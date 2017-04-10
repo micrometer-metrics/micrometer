@@ -1,0 +1,27 @@
+plugins {
+    id 'java'
+    id "me.champeau.gradle.jmh" version "0.3.1"
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.netflix.spectator:spectator-api:latest.release'
+    compile 'org.springframework.boot:spring-boot-actuator:latest.release'
+    compile 'io.prometheus:simpleclient:latest.release'
+    compile 'com.datadoghq:java-dogstatsd-client:latest.release'
+    compile 'io.dropwizard.metrics:metrics-core:latest.release'
+
+    jmh 'org.openjdk.jmh:jmh-core:latest.release'
+    jmh 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
+}
+
+jmh {
+    jmhVersion = '1.18'
+    warmupIterations = 2
+    iterations = 5
+    fork = 0
+    duplicateClassesStrategy = 'warn'
+}
