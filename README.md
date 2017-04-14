@@ -14,3 +14,9 @@ In addition to the features already present in Spring Boot [Actuator Metrics](ht
 * Logging appenders to track the number of log messages and stack traces being emitted from the app.
 * Fold in buffer pool and memory pool metrics reported by the JDK via JMX.
 * Fold in information about GC causes.
+
+## Collectors
+
+Support for Prometheus and Spectator collectors is in development.
+
+A TCK verifying collector implementation correctness is provided in `org.springframework.metrics.tck`.
