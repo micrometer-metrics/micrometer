@@ -16,6 +16,8 @@ dependencies {
 
     jmh 'org.openjdk.jmh:jmh-core:latest.release'
     jmh 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
+
+    testCompile 'junit:junit:4.+'
 }
 
 jmh {

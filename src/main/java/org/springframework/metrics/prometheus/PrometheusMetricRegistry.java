@@ -9,7 +9,7 @@ import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class PrometheusMetricRegistry implements MetricRegistry {
+public class PrometheusMetricRegistry extends AbstractMetricRegistry {
     private CollectorRegistry registry;
 
     public PrometheusMetricRegistry() {
@@ -28,7 +28,7 @@ public class PrometheusMetricRegistry implements MetricRegistry {
 
     @Override
     public Counter counter(String name, Iterable<Tag> tags) {
-        return new PrometheusCounter(withNameAndTags(io.prometheus.client.Counter.build(), name, tags));
+        return register(new PrometheusCounter(withNameAndTags(io.prometheus.client.Counter.build(), name, tags)));
     }
 
     @Override
@@ -38,13 +38,12 @@ public class PrometheusMetricRegistry implements MetricRegistry {
 
     @Override
     public Timer timer(String name, Iterable<Tag> tags) {
-        return new PrometheusTimer(withNameAndTags(Summary.build(), name, tags), getClock());
+        return register(new PrometheusTimer(withNameAndTags(Summary.build(), name, tags), getClock()));
     }
 
     @Override
     public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        // TODO uhhh... do something with this gauge
-        withNameAndTags(Gauge.build(), name, tags);
+        register(new PrometheusGauge(withNameAndTags(Gauge.build(), name, tags)));
         return obj;
     }
 
@@ -57,6 +56,8 @@ public class PrometheusMetricRegistry implements MetricRegistry {
             SimpleCollector.Builder<B, C> builder, String name, Iterable<Tag> tags) {
 
         return builder
+                .name(name)
+                .help(" ")
                 .labelNames(StreamSupport.stream(tags.spliterator(), false)
                         .map(Tag::getKey)
                         .collect(Collectors.toList())

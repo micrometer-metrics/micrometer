@@ -1,6 +1,6 @@
 package org.springframework.metrics;
 
-public interface Gauge {
+public interface Gauge extends Meter {
     /**
      * Set the current value of the gauge.
      *

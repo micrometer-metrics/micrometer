@@ -18,7 +18,10 @@ public class PrometheusTimer implements Timer {
 
     @Override
     public void record(long amount, TimeUnit unit) {
-        summary.observe(amount);
+        if(amount >= 0) {
+            final long nanos = TimeUnit.NANOSECONDS.convert(amount, unit);
+            summary.observe(nanos);
+        }
     }
 
     @Override
