@@ -18,8 +18,8 @@ class TimerTest {
         Timer t = collector.timer("myTimer");
         t.record(42, TimeUnit.MILLISECONDS);
 
-        assertAll(() -> assertEquals(t.count(), 1L),
-                () -> assertEquals(t.totalTime(), 42000000L));
+        assertAll(() -> assertEquals(1L, t.count()),
+                () -> assertEquals(42000000L, t.totalTime()));
     }
 
     @DisplayName("negative times are discarded by the Timer")
@@ -29,8 +29,8 @@ class TimerTest {
         Timer t = collector.timer("myTimer");
         t.record(-42, TimeUnit.MILLISECONDS);
 
-        assertAll(() -> assertEquals(t.count(), 0L),
-                () -> assertEquals(t.totalTime(), 0L));
+        assertAll(() -> assertEquals(0L, t.count()),
+                () -> assertEquals(0L, t.totalTime()));
     }
 
     @DisplayName("zero times contribute to the count of overall events but do not add to total time")
@@ -40,7 +40,7 @@ class TimerTest {
         Timer t = collector.timer("myTimer");
         t.record(0, TimeUnit.MILLISECONDS);
 
-        assertAll(() -> assertEquals(t.count(), 1L),
-                () -> assertEquals(t.totalTime(), 0L));
+        assertAll(() -> assertEquals(1L, t.count()),
+                () -> assertEquals(0L, t.totalTime()));
     }
 }

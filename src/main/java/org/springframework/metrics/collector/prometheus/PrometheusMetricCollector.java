@@ -40,7 +40,7 @@ public class PrometheusMetricCollector extends AbstractMetricCollector {
 
     @Override
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags) {
-        return null;
+        return register(new PrometheusDistributionSummary(withNameAndTags(Summary.build(), name, tags), getClock()));
     }
 
     @Override

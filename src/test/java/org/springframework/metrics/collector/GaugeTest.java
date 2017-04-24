@@ -25,35 +25,35 @@ class GaugeTest {
         assertEquals(2, g.value(), 1.0e-12);
     }
 
-//    @DisplayName("gauges attached to an object are updated when their values are observed")
-//    @ParameterizedTest
-//    @ArgumentsSource(MetricCollectorsProvider.class)
-//    void objectGauge(MetricCollector collector) {
-//        List<String> list = collector.gauge("myGauge", Collections.emptyList(), new ArrayList<>(), List::size);
-//        list.addAll(Arrays.asList("a", "b"));
-//
-//        assertEquals(2, singleGauge(collector).value());
-//    }
-//
-//    @DisplayName("gauges can be directly associated with collection size")
-//    @ParameterizedTest
-//    @ArgumentsSource(MetricCollectorsProvider.class)
-//    void collectionSizeGauge(MetricCollector collector) {
-//        List<String> list = collector.collectionSize("myGauge", new ArrayList<>());
-//        list.addAll(Arrays.asList("a", "b"));
-//
-//        assertEquals(2, singleGauge(collector).value());
-//    }
-//
-//    @DisplayName("gauges can be directly associated with map entry size")
-//    @ParameterizedTest
-//    @ArgumentsSource(MetricCollectorsProvider.class)
-//    void mapSizeGauge(MetricCollector collector) {
-//        Map<String, Integer> map = collector.mapSize("myGauge", new HashMap<>());
-//        map.put("a", 1);
-//
-//        assertEquals(1, singleGauge(collector).value());
-//    }
+    @DisplayName("gauges attached to an object are updated when their values are observed")
+    @ParameterizedTest
+    @ArgumentsSource(MetricCollectorsProvider.class)
+    void objectGauge(MetricCollector collector) {
+        List<String> list = collector.gauge("myGauge", Collections.emptyList(), new ArrayList<>(), List::size);
+        list.addAll(Arrays.asList("a", "b"));
+
+        assertEquals(2, singleGauge(collector).value());
+    }
+
+    @DisplayName("gauges can be directly associated with collection size")
+    @ParameterizedTest
+    @ArgumentsSource(MetricCollectorsProvider.class)
+    void collectionSizeGauge(MetricCollector collector) {
+        List<String> list = collector.collectionSize("myGauge", new ArrayList<>());
+        list.addAll(Arrays.asList("a", "b"));
+
+        assertEquals(2, singleGauge(collector).value());
+    }
+
+    @DisplayName("gauges can be directly associated with map entry size")
+    @ParameterizedTest
+    @ArgumentsSource(MetricCollectorsProvider.class)
+    void mapSizeGauge(MetricCollector collector) {
+        Map<String, Integer> map = collector.mapSize("myGauge", new HashMap<>());
+        map.put("a", 1);
+
+        assertEquals(1, singleGauge(collector).value());
+    }
 
     private Gauge singleGauge(MetricCollector collector) {
         return (Gauge) collector.getMeters().stream().findFirst()
