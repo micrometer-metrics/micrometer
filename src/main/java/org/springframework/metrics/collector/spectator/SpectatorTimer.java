@@ -1,6 +1,6 @@
-package org.springframework.metrics.spectator;
+package org.springframework.metrics.collector.spectator;
 
-import org.springframework.metrics.Timer;
+import org.springframework.metrics.collector.Timer;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;

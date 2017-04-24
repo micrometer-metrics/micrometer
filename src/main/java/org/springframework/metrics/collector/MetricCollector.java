@@ -1,26 +1,23 @@
-package org.springframework.metrics;
+package org.springframework.metrics.collector;
 
 import com.netflix.spectator.api.DefaultRegistry;
-import com.netflix.spectator.api.Registry;
-import org.springframework.metrics.spectator.SpectatorMetricRegistry;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.function.ToDoubleFunction;
 
 import static java.util.Collections.emptyList;
 
-public interface MetricRegistry {
+public interface MetricCollector {
     class Builder {
-        public MetricRegistry createSpectatorRegistry() {
-            return createSpectatorRegistry(new DefaultRegistry());
-        }
+//        public MetricCollector createSpectatorRegistry() {
+//            return createSpectatorRegistry(new DefaultRegistry());
+//        }
 
-        public MetricRegistry createSpectatorRegistry(Registry registry) {
-            return new SpectatorMetricRegistry(registry);
-        }
+//        public MetricCollector createSpectatorRegistry(Registry registry) {
+//            return new SpectatorMetricCollector(registry);
+//        }
     }
 
     Collection<Meter> getMeters();
@@ -71,7 +68,9 @@ public interface MetricRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    <T extends Number> T gauge(String name, Iterable<Tag> tags, T number);
+    default <T extends Number> T gauge(String name, Iterable<Tag> tags, T number) {
+        return gauge(name, tags, number, Number::doubleValue);
+    }
 
     /**
      * Measures the rate of some activity.

@@ -1,6 +1,4 @@
-package org.springframework.metrics;
-
-import java.util.ArrayList;
+package org.springframework.metrics.collector;
 
 /**
  * Key/value pair representing a dimension of a meter used to classify and drill into measurements.

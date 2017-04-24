@@ -1,6 +1,6 @@
-package org.springframework.metrics.spectator;
+package org.springframework.metrics.collector.spectator;
 
-import org.springframework.metrics.Counter;
+import org.springframework.metrics.collector.Counter;
 
 public class SpectatorCounter implements Counter {
     private com.netflix.spectator.api.Counter counter;

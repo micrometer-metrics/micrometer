@@ -1,4 +1,4 @@
-package org.springframework.metrics;
+package org.springframework.metrics.collector;
 
 /**
  * Track the sample distribution of events. An example would be the response sizes for requests

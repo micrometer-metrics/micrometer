@@ -1,4 +1,4 @@
-package org.springframework.metrics;
+package org.springframework.metrics.collector;
 
 public class ImmutableTag implements Tag {
     private String key;

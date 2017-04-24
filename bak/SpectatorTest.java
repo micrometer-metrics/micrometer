@@ -2,11 +2,11 @@ package org.springframework.metrics;
 
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
-import org.springframework.metrics.spectator.SpectatorMetricRegistry;
-import org.springframework.metrics.tck.GaugeTest;
-import org.springframework.metrics.tck.MetricsCompatibilityKit;
-import org.springframework.metrics.tck.CounterTest;
-import org.springframework.metrics.tck.TimerTest;
+import org.springframework.metrics.collector.spectator.SpectatorMetricRegistry;
+import org.springframework.metrics.collector.GaugeTest;
+import org.springframework.metrics.collector.MetricsCompatibilityKit;
+import org.springframework.metrics.collector.CounterTest;
+import org.springframework.metrics.collector.TimerTest;
 
 /**
  * Compatibility suite for spectator binding.

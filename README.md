@@ -19,7 +19,7 @@ In addition to the features already present in Spring Boot [Actuator Metrics](ht
 
 Support for Prometheus and Spectator collectors is in development.
 
-A TCK verifying collector implementation correctness is provided in `org.springframework.metrics.tck`.
+A TCK verifying collector implementation correctness is provided in `org.springframework.metrics.collector`.
 
 ## Exporters
 

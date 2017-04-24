@@ -1,34 +1,41 @@
-package org.springframework.metrics.prometheus;
+package org.springframework.metrics.collector.prometheus;
 
-import io.prometheus.client.*;
+import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Gauge;
-import org.springframework.metrics.*;
-import org.springframework.metrics.Counter;
+import io.prometheus.client.SimpleCollector;
+import io.prometheus.client.Summary;
+import io.prometheus.client.exporter.PushGateway;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.metrics.collector.*;
 
+import java.io.IOException;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class PrometheusMetricRegistry extends AbstractMetricRegistry {
+public class PrometheusMetricCollector extends AbstractMetricCollector {
     private CollectorRegistry registry;
 
-    public PrometheusMetricRegistry() {
+    public PrometheusMetricCollector() {
         this(new CollectorRegistry(true));
     }
 
-    public PrometheusMetricRegistry(CollectorRegistry registry) {
+    @Autowired
+    public PrometheusMetricCollector(CollectorRegistry registry) {
         this.registry = registry;
     }
 
     @Override
     public Clock getClock() {
-        // FIXME inject me
+        // maps to Gauge.TimeProvider and SimpleTimer.TimeProvider in prometheus
+        // FIXME inject me somehow
         return System::nanoTime;
     }
 
     @Override
     public Counter counter(String name, Iterable<Tag> tags) {
-        return register(new PrometheusCounter(withNameAndTags(io.prometheus.client.Counter.build(), name, tags)));
+        return register(new PrometheusCounter(withNameAndTags(io.prometheus.client.Gauge.build(), name, tags)));
     }
 
     @Override
@@ -41,15 +48,11 @@ public class PrometheusMetricRegistry extends AbstractMetricRegistry {
         return register(new PrometheusTimer(withNameAndTags(Summary.build(), name, tags), getClock()));
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        register(new PrometheusGauge(withNameAndTags(Gauge.build(), name, tags)));
+        register(new PrometheusGauge(withNameAndTags(PrometheusToDoubleGuage.build(obj, f), name, tags)));
         return obj;
-    }
-
-    @Override
-    public <T extends Number> T gauge(String name, Iterable<Tag> tags, T number) {
-        return null;
     }
 
     private <B extends SimpleCollector.Builder<B, C>, C extends SimpleCollector<D>, D> D withNameAndTags(

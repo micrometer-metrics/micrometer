@@ -1,4 +1,4 @@
-package org.springframework.metrics;
+package org.springframework.metrics.collector;
 
 /**
  * Measures the rate of change based on calls to increment.

@@ -1,6 +1,6 @@
-package org.springframework.metrics.spectator;
+package org.springframework.metrics.collector.spectator;
 
-import org.springframework.metrics.DistributionSummary;
+import org.springframework.metrics.collector.DistributionSummary;
 
 public class SpectatorDistributionSummary implements DistributionSummary {
     private com.netflix.spectator.api.DistributionSummary distributionSummary;

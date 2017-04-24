@@ -1,26 +1,25 @@
-package org.springframework.metrics.spectator;
+package org.springframework.metrics.collector.spectator;
 
-import com.netflix.spectator.api.BasicTag;
-import com.netflix.spectator.api.DefaultRegistry;
-import com.netflix.spectator.api.Id;
-import com.netflix.spectator.api.Registry;
-import org.springframework.metrics.*;
+import com.netflix.spectator.api.*;
+import org.springframework.metrics.collector.*;
+import org.springframework.metrics.collector.Clock;
+import org.springframework.metrics.collector.Counter;
+import org.springframework.metrics.collector.DistributionSummary;
+import org.springframework.metrics.collector.Tag;
+import org.springframework.metrics.collector.Timer;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class SpectatorMetricRegistry extends AbstractMetricRegistry {
+public class SpectatorMetricCollector extends AbstractMetricCollector {
     private Registry registry;
 
-    public SpectatorMetricRegistry() {
+    public SpectatorMetricCollector() {
         this(new DefaultRegistry());
     }
 
-    public SpectatorMetricRegistry(Registry registry) {
+    public SpectatorMetricCollector(Registry registry) {
         this.registry = registry;
     }
 
@@ -54,16 +53,9 @@ public class SpectatorMetricRegistry extends AbstractMetricRegistry {
     @Override
     public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
         Id gaugeId = registry.createId(name, toSpectatorTags(tags));
-        registry.gauge(gaugeId, obj, f);
-        register(new SpectatorGauge((com.netflix.spectator.api.Gauge) registry.get(gaugeId)));
+        com.netflix.spectator.api.Gauge gauge = new SpectatorToDoubleGauge<>(registry.clock(), gaugeId, obj, f);
+        registry.register(gauge);
+        register(new SpectatorGauge(gauge));
         return obj;
-    }
-
-    @Override
-    public <T extends Number> T gauge(String name, Iterable<Tag> tags, T number) {
-        Id gaugeId = registry.createId(name, toSpectatorTags(tags));
-        registry.gauge(gaugeId, number);
-        register(new SpectatorGauge((com.netflix.spectator.api.Gauge) registry.get(gaugeId)));
-        return number;
     }
 }

@@ -1,8 +1,8 @@
-package org.springframework.metrics.prometheus;
+package org.springframework.metrics.collector.prometheus;
 
 import io.prometheus.client.Summary;
-import org.springframework.metrics.Clock;
-import org.springframework.metrics.Timer;
+import org.springframework.metrics.collector.Clock;
+import org.springframework.metrics.collector.Timer;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
