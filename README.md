@@ -15,20 +15,73 @@ In addition to the features already present in Spring Boot [Actuator Metrics](ht
 * Fold in buffer pool and memory pool metrics reported by the JDK via JMX.
 * Fold in information about GC causes.
 
-## Collectors
+## Instrumentation
+
+*Defined:* The API used to create and interact with meter instances, generally through a meter registry. An individual meter holds one or more metrics depending on its type.
+
+*Existing API:* `Metric`, ½ of `MetricWriter`, `CounterService`, `GaugeService`
 
 Support for Prometheus and Spectator collectors is in development.
 
 A TCK verifying collector implementation correctness is provided in `org.springframework.metrics.collector`.
 
+Support targets:
+
+* Spectator
+* Prometheus Java client
+* Dropwizard Metrics (hierarchical)
+* StatsD and Datadog StatsD
+
 ## Exporters
 
-Nothing yet!
+*Defined:* Exporters identify export-worthy metrics from a meter registry, transform (e.g. convert monotonically increasing counters to a rate), add global dimensions, and push metrics to a metrics backend on a periodic interval(s).
+
+*Existing API:* `Exporter`, `@ExportMetricWriter`, `@ExportMetricReader`, `MetricCopyExporter`, `MetricReader`, `AggregateMetricReader`, ½ of `MetricWriter`
+
+* servo-atlas
+* Dropwizard Metrics "Reporters"
+* Datadog StatsD (also acts as a collector)
+* Direct to Datadog HTTP API
+* JMX
+* PCF Metrics
 
 ## Backends
 
-Nothing yet!
+*Defined:* A metrics backend is a time-series database. It may be a plain TSDB or contain optimizations for metrics specifically like:
+
+* Tiered reduction in granularity of older metrics to save on storage
+* Tiered persistence of metrics, prioritizing more recent metrics for fastest lookup and older metrics for cost
+* Act like a circular buffer for time-series data to more strictly bound resource consumption
+
+Metrics backends typically contain some metrics-specific query interface (e.g. PromQL, Atlas stack language). In some cases the metrics backend also happens to serve dashboards and alerting configuration that we are calling a metrics frontend. In other cases, these pieces are distinct.
+
+Potential support targets:
+
+* Atlas
+* Prometheus (Pushgateway)
+* Graphite
+* InfluxDB
+* Datadog
+* OpenTSDB
+* RRDtool?
+* Ganglia
+* Some supported statsd backends
+* PCF Metrics
+* JMX
+* Message channel -- not a backend in itself of course, but could be linked to one indirectly?
+* AWS CloudWatch
+* Elasticsearch -- understand why projects like Orestes exist first
 
 ## Frontends
 
-Nothing yet!
+*Defined:* Frontends provide some combination of individual metrics graphs, whole dashboards, and alerting configuration.
+
+Support targets:
+
+* Graphana
+* Graphite
+* Prometheus
+* RRDtool
+* Atlas -- Requires prying the Atlas frontend out of closed source at Netflix. They also have two more closed source pieces cleverly named:
+* Alerts
+* Netflix Dashboards
