@@ -7,6 +7,7 @@ buildscript {
 plugins {
     id 'java'
     id "me.champeau.gradle.jmh" version "0.3.1"
+    id "nebula.integtest" version "3.3.0"
 }
 
 apply plugin: 'org.junit.platform.gradle.plugin'
@@ -16,8 +17,6 @@ repositories {
 }
 
 dependencies {
-//    compile 'org.springframework.boot:spring-boot-actuator:latest.release'
-
     compile 'org.springframework:spring-beans:latest.release'
 
     compile 'com.netflix.spectator:spectator-api:latest.release'
@@ -29,9 +28,6 @@ dependencies {
 
     compile 'io.dropwizard.metrics:metrics-core:latest.release'
 
-    jmh 'org.openjdk.jmh:jmh-core:latest.release'
-    jmh 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
-
     // see https://github.com/junit-team/junit5/issues/586 for why this is necessary
     testCompile 'org.junit.platform:junit-platform-launcher:1.0.0-M4'
 
@@ -40,6 +36,16 @@ dependencies {
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.0-M4'
 
     testRuntime 'org.apache.logging.log4j:log4j-jul:latest.release'
+
+    integTestCompile 'com.netflix.spectator:spectator-reg-metrics3:latest.release'
+    integTestCompile 'com.netflix.spectator:spectator-reg-servo:latest.release'
+    integTestCompile 'com.netflix.servo:servo-atlas:latest.release'
+
+    integTestCompile 'ch.qos.logback:logback-classic:latest.release'
+
+    jmh 'org.openjdk.jmh:jmh-core:latest.release'
+    jmh 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
+    jmh 'org.springframework.boot:spring-boot-actuator:latest.release'
 }
 
 jmh {
