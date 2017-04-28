@@ -16,5 +16,5 @@ public interface Counter extends Meter {
   void increment(double amount);
 
   /** The cumulative count since this counter was created. */
-  long count();
+  double count();
 }

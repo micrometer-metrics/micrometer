@@ -23,7 +23,7 @@ public class PrometheusCounter implements Counter {
     }
 
     @Override
-    public long count() {
-        return (long) counter.get();
+    public double count() {
+        return counter.get();
     }
 }

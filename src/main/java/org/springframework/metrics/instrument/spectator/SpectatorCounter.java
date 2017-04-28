@@ -20,7 +20,7 @@ public class SpectatorCounter implements Counter {
     }
 
     @Override
-    public long count() {
+    public double count() {
         return counter.count();
     }
 }
