@@ -78,7 +78,7 @@ Potential support targets:
 
 Support targets:
 
-* Graphana
+* Grafana
 * Graphite
 * Prometheus
 * RRDtool
