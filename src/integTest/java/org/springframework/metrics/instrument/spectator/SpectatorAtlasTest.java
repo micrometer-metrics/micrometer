@@ -18,6 +18,8 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * This is the original support Netflix added for getting Spectator metrics to Atlas (through Servo).
+ *
  * Requires a running atlas server on localhost:7101
  */
 class SpectatorAtlasTest {
