@@ -85,6 +85,10 @@ public class MetricsHandlerInterceptor extends HandlerInterceptorAdapter {
         if (handler instanceof HandlerMethod) {
 
             Timed timed = ((HandlerMethod) handler).getMethod().getAnnotation(Timed.class);
+            if (timed == null) {
+                timed = ((HandlerMethod) handler).getBeanType().getAnnotation(Timed.class);
+            }
+
             if (timed != null) {
                 String name = environment.getProperty("spring.metrics.web.name", "rest");
                 if (!timed.value().isEmpty()) {
@@ -95,7 +99,7 @@ public class MetricsHandlerInterceptor extends HandlerInterceptorAdapter {
                 String[] extraTags = timed.extraTags();
                 if (extraTags.length > 0) {
                     if (extraTags.length % 2 != 0) {
-                        if(logger.isErrorEnabled()) {
+                        if (logger.isErrorEnabled()) {
                             Method method = ((HandlerMethod) handler).getMethod();
                             String target = method.getDeclaringClass().getName() + "." + method.getName();
                             logger.error("@Timed extraTags array on method " + target + " size must be even, it is a set of key=value pairs");
@@ -108,7 +112,7 @@ public class MetricsHandlerInterceptor extends HandlerInterceptorAdapter {
                 }
 
                 Timer timer = registry.timer(name, tags);
-                if(timer != null) {
+                if (timer != null) {
                     timer.record(endTime - startTime, TimeUnit.NANOSECONDS);
                 }
             }
