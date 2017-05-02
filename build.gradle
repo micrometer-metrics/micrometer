@@ -31,7 +31,11 @@ dependencies {
 
     compileOnly 'org.springframework.boot:spring-boot:latest.release'
     compileOnly 'org.springframework.boot:spring-boot-actuator:latest.release'
+    compileOnly 'org.springframework:spring-webmvc:latest.release'
+    compileOnly 'javax.servlet:javax.servlet-api:3.0.1'
     compileOnly 'org.springframework:spring-web:latest.release'
+
+    testCompile 'org.assertj:assertj-core:3.+'
 
     // see https://github.com/junit-team/junit5/issues/586 for why this is necessary
     testCompile 'org.junit.platform:junit-platform-launcher:1.0.0-M4'
@@ -40,7 +44,12 @@ dependencies {
     testCompile 'org.junit.jupiter:junit-jupiter-params:5.0.0-M4'
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.0-M4'
 
-    testRuntime 'org.apache.logging.log4j:log4j-jul:latest.release'
+    testCompile 'org.springframework.boot:spring-boot-starter-web:latest.release'
+    testCompile 'org.springframework.boot:spring-boot-actuator:latest.release'
+    testCompile 'org.springframework.boot:spring-boot-starter-test:latest.release'
+
+    testRuntime 'org.apache.httpcomponents:httpclient:4.4+'
+    testRuntime 'org.apache.logging.log4j:log4j-jul:latest.release' // necessary for logging emanating from JUnit5
 
     integTestCompile 'com.netflix.spectator:spectator-reg-metrics3:latest.release'
     integTestCompile 'com.netflix.spectator:spectator-reg-servo:latest.release'
@@ -49,11 +58,6 @@ dependencies {
 
     integTestCompile 'ch.qos.logback:logback-classic:latest.release'
 
-    integTestCompile 'org.springframework.boot:spring-boot-starter-web:latest.release'
-    integTestCompile 'org.springframework.boot:spring-boot-actuator:latest.release'
-    integTestCompile 'org.springframework.boot:spring-boot-starter-test:latest.release'
-
-    integTestCompile 'org.apache.httpcomponents:httpclient:4.4+'
     integTestCompile 'io.projectreactor:reactor-core:latest.release'
 
     integTestCompile 'io.prometheus:simpleclient_spring_boot:latest.release'

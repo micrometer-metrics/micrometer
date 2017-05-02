@@ -1,5 +1,7 @@
 package org.springframework.metrics.instrument;
 
+import java.util.Objects;
+
 public class ImmutableTag implements Tag {
     private String key;
     private String value;
@@ -17,5 +19,19 @@ public class ImmutableTag implements Tag {
     @Override
     public String getValue() {
         return value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ImmutableTag that = (ImmutableTag) o;
+        return Objects.equals(key, that.key) &&
+                Objects.equals(value, that.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(key, value);
     }
 }

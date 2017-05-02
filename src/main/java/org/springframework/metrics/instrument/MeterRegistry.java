@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.ToDoubleFunction;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
 
@@ -13,22 +15,14 @@ public interface MeterRegistry {
     Clock getClock();
 
     /**
-     * Register a gauge that reports the value of the {@link java.lang.Number}.
-     *
-     * @param name   Name of the metric being registered.
-     * @param tags   Sequence of dimensions for breaking down the getName.
-     * @param number Thread-safe implementation of {@link Number} used to access the value.
-     * @return The number that was passed in so the registration can be done as part of an assignment
-     * statement.
+     * Measures the rate of some activity.
      */
-    default <T extends Number> T gauge(String name, Iterable<Tag> tags, T number) {
-        return gauge(name, tags, number, Number::doubleValue);
-    }
+    Counter counter(String name, Iterable<Tag> tags);
 
     /**
      * Measures the rate of some activity.
      */
-    Counter counter(String name, Iterable<Tag> tags);
+    default Counter counter(String name, Stream<Tag> tags) { return counter(name, tags.collect(Collectors.toList())); }
 
     /**
      * Measures the rate of some activity.
@@ -52,6 +46,11 @@ public interface MeterRegistry {
     /**
      * Measures the sample distribution of events.
      */
+    default DistributionSummary distributionSummary(String name, Stream<Tag> tags) { return distributionSummary(name, tags.collect(Collectors.toList())); }
+
+    /**
+     * Measures the sample distribution of events.
+     */
     default DistributionSummary distributionSummary(String name) {
         return distributionSummary(name, emptyList());
     }
@@ -71,6 +70,11 @@ public interface MeterRegistry {
     /**
      * Measures the time taken for short tasks.
      */
+    default Timer timer(String name, Stream<Tag> tags) { return timer(name, tags.collect(Collectors.toList())); }
+
+    /**
+     * Measures the time taken for short tasks.
+     */
     default Timer timer(String name) {
         return timer(name, emptyList());
     }
@@ -86,6 +90,11 @@ public interface MeterRegistry {
      * Measures the time taken for short tasks.
      */
     LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags);
+
+    /**
+     * Measures the time taken for short tasks.
+     */
+    default LongTaskTimer longTaskTimer(String name, Stream<Tag> tags) { return longTaskTimer(name, tags.collect(Collectors.toList())); }
 
     /**
      * Measures the time taken for short tasks.
@@ -120,6 +129,19 @@ public interface MeterRegistry {
      * statement.
      */
     <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f);
+
+    /**
+     * Register a gauge that reports the value of the {@link java.lang.Number}.
+     *
+     * @param name   Name of the metric being registered.
+     * @param tags   Sequence of dimensions for breaking down the getName.
+     * @param number Thread-safe implementation of {@link Number} used to access the value.
+     * @return The number that was passed in so the registration can be done as part of an assignment
+     * statement.
+     */
+    default <T extends Number> T gauge(String name, Iterable<Tag> tags, T number) {
+        return gauge(name, tags, number, Number::doubleValue);
+    }
 
     /**
      * Register a gauge that reports the value of the {@link java.lang.Number}.
