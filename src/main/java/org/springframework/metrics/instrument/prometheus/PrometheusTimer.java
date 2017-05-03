@@ -17,8 +17,10 @@ public class PrometheusTimer extends AbstractTimer {
     @Override
     public void record(long amount, TimeUnit unit) {
         if(amount >= 0) {
-            final long nanos = TimeUnit.NANOSECONDS.convert(amount, unit);
-            summary.observe(nanos);
+            final double nanos = TimeUnit.NANOSECONDS.convert(amount, unit);
+
+            // Prometheus prefers to receive everything in base units, i.e. seconds
+            summary.observe(nanos / 10e8);
         }
     }
 
@@ -28,7 +30,7 @@ public class PrometheusTimer extends AbstractTimer {
     }
 
     @Override
-    public long totalTime() {
-        return (long) summary.get().sum;
+    public double totalTime(TimeUnit unit) {
+        return secondsToUnit(summary.get().sum, unit);
     }
 }

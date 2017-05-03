@@ -21,7 +21,7 @@ class TimerTest {
         t.record(42, TimeUnit.MILLISECONDS);
 
         assertAll(() -> assertEquals(1L, t.count()),
-                () -> assertEquals(42000000L, t.totalTime()));
+                () -> assertEquals(42, t.totalTime(TimeUnit.MILLISECONDS), 1.0e-12));
     }
 
     @DisplayName("negative times are discarded by the Timer")
@@ -32,7 +32,7 @@ class TimerTest {
         t.record(-42, TimeUnit.MILLISECONDS);
 
         assertAll(() -> assertEquals(0L, t.count()),
-                () -> assertEquals(0L, t.totalTime()));
+                () -> assertEquals(0, t.totalTimeNanos(), 1.0e-12));
     }
 
     @DisplayName("zero times contribute to the count of overall events but do not add to total time")
@@ -43,7 +43,7 @@ class TimerTest {
         t.record(0, TimeUnit.MILLISECONDS);
 
         assertAll(() -> assertEquals(1L, t.count()),
-                () -> assertEquals(0L, t.totalTime()));
+                () -> assertEquals(0L, t.totalTimeNanos()));
     }
 
     @DisplayName("record a runnable task")
@@ -53,10 +53,10 @@ class TimerTest {
         Timer t = collector.timer("myTimer");
 
         try {
-            t.record((Runnable) () -> clock(collector).time = 10);
+            t.record((Runnable) () -> clock(collector).addAndGetNanos(10));
         } finally {
             assertAll(() -> assertEquals(1L, t.count()),
-                    () -> assertEquals(10L, t.totalTime()));
+                    () -> assertEquals(10, t.totalTimeNanos() ,1.0e-12));
         }
     }
 
@@ -68,12 +68,12 @@ class TimerTest {
 
         assertThrows(Exception.class, () -> {
             t.record(() -> {
-                clock(collector).time = 10;
+                clock(collector).addAndGetNanos(10);
                 throw new Exception("uh oh");
             });
         });
 
         assertAll(() -> assertEquals(1L, t.count()),
-                () -> assertEquals(10L, t.totalTime()));
+                () -> assertEquals(10, t.totalTimeNanos(), 1.0e-12));
     }
 }

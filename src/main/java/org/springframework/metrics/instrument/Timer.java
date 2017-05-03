@@ -36,6 +36,10 @@ public interface Timer extends Meter {
   /** The number of times that record has been called since this timer was created. */
   long count();
 
-  /** The total time in nanoseconds of all recorded events since this timer was created. */
-  long totalTime();
+  /** The total time of all recorded events since this timer was created. */
+  double totalTime(TimeUnit unit);
+
+  default double totalTimeNanos() {
+    return totalTime(TimeUnit.NANOSECONDS);
+  }
 }

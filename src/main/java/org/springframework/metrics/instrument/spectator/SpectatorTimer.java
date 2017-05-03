@@ -15,7 +15,7 @@ public class SpectatorTimer extends AbstractTimer {
 
     @Override
     public void record(long amount, TimeUnit unit) {
-        timer.record(amount, unit);
+        timer.record(unit.toNanos(amount), TimeUnit.NANOSECONDS);
     }
 
     @Override
@@ -24,7 +24,8 @@ public class SpectatorTimer extends AbstractTimer {
     }
 
     @Override
-    public long totalTime() {
-        return timer.totalTime();
+    public double totalTime(TimeUnit unit) {
+        // the Spectator Timer contract insists that nanos be returned from totalTime()
+        return nanosToUnit(timer.totalTime(), unit);
     }
 }

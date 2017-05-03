@@ -33,7 +33,7 @@ public class SimpleTimer extends AbstractTimer {
     }
 
     @Override
-    public long totalTime() {
-        return totalTime.get();
+    public double totalTime(TimeUnit unit) {
+        return nanosToUnit(totalTime.get(), unit);
     }
 }

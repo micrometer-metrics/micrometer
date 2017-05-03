@@ -16,13 +16,13 @@ class LongTaskTimerTest {
     void testRecord(MeterRegistry collector) {
         LongTaskTimer t = collector.longTaskTimer("myTimer");
         long tId = t.start();
-        clock(collector).time = 10;
+        clock(collector).addAndGetNanos(10);
 
         assertAll(() -> assertEquals(10, t.duration()),
                 () -> assertEquals(10, t.duration(tId)),
                 () -> assertEquals(1, t.activeTasks()));
 
-        clock(collector).time += 10;
+        clock(collector).addAndGetNanos(10);
         t.stop(tId);
 
         assertAll(() -> assertEquals(0, t.duration()),

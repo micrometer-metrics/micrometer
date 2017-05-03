@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
@@ -31,10 +32,8 @@ class WebfluxMetricsHandlerInterceptorTest {
     @BeforeEach
     void before() {
         registry = mock(MeterRegistry.class);
-
-        // FIXME WebFilters don't appear to be able to intercept the response
         client = WebTestClient.bindToController(new Controller2())
-                //.webFilter(new WebMetricsFilter(registry))
+                .webFilter(new MetricsWebFilter(registry))
                 .build();
     }
 
