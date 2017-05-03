@@ -27,13 +27,10 @@ import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static org.springframework.web.context.request.RequestAttributes.SCOPE_REQUEST;
 
@@ -42,9 +39,9 @@ import static org.springframework.web.context.request.RequestAttributes.SCOPE_RE
  *
  * @author Jon Schneider
  */
-public class MetricsHandlerInterceptor extends HandlerInterceptorAdapter {
+public class WebmvcMetricsHandlerInterceptor extends HandlerInterceptorAdapter {
 
-    private static final Log logger = LogFactory.getLog(MetricsHandlerInterceptor.class);
+    private static final Log logger = LogFactory.getLog(WebmvcMetricsHandlerInterceptor.class);
     private static final String TIMING_REQUEST_ATTRIBUTE = "requestStartTime";
 
     @Autowired
@@ -90,7 +87,7 @@ public class MetricsHandlerInterceptor extends HandlerInterceptorAdapter {
             }
 
             if (timed != null) {
-                String name = environment.getProperty("spring.metrics.web.name", "rest");
+                String name = environment.getProperty("spring.metrics.web.name", "http-request");
                 if (!timed.value().isEmpty()) {
                     name = timed.value();
                 }

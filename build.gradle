@@ -5,51 +5,50 @@ buildscript {
 }
 
 plugins {
-    id 'java'
+    id "java"
     id "me.champeau.gradle.jmh" version "0.3.1"
     id "nebula.integtest" version "3.3.0"
-//    id "org.springframework.boot" version "1.5.3.RELEASE"
+    id "nebula.optional-base" version "3.1.0"
 }
 
 apply plugin: 'org.junit.platform.gradle.plugin'
 
 repositories {
     mavenCentral()
+    maven { url 'https://repo.spring.io/libs-milestone' }
+    maven { url 'https://repo.spring.io/libs-snapshot' }
 }
 
 dependencies {
-    compile 'org.springframework:spring-beans:latest.release'
+    compile "org.springframework:spring-beans:$springBootVersion", optional
+    compile "org.springframework.boot:spring-boot:$springBootVersion", optional
+    compile "org.springframework.boot:spring-boot-actuator:$springBootVersion", optional
+    compile "org.springframework:spring-webmvc:$springVersion", optional
+    compile "org.springframework:spring-webflux:$springVersion", optional
+    compile "org.springframework:spring-web:$springVersion", optional
+    compile 'javax.servlet:javax.servlet-api:3.0.1', optional
 
-    compile 'com.netflix.spectator:spectator-api:latest.release'
+    // collector options
+    compile 'com.netflix.spectator:spectator-api:latest.release', optional
+    compile 'io.prometheus:simpleclient:latest.release', optional
+    compile 'io.prometheus:simpleclient_pushgateway:latest.release', optional
+    compile 'com.datadoghq:java-dogstatsd-client:latest.release', optional
+    compile 'io.dropwizard.metrics:metrics-core:latest.release', optional
 
-    compile 'io.prometheus:simpleclient:latest.release'
-    compile 'io.prometheus:simpleclient_pushgateway:latest.release'
-
-    compile 'com.datadoghq:java-dogstatsd-client:latest.release'
-
-    compile 'io.dropwizard.metrics:metrics-core:latest.release'
-
-    compileOnly 'org.springframework.boot:spring-boot:latest.release'
-    compileOnly 'org.springframework.boot:spring-boot-actuator:latest.release'
-    compileOnly 'org.springframework:spring-webmvc:latest.release'
-    compileOnly 'javax.servlet:javax.servlet-api:3.0.1'
-    compileOnly 'org.springframework:spring-web:latest.release'
-
-    testCompile 'org.assertj:assertj-core:3.+'
-
-    // see https://github.com/junit-team/junit5/issues/586 for why this is necessary
-    testCompile 'org.junit.platform:junit-platform-launcher:1.0.0-M4'
-
+    // JUnit 5
+    testCompile 'org.junit.platform:junit-platform-launcher:1.0.0-M4' // see https://github.com/junit-team/junit5/issues/586 for why this is necessary
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0-M4'
     testCompile 'org.junit.jupiter:junit-jupiter-params:5.0.0-M4'
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.0-M4'
-
-    testCompile 'org.springframework.boot:spring-boot-starter-web:latest.release'
-    testCompile 'org.springframework.boot:spring-boot-actuator:latest.release'
-    testCompile 'org.springframework.boot:spring-boot-starter-test:latest.release'
-
-    testRuntime 'org.apache.httpcomponents:httpclient:4.4+'
     testRuntime 'org.apache.logging.log4j:log4j-jul:latest.release' // necessary for logging emanating from JUnit5
+
+    testCompile 'org.assertj:assertj-core:3.+'
+
+    testCompile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+    testCompile "org.springframework.boot:spring-boot-actuator:$springBootVersion"
+    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testCompile 'org.springframework:spring-test:5.0.0.BUILD-SNAPSHOT' // earlier versions did not contain JUnit 5 support
+    testRuntime 'org.apache.httpcomponents:httpclient:4.4+'
 
     integTestCompile 'com.netflix.spectator:spectator-reg-metrics3:latest.release'
     integTestCompile 'com.netflix.spectator:spectator-reg-servo:latest.release'
@@ -57,7 +56,6 @@ dependencies {
     integTestCompile 'com.netflix.servo:servo-atlas:latest.release'
 
     integTestCompile 'ch.qos.logback:logback-classic:latest.release'
-
     integTestCompile 'io.projectreactor:reactor-core:latest.release'
 
     integTestCompile 'io.prometheus:simpleclient_spring_boot:latest.release'
@@ -65,7 +63,7 @@ dependencies {
 
     jmh 'org.openjdk.jmh:jmh-core:latest.release'
     jmh 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
-    jmh 'org.springframework.boot:spring-boot-actuator:latest.release'
+    jmh "org.springframework.boot:spring-boot-actuator:$springBootVersion"
 }
 
 jmh {

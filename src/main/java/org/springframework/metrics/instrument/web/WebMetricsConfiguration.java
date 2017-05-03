@@ -20,28 +20,37 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 /**
  * @author Jon Schneider
  */
 @Configuration
-public class WebMetricsInterceptorConfiguration {
+public class WebMetricsConfiguration {
 
+	/**
+	 * We continue to use the deprecated WebMvcConfigurerAdapter for backwards compatibility
+	 * with Spring Framework 4.X.
+	 */
 	@Configuration
 	@ConditionalOnWebApplication
-	@ConditionalOnClass(WebMvcConfigurerAdapter.class)
-	static class MetricsWebResourceConfiguration extends WebMvcConfigurerAdapter {
+	@ConditionalOnClass(WebMvcConfigurer.class)
+	static class WebMvcConfiguration extends WebMvcConfigurerAdapter {
 		@Bean
-		MetricsHandlerInterceptor servoMonitoringWebResourceInterceptor() {
-			return new MetricsHandlerInterceptor();
+        WebmvcMetricsHandlerInterceptor webMetricsInterceptor() {
+			return new WebmvcMetricsHandlerInterceptor();
 		}
 
 		@Override
 		public void addInterceptors(InterceptorRegistry registry) {
-			registry.addInterceptor(servoMonitoringWebResourceInterceptor());
+			registry.addInterceptor(webMetricsInterceptor());
 		}
+	}
 
+	@Configuration
+	@ConditionalOnWebApplication
+	static class WebMetricsTagProviderConfiguration {
 		@Bean
 		@ConditionalOnMissingBean(WebMetricsTagProvider.class)
 		@ConditionalOnClass(name = "javax.servlet.http.HttpServletRequest")

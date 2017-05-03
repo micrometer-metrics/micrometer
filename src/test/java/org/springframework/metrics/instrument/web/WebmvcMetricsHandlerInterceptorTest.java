@@ -1,8 +1,8 @@
 package org.springframework.metrics.instrument.web;
 
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -14,7 +14,7 @@ import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.annotation.Timed;
 import org.springframework.metrics.instrument.simple.SimpleTimer;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
@@ -25,25 +25,27 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = MetricsHandlerExampleApp.class)
-@WebMvcTest({MetricsHandlerInterceptorController1.class, MetricsHandlerInterceptorController2.class})
-public class MetricsHandlerInterceptorTest {
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = WebmvcMetricsHandlerInterceptorTest.App.class)
+@WebMvcTest({WebmvcMetricsHandlerInterceptorTest.Controller1.class, WebmvcMetricsHandlerInterceptorTest.Controller2.class})
+class WebmvcMetricsHandlerInterceptorTest {
     @Autowired
+    private
     MockMvc mvc;
 
     @MockBean
+    private
     MeterRegistry registry;
 
     @Test
-    public void metricsGatheredWhenMethodIsTimed() throws Exception {
+    void metricsGatheredWhenMethodIsTimed() throws Exception {
         SimpleTimer timer = expectTimer();
         mvc.perform(get("/api/c1/10")).andExpect(status().isOk());
         assertTags(
@@ -55,13 +57,13 @@ public class MetricsHandlerInterceptorTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void metricsNotGatheredWhenRequestMappingIsNotTimed() throws Exception {
+    void metricsNotGatheredWhenRequestMappingIsNotTimed() throws Exception {
         mvc.perform(get("/api/c1/untimed/10")).andExpect(status().isOk());
         verify(registry, never()).timer(anyString(), any(Stream.class));
     }
 
     @Test
-    public void metricsGatheredWhenControllerIsTimed() throws Exception {
+    void metricsGatheredWhenControllerIsTimed() throws Exception {
         SimpleTimer timer = expectTimer();
         mvc.perform(get("/api/c2/10")).andExpect(status().isOk());
         assertTags(Tag.of("status", "200"));
@@ -69,7 +71,7 @@ public class MetricsHandlerInterceptorTest {
     }
 
     @Test
-    public void metricsGatheredWhenClientRequestBad() throws Exception {
+    void metricsGatheredWhenClientRequestBad() throws Exception {
         SimpleTimer timer = expectTimer();
         mvc.perform(get("/api/c1/oops")).andExpect(status().is4xxClientError());
         assertTags(Tag.of("status", "400"), Tag.of("uri", "api_c1_-id-"));
@@ -77,7 +79,7 @@ public class MetricsHandlerInterceptorTest {
     }
 
     @Test
-    public void metricsGatheredWhenUnhandledError() throws Exception {
+    void metricsGatheredWhenUnhandledError() throws Exception {
         SimpleTimer timer = expectTimer();
         try {
             mvc.perform(get("/api/c1/unhandledError/10")).andExpect(status().isOk());
@@ -88,8 +90,8 @@ public class MetricsHandlerInterceptorTest {
     }
 
     @Test
-    /* FIXME */ @Ignore("ErrorMvcAutoConfiguration is blowing up on SPEL evaluation of 'timestamp'")
-    public void metricsGatheredWhenHandledError() throws Exception {
+    /* FIXME */ @Disabled("ErrorMvcAutoConfiguration is blowing up on SPEL evaluation of 'timestamp'")
+    void metricsGatheredWhenHandledError() throws Exception {
         SimpleTimer timer = expectTimer();
         mvc.perform(get("/api/c1/error/10")).andExpect(status().is4xxClientError());
         assertTags(Tag.of("status", "422"), Tag.of("uri", "api_c1_error_-id-"));
@@ -97,7 +99,7 @@ public class MetricsHandlerInterceptorTest {
     }
 
     @Test
-    public void metricsGatheredWhenRegexEndpoint() throws Exception {
+    void metricsGatheredWhenRegexEndpoint() throws Exception {
         SimpleTimer timer = expectTimer();
         mvc.perform(get("/api/c1/regex/.abc")).andExpect(status().isOk());
         assertTags(Tag.of("status", "200"), Tag.of("uri", "api_c1_regex_-id-"));
@@ -108,67 +110,66 @@ public class MetricsHandlerInterceptorTest {
     private void assertTags(Tag... match) {
         ArgumentCaptor<Stream> tags = ArgumentCaptor.forClass(Stream.class);
         verify(registry).timer(anyString(), tags.capture());
-        assertThat((List) tags.getValue().collect(Collectors.toList())).contains(match);
+        assertThat((List) tags.getValue().collect(Collectors.toList())).contains((Object[]) match);
     }
 
     private SimpleTimer expectTimer() {
         SimpleTimer timer = new SimpleTimer();
 
         //noinspection unchecked
-        when(registry.timer(eq("rest"), any(Stream.class))).thenReturn(timer);
+        when(registry.timer(eq("http-request"), any(Stream.class))).thenReturn(timer);
         return timer;
     }
-}
 
-@SpringBootApplication
-class MetricsHandlerExampleApp {
-}
+    @SpringBootApplication
+    static class App {}
 
-@RestController
-@RequestMapping("/api/c1")
-class MetricsHandlerInterceptorController1 {
-    @Timed(extraTags = {"public", "true"})
-    @RequestMapping("/{id}")
-    public String successfulWithExtraTags(@PathVariable Long id) {
-        return id.toString();
+    @RestController
+    @RequestMapping("/api/c1")
+    static class Controller1 {
+        @Timed(extraTags = {"public", "true"})
+        @GetMapping("/{id}")
+        public String successfulWithExtraTags(@PathVariable Long id) {
+            return id.toString();
+        }
+
+        @GetMapping("/untimed/{id}")
+        public String successfulButUntimed(@PathVariable Long id) {
+            return id.toString();
+        }
+
+        @Timed
+        @GetMapping("/error/{id}")
+        public String alwaysThrowsException(@PathVariable Long id) {
+            throw new IllegalStateException("Boom on $id!");
+        }
+
+        @Timed
+        @GetMapping("/unhandledError/{id}")
+        public String alwaysThrowsUnhandledException(@PathVariable Long id) {
+            throw new RuntimeException("Boom on $id!");
+        }
+
+        @Timed
+        @GetMapping("/regex/{id:\\.[a-z]+}")
+        public String successfulRegex(@PathVariable String id) {
+            return id;
+        }
+
+        @ExceptionHandler(value = IllegalStateException.class)
+        @ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+        ModelAndView defaultErrorHandler(HttpServletRequest request, Exception e) {
+            return new ModelAndView("error");
+        }
     }
 
-    @RequestMapping("/untimed/{id}")
-    public String successfulButUntimed(@PathVariable Long id) {
-        return id.toString();
-    }
-
+    @RestController
     @Timed
-    @RequestMapping("/error/{id}")
-    public String alwaysThrowsException(@PathVariable Long id) {
-        throw new IllegalStateException("Boom on $id!");
-    }
-
-    @Timed
-    @RequestMapping("/unhandledError/{id}")
-    public String alwaysThrowsUnhandledException(@PathVariable Long id) {
-        throw new RuntimeException("Boom on $id!");
-    }
-
-    @Timed
-    @RequestMapping("/regex/{id:\\.[a-z]+}")
-    public String successfulRegex(@PathVariable String id) {
-        return id;
-    }
-
-    @ExceptionHandler(value = IllegalStateException.class)
-    @ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-    ModelAndView defaultErrorHandler(HttpServletRequest request, Exception e) {
-        return new ModelAndView("error");
-    }
-}
-
-@RestController
-@Timed
-@RequestMapping("/api/c2")
-class MetricsHandlerInterceptorController2 {
-    @RequestMapping("/{id}")
-    public String successful(@PathVariable Long id) {
-        return id.toString();
+    @RequestMapping("/api/c2")
+    static class Controller2 {
+        @GetMapping("/{id}")
+        public String successful(@PathVariable Long id) {
+            return id.toString();
+        }
     }
 }
