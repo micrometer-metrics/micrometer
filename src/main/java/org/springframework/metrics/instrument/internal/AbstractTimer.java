@@ -13,7 +13,8 @@ public abstract class AbstractTimer implements Timer {
         this.clock = clock;
     }
 
-    @Override public <T> T record(Callable<T> f) throws Exception {
+    @Override
+    public <T> T record(Callable<T> f) throws Exception {
         final long s = clock.monotonicTime();
         try {
             return f.call();
@@ -23,7 +24,8 @@ public abstract class AbstractTimer implements Timer {
         }
     }
 
-    @Override public void record(Runnable f) {
+    @Override
+    public void record(Runnable f) {
         final long s = clock.monotonicTime();
         try {
             f.run();
@@ -38,30 +40,44 @@ public abstract class AbstractTimer implements Timer {
      * @see TimeUnit#convert(long, TimeUnit)
      */
     protected static double nanosToUnit(double nanos, TimeUnit destinationUnit) {
-        switch(destinationUnit) {
-            case MICROSECONDS: return nanos/(C1/C0);
-            case MILLISECONDS: return nanos/(C2/C0);
-            case SECONDS: return nanos/(C3/C0);
-            case MINUTES: return nanos/(C4/C0);
-            case HOURS: return nanos/(C5/C0);
-            case DAYS: return nanos/(C6/C0);
+        switch (destinationUnit) {
+            case MICROSECONDS:
+                return nanos / (C1 / C0);
+            case MILLISECONDS:
+                return nanos / (C2 / C0);
+            case SECONDS:
+                return nanos / (C3 / C0);
+            case MINUTES:
+                return nanos / (C4 / C0);
+            case HOURS:
+                return nanos / (C5 / C0);
+            case DAYS:
+                return nanos / (C6 / C0);
 
             case NANOSECONDS:
-            default: return nanos;
+            default:
+                return nanos;
         }
     }
 
     protected static double secondsToUnit(double seconds, TimeUnit destinationUnit) {
         switch (destinationUnit) {
-            case NANOSECONDS: return seconds * (C3/C0);
-            case MICROSECONDS: return seconds * (C3/C1);
-            case MILLISECONDS: return seconds * (C3/C2);
-            case MINUTES: return seconds / (C4/C3);
-            case HOURS: return seconds / (C5/C3);
-            case DAYS: return seconds / (C6/C3);
+            case NANOSECONDS:
+                return seconds * (C3 / C0);
+            case MICROSECONDS:
+                return seconds * (C3 / C1);
+            case MILLISECONDS:
+                return seconds * (C3 / C2);
+            case MINUTES:
+                return seconds / (C4 / C3);
+            case HOURS:
+                return seconds / (C5 / C3);
+            case DAYS:
+                return seconds / (C6 / C3);
 
             case SECONDS:
-            default: return seconds;
+            default:
+                return seconds;
         }
     }
 

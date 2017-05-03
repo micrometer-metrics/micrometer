@@ -16,10 +16,10 @@ public class PrometheusCounter implements Counter {
 
     @Override
     public void increment(double amount) {
-        if(amount < 0)
+        if (amount < 0)
             counter.dec(-amount);
         else
-           counter.inc(amount);
+            counter.inc(amount);
     }
 
     @Override

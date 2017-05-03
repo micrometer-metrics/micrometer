@@ -22,18 +22,18 @@ import org.springframework.core.NamedThreadLocal;
  * @author Jon Schneider
  */
 public class RestTemplateUrlTemplateHolder {
-	private static final ThreadLocal<String> restTemplateUrlTemplateHolder = new NamedThreadLocal<String>(
-			"Rest Template URL Template");
+    private static final ThreadLocal<String> restTemplateUrlTemplateHolder = new NamedThreadLocal<String>(
+            "Rest Template URL Template");
 
-	public static String getRestTemplateUrlTemplate() {
-		return restTemplateUrlTemplateHolder.get();
-	}
+    public static String getRestTemplateUrlTemplate() {
+        return restTemplateUrlTemplateHolder.get();
+    }
 
-	public static void setRestTemplateUrlTemplate(String urlTemplate) {
-		restTemplateUrlTemplateHolder.set(urlTemplate);
-	}
+    public static void setRestTemplateUrlTemplate(String urlTemplate) {
+        restTemplateUrlTemplateHolder.set(urlTemplate);
+    }
 
-	public static void clear() {
-		restTemplateUrlTemplateHolder.remove();
-	}
+    public static void clear() {
+        restTemplateUrlTemplateHolder.remove();
+    }
 }

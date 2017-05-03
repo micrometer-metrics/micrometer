@@ -29,42 +29,42 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 @Configuration
 public class WebMetricsConfiguration {
 
-	/**
-	 * We continue to use the deprecated WebMvcConfigurerAdapter for backwards compatibility
-	 * with Spring Framework 4.X.
-	 */
-	@Configuration
-	@ConditionalOnWebApplication
-	@ConditionalOnClass(WebMvcConfigurer.class)
-	static class WebMvcConfiguration extends WebMvcConfigurerAdapter {
-		@Bean
+    /**
+     * We continue to use the deprecated WebMvcConfigurerAdapter for backwards compatibility
+     * with Spring Framework 4.X.
+     */
+    @Configuration
+    @ConditionalOnWebApplication
+    @ConditionalOnClass(WebMvcConfigurer.class)
+    static class WebMvcConfiguration extends WebMvcConfigurerAdapter {
+        @Bean
         WebmvcMetricsHandlerInterceptor webMetricsInterceptor() {
-			return new WebmvcMetricsHandlerInterceptor();
-		}
+            return new WebmvcMetricsHandlerInterceptor();
+        }
 
-		@Override
-		public void addInterceptors(InterceptorRegistry registry) {
-			registry.addInterceptor(webMetricsInterceptor());
-		}
-	}
+        @Override
+        public void addInterceptors(InterceptorRegistry registry) {
+            registry.addInterceptor(webMetricsInterceptor());
+        }
+    }
 
-	@Configuration
-	@ConditionalOnWebApplication
-	static class WebMetricsTagProviderConfiguration {
-		@Bean
-		@ConditionalOnMissingBean(WebMetricsTagProvider.class)
-		@ConditionalOnClass(name = "javax.servlet.http.HttpServletRequest")
-		public WebMetricsTagProvider defaultMetricsTagProvider() {
-			return new DefaultWebMetricsTagProvider();
-		}
+    @Configuration
+    @ConditionalOnWebApplication
+    static class WebMetricsTagProviderConfiguration {
+        @Bean
+        @ConditionalOnMissingBean(WebMetricsTagProvider.class)
+        @ConditionalOnClass(name = "javax.servlet.http.HttpServletRequest")
+        public WebMetricsTagProvider defaultMetricsTagProvider() {
+            return new DefaultWebMetricsTagProvider();
+        }
 
-		@Bean
-		@ConditionalOnMissingBean(WebMetricsTagProvider.class)
-		@ConditionalOnMissingClass("javax.servlet.http.HttpServletRequest")
-		public WebMetricsTagProvider emptyMetricsTagProvider() {
-			return new EmptyWebMetricsTagProvider();
-		}
-	}
+        @Bean
+        @ConditionalOnMissingBean(WebMetricsTagProvider.class)
+        @ConditionalOnMissingClass("javax.servlet.http.HttpServletRequest")
+        public WebMetricsTagProvider emptyMetricsTagProvider() {
+            return new EmptyWebMetricsTagProvider();
+        }
+    }
 
 //	@Configuration
 //	@ConditionalOnClass({ RestTemplate.class, JoinPoint.class })

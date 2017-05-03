@@ -13,7 +13,7 @@ public class PrometheusDistributionSummary implements DistributionSummary {
 
     @Override
     public void record(long amount) {
-        if(amount >= 0)
+        if (amount >= 0)
             summary.observe(amount);
     }
 

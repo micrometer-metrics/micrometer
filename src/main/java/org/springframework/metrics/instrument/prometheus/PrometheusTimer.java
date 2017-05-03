@@ -16,7 +16,7 @@ public class PrometheusTimer extends AbstractTimer {
 
     @Override
     public void record(long amount, TimeUnit unit) {
-        if(amount >= 0) {
+        if (amount >= 0) {
             final double nanos = TimeUnit.NANOSECONDS.convert(amount, unit);
 
             // Prometheus prefers to receive everything in base units, i.e. seconds

@@ -7,8 +7,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 class PrometheusEndpointConfiguration {
 
-  @Bean
-  public PrometheusEndpoint prometheusEndpoint() {
-    return new PrometheusEndpoint(CollectorRegistry.defaultRegistry);
-  }
+    @Bean
+    public PrometheusEndpoint prometheusEndpoint() {
+        return new PrometheusEndpoint(CollectorRegistry.defaultRegistry);
+    }
 }

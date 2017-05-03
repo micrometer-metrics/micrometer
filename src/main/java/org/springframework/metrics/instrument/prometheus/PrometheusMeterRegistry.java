@@ -85,8 +85,8 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         collector = collectorTransform.apply(collector);
 
         return collector.labels(StreamSupport.stream(tags.spliterator(), false)
-                        .map(Tag::getValue)
-                        .collect(Collectors.toList())
-                        .toArray(new String[]{}));
+                .map(Tag::getValue)
+                .collect(Collectors.toList())
+                .toArray(new String[]{}));
     }
 }

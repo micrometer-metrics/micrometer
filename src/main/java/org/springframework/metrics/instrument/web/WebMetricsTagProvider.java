@@ -26,20 +26,20 @@ import org.springframework.metrics.instrument.Tag;
  * @author Jon Schneider
  */
 public interface WebMetricsTagProvider {
-	/**
-	 * @param request RestTemplate client HTTP request
-	 * @param response may be null in the event of a client error
-	 * @return a map of tags added to every client HTTP request metric
-	 */
-	Stream<Tag> clientHttpRequestTags(HttpRequest request,
-                                              ClientHttpResponse response);
+    /**
+     * @param request  RestTemplate client HTTP request
+     * @param response may be null in the event of a client error
+     * @return a map of tags added to every client HTTP request metric
+     */
+    Stream<Tag> clientHttpRequestTags(HttpRequest request,
+                                      ClientHttpResponse response);
 
-	/**
-	 * @param request HTTP request
-	 * @param response HTTP response
-	 * @param handler the request method that is responsible for handling the request
-	 * @return a map of tags added to every Spring MVC HTTP request metric
-	 */
-	Stream<Tag> httpRequestTags(HttpServletRequest request,
-								HttpServletResponse response, Object handler, String caller);
+    /**
+     * @param request  HTTP request
+     * @param response HTTP response
+     * @param handler  the request method that is responsible for handling the request
+     * @return a map of tags added to every Spring MVC HTTP request metric
+     */
+    Stream<Tag> httpRequestTags(HttpServletRequest request,
+                                HttpServletResponse response, Object handler, String caller);
 }

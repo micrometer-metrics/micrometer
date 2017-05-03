@@ -71,9 +71,13 @@ public interface LongTaskTimer extends Meter {
      */
     long duration(long task);
 
-    /** Returns the cumulative duration of all current tasks in nanoseconds. */
+    /**
+     * Returns the cumulative duration of all current tasks in nanoseconds.
+     */
     long duration();
 
-    /** Returns the current number of tasks being executed. */
+    /**
+     * Returns the current number of tasks being executed.
+     */
     int activeTasks();
 }

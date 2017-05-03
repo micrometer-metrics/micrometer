@@ -22,7 +22,9 @@ public interface MeterRegistry {
     /**
      * Measures the rate of some activity.
      */
-    default Counter counter(String name, Stream<Tag> tags) { return counter(name, tags.collect(Collectors.toList())); }
+    default Counter counter(String name, Stream<Tag> tags) {
+        return counter(name, tags.collect(Collectors.toList()));
+    }
 
     /**
      * Measures the rate of some activity.
@@ -46,7 +48,9 @@ public interface MeterRegistry {
     /**
      * Measures the sample distribution of events.
      */
-    default DistributionSummary distributionSummary(String name, Stream<Tag> tags) { return distributionSummary(name, tags.collect(Collectors.toList())); }
+    default DistributionSummary distributionSummary(String name, Stream<Tag> tags) {
+        return distributionSummary(name, tags.collect(Collectors.toList()));
+    }
 
     /**
      * Measures the sample distribution of events.
@@ -70,7 +74,9 @@ public interface MeterRegistry {
     /**
      * Measures the time taken for short tasks.
      */
-    default Timer timer(String name, Stream<Tag> tags) { return timer(name, tags.collect(Collectors.toList())); }
+    default Timer timer(String name, Stream<Tag> tags) {
+        return timer(name, tags.collect(Collectors.toList()));
+    }
 
     /**
      * Measures the time taken for short tasks.
@@ -94,7 +100,9 @@ public interface MeterRegistry {
     /**
      * Measures the time taken for short tasks.
      */
-    default LongTaskTimer longTaskTimer(String name, Stream<Tag> tags) { return longTaskTimer(name, tags.collect(Collectors.toList())); }
+    default LongTaskTimer longTaskTimer(String name, Stream<Tag> tags) {
+        return longTaskTimer(name, tags.collect(Collectors.toList()));
+    }
 
     /**
      * Measures the time taken for short tasks.
@@ -121,10 +129,10 @@ public interface MeterRegistry {
      * of active threads. For other behaviors, manage it on the user side and avoid multiple
      * registrations.
      *
-     * @param name   Name of the metric being registered.
-     * @param tags   Sequence of dimensions for breaking down the getName.
-     * @param obj Object used to compute a value.
-     * @param f   Function that is applied on the value for the number.
+     * @param name Name of the metric being registered.
+     * @param tags Sequence of dimensions for breaking down the getName.
+     * @param obj  Object used to compute a value.
+     * @param f    Function that is applied on the value for the number.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
@@ -175,8 +183,8 @@ public interface MeterRegistry {
      * {@link java.util.Collection#size()} can be expensive for some collection implementations
      * and should be considered before registering.
      *
-     * @param name   Name of the metric being registered.
-     * @param tags   Sequence of dimensions for breaking down the getName.
+     * @param name       Name of the metric being registered.
+     * @param tags       Sequence of dimensions for breaking down the getName.
      * @param collection Thread-safe implementation of {@link Collection} used to access the value.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
@@ -208,8 +216,8 @@ public interface MeterRegistry {
      * {@link java.util.Map#size()} can be expensive for some collection implementations
      * and should be considered before registering.
      *
-     * @param name   Name of the metric being registered.
-     * @param tags   Sequence of dimensions for breaking down the getName.
+     * @param name       Name of the metric being registered.
+     * @param tags       Sequence of dimensions for breaking down the getName.
      * @param collection Thread-safe implementation of {@link Map} used to access the value.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
