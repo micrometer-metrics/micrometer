@@ -2,6 +2,12 @@
 
 Early work on dimensional Spring Metrics for application monitoring.
 
+## Reference Documentation
+
+You can view an early preview of the reference [documentation here](https://jkschneider.github.io/spring-metrics/).
+
+## Goals
+
 In addition to the features already present in Spring Boot [Actuator Metrics](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-metrics.html), these are some goals for inclusion in an initial release:
 
 * Adopt a dimensional system rather than hierarchical. Many metrics backends are dimensional in nature. A hierarchical name can be derived consistently from a series of dimensions for those that are not (example of this in spectator-reg-metrics3).
