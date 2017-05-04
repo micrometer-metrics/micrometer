@@ -21,6 +21,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClas
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
@@ -38,6 +39,7 @@ public class WebMetricsConfiguration {
     @Configuration
     @ConditionalOnWebApplication
     @ConditionalOnClass(WebMvcConfigurer.class)
+    @Import(WebMetricsTagProviderConfiguration.class)
     static class WebMvcConfiguration extends WebMvcConfigurerAdapter {
         @Bean
         WebmvcMetricsHandlerInterceptor webMetricsInterceptor() {
@@ -67,71 +69,4 @@ public class WebMetricsConfiguration {
             return new EmptyWebMetricsTagProvider();
         }
     }
-
-//	@Configuration
-//	@ConditionalOnClass({ RestTemplate.class, JoinPoint.class })
-//	@ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)
-//	static class MetricsRestTemplateAspectConfiguration {
-//
-//		@Bean
-//		RestTemplateUrlTemplateCapturingAspect restTemplateUrlTemplateCapturingAspect() {
-//			return new RestTemplateUrlTemplateCapturingAspect();
-//		}
-//
-//	}
-
-//	@Configuration
-//	@ConditionalOnClass({ RestTemplate.class, HttpServletRequest.class })	// HttpServletRequest implicitly required by WebMetricsTagProvider
-//	static class MetricsRestTemplateConfiguration {
-//
-//		@Value("${netflix.metrics.restClient.metricName:restclient}")
-//		String metricName;
-//
-//		@Bean
-//		MetricsClientHttpRequestInterceptor spectatorLoggingClientHttpRequestInterceptor(
-//				Collection<WebMetricsTagProvider> tagProviders,
-//				ServoMonitorCache servoMonitorCache) {
-//			return new MetricsClientHttpRequestInterceptor(tagProviders,
-//					servoMonitorCache, this.metricName);
-//		}
-//
-//		@Bean
-//		BeanPostProcessor spectatorRestTemplateInterceptorPostProcessor() {
-//			return new MetricsInterceptorPostProcessor();
-//		}
-//
-//		private static class MetricsInterceptorPostProcessor
-//				implements BeanPostProcessor, ApplicationContextAware {
-//			private ApplicationContext context;
-//			private MetricsClientHttpRequestInterceptor interceptor;
-//
-//			@Override
-//			public Object postProcessBeforeInitialization(Object bean, String beanName) {
-//				return bean;
-//			}
-//
-//			@Override
-//			public Object postProcessAfterInitialization(Object bean, String beanName) {
-//				if (bean instanceof RestTemplate) {
-//					if (this.interceptor == null) {
-//						this.interceptor = this.context
-//								.getBean(MetricsClientHttpRequestInterceptor.class);
-//					}
-//					RestTemplate restTemplate = (RestTemplate) bean;
-//					// create a new list as the old one may be unmodifiable (ie Arrays.asList())
-//					ArrayList<ClientHttpRequestInterceptor> interceptors = new ArrayList<>();
-//					interceptors.add(interceptor);
-//					interceptors.addAll(restTemplate.getInterceptors());
-//					restTemplate.setInterceptors(interceptors);
-//				}
-//				return bean;
-//			}
-//
-//			@Override
-//			public void setApplicationContext(ApplicationContext context)
-//					throws BeansException {
-//				this.context = context;
-//			}
-//		}
-//	}
 }

@@ -15,16 +15,17 @@
  */
 package org.springframework.metrics.instrument.web;
 
-import java.util.Map;
-import java.util.stream.Stream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.metrics.instrument.Tag;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.stream.Stream;
+
 /**
+ * Defines the global set of tags added to every instrumented web request.
+ *
  * @author Jon Schneider
  */
 public interface WebMetricsTagProvider {

@@ -23,8 +23,6 @@ plugins {
 apply plugin: 'org.junit.platform.gradle.plugin'
 apply plugin: 'com.github.hierynomus.license'
 
-group = 'org.springframework'
-
 repositories {
     mavenCentral()
     maven { url 'https://repo.spring.io/libs-milestone' }
@@ -37,12 +35,12 @@ ext {
 }
 
 dependencies {
-    compile "org.springframework:spring-beans:$ext.springBootVersion", optional
-    compile "org.springframework.boot:spring-boot:$ext.springBootVersion", optional
-    compile "org.springframework.boot:spring-boot-actuator:$ext.springBootVersion", optional
-    compile "org.springframework:spring-webmvc:$ext.springVersion", optional
-    compile "org.springframework:spring-webflux:$ext.springVersion", optional
-    compile "org.springframework:spring-web:$ext.springVersion", optional
+    compile "org.springframework:spring-beans:$project.springBootVersion", optional
+    compile "org.springframework.boot:spring-boot:$project.springBootVersion", optional
+    compile "org.springframework.boot:spring-boot-actuator:$project.springBootVersion", optional
+    compile "org.springframework:spring-webmvc:$project.springVersion", optional
+    compile "org.springframework:spring-webflux:$project.springVersion", optional
+    compile "org.springframework:spring-web:$project.springVersion", optional
     compile 'javax.servlet:javax.servlet-api:3.0.1', optional
 
     // collector options
@@ -57,13 +55,13 @@ dependencies {
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0-M4'
     testCompile 'org.junit.jupiter:junit-jupiter-params:5.0.0-M4'
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.0-M4'
-    testRuntime 'org.apache.logging.log4j:log4j-jul:latest.release' // necessary for logging emanating from JUnit5
+    testRuntime 'ch.qos.logback:logback-classic:latest.release'
 
     testCompile 'org.assertj:assertj-core:3.+'
 
-    testCompile "org.springframework.boot:spring-boot-starter-web:$ext.springBootVersion"
-    testCompile "org.springframework.boot:spring-boot-actuator:$ext.springBootVersion"
-    testCompile "org.springframework.boot:spring-boot-starter-test:$ext.springBootVersion"
+    testCompile "org.springframework.boot:spring-boot-starter-web:$project.springBootVersion"
+    testCompile "org.springframework.boot:spring-boot-actuator:$project.springBootVersion"
+    testCompile "org.springframework.boot:spring-boot-starter-test:$project.springBootVersion"
     testCompile 'org.springframework:spring-test:5.0.0.BUILD-SNAPSHOT' // earlier versions did not contain JUnit 5 support
     testRuntime 'org.apache.httpcomponents:httpclient:4.4+'
 
@@ -72,7 +70,6 @@ dependencies {
     integTestCompile 'com.netflix.spectator:spectator-reg-atlas:latest.release'
     integTestCompile 'com.netflix.servo:servo-atlas:latest.release'
 
-    integTestCompile 'ch.qos.logback:logback-classic:latest.release'
     integTestCompile 'io.projectreactor:reactor-core:latest.release'
 
     integTestCompile 'io.prometheus:simpleclient_spring_boot:latest.release'
@@ -80,7 +77,7 @@ dependencies {
 
     jmh 'org.openjdk.jmh:jmh-core:latest.release'
     jmh 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
-    jmh "org.springframework.boot:spring-boot-actuator:$ext.springBootVersion"
+    jmh "org.springframework.boot:spring-boot-actuator:$project.springBootVersion"
 }
 
 jmh {
