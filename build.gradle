@@ -1,21 +1,29 @@
 buildscript {
     dependencies {
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-M4'
+        classpath 'gradle.plugin.nl.javadude.gradle.plugins:license-gradle-plugin:0.13.1'
     }
 }
 
 plugins {
-    id "java"
-    id "me.champeau.gradle.jmh" version "0.3.1"
-    id "nebula.integtest" version "3.3.0"
-    id "nebula.optional-base" version "3.1.0"
+    id 'java'
+    id 'me.champeau.gradle.jmh' version '0.3.1'
+    id 'nebula.integtest' version '3.3.0'
+    id 'nebula.optional-base' version '3.1.0'
 
     id 'org.ajoberstar.github-pages' version '1.1.0'
     id 'org.asciidoctor.gradle.asciidoctor' version '1.5.1'
     id 'org.asciidoctor.convert' version '1.5.3'
+
+    id 'nebula.maven-publish' version '4.9.1'
+    id 'nebula.release' version '5.0.0'
+    id 'nebula.nebula-bintray' version '3.5.2'
 }
 
 apply plugin: 'org.junit.platform.gradle.plugin'
+apply plugin: 'com.github.hierynomus.license'
+
+group = 'org.springframework'
 
 repositories {
     mavenCentral()
@@ -23,13 +31,18 @@ repositories {
     maven { url 'https://repo.spring.io/libs-snapshot' }
 }
 
+ext {
+    springBootVersion = findProperty('springBootVersion') ?: '2.0.0.BUILD-SNAPSHOT'
+    springVersion = findProperty('springVersion') ?: '5.0.0.BUILD-SNAPSHOT'
+}
+
 dependencies {
-    compile "org.springframework:spring-beans:$springBootVersion", optional
-    compile "org.springframework.boot:spring-boot:$springBootVersion", optional
-    compile "org.springframework.boot:spring-boot-actuator:$springBootVersion", optional
-    compile "org.springframework:spring-webmvc:$springVersion", optional
-    compile "org.springframework:spring-webflux:$springVersion", optional
-    compile "org.springframework:spring-web:$springVersion", optional
+    compile "org.springframework:spring-beans:$ext.springBootVersion", optional
+    compile "org.springframework.boot:spring-boot:$ext.springBootVersion", optional
+    compile "org.springframework.boot:spring-boot-actuator:$ext.springBootVersion", optional
+    compile "org.springframework:spring-webmvc:$ext.springVersion", optional
+    compile "org.springframework:spring-webflux:$ext.springVersion", optional
+    compile "org.springframework:spring-web:$ext.springVersion", optional
     compile 'javax.servlet:javax.servlet-api:3.0.1', optional
 
     // collector options
@@ -48,9 +61,9 @@ dependencies {
 
     testCompile 'org.assertj:assertj-core:3.+'
 
-    testCompile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
-    testCompile "org.springframework.boot:spring-boot-actuator:$springBootVersion"
-    testCompile "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testCompile "org.springframework.boot:spring-boot-starter-web:$ext.springBootVersion"
+    testCompile "org.springframework.boot:spring-boot-actuator:$ext.springBootVersion"
+    testCompile "org.springframework.boot:spring-boot-starter-test:$ext.springBootVersion"
     testCompile 'org.springframework:spring-test:5.0.0.BUILD-SNAPSHOT' // earlier versions did not contain JUnit 5 support
     testRuntime 'org.apache.httpcomponents:httpclient:4.4+'
 
@@ -67,7 +80,7 @@ dependencies {
 
     jmh 'org.openjdk.jmh:jmh-core:latest.release'
     jmh 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
-    jmh "org.springframework.boot:spring-boot-actuator:$springBootVersion"
+    jmh "org.springframework.boot:spring-boot-actuator:$ext.springBootVersion"
 }
 
 jmh {
@@ -102,7 +115,6 @@ asciidoctorj {
 asciidoctor {
     attributes \
         'build-gradle': file('build.gradle'),
-//        'endpoint-url': 'http://example.org',
         'source-highlighter': 'coderay',
         'imagesdir': 'images',
         'toc': 'left',
@@ -114,3 +126,22 @@ asciidoctor {
 }
 
 publishGhPages.dependsOn asciidoctor
+
+bintray.pkg {
+    repo = 'jars'
+    userOrg = 'spring'
+    websiteUrl = 'https://github.com/jkschneider/spring-metrics'
+    vcsUrl = 'https://github.com/jkschneider/spring-metrics.git'
+    issueTrackerUrl = 'https://github.com/jkschneider/spring-metrics/issues'
+    labels = ['spring', 'metrics', 'prometheus', 'spectator']
+}
+
+license {
+    header = file('gradle/licenseHeader.txt')
+    exclude '**/*.tokens'
+    mapping {
+        kt = 'JAVADOC_STYLE'
+    }
+    sourceSets = project.sourceSets
+    strictCheck = true
+}
