@@ -8,7 +8,7 @@ cache:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
 before_install:
-#- test $TRAVIS_PULL_REQUEST = false && openssl aes-256-cbc -K $encrypted_5f73a0ea8c9b_key -iv $encrypted_5f73a0ea8c9b_iv -in gradle.properties.enc -out gradle.properties -d || true
+- test $TRAVIS_PULL_REQUEST = false && openssl aes-256-cbc -K $encrypted_f9867d26bacb_key -iv $encrypted_f9867d26bacb_iv -in gradle.properties.enc -out gradle.properties -d || true
 notifications:
   webhooks:
     on_success: always
