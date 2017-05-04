@@ -84,7 +84,7 @@ junitPlatform {
 }
 
 githubPages {
-    repoUri = 'https://github.com/jkschneider/spring0-metrics.git'
+    repoUri = 'https://github.com/jkschneider/spring-metrics.git'
     credentials {
         username = project.hasProperty('githubToken') ? project.githubToken : ''
         password = ''
