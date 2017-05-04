@@ -9,6 +9,10 @@ plugins {
     id "me.champeau.gradle.jmh" version "0.3.1"
     id "nebula.integtest" version "3.3.0"
     id "nebula.optional-base" version "3.1.0"
+
+    id 'org.ajoberstar.github-pages' version '1.1.0'
+    id 'org.asciidoctor.gradle.asciidoctor' version '1.5.1'
+    id 'org.asciidoctor.convert' version '1.5.3'
 }
 
 apply plugin: 'org.junit.platform.gradle.plugin'
@@ -78,3 +82,35 @@ junitPlatform {
 //    enableStandardTestTask true
     logManager 'org.apache.logging.log4j.jul.LogManager'
 }
+
+githubPages {
+    repoUri = 'https://github.com/jkschneider/spring0-metrics.git'
+    credentials {
+        username = project.hasProperty('githubToken') ? project.githubToken : ''
+        password = ''
+    }
+
+    pages {
+        from file(asciidoctor.outputDir.path + '/html5')
+    }
+}
+
+asciidoctorj {
+    version = '1.5.4'
+}
+
+asciidoctor {
+    attributes \
+        'build-gradle': file('build.gradle'),
+//        'endpoint-url': 'http://example.org',
+        'source-highlighter': 'coderay',
+        'imagesdir': 'images',
+        'toc': 'left',
+        'icons': 'font',
+        'setanchors': 'true',
+        'idprefix': '',
+        'idseparator': '-',
+        'docinfo1': 'true'
+}
+
+publishGhPages.dependsOn asciidoctor

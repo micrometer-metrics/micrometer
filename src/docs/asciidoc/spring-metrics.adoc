@@ -1,0 +1,313 @@
+:github-tag: master
+:github-repo: jkschneider/spring-metrics
+:github-raw: http://raw.github.com/{github-repo}/{github-tag}
+:github-code: http://github.com/{github-repo}/tree/{github-tag}
+:all: {asterisk}{asterisk}
+:nofooter:
+:imagesdir: ./images
+= Spring Metrics
+
+This project provides facilities for instrumenting apps with metrics collection
+and interacting with popular third-party application monitoring systems.
+
+== Instrumentation
+
+Spring Metrics features a metrics collection API that is designed to record dimensional
+time series for export to a variety of time series databases and monitoring backends.
+
+Suppose we have a simple service and we want to keep track of:
+
+* Number of requests received with dimensions for breaking down by status code, method, the exception type if the request fails in an unexpected way, etc.
+* Latency for handling requests.
+* The size of a collection that is acting as a cache.
+
+Here is an example of what this might look like with `spring-metrics`.
+
+```java
+@RestController
+@Timed
+public class MyController {
+    Map<Integer, Person> people = new Map<Integer, Person>();
+
+    public MyController(MeterRegistry registry) {
+        // constructs a gauge to monitor the size of the population
+        registry.collectionSize("population", people);
+    }
+
+    @GetMapping("/api/people")
+    public List<Person> listPeople() {
+        return people;
+    }
+
+    @GetMapping("/api/person/{id}")
+    public Person findPerson(@PathVariable Integer id) {
+        return people.get(id);
+    }
+}
+```
+
+In this sample code, multiple dimensional time series are created with a variety of metrics:
+
+1. Adding `@Timed` to the controller creates a `Timer` time series named `http-requests` which
+by default contains dimensions for the HTTP status of the response, HTTP method, exception type if the request fails,
+and the pre-variable substitution parameterized endpoint URI.
+2. Calling `collectionSize` on our meter registry adds a `Gauge` time series named `population` that
+changes when observed by a metrics backend or exporter.
+
+Let's break down the key pieces of the instrumentation API in detail.
+
+=== Meter
+
+A meter is the interface for collecting a set of measurements (which we individually call metrics) about your application. `spring-metrics`
+packs with a supported set of `Meter` primitives including: `Timer`, `Counter`, `Gauge`, `DistributionSummary`,
+and `LongTaskTimer`. Note that different meter types result in a different number of metrics. For example, while there is a single
+metric that represents a `Gauge`, a `Timer` measures both number of timed events and the total time of all events timed.
+
+[NOTE]
+====
+We have adopted the definition of the term "meter" as initially described by Spectator. Those familiar with Dropwizard
+metrics may recall that in Dropwizard a meter is a specialization of a counter that measures the rate of events over time
+(e.g., “requests per second”). This is NOT the meaning of meter in `spring-metrics`.
+====
+
+=== Meter Registry
+
+A registry creates and manages your application's set of meters. Exporters use the meter registry to iterate
+over the set of meters instrumenting your application, and then further iterate over each meter's metrics, generally
+resulting in a time series in the metrics backend for each combination of metrics and dimensions.
+
+=== Dimensions/Tags
+
+A meter is uniquely identified by its name and dimensions. We use the term dimensions and tags interchangeably, and
+the `spring-metrics` interface is `Tag` simply because it is shorter.
+
+As a general rule it should be possible to use the name as a pivot. Dimensions allow a particular named metric
+to be sliced to drill down and reason about the data. This means that if just the name is selected, then the user can drill down
+using other dimensions and be able to reason about the value being shown.
+
+Suppose we are trying to measure the number of threads in a thread pool and the number of rows in a database table.
+
+==== Recommended approach
+
+```java
+registry.counter("threadpool-size", "id", "server-requests")
+registry.counter("db-size", "table", "users")
+```
+
+This variant provides enough context so that if just the name is selected the value can be reasoned about and
+is at least potentially meaningful. For example if we select `threadpool.size` we can see the total number of
+threads in all pools. Then we can group by or select an `id` to drill down further or perform comparative
+analysis on the contribution of each functional area to the number of threads consumed by the instrumented app.
+
+[NOTE]
+====
+We do not offer an opinion about naming styles. Spectator promotes camel case and Prometheus promotes '_' separation
+(along with other https://prometheus.io/docs/practices/naming/#metric-names[recommendations]),
+but they are both are admittedly arbitrary. Consistency is key. We recommend following the convention most commonly used by your
+organization or your chosen metrics backend.
+====
+
+==== Bad approach
+
+```java
+registry.counter("size",
+    "class", "ThreadPool",
+    "id", "server-requests");
+
+registry.counter("size",
+    "class", "Database",
+    "table", "users");
+```
+
+In this approach, if we select `size` we will get a value that is an aggregate of the number of threads
+and the number of items in a database. This metric is not useful without further dimensional drill-down.
+
+=== Measuring in Base Units
+
+Keep measurements in base units where possible. For example, disk sizes should be bytes, or network rates should
+be in bytes/second. The unit should be obvious from the name. It also means the SI prefix shown on graph images
+make more sense, e.g. 1k is 1 kilobyte not 1 kilo-megabyte.
+
+The appropriate base unit for timers does vary by metrics backend for good reason. We will discuss this further
+in the Timers section.
+
+=== Counters
+
+Counters report a single metric, a count. The `Counter` interface allows you to increment by a fixed amount, and isn't
+opinionated about whether that fixed amount may be negative.
+
+[CAUTION]
+====
+Prometheus is opinionated about decrementing counters, and will throw an exception if you attempt to decrement. Other
+systems have no such strictures. For the vast majority of counter uses, decrementing is not a requirement anyway.
+====
+
+When building graphs and alerts off of counters, generally you should be most interested in measuring the rate at
+which some event is occurring over a given time interval. Consider a simple queue, counters could be used to measure
+things like the rate at which items are being inserted and removed.
+
+It's tempting at first to conceive of visualizing absolute counts rather than a rate, but carefully consider that
+the absolute count is usually both a function of the rapidity with which something is used *and* the longevity of the
+application instance under instrumentation. Building dashboards and alerts of the rate of a counter per some interval of
+time disregards the longevity of the app. This knowledge is built-into some metrics backends like Atlas, which only
+consume the rate from counters.
+
+=== Timers
+
+Timers are useful for measuring short-duration latencies and the frequency of such events. They report the total time
+and count of events as two separate metrics.
+
+As an example, consider a chart showing request latency to a typical web server. The expectation is many short requests
+so the timer will be getting updated many times per second.
+
+.Request Latency
+image::request-latency.png[]
+
+The appropriate base unit for timers does vary by metrics backend for good reason.
+Prometheus recommends recording timings in seconds (as this is technically a base unit),
+but records this value as a `double`. Spectator records timings with a `long`, and so is
+biased to maintaining a base unit of nanoseconds. `spring-metrics` is decidedly un-opinionated
+about this, but because of the potential for confusion, requires a `TimeUnit` when interacting
+with `Timers`. `spring-metrics` is aware of the preferences of each implementation and stores your
+timing in the appropriate base unit based on the implementation.
+
+```java
+public interface Timer extends Meter {
+    void record(long amount, TimeUnit unit);
+    double totalTime(TimeUnit unit);
+}
+```
+
+[NOTE]
+====
+While reading directly from a `spring-metrics` timer returns a `double`,
+the underlying value stored in a Spectator-like implementation may be a nanosecond precise
+`long`. What precision is lost by converting to a `double` in the `spring-metrics`
+interface will not affect a system like Atlas, because it will be configured to read measurements
+from the underlying Spectator Timer that `spring-metrics` is hiding from you.
+====
+
+=== Long Task Timers
+
+The long task timer is a special type of timer that allows you to measure time while an
+event being measured is *still running*. A timer does not record the duration
+and until the task is complete.
+
+Now consider a background process to refresh metadata from a data store.
+For example, Edda caches AWS resources such as instances, volumes, auto-scaling
+groups etc. Normally all data can be refreshed in a few minutes. If the AWS
+services are having problems it can take much longer. A long duration timer can
+be used to track the overall time for refreshing the metadata.
+
+The charts below show max latency for the refresh using a regular timer and a
+long task timer. Regular timer, note that the y-axis is using a logarithmic scale:
+
+.Regular Timer
+image::long-duration-regular-timer.png[]
+
+With the long task timer:
+
+.Long Task Timer
+image::long-duration-timer.png[]
+
+If we wanted to alert when this process exceeds `threshold`,
+with a long task timer we will receive that alert at the first
+reporting interval after we have exceeded the threshold. With a regular
+timer, we wouldn't receive the alert until the first reporting interval after
+the process completed, over an hour later!
+
+=== Gauges
+
+A gauge is a handle to get the current value. Typical examples for gauges
+would be the size of a collection or map or number of threads in a running state.
+
+`spring-metrics` takes the stance that gauges should be sampled and not set, so
+there is no information about what might have occurred between samples. After all,
+any intermediate values set on a gauge are lost by the time the gauge value is reported
+to a metrics backend anyway, so there seems to be little value in setting those intermediate
+values in the first place.
+
+If it helps, think of a `Gauge` as a heisenguage - a meter that only changes when it
+is observed.
+
+[NOTE]
+====
+In Prometheus, a gauge is a generalization of a counter that also happens to allow
+for decrementing. If you view a gauge as something that is actively set by the application
+application code rather than sampled, it is clear that your code would have to increment
+and decrement the gauge as the size of the thing being measured changes. We do not believe
+this view is without merit, but rather is practically equivalent to the heisengauge from the
+results in the monitoring system but harder to work with in code.
+====
+
+The `MeterRegistry` interface contains a number of convenience methods for instrumenting
+collections, maps, executors, and caches with gauges.
+
+Lastly, Gauges are useful for monitoring things with natural upper bounds. We don't recommend
+using a gauge to monitor things like request count, as they can grow without bound for
+the duration of an application instance's life.
+
+=== Distribution Summary
+
+A distribution summary is used to track the distribution of events. It is wholly
+similar to a timer, but more general in that the size does not have to be a period of
+time. For example, a distribution summary could be used to measure the payload
+sizes of requests hitting a server.
+
+== Spring MVC and Spring WebFlux
+
+`spring-metrics` contains built-in interceptors that instrument timings for requests made
+to Spring MVC and Spring WebFlux server endpoints. Spring Boot 2.+ autoconfigures these
+interceptors. If you are using Spring Boot 1.x, simply add `@Import(WebMetricsConfiguration.class)`
+to your `@SpringBootApplication` class.
+
+The interceptors need to be enabled for every request handler or controller that you want
+to time. Add `@Timed` to:
+
+1. A controller class to enable timings on every request handler in the controller.
+2. A method to enable for an individual endpoint. This is not necessary if you have it on the class.
+
+```java
+@RestController
+@Timed // (1)
+public class MyController {
+    @GetMapping("/api/people")
+    @Timed // (2)
+    public List<Person> listPeople() { ... }
+```
+
+The `Timer` is registered with a name of `http-requests` by default. This can be changed by setting
+`spring.metrics.web.name`.
+
+The `Timer` contains a set of dimensions for every request, governed by the primary bean `WebMetricsTagProvider` registered
+in your application context. If you don't provide such a bean, a default implementation is selected which adds the following dimensions:
+
+1. `method`, the HTTP method (e.g. GET, PUT)
+2. `status`, the numeric HTTP status code (e.g. 200, 201, 500)
+3. `uri`, the URI template prior to variable substitution (e.g. /api/person/{id})
+4. `exception`, the simple name of the exception class thrown (only if an exception is thrown)
+
+In addition to the tags provided by your `WebMetricsTagProvider`, you can add fixed tags to individual
+controllers or request methods via the `extraTags` attribute on `@Timed`:
+
+```java
+@Timed(extraTags = {"authenticated", "false"})
+```
+
+== Prometheus
+
+=== Pulling metrics with scraping
+
+Adding `@EnablePrometheusScraping` to your Spring Boot application enables
+a Spring Boot Actuator endpoint at `/prometheus` that presents a Prometheus
+scrape with the appropriate format for a Prometheus scrape.
+
+Here is an example `scrape_config` to add to prometheus.yml:
+
+```yml
+scrape_configs:
+  - job_name: 'spring'
+    metrics_path: '/prometheus'
+    static_configs:
+      - targets: ['HOST:PORT']
+```
