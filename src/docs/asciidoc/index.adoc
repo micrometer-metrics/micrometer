@@ -7,6 +7,10 @@
 :imagesdir: ./images
 = Spring Metrics
 
+image:https://travis-ci.org/jkschneider/spring-metrics.svg?branch=master[link="https://travis-ci.org/jkschneider/spring-metrics"]
+image:https://badges.gitter.im/Join%20Chat.svg[link="https://gitter.im/spring-projects/spring-metrics?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge"]
+image:https://img.shields.io/badge/License-Apache%202.0-blue.svg[link="http://www.apache.org/licenses/LICENSE-2.0"]
+
 This project provides facilities for instrumenting apps with metrics collection
 and interacting with popular third-party application monitoring systems.
 
@@ -62,13 +66,6 @@ A meter is the interface for collecting a set of measurements (which we individu
 packs with a supported set of `Meter` primitives including: `Timer`, `Counter`, `Gauge`, `DistributionSummary`,
 and `LongTaskTimer`. Note that different meter types result in a different number of metrics. For example, while there is a single
 metric that represents a `Gauge`, a `Timer` measures both number of timed events and the total time of all events timed.
-
-[NOTE]
-====
-We have adopted the definition of the term "meter" as initially described by Spectator. Those familiar with Dropwizard
-metrics may recall that in Dropwizard a meter is a specialization of a counter that measures the rate of events over time
-(e.g., “requests per second”). This is NOT the meaning of meter in `spring-metrics`.
-====
 
 === Meter Registry
 
@@ -268,7 +265,7 @@ any intermediate values set on a gauge are lost by the time the gauge value is r
 to a metrics backend anyway, so there seems to be little value in setting those intermediate
 values in the first place.
 
-If it helps, think of a `Gauge` as a heisenguage - a meter that only changes when it
+If it helps, think of a `Gauge` as a heisengauge - a meter that only changes when it
 is observed.
 
 [NOTE]
@@ -352,3 +349,11 @@ scrape_configs:
     static_configs:
       - targets: ['HOST:PORT']
 ```
+
+== Dropwizard
+
+=== A different meaning for the word "Meter"
+
+We have adopted the definition of the term "meter" as initially described by Spectator. Those familiar with Dropwizard
+metrics may recall that in Dropwizard a meter is a specialization of a counter that measures the rate of events over time
+(e.g., “requests per second”). This is NOT the meaning of meter in `spring-metrics`.
