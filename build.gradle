@@ -53,11 +53,6 @@ dependencies {
     // cache monitoring
     compile 'com.google.guava:guava:21.0', optional
 
-    // data source monitoring
-    compile 'org.apache.tomcat:tomcat-jdbc:latest.release', optional
-    compile 'com.zaxxer:HikariCP:2.+', optional
-    compile 'org.apache.commons:commons-dbcp:2.+', optional
-
     // JUnit 5
     testCompile 'org.junit.platform:junit-platform-launcher:1.0.0-M4' // see https://github.com/junit-team/junit5/issues/586 for why this is necessary
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0-M4'
