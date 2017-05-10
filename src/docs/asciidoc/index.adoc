@@ -1,5 +1,5 @@
 :github-tag: master
-:github-repo: jkschneider/spring-metrics
+:github-repo: spring-projects/spring-metrics
 :github-raw: http://raw.github.com/{github-repo}/{github-tag}
 :github-code: http://github.com/{github-repo}/tree/{github-tag}
 :all: {asterisk}{asterisk}
@@ -7,7 +7,7 @@
 :imagesdir: ./images
 = Spring Metrics
 
-image:https://travis-ci.org/jkschneider/spring-metrics.svg?branch=master[link="https://travis-ci.org/jkschneider/spring-metrics"]
+image:https://travis-ci.org/spring-projects/spring-metrics.svg?branch=master[link="https://travis-ci.org/spring-projects/spring-metrics"]
 image:https://badges.gitter.im/Join%20Chat.svg[link="https://gitter.im/spring-projects/spring-metrics?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge"]
 image:https://img.shields.io/badge/License-Apache%202.0-blue.svg[link="http://www.apache.org/licenses/LICENSE-2.0"]
 

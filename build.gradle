@@ -98,7 +98,7 @@ junitPlatform {
 }
 
 githubPages {
-    repoUri = 'https://github.com/jkschneider/spring-metrics.git'
+    repoUri = 'https://github.com/spring-projects/spring-metrics.git'
     credentials {
         username = project.hasProperty('githubToken') ? project.githubToken : ''
         password = ''
@@ -131,9 +131,9 @@ publishGhPages.dependsOn asciidoctor
 bintray.pkg {
     repo = 'jars'
     userOrg = 'spring'
-    websiteUrl = 'https://github.com/jkschneider/spring-metrics'
-    vcsUrl = 'https://github.com/jkschneider/spring-metrics.git'
-    issueTrackerUrl = 'https://github.com/jkschneider/spring-metrics/issues'
+    websiteUrl = 'https://github.com/spring-projects/spring-metrics'
+    vcsUrl = 'https://github.com/spring-projects/spring-metrics.git'
+    issueTrackerUrl = 'https://github.com/spring-projects/spring-metrics/issues'
     labels = ['spring', 'metrics', 'prometheus', 'spectator']
 }
 

@@ -1,14 +1,14 @@
 # Spring Metrics
 
-[![Build Status](https://travis-ci.org/jkschneider/spring-metrics.svg?branch=master)](https://travis-ci.org/jkschneider/spring-metrics)
+[![Build Status](https://travis-ci.org/spring-projects/spring-metrics.svg?branch=master)](https://travis-ci.org/spring-projects/spring-metrics)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/spring-projects/spring-metrics?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![Apache 2.0](https://img.shields.io/github/license/jkschneider/spring-metrics.svg)](http://www.apache.org/licenses/LICENSE-2.0)
+[![Apache 2.0](https://img.shields.io/github/license/spring-projects/spring-metrics.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
 Early work on dimensional Spring Metrics for application monitoring.
 
 ## Reference Documentation
 
-You can view an early preview of the reference [documentation here](https://jkschneider.github.io/spring-metrics/). Lots more to come.
+You can view an early preview of the reference [documentation here](https://spring-projects.github.io/spring-metrics/). Lots more to come.
 
 ## Goals
 
