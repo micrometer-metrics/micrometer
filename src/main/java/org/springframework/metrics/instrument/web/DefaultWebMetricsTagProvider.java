@@ -15,19 +15,21 @@
  */
 package org.springframework.metrics.instrument.web;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Stream;
+import org.springframework.http.HttpRequest;
+import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.metrics.instrument.Tag;
+import org.springframework.util.StringUtils;
+import org.springframework.web.reactive.function.server.ServerRequest;
+import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.servlet.HandlerMapping;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.http.HttpRequest;
-import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.metrics.instrument.Tag;
-import org.springframework.util.StringUtils;
-import org.springframework.web.servlet.HandlerMapping;
+import java.io.IOException;
+import java.util.stream.Stream;
 
 /**
  * Adds a sensible set of tags to Spring Web/Webflux timers and RestTemplate/WebClient timers. Note that
@@ -73,8 +75,7 @@ public class DefaultWebMetricsTagProvider implements WebMetricsTagProvider {
         tags.add(Tag.of("method", request.getMethod()));
         tags.add(Tag.of("status", ((Integer) response.getStatus()).toString()));
 
-        String uri = (String) request
-                .getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+        String uri = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
         if (uri == null) {
             uri = request.getPathInfo();
         }
@@ -85,6 +86,60 @@ public class DefaultWebMetricsTagProvider implements WebMetricsTagProvider {
         tags.add(Tag.of("uri", uri.isEmpty() ? "root" : uri));
 
         Object exception = request.getAttribute("exception");
+        if (exception != null) {
+            tags.add(Tag.of("exception", exception.getClass().getSimpleName()));
+        }
+
+        if (caller != null) {
+            tags.add(Tag.of("caller", caller));
+        }
+
+        return tags.build();
+    }
+
+    @Override
+    public Stream<Tag> httpRequestTags(ServerWebExchange exchange, Throwable exception, String caller) {
+        Stream.Builder<Tag> tags = Stream.builder();
+
+        ServerHttpRequest request = exchange.getRequest();
+        ServerHttpResponse response = exchange.getResponse();
+
+        tags.add(Tag.of("method", request.getMethod().toString()));
+
+        // FIXME determined too late
+//        tags.add(Tag.of("status", response.getStatusCode().toString()));
+
+        String uri = (String) exchange.getAttribute(org.springframework.web.reactive.HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE).orElse(null);
+        if (!StringUtils.hasText(uri)) {
+            uri = "/";
+        }
+        uri = sanitizeUrlTemplate(uri.substring(1));
+        tags.add(Tag.of("uri", uri.isEmpty() ? "root" : uri));
+
+        if (exception != null) {
+            tags.add(Tag.of("exception", exception.getClass().getSimpleName()));
+        }
+
+        if (caller != null) {
+            tags.add(Tag.of("caller", caller));
+        }
+
+        return tags.build();
+    }
+
+    @Override
+    public Stream<Tag> httpRequestTags(ServerRequest request, ServerResponse response, String uri, Throwable exception, String caller) {
+        Stream.Builder<Tag> tags = Stream.builder();
+
+        tags.add(Tag.of("method", request.method().toString()));
+        tags.add(Tag.of("status", response.statusCode().toString()));
+
+        if (!StringUtils.hasText(uri)) {
+            uri = "/";
+        }
+        uri = sanitizeUrlTemplate(uri.substring(1));
+        tags.add(Tag.of("uri", uri.isEmpty() ? "root" : uri));
+
         if (exception != null) {
             tags.add(Tag.of("exception", exception.getClass().getSimpleName()));
         }

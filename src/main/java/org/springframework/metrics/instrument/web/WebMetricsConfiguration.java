@@ -66,7 +66,7 @@ public class WebMetricsConfiguration {
         @ConditionalOnMissingBean(WebMetricsTagProvider.class)
         @ConditionalOnMissingClass("javax.servlet.http.HttpServletRequest")
         public WebMetricsTagProvider emptyMetricsTagProvider() {
-            return new EmptyWebMetricsTagProvider();
+            return new WebMetricsTagProvider() {};
         }
     }
 }

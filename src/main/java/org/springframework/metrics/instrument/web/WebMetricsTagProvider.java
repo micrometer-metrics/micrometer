@@ -17,14 +17,20 @@ package org.springframework.metrics.instrument.web;
 
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.metrics.instrument.Tag;
+import org.springframework.web.reactive.function.server.ServerRequest;
+import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.web.server.ServerWebExchange;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.stream.Stream;
 
 /**
- * Defines the global set of tags added to every instrumented web request.
+ * Defines the default set of tags added to instrumented web requests. It is only necessary to implement
+ * providers for the programming model(s) you are using.
  *
  * @author Jon Schneider
  */
@@ -34,15 +40,45 @@ public interface WebMetricsTagProvider {
      * @param response may be null in the event of a client error
      * @return a map of tags added to every client HTTP request metric
      */
-    Stream<Tag> clientHttpRequestTags(HttpRequest request,
-                                      ClientHttpResponse response);
+    default Stream<Tag> clientHttpRequestTags(HttpRequest request,
+                                      ClientHttpResponse response) {
+        return Stream.empty();
+    }
 
     /**
+     * Supplies default tags to the Web MVC server programming model
+     *
      * @param request  HTTP request
      * @param response HTTP response
      * @param handler  the request method that is responsible for handling the request
      * @return a map of tags added to every Spring MVC HTTP request metric
      */
-    Stream<Tag> httpRequestTags(HttpServletRequest request,
-                                HttpServletResponse response, Object handler, String caller);
+    default Stream<Tag> httpRequestTags(HttpServletRequest request,
+                                HttpServletResponse response, Object handler, String caller) {
+        return Stream.empty();
+    }
+
+    /**
+     * Supplies default tags to the WebFlux annotation-based server programming model
+     * @param exchange
+     * @param exception
+     * @param caller
+     * @return
+     */
+    default Stream<Tag> httpRequestTags(ServerWebExchange exchange, Throwable exception, String caller) {
+        return Stream.empty();
+    }
+
+    /**
+     * Supplies default tags to the WebFlux functional server programming model
+     * @param request
+     * @param response
+     * @param uri
+     * @param exception
+     * @param caller
+     * @return
+     */
+    default Stream<Tag> httpRequestTags(ServerRequest request, ServerResponse response, String uri, Throwable exception, String caller) {
+        return Stream.empty();
+    }
 }

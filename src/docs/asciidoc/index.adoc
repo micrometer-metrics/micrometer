@@ -158,7 +158,7 @@ registry.counter("size",
 ```
 
 In this approach, if we select `size` we will get a value that is an aggregate of the number of threads
-and the number of items in a database. This metric is not useful without further dimensional drill-down.
+and the number of items in a database. This time series is not useful without further dimensional drill-down.
 
 === Measuring in Base Units
 

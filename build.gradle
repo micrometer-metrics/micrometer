@@ -63,6 +63,10 @@ dependencies {
     testCompile "org.springframework.boot:spring-boot-actuator:$project.springBootVersion"
     testCompile "org.springframework.boot:spring-boot-starter-test:$project.springBootVersion"
     testCompile 'org.springframework:spring-test:5.0.0.BUILD-SNAPSHOT' // earlier versions did not contain JUnit 5 support
+
+    testCompile 'io.projectreactor.addons:reactor-test:3.1.0.BUILD-SNAPSHOT'
+    testCompile 'io.projectreactor.ipc:reactor-netty:latest.release'
+
     testRuntime 'org.apache.httpcomponents:httpclient:4.4+'
 
     integTestCompile 'com.netflix.spectator:spectator-reg-metrics3:latest.release'
