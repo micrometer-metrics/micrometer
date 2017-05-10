@@ -15,16 +15,31 @@
  */
 package org.springframework.metrics.instrument;
 
+import com.google.common.cache.Cache;
+import org.springframework.metrics.instrument.binder.MeterBinder;
+
+import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.ToDoubleFunction;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.*;
+import static java.util.stream.StreamSupport.*;
 
+/**
+ * Creates and manages your application's set of meters. Exporters use the meter registry to iterate
+ * over the set of meters instrumenting your application, and then further iterate over each meter's metrics, generally
+ * resulting in a time series in the metrics backend for each combination of metrics and dimensions.
+ *
+ * @author Jon Schneider
+ */
 public interface MeterRegistry {
+    /**
+     * @return The set of registered meters.
+     */
     Collection<Meter> getMeters();
 
     Clock getClock();
@@ -38,7 +53,7 @@ public interface MeterRegistry {
      * Measures the rate of some activity.
      */
     default Counter counter(String name, Stream<Tag> tags) {
-        return counter(name, tags.collect(Collectors.toList()));
+        return counter(name, tags.collect(toList()));
     }
 
     /**
@@ -64,7 +79,7 @@ public interface MeterRegistry {
      * Measures the sample distribution of events.
      */
     default DistributionSummary distributionSummary(String name, Stream<Tag> tags) {
-        return distributionSummary(name, tags.collect(Collectors.toList()));
+        return distributionSummary(name, tags.collect(toList()));
     }
 
     /**
@@ -90,7 +105,7 @@ public interface MeterRegistry {
      * Measures the time taken for short tasks.
      */
     default Timer timer(String name, Stream<Tag> tags) {
-        return timer(name, tags.collect(Collectors.toList()));
+        return timer(name, tags.collect(toList()));
     }
 
     /**
@@ -116,7 +131,7 @@ public interface MeterRegistry {
      * Measures the time taken for short tasks.
      */
     default LongTaskTimer longTaskTimer(String name, Stream<Tag> tags) {
-        return longTaskTimer(name, tags.collect(Collectors.toList()));
+        return longTaskTimer(name, tags.collect(toList()));
     }
 
     /**
@@ -131,6 +146,28 @@ public interface MeterRegistry {
      */
     default LongTaskTimer longTaskTimer(String name, String... tags) {
         return longTaskTimer(name, toTags(tags));
+    }
+
+    /**
+     * Register a gauge that reports the value of the object after the function
+     * {@code f} is applied. The registration will keep a weak reference to the object so it will
+     * not prevent garbage collection. Applying {@code f} on the object should be thread safe.
+     * <p>
+     * If multiple gauges are registered with the same id, then the values will be aggregated and
+     * the sum will be reported. For example, registering multiple gauges for active threads in
+     * a thread pool with the same id would produce a value that is the overall number
+     * of active threads. For other behaviors, manage it on the user side and avoid multiple
+     * registrations.
+     *
+     * @param name Name of the metric being registered.
+     * @param tags Sequence of dimensions for breaking down the getName.
+     * @param obj  Object used to compute a value.
+     * @param f    Function that is applied on the value for the number.
+     * @return The number that was passed in so the registration can be done as part of an assignment
+     * statement.
+     */
+    default <T> T gauge(String name, Stream<Tag> tags, T obj, ToDoubleFunction<T> f) {
+        return gauge(name, tags.collect(toList()), obj, f);
     }
 
     /**
@@ -266,5 +303,75 @@ public interface MeterRegistry {
             ts.add(new ImmutableTag(keyValues[i], keyValues[i + 1]));
         }
         return ts;
+    }
+
+    /**
+     * Execute an algorithm to bind one or more metrics to the registry.
+     */
+    MeterRegistry bind(MeterBinder... binders);
+
+    /**
+     * Record metrics on Guava caches.
+     *
+     * @see com.google.common.cache.CacheStats
+     * @param cache The cache to instrument.
+     * @return The instrumented cache, unchanged. The original cache is not
+     * wrapped or proxied in any way.
+     */
+    default Cache monitor(String name, Iterable<Tag> tags, Cache cache) {
+        return monitor(name, stream(tags.spliterator(), false), cache);
+    }
+
+    /**
+     * Record metrics on Guava caches.
+     *
+     * @see com.google.common.cache.CacheStats
+     * @param cache The cache to instrument.
+     * @return The instrumented cache, unchanged. The original cache is not
+     * wrapped or proxied in any way.
+     */
+    Cache monitor(String name, Stream<Tag> tags, Cache cache);
+
+    /**
+     * Record metrics on Guava caches.
+     *
+     * @see com.google.common.cache.CacheStats
+     * @param cache The cache to instrument.
+     * @return The instrumented cache, unchanged. The original cache is not
+     * wrapped or proxied in any way.
+     */
+    default Cache monitor(String name, Cache cache) {
+        return monitor(name, emptyList(), cache);
+    }
+
+    /**
+     * Record metrics on active connections and connection pool utilization.
+     *
+     * @param dataSource The data source to instrument.
+     * @return The instrumented data source, unchanged. The original data source
+     * is not wrapped or proxied in any way.
+     */
+    default DataSource monitor(String name, Iterable<Tag> tags, DataSource dataSource) {
+        return monitor(name, stream(tags.spliterator(), false), dataSource);
+    }
+
+    /**
+     * Record metrics on active connections and connection pool utilization.
+     *
+     * @param dataSource The data source to instrument.
+     * @return The instrumented data source, unchanged. The original data source
+     * is not wrapped or proxied in any way.
+     */
+    DataSource monitor(String name, Stream<Tag> tags, DataSource dataSource);
+
+    /**
+     * Record metrics on active connections and connection pool utilization.
+     *
+     * @param dataSource The data source to instrument.
+     * @return The instrumented data source, unchanged. The original data source
+     * is not wrapped or proxied in any way.
+     */
+    default DataSource monitor(String name, DataSource dataSource) {
+        return monitor(name, emptyList(), dataSource);
     }
 }

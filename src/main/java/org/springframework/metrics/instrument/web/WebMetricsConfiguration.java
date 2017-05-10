@@ -24,7 +24,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 /**
  * @author Jon Schneider
@@ -36,11 +35,12 @@ public class WebMetricsConfiguration {
      * We continue to use the deprecated WebMvcConfigurerAdapter for backwards compatibility
      * with Spring Framework 4.X.
      */
+    @SuppressWarnings("deprecation")
     @Configuration
     @ConditionalOnWebApplication
     @ConditionalOnClass(WebMvcConfigurer.class)
     @Import(WebMetricsTagProviderConfiguration.class)
-    static class WebMvcConfiguration extends WebMvcConfigurerAdapter {
+    static class WebMvcConfiguration extends org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter {
         @Bean
         WebmvcMetricsHandlerInterceptor webMetricsInterceptor() {
             return new WebmvcMetricsHandlerInterceptor();

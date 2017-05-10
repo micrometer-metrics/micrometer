@@ -13,26 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.metrics.instrument;
+package org.springframework.metrics.instrument.binder;
+
+import org.springframework.metrics.instrument.MeterRegistry;
 
 /**
- * Used to measure the rate of change based on calls to increment.
+ * Binders register one or more metrics to provide information about the state
+ * of some aspect of the application or its container.
+ *
+ * Binders are enabled by default if they source data for an alert
+ * that is recommended for a production ready app.
  */
-public interface Counter extends Meter {
-    /**
-     * Update the counter by one.
-     */
-    void increment();
-
-    /**
-     * Update the counter by {@code amount}.
-     *
-     * @param amount Amount to add to the counter.
-     */
-    void increment(double amount);
-
-    /**
-     * The cumulative count since this counter was created.
-     */
-    double count();
+public interface MeterBinder {
+    void bindTo(MeterRegistry registry);
 }

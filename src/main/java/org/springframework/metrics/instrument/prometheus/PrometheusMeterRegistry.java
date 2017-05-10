@@ -15,6 +15,7 @@
  */
 package org.springframework.metrics.instrument.prometheus;
 
+import com.google.common.cache.Cache;
 import io.prometheus.client.*;
 import io.prometheus.client.Gauge;
 import org.springframework.beans.factory.annotation.Autowired;
