@@ -292,6 +292,39 @@ similar to a timer, but more general in that the size does not have to be a peri
 time. For example, a distribution summary could be used to measure the payload
 sizes of requests hitting a server.
 
+=== Meter Binders
+
+Meter binders register one or more metrics to provide information about the state of some aspect
+of the application or its container.
+
+To enable the collection of the set of metrics encapsulated in a binder, define the binder as a bean:
+
+```java
+@Bean
+JvmMemoryMeterBinder memoryBinder() {
+    return new JvmMemoryMeterBinder();
+}
+```
+
+This will bind metrics to all `MeterRegistry` instances in the application context. To manually
+bind metrics to a single `MeterRegistry`:
+
+```java
+@Bean
+MeterRegistry prometheusRegistry() {
+    return new PrometheusMeterRegistry()
+        .bind(new JvmMemoryMeterBinder());
+}
+```
+
+Binders are enabled by default via Spring Boot auto configuration if they source data for an alert
+that is recommended for a production ready app. The idea is to encourage the capture of metrics
+that are the most actionable. The following binders are auto-configured:
+
+1. `JvmGcMeterBinder` - Records information about GC events and their causes, split by generation.
+We recommend setting up alerts for production ready apps for (1) if `jvm_gc_pause` exceeds some fixed value (500 ms
+is a good general purpose value) and (2) if `jvm_gc_live_data_size` exceeds 70% of the heap.
+
 == Spring MVC and Spring WebFlux
 
 `spring-metrics` contains built-in interceptors that instrument timings for requests made
