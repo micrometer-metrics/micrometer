@@ -308,7 +308,12 @@ public interface MeterRegistry {
     /**
      * Execute an algorithm to bind one or more metrics to the registry.
      */
-    MeterRegistry bind(MeterBinder... binders);
+    default MeterRegistry bind(MeterBinder... binders) {
+        for (MeterBinder binder : binders) {
+            binder.bindTo(this);
+        }
+        return this;
+    }
 
     /**
      * Record metrics on Guava caches.
