@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadata;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProvider;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProviders;
+import org.springframework.core.env.Environment;
 import org.springframework.metrics.instrument.Clock;
 import org.springframework.metrics.instrument.Meter;
 import org.springframework.metrics.instrument.MeterRegistry;
@@ -73,19 +74,18 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
     @Override
     public Cache monitor(String name, Stream<Tag> tags, Cache cache) {
-        Stream<Tag> tagsWithCacheName = Streams.concat(tags, Stream.of(Tag.of("cache", name)));
         CacheStats stats = cache.stats();
 
-        gauge("guava_cache_size", tagsWithCacheName, cache, Cache::size);
-        gauge("guava_cache_hit_total", tagsWithCacheName, stats, CacheStats::hitCount);
-        gauge("guava_cache_miss_total", tagsWithCacheName, stats, CacheStats::missCount);
-        gauge("guava_cache_requests_total", tagsWithCacheName, stats, CacheStats::requestCount);
-        gauge("guava_cache_eviction_total", tagsWithCacheName, stats, CacheStats::evictionCount);
-        gauge("guava_cache_load_duration", tagsWithCacheName, stats, CacheStats::totalLoadTime);
+        gauge(name + "_size", tags, cache, Cache::size);
+        gauge(name + "_hit_total", tags, stats, CacheStats::hitCount);
+        gauge(name + "_miss_total", tags, stats, CacheStats::missCount);
+        gauge(name + "_requests_total", tags, stats, CacheStats::requestCount);
+        gauge(name + "_eviction_total", tags, stats, CacheStats::evictionCount);
+        gauge(name + "_load_duration", tags, stats, CacheStats::totalLoadTime);
 
         if(cache instanceof LoadingCache) {
-            gauge("guava_cache_loads_total", tagsWithCacheName, stats, CacheStats::loadCount);
-            gauge("guava_cache_load_failure_total", tagsWithCacheName, stats, CacheStats::loadExceptionCount);
+            gauge(name + "_loads_total", tags, stats, CacheStats::loadCount);
+            gauge(name + "_load_failure_total", tags, stats, CacheStats::loadExceptionCount);
         }
 
         return cache;
@@ -93,20 +93,18 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
     @Override
     public DataSource monitor(String name, Stream<Tag> tags, DataSource dataSource) {
-        Stream<Tag> tagsWithDataSourceName = Streams.concat(tags, Stream.of(Tag.of("dataSource", name)));
-
         DataSourcePoolMetadataProvider provider = new DataSourcePoolMetadataProviders(providers);
         DataSourcePoolMetadata poolMetadata = provider.getDataSourcePoolMetadata(dataSource);
 
         if (poolMetadata != null) {
             if(poolMetadata.getActive() != null)
-                gauge("data_source_active_connections", tagsWithDataSourceName, poolMetadata, DataSourcePoolMetadata::getActive);
+                gauge(name  + "_active_connections", tags, poolMetadata, DataSourcePoolMetadata::getActive);
 
             if(poolMetadata.getMax() != null)
-                gauge("data_source_max_connections", tagsWithDataSourceName, poolMetadata, DataSourcePoolMetadata::getMax);
+                gauge(name + "_max_connections", tags, poolMetadata, DataSourcePoolMetadata::getMax);
 
             if(poolMetadata.getMin() != null)
-                gauge("data_source_min_connections", tagsWithDataSourceName, poolMetadata, DataSourcePoolMetadata::getMin);
+                gauge(name + "_min_connections", tags, poolMetadata, DataSourcePoolMetadata::getMin);
         }
 
         return dataSource;

@@ -292,6 +292,62 @@ similar to a timer, but more general in that the size does not have to be a peri
 time. For example, a distribution summary could be used to measure the payload
 sizes of requests hitting a server.
 
+=== Caches
+
+Guava caches can be instrumented with the registry, but it is important that you call `recordStats()` on
+the `CacheBuilder`, as it is not possible to turn this on after the `Cache` is constructed.
+
+```java
+@Repository
+class PersonRepository {
+    LoadingCache<String, Person> personBySsn;
+
+    public PersonRepository(MeterRegistry registry) {
+        personBySsn = registry.monitor("people_cache",
+            "lookup_key", "ssn", // <- any number of tags
+            CacheBuilder.newBuilder().recordStats().build()
+        );
+    }
+}
+```
+
+Cache instrumentation results in several gauges whose names are
+prefixed by the provided name ("people_cache" in this example),
+corresponding to the stats recorded in `CacheStats`.
+
+The original cache instance is unchanged by instrumentation.
+
+=== Data Sources
+
+Data sources can be instrumented with the registry. This requires
+the `DataSourcePoolMetadataProvider` automatically configured by Spring
+Boot, so only works in a Spring Boot context where these providers
+are configured.
+
+```java
+@Configuration
+class MyConfiguration {
+    @Autowired
+    private DataSource dataSource;
+
+    @Autowired
+    private Environment env;
+
+    @PostConstruct
+    private void instrumentDataSource() {
+        registry.monitor("data_source",
+            "stack", env.acceptsProfiles("prod") ? "prod" : "test", // <- any number of tags
+            dataSource
+        );
+    }
+}
+```
+
+Data source instrumentation results in gauges representing the
+currently active, maximum allowed, and minimum allowed connections
+in the pool. Each of these gauges has a name which is prefixed by
+the provided name ("data_source" in this example).
+
 === Meter Binders
 
 Meter binders register one or more metrics to provide information about the state of some aspect
