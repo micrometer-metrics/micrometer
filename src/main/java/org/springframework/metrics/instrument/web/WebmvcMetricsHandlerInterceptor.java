@@ -89,7 +89,7 @@ public class WebmvcMetricsHandlerInterceptor extends HandlerInterceptorAdapter {
             }
 
             if (timed != null) {
-                String name = environment.getProperty("spring.metrics.web.name", "http-request");
+                String name = environment.getProperty("spring.metrics.web.name", "http_server_requests");
                 if (!timed.value().isEmpty()) {
                     name = timed.value();
                 }

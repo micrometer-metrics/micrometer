@@ -325,11 +325,14 @@ that are the most actionable. The following binders are auto-configured:
 We recommend setting up alerts for production ready apps for (1) if `jvm_gc_pause` exceeds some fixed value (500 ms
 is a good general purpose value) and (2) if `jvm_gc_live_data_size` exceeds 70% of the heap.
 
-== Spring MVC and Spring WebFlux
+== Spring Web MVC and Spring WebFlux
 
-`spring-metrics` contains built-in interceptors that instrument timings for requests made
-to Spring MVC and Spring WebFlux server endpoints. Spring Boot 2.+ autoconfigures these
-interceptors. If you are using Spring Boot 1.x, simply add `@Import(WebMetricsConfiguration.class)`
+`spring-metrics` contains built-in instrumentation for timings of requests made
+to Spring MVC and Spring WebFlux server endpoints.
+
+=== Web MVC and Annotation-Based WebFlux
+
+Spring Boot 2.+ autoconfigures these interceptors. If you are using Spring Boot 1.x, simply add `@Import(WebMetricsConfiguration.class)`
 to your `@SpringBootApplication` class.
 
 The interceptors need to be enabled for every request handler or controller that you want
@@ -347,7 +350,7 @@ public class MyController {
     public List<Person> listPeople() { ... }
 ```
 
-The `Timer` is registered with a name of `http-requests` by default. This can be changed by setting
+The `Timer` is registered with a name of `http_server_requests` by default. This can be changed by setting
 `spring.metrics.web.name`.
 
 The `Timer` contains a set of dimensions for every request, governed by the primary bean `WebMetricsTagProvider` registered
@@ -364,6 +367,21 @@ controllers or request methods via the `extraTags` attribute on `@Timed`:
 ```java
 @Timed(extraTags = {"authenticated", "false"})
 ```
+
+=== Webflux Functional
+
+`spring-metrics` contains a filter that you can add to a `RouterFunction` to instrument timings to its routes.
+
+```java
+RouterFunctionMetrics metrics = new RouterFunctionMetrics(registry);
+metrics.setDefaultTagName("my_metric_name"); // OPTIONAL, default is http_server_requests
+
+RouterFunction<ServerResponse> routes = RouterFunctions
+    .route(GET("/person/{id}").and(accept(APPLICATION_JSON)), request -> ServerResponse.ok().build())
+    .filter(metrics.timer());
+```
+
+The filter applies to all routes defined by this router function.
 
 == Prometheus
 

@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 public class RouterFunctionMetrics {
     private final MeterRegistry registry;
 
-    private String defaultTagName = "http-request";
+    private String defaultTagName = "http_server_requests";
     private WebMetricsTagProvider tagProvider = new DefaultWebMetricsTagProvider();
 
     public RouterFunctionMetrics(MeterRegistry registry) {

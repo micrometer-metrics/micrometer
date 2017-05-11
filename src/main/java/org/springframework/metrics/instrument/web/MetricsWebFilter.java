@@ -38,11 +38,11 @@ public class MetricsWebFilter implements WebFilter {
         Mono<Void> filtered = chain.filter(exchange);
         return filtered
                 .doOnSuccess(done ->
-                        registry.timer("http-request", tagProvider.httpRequestTags(exchange, null, null))
+                        registry.timer("http_server_requests", tagProvider.httpRequestTags(exchange, null, null))
                                 .record(System.nanoTime() - start, TimeUnit.NANOSECONDS)
                 )
                 .doOnError(t ->
-                        registry.timer("http-request", tagProvider.httpRequestTags(exchange, t, null))
+                        registry.timer("http_server_requests", tagProvider.httpRequestTags(exchange, t, null))
                                 .record(System.nanoTime() - start, TimeUnit.NANOSECONDS)
                 );
     }

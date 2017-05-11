@@ -77,7 +77,7 @@ class RouterFunctionMetricsTest {
         SimpleTimer timer = new SimpleTimer();
 
         //noinspection unchecked
-        when(registry.timer(eq("http-request"), any(Stream.class))).thenReturn(timer);
+        when(registry.timer(eq("http_server_requests"), any(Stream.class))).thenReturn(timer);
         return timer;
     }
 }
