@@ -20,7 +20,7 @@ import org.springframework.metrics.instrument.MeterRegistry;
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.ManagementFactory;
 
-public class ClassLoaderMeterBinder implements MeterBinder {
+public class ClassLoaderMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         ClassLoadingMXBean classLoadingBean = ManagementFactory.getClassLoadingMXBean();

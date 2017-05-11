@@ -48,4 +48,9 @@ public class SpectatorLongTaskTimer implements LongTaskTimer {
     public int activeTasks() {
         return timer.activeTasks();
     }
+
+    @Override
+    public String getName() {
+        return timer.id().name();
+    }
 }

@@ -22,12 +22,13 @@ import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.*;
-import static java.util.stream.StreamSupport.*;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
 
 /**
  * Creates and manages your application's set of meters. Exporters use the meter registry to iterate
@@ -41,6 +42,14 @@ public interface MeterRegistry {
      * @return The set of registered meters.
      */
     Collection<Meter> getMeters();
+
+    default Collection<Meter> find(String name) {
+        return getMeters().stream().filter(m -> m.getName().equals(name)).collect(toList());
+    }
+
+    default Optional<Meter> findOne(String name) {
+        return getMeters().stream().filter(m -> m.getName().equals(name)).findAny();
+    }
 
     Clock getClock();
 

@@ -22,10 +22,12 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractTimer implements Timer {
-    private Clock clock;
+    protected Clock clock;
+    protected String name;
 
-    protected AbstractTimer(Clock clock) {
+    protected AbstractTimer(String name, Clock clock) {
         this.clock = clock;
+        this.name = name;
     }
 
     @Override
@@ -104,5 +106,8 @@ public abstract class AbstractTimer implements Timer {
     private static final long C5 = C4 * 60L;
     private static final long C6 = C5 * 24L;
 
-    private static final long MAX = Long.MAX_VALUE;
+    @Override
+    public String getName() {
+        return name;
+    }
 }

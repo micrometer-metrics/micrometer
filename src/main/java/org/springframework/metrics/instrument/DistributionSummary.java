@@ -27,7 +27,7 @@ public interface DistributionSummary extends Meter {
      * @param amount Amount for an event being measured. For example, if the size in bytes of responses
      *               from a server. If the amount is less than 0 the value will be dropped.
      */
-    void record(long amount);
+    void record(double amount);
 
     /**
      * The number of times that record has been called since this timer was created.
@@ -37,5 +37,5 @@ public interface DistributionSummary extends Meter {
     /**
      * The total amount of all recorded events since this summary was created.
      */
-    long totalAmount();
+    double totalAmount();
 }

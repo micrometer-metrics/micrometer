@@ -22,8 +22,12 @@ import org.springframework.metrics.instrument.Counter;
  * @author Jon Schneider
  */
 public class SimpleCounter implements Counter {
+    private final String name;
+    private AtomicDouble count = new AtomicDouble(0);
 
-    AtomicDouble count = new AtomicDouble(0);
+    public SimpleCounter(String name) {
+        this.name = name;
+    }
 
     @Override
     public void increment() {
@@ -38,5 +42,10 @@ public class SimpleCounter implements Counter {
     @Override
     public double count() {
         return count.get();
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 }

@@ -28,4 +28,9 @@ public class SpectatorGauge implements Gauge {
     public double value() {
         return gauge.value();
     }
+
+    @Override
+    public String getName() {
+        return gauge.id().name();
+    }
 }

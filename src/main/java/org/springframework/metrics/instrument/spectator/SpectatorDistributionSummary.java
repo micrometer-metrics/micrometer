@@ -24,9 +24,14 @@ public class SpectatorDistributionSummary implements DistributionSummary {
         this.distributionSummary = distributionSummary;
     }
 
+    /**
+     * @param amount Amount for an event being measured. For this implementation,
+     *               amount is truncated to a long because the underlying Spectator
+     *               implementation takes a long.
+     */
     @Override
-    public void record(long amount) {
-        distributionSummary.record(amount);
+    public void record(double amount) {
+        distributionSummary.record((long) amount);
     }
 
     @Override
@@ -35,7 +40,12 @@ public class SpectatorDistributionSummary implements DistributionSummary {
     }
 
     @Override
-    public long totalAmount() {
+    public double totalAmount() {
         return distributionSummary.totalAmount();
+    }
+
+    @Override
+    public String getName() {
+        return distributionSummary.id().name();
     }
 }

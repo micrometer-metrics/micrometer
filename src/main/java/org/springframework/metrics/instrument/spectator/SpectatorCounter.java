@@ -38,4 +38,9 @@ public class SpectatorCounter implements Counter {
     public double count() {
         return counter.count();
     }
+
+    @Override
+    public String getName() {
+        return counter.id().name();
+    }
 }

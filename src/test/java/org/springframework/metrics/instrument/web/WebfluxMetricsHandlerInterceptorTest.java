@@ -81,7 +81,7 @@ class WebfluxMetricsHandlerInterceptorTest {
     }
 
     private SimpleTimer expectTimer() {
-        SimpleTimer timer = new SimpleTimer();
+        SimpleTimer timer = new SimpleTimer("http_server_requests");
 
         //noinspection unchecked
         when(registry.timer(eq("http_server_requests"), any(Stream.class))).thenReturn(timer);

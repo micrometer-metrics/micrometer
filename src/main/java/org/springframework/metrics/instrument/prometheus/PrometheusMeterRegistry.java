@@ -15,12 +15,12 @@
  */
 package org.springframework.metrics.instrument.prometheus;
 
-import com.google.common.cache.Cache;
-import io.prometheus.client.*;
+import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Gauge;
+import io.prometheus.client.SimpleCollector;
+import io.prometheus.client.Summary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.metrics.instrument.*;
-import org.springframework.metrics.instrument.Counter;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
 
 import java.lang.ref.WeakReference;
@@ -48,17 +48,17 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public Counter counter(String name, Iterable<Tag> tags) {
-        return register(new PrometheusCounter(withNameAndTags(io.prometheus.client.Gauge.build(), name, tags)));
+        return register(new PrometheusCounter(name, withNameAndTags(io.prometheus.client.Gauge.build(), name, tags)));
     }
 
     @Override
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags) {
-        return register(new PrometheusDistributionSummary(withNameAndTags(Summary.build(), name, tags), getClock()));
+        return register(new PrometheusDistributionSummary(name, withNameAndTags(Summary.build(), name, tags)));
     }
 
     @Override
     public Timer timer(String name, Iterable<Tag> tags) {
-        return register(new PrometheusTimer(withNameAndTags(Summary.build(), name, tags), getClock()));
+        return register(new PrometheusTimer(name, withNameAndTags(Summary.build(), name, tags), getClock()));
     }
 
     @Override
@@ -71,7 +71,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
         final WeakReference<T> ref = new WeakReference<T>(obj);
 
-        register(new PrometheusGauge(withNameAndTags(io.prometheus.client.Gauge.build(), name, tags,
+        register(new PrometheusGauge(name, withNameAndTags(io.prometheus.client.Gauge.build(), name, tags,
                 gauge -> gauge.setChild(new Gauge.Child() {
                     @Override
                     public double get() {

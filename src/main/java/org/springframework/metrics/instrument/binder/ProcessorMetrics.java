@@ -18,16 +18,20 @@ package org.springframework.metrics.instrument.binder;
 import org.springframework.metrics.instrument.MeterRegistry;
 
 import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
+import java.lang.management.OperatingSystemMXBean;
 
-public class ThreadMeterBinder implements MeterBinder {
-
+/**
+ * Record metrics related to CPU utilization
+ */
+public class ProcessorMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
-        ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
+        Runtime runtime = Runtime.getRuntime();
+        registry.gauge("cpu_total", runtime, Runtime::availableProcessors);
 
-        registry.gauge("threads_peak", threadBean, ThreadMXBean::getPeakThreadCount);
-        registry.gauge("threads_daemon", threadBean, ThreadMXBean::getDaemonThreadCount);
-        registry.gauge("threads_live", threadBean, ThreadMXBean::getThreadCount);
+        OperatingSystemMXBean operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
+        if(operatingSystemBean != null && operatingSystemBean.getSystemLoadAverage() >= 0) {
+            registry.gauge("cpu_load_average", operatingSystemBean, OperatingSystemMXBean::getSystemLoadAverage);
+        }
     }
 }

@@ -18,14 +18,21 @@ package org.springframework.metrics.instrument.prometheus;
 import org.springframework.metrics.instrument.Gauge;
 
 public class PrometheusGauge implements Gauge {
+    private final String name;
     private io.prometheus.client.Gauge.Child gauge;
 
-    public PrometheusGauge(io.prometheus.client.Gauge.Child gauge) {
+    public PrometheusGauge(String name, io.prometheus.client.Gauge.Child gauge) {
+        this.name = name;
         this.gauge = gauge;
     }
 
     @Override
     public double value() {
         return gauge.get();
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 }

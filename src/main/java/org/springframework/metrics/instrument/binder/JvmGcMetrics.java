@@ -37,11 +37,11 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @see GarbageCollectorMXBean
  */
-public class JvmGcMeterBinder implements MeterBinder {
+public class JvmGcMetrics implements MeterBinder {
     private String youngGenPoolName;
     private String oldGenPoolName;
 
-    public JvmGcMeterBinder() {
+    public JvmGcMetrics() {
         for (MemoryPoolMXBean mbean : ManagementFactory.getMemoryPoolMXBeans()) {
             if (isYoungGenPool(mbean.getName()))
                 youngGenPoolName = mbean.getName();
@@ -71,8 +71,7 @@ public class JvmGcMeterBinder implements MeterBinder {
 
         for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
             if (mbean instanceof NotificationEmitter) {
-                final NotificationEmitter emitter = (NotificationEmitter) mbean;
-                emitter.addNotificationListener((notification, ref) -> {
+                ((NotificationEmitter) mbean).addNotificationListener((notification, ref) -> {
                     final String type = notification.getType();
                     if (type.equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
                         CompositeData cd = (CompositeData) notification.getUserData();

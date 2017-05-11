@@ -28,12 +28,12 @@ public class SimpleTimer extends AbstractTimer {
     private AtomicLong count = new AtomicLong(0);
     private AtomicLong totalTime = new AtomicLong(0);
 
-    public SimpleTimer() {
-        this(Clock.SYSTEM);
+    public SimpleTimer(String name) {
+        this(name, Clock.SYSTEM);
     }
 
-    public SimpleTimer(Clock clock) {
-        super(clock);
+    public SimpleTimer(String name, Clock clock) {
+        super(name, clock);
     }
 
     @Override

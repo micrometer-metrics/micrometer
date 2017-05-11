@@ -24,7 +24,7 @@ public class SpectatorTimer extends AbstractTimer {
     private com.netflix.spectator.api.Timer timer;
 
     public SpectatorTimer(com.netflix.spectator.api.Timer timer, Clock clock) {
-        super(clock);
+        super(timer.id().name(), clock);
         this.timer = timer;
     }
 

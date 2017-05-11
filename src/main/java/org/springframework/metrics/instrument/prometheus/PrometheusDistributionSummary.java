@@ -20,14 +20,16 @@ import org.springframework.metrics.instrument.Clock;
 import org.springframework.metrics.instrument.DistributionSummary;
 
 public class PrometheusDistributionSummary implements DistributionSummary {
+    private final String name;
     private Summary.Child summary;
 
-    public PrometheusDistributionSummary(Summary.Child summary, Clock clock) {
+    public PrometheusDistributionSummary(String name, Summary.Child summary) {
+        this.name = name;
         this.summary = summary;
     }
 
     @Override
-    public void record(long amount) {
+    public void record(double amount) {
         if (amount >= 0)
             summary.observe(amount);
     }
@@ -38,7 +40,12 @@ public class PrometheusDistributionSummary implements DistributionSummary {
     }
 
     @Override
-    public long totalAmount() {
+    public double totalAmount() {
         return (long) summary.get().sum;
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 }

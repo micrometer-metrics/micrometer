@@ -18,9 +18,11 @@ package org.springframework.metrics.instrument.prometheus;
 import org.springframework.metrics.instrument.Counter;
 
 public class PrometheusCounter implements Counter {
+    private final String name;
     private io.prometheus.client.Gauge.Child counter;
 
-    public PrometheusCounter(io.prometheus.client.Gauge.Child counter) {
+    public PrometheusCounter(String name, io.prometheus.client.Gauge.Child counter) {
+        this.name = name;
         this.counter = counter;
     }
 
@@ -40,5 +42,10 @@ public class PrometheusCounter implements Counter {
     @Override
     public double count() {
         return counter.get();
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 }

@@ -30,7 +30,7 @@ import static java.util.Collections.singletonList;
  * @see MemoryPoolMXBean
  * @see BufferPoolMXBean
  */
-public class JvmMemoryMeterBinder implements MeterBinder {
+public class JvmMemoryMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {

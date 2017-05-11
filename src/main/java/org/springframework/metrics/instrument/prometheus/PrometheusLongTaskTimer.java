@@ -101,4 +101,9 @@ public class PrometheusLongTaskTimer extends Collector implements LongTaskTimer 
 
         return singletonList(labeledGauge);
     }
+
+    @Override
+    public String getName() {
+        return name;
+    }
 }
