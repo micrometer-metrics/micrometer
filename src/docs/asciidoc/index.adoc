@@ -348,6 +348,8 @@ currently active, maximum allowed, and minimum allowed connections
 in the pool. Each of these gauges has a name which is prefixed by
 the provided name ("data_source" in this example).
 
+The original data source instance is unchanged by instrumentation.
+
 === Meter Binders
 
 Meter binders register one or more metrics to provide information about the state of some aspect
@@ -433,7 +435,8 @@ RouterFunctionMetrics metrics = new RouterFunctionMetrics(registry);
 metrics.setDefaultTagName("my_metric_name"); // OPTIONAL, default is http_server_requests
 
 RouterFunction<ServerResponse> routes = RouterFunctions
-    .route(GET("/person/{id}").and(accept(APPLICATION_JSON)), request -> ServerResponse.ok().build())
+    .route(GET("/person/{id}").and(accept(APPLICATION_JSON)),
+        request -> ServerResponse.ok().build())
     .filter(metrics.timer());
 ```
 
