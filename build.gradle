@@ -149,3 +149,5 @@ license {
     sourceSets = project.sourceSets
     strictCheck = true
 }
+
+nebulaRelease.addReleaseBranchPattern(/v?\d+\.\d+\.\d+\.RELEASE/)
