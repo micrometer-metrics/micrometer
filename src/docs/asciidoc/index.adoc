@@ -377,7 +377,7 @@ MeterRegistry prometheusRegistry() {
 
 Binders are enabled by default via Spring Boot auto configuration if they source data for an alert
 that is recommended for a production ready app. The idea is to encourage the capture of metrics
-that are the most actionable. The following binders are auto-configured:
+that are the most actionable. The following binders are auto-configured (TODO WILL be autoconfigured, but not yet):
 
 1. `JvmGcMetrics` - Records information about GC events and their causes, split by generation.
 We recommend setting up alerts for production ready apps for (1) if `jvm_gc_pause` exceeds some fixed value (500 ms
@@ -443,6 +443,32 @@ RouterFunction<ServerResponse> routes = RouterFunctions
 The filter applies to all routes defined by this router function.
 
 == Prometheus
+
+=== Quickstart for Prometheus-based monitoring
+
+You will need the following dependencies:
+
+```groovy
+compile 'org.springframework.metrics:spring-metrics:latest.release'
+compile 'io.prometheus:simpleclient:latest.release'
+```
+
+Register the Prometheus registry and enable Prometheus scraping:
+
+```java
+@SpringBootApplication
+@EnablePrometheusScraping
+@Import(WebMetricsConfiguration.class) // to enable automatic timing of Web MVC endpoints
+public class MyApp {
+    @Bean
+    public MeterRegistry prometheusRegistry() {
+        return new PrometheusRegistry()
+            .bind(new JvmGcMetrics())
+            .bind(new ProcessorMetrics());
+    }
+}
+
+Then inject `MeterRegistry` wherever you need to create a timer, gauge, counter, or summary.
 
 === Pulling metrics with scraping
 

@@ -34,6 +34,8 @@ ext {
     springVersion = findProperty('springVersion') ?: '5.0.0.BUILD-SNAPSHOT'
 }
 
+group = 'org.springframework.metrics'
+
 dependencies {
     compile "org.springframework:spring-beans:$project.springBootVersion", optional
     compile "org.springframework.boot:spring-boot:$project.springBootVersion", optional
