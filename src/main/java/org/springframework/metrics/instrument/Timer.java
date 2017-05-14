@@ -39,7 +39,7 @@ public interface Timer extends Meter {
      * @param f Function to execute and measure the execution time.
      * @return The return value of `f`.
      */
-    <T> T record(Callable<T> f) throws Exception;
+    <T> T record(Callable<T> f) throws MetricException;
 
     /**
      * Executes the runnable `f` and records the time taken.

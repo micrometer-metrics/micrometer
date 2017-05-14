@@ -46,10 +46,13 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     @Autowired(required = false)
     private Collection<MeterBinder> binders;
 
+    @SuppressWarnings("ConstantConditions")
     @PostConstruct
     private void bind() {
-        for (MeterBinder binder : binders) {
-            bind(binder);
+        if(binders != null) {
+            for (MeterBinder binder : binders) {
+                bind(binder);
+            }
         }
     }
 
