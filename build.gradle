@@ -1,7 +1,11 @@
 buildscript {
+    repositories {
+        mavenLocal()
+    }
+
     dependencies {
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-M4'
-        classpath 'gradle.plugin.nl.javadude.gradle.plugins:license-gradle-plugin:0.13.1'
+        classpath 'io.spring.gradle:spring-project-plugin:0.1+'
     }
 }
 
@@ -10,18 +14,10 @@ plugins {
     id 'me.champeau.gradle.jmh' version '0.3.1'
     id 'nebula.integtest' version '3.3.0'
     id 'nebula.optional-base' version '3.1.0'
-
-    id 'org.ajoberstar.github-pages' version '1.1.0'
-    id 'org.asciidoctor.gradle.asciidoctor' version '1.5.1'
-    id 'org.asciidoctor.convert' version '1.5.3'
-
-    id 'nebula.maven-publish' version '4.9.1'
-    id 'nebula.release' version '5.0.0'
-    id 'nebula.nebula-bintray-publishing' version '3.5.2'
 }
 
 apply plugin: 'org.junit.platform.gradle.plugin'
-apply plugin: 'com.github.hierynomus.license'
+apply plugin: 'io.spring.project'
 
 repositories {
     mavenCentral()
@@ -98,58 +94,9 @@ jmh {
 }
 
 junitPlatform {
-//    enableStandardTestTask true
     logManager 'org.apache.logging.log4j.jul.LogManager'
 }
 
-githubPages {
-    repoUri = 'https://github.com/spring-projects/spring-metrics.git'
-    credentials {
-        username = project.hasProperty('githubToken') ? project.githubToken : ''
-        password = ''
-    }
-
-    pages {
-        from file(asciidoctor.outputDir.path + '/html5')
-    }
-}
-
-asciidoctorj {
-    version = '1.5.4'
-}
-
-asciidoctor {
-    attributes \
-        'build-gradle': file('build.gradle'),
-        'source-highlighter': 'coderay',
-        'imagesdir': 'images',
-        'toc': 'left',
-        'icons': 'font',
-        'setanchors': 'true',
-        'idprefix': '',
-        'idseparator': '-',
-        'docinfo1': 'true'
-}
-
-publishGhPages.dependsOn asciidoctor
-
 bintray.pkg {
-    repo = 'jars'
-    userOrg = 'spring'
-    websiteUrl = 'https://github.com/spring-projects/spring-metrics'
-    vcsUrl = 'https://github.com/spring-projects/spring-metrics.git'
-    issueTrackerUrl = 'https://github.com/spring-projects/spring-metrics/issues'
     labels = ['spring', 'metrics', 'prometheus', 'spectator']
 }
-
-license {
-    header = file('gradle/licenseHeader.txt')
-    exclude '**/*.tokens'
-    mapping {
-        kt = 'JAVADOC_STYLE'
-    }
-    sourceSets = project.sourceSets
-    strictCheck = true
-}
-
-nebulaRelease.addReleaseBranchPattern(/v?\d+\.\d+\.\d+\.RELEASE/)
