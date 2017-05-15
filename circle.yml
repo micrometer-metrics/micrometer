@@ -1,0 +1,20 @@
+machine:
+  java:
+    version: oraclejdk8
+test:
+  pre:
+    - openssl aes-256-cbc -d -in gradle.properties.enc -out gradle.properties -k $KEY
+  override:
+    - ./gradle/ciBuild.sh
+  post:
+    - mkdir -p $CIRCLE_TEST_REPORTS/junit/
+    - find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
+general:
+  artifacts:
+    - "build/reports"
+    - "build/libs"
+    - "build/publications"
+deployment:
+  release:
+    tag: /v.*/
+    owner: spring-projects
