@@ -1,6 +1,6 @@
 # Spring Metrics
 
-[![Build Status](https://travis-ci.org/spring-projects/spring-metrics.svg?branch=master)](https://travis-ci.org/spring-projects/spring-metrics)
+[![Build Status](https://circleci.com/gh/spring-projects/spring-metrics.svg?style=svg)](https://circleci.com/gh/spring-projects/spring-metrics)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/spring-projects/spring-metrics?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Apache 2.0](https://img.shields.io/github/license/spring-projects/spring-metrics.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 

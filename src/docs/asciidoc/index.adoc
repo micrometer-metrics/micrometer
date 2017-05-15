@@ -7,7 +7,7 @@
 :imagesdir: ./images
 = Spring Metrics
 
-image:https://travis-ci.org/spring-projects/spring-metrics.svg?branch=master[Build Status, link="https://travis-ci.org/spring-projects/spring-metrics"]
+image::https://circleci.com/gh/spring-projects/spring-metrics.svg?style=svg[Build Status, link=https://circleci.com/gh/spring-cloud/spring-metrics]
 image:https://badges.gitter.im/Join%20Chat.svg[Gitter, link="https://gitter.im/spring-projects/spring-metrics?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge"]
 image:https://img.shields.io/badge/License-Apache%202.0-blue.svg[Apache License,link="http://www.apache.org/licenses/LICENSE-2.0"]
 
