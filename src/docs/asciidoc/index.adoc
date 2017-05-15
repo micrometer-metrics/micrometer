@@ -95,10 +95,10 @@ public class MyController {
         registry.collectionSize("population", people);
 
         // register a counter of questionable usefulness
-        steveCounter = registry.counter("find-steve", /* optional tags here */);
+        steveCounter = registry.counter("find_steve", /* optional tags here */);
 
         // register a timer -- though for request timing it is easier to use @Timed
-        findPersonTimer = registry.timer("http-requests", "method", "GET");
+        findPersonTimer = registry.timer("http_requests", "method", "GET");
     }
 
     @GetMapping("/api/person")
