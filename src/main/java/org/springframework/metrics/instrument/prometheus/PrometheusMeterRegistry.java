@@ -15,15 +15,16 @@
  */
 package org.springframework.metrics.instrument.prometheus;
 
-import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.*;
 import io.prometheus.client.Gauge;
-import io.prometheus.client.SimpleCollector;
-import io.prometheus.client.Summary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.metrics.instrument.*;
+import org.springframework.metrics.instrument.Counter;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
 
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
+import java.util.Map;
 import java.util.function.ToDoubleFunction;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -99,6 +100,21 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
                 .register(registry);
 
         collector = collectorTransform.apply(collector);
+
+        // since we don't yet create Histograms, the full name will be one of the metrics registered
+        // with the collector registry
+        // FIXME we should expose a getter on namesToCollectors in CollectorRegistry
+        try {
+            Field namesToCollectorsField = registry.getClass().getDeclaredField("namesToCollectors");
+            namesToCollectorsField.setAccessible(true);
+            @SuppressWarnings("unchecked") Map<String, Collector> namesToCollectors =
+                    (Map<String, Collector>) namesToCollectorsField.get(registry);
+            if(!namesToCollectors.containsKey(name)) {
+                registry.register(collector);
+            }
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
 
         return collector.labels(StreamSupport.stream(tags.spliterator(), false)
                 .map(Tag::getValue)
