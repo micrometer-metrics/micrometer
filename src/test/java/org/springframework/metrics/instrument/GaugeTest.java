@@ -29,11 +29,11 @@ class GaugeTest {
     @DisplayName("gauges attached to a number are updated when their values are observed")
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
-    void numericGauge(MeterRegistry collector) {
-        AtomicInteger n = collector.gauge("myGauge", new AtomicInteger(0));
+    void numericGauge(MeterRegistry registry) {
+        AtomicInteger n = registry.gauge("myGauge", new AtomicInteger(0));
         n.set(1);
 
-        Gauge g = singleGauge(collector);
+        Gauge g = singleGauge(registry);
         assertEquals(1, g.value(), 1.0e-12);
 
         n.set(2);
@@ -43,35 +43,35 @@ class GaugeTest {
     @DisplayName("gauges attached to an object are updated when their values are observed")
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
-    void objectGauge(MeterRegistry collector) {
-        List<String> list = collector.gauge("myGauge", Collections.emptyList(), new ArrayList<>(), List::size);
+    void objectGauge(MeterRegistry registry) {
+        List<String> list = registry.gauge("myGauge", Collections.emptyList(), new ArrayList<>(), List::size);
         list.addAll(Arrays.asList("a", "b"));
 
-        assertEquals(2, singleGauge(collector).value());
+        assertEquals(2, singleGauge(registry).value());
     }
 
     @DisplayName("gauges can be directly associated with collection size")
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
-    void collectionSizeGauge(MeterRegistry collector) {
-        List<String> list = collector.collectionSize("myGauge", new ArrayList<>());
+    void collectionSizeGauge(MeterRegistry registry) {
+        List<String> list = registry.collectionSize("myGauge", new ArrayList<>());
         list.addAll(Arrays.asList("a", "b"));
 
-        assertEquals(2, singleGauge(collector).value());
+        assertEquals(2, singleGauge(registry).value());
     }
 
     @DisplayName("gauges can be directly associated with map entry size")
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
-    void mapSizeGauge(MeterRegistry collector) {
-        Map<String, Integer> map = collector.mapSize("myGauge", new HashMap<>());
+    void mapSizeGauge(MeterRegistry registry) {
+        Map<String, Integer> map = registry.mapSize("myGauge", new HashMap<>());
         map.put("a", 1);
 
-        assertEquals(1, singleGauge(collector).value());
+        assertEquals(1, singleGauge(registry).value());
     }
 
-    private Gauge singleGauge(MeterRegistry collector) {
-        return (Gauge) collector.getMeters().stream().findFirst()
+    private Gauge singleGauge(MeterRegistry registry) {
+        return (Gauge) registry.getMeters().stream().findFirst()
                 .orElseThrow(() -> new IllegalStateException("Expected a gauge to be registered"));
     }
 }

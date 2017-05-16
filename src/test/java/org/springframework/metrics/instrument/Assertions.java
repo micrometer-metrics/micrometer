@@ -24,6 +24,6 @@ public class Assertions {
         assertThat(registry.findOne(name))
                 .containsInstanceOf(Gauge.class)
                 .map(g -> (Gauge) g)
-                .hasValueSatisfying(g -> assertThat(g.value()).matches(valueTest));
+                .hasValueSatisfying(g -> assertThat(g.value()).matches(valueTest, "gauge value"));
     }
 }

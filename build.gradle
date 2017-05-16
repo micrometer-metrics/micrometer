@@ -6,8 +6,6 @@ buildscript {
     dependencies {
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-M4'
     }
-
-    configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'seconds'
 }
 
 plugins {
@@ -58,12 +56,14 @@ dependencies {
     // cache monitoring
     compile 'com.google.guava:guava:21.0', optional
 
+    // log monitoring
+    compile 'ch.qos.logback:logback-classic:latest.release', optional
+
     // JUnit 5
     testCompile 'org.junit.platform:junit-platform-launcher:1.0.0-M4' // see https://github.com/junit-team/junit5/issues/586 for why this is necessary
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0-M4'
     testCompile 'org.junit.jupiter:junit-jupiter-params:5.0.0-M4'
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.0-M4'
-    testRuntime 'ch.qos.logback:logback-classic:latest.release'
 
     testCompile 'org.assertj:assertj-core:3.+'
 
@@ -98,10 +98,6 @@ jmh {
     iterations = 5
     fork = 0
     duplicateClassesStrategy = 'warn'
-}
-
-junitPlatform {
-    logManager 'org.apache.logging.log4j.jul.LogManager'
 }
 
 bintray.pkg {

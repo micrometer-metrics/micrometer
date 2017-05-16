@@ -34,10 +34,11 @@ import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public abstract class AbstractMeterRegistry implements MeterRegistry {
-    private Collection<Meter> meters = new ArrayList<>();
     protected Clock clock;
 
     @Autowired(required = false)
@@ -60,19 +61,9 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         this.clock = clock;
     }
 
-    protected <T extends Meter> T register(T meter) {
-        meters.add(meter);
-        return meter;
-    }
-
     @Override
     public Clock getClock() {
         return clock;
-    }
-
-    @Override
-    public Collection<Meter> getMeters() {
-        return meters;
     }
 
     @Override

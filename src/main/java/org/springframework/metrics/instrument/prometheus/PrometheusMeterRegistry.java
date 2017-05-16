@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 Pivotal Software, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,17 +21,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.metrics.instrument.*;
 import org.springframework.metrics.instrument.Counter;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
+import org.springframework.metrics.instrument.internal.MeterId;
 
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.ToDoubleFunction;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
+
+import static org.springframework.metrics.instrument.internal.MeterId.id;
 
 public class PrometheusMeterRegistry extends AbstractMeterRegistry {
-    private CollectorRegistry registry;
+    private final CollectorRegistry registry;
+
+    private final Map<MeterId, Collector> collectorMap = new HashMap<>();
+
+    // Map of Collector Child (which has no common base class or interface) to Meter
+    private final Map<Object, Meter> meterMap = new HashMap<>();
 
     public PrometheusMeterRegistry() {
         this(new CollectorRegistry(true));
@@ -48,18 +56,35 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
+    public Collection<Meter> getMeters() {
+        return meterMap.values();
+    }
+
+    @Override
     public Counter counter(String name, Iterable<Tag> tags) {
-        return register(new PrometheusCounter(name, withNameAndTags(io.prometheus.client.Gauge.build(), name, tags)));
+        MeterId id = id(name, tags);
+        io.prometheus.client.Counter counter = (io.prometheus.client.Counter) collectorMap.computeIfAbsent(id,
+                i -> buildCollector(id, io.prometheus.client.Counter.build()));
+
+        return (Counter) meterMap.computeIfAbsent(counter, c -> new PrometheusCounter(name, child(counter, id.getTags())));
     }
 
     @Override
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags) {
-        return register(new PrometheusDistributionSummary(name, withNameAndTags(Summary.build(), name, tags)));
+        MeterId id = id(name, tags);
+        io.prometheus.client.Summary summary = (io.prometheus.client.Summary) collectorMap.computeIfAbsent(id(name, tags),
+                i -> buildCollector(id, io.prometheus.client.Summary.build()));
+
+        return (DistributionSummary) meterMap.computeIfAbsent(summary, s -> new PrometheusDistributionSummary(name, child(summary, id.getTags())));
     }
 
     @Override
     public Timer timer(String name, Iterable<Tag> tags) {
-        return register(new PrometheusTimer(name, withNameAndTags(Summary.build(), name, tags), getClock()));
+        MeterId id = id(name, tags);
+        io.prometheus.client.Summary summary = (io.prometheus.client.Summary) collectorMap.computeIfAbsent(id(name, tags),
+                i -> buildCollector(id, io.prometheus.client.Summary.build()));
+
+        return (Timer) meterMap.computeIfAbsent(summary, s -> new PrometheusTimer(name, child(summary, id.getTags()), getClock()));
     }
 
     @Override
@@ -70,53 +95,40 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     @SuppressWarnings("unchecked")
     @Override
     public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        final WeakReference<T> ref = new WeakReference<T>(obj);
+        final WeakReference<T> ref = new WeakReference<>(obj);
 
-        register(new PrometheusGauge(name, withNameAndTags(io.prometheus.client.Gauge.build(), name, tags,
-                gauge -> gauge.setChild(new Gauge.Child() {
-                    @Override
-                    public double get() {
-                        final T obj = ref.get();
-                        return (obj == null) ? Double.NaN : f.applyAsDouble(obj);
-                    }
-                }))));
+        MeterId id = id(name, tags);
+        io.prometheus.client.Gauge gauge = (io.prometheus.client.Gauge) collectorMap.computeIfAbsent(id(name, tags),
+                i -> buildCollector(id, io.prometheus.client.Gauge.build()));
+
+        meterMap.computeIfAbsent(gauge, g -> {
+            gauge.setChild(new Gauge.Child() {
+                @Override
+                public double get() {
+                    final T obj = ref.get();
+                    return (obj == null) ? Double.NaN : f.applyAsDouble(obj);
+                }
+            });
+            return new PrometheusGauge(name, child(gauge, id.getTags()));
+        });
+
         return obj;
     }
 
-    private <B extends SimpleCollector.Builder<B, C>, C extends SimpleCollector<D>, D> D withNameAndTags(
-            SimpleCollector.Builder<B, C> builder, String name, Iterable<Tag> tags) {
-        return withNameAndTags(builder, name, tags, UnaryOperator.identity());
-    }
-
-    private <B extends SimpleCollector.Builder<B, C>, C extends SimpleCollector<D>, D> D withNameAndTags(
-            SimpleCollector.Builder<B, C> builder, String name, Iterable<Tag> tags, UnaryOperator<C> collectorTransform) {
-        C collector = builder
-                .name(name)
+    private <B extends SimpleCollector.Builder<B, C>, C extends SimpleCollector<D>, D> C buildCollector(MeterId id,
+                                                                                                        SimpleCollector.Builder<B, C> builder) {
+        return builder
+                .name(id.getName())
                 .help(" ")
-                .labelNames(StreamSupport.stream(tags.spliterator(), false)
+                .labelNames(Arrays.stream(id.getTags())
                         .map(Tag::getKey)
                         .collect(Collectors.toList())
                         .toArray(new String[]{}))
                 .register(registry);
+    }
 
-        collector = collectorTransform.apply(collector);
-
-        // since we don't yet create Histograms, the full name will be one of the metrics registered
-        // with the collector registry
-        // FIXME we should expose a getter on namesToCollectors in CollectorRegistry
-        try {
-            Field namesToCollectorsField = registry.getClass().getDeclaredField("namesToCollectors");
-            namesToCollectorsField.setAccessible(true);
-            @SuppressWarnings("unchecked") Map<String, Collector> namesToCollectors =
-                    (Map<String, Collector>) namesToCollectorsField.get(registry);
-            if(!namesToCollectors.containsKey(name)) {
-                registry.register(collector);
-            }
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-
-        return collector.labels(StreamSupport.stream(tags.spliterator(), false)
+    private <C extends SimpleCollector<D>, D> D child(C collector, Tag[] tags) {
+        return collector.labels(Arrays.stream(tags)
                 .map(Tag::getValue)
                 .collect(Collectors.toList())
                 .toArray(new String[]{}));

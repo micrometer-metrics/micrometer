@@ -27,8 +27,8 @@ class DistributionSummaryTest {
     @DisplayName("multiple recordings are maintained")
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
-    void record(MeterRegistry collector) {
-        DistributionSummary ds = collector.distributionSummary("myDistributionSummary");
+    void record(MeterRegistry registry) {
+        DistributionSummary ds = registry.distributionSummary("myDistributionSummary");
 
         ds.record(10);
         assertAll(() -> assertEquals(1L, ds.count()),

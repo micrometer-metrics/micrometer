@@ -19,16 +19,14 @@ import com.google.common.cache.Cache;
 import org.springframework.metrics.instrument.binder.MeterBinder;
 
 import javax.sql.DataSource;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
+import static org.springframework.metrics.instrument.Tags.tagList;
 
 /**
  * Creates and manages your application's set of meters. Exporters use the meter registry to iterate
@@ -76,7 +74,7 @@ public interface MeterRegistry {
      * Measures the rate of some activity.
      */
     default Counter counter(String name, String... tags) {
-        return counter(name, toTags(tags));
+        return counter(name, tagList(tags));
     }
 
     /**
@@ -102,7 +100,7 @@ public interface MeterRegistry {
      * Measures the sample distribution of events.
      */
     default DistributionSummary distributionSummary(String name, String... tags) {
-        return distributionSummary(name, toTags(tags));
+        return distributionSummary(name, tagList(tags));
     }
 
     /**
@@ -128,7 +126,7 @@ public interface MeterRegistry {
      * Measures the time taken for short tasks.
      */
     default Timer timer(String name, String... tags) {
-        return timer(name, toTags(tags));
+        return timer(name, tagList(tags));
     }
 
     /**
@@ -154,7 +152,7 @@ public interface MeterRegistry {
      * Measures the time taken for short tasks.
      */
     default LongTaskTimer longTaskTimer(String name, String... tags) {
-        return longTaskTimer(name, toTags(tags));
+        return longTaskTimer(name, tagList(tags));
     }
 
     /**
@@ -301,17 +299,6 @@ public interface MeterRegistry {
      */
     default <T extends Map<?, ?>> T mapSize(String name, T collection) {
         return mapSize(name, emptyList(), collection);
-    }
-
-    default Iterable<Tag> toTags(String... keyValues) {
-        if (keyValues.length % 2 == 1) {
-            throw new IllegalArgumentException("size must be even, it is a set of key=value pairs");
-        }
-        ArrayList<Tag> ts = new ArrayList<>(keyValues.length);
-        for (int i = 0; i < keyValues.length; i += 2) {
-            ts.add(new ImmutableTag(keyValues[i], keyValues[i + 1]));
-        }
-        return ts;
     }
 
     /**

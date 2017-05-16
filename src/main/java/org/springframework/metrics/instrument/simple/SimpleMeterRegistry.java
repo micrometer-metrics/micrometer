@@ -17,7 +17,12 @@ package org.springframework.metrics.instrument.simple;
 
 import org.springframework.metrics.instrument.*;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
+import org.springframework.metrics.instrument.internal.MeterId;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.ToDoubleFunction;
 
 /**
@@ -26,6 +31,8 @@ import java.util.function.ToDoubleFunction;
  * @author Jon Schneider
  */
 public class SimpleMeterRegistry extends AbstractMeterRegistry {
+    private final Map<MeterId, Meter> meterMap = new HashMap<>();
+
     public SimpleMeterRegistry() {
         this(Clock.SYSTEM);
     }
@@ -36,27 +43,32 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public Counter counter(String name, Iterable<Tag> tags) {
-        return new SimpleCounter(name);
+        return (Counter) meterMap.computeIfAbsent(new MeterId(name, tags), id -> new SimpleCounter(name));
     }
 
     @Override
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags) {
-        return new SimpleDistributionSummary(name);
+        return (DistributionSummary) meterMap.computeIfAbsent(new MeterId(name, tags), id -> new SimpleDistributionSummary(name));
     }
 
     @Override
     public Timer timer(String name, Iterable<Tag> tags) {
-        return new SimpleTimer(name);
+        return (Timer) meterMap.computeIfAbsent(new MeterId(name, tags), id -> new SimpleTimer(name));
     }
 
     @Override
     public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
-        return new SimpleLongTaskTimer(name, getClock());
+        return (LongTaskTimer) meterMap.computeIfAbsent(new MeterId(name, tags), id -> new SimpleLongTaskTimer(name, getClock()));
     }
 
     @Override
     public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        register(new SimpleGauge<>(name, obj, f));
+        meterMap.computeIfAbsent(new MeterId(name, tags), id -> new SimpleGauge<>(name, obj, f));
         return obj;
+    }
+
+    @Override
+    public Collection<Meter> getMeters() {
+        return meterMap.values();
     }
 }

@@ -23,12 +23,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.metrics.instrument.*;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class SpectatorMeterRegistry extends AbstractMeterRegistry {
-    private Registry registry;
+    private final Registry registry;
+    private final Map<com.netflix.spectator.api.Meter, Meter> meterMap = new HashMap<>();
 
     public SpectatorMeterRegistry() {
         this(new DefaultRegistry());
@@ -61,23 +65,32 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
+    public Collection<Meter> getMeters() {
+        return meterMap.values();
+    }
+
+    @Override
     public Counter counter(String name, Iterable<Tag> tags) {
-        return register(new SpectatorCounter(registry.counter(name, toSpectatorTags(tags))));
+        com.netflix.spectator.api.Counter counter = registry.counter(name, toSpectatorTags(tags));
+        return (Counter) meterMap.computeIfAbsent(counter, c -> new SpectatorCounter(counter));
     }
 
     @Override
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags) {
-        return register(new SpectatorDistributionSummary(registry.distributionSummary(name, toSpectatorTags(tags))));
+        com.netflix.spectator.api.DistributionSummary ds = registry.distributionSummary(name, toSpectatorTags(tags));
+        return (DistributionSummary) meterMap.computeIfAbsent(ds, d -> new SpectatorDistributionSummary(ds));
     }
 
     @Override
     public Timer timer(String name, Iterable<Tag> tags) {
-        return register(new SpectatorTimer(registry.timer(name, toSpectatorTags(tags)), getClock()));
+        com.netflix.spectator.api.Timer timer = registry.timer(name, toSpectatorTags(tags));
+        return (Timer) meterMap.computeIfAbsent(timer, t -> new SpectatorTimer(timer, getClock()));
     }
 
     @Override
     public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
-        return register(new SpectatorLongTaskTimer(registry.longTaskTimer(name, toSpectatorTags(tags))));
+        com.netflix.spectator.api.LongTaskTimer timer = registry.longTaskTimer(name, toSpectatorTags(tags));
+        return (LongTaskTimer) meterMap.computeIfAbsent(timer, t -> new SpectatorLongTaskTimer(timer));
     }
 
     @Override
@@ -85,7 +98,7 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
         Id gaugeId = registry.createId(name, toSpectatorTags(tags));
         com.netflix.spectator.api.Gauge gauge = new SpectatorToDoubleGauge<>(registry.clock(), gaugeId, obj, f);
         registry.register(gauge);
-        register(new SpectatorGauge(gauge));
+        meterMap.computeIfAbsent(gauge, g -> new SpectatorGauge(gauge));
         return obj;
     }
 }

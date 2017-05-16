@@ -31,8 +31,8 @@ class TimerTest {
     @DisplayName("total time and count are preserved for a single timing")
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
-    void record(MeterRegistry collector) {
-        Timer t = collector.timer("myTimer");
+    void record(MeterRegistry registry) {
+        Timer t = registry.timer("myTimer");
         t.record(42, TimeUnit.MILLISECONDS);
 
         assertAll(() -> assertEquals(1L, t.count()),
@@ -42,8 +42,8 @@ class TimerTest {
     @DisplayName("negative times are discarded by the Timer")
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
-    void recordNegative(MeterRegistry collector) {
-        Timer t = collector.timer("myTimer");
+    void recordNegative(MeterRegistry registry) {
+        Timer t = registry.timer("myTimer");
         t.record(-42, TimeUnit.MILLISECONDS);
 
         assertAll(() -> assertEquals(0L, t.count()),
@@ -53,8 +53,8 @@ class TimerTest {
     @DisplayName("zero times contribute to the count of overall events but do not add to total time")
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
-    void recordZero(MeterRegistry collector) {
-        Timer t = collector.timer("myTimer");
+    void recordZero(MeterRegistry registry) {
+        Timer t = registry.timer("myTimer");
         t.record(0, TimeUnit.MILLISECONDS);
 
         assertAll(() -> assertEquals(1L, t.count()),
@@ -64,11 +64,11 @@ class TimerTest {
     @DisplayName("record a runnable task")
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
-    void recordWithRunnable(MeterRegistry collector) throws Exception {
-        Timer t = collector.timer("myTimer");
+    void recordWithRunnable(MeterRegistry registry) throws Exception {
+        Timer t = registry.timer("myTimer");
 
         try {
-            t.record((Runnable) () -> clock(collector).addAndGetNanos(10));
+            t.record((Runnable) () -> clock(registry).addAndGetNanos(10));
         } finally {
             assertAll(() -> assertEquals(1L, t.count()),
                     () -> assertEquals(10, t.totalTimeNanos() ,1.0e-12));
@@ -78,12 +78,12 @@ class TimerTest {
     @DisplayName("callable task that throws exception is still recorded")
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
-    void recordCallableException(MeterRegistry collector) {
-        Timer t = collector.timer("myTimer");
+    void recordCallableException(MeterRegistry registry) {
+        Timer t = registry.timer("myTimer");
 
         assertThrows(Exception.class, () -> {
             t.record(() -> {
-                clock(collector).addAndGetNanos(10);
+                clock(registry).addAndGetNanos(10);
                 throw new Exception("uh oh");
             });
         });

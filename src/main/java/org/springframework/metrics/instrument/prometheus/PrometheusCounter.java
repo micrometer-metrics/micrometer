@@ -19,9 +19,9 @@ import org.springframework.metrics.instrument.Counter;
 
 public class PrometheusCounter implements Counter {
     private final String name;
-    private io.prometheus.client.Gauge.Child counter;
+    private io.prometheus.client.Counter.Child counter;
 
-    public PrometheusCounter(String name, io.prometheus.client.Gauge.Child counter) {
+    public PrometheusCounter(String name, io.prometheus.client.Counter.Child counter) {
         this.name = name;
         this.counter = counter;
     }
@@ -33,10 +33,7 @@ public class PrometheusCounter implements Counter {
 
     @Override
     public void increment(double amount) {
-        if (amount < 0)
-            counter.dec(-amount);
-        else
-            counter.inc(amount);
+        counter.inc(amount);
     }
 
     @Override
