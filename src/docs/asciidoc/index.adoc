@@ -14,6 +14,26 @@ image:https://img.shields.io/badge/License-Apache%202.0-blue.svg[Apache License,
 This project provides facilities for instrumenting apps with metrics collection
 and interacting with popular third-party application monitoring systems.
 
+== Installing
+
+Pre-release artifacts are being published frequently, but are NOT intended for production use.
+
+In Gradle:
+
+```groovy
+compile 'org.springframework.metrics:spring-metrics:latest.release'
+```
+
+Or in Maven:
+
+```xml
+<dependency>
+  <groupId>org.springframework.metrics</groupId>
+  <artifactId>spring-metrics</artifactId>
+  <version>${metrics.version}</version>
+</dependency>
+```
+
 == Instrumentation
 
 Spring Metrics features a metrics collection API that is designed to record dimensional
@@ -142,7 +162,8 @@ analysis on the contribution of each functional area to the number of threads co
 We do not offer an opinion about naming styles. Spectator promotes camel case and Prometheus promotes '_' separation
 (along with other https://prometheus.io/docs/practices/naming/#metric-names[recommendations]),
 but they are both are admittedly arbitrary. Consistency is key. We recommend following the convention most commonly used by your
-organization or your chosen metrics backend.
+organization or your chosen metrics backend. It is recommended to stay away from '-' separated names, as some metrics
+backends interpret '-' as metric subtraction.
 ====
 
 ==== Bad approach
@@ -382,6 +403,7 @@ that are the most actionable. The following binders are auto-configured (TODO WI
 1. `JvmGcMetrics` - Records information about GC events and their causes, split by generation.
 We recommend setting up alerts for production ready apps for (1) if `jvm_gc_pause` exceeds some fixed value (500 ms
 is a good general purpose value) and (2) if `jvm_gc_live_data_size` exceeds 70% of the heap.
+2. `LogbackMetrics` - Records counts for log event at various levels. Auto-configured in the presence of `logback-core`.
 
 == Spring Web MVC and Spring WebFlux
 

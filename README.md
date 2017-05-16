@@ -25,6 +25,26 @@ In addition to the features already present in Spring Boot [Actuator Metrics](ht
 * Fold in buffer pool and memory pool metrics reported by the JDK via JMX.
 * Fold in information about GC causes.
 
+## Installing
+
+Pre-release artifacts are being published frequently, but are NOT intended for production use.
+
+In Gradle:
+
+```groovy
+compile 'org.springframework.metrics:spring-metrics:latest.release'
+```
+
+Or in Maven:
+
+```xml
+<dependency>
+  <groupId>org.springframework.metrics</groupId>
+  <artifactId>spring-metrics</artifactId>
+  <version>${metrics.version}</version>
+</dependency>
+```
+
 ## Building Locally
 
 Run `./gradlew pTML` to publish a snapshot to your Maven local repo. To consume:
