@@ -15,19 +15,20 @@
  */
 package org.springframework.metrics.instrument.prometheus;
 
-import io.prometheus.client.*;
+import io.prometheus.client.Collector;
+import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Gauge;
+import io.prometheus.client.SimpleCollector;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.metrics.instrument.*;
-import org.springframework.metrics.instrument.Counter;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
 import org.springframework.metrics.instrument.internal.MeterId;
 
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
@@ -36,10 +37,10 @@ import static org.springframework.metrics.instrument.internal.MeterId.id;
 public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     private final CollectorRegistry registry;
 
-    private final Map<String, Collector> collectorMap = new HashMap<>();
+    private final Map<String, Collector> collectorMap = new ConcurrentHashMap<>();
 
     // Map of Collector Child (which has no common base class or interface) to Meter
-    private final Map<Object, Meter> meterMap = new HashMap<>();
+    private final Map<Object, Meter> meterMap = new ConcurrentHashMap<>();
 
     public PrometheusMeterRegistry() {
         this(CollectorRegistry.defaultRegistry);

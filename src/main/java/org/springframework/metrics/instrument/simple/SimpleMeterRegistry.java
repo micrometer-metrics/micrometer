@@ -20,9 +20,8 @@ import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
 import org.springframework.metrics.instrument.internal.MeterId;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.ToDoubleFunction;
 
 /**
@@ -31,7 +30,7 @@ import java.util.function.ToDoubleFunction;
  * @author Jon Schneider
  */
 public class SimpleMeterRegistry extends AbstractMeterRegistry {
-    private final Map<MeterId, Meter> meterMap = new HashMap<>();
+    private final Map<MeterId, Meter> meterMap = new ConcurrentHashMap<>();
 
     public SimpleMeterRegistry() {
         this(Clock.SYSTEM);
