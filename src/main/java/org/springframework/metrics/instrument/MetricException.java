@@ -21,7 +21,6 @@ public class MetricException extends RuntimeException {
         super(msg, e);
     }
 
-
     public MetricException(Throwable e) {
         super(e);
     }

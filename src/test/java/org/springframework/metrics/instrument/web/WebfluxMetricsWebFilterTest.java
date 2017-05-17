@@ -27,10 +27,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.reactive.function.server.HandlerFunction;
-import org.springframework.web.reactive.function.server.RouterFunction;
-import org.springframework.web.reactive.function.server.RouterFunctions;
-import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
@@ -42,11 +38,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
-import static org.springframework.web.reactive.function.server.RequestPredicates.accept;
 
-class WebfluxMetricsHandlerInterceptorTest {
+class WebfluxMetricsWebFilterTest {
     private MeterRegistry registry;
     private WebTestClient client;
 
@@ -54,7 +47,7 @@ class WebfluxMetricsHandlerInterceptorTest {
     void before() {
         registry = mock(MeterRegistry.class);
         client = WebTestClient.bindToController(new Controller2())
-                .webFilter(new MetricsWebFilter(registry, new DefaultWebMetricsTagProvider()))
+                .webFilter(new WebfluxMetricsWebFilter(registry, new DefaultWebMetricsTagProvider(), "http_server_requests"))
                 .build();
     }
 

@@ -23,13 +23,22 @@ import reactor.core.publisher.Mono;
 
 import java.util.concurrent.TimeUnit;
 
-public class MetricsWebFilter implements WebFilter {
+/**
+ * Intercepts incoming HTTP requests modeled with the Webflux annotation-based programming model.
+ *
+ * @author Jon Schneider
+ */
+public class WebfluxMetricsWebFilter implements WebFilter {
     private final MeterRegistry registry;
     private final WebMetricsTagProvider tagProvider;
+    private final String metricName;
 
-    public MetricsWebFilter(MeterRegistry registry, WebMetricsTagProvider tagProvider) {
+    public WebfluxMetricsWebFilter(MeterRegistry registry,
+                                   WebMetricsTagProvider tagProvider,
+                                   String metricName) {
         this.registry = registry;
         this.tagProvider = tagProvider;
+        this.metricName = metricName;
     }
 
     @Override
@@ -38,11 +47,11 @@ public class MetricsWebFilter implements WebFilter {
         Mono<Void> filtered = chain.filter(exchange);
         return filtered
                 .doOnSuccess(done ->
-                        registry.timer("http_server_requests", tagProvider.httpRequestTags(exchange, null, null))
+                        registry.timer(metricName, tagProvider.httpRequestTags(exchange, null, null))
                                 .record(System.nanoTime() - start, TimeUnit.NANOSECONDS)
                 )
                 .doOnError(t ->
-                        registry.timer("http_server_requests", tagProvider.httpRequestTags(exchange, t, null))
+                        registry.timer(metricName, tagProvider.httpRequestTags(exchange, t, null))
                                 .record(System.nanoTime() - start, TimeUnit.NANOSECONDS)
                 );
     }

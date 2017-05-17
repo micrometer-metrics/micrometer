@@ -16,11 +16,11 @@
 package org.springframework.metrics.instrument.simple;
 
 import org.springframework.metrics.instrument.*;
+import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
 import org.springframework.metrics.instrument.internal.MeterId;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.ToDoubleFunction;
 
@@ -31,6 +31,7 @@ import java.util.function.ToDoubleFunction;
  */
 public class SimpleMeterRegistry extends AbstractMeterRegistry {
     private final Map<MeterId, Meter> meterMap = new ConcurrentHashMap<>();
+    private final Map<Meter, MeterId> idMap = new HashMap<>();
 
     public SimpleMeterRegistry() {
         this(Clock.SYSTEM);
@@ -42,32 +43,55 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public Counter counter(String name, Iterable<Tag> tags) {
-        return (Counter) meterMap.computeIfAbsent(new MeterId(name, tags), id -> new SimpleCounter(name));
+        return (Counter) meterMap.computeIfAbsent(new MeterId(name, tags), id -> storeId(id, new SimpleCounter(name)));
     }
 
     @Override
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags) {
-        return (DistributionSummary) meterMap.computeIfAbsent(new MeterId(name, tags), id -> new SimpleDistributionSummary(name));
+        return (DistributionSummary) meterMap.computeIfAbsent(new MeterId(name, tags), id -> storeId(id, new SimpleDistributionSummary(name)));
     }
 
     @Override
     public Timer timer(String name, Iterable<Tag> tags) {
-        return (Timer) meterMap.computeIfAbsent(new MeterId(name, tags), id -> new SimpleTimer(name));
+        return (Timer) meterMap.computeIfAbsent(new MeterId(name, tags), id -> storeId(id, new SimpleTimer(name)));
     }
 
     @Override
     public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
-        return (LongTaskTimer) meterMap.computeIfAbsent(new MeterId(name, tags), id -> new SimpleLongTaskTimer(name, getClock()));
+        return (LongTaskTimer) meterMap.computeIfAbsent(new MeterId(name, tags), id -> storeId(id, new SimpleLongTaskTimer(name, getClock())));
     }
 
     @Override
     public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        meterMap.computeIfAbsent(new MeterId(name, tags), id -> new SimpleGauge<>(name, obj, f));
+        meterMap.computeIfAbsent(new MeterId(name, tags), id -> storeId(id, new SimpleGauge<>(name, obj, f)));
         return obj;
     }
 
     @Override
     public Collection<Meter> getMeters() {
         return meterMap.values();
+    }
+
+    public MeterId id(Meter m) {
+        return idMap.get(m);
+    }
+
+    public <M extends Meter> Optional<M> findMeter(Class<M> mClass, String name, Iterable<Tag> tags) {
+        Collection<Tag> tagsToMatch = new ArrayList<>();
+        tags.forEach(tagsToMatch::add);
+
+        //noinspection unchecked
+        return meterMap.keySet().stream()
+                .filter(id -> id.getName().equals(name))
+                .filter(id ->
+                        Arrays.asList(id.getTags()).containsAll(tagsToMatch))
+                .findAny()
+                .map(meterMap::get)
+                .map(m -> (M) m);
+    }
+
+    private Meter storeId(MeterId id, Meter m) {
+        idMap.put(m, id);
+        return m;
     }
 }

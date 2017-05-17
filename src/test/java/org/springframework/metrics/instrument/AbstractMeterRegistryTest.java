@@ -15,11 +15,14 @@
  */
 package org.springframework.metrics.instrument;
 
+import org.assertj.core.api.AbstractThrowableAssert;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.springframework.metrics.instrument.prometheus.PrometheusMeterRegistry;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 class AbstractMeterRegistryTest {
 
@@ -31,5 +34,37 @@ class AbstractMeterRegistryTest {
         registry.counter("foo");
 
         assertThat(registry.getMeters().size()).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(MeterRegistriesProvider.class)
+    @DisplayName("same meter name but subset of tags")
+    void tagSubsets(MeterRegistry registry) {
+        registry.counter("foo", "k", "v");
+
+        AbstractThrowableAssert<?, ? extends Throwable> subsetAssert = assertThatCode(() ->
+                registry.counter("foo", "k", "v", "k2", "v2"));
+
+        if(registry instanceof PrometheusMeterRegistry) {
+            // Prometheus requires a fixed set of tags per meter
+            subsetAssert.hasMessage("Incorrect number of labels.");
+        }
+        else {
+            subsetAssert.doesNotThrowAnyException();
+        }
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(MeterRegistriesProvider.class)
+    @DisplayName("find meters by name matching a subset of their tags")
+    void findMeters(MeterRegistry registry) {
+        Counter c1 = registry.counter("foo", "k", "v");
+        Counter c2 = registry.counter("bar", "k", "v", "k2", "v");
+
+        assertThat(registry.findMeter(Counter.class, "foo", "k", "v"))
+                .containsSame(c1);
+
+        assertThat(registry.findMeter(Counter.class, "bar", "k", "v"))
+                .containsSame(c2);
     }
 }

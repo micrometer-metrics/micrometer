@@ -24,6 +24,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
+import org.springframework.metrics.boot.EnableMetrics;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.annotation.Timed;
@@ -137,6 +138,7 @@ class WebmvcMetricsHandlerInterceptorTest {
     }
 
     @SpringBootApplication
+    @EnableMetrics
     static class App {}
 
     @RestController

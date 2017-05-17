@@ -41,10 +41,12 @@ dependencies {
     compile "org.springframework:spring-beans:$project.springBootVersion", optional
     compile "org.springframework.boot:spring-boot:$project.springBootVersion", optional
     compile "org.springframework.boot:spring-boot-actuator:$project.springBootVersion", optional
+    compile "org.springframework.boot:spring-boot-starter-aop:$project.springBootVersion", optional
     compile "org.springframework:spring-webmvc:$project.springVersion", optional
     compile "org.springframework:spring-webflux:$project.springVersion", optional
     compile "org.springframework:spring-web:$project.springVersion", optional
-    compile 'javax.servlet:javax.servlet-api:3.0.1', optional
+    compile 'javax.servlet:javax.servlet-api:3.1.0', optional
+    compile 'org.aspectj:aspectjweaver:1.8.+', optional
 
     // collector options
     compile 'com.netflix.spectator:spectator-api:latest.release', optional
@@ -67,7 +69,11 @@ dependencies {
 
     testCompile 'org.assertj:assertj-core:3.+'
 
-    testCompile "org.springframework.boot:spring-boot-starter-web:$project.springBootVersion"
+    testCompile("org.springframework.boot:spring-boot-starter-web:$project.springBootVersion") {
+        // snapshots of boot-starter-web can depend on RC's of spring-web(mvc), pulling the versions down
+        exclude module: 'spring-webmvc'
+        exclude module: 'spring-web'
+    }
     testCompile "org.springframework.boot:spring-boot-actuator:$project.springBootVersion"
     testCompile "org.springframework.boot:spring-boot-starter-test:$project.springBootVersion"
     testCompile 'org.springframework:spring-test:5.0.0.BUILD-SNAPSHOT' // earlier versions did not contain JUnit 5 support

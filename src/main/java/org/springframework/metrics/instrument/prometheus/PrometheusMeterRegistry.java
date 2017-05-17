@@ -21,26 +21,25 @@ import io.prometheus.client.Gauge;
 import io.prometheus.client.SimpleCollector;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.metrics.instrument.*;
+import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
+import org.springframework.metrics.instrument.internal.ImmutableTag;
 import org.springframework.metrics.instrument.internal.MeterId;
 
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
+import static java.util.stream.StreamSupport.stream;
 import static org.springframework.metrics.instrument.internal.MeterId.id;
 
 public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     private final CollectorRegistry registry;
 
     private final Map<String, Collector> collectorMap = new ConcurrentHashMap<>();
-
-    // Map of Collector Child (which has no common base class or interface) to Meter
-    private final Map<Object, Meter> meterMap = new ConcurrentHashMap<>();
+    private final Map<MeterId, Meter> meterMap = new ConcurrentHashMap<>();
 
     public PrometheusMeterRegistry() {
         this(CollectorRegistry.defaultRegistry);
@@ -59,6 +58,20 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     @Override
     public Collection<Meter> getMeters() {
         return meterMap.values();
+    }
+
+    @Override
+    public <M extends Meter> Optional<M> findMeter(Class<M> mClass, String name, Iterable<Tag> tags) {
+        Collection<Tag> tagsToMatch = new ArrayList<>();
+        tags.forEach(tagsToMatch::add);
+
+        //noinspection unchecked
+        return meterMap.keySet().stream()
+                .filter(id -> id.getName().equals(name))
+                .filter(id -> Arrays.asList(id.getTags()).containsAll(tagsToMatch))
+                .findAny()
+                .map(meterMap::get)
+                .map(m -> (M) m);
     }
 
     @Override

@@ -15,11 +15,12 @@
  */
 package org.springframework.metrics.instrument;
 
-import java.util.Map;
-import java.util.stream.Collectors;
+import org.springframework.metrics.instrument.internal.ImmutableTag;
 
 /**
  * Key/value pair representing a dimension of a meter used to classify and drill into measurements.
+ *
+ * @author Jon Schneider
  */
 public interface Tag {
     String getKey();

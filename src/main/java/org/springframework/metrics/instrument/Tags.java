@@ -15,10 +15,16 @@
  */
 package org.springframework.metrics.instrument;
 
-import java.util.ArrayList;
+import org.springframework.metrics.instrument.internal.ImmutableTag;
 
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @author Jon Schneider
+ */
 public class Tags {
-    public static Iterable<Tag> tagList(String... keyValues) {
+    public static List<Tag> tagList(String... keyValues) {
         if (keyValues.length % 2 == 1) {
             throw new IllegalArgumentException("size must be even, it is a set of key=value pairs");
         }

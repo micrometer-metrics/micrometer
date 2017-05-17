@@ -17,8 +17,6 @@ package org.springframework.metrics.instrument.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.Timer;
@@ -46,14 +44,17 @@ public class WebmvcMetricsHandlerInterceptor extends HandlerInterceptorAdapter {
     private static final Log logger = LogFactory.getLog(WebmvcMetricsHandlerInterceptor.class);
     private static final String TIMING_REQUEST_ATTRIBUTE = "requestStartTime";
 
-    @Autowired
-    MeterRegistry registry;
+    private final MeterRegistry registry;
+    private final WebMetricsTagProvider provider;
+    private final String metricName;
 
-    @Autowired
-    Environment environment;
-
-    @Autowired
-    WebMetricsTagProvider provider;
+    public WebmvcMetricsHandlerInterceptor(MeterRegistry registry,
+                                           WebMetricsTagProvider provider,
+                                           String metricName) {
+        this.registry = registry;
+        this.provider = provider;
+        this.metricName = metricName;
+    }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response,
@@ -89,7 +90,7 @@ public class WebmvcMetricsHandlerInterceptor extends HandlerInterceptorAdapter {
             }
 
             if (timed != null) {
-                String name = environment.getProperty("spring.metrics.web.name", "http_server_requests");
+                String name = metricName;
                 if (!timed.value().isEmpty()) {
                     name = timed.value();
                 }

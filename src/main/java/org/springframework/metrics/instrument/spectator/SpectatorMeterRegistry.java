@@ -21,14 +21,15 @@ import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.metrics.instrument.*;
+import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
+import org.springframework.metrics.instrument.internal.ImmutableTag;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
+
+import static java.util.stream.StreamSupport.stream;
 
 public class SpectatorMeterRegistry extends AbstractMeterRegistry {
     private final Registry registry;
@@ -59,7 +60,7 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
     }
 
     private Iterable<com.netflix.spectator.api.Tag> toSpectatorTags(Iterable<Tag> tags) {
-        return StreamSupport.stream(tags.spliterator(), false)
+        return stream(tags.spliterator(), false)
                 .map(t -> new BasicTag(t.getKey(), t.getValue()))
                 .collect(Collectors.toList());
     }
@@ -67,6 +68,23 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
     @Override
     public Collection<Meter> getMeters() {
         return meterMap.values();
+    }
+
+    @Override
+    public <M extends Meter> Optional<M> findMeter(Class<M> mClass, String name, Iterable<Tag> tags) {
+        Collection<Tag> tagsToMatch = new ArrayList<>();
+        tags.forEach(tagsToMatch::add);
+
+        //noinspection unchecked
+        return meterMap.entrySet().stream()
+                .filter(e -> mClass.isInstance(e.getValue()))
+                .filter(e -> e.getKey().id().name().equals(name))
+                .filter(e -> stream(e.getKey().id().tags().spliterator(), false)
+                        .map(t -> new ImmutableTag(t.key(), t.value()))
+                        .collect(Collectors.toList())
+                        .containsAll(tagsToMatch))
+                .map(e -> (M) e.getValue())
+                .findAny();
     }
 
     @Override

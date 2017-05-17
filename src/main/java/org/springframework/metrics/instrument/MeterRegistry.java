@@ -41,13 +41,15 @@ public interface MeterRegistry {
      */
     Collection<Meter> getMeters();
 
-    default Collection<Meter> find(String name) {
-        return getMeters().stream().filter(m -> m.getName().equals(name)).collect(toList());
+    default <M extends Meter> Optional<M> findMeter(Class<M> mClass, String name, String...tags) {
+        return findMeter(mClass, name, Tags.tagList(tags));
     }
 
-    default Optional<Meter> findOne(String name) {
-        return getMeters().stream().filter(m -> m.getName().equals(name)).findAny();
+    default <M extends Meter> Optional<M> findMeter(Class<M> mClass, String name, Stream<Tag> tags) {
+        return findMeter(mClass, name, tags);
     }
+
+    <M extends Meter> Optional<M> findMeter(Class<M> mClass, String name, Iterable<Tag> tags);
 
     Clock getClock();
 
