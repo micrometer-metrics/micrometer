@@ -15,14 +15,62 @@
  */
 package org.springframework.metrics.instrument.binder;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.turbo.TurboFilter;
+import ch.qos.logback.core.spi.FilterReply;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.springframework.metrics.instrument.Counter;
 import org.springframework.metrics.instrument.MeterRegistry;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class LogbackMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
         context.addTurboFilter(new MetricsTurboFilter(registry));
+    }
+}
+
+class MetricsTurboFilter extends TurboFilter {
+    private final Counter errorCounter;
+    private final Counter warnCounter;
+    private final Counter infoCounter;
+    private final Counter debugCounter;
+    private final Counter traceCounter;
+
+    MetricsTurboFilter(MeterRegistry registry) {
+        errorCounter = registry.counter("logback_events", "level", "error");
+        warnCounter = registry.counter("logback_events", "level", "warn");
+        infoCounter = registry.counter("logback_events", "level", "info");
+        debugCounter = registry.counter("logback_events", "level", "debug");
+        traceCounter = registry.counter("logback_events", "level", "trace");
+    }
+
+    @Override
+    public FilterReply decide(Marker marker, Logger logger, Level level, String format, Object[] params, Throwable t) {
+        switch(level.toInt()) {
+            case Level.ERROR_INT:
+                errorCounter.increment();
+                break;
+            case Level.WARN_INT:
+                warnCounter.increment();
+                break;
+            case Level.INFO_INT:
+                infoCounter.increment();
+                break;
+            case Level.DEBUG_INT:
+                debugCounter.increment();
+                break;
+            case Level.TRACE_INT:
+                traceCounter.increment();
+                break;
+        }
+
+        return FilterReply.ACCEPT;
     }
 }
