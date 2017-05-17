@@ -36,13 +36,13 @@ import static org.springframework.metrics.instrument.internal.MeterId.id;
 public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     private final CollectorRegistry registry;
 
-    private final Map<MeterId, Collector> collectorMap = new HashMap<>();
+    private final Map<String, Collector> collectorMap = new HashMap<>();
 
     // Map of Collector Child (which has no common base class or interface) to Meter
     private final Map<Object, Meter> meterMap = new HashMap<>();
 
     public PrometheusMeterRegistry() {
-        this(new CollectorRegistry(true));
+        this(CollectorRegistry.defaultRegistry);
     }
 
     public PrometheusMeterRegistry(CollectorRegistry registry) {
@@ -63,28 +63,28 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     @Override
     public Counter counter(String name, Iterable<Tag> tags) {
         MeterId id = id(name, tags);
-        io.prometheus.client.Counter counter = (io.prometheus.client.Counter) collectorMap.computeIfAbsent(id,
+        io.prometheus.client.Counter counter = (io.prometheus.client.Counter) collectorMap.computeIfAbsent(name,
                 i -> buildCollector(id, io.prometheus.client.Counter.build()));
 
-        return (Counter) meterMap.computeIfAbsent(counter, c -> new PrometheusCounter(name, child(counter, id.getTags())));
+        return (Counter) meterMap.computeIfAbsent(id, c -> new PrometheusCounter(name, child(counter, id.getTags())));
     }
 
     @Override
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags) {
         MeterId id = id(name, tags);
-        io.prometheus.client.Summary summary = (io.prometheus.client.Summary) collectorMap.computeIfAbsent(id(name, tags),
+        io.prometheus.client.Summary summary = (io.prometheus.client.Summary) collectorMap.computeIfAbsent(name,
                 i -> buildCollector(id, io.prometheus.client.Summary.build()));
 
-        return (DistributionSummary) meterMap.computeIfAbsent(summary, s -> new PrometheusDistributionSummary(name, child(summary, id.getTags())));
+        return (DistributionSummary) meterMap.computeIfAbsent(id, s -> new PrometheusDistributionSummary(name, child(summary, id.getTags())));
     }
 
     @Override
     public Timer timer(String name, Iterable<Tag> tags) {
         MeterId id = id(name, tags);
-        io.prometheus.client.Summary summary = (io.prometheus.client.Summary) collectorMap.computeIfAbsent(id(name, tags),
+        io.prometheus.client.Summary summary = (io.prometheus.client.Summary) collectorMap.computeIfAbsent(name,
                 i -> buildCollector(id, io.prometheus.client.Summary.build()));
 
-        return (Timer) meterMap.computeIfAbsent(summary, s -> new PrometheusTimer(name, child(summary, id.getTags()), getClock()));
+        return (Timer) meterMap.computeIfAbsent(id, s -> new PrometheusTimer(name, child(summary, id.getTags()), getClock()));
     }
 
     @Override
@@ -98,10 +98,10 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         final WeakReference<T> ref = new WeakReference<>(obj);
 
         MeterId id = id(name, tags);
-        io.prometheus.client.Gauge gauge = (io.prometheus.client.Gauge) collectorMap.computeIfAbsent(id(name, tags),
+        io.prometheus.client.Gauge gauge = (io.prometheus.client.Gauge) collectorMap.computeIfAbsent(name,
                 i -> buildCollector(id, io.prometheus.client.Gauge.build()));
 
-        meterMap.computeIfAbsent(gauge, g -> {
+        meterMap.computeIfAbsent(id, g -> {
             gauge.setChild(new Gauge.Child() {
                 @Override
                 public double get() {
