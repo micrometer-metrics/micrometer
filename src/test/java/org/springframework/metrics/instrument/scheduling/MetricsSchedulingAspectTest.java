@@ -46,8 +46,11 @@ class MetricsSchedulingAspectTest {
     @Autowired
     MeterRegistry registry;
 
+    @Autowired
+    ThreadPoolTaskScheduler scheduler;
+
     @Test
-    void scheduledIsInstrumented() {
+    void scheduledIsInstrumented() throws InterruptedException {
         assertThat(registry.findMeter(Timer.class, "beeper"))
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
 
@@ -56,6 +59,8 @@ class MetricsSchedulingAspectTest {
 
         // make sure longBeep continues running until we have a chance to observe it in the active state
         observeLongTaskLatch.countDown();
+
+        while(scheduler.getActiveCount() > 0) {}
 
         // now the long beeper has contributed to the beep count as well
         assertThat(registry.findMeter(Timer.class, "beeper"))
@@ -72,7 +77,7 @@ class MetricsSchedulingAspectTest {
         }
 
         @Bean
-        TaskScheduler scheduler() {
+        ThreadPoolTaskScheduler scheduler() {
             ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
             // this way, executing longBeep doesn't block the short tasks from running
             scheduler.setPoolSize(5);
