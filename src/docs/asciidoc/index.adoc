@@ -7,7 +7,7 @@
 :imagesdir: ./images
 = Spring Metrics
 
-image::https://circleci.com/gh/spring-projects/spring-metrics.svg?style=svg[Build Status, link=https://circleci.com/gh/spring-cloud/spring-metrics]
+image:https://circleci.com/gh/spring-projects/spring-metrics.svg?style=svg[Build Status, link=https://circleci.com/gh/spring-cloud/spring-metrics]
 image:https://badges.gitter.im/Join%20Chat.svg[Gitter, link="https://gitter.im/spring-projects/spring-metrics?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge"]
 image:https://img.shields.io/badge/License-Apache%202.0-blue.svg[Apache License,link="http://www.apache.org/licenses/LICENSE-2.0"]
 
@@ -258,6 +258,18 @@ groups etc. Normally all data can be refreshed in a few minutes. If the AWS
 services are having problems it can take much longer. A long duration timer can
 be used to track the overall time for refreshing the metadata.
 
+In a Spring application, it is common for such long running processes to be implemented with `@Scheduled`.
+`spring-metrics` provides a special `@Timed` annotation for instrumenting these processes with a long
+task timer:
+
+```java
+@Timed(value = "aws_scrape", longTask = true)
+@Scheduled(fixedDelay = 360000)
+void scrapeResources() {
+    // find instances, volumes, auto-scaling groups, etc...
+}
+```
+
 The charts below show max latency for the refresh using a regular timer and a
 long task timer. Regular timer, note that the y-axis is using a logarithmic scale:
 
@@ -405,7 +417,7 @@ We recommend setting up alerts for production ready apps for (1) if `jvm_gc_paus
 is a good general purpose value) and (2) if `jvm_gc_live_data_size` exceeds 70% of the heap.
 2. `LogbackMetrics` - Records counts for log event at various levels. Auto-configured in the presence of `logback-core`.
 
-== Spring Web MVC and Spring WebFlux
+== Server-side HTTP Instrumentation
 
 `spring-metrics` contains built-in instrumentation for timings of requests made
 to Spring MVC and Spring WebFlux server endpoints.
@@ -420,6 +432,8 @@ to time. Add `@Timed` to:
 
 1. A controller class to enable timings on every request handler in the controller.
 2. A method to enable for an individual endpoint. This is not necessary if you have it on the class.
+3. A method with `longTask = true` to enable a long task timer for the method. Long task timers require a
+separate metric name, and can be stacked with a short task timer.
 
 ```java
 @RestController
@@ -427,6 +441,7 @@ to time. Add `@Timed` to:
 public class MyController {
     @GetMapping("/api/people")
     @Timed // (2)
+    @Timed(value = "all_people", longTask = true) // (3)
     public List<Person> listPeople() { ... }
 ```
 
@@ -464,14 +479,32 @@ RouterFunction<ServerResponse> routes = RouterFunctions
 
 The filter applies to all routes defined by this router function.
 
-=== `RestTemplate` Timing
+== Client-side HTTP Instrumentation
 
-Adding `@EnableMetrics` to your `@SpringBootApplication` class autoconfigures a `BeanPostProcessor` for `RestTemplate`,
+Adding `@EnableMetrics` to your `@SpringBootApplication` class configures a `BeanPostProcessor` for `RestTemplate`,
 so every instance you create via the application context will be instrumented.
 
 A timer is recorded for each invocation that includes tags for URI (before parameter substitution), host, and status.
 The name of this timer is `http_client_requests`, and can be changed via the `spring.metrics.web.client_requests.name`
 property.
+
+== Scheduling Instrumentation
+
+Adding `@EnableMetrics` to your `@SpringBootApplication` class plus enabling AOP configures AOP advice that times
+`@Scheduled` methods. For a method to be timed, it must be marked as `@Timed("my_metric_name")` with a name.
+
+Depending on the duration of the scheduled task, you may want to choose to time the method with a `LongTaskTimer`,
+a `Timer`, or both. Below is an example of measuring both long task and regular timings to a scheduled task:
+
+```java
+@Timed("beep")
+@Timed(value = "long_beep", longTask = true)
+@Scheduled(fixedRate = 1000)
+void longBeep() {
+    // calculate the meaning of life, then beep...
+    System.out.println("beep");
+}
+```
 
 == Prometheus
 

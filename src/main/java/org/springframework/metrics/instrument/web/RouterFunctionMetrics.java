@@ -26,20 +26,24 @@ import java.util.stream.Stream;
 public class RouterFunctionMetrics {
     private final MeterRegistry registry;
 
-    private String defaultTagName = "http_server_requests";
+    private String defaultName = "http_server_requests";
     private WebMetricsTagProvider tagProvider = new DefaultWebMetricsTagProvider();
 
     public RouterFunctionMetrics(MeterRegistry registry) {
         this.registry = registry;
     }
 
-    public RouterFunctionMetrics setDefaultTagName(String defaultTagName) {
-        this.defaultTagName = defaultTagName;
+    public RouterFunctionMetrics setDefaultName(String defaultName) {
+        this.defaultName = defaultName;
         return this;
     }
 
     public HandlerFilterFunction<ServerResponse, ServerResponse> timer() {
-        return timer(defaultTagName, Stream.empty());
+        return timer(defaultName, Stream.empty());
+    }
+
+    public HandlerFilterFunction<ServerResponse, ServerResponse> timer(Stream<Tag> tags) {
+        return timer(defaultName, tags);
     }
 
     public HandlerFilterFunction<ServerResponse, ServerResponse> timer(String name, Stream<Tag> tags) {
