@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.metrics.instrument.MeterRegistry;
+import org.springframework.metrics.instrument.scheduling.MetricsSchedulingAspect;
 import org.springframework.metrics.instrument.web.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -40,6 +41,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.annotation.*;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 
 /**
  * Enable dimensional metrics collection.
@@ -107,6 +109,16 @@ class MetricsBoot1Configuration {
         public WebMetricsTagProvider emptyMetricsTagProvider() {
             return new WebMetricsTagProvider() {};
         }
+    }
+
+    /**
+     * If AOP is not enabled, scheduled interception will not work.
+     */
+    @Bean
+    @ConditionalOnClass({RestTemplate.class, JoinPoint.class})
+    @ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)
+    public MetricsSchedulingAspect metricsSchedulingAspect(MeterRegistry registry) {
+        return new MetricsSchedulingAspect(registry);
     }
 
     /**

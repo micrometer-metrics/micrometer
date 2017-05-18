@@ -68,7 +68,7 @@ class TimerTest {
         Timer t = registry.timer("myTimer");
 
         try {
-            t.record((Runnable) () -> clock(registry).addAndGetNanos(10));
+            t.record(() -> clock(registry).addAndGetNanos(10));
         } finally {
             assertAll(() -> assertEquals(1L, t.count()),
                     () -> assertEquals(10, t.totalTimeNanos() ,1.0e-12));
@@ -82,7 +82,7 @@ class TimerTest {
         Timer t = registry.timer("myTimer");
 
         assertThrows(Exception.class, () -> {
-            t.record(() -> {
+            t.recordThrowable(() -> {
                 clock(registry).addAndGetNanos(10);
                 throw new Exception("uh oh");
             });
