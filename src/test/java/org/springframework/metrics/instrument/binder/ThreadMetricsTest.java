@@ -44,6 +44,6 @@ class ThreadMetricsTest {
             // do nothing
         });
 
-        assertGaugeValue(registry, "threads_peak", v -> v > peak.get());
+        assertGaugeValue(registry, "threads_peak", v -> v >= peak.get());
     }
 }
