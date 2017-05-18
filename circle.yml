@@ -18,3 +18,8 @@ deployment:
   release:
     tag: /v.*/
     owner: spring-projects
+dependencies:
+  override:
+    - ./gradlew downloadDependencies
+  cache_directories:
+    - "~/.gradle"
