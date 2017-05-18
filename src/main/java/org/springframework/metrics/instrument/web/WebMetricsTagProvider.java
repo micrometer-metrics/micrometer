@@ -36,6 +36,8 @@ import java.util.stream.Stream;
  */
 public interface WebMetricsTagProvider {
     /**
+     * Supplies default tags to timers monitoring RestTemplate requests.
+     *
      * @param request  RestTemplate client HTTP request
      * @param response may be null in the event of a client error
      * @return a map of tags added to every client HTTP request metric
@@ -46,7 +48,18 @@ public interface WebMetricsTagProvider {
     }
 
     /**
-     * Supplies default tags to the Web MVC server programming model
+     * Supplies default tags to long task timers monitoring the Web MVC server programming model.
+     *
+     * @param request  HTTP request
+     * @param handler  the request method that is responsible for handling the request
+     * @return a map of tags added to every Spring MVC HTTP request metric
+     */
+    default Stream<Tag> httpLongRequestTags(HttpServletRequest request, Object handler) {
+        return Stream.empty();
+    }
+
+    /**
+     * Supplies default tags to the Web MVC server programming model.
      *
      * @param request  HTTP request
      * @param response HTTP response
@@ -54,31 +67,29 @@ public interface WebMetricsTagProvider {
      * @return a map of tags added to every Spring MVC HTTP request metric
      */
     default Stream<Tag> httpRequestTags(HttpServletRequest request,
-                                HttpServletResponse response, Object handler, String caller) {
+                                HttpServletResponse response, Object handler) {
         return Stream.empty();
     }
 
     /**
-     * Supplies default tags to the WebFlux annotation-based server programming model
+     * Supplies default tags to the WebFlux annotation-based server programming model.
      * @param exchange
      * @param exception
-     * @param caller
      * @return
      */
-    default Stream<Tag> httpRequestTags(ServerWebExchange exchange, Throwable exception, String caller) {
+    default Stream<Tag> httpRequestTags(ServerWebExchange exchange, Throwable exception) {
         return Stream.empty();
     }
 
     /**
-     * Supplies default tags to the WebFlux functional server programming model
+     * Supplies default tags to the WebFlux functional server programming model.
      * @param request
      * @param response
      * @param uri
      * @param exception
-     * @param caller
      * @return
      */
-    default Stream<Tag> httpRequestTags(ServerRequest request, ServerResponse response, String uri, Throwable exception, String caller) {
+    default Stream<Tag> httpRequestTags(ServerRequest request, ServerResponse response, String uri, Throwable exception) {
         return Stream.empty();
     }
 }

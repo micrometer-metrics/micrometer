@@ -47,11 +47,11 @@ public class WebfluxMetricsWebFilter implements WebFilter {
         Mono<Void> filtered = chain.filter(exchange);
         return filtered
                 .doOnSuccess(done ->
-                        registry.timer(metricName, tagProvider.httpRequestTags(exchange, null, null))
+                        registry.timer(metricName, tagProvider.httpRequestTags(exchange, null))
                                 .record(System.nanoTime() - start, TimeUnit.NANOSECONDS)
                 )
                 .doOnError(t ->
-                        registry.timer(metricName, tagProvider.httpRequestTags(exchange, t, null))
+                        registry.timer(metricName, tagProvider.httpRequestTags(exchange, t))
                                 .record(System.nanoTime() - start, TimeUnit.NANOSECONDS)
                 );
     }

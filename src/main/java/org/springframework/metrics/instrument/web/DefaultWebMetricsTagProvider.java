@@ -68,8 +68,27 @@ public class DefaultWebMetricsTagProvider implements WebMetricsTagProvider {
     }
 
     @Override
+    public Stream<Tag> httpLongRequestTags(HttpServletRequest request, Object handler) {
+        Stream.Builder<Tag> tags = Stream.builder();
+
+        tags.add(Tag.of("method", request.getMethod()));
+
+        String uri = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+        if (uri == null) {
+            uri = request.getPathInfo();
+        }
+        if (!StringUtils.hasText(uri)) {
+            uri = "/";
+        }
+        uri = sanitizeUrlTemplate(uri.substring(1));
+        tags.add(Tag.of("uri", uri.isEmpty() ? "root" : uri));
+
+        return tags.build();
+    }
+
+    @Override
     public Stream<Tag> httpRequestTags(HttpServletRequest request,
-                                       HttpServletResponse response, Object handler, String caller) {
+                                       HttpServletResponse response, Object handler) {
         Stream.Builder<Tag> tags = Stream.builder();
 
         tags.add(Tag.of("method", request.getMethod()));
@@ -90,15 +109,11 @@ public class DefaultWebMetricsTagProvider implements WebMetricsTagProvider {
             tags.add(Tag.of("exception", exception.getClass().getSimpleName()));
         }
 
-        if (caller != null) {
-            tags.add(Tag.of("caller", caller));
-        }
-
         return tags.build();
     }
 
     @Override
-    public Stream<Tag> httpRequestTags(ServerWebExchange exchange, Throwable exception, String caller) {
+    public Stream<Tag> httpRequestTags(ServerWebExchange exchange, Throwable exception) {
         Stream.Builder<Tag> tags = Stream.builder();
 
         ServerHttpRequest request = exchange.getRequest();
@@ -120,15 +135,11 @@ public class DefaultWebMetricsTagProvider implements WebMetricsTagProvider {
             tags.add(Tag.of("exception", exception.getClass().getSimpleName()));
         }
 
-        if (caller != null) {
-            tags.add(Tag.of("caller", caller));
-        }
-
         return tags.build();
     }
 
     @Override
-    public Stream<Tag> httpRequestTags(ServerRequest request, ServerResponse response, String uri, Throwable exception, String caller) {
+    public Stream<Tag> httpRequestTags(ServerRequest request, ServerResponse response, String uri, Throwable exception) {
         Stream.Builder<Tag> tags = Stream.builder();
 
         tags.add(Tag.of("method", request.method().toString()));
@@ -142,10 +153,6 @@ public class DefaultWebMetricsTagProvider implements WebMetricsTagProvider {
 
         if (exception != null) {
             tags.add(Tag.of("exception", exception.getClass().getSimpleName()));
-        }
-
-        if (caller != null) {
-            tags.add(Tag.of("caller", caller));
         }
 
         return tags.build();

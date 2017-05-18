@@ -48,7 +48,7 @@ public class RouterFunctionMetrics {
             return next
                     .handle(request)
                     .doOnSuccess(response -> {
-                        Stream<Tag> allTags = Stream.concat(tags, tagProvider.httpRequestTags(request, response, "", null, null));
+                        Stream<Tag> allTags = Stream.concat(tags, tagProvider.httpRequestTags(request, response, "", null));
                         registry.timer(name, allTags).record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
                     });
         };

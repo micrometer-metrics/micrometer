@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 Pivotal Software, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,37 +15,42 @@
  */
 package org.springframework.metrics.instrument.web;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.metrics.boot.EnableMetrics;
+import org.springframework.metrics.instrument.LongTaskTimer;
 import org.springframework.metrics.instrument.MeterRegistry;
-import org.springframework.metrics.instrument.Tag;
+import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.annotation.Timed;
-import org.springframework.metrics.instrument.simple.SimpleTimer;
+import org.springframework.metrics.instrument.simple.SimpleMeterRegistry;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
@@ -53,93 +58,97 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest({WebmvcMetricsHandlerInterceptorTest.Controller1.class, WebmvcMetricsHandlerInterceptorTest.Controller2.class})
 class WebmvcMetricsHandlerInterceptorTest {
     @Autowired
-    private
-    MockMvc mvc;
+    private MockMvc mvc;
 
-    @MockBean
-    private
-    MeterRegistry registry;
+    @Autowired
+    private SimpleMeterRegistry registry;
+
+    static CountDownLatch longRequestCountDown = new CountDownLatch(1);
+
+    @AfterEach
+    void clearRegistry() {
+        registry.clear();
+    }
 
     @Test
     void metricsGatheredWhenMethodIsTimed() throws Exception {
-        SimpleTimer timer = expectTimer();
         mvc.perform(get("/api/c1/10")).andExpect(status().isOk());
-        assertTags(
-                Tag.of("status", "200"), Tag.of("uri", "api_c1_-id-"), // default tags provided by WebMetricsTagProvider
-                Tag.of("public", "true") // extra tags provided via @Timed
-        );
-        assertThat(timer.count()).isEqualTo(1);
+        assertThat(registry.findMeter(Timer.class, "http_server_requests", "status", "200", "uri", "api_c1_-id-", "public", "true"))
+                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
     @SuppressWarnings("unchecked")
     @Test
     void metricsNotGatheredWhenRequestMappingIsNotTimed() throws Exception {
         mvc.perform(get("/api/c1/untimed/10")).andExpect(status().isOk());
-        verify(registry, never()).timer(anyString(), any(Stream.class));
+        assertThat(registry.findMeter(Timer.class, "http_server_requests")).isEmpty();
     }
 
     @Test
     void metricsGatheredWhenControllerIsTimed() throws Exception {
-        SimpleTimer timer = expectTimer();
         mvc.perform(get("/api/c2/10")).andExpect(status().isOk());
-        assertTags(Tag.of("status", "200"));
-        assertThat(timer.count()).isEqualTo(1);
+        assertThat(registry.findMeter(Timer.class, "http_server_requests", "status", "200"))
+                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
     @Test
     void metricsGatheredWhenClientRequestBad() throws Exception {
-        SimpleTimer timer = expectTimer();
         mvc.perform(get("/api/c1/oops")).andExpect(status().is4xxClientError());
-        assertTags(Tag.of("status", "400"), Tag.of("uri", "api_c1_-id-"));
-        assertThat(timer.count()).isEqualTo(1);
+        assertThat(registry.findMeter(Timer.class, "http_server_requests", "status", "400"))
+                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
     @Test
     void metricsGatheredWhenUnhandledError() throws Exception {
-        SimpleTimer timer = expectTimer();
-        try {
-            mvc.perform(get("/api/c1/unhandledError/10")).andExpect(status().isOk());
-        } catch (Exception e) {
-        }
-        assertTags(Tag.of("exception", "RuntimeException"), Tag.of("status", "200"), Tag.of("uri", "api_c1_unhandledError_-id-"));
-        assertThat(timer.count()).isEqualTo(1);
+        assertThatCode(() -> mvc.perform(get("/api/c1/unhandledError/10")).andExpect(status().isOk()))
+                .hasCauseInstanceOf(RuntimeException.class);
+        assertThat(registry.findMeter(Timer.class, "http_server_requests", "exception", "RuntimeException"))
+                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
     @Test
-    /* FIXME */ @Disabled("ErrorMvcAutoConfiguration is blowing up on SPEL evaluation of 'timestamp'")
+    void metricsGatheredForLongRunningRequestMapping() throws Exception {
+        MvcResult result = mvc.perform(get("/api/c1/long/10"))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        // while the mapping is running, it contributes to the activeTasks count
+        assertThat(registry.findMeter(LongTaskTimer.class, "my_long_request"))
+                .hasValueSatisfying(t -> assertThat(t.activeTasks()).isEqualTo(1));
+
+        // once the mapping completes, we can gather information about status, etc.
+        longRequestCountDown.countDown();
+
+        mvc.perform(asyncDispatch(result)).andExpect(status().isOk());
+
+        assertThat(registry.findMeter(Timer.class, "http_server_requests", "status", "200"))
+                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+    }
+
+    @Test
+    /* FIXME */
+    @Disabled("ErrorMvcAutoConfiguration is blowing up on SPEL evaluation of 'timestamp'")
     void metricsGatheredWhenHandledError() throws Exception {
-        SimpleTimer timer = expectTimer();
         mvc.perform(get("/api/c1/error/10")).andExpect(status().is4xxClientError());
-        assertTags(Tag.of("status", "422"), Tag.of("uri", "api_c1_error_-id-"));
-        assertThat(timer.count()).isEqualTo(1);
+        assertThat(registry.findMeter(Timer.class, "http_server_requests", "status", "422"))
+                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
     @Test
     void metricsGatheredWhenRegexEndpoint() throws Exception {
-        SimpleTimer timer = expectTimer();
         mvc.perform(get("/api/c1/regex/.abc")).andExpect(status().isOk());
-        assertTags(Tag.of("status", "200"), Tag.of("uri", "api_c1_regex_-id-"));
-        assertThat(timer.count()).isEqualTo(1);
-    }
-
-    @SuppressWarnings("unchecked")
-    private void assertTags(Tag... match) {
-        ArgumentCaptor<Stream> tags = ArgumentCaptor.forClass(Stream.class);
-        verify(registry).timer(anyString(), tags.capture());
-        assertThat((List) tags.getValue().collect(Collectors.toList())).contains((Object[]) match);
-    }
-
-    private SimpleTimer expectTimer() {
-        SimpleTimer timer = new SimpleTimer("http_server_requests");
-
-        //noinspection unchecked
-        when(registry.timer(eq("http_server_requests"), any(Stream.class))).thenReturn(timer);
-        return timer;
+        assertThat(registry.findMeter(Timer.class, "http_server_requests", "uri", "api_c1_regex_-id-"))
+                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
     @SpringBootApplication
     @EnableMetrics
-    static class App {}
+    static class App {
+        @Bean
+        MeterRegistry registry() {
+            return new SimpleMeterRegistry();
+        }
+    }
 
     @RestController
     @RequestMapping("/api/c1")
@@ -148,6 +157,20 @@ class WebmvcMetricsHandlerInterceptorTest {
         @GetMapping("/{id}")
         public String successfulWithExtraTags(@PathVariable Long id) {
             return id.toString();
+        }
+
+        @Timed // contains dimensions for status, etc. that can't be known until after the response is sent
+        @Timed(value = "my_long_request", longTask = true) // in progress metric
+        @GetMapping("/long/{id}")
+        public Callable<String> takesLongTimeToSatisfy(@PathVariable Long id) {
+            return () -> {
+                try {
+                    longRequestCountDown.await();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                return id.toString();
+            };
         }
 
         @GetMapping("/untimed/{id}")

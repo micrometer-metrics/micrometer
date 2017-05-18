@@ -19,9 +19,12 @@ import java.lang.annotation.*;
 
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Documented
+@Repeatable(TimedSet.class)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Timed {
     String value() default "";
 
     String[] extraTags() default {};
+
+    boolean longTask() default false;
 }

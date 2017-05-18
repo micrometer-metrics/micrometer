@@ -94,4 +94,12 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
         idMap.put(m, id);
         return m;
     }
+
+    /**
+     * Clear the registry of all registered meters and their values.
+     */
+    public void clear() {
+        meterMap.clear();
+        idMap.clear();
+    }
 }
