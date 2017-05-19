@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.metrics.instrument.annotation;
+package org.springframework.metrics.annotation;
 
 import java.lang.annotation.*;
 
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Documented
-@Repeatable(TimedSet.class)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Timed {
-    String value() default "";
-
-    String[] extraTags() default {};
-
-    boolean longTask() default false;
+public @interface TimedSet {
+    Timed[] value();
 }

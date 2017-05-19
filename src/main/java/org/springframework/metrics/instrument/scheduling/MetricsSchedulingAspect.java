@@ -26,7 +26,7 @@ import org.springframework.metrics.instrument.LongTaskTimer;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Tags;
 import org.springframework.metrics.instrument.Timer;
-import org.springframework.metrics.instrument.annotation.Timed;
+import org.springframework.metrics.annotation.Timed;
 import org.springframework.metrics.instrument.internal.TimedUtils;
 
 import java.lang.reflect.Method;

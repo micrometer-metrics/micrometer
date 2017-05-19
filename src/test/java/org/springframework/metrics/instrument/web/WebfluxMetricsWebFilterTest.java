@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Tag;
-import org.springframework.metrics.instrument.annotation.Timed;
+import org.springframework.metrics.annotation.Timed;
 import org.springframework.metrics.instrument.simple.SimpleTimer;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.bind.annotation.GetMapping;

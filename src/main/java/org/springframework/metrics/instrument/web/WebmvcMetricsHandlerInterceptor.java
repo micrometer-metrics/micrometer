@@ -20,7 +20,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.Timer;
-import org.springframework.metrics.instrument.annotation.Timed;
+import org.springframework.metrics.annotation.Timed;
 import org.springframework.metrics.instrument.internal.TimedUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.method.HandlerMethod;
@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 

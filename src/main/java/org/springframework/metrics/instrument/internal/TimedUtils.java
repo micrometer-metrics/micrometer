@@ -15,21 +15,14 @@
  */
 package org.springframework.metrics.instrument.internal;
 
-import org.springframework.metrics.instrument.annotation.Timed;
-import org.springframework.metrics.instrument.annotation.TimedSet;
+import org.springframework.metrics.annotation.Timed;
+import org.springframework.metrics.annotation.TimedSet;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
-import static java.util.Collections.emptySet;
-import static java.util.Collections.singleton;
 import static java.util.Comparator.comparing;
-import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 
