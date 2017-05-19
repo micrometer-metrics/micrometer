@@ -16,6 +16,7 @@
 package org.springframework.metrics.instrument.web;
 
 import org.springframework.http.HttpRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -121,8 +122,10 @@ public class DefaultWebMetricsTagProvider implements WebMetricsTagProvider {
 
         tags.add(Tag.of("method", request.getMethod().toString()));
 
-        // FIXME determined too late
-//        tags.add(Tag.of("status", response.getStatusCode().toString()));
+        HttpStatus status = response.getStatusCode();
+        if(status == null)
+            status = HttpStatus.OK;
+        tags.add(Tag.of("status", status.toString()));
 
         String uri = (String) exchange.getAttribute(org.springframework.web.reactive.HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE).orElse(null);
         if (!StringUtils.hasText(uri)) {

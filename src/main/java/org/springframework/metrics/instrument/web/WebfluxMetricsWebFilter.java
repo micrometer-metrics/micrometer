@@ -45,6 +45,12 @@ public class WebfluxMetricsWebFilter implements WebFilter {
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         final long start = System.nanoTime();
         Mono<Void> filtered = chain.filter(exchange);
+
+//        exchange.getResponse().beforeCommit(() -> {
+//            exchange.getResponse().getStatusCode(); // still null at this point
+//            return Mono.empty();
+//        });
+
         return filtered
                 .doOnSuccess(done ->
                         registry.timer(metricName, tagProvider.httpRequestTags(exchange, null))

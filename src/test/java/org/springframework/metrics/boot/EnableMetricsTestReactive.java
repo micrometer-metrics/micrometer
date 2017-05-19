@@ -55,7 +55,7 @@ public class EnableMetricsTestReactive {
     public void reactiveRequestMappingIsInstrumented() {
         assertThat(loopback.getForObject("/api/echo/hi", String.class)).isEqualTo("hi");
 
-        assertThat(registry.findMeter(Timer.class, "http_server_requests", "uri", "api_echo_-word-"))
+        assertThat(registry.findMeter(Timer.class, "http_server_requests", "status", "200", "uri", "api_echo_-word-"))
                 .containsInstanceOf(Timer.class)
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
