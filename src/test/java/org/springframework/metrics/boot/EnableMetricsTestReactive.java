@@ -73,11 +73,6 @@ public class EnableMetricsTestReactive {
         public RestTemplate restTemplate() {
             return new RestTemplate();
         }
-
-        @Bean
-        public WebfluxMetricsWebFilter webfluxMetrics(WebMetricsTagProvider provider) {
-            return new WebfluxMetricsWebFilter(registry(), provider, "http_server_requests");
-        }
     }
 
     @RestController

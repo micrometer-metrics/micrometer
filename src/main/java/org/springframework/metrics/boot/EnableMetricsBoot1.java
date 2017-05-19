@@ -62,14 +62,26 @@ class MetricsBoot1Configuration {
         return new DefaultWebMetricsTagProvider();
     }
 
+    @Configuration
+    @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.REACTIVE)
+    @Import(WebMetricsTagProviderConfiguration.class)
+    static class WebFluxConfiguration {
+        @Autowired
+        MeterRegistry registry;
+
+        @Bean
+        public WebfluxMetricsWebFilter webfluxMetrics(WebMetricsTagProvider provider) {
+            return new WebfluxMetricsWebFilter(registry, provider, "http_server_requests");
+        }
+    }
+
     /**
      * We continue to use the deprecated WebMvcConfigurerAdapter for backwards compatibility
      * with Spring Framework 4.X.
      */
     @SuppressWarnings("deprecation")
     @Configuration
-    @ConditionalOnWebApplication
-    @ConditionalOnClass(WebMvcConfigurer.class)
+    @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
     @Import(WebMetricsTagProviderConfiguration.class)
     static class WebMvcConfiguration extends org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter {
         @Autowired
