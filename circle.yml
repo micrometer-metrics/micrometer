@@ -20,6 +20,6 @@ deployment:
     owner: spring-projects
 dependencies:
   override:
-    - ./gradlew downloadDependencies
+    - ./gradlew downloadDependencies --console=plain
   cache_directories:
     - "~/.gradle"
