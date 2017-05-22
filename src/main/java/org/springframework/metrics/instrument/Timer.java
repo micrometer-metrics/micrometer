@@ -49,6 +49,24 @@ public interface Timer extends Meter {
     void record(Runnable f);
 
     /**
+     * Wrap a {@link Runnable} so that it is timed when invoked.
+     *
+     * @param f  The Runnable to time when it is invoked.
+     * @return The wrapped Runnable.
+     */
+    default Runnable wrap(Runnable f) {
+        return () -> record(f);
+    }
+
+    /**
+     * Wrap a {@link Callable} so that it is timed when invoked.
+     *
+     * @param f  The Callable to time when it is invoked.
+     * @return The wrapped Callable.
+     */
+    <T> Callable<T> wrap(Callable<T> f);
+
+    /**
      * The number of times that record has been called since this timer was created.
      */
     long count();

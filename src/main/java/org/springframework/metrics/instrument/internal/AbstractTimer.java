@@ -19,6 +19,7 @@ import org.springframework.metrics.instrument.Clock;
 import org.springframework.metrics.instrument.ThrowableCallable;
 import org.springframework.metrics.instrument.Timer;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractTimer implements Timer {
@@ -39,6 +40,19 @@ public abstract class AbstractTimer implements Timer {
             final long e = clock.monotonicTime();
             record(e - s, TimeUnit.NANOSECONDS);
         }
+    }
+
+    @Override
+    public <T> Callable<T> wrap(Callable<T> f) {
+        return () -> {
+            final long s = clock.monotonicTime();
+            try {
+                return f.call();
+            } finally {
+                final long e = clock.monotonicTime();
+                record(e - s, TimeUnit.NANOSECONDS);
+            }
+        };
     }
 
     @Override

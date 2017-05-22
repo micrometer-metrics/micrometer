@@ -24,10 +24,7 @@ import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetada
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProvider;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProviders;
 import org.springframework.core.env.Environment;
-import org.springframework.metrics.instrument.Clock;
-import org.springframework.metrics.instrument.Meter;
-import org.springframework.metrics.instrument.MeterRegistry;
-import org.springframework.metrics.instrument.Tag;
+import org.springframework.metrics.instrument.*;
 import org.springframework.metrics.instrument.binder.MeterBinder;
 
 import javax.annotation.PostConstruct;
@@ -36,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.stream.Stream;
 
 public abstract class AbstractMeterRegistry implements MeterRegistry {
@@ -64,25 +62,6 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     @Override
     public Clock getClock() {
         return clock;
-    }
-
-    @Override
-    public Cache monitor(String name, Stream<Tag> tags, Cache cache) {
-        CacheStats stats = cache.stats();
-
-        gauge(name + "_size", tags, cache, Cache::size);
-        gauge(name + "_hit_total", tags, stats, CacheStats::hitCount);
-        gauge(name + "_miss_total", tags, stats, CacheStats::missCount);
-        gauge(name + "_requests_total", tags, stats, CacheStats::requestCount);
-        gauge(name + "_eviction_total", tags, stats, CacheStats::evictionCount);
-        gauge(name + "_load_duration", tags, stats, CacheStats::totalLoadTime);
-
-        if(cache instanceof LoadingCache) {
-            gauge(name + "_loads_total", tags, stats, CacheStats::loadCount);
-            gauge(name + "_load_failure_total", tags, stats, CacheStats::loadExceptionCount);
-        }
-
-        return cache;
     }
 
     @Override

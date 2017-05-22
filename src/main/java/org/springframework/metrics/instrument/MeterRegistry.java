@@ -16,10 +16,17 @@
 package org.springframework.metrics.instrument;
 
 import com.google.common.cache.Cache;
+import com.google.common.cache.CacheStats;
+import com.google.common.cache.LoadingCache;
+import org.springframework.metrics.instrument.internal.MonitoredExecutorService;
 import org.springframework.metrics.instrument.binder.MeterBinder;
 
 import javax.sql.DataSource;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Stream;
 
@@ -41,7 +48,7 @@ public interface MeterRegistry {
      */
     Collection<Meter> getMeters();
 
-    default <M extends Meter> Optional<M> findMeter(Class<M> mClass, String name, String...tags) {
+    default <M extends Meter> Optional<M> findMeter(Class<M> mClass, String name, String... tags) {
         return findMeter(mClass, name, Tags.tagList(tags));
     }
 
@@ -316,10 +323,12 @@ public interface MeterRegistry {
     /**
      * Record metrics on Guava caches.
      *
-     * @see com.google.common.cache.CacheStats
+     * @param name  The name prefix of the metrics.
+     * @param tags  Tags to apply to all recorded metrics.
      * @param cache The cache to instrument.
      * @return The instrumented cache, unchanged. The original cache is not
      * wrapped or proxied in any way.
+     * @see com.google.common.cache.CacheStats
      */
     default Cache monitor(String name, Iterable<Tag> tags, Cache cache) {
         return monitor(name, stream(tags.spliterator(), false), cache);
@@ -328,20 +337,39 @@ public interface MeterRegistry {
     /**
      * Record metrics on Guava caches.
      *
-     * @see com.google.common.cache.CacheStats
+     * @param name  The name prefix of the metrics.
+     * @param tags  Tags to apply to all recorded metrics.
      * @param cache The cache to instrument.
      * @return The instrumented cache, unchanged. The original cache is not
      * wrapped or proxied in any way.
+     * @see com.google.common.cache.CacheStats
      */
-    Cache monitor(String name, Stream<Tag> tags, Cache cache);
+    default Cache monitor(String name, Stream<Tag> tags, Cache cache) {
+        CacheStats stats = cache.stats();
+
+        gauge(name + "_size", tags, cache, Cache::size);
+        gauge(name + "_hit_total", tags, stats, CacheStats::hitCount);
+        gauge(name + "_miss_total", tags, stats, CacheStats::missCount);
+        gauge(name + "_requests_total", tags, stats, CacheStats::requestCount);
+        gauge(name + "_eviction_total", tags, stats, CacheStats::evictionCount);
+        gauge(name + "_load_duration", tags, stats, CacheStats::totalLoadTime);
+
+        if(cache instanceof LoadingCache) {
+            gauge(name + "_loads_total", tags, stats, CacheStats::loadCount);
+            gauge(name + "_load_failure_total", tags, stats, CacheStats::loadExceptionCount);
+        }
+
+        return cache;
+    }
 
     /**
      * Record metrics on Guava caches.
      *
-     * @see com.google.common.cache.CacheStats
+     * @param name  The name prefix of the metrics.
      * @param cache The cache to instrument.
      * @return The instrumented cache, unchanged. The original cache is not
      * wrapped or proxied in any way.
+     * @see com.google.common.cache.CacheStats
      */
     default Cache monitor(String name, Cache cache) {
         return monitor(name, emptyList(), cache);
@@ -350,6 +378,8 @@ public interface MeterRegistry {
     /**
      * Record metrics on active connections and connection pool utilization.
      *
+     * @param name       The name prefix of the metrics.
+     * @param tags       Tags to apply to all recorded metrics.
      * @param dataSource The data source to instrument.
      * @return The instrumented data source, unchanged. The original data source
      * is not wrapped or proxied in any way.
@@ -359,8 +389,12 @@ public interface MeterRegistry {
     }
 
     /**
-     * Record metrics on active connections and connection pool utilization.
+     * Record metrics on active connections and connection pool utilization. How
+     * metadata regarding the data source's underlying pool and its utilization is
+     * implementation-dependent.
      *
+     * @param name       The name prefix of the metrics.
+     * @param tags       Tags to apply to all recorded metrics.
      * @param dataSource The data source to instrument.
      * @return The instrumented data source, unchanged. The original data source
      * is not wrapped or proxied in any way.
@@ -370,11 +404,83 @@ public interface MeterRegistry {
     /**
      * Record metrics on active connections and connection pool utilization.
      *
+     * @param name       The name prefix of the metrics
      * @param dataSource The data source to instrument.
      * @return The instrumented data source, unchanged. The original data source
      * is not wrapped or proxied in any way.
      */
     default DataSource monitor(String name, DataSource dataSource) {
         return monitor(name, emptyList(), dataSource);
+    }
+
+    /**
+     * Record metrics on the use of an executor.
+     *
+     * @param name       The name prefix of the metrics.
+     * @param tags       Tags to apply to all recorded metrics.
+     * @param executor   The executor to instrument.
+     * @return The instrumented executor, proxied.
+     */
+    default Executor monitor(String name, Iterable<Tag> tags, Executor executor) {
+        return monitor(name, stream(tags.spliterator(), false), executor);
+    }
+
+    /**
+     * Record metrics on the use of an executor.
+     *
+     * @param name       The name prefix of the metrics.
+     * @param tags       Tags to apply to all recorded metrics.
+     * @param executor   The executor to instrument.
+     * @return The instrumented executor, proxied.
+     */
+    default Executor monitor(String name, Stream<Tag> tags, Executor executor) {
+        final Timer timer = timer(name, tags);
+        return command -> timer.record(() -> executor.execute(command));
+    }
+
+    /**
+     * Record metrics on the use of an executor service.
+     *
+     * @param name       The name prefix of the metrics.
+     * @param executor   The executor to instrument.
+     * @return The instrumented executor, proxied.
+     */
+    default Executor monitor(String name, Executor executor) {
+        return monitor(name, emptyList(), executor);
+    }
+
+    /**
+     * Record metrics on the use of an executor.
+     *
+     * @param name       The name prefix of the metrics.
+     * @param tags       Tags to apply to all recorded metrics.
+     * @param executor   The executor to instrument.
+     * @return The instrumented executor, proxied.
+     */
+    default ExecutorService monitor(String name, Stream<Tag> tags, ExecutorService executor) {
+        return monitor(name, tags.collect(toList()), executor);
+    }
+
+    /**
+     * Record metrics on the use of an executor.
+     *
+     * @param name       The name prefix of the metrics.
+     * @param tags       Tags to apply to all recorded metrics.
+     * @param executor   The executor to instrument.
+     * @return The instrumented executor, proxied.
+     */
+    default ExecutorService monitor(String name, Iterable<Tag> tags, ExecutorService executor) {
+        return new MonitoredExecutorService(this, executor, name, tags);
+    }
+
+    /**
+     * Record metrics on the use of an executor.
+     *
+     * @param name       The name prefix of the metrics.
+     * @param executor   The executor to instrument.
+     * @return The instrumented executor, proxied.
+     */
+    default ExecutorService monitor(String name, ExecutorService executor) {
+        return monitor(name, emptyList(), executor);
     }
 }

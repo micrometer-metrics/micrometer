@@ -21,7 +21,6 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.ApplicationContext;
@@ -36,12 +35,9 @@ import org.springframework.metrics.instrument.scheduling.MetricsSchedulingAspect
 import org.springframework.metrics.instrument.web.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import javax.servlet.http.HttpServletRequest;
 import java.lang.annotation.*;
 import java.util.ArrayList;
-import java.util.regex.Pattern;
 
 /**
  * Enable dimensional metrics collection.
