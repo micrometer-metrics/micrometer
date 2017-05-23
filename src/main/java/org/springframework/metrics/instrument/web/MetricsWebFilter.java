@@ -28,16 +28,16 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Jon Schneider
  */
-public class WebfluxMetricsWebFilter implements WebFilter {
+public class MetricsWebFilter implements WebFilter {
     private final MeterRegistry registry;
-    private final WebMetricsTagConfigurer tagProvider;
+    private final WebfluxTagConfigurer tagConfigurer;
     private final String metricName;
 
-    public WebfluxMetricsWebFilter(MeterRegistry registry,
-                                   WebMetricsTagConfigurer tagProvider,
-                                   String metricName) {
+    public MetricsWebFilter(MeterRegistry registry,
+                            WebfluxTagConfigurer tagConfigurer,
+                            String metricName) {
         this.registry = registry;
-        this.tagProvider = tagProvider;
+        this.tagConfigurer = tagConfigurer;
         this.metricName = metricName;
     }
 
@@ -53,11 +53,11 @@ public class WebfluxMetricsWebFilter implements WebFilter {
 
         return filtered
                 .doOnSuccess(done ->
-                        registry.timer(metricName, tagProvider.httpRequestTags(exchange, null))
+                        registry.timer(metricName, tagConfigurer.httpRequestTags(exchange, null))
                                 .record(System.nanoTime() - start, TimeUnit.NANOSECONDS)
                 )
                 .doOnError(t ->
-                        registry.timer(metricName, tagProvider.httpRequestTags(exchange, t))
+                        registry.timer(metricName, tagConfigurer.httpRequestTags(exchange, t))
                                 .record(System.nanoTime() - start, TimeUnit.NANOSECONDS)
                 );
     }

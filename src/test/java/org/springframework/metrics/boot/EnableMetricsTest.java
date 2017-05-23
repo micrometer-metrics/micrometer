@@ -26,6 +26,8 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.annotation.Timed;
@@ -33,17 +35,24 @@ import org.springframework.metrics.instrument.binder.JvmMemoryMetrics;
 import org.springframework.metrics.instrument.binder.LogbackMetrics;
 import org.springframework.metrics.instrument.binder.MeterBinder;
 import org.springframework.metrics.instrument.simple.SimpleMeterRegistry;
-import org.springframework.metrics.instrument.web.WebMetricsTagConfigurer;
-import org.springframework.metrics.instrument.web.WebfluxMetricsWebFilter;
+import org.springframework.metrics.instrument.web.RestTemplateTagConfigurer;
+import org.springframework.metrics.instrument.web.MetricsWebFilter;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.web.client.ExpectedCount;
+import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.client.ExpectedCount.once;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -67,7 +76,13 @@ class EnableMetricsTest {
 
     @Test
     void restTemplateIsInstrumented() {
-        external.getForObject("http://www.google.com", String.class);
+        MockRestServiceServer server = MockRestServiceServer.bindTo(external).build();
+        server.expect(once(), requestTo("/api/external")).andExpect(method(HttpMethod.GET))
+            .andRespond(withSuccess("{\"message\": \"hello\"}", MediaType.APPLICATION_JSON));
+
+        //noinspection unchecked
+        assertThat(external.getForObject("/api/external", Map.class))
+            .containsKey("message");
 
         assertThat(registry.findMeter(Timer.class, "http_client_requests"))
             .containsInstanceOf(Timer.class)
@@ -106,11 +121,6 @@ class EnableMetricsTest {
         @Bean
         public RestTemplate restTemplate() {
             return new RestTemplate();
-        }
-
-        @Bean
-        public WebfluxMetricsWebFilter webfluxMetrics(WebMetricsTagConfigurer provider) {
-            return new WebfluxMetricsWebFilter(registry(), provider, "http_server_requests");
         }
     }
 

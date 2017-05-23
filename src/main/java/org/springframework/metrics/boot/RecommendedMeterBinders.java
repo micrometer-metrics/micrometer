@@ -15,18 +15,22 @@
  */
 package org.springframework.metrics.boot;
 
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.metrics.instrument.binder.JvmMemoryMetrics;
+import org.springframework.metrics.instrument.binder.LogbackMetrics;
 
-import java.lang.annotation.*;
+@Configuration
+class RecommendedMeterBinders {
+    @Bean
+    JvmMemoryMetrics jvmMemoryMetrics() {
+        return new JvmMemoryMetrics();
+    }
 
-/**
- * Enable dimensional metrics collection.
- */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-@Inherited
-@Import({ MetricsConfiguration.class, MetricsBoot1Configuration.class })
-public @interface EnableMetrics {
+    @Bean
+    @ConditionalOnClass(ch.qos.logback.classic.Logger.class)
+    LogbackMetrics logbackMetrics() {
+        return new LogbackMetrics();
+    }
 }
-

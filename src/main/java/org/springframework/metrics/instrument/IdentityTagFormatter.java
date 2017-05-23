@@ -13,20 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.metrics.boot;
+package org.springframework.metrics.instrument;
 
-import org.springframework.context.annotation.Import;
-
-import java.lang.annotation.*;
-
-/**
- * Enable dimensional metrics collection.
- */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-@Inherited
-@Import({ MetricsConfiguration.class, MetricsBoot1Configuration.class })
-public @interface EnableMetrics {
+public class IdentityTagFormatter implements TagFormatter {
 }
-

@@ -18,8 +18,8 @@ package org.springframework.metrics.instrument.web;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.metrics.export.atlas.AtlasTagFormatter;
 import org.springframework.metrics.instrument.MeterRegistry;
+import org.springframework.metrics.instrument.IdentityTagFormatter;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.simple.SimpleMeterRegistry;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -34,14 +34,14 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Jon Schneider
  */
-class MetricsClientHttpRequestInterceptorTest {
+class MetricsRestTemplateInterceptorTest {
     @Test
     void interceptRestTemplate() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
         RestTemplate restTemplate = new RestTemplate();
-        restTemplate.setInterceptors(singletonList(new MetricsClientHttpRequestInterceptor(
-                registry, new DefaultWebMetricsTagConfigurer(new AtlasTagFormatter()),
+        restTemplate.setInterceptors(singletonList(new MetricsRestTemplateInterceptor(
+                registry, new RestTemplateTagConfigurer(new IdentityTagFormatter()),
                 "http_client_requests"
         )));
 

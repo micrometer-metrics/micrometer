@@ -17,37 +17,30 @@ package org.springframework.metrics.instrument.web;
 
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Tag;
-import org.springframework.metrics.instrument.TagFormatter;
 import org.springframework.web.reactive.function.server.HandlerFilterFunction;
+import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 public class RouterFunctionMetrics {
     private final MeterRegistry registry;
-
-    private String defaultName = "http_server_requests";
-
-    // FIXME how best to inject the tag formatter and configurer?
-    private WebMetricsTagConfigurer tagProvider = new DefaultWebMetricsTagConfigurer(new TagFormatter() {
-    });
+    private BiFunction<ServerRequest, ServerResponse, Stream<Tag>> defaultTags = (ServerRequest request, ServerResponse response) ->
+            Stream.of(method(request), status(response));
 
     public RouterFunctionMetrics(MeterRegistry registry) {
         this.registry = registry;
     }
 
-    public RouterFunctionMetrics setDefaultName(String defaultName) {
-        this.defaultName = defaultName;
+    public RouterFunctionMetrics setDefaultTags(BiFunction<ServerRequest, ServerResponse, Stream<Tag>> defaultTags) {
+        this.defaultTags = defaultTags;
         return this;
     }
 
-    public HandlerFilterFunction<ServerResponse, ServerResponse> timer() {
-        return timer(defaultName, Stream.empty());
-    }
-
-    public HandlerFilterFunction<ServerResponse, ServerResponse> timer(Stream<Tag> tags) {
-        return timer(defaultName, tags);
+    public HandlerFilterFunction<ServerResponse, ServerResponse> timer(String name) {
+        return timer(name, Stream.empty());
     }
 
     public HandlerFilterFunction<ServerResponse, ServerResponse> timer(String name, Stream<Tag> tags) {
@@ -56,9 +49,27 @@ public class RouterFunctionMetrics {
             return next
                     .handle(request)
                     .doOnSuccess(response -> {
-                        Stream<Tag> allTags = Stream.concat(tags, tagProvider.httpRequestTags(request, response, "", null));
+                        Stream<Tag> allTags = Stream.concat(tags, defaultTags.apply(request, response));
                         registry.timer(name, allTags).record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+                    })
+                    .doOnError(error -> {
                     });
         };
+    }
+
+    /**
+     * @param request The HTTP request.
+     * @return A "method" tag whose value is a capitalized method (e.g. GET).
+     */
+    public static Tag method(ServerRequest request) {
+        return Tag.of("method", request.method().toString());
+    }
+
+    /**
+     * @param response The HTTP response.
+     * @return A "status" tag whose value is the numeric status code.
+     */
+    public static Tag status(ServerResponse response) {
+        return Tag.of("status", response.statusCode().toString());
     }
 }

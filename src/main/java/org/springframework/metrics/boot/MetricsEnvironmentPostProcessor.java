@@ -38,12 +38,10 @@ public class MetricsEnvironmentPostProcessor implements EnvironmentPostProcessor
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment,
                                        SpringApplication application) {
-        if (ClassUtils.isPresent("com.netflix.servo.monitor.Monitors", null)) {
-            // Make spring AOP default to target class so RestTemplates can be customized,
-            // @Scheduled instrumented
-            log.debug("Setting 'spring.aop.proxyTargetClass=true' to make spring AOP default to target class so RestTemplates can be customized");
-            addDefaultProperty(environment, "spring.aop.proxyTargetClass", "true");
-        }
+        // Make spring AOP default to target class so RestTemplates can be customized,
+        // @Scheduled instrumented
+        log.debug("Setting 'spring.aop.proxyTargetClass=true' to make spring AOP default to target class so RestTemplates can be customized");
+        addDefaultProperty(environment, "spring.aop.proxyTargetClass", "true");
     }
 
     private void addDefaultProperty(ConfigurableEnvironment environment, String name,

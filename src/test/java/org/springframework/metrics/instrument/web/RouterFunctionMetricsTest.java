@@ -54,7 +54,7 @@ class RouterFunctionMetricsTest {
 
         RouterFunction<ServerResponse> routes = RouterFunctions
                 .route(GET("/person/{id}").and(accept(APPLICATION_JSON)), request -> ServerResponse.ok().build())
-                .filter(metrics.timer());
+                .filter(metrics.timer("http_server_requests"));
 
         expectTimer();
 

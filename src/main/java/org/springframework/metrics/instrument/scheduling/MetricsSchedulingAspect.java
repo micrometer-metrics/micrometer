@@ -15,25 +15,21 @@
  */
 package org.springframework.metrics.instrument.scheduling;
 
-import com.google.common.base.Functions;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.metrics.annotation.Timed;
 import org.springframework.metrics.instrument.LongTaskTimer;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Tags;
 import org.springframework.metrics.instrument.Timer;
-import org.springframework.metrics.annotation.Timed;
 import org.springframework.metrics.instrument.internal.TimedUtils;
 
 import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Aspect
 public class MetricsSchedulingAspect {
@@ -60,19 +56,15 @@ public class MetricsSchedulingAspect {
             }
         }
 
-        Map<Boolean, Timed> timedAnnots = TimedUtils.findTimed(method)
-                .filter(t -> !t.value().isEmpty())
-                .collect(Collectors.toMap(Timed::longTask, Functions.identity()));
-
-        Timed shortTaskTimerAnnot = timedAnnots.get(false);
         Timer shortTaskTimer = null;
-        if(shortTaskTimerAnnot != null)
-            shortTaskTimer = registry.timer(shortTaskTimerAnnot.value(), Tags.tagList(shortTaskTimerAnnot.extraTags()));
-
-        Timed longTaskTimerAnnot = timedAnnots.get(true);
         LongTaskTimer longTaskTimer = null;
-        if(longTaskTimerAnnot != null)
-            longTaskTimer = registry.longTaskTimer(longTaskTimerAnnot.value(), Tags.tagList(longTaskTimerAnnot.extraTags()));
+
+        for (Timed timed : TimedUtils.findTimed(method).toArray(Timed[]::new)) {
+            if(timed.longTask())
+                longTaskTimer = registry.longTaskTimer(timed.value(), Tags.tagList(timed.extraTags()));
+            else
+                shortTaskTimer = registry.timer(timed.value(), Tags.tagList(timed.extraTags()));
+        }
 
         if(shortTaskTimer != null && longTaskTimer != null) {
             final Timer finalTimer = shortTaskTimer;

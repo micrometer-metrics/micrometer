@@ -18,8 +18,8 @@ package org.springframework.metrics.instrument.web;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.metrics.export.atlas.AtlasTagFormatter;
 import org.springframework.metrics.instrument.MeterRegistry;
+import org.springframework.metrics.instrument.IdentityTagFormatter;
 import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.annotation.Timed;
 import org.springframework.metrics.instrument.simple.SimpleTimer;
@@ -40,7 +40,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-class WebfluxMetricsWebFilterTest {
+class MetricsWebFilterTest {
     private MeterRegistry registry;
     private WebTestClient client;
 
@@ -48,7 +48,7 @@ class WebfluxMetricsWebFilterTest {
     void before() {
         registry = mock(MeterRegistry.class);
         client = WebTestClient.bindToController(new Controller2())
-                .webFilter(new WebfluxMetricsWebFilter(registry, new DefaultWebMetricsTagConfigurer(new AtlasTagFormatter()), "http_server_requests"))
+                .webFilter(new MetricsWebFilter(registry, new WebfluxTagConfigurer(new IdentityTagFormatter()), "http_server_requests"))
                 .build();
     }
 
@@ -60,7 +60,7 @@ class WebfluxMetricsWebFilterTest {
                 .expectBody().consumeAsStringWith(b -> assertThat(b).isEqualTo("10"));
 
         assertTags(
-                Tag.of("uri", "api_c2_-id-")
+                Tag.of("uri", "api/c2/{id}")
                 // FIXME doOnSuccess happens before status code is determined
 //                Tag.of("status", "200")
         );

@@ -29,14 +29,14 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Jon Schneider
  */
-public class MetricsClientHttpRequestInterceptor implements ClientHttpRequestInterceptor {
+public class MetricsRestTemplateInterceptor implements ClientHttpRequestInterceptor {
     private final MeterRegistry meterRegistry;
-    private final WebMetricsTagConfigurer tagProvider;
+    private final RestTemplateTagConfigurer tagProvider;
     private final String metricName;
 
-    public MetricsClientHttpRequestInterceptor(MeterRegistry meterRegistry,
-                                               WebMetricsTagConfigurer tagProvider,
-                                               String metricName) {
+    public MetricsRestTemplateInterceptor(MeterRegistry meterRegistry,
+                                          RestTemplateTagConfigurer tagProvider,
+                                          String metricName) {
         this.tagProvider = tagProvider;
         this.meterRegistry = meterRegistry;
         this.metricName = metricName;

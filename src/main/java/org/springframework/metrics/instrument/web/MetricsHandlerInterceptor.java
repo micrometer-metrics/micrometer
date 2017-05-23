@@ -17,10 +17,10 @@ package org.springframework.metrics.instrument.web;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.metrics.annotation.Timed;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.Timer;
-import org.springframework.metrics.annotation.Timed;
 import org.springframework.metrics.instrument.internal.TimedUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.method.HandlerMethod;
@@ -45,22 +45,22 @@ import static org.springframework.web.context.request.RequestAttributes.SCOPE_RE
  *
  * @author Jon Schneider
  */
-public class WebmvcMetricsHandlerInterceptor extends HandlerInterceptorAdapter {
+public class MetricsHandlerInterceptor extends HandlerInterceptorAdapter {
 
-    private static final Log logger = LogFactory.getLog(WebmvcMetricsHandlerInterceptor.class);
+    private static final Log logger = LogFactory.getLog(MetricsHandlerInterceptor.class);
     private static final String TIMING_REQUEST_ATTRIBUTE = "requestStartTime";
 
     private final MeterRegistry registry;
-    private final WebMetricsTagConfigurer provider;
+    private final WebmvcTagConfigurer tagConfigurer;
     private final String metricName;
 
     private final Map<Timed, Long> longTaskTimerIds = new ConcurrentHashMap<>();
 
-    public WebmvcMetricsHandlerInterceptor(MeterRegistry registry,
-                                           WebMetricsTagConfigurer provider,
-                                           String metricName) {
+    public MetricsHandlerInterceptor(MeterRegistry registry,
+                                     WebmvcTagConfigurer tagConfigurer,
+                                     String metricName) {
         this.registry = registry;
-        this.provider = provider;
+        this.tagConfigurer = tagConfigurer;
         this.metricName = metricName;
     }
 
@@ -72,7 +72,7 @@ public class WebmvcMetricsHandlerInterceptor extends HandlerInterceptorAdapter {
                 logger.warn("Unable to perform metrics timing on " + ((HandlerMethod) handler).getShortLogMessage() + ": @Timed annotation must have a value used to name the metric");
                 return;
             }
-            longTaskTimerIds.put(t, registry.longTaskTimer(t.value(), provider.httpLongRequestTags(request, handler)).start());
+            longTaskTimerIds.put(t, registry.longTaskTimer(t.value(), tagConfigurer.httpLongRequestTags(request, handler)).start());
         });
 
         RequestContextHolder.getRequestAttributes().setAttribute(TIMING_REQUEST_ATTRIBUTE,
@@ -101,7 +101,7 @@ public class WebmvcMetricsHandlerInterceptor extends HandlerInterceptorAdapter {
         // complete any LongTaskTimer tasks running for this method
         longTaskTimed(handler).forEach(t -> {
             if(!t.value().isEmpty()) {
-                registry.longTaskTimer(t.value(), provider.httpLongRequestTags(request, handler)).stop(longTaskTimerIds.remove(t));
+                registry.longTaskTimer(t.value(), tagConfigurer.httpLongRequestTags(request, handler)).stop(longTaskTimerIds.remove(t));
             }
         });
 
@@ -112,7 +112,7 @@ public class WebmvcMetricsHandlerInterceptor extends HandlerInterceptorAdapter {
                 name = t.value();
             }
 
-            Stream<Tag> tags = provider.httpRequestTags(request, response, handler);
+            Stream<Tag> tags = tagConfigurer.httpRequestTags(request, response);
             String[] extraTags = t.extraTags();
             if (extraTags.length > 0) {
                 if (extraTags.length % 2 != 0) {

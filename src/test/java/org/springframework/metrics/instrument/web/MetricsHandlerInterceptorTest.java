@@ -49,9 +49,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = WebmvcMetricsHandlerInterceptorTest.App.class)
-@WebMvcTest({WebmvcMetricsHandlerInterceptorTest.Controller1.class, WebmvcMetricsHandlerInterceptorTest.Controller2.class})
-class WebmvcMetricsHandlerInterceptorTest {
+@ContextConfiguration(classes = MetricsHandlerInterceptorTest.App.class)
+@WebMvcTest({MetricsHandlerInterceptorTest.Controller1.class, MetricsHandlerInterceptorTest.Controller2.class})
+class MetricsHandlerInterceptorTest {
     @Autowired
     private MockMvc mvc;
 

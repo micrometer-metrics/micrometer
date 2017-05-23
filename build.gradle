@@ -106,6 +106,8 @@ jmh {
     duplicateClassesStrategy = 'warn'
 }
 
-bintray.pkg {
-    labels = ['spring', 'metrics', 'prometheus', 'spectator']
+if(project.extensions.findByName('bintray')) {
+    bintray.pkg {
+        labels = ['spring', 'metrics', 'prometheus', 'spectator']
+    }
 }
