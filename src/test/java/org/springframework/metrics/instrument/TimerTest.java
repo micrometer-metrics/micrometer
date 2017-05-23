@@ -16,10 +16,13 @@
 package org.springframework.metrics.instrument;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.springframework.metrics.instrument.simple.SimpleMeterRegistry;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,6 +30,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.metrics.instrument.MockClock.clock;
 
 class TimerTest {
+
+    @Test
+    void recordThrowable() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        Supplier<String> timed = () -> registry.timer("timer").record(() -> "");
+        timed.get();
+    }
 
     @DisplayName("total time and count are preserved for a single timing")
     @ParameterizedTest
@@ -82,7 +93,7 @@ class TimerTest {
         Timer t = registry.timer("myTimer");
 
         assertThrows(Exception.class, () -> {
-            t.recordThrowable(() -> {
+            t.recordCallable(() -> {
                 clock(registry).addAndGetNanos(10);
                 throw new Exception("uh oh");
             });

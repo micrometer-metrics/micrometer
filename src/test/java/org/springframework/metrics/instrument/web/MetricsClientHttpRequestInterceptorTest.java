@@ -18,6 +18,7 @@ package org.springframework.metrics.instrument.web;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.metrics.export.atlas.AtlasTagFormatter;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.simple.SimpleMeterRegistry;
@@ -40,7 +41,7 @@ class MetricsClientHttpRequestInterceptorTest {
 
         RestTemplate restTemplate = new RestTemplate();
         restTemplate.setInterceptors(singletonList(new MetricsClientHttpRequestInterceptor(
-                registry, new DefaultWebMetricsTagProvider(),
+                registry, new DefaultWebMetricsTagConfigurer(new AtlasTagFormatter()),
                 "http_client_requests"
         )));
 

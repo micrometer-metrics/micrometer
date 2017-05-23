@@ -31,6 +31,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.metrics.instrument.MeterRegistry;
+import org.springframework.metrics.instrument.TagFormatter;
+import org.springframework.metrics.instrument.binder.JvmMemoryMetrics;
+import org.springframework.metrics.instrument.binder.LogbackMetrics;
 import org.springframework.metrics.instrument.scheduling.MetricsSchedulingAspect;
 import org.springframework.metrics.instrument.web.*;
 import org.springframework.web.client.RestTemplate;
@@ -53,9 +56,29 @@ public @interface EnableMetricsBoot1 {
 @Configuration
 class MetricsBoot1Configuration {
     @Bean
-    @ConditionalOnMissingBean(WebMetricsTagProvider.class)
-    public WebMetricsTagProvider defaultMetricsTagProvider() {
-        return new DefaultWebMetricsTagProvider();
+    @ConditionalOnMissingBean(TagFormatter.class)
+    public TagFormatter tagFormatter() {
+        return new TagFormatter() {};
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(WebMetricsTagConfigurer.class)
+    public WebMetricsTagConfigurer defaultMetricsTagProvider(TagFormatter tagFormatter) {
+        return new DefaultWebMetricsTagConfigurer(tagFormatter);
+    }
+
+    @Configuration
+    static class RecommendedMeterBinders {
+        @Bean
+        JvmMemoryMetrics jvmMemoryMetrics() {
+            return new JvmMemoryMetrics();
+        }
+
+        @Bean
+        @ConditionalOnClass(ch.qos.logback.classic.Logger.class)
+        LogbackMetrics logbackMetrics() {
+            return new LogbackMetrics();
+        }
     }
 
     @Configuration
@@ -66,7 +89,7 @@ class MetricsBoot1Configuration {
         MeterRegistry registry;
 
         @Bean
-        public WebfluxMetricsWebFilter webfluxMetrics(WebMetricsTagProvider provider) {
+        public WebfluxMetricsWebFilter webfluxMetrics(WebMetricsTagConfigurer provider) {
             return new WebfluxMetricsWebFilter(registry, provider, "http_server_requests");
         }
     }
@@ -84,7 +107,7 @@ class MetricsBoot1Configuration {
         MeterRegistry registry;
 
         @Autowired
-        WebMetricsTagProvider tagProvider;
+        WebMetricsTagConfigurer tagProvider;
 
         @Autowired
         Environment environment;
@@ -105,17 +128,17 @@ class MetricsBoot1Configuration {
     @ConditionalOnWebApplication
     static class WebMetricsTagProviderConfiguration {
         @Bean
-        @ConditionalOnMissingBean(WebMetricsTagProvider.class)
+        @ConditionalOnMissingBean(WebMetricsTagConfigurer.class)
         @ConditionalOnClass(name = "javax.servlet.http.HttpServletRequest")
-        public WebMetricsTagProvider defaultMetricsTagProvider() {
-            return new DefaultWebMetricsTagProvider();
+        public WebMetricsTagConfigurer defaultMetricsTagProvider(TagFormatter tagFormatter) {
+            return new DefaultWebMetricsTagConfigurer(tagFormatter);
         }
 
         @Bean
-        @ConditionalOnMissingBean(WebMetricsTagProvider.class)
+        @ConditionalOnMissingBean(WebMetricsTagConfigurer.class)
         @ConditionalOnMissingClass("javax.servlet.http.HttpServletRequest")
-        public WebMetricsTagProvider emptyMetricsTagProvider() {
-            return new WebMetricsTagProvider() {};
+        public WebMetricsTagConfigurer emptyMetricsTagProvider() {
+            return new WebMetricsTagConfigurer() {};
         }
     }
 
@@ -149,7 +172,7 @@ class MetricsBoot1Configuration {
 
         @Bean
         MetricsClientHttpRequestInterceptor spectatorLoggingClientHttpRequestInterceptor(MeterRegistry meterRegistry,
-                                                                                         WebMetricsTagProvider tagProvider,
+                                                                                         WebMetricsTagConfigurer tagProvider,
                                                                                          Environment environment) {
             return new MetricsClientHttpRequestInterceptor(meterRegistry, tagProvider,
                     environment.getProperty("spring.metrics.web.client_requests.name", "http_client_requests"));

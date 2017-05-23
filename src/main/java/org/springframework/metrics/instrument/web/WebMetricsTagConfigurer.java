@@ -34,7 +34,7 @@ import java.util.stream.Stream;
  *
  * @author Jon Schneider
  */
-public interface WebMetricsTagProvider {
+public interface WebMetricsTagConfigurer {
     /**
      * Supplies default tags to timers monitoring RestTemplate requests.
      *
@@ -67,7 +67,7 @@ public interface WebMetricsTagProvider {
      * @return a map of tags added to every Spring MVC HTTP request metric
      */
     default Stream<Tag> httpRequestTags(HttpServletRequest request,
-                                HttpServletResponse response, Object handler) {
+                                        HttpServletResponse response, Object handler) {
         return Stream.empty();
     }
 

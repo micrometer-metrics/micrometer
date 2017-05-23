@@ -27,8 +27,6 @@ import org.springframework.metrics.annotation.Timed;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.simple.SimpleMeterRegistry;
-import org.springframework.metrics.instrument.web.WebMetricsTagProvider;
-import org.springframework.metrics.instrument.web.WebfluxMetricsWebFilter;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -55,7 +53,7 @@ public class EnableMetricsTestReactive {
     public void reactiveRequestMappingIsInstrumented() {
         assertThat(loopback.getForObject("/api/echo/hi", String.class)).isEqualTo("hi");
 
-        assertThat(registry.findMeter(Timer.class, "http_server_requests", "status", "200", "uri", "api_echo_-word-"))
+        assertThat(registry.findMeter(Timer.class, "http_server_requests", "status", "200", "uri", "api/echo/{word}"))
                 .containsInstanceOf(Timer.class)
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }

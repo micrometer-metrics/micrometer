@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.metrics.instrument.prometheus;
+package org.springframework.metrics.export.prometheus;
 
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
@@ -32,7 +32,7 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
  * can be scraped by the Prometheus server
  */
 @ConfigurationProperties("endpoints.prometheus")
-class PrometheusEndpoint extends AbstractEndpoint<ResponseEntity<String>> {
+public class PrometheusEndpoint extends AbstractEndpoint<ResponseEntity<String>> {
 
     // TODO what to do in the event that we have multiple registries?
     private final CollectorRegistry collectorRegistry;

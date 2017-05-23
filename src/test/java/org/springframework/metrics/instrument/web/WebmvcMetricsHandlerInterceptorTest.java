@@ -68,7 +68,7 @@ class WebmvcMetricsHandlerInterceptorTest {
     @Test
     void metricsGatheredWhenMethodIsTimed() throws Exception {
         mvc.perform(get("/api/c1/10")).andExpect(status().isOk());
-        assertThat(registry.findMeter(Timer.class, "http_server_requests", "status", "200", "uri", "api_c1_-id-", "public", "true"))
+        assertThat(registry.findMeter(Timer.class, "http_server_requests", "status", "200", "uri", "api/c1/{id}", "public", "true"))
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
@@ -132,7 +132,7 @@ class WebmvcMetricsHandlerInterceptorTest {
     @Test
     void metricsGatheredWhenRegexEndpoint() throws Exception {
         mvc.perform(get("/api/c1/regex/.abc")).andExpect(status().isOk());
-        assertThat(registry.findMeter(Timer.class, "http_server_requests", "uri", "api_c1_regex_-id-"))
+        assertThat(registry.findMeter(Timer.class, "http_server_requests", "uri", "api/c1/regex/{id:\\.[a-z]+}"))
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 

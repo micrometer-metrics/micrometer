@@ -30,11 +30,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class WebfluxMetricsWebFilter implements WebFilter {
     private final MeterRegistry registry;
-    private final WebMetricsTagProvider tagProvider;
+    private final WebMetricsTagConfigurer tagProvider;
     private final String metricName;
 
     public WebfluxMetricsWebFilter(MeterRegistry registry,
-                                   WebMetricsTagProvider tagProvider,
+                                   WebMetricsTagConfigurer tagProvider,
                                    String metricName) {
         this.registry = registry;
         this.tagProvider = tagProvider;

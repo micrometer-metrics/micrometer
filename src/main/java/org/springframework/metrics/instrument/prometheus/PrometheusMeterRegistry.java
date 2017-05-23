@@ -116,14 +116,21 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
                 i -> buildCollector(id, io.prometheus.client.Gauge.build()));
 
         meterMap.computeIfAbsent(id, g -> {
-            gauge.setChild(new Gauge.Child() {
+            String[] labelValues = Arrays.stream(id.getTags())
+                    .map(Tag::getValue)
+                    .collect(Collectors.toList())
+                    .toArray(new String[]{});
+
+            Gauge.Child child = new Gauge.Child() {
                 @Override
                 public double get() {
                     final T obj = ref.get();
                     return (obj == null) ? Double.NaN : f.applyAsDouble(obj);
                 }
-            });
-            return new PrometheusGauge(name, child(gauge, id.getTags()));
+            };
+
+            gauge.setChild(child, labelValues);
+            return new PrometheusGauge(name, child);
         });
 
         return obj;

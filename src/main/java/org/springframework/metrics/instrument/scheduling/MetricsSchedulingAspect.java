@@ -31,6 +31,8 @@ import org.springframework.metrics.instrument.internal.TimedUtils;
 
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Aspect
@@ -74,15 +76,37 @@ public class MetricsSchedulingAspect {
 
         if(shortTaskTimer != null && longTaskTimer != null) {
             final Timer finalTimer = shortTaskTimer;
-            return longTaskTimer.recordThrowable(() -> finalTimer.recordThrowable(pjp::proceed));
+            return recordThrowable(longTaskTimer, () -> recordThrowable(finalTimer, pjp::proceed));
         }
         else if(shortTaskTimer != null) {
-            return shortTaskTimer.recordThrowable(pjp::proceed);
+            return recordThrowable(shortTaskTimer, pjp::proceed);
         }
         else if(longTaskTimer != null) {
-            return longTaskTimer.recordThrowable(pjp::proceed);
+            return recordThrowable(longTaskTimer, pjp::proceed);
         }
 
         return pjp.proceed();
+    }
+
+    private Object recordThrowable(LongTaskTimer timer, ThrowableCallable f) throws Throwable {
+        long id = timer.start();
+        try {
+            return f.call();
+        } finally {
+            timer.stop(id);
+        }
+    }
+
+    private Object recordThrowable(Timer timer, ThrowableCallable f) throws Throwable {
+        long start = registry.getClock().monotonicTime();
+        try {
+            return f.call();
+        } finally {
+            timer.record(registry.getClock().monotonicTime() - start, TimeUnit.NANOSECONDS);
+        }
+    }
+
+    private interface ThrowableCallable {
+        Object call() throws Throwable;
     }
 }

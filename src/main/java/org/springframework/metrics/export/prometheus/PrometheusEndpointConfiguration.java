@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.metrics.instrument;
+package org.springframework.metrics.export.prometheus;
 
-@FunctionalInterface
-public interface ThrowableCallable<V> {
-    /**
-     * Computes a result, or throws an exception if unable to do so.
-     *
-     * @return computed result
-     * @throws Throwable if unable to compute a result
-     */
-    V call() throws Throwable;
+import io.prometheus.client.CollectorRegistry;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class PrometheusEndpointConfiguration {
+    @Bean
+    public PrometheusEndpoint prometheusEndpoint() {
+        return new PrometheusEndpoint(CollectorRegistry.defaultRegistry);
+    }
 }

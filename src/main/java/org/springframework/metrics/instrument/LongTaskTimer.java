@@ -15,7 +15,9 @@
  */
 package org.springframework.metrics.instrument;
 
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public interface LongTaskTimer extends Meter {
     /**
@@ -24,10 +26,25 @@ public interface LongTaskTimer extends Meter {
      * @param f Function to execute and measure the execution time.
      * @return The return value of `f`.
      */
-    default <T> T recordThrowable(ThrowableCallable<T> f) throws Throwable {
+    default <T> T recordCallable(Callable<T> f) throws Exception {
         long id = start();
         try {
             return f.call();
+        } finally {
+            stop(id);
+        }
+    }
+
+    /**
+     * Executes the callable `f` and records the time taken.
+     *
+     * @param f Function to execute and measure the execution time.
+     * @return The return value of `f`.
+     */
+    default <T> T record(Supplier<T> f) throws Exception {
+        long id = start();
+        try {
+            return f.get();
         } finally {
             stop(id);
         }

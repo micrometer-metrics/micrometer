@@ -51,13 +51,13 @@ public class WebmvcMetricsHandlerInterceptor extends HandlerInterceptorAdapter {
     private static final String TIMING_REQUEST_ATTRIBUTE = "requestStartTime";
 
     private final MeterRegistry registry;
-    private final WebMetricsTagProvider provider;
+    private final WebMetricsTagConfigurer provider;
     private final String metricName;
 
     private final Map<Timed, Long> longTaskTimerIds = new ConcurrentHashMap<>();
 
     public WebmvcMetricsHandlerInterceptor(MeterRegistry registry,
-                                           WebMetricsTagProvider provider,
+                                           WebMetricsTagConfigurer provider,
                                            String metricName) {
         this.registry = registry;
         this.provider = provider;

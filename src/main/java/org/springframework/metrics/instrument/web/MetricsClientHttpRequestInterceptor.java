@@ -31,11 +31,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class MetricsClientHttpRequestInterceptor implements ClientHttpRequestInterceptor {
     private final MeterRegistry meterRegistry;
-    private final WebMetricsTagProvider tagProvider;
+    private final WebMetricsTagConfigurer tagProvider;
     private final String metricName;
 
     public MetricsClientHttpRequestInterceptor(MeterRegistry meterRegistry,
-                                               WebMetricsTagProvider tagProvider,
+                                               WebMetricsTagConfigurer tagProvider,
                                                String metricName) {
         this.tagProvider = tagProvider;
         this.meterRegistry = meterRegistry;

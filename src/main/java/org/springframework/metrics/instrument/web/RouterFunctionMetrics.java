@@ -17,6 +17,7 @@ package org.springframework.metrics.instrument.web;
 
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Tag;
+import org.springframework.metrics.instrument.TagFormatter;
 import org.springframework.web.reactive.function.server.HandlerFilterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
@@ -27,7 +28,10 @@ public class RouterFunctionMetrics {
     private final MeterRegistry registry;
 
     private String defaultName = "http_server_requests";
-    private WebMetricsTagProvider tagProvider = new DefaultWebMetricsTagProvider();
+
+    // FIXME how best to inject the tag formatter and configurer?
+    private WebMetricsTagConfigurer tagProvider = new DefaultWebMetricsTagConfigurer(new TagFormatter() {
+    });
 
     public RouterFunctionMetrics(MeterRegistry registry) {
         this.registry = registry;

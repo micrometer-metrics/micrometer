@@ -17,6 +17,7 @@ package org.springframework.metrics.instrument;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * Timer intended to track a large number of short running events. Example would be something like
@@ -34,12 +35,20 @@ public interface Timer extends Meter {
     void record(long amount, TimeUnit unit);
 
     /**
+     * Executes the Supplier `f` and records the time taken.
+     *
+     * @param f Function to execute and measure the execution time.
+     * @return The return value of `f`.
+     */
+    <T> T record(Supplier<T> f);
+
+    /**
      * Executes the callable `f` and records the time taken.
      *
      * @param f Function to execute and measure the execution time.
      * @return The return value of `f`.
      */
-    <T> T recordThrowable(ThrowableCallable<T> f) throws Throwable;
+    <T> T recordCallable(Callable<T> f) throws Exception;
 
     /**
      * Executes the runnable `f` and records the time taken.

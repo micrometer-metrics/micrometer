@@ -15,25 +15,18 @@
  */
 package org.springframework.metrics.instrument.internal;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheStats;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadata;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProvider;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProviders;
-import org.springframework.core.env.Environment;
-import org.springframework.metrics.instrument.*;
+import org.springframework.metrics.instrument.Clock;
+import org.springframework.metrics.instrument.MeterRegistry;
+import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.binder.MeterBinder;
 
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.Executor;
 import java.util.stream.Stream;
 
 public abstract class AbstractMeterRegistry implements MeterRegistry {

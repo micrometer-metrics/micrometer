@@ -21,6 +21,7 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.metrics.instrument.Tag;
+import org.springframework.metrics.instrument.TagFormatter;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -38,7 +39,13 @@ import java.util.stream.Stream;
  *
  * @author Jon Schneider
  */
-public class DefaultWebMetricsTagProvider implements WebMetricsTagProvider {
+public class DefaultWebMetricsTagConfigurer implements WebMetricsTagConfigurer {
+    private final TagFormatter tagFormatter;
+
+    public DefaultWebMetricsTagConfigurer(TagFormatter tagFormatter) {
+        this.tagFormatter = tagFormatter;
+    }
+
     @Override
     public Stream<Tag> clientHttpRequestTags(HttpRequest request,
                                              ClientHttpResponse response) {
@@ -63,7 +70,7 @@ public class DefaultWebMetricsTagProvider implements WebMetricsTagProvider {
         String strippedUrlTemplate = urlTemplate.replaceAll("^https?://[^/]+/", "");
 
         return Stream.of(Tag.of("method", request.getMethod().name()),
-                Tag.of("uri", sanitizeUrlTemplate(strippedUrlTemplate)),
+                Tag.of("uri", tagFormatter.formatTagValue(strippedUrlTemplate)),
                 Tag.of("status", status),
                 Tag.of("clientName", host));
     }
@@ -81,7 +88,7 @@ public class DefaultWebMetricsTagProvider implements WebMetricsTagProvider {
         if (!StringUtils.hasText(uri)) {
             uri = "/";
         }
-        uri = sanitizeUrlTemplate(uri.substring(1));
+        uri = tagFormatter.formatTagValue(uri.substring(1));
         tags.add(Tag.of("uri", uri.isEmpty() ? "root" : uri));
 
         return tags.build();
@@ -102,7 +109,7 @@ public class DefaultWebMetricsTagProvider implements WebMetricsTagProvider {
         if (!StringUtils.hasText(uri)) {
             uri = "/";
         }
-        uri = sanitizeUrlTemplate(uri.substring(1));
+        uri = tagFormatter.formatTagValue(uri.substring(1));
         tags.add(Tag.of("uri", uri.isEmpty() ? "root" : uri));
 
         Object exception = request.getAttribute("exception");
@@ -131,7 +138,7 @@ public class DefaultWebMetricsTagProvider implements WebMetricsTagProvider {
         if (!StringUtils.hasText(uri)) {
             uri = "/";
         }
-        uri = sanitizeUrlTemplate(uri.substring(1));
+        uri = tagFormatter.formatTagValue(uri.substring(1));
         tags.add(Tag.of("uri", uri.isEmpty() ? "root" : uri));
 
         if (exception != null) {
@@ -151,7 +158,7 @@ public class DefaultWebMetricsTagProvider implements WebMetricsTagProvider {
         if (!StringUtils.hasText(uri)) {
             uri = "/";
         }
-        uri = sanitizeUrlTemplate(uri.substring(1));
+        uri = tagFormatter.formatTagValue(uri.substring(1));
         tags.add(Tag.of("uri", uri.isEmpty() ? "root" : uri));
 
         if (exception != null) {
@@ -159,21 +166,5 @@ public class DefaultWebMetricsTagProvider implements WebMetricsTagProvider {
         }
 
         return tags.build();
-    }
-
-    /**
-     * As is, the urlTemplate is not suitable for use with Atlas, as all interactions with
-     * Atlas take place via query parameters
-     */
-    protected String sanitizeUrlTemplate(String urlTemplate) {
-        // FIXME generalize this on a per-exporter basis (Prometheus will have different requirements than Atlas, etc).
-        String sanitized = urlTemplate
-                .replaceAll("\\{(\\w+):.+}(?=/|$)", "-$1-") // extract path variable names from regex expressions
-                .replaceAll("/", "_")
-                .replaceAll("[{}]", "-");
-        if (!StringUtils.hasText(sanitized)) {
-            sanitized = "none";
-        }
-        return sanitized;
     }
 }

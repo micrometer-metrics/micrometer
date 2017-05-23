@@ -16,11 +16,11 @@
 package org.springframework.metrics.instrument.internal;
 
 import org.springframework.metrics.instrument.Clock;
-import org.springframework.metrics.instrument.ThrowableCallable;
 import org.springframework.metrics.instrument.Timer;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 public abstract class AbstractTimer implements Timer {
     protected Clock clock;
@@ -32,10 +32,21 @@ public abstract class AbstractTimer implements Timer {
     }
 
     @Override
-    public <T> T recordThrowable(ThrowableCallable<T> f) throws Throwable {
+    public <T> T recordCallable(Callable<T> f) throws Exception {
         final long s = clock.monotonicTime();
         try {
             return f.call();
+        } finally {
+            final long e = clock.monotonicTime();
+            record(e - s, TimeUnit.NANOSECONDS);
+        }
+    }
+
+    @Override
+    public <T> T record(Supplier<T> f) {
+        final long s = clock.monotonicTime();
+        try {
+            return f.get();
         } finally {
             final long e = clock.monotonicTime();
             record(e - s, TimeUnit.NANOSECONDS);
