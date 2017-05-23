@@ -40,7 +40,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 class MetricsSchedulingAspectTest {
 
-    static CountDownLatch observeLongTaskLatch = new CountDownLatch(1);
+    static CountDownLatch longTaskStarted = new CountDownLatch(1);
+    static CountDownLatch longTaskShouldComplete = new CountDownLatch(1);
 
     @Autowired
     MeterRegistry registry;
@@ -53,11 +54,13 @@ class MetricsSchedulingAspectTest {
         assertThat(registry.findMeter(Timer.class, "beeper"))
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
 
+        longTaskStarted.await();
+
         assertThat(registry.findMeter(LongTaskTimer.class, "longBeep"))
                 .hasValueSatisfying(t -> assertThat(t.activeTasks()).isEqualTo(1));
 
         // make sure longBeep continues running until we have a chance to observe it in the active state
-        observeLongTaskLatch.countDown();
+        longTaskShouldComplete.countDown();
 
         while(scheduler.getActiveCount() > 0) {}
 
@@ -87,7 +90,8 @@ class MetricsSchedulingAspectTest {
         @Timed(value = "longBeep", longTask = true)
         @Scheduled(fixedRate = 1000)
         void longBeep() throws InterruptedException {
-            observeLongTaskLatch.await();
+            longTaskStarted.countDown();
+            longTaskShouldComplete.await();
             System.out.println("beep");
         }
 
