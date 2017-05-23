@@ -395,6 +395,7 @@ class MyConfiguration {
         return registry.monitor(Executors.newFixedThreadPool(8));
     }
 }
+```
 
 `ExecutorService` instrumentation results in a gauge that tracks
 the number of queued tasks that have not been started yet plus a timer
