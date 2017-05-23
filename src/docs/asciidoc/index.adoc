@@ -477,15 +477,16 @@ public class MyController {
 The `Timer` is registered with a name of `http_server_requests` by default. This can be changed by setting
 `spring.metrics.web.server_requests.name`.
 
-The `Timer` contains a set of dimensions for every request, governed by the primary bean `WebMetricsTagProvider` registered
-in your application context. If you don't provide such a bean, a default implementation is selected which adds the following dimensions:
+The `Timer` contains a set of dimensions for every request, governed by the primary bean `WebfluxTagConfigurer` or
+`WebmvcTagConfigurer` (depending on which programming model you are using) registered in your application
+context. If you don't provide such a bean, a default implementation is selected which adds the following dimensions:
 
 1. `method`, the HTTP method (e.g. GET, PUT)
 2. `status`, the numeric HTTP status code (e.g. 200, 201, 500)
 3. `uri`, the URI template prior to variable substitution (e.g. /api/person/{id})
 4. `exception`, the simple name of the exception class thrown (only if an exception is thrown)
 
-In addition to the tags provided by your `WebMetricsTagProvider`, you can add fixed tags to individual
+In addition to the default tags provided, you can add fixed tags to individual
 controllers or request methods via the `extraTags` attribute on `@Timed`:
 
 ```java
