@@ -1,0 +1,17 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.springframework.metrics:spring-metrics:latest.release'
+    compile 'com.netflix.spectator:spectator-reg-servo:latest.release'
+    compile 'colt:colt:1.2.0'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.5'
+}

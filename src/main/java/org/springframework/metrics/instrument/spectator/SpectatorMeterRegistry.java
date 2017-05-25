@@ -15,6 +15,7 @@
  */
 package org.springframework.metrics.instrument.spectator;
 
+import com.google.common.collect.Iterables;
 import com.netflix.spectator.api.BasicTag;
 import com.netflix.spectator.api.DefaultRegistry;
 import com.netflix.spectator.api.Id;
@@ -63,7 +64,7 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
         });
     }
 
-    private Iterable<com.netflix.spectator.api.Tag> toSpectatorTags(Iterable<Tag> tags) {
+    private Collection<com.netflix.spectator.api.Tag> toSpectatorTags(Iterable<Tag> tags) {
         return stream(tags.spliterator(), false)
                 .map(t -> new BasicTag(t.getKey(), t.getValue()))
                 .collect(Collectors.toList());
@@ -105,6 +106,15 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     protected Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles) {
+        if(quantiles != null) {
+            for (Double q : quantiles.monitored()) {
+                List<com.netflix.spectator.api.Tag> quantileTags = new LinkedList<>(toSpectatorTags(tags));
+                quantileTags.add(new BasicTag("quantile", Double.isNaN(q) ? "NaN" : Double.toString(q)));
+                quantileTags.add(new BasicTag("statistic", "quantile"));
+                registry.gauge(registry.createId(name, quantileTags), q, quantiles::get);
+            }
+        }
+
         com.netflix.spectator.api.Timer timer = registry.timer(name, toSpectatorTags(tags));
         return (Timer) meterMap.computeIfAbsent(timer, t -> new SpectatorTimer(timer, getClock()));
     }

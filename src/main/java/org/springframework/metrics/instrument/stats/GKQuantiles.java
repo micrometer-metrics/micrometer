@@ -419,7 +419,9 @@ public class GKQuantiles implements Quantiles {
         Tuple minimum = workingSet.get(0);
         Tuple maximum = workingSet.get(workingSet.size() - 1);
         workingSet.remove(0);
-        workingSet.remove(workingSet.size() - 1);
+
+        if(!workingSet.isEmpty())
+            workingSet.remove(workingSet.size() - 1);
 
         // adding the minimum as the first element into partitions
         LinkedList<Tuple> currentPartition = new LinkedList<>();
