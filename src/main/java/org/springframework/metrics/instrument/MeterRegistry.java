@@ -113,9 +113,18 @@ public interface MeterRegistry {
     }
 
     /**
+     * Build a new Timer, which is registered with this registry once {@link Timer.Builder#create()} is called.
+     * @param name The name of the timer (which is the only requirement for a new timer).
+     * @return The builder.
+     */
+    Timer.Builder timerBuilder(String name);
+
+    /**
      * Measures the time taken for short tasks.
      */
-    Timer timer(String name, Iterable<Tag> tags);
+    default Timer timer(String name, Iterable<Tag> tags) {
+        return timerBuilder(name).tags(tags).create();
+    }
 
     /**
      * Measures the time taken for short tasks.

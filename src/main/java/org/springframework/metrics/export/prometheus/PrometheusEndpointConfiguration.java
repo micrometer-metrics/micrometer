@@ -18,11 +18,12 @@ package org.springframework.metrics.export.prometheus;
 import io.prometheus.client.CollectorRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.metrics.instrument.prometheus.PrometheusMeterRegistry;
 
 @Configuration
 public class PrometheusEndpointConfiguration {
     @Bean
-    public PrometheusEndpoint prometheusEndpoint() {
-        return new PrometheusEndpoint(CollectorRegistry.defaultRegistry);
+    public PrometheusActuatorEndpoint prometheusEndpoint(PrometheusMeterRegistry registry) {
+        return new PrometheusActuatorEndpoint(registry.getCollectorRegistry());
     }
 }

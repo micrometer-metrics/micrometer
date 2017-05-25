@@ -544,7 +544,7 @@ You will need the following dependencies:
 
 ```groovy
 compile 'org.springframework.metrics:spring-metrics:latest.release'
-compile 'io.prometheus:simpleclient:latest.release'
+compile 'io.prometheus:simpleclient_common:latest.release'
 ```
 
 Add `@EnablePrometheusMetrics` to your configuration.

@@ -15,16 +15,15 @@
  */
 package org.springframework.metrics.instrument.prometheus;
 
-import io.prometheus.client.Collector;
-import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.*;
 import io.prometheus.client.Gauge;
-import io.prometheus.client.SimpleCollector;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.metrics.instrument.*;
+import org.springframework.metrics.instrument.Counter;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
-import org.springframework.metrics.instrument.internal.ImmutableTag;
 import org.springframework.metrics.instrument.internal.MeterId;
+import org.springframework.metrics.instrument.stats.*;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -32,9 +31,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
-import static java.util.stream.StreamSupport.stream;
 import static org.springframework.metrics.instrument.internal.MeterId.id;
 
+/**
+ * @author Jon Schneider
+ */
 public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     private final CollectorRegistry registry;
 
@@ -78,7 +79,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     public Counter counter(String name, Iterable<Tag> tags) {
         MeterId id = id(name, tags);
         io.prometheus.client.Counter counter = (io.prometheus.client.Counter) collectorMap.computeIfAbsent(name,
-                i -> buildCollector(id, io.prometheus.client.Counter.build()));
+                i -> buildCollector(id, io.prometheus.client.Counter.build()).register(registry));
 
         return (Counter) meterMap.computeIfAbsent(id, c -> new PrometheusCounter(name, child(counter, id.getTags())));
     }
@@ -87,16 +88,27 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags) {
         MeterId id = id(name, tags);
         io.prometheus.client.Summary summary = (io.prometheus.client.Summary) collectorMap.computeIfAbsent(name,
-                i -> buildCollector(id, io.prometheus.client.Summary.build()));
+                i -> buildCollector(id, io.prometheus.client.Summary.build()).register(registry));
 
         return (DistributionSummary) meterMap.computeIfAbsent(id, s -> new PrometheusDistributionSummary(name, child(summary, id.getTags())));
     }
 
     @Override
-    public Timer timer(String name, Iterable<Tag> tags) {
+    protected Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles) {
         MeterId id = id(name, tags);
         io.prometheus.client.Summary summary = (io.prometheus.client.Summary) collectorMap.computeIfAbsent(name,
-                i -> buildCollector(id, io.prometheus.client.Summary.build()));
+                i -> {
+                    Summary.Builder builder = buildCollector(id, Summary.build());
+
+                    // discard the internal implementation of CKMSQuantiles and let Prometheus do the work
+                    if(quantiles instanceof CKMSQuantiles) {
+                        for (CKMSQuantiles.Quantile q : ((CKMSQuantiles) quantiles).getQuantiles()) {
+                            builder = builder.quantile(q.getQuantile(), q.getError());
+                        }
+                    }
+
+                    return builder.register(registry);
+                });
 
         return (Timer) meterMap.computeIfAbsent(id, s -> new PrometheusTimer(name, child(summary, id.getTags()), getClock()));
     }
@@ -113,7 +125,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
         MeterId id = id(name, tags);
         io.prometheus.client.Gauge gauge = (io.prometheus.client.Gauge) collectorMap.computeIfAbsent(name,
-                i -> buildCollector(id, io.prometheus.client.Gauge.build()));
+                i -> buildCollector(id, io.prometheus.client.Gauge.build()).register(registry));
 
         meterMap.computeIfAbsent(id, g -> {
             String[] labelValues = Arrays.stream(id.getTags())
@@ -136,7 +148,14 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         return obj;
     }
 
-    private <B extends SimpleCollector.Builder<B, C>, C extends SimpleCollector<D>, D> C buildCollector(MeterId id,
+    /**
+     * @return The underlying Prometheus {@link CollectorRegistry}.
+     */
+    public CollectorRegistry getCollectorRegistry() {
+        return registry;
+    }
+
+    private <B extends SimpleCollector.Builder<B, C>, C extends SimpleCollector<D>, D> B buildCollector(MeterId id,
                                                                                                         SimpleCollector.Builder<B, C> builder) {
         return builder
                 .name(id.getName())
@@ -144,8 +163,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
                 .labelNames(Arrays.stream(id.getTags())
                         .map(Tag::getKey)
                         .collect(Collectors.toList())
-                        .toArray(new String[]{}))
-                .register(registry);
+                        .toArray(new String[]{}));
     }
 
     private <C extends SimpleCollector<D>, D> D child(C collector, Tag[] tags) {

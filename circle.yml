@@ -14,9 +14,6 @@ general:
     - "build/reports"
     - "build/libs"
     - "build/publications"
-  branches:
-    ignore:
-      - "gh-pages"
 deployment:
   release:
     tag: /v.*/

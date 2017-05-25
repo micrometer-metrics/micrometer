@@ -1,0 +1,20 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.spring.io/libs-snapshot' }
+}
+
+dependencies {
+    compile 'org.springframework.metrics:spring-metrics:latest.release'
+    compile 'io.prometheus:simpleclient_common:latest.release'
+    compile 'colt:colt:1.2.0'
+    compile 'org.springframework:spring-webflux:5.0.0.BUILD-SNAPSHOT'
+    compile 'org.apache.tomcat.embed:tomcat-embed-core:8.5.15'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.5'
+}

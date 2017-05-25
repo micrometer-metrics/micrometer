@@ -19,14 +19,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadata;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProvider;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProviders;
-import org.springframework.metrics.instrument.Clock;
-import org.springframework.metrics.instrument.MeterRegistry;
-import org.springframework.metrics.instrument.Tag;
+import org.springframework.metrics.instrument.*;
 import org.springframework.metrics.instrument.binder.MeterBinder;
+import org.springframework.metrics.instrument.stats.Quantiles;
 
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Stream;
 
 public abstract class AbstractMeterRegistry implements MeterRegistry {
@@ -75,4 +76,38 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
         return dataSource;
     }
+
+    @Override
+    public Timer.Builder timerBuilder(String name) {
+        return new TimerBuilder(name);
+    }
+
+    private class TimerBuilder implements Timer.Builder {
+        private final String name;
+        private Quantiles quantiles;
+        private final List<Tag> tags = new ArrayList<>();
+
+        private TimerBuilder(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public Timer.Builder quantiles(Quantiles quantiles) {
+            this.quantiles = quantiles;
+            return this;
+        }
+
+        @Override
+        public Timer.Builder tag(Tag tag) {
+            tags.add(tag);
+            return this;
+        }
+
+        @Override
+        public Timer create() {
+            return timer(name, tags, quantiles);
+        }
+    }
+
+    protected abstract Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles);
 }

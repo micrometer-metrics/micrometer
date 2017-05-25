@@ -32,12 +32,11 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
  * can be scraped by the Prometheus server
  */
 @ConfigurationProperties("endpoints.prometheus")
-public class PrometheusEndpoint extends AbstractEndpoint<ResponseEntity<String>> {
+public class PrometheusActuatorEndpoint extends AbstractEndpoint<ResponseEntity<String>> {
 
-    // TODO what to do in the event that we have multiple registries?
     private final CollectorRegistry collectorRegistry;
 
-    PrometheusEndpoint(CollectorRegistry collectorRegistry) {
+    PrometheusActuatorEndpoint(CollectorRegistry collectorRegistry) {
         super("prometheus");
         this.collectorRegistry = collectorRegistry;
     }

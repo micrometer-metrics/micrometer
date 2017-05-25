@@ -19,6 +19,7 @@ import org.springframework.metrics.instrument.*;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
 import org.springframework.metrics.instrument.internal.MeterId;
+import org.springframework.metrics.instrument.stats.Quantiles;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,7 +53,7 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    public Timer timer(String name, Iterable<Tag> tags) {
+    protected Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles) {
         return (Timer) meterMap.computeIfAbsent(new MeterId(name, tags), id -> storeId(id, new SimpleTimer(name)));
     }
 

@@ -24,6 +24,7 @@ import org.springframework.metrics.instrument.*;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
 import org.springframework.metrics.instrument.internal.ImmutableTag;
+import org.springframework.metrics.instrument.stats.Quantiles;
 
 import java.util.*;
 import java.util.function.ToDoubleFunction;
@@ -31,6 +32,9 @@ import java.util.stream.Collectors;
 
 import static java.util.stream.StreamSupport.stream;
 
+/**
+ * @author Jon Schneider
+ */
 public class SpectatorMeterRegistry extends AbstractMeterRegistry {
     private final Registry registry;
     private final Map<com.netflix.spectator.api.Meter, Meter> meterMap = new HashMap<>();
@@ -100,7 +104,7 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    public Timer timer(String name, Iterable<Tag> tags) {
+    protected Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles) {
         com.netflix.spectator.api.Timer timer = registry.timer(name, toSpectatorTags(tags));
         return (Timer) meterMap.computeIfAbsent(timer, t -> new SpectatorTimer(timer, getClock()));
     }

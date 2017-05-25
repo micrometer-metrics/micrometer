@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 Pivotal Software, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,13 @@
  */
 package org.springframework.metrics.instrument;
 
+import org.springframework.metrics.instrument.stats.Quantiles;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Timer intended to track a large number of short running events. Example would be something like
@@ -60,7 +64,7 @@ public interface Timer extends Meter {
     /**
      * Wrap a {@link Runnable} so that it is timed when invoked.
      *
-     * @param f  The Runnable to time when it is invoked.
+     * @param f The Runnable to time when it is invoked.
      * @return The wrapped Runnable.
      */
     default Runnable wrap(Runnable f) {
@@ -70,7 +74,7 @@ public interface Timer extends Meter {
     /**
      * Wrap a {@link Callable} so that it is timed when invoked.
      *
-     * @param f  The Callable to time when it is invoked.
+     * @param f The Callable to time when it is invoked.
      * @return The wrapped Callable.
      */
     <T> Callable<T> wrap(Callable<T> f);
@@ -90,5 +94,28 @@ public interface Timer extends Meter {
      */
     default double totalTimeNanos() {
         return totalTime(TimeUnit.NANOSECONDS);
+    }
+
+    interface Builder {
+        Builder quantiles(Quantiles quantiles);
+
+        Builder tag(Tag tag);
+
+        default Builder tag(String key, String value) {
+            return tag(Tag.of(key, value));
+        }
+
+        default Builder tags(Iterable<Tag> tags) {
+            for (Tag tag : tags) {
+                tag(tag);
+            }
+            return this;
+        }
+
+        default Builder tags(Stream<Tag> tags) {
+            return tags(tags.collect(Collectors.toList()));
+        }
+
+        Timer create();
     }
 }
