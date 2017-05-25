@@ -1,7 +1,6 @@
 package org.springframework.metrics.instrument.stats;
 
 import java.util.Collection;
-import java.util.stream.Stream;
 
 /**
  * Calculate φ-quantiles, where 0 ≤ φ ≤ 1. The φ-quantile is the observation value that ranks at number φ*N among
@@ -24,7 +23,7 @@ public interface Quantiles {
     Double get(double percentile);
 
     /**
-     * Get all registered quantiles
+     * Get all monitored quantiles
      */
-    Collection<Double> registered();
+    Collection<Double> monitored();
 }

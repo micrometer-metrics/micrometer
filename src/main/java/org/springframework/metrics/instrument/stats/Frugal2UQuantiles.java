@@ -52,18 +52,18 @@ public class Frugal2UQuantiles implements Quantiles {
         return 0.0;
     }
 
-    public Collection<Double> registered() {
+    public Collection<Double> monitored() {
         return registered;
     }
 
-    public static class Quantile {
+    static class Quantile {
         double m;
         double q;
         int step = 1;
         int sign = 0;
         Random r = new Random(new Random().nextInt());
 
-        public Quantile(double quantile, double estimate) {
+        Quantile(double quantile, double estimate) {
             m = estimate;
             q = quantile;
         }

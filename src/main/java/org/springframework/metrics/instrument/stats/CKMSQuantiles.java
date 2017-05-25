@@ -60,8 +60,6 @@ public class CKMSQuantiles implements Quantiles {
   
     /**
      * Add a new value from the stream.
-     * 
-     * @param value
      */
     @Override
     public void observe(double value) {
@@ -114,7 +112,7 @@ public class CKMSQuantiles implements Quantiles {
     }
 
     @Override
-    public Collection<Double> registered() {
+    public Collection<Double> monitored() {
         return registered;
     }
 
@@ -255,14 +253,14 @@ public class CKMSQuantiles implements Quantiles {
         final double u;
         final double v;
 
-        public Quantile(double quantile, double error) {
+        Quantile(double quantile, double error) {
             this.quantile = quantile;
             this.error = error;
             u = 2.0 * error / (1.0 - quantile);
             v = 2.0 * error / quantile;
         }
 
-        public double getQuantile() {
+        double getQuantile() {
             return quantile;
         }
 

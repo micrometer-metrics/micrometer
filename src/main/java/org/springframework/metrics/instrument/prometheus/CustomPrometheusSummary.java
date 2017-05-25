@@ -53,7 +53,7 @@ public class CustomPrometheusSummary extends Collector {
         List<MetricFamilySamples.Sample> samples = new ArrayList<MetricFamilySamples.Sample>();
 
         if(quantiles != null) {
-            for(Double q: quantiles.registered()) {
+            for(Double q: quantiles.monitored()) {
                 List<String> quantileValues = new LinkedList<>(tagValues);
                 quantileValues.add(Collector.doubleToGoString(q));
                 samples.add(new MetricFamilySamples.Sample(name, quantileKeys, quantileValues, quantiles.get(q)));

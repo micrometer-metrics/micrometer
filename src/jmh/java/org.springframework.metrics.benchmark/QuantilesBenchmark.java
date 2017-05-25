@@ -8,9 +8,7 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
-import org.springframework.metrics.instrument.stats.Quantiles;
-import org.springframework.metrics.instrument.stats.CKMSQuantiles;
-import org.springframework.metrics.instrument.stats.Frugal2UQuantiles;
+import org.springframework.metrics.instrument.stats.*;
 
 import java.util.concurrent.TimeUnit;
 
@@ -23,6 +21,8 @@ public class QuantilesBenchmark {
 
     private Quantiles ckms;
     private Quantiles frugal2u;
+    private Quantiles gk;
+    private Quantiles window;
 
     @Setup
     public void setup() {
@@ -35,6 +35,16 @@ public class QuantilesBenchmark {
                 .quantile( 0.99, 100)
                 .quantile( 0.99, 100)
                 .create();
+
+        gk = GKQuantiles.build()
+                .quantile(0.5)
+                .quantile(0.99)
+                .create();
+
+        window = WindowSketchQuantiles.build()
+                .quantile(0.5)
+                .quantile(0.99)
+                .create();
     }
 
     @Benchmark
@@ -45,6 +55,16 @@ public class QuantilesBenchmark {
     @Benchmark
     public void ckmsQuantiles() {
         ckms.observe(Math.max(0.0, dist.nextDouble()));
+    }
+
+    @Benchmark
+    public void gkQuantiles() {
+        gk.observe(Math.max(0.0, dist.nextDouble()));
+    }
+
+    @Benchmark
+    public void windowQuantiles() {
+        window.observe(Math.max(0.0, dist.nextDouble()));
     }
 
     public static void main(String[] args) throws RunnerException {

@@ -13,6 +13,8 @@ import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.prometheus.PrometheusMeterRegistry;
 import org.springframework.metrics.instrument.stats.CKMSQuantiles;
 import org.springframework.metrics.instrument.stats.Frugal2UQuantiles;
+import org.springframework.metrics.instrument.stats.GKQuantiles;
+import org.springframework.metrics.instrument.stats.WindowSketchQuantiles;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -50,10 +52,27 @@ public class PrometheusQuantilesSample {
                         .create())
                 .create();
 
+        Timer gkTimer = meterRegistry.timerBuilder("random_gk")
+                .quantiles(GKQuantiles.build()
+                        .quantile(0.5)
+                        .quantile(0.95)
+                        .create())
+                .create();
+
+        Timer windowTimer = meterRegistry.timerBuilder("random_window")
+                .quantiles(WindowSketchQuantiles.build()
+                        .quantile(0.5)
+                        .quantile(0.95)
+                        .create())
+                .create();
+
+        //noinspection InfiniteLoopStatement
         while(true) {
             long sample = (long) Math.max(0, dist.nextDouble());
             ckmsTimer.record(sample, TimeUnit.SECONDS);
             frugalTimer.record(sample, TimeUnit.SECONDS);
+            gkTimer.record(sample, TimeUnit.SECONDS);
+            windowTimer.record(sample, TimeUnit.SECONDS);
         }
     }
 

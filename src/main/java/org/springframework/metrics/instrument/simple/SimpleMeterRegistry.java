@@ -97,7 +97,7 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
     }
 
     /**
-     * Clear the registry of all registered meters and their values.
+     * Clear the registry of all monitored meters and their values.
      */
     public void clear() {
         meterMap.clear();
