@@ -79,7 +79,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     public Counter counter(String name, Iterable<Tag> tags) {
         MeterId id = id(name, tags);
         io.prometheus.client.Counter counter = (io.prometheus.client.Counter) collectorMap.computeIfAbsent(name,
-                i -> buildCollector(id, io.prometheus.client.Counter.build()).register(registry));
+                i -> buildCollector(id, io.prometheus.client.Counter.build()));
 
         return (Counter) meterMap.computeIfAbsent(id, c -> new PrometheusCounter(name, child(counter, id.getTags())));
     }
@@ -88,7 +88,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags) {
         MeterId id = id(name, tags);
         io.prometheus.client.Summary summary = (io.prometheus.client.Summary) collectorMap.computeIfAbsent(name,
-                i -> buildCollector(id, io.prometheus.client.Summary.build()).register(registry));
+                i -> buildCollector(id, io.prometheus.client.Summary.build()));
 
         return (DistributionSummary) meterMap.computeIfAbsent(id, s -> new PrometheusDistributionSummary(name, child(summary, id.getTags())));
     }
@@ -96,21 +96,9 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     @Override
     protected Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles) {
         MeterId id = id(name, tags);
-        io.prometheus.client.Summary summary = (io.prometheus.client.Summary) collectorMap.computeIfAbsent(name,
-                i -> {
-                    Summary.Builder builder = buildCollector(id, Summary.build());
-
-                    // discard the internal implementation of CKMSQuantiles and let Prometheus do the work
-                    if(quantiles instanceof CKMSQuantiles) {
-                        for (CKMSQuantiles.Quantile q : ((CKMSQuantiles) quantiles).getQuantiles()) {
-                            builder = builder.quantile(q.getQuantile(), q.getError());
-                        }
-                    }
-
-                    return builder.register(registry);
-                });
-
-        return (Timer) meterMap.computeIfAbsent(id, s -> new PrometheusTimer(name, child(summary, id.getTags()), getClock()));
+        final CustomPrometheusSummary summary = (CustomPrometheusSummary) collectorMap.computeIfAbsent(name, i -> new CustomPrometheusSummary(name, tags, quantiles)
+                .register(registry));
+        return (Timer) meterMap.computeIfAbsent(id, t -> new PrometheusTimer(name, summary, getClock(), quantiles));
     }
 
     @Override
@@ -125,7 +113,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
         MeterId id = id(name, tags);
         io.prometheus.client.Gauge gauge = (io.prometheus.client.Gauge) collectorMap.computeIfAbsent(name,
-                i -> buildCollector(id, io.prometheus.client.Gauge.build()).register(registry));
+                i -> buildCollector(id, io.prometheus.client.Gauge.build()));
 
         meterMap.computeIfAbsent(id, g -> {
             String[] labelValues = Arrays.stream(id.getTags())
@@ -155,7 +143,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         return registry;
     }
 
-    private <B extends SimpleCollector.Builder<B, C>, C extends SimpleCollector<D>, D> B buildCollector(MeterId id,
+    private <B extends SimpleCollector.Builder<B, C>, C extends SimpleCollector<D>, D> C buildCollector(MeterId id,
                                                                                                         SimpleCollector.Builder<B, C> builder) {
         return builder
                 .name(id.getName())
@@ -163,7 +151,8 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
                 .labelNames(Arrays.stream(id.getTags())
                         .map(Tag::getKey)
                         .collect(Collectors.toList())
-                        .toArray(new String[]{}));
+                        .toArray(new String[]{}))
+                .register(registry);
     }
 
     private <C extends SimpleCollector<D>, D> D child(C collector, Tag[] tags) {

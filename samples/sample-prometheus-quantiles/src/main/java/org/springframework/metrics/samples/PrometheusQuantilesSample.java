@@ -12,6 +12,7 @@ import org.springframework.metrics.export.prometheus.PrometheusFunctions;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.prometheus.PrometheusMeterRegistry;
 import org.springframework.metrics.instrument.stats.CKMSQuantiles;
+import org.springframework.metrics.instrument.stats.Frugal2UQuantiles;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -35,16 +36,24 @@ public class PrometheusQuantilesSample {
 
         startServer(route);
 
-        Timer timer = meterRegistry.timerBuilder("random")
+        Timer ckmsTimer = meterRegistry.timerBuilder("random_ckms")
                 .quantiles(CKMSQuantiles.build()
                         .quantile(0.5, 0.05)
                         .quantile(0.95, 0.01)
                         .create())
                 .create();
 
+        Timer frugalTimer = meterRegistry.timerBuilder("random_frugal")
+                .quantiles(Frugal2UQuantiles.build()
+                        .quantile(0.5, 10)
+                        .quantile(0.95, 10)
+                        .create())
+                .create();
+
         while(true) {
             long sample = (long) Math.max(0, dist.nextDouble());
-            timer.record(sample, TimeUnit.SECONDS);
+            ckmsTimer.record(sample, TimeUnit.SECONDS);
+            frugalTimer.record(sample, TimeUnit.SECONDS);
         }
     }
 

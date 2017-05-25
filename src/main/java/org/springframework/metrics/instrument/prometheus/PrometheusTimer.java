@@ -18,34 +18,40 @@ package org.springframework.metrics.instrument.prometheus;
 import io.prometheus.client.Summary;
 import org.springframework.metrics.instrument.Clock;
 import org.springframework.metrics.instrument.internal.AbstractTimer;
+import org.springframework.metrics.instrument.stats.Quantiles;
 
 import java.util.concurrent.TimeUnit;
 
 public class PrometheusTimer extends AbstractTimer {
-    private Summary.Child summary;
+    private CustomPrometheusSummary summary;
+    private Quantiles quantiles;
 
-    public PrometheusTimer(String name, Summary.Child summary, Clock clock) {
+    public PrometheusTimer(String name, CustomPrometheusSummary summary, Clock clock, Quantiles quantiles) {
         super(name, clock);
         this.summary = summary;
+        this.quantiles = quantiles;
     }
 
     @Override
     public void record(long amount, TimeUnit unit) {
         if (amount >= 0) {
-            final double nanos = TimeUnit.NANOSECONDS.convert(amount, unit);
+            final double seconds = TimeUnit.NANOSECONDS.convert(amount, unit) / 10e8;
+
+            if(quantiles != null)
+                quantiles.observe(seconds);
 
             // Prometheus prefers to receive everything in base units, i.e. seconds
-            summary.observe(nanos / 10e8);
+            summary.observe(seconds);
         }
     }
 
     @Override
     public long count() {
-        return (long) summary.get().count;
+        return summary.count();
     }
 
     @Override
     public double totalTime(TimeUnit unit) {
-        return secondsToUnit(summary.get().sum, unit);
+        return secondsToUnit(summary.sum(), unit);
     }
 }

@@ -31,8 +31,8 @@ public class CKMSQuantiles implements Quantiles {
     /**
      * Current list of sampled items, maintained in sorted order with error bounds.
      */
-    private LinkedList<Item> sample;
-    
+    private final LinkedList<Item> sample;
+
     /**
      * Buffers incoming items to be inserted in batch.
      */
@@ -45,9 +45,17 @@ public class CKMSQuantiles implements Quantiles {
      */
     private final Quantile quantiles[];
 
-    public CKMSQuantiles(Quantile[] quantiles) {
+    private final Collection<Double> registered;
+
+    CKMSQuantiles(Quantile[] quantiles) {
         this.quantiles = quantiles;
-        this.sample = new LinkedList<Item>();
+
+        registered = new ArrayList<>();
+        for (Quantile quantile : quantiles) {
+            registered.add(quantile.getQuantile());
+        }
+
+        this.sample = new LinkedList<>();
     }
   
     /**
@@ -56,7 +64,7 @@ public class CKMSQuantiles implements Quantiles {
      * @param value
      */
     @Override
-    public void offer(double value) {
+    public void observe(double value) {
         buffer[bufferCount] = value;
         bufferCount++;
 
@@ -73,36 +81,43 @@ public class CKMSQuantiles implements Quantiles {
      * @return Estimated value at that quantile.
      */
     @Override
-    public double get(double q) {
+    public Double get(double q) {
         // clear the buffer
         insertBatch();
         compress();
 
-        if (sample.size() == 0) {
-            return Double.NaN;
-        }
-
-        int rankMin = 0;
-        int desired = (int) (q * count);
-
-        ListIterator<Item> it = sample.listIterator();
-        Item prev, cur;
-        cur = it.next();
-        while (it.hasNext()) {
-            prev = cur;
-            cur = it.next();
-
-            rankMin += prev.g;
-
-            if (rankMin + cur.g + cur.delta > desired + (allowableError(desired) / 2)) {
-                return prev.value;
+        synchronized (sample) {
+            if (sample.size() == 0) {
+                return Double.NaN;
             }
-        }
 
-        // edge case of wanting max value
-        return sample.getLast().value;
+            int rankMin = 0;
+            int desired = (int) (q * count);
+
+            ListIterator<Item> it = sample.listIterator();
+            Item prev, cur;
+            cur = it.next();
+            while (it.hasNext()) {
+                prev = cur;
+                cur = it.next();
+
+                rankMin += prev.g;
+
+                if (rankMin + cur.g + cur.delta > desired + (allowableError(desired) / 2)) {
+                    return prev.value;
+                }
+            }
+
+            // edge case of wanting max value
+            return sample.getLast().value;
+        }
     }
-    
+
+    @Override
+    public Collection<Double> registered() {
+        return registered;
+    }
+
     /**
      * Specifies the allowable error for this rank, depending on which quantiles
      * are being targeted.
@@ -142,42 +157,44 @@ public class CKMSQuantiles implements Quantiles {
 
         Arrays.sort(buffer, 0, bufferCount);
 
-        // Base case: no samples
-        int start = 0;
-        if (sample.size() == 0) {
-          Item newItem = new Item(buffer[0], 1, 0);
-          sample.add(newItem);
-          start++;
-          count++;
-        }
+        synchronized (sample) {
+            // Base case: no samples
+            int start = 0;
+            if (sample.size() == 0) {
+                Item newItem = new Item(buffer[0], 1, 0);
+                sample.add(newItem);
+                start++;
+                count++;
+            }
 
-        ListIterator<Item> it = sample.listIterator();
-        Item item = it.next();
-        
-        for (int i = start; i < bufferCount; i++) {
-            double v = buffer[i];
-            while (it.nextIndex() < sample.size() && item.value < v) {
-                item = it.next();
+            ListIterator<Item> it = sample.listIterator();
+            Item item = it.next();
+
+            for (int i = start; i < bufferCount; i++) {
+                double v = buffer[i];
+                while (it.nextIndex() < sample.size() && item.value < v) {
+                    item = it.next();
+                }
+
+                // If we found that bigger item, back up so we insert ourselves before it
+                if (item.value > v) {
+                    it.previous();
+                }
+
+                // We use different indexes for the edge comparisons, because of the above
+                // if statement that adjusts the iterator
+                int delta;
+                if (it.previousIndex() == 0 || it.nextIndex() == sample.size()) {
+                    delta = 0;
+                } else {
+                    delta = ((int) Math.floor(allowableError(it.nextIndex()))) - 1;
+                }
+
+                Item newItem = new Item(v, 1, delta);
+                it.add(newItem);
+                count++;
+                item = newItem;
             }
-            
-            // If we found that bigger item, back up so we insert ourselves before it
-            if (item.value > v) {
-                it.previous();
-            }
-            
-            // We use different indexes for the edge comparisons, because of the above
-            // if statement that adjusts the iterator
-            int delta;
-            if (it.previousIndex() == 0 || it.nextIndex() == sample.size()) {
-                delta = 0;
-            } else {
-                delta = ((int) Math.floor(allowableError(it.nextIndex()))) - 1;
-            }
-            
-            Item newItem = new Item(v, 1, delta);
-            it.add(newItem);
-            count++;
-            item = newItem;
         }
 
         bufferCount = 0;
@@ -189,26 +206,28 @@ public class CKMSQuantiles implements Quantiles {
      * with the adjacent item if it is.
      */
     private void compress() {
-        if (sample.size() < 2) {
-          return;
-        }
+        synchronized (sample) {
+            if (sample.size() < 2) {
+                return;
+            }
 
-        ListIterator<Item> it = sample.listIterator();
-        Item prev;
-        Item next = it.next();
+            ListIterator<Item> it = sample.listIterator();
+            Item prev;
+            Item next = it.next();
 
-        while (it.hasNext()) {
-            prev = next;
-            next = it.next();
+            while (it.hasNext()) {
+                prev = next;
+                next = it.next();
 
-            if (prev.g + next.g + next.delta <= allowableError(it.previousIndex())) {
-                next.g += prev.g;
-                // Remove prev. it.remove() kills the last thing returned.
-                it.previous();
-                it.previous();
-                it.remove();
-                // it.next() is now equal to next, skip it back forward again
-                it.next();
+                if (prev.g + next.g + next.delta <= allowableError(it.previousIndex())) {
+                    next.g += prev.g;
+                    // Remove prev. it.remove() kills the last thing returned.
+                    it.previous();
+                    it.previous();
+                    it.remove();
+                    // it.next() is now equal to next, skip it back forward again
+                    it.next();
+                }
             }
         }
     }

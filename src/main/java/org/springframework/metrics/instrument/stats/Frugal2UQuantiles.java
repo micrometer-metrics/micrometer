@@ -1,6 +1,7 @@
 package org.springframework.metrics.instrument.stats;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
@@ -24,33 +25,35 @@ import java.util.Random;
 public class Frugal2UQuantiles implements Quantiles {
 
     private final Quantile quantiles[];
+    private final Collection<Double> registered;
 
-    public Frugal2UQuantiles(Quantile[] quantiles) {
+    Frugal2UQuantiles(Quantile[] quantiles) {
         this.quantiles = quantiles;
-    }
 
-    public Frugal2UQuantiles(double[] quantiles, double initialEstimate) {
-        this.quantiles = new Quantile[quantiles.length];
-        for (int i=0; i<quantiles.length; i++) {
-            this.quantiles[i] = new Quantile(quantiles[i], initialEstimate);
+        registered = new ArrayList<>();
+        for (Quantile quantile : quantiles) {
+            registered.add(quantile.q);
         }
     }
 
     @Override
-    public void offer(double value) {
+    public void observe(double value) {
         for (Quantile q : quantiles) {
             q.insert(value);
         }
     }
 
     @Override
-    public double get(double q) {
+    public Double get(double q) {
         for (Quantile quantile : quantiles) {
             if (quantile.q == q)
                 return quantile.m;
         }
-
         return 0.0;
+    }
+
+    public Collection<Double> registered() {
+        return registered;
     }
 
     public static class Quantile {

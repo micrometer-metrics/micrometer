@@ -39,12 +39,12 @@ public class QuantilesBenchmark {
 
     @Benchmark
     public void frugal2uQuantiles() {
-        frugal2u.offer(Math.max(0.0, dist.nextDouble()));
+        frugal2u.observe(Math.max(0.0, dist.nextDouble()));
     }
 
     @Benchmark
     public void ckmsQuantiles() {
-        ckms.offer(Math.max(0.0, dist.nextDouble()));
+        ckms.observe(Math.max(0.0, dist.nextDouble()));
     }
 
     public static void main(String[] args) throws RunnerException {
