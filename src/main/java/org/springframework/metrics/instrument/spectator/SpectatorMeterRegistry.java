@@ -15,11 +15,11 @@
  */
 package org.springframework.metrics.instrument.spectator;
 
-import com.google.common.collect.Iterables;
 import com.netflix.spectator.api.BasicTag;
 import com.netflix.spectator.api.DefaultRegistry;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
+import io.prometheus.client.CollectorRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.metrics.instrument.*;
 import org.springframework.metrics.instrument.Timer;
@@ -99,13 +99,20 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    public DistributionSummary distributionSummary(String name, Iterable<Tag> tags) {
+    public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles) {
+        registerQuantilesGaugeIfNecessary(name, tags, quantiles);
         com.netflix.spectator.api.DistributionSummary ds = registry.distributionSummary(name, toSpectatorTags(tags));
         return (DistributionSummary) meterMap.computeIfAbsent(ds, d -> new SpectatorDistributionSummary(ds));
     }
 
     @Override
     protected Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles) {
+        registerQuantilesGaugeIfNecessary(name, tags, quantiles);
+        com.netflix.spectator.api.Timer timer = registry.timer(name, toSpectatorTags(tags));
+        return (Timer) meterMap.computeIfAbsent(timer, t -> new SpectatorTimer(timer, getClock()));
+    }
+
+    private void registerQuantilesGaugeIfNecessary(String name, Iterable<Tag> tags, Quantiles quantiles) {
         if(quantiles != null) {
             for (Double q : quantiles.monitored()) {
                 List<com.netflix.spectator.api.Tag> quantileTags = new LinkedList<>(toSpectatorTags(tags));
@@ -114,9 +121,6 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
                 registry.gauge(registry.createId(name, quantileTags), q, quantiles::get);
             }
         }
-
-        com.netflix.spectator.api.Timer timer = registry.timer(name, toSpectatorTags(tags));
-        return (Timer) meterMap.computeIfAbsent(timer, t -> new SpectatorTimer(timer, getClock()));
     }
 
     @Override
@@ -132,5 +136,12 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
         registry.register(gauge);
         meterMap.computeIfAbsent(gauge, g -> new SpectatorGauge(gauge));
         return obj;
+    }
+
+    /**
+     * @return The underlying Spectator {@link Registry}.
+     */
+    public Registry getSpectatorRegistry() {
+        return registry;
     }
 }

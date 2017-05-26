@@ -15,7 +15,6 @@
  */
 package org.springframework.metrics.instrument.prometheus;
 
-import io.prometheus.client.Summary;
 import org.springframework.metrics.instrument.Clock;
 import org.springframework.metrics.instrument.internal.AbstractTimer;
 import org.springframework.metrics.instrument.stats.Quantiles;

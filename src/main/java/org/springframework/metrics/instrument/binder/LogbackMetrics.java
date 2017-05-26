@@ -25,9 +25,6 @@ import org.slf4j.Marker;
 import org.springframework.metrics.instrument.Counter;
 import org.springframework.metrics.instrument.MeterRegistry;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class LogbackMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {

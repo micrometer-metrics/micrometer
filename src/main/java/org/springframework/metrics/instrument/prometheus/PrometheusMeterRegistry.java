@@ -15,15 +15,16 @@
  */
 package org.springframework.metrics.instrument.prometheus;
 
-import io.prometheus.client.*;
+import io.prometheus.client.Collector;
+import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Gauge;
+import io.prometheus.client.SimpleCollector;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.metrics.instrument.*;
-import org.springframework.metrics.instrument.Counter;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
 import org.springframework.metrics.instrument.internal.MeterId;
-import org.springframework.metrics.instrument.stats.*;
+import org.springframework.metrics.instrument.stats.Quantiles;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -85,12 +86,11 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    public DistributionSummary distributionSummary(String name, Iterable<Tag> tags) {
+    public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles) {
         MeterId id = id(name, tags);
-        io.prometheus.client.Summary summary = (io.prometheus.client.Summary) collectorMap.computeIfAbsent(name,
-                i -> buildCollector(id, io.prometheus.client.Summary.build()));
-
-        return (DistributionSummary) meterMap.computeIfAbsent(id, s -> new PrometheusDistributionSummary(name, child(summary, id.getTags())));
+        final CustomPrometheusSummary summary = (CustomPrometheusSummary) collectorMap.computeIfAbsent(name, i -> new CustomPrometheusSummary(name, tags, quantiles)
+                .register(registry));
+        return (DistributionSummary) meterMap.computeIfAbsent(id, t -> new PrometheusDistributionSummary(name, summary, quantiles));
     }
 
     @Override
@@ -139,7 +139,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     /**
      * @return The underlying Prometheus {@link CollectorRegistry}.
      */
-    public CollectorRegistry getCollectorRegistry() {
+    public CollectorRegistry getPrometheusRegistry() {
         return registry;
     }
 

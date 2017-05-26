@@ -34,7 +34,7 @@ public class PrometheusFunctions {
                 .body(Mono.fromSupplier(() -> {
                     Writer writer = new StringWriter();
                     try {
-                        TextFormat.write004(writer, registry.getCollectorRegistry().metricFamilySamples());
+                        TextFormat.write004(writer, registry.getPrometheusRegistry().metricFamilySamples());
                     } catch (IOException e) {
                         // This actually never happens since StringWriter::write() doesn't throw any IOException
                         throw new RuntimeException(e);

@@ -48,13 +48,26 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    public DistributionSummary distributionSummary(String name, Iterable<Tag> tags) {
+    public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles) {
+        registerQuantilesGaugeIfNecessary(name, tags, quantiles);
         return (DistributionSummary) meterMap.computeIfAbsent(new MeterId(name, tags), id -> storeId(id, new SimpleDistributionSummary(name)));
     }
 
     @Override
     protected Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles) {
+        registerQuantilesGaugeIfNecessary(name, tags, quantiles);
         return (Timer) meterMap.computeIfAbsent(new MeterId(name, tags), id -> storeId(id, new SimpleTimer(name)));
+    }
+
+    private void registerQuantilesGaugeIfNecessary(String name, Iterable<Tag> tags, Quantiles quantiles) {
+        if(quantiles != null) {
+            for (Double q : quantiles.monitored()) {
+                List<Tag> quantileTags = new LinkedList<>();
+                tags.forEach(quantileTags::add);
+                quantileTags.add(Tag.of("quantile", Double.isNaN(q) ? "NaN" : Double.toString(q)));
+                meterMap.computeIfAbsent(new MeterId(name, quantileTags), id -> storeId(id, new SimpleGauge<>(name, q, quantiles::get)));
+            }
+        }
     }
 
     @Override

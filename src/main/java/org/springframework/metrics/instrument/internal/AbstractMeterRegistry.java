@@ -110,4 +110,38 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     }
 
     protected abstract Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles);
+
+    @Override
+    public DistributionSummary.Builder distributionSummaryBuilder(String name) {
+        return new DistributionSummaryBuilder(name);
+    }
+
+    private class DistributionSummaryBuilder implements DistributionSummary.Builder {
+        private final String name;
+        private Quantiles quantiles;
+        private final List<Tag> tags = new ArrayList<>();
+
+        private DistributionSummaryBuilder(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public DistributionSummary.Builder quantiles(Quantiles quantiles) {
+            this.quantiles = quantiles;
+            return this;
+        }
+
+        @Override
+        public DistributionSummary.Builder tag(Tag tag) {
+            tags.add(tag);
+            return this;
+        }
+
+        @Override
+        public DistributionSummary create() {
+            return distributionSummary(name, tags, quantiles);
+        }
+    }
+
+    protected abstract DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles);
 }

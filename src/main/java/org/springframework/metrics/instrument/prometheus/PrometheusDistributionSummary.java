@@ -15,33 +15,37 @@
  */
 package org.springframework.metrics.instrument.prometheus;
 
-import io.prometheus.client.Summary;
-import org.springframework.metrics.instrument.Clock;
 import org.springframework.metrics.instrument.DistributionSummary;
+import org.springframework.metrics.instrument.stats.Quantiles;
 
 public class PrometheusDistributionSummary implements DistributionSummary {
     private final String name;
-    private Summary.Child summary;
+    private final CustomPrometheusSummary summary;
+    private final Quantiles quantiles;
 
-    public PrometheusDistributionSummary(String name, Summary.Child summary) {
+    public PrometheusDistributionSummary(String name, CustomPrometheusSummary summary, Quantiles quantiles) {
         this.name = name;
         this.summary = summary;
+        this.quantiles = quantiles;
     }
 
     @Override
     public void record(double amount) {
-        if (amount >= 0)
+        if (amount >= 0) {
+            if(quantiles != null)
+                quantiles.observe(amount);
             summary.observe(amount);
+        }
     }
 
     @Override
     public long count() {
-        return (long) summary.get().count;
+        return summary.count();
     }
 
     @Override
     public double totalAmount() {
-        return (long) summary.get().sum;
+        return summary.sum();
     }
 
     @Override

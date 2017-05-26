@@ -15,6 +15,11 @@
  */
 package org.springframework.metrics.instrument;
 
+import org.springframework.metrics.instrument.stats.Quantiles;
+
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 /**
  * Track the sample distribution of events. An example would be the response sizes for requests
  * hitting and http server.
@@ -38,4 +43,27 @@ public interface DistributionSummary extends Meter {
      * The total amount of all recorded events since this summary was created.
      */
     double totalAmount();
+
+    interface Builder {
+        Builder quantiles(Quantiles quantiles);
+
+        Builder tag(Tag tag);
+
+        default Builder tag(String key, String value) {
+            return tag(Tag.of(key, value));
+        }
+
+        default Builder tags(Iterable<Tag> tags) {
+            for (Tag tag : tags) {
+                tag(tag);
+            }
+            return this;
+        }
+
+        default Builder tags(Stream<Tag> tags) {
+            return tags(tags.collect(Collectors.toList()));
+        }
+
+        DistributionSummary create();
+    }
 }

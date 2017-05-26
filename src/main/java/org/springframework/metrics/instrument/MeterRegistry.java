@@ -18,8 +18,8 @@ package org.springframework.metrics.instrument;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheStats;
 import com.google.common.cache.LoadingCache;
-import org.springframework.metrics.instrument.internal.MonitoredExecutorService;
 import org.springframework.metrics.instrument.binder.MeterBinder;
+import org.springframework.metrics.instrument.internal.MonitoredExecutorService;
 
 import javax.sql.DataSource;
 import java.util.Collection;
@@ -87,9 +87,18 @@ public interface MeterRegistry {
     }
 
     /**
+     * Build a new Distribution Summary, which is registered with this registry once {@link DistributionSummary.Builder#create()} is called.
+     * @param name The name of the distribution summary (which is the only requirement for a new distribution summary).
+     * @return The builder.
+     */
+    DistributionSummary.Builder distributionSummaryBuilder(String name);
+
+    /**
      * Measures the sample distribution of events.
      */
-    DistributionSummary distributionSummary(String name, Iterable<Tag> tags);
+    default DistributionSummary distributionSummary(String name, Iterable<Tag> tags) {
+        return distributionSummaryBuilder(name).tags(tags).create();
+    }
 
     /**
      * Measures the sample distribution of events.

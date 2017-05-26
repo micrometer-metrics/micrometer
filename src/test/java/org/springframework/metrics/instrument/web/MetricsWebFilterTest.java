@@ -57,7 +57,8 @@ class MetricsWebFilterTest {
         SimpleTimer timer = expectTimer();
         client.get().uri("/api/c2/10").exchange()
                 .expectStatus().isOk()
-                .expectBody().consumeAsStringWith(b -> assertThat(b).isEqualTo("10"));
+                .expectBody()
+                .consumeWith(r -> assertThat(new String(r.getResponseBody())).isEqualTo("10"));
 
         assertTags(
                 Tag.of("uri", "api/c2/{id}")

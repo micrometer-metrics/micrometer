@@ -21,9 +21,6 @@ import org.springframework.metrics.instrument.Clock;
 import org.springframework.metrics.instrument.LongTaskTimer;
 import org.springframework.metrics.instrument.Tag;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;

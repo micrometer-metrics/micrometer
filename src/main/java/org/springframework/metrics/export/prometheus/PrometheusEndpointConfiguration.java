@@ -15,7 +15,6 @@
  */
 package org.springframework.metrics.export.prometheus;
 
-import io.prometheus.client.CollectorRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.metrics.instrument.prometheus.PrometheusMeterRegistry;
@@ -24,6 +23,6 @@ import org.springframework.metrics.instrument.prometheus.PrometheusMeterRegistry
 public class PrometheusEndpointConfiguration {
     @Bean
     public PrometheusActuatorEndpoint prometheusEndpoint(PrometheusMeterRegistry registry) {
-        return new PrometheusActuatorEndpoint(registry.getCollectorRegistry());
+        return new PrometheusActuatorEndpoint(registry.getPrometheusRegistry());
     }
 }
