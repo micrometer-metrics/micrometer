@@ -27,4 +27,6 @@ public @interface Timed {
     String[] extraTags() default {};
 
     boolean longTask() default false;
+
+    double[] quantiles() default {};
 }

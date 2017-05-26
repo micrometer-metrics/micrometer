@@ -25,6 +25,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.metrics.boot.EnableMetrics;
+import org.springframework.metrics.instrument.Gauge;
 import org.springframework.metrics.instrument.LongTaskTimer;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Timer;
@@ -66,7 +67,7 @@ class MetricsHandlerInterceptorTest {
     }
 
     @Test
-    void metricsGatheredWhenMethodIsTimed() throws Exception {
+    void timedMethod() throws Exception {
         mvc.perform(get("/api/c1/10")).andExpect(status().isOk());
         assertThat(registry.findMeter(Timer.class, "http_server_requests", "status", "200", "uri", "api/c1/{id}", "public", "true"))
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
@@ -74,27 +75,27 @@ class MetricsHandlerInterceptorTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void metricsNotGatheredWhenRequestMappingIsNotTimed() throws Exception {
+    void untimedMethod() throws Exception {
         mvc.perform(get("/api/c1/untimed/10")).andExpect(status().isOk());
         assertThat(registry.findMeter(Timer.class, "http_server_requests")).isEmpty();
     }
 
     @Test
-    void metricsGatheredWhenControllerIsTimed() throws Exception {
+    void timedControllerClass() throws Exception {
         mvc.perform(get("/api/c2/10")).andExpect(status().isOk());
         assertThat(registry.findMeter(Timer.class, "http_server_requests", "status", "200"))
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
     @Test
-    void metricsGatheredWhenClientRequestBad() throws Exception {
+    void badClientRequest() throws Exception {
         mvc.perform(get("/api/c1/oops")).andExpect(status().is4xxClientError());
         assertThat(registry.findMeter(Timer.class, "http_server_requests", "status", "400"))
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
     @Test
-    void metricsGatheredWhenUnhandledError() throws Exception {
+    void unhandledError() throws Exception {
         assertThatCode(() -> mvc.perform(get("/api/c1/unhandledError/10")).andExpect(status().isOk()))
                 .hasCauseInstanceOf(RuntimeException.class);
         assertThat(registry.findMeter(Timer.class, "http_server_requests", "exception", "RuntimeException"))
@@ -102,7 +103,7 @@ class MetricsHandlerInterceptorTest {
     }
 
     @Test
-    void metricsGatheredForLongRunningRequestMapping() throws Exception {
+    void longRunningRequest() throws Exception {
         MvcResult result = mvc.perform(get("/api/c1/long/10"))
                 .andExpect(request().asyncStarted())
                 .andReturn();
@@ -123,17 +124,24 @@ class MetricsHandlerInterceptorTest {
     @Test
     /* FIXME */
     @Disabled("ErrorMvcAutoConfiguration is blowing up on SPEL evaluation of 'timestamp'")
-    void metricsGatheredWhenHandledError() throws Exception {
+    void endpointThrowsError() throws Exception {
         mvc.perform(get("/api/c1/error/10")).andExpect(status().is4xxClientError());
         assertThat(registry.findMeter(Timer.class, "http_server_requests", "status", "422"))
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
     @Test
-    void metricsGatheredWhenRegexEndpoint() throws Exception {
+    void regexBasedRequestMapping() throws Exception {
         mvc.perform(get("/api/c1/regex/.abc")).andExpect(status().isOk());
         assertThat(registry.findMeter(Timer.class, "http_server_requests", "uri", "api/c1/regex/{id:\\.[a-z]+}"))
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+    }
+
+    @Test
+    void recordQuantiles() throws Exception {
+        mvc.perform(get("/api/c1/quantiles/10")).andExpect(status().isOk());
+        assertThat(registry.findMeter(Gauge.class, "http_server_requests.quantiles", "quantile", "0.5")).isNotEmpty();
+        assertThat(registry.findMeter(Gauge.class, "http_server_requests.quantiles", "quantile", "0.95")).isNotEmpty();
     }
 
     @SpringBootApplication
@@ -188,6 +196,12 @@ class MetricsHandlerInterceptorTest {
         @Timed
         @GetMapping("/regex/{id:\\.[a-z]+}")
         public String successfulRegex(@PathVariable String id) {
+            return id;
+        }
+
+        @Timed(quantiles = {0.5, 0.95})
+        @GetMapping("/quantiles/{id}")
+        public String quantiles(@PathVariable String id) {
             return id;
         }
 

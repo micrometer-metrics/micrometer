@@ -414,8 +414,10 @@ public class WindowSketchQuantiles implements Quantiles {
         private Collection<Double> monitored = new ArrayList<>();
         private double error = 0.05;
 
-        public Builder quantile(double quantile) {
-            monitored.add(quantile);
+        public Builder quantile(double... quantiles) {
+            for (double quantile : quantiles) {
+                monitored.add(quantile);
+            }
             return this;
         }
 

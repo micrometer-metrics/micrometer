@@ -65,7 +65,7 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
                 List<Tag> quantileTags = new LinkedList<>();
                 tags.forEach(quantileTags::add);
                 quantileTags.add(Tag.of("quantile", Double.isNaN(q) ? "NaN" : Double.toString(q)));
-                meterMap.computeIfAbsent(new MeterId(name, quantileTags), id -> storeId(id, new SimpleGauge<>(name, q, quantiles::get)));
+                meterMap.computeIfAbsent(new MeterId(name + ".quantiles", quantileTags), id -> storeId(id, new SimpleGauge<>(name, q, quantiles::get)));
             }
         }
     }

@@ -22,6 +22,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.metrics.boot.EnableMetrics;
+import org.springframework.metrics.instrument.Gauge;
 import org.springframework.metrics.instrument.LongTaskTimer;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Timer;
@@ -52,7 +53,10 @@ class MetricsSchedulingAspectTest {
     @Test
     void scheduledIsInstrumented() throws InterruptedException {
         assertThat(registry.findMeter(Timer.class, "beeper"))
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(2));
+
+        assertThat(registry.findMeter(Gauge.class, "beeper.quantiles", "quantile", "0.5")).isNotEmpty();
+        assertThat(registry.findMeter(Gauge.class, "beeper.quantiles", "quantile", "0.95")).isNotEmpty();
 
         longTaskStarted.await();
 
@@ -66,7 +70,7 @@ class MetricsSchedulingAspectTest {
 
         // now the long beeper has contributed to the beep count as well
         assertThat(registry.findMeter(Timer.class, "beeper"))
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(2));
+                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(3));
     }
 
     @SpringBootApplication
@@ -82,7 +86,7 @@ class MetricsSchedulingAspectTest {
         ThreadPoolTaskScheduler scheduler() {
             ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
             // this way, executing longBeep doesn't block the short tasks from running
-            scheduler.setPoolSize(5);
+            scheduler.setPoolSize(6);
             return scheduler;
         }
 
@@ -101,14 +105,20 @@ class MetricsSchedulingAspectTest {
             System.out.println("beep");
         }
 
-        @Timed // not instrumented because @Timed lacks a metric name
+        @Timed(value = "beeper", quantiles = {0.5, 0.95})
         @Scheduled(fixedRate = 1000)
         void beep2() {
             System.out.println("beep");
         }
 
-        @Scheduled(fixedRate = 1000) // not instrumented because it isn't @Timed
+        @Timed // not instrumented because @Timed lacks a metric name
+        @Scheduled(fixedRate = 1000)
         void beep3() {
+            System.out.println("beep");
+        }
+
+        @Scheduled(fixedRate = 1000) // not instrumented because it isn't @Timed
+        void beep4() {
             System.out.println("beep");
         }
     }

@@ -22,6 +22,7 @@ import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.internal.TimedUtils;
+import org.springframework.metrics.instrument.stats.WindowSketchQuantiles;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
@@ -112,7 +113,9 @@ public class MetricsHandlerInterceptor extends HandlerInterceptorAdapter {
                 name = t.value();
             }
 
-            Stream<Tag> tags = tagConfigurer.httpRequestTags(request, response);
+            Timer.Builder timerBuilder = registry.timerBuilder(name)
+                    .tags(tagConfigurer.httpRequestTags(request, response));
+
             String[] extraTags = t.extraTags();
             if (extraTags.length > 0) {
                 if (extraTags.length % 2 != 0) {
@@ -122,16 +125,16 @@ public class MetricsHandlerInterceptor extends HandlerInterceptorAdapter {
                         logger.error("@Timed extraTags array on method " + target + " size must be even, it is a set of key=value pairs");
                     }
                 } else {
-                    Stream<Tag> extraTagsStream = IntStream.range(0, extraTags.length / 2)
-                            .mapToObj(i -> Tag.of(extraTags[i], extraTags[i + 1]));
-                    tags = Stream.concat(tags, extraTagsStream);
+                    timerBuilder = timerBuilder.tags(IntStream.range(0, extraTags.length / 2)
+                            .mapToObj(i -> Tag.of(extraTags[i], extraTags[i + 1])));
                 }
             }
 
-            Timer timer = registry.timer(name, tags);
-            if (timer != null) {
-                timer.record(endTime - startTime, TimeUnit.NANOSECONDS);
+            if(t.quantiles().length > 0) {
+                timerBuilder = timerBuilder.quantiles(WindowSketchQuantiles.build().quantile(t.quantiles()).create());
             }
+
+            timerBuilder.create().record(endTime - startTime, TimeUnit.NANOSECONDS);
         });
     }
 
