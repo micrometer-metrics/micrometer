@@ -68,6 +68,6 @@ class MetricsTurboFilter extends TurboFilter {
                 break;
         }
 
-        return FilterReply.ACCEPT;
+        return FilterReply.NEUTRAL;
     }
 }
