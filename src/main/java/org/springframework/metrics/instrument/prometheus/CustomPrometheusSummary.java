@@ -15,22 +15,21 @@
  */
 package org.springframework.metrics.instrument.prometheus;
 
-import com.google.common.collect.Streams;
 import io.prometheus.client.Collector;
 import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.stats.Quantiles;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
 
 /**
  * Necessitated by a desire to offer different quantile algorithms.
@@ -49,7 +48,7 @@ public class CustomPrometheusSummary extends Collector {
         this.name = name;
         this.countName = name + "_count";
         this.sumName = name + "_sum";
-        this.tagKeys = Streams.stream(tags).map(Tag::getKey).collect(toList());
+        this.tagKeys = stream(tags.spliterator(), false).map(Tag::getKey).collect(toList());
     }
 
     public Child child(Iterable<Tag> tags, Quantiles quantiles) {
@@ -68,7 +67,7 @@ public class CustomPrometheusSummary extends Collector {
 
         Child(Iterable<Tag> tags, Quantiles quantiles) {
             this.quantiles = quantiles;
-            this.tagValues = Streams.stream(tags).map(Tag::getValue).collect(toList());
+            this.tagValues = stream(tags.spliterator(), false).map(Tag::getValue).collect(toList());
 
             if(quantiles != null) {
                 quantileKeys = new LinkedList<>(tagKeys);
