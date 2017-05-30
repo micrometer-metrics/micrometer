@@ -20,10 +20,10 @@ import org.springframework.metrics.instrument.stats.Quantiles;
 
 public class PrometheusDistributionSummary implements DistributionSummary {
     private final String name;
-    private final CustomPrometheusSummary summary;
+    private final CustomPrometheusSummary.Child summary;
     private final Quantiles quantiles;
 
-    public PrometheusDistributionSummary(String name, CustomPrometheusSummary summary, Quantiles quantiles) {
+    public PrometheusDistributionSummary(String name, CustomPrometheusSummary.Child summary, Quantiles quantiles) {
         this.name = name;
         this.summary = summary;
         this.quantiles = quantiles;

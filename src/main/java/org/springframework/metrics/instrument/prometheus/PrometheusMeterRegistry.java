@@ -88,17 +88,17 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     @Override
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles) {
         MeterId id = id(name, tags);
-        final CustomPrometheusSummary summary = (CustomPrometheusSummary) collectorMap.computeIfAbsent(name, i -> new CustomPrometheusSummary(name, tags, quantiles)
+        final CustomPrometheusSummary summary = (CustomPrometheusSummary) collectorMap.computeIfAbsent(name, i -> new CustomPrometheusSummary(name, tags)
                 .register(registry));
-        return (DistributionSummary) meterMap.computeIfAbsent(id, t -> new PrometheusDistributionSummary(name, summary, quantiles));
+        return (DistributionSummary) meterMap.computeIfAbsent(id, t -> new PrometheusDistributionSummary(name, summary.child(tags, quantiles), quantiles));
     }
 
     @Override
     protected Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles) {
         MeterId id = id(name, tags);
-        final CustomPrometheusSummary summary = (CustomPrometheusSummary) collectorMap.computeIfAbsent(name, i -> new CustomPrometheusSummary(name, tags, quantiles)
+        final CustomPrometheusSummary summary = (CustomPrometheusSummary) collectorMap.computeIfAbsent(name, i -> new CustomPrometheusSummary(name, tags)
                 .register(registry));
-        return (Timer) meterMap.computeIfAbsent(id, t -> new PrometheusTimer(name, summary, getClock(), quantiles));
+        return (Timer) meterMap.computeIfAbsent(id, t -> new PrometheusTimer(name, summary.child(tags, quantiles), getClock(), quantiles));
     }
 
     @Override

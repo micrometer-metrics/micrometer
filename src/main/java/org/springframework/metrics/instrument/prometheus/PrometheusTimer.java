@@ -22,10 +22,10 @@ import org.springframework.metrics.instrument.stats.Quantiles;
 import java.util.concurrent.TimeUnit;
 
 public class PrometheusTimer extends AbstractTimer {
-    private CustomPrometheusSummary summary;
+    private CustomPrometheusSummary.Child summary;
     private Quantiles quantiles;
 
-    public PrometheusTimer(String name, CustomPrometheusSummary summary, Clock clock, Quantiles quantiles) {
+    public PrometheusTimer(String name, CustomPrometheusSummary.Child summary, Clock clock, Quantiles quantiles) {
         super(name, clock);
         this.summary = summary;
         this.quantiles = quantiles;

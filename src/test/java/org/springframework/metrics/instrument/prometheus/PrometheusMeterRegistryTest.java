@@ -20,11 +20,15 @@ import io.prometheus.client.CollectorRegistry;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.metrics.Issue;
 import org.springframework.metrics.instrument.stats.GKQuantiles;
 
+import java.util.Arrays;
 import java.util.Enumeration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.offset;
 
 /**
  * @author Jon Schneider
@@ -47,6 +51,20 @@ class PrometheusMeterRegistryTest {
 
         assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndTagKey("timer", "quantile"));
         assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndTagKey("ds", "quantile"));
+    }
+
+    @DisplayName("custom distribution summaries respect varying tags")
+    @Issue("#27")
+    @Test
+    void customSummaries() {
+        PrometheusMeterRegistry registry = new PrometheusMeterRegistry();
+
+        Arrays.asList("v1", "v2").forEach(v -> {
+            registry.distributionSummary("s", "k", v).record(1.0);
+            assertThat(registry.getPrometheusRegistry().getSampleValue("s_count", new String[] { "k" }, new String[] { v }))
+                    .describedAs("distribution summary s with a tag value of %s", v)
+                    .isEqualTo(1.0, offset(1e-12));
+        });
     }
 
     private Condition<Enumeration<Collector.MetricFamilySamples>> withNameAndTagKey(String name, String tagKey) {
