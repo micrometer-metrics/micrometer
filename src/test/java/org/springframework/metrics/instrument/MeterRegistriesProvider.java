@@ -26,7 +26,7 @@ import org.springframework.metrics.instrument.prometheus.*;
 
 import java.util.stream.Stream;
 
-class MeterRegistriesProvider implements ArgumentsProvider {
+public class MeterRegistriesProvider implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> arguments(ContainerExtensionContext context) throws Exception {
         return Stream.of(
