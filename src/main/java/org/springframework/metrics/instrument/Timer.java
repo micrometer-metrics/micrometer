@@ -24,8 +24,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Timer intended to track a large number of short running events. Example would be something like
- * an http request. Though "short running" is a bit subjective the assumption is that it should be
+ * Timer intended to track of a large number of short running events. Example would be something like
+ * an HTTP request. Though "short running" is a bit subjective the assumption is that it should be
  * under a minute.
  */
 public interface Timer extends Meter {

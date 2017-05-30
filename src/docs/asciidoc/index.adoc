@@ -565,6 +565,14 @@ cases.
 enables a Spring Boot Actuator endpoint at `/prometheus` that presents a Prometheus
 scrape with the appropriate format.
 
+A router function generator is also provided to add a scraping endpoint to a Webflux functional application:
+
+```java
+PrometheusMeterRegistry meterRegistry = new PrometheusMeterRegistry();
+RouterFunction<ServerResponse> route = route(GET("/prometheus"),
+    PrometheusFunctions.scrape(meterRegistry));
+```
+
 Here is an example `scrape_config` to add to prometheus.yml:
 
 ```yml

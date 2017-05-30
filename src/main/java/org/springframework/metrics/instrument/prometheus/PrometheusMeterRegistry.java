@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
+import static org.springframework.metrics.instrument.internal.MapAccess.computeIfAbsent;
 import static org.springframework.metrics.instrument.internal.MeterId.id;
 
 /**

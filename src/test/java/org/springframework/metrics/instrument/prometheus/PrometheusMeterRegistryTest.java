@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.Enumeration;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.offset;
 
 /**
@@ -61,7 +60,7 @@ class PrometheusMeterRegistryTest {
 
         Arrays.asList("v1", "v2").forEach(v -> {
             registry.distributionSummary("s", "k", v).record(1.0);
-            assertThat(registry.getPrometheusRegistry().getSampleValue("s_count", new String[] { "k" }, new String[] { v }))
+            assertThat(registry.getPrometheusRegistry().getSampleValue("s_count", new String[]{"k"}, new String[]{v}))
                     .describedAs("distribution summary s with a tag value of %s", v)
                     .isEqualTo(1.0, offset(1e-12));
         });

@@ -26,6 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.ToDoubleFunction;
 
+import static org.springframework.metrics.instrument.internal.MapAccess.computeIfAbsent;
+
 /**
  * A minimal meter registry implementation primarily used for tests.
  *
