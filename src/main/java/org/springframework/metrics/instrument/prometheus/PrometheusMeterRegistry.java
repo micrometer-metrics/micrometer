@@ -29,6 +29,7 @@ import org.springframework.metrics.instrument.stats.Quantiles;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
@@ -40,8 +41,8 @@ import static org.springframework.metrics.instrument.internal.MeterId.id;
 public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     private final CollectorRegistry registry;
 
-    private final Map<String, Collector> collectorMap = new ConcurrentHashMap<>();
-    private final Map<MeterId, Meter> meterMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Collector> collectorMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<MeterId, Meter> meterMap = new ConcurrentHashMap<>();
 
     public PrometheusMeterRegistry() {
         this(CollectorRegistry.defaultRegistry);
@@ -79,26 +80,25 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     @Override
     public Counter counter(String name, Iterable<Tag> tags) {
         MeterId id = id(name, tags);
-        io.prometheus.client.Counter counter = (io.prometheus.client.Counter) collectorMap.computeIfAbsent(name,
-                i -> buildCollector(id, io.prometheus.client.Counter.build()));
-
-        return (Counter) meterMap.computeIfAbsent(id, c -> new PrometheusCounter(name, child(counter, id.getTags())));
+        io.prometheus.client.Counter counter = computeIfAbsent(collectorMap, name,
+                n -> buildCollector(id, io.prometheus.client.Counter.build()));
+        return computeIfAbsent(meterMap, id, c -> new PrometheusCounter(name, child(counter, id.getTags())));
     }
 
     @Override
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles) {
         MeterId id = id(name, tags);
-        final CustomPrometheusSummary summary = (CustomPrometheusSummary) collectorMap.computeIfAbsent(name, i -> new CustomPrometheusSummary(name, tags)
-                .register(registry));
-        return (DistributionSummary) meterMap.computeIfAbsent(id, t -> new PrometheusDistributionSummary(name, summary.child(tags, quantiles), quantiles));
+        final CustomPrometheusSummary summary = computeIfAbsent(collectorMap, name,
+                n -> new CustomPrometheusSummary(name, tags).register(registry));
+        return computeIfAbsent(meterMap, id, t -> new PrometheusDistributionSummary(name, summary.child(tags, quantiles), quantiles));
     }
 
     @Override
     protected Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles) {
         MeterId id = id(name, tags);
-        final CustomPrometheusSummary summary = (CustomPrometheusSummary) collectorMap.computeIfAbsent(name, i -> new CustomPrometheusSummary(name, tags)
-                .register(registry));
-        return (Timer) meterMap.computeIfAbsent(id, t -> new PrometheusTimer(name, summary.child(tags, quantiles), getClock(), quantiles));
+        final CustomPrometheusSummary summary = computeIfAbsent(collectorMap, name,
+                n -> new CustomPrometheusSummary(name, tags).register(registry));
+        return computeIfAbsent(meterMap, id, t -> new PrometheusTimer(name, summary.child(tags, quantiles), getClock(), quantiles));
     }
 
     @Override
@@ -112,10 +112,10 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         final WeakReference<T> ref = new WeakReference<>(obj);
 
         MeterId id = id(name, tags);
-        io.prometheus.client.Gauge gauge = (io.prometheus.client.Gauge) collectorMap.computeIfAbsent(name,
+        io.prometheus.client.Gauge gauge = computeIfAbsent(collectorMap, name,
                 i -> buildCollector(id, io.prometheus.client.Gauge.build()));
 
-        meterMap.computeIfAbsent(id, g -> {
+        computeIfAbsent(meterMap, id, g -> {
             String[] labelValues = Arrays.stream(id.getTags())
                     .map(Tag::getValue)
                     .collect(Collectors.toList())

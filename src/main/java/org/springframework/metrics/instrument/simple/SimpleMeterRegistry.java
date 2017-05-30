@@ -23,6 +23,7 @@ import org.springframework.metrics.instrument.stats.Quantiles;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.ToDoubleFunction;
 
 /**
@@ -31,8 +32,8 @@ import java.util.function.ToDoubleFunction;
  * @author Jon Schneider
  */
 public class SimpleMeterRegistry extends AbstractMeterRegistry {
-    private final Map<MeterId, Meter> meterMap = new ConcurrentHashMap<>();
-    private final Map<Meter, MeterId> idMap = new HashMap<>();
+    private final ConcurrentMap<MeterId, Meter> meterMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Meter, MeterId> idMap = new ConcurrentHashMap<>();
 
     public SimpleMeterRegistry() {
         this(Clock.SYSTEM);
@@ -44,19 +45,19 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public Counter counter(String name, Iterable<Tag> tags) {
-        return (Counter) meterMap.computeIfAbsent(new MeterId(name, tags), id -> storeId(id, new SimpleCounter(name)));
+        return computeIfAbsent(meterMap, new MeterId(name, tags), id -> storeId(id, new SimpleCounter(name)));
     }
 
     @Override
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles) {
         registerQuantilesGaugeIfNecessary(name, tags, quantiles);
-        return (DistributionSummary) meterMap.computeIfAbsent(new MeterId(name, tags), id -> storeId(id, new SimpleDistributionSummary(name)));
+        return computeIfAbsent(meterMap, new MeterId(name, tags), id -> storeId(id, new SimpleDistributionSummary(name)));
     }
 
     @Override
     protected Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles) {
         registerQuantilesGaugeIfNecessary(name, tags, quantiles);
-        return (Timer) meterMap.computeIfAbsent(new MeterId(name, tags), id -> storeId(id, new SimpleTimer(name)));
+        return computeIfAbsent(meterMap, new MeterId(name, tags), id -> storeId(id, new SimpleTimer(name)));
     }
 
     private void registerQuantilesGaugeIfNecessary(String name, Iterable<Tag> tags, Quantiles quantiles) {
@@ -65,19 +66,19 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
                 List<Tag> quantileTags = new LinkedList<>();
                 tags.forEach(quantileTags::add);
                 quantileTags.add(Tag.of("quantile", Double.isNaN(q) ? "NaN" : Double.toString(q)));
-                meterMap.computeIfAbsent(new MeterId(name + ".quantiles", quantileTags), id -> storeId(id, new SimpleGauge<>(name, q, quantiles::get)));
+                computeIfAbsent(meterMap, new MeterId(name + ".quantiles", quantileTags), id -> storeId(id, new SimpleGauge<>(name, q, quantiles::get)));
             }
         }
     }
 
     @Override
     public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
-        return (LongTaskTimer) meterMap.computeIfAbsent(new MeterId(name, tags), id -> storeId(id, new SimpleLongTaskTimer(name, getClock())));
+        return computeIfAbsent(meterMap, new MeterId(name, tags), id -> storeId(id, new SimpleLongTaskTimer(name, getClock())));
     }
 
     @Override
     public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        meterMap.computeIfAbsent(new MeterId(name, tags), id -> storeId(id, new SimpleGauge<>(name, obj, f)));
+        computeIfAbsent(meterMap, new MeterId(name, tags), id -> storeId(id, new SimpleGauge<>(name, obj, f)));
         return obj;
     }
 
@@ -104,7 +105,7 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
                 .map(m -> (M) m);
     }
 
-    private Meter storeId(MeterId id, Meter m) {
+    private <M extends Meter> M storeId(MeterId id, M m) {
         idMap.put(m, id);
         return m;
     }
