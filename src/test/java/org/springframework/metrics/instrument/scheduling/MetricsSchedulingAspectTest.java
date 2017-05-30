@@ -44,6 +44,8 @@ class MetricsSchedulingAspectTest {
     static CountDownLatch longTaskStarted = new CountDownLatch(1);
     static CountDownLatch longTaskShouldComplete = new CountDownLatch(1);
 
+    static CountDownLatch shortBeepsCompleted = new CountDownLatch(2);
+
     @Autowired
     MeterRegistry registry;
 
@@ -52,6 +54,8 @@ class MetricsSchedulingAspectTest {
 
     @Test
     void scheduledIsInstrumented() throws InterruptedException {
+        shortBeepsCompleted.await();
+
         assertThat(registry.findMeter(Timer.class, "beeper"))
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(2));
 
@@ -102,12 +106,14 @@ class MetricsSchedulingAspectTest {
         @Timed("beeper")
         @Scheduled(fixedRate = 1000)
         void beep1() {
+            shortBeepsCompleted.countDown();
             System.out.println("beep");
         }
 
         @Timed(value = "beeper", quantiles = {0.5, 0.95})
         @Scheduled(fixedRate = 1000)
         void beep2() {
+            shortBeepsCompleted.countDown();
             System.out.println("beep");
         }
 
