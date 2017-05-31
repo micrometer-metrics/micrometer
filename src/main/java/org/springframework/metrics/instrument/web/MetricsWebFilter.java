@@ -43,22 +43,16 @@ public class MetricsWebFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        final long start = System.nanoTime();
-        Mono<Void> filtered = chain.filter(exchange);
-
-//        exchange.getResponse().beforeCommit(() -> {
-//            exchange.getResponse().getStatusCode(); // still null at this point
-//            return Mono.empty();
-//        });
-
-        return filtered
-                .doOnSuccess(done ->
-                        registry.timer(metricName, tagConfigurer.httpRequestTags(exchange, null))
-                                .record(System.nanoTime() - start, TimeUnit.NANOSECONDS)
-                )
-                .doOnError(t ->
-                        registry.timer(metricName, tagConfigurer.httpRequestTags(exchange, t))
-                                .record(System.nanoTime() - start, TimeUnit.NANOSECONDS)
-                );
+        return chain.filter(exchange).compose(f -> {
+            long start = System.nanoTime();
+            return f.doOnSuccess(done ->
+                            registry.timer(metricName, tagConfigurer.httpRequestTags(exchange, null))
+                                    .record(System.nanoTime() - start, TimeUnit.NANOSECONDS)
+                    )
+                    .doOnError(t ->
+                            registry.timer(metricName, tagConfigurer.httpRequestTags(exchange, t))
+                                    .record(System.nanoTime() - start, TimeUnit.NANOSECONDS)
+                    );
+        });
     }
 }
