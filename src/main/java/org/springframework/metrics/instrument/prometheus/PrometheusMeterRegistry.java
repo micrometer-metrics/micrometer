@@ -137,7 +137,13 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         return obj;
     }
 
-    /**
+  @Override
+  public MeterRegistry monitor(MeterReporter meterReporter) {
+    registry.register(new PrometheusMeterReporterCollector(meterReporter));
+    return this;
+  }
+
+  /**
      * @return The underlying Prometheus {@link CollectorRegistry}.
      */
     public CollectorRegistry getPrometheusRegistry() {

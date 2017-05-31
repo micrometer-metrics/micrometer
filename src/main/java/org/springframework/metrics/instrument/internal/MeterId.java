@@ -35,6 +35,10 @@ public class MeterId {
         return new MeterId(name, tags);
     }
 
+    public static MeterId id(String name, Tag... tags) {
+        return new MeterId(name, Arrays.asList(tags));
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

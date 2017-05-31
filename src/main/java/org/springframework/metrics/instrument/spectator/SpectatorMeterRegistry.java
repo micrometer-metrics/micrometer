@@ -138,6 +138,11 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
         return obj;
     }
 
+    @Override
+    public MeterRegistry monitor(MeterReporter meterReporter) {
+        throw new UnsupportedOperationException("TODO: Implement");
+    }
+
     /**
      * @return The underlying Spectator {@link Registry}.
      */

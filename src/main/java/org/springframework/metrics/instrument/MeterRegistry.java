@@ -501,4 +501,6 @@ public interface MeterRegistry {
     default ExecutorService monitor(String name, ExecutorService executor) {
         return monitor(name, emptyList(), executor);
     }
+
+    MeterRegistry monitor(MeterReporter meterReporter);
 }

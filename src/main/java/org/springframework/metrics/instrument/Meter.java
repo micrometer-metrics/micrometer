@@ -20,4 +20,12 @@ package org.springframework.metrics.instrument;
  */
 public interface Meter {
     String getName();
+
+    enum Type {
+        COUNTER,
+        GAUGE,
+        DISTRIBUTION_SUMMARY,
+        LONG_TASK_TIMER,
+        TIMER
+    }
 }
