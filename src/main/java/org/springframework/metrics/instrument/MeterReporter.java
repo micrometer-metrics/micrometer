@@ -15,17 +15,16 @@
  */
 package org.springframework.metrics.instrument;
 
-/**
- * A counter, gauge, timer, or distribution summary that results collects one or more metrics.
- */
-public interface Meter {
-    String getName();
+import org.springframework.metrics.instrument.binder.MeterBinder;
 
-    enum Type {
-        COUNTER,
-        GAUGE,
-        DISTRIBUTION_SUMMARY,
-        LONG_TASK_TIMER,
-        TIMER
-    }
+import java.util.List;
+
+abstract public class MeterReporter implements MeterBinder{
+
+  @Override
+  public void bindTo(MeterRegistry registry) {
+    registry.monitor(this);
+  }
+
+  abstract public List<MeterSamples> report();
 }

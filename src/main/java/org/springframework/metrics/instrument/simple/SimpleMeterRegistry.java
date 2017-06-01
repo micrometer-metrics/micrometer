@@ -85,6 +85,11 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
+    public MeterRegistry monitor(MeterReporter meterReporter) {
+        return null;
+    }
+
+    @Override
     public Collection<Meter> getMeters() {
         return meterMap.values();
     }
