@@ -554,6 +554,7 @@ Add `@EnablePrometheusMetrics` to your configuration.
 @EnablePrometheusMetrics
 public class MyApp {
 }
+```
 
 Then inject `MeterRegistry` wherever you need to create a timer, gauge, counter, or summary. Where supported,
 you may also use the `@Timed` annotation, which eliminates the need to inject a `MeterRegistry` in certain
