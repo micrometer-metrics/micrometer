@@ -16,6 +16,7 @@
 package org.springframework.metrics.instrument.prometheus;
 
 import org.springframework.metrics.instrument.Clock;
+import org.springframework.metrics.instrument.Measurement;
 import org.springframework.metrics.instrument.internal.AbstractTimer;
 import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 
@@ -54,5 +55,10 @@ public class PrometheusTimer extends AbstractTimer {
     @Override
     public double totalTime(TimeUnit unit) {
         return secondsToUnit(summary.sum(), unit);
+    }
+
+    @Override
+    public Iterable<Measurement> measure() {
+        throw new UnsupportedOperationException("TODO");
     }
 }

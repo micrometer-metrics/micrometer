@@ -45,6 +45,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     private final ConcurrentMap<String, Collector> collectorMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<MeterId, Meter> meterMap = new ConcurrentHashMap<>();
+    private final Set<Meter> monitoredMeter = ConcurrentHashMap.newKeySet();
 
     public PrometheusMeterRegistry() {
         this(CollectorRegistry.defaultRegistry);
@@ -58,6 +59,16 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     public PrometheusMeterRegistry(CollectorRegistry registry, Clock clock) {
         super(clock);
         this.registry = registry;
+
+        registry.register(new Collector() {
+            @Override
+            public List<MetricFamilySamples> collect() {
+                List<MetricFamilySamples> families = new ArrayList<>();
+
+
+                return families;
+            }
+        });
     }
 
     @Override
@@ -136,6 +147,12 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         });
 
         return obj;
+    }
+
+    @Override
+    public MeterRegistry monitor(Meter meter){
+        monitoredMeter.add(meter);
+        return this;
     }
 
     /**

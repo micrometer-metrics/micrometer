@@ -182,6 +182,8 @@ public interface MeterRegistry {
         return longTaskTimer(name, tagList(tags));
     }
 
+    MeterRegistry monitor(Meter meter);
+
     /**
      * Register a gauge that reports the value of the object after the function
      * {@code f} is applied. The registration will keep a weak reference to the object so it will
