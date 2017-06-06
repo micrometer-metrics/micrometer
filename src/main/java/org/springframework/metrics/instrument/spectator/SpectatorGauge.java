@@ -16,6 +16,8 @@
 package org.springframework.metrics.instrument.spectator;
 
 import org.springframework.metrics.instrument.Gauge;
+import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Tag;
 
 public class SpectatorGauge implements Gauge {
     private com.netflix.spectator.api.Gauge gauge;
@@ -32,5 +34,15 @@ public class SpectatorGauge implements Gauge {
     @Override
     public String getName() {
         return gauge.id().name();
+    }
+
+    @Override
+    public Tag[] getTags() {
+        return SpectatorUtils.tags(gauge);
+    }
+
+    @Override
+    public Iterable<Measurement> measure() {
+        return SpectatorUtils.measurements(gauge);
     }
 }

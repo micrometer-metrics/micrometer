@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 Pivotal Software, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,24 +16,22 @@
 package org.springframework.metrics.instrument.prometheus;
 
 import org.springframework.metrics.instrument.DistributionSummary;
-import org.springframework.metrics.instrument.stats.quantile.Quantiles;
+import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Tag;
+import org.springframework.metrics.instrument.internal.MeterId;
 
 public class PrometheusDistributionSummary implements DistributionSummary {
-    private final String name;
+    private final MeterId id;
     private final CustomPrometheusSummary.Child summary;
-    private final Quantiles quantiles;
 
-    public PrometheusDistributionSummary(String name, CustomPrometheusSummary.Child summary, Quantiles quantiles) {
-        this.name = name;
+    PrometheusDistributionSummary(MeterId id, CustomPrometheusSummary.Child summary) {
+        this.id = id;
         this.summary = summary;
-        this.quantiles = quantiles;
     }
 
     @Override
     public void record(double amount) {
         if (amount >= 0) {
-            if(quantiles != null)
-                quantiles.observe(amount);
             summary.observe(amount);
         }
     }
@@ -50,6 +48,16 @@ public class PrometheusDistributionSummary implements DistributionSummary {
 
     @Override
     public String getName() {
-        return name;
+        return id.getName();
+    }
+
+    @Override
+    public Tag[] getTags() {
+        return id.getTags();
+    }
+
+    @Override
+    public Iterable<Measurement> measure() {
+        return summary.measure();
     }
 }

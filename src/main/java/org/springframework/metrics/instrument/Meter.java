@@ -21,6 +21,8 @@ package org.springframework.metrics.instrument;
 public interface Meter {
     String getName();
 
+    Tag[] getTags();
+
     /**
      * Get the set of measurements for this meter.
      */

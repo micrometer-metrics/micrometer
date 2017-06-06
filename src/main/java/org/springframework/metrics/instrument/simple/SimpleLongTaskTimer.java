@@ -17,20 +17,25 @@ package org.springframework.metrics.instrument.simple;
 
 import org.springframework.metrics.instrument.Clock;
 import org.springframework.metrics.instrument.LongTaskTimer;
+import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Tag;
+import org.springframework.metrics.instrument.internal.MeterId;
 
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.springframework.metrics.instrument.Tag.tags;
+
 public class SimpleLongTaskTimer implements LongTaskTimer {
-    private final String name;
+    private final MeterId id;
     private final ConcurrentMap<Long, Long> tasks = new ConcurrentHashMap<>();
     private final AtomicLong nextTask = new AtomicLong(0L);
-
     private final Clock clock;
 
-    public SimpleLongTaskTimer(String name, Clock clock) {
-        this.name = name;
+    public SimpleLongTaskTimer(MeterId id, Clock clock) {
+        this.id = id;
         this.clock = clock;
     }
 
@@ -75,6 +80,19 @@ public class SimpleLongTaskTimer implements LongTaskTimer {
 
     @Override
     public String getName() {
-        return name;
+        return id.getName();
+    }
+
+    @Override
+    public Tag[] getTags() {
+        return id.getTags();
+    }
+
+    @Override
+    public Iterable<Measurement> measure() {
+        return Arrays.asList(
+                id.withTags(tags("type", "LONG_TIMER", "statistic", "activeTasks")).measurement(activeTasks()),
+                id.withTags(tags("type", "LONG_TIMER", "statistic", "duration")).measurement(duration())
+        );
     }
 }

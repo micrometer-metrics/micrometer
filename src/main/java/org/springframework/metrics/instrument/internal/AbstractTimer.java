@@ -16,6 +16,7 @@
 package org.springframework.metrics.instrument.internal;
 
 import org.springframework.metrics.instrument.Clock;
+import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.Timer;
 
 import java.util.concurrent.Callable;
@@ -24,11 +25,11 @@ import java.util.function.Supplier;
 
 public abstract class AbstractTimer implements Timer {
     protected Clock clock;
-    protected String name;
+    protected MeterId id;
 
-    protected AbstractTimer(String name, Clock clock) {
+    protected AbstractTimer(MeterId id, Clock clock) {
         this.clock = clock;
-        this.name = name;
+        this.id = id;
     }
 
     @Override
@@ -79,6 +80,11 @@ public abstract class AbstractTimer implements Timer {
 
     @Override
     public String getName() {
-        return name;
+        return id.getName();
+    }
+
+    @Override
+    public Tag[] getTags() {
+        return id.getTags();
     }
 }

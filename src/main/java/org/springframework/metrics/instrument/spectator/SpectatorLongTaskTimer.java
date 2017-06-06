@@ -16,6 +16,8 @@
 package org.springframework.metrics.instrument.spectator;
 
 import org.springframework.metrics.instrument.LongTaskTimer;
+import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Tag;
 
 public class SpectatorLongTaskTimer implements LongTaskTimer {
     private final com.netflix.spectator.api.LongTaskTimer timer;
@@ -52,5 +54,15 @@ public class SpectatorLongTaskTimer implements LongTaskTimer {
     @Override
     public String getName() {
         return timer.id().name();
+    }
+
+    @Override
+    public Tag[] getTags() {
+        return SpectatorUtils.tags(timer);
+    }
+
+    @Override
+    public Iterable<Measurement> measure() {
+        return SpectatorUtils.measurements(timer);
     }
 }

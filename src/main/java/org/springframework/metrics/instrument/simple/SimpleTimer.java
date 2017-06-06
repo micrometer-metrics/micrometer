@@ -16,41 +16,50 @@
 package org.springframework.metrics.instrument.simple;
 
 import org.springframework.metrics.instrument.Clock;
+import org.springframework.metrics.instrument.Measurement;
 import org.springframework.metrics.instrument.internal.AbstractTimer;
+import org.springframework.metrics.instrument.internal.MeterId;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
+import static org.springframework.metrics.instrument.Tag.tags;
 import static org.springframework.metrics.instrument.internal.TimeUtils.nanosToUnit;
 
 /**
  * @author Jon Schneider
  */
 public class SimpleTimer extends AbstractTimer {
-    private AtomicLong count = new AtomicLong(0);
-    private AtomicLong totalTime = new AtomicLong(0);
+    private LongAdder count = new LongAdder();
+    private LongAdder totalTime = new LongAdder();
 
-    public SimpleTimer(String name) {
-        this(name, Clock.SYSTEM);
-    }
-
-    public SimpleTimer(String name, Clock clock) {
-        super(name, clock);
+    SimpleTimer(MeterId id, Clock clock) {
+        super(id, clock);
     }
 
     @Override
     public void record(long amount, TimeUnit unit) {
-        count.incrementAndGet();
-        totalTime.addAndGet(TimeUnit.NANOSECONDS.convert(amount, unit));
+        count.increment();
+        totalTime.add(TimeUnit.NANOSECONDS.convert(amount, unit));
     }
 
     @Override
     public long count() {
-        return count.get();
+        return count.longValue();
     }
 
     @Override
     public double totalTime(TimeUnit unit) {
-        return nanosToUnit(totalTime.get(), unit);
+        return nanosToUnit(totalTime.doubleValue(), unit);
+    }
+
+    @Override
+    public Iterable<Measurement> measure() {
+        return Arrays.asList(
+                id.withTags(tags("type", "SUMMARY", "statistic", "count")).measurement(count()),
+                id.withTags(tags("type", "SUMMARY", "statistic", "amount")).measurement(totalTime(TimeUnit.NANOSECONDS))
+        );
     }
 }

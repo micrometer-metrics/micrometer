@@ -16,13 +16,18 @@
 package org.springframework.metrics.instrument.prometheus;
 
 import org.springframework.metrics.instrument.Gauge;
+import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Tag;
+import org.springframework.metrics.instrument.internal.MeterId;
+
+import java.util.Collections;
 
 public class PrometheusGauge implements Gauge {
-    private final String name;
+    private final MeterId id;
     private io.prometheus.client.Gauge.Child gauge;
 
-    public PrometheusGauge(String name, io.prometheus.client.Gauge.Child gauge) {
-        this.name = name;
+    PrometheusGauge(MeterId id, io.prometheus.client.Gauge.Child gauge) {
+        this.id = id;
         this.gauge = gauge;
     }
 
@@ -33,6 +38,16 @@ public class PrometheusGauge implements Gauge {
 
     @Override
     public String getName() {
-        return name;
+        return id.getName();
+    }
+
+    @Override
+    public Tag[] getTags() {
+        return id.getTags();
+    }
+
+    @Override
+    public Iterable<Measurement> measure() {
+        return Collections.singletonList(id.measurement(gauge.get()));
     }
 }

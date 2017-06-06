@@ -28,7 +28,7 @@ class LongTaskTimerTest {
     @DisplayName("total time is preserved for a single timing")
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
-    void testRecord(MeterRegistry registry) {
+    void record(MeterRegistry registry) {
         LongTaskTimer t = registry.longTaskTimer("myTimer");
         long tId = t.start();
         clock(registry).addAndGetNanos(10);

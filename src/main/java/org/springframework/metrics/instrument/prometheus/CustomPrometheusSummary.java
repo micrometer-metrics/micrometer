@@ -50,11 +50,11 @@ public class CustomPrometheusSummary extends Collector {
 
     private final Collection<Child> children = new ConcurrentLinkedQueue<>();
 
-    CustomPrometheusSummary(String name, Iterable<Tag> tags) {
+    CustomPrometheusSummary(String name, List<String> tagKeys) {
         this.name = name;
         this.countName = name + "_count";
         this.sumName = name + "_sum";
-        this.tagKeys = stream(tags.spliterator(), false).map(Tag::getKey).collect(toList());
+        this.tagKeys = tagKeys;
     }
 
     Child child(Iterable<Tag> tags, Quantiles quantiles, Histogram histogram) {
@@ -63,7 +63,7 @@ public class CustomPrometheusSummary extends Collector {
         return child;
     }
 
-    class Child {
+    class Child implements CustomCollectorChild {
         private final List<String> tagValues;
 
         private final Quantiles quantiles;
@@ -100,6 +100,7 @@ public class CustomPrometheusSummary extends Collector {
             }
         }
 
+        @Override
         public Stream<MetricFamilySamples.Sample> collect() {
             Stream.Builder<MetricFamilySamples.Sample> samples = Stream.builder();
 

@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 Pivotal Software, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,8 @@
 package org.springframework.metrics.instrument.spectator;
 
 import org.springframework.metrics.instrument.Counter;
+import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Tag;
 
 public class SpectatorCounter implements Counter {
     private com.netflix.spectator.api.Counter counter;
@@ -42,5 +44,15 @@ public class SpectatorCounter implements Counter {
     @Override
     public String getName() {
         return counter.id().name();
+    }
+
+    @Override
+    public Tag[] getTags() {
+        return SpectatorUtils.tags(counter);
+    }
+
+    @Override
+    public Iterable<Measurement> measure() {
+        return SpectatorUtils.measurements(counter);
     }
 }

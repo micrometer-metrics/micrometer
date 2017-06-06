@@ -16,17 +16,21 @@
 package org.springframework.metrics.instrument.simple;
 
 import org.springframework.metrics.instrument.Gauge;
+import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Tag;
+import org.springframework.metrics.instrument.internal.MeterId;
 
 import java.lang.ref.WeakReference;
+import java.util.Collections;
 import java.util.function.ToDoubleFunction;
 
 public class SimpleGauge<T> implements Gauge {
-    private final String name;
+    private final MeterId id;
     private final WeakReference<T> ref;
     private final ToDoubleFunction<T> value;
 
-    public SimpleGauge(String name, T obj, ToDoubleFunction<T> value) {
-        this.name = name;
+    public SimpleGauge(MeterId id, T obj, ToDoubleFunction<T> value) {
+        this.id = id;
         this.ref = new WeakReference<>(obj);
         this.value = value;
     }
@@ -38,6 +42,16 @@ public class SimpleGauge<T> implements Gauge {
 
     @Override
     public String getName() {
-        return name;
+        return id.getName();
+    }
+
+    @Override
+    public Tag[] getTags() {
+        return id.getTags();
+    }
+
+    @Override
+    public Iterable<Measurement> measure() {
+        return Collections.singletonList(id.withTags(Tag.of("type", "GAUGE")).measurement(value()));
     }
 }

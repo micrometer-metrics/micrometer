@@ -20,6 +20,8 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.http.server.reactive.ReactorHttpHandlerAdapter;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Tag;
+import org.springframework.metrics.instrument.Timer;
+import org.springframework.metrics.instrument.simple.SimpleMeterRegistry;
 import org.springframework.metrics.instrument.simple.SimpleTimer;
 import org.springframework.web.reactive.function.server.*;
 import reactor.core.publisher.Mono;
@@ -40,7 +42,7 @@ import static org.springframework.web.reactive.function.server.RequestPredicates
 
 
 class RouterFunctionMetricsTest {
-    private MeterRegistry registry = mock(MeterRegistry.class);
+    private MeterRegistry registry = new SimpleMeterRegistry();
 
     private MockServerRequest request = MockServerRequest.builder()
             .uri(URI.create("/person/1"))
@@ -56,28 +58,12 @@ class RouterFunctionMetricsTest {
                 .route(GET("/person/{id}").and(accept(APPLICATION_JSON)), request -> ServerResponse.ok().build())
                 .filter(metrics.timer("http_server_requests"));
 
-        expectTimer();
-
         routes.route(request)
                 .block() // block for handler filter function
                 .handle(request)
                 .block(); // block for ServerResponse
 
-        assertTags(Tag.of("status", "200"));
-    }
-
-    @SuppressWarnings("unchecked")
-    private void assertTags(Tag... match) {
-        ArgumentCaptor<Stream> tags = ArgumentCaptor.forClass(Stream.class);
-        verify(registry).timer(anyString(), tags.capture());
-        assertThat((List) tags.getValue().collect(Collectors.toList())).contains((Object[]) match);
-    }
-
-    private SimpleTimer expectTimer() {
-        SimpleTimer timer = new SimpleTimer("http_server_requests");
-
-        //noinspection unchecked
-        when(registry.timer(eq("http_server_requests"), any(Stream.class))).thenReturn(timer);
-        return timer;
+        assertThat(registry.findMeter(Timer.class, "http_server_requests"))
+                .hasValueSatisfying(t -> assertThat(t.getTags()).contains(Tag.of("status", "200")));
     }
 }
