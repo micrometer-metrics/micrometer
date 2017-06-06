@@ -15,8 +15,6 @@
  */
 package org.springframework.metrics.instrument.stats.hist;
 
-import org.springframework.metrics.instrument.internal.TimeUtils;
-
 import java.util.concurrent.TimeUnit;
 
 import static org.springframework.metrics.instrument.internal.TimeUtils.convert;
@@ -30,25 +28,27 @@ public class TimeScaleNormalHistogram extends NormalHistogram<Double> {
     }
 
     /**
-     * @param shift The time scale of the new cumulative histogram
+     * @param targetUnit The time scale of the new cumulative histogram
      * @return
      */
-    public TimeScaleNormalHistogram shiftScale(TimeUnit shift) {
-        if(shift.equals(timeScale))
+    public TimeScaleNormalHistogram shiftScale(TimeUnit targetUnit) {
+        if(targetUnit.equals(timeScale))
             return this;
-        return new TimeScaleNormalHistogram(new ScaledBucketFunction(shift), shift);
+        return new TimeScaleNormalHistogram(new ScaledBucketFunction(timeScale, targetUnit), targetUnit);
     }
 
     class ScaledBucketFunction implements BucketFunction<Double> {
-        private TimeUnit shift;
+        private final TimeUnit targetUnit;
+        private final TimeUnit sourceUnit;
 
-        ScaledBucketFunction(TimeUnit shift) {
-            this.shift = shift;
+        ScaledBucketFunction(TimeUnit sourceUnit, TimeUnit targetUnit) {
+            this.sourceUnit = sourceUnit;
+            this.targetUnit = targetUnit;
         }
 
         @Override
         public Double bucket(double d) {
-            return convert(f.bucket(convert(d, shift, timeScale)), timeScale, shift);
+            return convert(f.bucket(convert(d, targetUnit, sourceUnit)), sourceUnit, targetUnit);
         }
     }
 }

@@ -37,18 +37,18 @@ public class TimeScaleCumulativeHistogram extends CumulativeHistogram<Double> {
     }
 
     /**
-     * @param shift The time scale of the new cumulative histogram
+     * @param targetUnit The time scale of the new cumulative histogram
      * @return
      */
-    public TimeScaleCumulativeHistogram shiftScale(TimeUnit shift) {
-        if(shift.equals(timeScale))
+    public TimeScaleCumulativeHistogram shiftScale(TimeUnit targetUnit) {
+        if(targetUnit.equals(timeScale))
             return this;
-        return new TimeScaleCumulativeHistogram(new ScaledCumulativeBucketFunction(shift), shift);
+        return new TimeScaleCumulativeHistogram(new ScaledCumulativeBucketFunction(timeScale, targetUnit), targetUnit);
     }
 
     class ScaledCumulativeBucketFunction extends FixedCumulativeBucketFunction<Double> {
-        ScaledCumulativeBucketFunction(TimeUnit shift) {
-            super(d -> d, f.buckets().stream().map(d -> TimeUtils.convert(d, timeScale, shift))
+        ScaledCumulativeBucketFunction(TimeUnit sourceUnit, TimeUnit targetUnit) {
+            super(d -> d, f.buckets().stream().map(d -> TimeUtils.convert(d, sourceUnit, targetUnit))
                     .collect(Collectors.toSet()), f.bucketComparator());
         }
     }

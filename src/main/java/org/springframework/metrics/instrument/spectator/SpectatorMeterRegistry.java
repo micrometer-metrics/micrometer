@@ -24,6 +24,7 @@ import org.springframework.metrics.instrument.*;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
 import org.springframework.metrics.instrument.internal.ImmutableTag;
+import org.springframework.metrics.instrument.stats.hist.Bucket;
 import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 import org.springframework.metrics.instrument.stats.hist.Histogram;
 
@@ -108,8 +109,21 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
     @Override
     protected Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
         registerQuantilesGaugeIfNecessary(name, tags, quantiles);
+        registerHistogramCounterIfNecessary(name, tags, histogram);
         com.netflix.spectator.api.Timer timer = registry.timer(name, toSpectatorTags(tags));
         return (Timer) meterMap.computeIfAbsent(timer, t -> new SpectatorTimer(timer, getClock()));
+    }
+
+    private void registerHistogramCounterIfNecessary(String name, Iterable<Tag> tags, Histogram<?> histogram) {
+        // FIXME need the heisen-counter to complete
+//        if(histogram != null) {
+//            for (Bucket<?> bucket : histogram.getBuckets()) {
+//                List<com.netflix.spectator.api.Tag> histogramTags = new LinkedList<>(toSpectatorTags(tags));
+//                histogramTags.add(new BasicTag("bucket", bucket.toString()));
+//                histogramTags.add(new BasicTag("statistic", "histogram"));
+//                registry.counter(registry.createId(name, histogramTags)).count();
+//            }
+//        }
     }
 
     private void registerQuantilesGaugeIfNecessary(String name, Iterable<Tag> tags, Quantiles quantiles) {
