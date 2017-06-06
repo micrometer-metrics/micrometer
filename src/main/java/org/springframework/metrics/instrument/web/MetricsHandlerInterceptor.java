@@ -21,8 +21,8 @@ import org.springframework.metrics.annotation.Timed;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.Timer;
-import org.springframework.metrics.instrument.internal.TimedUtils;
-import org.springframework.metrics.instrument.stats.WindowSketchQuantiles;
+import org.springframework.metrics.instrument.internal.AnnotationUtils;
+import org.springframework.metrics.instrument.stats.quantile.WindowSketchQuantiles;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
@@ -36,7 +36,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toSet;
 import static org.springframework.web.context.request.RequestAttributes.SCOPE_REQUEST;
@@ -142,9 +141,9 @@ public class MetricsHandlerInterceptor extends HandlerInterceptorAdapter {
         if(!(m instanceof HandlerMethod))
             return Collections.emptySet();
 
-        Set<Timed> timed = TimedUtils.findTimed(((HandlerMethod) m).getMethod()).filter(Timed::longTask).collect(toSet());
+        Set<Timed> timed = AnnotationUtils.findTimed(((HandlerMethod) m).getMethod()).filter(Timed::longTask).collect(toSet());
         if (timed.isEmpty()) {
-            return TimedUtils.findTimed(((HandlerMethod) m).getBeanType()).filter(Timed::longTask).collect(toSet());
+            return AnnotationUtils.findTimed(((HandlerMethod) m).getBeanType()).filter(Timed::longTask).collect(toSet());
         }
         return timed;
     }
@@ -153,9 +152,9 @@ public class MetricsHandlerInterceptor extends HandlerInterceptorAdapter {
         if(!(m instanceof HandlerMethod))
             return Collections.emptySet();
 
-        Set<Timed> timed = TimedUtils.findTimed(((HandlerMethod) m).getMethod()).filter(t -> !t.longTask()).collect(toSet());
+        Set<Timed> timed = AnnotationUtils.findTimed(((HandlerMethod) m).getMethod()).filter(t -> !t.longTask()).collect(toSet());
         if (timed.isEmpty()) {
-            return TimedUtils.findTimed(((HandlerMethod) m).getBeanType()).filter(t -> !t.longTask()).collect(toSet());
+            return AnnotationUtils.findTimed(((HandlerMethod) m).getBeanType()).filter(t -> !t.longTask()).collect(toSet());
         }
         return timed;
     }

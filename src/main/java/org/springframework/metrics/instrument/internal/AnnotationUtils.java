@@ -29,28 +29,20 @@ import static java.util.stream.Stream.of;
 /**
  * @author Jon Schneider
  */
-public class TimedUtils {
+public class AnnotationUtils {
     public static Stream<Timed> findTimed(Class<?> clazz) {
-        Timed t = clazz.getAnnotation(Timed.class);
-        if(t != null)
-            return of(t);
-
-        TimedSet ts = clazz.getAnnotation(TimedSet.class);
-        if(ts != null)
-            return stream(ts.value()).sorted(comparing(Timed::value));
-
-        return empty();
+        return findTimed(clazz.getAnnotation(Timed.class), clazz.getAnnotation(TimedSet.class));
     }
 
     public static Stream<Timed> findTimed(Method m) {
-        Timed t = m.getAnnotation(Timed.class);
+        return findTimed(m.getAnnotation(Timed.class), m.getAnnotation(TimedSet.class));
+    }
+
+    private static Stream<Timed> findTimed(Timed t, TimedSet ts) {
         if(t != null)
             return of(t);
-
-        TimedSet ts = m.getAnnotation(TimedSet.class);
         if(ts != null)
             return stream(ts.value()).sorted(comparing(Timed::value));
-
         return empty();
     }
 }

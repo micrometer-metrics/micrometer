@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.metrics.instrument.stats;
+package org.springframework.metrics.instrument.stats.hist;
 
+import java.util.Comparator;
 import java.util.Set;
 
-/**
- * @author Jon Schneider
- */
-public interface Histogram<T> {
+public interface CumulativeBucketFunction<T> {
     /**
-     * Add a sample
-     * @param value
+     * @return A value less than or equal to the first bucket that should be
+     * incremented on account of the observation of {@code d} and strictly greater
+     * than the last bucket that should NOT be incremented.
      */
-    void observe(double value);
-
-    Double get(T bucket);
+    T bucketFloor(double d);
 
     Set<T> buckets();
+
+    Comparator<? super T> bucketComparator();
 }

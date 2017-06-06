@@ -17,9 +17,11 @@ package org.springframework.metrics.instrument.prometheus;
 
 import org.springframework.metrics.instrument.Clock;
 import org.springframework.metrics.instrument.internal.AbstractTimer;
-import org.springframework.metrics.instrument.stats.Quantiles;
+import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 
 import java.util.concurrent.TimeUnit;
+
+import static org.springframework.metrics.instrument.internal.TimeUtils.secondsToUnit;
 
 public class PrometheusTimer extends AbstractTimer {
     private CustomPrometheusSummary.Child summary;

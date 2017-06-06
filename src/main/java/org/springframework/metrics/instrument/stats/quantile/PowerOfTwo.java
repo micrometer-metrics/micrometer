@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.metrics.instrument.stats;
+package org.springframework.metrics.instrument.stats.quantile;
 
 /**
  * Copied from https://github.com/mayconbordin/streaminer#quantiles

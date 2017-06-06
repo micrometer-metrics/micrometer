@@ -24,7 +24,8 @@ import org.springframework.metrics.instrument.*;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
 import org.springframework.metrics.instrument.internal.MeterId;
-import org.springframework.metrics.instrument.stats.Quantiles;
+import org.springframework.metrics.instrument.stats.quantile.Quantiles;
+import org.springframework.metrics.instrument.stats.hist.Histogram;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -87,19 +88,19 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles) {
+    public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
         MeterId id = id(name, tags);
         final CustomPrometheusSummary summary = computeIfAbsent(collectorMap, name,
                 n -> new CustomPrometheusSummary(name, tags).register(registry));
-        return computeIfAbsent(meterMap, id, t -> new PrometheusDistributionSummary(name, summary.child(tags, quantiles), quantiles));
+        return computeIfAbsent(meterMap, id, t -> new PrometheusDistributionSummary(name, summary.child(tags, quantiles, histogram), quantiles));
     }
 
     @Override
-    protected Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles) {
+    protected Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
         MeterId id = id(name, tags);
         final CustomPrometheusSummary summary = computeIfAbsent(collectorMap, name,
                 n -> new CustomPrometheusSummary(name, tags).register(registry));
-        return computeIfAbsent(meterMap, id, t -> new PrometheusTimer(name, summary.child(tags, quantiles), getClock(), quantiles));
+        return computeIfAbsent(meterMap, id, t -> new PrometheusTimer(name, summary.child(tags, quantiles, histogram), getClock(), quantiles));
     }
 
     @Override

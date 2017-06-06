@@ -20,6 +20,8 @@ import org.springframework.metrics.instrument.internal.AbstractTimer;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.springframework.metrics.instrument.internal.TimeUtils.nanosToUnit;
+
 public class SpectatorTimer extends AbstractTimer {
     private com.netflix.spectator.api.Timer timer;
 

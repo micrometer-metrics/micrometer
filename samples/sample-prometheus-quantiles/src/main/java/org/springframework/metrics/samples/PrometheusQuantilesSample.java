@@ -11,10 +11,10 @@ import org.springframework.http.server.reactive.ServletHttpHandlerAdapter;
 import org.springframework.metrics.export.prometheus.PrometheusFunctions;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.prometheus.PrometheusMeterRegistry;
-import org.springframework.metrics.instrument.stats.CKMSQuantiles;
-import org.springframework.metrics.instrument.stats.Frugal2UQuantiles;
-import org.springframework.metrics.instrument.stats.GKQuantiles;
-import org.springframework.metrics.instrument.stats.WindowSketchQuantiles;
+import org.springframework.metrics.instrument.stats.quantile.CKMSQuantiles;
+import org.springframework.metrics.instrument.stats.quantile.Frugal2UQuantiles;
+import org.springframework.metrics.instrument.stats.quantile.GKQuantiles;
+import org.springframework.metrics.instrument.stats.quantile.WindowSketchQuantiles;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -26,6 +26,11 @@ import java.util.concurrent.TimeUnit;
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
+/**
+ * Demonstrates the four quantile algorithms.
+ *
+ * @author Jon Schneider
+ */
 public class PrometheusQuantilesSample {
     public static void main(String[] args) throws UnknownHostException, LifecycleException {
         RandomEngine r = new MersenneTwister64(0);

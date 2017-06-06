@@ -15,7 +15,8 @@
  */
 package org.springframework.metrics.instrument;
 
-import org.springframework.metrics.instrument.stats.Quantiles;
+import org.springframework.metrics.instrument.stats.quantile.Quantiles;
+import org.springframework.metrics.instrument.stats.hist.Histogram;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -98,6 +99,8 @@ public interface Timer extends Meter {
 
     interface Builder {
         Builder quantiles(Quantiles quantiles);
+
+        Builder histogram(Histogram<?> histogram);
 
         Builder tag(Tag tag);
 

@@ -16,7 +16,7 @@
 package org.springframework.metrics.instrument.prometheus;
 
 import org.springframework.metrics.instrument.DistributionSummary;
-import org.springframework.metrics.instrument.stats.Quantiles;
+import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 
 public class PrometheusDistributionSummary implements DistributionSummary {
     private final String name;

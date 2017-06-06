@@ -21,7 +21,7 @@ import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.metrics.Issue;
-import org.springframework.metrics.instrument.stats.GKQuantiles;
+import org.springframework.metrics.instrument.stats.quantile.GKQuantiles;
 
 import java.util.Arrays;
 import java.util.Enumeration;

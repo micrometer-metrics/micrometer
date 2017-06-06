@@ -19,13 +19,13 @@ import com.netflix.spectator.api.BasicTag;
 import com.netflix.spectator.api.DefaultRegistry;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
-import io.prometheus.client.CollectorRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.metrics.instrument.*;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
 import org.springframework.metrics.instrument.internal.ImmutableTag;
-import org.springframework.metrics.instrument.stats.Quantiles;
+import org.springframework.metrics.instrument.stats.quantile.Quantiles;
+import org.springframework.metrics.instrument.stats.hist.Histogram;
 
 import java.util.*;
 import java.util.function.ToDoubleFunction;
@@ -99,14 +99,14 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles) {
+    public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
         registerQuantilesGaugeIfNecessary(name, tags, quantiles);
         com.netflix.spectator.api.DistributionSummary ds = registry.distributionSummary(name, toSpectatorTags(tags));
         return (DistributionSummary) meterMap.computeIfAbsent(ds, d -> new SpectatorDistributionSummary(ds));
     }
 
     @Override
-    protected Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles) {
+    protected Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
         registerQuantilesGaugeIfNecessary(name, tags, quantiles);
         com.netflix.spectator.api.Timer timer = registry.timer(name, toSpectatorTags(tags));
         return (Timer) meterMap.computeIfAbsent(timer, t -> new SpectatorTimer(timer, getClock()));

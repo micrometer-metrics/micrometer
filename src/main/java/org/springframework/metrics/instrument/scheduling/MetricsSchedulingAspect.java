@@ -26,8 +26,8 @@ import org.springframework.metrics.instrument.LongTaskTimer;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Tags;
 import org.springframework.metrics.instrument.Timer;
-import org.springframework.metrics.instrument.internal.TimedUtils;
-import org.springframework.metrics.instrument.stats.WindowSketchQuantiles;
+import org.springframework.metrics.instrument.internal.AnnotationUtils;
+import org.springframework.metrics.instrument.stats.quantile.WindowSketchQuantiles;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
@@ -60,7 +60,7 @@ public class MetricsSchedulingAspect {
         Timer shortTaskTimer = null;
         LongTaskTimer longTaskTimer = null;
 
-        for (Timed timed : TimedUtils.findTimed(method).toArray(Timed[]::new)) {
+        for (Timed timed : AnnotationUtils.findTimed(method).toArray(Timed[]::new)) {
             if(timed.longTask())
                 longTaskTimer = registry.longTaskTimer(timed.value(), Tags.tagList(timed.extraTags()));
             else {

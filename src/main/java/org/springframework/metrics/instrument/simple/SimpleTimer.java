@@ -21,6 +21,8 @@ import org.springframework.metrics.instrument.internal.AbstractTimer;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.springframework.metrics.instrument.internal.TimeUtils.nanosToUnit;
+
 /**
  * @author Jon Schneider
  */

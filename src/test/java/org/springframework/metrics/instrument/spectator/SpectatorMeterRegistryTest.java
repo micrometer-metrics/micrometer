@@ -21,7 +21,7 @@ import com.netflix.spectator.api.Registry;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.metrics.instrument.stats.GKQuantiles;
+import org.springframework.metrics.instrument.stats.quantile.GKQuantiles;
 
 import java.util.function.Predicate;
 

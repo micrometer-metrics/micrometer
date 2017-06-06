@@ -21,15 +21,14 @@ import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetada
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProviders;
 import org.springframework.metrics.instrument.*;
 import org.springframework.metrics.instrument.binder.MeterBinder;
-import org.springframework.metrics.instrument.stats.Quantiles;
+import org.springframework.metrics.instrument.stats.quantile.Quantiles;
+import org.springframework.metrics.instrument.stats.hist.Histogram;
 
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 public abstract class AbstractMeterRegistry implements MeterRegistry {
@@ -87,6 +86,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     private class TimerBuilder implements Timer.Builder {
         private final String name;
         private Quantiles quantiles;
+        private Histogram<?> histogram;
         private final List<Tag> tags = new ArrayList<>();
 
         private TimerBuilder(String name) {
@@ -99,6 +99,11 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
             return this;
         }
 
+        public Timer.Builder histogram(Histogram histogram) {
+            this.histogram = histogram;
+            return this;
+        }
+
         @Override
         public Timer.Builder tag(Tag tag) {
             tags.add(tag);
@@ -107,11 +112,11 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
         @Override
         public Timer create() {
-            return timer(name, tags, quantiles);
+            return timer(name, tags, quantiles, histogram);
         }
     }
 
-    protected abstract Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles);
+    protected abstract Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram);
 
     @Override
     public DistributionSummary.Builder distributionSummaryBuilder(String name) {
@@ -121,6 +126,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     private class DistributionSummaryBuilder implements DistributionSummary.Builder {
         private final String name;
         private Quantiles quantiles;
+        private Histogram<?> histogram;
         private final List<Tag> tags = new ArrayList<>();
 
         private DistributionSummaryBuilder(String name) {
@@ -133,6 +139,11 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
             return this;
         }
 
+        public DistributionSummary.Builder histogram(Histogram<?> histogram) {
+            this.histogram = histogram;
+            return this;
+        }
+
         @Override
         public DistributionSummary.Builder tag(Tag tag) {
             tags.add(tag);
@@ -141,9 +152,9 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
         @Override
         public DistributionSummary create() {
-            return distributionSummary(name, tags, quantiles);
+            return distributionSummary(name, tags, quantiles, histogram);
         }
     }
 
-    protected abstract DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles);
+    protected abstract DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram);
 }
