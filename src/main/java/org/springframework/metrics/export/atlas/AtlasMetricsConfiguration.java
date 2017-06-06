@@ -15,10 +15,18 @@
  */
 package org.springframework.metrics.export.atlas;
 
+import com.netflix.spectator.api.Clock;
+import com.netflix.spectator.api.Registry;
+import com.netflix.spectator.atlas.AtlasConfig;
+import com.netflix.spectator.atlas.AtlasRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.metrics.instrument.spectator.SpectatorMeterRegistry;
 
+/**
+ * @author Jon Schneider
+ */
 @Configuration
 public class AtlasMetricsConfiguration {
     @Bean
@@ -27,7 +35,19 @@ public class AtlasMetricsConfiguration {
     }
 
     @Bean
-    SpectatorMeterRegistry meterRegistry() {
-        return new SpectatorMeterRegistry();
+    SpectatorMeterRegistry meterRegistry(Registry registry) {
+        return new SpectatorMeterRegistry(registry);
+    }
+
+    @Bean
+    AtlasConfig atlasConfig(Environment environment) {
+        return environment::getProperty;
+    }
+
+    @Bean
+    AtlasRegistry atlasRegistry(AtlasConfig atlasConfig) {
+        AtlasRegistry registry = new AtlasRegistry(Clock.SYSTEM, atlasConfig);
+        registry.start();
+        return registry;
     }
 }

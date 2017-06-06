@@ -47,12 +47,15 @@ dependencies {
     compile 'javax.servlet:javax.servlet-api:3.1.0', optional
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
 
-    // collector options
+    // instrumentation options
     compile 'com.netflix.spectator:spectator-api:latest.release', optional
     compile 'io.prometheus:simpleclient:latest.release', optional
     compile 'io.prometheus:simpleclient_pushgateway:latest.release', optional
     compile 'com.datadoghq:java-dogstatsd-client:latest.release', optional
     compile 'io.dropwizard.metrics:metrics-core:latest.release', optional
+
+    // exporters
+    compile 'com.netflix.spectator:spectator-reg-atlas:latest.release', optional
 
     // cache monitoring
     compile 'com.google.guava:guava:21.0', optional
@@ -79,6 +82,10 @@ dependencies {
 
     testCompile 'io.projectreactor.addons:reactor-test:3.1.0.BUILD-SNAPSHOT'
     testCompile 'io.projectreactor.ipc:reactor-netty:latest.release'
+
+    // for use in mock servers
+    testCompile 'org.springframework:spring-webflux:5.0.0.BUILD-SNAPSHOT'
+    testCompile 'org.apache.tomcat.embed:tomcat-embed-core:8.5.15'
 
     testRuntime 'org.apache.httpcomponents:httpclient:4.4+'
 
