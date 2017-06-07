@@ -17,7 +17,6 @@ package org.springframework.metrics.instrument.web;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.metrics.annotation.Timed;
 import org.springframework.metrics.instrument.IdentityTagFormatter;
 import org.springframework.metrics.instrument.MeterRegistry;
@@ -31,13 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.verify;
 
 class MetricsWebFilterTest {
     private MeterRegistry registry = new SimpleMeterRegistry();

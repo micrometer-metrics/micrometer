@@ -18,7 +18,6 @@ package org.springframework.metrics.instrument.simple;
 import com.netflix.spectator.impl.AtomicDouble;
 import org.springframework.metrics.instrument.Counter;
 import org.springframework.metrics.instrument.Measurement;
-import org.springframework.metrics.instrument.Meter;
 import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.internal.MeterId;
 

@@ -23,7 +23,6 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertySource;
-import org.springframework.util.ClassUtils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

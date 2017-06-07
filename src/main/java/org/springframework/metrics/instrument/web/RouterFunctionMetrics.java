@@ -17,39 +17,55 @@ package org.springframework.metrics.instrument.web;
 
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Tag;
+import org.springframework.metrics.instrument.Tags;
 import org.springframework.web.reactive.function.server.HandlerFilterFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.Collections.emptyList;
+import static java.util.stream.StreamSupport.stream;
+
+/**
+ * @author Jon Schneider
+ */
 public class RouterFunctionMetrics {
     private final MeterRegistry registry;
-    private BiFunction<ServerRequest, ServerResponse, Stream<Tag>> defaultTags = (ServerRequest request, ServerResponse response) ->
-            Stream.of(method(request), status(response));
+    private BiFunction<ServerRequest, ServerResponse, Collection<Tag>> defaultTags = (ServerRequest request, ServerResponse response) ->
+            Arrays.asList(method(request), status(response));
 
     public RouterFunctionMetrics(MeterRegistry registry) {
         this.registry = registry;
     }
 
-    public RouterFunctionMetrics setDefaultTags(BiFunction<ServerRequest, ServerResponse, Stream<Tag>> defaultTags) {
+    public RouterFunctionMetrics defaultTags(BiFunction<ServerRequest, ServerResponse, Collection<Tag>> defaultTags) {
         this.defaultTags = defaultTags;
         return this;
     }
 
     public HandlerFilterFunction<ServerResponse, ServerResponse> timer(String name) {
-        return timer(name, Stream.empty());
+        return timer(name, emptyList());
     }
 
-    public HandlerFilterFunction<ServerResponse, ServerResponse> timer(String name, Stream<Tag> tags) {
+    public HandlerFilterFunction<ServerResponse, ServerResponse> timer(String name, String... tags) {
+        return timer(name, Tags.zip(tags));
+    }
+
+    public HandlerFilterFunction<ServerResponse, ServerResponse> timer(String name, Iterable<Tag> tags) {
         return (request, next) -> {
             final long start = System.nanoTime();
             return next
                     .handle(request)
                     .doOnSuccess(response -> {
-                        Stream<Tag> allTags = Stream.concat(tags, defaultTags.apply(request, response));
+                        List<Tag> allTags = Stream.concat(stream(tags.spliterator(), false), defaultTags.apply(request, response).stream())
+                            .collect(Collectors.toList());
                         registry.timer(name, allTags).record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
                     })
                     .doOnError(error -> {

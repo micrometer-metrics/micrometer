@@ -16,7 +16,6 @@
 package org.springframework.metrics.instrument.internal;
 
 import org.springframework.metrics.instrument.Clock;
-import org.springframework.metrics.instrument.Meter;
 import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.Timer;
 

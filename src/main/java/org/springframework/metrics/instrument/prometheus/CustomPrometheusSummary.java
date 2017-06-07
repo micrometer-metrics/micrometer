@@ -17,12 +17,8 @@ package org.springframework.metrics.instrument.prometheus;
 
 import io.prometheus.client.Collector;
 import org.springframework.metrics.instrument.Tag;
+import org.springframework.metrics.instrument.stats.hist.*;
 import org.springframework.metrics.instrument.stats.quantile.Quantiles;
-import org.springframework.metrics.instrument.stats.hist.Bucket;
-import org.springframework.metrics.instrument.stats.hist.Histogram;
-import org.springframework.metrics.instrument.stats.hist.CumulativeHistogram;
-import org.springframework.metrics.instrument.stats.hist.TimeScaleCumulativeHistogram;
-import org.springframework.metrics.instrument.stats.hist.TimeScaleNormalHistogram;
 
 import java.util.Collection;
 import java.util.Collections;

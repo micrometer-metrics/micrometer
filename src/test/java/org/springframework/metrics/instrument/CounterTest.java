@@ -18,7 +18,6 @@ package org.springframework.metrics.instrument;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.springframework.metrics.instrument.prometheus.PrometheusCounter;
 import org.springframework.metrics.instrument.prometheus.PrometheusMeterRegistry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

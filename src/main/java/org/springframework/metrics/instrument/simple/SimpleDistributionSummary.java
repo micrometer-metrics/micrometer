@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
-import static java.util.stream.Stream.of;
 import static org.springframework.metrics.instrument.simple.SimpleUtils.typeTag;
 
 public class SimpleDistributionSummary implements DistributionSummary {

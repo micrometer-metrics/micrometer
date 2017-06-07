@@ -21,12 +21,12 @@ import org.junit.jupiter.api.extension.ContainerExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ObjectArrayArguments;
-import org.springframework.metrics.instrument.spectator.*;
-import org.springframework.metrics.instrument.prometheus.*;
+import org.springframework.metrics.instrument.prometheus.PrometheusMeterRegistry;
+import org.springframework.metrics.instrument.spectator.SpectatorMeterRegistry;
 
 import java.util.stream.Stream;
 
-public class MeterRegistriesProvider implements ArgumentsProvider {
+class MeterRegistriesProvider implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> arguments(ContainerExtensionContext context) throws Exception {
         return Stream.of(

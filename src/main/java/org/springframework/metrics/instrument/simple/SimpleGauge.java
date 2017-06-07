@@ -17,7 +17,6 @@ package org.springframework.metrics.instrument.simple;
 
 import org.springframework.metrics.instrument.Gauge;
 import org.springframework.metrics.instrument.Measurement;
-import org.springframework.metrics.instrument.Meter;
 import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.internal.MeterId;
 

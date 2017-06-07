@@ -15,11 +15,25 @@
  */
 package org.springframework.metrics.instrument;
 
+import com.google.common.cache.Cache;
+import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProvider;
+import org.springframework.metrics.instrument.binder.CacheMetrics;
+import org.springframework.metrics.instrument.binder.DataSourceMetrics;
+import org.springframework.metrics.instrument.internal.TimedExecutorService;
+import org.springframework.metrics.instrument.scheduling.ExecutorServiceMetrics;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+
+import javax.sql.DataSource;
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+
+import static java.util.Arrays.asList;
 
 /**
  * @author Jon Schneider
@@ -43,13 +57,8 @@ public class Meters {
             return this;
         }
 
-        public Builder tags(Tag... tags) {
-            this.tags = Arrays.asList(tags);
-            return this;
-        }
-
         public Builder tags(String... tags) {
-            this.tags = Tag.tags(tags);
+            this.tags = Tags.zip(tags);
             return this;
         }
 
@@ -90,6 +99,8 @@ public class Meters {
         }
 
         /**
+         * @param obj     The monitored object. Access to this object's state from the meter must be thread safe. For
+         *                example, if the monitored object is a collection type, ensure it is from the {@code java.util.concurrent} package.
          * @param measure A function of a meter name and a monitored object to a set of measurements. The generated measurements
          *                will be enriched with the containing meter's tags automatically. The monitored object is held with
          *                a weak reference, so as not to prevent garbage collection of the underlying object.
@@ -126,5 +137,184 @@ public class Meters {
                 }
             };
         }
+    }
+
+    /**
+     * Record metrics on Guava caches.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param cache    The cache to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     * @see com.google.common.cache.CacheStats
+     */
+    public static Cache monitor(MeterRegistry registry, Cache cache, String name, Tag... tags) {
+        new CacheMetrics(name, asList(tags), cache).bindTo(registry);
+        return cache;
+    }
+
+    /**
+     * Record metrics on Guava caches.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param cache    The cache to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     * @see com.google.common.cache.CacheStats
+     */
+    public static Cache monitor(MeterRegistry registry, Cache cache, String name, Iterable<Tag> tags) {
+        new CacheMetrics(name, tags, cache).bindTo(registry);
+        return cache;
+    }
+
+    /**
+     * Record metrics on active connections and connection pool utilization.
+     *
+     * @param registry          The registry to bind metrics to.
+     * @param dataSource        The data source to instrument.
+     * @param metadataProviders A list of providers from which the instrumentation can look up information about pool usage.
+     * @param name              The name prefix of the metrics.
+     * @param tags              Tags to apply to all recorded metrics.
+     * @return The instrumented data source, unchanged. The original data source
+     * is not wrapped or proxied in any way.
+     */
+    public static DataSource monitor(MeterRegistry registry,
+                                     DataSource dataSource,
+                                     Collection<DataSourcePoolMetadataProvider> metadataProviders,
+                                     String name,
+                                     Iterable<Tag> tags) {
+        new DataSourceMetrics(dataSource, metadataProviders, name, tags).bindTo(registry);
+        return dataSource;
+    }
+
+    /**
+     * Record metrics on active connections and connection pool utilization.
+     *
+     * @param registry          The registry to bind metrics to.
+     * @param dataSource        The data source to instrument.
+     * @param metadataProviders A list of providers from which the instrumentation can look up information about pool usage.
+     * @param name              The name prefix of the metrics
+     * @param tags              Tags to apply to all recorded metrics.
+     * @return The instrumented data source, unchanged. The original data source
+     * is not wrapped or proxied in any way.
+     */
+    public static DataSource monitor(MeterRegistry registry,
+                                     DataSource dataSource,
+                                     Collection<DataSourcePoolMetadataProvider> metadataProviders,
+                                     String name,
+                                     Tag... tags) {
+        return monitor(registry, dataSource, metadataProviders, name, asList(tags));
+    }
+
+    /**
+     * Record metrics on the use of an {@link Executor}.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param executor The executor to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented executor, proxied.
+     */
+    public static Executor monitor(MeterRegistry registry, Executor executor, String name, Iterable<Tag> tags) {
+        final Timer commandTimer = registry.timer(name, tags);
+        return commandTimer::record;
+    }
+
+    /**
+     * Record metrics on the use of an {@link Executor}.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param executor The executor to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented executor, proxied.
+     */
+    public static Executor monitor(MeterRegistry registry, Executor executor, String name, Tag... tags) {
+        return monitor(registry, executor, name, asList(tags));
+    }
+
+    /**
+     * Record metrics on the use of an {@link ExecutorService}.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param executor The executor to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented executor, proxied.
+     */
+    public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String name, Iterable<Tag> tags) {
+        new ExecutorServiceMetrics(executor, name, tags).bindTo(registry);
+        return new TimedExecutorService(registry, executor, name, tags);
+    }
+
+    /**
+     * Record metrics on the use of an {@link ExecutorService}.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param executor The executor to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented executor, proxied.
+     */
+    public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String name, Tag... tags) {
+        return monitor(registry, executor, name, asList(tags));
+    }
+
+    /**
+     * Record metrics on the use of a {@link ThreadPoolTaskExecutor}.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param executor The task executor to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented executor, proxied.
+     */
+    public static ThreadPoolTaskExecutor monitor(MeterRegistry registry, ThreadPoolTaskExecutor executor, String name, Iterable<Tag> tags) {
+        monitor(registry, executor.getThreadPoolExecutor(), name, tags);
+        return executor;
+    }
+
+    /**
+     * Record metrics on the use of a {@link ThreadPoolTaskExecutor}.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param executor The executor to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented executor, proxied.
+     */
+    public static ThreadPoolTaskExecutor monitor(MeterRegistry registry, ThreadPoolTaskExecutor executor, String name, Tag... tags) {
+        monitor(registry, executor.getThreadPoolExecutor(), name, tags);
+        return executor;
+    }
+
+    /**
+     * Record metrics on the use of a {@link ThreadPoolTaskExecutor}.
+     *
+     * @param registry  The registry to bind metrics to.
+     * @param scheduler The task scheduler to instrument.
+     * @param name      The name prefix of the metrics.
+     * @param tags      Tags to apply to all recorded metrics.
+     * @return The instrumented scheduler, proxied.
+     */
+    public static ThreadPoolTaskScheduler monitor(MeterRegistry registry, ThreadPoolTaskScheduler scheduler, String name, Iterable<Tag> tags) {
+        monitor(registry, scheduler.getScheduledExecutor(), name, tags);
+        return scheduler;
+    }
+
+    /**
+     * Record metrics on the use of a {@link ThreadPoolTaskExecutor}.
+     *
+     * @param registry  The registry to bind metrics to.
+     * @param scheduler The scheduler to instrument.
+     * @param name      The name prefix of the metrics.
+     * @param tags      Tags to apply to all recorded metrics.
+     * @return The instrumented scheduler, proxied.
+     */
+    public static ThreadPoolTaskScheduler monitor(MeterRegistry registry, ThreadPoolTaskScheduler scheduler, String name, Tag... tags) {
+        monitor(registry, scheduler.getScheduledExecutor(), name, tags);
+        return scheduler;
     }
 }

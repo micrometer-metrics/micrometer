@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.toSet;
@@ -125,7 +126,8 @@ public class MetricsHandlerInterceptor extends HandlerInterceptorAdapter {
                     }
                 } else {
                     timerBuilder = timerBuilder.tags(IntStream.range(0, extraTags.length / 2)
-                            .mapToObj(i -> Tag.of(extraTags[i], extraTags[i + 1])));
+                            .mapToObj(i -> Tag.of(extraTags[i], extraTags[i + 1]))
+                            .collect(Collectors.toList()));
                 }
             }
 

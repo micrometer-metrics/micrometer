@@ -24,7 +24,7 @@ import java.util.TreeSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
-import static org.springframework.metrics.instrument.Tag.tags;
+import static org.springframework.metrics.instrument.Tags.zip;
 
 /**
  * @author Jon Schneider
@@ -40,12 +40,12 @@ class MetersTest {
                 .create(letters, (name, letterSet) -> {
                     SortedSet<String> after = letterSet.tailSet("b");
                     Measurement total = new Measurement(name,
-                            tags("statistic", "total"),
+                            zip("statistic", "total"),
                             letterSet.tailSet("b").size() - 1);
 
                     after.retainAll(Arrays.asList("a", "e", "i", "o", "u", "y"));
                     Measurement vowels = new Measurement(name,
-                            tags("statistic", "vowels"),
+                            zip("statistic", "vowels"),
                             after.size());
 
                     return Arrays.asList(total, vowels);

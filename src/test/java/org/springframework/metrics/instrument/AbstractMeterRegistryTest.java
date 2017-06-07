@@ -16,17 +16,13 @@
 package org.springframework.metrics.instrument;
 
 import org.assertj.core.api.AbstractThrowableAssert;
-import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.springframework.metrics.instrument.prometheus.PrometheusMeterRegistry;
 
-import java.util.concurrent.*;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.data.Offset.offset;
 
 class AbstractMeterRegistryTest {
 
@@ -69,34 +65,5 @@ class AbstractMeterRegistryTest {
 
         assertThat(registry.findMeter(Counter.class, "bar", "k", "v"))
                 .containsSame(c2);
-    }
-
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    @DisplayName("ExecutorService can be monitored with a default set of metrics")
-    void monitorExecutorService(MeterRegistry registry) throws InterruptedException {
-        ExecutorService pool = registry.monitor("beep_pool", Executors.newSingleThreadExecutor());
-        CountDownLatch taskStart = new CountDownLatch(1);
-        CountDownLatch taskComplete = new CountDownLatch(1);
-
-        pool.submit(() -> {
-            taskStart.countDown();
-            taskComplete.await();
-            System.out.println("beep");
-            return 0;
-        });
-        pool.submit(() -> System.out.println("boop"));
-
-        taskStart.await();
-        assertThat(registry.findMeter(Gauge.class, "beep_pool_queued"))
-                .hasValueSatisfying(g -> assertThat(g.value()).isEqualTo(1, offset(1e-12)));
-
-        taskComplete.countDown();
-        pool.awaitTermination(1, TimeUnit.SECONDS);
-
-        assertThat(registry.findMeter(Timer.class, "beep_pool_duration"))
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(2));
-        assertThat(registry.findMeter(Gauge.class, "beep_pool_queued"))
-                .hasValueSatisfying(g -> assertThat(g.value()).isEqualTo(0, offset(1e-12)));
     }
 }

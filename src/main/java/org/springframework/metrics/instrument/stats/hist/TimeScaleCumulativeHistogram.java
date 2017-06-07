@@ -17,7 +17,6 @@ package org.springframework.metrics.instrument.stats.hist;
 
 import org.springframework.metrics.instrument.internal.TimeUtils;
 
-import java.util.Comparator;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 

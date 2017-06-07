@@ -15,7 +15,6 @@
  */
 package org.springframework.metrics.instrument.internal;
 
-import org.springframework.metrics.instrument.Clock;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.Timer;
@@ -23,26 +22,21 @@ import org.springframework.metrics.instrument.Timer;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.stream.Collectors.toList;
 
 /**
- * A metrics instrumented {@link java.util.concurrent.ExecutorService}.
+ * An {@link java.util.concurrent.ExecutorService} that is timed
  *
  * @author Jon Schneider
  */
-public class MonitoredExecutorService implements ExecutorService {
+public class TimedExecutorService implements ExecutorService {
     private final ExecutorService delegate;
-    private final Clock clock;
     private final Timer timer;
-    private final AtomicLong queued = new AtomicLong();
 
-    public MonitoredExecutorService(MeterRegistry registry, ExecutorService delegate, String name, Iterable<Tag> tags) {
+    public TimedExecutorService(MeterRegistry registry, ExecutorService delegate, String name, Iterable<Tag> tags) {
         this.delegate = delegate;
-        this.clock = registry.getClock();
         this.timer = registry.timer(name + "_duration", tags);
-        registry.gauge(name + "_queued", tags, queued);
     }
 
     @Override
@@ -72,31 +66,26 @@ public class MonitoredExecutorService implements ExecutorService {
 
     @Override
     public <T> Future<T> submit(Callable<T> task) {
-        queued.incrementAndGet();
-        return delegate.submit(wrap(task));
+        return delegate.submit(timer.wrap(task));
     }
 
     @Override
     public <T> Future<T> submit(Runnable task, T result) {
-        queued.incrementAndGet();
-        return delegate.submit(wrap(task), result);
+        return delegate.submit(() -> timer.record(task), result);
     }
 
     @Override
     public Future<?> submit(Runnable task) {
-        queued.incrementAndGet();
-        return delegate.submit(wrap(task));
+        return delegate.submit(() -> timer.record(task));
     }
 
     @Override
     public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
-        queued.accumulateAndGet(tasks.size(), (a, b) -> a + b);
         return delegate.invokeAll(wrapAll(tasks));
     }
 
     @Override
     public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
-        queued.accumulateAndGet(tasks.size(), (a, b) -> a + b);
         return delegate.invokeAll(wrapAll(tasks), timeout, unit);
     }
 
@@ -112,31 +101,10 @@ public class MonitoredExecutorService implements ExecutorService {
 
     @Override
     public void execute(Runnable command) {
-        queued.incrementAndGet();
         delegate.execute(timer.wrap(command));
     }
 
     private <T> Collection<? extends Callable<T>> wrapAll(Collection<? extends Callable<T>> tasks) {
-        return tasks.stream().map(this::wrap).collect(toList());
-    }
-
-    private <T> Callable<T> wrap(Callable<T> f) {
-        return () -> {
-            queued.decrementAndGet();
-            final long s = clock.monotonicTime();
-            try {
-                return f.call();
-            } finally {
-                final long e = clock.monotonicTime();
-                timer.record(e - s, TimeUnit.NANOSECONDS);
-            }
-        };
-    }
-
-    private Runnable wrap(Runnable f) {
-        return () -> {
-            queued.decrementAndGet();
-            timer.record(f);
-        };
+        return tasks.stream().map(timer::wrap).collect(toList());
     }
 }

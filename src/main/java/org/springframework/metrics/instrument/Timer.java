@@ -15,15 +15,12 @@
  */
 package org.springframework.metrics.instrument;
 
-import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 import org.springframework.metrics.instrument.stats.hist.Histogram;
+import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 
-import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Timer intended to track of a large number of short running events. Example would be something like
@@ -103,25 +100,9 @@ public interface Timer extends Meter {
 
         Builder histogram(Histogram<?> histogram);
 
-        Builder tag(Tag tag);
-
-        default Builder tag(String key, String value) {
-            return tag(Tag.of(key, value));
-        }
-
-        default Builder tags(Iterable<Tag> tags) {
-            for (Tag tag : tags) {
-                tag(tag);
-            }
-            return this;
-        }
-
+        Builder tags(Iterable<Tag> tags);
         default Builder tags(String... tags) {
-            return tags(Tag.tags(tags));
-        }
-
-        default Builder tags(Stream<Tag> tags) {
-            return tags(tags.collect(Collectors.toList()));
+            return tags(Tags.zip(tags));
         }
 
         Timer create();

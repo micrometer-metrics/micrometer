@@ -28,7 +28,7 @@ class DistributionSummaryTest {
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
     void record(MeterRegistry registry) {
-        DistributionSummary ds = registry.distributionSummary("myDistributionSummary");
+        DistributionSummary ds = registry.summary("myDistributionSummary");
 
         ds.record(10);
         assertAll(() -> assertEquals(1L, ds.count()),
@@ -44,7 +44,7 @@ class DistributionSummaryTest {
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
     void recordNegative(MeterRegistry collector) {
-        DistributionSummary ds = collector.distributionSummary("myDistributionSummary");
+        DistributionSummary ds = collector.summary("myDistributionSummary");
 
         ds.record(-10);
         assertAll(() -> assertEquals(0, ds.count()),
@@ -55,7 +55,7 @@ class DistributionSummaryTest {
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
     void recordZero(MeterRegistry collector) {
-        DistributionSummary ds = collector.distributionSummary("myDistributionSummary");
+        DistributionSummary ds = collector.summary("myDistributionSummary");
 
         ds.record(0);
         assertAll(() -> assertEquals(1L, ds.count()),

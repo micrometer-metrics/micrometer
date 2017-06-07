@@ -17,15 +17,10 @@ package org.springframework.metrics.instrument.prometheus;
 
 import org.springframework.metrics.instrument.Clock;
 import org.springframework.metrics.instrument.Measurement;
-import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.internal.AbstractTimer;
 import org.springframework.metrics.instrument.internal.MeterId;
-import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static org.springframework.metrics.instrument.internal.TimeUtils.secondsToUnit;
 

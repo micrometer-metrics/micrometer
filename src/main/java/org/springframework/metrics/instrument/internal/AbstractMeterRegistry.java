@@ -15,41 +15,15 @@
  */
 package org.springframework.metrics.instrument.internal;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadata;
-import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProvider;
-import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProviders;
 import org.springframework.metrics.instrument.*;
-import org.springframework.metrics.instrument.binder.MeterBinder;
-import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 import org.springframework.metrics.instrument.stats.hist.Histogram;
+import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 
-import javax.annotation.PostConstruct;
-import javax.sql.DataSource;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
 
 public abstract class AbstractMeterRegistry implements MeterRegistry {
     protected final Clock clock;
-
-    @Autowired(required = false)
-    private Collection<DataSourcePoolMetadataProvider> providers;
-
-    @Autowired(required = false)
-    private Collection<MeterBinder> binders;
-
-    @SuppressWarnings("ConstantConditions")
-    @PostConstruct
-    private void bind() {
-        if(binders != null) {
-            for (MeterBinder binder : binders) {
-                bind(binder);
-            }
-        }
-    }
-
     protected AbstractMeterRegistry(Clock clock) {
         this.clock = clock;
     }
@@ -57,25 +31,6 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     @Override
     public Clock getClock() {
         return clock;
-    }
-
-    @Override
-    public DataSource monitor(String name, Stream<Tag> tags, DataSource dataSource) {
-        DataSourcePoolMetadataProvider provider = new DataSourcePoolMetadataProviders(providers);
-        DataSourcePoolMetadata poolMetadata = provider.getDataSourcePoolMetadata(dataSource);
-
-        if (poolMetadata != null) {
-            if(poolMetadata.getActive() != null)
-                gauge(name  + "_active_connections", tags, poolMetadata, DataSourcePoolMetadata::getActive);
-
-            if(poolMetadata.getMax() != null)
-                gauge(name + "_max_connections", tags, poolMetadata, DataSourcePoolMetadata::getMax);
-
-            if(poolMetadata.getMin() != null)
-                gauge(name + "_min_connections", tags, poolMetadata, DataSourcePoolMetadata::getMin);
-        }
-
-        return dataSource;
     }
 
     @Override
@@ -105,8 +60,8 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         }
 
         @Override
-        public Timer.Builder tag(Tag tag) {
-            tags.add(tag);
+        public Timer.Builder tags(Iterable<Tag> tags) {
+            tags.forEach(this.tags::add);
             return this;
         }
 
@@ -145,8 +100,8 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         }
 
         @Override
-        public DistributionSummary.Builder tag(Tag tag) {
-            tags.add(tag);
+        public DistributionSummary.Builder tags(Iterable<Tag> tags) {
+            tags.forEach(this.tags::add);
             return this;
         }
 

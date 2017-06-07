@@ -24,9 +24,7 @@ import org.springframework.metrics.instrument.simple.SimpleMeterRegistry;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.metrics.instrument.MockClock.clock;
 
 class TimerTest {

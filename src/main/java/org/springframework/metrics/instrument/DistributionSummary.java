@@ -18,10 +18,6 @@ package org.springframework.metrics.instrument;
 import org.springframework.metrics.instrument.stats.hist.Histogram;
 import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 /**
  * Track the sample distribution of events. An example would be the response sizes for requests
  * hitting and http server.
@@ -51,25 +47,9 @@ public interface DistributionSummary extends Meter {
 
         Builder histogram(Histogram<?> histogram);
 
-        Builder tag(Tag tag);
-
-        default Builder tag(String key, String value) {
-            return tag(Tag.of(key, value));
-        }
-
-        default Builder tags(Iterable<Tag> tags) {
-            for (Tag tag : tags) {
-                tag(tag);
-            }
-            return this;
-        }
-
+        Builder tags(Iterable<Tag> tags);
         default Builder tags(String... tags) {
-            return tags(Tag.tags(tags));
-        }
-
-        default Builder tags(Stream<Tag> tags) {
-            return tags(tags.collect(Collectors.toList()));
+            return tags(Tags.zip(tags));
         }
 
         DistributionSummary create();

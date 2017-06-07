@@ -13,22 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.metrics.instrument.binder;
+package org.springframework.metrics.boot;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.metrics.instrument.Gauge;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.metrics.instrument.MeterRegistry;
-import org.springframework.metrics.instrument.simple.SimpleMeterRegistry;
+import org.springframework.metrics.instrument.binder.MeterBinder;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import javax.annotation.PostConstruct;
+import java.util.Collection;
 
-class ClassLoaderMetricsTest {
-    @Test
-    void classLoadingMetrics() {
-        MeterRegistry registry = new SimpleMeterRegistry();
-        new ClassLoaderMetrics().bindTo(registry);
+/**
+ * @author Jon Schneider
+ */
+@Configuration
+public class MeterBinderRegistration {
+    @Autowired
+    MeterRegistry registry;
 
-        assertThat(registry.findMeter(Gauge.class, "classes_loaded"))
-                .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
+    @Autowired(required = false)
+    Collection<MeterBinder> binders;
+
+    @PostConstruct
+    void bindAll() {
+        for (MeterBinder binder : binders) {
+            binder.bindTo(registry);
+        }
     }
 }

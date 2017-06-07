@@ -39,6 +39,7 @@ import org.springframework.web.client.RestTemplate;
         InstrumentRestTemplateConfiguration.class,
         InstrumentWebfluxRequestConfiguration.class,
         RecommendedMeterBinders.class,
+        MeterBinderRegistration.class
 })
 class MetricsConfiguration {
     // TODO when we figure out if or how Boot 2 might be different, change this

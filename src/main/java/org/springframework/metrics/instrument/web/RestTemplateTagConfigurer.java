@@ -21,7 +21,8 @@ import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.TagFormatter;
 
 import java.io.IOException;
-import java.util.stream.Stream;
+
+import static java.util.Arrays.asList;
 
 /**
  * Defines the default set of tags added to instrumented web requests. It is only necessary to implement
@@ -43,7 +44,7 @@ public class RestTemplateTagConfigurer {
      * @param response may be null in the event of a client error
      * @return a set of tags added to every client HTTP request metric
      */
-    Stream<Tag> clientHttpRequestTags(HttpRequest request,
+    Iterable<Tag> clientHttpRequestTags(HttpRequest request,
                                       ClientHttpResponse response) {
         String urlTemplate = RestTemplateUrlTemplateHolder.getRestTemplateUrlTemplate();
         if (urlTemplate == null) {
@@ -65,7 +66,7 @@ public class RestTemplateTagConfigurer {
 
         String strippedUrlTemplate = urlTemplate.replaceAll("^https?://[^/]+/", "");
 
-        return Stream.of(Tag.of("method", request.getMethod().name()),
+        return asList(Tag.of("method", request.getMethod().name()),
                 Tag.of("uri", tagFormatter.formatTagValue(strippedUrlTemplate)),
                 Tag.of("status", status),
                 Tag.of("clientName", host));

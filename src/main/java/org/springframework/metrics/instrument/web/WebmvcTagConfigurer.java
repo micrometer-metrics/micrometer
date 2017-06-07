@@ -22,7 +22,8 @@ import org.springframework.web.servlet.HandlerMapping;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.stream.Stream;
+
+import static java.util.Arrays.asList;
 
 /**
  * Supplies default tags to meters monitoring the Web MVC server (servlet) programming model.
@@ -43,8 +44,8 @@ public class WebmvcTagConfigurer {
      * @param handler  The request method that is responsible for handling the request.
      * @return A set of tags added to every Spring MVC HTTP request
      */
-    public Stream<Tag> httpLongRequestTags(HttpServletRequest request, Object handler) {
-        return Stream.of(method(request), uri(request));
+    public Iterable<Tag> httpLongRequestTags(HttpServletRequest request, Object handler) {
+        return asList(method(request), uri(request));
     }
 
     /**
@@ -54,9 +55,9 @@ public class WebmvcTagConfigurer {
      * @param response The HTTP response.
      * @return A set of tags added to every Spring MVC HTTP request.
      */
-    public Stream<Tag> httpRequestTags(HttpServletRequest request,
+    public Iterable<Tag> httpRequestTags(HttpServletRequest request,
                                        HttpServletResponse response) {
-        return Stream.of(method(request), uri(request), exception(request), status(response));
+        return asList(method(request), uri(request), exception(request), status(response));
     }
 
     /**

@@ -54,7 +54,7 @@ class GaugeTest {
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
     void collectionSizeGauge(MeterRegistry registry) {
-        List<String> list = registry.collectionSize("myGauge", new ArrayList<>());
+        List<String> list = registry.collectionSize(new ArrayList<>(), "myGauge");
         list.addAll(Arrays.asList("a", "b"));
 
         assertEquals(2, singleGauge(registry).value());
@@ -64,7 +64,7 @@ class GaugeTest {
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
     void mapSizeGauge(MeterRegistry registry) {
-        Map<String, Integer> map = registry.mapSize("myGauge", new HashMap<>());
+        Map<String, Integer> map = registry.mapSize(new HashMap<>(), "myGauge");
         map.put("a", 1);
 
         assertEquals(1, singleGauge(registry).value());

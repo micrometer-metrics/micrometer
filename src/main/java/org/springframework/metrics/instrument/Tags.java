@@ -15,14 +15,21 @@
  */
 package org.springframework.metrics.instrument;
 
-import java.util.function.Predicate;
+import java.util.ArrayList;
+import java.util.List;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
-public class Assertions {
-    public static void assertGaugeValue(MeterRegistry registry, String name, Predicate<Double> valueTest) {
-        assertThat(registry.findMeter(Gauge.class, name))
-                .containsInstanceOf(Gauge.class)
-                .hasValueSatisfying(g -> assertThat(g.value()).matches(valueTest, "gauge value"));
+/**
+ * @author Jon Schneider
+ */
+public class Tags {
+    public static List<Tag> zip(String... keyValues) {
+        if (keyValues.length % 2 == 1) {
+            throw new IllegalArgumentException("size must be even, it is a set of key=value pairs");
+        }
+        List<Tag> ts = new ArrayList<>(keyValues.length / 2);
+        for (int i = 0; i < keyValues.length; i += 2) {
+            ts.add(Tag.of(keyValues[i], keyValues[i + 1]));
+        }
+        return ts;
     }
 }

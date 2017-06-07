@@ -15,7 +15,10 @@
  */
 package org.springframework.metrics.instrument.simple;
 
-import org.springframework.metrics.instrument.*;
+import org.springframework.metrics.instrument.Clock;
+import org.springframework.metrics.instrument.LongTaskTimer;
+import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.internal.MeterId;
 
 import java.util.Arrays;
@@ -23,7 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.springframework.metrics.instrument.Tag.tags;
 import static org.springframework.metrics.instrument.simple.SimpleUtils.typeTag;
 
 public class SimpleLongTaskTimer implements LongTaskTimer {

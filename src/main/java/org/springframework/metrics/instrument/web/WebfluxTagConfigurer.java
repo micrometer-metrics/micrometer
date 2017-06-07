@@ -21,7 +21,7 @@ import org.springframework.metrics.instrument.TagFormatter;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 
-import java.util.stream.Stream;
+import static java.util.Arrays.asList;
 
 public class WebfluxTagConfigurer {
     private final TagFormatter tagFormatter;
@@ -32,12 +32,9 @@ public class WebfluxTagConfigurer {
 
     /**
      * Supplies default tags to the WebFlux annotation-based server programming model.
-     * @param exchange
-     * @param exception
-     * @return
      */
-    Stream<Tag> httpRequestTags(ServerWebExchange exchange, Throwable exception) {
-        return Stream.of(method(exchange), uri(exchange), exception(exception), status(exchange));
+    Iterable<Tag> httpRequestTags(ServerWebExchange exchange, Throwable exception) {
+        return asList(method(exchange), uri(exchange), exception(exception), status(exchange));
     }
 
     public Tag uri(ServerWebExchange exchange) {

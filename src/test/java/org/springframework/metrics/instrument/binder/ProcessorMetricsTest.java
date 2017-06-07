@@ -16,18 +16,21 @@
 package org.springframework.metrics.instrument.binder;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.metrics.instrument.Gauge;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.simple.SimpleMeterRegistry;
 
-import static org.springframework.metrics.instrument.Assertions.assertGaugeValue;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 class ProcessorMetricsTest {
     @Test
     void cpuMetrics() {
-        MeterRegistry registry = new SimpleMeterRegistry()
-                .bind(new ProcessorMetrics());
+        MeterRegistry registry = new SimpleMeterRegistry();
+        new ProcessorMetrics().bindTo(registry);
 
-        assertGaugeValue(registry, "cpu_total", v -> v > 0);
-        assertGaugeValue(registry, "cpu_load_average", v -> v > 0);
+        assertThat(registry.findMeter(Gauge.class, "cpu_total"))
+                .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
+        assertThat(registry.findMeter(Gauge.class, "cpu_load_average"))
+                .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
     }
 }

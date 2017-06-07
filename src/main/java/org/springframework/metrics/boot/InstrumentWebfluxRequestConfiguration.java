@@ -23,7 +23,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.TagFormatter;
-import org.springframework.metrics.instrument.web.*;
+import org.springframework.metrics.instrument.web.MetricsWebFilter;
+import org.springframework.metrics.instrument.web.WebfluxTagConfigurer;
 
 /**
  * Instrument Spring Webflux annotation-based programming model request mappings.
