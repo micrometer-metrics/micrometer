@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public abstract class AbstractMeterRegistry implements MeterRegistry {
-    protected Clock clock;
+    protected final Clock clock;
 
     @Autowired(required = false)
     private Collection<DataSourcePoolMetadataProvider> providers;

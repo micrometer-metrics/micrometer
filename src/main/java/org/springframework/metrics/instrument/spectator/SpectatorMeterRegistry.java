@@ -46,6 +46,20 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
     private final Registry registry;
     private final Map<com.netflix.spectator.api.Meter, Meter> meterMap = new HashMap<>();
 
+    private final com.netflix.spectator.api.Clock spectatorClock = new com.netflix.spectator.api.Clock() {
+        @Override
+        public long wallTime() {
+            // We don't see a need to provide a wallTime abstraction in our Clock interface. It only appears to be
+            // used by Spectator to mark measurements on the way out the door.
+            return com.netflix.spectator.api.Clock.SYSTEM.wallTime();
+        }
+
+        @Override
+        public long monotonicTime() {
+            return getClock().monotonicTime();
+        }
+    };
+
     public SpectatorMeterRegistry() {
         this(new DefaultRegistry());
     }
@@ -150,20 +164,6 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public MeterRegistry register(Meter meter) {
-        com.netflix.spectator.api.Clock spectatorClock = new com.netflix.spectator.api.Clock() {
-            @Override
-            public long wallTime() {
-                // we don't see a need to provide a wallTime abstraction in our
-                // Clock interface
-                return com.netflix.spectator.api.Clock.SYSTEM.wallTime();
-            }
-
-            @Override
-            public long monotonicTime() {
-                return getClock().monotonicTime();
-            }
-        };
-
         AbstractMeter<Meter> spectatorMeter = new AbstractMeter<Meter>(spectatorClock, spectatorId(registry, meter.getName(), meter.getTags()), meter) {
             @Override
             public Iterable<Measurement> measure() {
