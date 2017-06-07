@@ -58,7 +58,7 @@ public class SimpleDistributionSummary implements DistributionSummary {
     }
 
     @Override
-    public Tag[] getTags() {
+    public Iterable<Tag> getTags() {
         return id.getTags();
     }
 

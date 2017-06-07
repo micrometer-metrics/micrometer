@@ -22,7 +22,6 @@ import org.springframework.metrics.instrument.binder.MeterBinder;
 import org.springframework.metrics.instrument.internal.MonitoredExecutorService;
 
 import javax.sql.DataSource;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -50,11 +49,7 @@ public interface MeterRegistry {
     Collection<Meter> getMeters();
 
     default <M extends Meter> Optional<M> findMeter(Class<M> mClass, String name, String... tags) {
-        return findMeter(mClass, name, Arrays.asList(tags(tags)));
-    }
-
-    default <M extends Meter> Optional<M> findMeter(Class<M> mClass, String name, Stream<Tag> tags) {
-        return findMeter(mClass, name, tags);
+        return findMeter(mClass, name, tags(tags));
     }
 
     <M extends Meter> Optional<M> findMeter(Class<M> mClass, String name, Iterable<Tag> tags);
@@ -84,7 +79,7 @@ public interface MeterRegistry {
      * Measures the rate of some activity.
      */
     default Counter counter(String name, String... tags) {
-        return counter(name, Arrays.asList(tags(tags)));
+        return counter(name, tags(tags));
     }
 
     /**
@@ -119,7 +114,7 @@ public interface MeterRegistry {
      * Measures the sample distribution of events.
      */
     default DistributionSummary distributionSummary(String name, String... tags) {
-        return distributionSummary(name, Arrays.asList(tags(tags)));
+        return distributionSummary(name, tags(tags));
     }
 
     /**
@@ -154,7 +149,7 @@ public interface MeterRegistry {
      * Measures the time taken for short tasks.
      */
     default Timer timer(String name, String... tags) {
-        return timer(name, Arrays.asList(tags(tags)));
+        return timer(name, tags(tags));
     }
 
     /**
@@ -180,7 +175,7 @@ public interface MeterRegistry {
      * Measures the time taken for short tasks.
      */
     default LongTaskTimer longTaskTimer(String name, String... tags) {
-        return longTaskTimer(name, Arrays.asList(tags(tags)));
+        return longTaskTimer(name, tags(tags));
     }
 
     MeterRegistry register(Meter meter);

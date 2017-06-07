@@ -57,7 +57,7 @@ public class SpectatorLongTaskTimer implements LongTaskTimer {
     }
 
     @Override
-    public Tag[] getTags() {
+    public Iterable<Tag> getTags() {
         return SpectatorUtils.tags(timer);
     }
 

@@ -55,7 +55,7 @@ public class SimpleCounter implements Counter {
     }
 
     @Override
-    public Tag[] getTags() {
+    public Iterable<Tag> getTags() {
         return id.getTags();
     }
 

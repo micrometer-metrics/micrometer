@@ -37,7 +37,7 @@ public class SpectatorGauge implements Gauge {
     }
 
     @Override
-    public Tag[] getTags() {
+    public Iterable<Tag> getTags() {
         return SpectatorUtils.tags(gauge);
     }
 

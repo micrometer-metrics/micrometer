@@ -117,7 +117,7 @@ public interface Timer extends Meter {
         }
 
         default Builder tags(String... tags) {
-            return tags(Arrays.asList(Tag.tags(tags)));
+            return tags(Tag.tags(tags));
         }
 
         default Builder tags(Stream<Tag> tags) {

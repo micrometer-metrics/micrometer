@@ -42,7 +42,7 @@ public class PrometheusGauge implements Gauge {
     }
 
     @Override
-    public Tag[] getTags() {
+    public Iterable<Tag> getTags() {
         return id.getTags();
     }
 

@@ -34,7 +34,7 @@ public class SimpleLongTaskTimer implements LongTaskTimer {
     private final AtomicLong nextTask = new AtomicLong(0L);
     private final Clock clock;
 
-    public SimpleLongTaskTimer(MeterId id, Clock clock) {
+    SimpleLongTaskTimer(MeterId id, Clock clock) {
         this.id = id;
         this.clock = clock;
     }
@@ -84,7 +84,7 @@ public class SimpleLongTaskTimer implements LongTaskTimer {
     }
 
     @Override
-    public Tag[] getTags() {
+    public Iterable<Tag> getTags() {
         return id.getTags();
     }
 

@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 Pivotal Software, Inc.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -74,7 +74,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         //noinspection unchecked
         return meterMap.keySet().stream()
                 .filter(id -> id.getName().equals(name))
-                .filter(id -> Arrays.asList(id.getTags()).containsAll(tagsToMatch))
+                .filter(id -> id.getTags().containsAll(tagsToMatch))
                 .findAny()
                 .map(meterMap::get)
                 .map(m -> (M) m);
@@ -122,7 +122,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
                 i -> buildCollector(id, io.prometheus.client.Gauge.build()));
 
         computeIfAbsent(meterMap, id, g -> {
-            String[] labelValues = Arrays.stream(id.getTags())
+            String[] labelValues = id.getTags().stream()
                     .map(Tag::getValue)
                     .collect(Collectors.toList())
                     .toArray(new String[]{});
@@ -149,8 +149,8 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
             public List<MetricFamilySamples> collect() {
                 List<MetricFamilySamples.Sample> samples = stream(meter.measure().spliterator(), false)
                         .map(m -> {
-                            List<String> tagKeys = new ArrayList<>(m.getTags().length);
-                            List<String> tagValues = new ArrayList<>(m.getTags().length);
+                            List<String> tagKeys = new ArrayList<>(m.getTags().size());
+                            List<String> tagValues = new ArrayList<>(m.getTags().size());
                             for (Tag tag : m.getTags()) {
                                 tagKeys.add(tag.getKey());
                                 tagValues.add(tag.getValue());
@@ -180,15 +180,15 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         return builder
                 .name(id.getName())
                 .help(" ")
-                .labelNames(Arrays.stream(id.getTags())
+                .labelNames(id.getTags().stream()
                         .map(Tag::getKey)
                         .collect(Collectors.toList())
                         .toArray(new String[]{}))
                 .register(registry);
     }
 
-    private <C extends SimpleCollector<D>, D> D child(C collector, Tag[] tags) {
-        return collector.labels(Arrays.stream(tags)
+    private <C extends SimpleCollector<D>, D> D child(C collector, List<Tag> tags) {
+        return collector.labels(tags.stream()
                 .map(Tag::getValue)
                 .collect(Collectors.toList())
                 .toArray(new String[]{}));

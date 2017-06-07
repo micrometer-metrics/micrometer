@@ -60,7 +60,7 @@ public class PrometheusLongTaskTimer implements LongTaskTimer {
     }
 
     @Override
-    public Tag[] getTags() {
+    public Iterable<Tag> getTags() {
         return id.getTags();
     }
 

@@ -19,8 +19,8 @@ import org.springframework.metrics.instrument.*;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
 import org.springframework.metrics.instrument.internal.MeterId;
-import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 import org.springframework.metrics.instrument.stats.hist.Histogram;
+import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -102,8 +102,7 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
         //noinspection unchecked
         return meterMap.keySet().stream()
                 .filter(id -> id.getName().equals(name))
-                .filter(id ->
-                        Arrays.asList(id.getTags()).containsAll(tagsToMatch))
+                .filter(id -> id.getTags().containsAll(tagsToMatch))
                 .findAny()
                 .map(meterMap::get)
                 .map(m -> (M) m);

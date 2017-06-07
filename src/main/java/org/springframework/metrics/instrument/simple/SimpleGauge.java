@@ -46,7 +46,7 @@ public class SimpleGauge<T> implements Gauge {
     }
 
     @Override
-    public Tag[] getTags() {
+    public Iterable<Tag> getTags() {
         return id.getTags();
     }
 

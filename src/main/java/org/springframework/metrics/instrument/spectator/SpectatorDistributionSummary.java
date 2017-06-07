@@ -52,7 +52,7 @@ public class SpectatorDistributionSummary implements DistributionSummary {
     }
 
     @Override
-    public Tag[] getTags() {
+    public Iterable<Tag> getTags() {
         return SpectatorUtils.tags(distributionSummary);
     }
 
