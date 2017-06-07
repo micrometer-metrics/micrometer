@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 Pivotal Software, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,26 +40,27 @@ public class CacheMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        CacheStats stats = cache.stats();
-
         registry.gauge(name + "_size", tags, cache, Cache::size);
 
         registry.register(Meters.build(name + "_requests")
                 .type(Meter.Type.Counter)
-                .create(stats, (n, statsRef) -> Arrays.asList(
-                        /**
-                         * The sum of these two measurements is equal to {@link CacheStats#requestCount()}
-                         */
-                        new Measurement(n, singletonList(Tag.of("result", "hit")), statsRef.hitCount()),
-                        new Measurement(n, singletonList(Tag.of("result", "miss")), statsRef.missCount())
-                )));
+                .create(cache, (n, cacheRef) -> {
+                    CacheStats stats = cacheRef.stats();
+                    return Arrays.asList(
+                            /**
+                             * The sum of these two measurements is equal to {@link CacheStats#requestCount()}
+                             */
+                            new Measurement(n, singletonList(Tag.of("result", "hit")), stats.hitCount()),
+                            new Measurement(n, singletonList(Tag.of("result", "miss")), stats.missCount())
+                    );
+                }));
 
-        registry.gauge(name + "_evictions", tags, stats, CacheStats::evictionCount);
-        registry.gauge(name + "_load_duration", tags, stats, CacheStats::totalLoadTime);
+        registry.gauge(name + "_evictions", tags, cache, c -> c.stats().evictionCount());
+        registry.gauge(name + "_load_duration", tags, cache, c -> c.stats().totalLoadTime());
 
-        if(cache instanceof LoadingCache) {
-            registry.gauge(name + "_loads", tags, stats, CacheStats::loadCount);
-            registry.gauge(name + "_load_failures", tags, stats, CacheStats::loadExceptionCount);
+        if (cache instanceof LoadingCache) {
+            registry.gauge(name + "_loads", tags, cache, c -> c.stats().loadCount());
+            registry.gauge(name + "_load_failures", tags, cache, c -> c.stats().loadExceptionCount());
         }
     }
 }
