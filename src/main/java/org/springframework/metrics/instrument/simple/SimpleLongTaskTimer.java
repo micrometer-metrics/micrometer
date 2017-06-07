@@ -15,10 +15,7 @@
  */
 package org.springframework.metrics.instrument.simple;
 
-import org.springframework.metrics.instrument.Clock;
-import org.springframework.metrics.instrument.LongTaskTimer;
-import org.springframework.metrics.instrument.Measurement;
-import org.springframework.metrics.instrument.Tag;
+import org.springframework.metrics.instrument.*;
 import org.springframework.metrics.instrument.internal.MeterId;
 
 import java.util.Arrays;
@@ -89,10 +86,16 @@ public class SimpleLongTaskTimer implements LongTaskTimer {
     }
 
     @Override
+    public Type getType() {
+        return Type.Other;
+    }
+
+    @Override
     public Iterable<Measurement> measure() {
+        MeterId typedId = id.withTags(Tag.of(getType()));
         return Arrays.asList(
-                id.withTags(tags("type", "LONG_TIMER", "statistic", "activeTasks")).measurement(activeTasks()),
-                id.withTags(tags("type", "LONG_TIMER", "statistic", "duration")).measurement(duration())
+                typedId.withTags(Tag.of("statistic", "activeTasks")).measurement(activeTasks()),
+                typedId.withTags(Tag.of("statistic", "duration")).measurement(duration())
         );
     }
 }

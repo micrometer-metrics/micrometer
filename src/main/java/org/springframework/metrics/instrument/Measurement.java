@@ -89,11 +89,4 @@ public final class Measurement {
                 ", value=" + value +
                 '}';
     }
-
-    enum Type {
-        Counter,
-        Gauge,
-        Timer,
-        DistributionSummary
-    }
 }

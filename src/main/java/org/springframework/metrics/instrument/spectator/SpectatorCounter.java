@@ -17,6 +17,7 @@ package org.springframework.metrics.instrument.spectator;
 
 import org.springframework.metrics.instrument.Counter;
 import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Meter;
 import org.springframework.metrics.instrument.Tag;
 
 public class SpectatorCounter implements Counter {
@@ -49,6 +50,11 @@ public class SpectatorCounter implements Counter {
     @Override
     public Iterable<Tag> getTags() {
         return SpectatorUtils.tags(counter);
+    }
+
+    @Override
+    public Type getType() {
+        return Type.Counter;
     }
 
     @Override

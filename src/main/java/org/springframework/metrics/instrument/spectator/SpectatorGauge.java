@@ -42,6 +42,11 @@ public class SpectatorGauge implements Gauge {
     }
 
     @Override
+    public Type getType() {
+        return Type.Gauge;
+    }
+
+    @Override
     public Iterable<Measurement> measure() {
         return SpectatorUtils.measurements(gauge);
     }

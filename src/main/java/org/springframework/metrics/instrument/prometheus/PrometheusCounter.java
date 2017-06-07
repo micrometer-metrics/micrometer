@@ -17,6 +17,7 @@ package org.springframework.metrics.instrument.prometheus;
 
 import org.springframework.metrics.instrument.Counter;
 import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Meter;
 import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.internal.MeterId;
 
@@ -54,6 +55,11 @@ public class PrometheusCounter implements Counter {
     @Override
     public Iterable<Tag> getTags() {
         return id.getTags();
+    }
+
+    @Override
+    public Type getType() {
+        return Type.Counter;
     }
 
     @Override

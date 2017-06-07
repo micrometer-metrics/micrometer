@@ -159,7 +159,21 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
                         })
                         .collect(toList());
 
-                return Collections.singletonList(new MetricFamilySamples(meter.getName(), Type.UNTYPED, " ", samples));
+                Type type = Type.UNTYPED;
+                switch(meter.getType()) {
+                    case Counter:
+                        type = Type.COUNTER;
+                        break;
+                    case Gauge:
+                        type = Type.GAUGE;
+                        break;
+                    case DistributionSummary:
+                    case Timer:
+                        type = Type.SUMMARY;
+                        break;
+                }
+
+                return Collections.singletonList(new MetricFamilySamples(meter.getName(), type, " ", samples));
             }
         };
         registry.register(collector);

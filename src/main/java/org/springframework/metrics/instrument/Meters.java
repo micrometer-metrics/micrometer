@@ -31,24 +31,30 @@ public class Meters {
 
     public static class Builder {
         private final String name;
-        private Iterable<Tag> tags;
+        private Iterable<Tag> tags = Collections.emptyList();
+        private Meter.Type type = Meter.Type.Other;
 
         Builder(String name) {
             this.name = name;
         }
 
-        Builder tags(Iterable<Tag> tags) {
+        public Builder tags(Iterable<Tag> tags) {
             this.tags = tags;
             return this;
         }
 
-        Builder tags(Tag... tags) {
+        public Builder tags(Tag... tags) {
             this.tags = Arrays.asList(tags);
             return this;
         }
 
-        Builder tags(String... tags) {
+        public Builder tags(String... tags) {
             this.tags = Tag.tags(tags);
+            return this;
+        }
+
+        public Builder type(Meter.Type type) {
+            this.type = type;
             return this;
         }
 
@@ -57,7 +63,7 @@ public class Meters {
          *                will be enriched with the containing meter's tags automatically.
          * @return A custom meter
          */
-        Meter create(Function<String, Iterable<Measurement>> measure) {
+        public Meter create(Function<String, Iterable<Measurement>> measure) {
             return new Meter() {
                 @Override
                 public String getName() {
@@ -67,6 +73,11 @@ public class Meters {
                 @Override
                 public Iterable<Tag> getTags() {
                     return tags;
+                }
+
+                @Override
+                public Type getType() {
+                    return type;
                 }
 
                 @Override
@@ -85,7 +96,7 @@ public class Meters {
          * @return A custom meter. Once the underlying object has been garbage collected, this meter will emit an
          * empty set of measurements on sampling.
          */
-        <T> Meter create(T obj, BiFunction<String, T, Iterable<Measurement>> measure) {
+        public <T> Meter create(T obj, BiFunction<String, T, Iterable<Measurement>> measure) {
             return new Meter() {
                 private WeakReference<T> ref = new WeakReference<>(obj);
 
@@ -97,6 +108,11 @@ public class Meters {
                 @Override
                 public Iterable<Tag> getTags() {
                     return tags;
+                }
+
+                @Override
+                public Type getType() {
+                    return type;
                 }
 
                 @Override

@@ -17,6 +17,7 @@ package org.springframework.metrics.instrument.prometheus;
 
 import org.springframework.metrics.instrument.Gauge;
 import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Meter;
 import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.internal.MeterId;
 
@@ -44,6 +45,11 @@ public class PrometheusGauge implements Gauge {
     @Override
     public Iterable<Tag> getTags() {
         return id.getTags();
+    }
+
+    @Override
+    public Type getType() {
+        return Type.Gauge;
     }
 
     @Override

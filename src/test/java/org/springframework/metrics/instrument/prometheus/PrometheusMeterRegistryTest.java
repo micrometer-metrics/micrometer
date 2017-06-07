@@ -21,11 +21,17 @@ import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.metrics.Issue;
+import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Meter;
+import org.springframework.metrics.instrument.Meters;
 import org.springframework.metrics.instrument.stats.quantile.GKQuantiles;
 
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.concurrent.atomic.AtomicLong;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
@@ -33,13 +39,12 @@ import static org.assertj.core.api.Assertions.offset;
  * @author Jon Schneider
  */
 class PrometheusMeterRegistryTest {
+    private PrometheusMeterRegistry registry = new PrometheusMeterRegistry();
+    private CollectorRegistry prometheusRegistry = registry.getPrometheusRegistry();
 
     @DisplayName("quantiles are given as a separate sample with a key of 'quantile'")
     @Test
     void quantiles() {
-        PrometheusMeterRegistry registry = new PrometheusMeterRegistry();
-        CollectorRegistry prometheusRegistry = registry.getPrometheusRegistry();
-
         registry.timerBuilder("timer")
                 .quantiles(GKQuantiles.build().quantile(0.5).create())
                 .create();
@@ -56,14 +61,25 @@ class PrometheusMeterRegistryTest {
     @Issue("#27")
     @Test
     void customSummaries() {
-        PrometheusMeterRegistry registry = new PrometheusMeterRegistry();
-
         Arrays.asList("v1", "v2").forEach(v -> {
             registry.distributionSummary("s", "k", v).record(1.0);
             assertThat(registry.getPrometheusRegistry().getSampleValue("s_count", new String[]{"k"}, new String[]{v}))
                     .describedAs("distribution summary s with a tag value of %s", v)
                     .isEqualTo(1.0, offset(1e-12));
         });
+    }
+
+    @DisplayName("custom meters can be typed")
+    @Test
+    void typedCustomMeters() {
+        AtomicLong n = new AtomicLong();
+        registry.register(Meters.build("counter")
+            .type(Meter.Type.Counter)
+            .create(n, (name, counter) -> singletonList(new Measurement(name, emptyList(), (double) n.incrementAndGet()))));
+
+        assertThat(registry.getPrometheusRegistry().metricFamilySamples().nextElement().type)
+                .describedAs("custom counter with a type of COUNTER")
+                .isEqualTo(Collector.Type.COUNTER);
     }
 
     private Condition<Enumeration<Collector.MetricFamilySamples>> withNameAndTagKey(String name, String tagKey) {

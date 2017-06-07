@@ -23,8 +23,18 @@ public interface Meter {
 
     Iterable<Tag> getTags();
 
+    Type getType();
+
     /**
      * Get the set of measurements for this meter.
      */
     Iterable<Measurement> measure();
+
+    enum Type {
+        Counter,
+        Gauge,
+        Timer,
+        DistributionSummary,
+        Other
+    }
 }
