@@ -21,6 +21,11 @@ import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
+
+import static org.springframework.metrics.instrument.internal.MapAccess.computeIfAbsent;
 
 public abstract class AbstractMeterRegistry implements MeterRegistry {
     protected final Clock clock;

@@ -31,6 +31,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
@@ -80,10 +81,12 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
                 .map(m -> (M) m);
     }
 
+
+
     @Override
     public Counter counter(String name, Iterable<Tag> tags) {
         MeterId id = new MeterId(name, tags);
-        io.prometheus.client.Counter counter = computeIfAbsent(collectorMap, name,
+        io.prometheus.client.Counter counter = collectorByName(io.prometheus.client.Counter.class, name,
                 n -> buildCollector(id, io.prometheus.client.Counter.build()));
         return computeIfAbsent(meterMap, id, c -> new PrometheusCounter(id, child(counter, id.getTags())));
     }
@@ -91,7 +94,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     @Override
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
         MeterId id = new MeterId(name, tags);
-        final CustomPrometheusSummary summary = computeIfAbsent(collectorMap, name,
+        final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, name,
                 n -> new CustomPrometheusSummary(name, stream(tags.spliterator(), false).map(Tag::getKey).collect(toList())).register(registry));
         return computeIfAbsent(meterMap, id, t -> new PrometheusDistributionSummary(id, summary.child(tags, quantiles, histogram)));
     }
@@ -99,7 +102,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     @Override
     protected Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
         MeterId id = new MeterId(name, tags);
-        final CustomPrometheusSummary summary = computeIfAbsent(collectorMap, name,
+        final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, name,
                 n -> new CustomPrometheusSummary(name, stream(tags.spliterator(), false).map(Tag::getKey).collect(toList())).register(registry));
         return computeIfAbsent(meterMap, id, t -> new PrometheusTimer(id, summary.child(tags, quantiles, histogram), getClock()));
     }
@@ -107,7 +110,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     @Override
     public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
         MeterId id = new MeterId(name, tags);
-        final CustomPrometheusLongTaskTimer longTaskTimer = computeIfAbsent(collectorMap, name,
+        final CustomPrometheusLongTaskTimer longTaskTimer = collectorByName(CustomPrometheusLongTaskTimer.class, name,
                 n -> new CustomPrometheusLongTaskTimer(name, stream(tags.spliterator(), false).map(Tag::getKey).collect(toList()), getClock()).register(registry));
         return computeIfAbsent(meterMap, id, t -> new PrometheusLongTaskTimer(id, longTaskTimer.child(tags)));
     }
@@ -118,7 +121,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         final WeakReference<T> ref = new WeakReference<>(obj);
 
         MeterId id = new MeterId(name, tags);
-        io.prometheus.client.Gauge gauge = computeIfAbsent(collectorMap, name,
+        io.prometheus.client.Gauge gauge = collectorByName(Gauge.class, name,
                 i -> buildCollector(id, io.prometheus.client.Gauge.build()));
 
         computeIfAbsent(meterMap, id, g -> {
@@ -206,5 +209,13 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
                 .map(Tag::getValue)
                 .collect(Collectors.toList())
                 .toArray(new String[]{}));
+    }
+
+    private <C extends Collector> C collectorByName(Class<C> collectorType, String name, Function<String, C> ifAbsent) {
+        C collector = computeIfAbsent(collectorMap, name, ifAbsent);
+        if(!collectorType.isInstance(collector)) {
+            throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
+        }
+        return collector;
     }
 }

@@ -42,6 +42,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
@@ -124,6 +125,13 @@ class PrometheusMeterRegistryTest {
                                 .contains("integers{parity=\"even\",}")
                                 .contains("integers{parity=\"odd\",}")
                 );
+    }
+
+    @DisplayName("attempts to register different meter types with the same name fail somewhat gracefully")
+    @Test
+    void differentMeterTypesWithSameName() {
+        registry.timer("m");
+        assertThrows(IllegalArgumentException.class, () -> registry.counter("m"));
     }
 
     private Condition<Enumeration<Collector.MetricFamilySamples>> withNameAndTagKey(String name, String tagKey) {
