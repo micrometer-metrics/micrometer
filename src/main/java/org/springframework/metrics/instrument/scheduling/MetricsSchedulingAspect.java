@@ -24,7 +24,6 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.metrics.annotation.Timed;
 import org.springframework.metrics.instrument.LongTaskTimer;
 import org.springframework.metrics.instrument.MeterRegistry;
-import org.springframework.metrics.instrument.Tags;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.internal.AnnotationUtils;
 import org.springframework.metrics.instrument.stats.quantile.WindowSketchQuantiles;
@@ -62,10 +61,10 @@ public class MetricsSchedulingAspect {
 
         for (Timed timed : AnnotationUtils.findTimed(method).toArray(Timed[]::new)) {
             if(timed.longTask())
-                longTaskTimer = registry.longTaskTimer(timed.value(), Tags.tagList(timed.extraTags()));
+                longTaskTimer = registry.longTaskTimer(timed.value(), timed.extraTags());
             else {
                 Timer.Builder timerBuilder = registry.timerBuilder(timed.value())
-                        .tags(Tags.tagList(timed.extraTags()));
+                        .tags(timed.extraTags());
                 if(timed.quantiles().length > 0) {
                     timerBuilder = timerBuilder.quantiles(WindowSketchQuantiles.build().quantile(timed.quantiles()).create());
                 }

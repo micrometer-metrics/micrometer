@@ -17,16 +17,21 @@ package org.springframework.metrics.instrument.simple;
 
 import com.netflix.spectator.impl.AtomicDouble;
 import org.springframework.metrics.instrument.Counter;
+import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Tag;
+import org.springframework.metrics.instrument.internal.MeterId;
+
+import java.util.Collections;
 
 /**
  * @author Jon Schneider
  */
 public class SimpleCounter implements Counter {
-    private final String name;
+    private final MeterId id;
     private AtomicDouble count = new AtomicDouble(0);
 
-    public SimpleCounter(String name) {
-        this.name = name;
+    SimpleCounter(MeterId id) {
+        this.id = id;
     }
 
     @Override
@@ -46,6 +51,16 @@ public class SimpleCounter implements Counter {
 
     @Override
     public String getName() {
-        return name;
+        return id.getName();
+    }
+
+    @Override
+    public Iterable<Tag> getTags() {
+        return id.getTags();
+    }
+
+    @Override
+    public Iterable<Measurement> measure() {
+        return Collections.singletonList(id.withTags(Tag.of("type", "COUNTER")).measurement(count()));
     }
 }

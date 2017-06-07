@@ -15,9 +15,10 @@
  */
 package org.springframework.metrics.instrument;
 
-import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 import org.springframework.metrics.instrument.stats.hist.Histogram;
+import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 
+import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -61,6 +62,10 @@ public interface DistributionSummary extends Meter {
                 tag(tag);
             }
             return this;
+        }
+
+        default Builder tags(String... tags) {
+            return tags(Tag.tags(tags));
         }
 
         default Builder tags(Stream<Tag> tags) {

@@ -17,6 +17,10 @@ package org.springframework.metrics.instrument;
 
 import org.springframework.metrics.instrument.internal.ImmutableTag;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Key/value pair representing a dimension of a meter used to classify and drill into measurements.
  *
@@ -29,5 +33,16 @@ public interface Tag {
 
     static Tag of(String key, String value) {
         return new ImmutableTag(key, value);
+    }
+
+    static List<Tag> tags(String... keyValues) {
+        if (keyValues.length % 2 == 1) {
+            throw new IllegalArgumentException("size must be even, it is a set of key=value pairs");
+        }
+        List<Tag> ts = new ArrayList<>(keyValues.length / 2);
+        for (int i = 0; i < keyValues.length; i += 2) {
+            ts.add(Tag.of(keyValues[i], keyValues[i + 1]));
+        }
+        return ts;
     }
 }

@@ -15,39 +15,24 @@
  */
 package org.springframework.metrics.instrument.prometheus;
 
-import org.springframework.metrics.instrument.Gauge;
+import io.prometheus.client.Collector;
 import org.springframework.metrics.instrument.Measurement;
 import org.springframework.metrics.instrument.Tag;
-import org.springframework.metrics.instrument.internal.MeterId;
 
-import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
-public class PrometheusGauge implements Gauge {
-    private final MeterId id;
-    private io.prometheus.client.Gauge.Child gauge;
+public interface CustomCollectorChild {
+    Stream<Collector.MetricFamilySamples.Sample> collect();
 
-    PrometheusGauge(MeterId id, io.prometheus.client.Gauge.Child gauge) {
-        this.id = id;
-        this.gauge = gauge;
-    }
-
-    @Override
-    public double value() {
-        return gauge.get();
-    }
-
-    @Override
-    public String getName() {
-        return id.getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return id.getTags();
-    }
-
-    @Override
-    public Iterable<Measurement> measure() {
-        return Collections.singletonList(id.measurement(gauge.get()));
+    default Iterable<Measurement> measure() {
+        return collect().map(sample -> {
+            List<Tag> tags = IntStream.range(0, sample.labelNames.size())
+                    .mapToObj(i -> Tag.of(sample.labelNames.get(i), sample.labelValues.get(i)))
+                    .collect(Collectors.toList());
+            return new Measurement(sample.name, tags, sample.value);
+        }).collect(Collectors.toList());
     }
 }

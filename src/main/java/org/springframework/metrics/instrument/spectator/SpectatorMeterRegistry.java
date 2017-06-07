@@ -15,24 +15,29 @@
  */
 package org.springframework.metrics.instrument.spectator;
 
-import com.netflix.spectator.api.BasicTag;
-import com.netflix.spectator.api.DefaultRegistry;
-import com.netflix.spectator.api.Id;
-import com.netflix.spectator.api.Registry;
+import com.netflix.spectator.api.*;
+import com.netflix.spectator.api.Measurement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.metrics.instrument.*;
+import org.springframework.metrics.instrument.Clock;
+import org.springframework.metrics.instrument.Counter;
+import org.springframework.metrics.instrument.DistributionSummary;
+import org.springframework.metrics.instrument.LongTaskTimer;
+import org.springframework.metrics.instrument.Meter;
+import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.internal.AbstractMeterRegistry;
 import org.springframework.metrics.instrument.internal.ImmutableTag;
-import org.springframework.metrics.instrument.stats.hist.Bucket;
-import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 import org.springframework.metrics.instrument.stats.hist.Histogram;
+import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 
 import java.util.*;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.stream.StreamSupport.stream;
+import static org.springframework.metrics.instrument.spectator.SpectatorUtils.spectatorId;
 
 /**
  * @author Jon Schneider
@@ -144,9 +149,38 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
+    public MeterRegistry register(Meter meter) {
+        com.netflix.spectator.api.Clock spectatorClock = new com.netflix.spectator.api.Clock() {
+            @Override
+            public long wallTime() {
+                // we don't see a need to provide a wallTime abstraction in our
+                // Clock interface
+                return com.netflix.spectator.api.Clock.SYSTEM.wallTime();
+            }
+
+            @Override
+            public long monotonicTime() {
+                return getClock().monotonicTime();
+            }
+        };
+
+        AbstractMeter<Meter> spectatorMeter = new AbstractMeter<Meter>(spectatorClock, spectatorId(registry, meter.getName(), meter.getTags()), meter) {
+            @Override
+            public Iterable<Measurement> measure() {
+                return stream(ref.get().measure().spliterator(), false)
+                        .map(m -> new Measurement(spectatorId(registry, m.getName(), m.getTags()), clock.wallTime(), m.getValue()))
+                        .collect(Collectors.toList());
+            }
+        };
+
+        meterMap.put(spectatorMeter, meter);
+        return this;
+    }
+
+    @Override
     public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
         Id gaugeId = registry.createId(name, toSpectatorTags(tags));
-        com.netflix.spectator.api.Gauge gauge = new SpectatorToDoubleGauge<>(registry.clock(), gaugeId, obj, f);
+        com.netflix.spectator.api.Gauge gauge = new CustomSpectatorToDoubleGauge<>(registry.clock(), gaugeId, obj, f);
         registry.register(gauge);
         meterMap.computeIfAbsent(gauge, g -> new SpectatorGauge(gauge));
         return obj;

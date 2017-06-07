@@ -16,30 +16,31 @@
 package org.springframework.metrics.instrument.prometheus;
 
 import org.springframework.metrics.instrument.Clock;
+import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.internal.AbstractTimer;
+import org.springframework.metrics.instrument.internal.MeterId;
 import org.springframework.metrics.instrument.stats.quantile.Quantiles;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.springframework.metrics.instrument.internal.TimeUtils.secondsToUnit;
 
 public class PrometheusTimer extends AbstractTimer {
     private CustomPrometheusSummary.Child summary;
-    private Quantiles quantiles;
 
-    public PrometheusTimer(String name, CustomPrometheusSummary.Child summary, Clock clock, Quantiles quantiles) {
-        super(name, clock);
+    PrometheusTimer(MeterId id, CustomPrometheusSummary.Child summary, Clock clock) {
+        super(id, clock);
         this.summary = summary;
-        this.quantiles = quantiles;
     }
 
     @Override
     public void record(long amount, TimeUnit unit) {
         if (amount >= 0) {
             final double seconds = TimeUnit.NANOSECONDS.convert(amount, unit) / 10e8;
-
-            if(quantiles != null)
-                quantiles.observe(seconds);
 
             // Prometheus prefers to receive everything in base units, i.e. seconds
             summary.observe(seconds);
@@ -54,5 +55,10 @@ public class PrometheusTimer extends AbstractTimer {
     @Override
     public double totalTime(TimeUnit unit) {
         return secondsToUnit(summary.sum(), unit);
+    }
+
+    @Override
+    public Iterable<Measurement> measure() {
+        return summary.measure();
     }
 }

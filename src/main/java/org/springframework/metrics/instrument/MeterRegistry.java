@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
-import static org.springframework.metrics.instrument.Tags.tagList;
+import static org.springframework.metrics.instrument.Tag.tags;
 
 /**
  * Creates and manages your application's set of meters. Exporters use the meter registry to iterate
@@ -49,11 +49,7 @@ public interface MeterRegistry {
     Collection<Meter> getMeters();
 
     default <M extends Meter> Optional<M> findMeter(Class<M> mClass, String name, String... tags) {
-        return findMeter(mClass, name, Tags.tagList(tags));
-    }
-
-    default <M extends Meter> Optional<M> findMeter(Class<M> mClass, String name, Stream<Tag> tags) {
-        return findMeter(mClass, name, tags);
+        return findMeter(mClass, name, tags(tags));
     }
 
     <M extends Meter> Optional<M> findMeter(Class<M> mClass, String name, Iterable<Tag> tags);
@@ -83,7 +79,7 @@ public interface MeterRegistry {
      * Measures the rate of some activity.
      */
     default Counter counter(String name, String... tags) {
-        return counter(name, tagList(tags));
+        return counter(name, tags(tags));
     }
 
     /**
@@ -118,7 +114,7 @@ public interface MeterRegistry {
      * Measures the sample distribution of events.
      */
     default DistributionSummary distributionSummary(String name, String... tags) {
-        return distributionSummary(name, tagList(tags));
+        return distributionSummary(name, tags(tags));
     }
 
     /**
@@ -153,7 +149,7 @@ public interface MeterRegistry {
      * Measures the time taken for short tasks.
      */
     default Timer timer(String name, String... tags) {
-        return timer(name, tagList(tags));
+        return timer(name, tags(tags));
     }
 
     /**
@@ -179,8 +175,10 @@ public interface MeterRegistry {
      * Measures the time taken for short tasks.
      */
     default LongTaskTimer longTaskTimer(String name, String... tags) {
-        return longTaskTimer(name, tagList(tags));
+        return longTaskTimer(name, tags(tags));
     }
+
+    MeterRegistry register(Meter meter);
 
     /**
      * Register a gauge that reports the value of the object after the function

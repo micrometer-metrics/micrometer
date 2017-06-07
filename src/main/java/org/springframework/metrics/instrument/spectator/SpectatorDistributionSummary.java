@@ -16,6 +16,8 @@
 package org.springframework.metrics.instrument.spectator;
 
 import org.springframework.metrics.instrument.DistributionSummary;
+import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Tag;
 
 public class SpectatorDistributionSummary implements DistributionSummary {
     private com.netflix.spectator.api.DistributionSummary distributionSummary;
@@ -47,5 +49,15 @@ public class SpectatorDistributionSummary implements DistributionSummary {
     @Override
     public String getName() {
         return distributionSummary.id().name();
+    }
+
+    @Override
+    public Iterable<Tag> getTags() {
+        return SpectatorUtils.tags(distributionSummary);
+    }
+
+    @Override
+    public Iterable<Measurement> measure() {
+        return SpectatorUtils.measurements(distributionSummary);
     }
 }

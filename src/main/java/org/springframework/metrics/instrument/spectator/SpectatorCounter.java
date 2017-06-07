@@ -16,6 +16,8 @@
 package org.springframework.metrics.instrument.spectator;
 
 import org.springframework.metrics.instrument.Counter;
+import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Tag;
 
 public class SpectatorCounter implements Counter {
     private com.netflix.spectator.api.Counter counter;
@@ -42,5 +44,15 @@ public class SpectatorCounter implements Counter {
     @Override
     public String getName() {
         return counter.id().name();
+    }
+
+    @Override
+    public Iterable<Tag> getTags() {
+        return SpectatorUtils.tags(counter);
+    }
+
+    @Override
+    public Iterable<Measurement> measure() {
+        return SpectatorUtils.measurements(counter);
     }
 }

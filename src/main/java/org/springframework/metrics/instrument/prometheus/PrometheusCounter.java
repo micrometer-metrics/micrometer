@@ -16,13 +16,18 @@
 package org.springframework.metrics.instrument.prometheus;
 
 import org.springframework.metrics.instrument.Counter;
+import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Tag;
+import org.springframework.metrics.instrument.internal.MeterId;
+
+import java.util.Collections;
 
 public class PrometheusCounter implements Counter {
-    private final String name;
+    private final MeterId id;
     private io.prometheus.client.Counter.Child counter;
 
-    public PrometheusCounter(String name, io.prometheus.client.Counter.Child counter) {
-        this.name = name;
+    PrometheusCounter(MeterId id, io.prometheus.client.Counter.Child counter) {
+        this.id = id;
         this.counter = counter;
     }
 
@@ -43,6 +48,16 @@ public class PrometheusCounter implements Counter {
 
     @Override
     public String getName() {
-        return name;
+        return id.getName();
+    }
+
+    @Override
+    public Iterable<Tag> getTags() {
+        return id.getTags();
+    }
+
+    @Override
+    public Iterable<Measurement> measure() {
+        return Collections.singletonList(id.measurement(count()));
     }
 }

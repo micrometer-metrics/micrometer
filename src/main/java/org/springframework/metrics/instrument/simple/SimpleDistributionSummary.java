@@ -16,36 +16,57 @@
 package org.springframework.metrics.instrument.simple;
 
 import org.springframework.metrics.instrument.DistributionSummary;
+import org.springframework.metrics.instrument.Measurement;
+import org.springframework.metrics.instrument.Tag;
+import org.springframework.metrics.instrument.internal.MeterId;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Arrays;
+import java.util.concurrent.atomic.DoubleAdder;
+import java.util.concurrent.atomic.LongAdder;
+
+import static java.util.stream.Stream.of;
+import static org.springframework.metrics.instrument.Tag.tags;
 
 public class SimpleDistributionSummary implements DistributionSummary {
-    private final String name;
-    private AtomicLong count = new AtomicLong(0);
-    private double amount = 0.0;
+    private final MeterId id;
+    private LongAdder count = new LongAdder();
+    private DoubleAdder amount = new DoubleAdder();
 
-    public SimpleDistributionSummary(String name) {
-        this.name = name;
+    public SimpleDistributionSummary(MeterId id) {
+        this.id = id;
     }
 
     @Override
     public void record(double amount) {
-        count.incrementAndGet();
-        amount += amount;
+        count.increment();
+        this.amount.add(amount);
     }
 
     @Override
     public long count() {
-        return count.get();
+        return count.longValue();
     }
 
     @Override
     public double totalAmount() {
-        return amount;
+        return amount.doubleValue();
     }
 
     @Override
     public String getName() {
-        return name;
+        return id.getName();
+    }
+
+    @Override
+    public Iterable<Tag> getTags() {
+        return id.getTags();
+    }
+
+    @Override
+    public Iterable<Measurement> measure() {
+        return Arrays.asList(
+            id.withTags(tags("type", "SUMMARY", "statistic", "count")).measurement(count()),
+            id.withTags(tags("type", "SUMMARY", "statistic", "amount")).measurement(totalAmount())
+        );
     }
 }

@@ -18,11 +18,12 @@ package org.springframework.metrics.instrument.web;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.metrics.instrument.MeterRegistry;
-import org.springframework.metrics.instrument.IdentityTagFormatter;
-import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.annotation.Timed;
-import org.springframework.metrics.instrument.simple.SimpleTimer;
+import org.springframework.metrics.instrument.IdentityTagFormatter;
+import org.springframework.metrics.instrument.MeterRegistry;
+import org.springframework.metrics.instrument.Tag;
+import org.springframework.metrics.instrument.Timer;
+import org.springframework.metrics.instrument.simple.SimpleMeterRegistry;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,18 +36,15 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 
 class MetricsWebFilterTest {
-    private MeterRegistry registry;
+    private MeterRegistry registry = new SimpleMeterRegistry();
     private WebTestClient client;
 
     @BeforeEach
     void before() {
-        registry = mock(MeterRegistry.class);
         client = WebTestClient.bindToController(new Controller2())
                 .webFilter(new MetricsWebFilter(registry, new WebfluxTagConfigurer(new IdentityTagFormatter()), "http_server_requests"))
                 .build();
@@ -54,33 +52,18 @@ class MetricsWebFilterTest {
 
     @Test
     void metricsGatheredWhenControllerIsTimed() throws Exception {
-        SimpleTimer timer = expectTimer();
         client.get().uri("/api/c2/10").exchange()
                 .expectStatus().isOk()
                 .expectBody()
                 .consumeWith(r -> assertThat(new String(r.getResponseBody())).isEqualTo("10"));
 
-        assertTags(
-                Tag.of("uri", "api/c2/{id}")
-                // FIXME doOnSuccess happens before status code is determined
-//                Tag.of("status", "200")
-        );
-        assertThat(timer.count()).isEqualTo(1);
-    }
-
-    @SuppressWarnings("unchecked")
-    private void assertTags(Tag... match) {
-        ArgumentCaptor<Stream> tags = ArgumentCaptor.forClass(Stream.class);
-        verify(registry).timer(anyString(), tags.capture());
-        assertThat((List) tags.getValue().collect(Collectors.toList())).contains((Object[]) match);
-    }
-
-    private SimpleTimer expectTimer() {
-        SimpleTimer timer = new SimpleTimer("http_server_requests");
-
-        //noinspection unchecked
-        when(registry.timer(eq("http_server_requests"), any(Stream.class))).thenReturn(timer);
-        return timer;
+        assertThat(registry.findMeter(Timer.class, "http_server_requests"))
+                .hasValueSatisfying(t -> {
+                    assertThat(t.getTags())
+                            .contains(Tag.of("uri", "api/c2/{id}"))
+                            .contains(Tag.of("status", "200"));
+                    assertThat(t.count()).isEqualTo(1);
+                });
     }
 
     @RestController

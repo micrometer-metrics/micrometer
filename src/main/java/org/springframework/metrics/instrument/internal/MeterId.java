@@ -15,24 +15,39 @@
  */
 package org.springframework.metrics.instrument.internal;
 
+import org.springframework.metrics.instrument.Measurement;
 import org.springframework.metrics.instrument.Tag;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static java.util.stream.Stream.concat;
+import static java.util.stream.StreamSupport.stream;
 
 public class MeterId {
     private final String name;
-    private final Tag[] tags;
+    private final List<Tag> tags;
 
     public MeterId(String name, Iterable<Tag> tags) {
         this.name = name;
-        this.tags = StreamSupport.stream(tags.spliterator(), false).sorted(Comparator.comparing(Tag::getKey))
-                .toArray(Tag[]::new);
+        this.tags = stream(tags.spliterator(), false).sorted(Comparator.comparing(Tag::getKey))
+                .collect(Collectors.toList());
     }
 
-    public static MeterId id(String name, Iterable<Tag> tags) {
-        return new MeterId(name, tags);
+    public MeterId(String name, Tag... tags) {
+        this(name, Arrays.asList(tags));
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public List<Tag> getTags() {
+        return tags;
     }
 
     @Override
@@ -40,13 +55,13 @@ public class MeterId {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MeterId meterId = (MeterId) o;
-        return (name != null ? name.equals(meterId.name) : meterId.name == null) && Arrays.equals(tags, meterId.tags);
+        return name.equals(meterId.name) && tags.equals(meterId.tags);
     }
 
     @Override
     public int hashCode() {
-        int result = name != null ? name.hashCode() : 0;
-        result = 31 * result + Arrays.hashCode(tags);
+        int result = name.hashCode();
+        result = 31 * result + tags.hashCode();
         return result;
     }
 
@@ -54,15 +69,25 @@ public class MeterId {
     public String toString() {
         return "MeterId{" +
                 "name='" + name + '\'' +
-                ", tags=" + Arrays.toString(tags) +
+                ", tags=" + tags +
                 '}';
     }
 
-    public String getName() {
-        return name;
+    /**
+     * @return A new id with additional tags.
+     */
+    public MeterId withTags(Tag... extraTags) {
+        return new MeterId(name, concat(tags.stream(), Stream.of(extraTags)).collect(Collectors.toList()));
     }
 
-    public Tag[] getTags() {
-        return tags;
+    /**
+     * @return A new id with additional tags.
+     */
+    public MeterId withTags(Iterable<Tag> extraTags) {
+        return new MeterId(name, concat(tags.stream(), stream(extraTags.spliterator(), false)).collect(Collectors.toList()));
+    }
+
+    public Measurement measurement(double value) {
+        return new Measurement(name, tags, value);
     }
 }

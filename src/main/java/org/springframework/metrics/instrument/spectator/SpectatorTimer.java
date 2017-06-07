@@ -16,7 +16,9 @@
 package org.springframework.metrics.instrument.spectator;
 
 import org.springframework.metrics.instrument.Clock;
+import org.springframework.metrics.instrument.Measurement;
 import org.springframework.metrics.instrument.internal.AbstractTimer;
+import org.springframework.metrics.instrument.internal.MeterId;
 
 import java.util.concurrent.TimeUnit;
 
@@ -25,8 +27,8 @@ import static org.springframework.metrics.instrument.internal.TimeUtils.nanosToU
 public class SpectatorTimer extends AbstractTimer {
     private com.netflix.spectator.api.Timer timer;
 
-    public SpectatorTimer(com.netflix.spectator.api.Timer timer, Clock clock) {
-        super(timer.id().name(), clock);
+    SpectatorTimer(com.netflix.spectator.api.Timer timer, Clock clock) {
+        super(new MeterId(timer.id().name(), SpectatorUtils.tags(timer)), clock);
         this.timer = timer;
     }
 
@@ -44,5 +46,10 @@ public class SpectatorTimer extends AbstractTimer {
     public double totalTime(TimeUnit unit) {
         // the Spectator Timer contract insists that nanos be returned from totalTime()
         return nanosToUnit(timer.totalTime(), unit);
+    }
+
+    @Override
+    public Iterable<Measurement> measure() {
+        return SpectatorUtils.measurements(timer);
     }
 }
