@@ -142,8 +142,8 @@ public class Frugal2UQuantiles implements Quantiles {
         return quantiles;
     }
 
-    public static Builder build() {
-        return new Builder();
+    public static Builder quantile(double quantile, double estimate) {
+        return new Builder().quantile(quantile, estimate);
     }
 
     public static class Builder {

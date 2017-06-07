@@ -43,7 +43,7 @@ public class PrometheusHistogramSample {
 
         DistributionSummary hist = meterRegistry.distributionSummaryBuilder("hist")
                 .histogram(CumulativeHistogram.buckets(linear(0, 10, 20)))
-                .quantiles(CKMSQuantiles.build()
+                .quantiles(CKMSQuantiles
                         .quantile(0.95, 0.01)
                         .quantile(0.5, 0.05)
                         .create())

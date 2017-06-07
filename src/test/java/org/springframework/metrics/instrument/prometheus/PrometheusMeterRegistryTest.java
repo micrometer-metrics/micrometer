@@ -63,11 +63,11 @@ class PrometheusMeterRegistryTest {
     @Test
     void quantiles() {
         registry.timerBuilder("timer")
-                .quantiles(GKQuantiles.build().quantile(0.5).create())
+                .quantiles(GKQuantiles.quantiles(0.5).create())
                 .create();
 
         registry.distributionSummaryBuilder("ds")
-                .quantiles(GKQuantiles.build().quantile(0.5).create())
+                .quantiles(GKQuantiles.quantiles(0.5).create())
                 .create();
 
         assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndTagKey("timer", "quantile"));

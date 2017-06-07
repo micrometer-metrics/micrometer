@@ -406,15 +406,15 @@ public class WindowSketchQuantiles implements Quantiles {
         }
     }
 
-    public static Builder build() {
-        return new Builder();
+    public static Builder quantiles(double... quantiles) {
+        return new Builder().quantiles(quantiles);
     }
 
     public static class Builder {
         private Collection<Double> monitored = new ArrayList<>();
         private double error = 0.05;
 
-        public Builder quantile(double... quantiles) {
+        public Builder quantiles(double... quantiles) {
             for (double quantile : quantiles) {
                 monitored.add(quantile);
             }

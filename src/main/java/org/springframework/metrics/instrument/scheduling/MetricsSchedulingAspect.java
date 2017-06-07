@@ -66,7 +66,7 @@ public class MetricsSchedulingAspect {
                 Timer.Builder timerBuilder = registry.timerBuilder(timed.value())
                         .tags(timed.extraTags());
                 if(timed.quantiles().length > 0) {
-                    timerBuilder = timerBuilder.quantiles(WindowSketchQuantiles.build().quantile(timed.quantiles()).create());
+                    timerBuilder = timerBuilder.quantiles(WindowSketchQuantiles.quantiles(timed.quantiles()).create());
                 }
                 shortTaskTimer = timerBuilder.create();
             }

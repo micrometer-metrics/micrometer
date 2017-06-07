@@ -40,11 +40,11 @@ class SpectatorMeterRegistryTest {
         Registry spectatorRegistry = registry.getSpectatorRegistry();
 
         registry.timerBuilder("timer")
-                .quantiles(GKQuantiles.build().quantile(0.5).create())
+                .quantiles(GKQuantiles.quantiles(0.5).create())
                 .create();
 
         registry.distributionSummaryBuilder("ds")
-                .quantiles(GKQuantiles.build().quantile(0.5).create())
+                .quantiles(GKQuantiles.quantiles(0.5).create())
                 .create();
 
         assertThat(spectatorRegistry).haveAtLeastOne(withNameAndTagKey("timer", "quantile"));

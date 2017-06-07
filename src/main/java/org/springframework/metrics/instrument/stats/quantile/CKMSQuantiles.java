@@ -293,8 +293,8 @@ public class CKMSQuantiles implements Quantiles {
         return quantiles;
     }
 
-    public static Builder build() {
-        return new Builder();
+    public static Builder quantile(double quantile, double error) {
+        return new Builder().quantile(quantile, error);
     }
 
     public static class Builder {

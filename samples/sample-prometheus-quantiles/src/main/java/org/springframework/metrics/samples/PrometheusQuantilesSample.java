@@ -44,31 +44,25 @@ public class PrometheusQuantilesSample {
         startServer(route);
 
         Timer ckmsTimer = meterRegistry.timerBuilder("random_ckms")
-                .quantiles(CKMSQuantiles.build()
+                .quantiles(CKMSQuantiles
                         .quantile(0.5, 0.05)
                         .quantile(0.95, 0.01)
                         .create())
                 .create();
 
         Timer frugalTimer = meterRegistry.timerBuilder("random_frugal")
-                .quantiles(Frugal2UQuantiles.build()
+                .quantiles(Frugal2UQuantiles
                         .quantile(0.5, 10)
                         .quantile(0.95, 10)
                         .create())
                 .create();
 
         Timer gkTimer = meterRegistry.timerBuilder("random_gk")
-                .quantiles(GKQuantiles.build()
-                        .quantile(0.5)
-                        .quantile(0.95)
-                        .create())
+                .quantiles(GKQuantiles.quantiles(0.5, 0.95).create())
                 .create();
 
         Timer windowTimer = meterRegistry.timerBuilder("random_window")
-                .quantiles(WindowSketchQuantiles.build()
-                        .quantile(0.5)
-                        .quantile(0.95)
-                        .create())
+                .quantiles(WindowSketchQuantiles.quantiles(0.5, 0.95).create())
                 .create();
 
         //noinspection InfiniteLoopStatement

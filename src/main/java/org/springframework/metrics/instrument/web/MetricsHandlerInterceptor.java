@@ -132,7 +132,7 @@ public class MetricsHandlerInterceptor extends HandlerInterceptorAdapter {
             }
 
             if(t.quantiles().length > 0) {
-                timerBuilder = timerBuilder.quantiles(WindowSketchQuantiles.build().quantile(t.quantiles()).create());
+                timerBuilder = timerBuilder.quantiles(WindowSketchQuantiles.quantiles(t.quantiles()).create());
             }
 
             timerBuilder.create().record(endTime - startTime, TimeUnit.NANOSECONDS);

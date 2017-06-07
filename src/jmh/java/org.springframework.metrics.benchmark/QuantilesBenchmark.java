@@ -41,24 +41,20 @@ public class QuantilesBenchmark {
 
     @Setup
     public void setup() {
-        ckms = CKMSQuantiles.build()
+        ckms = CKMSQuantiles
                 .quantile(0.5, 0.05)
                 .quantile(0.99, 0.01)
                 .create();
 
-        frugal2u = Frugal2UQuantiles.build()
+        frugal2u = Frugal2UQuantiles
                 .quantile( 0.99, 100)
                 .quantile( 0.99, 100)
                 .create();
 
-        gk = GKQuantiles.build()
-                .quantile(0.5)
-                .quantile(0.99)
+        gk = GKQuantiles.quantiles(0.5, 0.99)
                 .create();
 
-        window = WindowSketchQuantiles.build()
-                .quantile(0.5)
-                .quantile(0.99)
+        window = WindowSketchQuantiles.quantiles(0.5, 0.99)
                 .create();
     }
 

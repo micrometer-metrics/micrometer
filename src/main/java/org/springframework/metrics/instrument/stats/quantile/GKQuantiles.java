@@ -16,10 +16,7 @@
 package org.springframework.metrics.instrument.stats.quantile;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -667,16 +664,18 @@ public class GKQuantiles implements Quantiles {
         }
     }
 
-    public static Builder build() {
-        return new Builder();
+    public static Builder quantiles(double... quantiles) {
+        return new Builder().quantiles(quantiles);
     }
 
     public static class Builder {
         private Collection<Double> monitored = new ArrayList<>();
         private double error = 0.05;
 
-        public Builder quantile(double quantile) {
-            monitored.add(quantile);
+        public Builder quantiles(double... quantiles) {
+            for (double quantile : quantiles) {
+                monitored.add(quantile);
+            }
             return this;
         }
 
