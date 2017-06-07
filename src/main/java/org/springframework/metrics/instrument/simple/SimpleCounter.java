@@ -24,6 +24,8 @@ import org.springframework.metrics.instrument.internal.MeterId;
 
 import java.util.Collections;
 
+import static org.springframework.metrics.instrument.simple.SimpleUtils.typeTag;
+
 /**
  * @author Jon Schneider
  */
@@ -67,6 +69,6 @@ public class SimpleCounter implements Counter {
 
     @Override
     public Iterable<Measurement> measure() {
-        return Collections.singletonList(id.withTags(Tag.of(getType())).measurement(count()));
+        return Collections.singletonList(id.withTags(typeTag(getType())).measurement(count()));
     }
 }

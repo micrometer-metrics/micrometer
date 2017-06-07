@@ -35,10 +35,6 @@ public interface Tag {
         return new ImmutableTag(key, value);
     }
 
-    static Tag of(Meter.Type type) {
-        return new ImmutableTag("type", type.toString());
-    }
-
     static List<Tag> tags(String... keyValues) {
         if (keyValues.length % 2 == 1) {
             throw new IllegalArgumentException("size must be even, it is a set of key=value pairs");

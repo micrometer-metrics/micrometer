@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.springframework.metrics.instrument.Tag.tags;
+import static org.springframework.metrics.instrument.simple.SimpleUtils.typeTag;
 
 public class SimpleLongTaskTimer implements LongTaskTimer {
     private final MeterId id;
@@ -92,10 +93,9 @@ public class SimpleLongTaskTimer implements LongTaskTimer {
 
     @Override
     public Iterable<Measurement> measure() {
-        MeterId typedId = id.withTags(Tag.of(getType()));
         return Arrays.asList(
-                typedId.withTags(Tag.of("statistic", "activeTasks")).measurement(activeTasks()),
-                typedId.withTags(Tag.of("statistic", "duration")).measurement(duration())
+                id.withTags(typeTag(getType()), Tag.of("statistic", "activeTasks")).measurement(activeTasks()),
+                id.withTags(typeTag(getType()), Tag.of("statistic", "duration")).measurement(duration())
         );
     }
 }

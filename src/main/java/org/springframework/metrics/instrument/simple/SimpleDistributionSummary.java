@@ -17,7 +17,6 @@ package org.springframework.metrics.instrument.simple;
 
 import org.springframework.metrics.instrument.DistributionSummary;
 import org.springframework.metrics.instrument.Measurement;
-import org.springframework.metrics.instrument.Meter;
 import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.internal.MeterId;
 
@@ -26,7 +25,7 @@ import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
 import static java.util.stream.Stream.of;
-import static org.springframework.metrics.instrument.Tag.tags;
+import static org.springframework.metrics.instrument.simple.SimpleUtils.typeTag;
 
 public class SimpleDistributionSummary implements DistributionSummary {
     private final MeterId id;
@@ -70,10 +69,9 @@ public class SimpleDistributionSummary implements DistributionSummary {
 
     @Override
     public Iterable<Measurement> measure() {
-        MeterId typedId = id.withTags(Tag.of(getType()));
         return Arrays.asList(
-            typedId.withTags(Tag.of("statistic", "count")).measurement(count()),
-            typedId.withTags(Tag.of("statistic", "amount")).measurement(totalAmount())
+            id.withTags(typeTag(getType()), Tag.of("statistic", "count")).measurement(count()),
+            id.withTags(typeTag(getType()), Tag.of("statistic", "amount")).measurement(totalAmount())
         );
     }
 }

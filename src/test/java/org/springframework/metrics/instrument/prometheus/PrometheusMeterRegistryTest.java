@@ -18,6 +18,7 @@ package org.springframework.metrics.instrument.prometheus;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import org.assertj.core.api.Condition;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.metrics.Issue;
@@ -39,8 +40,14 @@ import static org.assertj.core.api.Assertions.offset;
  * @author Jon Schneider
  */
 class PrometheusMeterRegistryTest {
-    private PrometheusMeterRegistry registry = new PrometheusMeterRegistry();
-    private CollectorRegistry prometheusRegistry = registry.getPrometheusRegistry();
+    private PrometheusMeterRegistry registry;
+    private CollectorRegistry prometheusRegistry;
+
+    @BeforeEach
+    void before() {
+        prometheusRegistry = new CollectorRegistry();
+        registry = new PrometheusMeterRegistry(prometheusRegistry);
+    }
 
     @DisplayName("quantiles are given as a separate sample with a key of 'quantile'")
     @Test

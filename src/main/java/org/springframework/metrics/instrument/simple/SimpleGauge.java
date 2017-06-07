@@ -25,6 +25,8 @@ import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.function.ToDoubleFunction;
 
+import static org.springframework.metrics.instrument.simple.SimpleUtils.typeTag;
+
 public class SimpleGauge<T> implements Gauge {
     private final MeterId id;
     private final WeakReference<T> ref;
@@ -58,6 +60,6 @@ public class SimpleGauge<T> implements Gauge {
 
     @Override
     public Iterable<Measurement> measure() {
-        return Collections.singletonList(id.withTags(Tag.of(getType())).measurement(value()));
+        return Collections.singletonList(id.withTags(typeTag(getType())).measurement(value()));
     }
 }

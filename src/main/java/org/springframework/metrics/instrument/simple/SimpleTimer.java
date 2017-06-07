@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
 import static org.springframework.metrics.instrument.internal.TimeUtils.nanosToUnit;
+import static org.springframework.metrics.instrument.simple.SimpleUtils.typeTag;
 
 /**
  * @author Jon Schneider
@@ -56,10 +57,9 @@ public class SimpleTimer extends AbstractTimer {
 
     @Override
     public Iterable<Measurement> measure() {
-        MeterId typedId = id.withTags(Tag.of(getType()));
         return Arrays.asList(
-                typedId.withTags(Tag.of("statistic", "count")).measurement(count()),
-                typedId.withTags(Tag.of("statistic", "amount")).measurement(totalTime(TimeUnit.NANOSECONDS))
+                id.withTags(typeTag(getType()), Tag.of("statistic", "count")).measurement(count()),
+                id.withTags(typeTag(getType()), Tag.of("statistic", "amount")).measurement(totalTime(TimeUnit.NANOSECONDS))
         );
     }
 }
