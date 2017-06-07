@@ -74,7 +74,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     protected abstract Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram);
 
     @Override
-    public DistributionSummary.Builder distributionSummaryBuilder(String name) {
+    public DistributionSummary.Builder summaryBuilder(String name) {
         return new DistributionSummaryBuilder(name);
     }
 

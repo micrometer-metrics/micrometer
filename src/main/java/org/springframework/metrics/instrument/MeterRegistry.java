@@ -63,13 +63,13 @@ public interface MeterRegistry {
      * @param name The name of the distribution summary (which is the only requirement for a new distribution summary).
      * @return The builder.
      */
-    DistributionSummary.Builder distributionSummaryBuilder(String name);
+    DistributionSummary.Builder summaryBuilder(String name);
 
     /**
      * Measures the sample distribution of events.
      */
     default DistributionSummary summary(String name, Iterable<Tag> tags) {
-        return distributionSummaryBuilder(name).tags(tags).create();
+        return summaryBuilder(name).tags(tags).create();
     }
 
     /**

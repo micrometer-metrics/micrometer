@@ -330,11 +330,13 @@ sizes of requests hitting a server.
 Timers and distribution summaries can be enriched with https://en.wikipedia.org/wiki/Quantile[quantiles] computed in your app prior to shipping
 to a monitoring backend.
 
-```java0
+```java
 Timer timer = meterRegistry.timerBuilder("my_timer")
                 .quantiles(WindowSketchQuantiles.quantiles(0.5, 0.95).create())
                 .create();
 ```
+
+For distribution summaries, you can use `summaryBuilder(name)` which mirrors this construction.
 
 This would result in additional gauges with tags `quantile=0.5` and `quantile=0.95`. The 0.95 quantile is the
 the value below which 95% of observations in a group of observations fall. 0.5 represents the media of our
@@ -380,6 +382,59 @@ used inside of `WindowSketchQuantiles`.
 GKQuantiles.quantiles(0.5, 0.95)
     .error(0.01) // OPTIONAL, defaults to 0.05
     .create()
+```
+
+Here is a demonstration of all four algorithms operating simultaneously on the same distribution:
+
+.Quantile Algorithms at Work
+image::quantile-algorithms.png[]
+
+It is also possible to indicate that you want to compute quantiles in an `@Timed` annotation:
+
+```java
+@RestController
+public class MyController {
+    @Timed(value = "list_people", quantiles = {0.5, 0.95})
+    @GetMapping("/api/people")
+    public List<Person> listPeople() { ... }
+```
+
+=== Histogram Statistics
+
+Timers and distribution summaries can be enriched with histogram statistics that yield a counter
+time series for each of a set of buckets.
+
+Histograms can be used to compute quantiles or other summary statistics in some monitoring backends
+(e.g. https://prometheus.io/docs/querying/functions/#histogram_quantile[Prometheus]). Because histograms
+buckets are exposed as individual counters to the monitoring backend, it is possible to aggregate
+observations across a distributed system and compute summary statistics like quantiles for an entire
+cluster.
+
+Naturally, the error rate of the computed summary statistic will be higher because of the lossy nature of bucketing data.
+
+`spring-metrics` supports both cumulative and non-cumulative (normal) histograms and provides a set of
+generators for each.
+
+```java
+DistributionSummary hist = meterRegistry.summaryBuilder("hist")
+        .histogram(CumulativeHistogram.buckets(linear(0, 10, 20)))
+        .create();
+```
+
+For timers, you can use `timerBuilder(name)` which mirrors this construction.
+
+This sample constructs a cumulative histogram consisting of 20 buckets, one every 10 units
+beginning at 0.
+
+To construct a normal histogram, use the generators on `NormalHistogram`.
+
+For timers, be sure to specify the `TimeUnit` that your buckets represent. The bucket tag value
+on the time series will be normalized to the expected time base unit of the monitoring backend
+(e.g. seconds on Prometheus, nanoseconds on Atlas). In this way, you can keep your histograms
+backend agnostic.
+
+```java
+CumulativeHistogram.buckets(linear(0, 10, 20), TimeUnit.MILLISECONDS);
 ```
 
 === Cache Monitoring

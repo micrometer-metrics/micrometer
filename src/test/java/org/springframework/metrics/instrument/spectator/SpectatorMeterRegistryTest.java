@@ -43,7 +43,7 @@ class SpectatorMeterRegistryTest {
                 .quantiles(GKQuantiles.quantiles(0.5).create())
                 .create();
 
-        registry.distributionSummaryBuilder("ds")
+        registry.summaryBuilder("ds")
                 .quantiles(GKQuantiles.quantiles(0.5).create())
                 .create();
 

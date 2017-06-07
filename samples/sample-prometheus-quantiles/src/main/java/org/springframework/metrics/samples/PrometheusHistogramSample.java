@@ -41,7 +41,7 @@ public class PrometheusHistogramSample {
 
         startServer(route);
 
-        DistributionSummary hist = meterRegistry.distributionSummaryBuilder("hist")
+        DistributionSummary hist = meterRegistry.summaryBuilder("hist")
                 .histogram(CumulativeHistogram.buckets(linear(0, 10, 20)))
                 .quantiles(CKMSQuantiles
                         .quantile(0.95, 0.01)
