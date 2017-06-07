@@ -20,9 +20,6 @@ import org.springframework.metrics.instrument.Gauge;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.simple.SimpleMeterRegistry;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 class ThreadMetricsTest {
@@ -35,20 +32,7 @@ class ThreadMetricsTest {
                 .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
         assertThat(registry.findMeter(Gauge.class, "threads_daemon"))
                 .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
-
-        AtomicInteger peak = new AtomicInteger(0);
         assertThat(registry.findMeter(Gauge.class, "threads_peak"))
-                .hasValueSatisfying(g -> {
-                    peak.set((int) g.value());
-                    assertThat(g.value()).isGreaterThan(0);
-                });
-
-        // should bump the peak by one
-        Executors.newSingleThreadExecutor().submit(() -> {
-            // do nothing
-        });
-
-        assertThat(registry.findMeter(Gauge.class, "threads_peak"))
-                .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(peak.get()));
+                .hasValueSatisfying(g ->  assertThat(g.value()).isGreaterThan(0));
     }
 }
