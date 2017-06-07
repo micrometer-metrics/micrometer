@@ -325,6 +325,63 @@ similar to a timer, but more general in that the size does not have to be a peri
 time. For example, a distribution summary could be used to measure the payload
 sizes of requests hitting a server.
 
+=== Quantile Statistics
+
+Timers and distribution summaries can be enriched with https://en.wikipedia.org/wiki/Quantile[quantiles] computed in your app prior to shipping
+to a monitoring backend.
+
+```java0
+Timer timer = meterRegistry.timerBuilder("my_timer")
+                .quantiles(WindowSketchQuantiles.quantiles(0.5, 0.95).create())
+                .create();
+```
+
+This would result in additional gauges with tags `quantile=0.5` and `quantile=0.95`. The 0.95 quantile is the
+the value below which 95% of observations in a group of observations fall. 0.5 represents the media of our
+observations thus far.
+
+Four quantile algorithms are provided out of the box with different tradeoffs:
+
+* `WindowSketchQuantiles` - The importance of an observation is decayed as it ages. This is the most computationally
+costly algorithm.
+
+```java
+WindowSketchQuantiles.quantiles(0.5, 0.95)
+    .error(0.01) // OPTIONAL, defaults to 0.05
+    .create()
+```
+
+* `Frugal2UQuantiles` - Successive approximation algorithm that converges towards the true quantile with enough
+observations. This is by least costly algorithm, but exhibits a higher error ratio in early observations.
+
+```java
+Frugal2UQuantiles
+    // the closer the initial estimate (100) is to the true quantile, the faster it converges
+    .quantile(0.95, 100)
+    .quantile(0.5, 150)
+    .create()
+```
+
+* `CKMSQuantiles` - Allows you to tradeoff computational complexity for error ratio on a per quantile basis. Often,
+it is desirable for higher quantiles to have a lower error ratio (e.g. 0.99 at 1% error vs. 0.5 at 5% error). Still
+more computationally expensive than Frugal.
+
+```java
+CKMSQuantiles
+    .quantile(0.95, 0.01)
+    .quantile(0.5, 0.05)
+    .create()
+```
+
+* `GKQuantiles` - Allows you to tradeoff computational complexity for error ratio across all quantiles. This is
+used inside of `WindowSketchQuantiles`.
+
+```java
+GKQuantiles.quantiles(0.5, 0.95)
+    .error(0.01) // OPTIONAL, defaults to 0.05
+    .create()
+```
+
 === Cache Monitoring
 
 Guava caches can be instrumented with the registry, but it is important that you call `recordStats()` on
@@ -336,9 +393,9 @@ class PersonRepository {
     LoadingCache<String, Person> personBySsn;
 
     public PersonRepository(MeterRegistry registry) {
-        personBySsn = registry.monitor("people_cache",
-            "lookup_key", "ssn", // <- any number of tags
-            CacheBuilder.newBuilder().recordStats().build()
+        personBySsn = Meters.monitor(registry, CacheBuilder.newBuilder().recordStats().build(),
+            "people_cache", // base metric name
+            "lookup_key", "ssn" // <- any number of tag key/value pairs
         );
     }
 }
@@ -364,13 +421,19 @@ class MyConfiguration {
     private DataSource dataSource;
 
     @Autowired
+    private Collection<DataSourcePoolMetadataProvider> metadataProviders;
+
+    @Autowired
     private Environment env;
 
     @PostConstruct
     private void instrumentDataSource() {
-        registry.monitor("data_source",
+        Meters.monitor(
+            registry,
+            dataSource,
+            metadataProviders,
+            "data_source", // base metric name
             "stack", env.acceptsProfiles("prod") ? "prod" : "test", // <- any number of tags
-            dataSource
         );
     }
 }
@@ -385,22 +448,29 @@ The original data source instance is unchanged by instrumentation.
 
 === Executor and ExecutorService Monitoring
 
-`Executor` and `ExecutorService` instances can be instrumented with the registry.
+`Executor` and `ExecutorService` instances can be instrumented with the registry. This includes any
+specializations of these types created by `java.util.concurrent.Executors`. Additionally, you can
+directly monitor `ThreadPoolTaskExecutor` and `ThreadPoolTaskScheduler` in a wholly similar way, but
+they must be initialized prior to attempting to instrument them.
 
 ```java
 @Configuration
 class MyConfiguration {
     @Bean("worker_pool")
     ExecutorService workerPool(MeterRegistry registry) {
-        return registry.monitor(Executors.newFixedThreadPool(8));
+        return Meters.monitor(registry,
+            Executors.newFixedThreadPool(8),
+            "worker_pool",
+            "threads", "8" // any number of tag key value pairs
+        );
     }
 }
 ```
 
-`ExecutorService` instrumentation results in a gauge that tracks
-the number of queued tasks that have not been started yet plus a timer
-that records the execution time of tasks (plus a count of such tasks, since
-`Timer`s always track both count and totalTime statistics).
+`ExecutorService` instrumentation results in a composite counter that tracks
+ the number of submitted, active, and completed tasks. Additionally, a timer records the
+ execution time of tasks (plus a count of such tasks, since `Timer`s always track both count
+ and totalTime statistics).
 
 `Executor` instrumentation just records the execution time.
 
@@ -424,8 +494,9 @@ bind metrics to a single `MeterRegistry`:
 ```java
 @Bean
 MeterRegistry prometheusRegistry() {
-    return new PrometheusMeterRegistry()
-        .bind(new JvmMemoryMetrics());
+    MeterRegistry registry = new PrometheusMeterRegistry();
+    new JvmMemoryMetrics().bindTo(registry);
+    return registry;
 }
 ```
 
@@ -499,12 +570,17 @@ controllers or request methods via the `extraTags` attribute on `@Timed`:
 
 ```java
 RouterFunctionMetrics metrics = new RouterFunctionMetrics(registry);
-metrics.setDefaultTagName("my_metric_name"); // OPTIONAL, default is http_server_requests
+
+// OPTIONAL: the default is to record tags on method and status
+metrics.defaultTags((req, resp) -> { /* custom tags here */ });
 
 RouterFunction<ServerResponse> routes = RouterFunctions
     .route(GET("/person/{id}").and(accept(APPLICATION_JSON)),
         request -> ServerResponse.ok().build())
-    .filter(metrics.timer());
+    .filter(metrics.timer(
+        "http_server_requests", // metric name
+        "instance", MY_INSTANCE_ID // optional tags
+    ));
 ```
 
 The filter applies to all routes defined by this router function.
@@ -556,9 +632,7 @@ public class MyApp {
 }
 ```
 
-Then inject `MeterRegistry` wherever you need to create a timer, gauge, counter, or summary. Where supported,
-you may also use the `@Timed` annotation, which eliminates the need to inject a `MeterRegistry` in certain
-cases.
+Then inject `MeterRegistry` wherever you need to create a timer, gauge, counter, or summary.
 
 === Pulling metrics with scraping
 
@@ -583,6 +657,47 @@ scrape_configs:
     static_configs:
       - targets: ['HOST:PORT']
 ```
+
+== Netflix Atlas
+
+=== Quickstart for Atlas-based monitoring
+
+You will need the following dependencies:
+
+```groovy
+compile 'org.springframework.metrics:spring-metrics:latest.release'
+compile 'com.netflix.spectator:spectator-reg-atlas:latest.release'
+```
+
+Add `@EnableAtlasMetrics` to your configuration.
+
+```java
+@SpringBootApplication
+@EnableAtlasMetrics
+public class MyApp {
+}
+```
+
+Spectator's Atlas registry publishes metrics to an Atlas server periodically. Below is a list of
+the most common configuration properties you will want to change and their default values
+(from any property source, e.g. application.yml):
+
+```yml
+# The location of your Atlas server
+atlas.uri: http://localhost:7101/api/v1/publish
+
+# You will probably want disable Atlas publishing in a local development profile.
+atlas.enabled: true
+
+# The interval at which metrics are sent to Atlas. See Duration.parse for the expected format.
+# The default is 1 minute.
+atlas.step: PT1M
+```
+
+For a full list of configuration properties that can influence Atlas publishing, see
+`com.netflix.spectator.atlas.AtlasConfig`.
+
+Then inject `MeterRegistry` wherever you need to create a timer, gauge, counter, or summary.
 
 == Dropwizard
 
