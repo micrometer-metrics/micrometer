@@ -107,4 +107,9 @@ public interface Timer extends Meter {
 
         Timer create();
     }
+
+    @Override
+    default Type getType() {
+        return Type.Timer;
+    }
 }

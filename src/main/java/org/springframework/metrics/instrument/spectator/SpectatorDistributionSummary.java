@@ -57,11 +57,6 @@ public class SpectatorDistributionSummary implements DistributionSummary {
     }
 
     @Override
-    public Type getType() {
-        return Type.DistributionSummary;
-    }
-
-    @Override
     public Iterable<Measurement> measure() {
         return SpectatorUtils.measurements(distributionSummary);
     }

@@ -28,14 +28,13 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.springframework.metrics.instrument.simple.SimpleUtils.typeTag;
 
-public class SimpleLongTaskTimer implements LongTaskTimer {
-    private final MeterId id;
+public class SimpleLongTaskTimer extends AbstractSimpleMeter implements LongTaskTimer {
     private final ConcurrentMap<Long, Long> tasks = new ConcurrentHashMap<>();
     private final AtomicLong nextTask = new AtomicLong(0L);
     private final Clock clock;
 
     SimpleLongTaskTimer(MeterId id, Clock clock) {
-        this.id = id;
+        super(id);
         this.clock = clock;
     }
 
@@ -76,21 +75,6 @@ public class SimpleLongTaskTimer implements LongTaskTimer {
     @Override
     public int activeTasks() {
         return tasks.size();
-    }
-
-    @Override
-    public String getName() {
-        return id.getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return id.getTags();
-    }
-
-    @Override
-    public Type getType() {
-        return Type.Other;
     }
 
     @Override

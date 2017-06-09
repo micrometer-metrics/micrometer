@@ -111,4 +111,9 @@ public interface LongTaskTimer extends Meter {
      * Returns the current number of tasks being executed.
      */
     int activeTasks();
+
+    @Override
+    default Type getType() {
+        return Type.LongTaskTimer;
+    }
 }

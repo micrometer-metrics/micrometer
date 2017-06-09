@@ -15,55 +15,38 @@
  */
 package org.springframework.metrics.instrument.simple;
 
-import com.netflix.spectator.impl.AtomicDouble;
 import org.springframework.metrics.instrument.Counter;
 import org.springframework.metrics.instrument.Measurement;
-import org.springframework.metrics.instrument.Tag;
 import org.springframework.metrics.instrument.internal.MeterId;
 
 import java.util.Collections;
+import java.util.concurrent.atomic.DoubleAdder;
 
 import static org.springframework.metrics.instrument.simple.SimpleUtils.typeTag;
 
 /**
  * @author Jon Schneider
  */
-public class SimpleCounter implements Counter {
-    private final MeterId id;
-    private AtomicDouble count = new AtomicDouble(0);
+public class SimpleCounter extends AbstractSimpleMeter implements Counter {
+    private DoubleAdder count = new DoubleAdder();
 
     SimpleCounter(MeterId id) {
-        this.id = id;
+        super(id);
     }
 
     @Override
     public void increment() {
-        count.addAndGet(1.0);
+        count.add(1.0);
     }
 
     @Override
     public void increment(double amount) {
-        count.addAndGet(amount);
+        count.add(amount);
     }
 
     @Override
     public double count() {
-        return count.get();
-    }
-
-    @Override
-    public String getName() {
-        return id.getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return id.getTags();
-    }
-
-    @Override
-    public Type getType() {
-        return Type.Counter;
+        return count.doubleValue();
     }
 
     @Override

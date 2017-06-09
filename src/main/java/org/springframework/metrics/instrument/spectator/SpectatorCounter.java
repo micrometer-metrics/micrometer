@@ -52,11 +52,6 @@ public class SpectatorCounter implements Counter {
     }
 
     @Override
-    public Type getType() {
-        return Type.Counter;
-    }
-
-    @Override
     public Iterable<Measurement> measure() {
         return SpectatorUtils.measurements(counter);
     }

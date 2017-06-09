@@ -87,9 +87,4 @@ public abstract class AbstractTimer implements Timer {
     public Iterable<Tag> getTags() {
         return id.getTags();
     }
-
-    @Override
-    public Type getType() {
-        return Type.Timer;
-    }
 }

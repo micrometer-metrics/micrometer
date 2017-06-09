@@ -57,11 +57,6 @@ public class PrometheusCounter implements Counter {
     }
 
     @Override
-    public Type getType() {
-        return Type.Counter;
-    }
-
-    @Override
     public Iterable<Measurement> measure() {
         return Collections.singletonList(id.measurement(count()));
     }

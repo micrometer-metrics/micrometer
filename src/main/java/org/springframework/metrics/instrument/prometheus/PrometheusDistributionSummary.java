@@ -57,11 +57,6 @@ public class PrometheusDistributionSummary implements DistributionSummary {
     }
 
     @Override
-    public Type getType() {
-        return Type.DistributionSummary;
-    }
-
-    @Override
     public Iterable<Measurement> measure() {
         return summary.measure();
     }

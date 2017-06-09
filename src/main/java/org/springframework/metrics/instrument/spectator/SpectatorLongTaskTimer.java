@@ -62,11 +62,6 @@ public class SpectatorLongTaskTimer implements LongTaskTimer {
     }
 
     @Override
-    public Type getType() {
-        return Type.Other;
-    }
-
-    @Override
     public Iterable<Measurement> measure() {
         return SpectatorUtils.measurements(timer);
     }

@@ -54,4 +54,9 @@ public interface DistributionSummary extends Meter {
 
         DistributionSummary create();
     }
+
+    @Override
+    default Type getType() {
+        return Type.DistributionSummary;
+    }
 }

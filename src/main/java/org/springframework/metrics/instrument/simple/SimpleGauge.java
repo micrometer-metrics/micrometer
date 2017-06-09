@@ -26,13 +26,12 @@ import java.util.function.ToDoubleFunction;
 
 import static org.springframework.metrics.instrument.simple.SimpleUtils.typeTag;
 
-public class SimpleGauge<T> implements Gauge {
-    private final MeterId id;
+public class SimpleGauge<T> extends AbstractSimpleMeter implements Gauge {
     private final WeakReference<T> ref;
     private final ToDoubleFunction<T> value;
 
-    public SimpleGauge(MeterId id, T obj, ToDoubleFunction<T> value) {
-        this.id = id;
+    SimpleGauge(MeterId id, T obj, ToDoubleFunction<T> value) {
+        super(id);
         this.ref = new WeakReference<>(obj);
         this.value = value;
     }
@@ -40,21 +39,6 @@ public class SimpleGauge<T> implements Gauge {
     @Override
     public double value() {
         return value.applyAsDouble(ref.get());
-    }
-
-    @Override
-    public String getName() {
-        return id.getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return id.getTags();
-    }
-
-    @Override
-    public Type getType() {
-        return Type.Gauge;
     }
 
     @Override

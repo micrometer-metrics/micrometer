@@ -65,11 +65,6 @@ public class PrometheusLongTaskTimer implements LongTaskTimer {
     }
 
     @Override
-    public Type getType() {
-        return Type.Other;
-    }
-
-    @Override
     public Iterable<Measurement> measure() {
         return timer.measure();
     }

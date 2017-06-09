@@ -30,9 +30,16 @@ public interface Meter {
      */
     Iterable<Measurement> measure();
 
+    /**
+     * Custom meters may emit metrics like one of these types without implementing
+     * the corresponding interface. For example, a heisen-counter like structure
+     * will emit the same metric as a {@link Counter} but does not have the same
+     * increment-driven API.
+     */
     enum Type {
         Counter,
         Gauge,
+        LongTaskTimer,
         Timer,
         DistributionSummary,
         Other

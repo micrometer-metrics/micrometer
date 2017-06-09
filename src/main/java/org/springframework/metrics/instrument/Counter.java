@@ -35,4 +35,7 @@ public interface Counter extends Meter {
      * The cumulative count since this counter was created.
      */
     double count();
+
+    @Override
+    default Type getType() { return Type.Counter; }
 }

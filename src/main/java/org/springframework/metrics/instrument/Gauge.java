@@ -21,4 +21,9 @@ public interface Gauge extends Meter {
      * of the underlying number or user-defined function that defines the value for the gauge.
      */
     double value();
+
+    @Override
+    default Type getType() {
+        return Type.Gauge;
+    }
 }
