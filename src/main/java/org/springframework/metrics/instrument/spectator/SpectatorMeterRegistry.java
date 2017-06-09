@@ -112,6 +112,21 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
                 .map(mClass::cast);
     }
 
+    public Optional<Meter> findMeter(Meter.Type type, String name, Iterable<Tag> tags) {
+        Collection<Tag> tagsToMatch = new ArrayList<>();
+        tags.forEach(tagsToMatch::add);
+
+        return meterMap.entrySet().stream()
+                .filter(e -> e.getValue().getType().equals(type))
+                .filter(e -> e.getKey().id().name().equals(name))
+                .filter(e -> stream(e.getKey().id().tags().spliterator(), false)
+                        .map(t -> new ImmutableTag(t.key(), t.value()))
+                        .collect(Collectors.toList())
+                        .containsAll(tagsToMatch))
+                .map(Map.Entry::getValue)
+                .findAny();
+    }
+
     @Override
     public Counter counter(String name, Iterable<Tag> tags) {
         com.netflix.spectator.api.Counter counter = registry.counter(name, toSpectatorTags(tags));

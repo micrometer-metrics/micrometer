@@ -55,7 +55,7 @@ class AbstractMeterRegistryTest {
 
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
-    @DisplayName("find meters by name matching a subset of their tags")
+    @DisplayName("find meters by name and class type matching a subset of their tags")
     void findMeters(MeterRegistry registry) {
         Counter c1 = registry.counter("foo", "k", "v");
         Counter c2 = registry.counter("bar", "k", "v", "k2", "v");
@@ -64,6 +64,20 @@ class AbstractMeterRegistryTest {
                 .containsSame(c1);
 
         assertThat(registry.findMeter(Counter.class, "bar", "k", "v"))
+                .containsSame(c2);
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(MeterRegistriesProvider.class)
+    @DisplayName("find meters by name and type matching a subset of their tags")
+    void findMetersByType(MeterRegistry registry) {
+        Counter c1 = registry.counter("foo", "k", "v");
+        Counter c2 = registry.counter("bar", "k", "v", "k2", "v");
+
+        assertThat(registry.findMeter(Meter.Type.Counter, "foo", "k", "v"))
+                .containsSame(c1);
+
+        assertThat(registry.findMeter(Meter.Type.Counter, "bar", "k", "v"))
                 .containsSame(c2);
     }
 }

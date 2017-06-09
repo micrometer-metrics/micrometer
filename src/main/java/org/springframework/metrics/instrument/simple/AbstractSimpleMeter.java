@@ -7,7 +7,7 @@ import org.springframework.metrics.instrument.internal.MeterId;
 public abstract class AbstractSimpleMeter implements Meter {
     protected final MeterId id;
 
-    public AbstractSimpleMeter(MeterId id) {
+    AbstractSimpleMeter(MeterId id) {
         this.id = id;
     }
 

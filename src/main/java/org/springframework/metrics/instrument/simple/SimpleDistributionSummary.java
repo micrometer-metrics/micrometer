@@ -36,8 +36,10 @@ public class SimpleDistributionSummary extends AbstractSimpleMeter implements Di
 
     @Override
     public void record(double amount) {
-        count.increment();
-        this.amount.add(amount);
+        if(amount >= 0) {
+            count.increment();
+            this.amount.add(amount);
+        }
     }
 
     @Override

@@ -43,6 +43,12 @@ public interface MeterRegistry {
 
     <M extends Meter> Optional<M> findMeter(Class<M> mClass, String name, Iterable<Tag> tags);
 
+    default Optional<Meter> findMeter(Meter.Type type, String name, String... tags) {
+        return findMeter(type, name, zip(tags));
+    }
+
+    Optional<Meter> findMeter(Meter.Type type, String name, Iterable<Tag> tags);
+
     Clock getClock();
 
     /**

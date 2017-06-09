@@ -41,8 +41,10 @@ public class SimpleTimer extends AbstractTimer {
 
     @Override
     public void record(long amount, TimeUnit unit) {
-        count.increment();
-        totalTime.add(TimeUnit.NANOSECONDS.convert(amount, unit));
+        if(amount >= 0) {
+            count.increment();
+            totalTime.add(TimeUnit.NANOSECONDS.convert(amount, unit));
+        }
     }
 
     @Override

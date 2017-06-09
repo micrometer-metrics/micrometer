@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.metrics.instrument.Gauge;
+import org.springframework.metrics.instrument.Meter;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.metrics.instrument.Timer;
 import org.springframework.metrics.instrument.simple.SimpleMeterRegistry;
@@ -111,7 +112,7 @@ class ExecutorServiceMetricsTest {
     }
 
     private void assertThreadPoolExecutorMetrics(String name) {
-        assertThat(registry.findMeter(Gauge.class, name)).isPresent();
+        assertThat(registry.findMeter(Meter.Type.Counter, name)).isPresent();
         assertThat(registry.findMeter(Gauge.class, name + "_queue_size")).isPresent();
         assertThat(registry.findMeter(Gauge.class, name + "_pool_size")).isPresent();
     }
