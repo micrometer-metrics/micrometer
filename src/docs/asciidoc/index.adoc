@@ -72,7 +72,7 @@ public class MyController {
 
 In this sample code, multiple dimensional time series are created with a variety of metrics:
 
-1. Adding `@Timed` to the controller creates a `Timer` time series named `http-requests` which
+1. Adding `@Timed` to the controller creates a `Timer` time series named `http_server_requests` which
 by default contains dimensions for the HTTP status of the response, HTTP method, exception type if the request fails,
 and the pre-variable substitution parameterized endpoint URI.
 2. Calling `collectionSize` on our meter registry adds a `Gauge` time series named `population` that

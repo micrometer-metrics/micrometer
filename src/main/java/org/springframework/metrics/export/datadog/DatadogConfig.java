@@ -18,7 +18,6 @@ public interface DatadogConfig extends RegistryConfig {
         return v;
     }
 
-
     /**
      * Returns the step size (reporting frequency) to use. The default is 10 seconds, matching the default
      * for the Datadog agent.
