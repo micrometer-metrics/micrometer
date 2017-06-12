@@ -48,14 +48,16 @@ class MetricsWebFilterTest {
         client.get().uri("/api/c2/10").exchange()
                 .expectStatus().isOk()
                 .expectBody()
-                .consumeWith(r -> assertThat(new String(r.getResponseBody())).isEqualTo("10"));
+                .consumeWith(r -> {
+                    assertThat(new String(r.getResponseBody())).isEqualTo("10");
 
-        assertThat(registry.findMeter(Timer.class, "http_server_requests"))
-                .hasValueSatisfying(t -> {
-                    assertThat(t.getTags())
-                            .contains(Tag.of("uri", "api/c2/{id}"))
-                            .contains(Tag.of("status", "200"));
-                    assertThat(t.count()).isEqualTo(1);
+                    assertThat(registry.findMeter(Timer.class, "http_server_requests"))
+                            .hasValueSatisfying(t -> {
+                                assertThat(t.getTags())
+                                        .contains(Tag.of("uri", "api/c2/{id}"))
+                                        .contains(Tag.of("status", "200"));
+                                assertThat(t.count()).isEqualTo(1);
+                            });
                 });
     }
 
