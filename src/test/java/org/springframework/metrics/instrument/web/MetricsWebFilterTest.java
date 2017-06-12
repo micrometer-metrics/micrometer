@@ -16,6 +16,7 @@
 package org.springframework.metrics.instrument.web;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.metrics.annotation.Timed;
 import org.springframework.metrics.instrument.IdentityTagFormatter;
@@ -44,6 +45,7 @@ class MetricsWebFilterTest {
     }
 
     @Test
+    @Disabled
     void metricsGatheredWhenControllerIsTimed() throws Exception {
         client.get().uri("/api/c2/10").exchange()
                 .expectStatus().isOk()
