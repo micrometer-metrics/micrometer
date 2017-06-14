@@ -8,7 +8,7 @@ Early work on dimensional Spring Metrics for application monitoring.
 
 ## Reference Documentation
 
-You can view an early preview of the reference [documentation here](https://spring-projects.github.io/spring-metrics/). Lots more to come.
+You can view an early preview of the reference [documentation here](http://docs.spring.io/spring-metrics/docs/current/public). Lots more to come.
 
 ## Goals
 
