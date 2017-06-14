@@ -183,18 +183,27 @@ public final class DatadogRegistry extends AbstractRegistry {
                             }).collect(joining(",")) +
                             "]}";
 
-                    OutputStream os = con.getOutputStream();
-                    os.write(body.getBytes());
-                    os.flush();
+                    try(OutputStream os = con.getOutputStream()) {
+                        os.write(body.getBytes());
+                        os.flush();
+                    }
 
                     int status = con.getResponseCode();
 
-                    if (status >= 400) {
+                    if (status >= 200 && status < 300) {
+                        logger.info("successfully sent " + batch.size() + " metrics to datadog");
+                    }
+                    else if (status >= 400) {
                         try (InputStream in = (status >= 400) ? con.getErrorStream() : con.getInputStream()) {
                             logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
                                     .lines().collect(joining("\n")));
                         }
                     }
+                    else {
+                        logger.error("failed to send metrics: http " + status);
+                    }
+
+                    con.disconnect();
                 }
             } catch (Exception e) {
                 logger.warn("failed to send metrics", e);

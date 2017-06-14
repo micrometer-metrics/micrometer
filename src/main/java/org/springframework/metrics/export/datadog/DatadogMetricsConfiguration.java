@@ -33,7 +33,7 @@ public class DatadogMetricsConfiguration {
     }
 
     @Bean
-    DatadogRegistry atlasRegistry(DatadogConfig atlasConfig) {
+    DatadogRegistry datadogRegistry(DatadogConfig atlasConfig) {
         DatadogRegistry registry = new DatadogRegistry(Clock.SYSTEM, atlasConfig);
         registry.start();
         return registry;
