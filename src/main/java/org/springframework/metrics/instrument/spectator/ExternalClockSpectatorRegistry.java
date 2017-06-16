@@ -37,6 +37,10 @@ public class ExternalClockSpectatorRegistry implements Registry {
         this.clock = clock;
     }
 
+    public Registry getSpectatorRegistry() {
+        return composite;
+    }
+
     @Override
     public Clock clock() {
         return clock;

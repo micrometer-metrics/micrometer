@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'org.springframework.boot' version '1.5.4.RELEASE'
 }
 
 repositories {
@@ -8,6 +9,7 @@ repositories {
 }
 
 dependencies {
+    compile 'org.springframework.boot:spring-boot-starter-web'
     compile 'org.springframework.metrics:spring-metrics:latest.release'
     compile 'com.netflix.spectator:spectator-reg-atlas:latest.release'
     compile 'colt:colt:1.2.0'

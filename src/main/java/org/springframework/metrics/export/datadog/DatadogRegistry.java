@@ -85,7 +85,7 @@ public final class DatadogRegistry extends AbstractRegistry {
      */
     public void start() {
         if (scheduler == null) {
-            // Setup main collection for publishing to Atlas
+            // Setup main collection for publishing to Datadog
             if (enabled) {
                 Scheduler.Options options = new Scheduler.Options()
                         .withFrequency(Scheduler.Policy.FIXED_RATE_SKIP_IF_LONG, step)

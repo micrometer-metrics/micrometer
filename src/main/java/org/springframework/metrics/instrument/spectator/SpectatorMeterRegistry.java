@@ -42,7 +42,7 @@ import static org.springframework.metrics.instrument.spectator.SpectatorUtils.sp
  * @author Jon Schneider
  */
 public class SpectatorMeterRegistry extends AbstractMeterRegistry {
-    private final Registry registry;
+    private final ExternalClockSpectatorRegistry registry;
     private final Map<com.netflix.spectator.api.Meter, Meter> meterMap = new HashMap<>();
 
     private final com.netflix.spectator.api.Clock spectatorClock = new com.netflix.spectator.api.Clock() {
@@ -205,6 +205,6 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
      * @return The underlying Spectator {@link Registry}.
      */
     public Registry getSpectatorRegistry() {
-        return registry;
+        return registry.getSpectatorRegistry();
     }
 }

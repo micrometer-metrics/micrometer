@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Timer that reports four measurements to Atlas:
+ * Timer that reports four measurements to Datadog:
  * <p>
  * <ul>
  * <li><b>count:</b> counter incremented each time record is called</li>
