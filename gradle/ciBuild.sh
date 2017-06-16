@@ -13,10 +13,10 @@ elif [ $CIRCLE_TAG ]; then
   echo -e 'Build Branch for Release => Branch ['$CIRCLE_BRANCH']  Tag ['$CIRCLE_TAG']'
   case "$CIRCLE_TAG" in
   *-rc\.*)
-    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true clean build candidate $SWITCHES
+    ./gradlew -Prelease.disableGitChecks=true -Prelease.version=$CIRCLE_TAG clean build candidate $SWITCHES
     ;;
   *)
-    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true clean build final $SWITCHES
+    ./gradlew -Prelease.disableGitChecks=true -Prelease.version=$CIRCLE_TAG clean build final $SWITCHES
     ;;
   esac
 else
