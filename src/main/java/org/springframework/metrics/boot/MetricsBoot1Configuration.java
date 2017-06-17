@@ -31,6 +31,7 @@ import org.springframework.web.client.RestTemplate;
  * @author Jon Schneider
  */
 @Configuration
+// this class didn't exist until Spring 5
 @ConditionalOnMissingClass("org.springframework.web.server.WebFilter") // TODO got to be a better way...
 @Import({
         InstrumentRestTemplateConfiguration.class,
@@ -53,7 +54,7 @@ class MetricsBoot1Configuration {
      * If AOP is not enabled, scheduled interception will not work.
      */
     @Bean
-    @ConditionalOnClass({RestTemplate.class, JoinPoint.class})
+    @ConditionalOnClass(name = {"org.springframework.web.client.RestTemplate", "org.aopalliance.intercept.JoinPoint"})
     @ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)
     public MetricsSchedulingAspect metricsSchedulingAspect(MeterRegistry registry) {
         return new MetricsSchedulingAspect(registry);
@@ -64,7 +65,7 @@ class MetricsBoot1Configuration {
      * will always be evaluated to "none".
      */
     @Configuration
-    @ConditionalOnClass({RestTemplate.class, JoinPoint.class})
+    @ConditionalOnClass(name = {"org.springframework.web.client.RestTemplate", "org.aopalliance.intercept.JoinPoint"})
     @ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)
     static class MetricsRestTemplateAspectConfiguration {
         @Bean
