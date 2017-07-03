@@ -35,7 +35,7 @@ public class SimpleTimer extends AbstractTimer {
     private LongAdder count = new LongAdder();
     private LongAdder totalTime = new LongAdder();
 
-    SimpleTimer(MeterId id, Clock clock) {
+    public SimpleTimer(MeterId id, Clock clock) {
         super(id, clock);
     }
 

@@ -29,7 +29,7 @@ public class SimpleGauge<T> extends AbstractSimpleMeter implements Gauge {
     private final WeakReference<T> ref;
     private final ToDoubleFunction<T> value;
 
-    SimpleGauge(MeterId id, T obj, ToDoubleFunction<T> value) {
+    public SimpleGauge(MeterId id, T obj, ToDoubleFunction<T> value) {
         super(id);
         this.ref = new WeakReference<>(obj);
         this.value = value;

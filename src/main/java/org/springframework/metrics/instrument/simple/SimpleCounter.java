@@ -30,7 +30,7 @@ import static org.springframework.metrics.instrument.simple.SimpleUtils.typeTag;
 public class SimpleCounter extends AbstractSimpleMeter implements Counter {
     private DoubleAdder count = new DoubleAdder();
 
-    SimpleCounter(MeterId id) {
+    public SimpleCounter(MeterId id) {
         super(id);
     }
 

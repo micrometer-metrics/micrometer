@@ -30,7 +30,7 @@ public class SimpleDistributionSummary extends AbstractSimpleMeter implements Di
     private LongAdder count = new LongAdder();
     private DoubleAdder amount = new DoubleAdder();
 
-    SimpleDistributionSummary(MeterId id) {
+    public SimpleDistributionSummary(MeterId id) {
         super(id);
     }
 

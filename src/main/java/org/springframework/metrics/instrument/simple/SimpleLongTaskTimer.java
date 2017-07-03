@@ -33,7 +33,7 @@ public class SimpleLongTaskTimer extends AbstractSimpleMeter implements LongTask
     private final AtomicLong nextTask = new AtomicLong(0L);
     private final Clock clock;
 
-    SimpleLongTaskTimer(MeterId id, Clock clock) {
+    public SimpleLongTaskTimer(MeterId id, Clock clock) {
         super(id);
         this.clock = clock;
     }
