@@ -38,7 +38,7 @@ public class WebfluxTagConfigurer {
     }
 
     public Tag uri(ServerWebExchange exchange) {
-        String rawUri = (String) exchange.getAttribute(org.springframework.web.reactive.HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE).orElse(null);
+        String rawUri = exchange.getAttributeOrDefault(org.springframework.web.reactive.HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE, null);
 
         if (!StringUtils.hasText(rawUri)) {
             rawUri = "/";
