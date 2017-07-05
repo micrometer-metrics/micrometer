@@ -17,10 +17,9 @@ package org.springframework.metrics.instrument;
 
 import com.netflix.spectator.api.DefaultRegistry;
 import io.prometheus.client.CollectorRegistry;
-import org.junit.jupiter.api.extension.ContainerExtensionContext;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
-import org.junit.jupiter.params.provider.ObjectArrayArguments;
 import org.springframework.metrics.instrument.prometheus.PrometheusMeterRegistry;
 import org.springframework.metrics.instrument.simple.SimpleMeterRegistry;
 import org.springframework.metrics.instrument.spectator.SpectatorMeterRegistry;
@@ -29,11 +28,11 @@ import java.util.stream.Stream;
 
 class MeterRegistriesProvider implements ArgumentsProvider {
     @Override
-    public Stream<? extends Arguments> arguments(ContainerExtensionContext context) throws Exception {
+    public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
         return Stream.of(
                 new SpectatorMeterRegistry(new DefaultRegistry(), new MockClock()),
                 new PrometheusMeterRegistry(new CollectorRegistry(true), new MockClock()),
                 new SimpleMeterRegistry(new MockClock())
-        ).map(ObjectArrayArguments::create);
+        ).map(Arguments::of);
     }
 }
