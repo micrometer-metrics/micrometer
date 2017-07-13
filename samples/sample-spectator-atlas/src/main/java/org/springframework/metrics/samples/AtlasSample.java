@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Arrays;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @SpringBootApplication
 @EnableAtlasMetrics
@@ -42,14 +44,16 @@ class PersonController {
 class RandomSampler {
     private RandomEngine r = new MersenneTwister64(0);
     private Normal dist = new Normal(25000.0D, 1000.0D, r);
-    private final DistributionSummary summary;
+    private final List<DistributionSummary> summary;
 
     public RandomSampler(MeterRegistry registry) {
-        this.summary = registry.summary("random");
+        this.summary = IntStream.range(0, 1)
+                .mapToObj(n -> registry.summary("random" + n))
+                .collect(Collectors.toList());
     }
 
     @Scheduled(fixedRate = 10)
     public void sampleRandom() {
-        summary.record(dist.nextDouble());
+        summary.forEach(s -> s.record(dist.nextDouble()));
     }
 }

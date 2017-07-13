@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TimerSimulation {
     public static void main(String[] args) {
-        Timer timer = Registries.prometheus().timer("timer");
+        Timer timer = Registries.atlas().timer("timer{");
 
         RandomEngine r = new MersenneTwister64(0);
         Normal incomingRequests = new Normal(0, 1, r);
