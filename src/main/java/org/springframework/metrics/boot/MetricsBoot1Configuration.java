@@ -54,7 +54,7 @@ class MetricsBoot1Configuration {
      * If AOP is not enabled, scheduled interception will not work.
      */
     @Bean
-    @ConditionalOnClass(name = {"org.springframework.web.client.RestTemplate", "org.aopalliance.intercept.JoinPoint"})
+    @ConditionalOnClass(name = {"org.aopalliance.intercept.JoinPoint"})
     @ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)
     public MetricsSchedulingAspect metricsSchedulingAspect(MeterRegistry registry) {
         return new MetricsSchedulingAspect(registry);
