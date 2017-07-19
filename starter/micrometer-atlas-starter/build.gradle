@@ -1,0 +1,4 @@
+dependencies {
+    compile project(':micrometer-core')
+    compile 'com.netflix.spectator:spectator-reg-atlas:latest.release'
+}

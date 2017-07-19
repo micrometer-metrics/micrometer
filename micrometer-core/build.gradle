@@ -1,0 +1,46 @@
+apply plugin: 'org.junit.platform.gradle.plugin'
+apply plugin: 'me.champeau.gradle.jmh'
+apply plugin: 'nebula.optional-base'
+apply plugin: 'nebula.facet'
+
+facets {
+    samples
+}
+
+dependencies {
+    // instrumentation options
+    compile 'com.netflix.spectator:spectator-api:latest.release', optional
+    compile 'io.prometheus:simpleclient:latest.release', optional
+    compile 'io.prometheus:simpleclient_pushgateway:latest.release', optional
+    compile 'com.datadoghq:java-dogstatsd-client:latest.release', optional
+    compile 'io.dropwizard.metrics:metrics-core:latest.release', optional
+
+    // exporters
+    compile 'com.netflix.spectator:spectator-reg-atlas:latest.release', optional
+
+    // cache monitoring
+    compile 'com.google.guava:guava:21.0', optional
+
+    // log monitoring
+    compile 'ch.qos.logback:logback-classic:latest.release', optional
+
+    // reactor
+    compile 'io.projectreactor:reactor-core:3.1.0.BUILD-SNAPSHOT', optional
+
+    testCompile 'io.projectreactor.addons:reactor-test:3.1.0.BUILD-SNAPSHOT'
+    testCompile 'io.projectreactor.ipc:reactor-netty:latest.release'
+
+    jmh 'org.openjdk.jmh:jmh-core:latest.release'
+    jmh 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
+    jmh 'colt:colt:1.2.0'
+
+    samplesCompile 'colt:colt:1.2.0'
+}
+
+jmh {
+    jmhVersion = '1.18'
+    warmupIterations = 2
+    iterations = 5
+    fork = 0
+    duplicateClassesStrategy = 'warn'
+}

@@ -1,29 +1,42 @@
-# Spring Metrics
+# Micrometer Application Metrics
 
 [![Build Status](https://circleci.com/gh/spring-projects/spring-metrics.svg?style=svg)](https://circleci.com/gh/spring-projects/spring-metrics)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/spring-projects/spring-metrics?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Apache 2.0](https://img.shields.io/github/license/spring-projects/spring-metrics.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
-Early work on dimensional Spring Metrics for application monitoring.
+An application metrics facade for the most popular monitoring tools. Instrument your code with dimensional metrics with a
+vendor neutral interface and decide on the monitoring backend at the last minute.
 
-## Reference Documentation
+Micrometer is the instrumentation library underpinning Spring Boot's metrics collection.
 
-You can view an early preview of the reference [documentation here](http://docs.spring.io/spring-metrics/docs/current/public). Lots more to come.
+See the [reference documentation](http://docs.spring.io/spring-metrics/docs/current/public). Lots more to come.
 
-## Goals
+## Supported monitoring backends
 
-In addition to the features already present in Spring Boot [Actuator Metrics](https://docs.spring.io/spring-boot/docs/current/reference/html/production-ready-metrics.html), these are some goals for inclusion in an initial release:
+* Prometheus
+* Netflix Atlas
+* Datadog (directly via API)
+* InfluxDB(coming)
+* StatsD (coming)
+* Graphite (coming)
 
-* Adopt a dimensional system rather than hierarchical. Many metrics backends are dimensional in nature. A hierarchical name can be derived consistently from a series of dimensions for those that are not (example of this in spectator-reg-metrics3).
-* Reduce instrumentation cost (in terms of CPU/memory overhead).
-* Support timers, gauges, counters, and distribution summaries as our meter primitives.
-* Configurable clock source for better test support.
-* Support tiering metrics by priority to allow for different push intervals (the relatively fewer critical metrics are published at a shorter interval than less critical metrics).
-* Support dynamically determined dimension values.
-    - Similarly, allow dynamically determined, high-cardinality dimensions to be turned off application wide by property.
-* Logging appenders to track the number of log messages and stack traces being emitted from the app.
-* Fold in buffer pool and memory pool metrics reported by the JDK via JMX.
-* Fold in information about GC causes.
+## Features
+
+Micrometer provides an interface for dimensional timers, gauges, counters, 
+distribution summaries, and long task timers and an implementation of these 
+interfaces for all the supported monitoring backends.
+
+Additionally, it provides pre-configured sets of metrics for:
+
+* Guava caches
+* Executors, ExecutorService, and derivatives
+* `ClassLoader`s
+* Garbage collection
+* CPU utilization
+* Thread pools
+* Logback level counts
+
+For test support, Micrometer features a configurable clock source wherever the clock is used.
 
 ## Installing
 
@@ -32,16 +45,16 @@ Pre-release artifacts are being published frequently, but are NOT intended for p
 In Gradle:
 
 ```groovy
-compile 'org.springframework.metrics:spring-metrics:latest.release'
+compile 'io.micrometer:micrometer-core:latest.release'
 ```
 
 Or in Maven:
 
 ```xml
 <dependency>
-  <groupId>org.springframework.metrics</groupId>
-  <artifactId>spring-metrics</artifactId>
-  <version>${metrics.version}</version>
+  <groupId>io.micrometer</groupId>
+  <artifactId>micrometer-core</artifactId>
+  <version>${micrometer.version}</version>
 </dependency>
 ```
 
@@ -55,77 +68,6 @@ repositories {
 }
 
 dependencies {
-    compile 'org.springframework.metrics:spring-metrics:latest.integration'
+    compile 'io.micrometer:micrometer-core:latest.integration'
 }
 ```
-
-## Instrumentation
-
-*Defined:* The API used to create and interact with meter instances, generally through a meter registry. An individual meter holds one or more metrics depending on its type.
-
-*Existing API:* `Metric`, ½ of `MetricWriter`, `CounterService`, `GaugeService`
-
-Support for Prometheus and Spectator collectors is in development.
-
-A TCK verifying collector implementation correctness is provided in `org.springframework.metrics.instrument`.
-
-Support targets:
-
-* Spectator
-* Prometheus Java client
-* Dropwizard Metrics (hierarchical)
-* StatsD and Datadog StatsD
-
-## Exporters
-
-*Defined:* Exporters identify export-worthy metrics from a meter registry, transform (e.g. convert monotonically increasing counters to a rate), add global dimensions, and push metrics to a metrics backend on a periodic interval(s).
-
-*Existing API:* `Exporter`, `@ExportMetricWriter`, `@ExportMetricReader`, `MetricCopyExporter`, `MetricReader`, `AggregateMetricReader`, ½ of `MetricWriter`
-
-* servo-atlas
-* Dropwizard Metrics "Reporters"
-* Datadog StatsD (also acts as a collector)
-* Direct to Datadog HTTP API
-* JMX
-* PCF Metrics
-
-## Backends
-
-*Defined:* A metrics backend is a time-series database. It may be a plain TSDB or contain optimizations for metrics specifically like:
-
-* Tiered reduction in granularity of older metrics to save on storage
-* Tiered persistence of metrics, prioritizing more recent metrics for fastest lookup and older metrics for cost
-* Act like a circular buffer for time-series data to more strictly bound resource consumption
-
-Metrics backends typically contain some metrics-specific query interface (e.g. PromQL, Atlas stack language). In some cases the metrics backend also happens to serve dashboards and alerting configuration that we are calling a metrics frontend. In other cases, these pieces are distinct.
-
-Potential support targets:
-
-* Atlas
-* Prometheus (Pushgateway)
-* Graphite
-* InfluxDB
-* Datadog
-* OpenTSDB
-* RRDtool?
-* Ganglia
-* Some supported statsd backends
-* PCF Metrics
-* JMX
-* Message channel -- not a backend in itself of course, but could be linked to one indirectly?
-* AWS CloudWatch
-* Elasticsearch -- understand why projects like Orestes exist first
-
-## Frontends
-
-*Defined:* Frontends provide some combination of individual metrics graphs, whole dashboards, and alerting configuration.
-
-Support targets:
-
-* Grafana
-* Graphite
-* Prometheus
-* RRDtool
-* Atlas -- Requires prying the Atlas frontend out of closed source at Netflix. They also have two more closed source pieces cleverly named:
-* Alerts
-* Netflix Dashboards

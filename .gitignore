@@ -1,4 +1,3 @@
 build/
 .gradle/
-third_party/
 gradle.properties
