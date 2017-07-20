@@ -30,6 +30,7 @@ class LongTaskTimerTest {
     @ArgumentsSource(MeterRegistriesProvider.class)
     void record(MeterRegistry registry) {
         LongTaskTimer t = registry.longTaskTimer("myTimer");
+
         long tId = t.start();
         clock(registry).addAndGetNanos(10);
 

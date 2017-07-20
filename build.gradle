@@ -24,7 +24,7 @@ subprojects {
     description = 'Application monitoring instrumentation facade'
 
     contacts {
-        'jkschneider@gmail.com' {
+        'jschneider@pivotal.io' {
             moniker 'Jon Schneider'
             github 'jkschneider'
         }

@@ -1,5 +1,8 @@
+plugins {
+    id 'org.springframework.boot' version '1.5.4.RELEASE'
+}
+
 apply plugin: 'org.junit.platform.gradle.plugin'
-apply plugin: 'me.champeau.gradle.jmh'
 apply plugin: 'nebula.optional-base'
 apply plugin: 'nebula.facet'
 
@@ -7,25 +10,15 @@ facets {
     samples
 }
 
-repositories {
-    maven { url 'https://repo.spring.io/libs-milestone' }
-}
-
-ext {
-    springBootVersion = findProperty('springBootVersion') ?: '2.0.0.BUILD-SNAPSHOT'
-    springVersion = findProperty('springVersion') ?: '5.0.0.BUILD-SNAPSHOT'
-}
-
 dependencies {
     compile project(':micrometer-core')
 
-    compile "org.springframework:spring-beans:$project.springBootVersion", optional
-    compile "org.springframework.boot:spring-boot:$project.springBootVersion", optional
-    compile "org.springframework.boot:spring-boot-actuator:$project.springBootVersion", optional
-    compile "org.springframework.boot:spring-boot-starter-aop:$project.springBootVersion", optional
-    compile "org.springframework:spring-webmvc:$project.springVersion", optional
-    compile "org.springframework:spring-webflux:$project.springVersion", optional
-    compile "org.springframework:spring-web:$project.springVersion", optional
+    compile 'org.springframework:spring-beans'
+    compile 'org.springframework.boot:spring-boot'
+    compile 'org.springframework.boot:spring-boot-actuator'
+    compile 'org.springframework.boot:spring-boot-starter-aop'
+    compile 'org.springframework:spring-webmvc'
+    compile 'org.springframework:spring-web'
     compile 'javax.servlet:javax.servlet-api:3.1.0', optional
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
 
@@ -37,22 +30,15 @@ dependencies {
 
     testCompile 'org.assertj:assertj-core:3.+'
 
-    testCompile("org.springframework.boot:spring-boot-starter-web:$project.springBootVersion") {
-        // snapshots of boot-starter-web can depend on RC's of spring-web(mvc), pulling the versions down
-        exclude module: 'spring-webmvc'
-        exclude module: 'spring-web'
-    }
-    testCompile "org.springframework.boot:spring-boot-actuator:$project.springBootVersion"
-    testCompile "org.springframework.boot:spring-boot-starter-test:$project.springBootVersion"
-    testCompile 'org.springframework:spring-test:5.0.0.BUILD-SNAPSHOT' // earlier versions did not contain JUnit 5 support
+    testCompile 'org.springframework.boot:spring-boot-starter-web'
+    testCompile 'org.springframework.boot:spring-boot-actuator'
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
+    testCompile 'org.springframework:spring-test'
 
     // for use in mock servers
-    testCompile 'org.springframework:spring-webflux:5.0.0.BUILD-SNAPSHOT'
     testCompile 'org.apache.tomcat.embed:tomcat-embed-core:8.5.15'
 
     testRuntime 'org.apache.httpcomponents:httpclient:4.4+'
-
-    jmh "org.springframework.boot:spring-boot-actuator:$project.springBootVersion"
 
     samplesCompile 'colt:colt:1.2.0'
 }

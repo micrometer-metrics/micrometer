@@ -1,0 +1,48 @@
+apply plugin: 'org.junit.platform.gradle.plugin'
+apply plugin: 'nebula.optional-base'
+
+repositories {
+    maven { url 'https://repo.spring.io/libs-milestone' }
+}
+
+ext {
+    springBootVersion = findProperty('springBootVersion') ?: '2.0.0.BUILD-SNAPSHOT'
+    springVersion = findProperty('springVersion') ?: '5.0.0.BUILD-SNAPSHOT'
+}
+
+dependencies {
+    compile project(':micrometer-core')
+
+    compile "org.springframework:spring-beans:$project.springBootVersion", optional
+    compile "org.springframework.boot:spring-boot:$project.springBootVersion", optional
+    compile "org.springframework.boot:spring-boot-actuator:$project.springBootVersion", optional
+    compile "org.springframework.boot:spring-boot-starter-aop:$project.springBootVersion", optional
+    compile "org.springframework:spring-webmvc:$project.springVersion", optional
+    compile "org.springframework:spring-webflux:$project.springVersion", optional
+    compile "org.springframework:spring-web:$project.springVersion", optional
+    compile 'javax.servlet:javax.servlet-api:3.1.0', optional
+    compile 'org.aspectj:aspectjweaver:1.8.+', optional
+
+    // JUnit 5
+    testCompile 'org.junit.platform:junit-platform-launcher:1.0.0-M5' // see https://github.com/junit-team/junit5/issues/586 for why this is necessary
+    testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0-M5'
+    testCompile 'org.junit.jupiter:junit-jupiter-params:5.0.0-M5'
+    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.0-M5'
+
+    testCompile 'org.assertj:assertj-core:3.+'
+
+    testCompile("org.springframework.boot:spring-boot-starter-web:$project.springBootVersion") {
+        // snapshots of boot-starter-web can depend on RC's of spring-web(mvc), pulling the versions down
+        exclude module: 'spring-webmvc'
+        exclude module: 'spring-web'
+    }
+    testCompile "org.springframework.boot:spring-boot-actuator:$project.springBootVersion"
+    testCompile "org.springframework.boot:spring-boot-starter-test:$project.springBootVersion"
+    testCompile 'org.springframework:spring-test:5.0.0.BUILD-SNAPSHOT' // earlier versions did not contain JUnit 5 support
+
+    // for use in mock servers
+    testCompile 'org.springframework:spring-webflux:5.0.0.BUILD-SNAPSHOT'
+    testCompile 'org.apache.tomcat.embed:tomcat-embed-core:8.5.15'
+
+    testRuntime 'org.apache.httpcomponents:httpclient:4.4+'
+}
