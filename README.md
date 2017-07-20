@@ -8,7 +8,7 @@ vendor neutral interface and decide on the monitoring backend at the last minute
 
 More info and the user manual are available on [micrometer.io](http://micrometer.io).
 
-Micrometer is the instrumentation library underpinning Spring Boot's metrics collection.
+Micrometer is the instrumentation library underpinning Spring Boot 2.0's metrics collection.
 
 ## Join the discussion
 
