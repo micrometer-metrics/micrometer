@@ -17,7 +17,7 @@ general:
 deployment:
   release:
     tag: /v.*/
-    owner: spring-projects
+    owner: micrometer-metrics
 dependencies:
   override:
     - ./gradlew downloadDependencies --console=plain
