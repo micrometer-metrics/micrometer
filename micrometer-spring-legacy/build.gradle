@@ -10,7 +10,7 @@ dependencyManagement {
         mavenBom 'org.springframework.boot:spring-boot-dependencies:1.5.4.RELEASE'
     }
     dependencies {
-        dependency 'org.assertj:assertj-core:3.+'
+        dependency 'org.assertj:assertj-core:3.8.0'
     }
 }
 
