@@ -1,9 +1,11 @@
 buildscript {
     repositories {
-      jcenter()
-      maven { url 'https://plugins.gradle.org/m2/' }
+        jcenter()
+        maven { url 'https://plugins.gradle.org/m2/' }
+        mavenLocal()
     }
     dependencies {
+        classpath 'org.ow2.asm:asm:5.0.3'
         classpath 'io.spring.gradle:spring-release-plugin:0.3.0'
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.2.0'
         classpath 'me.champeau.gradle:jmh-gradle-plugin:0.4.4'
@@ -13,14 +15,16 @@ buildscript {
 }
 
 allprojects {
-    apply plugin: 'nebula.release'
+    apply plugin: 'io.spring.release'
+    afterEvaluate { project ->
+        println "I'm building $project.name with version $project.version"
+    }
+    group = 'io.micrometer'
 }
 
 subprojects {
-    apply plugin: 'io.spring.release'
     apply plugin: 'java'
 
-    group = 'io.micrometer'
     description = 'Application monitoring instrumentation facade'
 
     contacts {
@@ -37,7 +41,7 @@ subprojects {
         maven { url 'https://repo.spring.io/libs-snapshot' }
     }
 
-    if(project.extensions.findByName('bintray')) {
+    if (project.extensions.findByName('bintray')) {
         bintray.pkg {
             labels = ['micrometer', 'atlas', 'metrics', 'prometheus', 'spectator', 'influx']
         }
