@@ -15,34 +15,34 @@
  */
 package io.micrometer.spring.export.prometheus;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.TagFormatter;
+import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.TagFormatter;
-import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ExtendWith(SpringExtension.class)
+@RunWith(SpringRunner.class)
 @SpringBootTest
-class EnablePrometheusMetricsTest {
+public class EnablePrometheusMetricsTest {
 
     @Autowired
     ApplicationContext context;
 
     @Test
-    void tagFormatting() {
+    public void tagFormatting() {
         assertThat(context.getBean(TagFormatter.class))
                 .isInstanceOf(PrometheusTagFormatter.class);
     }
 
     @Test
-    void meterRegistry() {
+    public void meterRegistry() {
         assertThat(context.getBean(MeterRegistry.class))
                 .isInstanceOf(PrometheusMeterRegistry.class);
     }

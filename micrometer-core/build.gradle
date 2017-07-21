@@ -30,6 +30,14 @@ dependencies {
     testCompile 'io.projectreactor.addons:reactor-test:3.1.0.BUILD-SNAPSHOT'
     testCompile 'io.projectreactor.ipc:reactor-netty:latest.release'
 
+    // JUnit 5
+    testCompile 'org.junit.platform:junit-platform-launcher:1.0.0-M5' // see https://github.com/junit-team/junit5/issues/586 for why this is necessary
+    testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0-M5'
+    testCompile 'org.junit.jupiter:junit-jupiter-params:5.0.0-M5'
+    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.0-M5'
+
+    testCompile 'org.assertj:assertj-core:3.+'
+
     jmh 'org.openjdk.jmh:jmh-core:latest.release'
     jmh 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
     jmh 'colt:colt:1.2.0'

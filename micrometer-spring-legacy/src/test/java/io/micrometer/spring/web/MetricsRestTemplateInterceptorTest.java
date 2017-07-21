@@ -19,7 +19,7 @@ import io.micrometer.core.instrument.IdentityTagFormatter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -29,14 +29,13 @@ import org.springframework.web.client.RestTemplate;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 
 /**
  * @author Jon Schneider
  */
-class MetricsRestTemplateInterceptorTest {
+public class MetricsRestTemplateInterceptorTest {
     @Test
-    void interceptRestTemplate() {
+    public void interceptRestTemplate() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
         RestTemplate restTemplate = new RestTemplate();
@@ -58,7 +57,7 @@ class MetricsRestTemplateInterceptorTest {
                 .containsInstanceOf(Timer.class)
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
 
-        assertEquals("OK", s);
+        assertThat(s).isEqualTo("OK");
 
         mockServer.verify();
     }

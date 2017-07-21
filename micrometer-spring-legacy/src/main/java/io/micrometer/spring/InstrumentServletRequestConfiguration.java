@@ -16,6 +16,7 @@
 package io.micrometer.spring;
 
 import io.micrometer.spring.web.MetricsHandlerInterceptor;
+import io.micrometer.spring.web.WebmvcTagConfigurer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -23,7 +24,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.TagFormatter;
-import org.springframework.boot.metrics.web.WebmvcTagConfigurer;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 
 /**

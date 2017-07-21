@@ -15,72 +15,75 @@
  */
 package io.micrometer.spring.export.atlas;
 
+import com.sun.net.httpserver.HttpServer;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.TagFormatter;
 import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
 import org.apache.catalina.LifecycleException;
-import org.apache.catalina.startup.Tomcat;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import io.micrometer.spring.LocalServer;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
-import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
-@ExtendWith(SpringExtension.class)
+@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = "atlas.step=PT1S")
-class EnableAtlasMetricsTest {
+public class EnableAtlasMetricsTest {
 
     @Autowired
     ApplicationContext context;
 
     @Test
-    void tagFormatting() {
+    public void tagFormatting() {
         assertThat(context.getBean(TagFormatter.class))
                 .isInstanceOf(AtlasTagFormatter.class);
     }
 
     @Test
-    void meterRegistry() {
+    public void meterRegistry() {
         assertThat(context.getBean(MeterRegistry.class))
                 .isInstanceOf(SpectatorMeterRegistry.class);
     }
 
     @Test
-    void metricsArePostedToAtlas() throws InterruptedException, LifecycleException {
+    public void metricsArePostedToAtlas() throws InterruptedException, LifecycleException {
         CountDownLatch metricsBatchesPosted = new CountDownLatch(1);
 
-        Tomcat mockAtlas = LocalServer.tomcatServer(7101,
-                route(POST("/api/v1/publish"), (request) -> {
-                    metricsBatchesPosted.countDown();
-                    return ServerResponse.ok()
-                            .header("Date", DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now()))
-                            .build();
-                })
-        );
-
         try {
-            metricsBatchesPosted.await(5000, TimeUnit.SECONDS);
-        } finally {
-            mockAtlas.stop();
+            HttpServer server = HttpServer.create(new InetSocketAddress(7101), 0);
+            server.createContext("/api/v1/publish", httpExchange -> {
+                httpExchange.getResponseHeaders()
+                        .add("Date", DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now()));
+                httpExchange.sendResponseHeaders(200, 0);
+                metricsBatchesPosted.countDown();
+            });
+
+            new Thread(server::start).run();
+
+            try {
+                metricsBatchesPosted.await(5000, TimeUnit.SECONDS);
+            } finally {
+                server.stop(0);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

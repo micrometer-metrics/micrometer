@@ -1,2 +1,2 @@
 org.springframework.boot.env.EnvironmentPostProcessor=\
-org.springframework.boot.metrics.MetricsEnvironmentPostProcessor
+io.micrometer.spring.MetricsEnvironmentPostProcessor

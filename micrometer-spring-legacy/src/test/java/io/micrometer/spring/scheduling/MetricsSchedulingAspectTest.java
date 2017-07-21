@@ -23,8 +23,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,15 +32,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.concurrent.CountDownLatch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ExtendWith(SpringExtension.class)
+@RunWith(SpringRunner.class)
 @SpringBootTest
-class MetricsSchedulingAspectTest {
+public class MetricsSchedulingAspectTest {
 
     static CountDownLatch longTaskStarted = new CountDownLatch(1);
     static CountDownLatch longTaskShouldComplete = new CountDownLatch(1);
@@ -54,7 +54,7 @@ class MetricsSchedulingAspectTest {
     ThreadPoolTaskScheduler scheduler;
 
     @Test
-    void scheduledIsInstrumented() throws InterruptedException {
+    public void scheduledIsInstrumented() throws InterruptedException {
         shortBeepsExecuted.await();
         while(scheduler.getActiveCount() > 1) {}
 

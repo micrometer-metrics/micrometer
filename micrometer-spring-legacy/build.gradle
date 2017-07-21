@@ -1,10 +1,18 @@
 plugins {
-    id 'org.springframework.boot' version '1.5.4.RELEASE'
+    id "io.spring.dependency-management" version "1.0.3.RELEASE"
 }
 
-apply plugin: 'org.junit.platform.gradle.plugin'
 apply plugin: 'nebula.optional-base'
 apply plugin: 'nebula.facet'
+
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:1.5.4.RELEASE'
+    }
+    dependencies {
+        dependency 'org.assertj:assertj-core:3.+'
+    }
+}
 
 facets {
     samples
@@ -22,18 +30,11 @@ dependencies {
     compile 'javax.servlet:javax.servlet-api:3.1.0', optional
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
 
-    // JUnit 5
-    testCompile 'org.junit.platform:junit-platform-launcher:1.0.0-M5' // see https://github.com/junit-team/junit5/issues/586 for why this is necessary
-    testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0-M5'
-    testCompile 'org.junit.jupiter:junit-jupiter-params:5.0.0-M5'
-    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.0-M5'
-
-    testCompile 'org.assertj:assertj-core:3.+'
-
     testCompile 'org.springframework.boot:spring-boot-starter-web'
     testCompile 'org.springframework.boot:spring-boot-actuator'
+
+    testCompile 'junit:junit:4.+'
     testCompile 'org.springframework.boot:spring-boot-starter-test'
-    testCompile 'org.springframework:spring-test'
 
     // for use in mock servers
     testCompile 'org.apache.tomcat.embed:tomcat-embed-core:8.5.15'

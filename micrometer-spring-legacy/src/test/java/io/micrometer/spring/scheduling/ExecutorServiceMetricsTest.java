@@ -19,10 +19,9 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
 import io.micrometer.spring.SpringMeters;
+import org.junit.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
@@ -32,17 +31,16 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
  * @author Jon Schneider
  * @author Clint Checketts
  */
-class ExecutorServiceMetricsTest {
+public class ExecutorServiceMetricsTest {
     private MeterRegistry registry;
 
-    @BeforeEach
-    void before() {
+    @Before
+    public void before() {
         registry = new SimpleMeterRegistry();
     }
 
-    @DisplayName("thread pool task executor can be instrumented after being initialized")
     @Test
-    void threadPoolTaskExecutor() {
+    public void threadPoolTaskExecutor() {
         ThreadPoolTaskExecutor exec = new ThreadPoolTaskExecutor();
         exec.initialize();
 
@@ -50,9 +48,8 @@ class ExecutorServiceMetricsTest {
         assertThreadPoolExecutorMetrics("exec");
     }
 
-    @DisplayName("thread pool task scheduler can be instrumented after being initialized")
     @Test
-    void taskScheduler() {
+    public void taskScheduler() {
         ThreadPoolTaskScheduler sched = new ThreadPoolTaskScheduler();
         sched.initialize();
 

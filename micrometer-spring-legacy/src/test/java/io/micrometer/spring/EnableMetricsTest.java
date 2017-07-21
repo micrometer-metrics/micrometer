@@ -15,9 +15,9 @@
  */
 package io.micrometer.spring;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.After;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -35,7 +35,7 @@ import io.micrometer.core.instrument.binder.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.LogbackMetrics;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -54,9 +54,9 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 /**
  * @author Jon Schneider
  */
-@ExtendWith(SpringExtension.class)
+@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class EnableMetricsTest {
+public class EnableMetricsTest {
     @Autowired
     ApplicationContext context;
 
@@ -69,13 +69,13 @@ class EnableMetricsTest {
     @Autowired
     SimpleMeterRegistry registry;
 
-    @AfterEach
-    void clearRegistry() {
+    @After
+    public void clearRegistry() {
         registry.clear();
     }
 
     @Test
-    void restTemplateIsInstrumented() {
+    public void restTemplateIsInstrumented() {
         MockRestServiceServer server = MockRestServiceServer.bindTo(external).build();
         server.expect(once(), requestTo("/api/external")).andExpect(method(HttpMethod.GET))
             .andRespond(withSuccess("{\"message\": \"hello\"}", MediaType.APPLICATION_JSON));
@@ -90,7 +90,7 @@ class EnableMetricsTest {
     }
 
     @Test
-    void requestMappingIsInstrumented() {
+    public void requestMappingIsInstrumented() {
         loopback.getForObject("/api/people", Set.class);
 
         assertThat(registry.findMeter(Timer.class, "http_server_requests"))
@@ -99,7 +99,7 @@ class EnableMetricsTest {
     }
 
     @Test
-    void automaticallyRegisteredBinders() {
+    public void automaticallyRegisteredBinders() {
         assertThat(context.getBeansOfType(MeterBinder.class).values())
                 .hasAtLeastOneElementOfType(LogbackMetrics.class)
                 .hasAtLeastOneElementOfType(JvmMemoryMetrics.class);
