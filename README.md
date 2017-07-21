@@ -27,3 +27,8 @@ dependencies {
     compile 'io.micrometer:micrometer-core:latest.integration'
 }
 ```
+
+-------------------------------------
+_Licensed under [Apache Software License 2.0](www.apache.org/licenses/LICENSE-2.0)_
+
+_Sponsored by [Pivotal](http://pivotal.io)_
