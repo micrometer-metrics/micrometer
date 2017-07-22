@@ -2,10 +2,11 @@ buildscript {
     repositories {
         jcenter()
         maven { url 'https://plugins.gradle.org/m2/' }
+        mavenLocal()
     }
     dependencies {
         classpath 'org.ow2.asm:asm:5.0.3'
-        classpath 'io.spring.gradle:spring-release-plugin:0.6.1'
+        classpath 'io.spring.gradle:spring-release-plugin:0.7.0-dev.0.uncommitted+8ffe1df'
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.2.0'
         classpath 'me.champeau.gradle:jmh-gradle-plugin:0.4.4'
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-M4'
