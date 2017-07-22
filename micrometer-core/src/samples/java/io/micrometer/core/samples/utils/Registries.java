@@ -20,7 +20,7 @@ import com.netflix.spectator.atlas.AtlasConfig;
 import com.netflix.spectator.atlas.AtlasRegistry;
 import com.sun.net.httpserver.HttpServer;
 import io.micrometer.core.instrument.datadog.DatadogConfig;
-import io.micrometer.core.instrument.datadog.DatadogRegistry;
+import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
 
@@ -69,7 +69,7 @@ public class Registries {
     }
 
     public static SpectatorMeterRegistry datadog() {
-        DatadogRegistry spectatorDatadog = new DatadogRegistry(Clock.SYSTEM, new DatadogConfig() {
+        DatadogConfig config = new DatadogConfig() {
             private final Properties props = new Properties();
 
             {
@@ -84,8 +84,8 @@ public class Registries {
             public String get(String k) {
                 return props.getProperty(k);
             }
-        });
-        spectatorDatadog.start();
-        return new SpectatorMeterRegistry(spectatorDatadog);
+        };
+
+        return new DatadogMeterRegistry(config);
     }
 }

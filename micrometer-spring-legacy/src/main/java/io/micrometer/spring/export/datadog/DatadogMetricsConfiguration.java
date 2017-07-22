@@ -15,29 +15,19 @@
  */
 package io.micrometer.spring.export.datadog;
 
-import com.netflix.spectator.api.Clock;
-import com.netflix.spectator.api.Registry;
 import io.micrometer.core.instrument.datadog.DatadogConfig;
-import io.micrometer.core.instrument.datadog.DatadogRegistry;
-import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
+import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 
 public class DatadogMetricsConfiguration {
     @Bean
-    SpectatorMeterRegistry meterRegistry(Registry registry) {
-        return new SpectatorMeterRegistry(registry);
+    DatadogMeterRegistry meterRegistry(DatadogConfig registry) {
+        return new DatadogMeterRegistry(registry);
     }
 
     @Bean
     DatadogConfig datadogConfig(Environment environment) {
         return environment::getProperty;
-    }
-
-    @Bean
-    DatadogRegistry datadogRegistry(DatadogConfig atlasConfig) {
-        DatadogRegistry registry = new DatadogRegistry(Clock.SYSTEM, atlasConfig);
-        registry.start();
-        return registry;
     }
 }
