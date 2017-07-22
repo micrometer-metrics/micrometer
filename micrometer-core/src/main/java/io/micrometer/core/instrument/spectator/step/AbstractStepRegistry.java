@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.spectator.step;
 
 import com.netflix.spectator.api.*;
 import com.netflix.spectator.impl.Scheduler;
-import io.micrometer.core.instrument.datadog.DatadogConfig;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -47,7 +46,7 @@ public abstract class AbstractStepRegistry extends AbstractRegistry {
 
     private Scheduler scheduler;
 
-    public AbstractStepRegistry(Clock clock, DatadogConfig config) {
+    public AbstractStepRegistry(Clock clock, StepRegistryConfig config) {
         super(new StepClock(clock, config.step().toMillis()), config);
         this.clock = clock;
 
