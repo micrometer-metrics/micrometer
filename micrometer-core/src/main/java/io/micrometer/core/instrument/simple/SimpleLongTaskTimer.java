@@ -27,13 +27,22 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class SimpleLongTaskTimer extends AbstractSimpleMeter implements LongTaskTimer {
+    private static final Tag TYPE_TAG = SimpleUtils.typeTag(Type.LongTaskTimer);
+    private static final Tag STAT_ACTIVE_TASKS_TAG = Tag.of("statistic", "activeTasks");
+    private static final Tag STAT_DURATION_TAG = Tag.of("statistic", "duration");
+
     private final ConcurrentMap<Long, Long> tasks = new ConcurrentHashMap<>();
     private final AtomicLong nextTask = new AtomicLong(0L);
     private final Clock clock;
 
+    private final MeterId activeTasksId;
+    private final MeterId durationId;
+
     public SimpleLongTaskTimer(MeterId id, Clock clock) {
         super(id);
         this.clock = clock;
+        this.activeTasksId = id.withTags(TYPE_TAG, STAT_ACTIVE_TASKS_TAG);
+        this.durationId = id.withTags(TYPE_TAG, STAT_DURATION_TAG);
     }
 
     @Override
@@ -78,8 +87,7 @@ public class SimpleLongTaskTimer extends AbstractSimpleMeter implements LongTask
     @Override
     public Iterable<Measurement> measure() {
         return Arrays.asList(
-                id.withTags(SimpleUtils.typeTag(getType()), Tag.of("statistic", "activeTasks")).measurement(activeTasks()),
-                id.withTags(SimpleUtils.typeTag(getType()), Tag.of("statistic", "duration")).measurement(duration())
-        );
+                activeTasksId.measurement(activeTasks()),
+                durationId.measurement(duration()));
     }
 }
