@@ -18,9 +18,9 @@ package io.micrometer.core.instrument.simple;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.internal.MeterId;
-import io.micrometer.core.instrument.internal.TimeUtils;
-import io.micrometer.core.instrument.internal.AbstractTimer;
+import io.micrometer.core.instrument.util.MeterId;
+import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.core.instrument.AbstractTimer;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;

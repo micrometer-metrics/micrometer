@@ -18,8 +18,8 @@ package io.micrometer.core.instrument.spectator;
 import com.netflix.spectator.api.*;
 import com.netflix.spectator.api.Measurement;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.internal.AbstractMeterRegistry;
-import io.micrometer.core.instrument.internal.ImmutableTag;
+import io.micrometer.core.instrument.AbstractMeterRegistry;
+import io.micrometer.core.instrument.ImmutableTag;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 

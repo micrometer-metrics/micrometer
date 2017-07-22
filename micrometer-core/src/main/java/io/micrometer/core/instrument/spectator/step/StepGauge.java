@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.datadog;
+package io.micrometer.core.instrument.spectator.step;
 
 import com.netflix.spectator.api.Clock;
 import com.netflix.spectator.api.Gauge;
@@ -23,13 +23,13 @@ import com.netflix.spectator.impl.AtomicDouble;
 
 import java.util.Collections;
 
-class DatadogGauge implements Gauge {
+class StepGauge implements Gauge {
     private final Id id;
     private final Clock clock;
     private final AtomicDouble value;
 
     /** Create a new instance. */
-    DatadogGauge(Id id, Clock clock) {
+    public StepGauge(Id id, Clock clock) {
         this.id = id;
         this.clock = clock;
         this.value = new AtomicDouble(0.0);

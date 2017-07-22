@@ -17,7 +17,7 @@ package io.micrometer.core.instrument.stats.hist;
 
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.internal.TimeUtils.convert;
+import static io.micrometer.core.instrument.util.TimeUtils.convert;
 
 public class TimeScaleNormalHistogram extends NormalHistogram<Double> {
     private final TimeUnit timeScale;

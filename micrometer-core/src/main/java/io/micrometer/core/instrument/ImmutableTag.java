@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.internal;
-
-import io.micrometer.core.instrument.Tag;
+package io.micrometer.core.instrument;
 
 import java.util.Objects;
 

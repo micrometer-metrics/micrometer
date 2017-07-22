@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.internal.MeterId;
+import io.micrometer.core.instrument.util.MeterId;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;

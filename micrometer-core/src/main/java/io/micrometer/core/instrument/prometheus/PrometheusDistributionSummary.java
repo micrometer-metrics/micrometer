@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument.prometheus;
 
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.internal.MeterId;
+import io.micrometer.core.instrument.util.MeterId;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Measurement;
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.datadog;
+package io.micrometer.core.instrument.spectator.step;
 
 import com.netflix.spectator.api.Clock;
 
@@ -23,13 +23,13 @@ import com.netflix.spectator.api.Clock;
  * from gauges will all have the same timestamp for a given reporting
  * interval.
  */
-class StepClock implements Clock {
+public class StepClock implements Clock {
 
   private final Clock impl;
   private final long step;
 
   /** Create a new instance. */
-  StepClock(Clock impl, long step) {
+  public StepClock(Clock impl, long step) {
     this.impl = impl;
     this.step = step;
   }

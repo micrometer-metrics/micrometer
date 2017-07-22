@@ -17,7 +17,7 @@ package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.internal.MeterId;
+import io.micrometer.core.instrument.util.MeterId;
 
 import java.util.Collections;
 import java.util.concurrent.atomic.DoubleAdder;

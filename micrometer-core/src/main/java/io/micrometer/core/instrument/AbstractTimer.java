@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.internal;
+package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.util.MeterId;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;

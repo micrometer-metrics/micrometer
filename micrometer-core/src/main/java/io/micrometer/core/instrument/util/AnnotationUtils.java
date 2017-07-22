@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.internal;
+package io.micrometer.core.instrument.util;
 
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.annotation.TimedSet;
@@ -27,6 +27,8 @@ import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 
 /**
+ * Convenience utility for locating {@link Timed} annotations on classes and methods.
+ *
  * @author Jon Schneider
  */
 public class AnnotationUtils {

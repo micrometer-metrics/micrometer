@@ -74,7 +74,7 @@ public class Registries {
 
             {
                 try {
-                    props.load(Registries.class.getResourceAsStream("/application.properties"));
+                    props.load(Registries.class.getResourceAsStream("/datadog.properties"));
                 } catch (IOException e) {
                     throw new RuntimeException("must have application.properties with datadog.apiKey defined", e);
                 }

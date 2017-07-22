@@ -16,9 +16,9 @@
 package io.micrometer.core.instrument.prometheus;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.internal.AbstractMeterRegistry;
-import io.micrometer.core.instrument.internal.MapAccess;
-import io.micrometer.core.instrument.internal.MeterId;
+import io.micrometer.core.instrument.AbstractMeterRegistry;
+import io.micrometer.core.instrument.util.MapAccess;
+import io.micrometer.core.instrument.util.MeterId;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 import io.prometheus.client.Collector;

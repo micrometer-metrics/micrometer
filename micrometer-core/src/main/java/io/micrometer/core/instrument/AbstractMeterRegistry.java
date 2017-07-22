@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.internal;
+package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.stats.hist.Histogram;

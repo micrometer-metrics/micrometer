@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.internal;
 
+import io.micrometer.core.instrument.util.MeterId;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

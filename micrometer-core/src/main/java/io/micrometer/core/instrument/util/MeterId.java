@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.internal;
+package io.micrometer.core.instrument.util;
 
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Measurement;
@@ -27,6 +27,12 @@ import java.util.stream.Stream;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.StreamSupport.stream;
 
+/**
+ * Used as a convenient data structure to hold a unique identifier for Meters (a combination
+ * of their name and tags), but should not be exposed to users through a public API.
+ *
+ * @author Jon Schneider
+ */
 public class MeterId {
     private final String name;
     private final List<Tag> tags;

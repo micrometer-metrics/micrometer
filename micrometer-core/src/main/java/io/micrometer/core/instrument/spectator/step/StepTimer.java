@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.datadog;
+package io.micrometer.core.instrument.spectator.step;
 
 import com.netflix.spectator.api.*;
 import com.netflix.spectator.impl.StepDouble;
@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Timer that reports four measurements to Datadog:
+ * Timer that reports four measurements to a monitoring system:
  * <p>
  * <ul>
  * <li><b>count:</b> counter incremented each time record is called</li>
@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * the values since the last complete interval rather than the total for the
  * life of the process.</p>
  */
-class DatadogTimer implements Timer {
+class StepTimer implements Timer {
 
     private final Id id;
     private final Clock clock;
@@ -58,7 +58,7 @@ class DatadogTimer implements Timer {
     /**
      * Create a new instance.
      */
-    DatadogTimer(Id id, Clock clock, long step) {
+    public StepTimer(Id id, Clock clock, long step) {
         this.id = id;
         this.clock = clock;
         this.count = new StepLong(0L, clock, step);

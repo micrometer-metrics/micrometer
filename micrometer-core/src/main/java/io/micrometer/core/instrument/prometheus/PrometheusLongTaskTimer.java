@@ -18,7 +18,7 @@ package io.micrometer.core.instrument.prometheus;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.internal.MeterId;
+import io.micrometer.core.instrument.util.MeterId;
 
 public class PrometheusLongTaskTimer implements LongTaskTimer {
     private final MeterId id;

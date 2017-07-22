@@ -13,10 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.internal;
+package io.micrometer.core.instrument.util;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Modification on {@link TimeUnit#convert(long, TimeUnit)} that accepts and preserves
+ * precision from a {@code double} argument.
+ *
+ * @author Jon Schneider
+ */
 public class TimeUtils {
     public static double convert(double t, TimeUnit sourceUnit, TimeUnit destinationUnit) {
         switch(sourceUnit) {

@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.internal;
+package io.micrometer.core.instrument.util;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
+/**
+ * @author Jon Schneider
+ */
 public class MapAccess {
     /**
      * This method should be used instead of the

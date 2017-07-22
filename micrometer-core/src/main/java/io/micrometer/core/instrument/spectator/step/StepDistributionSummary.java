@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.datadog;
+package io.micrometer.core.instrument.spectator.step;
 
 import com.netflix.spectator.api.*;
 import com.netflix.spectator.impl.StepDouble;
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Distribution summary that reports four measurements to Datadog:
+ * Distribution summary that reports four measurements to a monitoring system:
  * <p>
  * <ul>
  * <li><b>count:</b> counter incremented each time record is called</li>
@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * the values since the last complete interval rather than the total for the
  * life of the process.</p>
  */
-class DatadogDistributionSummary implements DistributionSummary {
+class StepDistributionSummary implements DistributionSummary {
 
     private final Id id;
     private final StepLong count;
@@ -55,7 +55,7 @@ class DatadogDistributionSummary implements DistributionSummary {
     /**
      * Create a new instance.
      */
-    DatadogDistributionSummary(Id id, Clock clock, long step) {
+    public StepDistributionSummary(Id id, Clock clock, long step) {
         this.id = id;
         this.count = new StepLong(0L, clock, step);
         this.total = new StepLong(0L, clock, step);

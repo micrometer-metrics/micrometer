@@ -18,7 +18,7 @@ package io.micrometer.core.instrument.prometheus;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.internal.MeterId;
+import io.micrometer.core.instrument.util.MeterId;
 
 import java.util.Collections;
 

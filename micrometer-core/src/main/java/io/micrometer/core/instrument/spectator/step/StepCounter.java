@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.datadog;
+package io.micrometer.core.instrument.spectator.step;
 
 import com.netflix.spectator.api.Clock;
 import com.netflix.spectator.api.Counter;
@@ -24,16 +24,16 @@ import com.netflix.spectator.impl.StepLong;
 import java.util.Collections;
 
 /**
- * Counter that reports a rate per second to Datadog. Note that {@link #count()} will
- * report the number events in the last complete interval rather than the total for
+ * Counter that reports a rate per second to a monitoring system. Note that {@link #count()}
+ * will report the number events in the last complete interval rather than the total for
  * the life of the process.
  */
-public class DatadogCounter implements Counter {
+public class StepCounter implements Counter {
     private final Id id;
     private final StepLong value;
 
     /** Create a new instance. */
-    DatadogCounter(Id id, Clock clock, long step) {
+    public StepCounter(Id id, Clock clock, long step) {
         this.id = id;
         this.value = new StepLong(0L, clock, step);
     }

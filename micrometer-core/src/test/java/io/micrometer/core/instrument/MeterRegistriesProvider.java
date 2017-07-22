@@ -30,7 +30,7 @@ class MeterRegistriesProvider implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
         return Stream.of(
-                new SpectatorMeterRegistry(new DefaultRegistry(), new MockClock()),
+                (Object) new SpectatorMeterRegistry(new DefaultRegistry(), new MockClock()),
                 new PrometheusMeterRegistry(new CollectorRegistry(true), new MockClock()),
                 new SimpleMeterRegistry(new MockClock())
         ).map(Arguments::of);

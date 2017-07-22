@@ -17,7 +17,7 @@ package io.micrometer.spring.scheduling;
 
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.internal.AnnotationUtils;
+import io.micrometer.core.instrument.util.AnnotationUtils;
 import io.micrometer.core.instrument.stats.quantile.WindowSketchQuantiles;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.stats.hist;
 
-import io.micrometer.core.instrument.internal.TimeUtils;
+import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
