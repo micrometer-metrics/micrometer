@@ -627,7 +627,7 @@ public class GKQuantiles implements Quantiles {
      * <li><b>offset</b>: the difference between the least rank of this element and the rank of the preceding
      * element.</li>
      * <li><b>range</b>: the span between this elements least and most rank</li>
-     * <ul>
+     * </ul>
      */
     private class Tuple implements Serializable {
         private static final long serialVersionUID = 1L;

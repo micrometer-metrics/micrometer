@@ -31,10 +31,10 @@ import java.util.Random;
  *    Algorithms. Springer Berlin Heidelberg, 2013. 77-96.
  * Available at: http://arxiv.org/abs/1407.1121
  *
- * Original code: <https://github.com/dgryski/go-frugal>
+ * Original code: &lt;https://github.com/dgryski/go-frugal&gt;
  * More info: http://blog.aggregateknowledge.com/2013/09/16/sketch-of-the-day-frugal-streaming/
  *
- * @author Maycon Viana Bordin <mayconbordin@gmail.com>
+ * @author Maycon Viana Bordin &lt;mayconbordin@gmail.com&gt;
  * @author Jon Schneider
  */
 public class Frugal2UQuantiles implements Quantiles {

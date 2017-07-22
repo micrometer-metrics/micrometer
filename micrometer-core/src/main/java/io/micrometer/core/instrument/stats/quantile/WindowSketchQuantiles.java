@@ -26,7 +26,7 @@ import java.util.*;
  * Singh Manku</i>. In detail the data structure described there is used in this class. The query
  * algorithm used here differs from the paper. In a nutshell the data structure works as follows:<br>
  * The fixed size window (please refer to {@link #setWindowSize(int)} to change the default value)
- * of a stream gets copied L times, which generated L <it>levels</it>. At one level the stream gets
+ * of a stream gets copied L times, which generated L &lt;it&gt;levels&lt;/it&gt;. At one level the stream gets
  * partitioned into equal sized blocks. Each level has a block size of it's own. <br>
  * At each block runs an instance of {@link CKMSQuantiles}. To query a quantile, the blocks are used to
  * reassemble the window, choosing disjoint blocks of different level, starting with big blocks and
