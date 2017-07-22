@@ -30,16 +30,24 @@ import java.util.concurrent.atomic.LongAdder;
  * @author Jon Schneider
  */
 public class SimpleTimer extends AbstractTimer {
+    private static final Tag STAT_COUNT_TAG = Tag.of("statistic", "count");
+    private static final Tag STAT_AMOUNT_TAG = Tag.of("statistic", "amount");
+    private static final Tag TYPE_TAG = SimpleUtils.typeTag(Type.Timer);
+
+    private final MeterId countId;
+    private final MeterId amountId;
     private LongAdder count = new LongAdder();
     private LongAdder totalTime = new LongAdder();
 
     public SimpleTimer(MeterId id, Clock clock) {
         super(id, clock);
+        this.countId = id.withTags(TYPE_TAG, STAT_COUNT_TAG);
+        this.amountId = id.withTags(TYPE_TAG, STAT_AMOUNT_TAG);
     }
 
     @Override
     public void record(long amount, TimeUnit unit) {
-        if(amount >= 0) {
+        if (amount >= 0) {
             count.increment();
             totalTime.add(TimeUnit.NANOSECONDS.convert(amount, unit));
         }
@@ -58,8 +66,7 @@ public class SimpleTimer extends AbstractTimer {
     @Override
     public Iterable<Measurement> measure() {
         return Arrays.asList(
-                id.withTags(SimpleUtils.typeTag(getType()), Tag.of("statistic", "count")).measurement(count()),
-                id.withTags(SimpleUtils.typeTag(getType()), Tag.of("statistic", "amount")).measurement(totalTime(TimeUnit.NANOSECONDS))
-        );
+                countId.measurement(count()),
+                amountId.measurement(totalTime(TimeUnit.NANOSECONDS)));
     }
 }

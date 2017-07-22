@@ -47,8 +47,5 @@ dependencies {
 
 jmh {
     jmhVersion = '1.18'
-    warmupIterations = 2
-    iterations = 5
-    fork = 0
     duplicateClassesStrategy = 'warn'
 }
