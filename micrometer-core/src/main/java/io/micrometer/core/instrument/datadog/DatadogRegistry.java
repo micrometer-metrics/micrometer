@@ -38,7 +38,7 @@ import static java.util.stream.Collectors.joining;
  *
  * @author Jon Schneider
  */
-final class DatadogRegistry extends AbstractStepRegistry {
+public final class DatadogRegistry extends AbstractStepRegistry {
 
     private final URL metricsEndpoint;
     private final String hostTag;

@@ -15,9 +15,10 @@
  */
 package io.micrometer.core.instrument.spectator;
 
+import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.AbstractTimer;
+import io.micrometer.core.instrument.Observer;
 import io.micrometer.core.instrument.util.MeterId;
 import io.micrometer.core.instrument.util.TimeUtils;
 
@@ -26,13 +27,13 @@ import java.util.concurrent.TimeUnit;
 public class SpectatorTimer extends AbstractTimer {
     private com.netflix.spectator.api.Timer timer;
 
-    SpectatorTimer(com.netflix.spectator.api.Timer timer, Clock clock) {
-        super(new MeterId(timer.id().name(), SpectatorUtils.tags(timer)), clock);
+    public SpectatorTimer(com.netflix.spectator.api.Timer timer, Clock clock, Observer... observers) {
+        super(new MeterId(timer.id().name(), SpectatorUtils.tags(timer)), clock, observers);
         this.timer = timer;
     }
 
     @Override
-    public void record(long amount, TimeUnit unit) {
+    public void recordTime(long amount, TimeUnit unit) {
         timer.record(unit.toNanos(amount), TimeUnit.NANOSECONDS);
     }
 

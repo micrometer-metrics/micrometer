@@ -16,10 +16,11 @@
 package io.micrometer.core.instrument.spectator;
 
 import com.netflix.spectator.api.*;
-import com.netflix.spectator.api.Measurement;
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.AbstractMeterRegistry;
 import io.micrometer.core.instrument.ImmutableTag;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Observer;
+import io.micrometer.core.instrument.stats.hist.Bucket;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
@@ -27,8 +28,8 @@ import java.util.*;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
-import static java.util.stream.StreamSupport.stream;
 import static io.micrometer.core.instrument.spectator.SpectatorUtils.spectatorId;
+import static java.util.stream.StreamSupport.stream;
 
 /**
  * @author Jon Schneider
@@ -72,12 +73,6 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
                 return clock.monotonicTime();
             }
         });
-    }
-
-    private Collection<com.netflix.spectator.api.Tag> toSpectatorTags(Iterable<io.micrometer.core.instrument.Tag> tags) {
-        return stream(tags.spliterator(), false)
-                .map(t -> new BasicTag(t.getKey(), t.getValue()))
-                .collect(Collectors.toList());
     }
 
     @Override
@@ -124,42 +119,10 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
         return (io.micrometer.core.instrument.Counter) meterMap.computeIfAbsent(counter, c -> new SpectatorCounter(counter));
     }
 
-    @Override
-    public io.micrometer.core.instrument.DistributionSummary distributionSummary(String name, Iterable<io.micrometer.core.instrument.Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
-        registerQuantilesGaugeIfNecessary(name, tags, quantiles);
-        com.netflix.spectator.api.DistributionSummary ds = registry.distributionSummary(name, toSpectatorTags(tags));
-        return (io.micrometer.core.instrument.DistributionSummary) meterMap.computeIfAbsent(ds, d -> new SpectatorDistributionSummary(ds));
-    }
-
-    @Override
-    protected io.micrometer.core.instrument.Timer timer(String name, Iterable<io.micrometer.core.instrument.Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
-        registerQuantilesGaugeIfNecessary(name, tags, quantiles);
-        registerHistogramCounterIfNecessary(name, tags, histogram);
-        com.netflix.spectator.api.Timer timer = registry.timer(name, toSpectatorTags(tags));
-        return (io.micrometer.core.instrument.Timer) meterMap.computeIfAbsent(timer, t -> new SpectatorTimer(timer, getClock()));
-    }
-
-    private void registerHistogramCounterIfNecessary(String name, Iterable<io.micrometer.core.instrument.Tag> tags, Histogram<?> histogram) {
-        // FIXME need the heisen-counter to complete
-//        if(histogram != null) {
-//            for (Bucket<?> bucket : histogram.getBuckets()) {
-//                List<com.netflix.spectator.api.Tag> histogramTags = new LinkedList<>(toSpectatorTags(tags));
-//                histogramTags.add(new BasicTag("bucket", bucket.toString()));
-//                histogramTags.add(new BasicTag("statistic", "histogram"));
-//                registry.counter(registry.createId(name, histogramTags)).count();
-//            }
-//        }
-    }
-
-    private void registerQuantilesGaugeIfNecessary(String name, Iterable<io.micrometer.core.instrument.Tag> tags, Quantiles quantiles) {
-        if(quantiles != null) {
-            for (Double q : quantiles.monitored()) {
-                List<com.netflix.spectator.api.Tag> quantileTags = new LinkedList<>(toSpectatorTags(tags));
-                quantileTags.add(new BasicTag("quantile", Double.isNaN(q) ? "NaN" : Double.toString(q)));
-                quantileTags.add(new BasicTag("statistic", "quantile"));
-                registry.gauge(registry.createId(name, quantileTags), q, quantiles::get);
-            }
-        }
+    private Collection<com.netflix.spectator.api.Tag> toSpectatorTags(Iterable<io.micrometer.core.instrument.Tag> tags) {
+        return stream(tags.spliterator(), false)
+                .map(t -> new BasicTag(t.getKey(), t.getValue()))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -190,6 +153,59 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
         registry.register(gauge);
         meterMap.computeIfAbsent(gauge, g -> new SpectatorGauge(gauge));
         return obj;
+    }
+
+    @Override
+    protected io.micrometer.core.instrument.Timer timer(String name, Iterable<io.micrometer.core.instrument.Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
+        Observer[] observers = createObserversIfNecessary(name, tags, quantiles, histogram);
+
+        com.netflix.spectator.api.Timer timer = registry.timer(name, toSpectatorTags(tags));
+        return (io.micrometer.core.instrument.Timer) meterMap.computeIfAbsent(timer,
+                t -> new SpectatorTimer(timer, getClock(), observers));
+    }
+
+    private Observer[] createObserversIfNecessary(String name, Iterable<io.micrometer.core.instrument.Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
+        List<Observer> observers = new ArrayList<>(2);
+
+        if (quantiles != null) {
+            for (Double q : quantiles.monitored()) {
+                List<com.netflix.spectator.api.Tag> quantileTags = new LinkedList<>(toSpectatorTags(tags));
+                quantileTags.add(new BasicTag("quantile", Double.isNaN(q) ? "NaN" : Double.toString(q)));
+                quantileTags.add(new BasicTag("statistic", "quantile"));
+
+                Id id = registry.createId(name, quantileTags);
+                registry.gauge(id, q, quantiles::get);
+
+                Gauge gauge = registry.gauge(id);
+                meterMap.computeIfAbsent(gauge, t -> new SpectatorGauge(gauge));
+            }
+
+            observers.add(quantiles);
+        }
+
+        if (histogram != null) {
+            for (Bucket<?> bucket : histogram.getBuckets()) {
+                List<com.netflix.spectator.api.Tag> histogramTags = new LinkedList<>(toSpectatorTags(tags));
+                histogramTags.add(new BasicTag("bucket", bucket.toString()));
+                histogramTags.add(new BasicTag("statistic", "histogram"));
+
+                Counter counter = registry.counter(registry.createId(name, histogramTags));
+                meterMap.computeIfAbsent(counter, t -> new SpectatorCounter(counter));
+            }
+
+            observers.add(histogram);
+        }
+
+        return observers.toArray(new Observer[0]);
+    }
+
+    @Override
+    public io.micrometer.core.instrument.DistributionSummary distributionSummary(String name, Iterable<io.micrometer.core.instrument.Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
+        Observer[] observers = createObserversIfNecessary(name, tags, quantiles, histogram);
+
+        com.netflix.spectator.api.DistributionSummary ds = registry.distributionSummary(name, toSpectatorTags(tags));
+        return (io.micrometer.core.instrument.DistributionSummary) meterMap.computeIfAbsent(ds,
+                d -> new SpectatorDistributionSummary(ds, observers));
     }
 
     /**

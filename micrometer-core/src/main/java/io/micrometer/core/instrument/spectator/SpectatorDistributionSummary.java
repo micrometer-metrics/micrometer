@@ -15,14 +15,15 @@
  */
 package io.micrometer.core.instrument.spectator;
 
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.util.MeterId;
 
-public class SpectatorDistributionSummary implements DistributionSummary {
+public class SpectatorDistributionSummary extends AbstractDistributionSummary {
     private com.netflix.spectator.api.DistributionSummary distributionSummary;
 
-    public SpectatorDistributionSummary(com.netflix.spectator.api.DistributionSummary distributionSummary) {
+    public SpectatorDistributionSummary(com.netflix.spectator.api.DistributionSummary distributionSummary,
+                                        Observer... observers) {
+        super(new MeterId(distributionSummary.id().name(), SpectatorUtils.tags(distributionSummary)), observers);
         this.distributionSummary = distributionSummary;
     }
 
@@ -32,7 +33,7 @@ public class SpectatorDistributionSummary implements DistributionSummary {
      *               implementation takes a long.
      */
     @Override
-    public void record(double amount) {
+    public void recordSummary(double amount) {
         distributionSummary.record((long) amount);
     }
 

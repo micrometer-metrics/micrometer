@@ -21,14 +21,21 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-public abstract class AbstractTimer implements Timer {
+public abstract class AbstractTimer extends AbstractObserverHolder implements Timer {
     protected Clock clock;
-    protected MeterId id;
 
-    protected AbstractTimer(MeterId id, Clock clock) {
+    protected AbstractTimer(MeterId id, Clock clock, Observer... observers) {
+        super(id, observers);
         this.clock = clock;
-        this.id = id;
     }
+
+    public void record(long amount, TimeUnit unit) {
+        recordTime(amount, unit);
+        observe(amount);
+    }
+
+    public abstract void recordTime(long amount, TimeUnit unit);
+
 
     @Override
     public <T> T recordCallable(Callable<T> f) throws Exception {
