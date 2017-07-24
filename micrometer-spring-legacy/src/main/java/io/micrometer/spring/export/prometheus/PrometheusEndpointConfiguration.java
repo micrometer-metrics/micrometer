@@ -15,9 +15,9 @@
  */
 package io.micrometer.spring.export.prometheus;
 
+import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 
 @Configuration
 public class PrometheusEndpointConfiguration {

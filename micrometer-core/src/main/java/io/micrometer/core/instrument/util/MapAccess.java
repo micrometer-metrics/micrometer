@@ -23,22 +23,16 @@ import java.util.function.Function;
  */
 public class MapAccess {
     /**
-     * This method should be used instead of the
-     * {@link ConcurrentMap#computeIfAbsent(Object, Function)} call to minimize
-     * thread contention. This method does not require locking for the common case
-     * where the key exists, but potentially performs additional computation when
-     * absent.
+     * Convenience method for {@link ConcurrentMap#computeIfAbsent(Object, Function)} that casts the result
+     * to the intended subtype.
      */
     @SuppressWarnings("unchecked")
     public static <K, V, W extends V> W computeIfAbsent(ConcurrentMap<K, V> map, K k, Function<? super K, ? extends W> f) {
-        V v = map.get(k);
-        if (v == null) {
-            V tmp = f.apply(k);
-            v = map.putIfAbsent(k, tmp);
-            if (v == null) {
-                v = tmp;
-            }
-        }
-        return (W) v;
+        /**
+         * TODO Look more carefully at {@link com.netflix.spectator.api.Utils#computeIfAbsent(ConcurrentMap, Object, Function)}
+         * to see why it apparently doesn't satisfactorily prevent more than one insertion of a key. Perhaps they didn't
+         * intend to prohibit this?
+         */
+        return (W) map.computeIfAbsent(k, f);
     }
 }

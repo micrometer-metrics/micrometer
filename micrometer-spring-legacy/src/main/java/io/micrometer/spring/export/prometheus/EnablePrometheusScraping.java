@@ -43,8 +43,7 @@ import java.lang.annotation.*;
  * <li>{@code endpoints.prometheus.sensitive} (default: {@code true})</li>
  * </ul>
  *
- * @author Marco Aust
- * @author Eliezio Oliveira
+ * @author Jon Schneider
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

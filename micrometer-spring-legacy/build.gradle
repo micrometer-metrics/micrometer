@@ -46,4 +46,6 @@ dependencies {
     testRuntime 'org.apache.httpcomponents:httpclient:4.4+'
 
     samplesCompile 'colt:colt:1.2.0'
+    samplesCompile 'org.springframework.boot:spring-boot-starter-web'
+    samplesCompile 'org.springframework.boot:spring-boot-actuator'
 }

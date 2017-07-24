@@ -32,8 +32,6 @@ import javax.annotation.PostConstruct;
  * @author Jon Schneider
  */
 @Configuration
-// this class didn't exist until Spring 5
-@ConditionalOnMissingClass("org.springframework.web.server.WebFilter") // TODO got to be a better way...
 @Import({
         RestTemplateMetricsConfiguration.class,
         RecommendedMeterBinders.class,
