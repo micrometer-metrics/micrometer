@@ -15,6 +15,7 @@
  */
 package io.micrometer.spring.export.prometheus;
 
+import io.prometheus.client.CollectorRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
@@ -27,7 +28,12 @@ public class PrometheusMetricsConfiguration {
     }
 
     @Bean
+    CollectorRegistry collectorRegistry() {
+        return new CollectorRegistry();
+    }
+
+    @Bean
     PrometheusMeterRegistry meterRegistry() {
-        return new PrometheusMeterRegistry();
+        return new PrometheusMeterRegistry(collectorRegistry());
     }
 }
