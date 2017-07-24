@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.stats.quantile;
 
+import io.micrometer.core.instrument.Observer;
+
 import java.util.Collection;
 
 /**
@@ -24,13 +26,7 @@ import java.util.Collection;
  *
  * @author Jon Schneider
  */
-public interface Quantiles {
-    /**
-     * Add a sample
-     * @param value
-     */
-    void observe(double value);
-    
+public interface Quantiles extends Observer {
     /**
      * @param percentile (0 .. 1.0)
      * @return Get the Nth percentile

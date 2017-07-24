@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.prometheus;
 
+import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.util.MeterId;
 import io.micrometer.core.instrument.util.TimeUtils;
 
@@ -32,7 +32,7 @@ public class PrometheusTimer extends AbstractTimer {
     }
 
     @Override
-    public void record(long amount, TimeUnit unit) {
+    public void recordTime(long amount, TimeUnit unit) {
         if (amount >= 0) {
             final double seconds = TimeUnit.NANOSECONDS.convert(amount, unit) / 10e8;
 

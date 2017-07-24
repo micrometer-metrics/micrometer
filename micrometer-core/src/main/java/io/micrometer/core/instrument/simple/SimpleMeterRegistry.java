@@ -16,11 +16,12 @@
 package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.util.MapAccess;
-import io.micrometer.core.instrument.util.MeterId;
+import io.micrometer.core.instrument.Observer;
+import io.micrometer.core.instrument.stats.hist.Bucket;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
-import io.micrometer.core.instrument.AbstractMeterRegistry;
+import io.micrometer.core.instrument.util.MapAccess;
+import io.micrometer.core.instrument.util.MeterId;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,17 +51,18 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
-        registerQuantilesGaugeIfNecessary(name, tags, quantiles);
-        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, tags), SimpleDistributionSummary::new);
+        Observer[] observers = createObserversIfNecessary(name, tags, quantiles, histogram);
+        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, tags), id -> new SimpleDistributionSummary(id, observers));
     }
 
     @Override
     protected io.micrometer.core.instrument.Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
-        registerQuantilesGaugeIfNecessary(name, tags, quantiles);
-        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, tags), id -> new SimpleTimer(id, getClock()));
+        Observer[] observers = createObserversIfNecessary(name, tags, quantiles, histogram);
+        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, tags), id -> new SimpleTimer(id, getClock(), observers));
     }
 
-    private void registerQuantilesGaugeIfNecessary(String name, Iterable<Tag> tags, Quantiles quantiles) {
+    private Observer[] createObserversIfNecessary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
+        List<Observer> observers = new ArrayList<>();
         if(quantiles != null) {
             for (Double q : quantiles.monitored()) {
                 List<Tag> quantileTags = new LinkedList<>();
@@ -68,7 +70,23 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
                 quantileTags.add(Tag.of("quantile", Double.isNaN(q) ? "NaN" : Double.toString(q)));
                 MapAccess.computeIfAbsent(meterMap, new MeterId(name + ".quantiles", quantileTags), id -> new SimpleGauge<>(id, q, quantiles::get));
             }
+
+            observers.add(quantiles);
         }
+
+        if(histogram != null) {
+            for (Bucket<?> bucket : histogram.getBuckets()) {
+                List<Tag> histogramTags = new LinkedList<>();
+                tags.forEach(histogramTags::add);
+                histogramTags.add(Tag.of("bucket", bucket.toString()));
+                histogramTags.add(Tag.of("statistic", "histogram"));
+                MapAccess.computeIfAbsent(meterMap, new MeterId(name + ".histogram", histogramTags), SimpleCounter::new);
+            }
+
+            observers.add(histogram);
+        }
+
+        return observers.toArray(new Observer[0]);
     }
 
     @Override

@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.stats.hist;
 
-import io.micrometer.core.instrument.Observer;
-
-import java.util.Collection;
+package io.micrometer.core.instrument;
 
 /**
- * @author Jon Schneider
+ * @author Dmitry Poluyanov
+ * @since 23.07.17
  */
-public interface Histogram<T> extends Observer {
-    Collection<Bucket<T>> getBuckets();
+public interface Observer {
+    /**
+     * Add a sample
+     * @param value
+     */
+    void observe(double value);
 }

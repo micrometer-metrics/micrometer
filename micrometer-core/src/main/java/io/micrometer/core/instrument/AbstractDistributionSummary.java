@@ -13,15 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.stats.hist;
 
-import io.micrometer.core.instrument.Observer;
+package io.micrometer.core.instrument;
 
-import java.util.Collection;
+import io.micrometer.core.instrument.util.MeterId;
 
 /**
- * @author Jon Schneider
+ * @author Dmitry Poluyanov
+ * @since 23.07.17
  */
-public interface Histogram<T> extends Observer {
-    Collection<Bucket<T>> getBuckets();
+public abstract class AbstractDistributionSummary extends AbstractObserverHolder implements DistributionSummary{
+    protected AbstractDistributionSummary(MeterId id, Observer... observers) {
+        super(id, observers);
+    }
+
+    @Override
+    public void record(double amount) {
+        recordSummary(amount);
+        observe(amount);
+    }
+
+   public abstract void recordSummary(double amount);
 }

@@ -15,12 +15,13 @@
  */
 package io.micrometer.core.instrument.simple;
 
+import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Observer;
 import io.micrometer.core.instrument.util.MeterId;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.instrument.AbstractTimer;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -36,17 +37,18 @@ public class SimpleTimer extends AbstractTimer {
 
     private final MeterId countId;
     private final MeterId amountId;
+
     private LongAdder count = new LongAdder();
     private LongAdder totalTime = new LongAdder();
 
-    public SimpleTimer(MeterId id, Clock clock) {
-        super(id, clock);
+    public SimpleTimer(MeterId id, Clock clock, Observer... observers) {
+        super(id, clock, observers);
         this.countId = id.withTags(TYPE_TAG, STAT_COUNT_TAG);
         this.amountId = id.withTags(TYPE_TAG, STAT_AMOUNT_TAG);
     }
 
     @Override
-    public void record(long amount, TimeUnit unit) {
+    public void recordTime(long amount, TimeUnit unit) {
         if (amount >= 0) {
             count.increment();
             totalTime.add(TimeUnit.NANOSECONDS.convert(amount, unit));
