@@ -23,29 +23,31 @@ import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetada
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProviders;
 
 import javax.sql.DataSource;
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
  * @author Jon Schneider
  */
 public class DataSourceMetrics implements MeterBinder {
-    private final DataSource dataSource;
-    private final Collection<DataSourcePoolMetadataProvider> metadataProviders;
     private final String name;
     private final Iterable<Tag> tags;
+    private final DataSourcePoolMetadata poolMetadata;
+
+    // prevents the poolMetadata that we base the gauges on from being garbage collected
+    private static Collection<DataSourcePoolMetadata> instrumentedPools = new ArrayList<>();
 
     public DataSourceMetrics(DataSource dataSource, Collection<DataSourcePoolMetadataProvider> metadataProviders, String name, Iterable<Tag> tags) {
         this.name = name;
         this.tags = tags;
-        this.dataSource = dataSource;
-        this.metadataProviders = metadataProviders;
+
+        DataSourcePoolMetadataProvider provider = new DataSourcePoolMetadataProviders(metadataProviders);
+        poolMetadata = provider.getDataSourcePoolMetadata(dataSource);
+        instrumentedPools.add(poolMetadata);
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        DataSourcePoolMetadataProvider provider = new DataSourcePoolMetadataProviders(metadataProviders);
-        DataSourcePoolMetadata poolMetadata = provider.getDataSourcePoolMetadata(dataSource);
-
         if (poolMetadata != null) {
             if(poolMetadata.getActive() != null)
                 registry.gauge(name  + "_active_connections", tags, poolMetadata, DataSourcePoolMetadata::getActive);

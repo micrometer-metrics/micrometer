@@ -36,6 +36,10 @@ dependencies {
     testCompile 'junit:junit:4.+'
     testCompile 'org.springframework.boot:spring-boot-starter-test'
 
+    // for testing DataSource metrics
+    testCompile 'org.hsqldb:hsqldb'
+    testCompile 'org.springframework.boot:spring-boot-starter-jdbc'
+
     // for use in mock servers
     testCompile 'org.apache.tomcat.embed:tomcat-embed-core:8.5.15'
 
