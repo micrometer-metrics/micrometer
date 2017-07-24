@@ -15,6 +15,8 @@
  */
 package org.springframework.boot.metrics.export.prometheus;
 
+import io.prometheus.client.CollectorRegistry;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
@@ -26,8 +28,14 @@ public class PrometheusMetricsConfiguration {
         return new PrometheusTagFormatter();
     }
 
+    @ConditionalOnMissingBean
     @Bean
-    PrometheusMeterRegistry meterRegistry() {
+    CollectorRegistry collectorRegistry() {
+        return new CollectorRegistry();
+    }
+
+    @Bean
+    PrometheusMeterRegistry meterRegistry(CollectorRegistry collectorRegistry) {
         return new PrometheusMeterRegistry();
     }
 }
