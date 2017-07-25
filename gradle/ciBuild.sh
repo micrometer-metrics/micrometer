@@ -8,9 +8,11 @@ if [ $CIRCLE_PR_NUMBER ]; then
   ./gradlew clean build $SWITCHES
 elif [ -z $CIRCLE_TAG ]; then
   echo -e ?'Build Branch with Snapshot => Branch ['$CIRCLE_BRANCH']'
+  openssl aes-256-cbc -d -in gradle.properties.enc -out gradle.properties -k $KEY
   ./gradlew clean build $SWITCHES
 elif [ $CIRCLE_TAG ]; then
   echo -e 'Build Branch for Release => Branch ['$CIRCLE_BRANCH']  Tag ['$CIRCLE_TAG']'
+  openssl aes-256-cbc -d -in gradle.properties.enc -out gradle.properties -k $KEY
   case "$CIRCLE_TAG" in
   *-rc\.*)
     ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true clean build candidate $SWITCHES
