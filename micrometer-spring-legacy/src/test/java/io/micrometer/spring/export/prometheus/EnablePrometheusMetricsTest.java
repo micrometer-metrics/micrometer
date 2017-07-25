@@ -47,7 +47,7 @@ public class EnablePrometheusMetricsTest {
                 .isInstanceOf(PrometheusMeterRegistry.class);
     }
 
-    @SpringBootApplication
+    @SpringBootApplication(scanBasePackages = "isolated")
     @EnablePrometheusMetrics
     static class PrometheusApp {}
 }

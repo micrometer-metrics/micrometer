@@ -19,8 +19,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
+import java.util.concurrent.TimeUnit;
+
+import static io.micrometer.core.instrument.MockClock.clock;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DistributionSummaryTest {
 
@@ -31,20 +35,24 @@ class DistributionSummaryTest {
         DistributionSummary ds = registry.summary("myDistributionSummary");
 
         ds.record(10);
+        clock(registry).addAndGet(1, TimeUnit.SECONDS);
+
         assertAll(() -> assertEquals(1L, ds.count()),
                 () -> assertEquals(10L, ds.totalAmount()));
 
-
         ds.record(10);
-        assertAll(() -> assertEquals(2L, ds.count()),
-                () -> assertEquals(20L, ds.totalAmount()));
+        ds.record(10);
+        clock(registry).addAndGet(1, TimeUnit.SECONDS);
+
+        assertAll(() -> assertTrue(ds.count() >= 2L),
+                () -> assertTrue(ds.totalAmount() >= 20L));
     }
 
     @DisplayName("negative quantities are ignored")
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
-    void recordNegative(MeterRegistry collector) {
-        DistributionSummary ds = collector.summary("myDistributionSummary");
+    void recordNegative(MeterRegistry registry) {
+        DistributionSummary ds = registry.summary("myDistributionSummary");
 
         ds.record(-10);
         assertAll(() -> assertEquals(0, ds.count()),
@@ -54,10 +62,12 @@ class DistributionSummaryTest {
     @DisplayName("record zero")
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
-    void recordZero(MeterRegistry collector) {
-        DistributionSummary ds = collector.summary("myDistributionSummary");
+    void recordZero(MeterRegistry registry) {
+        DistributionSummary ds = registry.summary("myDistributionSummary");
 
         ds.record(0);
+        clock(registry).addAndGet(1, TimeUnit.SECONDS);
+        
         assertAll(() -> assertEquals(1L, ds.count()),
                 () -> assertEquals(0L, ds.totalAmount()));
     }

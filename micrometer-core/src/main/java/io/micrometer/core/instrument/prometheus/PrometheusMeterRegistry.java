@@ -177,13 +177,12 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public MeterRegistry register(Meter meter) {
-        Iterable<Tag> allTags = withCommonTags(meter.getTags());
-
         Collector collector = new Collector() {
             @Override
             public List<MetricFamilySamples> collect() {
                 List<MetricFamilySamples.Sample> samples = stream(meter.measure().spliterator(), false)
                         .map(m -> {
+                            Iterable<Tag> allTags = withCommonTags(m.getTags());
                             List<String> tagKeys = new ArrayList<>();
                             List<String> tagValues = new ArrayList<>();
                             for (Tag tag : allTags) {

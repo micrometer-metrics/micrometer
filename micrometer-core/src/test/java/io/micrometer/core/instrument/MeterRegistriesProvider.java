@@ -15,26 +15,22 @@
  */
 package io.micrometer.core.instrument;
 
-import com.netflix.spectator.api.DefaultRegistry;
 import io.micrometer.core.instrument.datadog.DatadogConfig;
 import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
-import io.prometheus.client.CollectorRegistry;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
-import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 
+import java.time.Duration;
 import java.util.stream.Stream;
 
 class MeterRegistriesProvider implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
         return Stream.of(
-                (Object) new SpectatorMeterRegistry(new DefaultRegistry(), new MockClock()),
-                new PrometheusMeterRegistry(new CollectorRegistry(true), new MockClock()),
-                new SimpleMeterRegistry(new MockClock()),
+                (Object) //new SpectatorMeterRegistry(new DefaultRegistry(), new MockClock()),
+//                new PrometheusMeterRegistry(new CollectorRegistry(true), new MockClock()),
+//                new SimpleMeterRegistry(new MockClock()),
                 new DatadogMeterRegistry(new MockClock(), new DatadogConfig() {
                     @Override
                     public boolean enabled() {
@@ -49,6 +45,11 @@ class MeterRegistriesProvider implements ArgumentsProvider {
                     @Override
                     public String get(String k) {
                         return null;
+                    }
+
+                    @Override
+                    public Duration step() {
+                        return Duration.ofSeconds(1);
                     }
                 })
         ).map(Arguments::of);

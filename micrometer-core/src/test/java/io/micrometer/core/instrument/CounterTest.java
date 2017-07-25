@@ -15,11 +15,17 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
+import java.util.concurrent.TimeUnit;
+
+import static io.micrometer.core.instrument.MockClock.clock;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.offset;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class CounterTest {
@@ -30,10 +36,14 @@ class CounterTest {
     void increment(MeterRegistry registry) {
         Counter c = registry.counter("myCounter");
         c.increment();
-        assertEquals(1L, c.count());
+        clock(registry).addAndGet(1, TimeUnit.SECONDS);
+        assertThat(c.count()).isEqualTo(1.0, offset(1e-12));
         c.increment();
         c.increment();
-        assertEquals(3L, c.count());
+        clock(registry).addAndGet(1, TimeUnit.SECONDS);
+
+        // in the case of a step aggregating system will be 2, otherwise 3
+        assertThat(c.count()).isGreaterThanOrEqualTo(2.0);
     }
 
     @DisplayName("increment by a non-negative amount")
@@ -42,8 +52,8 @@ class CounterTest {
     void incrementAmount(MeterRegistry registry) {
         Counter c = registry.counter("myCounter");
         c.increment(2);
-        assertEquals(2L, c.count());
         c.increment(0);
+        clock(registry).addAndGet(1, TimeUnit.SECONDS);
         assertEquals(2L, c.count());
     }
 
@@ -51,8 +61,8 @@ class CounterTest {
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
     void incrementAmountNegative(MeterRegistry registry) {
-        if(registry instanceof PrometheusMeterRegistry) {
-            // Prometheus does not support decrementing counters
+        if(registry instanceof PrometheusMeterRegistry || registry instanceof DatadogMeterRegistry) {
+            // does not support decrementing counters
             return;
         }
 

@@ -18,24 +18,30 @@ package io.micrometer.core.instrument;
 import java.util.concurrent.TimeUnit;
 
 public class MockClock implements Clock {
-    private long time = 0;
+    // has to be non-zero to prevent divide-by-zeroes and other weird math results based on the clock
+    private long timeNanos = 1;
 
     @Override
     public long monotonicTime() {
-        return time;
+        return timeNanos;
     }
 
-    public static MockClock clock(MeterRegistry collector) {
-        return (MockClock) collector.getClock();
+    @Override
+    public long wallTime() {
+        return TimeUnit.MILLISECONDS.convert(timeNanos, TimeUnit.NANOSECONDS);
+    }
+
+    public static MockClock clock(MeterRegistry registry) {
+        return (MockClock) registry.getClock();
     }
 
     public long addAndGet(long amount, TimeUnit unit) {
-        time += unit.toNanos(amount);
-        return time;
+        timeNanos += unit.toNanos(amount);
+        return timeNanos;
     }
 
     public long addAndGetNanos(long amount) {
-        time += amount;
-        return time;
+        timeNanos += amount;
+        return timeNanos;
     }
 }

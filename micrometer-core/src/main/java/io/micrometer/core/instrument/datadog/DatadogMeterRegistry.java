@@ -26,14 +26,14 @@ public class DatadogMeterRegistry extends SpectatorMeterRegistry {
         super(new DatadogRegistry(new com.netflix.spectator.api.Clock() {
             @Override
             public long wallTime() {
-                return System.currentTimeMillis();
+                return clock.wallTime();
             }
 
             @Override
             public long monotonicTime() {
                 return clock.monotonicTime();
             }
-        }, config));
+        }, config), clock);
 
         ((DatadogRegistry) this.getSpectatorRegistry()).start();
     }

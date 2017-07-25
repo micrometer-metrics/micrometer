@@ -43,6 +43,7 @@ class TimerTest {
     void record(MeterRegistry registry) {
         Timer t = registry.timer("myTimer");
         t.record(42, TimeUnit.MILLISECONDS);
+        clock(registry).addAndGet(1, TimeUnit.SECONDS);
 
         assertAll(() -> assertEquals(1L, t.count()),
                 () -> assertEquals(42, t.totalTime(TimeUnit.MILLISECONDS), 1.0e-12));
@@ -65,6 +66,7 @@ class TimerTest {
     void recordZero(MeterRegistry registry) {
         Timer t = registry.timer("myTimer");
         t.record(0, TimeUnit.MILLISECONDS);
+        clock(registry).addAndGet(1, TimeUnit.SECONDS);
 
         assertAll(() -> assertEquals(1L, t.count()),
                 () -> assertEquals(0L, t.totalTimeNanos()));
@@ -78,6 +80,7 @@ class TimerTest {
 
         try {
             t.record(() -> clock(registry).addAndGetNanos(10));
+            clock(registry).addAndGet(1, TimeUnit.SECONDS);
         } finally {
             assertAll(() -> assertEquals(1L, t.count()),
                     () -> assertEquals(10, t.totalTimeNanos() ,1.0e-12));
@@ -96,6 +99,8 @@ class TimerTest {
                 throw new Exception("uh oh");
             });
         });
+
+        clock(registry).addAndGet(1, TimeUnit.SECONDS);
 
         assertAll(() -> assertEquals(1L, t.count()),
                 () -> assertEquals(10, t.totalTimeNanos(), 1.0e-12));
