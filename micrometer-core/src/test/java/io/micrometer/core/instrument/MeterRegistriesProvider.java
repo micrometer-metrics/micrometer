@@ -16,6 +16,8 @@
 package io.micrometer.core.instrument;
 
 import com.netflix.spectator.api.DefaultRegistry;
+import io.micrometer.core.instrument.datadog.DatadogConfig;
+import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
 import io.prometheus.client.CollectorRegistry;
@@ -32,7 +34,23 @@ class MeterRegistriesProvider implements ArgumentsProvider {
         return Stream.of(
                 (Object) new SpectatorMeterRegistry(new DefaultRegistry(), new MockClock()),
                 new PrometheusMeterRegistry(new CollectorRegistry(true), new MockClock()),
-                new SimpleMeterRegistry(new MockClock())
+                new SimpleMeterRegistry(new MockClock()),
+                new DatadogMeterRegistry(new MockClock(), new DatadogConfig() {
+                    @Override
+                    public boolean enabled() {
+                        return false;
+                    }
+
+                    @Override
+                    public String apiKey() {
+                        return "DOESNOTMATTER";
+                    }
+
+                    @Override
+                    public String get(String k) {
+                        return null;
+                    }
+                })
         ).map(Arguments::of);
     }
 }

@@ -26,6 +26,10 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.ToDoubleFunction;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
 
 /**
  * A minimal meter registry implementation primarily used for tests.
@@ -43,21 +47,27 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
         super(clock);
     }
 
+    private Iterable<Tag> withCommonTags(Iterable<Tag> tags) {
+        if(commonTags.isEmpty())
+            return tags;
+        return Stream.concat(stream(tags.spliterator(), false), commonTags.stream()).collect(toList());
+    }
+    
     @Override
     public Counter counter(String name, Iterable<Tag> tags) {
-        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, tags), SimpleCounter::new);
+        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, withCommonTags(tags)), SimpleCounter::new);
     }
 
     @Override
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
         registerQuantilesGaugeIfNecessary(name, tags, quantiles);
-        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, tags), SimpleDistributionSummary::new);
+        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, withCommonTags(tags)), SimpleDistributionSummary::new);
     }
 
     @Override
     protected io.micrometer.core.instrument.Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
         registerQuantilesGaugeIfNecessary(name, tags, quantiles);
-        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, tags), id -> new SimpleTimer(id, getClock()));
+        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, withCommonTags(tags)), id -> new SimpleTimer(id, getClock()));
     }
 
     private void registerQuantilesGaugeIfNecessary(String name, Iterable<Tag> tags, Quantiles quantiles) {
@@ -73,7 +83,7 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
-        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, tags), id -> new SimpleLongTaskTimer(id, getClock()));
+        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, withCommonTags(tags)), id -> new SimpleLongTaskTimer(id, getClock()));
     }
 
     @Override
@@ -84,7 +94,7 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        MapAccess.computeIfAbsent(meterMap, new MeterId(name, tags), id -> new SimpleGauge<>(id, obj, f));
+        MapAccess.computeIfAbsent(meterMap, new MeterId(name, withCommonTags(tags)), id -> new SimpleGauge<>(id, obj, f));
         return obj;
     }
 

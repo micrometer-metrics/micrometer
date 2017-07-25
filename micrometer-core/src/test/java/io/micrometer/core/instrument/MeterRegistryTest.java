@@ -24,7 +24,11 @@ import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-class AbstractMeterRegistryTest {
+/**
+ * A suite of tests applicable to all MeterRegistry implementations
+ * @author Jon Schneider
+ */
+class MeterRegistryTest {
 
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
@@ -79,5 +83,16 @@ class AbstractMeterRegistryTest {
 
         assertThat(registry.findMeter(Meter.Type.Counter, "bar", "k", "v"))
                 .containsSame(c2);
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(MeterRegistriesProvider.class)
+    @DisplayName("common tags are added to every measurement")
+    void addCommonTags(MeterRegistry registry) {
+        registry.commonTags("k", "v");
+        Counter c = registry.counter("foo");
+
+        assertThat(registry.findMeter(Meter.Type.Counter, "foo", "k", "v"))
+                .containsSame(c);
     }
 }

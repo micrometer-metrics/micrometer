@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.stats.quantile.Quantiles;
 import java.util.*;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.stream.StreamSupport.stream;
 import static io.micrometer.core.instrument.spectator.SpectatorUtils.spectatorId;
@@ -75,7 +76,7 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
     }
 
     private Collection<com.netflix.spectator.api.Tag> toSpectatorTags(Iterable<io.micrometer.core.instrument.Tag> tags) {
-        return stream(tags.spliterator(), false)
+        return Stream.concat(commonTags.stream(), stream(tags.spliterator(), false))
                 .map(t -> new BasicTag(t.getKey(), t.getValue()))
                 .collect(Collectors.toList());
     }

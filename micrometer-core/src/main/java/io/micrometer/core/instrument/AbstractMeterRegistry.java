@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
@@ -24,6 +23,8 @@ import java.util.List;
 
 public abstract class AbstractMeterRegistry implements MeterRegistry {
     protected final Clock clock;
+    protected final List<Tag> commonTags = new ArrayList<>();
+
     protected AbstractMeterRegistry(Clock clock) {
         this.clock = clock;
     }
@@ -112,4 +113,9 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     }
 
     protected abstract DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram);
+
+    @Override
+    public void commonTags(Iterable<Tag> tags) {
+        tags.forEach(commonTags::add);
+    }
 }

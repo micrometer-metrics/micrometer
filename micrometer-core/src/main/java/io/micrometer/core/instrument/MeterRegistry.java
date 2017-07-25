@@ -37,6 +37,18 @@ public interface MeterRegistry {
      */
     Collection<Meter> getMeters();
 
+    /**
+     * Append a list of common tags to apply to all metrics reported to the monitoring system.
+     */
+    void commonTags(Iterable<Tag> tags);
+
+    /**
+     * Append a list of common tags to apply to all metrics reported to the monitoring system.
+     */
+    default void commonTags(String... tags) {
+        commonTags(zip(tags));
+    }
+
     default <M extends Meter> Optional<M> findMeter(Class<M> mClass, String name, String... tags) {
         return findMeter(mClass, name, zip(tags));
     }

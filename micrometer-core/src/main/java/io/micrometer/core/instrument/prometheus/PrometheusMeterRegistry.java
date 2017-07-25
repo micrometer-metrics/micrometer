@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -111,7 +112,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public Counter counter(String name, Iterable<Tag> tags) {
-        MeterId id = new MeterId(name, tags);
+        MeterId id = new MeterId(name, withCommonTags(tags));
         io.prometheus.client.Counter counter = collectorByName(io.prometheus.client.Counter.class, name,
                 n -> buildCollector(id, io.prometheus.client.Counter.build()));
         return MapAccess.computeIfAbsent(meterMap, id, c -> new PrometheusCounter(id, child(counter, id.getTags())));
@@ -119,25 +120,28 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
-        MeterId id = new MeterId(name, tags);
+        Iterable<Tag> allTags = withCommonTags(tags);
+        MeterId id = new MeterId(name, allTags);
         final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, name,
-                n -> new CustomPrometheusSummary(name, stream(tags.spliterator(), false).map(Tag::getKey).collect(toList())).register(registry));
+                n -> new CustomPrometheusSummary(name, stream(allTags.spliterator(), false).map(Tag::getKey).collect(toList())).register(registry));
         return MapAccess.computeIfAbsent(meterMap, id, t -> new PrometheusDistributionSummary(id, summary.child(tags, quantiles, histogram)));
     }
 
     @Override
     protected io.micrometer.core.instrument.Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
-        MeterId id = new MeterId(name, tags);
+        Iterable<Tag> allTags = withCommonTags(tags);
+        MeterId id = new MeterId(name, allTags);
         final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, name,
-                n -> new CustomPrometheusSummary(name, stream(tags.spliterator(), false).map(Tag::getKey).collect(toList())).register(registry));
+                n -> new CustomPrometheusSummary(name, stream(allTags.spliterator(), false).map(Tag::getKey).collect(toList())).register(registry));
         return MapAccess.computeIfAbsent(meterMap, id, t -> new PrometheusTimer(id, summary.child(tags, quantiles, histogram), getClock()));
     }
 
     @Override
     public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
-        MeterId id = new MeterId(name, tags);
+        Iterable<Tag> allTags = withCommonTags(tags);
+        MeterId id = new MeterId(name, allTags);
         final CustomPrometheusLongTaskTimer longTaskTimer = collectorByName(CustomPrometheusLongTaskTimer.class, name,
-                n -> new CustomPrometheusLongTaskTimer(name, stream(tags.spliterator(), false).map(Tag::getKey).collect(toList()), getClock()).register(registry));
+                n -> new CustomPrometheusLongTaskTimer(name, stream(allTags.spliterator(), false).map(Tag::getKey).collect(toList()), getClock()).register(registry));
         return MapAccess.computeIfAbsent(meterMap, id, t -> new PrometheusLongTaskTimer(id, longTaskTimer.child(tags)));
     }
 
@@ -173,14 +177,16 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public MeterRegistry register(Meter meter) {
+        Iterable<Tag> allTags = withCommonTags(meter.getTags());
+
         Collector collector = new Collector() {
             @Override
             public List<MetricFamilySamples> collect() {
                 List<MetricFamilySamples.Sample> samples = stream(meter.measure().spliterator(), false)
                         .map(m -> {
-                            List<String> tagKeys = new ArrayList<>(m.getTags().size());
-                            List<String> tagValues = new ArrayList<>(m.getTags().size());
-                            for (Tag tag : m.getTags()) {
+                            List<String> tagKeys = new ArrayList<>();
+                            List<String> tagValues = new ArrayList<>();
+                            for (Tag tag : allTags) {
                                 tagKeys.add(tag.getKey());
                                 tagValues.add(tag.getValue());
                             }
@@ -243,5 +249,11 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
             throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
         }
         return collector;
+    }
+
+    private Iterable<Tag> withCommonTags(Iterable<Tag> tags) {
+        if(commonTags.isEmpty())
+            return tags;
+        return Stream.concat(stream(tags.spliterator(), false), commonTags.stream()).collect(toList());
     }
 }
