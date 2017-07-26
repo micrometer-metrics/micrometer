@@ -20,6 +20,8 @@ import io.micrometer.core.instrument.util.MeterId;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Measurement;
 
+import java.util.List;
+
 public class PrometheusDistributionSummary implements DistributionSummary {
     private final MeterId id;
     private final CustomPrometheusSummary.Child summary;
@@ -57,7 +59,7 @@ public class PrometheusDistributionSummary implements DistributionSummary {
     }
 
     @Override
-    public Iterable<Measurement> measure() {
+    public List<Measurement> measure() {
         return summary.measure();
     }
 }

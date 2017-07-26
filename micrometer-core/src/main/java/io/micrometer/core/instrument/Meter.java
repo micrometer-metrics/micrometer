@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
+import java.util.List;
+
 /**
  * A counter, gauge, timer, or distribution summary that results collects one or more metrics.
  */
@@ -26,9 +28,11 @@ public interface Meter {
     Type getType();
 
     /**
-     * Get the set of measurements for this meter.
+     * Get the set of measurements for this meter. A meter must always return
+     * the same number of measurements and in the same order, regardless of the
+     * level of activity or the lack thereof.
      */
-    Iterable<Measurement> measure();
+    List<Measurement> measure();
 
     /**
      * Custom meters may emit metrics like one of these types without implementing

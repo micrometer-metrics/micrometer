@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.util.MeterId;
 
 import java.lang.ref.WeakReference;
 import java.util.Collections;
+import java.util.List;
 import java.util.function.ToDoubleFunction;
 
 public class SimpleGauge<T> extends AbstractSimpleMeter implements Gauge {
@@ -43,7 +44,7 @@ public class SimpleGauge<T> extends AbstractSimpleMeter implements Gauge {
     }
 
     @Override
-    public Iterable<Measurement> measure() {
+    public List<Measurement> measure() {
         return Collections.singletonList(gaugeId.measurement(value()));
     }
 }

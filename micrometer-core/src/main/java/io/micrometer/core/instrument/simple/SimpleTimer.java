@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.instrument.AbstractTimer;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -64,7 +65,7 @@ public class SimpleTimer extends AbstractTimer {
     }
 
     @Override
-    public Iterable<Measurement> measure() {
+    public List<Measurement> measure() {
         return Arrays.asList(
                 countId.measurement(count()),
                 amountId.measurement(totalTime(TimeUnit.NANOSECONDS)));

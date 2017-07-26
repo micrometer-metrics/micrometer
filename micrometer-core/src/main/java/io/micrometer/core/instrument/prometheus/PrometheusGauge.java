@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterId;
 
 import java.util.Collections;
+import java.util.List;
 
 public class PrometheusGauge implements Gauge {
     private final MeterId id;
@@ -47,7 +48,7 @@ public class PrometheusGauge implements Gauge {
     }
 
     @Override
-    public Iterable<Measurement> measure() {
+    public List<Measurement> measure() {
         return Collections.singletonList(id.measurement(gauge.get()));
     }
 }

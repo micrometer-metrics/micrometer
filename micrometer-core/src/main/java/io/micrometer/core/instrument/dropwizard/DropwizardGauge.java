@@ -13,38 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.spectator;
+package io.micrometer.core.instrument.dropwizard;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.util.MeterId;
 
+import java.util.Collections;
 import java.util.List;
 
-public class SpectatorGauge implements Gauge {
-    private com.netflix.spectator.api.Gauge gauge;
+/**
+ * @author Jon Schneider
+ */
+public class DropwizardGauge extends AbstractDropwizardMeter implements Gauge {
+    private final com.codahale.metrics.Gauge<Double> impl;
 
-    public SpectatorGauge(com.netflix.spectator.api.Gauge gauge) {
-        this.gauge = gauge;
+    DropwizardGauge(MeterId id, com.codahale.metrics.Gauge<Double> impl) {
+        super(id);
+        this.impl = impl;
     }
 
     @Override
     public double value() {
-        return gauge.value();
-    }
-
-    @Override
-    public String getName() {
-        return gauge.id().name();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return SpectatorUtils.tags(gauge);
+        return impl.getValue();
     }
 
     @Override
     public List<Measurement> measure() {
-        return SpectatorUtils.measurements(gauge);
+        return Collections.singletonList(id.measurement(value()));
     }
 }

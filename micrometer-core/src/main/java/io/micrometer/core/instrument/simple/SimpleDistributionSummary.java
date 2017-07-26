@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterId;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -60,7 +61,7 @@ public class SimpleDistributionSummary extends AbstractSimpleMeter implements Di
     }
 
     @Override
-    public Iterable<Measurement> measure() {
+    public List<Measurement> measure() {
         return Arrays.asList(
                 countId.measurement(count()),
                 amountId.measurement(totalAmount()));

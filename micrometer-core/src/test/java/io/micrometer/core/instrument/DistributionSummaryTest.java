@@ -56,7 +56,7 @@ class DistributionSummaryTest {
 
         ds.record(-10);
         assertAll(() -> assertEquals(0, ds.count()),
-                () -> assertEquals(-0L, ds.totalAmount()));
+                () -> assertEquals(0L, ds.totalAmount()));
     }
 
     @DisplayName("record zero")

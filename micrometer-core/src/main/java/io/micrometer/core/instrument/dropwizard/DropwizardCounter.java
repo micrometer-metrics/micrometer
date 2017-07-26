@@ -13,47 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.simple;
+package io.micrometer.core.instrument.dropwizard;
 
+import com.codahale.metrics.Meter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterId;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.DoubleAdder;
 
 /**
  * @author Jon Schneider
  */
-public class SimpleCounter extends AbstractSimpleMeter implements Counter {
-    private static final Tag TYPE_TAG = SimpleUtils.typeTag(Type.Counter);
-    private final MeterId countId;
-    private DoubleAdder count = new DoubleAdder();
+public class DropwizardCounter extends AbstractDropwizardMeter implements Counter {
+    private final com.codahale.metrics.Meter impl;
 
-    public SimpleCounter(MeterId id) {
+    public DropwizardCounter(MeterId id, Meter impl) {
         super(id);
-        this.countId = id.withTags(TYPE_TAG);
-    }
-
-    @Override
-    public void increment() {
-        count.add(1.0);
-    }
-
-    @Override
-    public void increment(double amount) {
-        count.add(amount);
-    }
-
-    @Override
-    public double count() {
-        return count.doubleValue();
+        this.impl = impl;
     }
 
     @Override
     public List<Measurement> measure() {
-        return Collections.singletonList(countId.measurement(count()));
+        return Collections.singletonList(id.measurement(count()));
+    }
+
+    @Override
+    public void increment() {
+        impl.mark();
+    }
+
+    @Override
+    public void increment(double amount) {
+        impl.mark((long) amount);
+    }
+
+    @Override
+    public double count() {
+        return impl.getCount();
     }
 }

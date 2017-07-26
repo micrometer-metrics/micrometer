@@ -30,7 +30,7 @@ public final class Measurement {
 
     private final String name;
     private final SortedSet<Tag> tags = new TreeSet<>(Comparator.comparing(Tag::getKey));
-    private final double    value;
+    private final double value;
 
     /**
      * Create a new instance.

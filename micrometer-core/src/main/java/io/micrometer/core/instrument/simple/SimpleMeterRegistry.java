@@ -47,12 +47,6 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
         super(clock);
     }
 
-    private Iterable<Tag> withCommonTags(Iterable<Tag> tags) {
-        if(commonTags.isEmpty())
-            return tags;
-        return Stream.concat(stream(tags.spliterator(), false), commonTags.stream()).collect(toList());
-    }
-    
     @Override
     public Counter counter(String name, Iterable<Tag> tags) {
         return MapAccess.computeIfAbsent(meterMap, new MeterId(name, withCommonTags(tags)), SimpleCounter::new);

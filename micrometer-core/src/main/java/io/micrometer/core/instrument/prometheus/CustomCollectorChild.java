@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 public interface CustomCollectorChild {
     Stream<Collector.MetricFamilySamples.Sample> collect();
 
-    default Iterable<Measurement> measure() {
+    default List<Measurement> measure() {
         return collect().map(sample -> {
             List<Tag> tags = IntStream.range(0, sample.labelNames.size())
                     .mapToObj(i -> Tag.of(sample.labelNames.get(i), sample.labelValues.get(i)))

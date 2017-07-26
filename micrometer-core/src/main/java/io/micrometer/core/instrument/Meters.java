@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.internal.TimedExecutorService;
 
 import java.lang.ref.WeakReference;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.function.BiFunction;
@@ -66,7 +67,7 @@ public class Meters {
          *                will be enriched with the containing meter's tags automatically.
          * @return A custom meter
          */
-        public Meter create(Function<String, Iterable<Measurement>> measure) {
+        public Meter create(Function<String, List<Measurement>> measure) {
             return new Meter() {
                 @Override
                 public String getName() {
@@ -84,8 +85,8 @@ public class Meters {
                 }
 
                 @Override
-                public Iterable<Measurement> measure() {
-                    Iterable<Measurement> measurements = measure.apply(name);
+                public List<Measurement> measure() {
+                    List<Measurement> measurements = measure.apply(name);
                     measurements.forEach(m -> tags.forEach(t -> m.getTags().add(t)));
                     return measurements;
                 }
@@ -101,7 +102,7 @@ public class Meters {
          * @return A custom meter. Once the underlying object has been garbage collected, this meter will emit an
          * empty set of measurements on sampling.
          */
-        public <T> Meter create(T obj, BiFunction<String, T, Iterable<Measurement>> measure) {
+        public <T> Meter create(T obj, BiFunction<String, T, List<Measurement>> measure) {
             return new Meter() {
                 private WeakReference<T> ref = new WeakReference<>(obj);
 
@@ -121,9 +122,9 @@ public class Meters {
                 }
 
                 @Override
-                public Iterable<Measurement> measure() {
+                public List<Measurement> measure() {
                     if (ref.get() != null) {
-                        Iterable<Measurement> measurements = measure.apply(name, ref.get());
+                        List<Measurement> measurements = measure.apply(name, ref.get());
                         measurements.forEach(m -> tags.forEach(t -> m.getTags().add(t)));
                         return measurements;
                     }

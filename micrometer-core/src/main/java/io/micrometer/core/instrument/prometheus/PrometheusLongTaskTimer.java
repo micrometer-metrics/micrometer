@@ -20,6 +20,8 @@ import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterId;
 
+import java.util.List;
+
 public class PrometheusLongTaskTimer implements LongTaskTimer {
     private final MeterId id;
     private final CustomPrometheusLongTaskTimer.Child timer;
@@ -65,7 +67,7 @@ public class PrometheusLongTaskTimer implements LongTaskTimer {
     }
 
     @Override
-    public Iterable<Measurement> measure() {
+    public List<Measurement> measure() {
         return timer.measure();
     }
 }

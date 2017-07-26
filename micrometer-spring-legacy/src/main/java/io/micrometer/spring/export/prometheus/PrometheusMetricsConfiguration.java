@@ -31,7 +31,7 @@ public class PrometheusMetricsConfiguration {
     @ConditionalOnMissingBean
     @Bean
     CollectorRegistry collectorRegistry() {
-        return new CollectorRegistry();
+        return new CollectorRegistry(true);
     }
 
     @Bean

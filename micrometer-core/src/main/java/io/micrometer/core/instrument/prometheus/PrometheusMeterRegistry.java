@@ -52,7 +52,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     private final ConcurrentMap<MeterId, Meter> meterMap = new ConcurrentHashMap<>();
 
     public PrometheusMeterRegistry() {
-        this(CollectorRegistry.defaultRegistry);
+        this(new CollectorRegistry());
     }
 
     public PrometheusMeterRegistry(CollectorRegistry registry) {
@@ -248,11 +248,5 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
             throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
         }
         return collector;
-    }
-
-    private Iterable<Tag> withCommonTags(Iterable<Tag> tags) {
-        if(commonTags.isEmpty())
-            return tags;
-        return Stream.concat(stream(tags.spliterator(), false), commonTags.stream()).collect(toList());
     }
 }

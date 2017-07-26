@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -85,7 +86,7 @@ public class SimpleLongTaskTimer extends AbstractSimpleMeter implements LongTask
     }
 
     @Override
-    public Iterable<Measurement> measure() {
+    public List<Measurement> measure() {
         return Arrays.asList(
                 activeTasksId.measurement(activeTasks()),
                 durationId.measurement(duration()));

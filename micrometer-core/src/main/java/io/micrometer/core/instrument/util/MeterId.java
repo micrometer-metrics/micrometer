@@ -43,14 +43,13 @@ public class MeterId {
                 .collect(Collectors.toList());
     }
 
-    public MeterId(String name, Tag... tags) {
-        this(name, Arrays.asList(tags));
-    }
-
     public String getName() {
         return name;
     }
 
+    /**
+     * @return Tags, sorted by key
+     */
     public List<Tag> getTags() {
         return tags;
     }

@@ -61,7 +61,7 @@ public class SimpleMeasureBenchmark {
 
     @Setup
     public void setup() {
-        MeterId meterId = new MeterId("tested.timer", Tag.of("tag1", "v1"), Tag.of("tag2", "v2"));
+        MeterId meterId = new MeterId("tested.timer", Arrays.asList(Tag.of("tag1", "v1"), Tag.of("tag2", "v2")));
         timer = new SimpleTimer(meterId, Clock.SYSTEM);
         longTaskTimer = new SimpleLongTaskTimer(meterId, Clock.SYSTEM);
         counter = new SimpleCounter(meterId);

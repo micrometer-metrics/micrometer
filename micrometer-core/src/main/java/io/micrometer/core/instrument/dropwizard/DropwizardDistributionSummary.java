@@ -13,47 +13,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.simple;
+package io.micrometer.core.instrument.dropwizard;
 
-import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterId;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.DoubleAdder;
 
 /**
  * @author Jon Schneider
  */
-public class SimpleCounter extends AbstractSimpleMeter implements Counter {
-    private static final Tag TYPE_TAG = SimpleUtils.typeTag(Type.Counter);
-    private final MeterId countId;
-    private DoubleAdder count = new DoubleAdder();
+public class DropwizardDistributionSummary extends AbstractDropwizardMeter implements DistributionSummary {
+    private final com.codahale.metrics.Histogram impl;
+    private final DoubleAdder totalAmount = new DoubleAdder();
 
-    public SimpleCounter(MeterId id) {
+    DropwizardDistributionSummary(MeterId id, com.codahale.metrics.Histogram impl) {
         super(id);
-        this.countId = id.withTags(TYPE_TAG);
-    }
-
-    @Override
-    public void increment() {
-        count.add(1.0);
-    }
-
-    @Override
-    public void increment(double amount) {
-        count.add(amount);
-    }
-
-    @Override
-    public double count() {
-        return count.doubleValue();
+        this.impl = impl;
     }
 
     @Override
     public List<Measurement> measure() {
-        return Collections.singletonList(countId.measurement(count()));
+        return Collections.singletonList(id.measurement(impl.getSnapshot().getMean()));
+    }
+
+    @Override
+    public void record(double amount) {
+        if(amount >= 0) {
+            impl.update((long) amount);
+            totalAmount.add(amount);
+        }
+    }
+
+    @Override
+    public long count() {
+        return impl.getCount();
+    }
+
+    @Override
+    public double totalAmount() {
+        return totalAmount.doubleValue();
     }
 }

@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.util.MeterId;
 import io.micrometer.core.instrument.util.TimeUtils;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class SpectatorTimer extends AbstractTimer {
@@ -48,7 +49,7 @@ public class SpectatorTimer extends AbstractTimer {
     }
 
     @Override
-    public Iterable<Measurement> measure() {
+    public List<Measurement> measure() {
         return SpectatorUtils.measurements(timer);
     }
 }

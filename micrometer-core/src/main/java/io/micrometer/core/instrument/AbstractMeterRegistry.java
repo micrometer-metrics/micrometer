@@ -20,6 +20,10 @@ import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
 
 public abstract class AbstractMeterRegistry implements MeterRegistry {
     protected final Clock clock;
@@ -117,5 +121,11 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     @Override
     public void commonTags(Iterable<Tag> tags) {
         tags.forEach(commonTags::add);
+    }
+
+    protected Iterable<Tag> withCommonTags(Iterable<Tag> tags) {
+        if(commonTags.isEmpty())
+            return tags;
+        return Stream.concat(stream(tags.spliterator(), false), commonTags.stream()).collect(toList());
     }
 }

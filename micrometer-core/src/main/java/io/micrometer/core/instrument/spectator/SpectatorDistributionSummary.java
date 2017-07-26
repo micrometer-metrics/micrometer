@@ -19,6 +19,8 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Measurement;
 
+import java.util.List;
+
 public class SpectatorDistributionSummary implements DistributionSummary {
     private com.netflix.spectator.api.DistributionSummary distributionSummary;
 
@@ -57,7 +59,7 @@ public class SpectatorDistributionSummary implements DistributionSummary {
     }
 
     @Override
-    public Iterable<Measurement> measure() {
+    public List<Measurement> measure() {
         return SpectatorUtils.measurements(distributionSummary);
     }
 }

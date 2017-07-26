@@ -13,47 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.prometheus;
+package io.micrometer.core.instrument.dropwizard;
 
+import com.codahale.metrics.Timer;
+import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.util.MeterId;
 import io.micrometer.core.instrument.util.TimeUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class PrometheusTimer extends AbstractTimer {
-    private CustomPrometheusSummary.Child summary;
+public class DropwizardTimer extends AbstractTimer {
+    private final Timer impl;
+    private final AtomicLong totalTime = new AtomicLong(0);
 
-    PrometheusTimer(MeterId id, CustomPrometheusSummary.Child summary, Clock clock) {
+    public DropwizardTimer(MeterId id, Timer impl, Clock clock) {
         super(id, clock);
-        this.summary = summary;
+        this.id = id;
+        this.impl = impl;
     }
 
     @Override
     public void record(long amount, TimeUnit unit) {
         if (amount >= 0) {
-            final double seconds = TimeUnit.NANOSECONDS.convert(amount, unit) / 10e8;
-
-            // Prometheus prefers to receive everything in base units, i.e. seconds
-            summary.observe(seconds);
+            impl.update(amount, unit);
+            totalTime.addAndGet(TimeUnit.NANOSECONDS.convert(amount, unit));
         }
     }
 
     @Override
     public long count() {
-        return summary.count();
+        return impl.getCount();
     }
 
     @Override
     public double totalTime(TimeUnit unit) {
-        return TimeUtils.secondsToUnit(summary.sum(), unit);
+        return TimeUtils.convert(totalTime.get(), TimeUnit.NANOSECONDS, unit);
     }
 
     @Override
     public List<Measurement> measure() {
-        return summary.measure();
+        return Collections.singletonList(id.measurement(impl.getMeanRate()));
     }
 }
