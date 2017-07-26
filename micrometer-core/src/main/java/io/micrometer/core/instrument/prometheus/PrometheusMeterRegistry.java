@@ -124,7 +124,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         MeterId id = new MeterId(name, allTags);
         final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, name,
                 n -> new CustomPrometheusSummary(name, stream(allTags.spliterator(), false).map(Tag::getKey).collect(toList())).register(registry));
-        return MapAccess.computeIfAbsent(meterMap, id, t -> new PrometheusDistributionSummary(id, summary.child(tags, quantiles, histogram)));
+        return MapAccess.computeIfAbsent(meterMap, id, t -> new PrometheusDistributionSummary(id, summary.child(allTags, quantiles, histogram)));
     }
 
     @Override
@@ -133,7 +133,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         MeterId id = new MeterId(name, allTags);
         final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, name,
                 n -> new CustomPrometheusSummary(name, stream(allTags.spliterator(), false).map(Tag::getKey).collect(toList())).register(registry));
-        return MapAccess.computeIfAbsent(meterMap, id, t -> new PrometheusTimer(id, summary.child(tags, quantiles, histogram), getClock()));
+        return MapAccess.computeIfAbsent(meterMap, id, t -> new PrometheusTimer(id, summary.child(allTags, quantiles, histogram), getClock()));
     }
 
     @Override
@@ -142,7 +142,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         MeterId id = new MeterId(name, allTags);
         final CustomPrometheusLongTaskTimer longTaskTimer = collectorByName(CustomPrometheusLongTaskTimer.class, name,
                 n -> new CustomPrometheusLongTaskTimer(name, stream(allTags.spliterator(), false).map(Tag::getKey).collect(toList()), getClock()).register(registry));
-        return MapAccess.computeIfAbsent(meterMap, id, t -> new PrometheusLongTaskTimer(id, longTaskTimer.child(tags)));
+        return MapAccess.computeIfAbsent(meterMap, id, t -> new PrometheusLongTaskTimer(id, longTaskTimer.child(allTags)));
     }
 
     @SuppressWarnings("unchecked")
@@ -150,7 +150,9 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
         final WeakReference<T> ref = new WeakReference<>(obj);
 
-        MeterId id = new MeterId(name, tags);
+        Iterable<Tag> allTags = withCommonTags(tags);
+
+        MeterId id = new MeterId(name, allTags);
         io.prometheus.client.Gauge gauge = collectorByName(Gauge.class, name,
                 i -> buildCollector(id, io.prometheus.client.Gauge.build()));
 
@@ -194,7 +196,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
                         .collect(toList());
 
                 Type type = Type.UNTYPED;
-                switch(meter.getType()) {
+                switch (meter.getType()) {
                     case Counter:
                         type = Type.COUNTER;
                         break;
@@ -244,7 +246,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     private <C extends Collector> C collectorByName(Class<C> collectorType, String name, Function<String, C> ifAbsent) {
         C collector = MapAccess.computeIfAbsent(collectorMap, name, ifAbsent);
-        if(!collectorType.isInstance(collector)) {
+        if (!collectorType.isInstance(collector)) {
             throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
         }
         return collector;

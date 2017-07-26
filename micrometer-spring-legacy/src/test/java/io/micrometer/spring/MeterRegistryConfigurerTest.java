@@ -61,10 +61,8 @@ public class MeterRegistryConfigurerTest {
         }
 
         @Bean
-        public MeterRegistryConfigurer configurer() {
-            return registry -> {
-                registry.commonTags("region", "us-east-1");
-            };
+        public MeterRegistryConfigurer registryConfigurer() {
+            return registry -> registry.commonTags("region", "us-east-1");
         }
     }
 }

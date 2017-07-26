@@ -15,25 +15,42 @@
  */
 package io.micrometer.spring.export.prometheus;
 
+import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.TagFormatter;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
+import io.micrometer.spring.MeterRegistryConfigurer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.PostConstruct;
+import java.util.Collections;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class EnablePrometheusMetricsTest {
 
     @Autowired
     ApplicationContext context;
+
+    @Autowired
+    PrometheusMeterRegistry registry;
+
+    @Autowired
+    TestRestTemplate restTemplate;
 
     @Test
     public void tagFormatting() {
@@ -47,7 +64,28 @@ public class EnablePrometheusMetricsTest {
                 .isInstanceOf(PrometheusMeterRegistry.class);
     }
 
+    @Test
+    public void commonTags() {
+        restTemplate.getForObject("/api/people", String.class);
+        assertThat(registry.scrape()).contains("http_server_requests", "stack", "region");
+    }
+
     @SpringBootApplication(scanBasePackages = "isolated")
     @EnablePrometheusMetrics
-    static class PrometheusApp {}
+    @Import(PersonController.class)
+    static class PrometheusApp {
+        @Bean
+        public MeterRegistryConfigurer registryConfigurer() {
+            return registry -> registry.commonTags("stack", "prod", "region", "us-east-1");
+        }
+    }
+
+    @RestController
+    static class PersonController {
+        @Timed
+        @GetMapping("/api/people")
+        Set<String> personName() {
+            return Collections.singleton("Jon");
+        }
+    }
 }
