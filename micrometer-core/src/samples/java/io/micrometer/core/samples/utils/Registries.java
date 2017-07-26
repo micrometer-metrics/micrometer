@@ -21,6 +21,7 @@ import com.netflix.spectator.atlas.AtlasRegistry;
 import com.sun.net.httpserver.HttpServer;
 import io.micrometer.core.instrument.datadog.DatadogConfig;
 import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
+import io.micrometer.core.instrument.ganglia.GangliaMeterRegistry;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
 
@@ -68,7 +69,7 @@ public class Registries {
         return new SpectatorMeterRegistry(spectatorAtlas);
     }
 
-    public static SpectatorMeterRegistry datadog() {
+    public static DatadogMeterRegistry datadog() {
         DatadogConfig config = new DatadogConfig() {
             private final Properties props = new Properties();
 
@@ -87,5 +88,9 @@ public class Registries {
         };
 
         return new DatadogMeterRegistry(config);
+    }
+
+    public static GangliaMeterRegistry ganglia() {
+        return GangliaMeterRegistry.local();
     }
 }

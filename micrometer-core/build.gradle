@@ -13,10 +13,12 @@ dependencies {
     compile 'io.prometheus:simpleclient:latest.release', optional
     compile 'io.prometheus:simpleclient_pushgateway:latest.release', optional
     compile 'com.datadoghq:java-dogstatsd-client:latest.release', optional
-    compile 'io.dropwizard.metrics:metrics-core:latest.release', optional
+    compile 'io.dropwizard.metrics:metrics-core:3.+', optional
 
     // exporters
     compile 'com.netflix.spectator:spectator-reg-atlas:latest.release', optional
+    compile 'io.dropwizard.metrics:metrics-graphite:3.+', optional
+    compile 'io.dropwizard.metrics:metrics-ganglia:3.+', optional
 
     // cache monitoring
     compile 'com.google.guava:guava:21.0', optional
