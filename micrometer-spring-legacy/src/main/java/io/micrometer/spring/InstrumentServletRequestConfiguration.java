@@ -25,18 +25,15 @@ import org.springframework.core.env.Environment;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.TagFormatter;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 /**
  * Configures instrumentation of Spring Web MVC servlet-based request mappings.
  *
- * We continue to use the deprecated WebMvcConfigurerAdapter for backwards compatibility
- * with Spring Framework 4.X.
- *
  * @author Jon Schneider
  */
-@SuppressWarnings("deprecation")
 @Configuration
-class InstrumentServletRequestConfiguration extends org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter {
+class InstrumentServletRequestConfiguration extends WebMvcConfigurerAdapter {
     @Autowired
     MeterRegistry registry;
 

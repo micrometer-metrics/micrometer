@@ -22,9 +22,6 @@ import org.springframework.context.annotation.Import;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.TagFormatter;
 import io.micrometer.spring.scheduling.MetricsSchedulingAspect;
-import org.springframework.core.env.Environment;
-
-import javax.annotation.PostConstruct;
 
 /**
  * Metrics configuration for Spring 4/Boot 1.x
@@ -35,7 +32,7 @@ import javax.annotation.PostConstruct;
 @Import({
         RestTemplateMetricsConfiguration.class,
         RecommendedMeterBinders.class,
-        MeterBinderRegistration.class
+        MeterRegistryConfigurationSupport.class
 })
 class MetricsConfiguration {
     @Bean

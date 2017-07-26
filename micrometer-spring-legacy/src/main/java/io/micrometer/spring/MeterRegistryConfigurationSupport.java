@@ -24,20 +24,32 @@ import javax.annotation.PostConstruct;
 import java.util.Collection;
 
 /**
+ * Post-construction setup of a meter registry, regardless of its backing implementation.
+ *
  * @author Jon Schneider
  */
 @Configuration
-public class MeterBinderRegistration {
+public class MeterRegistryConfigurationSupport {
     @Autowired
     MeterRegistry registry;
 
     @Autowired(required = false)
     Collection<MeterBinder> binders;
 
+    @Autowired(required = false)
+    Collection<MeterRegistryConfigurer> registryConfigurers;
+
     @PostConstruct
     void bindAll() {
-        for (MeterBinder binder : binders) {
-            binder.bindTo(registry);
+        // Important that this happens before binders are applied, as it
+        // may involve adding common tags that should apply to metrics registered
+        // in those binders.
+        if(registryConfigurers != null) {
+            registryConfigurers.forEach(conf -> conf.configureRegistry(registry));
+        }
+
+        if(binders != null) {
+            binders.forEach(binder -> binder.bindTo(registry));
         }
     }
 }

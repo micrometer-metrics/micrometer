@@ -15,17 +15,21 @@
  */
 package io.micrometer.spring;
 
-import org.springframework.context.annotation.Import;
-
-import java.lang.annotation.*;
+import io.micrometer.core.instrument.MeterRegistry;
 
 /**
- * Enable dimensional metrics collection.
+ * Defines callback methods to customize the Java-based configuration for
+ * {@link io.micrometer.core.instrument.MeterRegistry} implementations.
+ * <p>
+ *
+ * Add one or more of these configurers to the application context to customize
+ * a registry.
+ *
+ * Configurers are guaranteed to be applied before any {@link io.micrometer.core.instrument.Meter}
+ * is registered with the registry.
+ *
+ * @author Jon Schneider
  */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-@Inherited
-@Import(MetricsConfiguration.class)
-public @interface EnableMetrics {
+public interface MeterRegistryConfigurer {
+    void configureRegistry(MeterRegistry registry);
 }
