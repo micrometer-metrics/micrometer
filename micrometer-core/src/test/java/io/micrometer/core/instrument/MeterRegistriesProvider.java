@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import com.codahale.metrics.MetricRegistry;
 import com.netflix.spectator.api.DefaultRegistry;
 import io.micrometer.core.instrument.datadog.DatadogConfig;
 import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
@@ -60,7 +59,7 @@ class MeterRegistriesProvider implements ArgumentsProvider {
                         return Duration.ofSeconds(1);
                     }
                 }),
-                new DropwizardMeterRegistry(new MetricRegistry(), new HierarchicalNameMapper(), new MockClock())
+                new DropwizardMeterRegistry(new HierarchicalNameMapper(), new MockClock())
         ).map(Arguments::of);
     }
 }
