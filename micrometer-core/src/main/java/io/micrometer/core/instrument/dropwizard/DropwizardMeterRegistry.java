@@ -41,9 +41,9 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
     private final ConcurrentMap<MeterId, Meter> meterMap = new ConcurrentHashMap<>();
     private final HierarchicalNameMapper nameMapper;
 
-    public DropwizardMeterRegistry(MetricRegistry registry, HierarchicalNameMapper nameMapper, Clock clock) {
+    public DropwizardMeterRegistry(HierarchicalNameMapper nameMapper, Clock clock) {
         super(clock);
-        this.registry = registry;
+        this.registry = new MetricRegistry();
         this.nameMapper = nameMapper;
     }
 

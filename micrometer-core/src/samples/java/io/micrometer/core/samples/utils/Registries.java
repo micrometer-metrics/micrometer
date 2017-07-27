@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.datadog.DatadogConfig;
 import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
 import io.micrometer.core.instrument.ganglia.GangliaMeterRegistry;
 import io.micrometer.core.instrument.graphite.GraphiteMeterRegistry;
+import io.micrometer.core.instrument.jmx.JmxMeterRegistry;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
 
@@ -92,10 +93,12 @@ public class Registries {
     }
 
     public static GangliaMeterRegistry ganglia() {
-        return GangliaMeterRegistry.local();
+        return new GangliaMeterRegistry();
     }
 
     public static GraphiteMeterRegistry graphite() {
-        return GraphiteMeterRegistry.local();
+        return new GraphiteMeterRegistry();
     }
+
+    public static JmxMeterRegistry jmx() { return new JmxMeterRegistry(); }
 }

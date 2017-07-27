@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
  * @author Jon Schneider
  */
 public class HierarchicalNameMapper {
+    public static final HierarchicalNameMapper DEFAULT = new HierarchicalNameMapper();
+
     protected String tagSeparator = ".";
     protected String valueSeparator = ".";
     protected Comparator<Tag> tagComparator = Comparator.comparing(Tag::getKey);

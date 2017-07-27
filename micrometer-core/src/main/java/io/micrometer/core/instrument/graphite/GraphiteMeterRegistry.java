@@ -1,6 +1,5 @@
 package io.micrometer.core.instrument.graphite;
 
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.graphite.PickledGraphite;
 import io.micrometer.core.instrument.Clock;
@@ -11,53 +10,36 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
-    public static class Builder {
-        private MetricRegistry registry = new MetricRegistry();
-        private HierarchicalNameMapper nameMapper = new HierarchicalNameMapper();
-        private Clock clock = Clock.SYSTEM;
-        private GraphiteConfig config = System::getProperty;
 
-        public Builder nameMapper(HierarchicalNameMapper nameMapper) {
-            this.nameMapper = nameMapper;
-            return this;
-        }
+    private final GraphiteReporter reporter;
+    private final GraphiteConfig config;
 
-        public Builder config(GraphiteConfig config) {
-            this.config = config;
-            return this;
-        }
-
-        public Builder clock(Clock clock) {
-            this.clock = clock;
-            return this;
-        }
-
-        public Builder registry(MetricRegistry registry) {
-            this.registry = registry;
-            return this;
-        }
-
-        public GraphiteMeterRegistry create() {
-            return new GraphiteMeterRegistry(registry, nameMapper, clock, config);
-        }
+    public GraphiteMeterRegistry() {
+        this(System::getProperty);
     }
 
-    public static Builder build() {
-        return new Builder();
+    public GraphiteMeterRegistry(GraphiteConfig config) {
+        this(config, HierarchicalNameMapper.DEFAULT, Clock.SYSTEM);
     }
 
-    public static GraphiteMeterRegistry local() {
-        return build().create();
-    }
-    
-    private GraphiteMeterRegistry(MetricRegistry registry, HierarchicalNameMapper nameMapper, Clock clock, GraphiteConfig config) {
-        super(registry, nameMapper, clock);
+    public GraphiteMeterRegistry(GraphiteConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
+        super(nameMapper, clock);
+
+        this.config = config;
 
         final PickledGraphite pickledGraphite = new PickledGraphite(new InetSocketAddress(config.host(), config.port()));
-        final GraphiteReporter reporter = GraphiteReporter.forRegistry(registry)
+        this.reporter = GraphiteReporter.forRegistry(getDropwizardRegistry())
                 .convertRatesTo(config.rateUnits())
                 .convertDurationsTo(config.durationUnits())
                 .build(pickledGraphite);
-        reporter.start(config.step().getSeconds(), TimeUnit.SECONDS);
+        start();
+    }
+
+    public void stop() {
+        this.reporter.stop();
+    }
+
+    public void start() {
+        this.reporter.start(config.step().getSeconds(), TimeUnit.SECONDS);
     }
 }

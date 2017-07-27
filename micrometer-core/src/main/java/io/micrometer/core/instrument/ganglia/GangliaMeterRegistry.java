@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 Pivotal Software, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.ganglia;
 
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ganglia.GangliaReporter;
 import info.ganglia.gmetric4j.gmetric.GMetric;
 import io.micrometer.core.instrument.Clock;
@@ -26,57 +25,38 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public class GangliaMeterRegistry extends DropwizardMeterRegistry {
-    public static class Builder {
-        private MetricRegistry registry = new MetricRegistry();
-        private HierarchicalNameMapper nameMapper = new HierarchicalNameMapper();
-        private Clock clock = Clock.SYSTEM;
-        private GangliaConfig config = System::getProperty;
+    private final GangliaReporter reporter;
+    private final GangliaConfig config;
 
-        public Builder nameMapper(HierarchicalNameMapper nameMapper) {
-            this.nameMapper = nameMapper;
-            return this;
-        }
-
-        public Builder config(GangliaConfig config) {
-            this.config = config;
-            return this;
-        }
-
-        public Builder clock(Clock clock) {
-            this.clock = clock;
-            return this;
-        }
-
-        public Builder registry(MetricRegistry registry) {
-            this.registry = registry;
-            return this;
-        }
-
-        public GangliaMeterRegistry create() {
-            return new GangliaMeterRegistry(registry, nameMapper, clock, config);
-        }
+    public GangliaMeterRegistry() {
+        this(System::getProperty);
     }
 
-    public static Builder build() {
-        return new Builder();
+    public GangliaMeterRegistry(GangliaConfig config) {
+        this(config, HierarchicalNameMapper.DEFAULT, Clock.SYSTEM);
     }
 
-    public static GangliaMeterRegistry local() {
-        return build().create();
-    }
-
-    private GangliaMeterRegistry(MetricRegistry registry, HierarchicalNameMapper nameMapper, Clock clock, GangliaConfig config) {
-        super(registry, nameMapper, clock);
+    public GangliaMeterRegistry(GangliaConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
+        super(nameMapper, clock);
+        this.config = config;
 
         try {
             final GMetric ganglia = new GMetric(config.host(), config.port(), config.addressingMode(), config.ttl());
-            final GangliaReporter reporter = GangliaReporter.forRegistry(registry)
+            this.reporter = GangliaReporter.forRegistry(getDropwizardRegistry())
                     .convertRatesTo(config.rateUnits())
                     .convertDurationsTo(config.durationUnits())
                     .build(ganglia);
-            reporter.start(config.step().getSeconds(), TimeUnit.SECONDS);
+            start();
         } catch (IOException e) {
             throw new RuntimeException("Failed to configure Ganglia metrics reporting", e);
         }
+    }
+
+    public void stop() {
+        this.reporter.stop();
+    }
+
+    public void start() {
+        this.reporter.start(config.step().getSeconds(), TimeUnit.SECONDS);
     }
 }
