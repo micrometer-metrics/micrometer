@@ -16,7 +16,6 @@
 package io.micrometer.spring.web;
 
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.TagFormatter;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerMapping;
 
@@ -31,12 +30,6 @@ import static java.util.Arrays.asList;
  * @author Jon Schneider
  */
 public class WebmvcTagConfigurer {
-    private final TagFormatter tagFormatter;
-
-    public WebmvcTagConfigurer(TagFormatter tagFormatter) {
-        this.tagFormatter = tagFormatter;
-    }
-
     /**
      * Supplies default tags to long task timers.
      *
@@ -84,7 +77,6 @@ public class WebmvcTagConfigurer {
         if (!StringUtils.hasText(uri)) {
             uri = "/";
         }
-        uri = tagFormatter.formatTagValue(uri.substring(1));
         return Tag.of("uri", uri.isEmpty() ? "root" : uri);
     }
 

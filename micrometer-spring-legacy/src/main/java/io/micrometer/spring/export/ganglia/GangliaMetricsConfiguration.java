@@ -13,29 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.export.atlas;
+package io.micrometer.spring.export.ganglia;
 
-import com.netflix.spectator.atlas.AtlasConfig;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.atlas.AtlasMeterRegistry;
+import io.micrometer.core.instrument.ganglia.GangliaConfig;
+import io.micrometer.core.instrument.ganglia.GangliaMeterRegistry;
+import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
-/**
- * @author Jon Schneider
- */
 @Configuration
-public class AtlasMetricsConfiguration {
+public class GangliaMetricsConfiguration {
     @Bean
-    AtlasMeterRegistry meterRegistry(AtlasConfig atlasConfig, Clock clock) {
-        return new AtlasMeterRegistry(atlasConfig, clock);
+    GangliaMeterRegistry meterRegistry(GangliaConfig config, HierarchicalNameMapper hierarchicalNameMapper, Clock clock) {
+        return new GangliaMeterRegistry(config, hierarchicalNameMapper, clock);
     }
 
     @Bean
-    AtlasConfig atlasConfig(Environment environment) {
+    GangliaConfig gangliaConfig(Environment environment) {
         return environment::getProperty;
+    }
+
+    @ConditionalOnMissingBean
+    @Bean
+    HierarchicalNameMapper hierarchicalNameMapper() {
+        return HierarchicalNameMapper.DEFAULT;
     }
 
     @ConditionalOnMissingBean

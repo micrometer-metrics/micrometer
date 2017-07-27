@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 docker run -d\
- --name graphite\
  -p 80:80\
  -p 2003-2004:2003-2004\
  -p 2023-2024:2023-2024\

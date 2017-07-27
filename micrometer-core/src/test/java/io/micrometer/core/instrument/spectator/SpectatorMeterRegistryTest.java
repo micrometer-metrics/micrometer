@@ -15,9 +15,12 @@
  */
 package io.micrometer.core.instrument.spectator;
 
+import com.netflix.spectator.api.DefaultRegistry;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Meter;
 import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.IdentityTagFormatter;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,7 +39,7 @@ class SpectatorMeterRegistryTest {
     @DisplayName("quantiles are registered as a separate gauge")
     @Test
     void quantiles() {
-        SpectatorMeterRegistry registry = new SpectatorMeterRegistry();
+        SpectatorMeterRegistry registry = new SpectatorMeterRegistry(new DefaultRegistry(), Clock.SYSTEM, new IdentityTagFormatter());
         Registry spectatorRegistry = registry.getSpectatorRegistry();
 
         registry.timerBuilder("timer")

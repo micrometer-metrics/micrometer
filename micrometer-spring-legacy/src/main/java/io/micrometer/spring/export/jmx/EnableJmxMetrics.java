@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.export.prometheus;
+package io.micrometer.spring.export.jmx;
 
 import io.micrometer.spring.EnableMetrics;
+import io.micrometer.spring.export.graphite.GraphiteMetricsConfiguration;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.*;
@@ -24,6 +25,6 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @EnableMetrics
-@Import({ PrometheusMetricsConfiguration.class, PrometheusEndpointConfiguration.class })
-public @interface EnablePrometheusMetrics {
+@Import(JmxMetricsConfiguration.class)
+public @interface EnableJmxMetrics {
 }

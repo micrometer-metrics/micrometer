@@ -15,19 +15,36 @@
  */
 package io.micrometer.spring.export.datadog;
 
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.datadog.DatadogConfig;
 import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
+import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
+@Configuration
 public class DatadogMetricsConfiguration {
     @Bean
-    DatadogMeterRegistry meterRegistry(DatadogConfig registry) {
-        return new DatadogMeterRegistry(registry);
+    DatadogMeterRegistry meterRegistry(DatadogConfig config) {
+        return new DatadogMeterRegistry(config);
     }
 
     @Bean
     DatadogConfig datadogConfig(Environment environment) {
         return environment::getProperty;
+    }
+
+    @ConditionalOnMissingBean
+    @Bean
+    HierarchicalNameMapper hierarchicalNameMapper() {
+        return HierarchicalNameMapper.DEFAULT;
+    }
+
+    @ConditionalOnMissingBean
+    @Bean
+    Clock clock() {
+        return Clock.SYSTEM;
     }
 }

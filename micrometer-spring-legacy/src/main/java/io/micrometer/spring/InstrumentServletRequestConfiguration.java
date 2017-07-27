@@ -37,18 +37,15 @@ class InstrumentServletRequestConfiguration extends WebMvcConfigurerAdapter {
     @Autowired
     MeterRegistry registry;
 
-    @Autowired
-    TagFormatter formatter;
-
     @Autowired(required = false)
     WebmvcTagConfigurer tagConfigurer;
 
     @Bean
     @ConditionalOnMissingBean(WebmvcTagConfigurer.class)
-    WebmvcTagConfigurer webmvcTagConfigurer(TagFormatter tagFormatter) {
+    WebmvcTagConfigurer webmvcTagConfigurer() {
         if(tagConfigurer != null)
             return tagConfigurer;
-        this.tagConfigurer = new WebmvcTagConfigurer(tagFormatter);
+        this.tagConfigurer = new WebmvcTagConfigurer();
         return this.tagConfigurer;
     }
 
@@ -57,7 +54,7 @@ class InstrumentServletRequestConfiguration extends WebMvcConfigurerAdapter {
 
     @Bean
     MetricsHandlerInterceptor webMetricsInterceptor() {
-        return new MetricsHandlerInterceptor(registry, webmvcTagConfigurer(formatter),
+        return new MetricsHandlerInterceptor(registry, webmvcTagConfigurer(),
                 environment.getProperty("spring.metrics.web.server_requests.name", "http_server_requests"));
     }
 

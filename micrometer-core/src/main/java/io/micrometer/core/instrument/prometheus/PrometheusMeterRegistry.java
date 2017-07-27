@@ -46,6 +46,7 @@ import static java.util.stream.StreamSupport.stream;
  * @author Jon Schneider
  */
 public class PrometheusMeterRegistry extends AbstractMeterRegistry {
+    private static final PrometheusTagFormatter tagFormatter = new PrometheusTagFormatter();
     private final CollectorRegistry registry;
 
     private final ConcurrentMap<String, Collector> collectorMap = new ConcurrentHashMap<>();
@@ -182,16 +183,16 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         Collector collector = new Collector() {
             @Override
             public List<MetricFamilySamples> collect() {
-                List<MetricFamilySamples.Sample> samples = stream(meter.measure().spliterator(), false)
+                List<MetricFamilySamples.Sample> samples = meter.measure().stream()
                         .map(m -> {
                             Iterable<Tag> allTags = withCommonTags(m.getTags());
                             List<String> tagKeys = new ArrayList<>();
                             List<String> tagValues = new ArrayList<>();
                             for (Tag tag : allTags) {
-                                tagKeys.add(tag.getKey());
-                                tagValues.add(tag.getValue());
+                                tagKeys.add(tagFormatter.formatTagKey(tag.getKey()));
+                                tagValues.add(tagFormatter.formatTagValue(tag.getValue()));
                             }
-                            return new MetricFamilySamples.Sample(m.getName(), tagKeys, tagValues, m.getValue());
+                            return new MetricFamilySamples.Sample(tagFormatter.formatName(m.getName()), tagKeys, tagValues, m.getValue());
                         })
                         .collect(toList());
 
@@ -228,10 +229,10 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     private <B extends SimpleCollector.Builder<B, C>, C extends SimpleCollector<D>, D> C buildCollector(MeterId id,
                                                                                                         SimpleCollector.Builder<B, C> builder) {
         return builder
-                .name(id.getName())
+                .name(tagFormatter.formatName(id.getName()))
                 .help(" ")
                 .labelNames(id.getTags().stream()
-                        .map(Tag::getKey)
+                        .map(t -> tagFormatter.formatTagKey(t.getKey()))
                         .collect(Collectors.toList())
                         .toArray(new String[]{}))
                 .register(registry);
@@ -239,7 +240,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     private <C extends SimpleCollector<D>, D> D child(C collector, List<Tag> tags) {
         return collector.labels(tags.stream()
-                .map(Tag::getValue)
+                .map(t -> tagFormatter.formatTagValue(t.getValue()))
                 .collect(Collectors.toList())
                 .toArray(new String[]{}));
     }

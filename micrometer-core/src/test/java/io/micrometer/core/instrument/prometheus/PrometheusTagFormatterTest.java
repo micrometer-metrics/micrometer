@@ -13,15 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.export.prometheus;
+package io.micrometer.core.instrument.prometheus;
 
-import io.micrometer.core.instrument.TagFormatter;
+import org.junit.jupiter.api.Test;
 
-/**
- * See https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
- * for a specification of the constraints on metric names and labels
- *
- * @author Jon Schneider
- */
-public class PrometheusTagFormatter implements TagFormatter {
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class PrometheusTagFormatterTest {
+    private PrometheusTagFormatter formatter = new PrometheusTagFormatter();
+
+    @Test
+    void formatName() {
+        assertThat(formatter.formatName("123abc/{:id}水")).isEqualTo("m_123abc__:id__");
+    }
+
+    @Test
+    void formatTagKey() {
+        assertThat(formatter.formatTagKey("123abc/{:id}水")).isEqualTo("m_123abc___id__");
+    }
 }

@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.export.prometheus;
+package io.micrometer.core.instrument.graphite;
 
-import io.micrometer.spring.EnableMetrics;
-import org.springframework.context.annotation.Import;
+import org.junit.jupiter.api.Test;
 
-import java.lang.annotation.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-@EnableMetrics
-@Import({ PrometheusMetricsConfiguration.class, PrometheusEndpointConfiguration.class })
-public @interface EnablePrometheusMetrics {
+class GraphiteTagFormatterTest {
+    private GraphiteTagFormatter formatter = new GraphiteTagFormatter();
+
+    @Test
+    void formatName() {
+        assertThat(formatter.formatName("name([{id}])/1")).isEqualTo("name___id____1");
+    }
 }

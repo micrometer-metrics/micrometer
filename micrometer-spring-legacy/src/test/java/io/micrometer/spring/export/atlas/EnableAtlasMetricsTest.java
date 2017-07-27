@@ -18,7 +18,6 @@ package io.micrometer.spring.export.atlas;
 import com.sun.net.httpserver.HttpServer;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.TagFormatter;
 import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
 import org.apache.catalina.LifecycleException;
 import org.junit.Test;
@@ -51,12 +50,6 @@ public class EnableAtlasMetricsTest {
     ApplicationContext context;
 
     @Test
-    public void tagFormatting() {
-        assertThat(context.getBean(TagFormatter.class))
-                .isInstanceOf(AtlasTagFormatter.class);
-    }
-
-    @Test
     public void meterRegistry() {
         assertThat(context.getBean(MeterRegistry.class))
                 .isInstanceOf(SpectatorMeterRegistry.class);
@@ -87,11 +80,11 @@ public class EnableAtlasMetricsTest {
         }
     }
 
-    @SpringBootApplication
+    @SpringBootApplication(scanBasePackages = "isolated")
     @EnableAtlasMetrics
     @EnableScheduling
     @Import(ScheduledCount.class)
-    static class PrometheusApp {
+    static class AtlasApp {
     }
 
     static class ScheduledCount {

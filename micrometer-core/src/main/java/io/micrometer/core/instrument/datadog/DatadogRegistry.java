@@ -43,7 +43,7 @@ final class DatadogRegistry extends AbstractStepRegistry {
     private final URL metricsEndpoint;
     private final String hostTag;
 
-    public DatadogRegistry(Clock clock, DatadogConfig config) {
+    public DatadogRegistry(DatadogConfig config, Clock clock) {
         super(clock, config);
 
         try {

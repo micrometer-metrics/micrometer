@@ -13,17 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.export.prometheus;
+package io.micrometer.core.instrument.datadog;
 
-import io.micrometer.spring.EnableMetrics;
-import org.springframework.context.annotation.Import;
+import org.junit.jupiter.api.Test;
 
-import java.lang.annotation.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-@EnableMetrics
-@Import({ PrometheusMetricsConfiguration.class, PrometheusEndpointConfiguration.class })
-public @interface EnablePrometheusMetrics {
+class DatadogTagFormatterTest {
+    private DatadogTagFormatter formatter = new DatadogTagFormatter();
+
+    @Test
+    void nameStartsWithLetter() {
+        assertThat(formatter.formatName("123")).isEqualTo("m_123");
+    }
+
+    @Test
+    void tagKeyStartsWithLetter() {
+        assertThat(formatter.formatTagKey("123")).isEqualTo("m_123");
+    }
 }

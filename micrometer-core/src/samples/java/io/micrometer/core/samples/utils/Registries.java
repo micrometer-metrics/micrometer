@@ -15,17 +15,16 @@
  */
 package io.micrometer.core.samples.utils;
 
-import com.netflix.spectator.api.Clock;
 import com.netflix.spectator.atlas.AtlasConfig;
-import com.netflix.spectator.atlas.AtlasRegistry;
 import com.sun.net.httpserver.HttpServer;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.atlas.AtlasMeterRegistry;
 import io.micrometer.core.instrument.datadog.DatadogConfig;
 import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
 import io.micrometer.core.instrument.ganglia.GangliaMeterRegistry;
 import io.micrometer.core.instrument.graphite.GraphiteMeterRegistry;
 import io.micrometer.core.instrument.jmx.JmxMeterRegistry;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
-import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -55,8 +54,8 @@ public class Registries {
         return prometheusRegistry;
     }
 
-    public static SpectatorMeterRegistry atlas() {
-        AtlasRegistry spectatorAtlas = new AtlasRegistry(Clock.SYSTEM, new AtlasConfig() {
+    public static AtlasMeterRegistry atlas() {
+        return new AtlasMeterRegistry(new AtlasConfig() {
             @Override
             public Duration step() {
                 return Duration.ofSeconds(10);
@@ -66,9 +65,7 @@ public class Registries {
             public String get(String k) {
                 return null;
             }
-        });
-        spectatorAtlas.start();
-        return new SpectatorMeterRegistry(spectatorAtlas);
+        }, Clock.SYSTEM);
     }
 
     public static DatadogMeterRegistry datadog() {

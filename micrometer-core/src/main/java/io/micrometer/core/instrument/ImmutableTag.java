@@ -40,9 +40,9 @@ public class ImmutableTag implements Tag {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ImmutableTag that = (ImmutableTag) o;
-        return Objects.equals(key, that.key) &&
-                Objects.equals(value, that.value);
+        Tag that = (Tag) o;
+        return Objects.equals(key, that.getKey()) &&
+                Objects.equals(value, that.getValue());
     }
 
     @Override

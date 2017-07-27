@@ -29,6 +29,10 @@ import java.util.stream.Collectors;
  * @author Jon Schneider
  */
 public class HierarchicalNameMapper {
+    /**
+     * Sort tags alphabetically by key and append tag key values to the name with '.', e.g.
+     * {@code http_server_requests.response.200.method.GET}
+     */
     public static final HierarchicalNameMapper DEFAULT = new HierarchicalNameMapper();
 
     protected String tagSeparator = ".";

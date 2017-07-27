@@ -17,7 +17,6 @@ package io.micrometer.spring.export.prometheus;
 
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.TagFormatter;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 import io.micrometer.spring.MeterRegistryConfigurer;
 import org.junit.Test;
@@ -33,7 +32,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.PostConstruct;
 import java.util.Collections;
 import java.util.Set;
 
@@ -51,12 +49,6 @@ public class EnablePrometheusMetricsTest {
 
     @Autowired
     TestRestTemplate restTemplate;
-
-    @Test
-    public void tagFormatting() {
-        assertThat(context.getBean(TagFormatter.class))
-                .isInstanceOf(PrometheusTagFormatter.class);
-    }
 
     @Test
     public void meterRegistry() {

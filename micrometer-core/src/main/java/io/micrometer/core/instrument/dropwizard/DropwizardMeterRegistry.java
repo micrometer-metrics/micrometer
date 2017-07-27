@@ -32,6 +32,9 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.ToDoubleFunction;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Jon Schneider
@@ -40,11 +43,13 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
     private final MetricRegistry registry;
     private final ConcurrentMap<MeterId, Meter> meterMap = new ConcurrentHashMap<>();
     private final HierarchicalNameMapper nameMapper;
+    private final TagFormatter tagFormatter;
 
-    public DropwizardMeterRegistry(HierarchicalNameMapper nameMapper, Clock clock) {
+    public DropwizardMeterRegistry(HierarchicalNameMapper nameMapper, Clock clock, TagFormatter tagFormatter) {
         super(clock);
         this.registry = new MetricRegistry();
         this.nameMapper = nameMapper;
+        this.tagFormatter = tagFormatter;
     }
 
     public MetricRegistry getDropwizardRegistry() {
@@ -94,10 +99,8 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
         return MapAccess.computeIfAbsent(meterMap, new MeterId(name, withCommonTags(tags)),
                 id -> {
                     LongTaskTimer ltt = new SimpleLongTaskTimer(id, clock);
-                    registry.register(nameMapper.toHierarchicalName(name + "_active", id.getTags()),
-                            (Gauge<Integer>) ltt::activeTasks);
-                    registry.register(nameMapper.toHierarchicalName(name + "_duration", id.getTags()),
-                            (Gauge<Long>) ltt::duration);
+                    registry.register(toDropwizardName(id.withName(name + "_active")), (Gauge<Integer>) ltt::activeTasks);
+                    registry.register(toDropwizardName(id.withName(name + "_duration")), (Gauge<Long>) ltt::duration);
                     return ltt;
                 });
     }
@@ -127,7 +130,10 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
     }
 
     private String toDropwizardName(MeterId id) {
-        return nameMapper.toHierarchicalName(id.getName(), id.getTags());
+        Collection<Tag> formattedTags = id.getTags().stream()
+                .map(t -> Tag.of(tagFormatter.formatTagKey(t.getKey()), tagFormatter.formatTagValue(t.getValue())))
+                .collect(toList());
+        return nameMapper.toHierarchicalName(tagFormatter.formatName(id.getName()), formattedTags);
     }
 
     @Override

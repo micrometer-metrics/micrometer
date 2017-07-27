@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.export.atlas;
+package io.micrometer.core.instrument.graphite;
 
 import io.micrometer.core.instrument.TagFormatter;
-import org.springframework.util.StringUtils;
 
-public class AtlasTagFormatter implements TagFormatter {
+import java.text.Normalizer;
+import java.util.regex.Pattern;
+
+public class GraphiteTagFormatter implements TagFormatter {
+    /**
+     * A list that probably is blacklisted: https://github.com/graphite-project/graphite-web/blob/master/webapp/graphite/render/grammar.py#L48-L55.
+     * Empirically, we have found others.
+     */
+    private static final Pattern blacklistedChars = Pattern.compile("[{}(),=\\[\\]/]");
+
     @Override
     public String formatName(String name) {
         return format(name);
@@ -34,14 +42,13 @@ public class AtlasTagFormatter implements TagFormatter {
         return format(value);
     }
 
-    private String format(String tagKeyOrValue) {
-        String sanitized = tagKeyOrValue
-                .replaceAll("\\{(\\w+):.+}(?=/|$)", "-$1-") // extract path variable names from regex expressions
-                .replaceAll("/", "_")
-                .replaceAll("[{}]", "-");
-        if (!StringUtils.hasText(sanitized)) {
-            sanitized = "none";
-        }
-        return sanitized;
+    /**
+     * Github Issue: https://github.com/graphite-project/graphite-web/issues/243
+
+     * Unicode is not OK. Some special chars are not OK.
+     */
+    private String format(String name) {
+        String sanitized = Normalizer.normalize(name, Normalizer.Form.NFKD);
+        return blacklistedChars.matcher(sanitized).replaceAll("_");
     }
 }

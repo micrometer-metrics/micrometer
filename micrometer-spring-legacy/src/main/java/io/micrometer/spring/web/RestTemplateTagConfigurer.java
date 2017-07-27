@@ -18,7 +18,6 @@ package io.micrometer.spring.web;
 import io.micrometer.core.instrument.Tag;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
-import io.micrometer.core.instrument.TagFormatter;
 
 import java.io.IOException;
 
@@ -31,12 +30,6 @@ import static java.util.Arrays.asList;
  * @author Jon Schneider
  */
 public class RestTemplateTagConfigurer {
-    private final TagFormatter tagFormatter;
-
-    public RestTemplateTagConfigurer(TagFormatter tagFormatter) {
-        this.tagFormatter = tagFormatter;
-    }
-
     /**
      * Supplies default tags to timers monitoring RestTemplate requests.
      *
@@ -67,7 +60,7 @@ public class RestTemplateTagConfigurer {
         String strippedUrlTemplate = urlTemplate.replaceAll("^https?://[^/]+/", "");
 
         return asList(Tag.of("method", request.getMethod().name()),
-                Tag.of("uri", tagFormatter.formatTagValue(strippedUrlTemplate)),
+                Tag.of("uri", strippedUrlTemplate),
                 Tag.of("status", status),
                 Tag.of("clientName", host));
     }

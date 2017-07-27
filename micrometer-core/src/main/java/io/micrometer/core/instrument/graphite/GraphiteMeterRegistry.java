@@ -38,7 +38,7 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
     }
 
     public GraphiteMeterRegistry(GraphiteConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
-        super(nameMapper, clock);
+        super(nameMapper, clock, new GraphiteTagFormatter());
 
         this.config = config;
 

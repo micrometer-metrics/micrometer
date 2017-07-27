@@ -15,13 +15,13 @@
  */
 package io.micrometer.core.instrument;
 
-import com.netflix.spectator.api.DefaultRegistry;
+import com.netflix.spectator.atlas.AtlasConfig;
+import io.micrometer.core.instrument.atlas.AtlasMeterRegistry;
 import io.micrometer.core.instrument.datadog.DatadogConfig;
 import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
 import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.prometheus.client.CollectorRegistry;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -35,10 +35,25 @@ class MeterRegistriesProvider implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
         return Stream.of(
-                (Object) new SpectatorMeterRegistry(new DefaultRegistry(), new MockClock()),
+                (Object) new AtlasMeterRegistry(new AtlasConfig() {
+                    @Override
+                    public boolean enabled() {
+                        return false;
+                    }
+
+                    @Override
+                    public String get(String k) {
+                        return null;
+                    }
+
+                    @Override
+                    public Duration step() {
+                        return Duration.ofSeconds(1);
+                    }
+                }, new MockClock()),
                 new PrometheusMeterRegistry(new CollectorRegistry(true), new MockClock()),
                 new SimpleMeterRegistry(new MockClock()),
-                new DatadogMeterRegistry(new MockClock(), new DatadogConfig() {
+                new DatadogMeterRegistry(new DatadogConfig() {
                     @Override
                     public boolean enabled() {
                         return false;
@@ -58,8 +73,8 @@ class MeterRegistriesProvider implements ArgumentsProvider {
                     public Duration step() {
                         return Duration.ofSeconds(1);
                     }
-                }),
-                new DropwizardMeterRegistry(new HierarchicalNameMapper(), new MockClock())
+                }, new MockClock()),
+                new DropwizardMeterRegistry(new HierarchicalNameMapper(), new MockClock(), new IdentityTagFormatter())
         ).map(Arguments::of);
     }
 }

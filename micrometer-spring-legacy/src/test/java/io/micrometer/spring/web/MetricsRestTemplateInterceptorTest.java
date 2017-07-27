@@ -15,7 +15,6 @@
  */
 package io.micrometer.spring.web;
 
-import io.micrometer.core.instrument.IdentityTagFormatter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -40,7 +39,7 @@ public class MetricsRestTemplateInterceptorTest {
 
         RestTemplate restTemplate = new RestTemplate();
         restTemplate.setInterceptors(singletonList(new MetricsRestTemplateInterceptor(
-                registry, new RestTemplateTagConfigurer(new IdentityTagFormatter()),
+                registry, new RestTemplateTagConfigurer(),
                 "http_client_requests"
         )));
 

@@ -15,7 +15,9 @@
  */
 package io.micrometer.spring;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.spring.web.MetricsRestTemplateInterceptor;
+import io.micrometer.spring.web.RestTemplateTagConfigurer;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -27,9 +29,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.TagFormatter;
-import io.micrometer.spring.web.RestTemplateTagConfigurer;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -43,18 +42,18 @@ class RestTemplateMetricsConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(RestTemplateTagConfigurer.class)
-    RestTemplateTagConfigurer restTemplateTagConfigurer(TagFormatter tagFormatter) {
+    RestTemplateTagConfigurer restTemplateTagConfigurer() {
         if(tagConfigurer != null)
             return tagConfigurer;
-        this.tagConfigurer = new RestTemplateTagConfigurer(tagFormatter);
+        this.tagConfigurer = new RestTemplateTagConfigurer();
         return tagConfigurer;
     }
 
     @Bean
     MetricsRestTemplateInterceptor clientHttpRequestInterceptor(MeterRegistry meterRegistry,
-                                                                TagFormatter tagFormatter,
+                                                                RestTemplateTagConfigurer restTemplateTagConfigurer,
                                                                 Environment environment) {
-        return new MetricsRestTemplateInterceptor(meterRegistry, restTemplateTagConfigurer(tagFormatter),
+        return new MetricsRestTemplateInterceptor(meterRegistry, restTemplateTagConfigurer,
                 environment.getProperty("spring.metrics.web.client_requests.name", "http_client_requests"));
     }
 

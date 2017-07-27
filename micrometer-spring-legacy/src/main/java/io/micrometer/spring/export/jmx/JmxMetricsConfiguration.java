@@ -13,29 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.export.atlas;
+package io.micrometer.spring.export.jmx;
 
-import com.netflix.spectator.atlas.AtlasConfig;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.atlas.AtlasMeterRegistry;
+import io.micrometer.core.instrument.jmx.JmxMeterRegistry;
+import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 
-/**
- * @author Jon Schneider
- */
 @Configuration
-public class AtlasMetricsConfiguration {
+public class JmxMetricsConfiguration {
     @Bean
-    AtlasMeterRegistry meterRegistry(AtlasConfig atlasConfig, Clock clock) {
-        return new AtlasMeterRegistry(atlasConfig, clock);
+    JmxMeterRegistry meterRegistry(HierarchicalNameMapper hierarchicalNameMapper, Clock clock) {
+        return new JmxMeterRegistry(hierarchicalNameMapper, clock);
     }
 
+    @ConditionalOnMissingBean
     @Bean
-    AtlasConfig atlasConfig(Environment environment) {
-        return environment::getProperty;
+    HierarchicalNameMapper hierarchicalNameMapper() {
+        return HierarchicalNameMapper.DEFAULT;
     }
 
     @ConditionalOnMissingBean

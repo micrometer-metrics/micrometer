@@ -16,9 +16,12 @@
 package io.micrometer.spring.export.prometheus;
 
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
+import org.springframework.boot.actuate.endpoint.Endpoint;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+@ConditionalOnClass(Endpoint.class)
 @Configuration
 public class PrometheusEndpointConfiguration {
     @Bean

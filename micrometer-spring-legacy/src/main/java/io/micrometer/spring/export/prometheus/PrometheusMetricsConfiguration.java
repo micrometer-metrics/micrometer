@@ -15,19 +15,15 @@
  */
 package io.micrometer.spring.export.prometheus;
 
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 import io.prometheus.client.CollectorRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 
 @Configuration
 public class PrometheusMetricsConfiguration {
-    @Bean
-    PrometheusTagFormatter tagFormatter() {
-        return new PrometheusTagFormatter();
-    }
-
     @ConditionalOnMissingBean
     @Bean
     CollectorRegistry collectorRegistry() {
@@ -35,7 +31,13 @@ public class PrometheusMetricsConfiguration {
     }
 
     @Bean
-    PrometheusMeterRegistry prometheusMeterRegistry(CollectorRegistry collectorRegistry) {
-        return new PrometheusMeterRegistry(collectorRegistry);
+    PrometheusMeterRegistry prometheusMeterRegistry(CollectorRegistry collectorRegistry, Clock clock) {
+        return new PrometheusMeterRegistry(collectorRegistry, clock);
+    }
+
+    @ConditionalOnMissingBean
+    @Bean
+    Clock clock() {
+        return Clock.SYSTEM;
     }
 }

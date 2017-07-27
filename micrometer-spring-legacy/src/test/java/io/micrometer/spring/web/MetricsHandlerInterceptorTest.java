@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -69,7 +70,7 @@ public class MetricsHandlerInterceptorTest {
     @Test
     public void timedMethod() throws Exception {
         mvc.perform(get("/api/c1/10")).andExpect(status().isOk());
-        assertThat(registry.findMeter(Timer.class, "http_server_requests", "status", "200", "uri", "api/c1/{id}", "public", "true"))
+        assertThat(registry.findMeter(Timer.class, "http_server_requests", "status", "200", "uri", "/api/c1/{id}", "public", "true"))
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
@@ -133,7 +134,7 @@ public class MetricsHandlerInterceptorTest {
     @Test
     public void regexBasedRequestMapping() throws Exception {
         mvc.perform(get("/api/c1/regex/.abc")).andExpect(status().isOk());
-        assertThat(registry.findMeter(Timer.class, "http_server_requests", "uri", "api/c1/regex/{id:\\.[a-z]+}"))
+        assertThat(registry.findMeter(Timer.class, "http_server_requests", "uri", "/api/c1/regex/{id:\\.[a-z]+}"))
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
@@ -144,8 +145,9 @@ public class MetricsHandlerInterceptorTest {
         assertThat(registry.findMeter(Gauge.class, "http_server_requests.quantiles", "quantile", "0.95")).isNotEmpty();
     }
 
-    @SpringBootApplication
+    @SpringBootApplication(scanBasePackages = "isolated")
     @EnableMetrics
+    @Import({ Controller1.class, Controller2.class })
     static class App {
         @Bean
         MeterRegistry registry() {

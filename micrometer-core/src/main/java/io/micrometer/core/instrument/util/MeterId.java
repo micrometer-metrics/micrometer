@@ -91,6 +91,10 @@ public class MeterId {
         return new MeterId(name, concat(tags.stream(), stream(extraTags.spliterator(), false)).collect(Collectors.toList()));
     }
 
+    public MeterId withName(String newName) {
+        return new MeterId(newName, tags);
+    }
+
     public Measurement measurement(double value) {
         return new Measurement(name, tags, value);
     }
