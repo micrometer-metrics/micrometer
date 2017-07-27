@@ -1,0 +1,4 @@
+dependencies {
+    compile project(':micrometer-core')
+    compile 'io.dropwizard.metrics:metrics-ganglia:3.+'
+}
