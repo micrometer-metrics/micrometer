@@ -36,6 +36,6 @@ public class PrometheusMetricsConfiguration {
 
     @Bean
     PrometheusMeterRegistry meterRegistry(CollectorRegistry collectorRegistry) {
-        return new PrometheusMeterRegistry();
+        return new PrometheusMeterRegistry(collectorRegistry);
     }
 }
