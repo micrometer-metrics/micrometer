@@ -28,8 +28,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TimerSample {
     public static void main(String[] args) {
-        Timer timer = Registries.prometheus().timer("timer", "instance", "local");
-        Timer timer2 = Registries.prometheus().timer("timer", "instance", "cloud");
+        Timer timer = Registries.ganglia().timer("timer", "instance", "local");
+        Timer timer2 = Registries.ganglia().timer("timer", "instance", "cloud");
 
         RandomEngine r = new MersenneTwister64(0);
         Normal incomingRequests = new Normal(0, 1, r);
