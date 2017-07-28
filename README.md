@@ -12,7 +12,7 @@ Micrometer is the instrumentation library underpinning Spring Boot 2.0's metrics
 
 ## Join the discussion
 
-Join the [Micrometer Slack](http://slack.micromter.io) to share your questions, concerns, and feature requests.
+Join the [Micrometer Slack](http://slack.micrometer.io) to share your questions, concerns, and feature requests.
 
 ## Building Locally
 
