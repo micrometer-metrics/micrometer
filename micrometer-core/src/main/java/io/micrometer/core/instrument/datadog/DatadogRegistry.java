@@ -44,7 +44,7 @@ final class DatadogRegistry extends AbstractStepRegistry {
     private final String hostTag;
 
     public DatadogRegistry(DatadogConfig config, Clock clock) {
-        super(clock, config);
+        super(config, clock);
 
         try {
             this.metricsEndpoint = URI.create("https://app.datadoghq.com/api/v1/series?api_key=" + config.apiKey()).toURL();

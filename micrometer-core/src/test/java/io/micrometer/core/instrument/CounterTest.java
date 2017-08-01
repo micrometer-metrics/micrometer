@@ -15,9 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.atlas.AtlasMeterRegistry;
-import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
+import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -62,9 +61,7 @@ class CounterTest {
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
     void incrementAmountNegative(MeterRegistry registry) {
-        if(registry instanceof AtlasMeterRegistry
-                || registry instanceof PrometheusMeterRegistry
-                || registry instanceof DatadogMeterRegistry) {
+        if(registry instanceof SpectatorMeterRegistry || registry instanceof PrometheusMeterRegistry) {
             // does not support decrementing counters
             return;
         }

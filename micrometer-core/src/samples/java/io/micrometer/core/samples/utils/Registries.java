@@ -23,6 +23,8 @@ import io.micrometer.core.instrument.datadog.DatadogConfig;
 import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
 import io.micrometer.core.instrument.ganglia.GangliaMeterRegistry;
 import io.micrometer.core.instrument.graphite.GraphiteMeterRegistry;
+import io.micrometer.core.instrument.influx.InfluxConfig;
+import io.micrometer.core.instrument.influx.InfluxMeterRegistry;
 import io.micrometer.core.instrument.jmx.JmxMeterRegistry;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 
@@ -98,4 +100,23 @@ public class Registries {
     }
 
     public static JmxMeterRegistry jmx() { return new JmxMeterRegistry(); }
+
+    public static InfluxMeterRegistry influx() {
+        return new InfluxMeterRegistry(new InfluxConfig() {
+            @Override
+            public String userName() {
+                return "admin";
+            }
+
+            @Override
+            public String password() {
+                return "admin";
+            }
+
+            @Override
+            public String get(String k) {
+                return null;
+            }
+        });
+    }
 }

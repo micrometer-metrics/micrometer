@@ -21,11 +21,13 @@ import com.netflix.spectator.api.Meter;
 import com.netflix.spectator.api.Registry;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.IdentityTagFormatter;
+import io.micrometer.core.instrument.Timer;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import io.micrometer.core.instrument.stats.quantile.GKQuantiles;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import static com.google.common.collect.Streams.stream;
@@ -42,20 +44,30 @@ class SpectatorMeterRegistryTest {
         SpectatorMeterRegistry registry = new SpectatorMeterRegistry(new DefaultRegistry(), Clock.SYSTEM, new IdentityTagFormatter());
         Registry spectatorRegistry = registry.getSpectatorRegistry();
 
-        registry.timerBuilder("timer")
-                .quantiles(GKQuantiles.quantiles(0.5).create())
+        Timer timer = registry.timerBuilder("timer")
+                .quantiles(GKQuantiles.quantiles(0.5, 0.95).create())
                 .create();
+
+        timer.record(100, TimeUnit.MILLISECONDS);
 
         registry.summaryBuilder("ds")
                 .quantiles(GKQuantiles.quantiles(0.5).create())
                 .create();
 
-        assertThat(spectatorRegistry).haveAtLeastOne(withNameAndTagKey("timer", "quantile"));
-        assertThat(spectatorRegistry).haveAtLeastOne(withNameAndTagKey("ds", "quantile"));
+        assertThat(spectatorRegistry).haveAtLeastOne(withNameAndQuantile("timer"));
+        assertThat(spectatorRegistry).haveAtLeastOne(withNameAndQuantile("ds"));
+
+        assertThat(spectatorRegistry).haveAtLeast(2,
+                new Condition<>(m -> quantilePredicate("timer").test(m.id()) && m.measure().iterator().next().value() != Double.NaN,
+                        "a meter with at least two quantiles where both quantiles have a value"));
     }
 
-    private Condition<Meter> withNameAndTagKey(String name, String tagKey) {
-        Predicate<Id> test = id -> id.name().equals(name) && stream(id.tags()).anyMatch(t -> t.key().equals(tagKey));
-        return new Condition<>(m -> test.test(m.id()), "a meter with name `%s` and tag `%s`", name, tagKey);
+    private Condition<Meter> withNameAndQuantile(String name) {
+        Predicate<Id> test = quantilePredicate(name);
+        return new Condition<>(m -> test.test(m.id()), "a meter with name `%s` and tag `%s`", name, "quantile");
+    }
+
+    private Predicate<Id> quantilePredicate(String name) {
+        return id -> id.name().equals(name) && stream(id.tags()).anyMatch(t -> t.key().equals("quantile"));
     }
 }

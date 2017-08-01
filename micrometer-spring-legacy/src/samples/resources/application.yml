@@ -17,5 +17,5 @@
 atlas.step: PT10S
 atlas.readTimeout: PT30S
 atlas.batchSize: 20000
-server.port: 8081
+server.port: 8080
 management.security.enabled: false

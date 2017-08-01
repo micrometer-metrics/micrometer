@@ -32,8 +32,7 @@ public interface StepRegistryConfig extends RegistryConfig {
     String prefix();
     
     /**
-     * Returns the step size (reporting frequency) to use. The default is 10 seconds, matching the default
-     * for the Datadog agent.
+     * Returns the step size (reporting frequency) to use. The default is 10 seconds.
      */
     default Duration step() {
         String v = get(prefix() + ".step");
@@ -41,7 +40,7 @@ public interface StepRegistryConfig extends RegistryConfig {
     }
 
     /**
-     * Returns true if publishing to Datadog is enabled. Default is {@code true}.
+     * Returns true if publishing is enabled. Default is {@code true}.
      */
     default boolean enabled() {
         String v = get(prefix() + ".enabled");

@@ -42,8 +42,7 @@ public interface GangliaConfig {
     }
 
     /**
-     * Returns the step size (reporting frequency) to use. The default is 10 seconds, matching the default
-     * for the Datadog agent.
+     * Returns the step size (reporting frequency) to use. The default is 10 seconds.
      */
     default Duration step() {
         String v = get(prefix() + ".step");

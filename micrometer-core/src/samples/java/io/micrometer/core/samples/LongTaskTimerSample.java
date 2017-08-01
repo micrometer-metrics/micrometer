@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class LongTaskTimerSample {
     public static void main(String[] args) {
-        LongTaskTimer timer = Registries.prometheus().longTaskTimer("longTaskTimer");
+        LongTaskTimer timer = Registries.influx().longTaskTimer("longTaskTimer");
 
         RandomEngine r = new MersenneTwister64(0);
         Normal incomingRequests = new Normal(0, 1, r);

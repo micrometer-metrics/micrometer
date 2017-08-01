@@ -4,7 +4,7 @@ include 'micrometer-core'
 //include 'micrometer-spring'
 include 'micrometer-spring-legacy'
 
-['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx'].each { sys ->
+['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx'].each { sys ->
     include "micrometer-$sys-starter"
     project(":micrometer-$sys-starter").projectDir = new File(rootProject.projectDir, "starter/micrometer-$sys-starter")
 }

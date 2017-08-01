@@ -18,8 +18,9 @@ package io.micrometer.core.samples;
 import cern.jet.random.Normal;
 import cern.jet.random.engine.MersenneTwister64;
 import cern.jet.random.engine.RandomEngine;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
+import io.micrometer.core.instrument.stats.quantile.GKQuantiles;
 import io.micrometer.core.samples.utils.Registries;
 import reactor.core.publisher.Flux;
 
@@ -29,9 +30,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TimerSample {
     public static void main(String[] args) {
-        PrometheusMeterRegistry prometheus = Registries.prometheus();
-        Timer timer = prometheus.timer("timer", "instance", "local");
-        Timer timer2 = prometheus.timer("timer", "instance", "cloud");
+        MeterRegistry registry = Registries.influx();
+        GKQuantiles quantiles = GKQuantiles.quantiles(0.95, 0.5).error(0.05).create();
+        Timer timer = registry.timerBuilder("timer4").quantiles(quantiles).create();
 
         RandomEngine r = new MersenneTwister64(0);
         Normal incomingRequests = new Normal(0, 1, r);
@@ -49,7 +50,6 @@ public class TimerSample {
                         // pretend the request took some amount of time, such that the time is
                         // distributed normally with a mean of 250ms
                         timer.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS);
-                        timer2.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS);
                     }
                 })
                 .blockLast();

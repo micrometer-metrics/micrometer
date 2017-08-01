@@ -134,7 +134,7 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
         registerQuantilesGaugeIfNecessary(name, tags, quantiles);
         registerHistogramCounterIfNecessary(name, tags, histogram);
         com.netflix.spectator.api.Timer timer = registry.timer(tagFormatter.formatName(name), toSpectatorTags(tags));
-        return (io.micrometer.core.instrument.Timer) meterMap.computeIfAbsent(timer, t -> new SpectatorTimer(timer, getClock()));
+        return (io.micrometer.core.instrument.Timer) meterMap.computeIfAbsent(timer, t -> new SpectatorTimer(timer, quantiles, getClock()));
     }
 
     private void registerHistogramCounterIfNecessary(String name, Iterable<io.micrometer.core.instrument.Tag> tags, Histogram<?> histogram) {
@@ -153,9 +153,11 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
         if(quantiles != null) {
             for (Double q : quantiles.monitored()) {
                 List<com.netflix.spectator.api.Tag> quantileTags = new LinkedList<>(toSpectatorTags(tags));
-                quantileTags.add(new BasicTag("quantile", Double.isNaN(q) ? "NaN" : Double.toString(q)));
-                quantileTags.add(new BasicTag("statistic", "quantile"));
-                registry.gauge(registry.createId(tagFormatter.formatName(name), quantileTags), q, quantiles::get);
+                if(!Double.isNaN(q)) {
+                    quantileTags.add(new BasicTag("quantile", Double.toString(q)));
+                    quantileTags.add(new BasicTag("statistic", "value"));
+                    registry.gauge(registry.createId(tagFormatter.formatName(name), quantileTags), q, quantiles::get);
+                }
             }
         }
     }

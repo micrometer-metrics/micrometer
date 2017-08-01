@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.spectator;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.AbstractTimer;
+import io.micrometer.core.instrument.stats.quantile.Quantiles;
 import io.micrometer.core.instrument.util.MeterId;
 import io.micrometer.core.instrument.util.TimeUtils;
 
@@ -25,16 +26,22 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class SpectatorTimer extends AbstractTimer {
-    private com.netflix.spectator.api.Timer timer;
+    private final com.netflix.spectator.api.Timer timer;
+    private final Quantiles quantiles;
 
-    SpectatorTimer(com.netflix.spectator.api.Timer timer, Clock clock) {
+    SpectatorTimer(com.netflix.spectator.api.Timer timer, Quantiles quantiles, Clock clock) {
         super(new MeterId(timer.id().name(), SpectatorUtils.tags(timer)), clock);
         this.timer = timer;
+        this.quantiles = quantiles;
     }
 
     @Override
     public void record(long amount, TimeUnit unit) {
-        timer.record(unit.toNanos(amount), TimeUnit.NANOSECONDS);
+        long nanoAmount = unit.toNanos(amount);
+        timer.record(nanoAmount, TimeUnit.NANOSECONDS);
+        if(quantiles != null) {
+            quantiles.observe(nanoAmount);
+        }
     }
 
     @Override

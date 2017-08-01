@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.export.datadog;
+package io.micrometer.spring.export.influx;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.datadog.DatadogConfig;
-import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
+import io.micrometer.core.instrument.influx.InfluxConfig;
+import io.micrometer.core.instrument.influx.InfluxMeterRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
 @Configuration
-public class DatadogMetricsConfiguration {
+public class InfluxMetricsConfiguration {
     @Bean
-    DatadogMeterRegistry meterRegistry(DatadogConfig config) {
-        return new DatadogMeterRegistry(config);
+    InfluxMeterRegistry meterRegistry(InfluxConfig config) {
+        return new InfluxMeterRegistry(config);
     }
 
     @Bean
-    DatadogConfig datadogConfig(Environment environment) {
+    InfluxConfig InfluxConfig(Environment environment) {
         return environment::getProperty;
     }
 

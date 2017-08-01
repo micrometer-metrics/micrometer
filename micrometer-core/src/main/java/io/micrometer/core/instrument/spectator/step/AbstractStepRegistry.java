@@ -46,7 +46,7 @@ public abstract class AbstractStepRegistry extends AbstractRegistry {
 
     private Scheduler scheduler;
 
-    public AbstractStepRegistry(Clock clock, StepRegistryConfig config) {
+    public AbstractStepRegistry(StepRegistryConfig config, Clock clock) {
         super(new StepClock(clock, config.step().toMillis()), config);
         this.clock = clock;
 
@@ -65,13 +65,13 @@ public abstract class AbstractStepRegistry extends AbstractRegistry {
      */
     public void start() {
         if (scheduler == null) {
-            // Setup main collection for publishing to Datadog
+            // Setup main collection for publishing
             if (enabled) {
                 Scheduler.Options options = new Scheduler.Options()
                         .withFrequency(Scheduler.Policy.FIXED_RATE_SKIP_IF_LONG, step)
                         .withInitialDelay(Duration.ofMillis(getInitialDelay(stepMillis)))
                         .withStopOnFailure(false);
-                scheduler = new Scheduler(this, "spring-metrics-datadog", numThreads);
+                scheduler = new Scheduler(this, "spring-metrics-publisher", numThreads);
                 scheduler.schedule(options, this::pushMetrics);
                 logger.info("started collecting metrics every {}", step);
             } else {
@@ -105,7 +105,7 @@ public abstract class AbstractStepRegistry extends AbstractRegistry {
     }
 
     /**
-     * Stop the scheduler reporting Datadog metrics.
+     * Stop the scheduler reporting metrics.
      */
     public void stop() {
         if (scheduler != null) {
