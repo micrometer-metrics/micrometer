@@ -30,6 +30,8 @@ dependencies {
     compile 'javax.servlet:javax.servlet-api:3.1.0', optional
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
 
+    compile 'org.springframework.integration:spring-integration-core', optional
+
     testCompile 'org.springframework.boot:spring-boot-starter-web'
     testCompile 'org.springframework.boot:spring-boot-actuator'
 
@@ -48,4 +50,7 @@ dependencies {
     samplesCompile 'colt:colt:1.2.0'
     samplesCompile 'org.springframework.boot:spring-boot-starter-web'
     samplesCompile 'org.springframework.boot:spring-boot-actuator'
+    samplesCompile 'org.springframework.integration:spring-integration-java-dsl'
+    samplesCompile 'org.springframework.integration:spring-integration-ws'
+    samplesCompile 'org.springframework.integration:spring-integration-xml'
 }

@@ -16,15 +16,18 @@
 package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.internal.FunctionTrackingCounter;
 import io.micrometer.core.instrument.util.MapAccess;
 import io.micrometer.core.instrument.util.MeterId;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 import io.micrometer.core.instrument.AbstractMeterRegistry;
 
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Stream;
 
@@ -53,6 +56,12 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
+    public <T> T counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+        MapAccess.computeIfAbsent(meterMap, new MeterId(name, withCommonTags(tags)), id -> new FunctionTrackingCounter<>(id, obj, f));
+        return obj;
+    }
+
+    @Override
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
         registerQuantilesGaugeIfNecessary(name, tags, quantiles);
         return MapAccess.computeIfAbsent(meterMap, new MeterId(name, withCommonTags(tags)), SimpleDistributionSummary::new);
@@ -65,7 +74,7 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
     }
 
     private void registerQuantilesGaugeIfNecessary(String name, Iterable<Tag> tags, Quantiles quantiles) {
-        if(quantiles != null) {
+        if (quantiles != null) {
             for (Double q : quantiles.monitored()) {
                 List<Tag> quantileTags = new LinkedList<>();
                 tags.forEach(quantileTags::add);

@@ -15,13 +15,12 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
-import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static io.micrometer.core.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,17 +56,17 @@ class CounterTest {
         assertEquals(2L, c.count());
     }
 
-    @DisplayName("increment by a negative amount")
+    @DisplayName("heisen-counter increments by change in a monotonically increasing function when observed")
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
-    void incrementAmountNegative(MeterRegistry registry) {
-        if(registry instanceof SpectatorMeterRegistry || registry instanceof PrometheusMeterRegistry) {
-            // does not support decrementing counters
-            return;
-        }
+    void heisenCounter(MeterRegistry registry) {
+        AtomicLong n = registry.counter("heisen", new AtomicLong(0));
+        n.incrementAndGet();
 
-        Counter c = registry.counter("myCounter");
-        c.increment(-2);
-        assertEquals(-2L, c.count());
+        Meter c = registry.findMeter(Meter.class, "heisen").get();
+
+        clock(registry).addAndGet(1, TimeUnit.SECONDS);
+        registry.getMeters().forEach(Meter::measure);
+        assertThat(c.measure().get(0).getValue()).isEqualTo(1);
     }
 }

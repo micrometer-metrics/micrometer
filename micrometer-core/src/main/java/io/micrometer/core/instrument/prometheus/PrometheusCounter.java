@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.prometheus;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meters;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterId;
 
@@ -30,11 +31,6 @@ public class PrometheusCounter implements Counter {
     PrometheusCounter(MeterId id, io.prometheus.client.Counter.Child counter) {
         this.id = id;
         this.counter = counter;
-    }
-
-    @Override
-    public void increment() {
-        counter.inc();
     }
 
     @Override
@@ -60,5 +56,16 @@ public class PrometheusCounter implements Counter {
     @Override
     public List<Measurement> measure() {
         return Collections.singletonList(id.measurement(count()));
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object o) {
+        return Meters.equals(this, o);
+    }
+
+    @Override
+    public int hashCode() {
+        return Meters.hashCode(this);
     }
 }

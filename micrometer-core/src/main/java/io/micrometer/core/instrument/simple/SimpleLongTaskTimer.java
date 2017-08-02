@@ -15,11 +15,8 @@
  */
 package io.micrometer.core.instrument.simple;
 
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.util.MeterId;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Measurement;
 
 import java.util.Arrays;
 import java.util.List;
@@ -90,5 +87,16 @@ public class SimpleLongTaskTimer extends AbstractSimpleMeter implements LongTask
         return Arrays.asList(
                 activeTasksId.measurement(activeTasks()),
                 durationId.measurement(duration()));
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object o) {
+        return Meters.equals(this, o);
+    }
+
+    @Override
+    public int hashCode() {
+        return Meters.hashCode(this);
     }
 }

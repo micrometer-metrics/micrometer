@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.prometheus;
 
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meters;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterId;
 
@@ -69,5 +70,16 @@ public class PrometheusLongTaskTimer implements LongTaskTimer {
     @Override
     public List<Measurement> measure() {
         return timer.measure();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object o) {
+        return Meters.equals(this, o);
+    }
+
+    @Override
+    public int hashCode() {
+        return Meters.hashCode(this);
     }
 }

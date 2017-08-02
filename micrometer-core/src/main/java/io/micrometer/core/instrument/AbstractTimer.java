@@ -85,4 +85,15 @@ public abstract class AbstractTimer implements Timer {
     public Iterable<Tag> getTags() {
         return id.getTags();
     }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object o) {
+        return Meters.equals(this, o);
+    }
+
+    @Override
+    public int hashCode() {
+        return Meters.hashCode(this);
+    }
 }

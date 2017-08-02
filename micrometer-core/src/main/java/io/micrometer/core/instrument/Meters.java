@@ -90,6 +90,17 @@ public class Meters {
                     measurements.forEach(m -> tags.forEach(t -> m.getTags().add(t)));
                     return measurements;
                 }
+
+                @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+                @Override
+                public boolean equals(Object o) {
+                    return Meters.equals(this, o);
+                }
+
+                @Override
+                public int hashCode() {
+                    return Meters.hashCode(this);
+                }
             };
         }
 
@@ -129,6 +140,17 @@ public class Meters {
                         return measurements;
                     }
                     return Collections.emptyList();
+                }
+
+                @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+                @Override
+                public boolean equals(Object o) {
+                    return Meters.equals(this, o);
+                }
+
+                @Override
+                public int hashCode() {
+                    return Meters.hashCode(this);
                 }
             };
         }
@@ -216,5 +238,23 @@ public class Meters {
      */
     public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String name, Tag... tags) {
         return monitor(registry, executor, name, asList(tags));
+    }
+
+    public static boolean equals(Meter m1, Object o) {
+        if (m1 == null && o != null) return false;
+        if (o == null && m1 != null) return false;
+        if (!(o instanceof Meter)) return false;
+        if (m1 == o) return true;
+        Meter m2 = (Meter) o;
+        return (m1.getName() != null ? m1.getName().equals(m2.getName()) : m2.getName() == null) &&
+                (m1.getTags() != null ? m1.getTags().equals(m2.getTags()) : m2.getTags() == null) &&
+                (m1.getType() != null ? m1.getType().equals(m2.getType()) : m2.getType() == null);
+    }
+
+    public static int hashCode(Meter m) {
+        int result = m.getName() != null ? m.getName().hashCode() : 0;
+        result = 31 * result + (m.getTags() != null ? m.getTags().hashCode() : 0);
+        result = 31 * result + (m.getType() != null ? m.getType().hashCode() : 0);
+        return result;
     }
 }

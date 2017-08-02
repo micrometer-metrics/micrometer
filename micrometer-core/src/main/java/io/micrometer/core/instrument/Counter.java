@@ -22,7 +22,9 @@ public interface Counter extends Meter {
     /**
      * Update the counter by one.
      */
-    void increment();
+    default void increment() {
+        increment(1.0);
+    }
 
     /**
      * Update the counter by {@code amount}.

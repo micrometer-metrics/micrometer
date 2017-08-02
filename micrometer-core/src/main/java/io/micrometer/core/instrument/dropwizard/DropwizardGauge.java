@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.dropwizard;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meters;
 import io.micrometer.core.instrument.util.MeterId;
 
 import java.util.Collections;
@@ -41,5 +42,16 @@ public class DropwizardGauge extends AbstractDropwizardMeter implements Gauge {
     @Override
     public List<Measurement> measure() {
         return Collections.singletonList(id.measurement(value()));
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object o) {
+        return Meters.equals(this, o);
+    }
+
+    @Override
+    public int hashCode() {
+        return Meters.hashCode(this);
     }
 }

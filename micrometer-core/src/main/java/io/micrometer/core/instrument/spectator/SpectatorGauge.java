@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.spectator;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meters;
 import io.micrometer.core.instrument.Tag;
 
 import java.util.List;
@@ -46,5 +47,16 @@ public class SpectatorGauge implements Gauge {
     @Override
     public List<Measurement> measure() {
         return SpectatorUtils.measurements(gauge);
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object o) {
+        return Meters.equals(this, o);
+    }
+
+    @Override
+    public int hashCode() {
+        return Meters.hashCode(this);
     }
 }

@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.spectator;
 
+import io.micrometer.core.instrument.Meters;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Measurement;
@@ -61,5 +62,16 @@ public class SpectatorDistributionSummary implements DistributionSummary {
     @Override
     public List<Measurement> measure() {
         return SpectatorUtils.measurements(distributionSummary);
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object o) {
+        return Meters.equals(this, o);
+    }
+
+    @Override
+    public int hashCode() {
+        return Meters.hashCode(this);
     }
 }

@@ -13,29 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.prometheus;
+package io.micrometer.core.instrument.internal;
 
-import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meters;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterId;
 
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.ToDoubleFunction;
 
-public class PrometheusGauge implements Gauge {
+public class FunctionTrackingCounter<T> implements Meter {
     private final MeterId id;
-    private io.prometheus.client.Gauge.Child gauge;
+    private final WeakReference<T> ref;
+    private final ToDoubleFunction<T> f;
 
-    PrometheusGauge(MeterId id, io.prometheus.client.Gauge.Child gauge) {
+    public FunctionTrackingCounter(MeterId id, T obj, ToDoubleFunction<T> f) {
         this.id = id;
-        this.gauge = gauge;
-    }
-
-    @Override
-    public double value() {
-        return gauge.get();
+        this.ref = new WeakReference<>(obj);
+        this.f = f;
     }
 
     @Override
@@ -49,18 +47,14 @@ public class PrometheusGauge implements Gauge {
     }
 
     @Override
+    public Type getType() {
+        return Type.Counter;
+    }
+
+    @Override
     public List<Measurement> measure() {
-        return Collections.singletonList(id.measurement(gauge.get()));
-    }
-
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(Object o) {
-        return Meters.equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return Meters.hashCode(this);
+        T obj = ref.get();
+        return obj != null ? Collections.singletonList(id.measurement(f.applyAsDouble(obj))) :
+                Collections.emptyList();
     }
 }

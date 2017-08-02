@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meters;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterId;
 
@@ -38,13 +39,9 @@ public class SimpleCounter extends AbstractSimpleMeter implements Counter {
     }
 
     @Override
-    public void increment() {
-        count.add(1.0);
-    }
-
-    @Override
     public void increment(double amount) {
-        count.add(amount);
+        if(amount > 0)
+            count.add(amount);
     }
 
     @Override
@@ -55,5 +52,16 @@ public class SimpleCounter extends AbstractSimpleMeter implements Counter {
     @Override
     public List<Measurement> measure() {
         return Collections.singletonList(countId.measurement(count()));
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object o) {
+        return Meters.equals(this, o);
+    }
+
+    @Override
+    public int hashCode() {
+        return Meters.hashCode(this);
     }
 }

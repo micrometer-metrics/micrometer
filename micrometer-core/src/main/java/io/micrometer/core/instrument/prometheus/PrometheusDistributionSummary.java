@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.prometheus;
 
+import io.micrometer.core.instrument.Meters;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterId;
 import io.micrometer.core.instrument.DistributionSummary;
@@ -61,5 +62,16 @@ public class PrometheusDistributionSummary implements DistributionSummary {
     @Override
     public List<Measurement> measure() {
         return summary.measure();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object o) {
+        return Meters.equals(this, o);
+    }
+
+    @Override
+    public int hashCode() {
+        return Meters.hashCode(this);
     }
 }

@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.spectator;
 
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Tag;
 
@@ -26,8 +27,8 @@ import java.util.stream.Stream;
 
 import static java.util.stream.StreamSupport.stream;
 
-class SpectatorUtils {
-    static List<Measurement> measurements(com.netflix.spectator.api.Meter meter) {
+public class SpectatorUtils {
+    public static List<Measurement> measurements(com.netflix.spectator.api.Meter meter) {
         return stream(meter.measure().spliterator(), false)
                 .map(m ->
                         new Measurement(
@@ -40,16 +41,30 @@ class SpectatorUtils {
                 .collect(Collectors.toList());
     }
 
-    static List<Tag> tags(com.netflix.spectator.api.Meter meter) {
+    public static List<Tag> tags(com.netflix.spectator.api.Meter meter) {
         return stream(meter.id().tags().spliterator(), false)
                 .map(t -> Tag.of(t.key(), t.value()))
                 .collect(Collectors.toList());
     }
 
-    static Id spectatorId(Registry registry, String name, Iterable<Tag> tags) {
+    public static Id spectatorId(Registry registry, String name, Iterable<Tag> tags) {
         String[] flattenedTags = stream(tags.spliterator(), false)
                 .flatMap(t -> Stream.of(t.getKey(), t.getValue()))
                 .toArray(String[]::new);
         return registry.createId(name, flattenedTags);
+    }
+
+    public static com.netflix.spectator.api.Clock spectatorClock(Clock clock) {
+        return new com.netflix.spectator.api.Clock() {
+            @Override
+            public long wallTime() {
+                return clock.wallTime();
+            }
+
+            @Override
+            public long monotonicTime() {
+                return clock.monotonicTime();
+            }
+        };
     }
 }

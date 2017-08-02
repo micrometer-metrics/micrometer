@@ -16,64 +16,45 @@
 package io.micrometer.core.instrument.spectator;
 
 import com.netflix.spectator.api.*;
+import com.netflix.spectator.api.Counter;
 import com.netflix.spectator.api.Measurement;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.AbstractMeterRegistry;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.ImmutableTag;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.spectator.step.FunctionTrackingStepCounter;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.function.UnaryOperator;
 
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.StreamSupport.stream;
 import static io.micrometer.core.instrument.spectator.SpectatorUtils.spectatorId;
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Stream.concat;
+import static java.util.stream.StreamSupport.stream;
 
 /**
  * @author Jon Schneider
  */
-public class SpectatorMeterRegistry extends AbstractMeterRegistry {
+public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
     private final TagFormatter tagFormatter;
-    private final ExternalClockSpectatorRegistry registry;
-    private final Map<com.netflix.spectator.api.Meter, io.micrometer.core.instrument.Meter> meterMap = new HashMap<>();
-
-    private final com.netflix.spectator.api.Clock spectatorClock = new com.netflix.spectator.api.Clock() {
-        @Override
-        public long wallTime() {
-            // We don't see a need to provide a wallTime abstraction in our Clock interface. It only appears to be
-            // used by Spectator to mark measurements on the way out the door.
-            return com.netflix.spectator.api.Clock.SYSTEM.wallTime();
-        }
-
-        @Override
-        public long monotonicTime() {
-            return getClock().monotonicTime();
-        }
-    };
+    private final Registry registry;
+    protected final Map<com.netflix.spectator.api.Meter, io.micrometer.core.instrument.Meter> meterMap = new HashMap<>();
 
     public SpectatorMeterRegistry(Registry registry, Clock clock, TagFormatter tagFormatter) {
         super(clock);
-        this.registry = new ExternalClockSpectatorRegistry(registry, new com.netflix.spectator.api.Clock() {
-            @Override
-            public long wallTime() {
-                return System.currentTimeMillis();
-            }
-
-            @Override
-            public long monotonicTime() {
-                return clock.monotonicTime();
-            }
-        });
+        this.registry = registry;
         this.tagFormatter = tagFormatter;
     }
 
     private Collection<com.netflix.spectator.api.Tag> toSpectatorTags(Iterable<io.micrometer.core.instrument.Tag> tags) {
-        return Stream.concat(commonTags.stream(), stream(tags.spliterator(), false))
+        return concat(commonTags.stream(), stream(tags.spliterator(), false))
                 .map(t -> new BasicTag(tagFormatter.formatTagKey(t.getKey()), tagFormatter.formatTagValue(t.getValue())))
                 .collect(toList());
     }
@@ -122,16 +103,34 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
         return (io.micrometer.core.instrument.Counter) meterMap.computeIfAbsent(counter, c -> new SpectatorCounter(counter));
     }
 
+    /**
+     * If using a custom spectator Registry type that does not extend from AbstractRegistry, provide
+     * a mechanism to create a new counter that doesn't register it with the registry.
+     * @return A new counter that has not yet been registered with the registry.
+     */
+    protected com.netflix.spectator.api.Counter newCounter(String name, Iterable<Tag> tags) {
+        try {
+            Id id = spectatorId(registry, name, tags);
+            Method newCounter = registry.getClass().getDeclaredMethod("newCounter", Id.class);
+            newCounter.setAccessible(true);
+            return (Counter) newCounter.invoke(registry, id);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new UnsupportedOperationException("Provide a way to construct a new counter that is not yet registered.");
+        }
+    }
+
     @Override
     public io.micrometer.core.instrument.DistributionSummary distributionSummary(String name, Iterable<io.micrometer.core.instrument.Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
-        registerQuantilesGaugeIfNecessary(name, tags, quantiles);
+        registerQuantilesGaugeIfNecessary(name, tags, quantiles, UnaryOperator.identity());
         com.netflix.spectator.api.DistributionSummary ds = registry.distributionSummary(tagFormatter.formatName(name), toSpectatorTags(tags));
         return (io.micrometer.core.instrument.DistributionSummary) meterMap.computeIfAbsent(ds, d -> new SpectatorDistributionSummary(ds));
     }
 
     @Override
     protected io.micrometer.core.instrument.Timer timer(String name, Iterable<io.micrometer.core.instrument.Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
-        registerQuantilesGaugeIfNecessary(name, tags, quantiles);
+        // scale nanosecond precise quantile values to seconds
+        registerQuantilesGaugeIfNecessary(name, tags, quantiles, t -> t / 1.0e6);
+
         registerHistogramCounterIfNecessary(name, tags, histogram);
         com.netflix.spectator.api.Timer timer = registry.timer(tagFormatter.formatName(name), toSpectatorTags(tags));
         return (io.micrometer.core.instrument.Timer) meterMap.computeIfAbsent(timer, t -> new SpectatorTimer(timer, quantiles, getClock()));
@@ -149,14 +148,14 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
 //        }
     }
 
-    private void registerQuantilesGaugeIfNecessary(String name, Iterable<io.micrometer.core.instrument.Tag> tags, Quantiles quantiles) {
+    private void registerQuantilesGaugeIfNecessary(String name, Iterable<io.micrometer.core.instrument.Tag> tags, Quantiles quantiles, UnaryOperator<Double> scaling) {
         if(quantiles != null) {
             for (Double q : quantiles.monitored()) {
                 List<com.netflix.spectator.api.Tag> quantileTags = new LinkedList<>(toSpectatorTags(tags));
                 if(!Double.isNaN(q)) {
                     quantileTags.add(new BasicTag("quantile", Double.toString(q)));
                     quantileTags.add(new BasicTag("statistic", "value"));
-                    registry.gauge(registry.createId(tagFormatter.formatName(name), quantileTags), q, quantiles::get);
+                    registry.gauge(registry.createId(tagFormatter.formatName(name), quantileTags), q, q2 -> scaling.apply(quantiles.get(q2)));
                 }
             }
         }
@@ -170,19 +169,25 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public MeterRegistry register(io.micrometer.core.instrument.Meter meter) {
-        AbstractMeter<io.micrometer.core.instrument.Meter> spectatorMeter = new AbstractMeter<io.micrometer.core.instrument.Meter>(spectatorClock, spectatorId(registry, meter.getName(), meter.getTags()), meter) {
-            @Override
-            public Iterable<Measurement> measure() {
-                return stream(ref.get().measure().spliterator(), false)
-                        .map(m -> {
-                            Iterable<Tag> formattedTags = m.getTags().stream().map(t -> Tag.of(tagFormatter.formatTagKey(t.getKey()), tagFormatter.formatTagValue(t.getValue()))).collect(toList());
-                            return new Measurement(spectatorId(registry, tagFormatter.formatName(m.getName()), formattedTags), clock.wallTime(), m.getValue());
-                        })
-                        .collect(toList());
-            }
-        };
+        Id id = spectatorId(registry, meter.getName(), meter.getTags());
+        if(registry.get(id) == null) {
+            AbstractMeter<io.micrometer.core.instrument.Meter> spectatorMeter = new AbstractMeter<io.micrometer.core.instrument.Meter>(registry.clock(), id, meter) {
+                @Override
+                public Iterable<Measurement> measure() {
+                    io.micrometer.core.instrument.Meter meter = ref.get();
+                    if (meter != null) {
+                        return meter.measure().stream()
+                                .map(m -> {
+                                    Iterable<Tag> formattedTags = m.getTags().stream().map(t -> Tag.of(tagFormatter.formatTagKey(t.getKey()), tagFormatter.formatTagValue(t.getValue()))).collect(toList());
+                                    return new Measurement(spectatorId(registry, tagFormatter.formatName(m.getName()), formattedTags), clock.wallTime(), m.getValue());
+                                })
+                                .collect(toList());
+                    } else return emptyList();
+                }
+            };
 
-        meterMap.put(spectatorMeter, meter);
+            meterMap.put(spectatorMeter, meter);
+        }
         return this;
     }
 
@@ -199,6 +204,23 @@ public class SpectatorMeterRegistry extends AbstractMeterRegistry {
      * @return The underlying Spectator {@link Registry}.
      */
     public Registry getSpectatorRegistry() {
-        return registry.getSpectatorRegistry();
+        return registry;
+    }
+
+    /**
+     * Builds a step-interval based counter that is incremented on observation with the difference
+     * between the current value of a monotonically increasing function {@code f} and the last observation of {@code f}.
+     */
+    protected <T> T stepCounter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f, long stepMillis) {
+        Id id = spectatorId(this.getSpectatorRegistry(), name, tags);
+        FunctionTrackingStepCounter<T> heisenCounter = new FunctionTrackingStepCounter<>(id, getSpectatorRegistry().clock(),
+                stepMillis, obj, f);
+
+        meterMap.computeIfAbsent(heisenCounter, c -> {
+            registry.register(heisenCounter);
+            return new SpectatorMeterWrapper(name, tags, Meter.Type.Counter, c);
+        });
+
+        return obj;
     }
 }

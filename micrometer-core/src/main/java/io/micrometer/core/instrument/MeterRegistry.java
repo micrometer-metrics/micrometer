@@ -64,15 +64,42 @@ public interface MeterRegistry {
     Clock getClock();
 
     /**
-     * Measures the rate of some activity.
+     * Tracks a monotonically increasing value.
      */
     Counter counter(String name, Iterable<Tag> tags);
 
     /**
-     * Measures the rate of some activity.
+     * Tracks a monotonically increasing value.
      */
     default Counter counter(String name, String... tags) {
         return counter(name, zip(tags));
+    }
+
+    /**
+     * Tracks a monotonically increasing value, automatically incrementing the counter whenever
+     * the value is observed.
+     */
+    <T> T counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f);
+
+    /**
+     * Tracks a monotonically increasing value provided by {@code f}, maintaining a weak reference on {@code obj}.
+     */
+    default <T> T counter(String name, T obj, ToDoubleFunction<T> f) {
+        return counter(name, emptyList(), obj, f);
+    }
+
+    /**
+     * Tracks a monotonically increasing value provided by {@code f}, maintaining a weak reference on {@code obj}.
+     */
+    default <T extends Number> T counter(String name, T number) {
+        return counter(name, emptyList(), number);
+    }
+
+    /**
+     * Tracks a number, maintaining a weak reference on it.
+     */
+    default <T extends Number> T counter(String name, Iterable<Tag> tags, T number) {
+        return counter(name, tags, number, Number::doubleValue);
     }
 
     /**

@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.dropwizard;
 
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meters;
 import io.micrometer.core.instrument.util.MeterId;
 
 import java.util.Collections;
@@ -57,5 +58,16 @@ public class DropwizardDistributionSummary extends AbstractDropwizardMeter imple
     @Override
     public double totalAmount() {
         return totalAmount.doubleValue();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object o) {
+        return Meters.equals(this, o);
+    }
+
+    @Override
+    public int hashCode() {
+        return Meters.hashCode(this);
     }
 }

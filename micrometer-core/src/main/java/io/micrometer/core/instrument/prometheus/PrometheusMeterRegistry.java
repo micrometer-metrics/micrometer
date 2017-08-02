@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.prometheus;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.AbstractMeterRegistry;
+import io.micrometer.core.instrument.internal.FunctionTrackingCounter;
 import io.micrometer.core.instrument.util.MapAccess;
 import io.micrometer.core.instrument.util.MeterId;
 import io.micrometer.core.instrument.stats.hist.Histogram;
@@ -120,6 +121,12 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
+    public <T> T counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+        register(new FunctionTrackingCounter<>(new MeterId(name, withCommonTags(tags)), obj, f));
+        return obj;
+    }
+
+    @Override
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
         Iterable<Tag> allTags = withCommonTags(tags);
         MeterId id = new MeterId(name, allTags);
@@ -180,42 +187,49 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public MeterRegistry register(Meter meter) {
-        Collector collector = new Collector() {
-            @Override
-            public List<MetricFamilySamples> collect() {
-                List<MetricFamilySamples.Sample> samples = meter.measure().stream()
-                        .map(m -> {
-                            Iterable<Tag> allTags = withCommonTags(m.getTags());
-                            List<String> tagKeys = new ArrayList<>();
-                            List<String> tagValues = new ArrayList<>();
-                            for (Tag tag : allTags) {
-                                tagKeys.add(tagFormatter.formatTagKey(tag.getKey()));
-                                tagValues.add(tagFormatter.formatTagValue(tag.getValue()));
-                            }
-                            return new MetricFamilySamples.Sample(tagFormatter.formatName(m.getName()), tagKeys, tagValues, m.getValue());
-                        })
-                        .collect(toList());
+        meterMap.computeIfAbsent(new MeterId(meter.getName(), meter.getTags()), id -> {
+            collectorMap.computeIfAbsent(meter.getName(), name -> {
+                Collector collector = new Collector() {
+                    @Override
+                    public List<MetricFamilySamples> collect() {
+                        List<MetricFamilySamples.Sample> samples = meter.measure().stream()
+                                .map(m -> {
+                                    Iterable<Tag> allTags = withCommonTags(m.getTags());
+                                    List<String> tagKeys = new ArrayList<>();
+                                    List<String> tagValues = new ArrayList<>();
+                                    for (Tag tag : allTags) {
+                                        tagKeys.add(tagFormatter.formatTagKey(tag.getKey()));
+                                        tagValues.add(tagFormatter.formatTagValue(tag.getValue()));
+                                    }
+                                    return new MetricFamilySamples.Sample(tagFormatter.formatName(m.getName()), tagKeys, tagValues, m.getValue());
+                                })
+                                .collect(toList());
 
-                Type type = Type.UNTYPED;
-                switch (meter.getType()) {
-                    case Counter:
-                        type = Type.COUNTER;
-                        break;
-                    case Gauge:
-                        type = Type.GAUGE;
-                        break;
-                    case DistributionSummary:
-                    case Timer:
-                        type = Type.SUMMARY;
-                        break;
-                }
+                        Type type = Type.UNTYPED;
+                        switch (meter.getType()) {
+                            case Counter:
+                                type = Type.COUNTER;
+                                break;
+                            case Gauge:
+                                type = Type.GAUGE;
+                                break;
+                            case DistributionSummary:
+                            case Timer:
+                                type = Type.SUMMARY;
+                                break;
+                        }
 
-                return Collections.singletonList(new MetricFamilySamples(meter.getName(), type, " ", samples));
-            }
-        };
-        registry.register(collector);
-        collectorMap.put(meter.getName(), collector);
-        meterMap.put(new MeterId(meter.getName(), meter.getTags()), meter);
+                        return Collections.singletonList(new MetricFamilySamples(meter.getName(), type, " ", samples));
+                    }
+                };
+
+                registry.register(collector);
+                return collector;
+            });
+
+            return meter;
+        });
+
         return this;
     }
 

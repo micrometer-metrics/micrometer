@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.dropwizard;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.internal.FunctionTrackingCounter;
 import io.micrometer.core.instrument.simple.SimpleLongTaskTimer;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
@@ -92,6 +93,12 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
     public Counter counter(String name, Iterable<Tag> tags) {
         return MapAccess.computeIfAbsent(meterMap, new MeterId(name, withCommonTags(tags)),
                 id -> new DropwizardCounter(id, registry.meter(toDropwizardName(id))));
+    }
+
+    @Override
+    public <T> T counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+        register(new FunctionTrackingCounter<>(new MeterId(name, withCommonTags(tags)), obj, f));
+        return obj;
     }
 
     @Override

@@ -13,44 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.prometheus;
+package io.micrometer.core.instrument.spectator;
 
-import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Meters;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.util.MeterId;
+import io.micrometer.core.instrument.spectator.SpectatorUtils;
 
-import java.util.Collections;
 import java.util.List;
 
-public class PrometheusGauge implements Gauge {
-    private final MeterId id;
-    private io.prometheus.client.Gauge.Child gauge;
+/**
+ * A Micrometer Meter that wraps an arbitrary Spectator Meter.
+ *
+ * @author Jon Schneider
+ */
+public class SpectatorMeterWrapper implements Meter {
+    private final String name;
+    private final Iterable<Tag> tags;
+    private final Type type;
+    private final com.netflix.spectator.api.Meter spectatorCounter;
 
-    PrometheusGauge(MeterId id, io.prometheus.client.Gauge.Child gauge) {
-        this.id = id;
-        this.gauge = gauge;
-    }
-
-    @Override
-    public double value() {
-        return gauge.get();
+    public SpectatorMeterWrapper(String name, Iterable<Tag> tags, Type type, com.netflix.spectator.api.Meter spectatorCounter) {
+        this.name = name;
+        this.tags = tags;
+        this.type = type;
+        this.spectatorCounter = spectatorCounter;
     }
 
     @Override
     public String getName() {
-        return id.getName();
+        return name;
     }
 
     @Override
     public Iterable<Tag> getTags() {
-        return id.getTags();
+        return tags;
+    }
+
+    @Override
+    public Type getType() {
+        return type;
     }
 
     @Override
     public List<Measurement> measure() {
-        return Collections.singletonList(id.measurement(gauge.get()));
+        return SpectatorUtils.measurements(spectatorCounter);
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
