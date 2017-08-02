@@ -63,8 +63,9 @@ public class FunctionTrackingStepCounter<T> implements Counter {
     }
 
     private void pollFunction() {
-        if(ref.get() != null) {
-            long absoluteCount = (long) f.applyAsDouble(ref.get());
+        T t = ref.get();
+        if(t != null) {
+            long absoluteCount = (long) f.applyAsDouble(t);
             long inc = Math.max(0, absoluteCount - lastCount.get());
             lastCount.addAndGet(inc);
             value.getCurrent().add(inc);
