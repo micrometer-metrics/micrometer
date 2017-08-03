@@ -1,8 +1,6 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.noop.NoOpRegistry;
-import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
-import org.assertj.core.api.AbstractThrowableAssert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,7 +9,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 
 class MeterFactoryTest {
   private MeterRegistry registry;
@@ -20,6 +17,18 @@ class MeterFactoryTest {
   @ArgumentsSource(MeterRegistriesProvider.class)
   @DisplayName("meters with the same name and tags are registered once")
   void uniqueMeters(MeterRegistry registry) {
+    MeterFactory.Config.setRegistry(registry);
+
+    MeterFactory.counter("foo");
+    MeterFactory.counter("foo");
+
+    assertThat(MeterFactory.Config.registry().getMeters().size()).isEqualTo(1);
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(MeterRegistriesProvider.class)
+  @DisplayName("meters with the same name and tags are registered once")
+  void longTaskTimer(MeterRegistry registry) {
     MeterFactory.Config.setRegistry(registry);
 
     MeterFactory.counter("foo");
