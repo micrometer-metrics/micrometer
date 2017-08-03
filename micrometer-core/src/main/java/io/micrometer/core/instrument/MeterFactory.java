@@ -1,12 +1,11 @@
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.noop.NoOpRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.DoubleSupplier;
-import java.util.function.ToDoubleFunction;
 
 public class MeterFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(MeterFactory.class);
@@ -45,9 +44,13 @@ public class MeterFactory {
 
   public static void setRegistry(MeterRegistry newRegistry){
     if(newRegistry == null) {
-      throw new NullPointerException("Null Registry is not allowed. Use a NoOpRegistry instead");
+      throw new NullPointerException("Null Registry is not allowed. Use a "+ NoOpRegistry.class.getCanonicalName()+" instead");
     }
     registry.set(newRegistry);
+  }
+
+  public static MeterRegistry registry() {
+    return registry.get();
   }
 
 }
