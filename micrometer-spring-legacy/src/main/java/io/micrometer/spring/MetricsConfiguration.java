@@ -43,7 +43,7 @@ class MetricsConfiguration {
 
     @Configuration
     @ConditionalOnWebApplication
-    @Import(InstrumentServletRequestConfiguration.class)
+    @Import(MetricsServletRequestConfiguration.class)
     static class WebMvcConfiguration {}
 
     /**

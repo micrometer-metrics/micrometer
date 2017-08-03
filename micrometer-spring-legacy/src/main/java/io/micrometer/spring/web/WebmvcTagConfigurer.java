@@ -49,8 +49,9 @@ public class WebmvcTagConfigurer {
      * @return A set of tags added to every Spring MVC HTTP request.
      */
     public Iterable<Tag> httpRequestTags(HttpServletRequest request,
-                                       HttpServletResponse response) {
-        return asList(method(request), uri(request), exception(request), status(response));
+                                         HttpServletResponse response,
+                                         Throwable ex) {
+        return asList(method(request), uri(request), exception(ex), status(response));
     }
 
     /**
@@ -80,8 +81,7 @@ public class WebmvcTagConfigurer {
         return Tag.of("uri", uri.isEmpty() ? "root" : uri);
     }
 
-    public Tag exception(HttpServletRequest request) {
-        Object exception = request.getAttribute("exception");
+    public Tag exception(Throwable exception) {
         if (exception != null) {
             return Tag.of("exception", exception.getClass().getSimpleName());
         }

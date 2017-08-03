@@ -15,6 +15,8 @@
  */
 package io.micrometer.spring;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.spring.web.ControllerMetrics;
 import io.micrometer.spring.web.MetricsHandlerInterceptor;
 import io.micrometer.spring.web.WebmvcTagConfigurer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +24,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.TagFormatter;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
@@ -33,33 +33,32 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
  * @author Jon Schneider
  */
 @Configuration
-class InstrumentServletRequestConfiguration extends WebMvcConfigurerAdapter {
-    @Autowired
-    MeterRegistry registry;
-
-    @Autowired(required = false)
-    WebmvcTagConfigurer tagConfigurer;
-
+class MetricsServletRequestConfiguration extends WebMvcConfigurerAdapter {
     @Bean
     @ConditionalOnMissingBean(WebmvcTagConfigurer.class)
     WebmvcTagConfigurer webmvcTagConfigurer() {
-        if(tagConfigurer != null)
-            return tagConfigurer;
-        this.tagConfigurer = new WebmvcTagConfigurer();
-        return this.tagConfigurer;
+        return new WebmvcTagConfigurer();
     }
 
-    @Autowired
-    Environment environment;
-
     @Bean
-    MetricsHandlerInterceptor webMetricsInterceptor() {
-        return new MetricsHandlerInterceptor(registry, webmvcTagConfigurer(),
+    ControllerMetrics controllerMetrics(MeterRegistry registry, WebmvcTagConfigurer configurer, Environment environment) {
+        return new ControllerMetrics(registry, configurer,
                 environment.getProperty("spring.metrics.web.server_requests.name", "http_server_requests"));
     }
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(webMetricsInterceptor());
+    @Bean
+    MetricsHandlerInterceptor webMetricsInterceptor(ControllerMetrics controllerMetrics) {
+        return new MetricsHandlerInterceptor(controllerMetrics);
+    }
+
+    @Configuration
+    class MetricsServletRequestInterceptorConfiguration extends WebMvcConfigurerAdapter {
+        @Autowired
+        MetricsHandlerInterceptor handlerInterceptor;
+
+        @Override
+        public void addInterceptors(InterceptorRegistry registry) {
+            registry.addInterceptor(handlerInterceptor);
+        }
     }
 }
