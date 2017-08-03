@@ -45,7 +45,7 @@ public class MeterFactory {
 
   public static void setRegistry(MeterRegistry newRegistry){
     if(newRegistry == null) {
-      throw new NullPointerException("Null Registry is not allowed use NoopRegistry instead");
+      throw new NullPointerException("Null Registry is not allowed. Use a NoOpRegistry instead");
     }
     registry.set(newRegistry);
   }
