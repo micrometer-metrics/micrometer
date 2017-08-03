@@ -13,16 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.prometheus;
+package io.micrometer.core.instrument.prometheus.internal;
 
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Tag;
 import io.prometheus.client.Collector;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
 
 public interface CustomCollectorChild {
     Stream<Collector.MetricFamilySamples.Sample> collect();

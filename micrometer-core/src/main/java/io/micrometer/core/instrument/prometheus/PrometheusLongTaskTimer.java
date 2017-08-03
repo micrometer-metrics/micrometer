@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meters;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.prometheus.internal.CustomPrometheusLongTaskTimer;
 import io.micrometer.core.instrument.util.MeterId;
 
 import java.util.List;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.prometheus;
+package io.micrometer.core.instrument.prometheus.internal;
 
 import io.micrometer.core.instrument.Tag;
 import io.prometheus.client.Collector;
@@ -44,13 +44,13 @@ public class CustomPrometheusLongTaskTimer extends Collector {
         this.tagKeys = tagKeys;
     }
 
-    Child child(Iterable<Tag> tags) {
+    public Child child(Iterable<Tag> tags) {
         Child child = new Child(tags);
         children.add(child);
         return child;
     }
 
-    class Child implements CustomCollectorChild {
+    public class Child implements CustomCollectorChild {
         private final List<String> tagValues;
         private final ConcurrentMap<Long, Long> tasks = new ConcurrentHashMap<>();
         private final AtomicLong nextTask = new AtomicLong(0L);

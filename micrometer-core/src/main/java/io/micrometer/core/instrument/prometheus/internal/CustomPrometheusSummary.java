@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.prometheus;
+package io.micrometer.core.instrument.prometheus.internal;
 
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.stats.hist.*;
@@ -46,20 +46,20 @@ public class CustomPrometheusSummary extends Collector {
 
     private final Collection<Child> children = new ConcurrentLinkedQueue<>();
 
-    CustomPrometheusSummary(String name, List<String> tagKeys) {
+    public CustomPrometheusSummary(String name, List<String> tagKeys) {
         this.name = name;
         this.countName = name + "_count";
         this.sumName = name + "_sum";
         this.tagKeys = tagKeys;
     }
 
-    Child child(Iterable<Tag> tags, Quantiles quantiles, Histogram histogram) {
+    public Child child(Iterable<Tag> tags, Quantiles quantiles, Histogram histogram) {
         Child child = new Child(tags, quantiles, histogram);
         children.add(child);
         return child;
     }
 
-    class Child implements CustomCollectorChild {
+    public class Child implements CustomCollectorChild {
         private final List<String> tagValues;
 
         private final Quantiles quantiles;

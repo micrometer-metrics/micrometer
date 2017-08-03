@@ -83,7 +83,7 @@ class ExecutorServiceMetricsTest {
     }
 
     private void assertThreadPoolExecutorMetrics(String name) {
-        assertThat(registry.findMeter(Meter.Type.Counter, name)).isPresent();
+        assertThat(registry.findMeter(Meter.Type.Counter, name + "_tasks")).isPresent();
         assertThat(registry.findMeter(Gauge.class, name + "_queue_size")).isPresent();
         assertThat(registry.findMeter(Gauge.class, name + "_pool_size")).isPresent();
     }

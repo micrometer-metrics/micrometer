@@ -17,10 +17,17 @@ package io.micrometer.core.instrument;
 
 import org.assertj.core.api.AbstractThrowableAssert;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
+
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
@@ -94,5 +101,44 @@ class MeterRegistryTest {
 
         assertThat(registry.findMeter(Meter.Type.Counter, "foo", "k", "v"))
                 .containsSame(c);
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(MeterRegistriesProvider.class)
+    @DisplayName("composite counters registered separately")
+    void compositeCountersRegisteredSeparately(MeterRegistry registry) {
+        Set<Integer> ns = new ConcurrentSkipListSet<>();
+
+        registry.register(Meters.build("integers")
+                .type(Meter.Type.Counter)
+                .tags("parity", "even")
+                .create(ns, (name, nsRef) -> Collections.singletonList(new Measurement(name, singletonList(Tag.of("parity", "even")), ns.stream().filter(n -> n % 2 == 0).count()))));
+
+        registry.register(Meters.build("integers")
+                .type(Meter.Type.Counter)
+                .tags("parity", "odd")
+                .create(ns, (name, nsRef) -> Collections.singletonList(new Measurement(name, singletonList(Tag.of("parity", "odd")), ns.stream().filter(n -> n % 2 != 0).count()))));
+
+        assertThat(registry.findMeter(Meter.class, "integers", "parity", "even")).isPresent();
+        assertThat(registry.findMeter(Meter.class, "integers", "parity", "odd")).isPresent();
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(MeterRegistriesProvider.class)
+    @DisplayName("composite counters")
+    void compositeCounters(MeterRegistry registry) throws InterruptedException {
+        Set<Integer> ns = new ConcurrentSkipListSet<>();
+
+        registry.register(Meters.build("integers")
+                .type(Meter.Type.Counter)
+                .create(ns, (name, nsRef) -> Arrays.asList(
+                        new Measurement(name, singletonList(Tag.of("parity", "even")), ns.stream().filter(n -> n % 2 == 0).count()),
+                        new Measurement(name, singletonList(Tag.of("parity", "odd")), ns.stream().filter(n -> n % 2 != 0).count())
+                )));
+
+        assertThat(registry.findMeter(Meter.class, "integers"))
+            .hasValueSatisfying(m ->
+                    assertThat(m.measure().stream().flatMap(ms -> ms.getTags().stream()).map(Tag::getValue)).contains("even", "odd")
+            );
     }
 }

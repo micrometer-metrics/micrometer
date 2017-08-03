@@ -30,9 +30,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TimerSample {
     public static void main(String[] args) {
-        MeterRegistry registry = Registries.influx();
+        MeterRegistry registry = Registries.atlas();
         GKQuantiles quantiles = GKQuantiles.quantiles(0.95, 0.5).error(0.05).create();
-        Timer timer = registry.timerBuilder("timer4").quantiles(quantiles).create();
+        Timer timer = registry.timerBuilder("timer").quantiles(quantiles).create();
 
         RandomEngine r = new MersenneTwister64(0);
         Normal incomingRequests = new Normal(0, 1, r);

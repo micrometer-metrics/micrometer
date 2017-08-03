@@ -29,6 +29,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -93,17 +94,22 @@ class PrometheusMeterRegistryTest {
                 .isEqualTo(Collector.Type.COUNTER);
     }
 
-    @DisplayName("composite counters")
+    @DisplayName("composite counters registered separately")
     @Test
-    void compositeCounters() throws InterruptedException {
+    void compositeCountersRegisteredSeparately() {
         Set<Integer> ns = new ConcurrentSkipListSet<>();
 
         registry.register(Meters.build("integers")
                 .type(Meter.Type.Counter)
-                .create(ns, (name, nsRef) -> Arrays.asList(
-                        new Measurement(name, singletonList(Tag.of("parity", "even")), ns.stream().filter(n -> n % 2 == 0).count()),
-                        new Measurement(name, singletonList(Tag.of("parity", "odd")), ns.stream().filter(n -> n % 2 != 0).count())
-                )));
+                .tags("parity", "even")
+                .create(ns, (name, nsRef) -> Collections.singletonList(new Measurement(name, singletonList(Tag.of("parity", "even")), ns.stream().filter(n -> n % 2 == 0).count()))));
+
+        registry.register(Meters.build("integers")
+                .type(Meter.Type.Counter)
+                .tags("parity", "odd")
+                .create(ns, (name, nsRef) -> Collections.singletonList(new Measurement(name, singletonList(Tag.of("parity", "odd")), ns.stream().filter(n -> n % 2 != 0).count()))));
+
+        System.out.println(registry.scrape());
 
         assertThat(registry.scrape())
                 .contains("# TYPE integers counter")

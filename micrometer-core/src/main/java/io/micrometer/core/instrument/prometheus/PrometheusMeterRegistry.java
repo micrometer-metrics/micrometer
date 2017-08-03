@@ -18,6 +18,9 @@ package io.micrometer.core.instrument.prometheus;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.AbstractMeterRegistry;
 import io.micrometer.core.instrument.internal.FunctionTrackingCounter;
+import io.micrometer.core.instrument.prometheus.internal.CustomPrometheusCollector;
+import io.micrometer.core.instrument.prometheus.internal.CustomPrometheusLongTaskTimer;
+import io.micrometer.core.instrument.prometheus.internal.CustomPrometheusSummary;
 import io.micrometer.core.instrument.util.MapAccess;
 import io.micrometer.core.instrument.util.MeterId;
 import io.micrometer.core.instrument.stats.hist.Histogram;
@@ -38,7 +41,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -188,45 +190,27 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     @Override
     public MeterRegistry register(Meter meter) {
         meterMap.computeIfAbsent(new MeterId(meter.getName(), meter.getTags()), id -> {
-            collectorMap.computeIfAbsent(meter.getName(), name -> {
-                Collector collector = new Collector() {
-                    @Override
-                    public List<MetricFamilySamples> collect() {
-                        List<MetricFamilySamples.Sample> samples = meter.measure().stream()
-                                .map(m -> {
-                                    Iterable<Tag> allTags = withCommonTags(m.getTags());
-                                    List<String> tagKeys = new ArrayList<>();
-                                    List<String> tagValues = new ArrayList<>();
-                                    for (Tag tag : allTags) {
-                                        tagKeys.add(tagFormatter.formatTagKey(tag.getKey()));
-                                        tagValues.add(tagFormatter.formatTagValue(tag.getValue()));
-                                    }
-                                    return new MetricFamilySamples.Sample(tagFormatter.formatName(m.getName()), tagKeys, tagValues, m.getValue());
-                                })
-                                .collect(toList());
+            CustomPrometheusCollector c = (CustomPrometheusCollector) collectorMap.computeIfAbsent(meter.getName(), name -> {
+                Collector.Type type = Collector.Type.UNTYPED;
+                switch (meter.getType()) {
+                    case Counter:
+                        type = Collector.Type.COUNTER;
+                        break;
+                    case Gauge:
+                        type = Collector.Type.GAUGE;
+                        break;
+                    case DistributionSummary:
+                    case Timer:
+                        type = Collector.Type.SUMMARY;
+                        break;
+                }
 
-                        Type type = Type.UNTYPED;
-                        switch (meter.getType()) {
-                            case Counter:
-                                type = Type.COUNTER;
-                                break;
-                            case Gauge:
-                                type = Type.GAUGE;
-                                break;
-                            case DistributionSummary:
-                            case Timer:
-                                type = Type.SUMMARY;
-                                break;
-                        }
-
-                        return Collections.singletonList(new MetricFamilySamples(meter.getName(), type, " ", samples));
-                    }
-                };
-
+                Collector collector = new CustomPrometheusCollector(name, type);
                 registry.register(collector);
                 return collector;
             });
 
+            c.child(meter::measure);
             return meter;
         });
 

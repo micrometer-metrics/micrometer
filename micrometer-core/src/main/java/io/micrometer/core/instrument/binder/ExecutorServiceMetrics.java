@@ -85,26 +85,20 @@ public class ExecutorServiceMetrics implements MeterBinder {
             return;
         }
 
-        registry.register(Meters.build(name)
-                .type(Meter.Type.Counter)
-                .tags(tags)
-                .create(tp, (n, tpRef) -> Arrays.asList(
-                        // The sum of the three lifecycle phases is monotonically increasing, though scheduled and active
-                        // can go up and down as tasks are added and completed. The sum of these three measurements
-                        // gives you the total of all tasks submitted irrespective of whether they have been completed or not.
-                        new Measurement(n, singletonList(Tag.of("lifecycle", "scheduled")), tpRef.getTaskCount()),
-                        new Measurement(n, singletonList(Tag.of("lifecycle", "completed")), tpRef.getCompletedTaskCount()),
-                        new Measurement(n, singletonList(Tag.of("lifecycle", "active")), tpRef.getActiveCount())
-                )));
+        // queued tasks = tasks - completed - active
+        registry.counter(name + "_tasks", tp, tpRef -> tpRef.getTaskCount() + tpRef.getCompletedTaskCount() + tpRef.getActiveCount());
+        registry.counter(name + "_completed", tp, ThreadPoolExecutor::getCompletedTaskCount);
 
+        registry.gauge(name + "_active", tp, ThreadPoolExecutor::getActiveCount);
         registry.gauge(name + "_queue_size", tags, tp, tpRef -> tpRef.getQueue().size());
         registry.gauge(name + "_pool_size", tags, tp, ThreadPoolExecutor::getPoolSize);
     }
 
     private void monitor(MeterRegistry registry, ForkJoinPool fj) {
-        registry.gauge(name + "_active", fj, ForkJoinPool::getActiveThreadCount);
+        registry.counter(name + "_steal_count", fj, ForkJoinPool::getStealCount);
+
         registry.gauge(name + "_queued_tasks", fj, ForkJoinPool::getQueuedTaskCount);
+        registry.gauge(name + "_active", fj, ForkJoinPool::getActiveThreadCount);
         registry.gauge(name + "_running_threads", fj, ForkJoinPool::getRunningThreadCount);
-        registry.gauge(name + "_steal_count", fj, ForkJoinPool::getStealCount);
     }
 }

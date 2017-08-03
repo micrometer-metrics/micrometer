@@ -114,12 +114,11 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public MeterRegistry register(Meter meter) {
-        MapAccess.computeIfAbsent(meterMap, new MeterId(meter.getName(), meter.getTags()), id -> {
-            for (int i = 0; i < meter.measure().size(); i++) {
-                final int index = i;
-                registry.register(toDropwizardName(id), (Gauge<Double>) () -> meter.measure().get(index).getValue());
-            }
-            return meter;
+        meter.measure().forEach(ms -> {
+            MapAccess.computeIfAbsent(meterMap, new MeterId(ms.getName(), ms.getTags()), id -> {
+                registry.register(toDropwizardName(id), (Gauge<Double>) ms::getValue);
+                return meter;
+            });
         });
 
         return this;

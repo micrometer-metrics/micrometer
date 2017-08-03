@@ -21,6 +21,7 @@ import com.google.common.cache.LoadingCache;
 import io.micrometer.core.instrument.*;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static java.util.Collections.singletonList;
 
@@ -42,25 +43,16 @@ public class CacheMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         registry.gauge(name + "_size", tags, cache, Cache::size);
 
-        registry.register(Meters.build(name + "_requests")
-                .type(Meter.Type.Counter)
-                .create(cache, (n, cacheRef) -> {
-                    CacheStats stats = cacheRef.stats();
-                    return Arrays.asList(
-                            /**
-                             * The sum of these two measurements is equal to {@link CacheStats#requestCount()}
-                             */
-                            new Measurement(n, singletonList(Tag.of("result", "hit")), stats.hitCount()),
-                            new Measurement(n, singletonList(Tag.of("result", "miss")), stats.missCount())
-                    );
-                }));
-
-        registry.gauge(name + "_evictions", tags, cache, c -> c.stats().evictionCount());
-        registry.gauge(name + "_load_duration", tags, cache, c -> c.stats().totalLoadTime());
+        registry.counter(name + "_requests", Tags.zip("result", "miss"), cache, c -> c.stats().missCount());
+        registry.counter(name + "_requests", Tags.zip("result", "hit"), cache, c -> c.stats().hitCount());
+        registry.counter(name + "_evictions", tags, cache, c -> c.stats().evictionCount());
 
         if (cache instanceof LoadingCache) {
-            registry.gauge(name + "_loads", tags, cache, c -> c.stats().loadCount());
-            registry.gauge(name + "_load_failures", tags, cache, c -> c.stats().loadExceptionCount());
+            // dividing these gives you a measure of load latency
+            registry.counter(name + "_load_duration", tags, cache, c -> c.stats().totalLoadTime());
+            registry.counter(name + "_loads", tags, cache, c -> c.stats().loadCount());
+
+            registry.counter(name + "_load_failures", tags, cache, c -> c.stats().loadExceptionCount());
         }
     }
 }

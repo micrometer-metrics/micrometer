@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.prometheus;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.AbstractTimer;
+import io.micrometer.core.instrument.prometheus.internal.CustomPrometheusSummary;
 import io.micrometer.core.instrument.util.MeterId;
 import io.micrometer.core.instrument.util.TimeUtils;
 
