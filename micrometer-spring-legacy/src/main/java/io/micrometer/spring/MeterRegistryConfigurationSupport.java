@@ -15,6 +15,7 @@
  */
 package io.micrometer.spring;
 
+import io.micrometer.core.api.MeterFactory;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -41,6 +42,8 @@ public class MeterRegistryConfigurationSupport {
 
     @PostConstruct
     void bindAll() {
+        MeterFactory.Config.setRegistry(registry);
+
         // Important that this happens before binders are applied, as it
         // may involve adding common tags that should apply to metrics registered
         // in those binders.
