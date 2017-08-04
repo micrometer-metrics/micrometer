@@ -37,6 +37,7 @@ public class WebmvcTagConfigurer {
      * @param handler  The request method that is responsible for handling the request.
      * @return A set of tags added to every Spring MVC HTTP request
      */
+    @SuppressWarnings("unused") // we aren't doing anything with the handler by default
     public Iterable<Tag> httpLongRequestTags(HttpServletRequest request, Object handler) {
         return asList(method(request), uri(request));
     }

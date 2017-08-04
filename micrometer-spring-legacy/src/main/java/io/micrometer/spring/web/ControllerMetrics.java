@@ -23,7 +23,10 @@ import io.micrometer.core.instrument.stats.quantile.WindowSketchQuantiles;
 import io.micrometer.core.instrument.util.AnnotationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.support.RequestContext;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -43,7 +46,8 @@ import static java.util.stream.Collectors.toSet;
  */
 public class ControllerMetrics {
     private static final String TIMING_REQUEST_ATTRIBUTE = "micrometer.requestStartTime";
-    private static final String HANDLER_REQUEST_ATTRIBUTE = "micrometer.handler";
+    private static final String HANDLER_REQUEST_ATTRIBUTE = "micrometer.requestHandler";
+    private static final String EXCEPTION_ATTRIBUTE = "micrometer.requestException";
 
     private static final Log logger = LogFactory.getLog(ControllerMetrics.class);
 
@@ -60,7 +64,11 @@ public class ControllerMetrics {
         this.metricName = metricName;
     }
 
-    public void preHandle(HttpServletRequest request, HandlerMethod handler) {
+    public void tagWithException(Throwable t) {
+        RequestContextHolder.getRequestAttributes().setAttribute(EXCEPTION_ATTRIBUTE, t, RequestAttributes.SCOPE_REQUEST);
+    }
+
+    void preHandle(HttpServletRequest request, HandlerMethod handler) {
         request.setAttribute(TIMING_REQUEST_ATTRIBUTE, System.nanoTime());
         request.setAttribute(HANDLER_REQUEST_ATTRIBUTE, handler);
 
@@ -73,11 +81,12 @@ public class ControllerMetrics {
         });
     }
 
-    public void record(HttpServletRequest request, HttpServletResponse response, Throwable ex) {
+    HttpServletResponse record(HttpServletRequest request, HttpServletResponse response, Throwable ex) {
         Long startTime = (Long) request.getAttribute(TIMING_REQUEST_ATTRIBUTE);
         Object handler = request.getAttribute(HANDLER_REQUEST_ATTRIBUTE);
 
         long endTime = System.nanoTime();
+        Throwable thrown = ex != null ? ex : (Throwable) request.getAttribute(EXCEPTION_ATTRIBUTE);
 
         // complete any LongTaskTimer tasks running for this method
         longTaskTimed(handler).forEach(t -> {
@@ -94,7 +103,7 @@ public class ControllerMetrics {
             }
 
             Timer.Builder timerBuilder = registry.timerBuilder(name)
-                    .tags(tagConfigurer.httpRequestTags(request, response, ex));
+                    .tags(tagConfigurer.httpRequestTags(request, response, thrown));
 
             String[] extraTags = t.extraTags();
             if (extraTags.length > 0) {
@@ -117,6 +126,8 @@ public class ControllerMetrics {
 
             timerBuilder.create().record(endTime - startTime, TimeUnit.NANOSECONDS);
         });
+
+        return response;
     }
 
     private Set<Timed> longTaskTimed(Object m) {

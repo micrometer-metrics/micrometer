@@ -53,9 +53,16 @@ public class ControllerMetricsTest {
     private SimpleMeterRegistry registry;
 
     @Test
-    public void unhandledErrorCaughtByCustomExceptionHandler() throws Exception {
-        assertThatCode(() -> mvc.perform(get("/api/c1/unhandledError/10")).andExpect(status().isOk()));
-        assertThat(registry.findMeter(Timer.class, "http_server_requests", "exception", "RuntimeException"))
+    public void handledExceptionIsRecordedInMetricTag() throws Exception {
+        assertThatCode(() -> mvc.perform(get("/api/handledError")).andExpect(status().is5xxServerError()));
+        assertThat(registry.findMeter(Timer.class, "http_server_requests", "exception", "Exception1"))
+                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+    }
+
+    @Test
+    public void rethrownExceptionIsRecordedInMetricTag() throws Exception {
+        assertThatCode(() -> mvc.perform(get("/api/rethrownError")).andExpect(status().is5xxServerError()));
+        assertThat(registry.findMeter(Timer.class, "http_server_requests", "exception", "Exception2"))
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
@@ -69,32 +76,43 @@ public class ControllerMetricsTest {
         }
     }
 
+    static class Exception1 extends RuntimeException {}
+    static class Exception2 extends RuntimeException {}
+
     @ControllerAdvice
     static class CustomExceptionHandler {
         @Autowired
         ControllerMetrics metrics;
 
         @ExceptionHandler
-        ResponseEntity<String> handleDefaultError(HttpServletRequest request,
-                                                            HttpServletResponse response,
-                                                            Throwable ex) {
-            metrics.record(request, response, ex);
+        ResponseEntity<String> handleError(HttpServletRequest request, Exception1 ex) throws Throwable {
+            metrics.tagWithException(ex);
             return new ResponseEntity<>("this is a custom exception body", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        @ExceptionHandler
+        ResponseEntity<String> rethrowError(HttpServletRequest request, Exception2 ex) throws Throwable {
+            throw ex;
         }
     }
 
     @RestController
-    @RequestMapping("/api/c1")
+    @RequestMapping("/api")
+    @Timed
     static class Controller1 {
         @Bean
         public CustomExceptionHandler controllerAdvice() {
             return new CustomExceptionHandler();
         }
 
-        @Timed
-        @GetMapping("/unhandledError/{id}")
-        public String alwaysThrowsUnhandledException(@PathVariable Long id) {
-            throw new RuntimeException("Boom on $id!");
+        @GetMapping("/handledError")
+        public String handledError() {
+            throw new Exception1();
+        }
+
+        @GetMapping("/rethrownError")
+        public String rethrownError() {
+            throw new Exception2();
         }
     }
 }
