@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.api.MeterProvider;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -31,7 +33,7 @@ import static io.micrometer.core.instrument.Tags.zip;
  *
  * @author Jon Schneider
  */
-public interface MeterRegistry {
+public interface MeterRegistry extends MeterProvider {
     /**
      * @return The set of registered meters.
      */
@@ -157,8 +159,6 @@ public interface MeterRegistry {
     default LongTaskTimer longTaskTimer(String name, String... tags) {
         return longTaskTimer(name, zip(tags));
     }
-
-    MeterRegistry register(Meter meter);
 
     /**
      * Register a gauge that reports the value of the object after the function

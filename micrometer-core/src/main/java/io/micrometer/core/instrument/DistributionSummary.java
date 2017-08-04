@@ -20,7 +20,7 @@ import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
 /**
  * Track the sample distribution of events. An example would be the response sizes for requests
- * hitting and http server.
+ * hitting an http server.
  */
 public interface DistributionSummary extends Meter {
 

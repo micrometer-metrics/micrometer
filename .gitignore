@@ -1,5 +1,11 @@
 build/
 .gradle/
 gradle.properties
+out/
+
+#IntelliJ Files
 *.iml
+*.ipr
+*.iws
 .idea
+

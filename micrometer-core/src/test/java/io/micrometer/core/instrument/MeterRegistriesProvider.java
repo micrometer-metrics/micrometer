@@ -33,7 +33,7 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import java.time.Duration;
 import java.util.stream.Stream;
 
-class MeterRegistriesProvider implements ArgumentsProvider {
+public class MeterRegistriesProvider implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
         return Stream.of(
