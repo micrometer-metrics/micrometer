@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.noop;
 
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterFactory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -26,7 +25,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 class NoOpRegistryTest {
 
