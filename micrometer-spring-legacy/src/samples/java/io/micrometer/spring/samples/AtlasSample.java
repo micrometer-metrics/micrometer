@@ -20,9 +20,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-//@SpringBootApplication(scanBasePackages = "io.micromter.spring.samples.components")
-//@EnableAtlasMetrics
-//@EnableScheduling
+@SpringBootApplication(scanBasePackages = "io.micrometer.spring.samples.components")
+@EnableAtlasMetrics
+@EnableScheduling
 public class AtlasSample {
     public static void main(String[] args) {
         SpringApplication.run(AtlasSample.class, args);

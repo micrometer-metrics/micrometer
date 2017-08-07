@@ -16,9 +16,7 @@
 package io.micrometer.spring.web;
 
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.stats.quantile.WindowSketchQuantiles;
 import io.micrometer.core.instrument.util.AnnotationUtils;
 import org.apache.commons.logging.Log;
@@ -32,14 +30,19 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
+import static java.util.stream.StreamSupport.stream;
 
 /**
  * @author Jon Schneider
@@ -54,7 +57,8 @@ public class ControllerMetrics {
     private final MeterRegistry registry;
     private final WebmvcTagConfigurer tagConfigurer;
     private final String metricName;
-    private final Map<Timed, Long> longTaskTimerIds = new ConcurrentHashMap<>();
+
+    private final Map<HttpServletRequest, Long> longTaskTimerIds = Collections.synchronizedMap(new IdentityHashMap<>());
 
     public ControllerMetrics(MeterRegistry registry,
                              WebmvcTagConfigurer tagConfigurer,
@@ -77,7 +81,7 @@ public class ControllerMetrics {
                 logger.warn("Unable to perform metrics timing on " + handler.getShortLogMessage() + ": @Timed annotation must have a value used to name the metric");
                 return;
             }
-            longTaskTimerIds.put(t, registry.longTaskTimer(t.value(), tagConfigurer.httpLongRequestTags(request, handler)).start());
+            longTaskTimerIds.put(request, longTaskTimer(t, request, handler).start());
         });
     }
 
@@ -91,7 +95,7 @@ public class ControllerMetrics {
         // complete any LongTaskTimer tasks running for this method
         longTaskTimed(handler).forEach(t -> {
             if(!t.value().isEmpty()) {
-                registry.longTaskTimer(t.value(), tagConfigurer.httpLongRequestTags(request, handler)).stop(longTaskTimerIds.remove(t));
+                longTaskTimer(t, request, handler).stop(longTaskTimerIds.remove(request));
             }
         });
 
@@ -128,6 +132,14 @@ public class ControllerMetrics {
         });
 
         return response;
+    }
+
+    private LongTaskTimer longTaskTimer(Timed t, HttpServletRequest request, Object handler) {
+        Iterable<Tag> tags = tagConfigurer.httpLongRequestTags(request, handler);
+        if(t.extraTags().length > 0) {
+            tags = Stream.concat(stream(tags.spliterator(), false), Tags.zip(t.extraTags()).stream()).collect(toList());
+        }
+        return registry.longTaskTimer(t.value(), tags);
     }
 
     private Set<Timed> longTaskTimed(Object m) {

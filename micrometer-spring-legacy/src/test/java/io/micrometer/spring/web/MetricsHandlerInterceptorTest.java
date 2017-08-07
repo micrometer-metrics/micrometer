@@ -110,7 +110,7 @@ public class MetricsHandlerInterceptorTest {
                 .andReturn();
 
         // while the mapping is running, it contributes to the activeTasks count
-        assertThat(registry.findMeter(LongTaskTimer.class, "my_long_request"))
+        assertThat(registry.findMeter(LongTaskTimer.class, "my_long_request", "region", "test"))
                 .hasValueSatisfying(t -> assertThat(t.activeTasks()).isEqualTo(1));
 
         // once the mapping completes, we can gather information about status, etc.
@@ -165,7 +165,7 @@ public class MetricsHandlerInterceptorTest {
         }
 
         @Timed // contains dimensions for status, etc. that can't be known until after the response is sent
-        @Timed(value = "my_long_request", longTask = true) // in progress metric
+        @Timed(value = "my_long_request", extraTags = {"region", "test"}, longTask = true) // in progress metric
         @GetMapping("/long/{id}")
         public Callable<String> takesLongTimeToSatisfy(@PathVariable Long id) {
             return () -> {
