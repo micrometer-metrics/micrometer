@@ -18,6 +18,11 @@ facets {
     samples
 }
 
+repositories {
+    // for spring-cloud-test-support
+    maven { url 'https://repo.spring.io/libs-milestone' }
+}
+
 dependencies {
     compile project(':micrometer-core')
 
@@ -44,6 +49,9 @@ dependencies {
 
     // for use in mock servers
     testCompile 'org.apache.tomcat.embed:tomcat-embed-core:8.5.15'
+
+    // for classpath exclusion in tests
+    testCompile 'org.springframework.cloud:spring-cloud-test-support:2.+'
 
     testRuntime 'org.apache.httpcomponents:httpclient:4.4+'
 
