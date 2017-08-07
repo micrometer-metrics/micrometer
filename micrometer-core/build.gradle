@@ -1,3 +1,8 @@
+plugins {
+    id "net.ltgt.apt" version "0.10"
+    id 'idea'
+}
+
 apply plugin: 'org.junit.platform.gradle.plugin'
 apply plugin: 'me.champeau.gradle.jmh'
 apply plugin: 'nebula.optional-base'
@@ -38,6 +43,13 @@ dependencies {
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0-M5'
     testCompile 'org.junit.jupiter:junit-jupiter-params:5.0.0-M5'
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.0-M5'
+
+    testCompile 'javax.inject:javax.inject:1'
+    testCompile 'org.springframework:spring-context:4.3.9.RELEASE'
+    testCompile 'com.google.inject:guice:4.1.0'
+
+    testCompile 'com.google.dagger:dagger:2.11'
+    testCompile 'com.google.dagger:dagger-compiler:2.11'
 
     testCompile 'org.assertj:assertj-core:3.+'
 
