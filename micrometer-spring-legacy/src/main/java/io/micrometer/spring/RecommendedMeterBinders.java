@@ -29,7 +29,7 @@ class RecommendedMeterBinders {
     }
 
     @Bean
-    @ConditionalOnClass(ch.qos.logback.classic.Logger.class)
+    @ConditionalOnClass(name = "ch.qos.logback.classic.Logger")
     LogbackMetrics logbackMetrics() {
         return new LogbackMetrics();
     }

@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
-@ConditionalOnClass(RestTemplate.class)
+@ConditionalOnClass(name = "org.springframework.web.client.RestTemplate")
 class RestTemplateMetricsConfiguration {
     @Autowired(required = false)
     RestTemplateTagConfigurer tagConfigurer;
