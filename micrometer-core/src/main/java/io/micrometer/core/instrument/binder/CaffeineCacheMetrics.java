@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder;
 
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -68,6 +69,16 @@ public class CaffeineCacheMetrics implements MeterBinder {
     this.cache = cache;
   }
 
+
+  /**
+   * @param name  The named of the cache, exposed as the 'cache' dimension
+   * @param cache The cache to be instrumented. Be certain to enable <cade></cade>
+   */
+  public CaffeineCacheMetrics(String name, AsyncLoadingCache<?, ?> cache) {
+    this.name = name;
+    this.cache = cache.synchronous();
+  }
+
   @Override
   public void bindTo(MeterRegistry registry) {
     List<Tag> tags = Tags.zip("cache", name);
@@ -85,6 +96,10 @@ public class CaffeineCacheMetrics implements MeterBinder {
       registry.counter("caffeine_cache_load_duration_seconds_count", tags, cache, c -> c.stats().loadCount());
 
       registry.counter("caffeine_cache_load_failures_total", tags, cache, c -> c.stats().loadFailureCount());
+    }
+
+    if (cache instanceof AsyncLoadingCache) {
+
     }
   }
 }
