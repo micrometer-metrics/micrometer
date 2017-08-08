@@ -10,8 +10,8 @@ facets {
 dependencies {
     // instrumentation options
     compile 'com.netflix.spectator:spectator-api:latest.release', optional
-    compile 'io.prometheus:simpleclient:latest.release', optional
-    compile 'io.prometheus:simpleclient_pushgateway:latest.release', optional
+    compile 'io.prometheus:simpleclient_common:latest.release', optional
+//    compile 'io.prometheus:simpleclient_pushgateway:latest.release', optional
     compile 'com.datadoghq:java-dogstatsd-client:latest.release', optional
     compile 'io.dropwizard.metrics:metrics-core:3.+', optional
 

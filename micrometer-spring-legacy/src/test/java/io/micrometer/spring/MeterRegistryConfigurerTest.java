@@ -49,7 +49,6 @@ public class MeterRegistryConfigurerTest {
 
     @SpringBootApplication(scanBasePackages = "isolated")
     @EnableMetrics
-    @Import(EnableMetricsTest.PersonController.class)
     static class MetricsApp {
         public static void main(String[] args) {
             SpringApplication.run(MetricsApp.class);
