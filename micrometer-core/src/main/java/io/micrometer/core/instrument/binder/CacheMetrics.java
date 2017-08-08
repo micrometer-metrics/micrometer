@@ -16,14 +16,8 @@
 package io.micrometer.core.instrument.binder;
 
 import com.google.common.cache.Cache;
-import com.google.common.cache.CacheStats;
 import com.google.common.cache.LoadingCache;
 import io.micrometer.core.instrument.*;
-
-import java.util.Arrays;
-import java.util.Collections;
-
-import static java.util.Collections.singletonList;
 
 /**
  * @author Jon Schneider
