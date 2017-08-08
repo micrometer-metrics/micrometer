@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 Pivotal Software, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,49 +57,45 @@ import java.util.List;
   * @author Clint Checketts
  */
 public class CaffeineCacheMetrics implements MeterBinder {
-  private final String name;
-  private final Cache<?, ?> cache;
+    private final String name;
+    private final Cache<?, ?> cache;
 
-  /**
-   * @param name  The named of the cache, exposed as the 'cache' dimension
-   * @param cache The cache to be instrumented. Be certain to enable <cade></cade>
-   */
-  public CaffeineCacheMetrics(String name, Cache<?, ?> cache) {
-    this.name = name;
-    this.cache = cache;
-  }
-
-
-  /**
-   * @param name  The named of the cache, exposed as the 'cache' dimension
-   * @param cache The cache to be instrumented. Be certain to enable <cade></cade>
-   */
-  public CaffeineCacheMetrics(String name, AsyncLoadingCache<?, ?> cache) {
-    this.name = name;
-    this.cache = cache.synchronous();
-  }
-
-  @Override
-  public void bindTo(MeterRegistry registry) {
-    List<Tag> tags = Tags.zip("cache", name);
-    registry.gauge("caffeine_cache_estimated_size", tags, cache, Cache::estimatedSize);
-
-    registry.counter("caffeine_cache_requests", Tags.zip("cache", name, "result", "miss"), cache, c -> c.stats().missCount());
-    registry.counter("caffeine_cache_requests", Tags.zip("cache", name, "result", "hit"), cache, c -> c.stats().hitCount());
-    registry.counter("caffeine_cache_requests_total", tags, cache, c -> c.stats().requestCount());
-    registry.counter("caffeine_cache_evictions_total", tags, cache, c -> c.stats().evictionCount());
-    registry.gauge("caffeine_cache_eviction_weight", tags, cache, c -> c.stats().evictionWeight());
-
-    if (cache instanceof LoadingCache) {
-      // dividing these gives you a measure of load latency
-      registry.counter("caffeine_cache_load_duration_seconds_sum", tags, cache, c -> c.stats().totalLoadTime());
-      registry.counter("caffeine_cache_load_duration_seconds_count", tags, cache, c -> c.stats().loadCount());
-
-      registry.counter("caffeine_cache_load_failures_total", tags, cache, c -> c.stats().loadFailureCount());
+    /**
+     * @param name  The named of the cache, exposed as the 'cache' dimension
+     * @param cache The cache to be instrumented. Be certain to enable <cade></cade>
+     */
+    public CaffeineCacheMetrics(String name, Cache<?, ?> cache) {
+        this.name = name;
+        this.cache = cache;
     }
 
-    if (cache instanceof AsyncLoadingCache) {
 
+    /**
+     * @param name  The named of the cache, exposed as the 'cache' dimension
+     * @param cache The cache to be instrumented. Be certain to enable <cade></cade>
+     */
+    public CaffeineCacheMetrics(String name, AsyncLoadingCache<?, ?> cache) {
+        this.name = name;
+        this.cache = cache.synchronous();
     }
-  }
+
+    @Override
+    public void bindTo(MeterRegistry registry) {
+        List<Tag> tags = Tags.zip("cache", name);
+        registry.gauge("caffeine_cache_estimated_size", tags, cache, Cache::estimatedSize);
+
+        registry.counter("caffeine_cache_requests", Tags.zip("cache", name, "result", "miss"), cache, c -> c.stats().missCount());
+        registry.counter("caffeine_cache_requests", Tags.zip("cache", name, "result", "hit"), cache, c -> c.stats().hitCount());
+        registry.counter("caffeine_cache_requests_total", tags, cache, c -> c.stats().requestCount());
+        registry.counter("caffeine_cache_evictions_total", tags, cache, c -> c.stats().evictionCount());
+        registry.gauge("caffeine_cache_eviction_weight", tags, cache, c -> c.stats().evictionWeight());
+
+        if (cache instanceof LoadingCache) {
+            // dividing these gives you a measure of load latency
+            registry.counter("caffeine_cache_load_duration_seconds_sum", tags, cache, c -> c.stats().totalLoadTime());
+            registry.counter("caffeine_cache_load_duration_seconds_count", tags, cache, c -> c.stats().loadCount());
+
+            registry.counter("caffeine_cache_load_failures_total", tags, cache, c -> c.stats().loadFailureCount());
+        }
+    }
 }
