@@ -23,7 +23,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Jon Schneider
  */
-public class TimeUtils {
+public final class TimeUtils {
+    private TimeUtils() {}
+
     public static double convert(double t, TimeUnit sourceUnit, TimeUnit destinationUnit) {
         switch(sourceUnit) {
             case NANOSECONDS:

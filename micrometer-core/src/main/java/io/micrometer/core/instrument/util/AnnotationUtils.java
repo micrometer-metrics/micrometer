@@ -31,7 +31,9 @@ import static java.util.stream.Stream.of;
  *
  * @author Jon Schneider
  */
-public class AnnotationUtils {
+public final class AnnotationUtils {
+    private AnnotationUtils() {}
+
     public static Stream<Timed> findTimed(Class<?> clazz) {
         return findTimed(clazz.getAnnotation(Timed.class), clazz.getAnnotation(TimedSet.class));
     }

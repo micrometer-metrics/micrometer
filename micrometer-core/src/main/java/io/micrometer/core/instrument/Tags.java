@@ -25,7 +25,9 @@ import static java.util.stream.StreamSupport.stream;
 /**
  * @author Jon Schneider
  */
-public class Tags {
+public final class Tags {
+    private Tags() {}
+
     public static List<Tag> zip(String... keyValues) {
         if (keyValues.length % 2 == 1) {
             throw new IllegalArgumentException("size must be even, it is a set of key=value pairs");
