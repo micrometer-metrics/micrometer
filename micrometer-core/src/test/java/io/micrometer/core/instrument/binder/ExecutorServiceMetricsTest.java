@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.util.Meters;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -42,7 +43,7 @@ class ExecutorServiceMetricsTest {
     @Test
     void threadPoolExecutor() {
         ExecutorService exec = Executors.newFixedThreadPool(2);
-        Meters.monitor(registry, exec, "exec");
+        ExecutorServiceMetrics.monitor(registry, exec, "exec");
         assertThreadPoolExecutorMetrics("exec");
     }
 
@@ -50,14 +51,14 @@ class ExecutorServiceMetricsTest {
     @Test
     void scheduledThreadPoolExecutor() {
         ExecutorService exec = Executors.newScheduledThreadPool(2);
-        Meters.monitor(registry, exec, "exec");
+        ExecutorServiceMetrics.monitor(registry, exec, "exec");
         assertThreadPoolExecutorMetrics("exec");
     }
 
     @DisplayName("ExecutorService can be monitored with a default set of metrics")
     @Test
     void monitorExecutorService() throws InterruptedException {
-        ExecutorService pool = Meters.monitor(registry, Executors.newSingleThreadExecutor(), "beep_pool");
+        ExecutorService pool = ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadExecutor(), "beep_pool");
         CountDownLatch taskStart = new CountDownLatch(1);
         CountDownLatch taskComplete = new CountDownLatch(1);
 

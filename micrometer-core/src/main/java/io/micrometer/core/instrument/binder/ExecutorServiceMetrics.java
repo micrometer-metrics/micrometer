@@ -17,14 +17,13 @@ package io.micrometer.core.instrument.binder;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.internal.TimedExecutorService;
 
 import java.lang.reflect.Field;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 
 /**
@@ -36,6 +35,60 @@ import static java.util.Collections.emptyList;
  * @author Clint Checketts
  */
 public class ExecutorServiceMetrics implements MeterBinder {
+    /**
+     * Record metrics on the use of an {@link Executor}.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param executor The executor to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented executor, proxied.
+     */
+    public static Executor monitor(MeterRegistry registry, Executor executor, String name, Iterable<Tag> tags) {
+        final Timer commandTimer = registry.timer(name, tags);
+        return commandTimer::record;
+    }
+
+    /**
+     * Record metrics on the use of an {@link Executor}.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param executor The executor to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented executor, proxied.
+     */
+    public static Executor monitor(MeterRegistry registry, Executor executor, String name, Tag... tags) {
+        return monitor(registry, executor, name, asList(tags));
+    }
+
+    /**
+     * Record metrics on the use of an {@link ExecutorService}.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param executor The executor to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented executor, proxied.
+     */
+    public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String name, Iterable<Tag> tags) {
+        new ExecutorServiceMetrics(executor, name, tags).bindTo(registry);
+        return new TimedExecutorService(registry, executor, name, tags);
+    }
+
+    /**
+     * Record metrics on the use of an {@link ExecutorService}.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param executor The executor to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented executor, proxied.
+     */
+    public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String name, Tag... tags) {
+        return monitor(registry, executor, name, asList(tags));
+    }
+
     private final ExecutorService executorService;
     private final String name;
     private final Iterable<Tag> tags;

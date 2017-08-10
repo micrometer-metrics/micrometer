@@ -16,15 +16,14 @@
 package io.micrometer.spring;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Meters;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.ExecutorServiceMetrics;
 import io.micrometer.spring.binder.DataSourceMetrics;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProvider;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import javax.sql.DataSource;
-
 import java.util.Collection;
 
 import static java.util.Arrays.asList;
@@ -79,7 +78,7 @@ public class SpringMeters {
      * @return The instrumented executor, proxied.
      */
     public static ThreadPoolTaskExecutor monitor(MeterRegistry registry, ThreadPoolTaskExecutor executor, String name, Iterable<Tag> tags) {
-        Meters.monitor(registry, executor.getThreadPoolExecutor(), name, tags);
+        ExecutorServiceMetrics.monitor(registry, executor.getThreadPoolExecutor(), name, tags);
         return executor;
     }
 
@@ -93,7 +92,7 @@ public class SpringMeters {
      * @return The instrumented executor, proxied.
      */
     public static ThreadPoolTaskExecutor monitor(MeterRegistry registry, ThreadPoolTaskExecutor executor, String name, Tag... tags) {
-        Meters.monitor(registry, executor.getThreadPoolExecutor(), name, tags);
+        ExecutorServiceMetrics.monitor(registry, executor.getThreadPoolExecutor(), name, tags);
         return executor;
     }
 
@@ -107,7 +106,7 @@ public class SpringMeters {
      * @return The instrumented scheduler, proxied.
      */
     public static ThreadPoolTaskScheduler monitor(MeterRegistry registry, ThreadPoolTaskScheduler scheduler, String name, Iterable<Tag> tags) {
-        Meters.monitor(registry, scheduler.getScheduledExecutor(), name, tags);
+        ExecutorServiceMetrics.monitor(registry, scheduler.getScheduledExecutor(), name, tags);
         return scheduler;
     }
 
@@ -121,7 +120,7 @@ public class SpringMeters {
      * @return The instrumented scheduler, proxied.
      */
     public static ThreadPoolTaskScheduler monitor(MeterRegistry registry, ThreadPoolTaskScheduler scheduler, String name, Tag... tags) {
-        Meters.monitor(registry, scheduler.getScheduledExecutor(), name, tags);
+        ExecutorServiceMetrics.monitor(registry, scheduler.getScheduledExecutor(), name, tags);
         return scheduler;
     }
 }

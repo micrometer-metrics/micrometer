@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.spectator;
 
-import io.micrometer.core.instrument.Meters;
+import io.micrometer.core.instrument.util.Meters;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Measurement;

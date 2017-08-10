@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.google.common.cache.CacheBuilder;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -57,6 +58,35 @@ import java.util.List;
   * @author Clint Checketts
  */
 public class CaffeineCacheMetrics implements MeterBinder {
+    /**
+     * Record metrics on a Caffeine cache.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param cache    The cache to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     */
+    public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String name, String... tags) {
+        return monitor(registry, cache, name, Tags.zip(tags));
+    }
+
+    /**
+     * Record metrics on a Caffeine cache. You must call {@link CacheBuilder#recordStats()} prior to building the cache
+     * for metrics to be recorded.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param cache    The cache to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     * @see com.google.common.cache.CacheStats
+     */
+    public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String name, Iterable<Tag> tags) {
+        new CaffeineCacheMetrics(name, tags, cache).bindTo(registry);
+        return cache;
+    }
+
     private final String name;
     private final Cache<?, ?> cache;
 
@@ -64,11 +94,10 @@ public class CaffeineCacheMetrics implements MeterBinder {
      * @param name  The named of the cache, exposed as the 'cache' dimension
      * @param cache The cache to be instrumented. Be certain to enable <cade></cade>
      */
-    public CaffeineCacheMetrics(String name, Cache<?, ?> cache) {
+    public CaffeineCacheMetrics(String name, Iterable<Tag> tags, Cache<?, ?> cache) {
         this.name = name;
         this.cache = cache;
     }
-
 
     /**
      * @param name  The named of the cache, exposed as the 'cache' dimension

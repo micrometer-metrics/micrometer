@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.util.MeterId;
+import io.micrometer.core.instrument.util.Meters;
 
 import java.util.Arrays;
 import java.util.List;

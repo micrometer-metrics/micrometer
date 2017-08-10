@@ -53,8 +53,7 @@ class CaffeineCacheMetricsTest {
         }).build();
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
-        CaffeineCacheMetrics collector = new CaffeineCacheMetrics("users", cache);
-        collector.bindTo(registry);
+        CaffeineCacheMetrics.monitor(registry, cache, "users");
 
         cache.getIfPresent("user1");
         cache.getIfPresent("user1");
@@ -85,8 +84,7 @@ class CaffeineCacheMetricsTest {
 
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
-        CaffeineCacheMetrics collector = new CaffeineCacheMetrics("loadingusers", cache);
-        collector.bindTo(registry);
+        CaffeineCacheMetrics.monitor(registry, cache, "loadingusers");
 
         cache.get("user1");
         cache.get("user1");
@@ -104,7 +102,6 @@ class CaffeineCacheMetricsTest {
         assertMetric(registry, Counter, "loadingusers", 3.0, "caffeine_cache_load_duration_seconds_count");
 
         assertMetric(registry, Counter, "loadingusers", 3.0, "caffeine_cache_load_duration_seconds_count");
-//    assertMetricGreatThan(registry, Counter,"caffeine_cache_load_duration_seconds_sum", "loadingusers", 0.0);
     }
 
     private void assertMetric(MeterRegistry registry, Meter.Type type, String cacheName, double value, String name) {
@@ -120,12 +117,4 @@ class CaffeineCacheMetricsTest {
 
         assertThat(meter.get().measure().stream().findFirst().map(Measurement::getValue).get()).isEqualTo(value);
     }
-
-
-//  private void assertMetricGreatThan(MeterRegistry registry,  Meter.Type type, String name, String cacheName, double value) {
-//    assertThat(registry.findMeter(type, name, Tags.zip("cache", name)).get().measure())
-//            .extracting(Measurement::getValue).
-//            .isGreaterThan(value);
-//  }
-
 }

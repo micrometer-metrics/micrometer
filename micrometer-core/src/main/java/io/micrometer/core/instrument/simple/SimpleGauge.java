@@ -17,7 +17,7 @@ package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meters;
+import io.micrometer.core.instrument.util.Meters;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterId;
 

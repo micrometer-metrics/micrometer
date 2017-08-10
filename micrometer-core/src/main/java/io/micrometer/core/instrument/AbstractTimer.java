@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.util.MeterId;
+import io.micrometer.core.instrument.util.Meters;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;

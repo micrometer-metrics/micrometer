@@ -17,12 +17,11 @@ package io.micrometer.core.instrument.dropwizard;
 
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meters;
+import io.micrometer.core.instrument.util.Meters;
 import io.micrometer.core.instrument.util.MeterId;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.DoubleAdder;
 
 /**

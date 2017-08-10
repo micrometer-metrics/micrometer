@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 Pivotal Software, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,6 @@ package io.micrometer.core.instrument.prometheus;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Meters;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.stats.quantile.GKQuantiles;
 import io.prometheus.client.Collector;
@@ -29,11 +28,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Enumeration;
-import java.util.Set;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.List;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -58,12 +54,12 @@ class PrometheusMeterRegistryTest {
     @Test
     void quantiles() {
         registry.timerBuilder("timer")
-                .quantiles(GKQuantiles.quantiles(0.5).create())
-                .create();
+            .quantiles(GKQuantiles.quantiles(0.5).create())
+            .create();
 
         registry.summaryBuilder("ds")
-                .quantiles(GKQuantiles.quantiles(0.5).create())
-                .create();
+            .quantiles(GKQuantiles.quantiles(0.5).create())
+            .create();
 
         assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndTagKey("timer", "quantile"));
         assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndTagKey("ds", "quantile"));
@@ -76,45 +72,42 @@ class PrometheusMeterRegistryTest {
         Arrays.asList("v1", "v2").forEach(v -> {
             registry.summary("s", "k", v).record(1.0);
             assertThat(registry.getPrometheusRegistry().getSampleValue("s_count", new String[]{"k"}, new String[]{v}))
-                    .describedAs("distribution summary s with a tag value of %s", v)
-                    .isEqualTo(1.0, offset(1e-12));
+                .describedAs("distribution summary s with a tag value of %s", v)
+                .isEqualTo(1.0, offset(1e-12));
         });
     }
 
     @DisplayName("custom meters can be typed")
     @Test
     void typedCustomMeters() {
-        AtomicLong n = new AtomicLong();
-        registry.register(Meters.build("counter")
-                .type(Meter.Type.Counter)
-                .create(n, (name, counter) -> singletonList(new Measurement(name, emptyList(), (double) n.incrementAndGet()))));
+        registry.register(new CustomCounter());
 
         assertThat(registry.getPrometheusRegistry().metricFamilySamples().nextElement().type)
-                .describedAs("custom counter with a type of COUNTER")
-                .isEqualTo(Collector.Type.COUNTER);
+            .describedAs("custom counter with a type of COUNTER")
+            .isEqualTo(Collector.Type.COUNTER);
     }
 
-    @DisplayName("composite counters registered separately")
-    @Test
-    void compositeCountersRegisteredSeparately() {
-        Set<Integer> ns = new ConcurrentSkipListSet<>();
+    private class CustomCounter implements Meter {
 
-        registry.register(Meters.build("integers")
-                .type(Meter.Type.Counter)
-                .tags("parity", "even")
-                .create(ns, (name, nsRef) -> Collections.singletonList(new Measurement(name, singletonList(Tag.of("parity", "even")), ns.stream().filter(n -> n % 2 == 0).count()))));
+        @Override
+        public String getName() {
+            return "custom";
+        }
 
-        registry.register(Meters.build("integers")
-                .type(Meter.Type.Counter)
-                .tags("parity", "odd")
-                .create(ns, (name, nsRef) -> Collections.singletonList(new Measurement(name, singletonList(Tag.of("parity", "odd")), ns.stream().filter(n -> n % 2 != 0).count()))));
+        @Override
+        public Iterable<Tag> getTags() {
+            return emptyList();
+        }
 
-        System.out.println(registry.scrape());
+        @Override
+        public Type getType() {
+            return Type.Counter;
+        }
 
-        assertThat(registry.scrape())
-                .contains("# TYPE integers counter")
-                .contains("integers{parity=\"even\",}")
-                .contains("integers{parity=\"odd\",}");
+        @Override
+        public List<Measurement> measure() {
+            return singletonList(new Measurement(getName(), emptyList(), 1));
+        }
     }
 
     @DisplayName("attempts to register different meter types with the same name fail somewhat gracefully")

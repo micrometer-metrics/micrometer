@@ -17,7 +17,7 @@ package io.micrometer.core.instrument.spectator;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meters;
+import io.micrometer.core.instrument.util.Meters;
 import io.micrometer.core.instrument.Tag;
 
 import java.util.List;

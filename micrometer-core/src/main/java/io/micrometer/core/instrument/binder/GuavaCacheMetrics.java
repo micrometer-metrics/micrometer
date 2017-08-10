@@ -16,13 +16,47 @@
 package io.micrometer.core.instrument.binder;
 
 import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import io.micrometer.core.instrument.*;
+
+import static java.util.Arrays.asList;
 
 /**
  * @author Jon Schneider
  */
 public class GuavaCacheMetrics implements MeterBinder {
+    /**
+     * Record metrics on a Guava cache. You must call {@link CacheBuilder#recordStats()} prior to building the cache
+     * for metrics to be recorded.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param cache    The cache to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     * @see com.google.common.cache.CacheStats
+     */
+    public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String name, String... tags) {
+        return monitor(registry, cache, name, Tags.zip(tags));
+    }
+
+    /**
+     * Record metrics on a Guava cache. You must call {@link CacheBuilder#recordStats()} prior to building the cache
+     * for metrics to be recorded.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param cache    The cache to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     * @see com.google.common.cache.CacheStats
+     */
+    public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String name, Iterable<Tag> tags) {
+        new GuavaCacheMetrics(name, tags, cache).bindTo(registry);
+        return cache;
+    }
+
     private final String name;
     private final Iterable<Tag> tags;
     private final Cache<?, ?> cache;
