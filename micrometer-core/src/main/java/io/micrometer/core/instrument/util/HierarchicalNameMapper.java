@@ -28,43 +28,19 @@ import java.util.stream.Collectors;
  *
  * @author Jon Schneider
  */
-public class HierarchicalNameMapper {
+public interface HierarchicalNameMapper {
     /**
      * Sort tags alphabetically by key and append tag key values to the name with '.', e.g.
      * {@code http_server_requests.response.200.method.GET}
      */
-    public static final HierarchicalNameMapper DEFAULT = new HierarchicalNameMapper();
+    HierarchicalNameMapper DEFAULT = (name, tags) -> {
+        List<Tag> tagsCopy = new ArrayList<>();
+        tags.forEach(tagsCopy::add);
+        tagsCopy.sort(Comparator.comparing(Tag::getKey));
+        return name + "." + tagsCopy.stream()
+            .map(t -> t.getKey() + "." + t.getValue())
+            .collect(Collectors.joining("."));
+    };
 
-    protected String tagSeparator = ".";
-    protected String valueSeparator = ".";
-    protected Comparator<Tag> tagComparator = Comparator.comparing(Tag::getKey);
-
-    /**
-     * The separator between two tags.
-     */
-    public HierarchicalNameMapper setTagSeparator(String tagSeparator) {
-        this.tagSeparator = tagSeparator;
-        return this;
-    }
-
-    /**
-     * The separator between a tag key and its value.
-     */
-    public HierarchicalNameMapper setValueSeparator(String valueSeparator) {
-        this.valueSeparator = valueSeparator;
-        return this;
-    }
-
-    public HierarchicalNameMapper setTagComparator(Comparator<Tag> tagComparator) {
-        this.tagComparator = tagComparator;
-        return this;
-    }
-
-    public String toHierarchicalName(String name, Collection<Tag> tags) {
-        List<Tag> tagsCopy = new ArrayList<>(tags);
-        tagsCopy.sort(tagComparator);
-        return name + tagSeparator + tagsCopy.stream()
-                .map(t -> t.getKey() + valueSeparator + t.getValue())
-                .collect(Collectors.joining(tagSeparator));
-    }
+    String toHierarchicalName(String name, Iterable<Tag> tags);
 }

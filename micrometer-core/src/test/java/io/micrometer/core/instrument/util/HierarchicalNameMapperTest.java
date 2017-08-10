@@ -28,10 +28,8 @@ class HierarchicalNameMapperTest {
 
     @Test
     void buildHierarchicalNameFromDimensionalId() {
-        HierarchicalNameMapper mapper = new HierarchicalNameMapper()
-                .setValueSeparator("-");
-
+        HierarchicalNameMapper mapper = HierarchicalNameMapper.DEFAULT;
         String name = mapper.toHierarchicalName("http_requests", Tags.zip("status", "200", "method", "GET"));
-        assertThat(name).isEqualTo("http_requests.method-GET.status-200");
+        assertThat(name).isEqualTo("http_requests.method.GET.status.200");
     }
 }
