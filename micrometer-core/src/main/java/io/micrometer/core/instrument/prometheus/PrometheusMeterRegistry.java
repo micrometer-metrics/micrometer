@@ -116,7 +116,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public Counter counter(String name, Iterable<Tag> tags) {
-        MeterId id = new MeterId(name, withCommonTags(tags));
+        MeterId id = new MeterId(name, Tags.concat(tags, commonTags));
         io.prometheus.client.Counter counter = collectorByName(io.prometheus.client.Counter.class, name,
                 n -> buildCollector(id, io.prometheus.client.Counter.build()));
         return MapAccess.computeIfAbsent(meterMap, id, c -> new PrometheusCounter(id, child(counter, id.getTags())));
@@ -124,13 +124,13 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public <T> T counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        register(new FunctionTrackingCounter<>(new MeterId(name, withCommonTags(tags)), obj, f));
+        register(new FunctionTrackingCounter<>(new MeterId(name, Tags.concat(tags, commonTags)), obj, f));
         return obj;
     }
 
     @Override
     public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
-        Iterable<Tag> allTags = withCommonTags(tags);
+        Iterable<Tag> allTags = Tags.concat(tags, commonTags);
         MeterId id = new MeterId(name, allTags);
         final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, name,
                 n -> new CustomPrometheusSummary(name, stream(allTags.spliterator(), false).map(Tag::getKey).collect(toList())).register(registry));
@@ -139,7 +139,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     protected io.micrometer.core.instrument.Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
-        Iterable<Tag> allTags = withCommonTags(tags);
+        Iterable<Tag> allTags = Tags.concat(tags, commonTags);
         MeterId id = new MeterId(name, allTags);
         final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, name,
                 n -> new CustomPrometheusSummary(name, stream(allTags.spliterator(), false).map(Tag::getKey).collect(toList())).register(registry));
@@ -148,7 +148,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
-        Iterable<Tag> allTags = withCommonTags(tags);
+        Iterable<Tag> allTags = Tags.concat(tags, commonTags);
         MeterId id = new MeterId(name, allTags);
         final CustomPrometheusLongTaskTimer longTaskTimer = collectorByName(CustomPrometheusLongTaskTimer.class, name,
                 n -> new CustomPrometheusLongTaskTimer(name, stream(allTags.spliterator(), false).map(Tag::getKey).collect(toList()), getClock()).register(registry));
@@ -160,7 +160,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
         final WeakReference<T> ref = new WeakReference<>(obj);
 
-        Iterable<Tag> allTags = withCommonTags(tags);
+        Iterable<Tag> allTags = Tags.concat(tags, commonTags);
 
         MeterId id = new MeterId(name, allTags);
         io.prometheus.client.Gauge gauge = collectorByName(Gauge.class, name,

@@ -17,49 +17,28 @@ package io.micrometer.core.instrument.binder;
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 
-import java.util.List;
-
-/* Collect metrics from Caffeine's com.github.benmanes.caffeine.cache.Cache.
-  * <p>
-  * <pre>{@code
-  *
-  * // Note that `recordStats()` is required to gather non-zero statistics
-  * Cache<String, String> cache = Caffeine.newBuilder().recordStats().build();
-  * CacheMetricsCollector cacheMetrics = new CacheMetricsCollector().register();
-  * cacheMetrics.addCache("mycache", cache);
-  *
-  * }</pre>
-  *
-  * Exposed metrics are labeled with the provided cache name.
-  *
-  * With the example above, sample metric names would be:
-  * <pre>
-  *     caffeine_cache_hit_total{cache="mycache"} 10.0
-  *     caffeine_cache_miss_total{cache="mycache"} 3.0
-  *     caffeine_cache_requests_total{cache="mycache"} 13.0
-  *     caffeine_cache_eviction_total{cache="mycache"} 1.0
-  *     caffeine_cache_estimated_size{cache="mycache"} 5.0
-  * </pre>
-  *
-  * Additionally if the cache includes a loader, the following metrics would be provided:
-  * <pre>
-  *     caffeine_cache_load_failure_total{cache="mycache"} 2.0
-  *     caffeine_cache_loads_total{cache="mycache"} 7.0
-  *     caffeine_cache_load_duration_seconds_count{cache="mycache"} 7.0
-  *     caffeine_cache_load_duration_seconds_sum{cache="mycache"} 0.0034
-  * </pre>
-  *
-  * @author Clint Checketts
+/**
+ * Collect metrics from Caffeine's com.github.benmanes.caffeine.cache.Cache.
+ * <p>
+ * Note that `recordStats()` is required to gather non-zero statistics:
+ * <pre>{@code
+ * Cache<String, String> cache = Caffeine.newBuilder().recordStats().build();
+ * CaffeineCacheMetrics.monitor(registry, cache, "mycache", "region", "test");
+ * }</pre>
+ * <p>
+ * @author Clint Checketts
  */
 public class CaffeineCacheMetrics implements MeterBinder {
     /**
-     * Record metrics on a Caffeine cache.
+     * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()} prior to building the cache
+     * for metrics to be recorded.
      *
      * @param registry The registry to bind metrics to.
      * @param cache    The cache to instrument.
@@ -72,7 +51,7 @@ public class CaffeineCacheMetrics implements MeterBinder {
     }
 
     /**
-     * Record metrics on a Caffeine cache. You must call {@link CacheBuilder#recordStats()} prior to building the cache
+     * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()} prior to building the cache
      * for metrics to be recorded.
      *
      * @param registry The registry to bind metrics to.
@@ -80,51 +59,72 @@ public class CaffeineCacheMetrics implements MeterBinder {
      * @param name     The name prefix of the metrics.
      * @param tags     Tags to apply to all recorded metrics.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
-     * @see com.google.common.cache.CacheStats
+     * @see CacheStats
      */
     public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String name, Iterable<Tag> tags) {
         new CaffeineCacheMetrics(name, tags, cache).bindTo(registry);
         return cache;
     }
 
-    private final String name;
-    private final Cache<?, ?> cache;
-
     /**
-     * @param name  The named of the cache, exposed as the 'cache' dimension
-     * @param cache The cache to be instrumented. Be certain to enable <cade></cade>
+     * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()} prior to building the cache
+     * for metrics to be recorded.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param cache    The cache to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
-    public CaffeineCacheMetrics(String name, Iterable<Tag> tags, Cache<?, ?> cache) {
-        this.name = name;
-        this.cache = cache;
+    public static <C extends AsyncLoadingCache> C monitor(MeterRegistry registry, C cache, String name, String... tags) {
+        return monitor(registry, cache, name, Tags.zip(tags));
     }
 
     /**
-     * @param name  The named of the cache, exposed as the 'cache' dimension
-     * @param cache The cache to be instrumented. Be certain to enable <cade></cade>
+     * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()} prior to building the cache
+     * for metrics to be recorded.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param cache    The cache to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     * @see CacheStats
      */
-    public CaffeineCacheMetrics(String name, AsyncLoadingCache<?, ?> cache) {
+    public static <C extends AsyncLoadingCache> C monitor(MeterRegistry registry, C cache, String name, Iterable<Tag> tags) {
+        monitor(registry, cache.synchronous(), name, tags);
+        return cache;
+    }
+
+    private final String name;
+    private final Iterable<Tag> tags;
+    private final Cache<?, ?> cache;
+
+    /**
+     * @param name  The metric name prefix
+     * @param cache The cache to be instrumented. You must call {@link Caffeine#recordStats()} prior to building the cache
+     *              for metrics to be recorded.
+     */
+    public CaffeineCacheMetrics(String name, Iterable<Tag> tags, Cache<?, ?> cache) {
         this.name = name;
-        this.cache = cache.synchronous();
+        this.tags = tags;
+        this.cache = cache;
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        List<Tag> tags = Tags.zip("cache", name);
-        registry.gauge("caffeine_cache_estimated_size", tags, cache, Cache::estimatedSize);
+        registry.gauge(name + "_estimated_size", tags, cache, Cache::estimatedSize);
 
-        registry.counter("caffeine_cache_requests", Tags.zip("cache", name, "result", "miss"), cache, c -> c.stats().missCount());
-        registry.counter("caffeine_cache_requests", Tags.zip("cache", name, "result", "hit"), cache, c -> c.stats().hitCount());
-        registry.counter("caffeine_cache_requests_total", tags, cache, c -> c.stats().requestCount());
-        registry.counter("caffeine_cache_evictions_total", tags, cache, c -> c.stats().evictionCount());
-        registry.gauge("caffeine_cache_eviction_weight", tags, cache, c -> c.stats().evictionWeight());
+        registry.counter(name + "_requests", Tags.zip("result", "miss"), cache, c -> c.stats().missCount());
+        registry.counter(name + "_requests", Tags.zip("result", "hit"), cache, c -> c.stats().hitCount());
+        registry.counter(name + "_evictions", tags, cache, c -> c.stats().evictionCount());
+        registry.gauge(name + "_eviction_weight", tags, cache, c -> c.stats().evictionWeight());
 
         if (cache instanceof LoadingCache) {
             // dividing these gives you a measure of load latency
-            registry.counter("caffeine_cache_load_duration_seconds_sum", tags, cache, c -> c.stats().totalLoadTime());
-            registry.counter("caffeine_cache_load_duration_seconds_count", tags, cache, c -> c.stats().loadCount());
-
-            registry.counter("caffeine_cache_load_failures_total", tags, cache, c -> c.stats().loadFailureCount());
+            registry.counter(name + "_load_duration", tags, cache, c -> c.stats().totalLoadTime());
+            registry.counter(name + "_load", Tags.concat(tags, "result", "success"), cache, c -> c.stats().loadSuccessCount());
+            registry.counter(name + "_load", Tags.concat(tags, "result", "failure"), cache, c -> c.stats().loadFailureCount());
         }
     }
 }

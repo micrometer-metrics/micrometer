@@ -16,44 +16,28 @@
 package io.micrometer.core.instrument.binder;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.CacheLoader;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Executor;
 
-import static io.micrometer.core.instrument.Meter.Type.Counter;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Clint Checketts
+ * @author Jon Schneider
  */
 class CaffeineCacheMetricsTest {
+    private SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
-    public void cacheExposesMetricsForHitMissAndEviction() throws Exception {
-        Cache<String, String> cache = Caffeine.newBuilder().maximumSize(2).recordStats().executor(new Executor() {
-            @Override
-            public void execute(Runnable command) {
-                // Run cleanup in same thread, to remove async behavior with evictions
-                command.run();
-            }
-        }).build();
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
-
-        CaffeineCacheMetrics.monitor(registry, cache, "users");
+    void cacheExposesMetricsForHitMissAndEviction() throws Exception {
+        // Run cleanup in same thread, to remove async behavior with evictions
+        Cache<String, String> cache = Caffeine.newBuilder().maximumSize(2).recordStats().executor(Runnable::run).build();
+        CaffeineCacheMetrics.monitor(registry, cache, "c");
 
         cache.getIfPresent("user1");
         cache.getIfPresent("user1");
@@ -65,56 +49,41 @@ class CaffeineCacheMetricsTest {
         cache.put("user3", "Third User");
         cache.put("user4", "Fourth User");
 
-        assertMetric(registry, Counter, Tags.zip("cache", "users", "result", "hit"), "users", 1.0, "caffeine_cache_requests");
-        assertMetric(registry, Counter, Tags.zip("cache", "users", "result", "miss"), "users", 2.0, "caffeine_cache_requests");
-        assertMetric(registry, Counter, "users", 3.0, "caffeine_cache_requests_total");
-        assertMetric(registry, Counter, "users", 2.0, "caffeine_cache_evictions_total");
+        assertThat(findCounter("c_requests", "result", "hit")).hasValueSatisfying(c -> val(c, 1));
+        assertThat(findCounter("c_requests", "result", "miss")).hasValueSatisfying(c -> val(c, 2));
+        assertThat(findCounter("c_evictions")).hasValueSatisfying(c -> val(c, 2));
     }
 
     @SuppressWarnings("unchecked")
     @Test
-    public void loadingCacheExposesMetricsForLoadsAndExceptions() throws Exception {
-        CacheLoader<String, String> loader = mock(CacheLoader.class);
-        when(loader.load(anyString()))
-            .thenReturn("First User")
-            .thenThrow(new RuntimeException("Seconds time fails"))
-            .thenReturn("Third User");
+    void loadingCacheExposesMetricsForLoadsAndExceptions() throws Exception {
+        LoadingCache<Integer, String> cache = CaffeineCacheMetrics.monitor(registry, Caffeine.newBuilder()
+            .recordStats()
+            .build(key -> {
+                if (key % 2 == 0)
+                    throw new Exception("no evens!");
+                return key.toString();
+            }), "c");
 
-        LoadingCache<String, String> cache = Caffeine.newBuilder().recordStats().build(loader);
-
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
-
-        CaffeineCacheMetrics.monitor(registry, cache, "loadingusers");
-
-        cache.get("user1");
-        cache.get("user1");
+        cache.get(1);
+        cache.get(1);
         try {
-            cache.get("user2");
-        } catch (Exception e) {
-            // ignoring.
+            cache.get(2); // throws exception
+        } catch (Exception ignored) {
         }
-        cache.get("user3");
+        cache.get(3);
 
-        assertMetric(registry, Counter, Tags.zip("cache", "loadingusers", "result", "hit"), "loadingusers", 1.0, "caffeine_cache_requests");
-        assertMetric(registry, Counter, Tags.zip("cache", "loadingusers", "result", "miss"), "loadingusers", 3.0, "caffeine_cache_requests");
-
-        assertMetric(registry, Counter, "loadingusers", 1.0, "caffeine_cache_load_failures_total");
-        assertMetric(registry, Counter, "loadingusers", 3.0, "caffeine_cache_load_duration_seconds_count");
-
-        assertMetric(registry, Counter, "loadingusers", 3.0, "caffeine_cache_load_duration_seconds_count");
+        assertThat(findCounter("c_requests", "result", "hit")).hasValueSatisfying(c -> val(c, 1));
+        assertThat(findCounter("c_requests", "result", "miss")).hasValueSatisfying(c -> val(c, 3));
+        assertThat(findCounter("c_load", "result", "failure")).hasValueSatisfying(c -> val(c, 1));
+        assertThat(findCounter("c_load", "result", "success")).hasValueSatisfying(c -> val(c, 2));
     }
 
-    private void assertMetric(MeterRegistry registry, Meter.Type type, String cacheName, double value, String name) {
-        assertMetric(registry, type, Tags.zip("cache", cacheName), cacheName, value, name);
+    private Optional<Meter> findCounter(String name, String... tags) {
+        return registry.findMeter(Meter.Type.Counter, name, tags);
     }
 
-    private void assertMetric(MeterRegistry registry, Meter.Type type, List<Tag> tags, String cacheName, double value, String name) {
-        Optional<Meter> meter = registry.findMeter(type, name, tags);
-        if (!meter.isPresent()) {
-            System.out.println("boom");
-        }
-        assertThat(meter).as("Meter should be in registry type=" + type + " tags=" + tags + " metricName=").isPresent();
-
-        assertThat(meter.get().measure().stream().findFirst().map(Measurement::getValue).get()).isEqualTo(value);
+    private void val(Meter m, double value) {
+        assertThat(m.measure().get(0).getValue()).isEqualTo(value);
     }
 }

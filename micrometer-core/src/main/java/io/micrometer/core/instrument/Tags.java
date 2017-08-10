@@ -17,6 +17,10 @@ package io.micrometer.core.instrument;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
 
 /**
  * @author Jon Schneider
@@ -31,5 +35,15 @@ public class Tags {
             ts.add(Tag.of(keyValues[i], keyValues[i + 1]));
         }
         return ts;
+    }
+
+    public static Iterable<Tag> concat(Iterable<Tag> tags, Iterable<Tag> otherTags) {
+        if(!otherTags.iterator().hasNext())
+            return tags;
+        return Stream.concat(stream(tags.spliterator(), false), stream(otherTags.spliterator(), false)).collect(toList());
+    }
+
+    public static Iterable<Tag> concat(Iterable<Tag> tags, String... keyValues) {
+        return concat(tags, zip(keyValues));
     }
 }

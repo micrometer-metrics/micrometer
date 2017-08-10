@@ -20,6 +20,8 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import io.micrometer.core.instrument.*;
 
+import java.util.List;
+
 import static java.util.Arrays.asList;
 
 /**
@@ -78,9 +80,8 @@ public class GuavaCacheMetrics implements MeterBinder {
         if (cache instanceof LoadingCache) {
             // dividing these gives you a measure of load latency
             registry.counter(name + "_load_duration", tags, cache, c -> c.stats().totalLoadTime());
-            registry.counter(name + "_loads", tags, cache, c -> c.stats().loadCount());
-
-            registry.counter(name + "_load_failures", tags, cache, c -> c.stats().loadExceptionCount());
+            registry.counter(name + "_load", Tags.concat(tags, "result", "success"), cache, c -> c.stats().loadSuccessCount());
+            registry.counter(name + "_load", Tags.concat(tags, "result", "failure"), cache, c -> c.stats().loadExceptionCount());
         }
     }
 }

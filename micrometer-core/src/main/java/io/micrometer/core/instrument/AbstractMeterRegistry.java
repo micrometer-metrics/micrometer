@@ -122,10 +122,4 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     public void commonTags(Iterable<Tag> tags) {
         tags.forEach(commonTags::add);
     }
-
-    protected Iterable<Tag> withCommonTags(Iterable<Tag> tags) {
-        if(commonTags.isEmpty())
-            return tags;
-        return Stream.concat(stream(tags.spliterator(), false), commonTags.stream()).collect(toList());
-    }
 }

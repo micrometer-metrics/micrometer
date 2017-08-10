@@ -40,7 +40,6 @@ dependencies {
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.0-M5'
 
     testCompile 'org.assertj:assertj-core:3.+'
-    testCompile 'org.mockito:mockito-core:1.10.19'
 
     jmh 'org.openjdk.jmh:jmh-core:latest.release'
     jmh 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'

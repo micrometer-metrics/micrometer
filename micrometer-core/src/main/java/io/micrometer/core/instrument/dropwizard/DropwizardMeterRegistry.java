@@ -33,7 +33,6 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.ToDoubleFunction;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -91,19 +90,19 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public Counter counter(String name, Iterable<Tag> tags) {
-        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, withCommonTags(tags)),
+        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, Tags.concat(tags, commonTags)),
                 id -> new DropwizardCounter(id, registry.meter(toDropwizardName(id))));
     }
 
     @Override
     public <T> T counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        register(new FunctionTrackingCounter<>(new MeterId(name, withCommonTags(tags)), obj, f));
+        register(new FunctionTrackingCounter<>(new MeterId(name, Tags.concat(tags, commonTags)), obj, f));
         return obj;
     }
 
     @Override
     public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
-        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, withCommonTags(tags)),
+        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, Tags.concat(tags, commonTags)),
                 id -> {
                     LongTaskTimer ltt = new SimpleLongTaskTimer(id, clock);
                     registry.register(toDropwizardName(id.withName(name + "_active")), (Gauge<Integer>) ltt::activeTasks);
@@ -126,7 +125,7 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        MapAccess.computeIfAbsent(meterMap, new MeterId(name, withCommonTags(tags)), id -> {
+        MapAccess.computeIfAbsent(meterMap, new MeterId(name, Tags.concat(tags, commonTags)), id -> {
             final WeakReference<T> ref = new WeakReference<>(obj);
             Gauge<Double> gauge = () -> f.applyAsDouble(ref.get());
             registry.register(toDropwizardName(id), gauge);
@@ -144,14 +143,14 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     protected Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
-        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, withCommonTags(tags)),
+        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, Tags.concat(tags, commonTags)),
                 id -> new DropwizardTimer(id, registry.timer(toDropwizardName(id)), clock));
     }
 
     @Override
     protected DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
         // FIXME deal with quantiles, histogram
-        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, withCommonTags(tags)),
+        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, Tags.concat(tags, commonTags)),
                 id -> new DropwizardDistributionSummary(id, registry.histogram(toDropwizardName(id))));
     }
 }
