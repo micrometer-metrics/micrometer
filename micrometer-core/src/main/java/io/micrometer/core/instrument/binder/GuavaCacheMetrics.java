@@ -22,12 +22,12 @@ import io.micrometer.core.instrument.*;
 /**
  * @author Jon Schneider
  */
-public class CacheMetrics implements MeterBinder {
+public class GuavaCacheMetrics implements MeterBinder {
     private final String name;
     private final Iterable<Tag> tags;
     private final Cache<?, ?> cache;
 
-    public CacheMetrics(String name, Iterable<Tag> tags, Cache<?, ?> cache) {
+    public GuavaCacheMetrics(String name, Iterable<Tag> tags, Cache<?, ?> cache) {
         this.name = name;
         this.tags = tags;
         this.cache = cache;

@@ -37,8 +37,10 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+/**
+ * @author Clint Checketts
+ */
 class CaffeineCacheMetricsTest {
-
 
     @Test
     public void cacheExposesMetricsForHitMissAndEviction() throws Exception {
@@ -69,7 +71,6 @@ class CaffeineCacheMetricsTest {
         assertMetric(registry, Counter, "users", 3.0, "caffeine_cache_requests_total");
         assertMetric(registry, Counter, "users", 2.0, "caffeine_cache_evictions_total");
     }
-
 
     @SuppressWarnings("unchecked")
     @Test

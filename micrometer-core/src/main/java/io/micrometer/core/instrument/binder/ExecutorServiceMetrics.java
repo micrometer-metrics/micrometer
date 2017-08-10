@@ -15,17 +15,17 @@
  */
 package io.micrometer.core.instrument.binder;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.internal.TimedExecutorService;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import static java.util.Collections.singletonList;
+import static java.util.Collections.emptyList;
 
 /**
  * Monitors the status of executor service pools. Does not record timings on operations executed in the {@link ExecutorService},
@@ -86,8 +86,8 @@ public class ExecutorServiceMetrics implements MeterBinder {
         }
 
         // queued tasks = tasks - completed - active
-        registry.counter(name + "_tasks", tp, tpRef -> tpRef.getTaskCount() + tpRef.getCompletedTaskCount() + tpRef.getActiveCount());
-        registry.counter(name + "_completed", tp, ThreadPoolExecutor::getCompletedTaskCount);
+        registry.counter(name + "_tasks", emptyList(), tp, tpRef -> tpRef.getTaskCount() + tpRef.getCompletedTaskCount() + tpRef.getActiveCount());
+        registry.counter(name + "_completed", emptyList(), tp, ThreadPoolExecutor::getCompletedTaskCount);
 
         registry.gauge(name + "_active", tp, ThreadPoolExecutor::getActiveCount);
         registry.gauge(name + "_queue_size", tags, tp, tpRef -> tpRef.getQueue().size());
@@ -95,7 +95,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
     }
 
     private void monitor(MeterRegistry registry, ForkJoinPool fj) {
-        registry.counter(name + "_steal_count", fj, ForkJoinPool::getStealCount);
+        registry.counter(name + "_steal_count", emptyList(), fj, ForkJoinPool::getStealCount);
 
         registry.gauge(name + "_queued_tasks", fj, ForkJoinPool::getQueuedTaskCount);
         registry.gauge(name + "_active", fj, ForkJoinPool::getActiveThreadCount);

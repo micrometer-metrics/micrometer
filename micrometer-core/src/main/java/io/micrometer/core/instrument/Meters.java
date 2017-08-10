@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument;
 
 import com.google.common.cache.Cache;
-import io.micrometer.core.instrument.binder.CacheMetrics;
+import io.micrometer.core.instrument.binder.GuavaCacheMetrics;
 import io.micrometer.core.instrument.binder.ExecutorServiceMetrics;
 import io.micrometer.core.instrument.internal.TimedExecutorService;
 
@@ -167,7 +167,7 @@ public class Meters {
      * @see com.google.common.cache.CacheStats
      */
     public static Cache monitor(MeterRegistry registry, Cache cache, String name, Tag... tags) {
-        new CacheMetrics(name, asList(tags), cache).bindTo(registry);
+        new GuavaCacheMetrics(name, asList(tags), cache).bindTo(registry);
         return cache;
     }
 
@@ -182,7 +182,7 @@ public class Meters {
      * @see com.google.common.cache.CacheStats
      */
     public static Cache monitor(MeterRegistry registry, Cache cache, String name, Iterable<Tag> tags) {
-        new CacheMetrics(name, tags, cache).bindTo(registry);
+        new GuavaCacheMetrics(name, tags, cache).bindTo(registry);
         return cache;
     }
 

@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static io.micrometer.core.instrument.MockClock.clock;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -60,7 +61,7 @@ class CounterTest {
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
     void heisenCounter(MeterRegistry registry) {
-        AtomicLong n = registry.counter("heisen", new AtomicLong(0));
+        AtomicLong n = registry.counter("heisen", emptyList(), new AtomicLong(0));
         n.incrementAndGet();
 
         Meter c = registry.findMeter(Meter.class, "heisen").get();

@@ -227,13 +227,13 @@ public interface MeterRegistry {
      * {@link java.util.Map#size()} can be expensive for some collection implementations
      * and should be considered before registering.
      *
-     * @param tags Sequence of dimensions for breaking down the getName.
      * @param name Name of the gauge being registered.
+     * @param tags Sequence of dimensions for breaking down the getName.
      * @param map  Thread-safe implementation of {@link Map} used to access the value.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    default <T extends Map<?, ?>> T gaugeMapSize(Iterable<Tag> tags, String name, T map) {
+    default <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
         return gauge(name, tags, map, Map::size);
     }
 }

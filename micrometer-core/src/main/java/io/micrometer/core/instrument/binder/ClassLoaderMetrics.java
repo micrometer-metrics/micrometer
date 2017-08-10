@@ -20,12 +20,14 @@ import io.micrometer.core.instrument.MeterRegistry;
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.ManagementFactory;
 
+import static java.util.Collections.emptyList;
+
 public class ClassLoaderMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         ClassLoadingMXBean classLoadingBean = ManagementFactory.getClassLoadingMXBean();
 
         registry.gauge("classes_loaded", classLoadingBean, ClassLoadingMXBean::getLoadedClassCount);
-        registry.counter("classes_unloaded", classLoadingBean, ClassLoadingMXBean::getUnloadedClassCount);
+        registry.counter("classes_unloaded", emptyList(), classLoadingBean, ClassLoadingMXBean::getUnloadedClassCount);
     }
 }

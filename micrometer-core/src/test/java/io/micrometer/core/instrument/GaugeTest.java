@@ -22,6 +22,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class GaugeTest {
@@ -44,7 +45,7 @@ class GaugeTest {
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
     void objectGauge(MeterRegistry registry) {
-        List<String> list = registry.gauge("myGauge", Collections.emptyList(), new ArrayList<>(), List::size);
+        List<String> list = registry.gauge("myGauge", emptyList(), new ArrayList<>(), List::size);
         list.addAll(Arrays.asList("a", "b"));
 
         assertEquals(2, singleGauge(registry).value());
@@ -54,7 +55,7 @@ class GaugeTest {
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
     void collectionSizeGauge(MeterRegistry registry) {
-        List<String> list = registry.gaugeCollectionSize(new ArrayList<>(), "myGauge");
+        List<String> list = registry.gaugeCollectionSize("myGauge", emptyList(), new ArrayList<>());
         list.addAll(Arrays.asList("a", "b"));
 
         assertEquals(2, singleGauge(registry).value());
@@ -64,7 +65,7 @@ class GaugeTest {
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
     void mapSizeGauge(MeterRegistry registry) {
-        Map<String, Integer> map = registry.gaugeMapSize(new HashMap<>(), "myGauge");
+        Map<String, Integer> map = registry.gaugeMapSize("myGauge", emptyList(), new HashMap<>());
         map.put("a", 1);
 
         assertEquals(1, singleGauge(registry).value());
