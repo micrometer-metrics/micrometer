@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.ToDoubleFunction;
 
-import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static io.micrometer.core.instrument.Tags.zip;
 
@@ -80,20 +79,6 @@ public interface MeterRegistry {
      * the value is observed.
      */
     <T> T counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f);
-
-    /**
-     * Tracks a monotonically increasing value provided by {@code f}, maintaining a weak reference on {@code obj}.
-     */
-    default <T> T counter(String name, T obj, ToDoubleFunction<T> f) {
-        return counter(name, emptyList(), obj, f);
-    }
-
-    /**
-     * Tracks a monotonically increasing value provided by {@code f}, maintaining a weak reference on {@code obj}.
-     */
-    default <T extends Number> T counter(String name, T number) {
-        return counter(name, emptyList(), number);
-    }
 
     /**
      * Tracks a number, maintaining a weak reference on it.
@@ -225,64 +210,30 @@ public interface MeterRegistry {
      * {@link java.util.Collection#size()} can be expensive for some collection implementations
      * and should be considered before registering.
      *
-     * @param collection Thread-safe implementation of {@link Collection} used to access the value.
      * @param name       Name of the gauge being registered.
      * @param tags       Sequence of dimensions for breaking down the getName.
+     * @param collection Thread-safe implementation of {@link Collection} used to access the value.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    default <T extends Collection<?>> T collectionSize(T collection, String name, Iterable<Tag> tags) {
+    default <T extends Collection<?>> T gaugeCollectionSize(String name, Iterable<Tag> tags, T collection) {
         return gauge(name, tags, collection, Collection::size);
     }
 
     /**
-     * Register a gauge that reports the size of the {@link java.util.Collection}. The registration
-     * will keep a weak reference to the collection so it will not prevent garbage collection.
-     * The collection implementation used should be thread safe. Note that calling
-     * {@link java.util.Collection#size()} can be expensive for some collection implementations
-     * and should be considered before registering.
-     *
-     * @param name       Name of the gauge being registered.
-     * @param collection Thread-safe implementation of {@link Collection} used to access the value.
-     * @param tags       Tags to apply to the gauge.
-     * @return The number that was passed in so the registration can be done as part of an assignment
-     * statement.
-     */
-    default <T extends Collection<?>> T collectionSize(T collection, String name, Tag... tags) {
-        return collectionSize(collection, name, asList(tags));
-    }
-
-    /**
      * Register a gauge that reports the size of the {@link java.util.Map}. The registration
      * will keep a weak reference to the collection so it will not prevent garbage collection.
      * The collection implementation used should be thread safe. Note that calling
      * {@link java.util.Map#size()} can be expensive for some collection implementations
      * and should be considered before registering.
      *
-     * @param name Name of the gauge being registered.
      * @param tags Sequence of dimensions for breaking down the getName.
-     * @param map  Thread-safe implementation of {@link Map} used to access the value.
-     * @return The number that was passed in so the registration can be done as part of an assignment
-     * statement.
-     */
-    default <T extends Map<?, ?>> T mapSize(T map, String name, Iterable<Tag> tags) {
-        return gauge(name, tags, map, Map::size);
-    }
-
-    /**
-     * Register a gauge that reports the size of the {@link java.util.Map}. The registration
-     * will keep a weak reference to the collection so it will not prevent garbage collection.
-     * The collection implementation used should be thread safe. Note that calling
-     * {@link java.util.Map#size()} can be expensive for some collection implementations
-     * and should be considered before registering.
-     *
-     * @param map  Thread-safe implementation of {@link Map} used to access the value.
      * @param name Name of the gauge being registered.
-     * @param tags Tags to apply to the gauge.
+     * @param map  Thread-safe implementation of {@link Map} used to access the value.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    default <T extends Map<?, ?>> T mapSize(T map, String name, String... tags) {
-        return mapSize(map, name, zip(tags));
+    default <T extends Map<?, ?>> T gaugeMapSize(Iterable<Tag> tags, String name, T map) {
+        return gauge(name, tags, map, Map::size);
     }
 }
