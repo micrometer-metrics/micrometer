@@ -26,7 +26,7 @@ import java.time.Duration;
 
 public class CounterSample {
     public static void main(String[] args) {
-        Counter counter = Registries.influx().counter("counter");
+        Counter counter = Registries.influx().meter("counter").counter();
 
         RandomEngine r = new MersenneTwister64(0);
         Normal dist = new Normal(0, 1, r);

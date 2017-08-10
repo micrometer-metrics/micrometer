@@ -60,11 +60,11 @@ public class JvmGcMetrics implements MeterBinder {
 
         // Incremented for any positive increases in the size of the old generation memory pool
         // before GC to after GC
-        Counter promotionRate = registry.counter("jvm_gc_promotion_rate");
+        Counter promotionRate = registry.meter("jvm_gc_promotion_rate").counter();
 
         // Incremented for the increase in the size of the young generation memory pool after one GC
         // to before the next
-        Counter allocationRate = registry.counter("jvm_gc_allocation_rate");
+        Counter allocationRate = registry.meter("jvm_gc_allocation_rate").counter();
 
         // start watching for GC notifications
         final AtomicLong youngGenSizeAfter = new AtomicLong(0L);

@@ -24,12 +24,17 @@ import java.util.function.ToDoubleFunction;
 
 import static java.util.stream.StreamSupport.stream;
 
-public abstract class AbstractMeterRegistry implements MeterRegistry {
+public abstract class AbstractMeterRegistry implements MeterRegistry, MeterRegistryConfigurator {
     protected final Clock clock;
     protected final List<Tag> commonTags = new ArrayList<>();
 
     protected AbstractMeterRegistry(Clock clock) {
         this.clock = clock;
+    }
+
+    @Override
+    public MeterIdBuilder meter(String name) {
+        return new MeterIdBuilder(name, this);
     }
 
     @Override

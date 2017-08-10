@@ -251,4 +251,8 @@ public interface MeterRegistry {
      * @return The builder.
      */
     <T> Gauge.Builder gaugeBuilder(String name, T obj, ToDoubleFunction<T> f);
+
+    default MeterIdBuilder meter(String name){
+        return new MeterIdBuilder(name, this);
+    }
 }
