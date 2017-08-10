@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Measurement;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,8 +40,8 @@ public class MeterId {
 
     public MeterId(String name, Iterable<Tag> tags) {
         this.name = name;
-        this.tags = stream(tags.spliterator(), false).sorted(Comparator.comparing(Tag::getKey))
-                .collect(Collectors.toList());
+        this.tags = Collections.unmodifiableList(stream(tags.spliterator(), false).sorted(Comparator.comparing(Tag::getKey))
+                .collect(Collectors.toList()));
     }
 
     public String getName() {
