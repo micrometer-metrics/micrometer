@@ -15,10 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * A measurement sampled from a meter.
@@ -29,7 +26,7 @@ import java.util.TreeSet;
 public final class Measurement {
 
     private final String name;
-    private final SortedSet<Tag> tags = new TreeSet<>(Comparator.comparing(Tag::getKey));
+    private final Set<Tag> tags;
     private final double value;
 
     /**
@@ -39,7 +36,11 @@ public final class Measurement {
      */
     public Measurement(String name, List<Tag> tags, double value) {
         this.name = name;
-        this.tags.addAll(tags);
+
+        SortedSet<Tag> sortedTags = new TreeSet<>(Comparator.comparing(Tag::getKey));
+        sortedTags.addAll(tags);
+        this.tags = Collections.unmodifiableSet(sortedTags);
+
         this.value = value;
     }
 
@@ -56,7 +57,7 @@ public final class Measurement {
      * @return An ordered set of tags. For some monitoring backends, the order of tags must remain the same from
      * sample to sample.
      */
-    public SortedSet<Tag> getTags() { return tags; }
+    public Set<Tag> getTags() { return tags; }
 
     /**
      * Value for the measurement.
