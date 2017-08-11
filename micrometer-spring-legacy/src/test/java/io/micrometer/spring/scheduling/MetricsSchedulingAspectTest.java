@@ -54,29 +54,30 @@ public class MetricsSchedulingAspectTest {
     ThreadPoolTaskScheduler scheduler;
 
     @Test
-    public void scheduledIsInstrumented() throws InterruptedException {
+    public void shortTasksAreInstrumented() throws InterruptedException {
         shortBeepsExecuted.await();
         while(scheduler.getActiveCount() > 1) {}
 
-        Assertions.assertThat(registry.findMeter(Timer.class, "beeper"))
+        assertThat(registry.findMeter(Timer.class, "beeper"))
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(2));
 
-        Assertions.assertThat(registry.findMeter(Gauge.class, "beeper.quantiles", "quantile", "0.5")).isNotEmpty();
+        assertThat(registry.findMeter(Gauge.class, "beeper.quantiles", "quantile", "0.5")).isNotEmpty();
         assertThat(registry.findMeter(Gauge.class, "beeper.quantiles", "quantile", "0.95")).isNotEmpty();
+    }
 
+    @Test
+    public void longTasksAreInstrumented() throws InterruptedException {
         longTaskStarted.await();
 
-        Assertions.assertThat(registry.findMeter(LongTaskTimer.class, "longBeep"))
-                .hasValueSatisfying(t -> assertThat(t.activeTasks()).isEqualTo(1));
+        assertThat(registry.findMeter(LongTaskTimer.class, "longBeep"))
+            .hasValueSatisfying(t -> assertThat(t.activeTasks()).isEqualTo(1));
 
         // make sure longBeep continues running until we have a chance to observe it in the active state
         longTaskShouldComplete.countDown();
-
         while(scheduler.getActiveCount() > 0) {}
 
-        // now the long beeper has contributed to the beep count as well
-        assertThat(registry.findMeter(Timer.class, "beeper"))
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(3));
+        assertThat(registry.findMeter(LongTaskTimer.class, "longBeep"))
+            .hasValueSatisfying(t -> assertThat(t.activeTasks()).isEqualTo(0));
     }
 
     @SpringBootApplication
@@ -96,7 +97,6 @@ public class MetricsSchedulingAspectTest {
             return scheduler;
         }
 
-        @Timed("beeper")
         @Timed(value = "longBeep", longTask = true)
         @Scheduled(fixedRate = 1000)
         void longBeep() throws InterruptedException {
@@ -105,28 +105,21 @@ public class MetricsSchedulingAspectTest {
             System.out.println("beep");
         }
 
-        @Timed("beeper")
-        @Scheduled(fixedRate = 1000)
-        void beep1() {
-            shortBeepsExecuted.countDown();
-            System.out.println("beep");
-        }
-
         @Timed(value = "beeper", quantiles = {0.5, 0.95})
         @Scheduled(fixedRate = 1000)
-        void beep2() {
+        void shortBeep() {
             shortBeepsExecuted.countDown();
             System.out.println("beep");
         }
 
         @Timed // not instrumented because @Timed lacks a metric name
         @Scheduled(fixedRate = 1000)
-        void beep3() {
+        void noMetricName() {
             System.out.println("beep");
         }
 
         @Scheduled(fixedRate = 1000) // not instrumented because it isn't @Timed
-        void beep4() {
+        void notTimed() {
             System.out.println("beep");
         }
     }
