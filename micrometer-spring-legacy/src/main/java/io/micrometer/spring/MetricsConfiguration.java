@@ -15,6 +15,9 @@
  */
 package io.micrometer.spring;
 
+import io.micrometer.spring.binder.SpringIntegrationMetrics;
+import org.springframework.boot.actuate.endpoint.MetricReaderPublicMetrics;
+import org.springframework.boot.actuate.metrics.integration.SpringIntegrationMetricReader;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +25,9 @@ import org.springframework.context.annotation.Import;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.TagFormatter;
 import io.micrometer.spring.scheduling.MetricsSchedulingAspect;
+import org.springframework.integration.config.EnableIntegrationManagement;
+import org.springframework.integration.support.management.IntegrationManagementConfigurer;
+import org.springframework.lang.UsesJava7;
 
 /**
  * Metrics configuration for Spring 4/Boot 1.x
@@ -67,6 +73,25 @@ class MetricsConfiguration {
         @Bean
         RestTemplateUrlTemplateCapturingAspect restTemplateUrlTemplateCapturingAspect() {
             return new RestTemplateUrlTemplateCapturingAspect();
+        }
+    }
+
+    @Configuration
+    @ConditionalOnClass(EnableIntegrationManagement.class)
+    static class MetricsIntegrationConfiguration {
+
+        @Bean(name = IntegrationManagementConfigurer.MANAGEMENT_CONFIGURER_NAME)
+        @ConditionalOnMissingBean(value = IntegrationManagementConfigurer.class, name = IntegrationManagementConfigurer.MANAGEMENT_CONFIGURER_NAME, search = SearchStrategy.CURRENT)
+        public IntegrationManagementConfigurer managementConfigurer() {
+            IntegrationManagementConfigurer configurer = new IntegrationManagementConfigurer();
+            configurer.setDefaultCountsEnabled(true);
+            configurer.setDefaultStatsEnabled(true);
+            return configurer;
+        }
+
+        @Bean
+        public SpringIntegrationMetrics springIntegrationMetrics(IntegrationManagementConfigurer configurer) {
+            return new SpringIntegrationMetrics(configurer);
         }
     }
 }

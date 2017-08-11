@@ -37,11 +37,6 @@ import org.springframework.integration.ws.WebServiceHeaders;
 @IntegrationComponentScan
 public class SpringIntegrationApplication {
 
-    @Bean
-    SpringIntegrationMetrics integrationMetrics(IntegrationManagementConfigurer configurer) {
-        return new SpringIntegrationMetrics(configurer);
-    }
-
     public static void main(String[] args) throws InterruptedException {
         ConfigurableApplicationContext ctx = SpringApplication.run(SpringIntegrationApplication.class, args);
         TempConverter converter = ctx.getBean(TempConverter.class);
