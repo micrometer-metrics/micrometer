@@ -77,7 +77,7 @@ class MetricsConfiguration {
     }
 
     @Configuration
-    @ConditionalOnClass(EnableIntegrationManagement.class)
+    @ConditionalOnClass(name = "org.springframework.integration.config.EnableIntegrationManagement")
     static class MetricsIntegrationConfiguration {
 
         @Bean(name = IntegrationManagementConfigurer.MANAGEMENT_CONFIGURER_NAME)

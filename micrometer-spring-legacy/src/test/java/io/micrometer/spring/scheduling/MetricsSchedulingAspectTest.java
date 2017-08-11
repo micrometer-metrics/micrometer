@@ -16,13 +16,12 @@
 package io.micrometer.spring.scheduling;
 
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.spring.EnableMetrics;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.assertj.core.api.Assertions;
+import io.micrometer.spring.EnableMetrics;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
