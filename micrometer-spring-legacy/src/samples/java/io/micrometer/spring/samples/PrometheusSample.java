@@ -15,16 +15,38 @@
  */
 package io.micrometer.spring.samples;
 
+import io.micrometer.core.api.MeterFactory;
+import io.micrometer.core.api.MeterProvider;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.spring.export.prometheus.EnablePrometheusMetrics;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication(scanBasePackages = "io.micrometer.spring.samples.components")
 @EnablePrometheusMetrics
 @EnableScheduling
+@RestController
 public class PrometheusSample {
+    private static final Counter wayTooEarly = MeterFactory.counter("way_early_greetings");
+    private final Counter tooEarly = MeterFactory.counter("early_greetings");
+
+    @Autowired
+    MeterProvider meterProvider;
+
     public static void main(String[] args) {
         SpringApplication.run(PrometheusSample.class, args);
+    }
+
+    @RequestMapping("/hello")
+    public String hello() {
+        wayTooEarly.increment();
+        tooEarly.increment();
+        MeterFactory.counter("greetings").increment();
+        meterProvider.counter("injected_greetings").increment();
+        return "hello world";
     }
 }
