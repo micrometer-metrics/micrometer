@@ -6,6 +6,15 @@ import io.micrometer.core.instrument.Meters;
 
 public class NullCheckLibrary {
 
+    // Pro
+    // Simple constructor usage
+    // Minimizes redirection between composite registry
+    // Allows registry substitution for testing
+
+    // Con
+    // Adds lots of null checks in the library, very ugly
+
+
     private Counter workCounter;
 
     public NullCheckLibrary() {
