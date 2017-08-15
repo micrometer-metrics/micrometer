@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.spring.web.MetricsRestTemplateInterceptor;
 import io.micrometer.spring.web.RestTemplateTagConfigurer;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -34,19 +33,16 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author Jon Schneider
+ */
 @Configuration
 @ConditionalOnClass(name = "org.springframework.web.client.RestTemplate")
 class RestTemplateMetricsConfiguration {
-    @Autowired(required = false)
-    RestTemplateTagConfigurer tagConfigurer;
-
     @Bean
     @ConditionalOnMissingBean(RestTemplateTagConfigurer.class)
     RestTemplateTagConfigurer restTemplateTagConfigurer() {
-        if(tagConfigurer != null)
-            return tagConfigurer;
-        this.tagConfigurer = new RestTemplateTagConfigurer();
-        return tagConfigurer;
+        return new RestTemplateTagConfigurer();
     }
 
     @Bean

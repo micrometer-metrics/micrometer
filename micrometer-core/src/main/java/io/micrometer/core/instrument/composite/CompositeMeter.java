@@ -13,27 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.core.instrument.composite;
 
-public interface Gauge extends Meter {
-    /**
-     * Returns the current value. The act of observing the value by calling this method triggers sampling
-     * of the underlying number or user-defined function that defines the value for the gauge.
-     */
-    double value();
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
 
-    @Override
-    default Type getType() {
-        return Type.Gauge;
-    }
-
-    interface Builder {
-        Builder tags(Iterable<Tag> tags);
-
-        default Builder tags(String... tags) {
-            return tags(Tags.zip(tags));
-        }
-
-        Gauge create();
-    }
+public interface CompositeMeter extends Meter {
+    void add(MeterRegistry registry);
+    void remove(MeterRegistry registry);
 }

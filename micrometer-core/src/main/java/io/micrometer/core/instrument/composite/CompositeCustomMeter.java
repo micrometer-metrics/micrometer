@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.internal;
+package io.micrometer.core.instrument.composite;
 
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterId;
 
@@ -26,43 +26,40 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.ToDoubleFunction;
 
-public class FunctionTrackingCounter<T> implements Counter {
-    private final MeterId id;
-    private final WeakReference<T> ref;
-    private final ToDoubleFunction<T> f;
+public class CompositeCustomMeter<T> implements CompositeMeter {
+    private final Meter meter;
 
-    public FunctionTrackingCounter(MeterId id, T obj, ToDoubleFunction<T> f) {
-        this.id = id;
-        this.ref = new WeakReference<>(obj);
-        this.f = f;
+    public CompositeCustomMeter(Meter meter) {
+        this.meter = meter;
+    }
+
+    @Override
+    public void add(MeterRegistry registry) {
+        registry.register(meter);
+    }
+
+    @Override
+    public void remove(MeterRegistry registry) {
+        // nothing to do
     }
 
     @Override
     public String getName() {
-        return id.getName();
+        return meter.getName();
     }
 
     @Override
     public Iterable<Tag> getTags() {
-        return id.getTags();
+        return meter.getTags();
     }
 
     @Override
-    public void increment(double amount) {
-        throw new UnsupportedOperationException("This counter tracks a cumulative value based on a " +
-            "function rather than series of increments.");
-    }
-
-    @Override
-    public double count() {
-        T obj = ref.get();
-        return obj == null ? 0 : f.applyAsDouble(obj);
+    public Type getType() {
+        return meter.getType();
     }
 
     @Override
     public List<Measurement> measure() {
-        T obj = ref.get();
-        return obj != null ? Collections.singletonList(id.measurement(count())) :
-                Collections.emptyList();
+        return meter.measure();
     }
 }

@@ -13,34 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.core.instrument.noop;
 
-import java.util.Collections;
-import java.util.List;
+import io.micrometer.core.instrument.DistributionSummary;
 
-/**
- * Used to measure the rate of change based on calls to increment.
- */
-public interface Counter extends Meter {
-    /**
-     * Update the counter by one.
-     */
-    default void increment() {
-        increment(1.0);
-    }
+public class NoopDistributionSummary extends NoopMeter implements DistributionSummary {
+    public static final NoopDistributionSummary INSTANCE = new NoopDistributionSummary();
 
-    /**
-     * Update the counter by {@code amount}.
-     *
-     * @param amount Amount to add to the counter.
-     */
-    void increment(double amount);
-
-    /**
-     * The cumulative count since this counter was created.
-     */
-    double count();
+    private NoopDistributionSummary() {}
 
     @Override
-    default Type getType() { return Type.Counter; }
+    public void record(double amount) {
+    }
+
+    @Override
+    public long count() {
+        return 0;
+    }
+
+    @Override
+    public double totalAmount() {
+        return 0;
+    }
 }

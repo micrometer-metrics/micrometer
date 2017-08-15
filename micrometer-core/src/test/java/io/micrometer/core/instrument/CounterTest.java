@@ -57,10 +57,10 @@ class CounterTest {
         assertEquals(2L, c.count());
     }
 
-    @DisplayName("heisen-counter increments by change in a monotonically increasing function when observed")
+    @DisplayName("function-tracking counter increments by change in a monotonically increasing function when observed")
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
-    void heisenCounter(MeterRegistry registry) {
+    void functionTrackingCounter(MeterRegistry registry) {
         AtomicLong n = registry.counter("heisen", emptyList(), new AtomicLong(0));
         n.incrementAndGet();
 

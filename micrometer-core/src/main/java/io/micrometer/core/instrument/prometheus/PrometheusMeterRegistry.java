@@ -129,7 +129,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
+    public DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
         Iterable<Tag> allTags = Tags.concat(tags, commonTags);
         MeterId id = new MeterId(name, allTags);
         final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, name,
@@ -138,7 +138,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
+    protected io.micrometer.core.instrument.Timer newTimer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
         Iterable<Tag> allTags = Tags.concat(tags, commonTags);
         MeterId id = new MeterId(name, allTags);
         final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, name,
@@ -157,7 +157,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
         final WeakReference<T> ref = new WeakReference<>(obj);
 
         Iterable<Tag> allTags = Tags.concat(tags, commonTags);
@@ -166,7 +166,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         io.prometheus.client.Gauge gauge = collectorByName(Gauge.class, name,
                 i -> buildCollector(id, io.prometheus.client.Gauge.build()));
 
-        MapAccess.computeIfAbsent(meterMap, id, g -> {
+        return MapAccess.computeIfAbsent(meterMap, id, g -> {
             String[] labelValues = id.getTags().stream()
                     .map(Tag::getValue)
                     .collect(Collectors.toList())
@@ -183,8 +183,6 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
             gauge.setChild(child, labelValues);
             return new PrometheusGauge(id, child);
         });
-
-        return obj;
     }
 
     @Override

@@ -13,27 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.core.instrument.noop;
 
-public interface Gauge extends Meter {
-    /**
-     * Returns the current value. The act of observing the value by calling this method triggers sampling
-     * of the underlying number or user-defined function that defines the value for the gauge.
-     */
-    double value();
+import io.micrometer.core.instrument.LongTaskTimer;
+
+public class NoopLongTaskTimer extends NoopMeter implements LongTaskTimer {
+    public static NoopLongTaskTimer INSTANCE = new NoopLongTaskTimer();
+
+    private NoopLongTaskTimer() {}
 
     @Override
-    default Type getType() {
-        return Type.Gauge;
+    public long start() {
+        return 0;
     }
 
-    interface Builder {
-        Builder tags(Iterable<Tag> tags);
+    @Override
+    public long stop(long task) {
+        return -1;
+    }
 
-        default Builder tags(String... tags) {
-            return tags(Tags.zip(tags));
-        }
+    @Override
+    public long duration(long task) {
+        return -1;
+    }
 
-        Gauge create();
+    @Override
+    public long duration() {
+        return 0;
+    }
+
+    @Override
+    public int activeTasks() {
+        return 0;
     }
 }

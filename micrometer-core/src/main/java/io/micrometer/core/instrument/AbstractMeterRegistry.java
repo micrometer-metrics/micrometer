@@ -20,9 +20,8 @@ import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.function.ToDoubleFunction;
 
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
 public abstract class AbstractMeterRegistry implements MeterRegistry {
@@ -37,6 +36,37 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     public Clock getClock() {
         return clock;
     }
+
+    @Override
+    public <T> Gauge.Builder gaugeBuilder(String name, T obj, ToDoubleFunction<T> f) {
+        return new GaugeBuilder<>(name, obj, f);
+    }
+
+    private class GaugeBuilder<T> implements Gauge.Builder {
+        private final String name;
+        private final T obj;
+        private final ToDoubleFunction<T> f;
+        private final List<Tag> tags = new ArrayList<>();
+
+        private GaugeBuilder(String name, T obj, ToDoubleFunction<T> f) {
+            this.name = name;
+            this.obj = obj;
+            this.f = f;
+        }
+
+        @Override
+        public Gauge.Builder tags(Iterable<Tag> tags) {
+            tags.forEach(this.tags::add);
+            return this;
+        }
+
+        @Override
+        public Gauge create() {
+            return newGauge(name, tags, obj, f);
+        }
+    }
+
+    protected abstract <T> Gauge newGauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f);
 
     @Override
     public Timer.Builder timerBuilder(String name) {
@@ -72,11 +102,11 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
         @Override
         public Timer create() {
-            return timer(name, tags, quantiles, histogram);
+            return newTimer(name, tags, quantiles, histogram);
         }
     }
 
-    protected abstract Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram);
+    protected abstract Timer newTimer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram);
 
     @Override
     public DistributionSummary.Builder summaryBuilder(String name) {
@@ -112,11 +142,11 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
         @Override
         public DistributionSummary create() {
-            return distributionSummary(name, tags, quantiles, histogram);
+            return newDistributionSummary(name, tags, quantiles, histogram);
         }
     }
 
-    protected abstract DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram);
+    protected abstract DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram);
 
     @Override
     public void commonTags(Iterable<Tag> tags) {

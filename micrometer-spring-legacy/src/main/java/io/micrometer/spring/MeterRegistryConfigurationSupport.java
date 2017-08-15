@@ -16,9 +16,9 @@
 package io.micrometer.spring;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PostConstruct;
 import java.util.Collection;
@@ -30,25 +30,28 @@ import java.util.Collection;
  */
 @Configuration
 public class MeterRegistryConfigurationSupport {
-    @Autowired
-    MeterRegistry registry;
+    private final MeterRegistry registry;
+    private final Collection<MeterBinder> binders;
+    private final Collection<MeterRegistryConfigurer> registryConfigurers;
 
-    @Autowired(required = false)
-    Collection<MeterBinder> binders;
-
-    @Autowired(required = false)
-    Collection<MeterRegistryConfigurer> registryConfigurers;
+    public MeterRegistryConfigurationSupport(MeterRegistry registry,
+                                             ObjectProvider<Collection<MeterBinder>> binders,
+                                             ObjectProvider<Collection<MeterRegistryConfigurer>> registryConfigurers) {
+        this.registry = registry;
+        this.binders = binders.getIfAvailable();
+        this.registryConfigurers = registryConfigurers.getIfAvailable();
+    }
 
     @PostConstruct
     void bindAll() {
         // Important that this happens before binders are applied, as it
         // may involve adding common tags that should apply to metrics registered
         // in those binders.
-        if(registryConfigurers != null) {
+        if (registryConfigurers != null) {
             registryConfigurers.forEach(conf -> conf.configureRegistry(registry));
         }
 
-        if(binders != null) {
+        if (binders != null) {
             binders.forEach(binder -> binder.bindTo(registry));
         }
     }

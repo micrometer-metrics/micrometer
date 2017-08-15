@@ -13,34 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.core.instrument.noop;
+
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tag;
 
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Used to measure the rate of change based on calls to increment.
- */
-public interface Counter extends Meter {
-    /**
-     * Update the counter by one.
-     */
-    default void increment() {
-        increment(1.0);
+public abstract class NoopMeter implements Meter {
+    @Override
+    public String getName() {
+        return "noop";
     }
 
-    /**
-     * Update the counter by {@code amount}.
-     *
-     * @param amount Amount to add to the counter.
-     */
-    void increment(double amount);
-
-    /**
-     * The cumulative count since this counter was created.
-     */
-    double count();
+    @Override
+    public Iterable<Tag> getTags() {
+        return Collections.emptyList();
+    }
 
     @Override
-    default Type getType() { return Type.Counter; }
+    public List<Measurement> measure() {
+        return Collections.emptyList();
+    }
 }

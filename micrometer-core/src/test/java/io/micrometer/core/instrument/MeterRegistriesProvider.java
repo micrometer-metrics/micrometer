@@ -17,6 +17,7 @@ package io.micrometer.core.instrument;
 
 import com.netflix.spectator.atlas.AtlasConfig;
 import io.micrometer.core.instrument.atlas.AtlasMeterRegistry;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.datadog.DatadogConfig;
 import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
 import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
@@ -92,7 +93,10 @@ class MeterRegistriesProvider implements ArgumentsProvider {
                     public Duration step() {
                         return Duration.ofSeconds(1);
                     }
-                }, new MockClock())
+                }, new MockClock()),
+                new CompositeMeterRegistry(new MockClock()) {{
+                    add(new SimpleMeterRegistry(clock));
+                }}
         ).map(Arguments::of);
     }
 }

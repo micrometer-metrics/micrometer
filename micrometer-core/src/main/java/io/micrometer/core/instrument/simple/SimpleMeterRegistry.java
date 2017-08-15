@@ -58,13 +58,13 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    public DistributionSummary distributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
+    public DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
         registerQuantilesGaugeIfNecessary(name, tags, quantiles);
         return MapAccess.computeIfAbsent(meterMap, new MeterId(name, Tags.concat(tags, commonTags)), SimpleDistributionSummary::new);
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer timer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
+    protected io.micrometer.core.instrument.Timer newTimer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
         registerQuantilesGaugeIfNecessary(name, tags, quantiles);
         return MapAccess.computeIfAbsent(meterMap, new MeterId(name, Tags.concat(tags, commonTags)), id -> new SimpleTimer(id, getClock()));
     }
@@ -92,9 +92,8 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        MapAccess.computeIfAbsent(meterMap, new MeterId(name, Tags.concat(tags, commonTags)), id -> new SimpleGauge<>(id, obj, f));
-        return obj;
+    protected <T> Gauge newGauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+        return MapAccess.computeIfAbsent(meterMap, new MeterId(name, Tags.concat(tags, commonTags)), id -> new SimpleGauge<>(id, obj, f));
     }
 
     @Override

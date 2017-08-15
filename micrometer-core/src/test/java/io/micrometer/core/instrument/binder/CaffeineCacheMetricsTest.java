@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
@@ -49,9 +50,9 @@ class CaffeineCacheMetricsTest {
         cache.put("user3", "Third User");
         cache.put("user4", "Fourth User");
 
-        assertThat(findCounter("c_requests", "result", "hit")).hasValueSatisfying(c -> val(c, 1));
-        assertThat(findCounter("c_requests", "result", "miss")).hasValueSatisfying(c -> val(c, 2));
-        assertThat(findCounter("c_evictions")).hasValueSatisfying(c -> val(c, 2));
+        assertThat(findCounter("c_requests", "result", "hit")).hasValueSatisfying(c -> cnt(c, 1));
+        assertThat(findCounter("c_requests", "result", "miss")).hasValueSatisfying(c -> cnt(c, 2));
+        assertThat(findCounter("c_evictions")).hasValueSatisfying(c -> cnt(c, 2));
     }
 
     @SuppressWarnings("unchecked")
@@ -73,17 +74,17 @@ class CaffeineCacheMetricsTest {
         }
         cache.get(3);
 
-        assertThat(findCounter("c_requests", "result", "hit")).hasValueSatisfying(c -> val(c, 1));
-        assertThat(findCounter("c_requests", "result", "miss")).hasValueSatisfying(c -> val(c, 3));
-        assertThat(findCounter("c_load", "result", "failure")).hasValueSatisfying(c -> val(c, 1));
-        assertThat(findCounter("c_load", "result", "success")).hasValueSatisfying(c -> val(c, 2));
+        assertThat(findCounter("c_requests", "result", "hit")).hasValueSatisfying(c -> cnt(c, 1));
+        assertThat(findCounter("c_requests", "result", "miss")).hasValueSatisfying(c -> cnt(c, 3));
+        assertThat(findCounter("c_load", "result", "failure")).hasValueSatisfying(c -> cnt(c, 1));
+        assertThat(findCounter("c_load", "result", "success")).hasValueSatisfying(c -> cnt(c, 2));
     }
 
-    private Optional<Meter> findCounter(String name, String... tags) {
-        return registry.findMeter(Meter.Type.Counter, name, tags);
+    private Optional<Counter> findCounter(String name, String... tags) {
+        return registry.findMeter(Counter.class, name, tags);
     }
 
-    private void val(Meter m, double value) {
-        assertThat(m.measure().get(0).getValue()).isEqualTo(value);
+    private void cnt(Counter c, double value) {
+        assertThat(c.count()).isEqualTo(value);
     }
 }

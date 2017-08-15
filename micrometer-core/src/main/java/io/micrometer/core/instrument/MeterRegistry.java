@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -31,6 +33,8 @@ import static io.micrometer.core.instrument.Tags.zip;
  * @author Jon Schneider
  */
 public interface MeterRegistry {
+    MeterRegistry globalRegistry = new CompositeMeterRegistry();
+
     /**
      * @return The set of registered meters.
      */
@@ -163,7 +167,10 @@ public interface MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f);
+    default <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+        gaugeBuilder(name, obj, f).tags(tags).create();
+        return obj;
+    }
 
     /**
      * Register a gauge that reports the value of the {@link java.lang.Number}.
@@ -236,4 +243,12 @@ public interface MeterRegistry {
     default <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
         return gauge(name, tags, map, Map::size);
     }
+
+    /**
+     * Build a new Gauge, which is registered with this registry once {@link Gauge.Builder#create()} is called.
+     *
+     * @param name The name of the gauge.
+     * @return The builder.
+     */
+    <T> Gauge.Builder gaugeBuilder(String name, T obj, ToDoubleFunction<T> f);
 }
