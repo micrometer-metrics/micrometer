@@ -44,7 +44,7 @@ public class MetricsSchedulingAspectTest {
     static CountDownLatch longTaskStarted = new CountDownLatch(1);
     static CountDownLatch longTaskShouldComplete = new CountDownLatch(1);
 
-    static CountDownLatch shortBeepsExecuted = new CountDownLatch(2);
+    static CountDownLatch shortBeepsExecuted = new CountDownLatch(1);
 
     @Autowired
     MeterRegistry registry;
@@ -55,10 +55,10 @@ public class MetricsSchedulingAspectTest {
     @Test
     public void shortTasksAreInstrumented() throws InterruptedException {
         shortBeepsExecuted.await();
-        while(scheduler.getActiveCount() > 1) {}
+        while(scheduler.getActiveCount() > 0) {}
 
         assertThat(registry.findMeter(Timer.class, "beeper"))
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(2));
+                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
 
         assertThat(registry.findMeter(Gauge.class, "beeper.quantiles", "quantile", "0.5")).isNotEmpty();
         assertThat(registry.findMeter(Gauge.class, "beeper.quantiles", "quantile", "0.95")).isNotEmpty();
@@ -97,7 +97,7 @@ public class MetricsSchedulingAspectTest {
         }
 
         @Timed(value = "longBeep", longTask = true)
-        @Scheduled(fixedRate = 1000)
+        @Scheduled(fixedDelay = 100000)
         void longBeep() throws InterruptedException {
             longTaskStarted.countDown();
             longTaskShouldComplete.await();
@@ -105,19 +105,19 @@ public class MetricsSchedulingAspectTest {
         }
 
         @Timed(value = "beeper", quantiles = {0.5, 0.95})
-        @Scheduled(fixedRate = 1000)
+        @Scheduled(fixedDelay = 100000)
         void shortBeep() {
             shortBeepsExecuted.countDown();
             System.out.println("beep");
         }
 
         @Timed // not instrumented because @Timed lacks a metric name
-        @Scheduled(fixedRate = 1000)
+        @Scheduled(fixedDelay = 100000)
         void noMetricName() {
             System.out.println("beep");
         }
 
-        @Scheduled(fixedRate = 1000) // not instrumented because it isn't @Timed
+        @Scheduled(fixedDelay = 100000) // not instrumented because it isn't @Timed
         void notTimed() {
             System.out.println("beep");
         }
