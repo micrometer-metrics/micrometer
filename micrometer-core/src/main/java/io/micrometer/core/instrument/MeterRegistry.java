@@ -33,7 +33,7 @@ import static io.micrometer.core.instrument.Tags.zip;
  * @author Jon Schneider
  */
 public interface MeterRegistry {
-    MeterRegistry globalRegistry = new CompositeMeterRegistry();
+    CompositeMeterRegistry globalRegistry = new CompositeMeterRegistry();
 
     /**
      * @return The set of registered meters.
