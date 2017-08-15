@@ -72,13 +72,17 @@ public class ControllerMetrics {
         RequestContextHolder.getRequestAttributes().setAttribute(EXCEPTION_ATTRIBUTE, t, RequestAttributes.SCOPE_REQUEST);
     }
 
-    void preHandle(HttpServletRequest request, HandlerMethod handler) {
+    void preHandle(HttpServletRequest request, Object handler) {
         request.setAttribute(TIMING_REQUEST_ATTRIBUTE, System.nanoTime());
         request.setAttribute(HANDLER_REQUEST_ATTRIBUTE, handler);
 
         longTaskTimed(handler).forEach(t -> {
             if(t.value().isEmpty()) {
-                logger.warn("Unable to perform metrics timing on " + handler.getShortLogMessage() + ": @Timed annotation must have a value used to name the metric");
+                if(handler instanceof HandlerMethod){
+                    logger.warn("Unable to perform metrics timing on " + ((HandlerMethod) handler).getShortLogMessage() + ": @Timed annotation must have a value used to name the metric");
+                } else {
+                    logger.warn("Unable to perform metrics timing for request " + request.getRequestURI() + ": @Timed annotation must have a value used to name the metric");
+                }
                 return;
             }
             longTaskTimerIds.put(request, longTaskTimer(t, request, handler).start());

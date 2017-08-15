@@ -37,7 +37,7 @@ public class MetricsHandlerInterceptor extends HandlerInterceptorAdapter {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response,
                              Object handler) throws Exception {
-        controllerMetrics.preHandle(request, (HandlerMethod) handler);
+        controllerMetrics.preHandle(request, handler);
         return super.preHandle(request, response, handler);
     }
 
