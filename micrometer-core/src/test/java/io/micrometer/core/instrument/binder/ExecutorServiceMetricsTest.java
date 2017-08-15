@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.binder;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.core.instrument.util.Meters;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

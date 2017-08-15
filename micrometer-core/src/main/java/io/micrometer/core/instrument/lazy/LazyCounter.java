@@ -13,59 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.prometheus;
+package io.micrometer.core.instrument.lazy;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.util.MeterId;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
-public class PrometheusCounter implements Counter {
-    private final MeterId id;
-    private io.prometheus.client.Counter.Child counter;
+public final class LazyCounter implements Counter {
+    private final Supplier<Counter> counterBuilder;
+    private volatile Counter counter;
 
-    PrometheusCounter(MeterId id, io.prometheus.client.Counter.Child counter) {
-        this.id = id;
-        this.counter = counter;
+    private Counter counter() {
+        final Counter result = counter;
+        return result == null ? (counter == null ? counter = counterBuilder.get() : counter) : result;
     }
 
-    @Override
-    public void increment(double amount) {
-        counter.inc(amount);
-    }
-
-    @Override
-    public double count() {
-        return counter.get();
+    public LazyCounter(Supplier<Counter> counterBuilder) {
+        this.counterBuilder = counterBuilder;
     }
 
     @Override
     public String getName() {
-        return id.getName();
+        return counter().getName();
     }
 
     @Override
     public Iterable<Tag> getTags() {
-        return id.getTags();
+        return counter().getTags();
     }
 
     @Override
     public List<Measurement> measure() {
-        return Collections.singletonList(id.measurement(count()));
-    }
-
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-    @Override
-    public boolean equals(Object o) {
-        return MeterEquivalence.equals(this, o);
+        return counter().measure();
     }
 
     @Override
-    public int hashCode() {
-        return MeterEquivalence.hashCode(this);
+    public void increment(double amount) {
+        counter().increment();
+    }
+
+    @Override
+    public double count() {
+        return counter().count();
     }
 }

@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.spectator;
 
-import io.micrometer.core.instrument.util.Meters;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;
@@ -72,11 +72,11 @@ public class SpectatorLongTaskTimer implements LongTaskTimer {
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object o) {
-        return Meters.equals(this, o);
+        return MeterEquivalence.equals(this, o);
     }
 
     @Override
     public int hashCode() {
-        return Meters.hashCode(this);
+        return MeterEquivalence.hashCode(this);
     }
 }

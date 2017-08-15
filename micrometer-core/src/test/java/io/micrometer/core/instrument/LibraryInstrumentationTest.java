@@ -1,3 +1,18 @@
+/**
+ * Copyright 2017 Pivotal Software, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micrometer.core.instrument;
 
 import com.google.inject.AbstractModule;
@@ -6,6 +21,7 @@ import com.google.inject.Injector;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.prometheus.client.CollectorRegistry;
@@ -15,18 +31,19 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.inject.Inject;
-import java.util.List;
-import java.util.function.Supplier;
 
-import static io.micrometer.core.instrument.LazyCounter.lazyCounter;
+import static io.micrometer.core.instrument.Meters.lazyCounter;
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * @author Jon Schneider
+ */
 class LibraryInstrumentationTest {
     @Test
     void injectWithSpring() {
         AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(SpringConfiguration.class);
         MyComponent component = ctx.getBean(MyComponent.class);
-        component.feature();
+        component.performanceCriticalFeature();
         assertThat(component.registry)
                 .isInstanceOf(PrometheusMeterRegistry.class)
                 .matches(r -> r.findMeter(Meter.Type.Counter, "feature_counter").isPresent());
@@ -36,7 +53,7 @@ class LibraryInstrumentationTest {
     void injectWithDagger() {
         DagConfiguration conf = DaggerDagConfiguration.create();
         MyComponent component = conf.component();
-        component.feature();
+        component.performanceCriticalFeature();
         assertThat(component.registry)
                 .isInstanceOf(PrometheusMeterRegistry.class)
                 .matches(r -> r.findMeter(Meter.Type.Counter, "feature_counter").isPresent());
@@ -46,7 +63,7 @@ class LibraryInstrumentationTest {
     void injectWithGuice() {
         Injector injector = Guice.createInjector(new GuiceConfiguration());
         MyComponent component = injector.getInstance(MyComponent.class);
-        component.feature();
+        component.performanceCriticalFeature();
         assertThat(component.registry)
                 .isInstanceOf(PrometheusMeterRegistry.class)
                 .matches(r -> r.findMeter(Meter.Type.Counter, "feature_counter").isPresent());
@@ -55,9 +72,9 @@ class LibraryInstrumentationTest {
     @Test
     void noInjection() {
         MyComponent component = new MyComponent();
-        component.feature();
+        component.performanceCriticalFeature();
         assertThat(component.registry)
-                .isInstanceOf(SimpleMeterRegistry.class)
+                .isInstanceOf(CompositeMeterRegistry.class)
                 .matches(r -> r.findMeter(Meter.Type.Counter, "feature_counter").isPresent());
     }
 }
@@ -96,57 +113,20 @@ class GuiceConfiguration extends AbstractModule {
 }
 
 class MyComponent {
-    @Inject
-    MeterRegistry registry = new SimpleMeterRegistry();
+    @Inject MeterRegistry registry = MeterRegistry.globalRegistry;
+
+    // for performance-critical uses, it is best to store a meter in a field
     Counter counter = lazyCounter(() -> registry.counter("feature_counter"));
 
-    void feature() {
+    void performanceCriticalFeature() {
         counter.increment();
     }
 
-    // required for dagger, not related to micrometer
+    void notPerformanceCriticalFeature() {
+        // in code blocks that are not performance-critical, it is acceptable to inline
+        // the retrieval of the counter
+        registry.counter("infrequent_counter").increment();
+    }
+
     @Inject MyComponent() {}
-}
-
-final class LazyCounter implements Counter {
-    public static Counter lazyCounter(Supplier<Counter> counterBuilder) {
-        return new LazyCounter(counterBuilder);
-    }
-
-    private final Supplier<Counter> counterBuilder;
-    private volatile Counter counter;
-
-    private Counter counter() {
-        final Counter result = counter;
-        return result == null ? (counter == null ? counterBuilder.get() : counter) : result;
-    }
-
-    private LazyCounter(Supplier<Counter> counterBuilder) {
-        this.counterBuilder = counterBuilder;
-    }
-
-    @Override
-    public String getName() {
-        return counter().getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return counter().getTags();
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return counter().measure();
-    }
-
-    @Override
-    public void increment(double amount) {
-        counter().increment();
-    }
-
-    @Override
-    public double count() {
-        return counter().count();
-    }
 }

@@ -17,7 +17,7 @@ package io.micrometer.core.instrument.spectator;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.util.Meters;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.Tag;
 
 import java.util.List;
@@ -57,11 +57,11 @@ public class SpectatorCounter implements Counter {
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object o) {
-        return Meters.equals(this, o);
+        return MeterEquivalence.equals(this, o);
     }
 
     @Override
     public int hashCode() {
-        return Meters.hashCode(this);
+        return MeterEquivalence.hashCode(this);
     }
 }

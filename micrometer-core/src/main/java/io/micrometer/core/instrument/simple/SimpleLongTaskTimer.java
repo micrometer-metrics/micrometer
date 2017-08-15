@@ -16,8 +16,8 @@
 package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.util.MeterId;
-import io.micrometer.core.instrument.util.Meters;
 
 import java.util.Arrays;
 import java.util.List;
@@ -93,11 +93,11 @@ public class SimpleLongTaskTimer extends AbstractSimpleMeter implements LongTask
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object o) {
-        return Meters.equals(this, o);
+        return MeterEquivalence.equals(this, o);
     }
 
     @Override
     public int hashCode() {
-        return Meters.hashCode(this);
+        return MeterEquivalence.hashCode(this);
     }
 }

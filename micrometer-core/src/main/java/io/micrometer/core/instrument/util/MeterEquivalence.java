@@ -20,8 +20,8 @@ import io.micrometer.core.instrument.Meter;
 /**
  * @author Jon Schneider
  */
-public final class Meters {
-    private Meters() {}
+public final class MeterEquivalence {
+    private MeterEquivalence() {}
 
     public static boolean equals(Meter m1, Object o) {
         if (m1 == null && o != null) return false;
