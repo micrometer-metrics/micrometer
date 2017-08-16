@@ -31,8 +31,8 @@ public class LazyLongTaskTimer implements LongTaskTimer {
         return result == null ? (timer == null ? timer = timerBuilder.get() : timer) : result;
     }
 
-    public LazyLongTaskTimer(Supplier<LongTaskTimer> counterBuilder) {
-        this.timerBuilder = counterBuilder;
+    public LazyLongTaskTimer(Supplier<LongTaskTimer> timerBuilder) {
+        this.timerBuilder = timerBuilder;
     }
 
     @Override

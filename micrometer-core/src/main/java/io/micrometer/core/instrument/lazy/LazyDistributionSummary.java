@@ -31,8 +31,8 @@ public class LazyDistributionSummary implements DistributionSummary {
         return result == null ? (summary == null ? summary = summaryBuilder.get() : summary) : result;
     }
 
-    public LazyDistributionSummary(Supplier<DistributionSummary> counterBuilder) {
-        this.summaryBuilder = counterBuilder;
+    public LazyDistributionSummary(Supplier<DistributionSummary> summaryBuilder) {
+        this.summaryBuilder = summaryBuilder;
     }
 
     @Override
