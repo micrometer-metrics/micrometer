@@ -33,8 +33,8 @@ public final class LazyTimer implements Timer {
         return result == null ? (timer == null ? timer = timerBuilder.get() : timer) : result;
     }
 
-    public LazyTimer(Supplier<Timer> counterBuilder) {
-        this.timerBuilder = counterBuilder;
+    public LazyTimer(Supplier<Timer> timerBuilder) {
+        this.timerBuilder = timerBuilder;
     }
 
     @Override
