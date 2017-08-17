@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -113,7 +114,25 @@ public interface LongTaskTimer extends Meter {
     int activeTasks();
 
     @Override
+    default Iterable<Measurement> measure() {
+        return Arrays.asList(
+            new Measurement(() -> (double) activeTasks(), Statistic.Count),
+            new Measurement(() -> (double) duration(), Statistic.Total)
+        );
+    }
+
+    @Override
     default Type getType() {
         return Type.LongTaskTimer;
+    }
+
+    interface Builder {
+        Builder tags(Iterable<Tag> tags);
+
+        default Builder tags(String... tags) {
+            return tags(Tags.zip(tags));
+        }
+
+        LongTaskTimer create();
     }
 }

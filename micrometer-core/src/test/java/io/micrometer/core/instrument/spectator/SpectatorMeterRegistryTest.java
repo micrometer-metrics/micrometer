@@ -20,17 +20,15 @@ import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Meter;
 import com.netflix.spectator.api.Registry;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.IdentityTagFormatter;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.TagFormatter;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.stats.quantile.GKQuantiles;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import io.micrometer.core.instrument.stats.quantile.GKQuantiles;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
-import java.util.function.ToDoubleFunction;
 
 import static com.google.common.collect.Streams.stream;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,12 +41,7 @@ class SpectatorMeterRegistryTest {
     @DisplayName("quantiles are registered as a separate gauge")
     @Test
     void quantiles() {
-        SpectatorMeterRegistry registry = new SpectatorMeterRegistry(new DefaultRegistry(), Clock.SYSTEM, new IdentityTagFormatter()) {
-            @Override
-            public <T> T counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-                return null;
-            }
-        };
+        SpectatorMeterRegistry registry = new SpectatorMeterRegistry(new DefaultRegistry(), Clock.SYSTEM, TagFormatter.identity) {};
         Registry spectatorRegistry = registry.getSpectatorRegistry();
 
         Timer timer = registry.timerBuilder("timer")

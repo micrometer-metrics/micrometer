@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 
+import static io.micrometer.core.instrument.Tags.zip;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -71,11 +72,8 @@ class MeterRegistryTest {
         Counter c1 = registry.counter("foo", "k", "v");
         Counter c2 = registry.counter("bar", "k", "v", "k2", "v");
 
-        assertThat(registry.findMeter(Counter.class, "foo", "k", "v"))
-                .containsSame(c1);
-
-        assertThat(registry.findMeter(Counter.class, "bar", "k", "v"))
-                .containsSame(c2);
+        assertThat(registry.find("foo").tags("k", "v").counter()).containsSame(c1);
+        assertThat(registry.find("bar").tags("k", "v").counter()).containsSame(c2);
     }
 
     @ParameterizedTest
@@ -85,21 +83,17 @@ class MeterRegistryTest {
         Counter c1 = registry.counter("foo", "k", "v");
         Counter c2 = registry.counter("bar", "k", "v", "k2", "v");
 
-        assertThat(registry.findMeter(Meter.Type.Counter, "foo", "k", "v"))
-                .containsSame(c1);
-
-        assertThat(registry.findMeter(Meter.Type.Counter, "bar", "k", "v"))
-                .containsSame(c2);
+        assertThat(registry.find("foo").tags("k", "v").counter()).containsSame(c1);
+        assertThat(registry.find("bar").tags("k", "v").counter()).containsSame(c2);
     }
 
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
     @DisplayName("common tags are added to every measurement")
     void addCommonTags(MeterRegistry registry) {
-        registry.commonTags("k", "v");
+        registry.config().commonTags("k", "v");
         Counter c = registry.counter("foo");
 
-        assertThat(registry.findMeter(Meter.Type.Counter, "foo", "k", "v"))
-                .containsSame(c);
+        assertThat(registry.find("foo").tags("k", "v").counter()).containsSame(c);
     }
 }

@@ -19,15 +19,11 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.noop.NoopTimer;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
-import io.micrometer.core.instrument.util.MeterId;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import static java.util.stream.Collectors.toList;
 
 public class CompositeTimer extends AbstractTimer implements CompositeMeter {
     private final Quantiles quantiles;
@@ -35,8 +31,8 @@ public class CompositeTimer extends AbstractTimer implements CompositeMeter {
 
     private final Map<MeterRegistry, Timer> timers = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    CompositeTimer(MeterId id, Quantiles quantiles, Histogram histogram, Clock clock) {
-        super(id, clock);
+    CompositeTimer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram histogram, Clock clock) {
+        super(name, tags, clock);
         this.quantiles = quantiles;
         this.histogram = histogram;
     }
@@ -66,7 +62,7 @@ public class CompositeTimer extends AbstractTimer implements CompositeMeter {
     public void add(MeterRegistry registry) {
         synchronized (timers) {
             timers.put(registry,
-                registry.timerBuilder(id.getName()).tags(id.getTags()).quantiles(quantiles).histogram(histogram).create());
+                registry.timerBuilder(getName()).tags(getTags()).quantiles(quantiles).histogram(histogram).create());
         }
     }
 
@@ -74,23 +70,6 @@ public class CompositeTimer extends AbstractTimer implements CompositeMeter {
     public void remove(MeterRegistry registry) {
         synchronized (timers) {
             timers.remove(registry);
-        }
-    }
-
-    @Override
-    public String getName() {
-        return id.getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return id.getTags();
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        synchronized (timers) {
-            return timers.values().stream().flatMap(c -> c.measure().stream()).collect(toList());
         }
     }
 }

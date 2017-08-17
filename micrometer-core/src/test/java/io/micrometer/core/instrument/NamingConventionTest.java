@@ -13,13 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.simple;
+package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Meter;
+import org.junit.jupiter.api.Test;
 
-public class SimpleUtils {
-    public static Tag typeTag(Meter.Type type) {
-        return Tag.of("simple.type", type.toString());
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
+class NamingConventionTest {
+    @Test
+    void camelCase() {
+        String name = NamingConvention.camelCase.name("a.Name.with.Words", Meter.Type.Counter);
+        assertThat(name).isEqualTo("aNameWithWords");
+    }
+
+    @Test
+    void snakeCase() {
+        String name = NamingConvention.snakeCase.name("a.Name.with.Words", Meter.Type.Counter);
+        assertThat(name).isEqualTo("a_Name_with_Words");
     }
 }

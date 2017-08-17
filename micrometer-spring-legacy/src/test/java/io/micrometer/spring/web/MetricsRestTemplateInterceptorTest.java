@@ -40,7 +40,7 @@ public class MetricsRestTemplateInterceptorTest {
         RestTemplate restTemplate = new RestTemplate();
         restTemplate.setInterceptors(singletonList(new MetricsRestTemplateInterceptor(
                 registry, new RestTemplateTagConfigurer(),
-                "http_client_requests"
+                "http.client.requests"
         )));
 
         MockRestServiceServer mockServer = MockRestServiceServer.createServer(restTemplate);
@@ -51,9 +51,7 @@ public class MetricsRestTemplateInterceptorTest {
         String s = restTemplate.getForObject("/test/{id}", String.class, 123);
 
         // the uri requires AOP to determine
-        assertThat(registry.findMeter(Timer.class, "http_client_requests",
-                "method", "GET", "uri", "none", "status", "200"))
-                .containsInstanceOf(Timer.class)
+        assertThat(registry.find("http.client.requests").tags("method", "GET", "uri", "none", "status", "200").timer())
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
 
         assertThat(s).isEqualTo("OK");

@@ -113,18 +113,18 @@ public class CaffeineCacheMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        registry.gauge(name + "_estimated_size", tags, cache, Cache::estimatedSize);
+        registry.gauge(name + ".estimated.size", tags, cache, Cache::estimatedSize);
 
-        registry.counter(name + "_requests", Tags.zip("result", "miss"), cache, c -> c.stats().missCount());
-        registry.counter(name + "_requests", Tags.zip("result", "hit"), cache, c -> c.stats().hitCount());
-        registry.counter(name + "_evictions", tags, cache, c -> c.stats().evictionCount());
-        registry.gauge(name + "_eviction_weight", tags, cache, c -> c.stats().evictionWeight());
+        registry.more().counter(name + ".requests", Tags.zip("result", "miss"), cache, c -> c.stats().missCount());
+        registry.more().counter(name + ".requests", Tags.zip("result", "hit"), cache, c -> c.stats().hitCount());
+        registry.more().counter(name + ".evictions", tags, cache, c -> c.stats().evictionCount());
+        registry.gauge(name + ".eviction.weight", tags, cache, c -> c.stats().evictionWeight());
 
         if (cache instanceof LoadingCache) {
             // dividing these gives you a measure of load latency
-            registry.counter(name + "_load_duration", tags, cache, c -> c.stats().totalLoadTime());
-            registry.counter(name + "_load", Tags.concat(tags, "result", "success"), cache, c -> c.stats().loadSuccessCount());
-            registry.counter(name + "_load", Tags.concat(tags, "result", "failure"), cache, c -> c.stats().loadFailureCount());
+            registry.more().counter(name + ".load.duration", tags, cache, c -> c.stats().totalLoadTime());
+            registry.more().counter(name + ".load", Tags.concat(tags, "result", "success"), cache, c -> c.stats().loadSuccessCount());
+            registry.more().counter(name + ".load", Tags.concat(tags, "result", "failure"), cache, c -> c.stats().loadFailureCount());
         }
     }
 }

@@ -36,7 +36,7 @@ public class TimedExecutorService implements ExecutorService {
 
     public TimedExecutorService(MeterRegistry registry, ExecutorService delegate, String name, Iterable<Tag> tags) {
         this.delegate = delegate;
-        this.timer = registry.timer(name + "_duration", tags);
+        this.timer = registry.timer(name, tags);
     }
 
     @Override

@@ -15,12 +15,9 @@
  */
 package io.micrometer.core.instrument.spectator;
 
-import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Measurement;
-
-import java.util.List;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 
 public class SpectatorLongTaskTimer implements LongTaskTimer {
     private final com.netflix.spectator.api.LongTaskTimer timer;
@@ -62,11 +59,6 @@ public class SpectatorLongTaskTimer implements LongTaskTimer {
     @Override
     public Iterable<Tag> getTags() {
         return SpectatorUtils.tags(timer);
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return SpectatorUtils.measurements(timer);
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

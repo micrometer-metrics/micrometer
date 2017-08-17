@@ -15,13 +15,12 @@
  */
 package io.micrometer.core.instrument.binder;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,16 +32,14 @@ class LogbackMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         new LogbackMetrics().bindTo(registry);
 
-        assertThat(registry.findMeter(Counter.class, "logback_events"))
-                .containsInstanceOf(Counter.class)
+        assertThat(registry.find("logback.events").counter())
                 .hasValueSatisfying(c -> assertThat(c.count()).isEqualTo(0));
 
         Logger logger = LoggerFactory.getLogger("foo");
         logger.warn("warn");
         logger.error("error");
 
-        assertThat(registry.findMeter(Counter.class, "logback_events", "level", "warn"))
-                .containsInstanceOf(Counter.class)
+        assertThat(registry.find("logback.events").tags("level.warn").counter())
                 .hasValueSatisfying(c -> assertThat(c.count()).isEqualTo(1));
     }
 }

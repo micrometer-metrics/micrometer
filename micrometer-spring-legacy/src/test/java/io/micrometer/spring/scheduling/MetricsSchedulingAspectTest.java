@@ -16,10 +16,7 @@
 package io.micrometer.spring.scheduling;
 
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.spring.EnableMetrics;
 import org.junit.Test;
@@ -57,25 +54,25 @@ public class MetricsSchedulingAspectTest {
         shortBeepsExecuted.await();
         while(scheduler.getActiveCount() > 0) {}
 
-        assertThat(registry.findMeter(Timer.class, "beeper"))
+        assertThat(registry.find("beeper").timer())
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
 
-        assertThat(registry.findMeter(Gauge.class, "beeper.quantiles", "quantile", "0.5")).isNotEmpty();
-        assertThat(registry.findMeter(Gauge.class, "beeper.quantiles", "quantile", "0.95")).isNotEmpty();
+        assertThat(registry.find("beeper").tags("quantile", "0.5").gauge()).isNotEmpty();
+        assertThat(registry.find("beeper").tags("quantile", "0.95").gauge()).isNotEmpty();
     }
 
     @Test
     public void longTasksAreInstrumented() throws InterruptedException {
         longTaskStarted.await();
 
-        assertThat(registry.findMeter(LongTaskTimer.class, "longBeep"))
+        assertThat(registry.find("long.beep").longTaskTimer())
             .hasValueSatisfying(t -> assertThat(t.activeTasks()).isEqualTo(1));
 
         // make sure longBeep continues running until we have a chance to observe it in the active state
         longTaskShouldComplete.countDown();
         while(scheduler.getActiveCount() > 0) {}
 
-        assertThat(registry.findMeter(LongTaskTimer.class, "longBeep"))
+        assertThat(registry.find("long.beep").longTaskTimer())
             .hasValueSatisfying(t -> assertThat(t.activeTasks()).isEqualTo(0));
     }
 
@@ -96,7 +93,7 @@ public class MetricsSchedulingAspectTest {
             return scheduler;
         }
 
-        @Timed(value = "longBeep", longTask = true)
+        @Timed(value = "long.beep", longTask = true)
         @Scheduled(fixedDelay = 100000)
         void longBeep() throws InterruptedException {
             longTaskStarted.countDown();

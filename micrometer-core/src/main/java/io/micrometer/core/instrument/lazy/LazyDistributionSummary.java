@@ -16,10 +16,8 @@
 package io.micrometer.core.instrument.lazy;
 
 import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Tag;
 
-import java.util.List;
 import java.util.function.Supplier;
 
 public class LazyDistributionSummary implements DistributionSummary {
@@ -43,11 +41,6 @@ public class LazyDistributionSummary implements DistributionSummary {
     @Override
     public Iterable<Tag> getTags() {
         return summary().getTags();
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return summary().measure();
     }
 
     @Override

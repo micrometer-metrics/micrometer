@@ -38,10 +38,10 @@ public class CustomPrometheusLongTaskTimer extends Collector {
     private final List<String> tagKeys;
     private final Collection<Child> children = new ConcurrentLinkedQueue<>();
 
-    public CustomPrometheusLongTaskTimer(String name, List<String> tagKeys, Clock clock) {
+    public CustomPrometheusLongTaskTimer(String name, Iterable<Tag> tags, Clock clock) {
         this.clock = clock;
         this.name = name;
-        this.tagKeys = tagKeys;
+        this.tagKeys = stream(tags.spliterator(), false).map(Tag::getKey).collect(toList());
     }
 
     public Child child(Iterable<Tag> tags) {

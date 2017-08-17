@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -61,13 +62,13 @@ class CounterTest {
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
     void functionTrackingCounter(MeterRegistry registry) {
-        AtomicLong n = registry.counter("heisen", emptyList(), new AtomicLong(0));
+        AtomicLong n = registry.more().counter("tracking", emptyList(), new AtomicLong(0));
         n.incrementAndGet();
 
-        Meter c = registry.findMeter(Meter.class, "heisen").get();
+        Meter c = registry.find("tracking").meter().get();
 
         clock(registry).addAndGet(1, TimeUnit.SECONDS);
         registry.getMeters().forEach(Meter::measure);
-        assertThat(c.measure().get(0).getValue()).isEqualTo(1);
+        assertThat(c.measure().iterator().next().getValue()).isEqualTo(1);
     }
 }

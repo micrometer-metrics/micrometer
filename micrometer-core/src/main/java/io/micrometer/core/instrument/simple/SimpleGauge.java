@@ -16,37 +16,26 @@
 package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.util.MeterId;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 
 import java.lang.ref.WeakReference;
-import java.util.Collections;
-import java.util.List;
 import java.util.function.ToDoubleFunction;
 
 public class SimpleGauge<T> extends AbstractSimpleMeter implements Gauge {
-    private static final Tag TYPE_TAG = SimpleUtils.typeTag(Type.Gauge);
     private final WeakReference<T> ref;
     private final ToDoubleFunction<T> value;
-    private final MeterId gaugeId;
 
-    public SimpleGauge(MeterId id, T obj, ToDoubleFunction<T> value) {
-        super(id);
+    public SimpleGauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> value) {
+        super(name, tags, Meter.Type.Gauge);
         this.ref = new WeakReference<>(obj);
         this.value = value;
-        this.gaugeId = id.withTags(TYPE_TAG);
     }
 
     @Override
     public double value() {
         return value.applyAsDouble(ref.get());
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return Collections.singletonList(gaugeId.measurement(value()));
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

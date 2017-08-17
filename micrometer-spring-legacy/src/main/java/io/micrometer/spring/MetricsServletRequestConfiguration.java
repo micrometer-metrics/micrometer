@@ -43,7 +43,7 @@ class MetricsServletRequestConfiguration extends WebMvcConfigurerAdapter {
     @Bean
     ControllerMetrics controllerMetrics(MeterRegistry registry, WebmvcTagConfigurer configurer, Environment environment) {
         return new ControllerMetrics(registry, configurer,
-                environment.getProperty("spring.metrics.web.server_requests.name", "http_server_requests"));
+                environment.getProperty("spring.metrics.web.server_requests.name", "http.server.requests"));
     }
 
     @Bean

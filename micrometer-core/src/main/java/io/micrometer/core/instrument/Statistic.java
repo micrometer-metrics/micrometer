@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.boot.metrics.export.atlas;
+package io.micrometer.core.instrument;
 
-import org.springframework.boot.metrics.EnableMetrics;
-import org.springframework.context.annotation.Import;
+public enum Statistic {
+    /** The sum of the amounts recorded. */
+    Total,
 
-import java.lang.annotation.*;
+    /** Rate per second for calls. */
+    Count,
 
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-@EnableMetrics
-@Import(AtlasMetricsConfiguration.class)
-public @interface EnableAtlasMetrics {
+    /** The maximum amount recorded. */
+    Max,
+
+    /** The sum of the squares of the amounts recorded. */
+    SumOfSquares,
+
+    /** Instantaneous value, such as those reported by gauges **/
+    Value,
+
+    Unknown
 }

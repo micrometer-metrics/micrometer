@@ -23,7 +23,6 @@ import dagger.Module;
 import dagger.Provides;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.prometheus.client.CollectorRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -46,7 +45,7 @@ class LibraryInstrumentationTest {
         component.performanceCriticalFeature();
         assertThat(component.registry)
                 .isInstanceOf(PrometheusMeterRegistry.class)
-                .matches(r -> r.findMeter(Meter.Type.Counter, "feature_counter").isPresent());
+                .matches(r -> r.find("feature.counter").counter().isPresent());
     }
 
     @Test
@@ -56,7 +55,7 @@ class LibraryInstrumentationTest {
         component.performanceCriticalFeature();
         assertThat(component.registry)
                 .isInstanceOf(PrometheusMeterRegistry.class)
-                .matches(r -> r.findMeter(Meter.Type.Counter, "feature_counter").isPresent());
+                .matches(r -> r.find("feature.counter").counter().isPresent());
     }
 
     @Test
@@ -66,7 +65,7 @@ class LibraryInstrumentationTest {
         component.performanceCriticalFeature();
         assertThat(component.registry)
                 .isInstanceOf(PrometheusMeterRegistry.class)
-                .matches(r -> r.findMeter(Meter.Type.Counter, "feature_counter").isPresent());
+                .matches(r -> r.find("feature.counter").counter().isPresent());
     }
 
     @Test
@@ -75,7 +74,7 @@ class LibraryInstrumentationTest {
         component.performanceCriticalFeature();
         assertThat(component.registry)
                 .isInstanceOf(CompositeMeterRegistry.class)
-                .matches(r -> r.findMeter(Meter.Type.Counter, "feature_counter").isPresent());
+                .matches(r -> r.find("feature.counter").counter().isPresent());
     }
 }
 
@@ -116,7 +115,7 @@ class MyComponent {
     @Inject MeterRegistry registry = MeterRegistry.globalRegistry;
 
     // for performance-critical uses, it is best to store a meter in a field
-    Counter counter = lazyCounter(() -> registry.counter("feature_counter"));
+    Counter counter = lazyCounter(() -> registry.counter("feature.counter"));
 
     void performanceCriticalFeature() {
         counter.increment();
@@ -125,7 +124,7 @@ class MyComponent {
     void notPerformanceCriticalFeature() {
         // in code blocks that are not performance-critical, it is acceptable to inline
         // the retrieval of the counter
-        registry.counter("infrequent_counter").increment();
+        registry.counter("infrequent.counter").increment();
     }
 
     @Inject MyComponent() {}

@@ -15,33 +15,25 @@
  */
 package io.micrometer.core.instrument.dropwizard;
 
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.instrument.util.MeterId;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Jon Schneider
  */
-public class DropwizardGauge extends AbstractDropwizardMeter implements Gauge {
+public class DropwizardGauge extends AbstractMeter implements Gauge {
     private final com.codahale.metrics.Gauge<Double> impl;
 
-    DropwizardGauge(MeterId id, com.codahale.metrics.Gauge<Double> impl) {
-        super(id);
+    DropwizardGauge(String name, Iterable<Tag> tags, com.codahale.metrics.Gauge<Double> impl) {
+        super(name, tags);
         this.impl = impl;
     }
 
     @Override
     public double value() {
         return impl.getValue();
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return Collections.singletonList(id.measurement(value()));
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

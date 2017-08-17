@@ -15,21 +15,16 @@
  */
 package io.micrometer.core.instrument.prometheus;
 
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.util.MeterId;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 
-import java.util.Collections;
-import java.util.List;
-
-public class PrometheusCounter implements Counter {
-    private final MeterId id;
+public class PrometheusCounter extends AbstractMeter implements Counter {
     private io.prometheus.client.Counter.Child counter;
 
-    PrometheusCounter(MeterId id, io.prometheus.client.Counter.Child counter) {
-        this.id = id;
+    PrometheusCounter(String name, Iterable<Tag> tags, io.prometheus.client.Counter.Child counter) {
+        super(name, tags);
         this.counter = counter;
     }
 
@@ -41,21 +36,6 @@ public class PrometheusCounter implements Counter {
     @Override
     public double count() {
         return counter.get();
-    }
-
-    @Override
-    public String getName() {
-        return id.getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return id.getTags();
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return Collections.singletonList(id.measurement(count()));
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

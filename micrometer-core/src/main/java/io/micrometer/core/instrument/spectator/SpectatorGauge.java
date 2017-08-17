@@ -44,11 +44,6 @@ public class SpectatorGauge implements Gauge {
         return SpectatorUtils.tags(gauge);
     }
 
-    @Override
-    public List<Measurement> measure() {
-        return SpectatorUtils.measurements(gauge);
-    }
-
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object o) {

@@ -24,7 +24,6 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.method.HandlerMethod;
-import org.springframework.web.servlet.support.RequestContext;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -33,12 +32,10 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -143,7 +140,7 @@ public class ControllerMetrics {
         if(t.extraTags().length > 0) {
             tags = Stream.concat(stream(tags.spliterator(), false), Tags.zip(t.extraTags()).stream()).collect(toList());
         }
-        return registry.longTaskTimer(t.value(), tags);
+        return registry.more().longTaskTimer(t.value(), tags);
     }
 
     private Set<Timed> longTaskTimed(Object m) {

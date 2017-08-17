@@ -15,33 +15,23 @@
  */
 package io.micrometer.core.instrument.simple;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.instrument.util.MeterId;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class SimpleLongTaskTimer extends AbstractSimpleMeter implements LongTaskTimer {
-    private static final Tag TYPE_TAG = SimpleUtils.typeTag(Type.LongTaskTimer);
-    private static final Tag STAT_ACTIVE_TASKS_TAG = Tag.of("statistic", "activeTasks");
-    private static final Tag STAT_DURATION_TAG = Tag.of("statistic", "duration");
-
     private final ConcurrentMap<Long, Long> tasks = new ConcurrentHashMap<>();
     private final AtomicLong nextTask = new AtomicLong(0L);
     private final Clock clock;
 
-    private final MeterId activeTasksId;
-    private final MeterId durationId;
-
-    public SimpleLongTaskTimer(MeterId id, Clock clock) {
-        super(id);
+    public SimpleLongTaskTimer(String name, Iterable<Tag> tags, Clock clock) {
+        super(name, tags, Type.LongTaskTimer);
         this.clock = clock;
-        this.activeTasksId = id.withTags(TYPE_TAG, STAT_ACTIVE_TASKS_TAG);
-        this.durationId = id.withTags(TYPE_TAG, STAT_DURATION_TAG);
     }
 
     @Override
@@ -81,13 +71,6 @@ public class SimpleLongTaskTimer extends AbstractSimpleMeter implements LongTask
     @Override
     public int activeTasks() {
         return tasks.size();
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return Arrays.asList(
-                activeTasksId.measurement(activeTasks()),
-                durationId.measurement(duration()));
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

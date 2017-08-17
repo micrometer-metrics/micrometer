@@ -15,21 +15,21 @@
  */
 package io.micrometer.core.instrument.composite;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.AbstractMeter;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.noop.NoopCounter;
-import io.micrometer.core.instrument.util.MeterId;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import static java.util.stream.Collectors.toList;
-
-class CompositeCounter implements Counter, CompositeMeter {
-    private final MeterId id;
+class CompositeCounter extends AbstractMeter implements Counter, CompositeMeter {
     private final Map<MeterRegistry, Counter> counters = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    CompositeCounter(MeterId id) {
-        this.id = id;
+    CompositeCounter(String name, Iterable<Tag> tags) {
+        super(name, tags);
     }
 
     @Override
@@ -49,7 +49,7 @@ class CompositeCounter implements Counter, CompositeMeter {
     @Override
     public void add(MeterRegistry registry) {
         synchronized (counters) {
-            counters.put(registry, registry.counter(id.getName(), id.getTags()));
+            counters.put(registry, registry.counter(getName(), getTags()));
         }
     }
 
@@ -57,23 +57,6 @@ class CompositeCounter implements Counter, CompositeMeter {
     public void remove(MeterRegistry registry) {
         synchronized (counters) {
             counters.remove(registry);
-        }
-    }
-
-    @Override
-    public String getName() {
-        return id.getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return id.getTags();
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        synchronized (counters) {
-            return counters.values().stream().flatMap(c -> c.measure().stream()).collect(toList());
         }
     }
 }

@@ -27,7 +27,7 @@ public class ClassLoaderMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         ClassLoadingMXBean classLoadingBean = ManagementFactory.getClassLoadingMXBean();
 
-        registry.gauge("classes_loaded", classLoadingBean, ClassLoadingMXBean::getLoadedClassCount);
-        registry.counter("classes_unloaded", emptyList(), classLoadingBean, ClassLoadingMXBean::getUnloadedClassCount);
+        registry.gauge("classes.loaded", classLoadingBean, ClassLoadingMXBean::getLoadedClassCount);
+        registry.more().counter("classes.unloaded", emptyList(), classLoadingBean, ClassLoadingMXBean::getUnloadedClassCount);
     }
 }

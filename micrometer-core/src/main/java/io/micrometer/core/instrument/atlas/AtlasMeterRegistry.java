@@ -19,15 +19,14 @@ import com.netflix.spectator.atlas.AtlasConfig;
 import com.netflix.spectator.atlas.AtlasRegistry;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
+import io.micrometer.core.instrument.spectator.step.StepSpectatorMeterRegistry;
 
 import java.util.function.ToDoubleFunction;
 
 /**
  * @author Jon Schneider
  */
-public class AtlasMeterRegistry extends SpectatorMeterRegistry {
-    private final long stepMillis;
-
+public class AtlasMeterRegistry extends StepSpectatorMeterRegistry {
     public AtlasMeterRegistry(AtlasConfig config, Clock clock) {
         // The Spectator Atlas registry will do tag formatting for us, so we'll just pass through
         // tag keys and values with the identity formatter.
@@ -41,10 +40,9 @@ public class AtlasMeterRegistry extends SpectatorMeterRegistry {
             public long monotonicTime() {
                 return clock.monotonicTime();
             }
-        }, config), clock, new IdentityTagFormatter());
+        }, config), clock, TagFormatter.identity, config.step().toMillis());
 
-        stepMillis = config.step().toMillis();
-
+        this.config().namingConvention(NamingConvention.camelCase);
         start();
     }
 
@@ -62,10 +60,5 @@ public class AtlasMeterRegistry extends SpectatorMeterRegistry {
 
     private AtlasRegistry getAtlasRegistry() {
         return (AtlasRegistry) this.getSpectatorRegistry();
-    }
-
-    @Override
-    public <T> T counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        return stepCounter(name, tags, obj, f, stepMillis);
     }
 }

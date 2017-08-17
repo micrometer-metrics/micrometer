@@ -18,6 +18,7 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -95,6 +96,19 @@ public interface Timer extends Meter {
         return totalTime(TimeUnit.NANOSECONDS);
     }
 
+    @Override
+    default Iterable<Measurement> measure() {
+        return Arrays.asList(
+            new Measurement(() -> (double) count(), Statistic.Count),
+            new Measurement(this::totalTimeNanos, Statistic.Total)
+        );
+    }
+
+    @Override
+    default Type getType() {
+        return Type.Timer;
+    }
+
     interface Builder {
         Builder quantiles(Quantiles quantiles);
 
@@ -106,10 +120,5 @@ public interface Timer extends Meter {
         }
 
         Timer create();
-    }
-
-    @Override
-    default Type getType() {
-        return Type.Timer;
     }
 }

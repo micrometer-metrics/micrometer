@@ -16,11 +16,8 @@
 package io.micrometer.core.instrument.spectator;
 
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.Tag;
-
-import java.util.List;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 
 public class SpectatorCounter implements Counter {
     private com.netflix.spectator.api.Counter counter;
@@ -47,11 +44,6 @@ public class SpectatorCounter implements Counter {
     @Override
     public Iterable<Tag> getTags() {
         return SpectatorUtils.tags(counter);
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return SpectatorUtils.measurements(counter);
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

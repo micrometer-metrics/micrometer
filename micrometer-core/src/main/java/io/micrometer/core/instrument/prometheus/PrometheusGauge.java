@@ -15,42 +15,22 @@
  */
 package io.micrometer.core.instrument.prometheus;
 
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.util.MeterId;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 
-import java.util.Collections;
-import java.util.List;
-
-public class PrometheusGauge implements Gauge {
-    private final MeterId id;
+public class PrometheusGauge extends AbstractMeter implements Gauge {
     private io.prometheus.client.Gauge.Child gauge;
 
-    PrometheusGauge(MeterId id, io.prometheus.client.Gauge.Child gauge) {
-        this.id = id;
+    PrometheusGauge(String name, Iterable<Tag> tags, io.prometheus.client.Gauge.Child gauge) {
+        super(name, tags);
         this.gauge = gauge;
     }
 
     @Override
     public double value() {
         return gauge.get();
-    }
-
-    @Override
-    public String getName() {
-        return id.getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return id.getTags();
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return Collections.singletonList(id.measurement(gauge.get()));
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

@@ -15,12 +15,10 @@
  */
 package io.micrometer.spring.scheduling;
 
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.Before;
 import io.micrometer.spring.SpringMeters;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -58,8 +56,8 @@ public class ExecutorServiceMetricsTest {
     }
 
     private void assertThreadPoolExecutorMetrics(String name) {
-        assertThat(registry.findMeter(Meter.Type.Counter, name + "_tasks")).isPresent();
-        assertThat(registry.findMeter(Gauge.class, name + "_queue_size")).isPresent();
-        assertThat(registry.findMeter(Gauge.class, name + "_pool_size")).isPresent();
+        assertThat(registry.find(name + ".tasks").meter()).isPresent();
+        assertThat(registry.find(name + ".queue.size").gauge()).isPresent();
+        assertThat(registry.find(name + ".pool.size").gauge()).isPresent();
     }
 }

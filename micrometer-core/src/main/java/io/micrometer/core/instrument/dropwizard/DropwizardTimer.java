@@ -18,12 +18,9 @@ package io.micrometer.core.instrument.dropwizard;
 import com.codahale.metrics.Timer;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.util.MeterId;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.TimeUtils;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -31,9 +28,8 @@ public class DropwizardTimer extends AbstractTimer {
     private final Timer impl;
     private final AtomicLong totalTime = new AtomicLong(0);
 
-    public DropwizardTimer(MeterId id, Timer impl, Clock clock) {
-        super(id, clock);
-        this.id = id;
+    DropwizardTimer(String name, Iterable<Tag> tags, Timer impl, Clock clock) {
+        super(name, tags, clock);
         this.impl = impl;
     }
 
@@ -53,10 +49,5 @@ public class DropwizardTimer extends AbstractTimer {
     @Override
     public double totalTime(TimeUnit unit) {
         return TimeUtils.convert(totalTime.get(), TimeUnit.NANOSECONDS, unit);
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return Collections.singletonList(id.measurement(impl.getMeanRate()));
     }
 }

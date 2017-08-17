@@ -15,30 +15,23 @@
  */
 package io.micrometer.core.instrument.dropwizard;
 
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.instrument.util.MeterId;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.atomic.DoubleAdder;
 
 /**
  * @author Jon Schneider
  */
-public class DropwizardDistributionSummary extends AbstractDropwizardMeter implements DistributionSummary {
+public class DropwizardDistributionSummary extends AbstractMeter implements DistributionSummary {
     private final com.codahale.metrics.Histogram impl;
     private final DoubleAdder totalAmount = new DoubleAdder();
 
-    DropwizardDistributionSummary(MeterId id, com.codahale.metrics.Histogram impl) {
-        super(id);
+    DropwizardDistributionSummary(String name, Iterable<Tag> tags, com.codahale.metrics.Histogram impl) {
+        super(name, tags);
         this.impl = impl;
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return Collections.singletonList(id.measurement(impl.getSnapshot().getMean()));
     }
 
     @Override

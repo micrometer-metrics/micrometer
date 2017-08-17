@@ -53,18 +53,18 @@ public class JvmGcMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         // Max size of old generation memory pool
-        AtomicLong maxDataSize = registry.gauge("jvm_gc_max_data_size", new AtomicLong(0L));
+        AtomicLong maxDataSize = registry.gauge("jvm.gc.max.data.size", new AtomicLong(0L));
 
         // Size of old generation memory pool after a full GC
-        AtomicLong liveDataSize = registry.gauge("jvm_gc_live_data_size", new AtomicLong(0L));
+        AtomicLong liveDataSize = registry.gauge("jvm.gc.live.data.size", new AtomicLong(0L));
 
         // Incremented for any positive increases in the size of the old generation memory pool
         // before GC to after GC
-        Counter promotionRate = registry.counter("jvm_gc_promotion_rate");
+        Counter promotionRate = registry.counter("jvm.gc.promotion.rate");
 
         // Incremented for the increase in the size of the young generation memory pool after one GC
         // to before the next
-        Counter allocationRate = registry.counter("jvm_gc_allocation_rate");
+        Counter allocationRate = registry.counter("jvm.gc.allocation.rate");
 
         // start watching for GC notifications
         final AtomicLong youngGenSizeAfter = new AtomicLong(0L);
@@ -77,7 +77,7 @@ public class JvmGcMetrics implements MeterBinder {
                         CompositeData cd = (CompositeData) notification.getUserData();
                         GarbageCollectionNotificationInfo notificationInfo = GarbageCollectionNotificationInfo.from(cd);
 
-                        registry.timer((isConcurrentPhase(notificationInfo) ? "jvm_gc_concurrent_phase_time" : "jvm_gc_pause"),
+                        registry.timer((isConcurrentPhase(notificationInfo) ? "jvm.gc.concurrent.phase.time" : "jvm.gc.pause"),
                                 "action", notificationInfo.getGcAction(), "cause", notificationInfo.getGcCause()
                         ).record(notificationInfo.getGcInfo().getDuration(), TimeUnit.MILLISECONDS);
 

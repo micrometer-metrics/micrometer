@@ -15,31 +15,26 @@
  */
 package io.micrometer.core.instrument.composite;
 
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.noop.NoopGauge;
-import io.micrometer.core.instrument.util.MeterId;
 
 import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.ToDoubleFunction;
 
-import static java.util.stream.Collectors.toList;
-
-public class CompositeGauge<T> implements Gauge, CompositeMeter {
-    private final MeterId id;
+public class CompositeGauge<T> extends AbstractMeter implements Gauge, CompositeMeter {
     private final WeakReference<T> ref;
     private final ToDoubleFunction<T> f;
 
     private final Map<MeterRegistry, Gauge> gauges = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    public CompositeGauge(MeterId id, T obj, ToDoubleFunction<T> f) {
-        this.id = id;
+    CompositeGauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+        super(name, tags);
         this.ref = new WeakReference<>(obj);
         this.f = f;
     }
@@ -56,7 +51,7 @@ public class CompositeGauge<T> implements Gauge, CompositeMeter {
         T obj = ref.get();
         if(obj != null) {
             synchronized (gauges) {
-                gauges.put(registry, registry.gaugeBuilder(id.getName(), obj, f).tags(id.getTags()).create());
+                gauges.put(registry, registry.gaugeBuilder(getName(), obj, f).tags(getTags()).create());
             }
         }
     }
@@ -65,23 +60,6 @@ public class CompositeGauge<T> implements Gauge, CompositeMeter {
     public void remove(MeterRegistry registry) {
         synchronized (gauges) {
             gauges.remove(registry);
-        }
-    }
-
-    @Override
-    public String getName() {
-        return id.getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return id.getTags();
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        synchronized (gauges) {
-            return gauges.values().stream().flatMap(c -> c.measure().stream()).collect(toList());
         }
     }
 }

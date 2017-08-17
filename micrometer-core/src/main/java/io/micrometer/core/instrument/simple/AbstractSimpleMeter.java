@@ -15,24 +15,13 @@
  */
 package io.micrometer.core.instrument.simple;
 
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.util.MeterId;
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 
-public abstract class AbstractSimpleMeter implements Meter {
-    protected final MeterId id;
-
-    AbstractSimpleMeter(MeterId id) {
-        this.id = id;
-    }
-
-    @Override
-    public String getName() {
-        return id.getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return id.getTags();
+abstract class AbstractSimpleMeter extends AbstractMeter {
+    AbstractSimpleMeter(String name, Iterable<Tag> tags, Meter.Type type) {
+        super(name, Tags.concat(tags, "simple.type", type.toString().toLowerCase()));
     }
 }

@@ -37,17 +37,17 @@ public class JvmMemoryMetrics implements MeterBinder {
         for (BufferPoolMXBean bufferPoolBean : ManagementFactory.getPlatformMXBeans(BufferPoolMXBean.class)) {
             Iterable<Tag> tags = singletonList(Tag.of("id", bufferPoolBean.getName()));
 
-            registry.gauge("jvm_buffer_count", tags, bufferPoolBean, BufferPoolMXBean::getCount);
-            registry.gauge("jvm_buffer_memory_used", tags, bufferPoolBean, BufferPoolMXBean::getMemoryUsed);
-            registry.gauge("jvm_buffer_total_capacity", tags, bufferPoolBean, BufferPoolMXBean::getTotalCapacity);
+            registry.gauge("jvm.buffer.count", tags, bufferPoolBean, BufferPoolMXBean::getCount);
+            registry.gauge("jvm.buffer.memory.used", tags, bufferPoolBean, BufferPoolMXBean::getMemoryUsed);
+            registry.gauge("jvm.buffer.total.capacity", tags, bufferPoolBean, BufferPoolMXBean::getTotalCapacity);
         }
 
         for (MemoryPoolMXBean memoryPoolBean : ManagementFactory.getPlatformMXBeans(MemoryPoolMXBean.class)) {
             Iterable<Tag> tags = singletonList(Tag.of("id", memoryPoolBean.getName()));
 
-            registry.gauge("jvm_memory_used", tags, memoryPoolBean, (mem) -> mem.getUsage().getUsed());
-            registry.gauge("jvm_memory_committed", tags, memoryPoolBean, (mem) -> mem.getUsage().getCommitted());
-            registry.gauge("jvm_memory_max", tags, memoryPoolBean, (mem) -> mem.getUsage().getMax());
+            registry.gauge("jvm.memory.used", tags, memoryPoolBean, (mem) -> mem.getUsage().getUsed());
+            registry.gauge("jvm.memory.committed", tags, memoryPoolBean, (mem) -> mem.getUsage().getCommitted());
+            registry.gauge("jvm.memory.max", tags, memoryPoolBean, (mem) -> mem.getUsage().getMax());
         }
     }
 }

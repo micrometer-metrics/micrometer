@@ -15,26 +15,21 @@
  */
 package io.micrometer.core.instrument.composite;
 
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.noop.NoopLongTaskTimer;
-import io.micrometer.core.instrument.util.MeterId;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
-import static java.util.stream.Collectors.toList;
-
-public class CompositeLongTaskTimer implements LongTaskTimer, CompositeMeter {
-    private final MeterId id;
+public class CompositeLongTaskTimer extends AbstractMeter implements LongTaskTimer, CompositeMeter {
     private final Map<MeterRegistry, LongTaskTimer> timers = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    public CompositeLongTaskTimer(MeterId id) {
-        this.id = id;
+    CompositeLongTaskTimer(String name, Iterable<Tag> tags) {
+        super(name, tags);
     }
 
     @Override
@@ -90,7 +85,7 @@ public class CompositeLongTaskTimer implements LongTaskTimer, CompositeMeter {
     @Override
     public void add(MeterRegistry registry) {
         synchronized (timers) {
-            timers.put(registry, registry.longTaskTimer(id.getName(), id.getTags()));
+            timers.put(registry, registry.more().longTaskTimer(getName(), getTags()));
         }
     }
 
@@ -98,23 +93,6 @@ public class CompositeLongTaskTimer implements LongTaskTimer, CompositeMeter {
     public void remove(MeterRegistry registry) {
         synchronized (timers) {
             timers.remove(registry);
-        }
-    }
-
-    @Override
-    public String getName() {
-        return id.getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return id.getTags();
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        synchronized (timers) {
-            return timers.values().stream().flatMap(c -> c.measure().stream()).collect(toList());
         }
     }
 }

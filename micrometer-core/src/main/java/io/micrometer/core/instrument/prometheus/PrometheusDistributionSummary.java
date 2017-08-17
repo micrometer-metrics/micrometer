@@ -15,21 +15,20 @@
  */
 package io.micrometer.core.instrument.prometheus;
 
-import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.prometheus.internal.CustomPrometheusSummary;
-import io.micrometer.core.instrument.util.MeterId;
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.prometheus.internal.CustomPrometheusSummary;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 
 import java.util.List;
 
-public class PrometheusDistributionSummary implements DistributionSummary {
-    private final MeterId id;
+public class PrometheusDistributionSummary extends AbstractMeter implements DistributionSummary {
     private final CustomPrometheusSummary.Child summary;
 
-    PrometheusDistributionSummary(MeterId id, CustomPrometheusSummary.Child summary) {
-        this.id = id;
+    PrometheusDistributionSummary(String name, Iterable<Tag> tags, CustomPrometheusSummary.Child summary) {
+        super(name, tags);
         this.summary = summary;
     }
 
@@ -48,21 +47,6 @@ public class PrometheusDistributionSummary implements DistributionSummary {
     @Override
     public double totalAmount() {
         return summary.sum();
-    }
-
-    @Override
-    public String getName() {
-        return id.getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return id.getTags();
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return summary.measure();
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

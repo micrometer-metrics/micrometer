@@ -25,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Optional;
@@ -43,7 +42,7 @@ public class MeterRegistryConfigurerTest {
 
     @Test
     public void commonTagsAreAppliedToAutoConfiguredBinders() {
-        Optional<Gauge> memUsed = registry.findMeter(Gauge.class, "jvm_memory_used");
+        Optional<Gauge> memUsed = registry.find("jvm.memory.used").gauge();
         assertThat(memUsed).hasValueSatisfying(g -> assertThat(g.getTags()).contains(Tag.of("region", "us-east-1")));
     }
 
@@ -61,7 +60,7 @@ public class MeterRegistryConfigurerTest {
 
         @Bean
         public MeterRegistryConfigurer registryConfigurer() {
-            return registry -> registry.commonTags("region", "us-east-1");
+            return registry -> registry.config().commonTags("region", "us-east-1");
         }
     }
 }

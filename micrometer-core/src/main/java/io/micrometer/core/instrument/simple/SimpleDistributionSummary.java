@@ -16,31 +16,19 @@
 package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.util.MeterId;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
 public class SimpleDistributionSummary extends AbstractSimpleMeter implements DistributionSummary {
-    private static final Tag STAT_COUNT_TAG = Tag.of("statistic", "count");
-    private static final Tag STAT_AMOUNT_TAG = Tag.of("statistic", "amount");
-    private static final Tag TYPE_TAG = SimpleUtils.typeTag(Type.DistributionSummary);
-
-    private final MeterId countId;
-    private final MeterId amountId;
-
     private LongAdder count = new LongAdder();
     private DoubleAdder amount = new DoubleAdder();
 
-    public SimpleDistributionSummary(MeterId id) {
-        super(id);
-        this.countId = id.withTags(TYPE_TAG, STAT_COUNT_TAG);
-        this.amountId = id.withTags(TYPE_TAG, STAT_AMOUNT_TAG);
+    public SimpleDistributionSummary(String name, Iterable<Tag> tags) {
+        super(name, tags, Meter.Type.DistributionSummary);
     }
 
     @Override
@@ -59,13 +47,6 @@ public class SimpleDistributionSummary extends AbstractSimpleMeter implements Di
     @Override
     public double totalAmount() {
         return amount.doubleValue();
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return Arrays.asList(
-                countId.measurement(count()),
-                amountId.measurement(totalAmount()));
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

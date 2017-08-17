@@ -46,11 +46,11 @@ public class CustomPrometheusSummary extends Collector {
 
     private final Collection<Child> children = new ConcurrentLinkedQueue<>();
 
-    public CustomPrometheusSummary(String name, List<String> tagKeys) {
+    public CustomPrometheusSummary(String name, Iterable<Tag> tags) {
         this.name = name;
         this.countName = name + "_count";
         this.sumName = name + "_sum";
-        this.tagKeys = tagKeys;
+        this.tagKeys = stream(tags.spliterator(), false).map(Tag::getKey).collect(toList());
     }
 
     public Child child(Iterable<Tag> tags, Quantiles quantiles, Histogram histogram) {

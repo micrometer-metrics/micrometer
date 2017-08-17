@@ -15,9 +15,8 @@
  */
 package io.micrometer.core.instrument.binder;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,7 +42,7 @@ class ExecutorServiceMetricsTest {
     void threadPoolExecutor() {
         ExecutorService exec = Executors.newFixedThreadPool(2);
         ExecutorServiceMetrics.monitor(registry, exec, "exec");
-        assertThreadPoolExecutorMetrics("exec");
+        assertThreadPoolExecutorMetrics();
     }
 
     @DisplayName("scheduled thread pool executor can be instrumented after being initialized")
@@ -51,40 +50,40 @@ class ExecutorServiceMetricsTest {
     void scheduledThreadPoolExecutor() {
         ExecutorService exec = Executors.newScheduledThreadPool(2);
         ExecutorServiceMetrics.monitor(registry, exec, "exec");
-        assertThreadPoolExecutorMetrics("exec");
+        assertThreadPoolExecutorMetrics();
     }
 
     @DisplayName("ExecutorService can be monitored with a default set of metrics")
     @Test
     void monitorExecutorService() throws InterruptedException {
-        ExecutorService pool = ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadExecutor(), "beep_pool");
+        ExecutorService pool = ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadExecutor(), "beep.pool");
         CountDownLatch taskStart = new CountDownLatch(1);
         CountDownLatch taskComplete = new CountDownLatch(1);
 
         pool.submit(() -> {
             taskStart.countDown();
-            taskComplete.await();
+            taskComplete.await(1, TimeUnit.SECONDS);
             System.out.println("beep");
             return 0;
         });
         pool.submit(() -> System.out.println("boop"));
 
-        taskStart.await();
-        AssertionsForClassTypes.assertThat(registry.findMeter(Gauge.class, "beep_pool_queue_size"))
+        taskStart.await(1, TimeUnit.SECONDS);
+        assertThat(registry.find("beep.pool.queue.size").gauge())
                 .hasValueSatisfying(g -> assertThat(g.value()).isEqualTo(1, offset(1e-12)));
 
         taskComplete.countDown();
         pool.awaitTermination(1, TimeUnit.SECONDS);
 
-        AssertionsForClassTypes.assertThat(registry.findMeter(Timer.class, "beep_pool_duration"))
+        assertThat(registry.find("beep.pool").timer())
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(2));
-        assertThat(registry.findMeter(Gauge.class, "beep_pool_queue_size"))
+        assertThat(registry.find("beep.pool.queue.size").gauge())
                 .hasValueSatisfying(g -> assertThat(g.value()).isEqualTo(0, offset(1e-12)));
     }
 
-    private void assertThreadPoolExecutorMetrics(String name) {
-        assertThat(registry.findMeter(Meter.Type.Counter, name + "_tasks")).isPresent();
-        assertThat(registry.findMeter(Gauge.class, name + "_queue_size")).isPresent();
-        assertThat(registry.findMeter(Gauge.class, name + "_pool_size")).isPresent();
+    private void assertThreadPoolExecutorMetrics() {
+        assertThat(registry.find("exec.tasks").meter()).isPresent();
+        assertThat(registry.find("exec.queue.size").gauge()).isPresent();
+        assertThat(registry.find("exec.pool.size").gauge()).isPresent();
     }
 }

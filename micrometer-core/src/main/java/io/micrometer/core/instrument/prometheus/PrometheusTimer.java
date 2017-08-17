@@ -15,21 +15,19 @@
  */
 package io.micrometer.core.instrument.prometheus;
 
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.AbstractTimer;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.prometheus.internal.CustomPrometheusSummary;
-import io.micrometer.core.instrument.util.MeterId;
 import io.micrometer.core.instrument.util.TimeUtils;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class PrometheusTimer extends AbstractTimer {
     private CustomPrometheusSummary.Child summary;
 
-    PrometheusTimer(MeterId id, CustomPrometheusSummary.Child summary, Clock clock) {
-        super(id, clock);
+    PrometheusTimer(String name, Iterable<Tag> tags, CustomPrometheusSummary.Child summary, Clock clock) {
+        super(name, tags, clock);
         this.summary = summary;
     }
 
@@ -51,10 +49,5 @@ public class PrometheusTimer extends AbstractTimer {
     @Override
     public double totalTime(TimeUnit unit) {
         return TimeUtils.secondsToUnit(summary.sum(), unit);
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return summary.measure();
     }
 }

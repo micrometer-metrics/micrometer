@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
-import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * A measurement sampled from a meter.
@@ -23,74 +23,35 @@ import java.util.*;
  * @author Clint Checketts
  * @author Jon Schneider
  */
-public final class Measurement {
+public class Measurement {
+    private final Supplier<Double> f;
+    private final Statistic statistic;
 
-    private final String name;
-    private final Set<Tag> tags;
-    private final double value;
-
-    /**
-     * Create a new instance.
-     *
-     * @param tags For some monitoring backends, the order of tags must remain the same from sample to sample.
-     */
-    public Measurement(String name, List<Tag> tags, double value) {
-        this.name = name;
-
-        SortedSet<Tag> sortedTags = new TreeSet<>(Comparator.comparing(Tag::getKey));
-        sortedTags.addAll(tags);
-        this.tags = Collections.unmodifiableSet(sortedTags);
-
-        this.value = value;
+    public Measurement(Supplier<Double> f, Statistic statistic) {
+        this.f = f;
+        this.statistic = statistic;
     }
 
-    /**
-     * Name of the measurement, which together with tags form a unique time series.
-     */
-    public String getName() {
-        return name;
+    public Supplier<Double> getValueFunction() {
+        return f;
     }
-
-    /**
-     * Tags for the measurement, which together with name form a unique time series.
-     *
-     * @return An ordered set of tags. For some monitoring backends, the order of tags must remain the same from
-     * sample to sample.
-     */
-    public Set<Tag> getTags() { return tags; }
 
     /**
      * Value for the measurement.
      */
     public double getValue() {
-        return value;
+        return f.get();
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Measurement that = (Measurement) o;
-        return Double.compare(that.value, value) == 0 && name.equals(that.name) && tags.equals(that.tags);
-    }
-
-    @Override
-    public int hashCode() {
-        int result;
-        long temp;
-        result = name.hashCode();
-        result = 31 * result + tags.hashCode();
-        temp = Double.doubleToLongBits(value);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
-        return result;
+    public Statistic getStatistic() {
+        return statistic;
     }
 
     @Override
     public String toString() {
         return "Measurement{" +
-                "name='" + name + '\'' +
-                ", tags=" + tags +
-                ", value=" + value +
-                '}';
+            "statistic='" + statistic + '\'' +
+            ", value=" + getValue() +
+            '}';
     }
 }

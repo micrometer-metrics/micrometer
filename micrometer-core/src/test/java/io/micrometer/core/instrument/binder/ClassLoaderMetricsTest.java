@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder;
 
-import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
@@ -28,7 +27,7 @@ class ClassLoaderMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         new ClassLoaderMetrics().bindTo(registry);
 
-        assertThat(registry.findMeter(Gauge.class, "classes_loaded"))
+        assertThat(registry.find("classes.loaded").gauge())
                 .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
     }
 }

@@ -61,7 +61,7 @@ public class MetricsSchedulingAspect {
 
         for (Timed timed : AnnotationUtils.findTimed(method).toArray(Timed[]::new)) {
             if(timed.longTask())
-                longTaskTimer = registry.longTaskTimer(timed.value(), timed.extraTags());
+                longTaskTimer = registry.more().longTaskTimer(timed.value(), timed.extraTags());
             else {
                 Timer.Builder timerBuilder = registry.timerBuilder(timed.value())
                         .tags(timed.extraTags());
@@ -96,11 +96,11 @@ public class MetricsSchedulingAspect {
     }
 
     private Object recordThrowable(Timer timer, ThrowableCallable f) throws Throwable {
-        long start = registry.getClock().monotonicTime();
+        long start = registry.config().clock().monotonicTime();
         try {
             return f.call();
         } finally {
-            timer.record(registry.getClock().monotonicTime() - start, TimeUnit.NANOSECONDS);
+            timer.record(registry.config().clock().monotonicTime() - start, TimeUnit.NANOSECONDS);
         }
     }
 

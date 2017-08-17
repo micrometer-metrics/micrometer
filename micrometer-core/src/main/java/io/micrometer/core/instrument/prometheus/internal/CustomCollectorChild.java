@@ -15,30 +15,10 @@
  */
 package io.micrometer.core.instrument.prometheus.internal;
 
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Tag;
 import io.prometheus.client.Collector;
 
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.StreamSupport.stream;
 
 public interface CustomCollectorChild {
     Stream<Collector.MetricFamilySamples.Sample> collect();
-
-    default List<Measurement> measure() {
-        return collect().map(sample -> {
-            List<Tag> tags = IntStream.range(0, sample.labelNames.size())
-                    .mapToObj(i -> Tag.of(sample.labelNames.get(i), sample.labelValues.get(i)))
-                    .collect(Collectors.toList());
-            return new Measurement(sample.name, tags, sample.value);
-        }).collect(Collectors.toList());
-    }
 }

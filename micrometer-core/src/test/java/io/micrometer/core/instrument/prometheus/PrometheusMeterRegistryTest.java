@@ -18,7 +18,7 @@ package io.micrometer.core.instrument.prometheus;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.stats.quantile.GKQuantiles;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
@@ -28,11 +28,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
-import java.util.List;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -61,7 +60,7 @@ class PrometheusMeterRegistryTest {
             .quantiles(GKQuantiles.quantiles(0.5).create())
             .create();
 
-        assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndTagKey("timer", "quantile"));
+        assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndTagKey("timer_duration_seconds", "quantile"));
         assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndTagKey("ds", "quantile"));
     }
 
@@ -80,34 +79,12 @@ class PrometheusMeterRegistryTest {
     @DisplayName("custom meters can be typed")
     @Test
     void typedCustomMeters() {
-        registry.register(new CustomCounter());
+        registry.register("name", emptyList(), Meter.Type.Counter,
+            Collections.singletonList(new Measurement(() -> 1.0, Statistic.Count)));
 
         assertThat(registry.getPrometheusRegistry().metricFamilySamples().nextElement().type)
             .describedAs("custom counter with a type of COUNTER")
             .isEqualTo(Collector.Type.COUNTER);
-    }
-
-    private class CustomCounter implements Meter {
-
-        @Override
-        public String getName() {
-            return "custom";
-        }
-
-        @Override
-        public Iterable<Tag> getTags() {
-            return emptyList();
-        }
-
-        @Override
-        public Type getType() {
-            return Type.Counter;
-        }
-
-        @Override
-        public List<Measurement> measure() {
-            return singletonList(new Measurement(getName(), emptyList(), 1));
-        }
     }
 
     @DisplayName("attempts to register different meter types with the same name fail somewhat gracefully")

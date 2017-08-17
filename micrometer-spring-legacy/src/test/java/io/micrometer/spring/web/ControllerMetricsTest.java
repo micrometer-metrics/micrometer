@@ -17,7 +17,6 @@ package io.micrometer.spring.web;
 
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.spring.EnableMetrics;
 import org.junit.Test;
@@ -35,7 +34,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -55,14 +53,14 @@ public class ControllerMetricsTest {
     @Test
     public void handledExceptionIsRecordedInMetricTag() throws Exception {
         assertThatCode(() -> mvc.perform(get("/api/handledError")).andExpect(status().is5xxServerError()));
-        assertThat(registry.findMeter(Timer.class, "http_server_requests", "exception", "Exception1"))
+        assertThat(registry.find("http.server.requests").tags("exception", "Exception1").timer())
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
     @Test
     public void rethrownExceptionIsRecordedInMetricTag() throws Exception {
         assertThatCode(() -> mvc.perform(get("/api/rethrownError")).andExpect(status().is5xxServerError()));
-        assertThat(registry.findMeter(Timer.class, "http_server_requests", "exception", "Exception2"))
+        assertThat(registry.find("http.server.requests").tags("exception", "Exception2").timer())
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 

@@ -18,7 +18,7 @@ package io.micrometer.core.instrument.ganglia;
 import com.codahale.metrics.ganglia.GangliaReporter;
 import info.ganglia.gmetric4j.gmetric.GMetric;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.IdentityTagFormatter;
+import io.micrometer.core.instrument.TagFormatter;
 import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 
@@ -40,7 +40,7 @@ public class GangliaMeterRegistry extends DropwizardMeterRegistry {
     public GangliaMeterRegistry(GangliaConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
         // Technically, Ganglia doesn't have any constraints on metric or tag names, but the encoding of Unicode can look
         // horrible in the UI. So be aware...
-        super(nameMapper, clock, new IdentityTagFormatter());
+        super(nameMapper, clock, TagFormatter.identity);
         this.config = config;
 
         try {

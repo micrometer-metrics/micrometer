@@ -18,6 +18,8 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
+import java.util.Arrays;
+
 /**
  * Track the sample distribution of events. An example would be the response sizes for requests
  * hitting and http server.
@@ -56,7 +58,10 @@ public interface DistributionSummary extends Meter {
     }
 
     @Override
-    default Type getType() {
-        return Type.DistributionSummary;
+    default Iterable<Measurement> measure() {
+        return Arrays.asList(
+            new Measurement(() -> (double) count(), Statistic.Count),
+            new Measurement(this::totalAmount, Statistic.Total)
+        );
     }
 }

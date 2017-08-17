@@ -19,47 +19,42 @@ import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.util.MeterId;
 
-import java.lang.ref.WeakReference;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.ToDoubleFunction;
+public class CompositeCustomMeter implements CompositeMeter {
+    private final String name;
+    private final Iterable<Tag> tags;
+    private final Meter.Type type;
+    private final Iterable<Measurement> measurements;
 
-public class CompositeCustomMeter<T> implements CompositeMeter {
-    private final Meter meter;
-
-    public CompositeCustomMeter(Meter meter) {
-        this.meter = meter;
-    }
-
-    @Override
-    public void add(MeterRegistry registry) {
-        registry.register(meter);
-    }
-
-    @Override
-    public void remove(MeterRegistry registry) {
-        // nothing to do
+    public CompositeCustomMeter(String name, Iterable<Tag> tags, Type type, Iterable<Measurement> measurements) {
+        this.name = name;
+        this.tags = tags;
+        this.type = type;
+        this.measurements = measurements;
     }
 
     @Override
     public String getName() {
-        return meter.getName();
+        return name;
     }
 
     @Override
     public Iterable<Tag> getTags() {
-        return meter.getTags();
+        return tags;
     }
 
     @Override
-    public Type getType() {
-        return meter.getType();
+    public Iterable<Measurement> measure() {
+        return measurements;
     }
 
     @Override
-    public List<Measurement> measure() {
-        return meter.measure();
+    public void add(MeterRegistry registry) {
+        registry.register(name, tags, type, measurements);
+    }
+
+    @Override
+    public void remove(MeterRegistry registry) {
+        // do nothing
     }
 }

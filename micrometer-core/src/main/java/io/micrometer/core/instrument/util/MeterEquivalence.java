@@ -30,14 +30,12 @@ public final class MeterEquivalence {
         if (m1 == o) return true;
         Meter m2 = (Meter) o;
         return (m1.getName() != null ? m1.getName().equals(m2.getName()) : m2.getName() == null) &&
-                (m1.getTags() != null ? m1.getTags().equals(m2.getTags()) : m2.getTags() == null) &&
-                (m1.getType() != null ? m1.getType().equals(m2.getType()) : m2.getType() == null);
+                (m1.getTags() != null ? m1.getTags().equals(m2.getTags()) : m2.getTags() == null);
     }
 
     public static int hashCode(Meter m) {
         int result = m.getName() != null ? m.getName().hashCode() : 0;
         result = 31 * result + (m.getTags() != null ? m.getTags().hashCode() : 0);
-        result = 31 * result + (m.getType() != null ? m.getType().hashCode() : 0);
         return result;
     }
 }

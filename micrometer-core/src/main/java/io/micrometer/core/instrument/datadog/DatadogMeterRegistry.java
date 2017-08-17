@@ -15,18 +15,14 @@
  */
 package io.micrometer.core.instrument.datadog;
 
+import com.netflix.spectator.atlas.AtlasRegistry;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
-
-import java.util.function.ToDoubleFunction;
+import io.micrometer.core.instrument.spectator.step.StepSpectatorMeterRegistry;
 
 /**
  * @author Jon Schneider
  */
-public class DatadogMeterRegistry extends SpectatorMeterRegistry {
-    private final long stepMillis;
-
+public class DatadogMeterRegistry extends StepSpectatorMeterRegistry {
     public DatadogMeterRegistry(DatadogConfig config, Clock clock) {
         super(new DatadogRegistry(config, new com.netflix.spectator.api.Clock() {
             @Override
@@ -38,19 +34,24 @@ public class DatadogMeterRegistry extends SpectatorMeterRegistry {
             public long monotonicTime() {
                 return clock.monotonicTime();
             }
-        }), clock, new DatadogTagFormatter());
+        }), clock, new DatadogTagFormatter(), config.step().toMillis());
 
-        this.stepMillis = config.step().toMillis();
-
-        ((DatadogRegistry) this.getSpectatorRegistry()).start();
+        start();
     }
 
     public DatadogMeterRegistry(DatadogConfig config) {
         this(config, Clock.SYSTEM);
     }
 
-    @Override
-    public <T> T counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        return stepCounter(name, tags, obj, f, stepMillis);
+    public void start() {
+        getDatadogRegistry().start();
+    }
+
+    public void stop() {
+        getDatadogRegistry().stop();
+    }
+
+    private DatadogRegistry getDatadogRegistry() {
+        return (DatadogRegistry) this.getSpectatorRegistry();
     }
 }

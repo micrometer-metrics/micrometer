@@ -16,10 +16,8 @@
 package io.micrometer.core.instrument.lazy;
 
 import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Tag;
 
-import java.util.List;
 import java.util.function.Supplier;
 
 public class LazyLongTaskTimer implements LongTaskTimer {
@@ -43,11 +41,6 @@ public class LazyLongTaskTimer implements LongTaskTimer {
     @Override
     public Iterable<Tag> getTags() {
         return timer().getTags();
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return timer().measure();
     }
 
     @Override

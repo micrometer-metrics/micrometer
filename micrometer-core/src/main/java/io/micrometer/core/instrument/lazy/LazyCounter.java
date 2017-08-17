@@ -46,11 +46,6 @@ public final class LazyCounter implements Counter {
     }
 
     @Override
-    public List<Measurement> measure() {
-        return counter().measure();
-    }
-
-    @Override
     public void increment(double amount) {
         counter().increment();
     }

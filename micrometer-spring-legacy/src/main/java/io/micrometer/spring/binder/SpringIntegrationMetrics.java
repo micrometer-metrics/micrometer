@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.springframework.beans.factory.SmartInitializingSingleton;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.support.management.*;
 
 import java.util.ArrayList;
@@ -40,9 +39,9 @@ public class SpringIntegrationMetrics implements MeterBinder, SmartInitializingS
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        registry.gauge("spring_integration_channelNames", configurer, c -> c.getChannelNames().length);
-        registry.gauge("spring_integration_handlerNames", configurer, c -> c.getHandlerNames().length);
-        registry.gauge("spring_integration_sourceNames", configurer, c -> c.getSourceNames().length);
+        registry.gauge("spring.integration.channelNames", configurer, c -> c.getChannelNames().length);
+        registry.gauge("spring.integration.handlerNames", configurer, c -> c.getHandlerNames().length);
+        registry.gauge("spring.integration.sourceNames", configurer, c -> c.getSourceNames().length);
         registries.add(registry);
     }
 
@@ -50,7 +49,7 @@ public class SpringIntegrationMetrics implements MeterBinder, SmartInitializingS
         for (String source : configurer.getSourceNames()) {
             MessageSourceMetrics sourceMetrics = configurer.getSourceMetrics(source);
             List<Tag> tags = Collections.singletonList(Tag.of("source", source));
-            registry.counter("spring_integration_source_messages", tags, sourceMetrics, MessageSourceMetrics::getMessageCount);
+            registry.more().counter("spring.integration.source.messages", tags, sourceMetrics, MessageSourceMetrics::getMessageCount);
         }
     }
 
@@ -62,11 +61,11 @@ public class SpringIntegrationMetrics implements MeterBinder, SmartInitializingS
             // creation as shown in the SpringIntegrationApplication sample.
             List<Tag> tags = Collections.singletonList(Tag.of("handler", handler));
 
-            registry.gauge("spring_integration_handler_duration_max", tags, handlerMetrics, MessageHandlerMetrics::getMaxDuration);
-            registry.gauge("spring_integration_handler_duration_min", tags, handlerMetrics, MessageHandlerMetrics::getMinDuration);
-            registry.gauge("spring_integration_handler_duration_mean", tags, handlerMetrics, MessageHandlerMetrics::getMeanDuration);
+            registry.gauge("spring.integration.handler.duration.max", tags, handlerMetrics, MessageHandlerMetrics::getMaxDuration);
+            registry.gauge("spring.integration.handler.duration.min", tags, handlerMetrics, MessageHandlerMetrics::getMinDuration);
+            registry.gauge("spring.integration.handler.duration.mean", tags, handlerMetrics, MessageHandlerMetrics::getMeanDuration);
 
-            registry.gauge("spring_integration_handler_activeCount", tags, handlerMetrics, MessageHandlerMetrics::getActiveCount);
+            registry.gauge("spring.integration.handler.activeCount", tags, handlerMetrics, MessageHandlerMetrics::getActiveCount);
         }
     }
 
@@ -75,11 +74,11 @@ public class SpringIntegrationMetrics implements MeterBinder, SmartInitializingS
             MessageChannelMetrics channelMetrics = configurer.getChannelMetrics(channel);
             List<Tag> tags = Collections.singletonList(Tag.of("channel", channel));
 
-            registry.counter("spring_integration_channel_sendErrors", tags, channelMetrics, MessageChannelMetrics::getSendErrorCount);
-            registry.counter("spring_integration_channel_sends", tags, channelMetrics, MessageChannelMetrics::getSendCount);
+            registry.more().counter("spring.integration.channel.sendErrors", tags, channelMetrics, MessageChannelMetrics::getSendErrorCount);
+            registry.more().counter("spring.integration.channel.sends", tags, channelMetrics, MessageChannelMetrics::getSendCount);
 
             if (channelMetrics instanceof PollableChannelManagement) {
-                registry.counter("spring_integration_receives", tags, (PollableChannelManagement) channelMetrics,
+                registry.more().counter("spring.integration.receives", tags, (PollableChannelManagement) channelMetrics,
                         PollableChannelManagement::getReceiveCount);
             }
         }

@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument;
 
 import java.util.Collections;
-import java.util.List;
 
 /**
  * Used to measure the rate of change based on calls to increment.
@@ -42,5 +41,22 @@ public interface Counter extends Meter {
     double count();
 
     @Override
-    default Type getType() { return Type.Counter; }
+    default Iterable<Measurement> measure() {
+        return Collections.singletonList(new Measurement(this::count, Statistic.Count));
+    }
+
+    @Override
+    default Type getType() {
+        return Type.Counter;
+    }
+
+    interface Builder {
+        Builder tags(Iterable<Tag> tags);
+
+        default Builder tags(String... tags) {
+            return tags(Tags.zip(tags));
+        }
+
+        Counter create();
+    }
 }

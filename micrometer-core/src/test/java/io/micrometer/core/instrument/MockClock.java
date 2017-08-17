@@ -32,7 +32,7 @@ public class MockClock implements Clock {
     }
 
     public static MockClock clock(MeterRegistry registry) {
-        return (MockClock) registry.getClock();
+        return (MockClock) registry.config().clock();
     }
 
     public long addAndGet(long amount, TimeUnit unit) {

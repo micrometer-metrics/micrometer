@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.boot.metrics.export.prometheus;
+package io.micrometer.core.instrument;
 
-import org.springframework.boot.metrics.EnableMetrics;
-import org.springframework.context.annotation.Import;
+public abstract class AbstractMeter implements Meter {
+    private final String name;
+    private final Iterable<Tag> tags;
 
-import java.lang.annotation.*;
+    public AbstractMeter(String name, Iterable<Tag> tags) {
+        this.name = name;
+        this.tags = tags;
+    }
 
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-@EnableMetrics
-@EnablePrometheusScraping
-@Import(PrometheusMetricsConfiguration.class)
-public @interface EnablePrometheusMetrics {
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public Iterable<Tag> getTags() {
+        return tags;
+    }
 }

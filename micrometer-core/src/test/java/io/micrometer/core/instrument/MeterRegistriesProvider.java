@@ -77,7 +77,7 @@ class MeterRegistriesProvider implements ArgumentsProvider {
                         return Duration.ofSeconds(1);
                     }
                 }, new MockClock()),
-                new DropwizardMeterRegistry(HierarchicalNameMapper.DEFAULT, new MockClock(), new IdentityTagFormatter()),
+                new DropwizardMeterRegistry(HierarchicalNameMapper.DEFAULT, new MockClock(), TagFormatter.identity),
                 new InfluxMeterRegistry(new InfluxConfig() {
                     @Override
                     public boolean enabled() {

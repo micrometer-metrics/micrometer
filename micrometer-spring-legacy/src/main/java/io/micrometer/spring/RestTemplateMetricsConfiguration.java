@@ -50,7 +50,7 @@ class RestTemplateMetricsConfiguration {
                                                                 RestTemplateTagConfigurer restTemplateTagConfigurer,
                                                                 Environment environment) {
         return new MetricsRestTemplateInterceptor(meterRegistry, restTemplateTagConfigurer,
-                environment.getProperty("spring.metrics.web.client_requests.name", "http_client_requests"));
+                environment.getProperty("spring.metrics.web.client_requests.name", "http.client.requests"));
     }
 
     @Bean

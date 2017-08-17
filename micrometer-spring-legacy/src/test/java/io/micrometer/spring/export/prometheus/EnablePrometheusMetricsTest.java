@@ -68,7 +68,7 @@ public class EnablePrometheusMetricsTest {
     static class PrometheusApp {
         @Bean
         public MeterRegistryConfigurer registryConfigurer() {
-            return registry -> registry.commonTags("stack", "prod", "region", "us-east-1");
+            return registry -> registry.config().commonTags("stack", "prod", "region", "us-east-1");
         }
     }
 

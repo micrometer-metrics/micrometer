@@ -15,12 +15,9 @@
  */
 package io.micrometer.core.instrument.spectator;
 
-import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Measurement;
-
-import java.util.List;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 
 public class SpectatorDistributionSummary implements DistributionSummary {
     private com.netflix.spectator.api.DistributionSummary distributionSummary;
@@ -57,11 +54,6 @@ public class SpectatorDistributionSummary implements DistributionSummary {
     @Override
     public Iterable<Tag> getTags() {
         return SpectatorUtils.tags(distributionSummary);
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return SpectatorUtils.measurements(distributionSummary);
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

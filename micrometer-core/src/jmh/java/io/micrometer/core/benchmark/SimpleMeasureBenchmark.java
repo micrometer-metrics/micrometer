@@ -17,7 +17,6 @@ package io.micrometer.core.benchmark;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.simple.*;
-import io.micrometer.core.instrument.util.MeterId;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.runner.Runner;
@@ -61,13 +60,15 @@ public class SimpleMeasureBenchmark {
 
     @Setup
     public void setup() {
-        MeterId meterId = new MeterId("tested.timer", Arrays.asList(Tag.of("tag1", "v1"), Tag.of("tag2", "v2")));
-        timer = new SimpleTimer(meterId, Clock.SYSTEM);
-        longTaskTimer = new SimpleLongTaskTimer(meterId, Clock.SYSTEM);
-        counter = new SimpleCounter(meterId);
+        String name = "tested.timer";
+        List<Tag> tags = Arrays.asList(Tag.of("tag1", "v1"), Tag.of("tag2", "v2"));
+
+        timer = new SimpleTimer(name, tags, Clock.SYSTEM);
+        longTaskTimer = new SimpleLongTaskTimer(name, tags, Clock.SYSTEM);
+        counter = new SimpleCounter(name, tags);
         List<Integer> testListReference = Arrays.asList(1, 2);
-        gauge = new SimpleGauge<>(meterId, testListReference, List::size);
-        distributionSummary = new SimpleDistributionSummary(meterId);
+        gauge = new SimpleGauge<>(name, tags, testListReference, List::size);
+        distributionSummary = new SimpleDistributionSummary(name, tags);
     }
 
     @Benchmark

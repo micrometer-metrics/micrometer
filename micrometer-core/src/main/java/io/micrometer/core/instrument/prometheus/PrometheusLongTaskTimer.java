@@ -15,21 +15,17 @@
  */
 package io.micrometer.core.instrument.prometheus;
 
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.prometheus.internal.CustomPrometheusLongTaskTimer;
-import io.micrometer.core.instrument.util.MeterId;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 
-import java.util.List;
-
-public class PrometheusLongTaskTimer implements LongTaskTimer {
-    private final MeterId id;
+public class PrometheusLongTaskTimer extends AbstractMeter implements LongTaskTimer {
     private final CustomPrometheusLongTaskTimer.Child timer;
 
-    PrometheusLongTaskTimer(MeterId id, CustomPrometheusLongTaskTimer.Child timer) {
-        this.id = id;
+    PrometheusLongTaskTimer(String name, Iterable<Tag> tags, CustomPrometheusLongTaskTimer.Child timer) {
+        super(name, tags);
         this.timer = timer;
     }
 
@@ -56,21 +52,6 @@ public class PrometheusLongTaskTimer implements LongTaskTimer {
     @Override
     public int activeTasks() {
         return timer.activeTasks();
-    }
-
-    @Override
-    public String getName() {
-        return id.getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return id.getTags();
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return timer.measure();
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

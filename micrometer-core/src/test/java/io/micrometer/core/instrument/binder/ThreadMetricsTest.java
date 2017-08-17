@@ -15,10 +15,9 @@
  */
 package io.micrometer.core.instrument.binder;
 
-import org.junit.jupiter.api.Test;
-import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -28,11 +27,11 @@ class ThreadMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         new ThreadMetrics().bindTo(registry);
 
-        assertThat(registry.findMeter(Gauge.class, "threads_live"))
+        assertThat(registry.find("threads.live").gauge())
                 .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
-        assertThat(registry.findMeter(Gauge.class, "threads_daemon"))
+        assertThat(registry.find("threads.daemon").gauge())
                 .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
-        assertThat(registry.findMeter(Gauge.class, "threads_peak"))
+        assertThat(registry.find("threads.peak").gauge())
                 .hasValueSatisfying(g ->  assertThat(g.value()).isGreaterThan(0));
     }
 }

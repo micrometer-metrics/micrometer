@@ -15,32 +15,27 @@
  */
 package io.micrometer.core.instrument.composite;
 
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.noop.NoopDistributionSummary;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
-import io.micrometer.core.instrument.util.MeterId;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
-import static java.util.stream.Collectors.toList;
-
-public class CompositeDistributionSummary implements DistributionSummary, CompositeMeter {
-    private final MeterId id;
+public class CompositeDistributionSummary extends AbstractMeter implements DistributionSummary, CompositeMeter {
     private final Quantiles quantiles;
     private final Histogram histogram;
 
     private final Map<MeterRegistry, DistributionSummary> distributionSummaries =
         Collections.synchronizedMap(new LinkedHashMap<>());
 
-    CompositeDistributionSummary(MeterId id, Quantiles quantiles, Histogram histogram) {
-        this.id = id;
+    CompositeDistributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram histogram) {
+        super(name, tags);
         this.quantiles = quantiles;
         this.histogram = histogram;
     }
@@ -70,7 +65,7 @@ public class CompositeDistributionSummary implements DistributionSummary, Compos
     public void add(MeterRegistry registry) {
         synchronized (distributionSummaries) {
             distributionSummaries.put(registry,
-                registry.summaryBuilder(id.getName()).tags(id.getTags()).quantiles(quantiles).histogram(histogram).create());
+                registry.summaryBuilder(getName()).tags(getTags()).quantiles(quantiles).histogram(histogram).create());
         }
     }
 
@@ -78,23 +73,6 @@ public class CompositeDistributionSummary implements DistributionSummary, Compos
     public void remove(MeterRegistry registry) {
         synchronized (distributionSummaries) {
             distributionSummaries.remove(registry);
-        }
-    }
-
-    @Override
-    public String getName() {
-        return id.getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return id.getTags();
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        synchronized (distributionSummaries) {
-            return distributionSummaries.values().stream().flatMap(c -> c.measure().stream()).collect(toList());
         }
     }
 }

@@ -16,15 +16,10 @@
 package io.micrometer.core.instrument.influx;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.IdentityTagFormatter;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
+import io.micrometer.core.instrument.TagFormatter;
+import io.micrometer.core.instrument.spectator.step.StepSpectatorMeterRegistry;
 
-import java.util.function.ToDoubleFunction;
-
-public class InfluxMeterRegistry extends SpectatorMeterRegistry {
-    private final long stepMillis;
-
+public class InfluxMeterRegistry extends StepSpectatorMeterRegistry {
     public InfluxMeterRegistry(InfluxConfig config, Clock clock) {
         super(new InfluxRegistry(config, new com.netflix.spectator.api.Clock() {
             @Override
@@ -36,19 +31,24 @@ public class InfluxMeterRegistry extends SpectatorMeterRegistry {
             public long monotonicTime() {
                 return clock.monotonicTime();
             }
-        }), clock, new IdentityTagFormatter());
+        }), clock, TagFormatter.identity, config.step().toMillis());
 
-        stepMillis = config.step().toMillis();
-
-        ((InfluxRegistry) this.getSpectatorRegistry()).start();
+        start();
     }
 
     public InfluxMeterRegistry(InfluxConfig config) {
         this(config, Clock.SYSTEM);
     }
 
-    @Override
-    public <T> T counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        return stepCounter(name, tags, obj, f, stepMillis);
+    public void start() {
+        getInfluxRegistry().start();
+    }
+
+    public void stop() {
+        getInfluxRegistry().stop();
+    }
+
+    private InfluxRegistry getInfluxRegistry() {
+        return (InfluxRegistry) this.getSpectatorRegistry();
     }
 }

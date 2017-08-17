@@ -23,23 +23,25 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
 
 public class CustomPrometheusCollector extends Collector {
     private final String name;
     private final Type type;
+    private final List<String> tagKeys;
     private final Collection<Child> children = new ConcurrentLinkedQueue<>();
 
-    public CustomPrometheusCollector(String name, Type type) {
+    public CustomPrometheusCollector(String name, Iterable<Tag> tags, Type type) {
         this.type = type;
         this.name = name;
+        this.tagKeys = stream(tags.spliterator(), false).map(Tag::getKey).collect(toList());
     }
 
-    public Child child(Supplier<List<Measurement>> measurementSupplier) {
-        Child child = new Child(measurementSupplier);
+    public Child child(Iterable<Tag> tags, Iterable<Measurement> measurements) {
+        Child child = new Child(stream(tags.spliterator(), false).map(Tag::getValue).collect(toList()), measurements);
         children.add(child);
         return child;
     }
@@ -51,20 +53,18 @@ public class CustomPrometheusCollector extends Collector {
     }
 
     class Child implements CustomCollectorChild {
-        private final Supplier<List<Measurement>> measurementSupplier;
+        private final List<String> tagValues;
+        private final Iterable<Measurement> measurements;
 
-        Child(Supplier<List<Measurement>> measurementSupplier) {
-            this.measurementSupplier = measurementSupplier;
+        Child(List<String> tagValues, Iterable<Measurement> measurements) {
+            this.tagValues = tagValues;
+            this.measurements = measurements;
         }
 
         @Override
         public Stream<Collector.MetricFamilySamples.Sample> collect() {
-            return measurementSupplier.get().stream()
-                    .map(m -> {
-                        List<String> keys = m.getTags().stream().map(Tag::getKey).collect(toList());
-                        List<String> values = m.getTags().stream().map(Tag::getValue).collect(toList());
-                        return new MetricFamilySamples.Sample(name, keys, values, m.getValue());
-                    });
+            return stream(measurements.spliterator(), false)
+                    .map(m -> new MetricFamilySamples.Sample(name, tagKeys, tagValues, m.getValue()));
         }
     }
 }

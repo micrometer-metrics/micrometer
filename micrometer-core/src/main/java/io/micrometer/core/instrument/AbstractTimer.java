@@ -15,20 +15,18 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.util.MeterId;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-public abstract class AbstractTimer implements Timer {
+public abstract class AbstractTimer extends AbstractMeter implements Timer {
     protected Clock clock;
-    protected MeterId id;
 
-    protected AbstractTimer(MeterId id, Clock clock) {
+    protected AbstractTimer(String name, Iterable<Tag> tags, Clock clock) {
+        super(name, tags);
         this.clock = clock;
-        this.id = id;
     }
 
     @Override
@@ -75,16 +73,6 @@ public abstract class AbstractTimer implements Timer {
             final long e = clock.monotonicTime();
             record(e - s, TimeUnit.NANOSECONDS);
         }
-    }
-
-    @Override
-    public String getName() {
-        return id.getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return id.getTags();
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

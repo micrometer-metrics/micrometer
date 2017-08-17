@@ -16,28 +16,20 @@
 package io.micrometer.core.instrument.dropwizard;
 
 import com.codahale.metrics.Meter;
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.instrument.util.MeterId;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Jon Schneider
  */
-public class DropwizardCounter extends AbstractDropwizardMeter implements Counter {
+public class DropwizardCounter extends AbstractMeter implements Counter {
     private final com.codahale.metrics.Meter impl;
 
-    public DropwizardCounter(MeterId id, Meter impl) {
-        super(id);
+    DropwizardCounter(String name, Iterable<Tag> tags, Meter impl) {
+        super(name, tags);
         this.impl = impl;
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return Collections.singletonList(id.measurement(count()));
     }
 
     @Override

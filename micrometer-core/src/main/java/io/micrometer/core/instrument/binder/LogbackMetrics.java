@@ -41,11 +41,11 @@ class MetricsTurboFilter extends TurboFilter {
     private final Counter traceCounter;
 
     MetricsTurboFilter(MeterRegistry registry) {
-        errorCounter = registry.counter("logback_events", "level", "error");
-        warnCounter = registry.counter("logback_events", "level", "warn");
-        infoCounter = registry.counter("logback_events", "level", "info");
-        debugCounter = registry.counter("logback_events", "level", "debug");
-        traceCounter = registry.counter("logback_events", "level", "trace");
+        errorCounter = registry.counter("logback.events", "level", "error");
+        warnCounter = registry.counter("logback.events", "level", "warn");
+        infoCounter = registry.counter("logback.events", "level", "info");
+        debugCounter = registry.counter("logback.events", "level", "debug");
+        traceCounter = registry.counter("logback.events", "level", "trace");
     }
 
     @Override

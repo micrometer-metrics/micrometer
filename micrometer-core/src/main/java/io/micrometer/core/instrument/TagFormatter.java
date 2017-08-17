@@ -26,6 +26,8 @@ package io.micrometer.core.instrument;
  * @author Jon Schneider
  */
 public interface TagFormatter {
+    TagFormatter identity = new TagFormatter() {};
+
     default String formatName(String name) { return name; }
     default String formatTagKey(String key) { return key; }
     default String formatTagValue(String value) { return value; }

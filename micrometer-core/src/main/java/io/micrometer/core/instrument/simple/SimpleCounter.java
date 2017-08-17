@@ -16,26 +16,20 @@
 package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.util.MeterId;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.atomic.DoubleAdder;
 
 /**
  * @author Jon Schneider
  */
 public class SimpleCounter extends AbstractSimpleMeter implements Counter {
-    private static final Tag TYPE_TAG = SimpleUtils.typeTag(Type.Counter);
-    private final MeterId countId;
     private DoubleAdder count = new DoubleAdder();
 
-    public SimpleCounter(MeterId id) {
-        super(id);
-        this.countId = id.withTags(TYPE_TAG);
+    public SimpleCounter(String name, Iterable<Tag> tags) {
+        super(name, tags, Meter.Type.Counter);
     }
 
     @Override
@@ -47,11 +41,6 @@ public class SimpleCounter extends AbstractSimpleMeter implements Counter {
     @Override
     public double count() {
         return count.doubleValue();
-    }
-
-    @Override
-    public List<Measurement> measure() {
-        return Collections.singletonList(countId.measurement(count()));
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

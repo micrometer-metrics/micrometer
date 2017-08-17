@@ -50,9 +50,9 @@ class CaffeineCacheMetricsTest {
         cache.put("user3", "Third User");
         cache.put("user4", "Fourth User");
 
-        assertThat(findCounter("c_requests", "result", "hit")).hasValueSatisfying(c -> cnt(c, 1));
-        assertThat(findCounter("c_requests", "result", "miss")).hasValueSatisfying(c -> cnt(c, 2));
-        assertThat(findCounter("c_evictions")).hasValueSatisfying(c -> cnt(c, 2));
+        assertThat(findCounter("c.requests", "result", "hit")).hasValueSatisfying(c -> cnt(c, 1));
+        assertThat(findCounter("c.requests", "result", "miss")).hasValueSatisfying(c -> cnt(c, 2));
+        assertThat(findCounter("c.evictions")).hasValueSatisfying(c -> cnt(c, 2));
     }
 
     @SuppressWarnings("unchecked")
@@ -74,17 +74,17 @@ class CaffeineCacheMetricsTest {
         }
         cache.get(3);
 
-        assertThat(findCounter("c_requests", "result", "hit")).hasValueSatisfying(c -> cnt(c, 1));
-        assertThat(findCounter("c_requests", "result", "miss")).hasValueSatisfying(c -> cnt(c, 3));
-        assertThat(findCounter("c_load", "result", "failure")).hasValueSatisfying(c -> cnt(c, 1));
-        assertThat(findCounter("c_load", "result", "success")).hasValueSatisfying(c -> cnt(c, 2));
+        assertThat(findCounter("c.requests", "result", "hit")).hasValueSatisfying(c -> cnt(c, 1));
+        assertThat(findCounter("c.requests", "result", "miss")).hasValueSatisfying(c -> cnt(c, 3));
+        assertThat(findCounter("c.load", "result", "failure")).hasValueSatisfying(c -> cnt(c, 1));
+        assertThat(findCounter("c.load", "result", "success")).hasValueSatisfying(c -> cnt(c, 2));
     }
 
-    private Optional<Counter> findCounter(String name, String... tags) {
-        return registry.findMeter(Counter.class, name, tags);
+    private Optional<Meter> findCounter(String name, String... tags) {
+        return registry.find(name).tags(tags).meter();
     }
 
-    private void cnt(Counter c, double value) {
-        assertThat(c.count()).isEqualTo(value);
+    private void cnt(Meter c, double value) {
+        assertThat(c.measure().iterator().next().getValue()).isEqualTo(value);
     }
 }

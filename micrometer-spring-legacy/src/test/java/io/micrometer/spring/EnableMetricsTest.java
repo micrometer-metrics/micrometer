@@ -15,7 +15,15 @@
  */
 package io.micrometer.spring;
 
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.LogbackMetrics;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,13 +36,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.binder.JvmMemoryMetrics;
-import io.micrometer.core.instrument.binder.LogbackMetrics;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -67,12 +68,7 @@ public class EnableMetricsTest {
     TestRestTemplate loopback;
 
     @Autowired
-    SimpleMeterRegistry registry;
-
-    @After
-    public void clearRegistry() {
-        registry.clear();
-    }
+    MeterRegistry registry;
 
     @Test
     public void restTemplateIsInstrumented() {
@@ -84,8 +80,7 @@ public class EnableMetricsTest {
         assertThat(external.getForObject("/api/external", Map.class))
             .containsKey("message");
 
-        assertThat(registry.findMeter(Timer.class, "http_client_requests"))
-            .containsInstanceOf(Timer.class)
+        assertThat(registry.find("http.client.requests").timer())
             .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
@@ -93,8 +88,7 @@ public class EnableMetricsTest {
     public void requestMappingIsInstrumented() {
         loopback.getForObject("/api/people", Set.class);
 
-        assertThat(registry.findMeter(Timer.class, "http_server_requests"))
-                .containsInstanceOf(Timer.class)
+        assertThat(registry.find("http.server.requests").timer())
                 .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
