@@ -21,6 +21,8 @@ import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.datadog.DatadogConfig;
 import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
 import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
+import io.micrometer.core.instrument.graphite.GraphiteConfig;
+import io.micrometer.core.instrument.graphite.GraphiteMeterRegistry;
 import io.micrometer.core.instrument.influx.InfluxConfig;
 import io.micrometer.core.instrument.influx.InfluxMeterRegistry;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
@@ -77,7 +79,17 @@ class MeterRegistriesProvider implements ArgumentsProvider {
                         return Duration.ofSeconds(1);
                     }
                 }, new MockClock()),
-                new DropwizardMeterRegistry(HierarchicalNameMapper.DEFAULT, new MockClock(), TagFormatter.identity),
+                new GraphiteMeterRegistry(new GraphiteConfig() {
+                    @Override
+                    public boolean enabled() {
+                        return false;
+                    }
+
+                    @Override
+                    public String get(String k) {
+                        return null;
+                    }
+                }, HierarchicalNameMapper.DEFAULT, new MockClock()),
                 new InfluxMeterRegistry(new InfluxConfig() {
                     @Override
                     public boolean enabled() {

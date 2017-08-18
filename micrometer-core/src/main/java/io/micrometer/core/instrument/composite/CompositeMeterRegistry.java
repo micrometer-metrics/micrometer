@@ -41,7 +41,7 @@ public class CompositeMeterRegistry extends AbstractMeterRegistry {
     }
 
     public CompositeMeterRegistry(Clock clock) {
-        super(clock, TagFormatter.identity);
+        super(clock);
     }
 
     @Override

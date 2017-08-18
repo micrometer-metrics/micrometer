@@ -47,13 +47,12 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
      * names when shipping metrics to hierarchical backends such as Graphite.
      */
     private NamingConvention namingConvention = NamingConvention.snakeCase;
-    private final TagFormatter tagFormatter;
 
     private MeterRegistry.Config config = new MeterRegistry.Config() {
         @Override
         public Config commonTags(Iterable<Tag> tags) {
             stream(tags.spliterator(), false)
-                .map(t -> Tag.of(tagFormatter.formatTagKey(t.getKey()), tagFormatter.formatTagValue(t.getValue())))
+                .map(t -> Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())))
                 .forEach(commonTags::add);
             return this;
         }
@@ -75,9 +74,8 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         return config;
     }
 
-    public AbstractMeterRegistry(Clock clock, TagFormatter tagFormatter) {
+    public AbstractMeterRegistry(Clock clock) {
         this.clock = clock;
-        this.tagFormatter = tagFormatter;
     }
 
     protected abstract DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram);
@@ -390,15 +388,15 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
             this.tags = tags;
         }
 
-        public String getName() {
+        String getName() {
             return name;
         }
 
         /**
          * The formatted name matching this registry's naming convention
          */
-        public String getConventionName(Meter.Type type) {
-            return tagFormatter.formatName(namingConvention.name(name, type));
+        String getConventionName(Meter.Type type) {
+            return namingConvention.name(name, type);
         }
 
         /**
@@ -406,7 +404,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
          */
         public List<Tag> getTags() {
             Stream<Tag> formattedTags = stream(tags.spliterator(), false)
-                .map(t -> Tag.of(tagFormatter.formatTagKey(t.getKey()), tagFormatter.formatTagValue(t.getValue())));
+                .map(t -> Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())));
 
             return Stream.concat(formattedTags, commonTags.stream())
                 .sorted(Comparator.comparing(Tag::getKey))

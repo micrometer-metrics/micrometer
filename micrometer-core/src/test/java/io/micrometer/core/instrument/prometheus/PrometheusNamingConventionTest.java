@@ -15,20 +15,34 @@
  */
 package io.micrometer.core.instrument.prometheus;
 
+import io.micrometer.core.instrument.Meter;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class PrometheusTagFormatterTest {
-    private PrometheusTagFormatter formatter = new PrometheusTagFormatter();
+/**
+ * @author Jon Schneider
+ */
+class PrometheusNamingConventionTest {
+    private PrometheusNamingConvention convention = new PrometheusNamingConvention();
 
     @Test
     void formatName() {
-        assertThat(formatter.formatName("123abc/{:id}水")).isEqualTo("m_123abc__:id__");
+        assertThat(convention.name("123abc/{:id}水", Meter.Type.Gauge)).isEqualTo("m_123abc__:id__");
     }
 
     @Test
     void formatTagKey() {
-        assertThat(formatter.formatTagKey("123abc/{:id}水")).isEqualTo("m_123abc___id__");
+        assertThat(convention.tagKey("123abc/{:id}水")).isEqualTo("m_123abc___id__");
+    }
+
+    @Test
+    void unitsAreAppendedToTimers() {
+        assertThat(convention.name("timer", Meter.Type.Timer)).isEqualTo("timer_duration_seconds");
+    }
+
+    @Test
+    void dotNotationIsConvertedToSnakeCase() {
+        assertThat(convention.name("gauge.size", Meter.Type.Gauge)).isEqualTo("gauge_size");
     }
 }

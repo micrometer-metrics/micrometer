@@ -15,12 +15,13 @@
  */
 package io.micrometer.core.instrument.datadog;
 
-import io.micrometer.core.instrument.TagFormatter;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.NamingConvention;
 
 /**
  * @author Jon Schneider
  */
-public class DatadogTagFormatter implements TagFormatter {
+public class DatadogNamingConvention implements NamingConvention {
     /**
      * {@see https://help.datadoghq.com/hc/en-us/articles/203764705-What-are-valid-metric-names-}
      *
@@ -28,8 +29,8 @@ public class DatadogTagFormatter implements TagFormatter {
      * all non-alphanumeric characters with '_'.
      */
     @Override
-    public String formatName(String name) {
-        String sanitized = name;
+    public String name(String name, Meter.Type type) {
+        String sanitized = NamingConvention.camelCase.name(name, type);
 
         // Metrics that don't start with a letter get dropped on the floor by the Datadog publish API,
         // so we will prepend them with 'm_'.
@@ -47,19 +48,19 @@ public class DatadogTagFormatter implements TagFormatter {
      * Tag keys that begin with a number show up as an empty string, so we prepend them with 'm_'.
      */
     @Override
-    public String formatTagKey(String key) {
+    public String tagKey(String key) {
         if(Character.isDigit(key.charAt(0))) {
             return "m_" + key;
         }
-        return key;
+        return NamingConvention.camelCase.tagKey(key);
     }
 
     /**
-     * Some set of non-alphanumeric characters will be replaced with '_', but not all (e.g. '/' is OK, but '{' is replaced).
-     * It is permissible for a tag value to begin with a digit.
+     * Some set of non-alphanumeric characters will be replaced by Datadog automatically with '_', but not all
+     * (e.g. '/' is OK, but '{' is replaced). It is permissible for a tag value to begin with a digit.
      */
     @Override
-    public String formatTagValue(String value) {
+    public String tagValue(String value) {
         return value;
     }
 }

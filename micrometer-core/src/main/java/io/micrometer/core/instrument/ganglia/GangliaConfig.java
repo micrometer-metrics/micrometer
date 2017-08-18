@@ -93,4 +93,12 @@ public interface GangliaConfig {
         String v = get(prefix() + ".port");
         return (v == null) ? 8649 : Integer.parseInt(v);
     }
+
+    /**
+     * Returns true if publishing is enabled. Default is {@code true}.
+     */
+    default boolean enabled() {
+        String v = get(prefix() + ".enabled");
+        return v == null || Boolean.valueOf(v);
+    }
 }

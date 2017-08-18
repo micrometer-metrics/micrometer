@@ -39,8 +39,8 @@ import static java.util.stream.StreamSupport.stream;
 public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
     private final Registry registry;
 
-    public SpectatorMeterRegistry(Registry registry, Clock clock, TagFormatter tagFormatter) {
-        super(clock, tagFormatter);
+    public SpectatorMeterRegistry(Registry registry, Clock clock) {
+        super(clock);
         this.registry = registry;
     }
 

@@ -17,11 +17,9 @@ package io.micrometer.core.instrument.atlas;
 
 import com.netflix.spectator.atlas.AtlasConfig;
 import com.netflix.spectator.atlas.AtlasRegistry;
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.NamingConvention;
 import io.micrometer.core.instrument.spectator.step.StepSpectatorMeterRegistry;
-
-import java.util.function.ToDoubleFunction;
 
 /**
  * @author Jon Schneider
@@ -40,9 +38,12 @@ public class AtlasMeterRegistry extends StepSpectatorMeterRegistry {
             public long monotonicTime() {
                 return clock.monotonicTime();
             }
-        }, config), clock, TagFormatter.identity, config.step().toMillis());
+        }, config), clock, config.step().toMillis());
 
+        // invalid character replacement happens in the spectator-reg-atlas module, so doesn't need
+        // to be duplicated here.
         this.config().namingConvention(NamingConvention.camelCase);
+
         start();
     }
 

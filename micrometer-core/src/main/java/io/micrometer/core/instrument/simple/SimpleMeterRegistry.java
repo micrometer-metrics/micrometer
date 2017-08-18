@@ -34,7 +34,7 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
     }
 
     public SimpleMeterRegistry(Clock clock) {
-        super(clock, TagFormatter.identity);
+        super(clock);
     }
 
     @Override

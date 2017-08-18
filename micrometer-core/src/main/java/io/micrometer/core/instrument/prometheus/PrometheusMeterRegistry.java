@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.prometheus;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.prometheus.internal.CustomPrometheusCollector;
 import io.micrometer.core.instrument.prometheus.internal.CustomPrometheusLongTaskTimer;
 import io.micrometer.core.instrument.prometheus.internal.CustomPrometheusSummary;
@@ -56,7 +55,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     }
 
     public PrometheusMeterRegistry(CollectorRegistry registry, Clock clock) {
-        super(clock, new PrometheusTagFormatter());
+        super(clock);
         this.registry = registry;
         this.config().namingConvention(new PrometheusNamingConvention());
     }

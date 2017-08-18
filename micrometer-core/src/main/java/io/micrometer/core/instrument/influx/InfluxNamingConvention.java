@@ -15,35 +15,40 @@
  */
 package io.micrometer.core.instrument.influx;
 
-import io.micrometer.core.instrument.TagFormatter;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.NamingConvention;
 
-public class InfluxTagFormatter implements TagFormatter {
+/**
+ * @author Jon Schneider
+ */
+public class InfluxNamingConvention implements NamingConvention {
     @Override
-    public String formatName(String name) {
+    public String name(String name, Meter.Type type) {
         return format(name.replace("=", "_"));
     }
 
     @Override
-    public String formatTagKey(String key) {
+    public String tagKey(String key) {
         // `time` cannot be a field key or tag key
-        if(key.equals("time"))
+        if (key.equals("time"))
             throw new IllegalArgumentException("'time' is an invalid tag key in InfluxDB");
         return format(key);
     }
 
     @Override
-    public String formatTagValue(String value) {
+    public String tagValue(String value) {
         // `time` cannot be a field key or tag key
-        if(value.equals("time"))
+        if (value.equals("time"))
             throw new IllegalArgumentException("'time' is an invalid tag value in InfluxDB");
         return format(value);
     }
 
     private String format(String name) {
         // https://docs.influxdata.com/influxdb/v1.3/write_protocols/line_protocol_reference/#special-characters
-        return name.replace(",", "\\,")
-                .replace(" ", "\\ ")
-                .replace("=", "\\=")
-                .replace("\"", "\\\"");
+        return NamingConvention.snakeCase.tagKey(name)
+            .replace(",", "\\,")
+            .replace(" ", "\\ ")
+            .replace("=", "\\=")
+            .replace("\"", "\\\"");
     }
 }

@@ -33,6 +33,7 @@ import javax.inject.Inject;
 
 import static io.micrometer.core.instrument.LazyMetrics.lazyCounter;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Demonstrates the combination of meter registry field injection + lazy meter fields.
@@ -73,10 +74,8 @@ class MeterRegistryInjectionTest {
     @Test
     void noInjection() {
         MyComponent component = new MyComponent();
-        component.performanceCriticalFeature();
-        assertThat(component.registry)
-                .isInstanceOf(CompositeMeterRegistry.class)
-                .matches(r -> r.find("feature.counter").counter().isPresent());
+        assertThatThrownBy(component::performanceCriticalFeature)
+            .isInstanceOf(NullPointerException.class);
     }
 }
 

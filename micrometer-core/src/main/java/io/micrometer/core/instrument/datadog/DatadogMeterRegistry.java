@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.datadog;
 
-import com.netflix.spectator.atlas.AtlasRegistry;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.spectator.step.StepSpectatorMeterRegistry;
 
@@ -34,7 +33,9 @@ public class DatadogMeterRegistry extends StepSpectatorMeterRegistry {
             public long monotonicTime() {
                 return clock.monotonicTime();
             }
-        }), clock, new DatadogTagFormatter(), config.step().toMillis());
+        }), clock, config.step().toMillis());
+
+        this.config().namingConvention(new DatadogNamingConvention());
 
         start();
     }

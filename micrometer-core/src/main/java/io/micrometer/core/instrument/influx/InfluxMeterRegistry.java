@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.influx;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.TagFormatter;
 import io.micrometer.core.instrument.spectator.step.StepSpectatorMeterRegistry;
 
 public class InfluxMeterRegistry extends StepSpectatorMeterRegistry {
@@ -31,7 +30,9 @@ public class InfluxMeterRegistry extends StepSpectatorMeterRegistry {
             public long monotonicTime() {
                 return clock.monotonicTime();
             }
-        }), clock, TagFormatter.identity, config.step().toMillis());
+        }), clock, config.step().toMillis());
+
+        this.config().namingConvention(new InfluxNamingConvention());
 
         start();
     }

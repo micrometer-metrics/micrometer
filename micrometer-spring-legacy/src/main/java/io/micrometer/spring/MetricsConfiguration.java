@@ -15,19 +15,14 @@
  */
 package io.micrometer.spring;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.spring.binder.SpringIntegrationMetrics;
-import org.springframework.boot.actuate.endpoint.MetricReaderPublicMetrics;
-import org.springframework.boot.actuate.metrics.integration.SpringIntegrationMetricReader;
+import io.micrometer.spring.scheduling.MetricsSchedulingAspect;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.TagFormatter;
-import io.micrometer.spring.scheduling.MetricsSchedulingAspect;
-import org.springframework.integration.config.EnableIntegrationManagement;
 import org.springframework.integration.support.management.IntegrationManagementConfigurer;
-import org.springframework.lang.UsesJava7;
 
 /**
  * Metrics configuration for Spring 4/Boot 1.x
@@ -41,12 +36,6 @@ import org.springframework.lang.UsesJava7;
         MeterRegistryConfigurationSupport.class
 })
 class MetricsConfiguration {
-    @Bean
-    @ConditionalOnMissingBean(TagFormatter.class)
-    public TagFormatter tagFormatter() {
-        return new TagFormatter() {};
-    }
-
     @Configuration
     @ConditionalOnWebApplication
     @Import(MetricsServletRequestConfiguration.class)

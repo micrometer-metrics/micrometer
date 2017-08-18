@@ -38,16 +38,19 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
     }
 
     public GraphiteMeterRegistry(GraphiteConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
-        super(nameMapper, clock, new GraphiteTagFormatter());
+        super(nameMapper, clock);
 
         this.config = config;
+        this.config().namingConvention(new GraphiteNamingConvention());
 
         final PickledGraphite pickledGraphite = new PickledGraphite(new InetSocketAddress(config.host(), config.port()));
         this.reporter = GraphiteReporter.forRegistry(getDropwizardRegistry())
                 .convertRatesTo(config.rateUnits())
                 .convertDurationsTo(config.durationUnits())
                 .build(pickledGraphite);
-        start();
+
+        if(config.enabled())
+            start();
     }
 
     public void stop() {

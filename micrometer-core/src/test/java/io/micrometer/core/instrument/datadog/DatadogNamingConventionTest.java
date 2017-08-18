@@ -15,20 +15,26 @@
  */
 package io.micrometer.core.instrument.datadog;
 
+import io.micrometer.core.instrument.Meter;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class DatadogTagFormatterTest {
-    private DatadogTagFormatter formatter = new DatadogTagFormatter();
+class DatadogNamingConventionTest {
+    private DatadogNamingConvention convention = new DatadogNamingConvention();
 
     @Test
     void nameStartsWithLetter() {
-        assertThat(formatter.formatName("123")).isEqualTo("m_123");
+        assertThat(convention.name("123", Meter.Type.Gauge)).isEqualTo("m_123");
     }
 
     @Test
     void tagKeyStartsWithLetter() {
-        assertThat(formatter.formatTagKey("123")).isEqualTo("m_123");
+        assertThat(convention.tagKey("123")).isEqualTo("m_123");
+    }
+
+    @Test
+    void dotNotationIsConvertedToCamelCase() {
+        assertThat(convention.name("gauge.size", Meter.Type.Gauge)).isEqualTo("gaugeSize");
     }
 }

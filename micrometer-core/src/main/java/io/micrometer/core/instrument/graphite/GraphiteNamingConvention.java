@@ -15,12 +15,13 @@
  */
 package io.micrometer.core.instrument.graphite;
 
-import io.micrometer.core.instrument.TagFormatter;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.NamingConvention;
 
 import java.text.Normalizer;
 import java.util.regex.Pattern;
 
-public class GraphiteTagFormatter implements TagFormatter {
+public class GraphiteNamingConvention implements NamingConvention {
     /**
      * A list that probably is blacklisted: https://github.com/graphite-project/graphite-web/blob/master/webapp/graphite/render/grammar.py#L48-L55.
      * Empirically, we have found others.
@@ -28,17 +29,17 @@ public class GraphiteTagFormatter implements TagFormatter {
     private static final Pattern blacklistedChars = Pattern.compile("[{}(),=\\[\\]/]");
 
     @Override
-    public String formatName(String name) {
+    public String name(String name, Meter.Type type) {
         return format(name);
     }
 
     @Override
-    public String formatTagKey(String key) {
+    public String tagKey(String key) {
         return format(key);
     }
 
     @Override
-    public String formatTagValue(String value) {
+    public String tagValue(String value) {
         return format(value);
     }
 
@@ -49,6 +50,7 @@ public class GraphiteTagFormatter implements TagFormatter {
      */
     private String format(String name) {
         String sanitized = Normalizer.normalize(name, Normalizer.Form.NFKD);
+        sanitized = NamingConvention.camelCase.tagKey(name);
         return blacklistedChars.matcher(sanitized).replaceAll("_");
     }
 }

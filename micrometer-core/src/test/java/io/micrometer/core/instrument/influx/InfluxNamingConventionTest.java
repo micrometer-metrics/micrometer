@@ -15,33 +15,33 @@
  */
 package io.micrometer.core.instrument.influx;
 
+import io.micrometer.core.instrument.Meter;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
-class InfluxTagFormatterTest {
-    private InfluxTagFormatter formatter = new InfluxTagFormatter();
+class InfluxNamingConventionTest {
+    private InfluxNamingConvention convention = new InfluxNamingConvention();
 
     @Test
-    void formatName() {
-        assertThat(formatter.formatName("foo=, bar")).isEqualTo("foo_\\,\\ bar");
+    void name() {
+        assertThat(convention.name("foo=, bar", Meter.Type.Gauge)).isEqualTo("foo_\\,\\ bar");
     }
 
     @Test
-    void formatTagKey() {
-        assertThat(formatter.formatTagKey("foo=, bar")).isEqualTo("foo\\=\\,\\ bar");
+    void tagKey() {
+        assertThat(convention.tagKey("foo=, bar")).isEqualTo("foo\\=\\,\\ bar");
     }
 
     @Test
-    void formatTagValue() {
-        assertThat(formatter.formatTagValue("foo=, bar")).isEqualTo("foo\\=\\,\\ bar");
+    void tagValue() {
+        assertThat(convention.tagValue("foo=, bar")).isEqualTo("foo\\=\\,\\ bar");
     }
 
     @Test
     void timeCannotBeATagKeyOrValue() {
-        assertThat(catchThrowable(() -> formatter.formatTagKey("time"))).isInstanceOf(IllegalArgumentException.class);
-        assertThat(catchThrowable(() -> formatter.formatTagValue("time"))).isInstanceOf(IllegalArgumentException.class);
+        assertThat(catchThrowable(() -> convention.tagKey("time"))).isInstanceOf(IllegalArgumentException.class);
+        assertThat(catchThrowable(() -> convention.tagValue("time"))).isInstanceOf(IllegalArgumentException.class);
     }
 }

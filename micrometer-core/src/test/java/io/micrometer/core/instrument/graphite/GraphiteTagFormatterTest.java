@@ -15,15 +15,21 @@
  */
 package io.micrometer.core.instrument.graphite;
 
+import io.micrometer.core.instrument.Meter;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GraphiteTagFormatterTest {
-    private GraphiteTagFormatter formatter = new GraphiteTagFormatter();
+    private GraphiteNamingConvention convention = new GraphiteNamingConvention();
 
     @Test
-    void formatName() {
-        assertThat(formatter.formatName("name([{id}])/1")).isEqualTo("name___id____1");
+    void name() {
+        assertThat(convention.name("name([{id}])/1", Meter.Type.Timer)).isEqualTo("name___id____1");
+    }
+
+    @Test
+    void dotNotationIsConvertedToCamelCase() {
+        assertThat(convention.name("gauge.size", Meter.Type.Gauge)).isEqualTo("gaugeSize");
     }
 }

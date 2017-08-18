@@ -33,8 +33,8 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
     private final MetricRegistry registry;
     private final HierarchicalNameMapper nameMapper;
 
-    public DropwizardMeterRegistry(HierarchicalNameMapper nameMapper, Clock clock, TagFormatter tagFormatter) {
-        super(clock, tagFormatter);
+    public DropwizardMeterRegistry(HierarchicalNameMapper nameMapper, Clock clock) {
+        super(clock);
         this.registry = new MetricRegistry();
         this.nameMapper = nameMapper;
         this.config().namingConvention(NamingConvention.camelCase);
