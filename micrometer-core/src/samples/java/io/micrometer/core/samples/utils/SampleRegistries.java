@@ -34,7 +34,7 @@ import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.Properties;
 
-public class Registries {
+public class SampleRegistries {
     public static PrometheusMeterRegistry prometheus() {
         PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry();
 
@@ -76,7 +76,7 @@ public class Registries {
 
             {
                 try {
-                    props.load(Registries.class.getResourceAsStream("/datadog.properties"));
+                    props.load(SampleRegistries.class.getResourceAsStream("/datadog.properties"));
                 } catch (IOException e) {
                     throw new RuntimeException("must have application.properties with datadog.apiKey defined", e);
                 }

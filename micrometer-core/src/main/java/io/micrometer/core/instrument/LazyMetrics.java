@@ -25,7 +25,7 @@ import java.util.function.Supplier;
 /**
  * @author Jon Schneider
  */
-public class Meters {
+public class LazyMetrics {
     public static Counter lazyCounter(Supplier<Counter> counterBuilder) {
         return new LazyCounter(counterBuilder);
     }

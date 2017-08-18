@@ -21,7 +21,7 @@ import cern.jet.random.engine.RandomEngine;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.stats.quantile.GKQuantiles;
-import io.micrometer.core.samples.utils.Registries;
+import io.micrometer.core.samples.utils.SampleRegistries;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TimerSample {
     public static void main(String[] args) {
-        MeterRegistry registry = Registries.atlas();
+        MeterRegistry registry = SampleRegistries.atlas();
         GKQuantiles quantiles = GKQuantiles.quantiles(0.95, 0.5).error(0.05).create();
         Timer timer = registry.timerBuilder("timer").quantiles(quantiles).create();
 

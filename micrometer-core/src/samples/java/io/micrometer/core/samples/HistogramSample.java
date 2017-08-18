@@ -22,7 +22,7 @@ import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 import io.micrometer.core.instrument.stats.hist.CumulativeHistogram;
 import io.micrometer.core.instrument.stats.quantile.CKMSQuantiles;
-import io.micrometer.core.samples.utils.Registries;
+import io.micrometer.core.samples.utils.SampleRegistries;
 
 import static io.micrometer.core.instrument.stats.hist.CumulativeHistogram.linear;
 
@@ -33,7 +33,7 @@ import static io.micrometer.core.instrument.stats.hist.CumulativeHistogram.linea
  */
 public class HistogramSample {
     public static void main(String[] args) throws InterruptedException {
-        PrometheusMeterRegistry meterRegistry = Registries.prometheus();
+        PrometheusMeterRegistry meterRegistry = SampleRegistries.prometheus();
 
         RandomEngine r = new MersenneTwister64(0);
         Normal dist = new Normal(100, 50, r);

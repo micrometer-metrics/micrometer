@@ -1,91 +1,24 @@
-/**
- * Copyright 2017 Pivotal Software, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.ToDoubleFunction;
 
-import static java.util.Collections.emptyList;
-import static io.micrometer.core.instrument.Tags.zip;
-
 /**
- * Creates and manages your application's set of meters. Exporters use the meter registry to iterate
- * over the set of meters instrumenting your application, and then further iterate over each meter's metrics, generally
- * resulting in a time series in the metrics backend for each combination of metrics and dimensions.
- *
  * @author Jon Schneider
  */
-public interface MeterRegistry {
-    /**
-     * @return The set of registered meters.
-     */
-    Collection<Meter> getMeters();
+public class Metrics {
+    public static final CompositeMeterRegistry globalRegistry = new CompositeMeterRegistry();
 
-    interface Config {
-        /**
-         * Append a list of common tags to apply to all metrics reported to the monitoring system.
-         */
-        Config commonTags(Iterable<Tag> tags);
-
-        /**
-         * Append a list of common tags to apply to all metrics reported to the monitoring system.
-         */
-        default Config commonTags(String... tags) {
-            commonTags(zip(tags));
-            return this;
-        }
-
-        /**
-         * Use the provided naming convention, overriding the default for your monitoring system.
-         */
-        Config namingConvention(NamingConvention convention);
-
-        /**
-         * Retrieve the clock used to measure durations of timers and long task timers (and sometimes
-         * influences publishing behavior).
-         */
-        Clock clock();
+    public static void addRegistry(MeterRegistry registry) {
+        globalRegistry.add(registry);
     }
 
-    /**
-     * Access to configuration options for this registry.
-     */
-    Config config();
-
-    interface Search {
-        default Search tags(String... tags) {
-            return tags(Tags.zip(tags));
-        }
-
-        Search tags(Iterable<Tag> tags);
-
-        Optional<Timer> timer();
-        Optional<Counter> counter();
-        Optional<Gauge> gauge();
-        Optional<DistributionSummary> summary();
-        Optional<LongTaskTimer> longTaskTimer();
-        Optional<Meter> meter();
-        Collection<Meter> meters();
+    public static void removeRegistry(MeterRegistry registry) {
+        globalRegistry.remove(registry);
     }
-
-    Search find(String name);
 
     /**
      * Build a new Counter, which is registered with this registry once {@link Counter.Builder#create()} is called.
@@ -93,20 +26,22 @@ public interface MeterRegistry {
      * @param name The name of the counter (which is the only requirement for a new counter).
      * @return The builder.
      */
-    Counter.Builder counterBuilder(String name);
-
-    /**
-     * Tracks a monotonically increasing value.
-     */
-    default Counter counter(String name, Iterable<Tag> tags) {
-        return counterBuilder(name).tags(tags).create();
+    public static Counter.Builder counterBuilder(String name) {
+        return globalRegistry.counterBuilder(name);
     }
 
     /**
      * Tracks a monotonically increasing value.
      */
-    default Counter counter(String name, String... tags) {
-        return counter(name, zip(tags));
+    public static Counter counter(String name, Iterable<Tag> tags) {
+        return globalRegistry.counter(name, tags);
+    }
+
+    /**
+     * Tracks a monotonically increasing value.
+     */
+    public static Counter counter(String name, String... tags) {
+        return globalRegistry.counter(name, tags);
     }
 
     /**
@@ -115,20 +50,22 @@ public interface MeterRegistry {
      * @param name The name of the distribution summary (which is the only requirement for a new distribution summary).
      * @return The builder.
      */
-    DistributionSummary.Builder summaryBuilder(String name);
-
-    /**
-     * Measures the sample distribution of events.
-     */
-    default DistributionSummary summary(String name, Iterable<Tag> tags) {
-        return summaryBuilder(name).tags(tags).create();
+    public static DistributionSummary.Builder summaryBuilder(String name) {
+        return globalRegistry.summaryBuilder(name);
     }
 
     /**
      * Measures the sample distribution of events.
      */
-    default DistributionSummary summary(String name, String... tags) {
-        return summary(name, zip(tags));
+    public static DistributionSummary summary(String name, Iterable<Tag> tags) {
+        return globalRegistry.summary(name, tags);
+    }
+
+    /**
+     * Measures the sample distribution of events.
+     */
+    public static DistributionSummary summary(String name, String... tags) {
+        return globalRegistry.summary(name, tags);
     }
 
     /**
@@ -137,35 +74,37 @@ public interface MeterRegistry {
      * @param name The name of the timer (which is the only requirement for a new timer).
      * @return The builder.
      */
-    Timer.Builder timerBuilder(String name);
-
-    /**
-     * Measures the time taken for short tasks.
-     */
-    default Timer timer(String name, Iterable<Tag> tags) {
-        return timerBuilder(name).tags(tags).create();
+    public static Timer.Builder timerBuilder(String name) {
+        return globalRegistry.timerBuilder(name);
     }
 
     /**
      * Measures the time taken for short tasks.
      */
-    default Timer timer(String name, String... tags) {
-        return timer(name, zip(tags));
+    public static Timer timer(String name, Iterable<Tag> tags) {
+        return globalRegistry.timer(name, tags);
     }
 
-    interface More {
+    /**
+     * Measures the time taken for short tasks.
+     */
+    public static Timer timer(String name, String... tags) {
+        return globalRegistry.timer(name, tags);
+    }
+
+    static class More {
         /**
          * Measures the time taken for short tasks.
          */
-        default LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
-            return longTaskTimerBuilder(name).tags(tags).create();
+        public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
+            return globalRegistry.more().longTaskTimer(name, tags);
         }
 
         /**
          * Measures the time taken for short tasks.
          */
-        default LongTaskTimer longTaskTimer(String name, String... tags) {
-            return longTaskTimer(name, zip(tags));
+        public LongTaskTimer longTaskTimer(String name, String... tags) {
+            return globalRegistry.more().longTaskTimer(name, tags);
         }
 
         /**
@@ -174,28 +113,38 @@ public interface MeterRegistry {
          * @param name The name of the timer (which is the only requirement for a new timer).
          * @return The builder.
          */
-        LongTaskTimer.Builder longTaskTimerBuilder(String name);
+        public LongTaskTimer.Builder longTaskTimerBuilder(String name) {
+            return globalRegistry.more().longTaskTimerBuilder(name);
+        }
 
         /**
          * Tracks a monotonically increasing value, automatically incrementing the counter whenever
          * the value is observed.
          */
-        <T> T counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f);
+        public <T> T counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+            return globalRegistry.more().counter(name, tags, obj, f);
+        }
 
         /**
          * Tracks a number, maintaining a weak reference on it.
          */
-        default <T extends Number> T counter(String name, Iterable<Tag> tags, T number) {
-            return counter(name, tags, number, Number::doubleValue);
+        public <T extends Number> T counter(String name, Iterable<Tag> tags, T number) {
+            return globalRegistry.more().counter(name, tags, number);
         }
     }
+
+    private static final More more = new More();
 
     /**
      * Access to less frequently used meter types and patterns.
      */
-    More more();
+    public static More more() {
+        return more;
+    };
 
-    MeterRegistry register(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements);
+    public static MeterRegistry register(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements) {
+        return globalRegistry.register(name, tags, type, measurements);
+    }
 
     /**
      * Register a gauge that reports the value of the object after the function
@@ -215,9 +164,8 @@ public interface MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    default <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        gaugeBuilder(name, obj, f).tags(tags).create();
-        return obj;
+    public static <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+        return globalRegistry.gauge(name, tags, obj, f);
     }
 
     /**
@@ -229,8 +177,8 @@ public interface MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    default <T extends Number> T gauge(String name, Iterable<Tag> tags, T number) {
-        return gauge(name, tags, number, Number::doubleValue);
+    public static <T extends Number> T gauge(String name, Iterable<Tag> tags, T number) {
+        return globalRegistry.gauge(name, tags, number);
     }
 
     /**
@@ -241,8 +189,8 @@ public interface MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    default <T extends Number> T gauge(String name, T number) {
-        return gauge(name, emptyList(), number);
+    public static <T extends Number> T gauge(String name, T number) {
+        return globalRegistry.gauge(name, number);
     }
 
     /**
@@ -254,8 +202,8 @@ public interface MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    default <T> T gauge(String name, T obj, ToDoubleFunction<T> f) {
-        return gauge(name, emptyList(), obj, f);
+    public static <T> T gauge(String name, T obj, ToDoubleFunction<T> f) {
+        return globalRegistry.gauge(name, obj, f);
     }
 
     /**
@@ -271,8 +219,8 @@ public interface MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    default <T extends Collection<?>> T gaugeCollectionSize(String name, Iterable<Tag> tags, T collection) {
-        return gauge(name, tags, collection, Collection::size);
+    public static <T extends Collection<?>> T gaugeCollectionSize(String name, Iterable<Tag> tags, T collection) {
+        return globalRegistry.gaugeCollectionSize(name, tags, collection);
     }
 
     /**
@@ -288,8 +236,8 @@ public interface MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    default <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
-        return gauge(name, tags, map, Map::size);
+    public static <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
+        return globalRegistry.gaugeMapSize(name, tags, map);
     }
 
     /**
@@ -300,5 +248,7 @@ public interface MeterRegistry {
      * @param f    Function that is applied on the value for the number.
      * @return The builder.
      */
-    <T> Gauge.Builder gaugeBuilder(String name, T obj, ToDoubleFunction<T> f);
+    public static <T> Gauge.Builder gaugeBuilder(String name, T obj, ToDoubleFunction<T> f) {
+        return globalRegistry.gaugeBuilder(name, obj, f);
+    }
 }

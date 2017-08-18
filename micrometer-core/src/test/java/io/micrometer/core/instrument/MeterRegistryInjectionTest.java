@@ -31,13 +31,15 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.inject.Inject;
 
-import static io.micrometer.core.instrument.Meters.lazyCounter;
+import static io.micrometer.core.instrument.LazyMetrics.lazyCounter;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
+ * Demonstrates the combination of meter registry field injection + lazy meter fields.
+ *
  * @author Jon Schneider
  */
-class LibraryInstrumentationTest {
+class MeterRegistryInjectionTest {
     @Test
     void injectWithSpring() {
         AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(SpringConfiguration.class);
@@ -112,7 +114,7 @@ class GuiceConfiguration extends AbstractModule {
 }
 
 class MyComponent {
-    @Inject MeterRegistry registry = MeterRegistry.globalRegistry;
+    @Inject MeterRegistry registry;
 
     // for performance-critical uses, it is best to store a meter in a field
     Counter counter = lazyCounter(() -> registry.counter("feature.counter"));
@@ -124,7 +126,7 @@ class MyComponent {
     void notPerformanceCriticalFeature() {
         // in code blocks that are not performance-critical, it is acceptable to inline
         // the retrieval of the counter
-        registry.counter("infrequent.counter").increment();
+        Metrics.counter("infrequent.counter").increment();
     }
 
     @Inject MyComponent() {}

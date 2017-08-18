@@ -20,7 +20,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.GuavaCacheMetrics;
-import io.micrometer.core.samples.utils.Registries;
+import io.micrometer.core.samples.utils.SampleRegistries;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -40,8 +40,8 @@ public class CacheSample {
                     }
                 });
 
-        MeterRegistry registry = Registries.prometheus();
-        new GuavaCacheMetrics("inverting_cache", emptyList(), cache).bindTo(registry);
+        MeterRegistry registry = SampleRegistries.prometheus();
+        new GuavaCacheMetrics("inverting.cache", emptyList(), cache).bindTo(registry);
 
         for(int i = 0;; i++) {
             cache.getUnchecked(i);
