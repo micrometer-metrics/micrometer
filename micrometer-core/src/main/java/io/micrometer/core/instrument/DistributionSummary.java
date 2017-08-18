@@ -56,6 +56,8 @@ public interface DistributionSummary extends Meter {
 
         Builder description(String description);
 
+        Builder baseUnit(String unit);
+
         DistributionSummary create();
     }
 

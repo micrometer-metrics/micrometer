@@ -52,7 +52,7 @@ public class SlidingWindow<T> implements Serializable {
             windowSize *= -1;
         }
         this.windowSize = windowSize;
-        this.elements = new LinkedList<Element<T>>();
+        this.elements = new LinkedList<>();
     }
 
     /**
@@ -63,7 +63,7 @@ public class SlidingWindow<T> implements Serializable {
      * @param element
      */
     public void add(T element) {
-        Element<T> newElement = new Element<T>(element, this.windowSize, 0);
+        Element<T> newElement = new Element<>(element, this.windowSize, 0);
         this.elements.addFirst(newElement);
     }
 
@@ -85,7 +85,7 @@ public class SlidingWindow<T> implements Serializable {
             throw new RuntimeException("The size of an element can't be a negative integer.");
         }
 
-        Element<T> newElement = new Element<T>(element, this.windowSize - size, size);
+        Element<T> newElement = new Element<>(element, this.windowSize - size, size);
         this.elements.addFirst(newElement);
     }
 
@@ -156,7 +156,7 @@ public class SlidingWindow<T> implements Serializable {
      * @return a {@link Collection} of element of type <b>T</b>
      */
     public Collection<T> getAll() {
-        Collection<T> elements = new LinkedList<T>();
+        Collection<T> elements = new LinkedList<>();
 
         for (int i = 0; i < this.elements.size(); i++) {
             elements.add(this.elements.get(i).getElement());
@@ -171,7 +171,7 @@ public class SlidingWindow<T> implements Serializable {
      * @return a {@link Collection} of element of type {@link Integer}
      */
     public Collection<Integer> getAllLifeTimes() {
-        Collection<Integer> lifeTimes = new LinkedList<Integer>();
+        Collection<Integer> lifeTimes = new LinkedList<>();
 
         for (int i = 0; i < this.elements.size(); i++) {
             lifeTimes.add(this.elements.get(i).getTimeToLive());

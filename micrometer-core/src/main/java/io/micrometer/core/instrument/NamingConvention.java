@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 public interface NamingConvention {
     NamingConvention snakeCase = new NamingConvention() {
         @Override
-        public String name(String name, Meter.Type type) {
+        public String name(String name, Meter.Type type, String baseUnit) {
             return toSnakeCase(name);
         }
 
@@ -50,7 +50,7 @@ public interface NamingConvention {
 
     NamingConvention camelCase = new NamingConvention() {
         @Override
-        public String name(String name, Meter.Type type) {
+        public String name(String name, Meter.Type type, String baseUnit) {
             return toCamelCase(name);
         }
 
@@ -82,7 +82,11 @@ public interface NamingConvention {
         }
     };
 
-    String name(String name, Meter.Type type);
+    default String name(String name, Meter.Type type) {
+        return name(name, type, null);
+    }
+
+    String name(String name, Meter.Type type, String baseUnit);
 
     default String tagKey(String key) { return key; }
     default String tagValue(String value) { return value; }

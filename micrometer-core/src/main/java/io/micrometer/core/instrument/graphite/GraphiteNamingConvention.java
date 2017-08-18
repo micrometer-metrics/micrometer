@@ -29,7 +29,7 @@ public class GraphiteNamingConvention implements NamingConvention {
     private static final Pattern blacklistedChars = Pattern.compile("[{}(),=\\[\\]/]");
 
     @Override
-    public String name(String name, Meter.Type type) {
+    public String name(String name, Meter.Type type, String baseUnit) {
         return format(name);
     }
 

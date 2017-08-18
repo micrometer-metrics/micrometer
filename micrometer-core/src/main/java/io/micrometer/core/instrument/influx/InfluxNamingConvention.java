@@ -23,7 +23,7 @@ import io.micrometer.core.instrument.NamingConvention;
  */
 public class InfluxNamingConvention implements NamingConvention {
     @Override
-    public String name(String name, Meter.Type type) {
+    public String name(String name, Meter.Type type, String baseUnit) {
         return format(name.replace("=", "_"));
     }
 

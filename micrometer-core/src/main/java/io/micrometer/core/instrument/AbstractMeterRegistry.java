@@ -206,6 +206,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         private Histogram<?> histogram;
         private final List<Tag> tags = new ArrayList<>();
         private String description;
+        private String baseUnit;
 
         private DistributionSummaryBuilder(String name) {
             this.name = name;
@@ -234,9 +235,16 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         }
 
         @Override
+        public DistributionSummary.Builder baseUnit(String unit) {
+            this.baseUnit = unit;
+            return this;
+        }
+
+        @Override
         public DistributionSummary create() {
             return registerMeterIfNecessary(DistributionSummary.class, name, tags, id ->
-                newDistributionSummary(id.getConventionName(Meter.Type.DistributionSummary), id.getTags(), description, quantiles, histogram));
+                newDistributionSummary(id.getConventionName(Meter.Type.DistributionSummary, baseUnit), id.getTags(),
+                    description, quantiles, histogram));
         }
     }
 
@@ -449,8 +457,12 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         /**
          * The formatted name matching this registry's naming convention
          */
+        String getConventionName(Meter.Type type, String baseUnit) {
+            return namingConvention.name(name, type, baseUnit);
+        }
+
         String getConventionName(Meter.Type type) {
-            return namingConvention.name(name, type);
+            return getConventionName(type, null);
         }
 
         /**

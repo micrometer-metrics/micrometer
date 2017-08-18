@@ -29,8 +29,8 @@ public class DatadogNamingConvention implements NamingConvention {
      * all non-alphanumeric characters with '_'.
      */
     @Override
-    public String name(String name, Meter.Type type) {
-        String sanitized = NamingConvention.camelCase.name(name, type);
+    public String name(String name, Meter.Type type, String baseUnit) {
+        String sanitized = NamingConvention.camelCase.name(name, type, baseUnit);
 
         // Metrics that don't start with a letter get dropped on the floor by the Datadog publish API,
         // so we will prepend them with 'm_'.

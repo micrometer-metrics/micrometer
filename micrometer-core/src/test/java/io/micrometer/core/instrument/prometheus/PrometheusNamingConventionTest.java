@@ -42,6 +42,12 @@ class PrometheusNamingConventionTest {
     }
 
     @Test
+    void unitsAreAppendedToDistributionSummaries() {
+        assertThat(convention.name("response.size", Meter.Type.DistributionSummary, "bytes")).isEqualTo("response_size_bytes");
+        assertThat(convention.name("summary", Meter.Type.DistributionSummary)).isEqualTo("summary");
+    }
+
+    @Test
     void dotNotationIsConvertedToSnakeCase() {
         assertThat(convention.name("gauge.size", Meter.Type.Gauge)).isEqualTo("gauge_size");
     }
