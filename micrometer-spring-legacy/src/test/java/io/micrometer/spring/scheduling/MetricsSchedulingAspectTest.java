@@ -32,6 +32,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.concurrent.CountDownLatch;
 
+import static io.micrometer.core.instrument.Statistic.Count;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
@@ -54,9 +55,7 @@ public class MetricsSchedulingAspectTest {
         shortBeepsExecuted.await();
         while(scheduler.getActiveCount() > 0) {}
 
-        assertThat(registry.find("beeper").timer())
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
-
+        assertThat(registry.find("beeper").value(Count, 1.0).timer()).isPresent();
         assertThat(registry.find("beeper").tags("quantile", "0.5").gauge()).isNotEmpty();
         assertThat(registry.find("beeper").tags("quantile", "0.95").gauge()).isNotEmpty();
     }
@@ -65,15 +64,13 @@ public class MetricsSchedulingAspectTest {
     public void longTasksAreInstrumented() throws InterruptedException {
         longTaskStarted.await();
 
-        assertThat(registry.find("long.beep").longTaskTimer())
-            .hasValueSatisfying(t -> assertThat(t.activeTasks()).isEqualTo(1));
+        assertThat(registry.find("long.beep").value(Count, 1.0).longTaskTimer()).isPresent();
 
         // make sure longBeep continues running until we have a chance to observe it in the active state
         longTaskShouldComplete.countDown();
         while(scheduler.getActiveCount() > 0) {}
 
-        assertThat(registry.find("long.beep").longTaskTimer())
-            .hasValueSatisfying(t -> assertThat(t.activeTasks()).isEqualTo(0));
+        assertThat(registry.find("long.beep").value(Count, 0.0).longTaskTimer()).isPresent();
     }
 
     @SpringBootApplication

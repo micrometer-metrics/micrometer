@@ -36,7 +36,6 @@ class MetricsTest {
         Metrics.addRegistry(new SimpleMeterRegistry());
         counter.increment();
 
-        assertThat(Metrics.globalRegistry.find("counter").counter())
-            .hasValueSatisfying(c -> assertThat(c.count()).isEqualTo(1));
+        assertThat(Metrics.globalRegistry.find("counter").value(Statistic.Count, 1.0).counter()).isPresent();
     }
 }

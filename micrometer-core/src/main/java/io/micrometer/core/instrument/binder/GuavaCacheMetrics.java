@@ -18,11 +18,9 @@ package io.micrometer.core.instrument.binder;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
-import io.micrometer.core.instrument.*;
-
-import java.util.List;
-
-import static java.util.Arrays.asList;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 
 /**
  * @author Jon Schneider

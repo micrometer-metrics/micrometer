@@ -15,11 +15,11 @@
  */
 package io.micrometer.spring.web;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
-import io.micrometer.core.instrument.MeterRegistry;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;

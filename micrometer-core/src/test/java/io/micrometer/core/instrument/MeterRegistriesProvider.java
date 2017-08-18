@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.atlas.AtlasMeterRegistry;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.datadog.DatadogConfig;
 import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
-import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
 import io.micrometer.core.instrument.graphite.GraphiteConfig;
 import io.micrometer.core.instrument.graphite.GraphiteMeterRegistry;
 import io.micrometer.core.instrument.influx.InfluxConfig;

@@ -19,9 +19,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
+import static io.micrometer.core.instrument.stats.hist.CumulativeHistogram.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.offset;
-import static io.micrometer.core.instrument.stats.hist.CumulativeHistogram.*;
 
 class CumulativeHistogramTest {
 

@@ -20,10 +20,10 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.turbo.TurboFilter;
 import ch.qos.logback.core.spi.FilterReply;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
-import io.micrometer.core.instrument.Counter;
 
 public class LogbackMetrics implements MeterBinder {
     @Override

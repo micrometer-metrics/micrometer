@@ -16,10 +16,10 @@
 package io.micrometer.spring;
 
 import io.micrometer.core.instrument.binder.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.LogbackMetrics;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import io.micrometer.core.instrument.binder.LogbackMetrics;
 
 @Configuration
 class RecommendedMeterBinders {

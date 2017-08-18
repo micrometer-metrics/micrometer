@@ -16,7 +16,6 @@
 package io.micrometer.spring.web;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.Test;
 import org.springframework.http.HttpMethod;
@@ -26,6 +25,7 @@ import org.springframework.test.web.client.match.MockRestRequestMatchers;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.RestTemplate;
 
+import static io.micrometer.core.instrument.Statistic.Count;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -51,8 +51,8 @@ public class MetricsRestTemplateInterceptorTest {
         String s = restTemplate.getForObject("/test/{id}", String.class, 123);
 
         // the uri requires AOP to determine
-        assertThat(registry.find("http.client.requests").tags("method", "GET", "uri", "none", "status", "200").timer())
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+        assertThat(registry.find("http.client.requests").tags("method", "GET", "uri", "none", "status", "200")
+            .value(Count, 1.0).timer()).isPresent();
 
         assertThat(s).isEqualTo("OK");
 

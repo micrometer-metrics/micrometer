@@ -16,8 +16,8 @@
 package io.micrometer.core.instrument.spectator;
 
 import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 
 public class SpectatorGauge implements Gauge {
     private com.netflix.spectator.api.Gauge gauge;

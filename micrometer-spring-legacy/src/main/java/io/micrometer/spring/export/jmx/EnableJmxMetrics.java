@@ -16,7 +16,6 @@
 package io.micrometer.spring.export.jmx;
 
 import io.micrometer.spring.EnableMetrics;
-import io.micrometer.spring.export.graphite.GraphiteMetricsConfiguration;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.*;

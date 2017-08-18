@@ -18,13 +18,10 @@ package io.micrometer.core.instrument.binder;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
-import java.util.Optional;
-
+import static io.micrometer.core.instrument.Statistic.Count;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -50,9 +47,9 @@ class CaffeineCacheMetricsTest {
         cache.put("user3", "Third User");
         cache.put("user4", "Fourth User");
 
-        assertThat(findCounter("c.requests", "result", "hit")).hasValueSatisfying(c -> cnt(c, 1));
-        assertThat(findCounter("c.requests", "result", "miss")).hasValueSatisfying(c -> cnt(c, 2));
-        assertThat(findCounter("c.evictions")).hasValueSatisfying(c -> cnt(c, 2));
+        assertThat(registry.find("c.requests").tags("result", "hit").value(Count, 1.0).meter()).isPresent();
+        assertThat(registry.find("c.requests").tags("result", "miss").value(Count, 2.0).meter()).isPresent();
+        assertThat(registry.find("c.evictions").value(Count, 2.0));
     }
 
     @SuppressWarnings("unchecked")
@@ -74,17 +71,9 @@ class CaffeineCacheMetricsTest {
         }
         cache.get(3);
 
-        assertThat(findCounter("c.requests", "result", "hit")).hasValueSatisfying(c -> cnt(c, 1));
-        assertThat(findCounter("c.requests", "result", "miss")).hasValueSatisfying(c -> cnt(c, 3));
-        assertThat(findCounter("c.load", "result", "failure")).hasValueSatisfying(c -> cnt(c, 1));
-        assertThat(findCounter("c.load", "result", "success")).hasValueSatisfying(c -> cnt(c, 2));
-    }
-
-    private Optional<Meter> findCounter(String name, String... tags) {
-        return registry.find(name).tags(tags).meter();
-    }
-
-    private void cnt(Meter c, double value) {
-        assertThat(c.measure().iterator().next().getValue()).isEqualTo(value);
+        assertThat(registry.find("c.requests").tags("result", "hit").value(Count, 1.0).meter()).isPresent();
+        assertThat(registry.find("c.requests").tags("result", "miss").value(Count, 3.0).meter()).isPresent();
+        assertThat(registry.find("c.load").tags("result", "failure").value(Count, 1.0).meter()).isPresent();
+        assertThat(registry.find("c.load").tags("result", "success").value(Count, 2.0).meter()).isPresent();
     }
 }

@@ -17,13 +17,10 @@ package io.micrometer.spring;
 
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.LogbackMetrics;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +43,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import static io.micrometer.core.instrument.Statistic.Count;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.ExpectedCount.once;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
@@ -80,16 +78,14 @@ public class EnableMetricsTest {
         assertThat(external.getForObject("/api/external", Map.class))
             .containsKey("message");
 
-        assertThat(registry.find("http.client.requests").timer())
-            .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+        assertThat(registry.find("http.client.requests").value(Count, 1.0).timer()).isPresent();
     }
 
     @Test
     public void requestMappingIsInstrumented() {
         loopback.getForObject("/api/people", Set.class);
 
-        assertThat(registry.find("http.server.requests").timer())
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+        assertThat(registry.find("http.server.requests").value(Count, 1.0).timer()).isPresent();
     }
 
     @Test

@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument.binder;
 
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 
 import java.lang.management.BufferPoolMXBean;
 import java.lang.management.ManagementFactory;

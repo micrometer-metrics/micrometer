@@ -15,7 +15,6 @@
  */
 package io.micrometer.spring.samples.integration;
 
-import io.micrometer.spring.binder.SpringIntegrationMetrics;
 import io.micrometer.spring.export.prometheus.EnablePrometheusMetrics;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -27,7 +26,6 @@ import org.springframework.integration.annotation.IntegrationComponentScan;
 import org.springframework.integration.annotation.MessagingGateway;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.support.Transformers;
-import org.springframework.integration.support.management.IntegrationManagementConfigurer;
 import org.springframework.integration.ws.SimpleWebServiceOutboundGateway;
 import org.springframework.integration.ws.WebServiceHeaders;
 

@@ -19,9 +19,6 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.spring.EnableMetrics;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +38,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 
+import static io.micrometer.core.instrument.Statistic.Count;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
@@ -63,8 +61,8 @@ public class MetricsHandlerInterceptorTest {
     @Test
     public void timedMethod() throws Exception {
         mvc.perform(get("/api/c1/10")).andExpect(status().isOk());
-        assertThat(registry.find("http.server.requests").tags("status", "200", "uri", "/api/c1/{id}", "public", "true").timer())
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+        assertThat(registry.find("http.server.requests").tags("status", "200", "uri", "/api/c1/{id}", "public", "true")
+            .value(Count, 1.0).timer()).isPresent();
     }
 
     @SuppressWarnings("unchecked")
@@ -92,8 +90,8 @@ public class MetricsHandlerInterceptorTest {
     public void unhandledError() throws Exception {
         assertThatCode(() -> mvc.perform(get("/api/c1/unhandledError/10")).andExpect(status().isOk()))
                 .hasCauseInstanceOf(RuntimeException.class);
-        assertThat(registry.find("http.server.requests").tags("exception", "RuntimeException").timer())
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+        assertThat(registry.find("http.server.requests").tags("exception", "RuntimeException")
+            .value(Count, 1.0).timer()).isPresent();
     }
 
     @Test
@@ -103,30 +101,30 @@ public class MetricsHandlerInterceptorTest {
                 .andReturn();
 
         // while the mapping is running, it contributes to the activeTasks count
-        assertThat(registry.find("my.long.request").tags("region", "test").longTaskTimer())
-                .hasValueSatisfying(t -> assertThat(t.activeTasks()).isEqualTo(1));
+        assertThat(registry.find("my.long.request").tags("region", "test")
+            .value(Count, 1.0).longTaskTimer()).isPresent();
 
         // once the mapping completes, we can gather information about status, etc.
         longRequestCountDown.countDown();
 
         mvc.perform(asyncDispatch(result)).andExpect(status().isOk());
 
-        assertThat(registry.find("http.server.requests").tags("status", "200").timer())
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+        assertThat(registry.find("http.server.requests").tags("status", "200")
+            .value(Count, 1.0).timer()).isPresent();
     }
 
     @Test
     public void endpointThrowsError() throws Exception {
         mvc.perform(get("/api/c1/error/10")).andExpect(status().is4xxClientError());
-        assertThat(registry.find("http.server.requests").tags("status", "422").timer())
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+        assertThat(registry.find("http.server.requests").tags("status", "422")
+            .value(Count, 1.0).timer()).isPresent();
     }
 
     @Test
     public void regexBasedRequestMapping() throws Exception {
         mvc.perform(get("/api/c1/regex/.abc")).andExpect(status().isOk());
-        assertThat(registry.find("http.server.requests").tags("uri", "/api/c1/regex/{id:\\.[a-z]+}").timer())
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+        assertThat(registry.find("http.server.requests").tags("uri", "/api/c1/regex/{id:\\.[a-z]+}")
+            .value(Count, 1.0).timer()).isPresent();
     }
 
     @Test

@@ -15,15 +15,13 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.ToDoubleFunction;
 
-import static java.util.Collections.emptyList;
 import static io.micrometer.core.instrument.Tags.zip;
+import static java.util.Collections.emptyList;
 
 /**
  * Creates and manages your application's set of meters. Exporters use the meter registry to iterate
@@ -75,6 +73,8 @@ public interface MeterRegistry {
         }
 
         Search tags(Iterable<Tag> tags);
+
+        Search value(Statistic statistic, double value);
 
         Optional<Timer> timer();
         Optional<Counter> counter();

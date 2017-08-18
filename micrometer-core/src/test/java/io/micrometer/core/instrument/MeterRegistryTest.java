@@ -15,20 +15,16 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 import org.assertj.core.api.AbstractThrowableAssert;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.Tags.zip;
-import static java.util.Collections.singletonList;
+import static io.micrometer.core.instrument.Statistic.Count;
+import static io.micrometer.core.instrument.Statistic.Total;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
@@ -85,6 +81,22 @@ class MeterRegistryTest {
 
         assertThat(registry.find("foo").tags("k", "v").counter()).containsSame(c1);
         assertThat(registry.find("bar").tags("k", "v").counter()).containsSame(c2);
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(MeterRegistriesProvider.class)
+    @DisplayName("find meters by name and value")
+    void findMetersByValue(MeterRegistry registry) {
+        Counter c = registry.counter("counter");
+        c.increment();
+
+        Timer t = registry.timer("timer");
+        t.record(10, TimeUnit.NANOSECONDS);
+
+        assertThat(registry.find("counter").value(Count, 1.0).counter()).isPresent();
+
+        assertThat(registry.find("timer").value(Count, 1.0).timer()).isPresent();
+        assertThat(registry.find("timer").value(Total, 10.0).timer()).isPresent();
     }
 
     @ParameterizedTest

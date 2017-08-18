@@ -325,6 +325,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     private class SearchImpl implements Search {
         private final String name;
         private List<Tag> tags = new ArrayList<>();
+        private Map<Statistic, Double> valueAsserts = new HashMap<>();
 
         SearchImpl(String name) {
             this.name = name;
@@ -333,6 +334,12 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         @Override
         public Search tags(Iterable<Tag> tags) {
             tags.forEach(this.tags::add);
+            return this;
+        }
+
+        @Override
+        public Search value(Statistic statistic, double value) {
+            valueAsserts.put(statistic, value);
             return this;
         }
 
@@ -389,6 +396,14 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
                 .filter(id2 -> id2.getName().equals(id.getName()))
                 .filter(id2 -> id2.getTags().containsAll(id.getTags()))
                 .map(meterMap::get)
+                .filter(m -> {
+                    for (Measurement measurement : m.measure()) {
+                        if(valueAsserts.getOrDefault(measurement.getStatistic(), measurement.getValue()) != measurement.getValue()) {
+                            return false;
+                        }
+                    }
+                    return true;
+                })
                 .findAny();
         }
 

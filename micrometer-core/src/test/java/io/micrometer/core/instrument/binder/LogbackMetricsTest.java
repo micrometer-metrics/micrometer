@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static io.micrometer.core.instrument.Statistic.Count;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LogbackMetricsTest {
@@ -32,14 +33,12 @@ class LogbackMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         new LogbackMetrics().bindTo(registry);
 
-        assertThat(registry.find("logback.events").counter())
-                .hasValueSatisfying(c -> assertThat(c.count()).isEqualTo(0));
+        assertThat(registry.find("logback.events").value(Count, 0.0).counter()).isPresent();
 
         Logger logger = LoggerFactory.getLogger("foo");
         logger.warn("warn");
         logger.error("error");
 
-        assertThat(registry.find("logback.events").tags("level.warn").counter())
-                .hasValueSatisfying(c -> assertThat(c.count()).isEqualTo(1));
+        assertThat(registry.find("logback.events").tags("level", "warn").value(Count, 1.0).counter()).isPresent();
     }
 }

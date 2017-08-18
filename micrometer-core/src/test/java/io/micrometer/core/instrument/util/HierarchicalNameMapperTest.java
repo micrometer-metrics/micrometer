@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.util;
 
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

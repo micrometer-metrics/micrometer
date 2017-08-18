@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
+import static io.micrometer.core.instrument.Statistic.Count;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -77,7 +78,7 @@ class CompositeMeterRegistryTest {
         assertThat(compositeCounter.count()).isEqualTo(1);
 
         // only the increment AFTER simple is added to the composite is counted to it
-        assertThat(simple.find("counter").counter()).hasValueSatisfying(c -> assertThat(c.count()).isEqualTo(1));
+        assertThat(simple.find("counter").value(Count, 1.0).counter()).isPresent();
     }
 
     @DisplayName("metrics that are created after a registry is added to that registry")
@@ -87,6 +88,6 @@ class CompositeMeterRegistryTest {
         composite.add(simple);
         composite.counter("counter").increment();
 
-        assertThat(simple.find("counter").counter()).hasValueSatisfying(c -> assertThat(c.count()).isEqualTo(1));
+        assertThat(simple.find("counter").value(Count, 1.0).counter()).isPresent();
     }
 }

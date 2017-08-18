@@ -33,8 +33,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
-
+import static io.micrometer.core.instrument.Statistic.Count;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -53,15 +52,15 @@ public class ControllerMetricsTest {
     @Test
     public void handledExceptionIsRecordedInMetricTag() throws Exception {
         assertThatCode(() -> mvc.perform(get("/api/handledError")).andExpect(status().is5xxServerError()));
-        assertThat(registry.find("http.server.requests").tags("exception", "Exception1").timer())
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+        assertThat(registry.find("http.server.requests").tags("exception", "Exception1")
+            .value(Count, 1.0).timer()).isPresent();
     }
 
     @Test
     public void rethrownExceptionIsRecordedInMetricTag() throws Exception {
         assertThatCode(() -> mvc.perform(get("/api/rethrownError")).andExpect(status().is5xxServerError()));
-        assertThat(registry.find("http.server.requests").tags("exception", "Exception2").timer())
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+        assertThat(registry.find("http.server.requests").tags("exception", "Exception2")
+            .value(Count, 1.0).timer()).isPresent();
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")
@@ -83,13 +82,13 @@ public class ControllerMetricsTest {
         ControllerMetrics metrics;
 
         @ExceptionHandler
-        ResponseEntity<String> handleError(HttpServletRequest request, Exception1 ex) throws Throwable {
+        ResponseEntity<String> handleError(Exception1 ex) throws Throwable {
             metrics.tagWithException(ex);
             return new ResponseEntity<>("this is a custom exception body", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         @ExceptionHandler
-        ResponseEntity<String> rethrowError(HttpServletRequest request, Exception2 ex) throws Throwable {
+        ResponseEntity<String> rethrowError(Exception2 ex) throws Throwable {
             throw ex;
         }
     }

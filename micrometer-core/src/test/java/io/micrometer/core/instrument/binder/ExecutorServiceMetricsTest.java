@@ -26,8 +26,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static io.micrometer.core.instrument.Statistic.Count;
+import static io.micrometer.core.instrument.Statistic.Value;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.data.Offset.offset;
 
 class ExecutorServiceMetricsTest {
     private MeterRegistry registry;
@@ -69,16 +70,13 @@ class ExecutorServiceMetricsTest {
         pool.submit(() -> System.out.println("boop"));
 
         taskStart.await(1, TimeUnit.SECONDS);
-        assertThat(registry.find("beep.pool.queue.size").gauge())
-                .hasValueSatisfying(g -> assertThat(g.value()).isEqualTo(1, offset(1e-12)));
+        assertThat(registry.find("beep.pool.queue.size").value(Value, 1.0).gauge()).isPresent();
 
         taskComplete.countDown();
         pool.awaitTermination(1, TimeUnit.SECONDS);
 
-        assertThat(registry.find("beep.pool").timer())
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(2));
-        assertThat(registry.find("beep.pool.queue.size").gauge())
-                .hasValueSatisfying(g -> assertThat(g.value()).isEqualTo(0, offset(1e-12)));
+        assertThat(registry.find("beep.pool").value(Count, 2.0).timer()).isPresent();
+        assertThat(registry.find("beep.pool.queue.size").value(Value, 0.0).gauge()).isPresent();
     }
 
     private void assertThreadPoolExecutorMetrics() {

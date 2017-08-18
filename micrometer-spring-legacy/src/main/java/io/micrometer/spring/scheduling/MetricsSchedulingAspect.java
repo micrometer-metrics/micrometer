@@ -16,17 +16,17 @@
 package io.micrometer.spring.scheduling;
 
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.util.AnnotationUtils;
 import io.micrometer.core.instrument.stats.quantile.WindowSketchQuantiles;
+import io.micrometer.core.instrument.util.AnnotationUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.MeterRegistry;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;

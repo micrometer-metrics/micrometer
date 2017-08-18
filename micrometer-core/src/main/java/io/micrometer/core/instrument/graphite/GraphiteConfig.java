@@ -15,8 +15,6 @@
  */
 package io.micrometer.core.instrument.graphite;
 
-import info.ganglia.gmetric4j.gmetric.GMetric;
-
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 

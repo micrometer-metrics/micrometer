@@ -21,7 +21,6 @@ import com.google.inject.Injector;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
-import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
 import io.prometheus.client.CollectorRegistry;
 import org.junit.jupiter.api.Test;

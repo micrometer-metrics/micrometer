@@ -15,17 +15,17 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static io.micrometer.core.instrument.MockClock.clock;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TimerTest {
 

@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.prometheus.internal;
 
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Tag;
 import io.prometheus.client.Collector;
-import io.micrometer.core.instrument.Clock;
 
 import java.util.Collection;
 import java.util.Collections;
