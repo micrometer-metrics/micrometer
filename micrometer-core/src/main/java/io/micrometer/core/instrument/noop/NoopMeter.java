@@ -34,6 +34,11 @@ public abstract class NoopMeter implements Meter {
     }
 
     @Override
+    public String getDescription() {
+        return null;
+    }
+
+    @Override
     public List<Measurement> measure() {
         return Collections.emptyList();
     }

@@ -30,8 +30,8 @@ public class SimpleTimer extends AbstractTimer {
     private LongAdder count = new LongAdder();
     private LongAdder totalTime = new LongAdder();
 
-    public SimpleTimer(String name, Iterable<Tag> tags, Clock clock) {
-        super(name, tags, clock);
+    public SimpleTimer(String name, Iterable<Tag> tags, String description, Clock clock) {
+        super(name, tags, description, clock);
     }
 
     @Override

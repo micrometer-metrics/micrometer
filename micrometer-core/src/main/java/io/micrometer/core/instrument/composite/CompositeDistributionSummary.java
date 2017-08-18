@@ -34,8 +34,8 @@ public class CompositeDistributionSummary extends AbstractMeter implements Distr
     private final Map<MeterRegistry, DistributionSummary> distributionSummaries =
         Collections.synchronizedMap(new LinkedHashMap<>());
 
-    CompositeDistributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram histogram) {
-        super(name, tags);
+    CompositeDistributionSummary(String name, Iterable<Tag> tags, String description, Quantiles quantiles, Histogram histogram) {
+        super(name, tags, description);
         this.quantiles = quantiles;
         this.histogram = histogram;
     }

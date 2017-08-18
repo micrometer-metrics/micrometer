@@ -28,8 +28,8 @@ import java.util.Map;
 class CompositeCounter extends AbstractMeter implements Counter, CompositeMeter {
     private final Map<MeterRegistry, Counter> counters = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    CompositeCounter(String name, Iterable<Tag> tags) {
-        super(name, tags);
+    CompositeCounter(String name, Iterable<Tag> tags, String description) {
+        super(name, tags, description);
     }
 
     @Override

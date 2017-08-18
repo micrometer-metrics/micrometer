@@ -40,14 +40,16 @@ import static java.util.stream.StreamSupport.stream;
  */
 public class CustomPrometheusSummary extends Collector {
     private final String name;
+    private final String description;
     private final String countName;
     private final String sumName;
     private final List<String> tagKeys;
 
     private final Collection<Child> children = new ConcurrentLinkedQueue<>();
 
-    public CustomPrometheusSummary(String name, Iterable<Tag> tags) {
+    public CustomPrometheusSummary(String name, Iterable<Tag> tags, String description) {
         this.name = name;
+        this.description = description;
         this.countName = name + "_count";
         this.sumName = name + "_sum";
         this.tagKeys = stream(tags.spliterator(), false).map(Tag::getKey).collect(toList());
@@ -146,7 +148,7 @@ public class CustomPrometheusSummary extends Collector {
     @Override
     public List<MetricFamilySamples> collect() {
         Type type = children.stream().anyMatch(c -> c.histogram != null) ? Type.HISTOGRAM : Type.SUMMARY;
-        return Collections.singletonList(new MetricFamilySamples(name, type, " ", children.stream()
+        return Collections.singletonList(new MetricFamilySamples(name, type, description == null ? " " : description, children.stream()
                 .flatMap(Child::collect).collect(toList())));
     }
 }

@@ -45,32 +45,32 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected Counter newCounter(String name, Iterable<Tag> tags) {
-        return new DropwizardCounter(name, tags, registry.meter(nameMapper.toHierarchicalName(name, tags)));
+    protected Counter newCounter(String name, Iterable<Tag> tags, String description) {
+        return new DropwizardCounter(name, tags, description, registry.meter(nameMapper.toHierarchicalName(name, tags)));
     }
 
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(String name, Iterable<Tag> tags, String description, ToDoubleFunction<T> f, T obj) {
         final WeakReference<T> ref = new WeakReference<>(obj);
         Gauge<Double> gauge = () -> f.applyAsDouble(ref.get());
         registry.register(nameMapper.toHierarchicalName(name, tags), gauge);
-        return new DropwizardGauge(name, tags, gauge);
+        return new DropwizardGauge(name, tags, description, gauge);
     }
 
     @Override
-    protected Timer newTimer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
-        return new DropwizardTimer(name, tags, registry.timer(nameMapper.toHierarchicalName(name, tags)), clock);
+    protected Timer newTimer(String name, Iterable<Tag> tags, String description, Histogram<?> histogram, Quantiles quantiles) {
+        return new DropwizardTimer(name, tags, description, registry.timer(nameMapper.toHierarchicalName(name, tags)), clock);
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
+    protected DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, String description, Quantiles quantiles, Histogram<?> histogram) {
         // FIXME deal with quantiles, histogram
-        return new DropwizardDistributionSummary(name, tags, registry.histogram(nameMapper.toHierarchicalName(name, tags)));
+        return new DropwizardDistributionSummary(name, tags, description, registry.histogram(nameMapper.toHierarchicalName(name, tags)));
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(String name, Iterable<Tag> tags) {
-        LongTaskTimer ltt = new SimpleLongTaskTimer(name, tags, clock);
+    protected LongTaskTimer newLongTaskTimer(String name, Iterable<Tag> tags, String description) {
+        LongTaskTimer ltt = new SimpleLongTaskTimer(name, tags, description, clock);
         registry.register(nameMapper.toHierarchicalName(name, tags) + ".active", (Gauge<Integer>) ltt::activeTasks);
         registry.register(nameMapper.toHierarchicalName(name, tags) + ".duration", (Gauge<Long>) ltt::duration);
         return ltt;

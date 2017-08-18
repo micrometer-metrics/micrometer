@@ -28,8 +28,8 @@ import java.util.Map;
 public class CompositeLongTaskTimer extends AbstractMeter implements LongTaskTimer, CompositeMeter {
     private final Map<MeterRegistry, LongTaskTimer> timers = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    CompositeLongTaskTimer(String name, Iterable<Tag> tags) {
-        super(name, tags);
+    CompositeLongTaskTimer(String name, Iterable<Tag> tags, String description) {
+        super(name, tags, description);
     }
 
     @Override

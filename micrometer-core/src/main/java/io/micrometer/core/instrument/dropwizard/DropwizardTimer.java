@@ -28,8 +28,8 @@ public class DropwizardTimer extends AbstractTimer {
     private final Timer impl;
     private final AtomicLong totalTime = new AtomicLong(0);
 
-    DropwizardTimer(String name, Iterable<Tag> tags, Timer impl, Clock clock) {
-        super(name, tags, clock);
+    DropwizardTimer(String name, Iterable<Tag> tags, String description, Timer impl, Clock clock) {
+        super(name, tags, description, clock);
         this.impl = impl;
     }
 

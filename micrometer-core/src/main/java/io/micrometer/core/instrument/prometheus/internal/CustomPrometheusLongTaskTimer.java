@@ -35,11 +35,13 @@ import static java.util.stream.StreamSupport.stream;
 public class CustomPrometheusLongTaskTimer extends Collector {
     private final Clock clock;
     private final String name;
+    private final String description;
     private final List<String> tagKeys;
     private final Collection<Child> children = new ConcurrentLinkedQueue<>();
 
-    public CustomPrometheusLongTaskTimer(String name, Iterable<Tag> tags, Clock clock) {
+    public CustomPrometheusLongTaskTimer(String name, Iterable<Tag> tags, String description, Clock clock) {
         this.clock = clock;
+        this.description = description;
         this.name = name;
         this.tagKeys = stream(tags.spliterator(), false).map(Tag::getKey).collect(toList());
     }
@@ -115,7 +117,7 @@ public class CustomPrometheusLongTaskTimer extends Collector {
 
     @Override
     public List<MetricFamilySamples> collect() {
-        return Collections.singletonList(new MetricFamilySamples(name, Type.UNTYPED, " ", children.stream()
+        return Collections.singletonList(new MetricFamilySamples(name, Type.UNTYPED, description == null ? " " : description, children.stream()
                 .flatMap(Child::collect).collect(toList())));
     }
 }

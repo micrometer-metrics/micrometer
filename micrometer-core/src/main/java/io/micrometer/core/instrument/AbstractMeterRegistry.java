@@ -78,11 +78,11 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         this.clock = clock;
     }
 
-    protected abstract DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram);
-    protected abstract <T> Gauge newGauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f);
-    protected abstract Counter newCounter(String name, Iterable<Tag> tags);
-    protected abstract LongTaskTimer newLongTaskTimer(String name, Iterable<Tag> tags);
-    protected abstract Timer newTimer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram);
+    protected abstract DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, String description, Quantiles quantiles, Histogram<?> histogram);
+    protected abstract <T> Gauge newGauge(String name, Iterable<Tag> tags, String description, ToDoubleFunction<T> f, T obj);
+    protected abstract Counter newCounter(String name, Iterable<Tag> tags, String description);
+    protected abstract LongTaskTimer newLongTaskTimer(String name, Iterable<Tag> tags, String description);
+    protected abstract Timer newTimer(String name, Iterable<Tag> tags, String description, Histogram<?> histogram, Quantiles quantiles);
     protected abstract void newMeter(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements);
 
     @Override
@@ -98,6 +98,11 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
                 @Override
                 public Iterable<Tag> getTags() {
                     return id.getTags();
+                }
+
+                @Override
+                public String getDescription() {
+                    return null;
                 }
 
                 @Override
@@ -119,6 +124,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         private final T obj;
         private final ToDoubleFunction<T> f;
         private final List<Tag> tags = new ArrayList<>();
+        private String description;
 
         private GaugeBuilder(String name, T obj, ToDoubleFunction<T> f) {
             this.name = name;
@@ -132,9 +138,15 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
             return this;
         }
 
+        public Gauge.Builder description(String description) {
+            this.description = description;
+            return this;
+        }
+
         @Override
         public Gauge create() {
-            return registerMeterIfNecessary(Gauge.class, name, tags, id -> newGauge(id.getConventionName(Meter.Type.Gauge), id.getTags(), obj, f));
+            return registerMeterIfNecessary(Gauge.class, name, tags, id ->
+                newGauge(id.getConventionName(Meter.Type.Gauge), id.getTags(), description, f, obj));
         }
     }
 
@@ -148,6 +160,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         private Quantiles quantiles;
         private Histogram<?> histogram;
         private final List<Tag> tags = new ArrayList<>();
+        private String description;
 
         private TimerBuilder(String name) {
             this.name = name;
@@ -170,9 +183,15 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
             return this;
         }
 
+        public Timer.Builder description(String description) {
+            this.description = description;
+            return this;
+        }
+
         @Override
         public Timer create() {
-            return registerMeterIfNecessary(Timer.class, name, tags, id -> newTimer(id.getConventionName(Meter.Type.Timer), id.getTags(), quantiles, histogram));
+            return registerMeterIfNecessary(Timer.class, name, tags, id ->
+                newTimer(id.getConventionName(Meter.Type.Timer), id.getTags(), description, histogram, quantiles));
         }
     }
 
@@ -186,6 +205,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         private Quantiles quantiles;
         private Histogram<?> histogram;
         private final List<Tag> tags = new ArrayList<>();
+        private String description;
 
         private DistributionSummaryBuilder(String name) {
             this.name = name;
@@ -208,10 +228,15 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
             return this;
         }
 
+        public DistributionSummary.Builder description(String description) {
+            this.description = description;
+            return this;
+        }
+
         @Override
         public DistributionSummary create() {
             return registerMeterIfNecessary(DistributionSummary.class, name, tags, id ->
-                newDistributionSummary(id.getConventionName(Meter.Type.DistributionSummary), id.getTags(), quantiles, histogram));
+                newDistributionSummary(id.getConventionName(Meter.Type.DistributionSummary), id.getTags(), description, quantiles, histogram));
         }
     }
 
@@ -223,6 +248,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     private class CounterBuilder implements Counter.Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
+        private String description;
 
         private CounterBuilder(String name) {
             this.name = name;
@@ -234,9 +260,15 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
             return this;
         }
 
+        public Counter.Builder description(String description) {
+            this.description = description;
+            return this;
+        }
+
         @Override
         public Counter create() {
-            return registerMeterIfNecessary(Counter.class, name, tags, id -> newCounter(id.getConventionName(Meter.Type.Counter), id.getTags()));
+            return registerMeterIfNecessary(Counter.class, name, tags, id ->
+                newCounter(id.getConventionName(Meter.Type.Counter), id.getTags(), description));
         }
     }
 
@@ -261,6 +293,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     private class LongTaskTimerBuilder implements LongTaskTimer.Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
+        private String description;
 
         private LongTaskTimerBuilder(String name) {
             this.name = name;
@@ -272,9 +305,15 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
             return this;
         }
 
+        public LongTaskTimer.Builder description(String description) {
+            this.description = description;
+            return this;
+        }
+
         @Override
         public LongTaskTimer create() {
-            return registerMeterIfNecessary(LongTaskTimer.class, name, tags, id -> newLongTaskTimer(id.getConventionName(Meter.Type.LongTaskTimer), id.getTags()));
+            return registerMeterIfNecessary(LongTaskTimer.class, name, tags, id ->
+                newLongTaskTimer(id.getConventionName(Meter.Type.LongTaskTimer), id.getTags(), description));
         }
     }
 

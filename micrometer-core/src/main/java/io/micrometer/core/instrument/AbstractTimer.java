@@ -24,8 +24,8 @@ import java.util.function.Supplier;
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
     protected Clock clock;
 
-    protected AbstractTimer(String name, Iterable<Tag> tags, Clock clock) {
-        super(name, tags);
+    protected AbstractTimer(String name, Iterable<Tag> tags, String description, Clock clock) {
+        super(name, tags, description);
         this.clock = clock;
     }
 

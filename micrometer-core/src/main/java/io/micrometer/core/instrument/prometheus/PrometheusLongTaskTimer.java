@@ -24,8 +24,8 @@ import io.micrometer.core.instrument.util.MeterEquivalence;
 public class PrometheusLongTaskTimer extends AbstractMeter implements LongTaskTimer {
     private final CustomPrometheusLongTaskTimer.Child timer;
 
-    PrometheusLongTaskTimer(String name, Iterable<Tag> tags, CustomPrometheusLongTaskTimer.Child timer) {
-        super(name, tags);
+    PrometheusLongTaskTimer(String name, Iterable<Tag> tags, String description, CustomPrometheusLongTaskTimer.Child timer) {
+        super(name, tags, description);
         this.timer = timer;
     }
 

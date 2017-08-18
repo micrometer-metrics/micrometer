@@ -23,8 +23,8 @@ import io.micrometer.core.instrument.util.MeterEquivalence;
 public class PrometheusGauge extends AbstractMeter implements Gauge {
     private io.prometheus.client.Gauge.Child gauge;
 
-    PrometheusGauge(String name, Iterable<Tag> tags, io.prometheus.client.Gauge.Child gauge) {
-        super(name, tags);
+    PrometheusGauge(String name, Iterable<Tag> tags, String description, io.prometheus.client.Gauge.Child gauge) {
+        super(name, tags, description);
         this.gauge = gauge;
     }
 

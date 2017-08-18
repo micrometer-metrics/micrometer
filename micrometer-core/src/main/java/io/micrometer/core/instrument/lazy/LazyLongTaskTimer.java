@@ -44,6 +44,11 @@ public class LazyLongTaskTimer implements LongTaskTimer {
     }
 
     @Override
+    public String getDescription() {
+        return timer().getDescription();
+    }
+
+    @Override
     public long start() {
         return timer().start();
     }

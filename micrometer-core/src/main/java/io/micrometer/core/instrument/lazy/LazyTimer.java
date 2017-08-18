@@ -46,6 +46,11 @@ public final class LazyTimer implements Timer {
     }
 
     @Override
+    public String getDescription() {
+        return timer().getDescription();
+    }
+
+    @Override
     public void record(long amount, TimeUnit unit) {
         timer().record(amount, unit);
     }

@@ -119,6 +119,8 @@ public interface Timer extends Meter {
             return tags(Tags.zip(tags));
         }
 
+        Builder description(String description);
+
         Timer create();
     }
 }

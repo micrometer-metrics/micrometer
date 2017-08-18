@@ -18,10 +18,12 @@ package io.micrometer.core.instrument;
 public abstract class AbstractMeter implements Meter {
     private final String name;
     private final Iterable<Tag> tags;
+    private final String description;
 
-    public AbstractMeter(String name, Iterable<Tag> tags) {
+    public AbstractMeter(String name, Iterable<Tag> tags, String description) {
         this.name = name;
         this.tags = tags;
+        this.description = description;
     }
 
     @Override
@@ -32,5 +34,9 @@ public abstract class AbstractMeter implements Meter {
     @Override
     public Iterable<Tag> getTags() {
         return tags;
+    }
+
+    public String getDescription() {
+        return description;
     }
 }

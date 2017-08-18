@@ -38,30 +38,30 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected Counter newCounter(String name, Iterable<Tag> tags) {
-        return new SimpleCounter(name, tags);
+    protected Counter newCounter(String name, Iterable<Tag> tags, String description) {
+        return new SimpleCounter(name, tags, description);
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
+    protected DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, String description, Quantiles quantiles, Histogram<?> histogram) {
         registerQuantilesGaugeIfNecessary(name, tags, quantiles);
-        return new SimpleDistributionSummary(name, tags);
+        return new SimpleDistributionSummary(name, tags, description);
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
+    protected io.micrometer.core.instrument.Timer newTimer(String name, Iterable<Tag> tags, String description, Histogram<?> histogram, Quantiles quantiles) {
         registerQuantilesGaugeIfNecessary(name, tags, quantiles);
-        return new SimpleTimer(name, tags, config().clock());
+        return new SimpleTimer(name, tags, description, config().clock());
     }
 
     @Override
-    protected <T> Gauge newGauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        return new SimpleGauge<>(name, tags, obj, f);
+    protected <T> Gauge newGauge(String name, Iterable<Tag> tags, String description, ToDoubleFunction<T> f, T obj) {
+        return new SimpleGauge<>(name, tags, description, obj, f);
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(String name, Iterable<Tag> tags) {
-        return new SimpleLongTaskTimer(name, tags, config().clock());
+    protected LongTaskTimer newLongTaskTimer(String name, Iterable<Tag> tags, String description) {
+        return new SimpleLongTaskTimer(name, tags, description, config().clock());
     }
 
     private void registerQuantilesGaugeIfNecessary(String name, Iterable<Tag> tags, Quantiles quantiles) {

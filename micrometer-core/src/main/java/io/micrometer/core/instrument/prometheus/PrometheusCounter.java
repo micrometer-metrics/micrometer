@@ -23,8 +23,8 @@ import io.micrometer.core.instrument.util.MeterEquivalence;
 public class PrometheusCounter extends AbstractMeter implements Counter {
     private io.prometheus.client.Counter.Child counter;
 
-    PrometheusCounter(String name, Iterable<Tag> tags, io.prometheus.client.Counter.Child counter) {
-        super(name, tags);
+    PrometheusCounter(String name, Iterable<Tag> tags, String description, io.prometheus.client.Counter.Child counter) {
+        super(name, tags, description);
         this.counter = counter;
     }
 

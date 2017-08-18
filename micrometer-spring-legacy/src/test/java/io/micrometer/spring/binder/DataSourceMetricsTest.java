@@ -35,6 +35,8 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Collection;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 /**
  * @author Jon Schneider
  */
@@ -53,7 +55,7 @@ public class DataSourceMetricsTest {
     public void dataSourceIsInstrumented() throws SQLException, InterruptedException {
         dataSource.getConnection().getMetaData();
         String scrape = restTemplate.getForObject("/prometheus", String.class);
-        System.out.println(scrape);
+        assertThat(scrape).contains("data_source_max_connections");
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")

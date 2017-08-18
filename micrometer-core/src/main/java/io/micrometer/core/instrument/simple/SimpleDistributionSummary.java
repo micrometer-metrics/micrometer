@@ -27,8 +27,8 @@ public class SimpleDistributionSummary extends AbstractSimpleMeter implements Di
     private LongAdder count = new LongAdder();
     private DoubleAdder amount = new DoubleAdder();
 
-    public SimpleDistributionSummary(String name, Iterable<Tag> tags) {
-        super(name, tags, Meter.Type.DistributionSummary);
+    public SimpleDistributionSummary(String name, Iterable<Tag> tags, String description) {
+        super(name, tags, description, Meter.Type.DistributionSummary);
     }
 
     @Override

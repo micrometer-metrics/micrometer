@@ -46,6 +46,11 @@ public final class LazyCounter implements Counter {
     }
 
     @Override
+    public String getDescription() {
+        return counter().getDescription();
+    }
+
+    @Override
     public void increment(double amount) {
         counter().increment();
     }

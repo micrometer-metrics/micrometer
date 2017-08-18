@@ -29,8 +29,8 @@ public class DropwizardDistributionSummary extends AbstractMeter implements Dist
     private final com.codahale.metrics.Histogram impl;
     private final DoubleAdder totalAmount = new DoubleAdder();
 
-    DropwizardDistributionSummary(String name, Iterable<Tag> tags, com.codahale.metrics.Histogram impl) {
-        super(name, tags);
+    DropwizardDistributionSummary(String name, Iterable<Tag> tags, String description, com.codahale.metrics.Histogram impl) {
+        super(name, tags, description);
         this.impl = impl;
     }
 

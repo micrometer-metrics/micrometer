@@ -51,33 +51,33 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected io.micrometer.core.instrument.Counter newCounter(String name, Iterable<io.micrometer.core.instrument.Tag> tags) {
+    protected io.micrometer.core.instrument.Counter newCounter(String name, Iterable<Tag> tags, String description) {
         com.netflix.spectator.api.Counter counter = registry.counter(name, toSpectatorTags(tags));
-        return new SpectatorCounter(counter);
+        return new SpectatorCounter(counter, description);
     }
 
     @Override
-    protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(String name, Iterable<io.micrometer.core.instrument.Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
+    protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, String description, Quantiles quantiles, Histogram<?> histogram) {
         registerQuantilesGaugeIfNecessary(name, tags, quantiles, UnaryOperator.identity());
         com.netflix.spectator.api.DistributionSummary ds = registry.distributionSummary(name, toSpectatorTags(tags));
-        return new SpectatorDistributionSummary(ds);
+        return new SpectatorDistributionSummary(ds, description);
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(String name, Iterable<io.micrometer.core.instrument.Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
+    protected io.micrometer.core.instrument.Timer newTimer(String name, Iterable<Tag> tags, String description, Histogram<?> histogram, Quantiles quantiles) {
         // scale nanosecond precise quantile values to seconds
         registerQuantilesGaugeIfNecessary(name, tags, quantiles, t -> t / 1.0e6);
         registerHistogramCounterIfNecessary(name, tags, histogram);
         com.netflix.spectator.api.Timer timer = registry.timer(name, toSpectatorTags(tags));
-        return new SpectatorTimer(timer, quantiles, config().clock());
+        return new SpectatorTimer(timer, description, quantiles, config().clock());
     }
 
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(String name, Iterable<io.micrometer.core.instrument.Tag> tags, T obj, ToDoubleFunction<T> f) {
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(String name, Iterable<Tag> tags, String description, ToDoubleFunction<T> f, T obj) {
         Id gaugeId = registry.createId(name, toSpectatorTags(tags));
         com.netflix.spectator.api.Gauge gauge = new CustomSpectatorToDoubleGauge<>(registry.clock(), gaugeId, obj, f);
         registry.register(gauge);
-        return new SpectatorGauge(gauge);
+        return new SpectatorGauge(gauge, description);
     }
 
     private void registerHistogramCounterIfNecessary(String name, Iterable<io.micrometer.core.instrument.Tag> tags, Histogram<?> histogram) {
@@ -106,9 +106,9 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(String name, Iterable<io.micrometer.core.instrument.Tag> tags) {
+    protected LongTaskTimer newLongTaskTimer(String name, Iterable<Tag> tags, String description) {
         com.netflix.spectator.api.LongTaskTimer timer = registry.longTaskTimer(name, toSpectatorTags(tags));
-        return new SpectatorLongTaskTimer(timer);
+        return new SpectatorLongTaskTimer(timer, description);
     }
 
     @Override

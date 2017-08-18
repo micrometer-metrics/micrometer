@@ -23,6 +23,8 @@ public interface Meter {
 
     Iterable<Tag> getTags();
 
+    String getDescription();
+
     /**
      * Get a set of measurements. Should always return
      * the same number of measurements and in the same order, regardless of the
@@ -33,7 +35,7 @@ public interface Meter {
     default Type getType() {
         return Type.Other;
     }
-    
+
     /**
      * Custom meters may emit metrics like one of these types without implementing
      * the corresponding interface. For example, a heisen-counter like structure

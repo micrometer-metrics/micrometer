@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.spectator;
 
+import com.netflix.spectator.api.Timer;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
@@ -26,8 +27,8 @@ public class SpectatorTimer extends AbstractTimer {
     private final com.netflix.spectator.api.Timer timer;
     private final Quantiles quantiles;
 
-    SpectatorTimer(com.netflix.spectator.api.Timer timer, Quantiles quantiles, Clock clock) {
-        super(timer.id().name(), SpectatorUtils.tags(timer), clock);
+    SpectatorTimer(Timer timer, String description, Quantiles quantiles, Clock clock) {
+        super(timer.id().name(), SpectatorUtils.tags(timer), description, clock);
         this.timer = timer;
         this.quantiles = quantiles;
     }

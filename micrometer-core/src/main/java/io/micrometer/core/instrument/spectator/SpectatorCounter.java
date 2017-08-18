@@ -21,9 +21,11 @@ import io.micrometer.core.instrument.util.MeterEquivalence;
 
 public class SpectatorCounter implements Counter {
     private com.netflix.spectator.api.Counter counter;
+    private final String description;
 
-    public SpectatorCounter(com.netflix.spectator.api.Counter counter) {
+    public SpectatorCounter(com.netflix.spectator.api.Counter counter, String description) {
         this.counter = counter;
+        this.description = description;
     }
 
     @Override
@@ -39,6 +41,11 @@ public class SpectatorCounter implements Counter {
     @Override
     public String getName() {
         return counter.id().name();
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
     }
 
     @Override

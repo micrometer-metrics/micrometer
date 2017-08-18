@@ -33,8 +33,8 @@ public class CompositeGauge<T> extends AbstractMeter implements Gauge, Composite
 
     private final Map<MeterRegistry, Gauge> gauges = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    CompositeGauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        super(name, tags);
+    CompositeGauge(String name, Iterable<Tag> tags, String description, T obj, ToDoubleFunction<T> f) {
+        super(name, tags, description);
         this.ref = new WeakReference<>(obj);
         this.f = f;
     }

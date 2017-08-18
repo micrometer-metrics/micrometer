@@ -76,32 +76,32 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    public Counter newCounter(String name, Iterable<Tag> tags) {
+    public Counter newCounter(String name, Iterable<Tag> tags, String description) {
         io.prometheus.client.Counter counter = collectorByName(io.prometheus.client.Counter.class, name,
-            n -> buildCollector(name, tags, io.prometheus.client.Counter.build()));
-        return new PrometheusCounter(name, tags, child(counter, tags));
+            n -> buildCollector(name, tags, description, io.prometheus.client.Counter.build()));
+        return new PrometheusCounter(name, tags, description, child(counter, tags));
     }
 
     @Override
-    public DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
+    public DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, String description, Quantiles quantiles, Histogram<?> histogram) {
         final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, name,
-            n -> new CustomPrometheusSummary(name, tags).register(registry));
-        return new PrometheusDistributionSummary(name, tags, summary.child(tags, quantiles, histogram));
+            n -> new CustomPrometheusSummary(name, tags, description).register(registry));
+        return new PrometheusDistributionSummary(name, tags, description, summary.child(tags, quantiles, histogram));
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram<?> histogram) {
+    protected io.micrometer.core.instrument.Timer newTimer(String name, Iterable<Tag> tags, String description, Histogram<?> histogram, Quantiles quantiles) {
         final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, name,
-            n -> new CustomPrometheusSummary(name, tags).register(registry));
-        return new PrometheusTimer(name, tags, summary.child(tags, quantiles, histogram), config().clock());
+            n -> new CustomPrometheusSummary(name, tags, description).register(registry));
+        return new PrometheusTimer(name, tags, description, summary.child(tags, quantiles, histogram), config().clock());
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(String name, Iterable<Tag> tags, String description, ToDoubleFunction<T> f, T obj) {
         final WeakReference<T> ref = new WeakReference<>(obj);
         io.prometheus.client.Gauge gauge = collectorByName(Gauge.class, name,
-            i -> buildCollector(name, tags, io.prometheus.client.Gauge.build()));
+            i -> buildCollector(name, tags, description, io.prometheus.client.Gauge.build()));
 
         String[] labelValues = stream(tags.spliterator(), false)
             .map(Tag::getValue)
@@ -117,14 +117,14 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         };
 
         gauge.setChild(child, labelValues);
-        return new PrometheusGauge(name, tags, child);
+        return new PrometheusGauge(name, tags, description, child);
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(String name, Iterable<Tag> tags) {
+    protected LongTaskTimer newLongTaskTimer(String name, Iterable<Tag> tags, String description) {
         final CustomPrometheusLongTaskTimer longTaskTimer = collectorByName(CustomPrometheusLongTaskTimer.class, name,
-            n -> new CustomPrometheusLongTaskTimer(name, tags, config().clock()).register(registry));
-        return new PrometheusLongTaskTimer(name, tags, longTaskTimer.child(tags));
+            n -> new CustomPrometheusLongTaskTimer(name, tags, description, config().clock()).register(registry));
+        return new PrometheusLongTaskTimer(name, tags, description, longTaskTimer.child(tags));
     }
 
     @Override
@@ -159,11 +159,13 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         return registry;
     }
 
-    private <B extends SimpleCollector.Builder<B, C>, C extends SimpleCollector<D>, D> C buildCollector(String name, Iterable<Tag> tags,
+    private <B extends SimpleCollector.Builder<B, C>, C extends SimpleCollector<D>, D> C buildCollector(String name,
+                                                                                                        Iterable<Tag> tags,
+                                                                                                        String description,
                                                                                                         SimpleCollector.Builder<B, C> builder) {
         return builder
             .name(name)
-            .help(" ")
+            .help(description == null ? " " : description)
             .labelNames(stream(tags.spliterator(), false)
                 .map(Tag::getKey)
                 .collect(Collectors.toList())

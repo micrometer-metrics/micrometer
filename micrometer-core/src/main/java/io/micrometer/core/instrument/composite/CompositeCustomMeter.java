@@ -44,6 +44,11 @@ public class CompositeCustomMeter implements CompositeMeter {
     }
 
     @Override
+    public String getDescription() {
+        return null;
+    }
+
+    @Override
     public Iterable<Measurement> measure() {
         return measurements;
     }

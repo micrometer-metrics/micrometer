@@ -21,9 +21,11 @@ import io.micrometer.core.instrument.util.MeterEquivalence;
 
 public class SpectatorDistributionSummary implements DistributionSummary {
     private com.netflix.spectator.api.DistributionSummary distributionSummary;
+    private final String description;
 
-    public SpectatorDistributionSummary(com.netflix.spectator.api.DistributionSummary distributionSummary) {
+    public SpectatorDistributionSummary(com.netflix.spectator.api.DistributionSummary distributionSummary, String description) {
         this.distributionSummary = distributionSummary;
+        this.description = description;
     }
 
     /**
@@ -54,6 +56,11 @@ public class SpectatorDistributionSummary implements DistributionSummary {
     @Override
     public Iterable<Tag> getTags() {
         return SpectatorUtils.tags(distributionSummary);
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

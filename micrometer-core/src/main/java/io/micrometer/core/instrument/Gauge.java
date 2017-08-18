@@ -41,6 +41,8 @@ public interface Gauge extends Meter {
             return tags(Tags.zip(tags));
         }
 
+        Builder description(String description);
+
         Gauge create();
     }
 }

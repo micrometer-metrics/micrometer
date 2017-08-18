@@ -54,6 +54,8 @@ public interface DistributionSummary extends Meter {
             return tags(Tags.zip(tags));
         }
 
+        Builder description(String description);
+
         DistributionSummary create();
     }
 

@@ -29,8 +29,8 @@ public class SimpleLongTaskTimer extends AbstractSimpleMeter implements LongTask
     private final AtomicLong nextTask = new AtomicLong(0L);
     private final Clock clock;
 
-    public SimpleLongTaskTimer(String name, Iterable<Tag> tags, Clock clock) {
-        super(name, tags, Type.LongTaskTimer);
+    public SimpleLongTaskTimer(String name, Iterable<Tag> tags, String description, Clock clock) {
+        super(name, tags, description, Type.LongTaskTimer);
         this.clock = clock;
     }
 

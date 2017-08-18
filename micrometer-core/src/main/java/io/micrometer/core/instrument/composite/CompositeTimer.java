@@ -31,8 +31,8 @@ public class CompositeTimer extends AbstractTimer implements CompositeMeter {
 
     private final Map<MeterRegistry, Timer> timers = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    CompositeTimer(String name, Iterable<Tag> tags, Quantiles quantiles, Histogram histogram, Clock clock) {
-        super(name, tags, clock);
+    CompositeTimer(String name, Iterable<Tag> tags, String description, Quantiles quantiles, Histogram histogram, Clock clock) {
+        super(name, tags, description, clock);
         this.quantiles = quantiles;
         this.histogram = histogram;
     }

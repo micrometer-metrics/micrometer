@@ -133,6 +133,8 @@ public interface LongTaskTimer extends Meter {
             return tags(Tags.zip(tags));
         }
 
+        Builder description(String description);
+
         LongTaskTimer create();
     }
 }

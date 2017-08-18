@@ -63,12 +63,12 @@ public class SimpleMeasureBenchmark {
         String name = "tested.timer";
         List<Tag> tags = Arrays.asList(Tag.of("tag1", "v1"), Tag.of("tag2", "v2"));
 
-        timer = new SimpleTimer(name, tags, Clock.SYSTEM);
-        longTaskTimer = new SimpleLongTaskTimer(name, tags, Clock.SYSTEM);
-        counter = new SimpleCounter(name, tags);
+        timer = new SimpleTimer(name, tags, "", Clock.SYSTEM);
+        longTaskTimer = new SimpleLongTaskTimer(name, tags, "", Clock.SYSTEM);
+        counter = new SimpleCounter(name, tags, "");
         List<Integer> testListReference = Arrays.asList(1, 2);
-        gauge = new SimpleGauge<>(name, tags, testListReference, List::size);
-        distributionSummary = new SimpleDistributionSummary(name, tags);
+        gauge = new SimpleGauge<>(name, tags, "", testListReference, List::size);
+        distributionSummary = new SimpleDistributionSummary(name, tags, "");
     }
 
     @Benchmark

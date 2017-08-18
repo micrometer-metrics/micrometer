@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -92,6 +93,23 @@ class PrometheusMeterRegistryTest {
     void differentMeterTypesWithSameName() {
         registry.timer("m");
         assertThrows(IllegalArgumentException.class, () -> registry.counter("m"));
+    }
+
+    @DisplayName("description text is bound to 'help' on Prometheus collectors")
+    @Test
+    void helpText() {
+        registry.timerBuilder("timer").description("my timer").create();
+        registry.counterBuilder("counter").description("my counter").create();
+        registry.summaryBuilder("summary").description("my summary").create();
+        registry.gaugeBuilder("gauge", new AtomicInteger(), AtomicInteger::doubleValue).description("my gauge").create();
+        registry.more().longTaskTimerBuilder("long.task.timer").description("my long task timer").create();
+
+        assertThat(registry.scrape())
+            .contains("HELP timer_duration_seconds my timer")
+            .contains("HELP summary my summary")
+            .contains("HELP gauge my gauge")
+            .contains("HELP counter_total my counter")
+            .contains("HELP long_task_timer my long task timer");
     }
 
     private Condition<Enumeration<Collector.MetricFamilySamples>> withNameAndTagKey(String name, String tagKey) {

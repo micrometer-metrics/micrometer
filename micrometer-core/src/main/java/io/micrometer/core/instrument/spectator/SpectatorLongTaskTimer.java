@@ -21,9 +21,11 @@ import io.micrometer.core.instrument.util.MeterEquivalence;
 
 public class SpectatorLongTaskTimer implements LongTaskTimer {
     private final com.netflix.spectator.api.LongTaskTimer timer;
+    private final String description;
 
-    public SpectatorLongTaskTimer(com.netflix.spectator.api.LongTaskTimer timer) {
+    public SpectatorLongTaskTimer(com.netflix.spectator.api.LongTaskTimer timer, String description) {
         this.timer = timer;
+        this.description = description;
     }
 
     @Override
@@ -59,6 +61,11 @@ public class SpectatorLongTaskTimer implements LongTaskTimer {
     @Override
     public Iterable<Tag> getTags() {
         return SpectatorUtils.tags(timer);
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

@@ -44,6 +44,11 @@ public class LazyDistributionSummary implements DistributionSummary {
     }
 
     @Override
+    public String getDescription() {
+        return summary().getDescription();
+    }
+
+    @Override
     public void record(double amount) {
         summary().record(amount);
     }
