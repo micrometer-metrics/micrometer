@@ -16,8 +16,8 @@
 package io.micrometer.spring.export.ganglia;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.ganglia.GangliaConfig;
-import io.micrometer.core.instrument.ganglia.GangliaMeterRegistry;
+import io.micrometer.ganglia.GangliaConfig;
+import io.micrometer.ganglia.GangliaMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;

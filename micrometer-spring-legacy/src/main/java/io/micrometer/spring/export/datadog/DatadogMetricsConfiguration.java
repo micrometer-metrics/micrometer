@@ -16,8 +16,8 @@
 package io.micrometer.spring.export.datadog;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.datadog.DatadogConfig;
-import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
+import io.micrometer.datadog.DatadogConfig;
+import io.micrometer.datadog.DatadogMeterRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

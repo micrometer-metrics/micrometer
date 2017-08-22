@@ -17,7 +17,7 @@ package io.micrometer.spring.export.atlas;
 
 import com.netflix.spectator.atlas.AtlasConfig;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.atlas.AtlasMeterRegistry;
+import io.micrometer.atlas.AtlasMeterRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -16,15 +16,15 @@
 package io.micrometer.core.instrument;
 
 import com.netflix.spectator.atlas.AtlasConfig;
-import io.micrometer.core.instrument.atlas.AtlasMeterRegistry;
+import io.micrometer.atlas.AtlasMeterRegistry;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.core.instrument.datadog.DatadogConfig;
-import io.micrometer.core.instrument.datadog.DatadogMeterRegistry;
-import io.micrometer.core.instrument.graphite.GraphiteConfig;
-import io.micrometer.core.instrument.graphite.GraphiteMeterRegistry;
-import io.micrometer.core.instrument.influx.InfluxConfig;
-import io.micrometer.core.instrument.influx.InfluxMeterRegistry;
-import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
+import io.micrometer.datadog.DatadogConfig;
+import io.micrometer.datadog.DatadogMeterRegistry;
+import io.micrometer.graphite.GraphiteConfig;
+import io.micrometer.graphite.GraphiteMeterRegistry;
+import io.micrometer.influx.InfluxConfig;
+import io.micrometer.influx.InfluxMeterRegistry;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.prometheus.client.CollectorRegistry;

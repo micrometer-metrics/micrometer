@@ -21,8 +21,7 @@ import com.google.inject.Injector;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
-import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
-import io.prometheus.client.CollectorRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -46,7 +45,7 @@ class MeterRegistryInjectionTest {
         MyComponent component = ctx.getBean(MyComponent.class);
         component.performanceCriticalFeature();
         assertThat(component.registry)
-                .isInstanceOf(PrometheusMeterRegistry.class)
+                .isInstanceOf(SimpleMeterRegistry.class)
                 .matches(r -> r.find("feature.counter").counter().isPresent());
     }
 
@@ -56,7 +55,7 @@ class MeterRegistryInjectionTest {
         MyComponent component = conf.component();
         component.performanceCriticalFeature();
         assertThat(component.registry)
-                .isInstanceOf(PrometheusMeterRegistry.class)
+                .isInstanceOf(SimpleMeterRegistry.class)
                 .matches(r -> r.find("feature.counter").counter().isPresent());
     }
 
@@ -66,7 +65,7 @@ class MeterRegistryInjectionTest {
         MyComponent component = injector.getInstance(MyComponent.class);
         component.performanceCriticalFeature();
         assertThat(component.registry)
-                .isInstanceOf(PrometheusMeterRegistry.class)
+                .isInstanceOf(SimpleMeterRegistry.class)
                 .matches(r -> r.find("feature.counter").counter().isPresent());
     }
 
@@ -86,7 +85,7 @@ interface DagConfiguration {
     class RegistryConf {
         @Provides
         static MeterRegistry registry() {
-            return new PrometheusMeterRegistry(new CollectorRegistry());
+            return new SimpleMeterRegistry();
         }
     }
 }
@@ -94,8 +93,8 @@ interface DagConfiguration {
 @Configuration
 class SpringConfiguration {
     @Bean
-    PrometheusMeterRegistry meterRegistry() {
-        return new PrometheusMeterRegistry(new CollectorRegistry());
+    SimpleMeterRegistry meterRegistry() {
+        return new SimpleMeterRegistry();
     }
 
     @Bean
@@ -107,7 +106,7 @@ class SpringConfiguration {
 class GuiceConfiguration extends AbstractModule {
     @Override
     protected void configure() {
-        bind(MeterRegistry.class).to(PrometheusMeterRegistry.class);
+        bind(MeterRegistry.class).to(SimpleMeterRegistry.class);
     }
 }
 

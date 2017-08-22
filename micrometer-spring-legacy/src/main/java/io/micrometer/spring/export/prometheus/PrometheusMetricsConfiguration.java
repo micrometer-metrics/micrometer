@@ -16,7 +16,7 @@
 package io.micrometer.spring.export.prometheus;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.prometheus.client.CollectorRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;

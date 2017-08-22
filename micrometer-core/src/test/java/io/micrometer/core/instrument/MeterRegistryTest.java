@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
 import org.assertj.core.api.AbstractThrowableAssert;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;

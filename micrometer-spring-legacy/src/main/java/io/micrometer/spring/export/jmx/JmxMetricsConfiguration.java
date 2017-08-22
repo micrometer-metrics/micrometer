@@ -16,7 +16,7 @@
 package io.micrometer.spring.export.jmx;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.jmx.JmxMeterRegistry;
+import io.micrometer.jmx.JmxMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;

@@ -16,8 +16,8 @@
 package io.micrometer.spring.export.influx;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.influx.InfluxConfig;
-import io.micrometer.core.instrument.influx.InfluxMeterRegistry;
+import io.micrometer.influx.InfluxConfig;
+import io.micrometer.influx.InfluxMeterRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

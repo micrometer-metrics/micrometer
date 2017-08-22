@@ -15,15 +15,7 @@ facets {
 dependencies {
     // instrumentation options
     compile 'com.netflix.spectator:spectator-api:latest.release', optional
-    compile 'io.prometheus:simpleclient_common:latest.release', optional
-//    compile 'io.prometheus:simpleclient_pushgateway:latest.release', optional
-    compile 'com.datadoghq:java-dogstatsd-client:latest.release', optional
     compile 'io.dropwizard.metrics:metrics-core:3.+', optional
-
-    // exporters
-    compile 'com.netflix.spectator:spectator-reg-atlas:latest.release', optional
-    compile 'io.dropwizard.metrics:metrics-graphite:3.+', optional
-    compile 'io.dropwizard.metrics:metrics-ganglia:3.+', optional
 
     // cache monitoring
     compile 'com.google.guava:guava:21.0', optional
@@ -52,6 +44,11 @@ dependencies {
     testCompile 'com.google.dagger:dagger-compiler:2.11'
 
     testCompile 'org.assertj:assertj-core:3.+'
+
+    ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx'].each { sys ->
+        samplesCompile project(":micrometer-$sys-starter")
+        testCompile project(":micrometer-$sys-starter")
+    }
 
     jmh 'org.openjdk.jmh:jmh-core:latest.release'
     jmh 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'

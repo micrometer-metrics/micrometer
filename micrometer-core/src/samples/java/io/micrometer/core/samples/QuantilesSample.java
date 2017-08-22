@@ -19,7 +19,7 @@ import cern.jet.random.Normal;
 import cern.jet.random.engine.MersenneTwister64;
 import cern.jet.random.engine.RandomEngine;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.micrometer.core.instrument.stats.quantile.CKMSQuantiles;
 import io.micrometer.core.instrument.stats.quantile.Frugal2UQuantiles;
 import io.micrometer.core.instrument.stats.quantile.GKQuantiles;

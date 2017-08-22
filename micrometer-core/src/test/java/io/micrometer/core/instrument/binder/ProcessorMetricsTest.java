@@ -27,7 +27,7 @@ class ProcessorMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         new ProcessorMetrics().bindTo(registry);
 
-        assertThat(registry.find("cpu.total").gauge())
+        assertThat(registry.find("cpu").gauge())
                 .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
         assertThat(registry.find("cpu.load.average").gauge())
                 .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));

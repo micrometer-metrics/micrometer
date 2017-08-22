@@ -17,7 +17,7 @@ package io.micrometer.spring.export.prometheus;
 
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.micrometer.spring.MeterRegistryConfigurer;
 import org.junit.Test;
 import org.junit.runner.RunWith;

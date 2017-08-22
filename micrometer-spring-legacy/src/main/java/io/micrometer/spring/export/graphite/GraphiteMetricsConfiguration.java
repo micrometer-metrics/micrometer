@@ -16,8 +16,8 @@
 package io.micrometer.spring.export.graphite;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.graphite.GraphiteConfig;
-import io.micrometer.core.instrument.graphite.GraphiteMeterRegistry;
+import io.micrometer.graphite.GraphiteConfig;
+import io.micrometer.graphite.GraphiteMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;

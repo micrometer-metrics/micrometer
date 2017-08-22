@@ -19,7 +19,7 @@ import cern.jet.random.Normal;
 import cern.jet.random.engine.MersenneTwister64;
 import cern.jet.random.engine.RandomEngine;
 import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.prometheus.PrometheusMeterRegistry;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.micrometer.core.instrument.stats.hist.CumulativeHistogram;
 import io.micrometer.core.instrument.stats.quantile.CKMSQuantiles;
 import io.micrometer.core.samples.utils.SampleRegistries;
