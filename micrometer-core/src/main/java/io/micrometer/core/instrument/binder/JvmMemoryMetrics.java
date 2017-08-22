@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 
 import java.lang.management.BufferPoolMXBean;
 import java.lang.management.ManagementFactory;
@@ -35,19 +36,38 @@ public class JvmMemoryMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         for (BufferPoolMXBean bufferPoolBean : ManagementFactory.getPlatformMXBeans(BufferPoolMXBean.class)) {
-            Iterable<Tag> tags = singletonList(Tag.of("id", bufferPoolBean.getName()));
+            Iterable<Tag> tags = Tags.zip("id", bufferPoolBean.getName());
 
             registry.gauge("jvm.buffer.count", tags, bufferPoolBean, BufferPoolMXBean::getCount);
-            registry.gauge("jvm.buffer.memory.used", tags, bufferPoolBean, BufferPoolMXBean::getMemoryUsed);
-            registry.gauge("jvm.buffer.total.capacity", tags, bufferPoolBean, BufferPoolMXBean::getTotalCapacity);
+
+            registry.gaugeBuilder("jvm.buffer.memory.used", bufferPoolBean, BufferPoolMXBean::getMemoryUsed)
+                .baseUnit("bytes")
+                .tags(tags)
+                .create();
+
+            registry.gaugeBuilder("jvm.buffer.total.capacity", bufferPoolBean, BufferPoolMXBean::getTotalCapacity)
+                .baseUnit("bytes")
+                .tags(tags)
+                .create();
         }
 
         for (MemoryPoolMXBean memoryPoolBean : ManagementFactory.getPlatformMXBeans(MemoryPoolMXBean.class)) {
-            Iterable<Tag> tags = singletonList(Tag.of("id", memoryPoolBean.getName()));
+            Iterable<Tag> tags = Tags.zip("id", memoryPoolBean.getName());
 
-            registry.gauge("jvm.memory.used", tags, memoryPoolBean, (mem) -> mem.getUsage().getUsed());
-            registry.gauge("jvm.memory.committed", tags, memoryPoolBean, (mem) -> mem.getUsage().getCommitted());
-            registry.gauge("jvm.memory.max", tags, memoryPoolBean, (mem) -> mem.getUsage().getMax());
+            registry.gaugeBuilder("jvm.memory.used", memoryPoolBean, (mem) -> mem.getUsage().getUsed())
+                .baseUnit("bytes")
+                .tags(tags)
+                .create();
+
+            registry.gaugeBuilder("jvm.memory.committed", memoryPoolBean, (mem) -> mem.getUsage().getCommitted())
+                .baseUnit("bytes")
+                .tags(tags)
+                .create();
+
+            registry.gaugeBuilder("jvm.memory.max", memoryPoolBean, (mem) -> mem.getUsage().getMax())
+                .baseUnit("bytes")
+                .tags(tags)
+                .create();
         }
     }
 }
