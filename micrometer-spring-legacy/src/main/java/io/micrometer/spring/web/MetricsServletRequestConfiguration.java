@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring;
+package io.micrometer.spring.web;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.spring.web.ControllerMetrics;
@@ -33,7 +33,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
  * @author Jon Schneider
  */
 @Configuration
-class MetricsServletRequestConfiguration extends WebMvcConfigurerAdapter {
+public class MetricsServletRequestConfiguration extends WebMvcConfigurerAdapter {
     @Bean
     @ConditionalOnMissingBean(WebmvcTagConfigurer.class)
     WebmvcTagConfigurer webmvcTagConfigurer() {

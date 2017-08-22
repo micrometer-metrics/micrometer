@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring;
+package io.micrometer.spring.web;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.spring.web.MetricsRestTemplateInterceptor;
@@ -38,7 +38,7 @@ import java.util.List;
  */
 @Configuration
 @ConditionalOnClass(name = "org.springframework.web.client.RestTemplate")
-class RestTemplateMetricsConfiguration {
+public class RestTemplateMetricsConfiguration {
     @Bean
     @ConditionalOnMissingBean(RestTemplateTagConfigurer.class)
     RestTemplateTagConfigurer restTemplateTagConfigurer() {

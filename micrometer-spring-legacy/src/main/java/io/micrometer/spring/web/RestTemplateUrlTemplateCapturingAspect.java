@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring;
+package io.micrometer.spring.web;
 
 import io.micrometer.spring.web.RestTemplateUrlTemplateHolder;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+
+import java.net.URI;
 
 /**
  * Captures the still-templated URI because currently the ClientHttpRequestInterceptor
@@ -27,12 +29,23 @@ import org.aspectj.lang.annotation.Aspect;
  * @author Jon Schneider
  */
 @Aspect
-class RestTemplateUrlTemplateCapturingAspect {
+public class RestTemplateUrlTemplateCapturingAspect {
     @Around("execution(* org.springframework.web.client.RestOperations+.*(String, ..))")
     Object captureUrlTemplate(ProceedingJoinPoint joinPoint) throws Throwable {
         try {
             String urlTemplate = (String) joinPoint.getArgs()[0];
             RestTemplateUrlTemplateHolder.setRestTemplateUrlTemplate(urlTemplate);
+            return joinPoint.proceed();
+        } finally {
+            RestTemplateUrlTemplateHolder.clear();
+        }
+    }
+
+    @Around("execution(* org.springframework.web.client.RestOperations+.*(java.net.URI, ..))")
+    Object captureUrlTemplateFromURI(ProceedingJoinPoint joinPoint) throws Throwable {
+        try {
+            URI urlTemplate = (URI) joinPoint.getArgs()[0];
+            RestTemplateUrlTemplateHolder.setRestTemplateUrlTemplate(urlTemplate.toString());
             return joinPoint.proceed();
         } finally {
             RestTemplateUrlTemplateHolder.clear();
