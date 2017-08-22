@@ -125,6 +125,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         private final ToDoubleFunction<T> f;
         private final List<Tag> tags = new ArrayList<>();
         private String description;
+        private String baseUnit;
 
         private GaugeBuilder(String name, T obj, ToDoubleFunction<T> f) {
             this.name = name;
@@ -138,15 +139,22 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
             return this;
         }
 
+        @Override
         public Gauge.Builder description(String description) {
             this.description = description;
             return this;
         }
 
         @Override
+        public Gauge.Builder baseUnit(String unit) {
+            this.baseUnit = unit;
+            return this;
+        }
+
+        @Override
         public Gauge create() {
             return registerMeterIfNecessary(Gauge.class, name, tags, id ->
-                newGauge(id.getConventionName(Meter.Type.Gauge), id.getTags(), description, f, obj));
+                newGauge(id.getConventionName(Meter.Type.Gauge, baseUnit), id.getTags(), description, f, obj));
         }
     }
 
@@ -257,6 +265,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
         private String description;
+        private String baseUnit;
 
         private CounterBuilder(String name) {
             this.name = name;
@@ -274,9 +283,15 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         }
 
         @Override
+        public Counter.Builder baseUnit(String unit) {
+            this.baseUnit = unit;
+            return this;
+        }
+
+        @Override
         public Counter create() {
             return registerMeterIfNecessary(Counter.class, name, tags, id ->
-                newCounter(id.getConventionName(Meter.Type.Counter), id.getTags(), description));
+                newCounter(id.getConventionName(Meter.Type.Counter, baseUnit), id.getTags(), description));
         }
     }
 

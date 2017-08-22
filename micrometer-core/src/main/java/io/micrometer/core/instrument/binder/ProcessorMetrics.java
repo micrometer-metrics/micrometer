@@ -27,7 +27,7 @@ public class ProcessorMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         Runtime runtime = Runtime.getRuntime();
-        registry.gauge("cpu.total", runtime, Runtime::availableProcessors);
+        registry.gauge("cpu", runtime, Runtime::availableProcessors);
 
         OperatingSystemMXBean operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
         if(operatingSystemBean != null && operatingSystemBean.getSystemLoadAverage() >= 0) {

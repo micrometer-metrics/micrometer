@@ -57,6 +57,8 @@ public interface Counter extends Meter {
             return tags(Tags.zip(tags));
         }
 
+        Builder baseUnit(String unit);
+
         Builder description(String description);
 
         Counter create();

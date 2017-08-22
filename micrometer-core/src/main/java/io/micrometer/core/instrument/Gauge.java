@@ -43,6 +43,8 @@ public interface Gauge extends Meter {
 
         Builder description(String description);
 
+        Builder baseUnit(String unit);
+
         Gauge create();
     }
 }

@@ -53,10 +53,16 @@ public class JvmGcMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         // Max size of old generation memory pool
-        AtomicLong maxDataSize = registry.gauge("jvm.gc.max.data.size", new AtomicLong(0L));
+        AtomicLong maxDataSize = new AtomicLong(0L);
+        registry.gaugeBuilder("jvm.gc.max.data.size", maxDataSize, AtomicLong::get)
+            .baseUnit("bytes")
+            .create();
 
         // Size of old generation memory pool after a full GC
-        AtomicLong liveDataSize = registry.gauge("jvm.gc.live.data.size", new AtomicLong(0L));
+        AtomicLong liveDataSize = new AtomicLong(0L);
+        registry.gaugeBuilder("jvm.gc.live.data.size", liveDataSize, AtomicLong::get)
+            .baseUnit("bytes")
+            .create();
 
         // Incremented for any positive increases in the size of the old generation memory pool
         // before GC to after GC

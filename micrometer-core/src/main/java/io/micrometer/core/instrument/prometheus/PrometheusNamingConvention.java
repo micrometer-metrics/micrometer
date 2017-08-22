@@ -41,6 +41,15 @@ public class PrometheusNamingConvention implements NamingConvention {
     public String name(String name, Meter.Type type, String baseUnit) {
         String conventionName = NamingConvention.snakeCase.name(name, type, baseUnit);
 
+        switch(type) {
+            case Counter:
+            case DistributionSummary:
+            case Gauge:
+                if(baseUnit != null && !conventionName.endsWith("_" + baseUnit))
+                    conventionName += "_" + baseUnit;
+                break;
+        }
+
         switch (type) {
             case Counter:
                 conventionName += "_total";
@@ -50,10 +59,6 @@ public class PrometheusNamingConvention implements NamingConvention {
                     conventionName += "_seconds";
                 else if(!conventionName.endsWith("_seconds"))
                     conventionName += "_duration_seconds";
-                break;
-            case DistributionSummary:
-                if(baseUnit != null && !conventionName.endsWith("_" + baseUnit))
-                    conventionName += "_" + baseUnit;
                 break;
         }
 
