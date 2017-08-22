@@ -195,6 +195,14 @@ public interface MeterRegistry {
      */
     More more();
 
+    /**
+     * Register a custom meter type.
+     * @param name Name of the meter being registered.
+     * @param tags Sequence of dimensions for breaking down the name.
+     * @param type Meter type, which may be used by naming conventions to normalize the name.
+     * @param measurements A sequence of measurements describing how to sample the meter.
+     * @return The registry.
+     */
     MeterRegistry register(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements);
 
     /**
@@ -209,7 +217,7 @@ public interface MeterRegistry {
      * registrations.
      *
      * @param name Name of the gauge being registered.
-     * @param tags Sequence of dimensions for breaking down the getName.
+     * @param tags Sequence of dimensions for breaking down the name.
      * @param obj  Object used to compute a value.
      * @param f    Function that is applied on the value for the number.
      * @return The number that was passed in so the registration can be done as part of an assignment
@@ -224,7 +232,7 @@ public interface MeterRegistry {
      * Register a gauge that reports the value of the {@link java.lang.Number}.
      *
      * @param name   Name of the gauge being registered.
-     * @param tags   Sequence of dimensions for breaking down the getName.
+     * @param tags   Sequence of dimensions for breaking down the name.
      * @param number Thread-safe implementation of {@link Number} used to access the value.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
@@ -266,7 +274,7 @@ public interface MeterRegistry {
      * and should be considered before registering.
      *
      * @param name       Name of the gauge being registered.
-     * @param tags       Sequence of dimensions for breaking down the getName.
+     * @param tags       Sequence of dimensions for breaking down the name.
      * @param collection Thread-safe implementation of {@link Collection} used to access the value.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
@@ -283,7 +291,7 @@ public interface MeterRegistry {
      * and should be considered before registering.
      *
      * @param name Name of the gauge being registered.
-     * @param tags Sequence of dimensions for breaking down the getName.
+     * @param tags Sequence of dimensions for breaking down the name.
      * @param map  Thread-safe implementation of {@link Map} used to access the value.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
