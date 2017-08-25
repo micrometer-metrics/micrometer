@@ -18,7 +18,6 @@ package io.micrometer.spring.web;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.spring.EnableMetrics;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +28,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = ControllerMetricsTest.App.class)
 @WebMvcTest(ControllerMetricsTest.Controller1.class)
+@TestPropertySource(properties = "metrics.useGlobalRegistry=false")
 public class ControllerMetricsTest {
     @Autowired
     private MockMvc mvc;
@@ -64,7 +65,6 @@ public class ControllerMetricsTest {
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")
-    @EnableMetrics
     @Import(Controller1.class)
     static class App {
         @Bean

@@ -13,17 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.export.prometheus;
+package io.micrometer.spring.export;
 
-import io.micrometer.spring.EnableMetrics;
-import org.springframework.context.annotation.Import;
+import io.micrometer.core.instrument.MeterRegistry;
 
-import java.lang.annotation.*;
-
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-@EnableMetrics
-@Import({ PrometheusMetricsConfiguration.class, PrometheusEndpointConfiguration.class })
-public @interface EnablePrometheusMetrics {
+public interface MetricsExporter {
+    MeterRegistry registry();
 }

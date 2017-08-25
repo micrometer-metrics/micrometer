@@ -16,16 +16,33 @@
 package io.micrometer.spring;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.spring.binder.SpringIntegrationMetrics;
+import io.micrometer.spring.export.MetricsExporter;
+import io.micrometer.spring.export.atlas.AtlasExportConfiguration;
+import io.micrometer.spring.export.datadog.DatadogExportConfiguration;
+import io.micrometer.spring.export.ganglia.GangliaExportConfiguration;
+import io.micrometer.spring.export.graphite.GraphiteExportConfiguration;
+import io.micrometer.spring.export.influx.InfluxExportConfiguration;
+import io.micrometer.spring.export.jmx.JmxExportConfiguration;
+import io.micrometer.spring.export.prometheus.PrometheusExportConfiguration;
 import io.micrometer.spring.scheduling.MetricsSchedulingAspect;
+import io.micrometer.spring.web.MetricsRestTemplateConfiguration;
 import io.micrometer.spring.web.MetricsServletRequestConfiguration;
-import io.micrometer.spring.web.RestTemplateMetricsConfiguration;
-import io.micrometer.spring.web.RestTemplateUrlTemplateCapturingAspect;
-import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.SearchStrategy;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.integration.support.management.IntegrationManagementConfigurer;
+
+import java.util.Collection;
 
 /**
  * Metrics configuration for Spring 4/Boot 1.x
@@ -33,16 +50,53 @@ import org.springframework.integration.support.management.IntegrationManagementC
  * @author Jon Schneider
  */
 @Configuration
+@EnableConfigurationProperties(MetricsConfigurationProperties.class)
 @Import({
-        RestTemplateMetricsConfiguration.class,
-        RecommendedMeterBinders.class,
-        MeterRegistryConfigurationSupport.class
+    RecommendedMeterBinders.class,
+    MetricsServletRequestConfiguration.class,
+    MetricsRestTemplateConfiguration.class,
+
+    // supported monitoring systems
+    AtlasExportConfiguration.class,
+    DatadogExportConfiguration.class,
+    GangliaExportConfiguration.class,
+    GraphiteExportConfiguration.class,
+    InfluxExportConfiguration.class,
+    JmxExportConfiguration.class,
+    PrometheusExportConfiguration.class
 })
 class MetricsConfiguration {
+    @ConditionalOnMissingBean(MeterRegistry.class)
+    @Bean
+    public CompositeMeterRegistry compositeMeterRegistry(ObjectProvider<Collection<MetricsExporter>> exportersProvider) {
+        CompositeMeterRegistry composite = new CompositeMeterRegistry();
+
+        if (exportersProvider.getIfAvailable() != null) {
+            exportersProvider.getIfAvailable().forEach(exporter -> composite.add(exporter.registry()));
+        }
+
+        return composite;
+    }
+
     @Configuration
-    @ConditionalOnWebApplication
-    @Import(MetricsServletRequestConfiguration.class)
-    static class WebMvcConfiguration {}
+    static class MeterRegistryConfigurationSupport {
+        public MeterRegistryConfigurationSupport(MeterRegistry registry,
+                                                 MetricsConfigurationProperties config,
+                                                 ObjectProvider<Collection<MeterBinder>> binders,
+                                                 ObjectProvider<Collection<MeterRegistryConfigurer>> registryConfigurers) {
+            if (registryConfigurers.getIfAvailable() != null) {
+                registryConfigurers.getIfAvailable().forEach(conf -> conf.configureRegistry(registry));
+            }
+
+            if (binders.getIfAvailable() != null) {
+                binders.getIfAvailable().forEach(binder -> binder.bindTo(registry));
+            }
+
+            if (config.getUseGlobalRegistry()) {
+                Metrics.globalRegistry.add(registry);
+            }
+        }
+    }
 
     /**
      * If AOP is not enabled, scheduled interception will not work.
@@ -52,20 +106,6 @@ class MetricsConfiguration {
     @ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)
     public MetricsSchedulingAspect metricsSchedulingAspect(MeterRegistry registry) {
         return new MetricsSchedulingAspect(registry);
-    }
-
-    /**
-     * If AOP is not enabled, client request interception will still work, but the URI tag
-     * will always be evaluated to "none".
-     */
-    @Configuration
-    @ConditionalOnClass(name = {"org.springframework.web.client.RestTemplate", "org.aopalliance.intercept.Joinpoint"})
-    @ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)
-    static class MetricsRestTemplateAspectConfiguration {
-        @Bean
-        RestTemplateUrlTemplateCapturingAspect restTemplateUrlTemplateCapturingAspect() {
-            return new RestTemplateUrlTemplateCapturingAspect();
-        }
     }
 
     @Configuration

@@ -41,13 +41,11 @@ public interface InfluxConfig extends StepRegistryConfig {
      *
      * Only available for InfluxEnterprise clusters.
      */
-    default String consistency() {
+    default InfluxConsistency consistency() {
         String v = get(prefix() + ".consistency");
         if(v == null)
-            return "one";
-        if(!v.equals("any") && !v.equals("one") && !v.equals("quorum") && !v.equals("all"))
-            throw new IllegalArgumentException("Influx consistency must be one of [any, one, quorum, all]");
-        return v;
+            return InfluxConsistency.ONE;
+        return InfluxConsistency.valueOf(v.toUpperCase());
     }
 
     /**

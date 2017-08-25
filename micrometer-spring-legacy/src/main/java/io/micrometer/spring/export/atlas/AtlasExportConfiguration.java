@@ -16,31 +16,35 @@
 package io.micrometer.spring.export.atlas;
 
 import com.netflix.spectator.atlas.AtlasConfig;
-import io.micrometer.core.instrument.Clock;
 import io.micrometer.atlas.AtlasMeterRegistry;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.spring.export.DurationConverter;
+import io.micrometer.spring.export.MetricsExporter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
+import org.springframework.context.annotation.Import;
 
 /**
  * @author Jon Schneider
  */
 @Configuration
-public class AtlasMetricsConfiguration {
+@ConditionalOnClass(name = "io.micrometer.atlas.AtlasMeterRegistry")
+@Import(DurationConverter.class)
+@EnableConfigurationProperties(AtlasConfigurationProperties.class)
+public class AtlasExportConfiguration {
+    @ConditionalOnProperty(value = "metrics.atlas.enabled", matchIfMissing = true)
     @Bean
-    AtlasMeterRegistry meterRegistry(AtlasConfig atlasConfig, Clock clock) {
-        return new AtlasMeterRegistry(atlasConfig, clock);
-    }
-
-    @Bean
-    AtlasConfig atlasConfig(Environment environment) {
-        return environment::getProperty;
+    public MetricsExporter atlasExporter(AtlasConfig config, Clock clock) {
+        return () -> new AtlasMeterRegistry(config, clock);
     }
 
     @ConditionalOnMissingBean
     @Bean
-    Clock clock() {
+    public Clock clock() {
         return Clock.SYSTEM;
     }
 }

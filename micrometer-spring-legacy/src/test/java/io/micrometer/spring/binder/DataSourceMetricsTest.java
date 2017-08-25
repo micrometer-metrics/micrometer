@@ -16,8 +16,8 @@
 package io.micrometer.spring.binder;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.spring.SpringMeters;
-import io.micrometer.spring.export.prometheus.EnablePrometheusMetrics;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProvider;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
@@ -41,29 +41,31 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
  * @author Jon Schneider
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource(properties = { "spring.datasource.generate-unique-name=true", "management.security.enabled=false" })
+@SpringBootTest
+@TestPropertySource(properties = {
+    "spring.datasource.generate-unique-name=true",
+    "management.security.enabled=false",
+    "metrics.useGlobalRegistry=false"
+})
 public class DataSourceMetricsTest {
-
     @Autowired
     DataSource dataSource;
 
     @Autowired
-    TestRestTemplate restTemplate;
+    MeterRegistry registry;
 
     @Test
     public void dataSourceIsInstrumented() throws SQLException, InterruptedException {
         dataSource.getConnection().getMetaData();
-        String scrape = restTemplate.getForObject("/prometheus", String.class);
-        assertThat(scrape).contains("data_source_max_connections");
+        assertThat(registry.find("data.source.max.connections").meter()).isPresent();
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")
-    @EnablePrometheusMetrics
     @Import(DataSourceConfig.class)
     static class MetricsApp {
-        public static void main(String[] args) {
-            SpringApplication.run(MetricsApp.class, "--debug");
+        @Bean
+        MeterRegistry registry() {
+            return new SimpleMeterRegistry();
         }
     }
 
@@ -73,10 +75,10 @@ public class DataSourceMetricsTest {
                                 Collection<DataSourcePoolMetadataProvider> metadataProviders,
                                 MeterRegistry registry) {
             SpringMeters.monitor(
-                    registry,
-                    dataSource,
-                    metadataProviders,
-                "data_source");
+                registry,
+                dataSource,
+                metadataProviders,
+                "data.source");
         }
     }
 }

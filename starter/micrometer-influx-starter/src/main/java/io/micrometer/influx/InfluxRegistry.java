@@ -49,7 +49,7 @@ public class InfluxRegistry extends AbstractStepRegistry {
         super(config, clock);
 
         try {
-            String queryParams = "?consistency=" + config.consistency() + "&precision=ms&db=" + config.db();
+            String queryParams = "?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
             if(config.retentionPolicy() != null)
                 queryParams += "&rp=" + config.retentionPolicy();
             this.influxEndpoint = URI.create(config.uri() + queryParams).toURL();

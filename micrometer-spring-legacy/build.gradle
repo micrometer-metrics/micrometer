@@ -41,6 +41,9 @@ dependencies {
 
     compile 'org.springframework.integration:spring-integration-core', optional
 
+    // to validate auto-completion on configuration properties
+    compileOnly 'org.springframework.boot:spring-boot-configuration-processor'
+
     testCompile 'org.springframework.boot:spring-boot-starter-web'
     testCompile 'org.springframework.boot:spring-boot-actuator'
 

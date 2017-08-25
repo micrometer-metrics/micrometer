@@ -18,26 +18,30 @@ package io.micrometer.spring.export.datadog;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.datadog.DatadogConfig;
 import io.micrometer.datadog.DatadogMeterRegistry;
+import io.micrometer.spring.export.DurationConverter;
+import io.micrometer.spring.export.MetricsExporter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
+import org.springframework.context.annotation.Import;
 
 @Configuration
-public class DatadogMetricsConfiguration {
+@ConditionalOnClass(name = "io.micrometer.datadog.DatadogMeterRegistry")
+@Import(DurationConverter.class)
+@EnableConfigurationProperties(DatadogConfigurationProperties.class)
+public class DatadogExportConfiguration {
+    @ConditionalOnProperty(value = "metrics.datadog.enabled", matchIfMissing = true)
     @Bean
-    DatadogMeterRegistry meterRegistry(DatadogConfig config) {
-        return new DatadogMeterRegistry(config);
-    }
-
-    @Bean
-    DatadogConfig datadogConfig(Environment environment) {
-        return environment::getProperty;
+    public MetricsExporter datadogExporter(DatadogConfig config, Clock clock) {
+        return () -> new DatadogMeterRegistry(config, clock);
     }
 
     @ConditionalOnMissingBean
     @Bean
-    Clock clock() {
+    public Clock clock() {
         return Clock.SYSTEM;
     }
 }

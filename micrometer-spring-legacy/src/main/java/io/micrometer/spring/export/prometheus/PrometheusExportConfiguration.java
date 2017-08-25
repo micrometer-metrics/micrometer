@@ -13,33 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.export.graphite;
+package io.micrometer.spring.export.prometheus;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.graphite.GraphiteConfig;
-import io.micrometer.graphite.GraphiteMeterRegistry;
-import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.micrometer.spring.export.MetricsExporter;
+import io.prometheus.client.CollectorRegistry;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 
 @Configuration
-public class GraphiteMetricsConfiguration {
+@ConditionalOnClass(name = "io.micrometer.prometheus.PrometheusMeterRegistry")
+public class PrometheusExportConfiguration {
+    @ConditionalOnProperty(value = "metrics.prometheus.enabled", matchIfMissing = true)
     @Bean
-    GraphiteMeterRegistry meterRegistry(GraphiteConfig config, HierarchicalNameMapper hierarchicalNameMapper, Clock clock) {
-        return new GraphiteMeterRegistry(config, hierarchicalNameMapper, clock);
-    }
-
-    @Bean
-    GraphiteConfig graphiteConfig(Environment environment) {
-        return environment::getProperty;
+    MetricsExporter prometheusMeterRegistry(CollectorRegistry collectorRegistry, Clock clock) {
+        return () -> new PrometheusMeterRegistry(collectorRegistry, clock);
     }
 
     @ConditionalOnMissingBean
     @Bean
-    HierarchicalNameMapper hierarchicalNameMapper() {
-        return HierarchicalNameMapper.DEFAULT;
+    CollectorRegistry collectorRegistry() {
+        return new CollectorRegistry(true);
     }
 
     @ConditionalOnMissingBean

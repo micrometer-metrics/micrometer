@@ -18,7 +18,6 @@ package io.micrometer.spring.web;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.spring.EnableMetrics;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +27,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -49,12 +49,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = MetricsHandlerInterceptorTest.App.class)
 @WebMvcTest({MetricsHandlerInterceptorTest.Controller1.class, MetricsHandlerInterceptorTest.Controller2.class})
+@TestPropertySource(properties = {
+    "metrics.useGlobalRegistry=false",
+    "metrics.web.autoTimeServerRequests=false"
+})
 public class MetricsHandlerInterceptorTest {
     @Autowired
     MockMvc mvc;
 
     @Autowired
-    SimpleMeterRegistry registry;
+    MeterRegistry registry;
 
     static CountDownLatch longRequestCountDown = new CountDownLatch(1);
 
@@ -137,7 +141,6 @@ public class MetricsHandlerInterceptorTest {
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")
-    @EnableMetrics
     @Import({ Controller1.class, Controller2.class })
     static class App {
         @Bean

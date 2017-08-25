@@ -91,15 +91,21 @@ public class CompositeMeterRegistry extends AbstractMeterRegistry {
         registries.forEach(meter::add);
     }
 
-    public void add(MeterRegistry registry) {
+    public CompositeMeterRegistry add(MeterRegistry registry) {
         if(registries.add(registry)) {
             compositeMeters.forEach(m -> m.add(registry));
         }
+        return this;
     }
 
-    public void remove(MeterRegistry registry) {
+    public CompositeMeterRegistry remove(MeterRegistry registry) {
         if(registries.remove(registry)) {
             compositeMeters.forEach(m -> m.remove(registry));
         }
+        return this;
+    }
+
+    public Set<MeterRegistry> getRegistries() {
+        return registries;
     }
 }

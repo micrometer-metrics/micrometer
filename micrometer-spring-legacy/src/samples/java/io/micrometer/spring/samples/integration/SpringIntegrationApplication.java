@@ -15,7 +15,6 @@
  */
 package io.micrometer.spring.samples.integration;
 
-import io.micrometer.spring.export.prometheus.EnablePrometheusMetrics;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -31,7 +30,6 @@ import org.springframework.integration.ws.WebServiceHeaders;
 
 @Configuration
 @SpringBootApplication
-@EnablePrometheusMetrics
 @IntegrationComponentScan
 public class SpringIntegrationApplication {
 

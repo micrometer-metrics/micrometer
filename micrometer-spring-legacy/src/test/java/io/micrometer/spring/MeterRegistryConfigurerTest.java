@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Optional;
@@ -35,10 +36,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jon Schneider
  */
 @RunWith(SpringRunner.class)
+@TestPropertySource(properties = "metrics.useGlobalRegistry=false")
 public class MeterRegistryConfigurerTest {
 
     @Autowired
-    SimpleMeterRegistry registry;
+    MeterRegistry registry;
 
     @Test
     public void commonTagsAreAppliedToAutoConfiguredBinders() {
@@ -47,7 +49,6 @@ public class MeterRegistryConfigurerTest {
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")
-    @EnableMetrics
     static class MetricsApp {
         public static void main(String[] args) {
             SpringApplication.run(MetricsApp.class);

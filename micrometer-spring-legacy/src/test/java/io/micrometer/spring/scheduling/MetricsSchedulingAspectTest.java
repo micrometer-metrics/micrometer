@@ -18,7 +18,6 @@ package io.micrometer.spring.scheduling;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.spring.EnableMetrics;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +27,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.concurrent.CountDownLatch;
@@ -37,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
+@TestPropertySource(properties = "metrics.useGlobalRegistry=false")
 public class MetricsSchedulingAspectTest {
 
     static CountDownLatch longTaskStarted = new CountDownLatch(1);
@@ -74,7 +75,6 @@ public class MetricsSchedulingAspectTest {
     }
 
     @SpringBootApplication
-    @EnableMetrics
     @EnableScheduling
     static class MetricsApp {
         @Bean
@@ -91,7 +91,7 @@ public class MetricsSchedulingAspectTest {
         }
 
         @Timed(value = "long.beep", longTask = true)
-        @Scheduled(fixedDelay = 100000)
+        @Scheduled(fixedDelay = 100_000)
         void longBeep() throws InterruptedException {
             longTaskStarted.countDown();
             longTaskShouldComplete.await();
@@ -99,19 +99,19 @@ public class MetricsSchedulingAspectTest {
         }
 
         @Timed(value = "beeper", quantiles = {0.5, 0.95})
-        @Scheduled(fixedDelay = 100000)
+        @Scheduled(fixedDelay = 100_000)
         void shortBeep() {
             shortBeepsExecuted.countDown();
             System.out.println("beep");
         }
 
         @Timed // not instrumented because @Timed lacks a metric name
-        @Scheduled(fixedDelay = 100000)
+        @Scheduled(fixedDelay = 100_000)
         void noMetricName() {
             System.out.println("beep");
         }
 
-        @Scheduled(fixedDelay = 100000) // not instrumented because it isn't @Timed
+        @Scheduled(fixedDelay = 100_000) // not instrumented because it isn't @Timed
         void notTimed() {
             System.out.println("beep");
         }

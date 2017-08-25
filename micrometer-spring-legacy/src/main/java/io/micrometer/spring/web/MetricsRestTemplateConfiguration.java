@@ -16,12 +16,11 @@
 package io.micrometer.spring.web;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.spring.web.MetricsRestTemplateInterceptor;
-import io.micrometer.spring.web.RestTemplateTagConfigurer;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
@@ -38,7 +37,7 @@ import java.util.List;
  */
 @Configuration
 @ConditionalOnClass(name = "org.springframework.web.client.RestTemplate")
-public class RestTemplateMetricsConfiguration {
+public class MetricsRestTemplateConfiguration {
     @Bean
     @ConditionalOnMissingBean(RestTemplateTagConfigurer.class)
     RestTemplateTagConfigurer restTemplateTagConfigurer() {
@@ -88,6 +87,20 @@ public class RestTemplateMetricsConfiguration {
         @Override
         public void setApplicationContext(ApplicationContext context) throws BeansException {
             this.context = context;
+        }
+    }
+
+    /**
+     * If AOP is not enabled, client request interception will still work, but the URI tag
+     * will always be evaluated to "none".
+     */
+    @Configuration
+    @ConditionalOnClass(name = {"org.aopalliance.intercept.Joinpoint"})
+    @ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)
+    static class MetricsRestTemplateAspectConfiguration {
+        @Bean
+        RestTemplateUrlTemplateCapturingAspect restTemplateUrlTemplateCapturingAspect() {
+            return new RestTemplateUrlTemplateCapturingAspect();
         }
     }
 }

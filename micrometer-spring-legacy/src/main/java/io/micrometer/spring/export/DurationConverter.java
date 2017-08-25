@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.export.datadog;
+package io.micrometer.spring.export;
 
-import io.micrometer.spring.EnableMetrics;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
+import org.springframework.core.convert.converter.Converter;
 
-import java.lang.annotation.*;
+import java.time.Duration;
 
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-@EnableMetrics
-@Import(DatadogMetricsConfiguration.class)
-public @interface EnableDatadogMetrics {
+@ConfigurationPropertiesBinding
+public class DurationConverter implements Converter<String, Duration> {
+    @Override
+    public Duration convert(String source) {
+       return Duration.parse(source);
+    }
 }

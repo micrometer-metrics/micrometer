@@ -13,17 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.export.atlas;
+package io.micrometer.influx;
 
-import io.micrometer.spring.EnableMetrics;
-import org.springframework.context.annotation.Import;
-
-import java.lang.annotation.*;
-
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-@EnableMetrics
-@Import(AtlasMetricsConfiguration.class)
-public @interface EnableAtlasMetrics {
+public enum InfluxConsistency {
+    ANY, ONE, QUORUM, ALL
 }

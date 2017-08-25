@@ -15,16 +15,14 @@
  */
 package io.micrometer.spring.samples;
 
-import io.micrometer.spring.export.atlas.EnableAtlasMetrics;
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages = "io.micrometer.spring.samples.components")
-@EnableAtlasMetrics
 @EnableScheduling
 public class AtlasSample {
     public static void main(String[] args) {
-        SpringApplication.run(AtlasSample.class, args);
+        new SpringApplicationBuilder(AtlasSample.class).profiles("atlas").run(args);
     }
 }

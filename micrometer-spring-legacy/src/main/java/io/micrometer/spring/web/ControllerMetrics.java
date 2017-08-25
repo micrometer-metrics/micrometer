@@ -19,6 +19,7 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.stats.quantile.WindowSketchQuantiles;
 import io.micrometer.core.instrument.util.AnnotationUtils;
+import io.micrometer.spring.MetricsConfigurationProperties;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.web.context.request.RequestAttributes;
@@ -27,6 +28,7 @@ import org.springframework.web.method.HandlerMethod;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -52,17 +54,17 @@ public class ControllerMetrics {
     private static final Log logger = LogFactory.getLog(ControllerMetrics.class);
 
     private final MeterRegistry registry;
+    private MetricsConfigurationProperties properties;
     private final WebmvcTagConfigurer tagConfigurer;
-    private final String metricName;
 
     private final Map<HttpServletRequest, Long> longTaskTimerIds = Collections.synchronizedMap(new IdentityHashMap<>());
 
     public ControllerMetrics(MeterRegistry registry,
-                             WebmvcTagConfigurer tagConfigurer,
-                             String metricName) {
+                             MetricsConfigurationProperties properties,
+                             WebmvcTagConfigurer tagConfigurer) {
         this.registry = registry;
+        this.properties = properties;
         this.tagConfigurer = tagConfigurer;
-        this.metricName = metricName;
     }
 
     public void tagWithException(Throwable t) {
@@ -102,7 +104,7 @@ public class ControllerMetrics {
 
         // record Timer values
         timed(handler).forEach(t -> {
-            String name = metricName;
+            String name = properties.getWeb().getServerRequestsName();
             if (!t.value().isEmpty()) {
                 name = t.value();
             }
@@ -160,8 +162,37 @@ public class ControllerMetrics {
 
         Set<Timed> timed = AnnotationUtils.findTimed(((HandlerMethod) m).getMethod()).filter(t -> !t.longTask()).collect(toSet());
         if (timed.isEmpty()) {
-            return AnnotationUtils.findTimed(((HandlerMethod) m).getBeanType()).filter(t -> !t.longTask()).collect(toSet());
+            timed = AnnotationUtils.findTimed(((HandlerMethod) m).getBeanType()).filter(t -> !t.longTask()).collect(toSet());
+            if(timed.isEmpty() && properties.getWeb().getAutoTimeServerRequests()) {
+                return Collections.singleton(new Timed() {
+                    @Override
+                    public Class<? extends Annotation> annotationType() {
+                        return Timed.class;
+                    }
+
+                    @Override
+                    public String value() {
+                        return "";
+                    }
+
+                    @Override
+                    public String[] extraTags() {
+                        return new String[0];
+                    }
+
+                    @Override
+                    public boolean longTask() {
+                        return false;
+                    }
+
+                    @Override
+                    public double[] quantiles() {
+                        return new double[0];
+                    }
+                });
+            }
         }
+
         return timed;
     }
 }

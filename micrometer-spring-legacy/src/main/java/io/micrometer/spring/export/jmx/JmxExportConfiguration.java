@@ -13,38 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.export.ganglia;
+package io.micrometer.spring.export.jmx;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.ganglia.GangliaConfig;
-import io.micrometer.ganglia.GangliaMeterRegistry;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.jmx.JmxMeterRegistry;
+import io.micrometer.spring.export.MetricsExporter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 
 @Configuration
-public class GangliaMetricsConfiguration {
+@ConditionalOnClass(name = "io.micrometer.jmx.JmxMeterRegistry")
+public class JmxExportConfiguration {
+    @ConditionalOnProperty(value = "metrics.jmx.enabled", matchIfMissing = true)
     @Bean
-    GangliaMeterRegistry meterRegistry(GangliaConfig config, HierarchicalNameMapper hierarchicalNameMapper, Clock clock) {
-        return new GangliaMeterRegistry(config, hierarchicalNameMapper, clock);
-    }
-
-    @Bean
-    GangliaConfig gangliaConfig(Environment environment) {
-        return environment::getProperty;
+    public MetricsExporter jmxExporter(HierarchicalNameMapper nameMapper, Clock clock) {
+        return () -> new JmxMeterRegistry(nameMapper, clock);
     }
 
     @ConditionalOnMissingBean
     @Bean
-    HierarchicalNameMapper hierarchicalNameMapper() {
-        return HierarchicalNameMapper.DEFAULT;
-    }
-
-    @ConditionalOnMissingBean
-    @Bean
-    Clock clock() {
+    public Clock clock() {
         return Clock.SYSTEM;
+    }
+
+    @ConditionalOnMissingBean
+    @Bean
+    public HierarchicalNameMapper hierarchicalNameMapper() {
+        return HierarchicalNameMapper.DEFAULT;
     }
 }

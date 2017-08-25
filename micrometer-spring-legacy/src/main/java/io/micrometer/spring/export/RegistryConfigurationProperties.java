@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.export.jmx;
+package io.micrometer.spring.export;
 
-import io.micrometer.spring.EnableMetrics;
-import org.springframework.context.annotation.Import;
+import java.util.Properties;
 
-import java.lang.annotation.*;
+public abstract class RegistryConfigurationProperties {
+    private Properties props = new Properties();
 
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-@EnableMetrics
-@Import(JmxMetricsConfiguration.class)
-public @interface EnableJmxMetrics {
+    protected abstract String prefix();
+
+    public String get(String k) {
+        return props.getProperty(k);
+    }
+
+    protected void set(String k, Object v) {
+        props.put(prefix() + "." + k, v.toString());
+    }
 }

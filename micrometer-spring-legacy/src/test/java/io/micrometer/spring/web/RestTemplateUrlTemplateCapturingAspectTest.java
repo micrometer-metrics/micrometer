@@ -17,7 +17,6 @@ package io.micrometer.spring.web;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.spring.EnableMetrics;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +25,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -41,6 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
+@TestPropertySource(properties = "metrics.useGlobalRegistry=false")
 public class RestTemplateUrlTemplateCapturingAspectTest {
     @Autowired
     RestTemplate restTemplate;
@@ -70,7 +71,6 @@ public class RestTemplateUrlTemplateCapturingAspectTest {
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")
-    @EnableMetrics
     static class MetricsApp {
         @Bean
         public MeterRegistry registry() {

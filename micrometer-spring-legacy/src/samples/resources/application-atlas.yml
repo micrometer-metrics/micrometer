@@ -14,17 +14,8 @@
 # limitations under the License.
 #
 
-server.port: 8080
-management.security.enabled: false
-
-# see https://stackoverflow.com/questions/44474160/spring-integration-display-warning-that-header-is-ignored-for-population-because
-logging.level.org.springframework.integration.support.MessageBuilder: WARN
-
-metrics:
-  atlas.enabled: false
-  datadog.enabled: false
-  ganglia.enabled: false
-  graphite.enabled: false
-  influx.enabled: false
-  jmx.enabled: false
-  prometheus.enabled: false
+metrics.atlas:
+  enabled: true
+  step: PT10S
+  readTimeout: PT30S
+  batchSize: 20000
