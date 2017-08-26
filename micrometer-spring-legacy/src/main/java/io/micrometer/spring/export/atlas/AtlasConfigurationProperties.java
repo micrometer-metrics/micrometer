@@ -80,6 +80,6 @@ public class AtlasConfigurationProperties extends RegistryConfigurationPropertie
 
     @Override
     protected String prefix() {
-        return "metrics.atlas";
+        return "atlas";
     }
 }

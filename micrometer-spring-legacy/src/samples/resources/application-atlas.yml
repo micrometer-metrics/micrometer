@@ -14,8 +14,9 @@
 # limitations under the License.
 #
 
-metrics.atlas:
-  enabled: true
-  step: PT10S
-  readTimeout: PT30S
-  batchSize: 20000
+metrics:
+  atlas:
+    enabled: true
+    step: PT10S
+    readTimeout: PT30S
+    batchSize: 20000
