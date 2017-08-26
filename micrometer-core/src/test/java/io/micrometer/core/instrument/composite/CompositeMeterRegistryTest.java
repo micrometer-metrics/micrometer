@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.NamingConvention;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -89,5 +90,34 @@ class CompositeMeterRegistryTest {
         composite.counter("counter").increment();
 
         assertThat(simple.find("counter").value(Count, 1.0).counter()).isPresent();
+    }
+
+    @DisplayName("metrics follow the naming convention of each registry in the composite")
+    @Test
+    void namingConventions() {
+        SimpleMeterRegistry simple = new SimpleMeterRegistry();
+        simple.config().namingConvention(NamingConvention.camelCase);
+
+        composite.add(simple);
+        composite.counter("my.counter").increment();
+
+        assertThat(simple.find("my.counter").value(Count, 1.0).counter()).isPresent();
+    }
+
+    @DisplayName("common tags added to the composite affect meters registered with registries in the composite")
+    @Test
+    void commonTags() {
+        SimpleMeterRegistry simple = new SimpleMeterRegistry();
+        simple.config().commonTags("instance", "local"); // added alongside other common tags in the composite
+        simple.config().commonTags("region", "us-west-1"); // overriden by the composite
+
+        composite.config().commonTags("region", "us-east-1");
+        composite.add(simple);
+        composite.config().commonTags("stack", "test");
+
+        composite.counter("counter").increment();
+
+        assertThat(simple.find("counter").tags("region", "us-east-1", "stack", "test",
+            "instance", "local").counter()).isPresent();
     }
 }

@@ -32,6 +32,8 @@ import java.util.stream.Collectors;
  * @author Jon Schneider
  */
 public interface NamingConvention {
+    NamingConvention identity = (name, type, baseUnit) -> name;
+
     NamingConvention snakeCase = new NamingConvention() {
         @Override
         public String name(String name, Meter.Type type, String baseUnit) {

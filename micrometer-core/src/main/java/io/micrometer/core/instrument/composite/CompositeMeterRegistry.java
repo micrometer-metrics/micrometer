@@ -42,6 +42,7 @@ public class CompositeMeterRegistry extends AbstractMeterRegistry {
 
     public CompositeMeterRegistry(Clock clock) {
         super(clock);
+        config().namingConvention(NamingConvention.identity);
     }
 
     @Override
