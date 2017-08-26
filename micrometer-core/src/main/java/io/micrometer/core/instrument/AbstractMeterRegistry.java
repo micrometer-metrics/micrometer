@@ -58,9 +58,19 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         }
 
         @Override
+        public Iterable<Tag> commonTags() {
+            return commonTags;
+        }
+
+        @Override
         public Config namingConvention(NamingConvention convention) {
             namingConvention = convention;
             return this;
+        }
+
+        @Override
+        public NamingConvention namingConvention() {
+            return namingConvention;
         }
 
         @Override

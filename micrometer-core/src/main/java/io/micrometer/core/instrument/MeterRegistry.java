@@ -51,9 +51,19 @@ public interface MeterRegistry {
         }
 
         /**
+         * @return The list of common tags in use on this registry.
+         */
+        Iterable<Tag> commonTags();
+
+        /**
          * Use the provided naming convention, overriding the default for your monitoring system.
          */
         Config namingConvention(NamingConvention convention);
+
+        /**
+         * @return The naming convention currently in use on this registry.
+         */
+        NamingConvention namingConvention();
 
         /**
          * Retrieve the clock used to measure durations of timers and long task timers (and sometimes
