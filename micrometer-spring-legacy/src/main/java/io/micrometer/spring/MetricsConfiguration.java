@@ -93,7 +93,7 @@ class MetricsConfiguration {
             }
 
             if (config.getUseGlobalRegistry()) {
-                Metrics.globalRegistry.add(registry);
+                Metrics.addRegistry(registry);
             }
         }
     }

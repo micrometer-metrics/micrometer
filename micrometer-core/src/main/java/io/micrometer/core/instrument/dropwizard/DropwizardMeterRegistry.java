@@ -52,7 +52,10 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
     @Override
     protected <T> io.micrometer.core.instrument.Gauge newGauge(String name, Iterable<Tag> tags, String description, ToDoubleFunction<T> f, T obj) {
         final WeakReference<T> ref = new WeakReference<>(obj);
-        Gauge<Double> gauge = () -> f.applyAsDouble(ref.get());
+        Gauge<Double> gauge = () -> {
+            T obj2 = ref.get();
+            return obj2 != null ? f.applyAsDouble(ref.get()) : Double.NaN;
+        };
         registry.register(nameMapper.toHierarchicalName(name, tags), gauge);
         return new DropwizardGauge(name, tags, description, gauge);
     }
