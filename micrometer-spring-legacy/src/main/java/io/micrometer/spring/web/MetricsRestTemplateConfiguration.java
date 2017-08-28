@@ -95,7 +95,7 @@ public class MetricsRestTemplateConfiguration {
      * will always be evaluated to "none".
      */
     @Configuration
-    @ConditionalOnClass(name = {"org.aopalliance.intercept.Joinpoint"})
+    @ConditionalOnClass(name = {"org.aspectj.lang.ProceedingJoinPoint"})
     @ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)
     static class MetricsRestTemplateAspectConfiguration {
         @Bean

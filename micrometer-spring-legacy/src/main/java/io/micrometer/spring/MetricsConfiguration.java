@@ -102,7 +102,7 @@ class MetricsConfiguration {
      * If AOP is not enabled, scheduled interception will not work.
      */
     @Bean
-    @ConditionalOnClass(name = "org.aopalliance.intercept.Joinpoint")
+    @ConditionalOnClass(name = "org.aspectj.lang.ProceedingJoinPoint")
     @ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)
     public MetricsSchedulingAspect metricsSchedulingAspect(MeterRegistry registry) {
         return new MetricsSchedulingAspect(registry);

@@ -15,7 +15,6 @@
  */
 package io.micrometer.spring.web;
 
-import io.micrometer.spring.web.RestTemplateUrlTemplateHolder;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
