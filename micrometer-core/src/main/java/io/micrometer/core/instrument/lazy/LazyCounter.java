@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.lazy;
 
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Tag;
 
 import java.util.function.Supplier;
 
@@ -34,13 +33,8 @@ public final class LazyCounter implements Counter {
     }
 
     @Override
-    public String getName() {
-        return counter().getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return counter().getTags();
+    public Id getId() {
+        return counter().getId();
     }
 
     @Override

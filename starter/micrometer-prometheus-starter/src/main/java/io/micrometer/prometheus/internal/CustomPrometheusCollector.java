@@ -16,6 +16,7 @@
 package io.micrometer.prometheus.internal;
 
 import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 import io.prometheus.client.Collector;
 
@@ -34,10 +35,10 @@ public class CustomPrometheusCollector extends Collector {
     private final List<String> tagKeys;
     private final Collection<Child> children = new ConcurrentLinkedQueue<>();
 
-    public CustomPrometheusCollector(String name, Iterable<Tag> tags, Type type) {
+    public CustomPrometheusCollector(Meter.Id id, Type type) {
         this.type = type;
-        this.name = name;
-        this.tagKeys = stream(tags.spliterator(), false).map(Tag::getKey).collect(toList());
+        this.name = id.getConventionName();
+        this.tagKeys = id.getConventionTags().stream().map(Tag::getKey).collect(toList());
     }
 
     public Child child(Iterable<Tag> tags, Iterable<Measurement> measurements) {

@@ -17,15 +17,15 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.prometheus.internal.CustomPrometheusSummary;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.prometheus.internal.CustomPrometheusSummary;
 
 public class PrometheusDistributionSummary extends AbstractMeter implements DistributionSummary {
     private final CustomPrometheusSummary.Child summary;
 
-    PrometheusDistributionSummary(String name, Iterable<Tag> tags, String description, CustomPrometheusSummary.Child summary) {
-        super(name, tags, description);
+    PrometheusDistributionSummary(Meter.Id id, String description, CustomPrometheusSummary.Child summary) {
+        super(id, description);
         this.summary = summary;
     }
 

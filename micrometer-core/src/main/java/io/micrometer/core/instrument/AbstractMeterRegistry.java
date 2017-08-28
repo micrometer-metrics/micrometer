@@ -88,26 +88,21 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         this.clock = clock;
     }
 
-    protected abstract DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, String description, Quantiles quantiles, Histogram<?> histogram);
-    protected abstract <T> Gauge newGauge(String name, Iterable<Tag> tags, String description, ToDoubleFunction<T> f, T obj);
-    protected abstract Counter newCounter(String name, Iterable<Tag> tags, String description);
-    protected abstract LongTaskTimer newLongTaskTimer(String name, Iterable<Tag> tags, String description);
-    protected abstract Timer newTimer(String name, Iterable<Tag> tags, String description, Histogram<?> histogram, Quantiles quantiles);
-    protected abstract void newMeter(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements);
+    protected abstract <T> Gauge newGauge(Meter.Id id, String description, ToDoubleFunction<T> f, T obj);
+    protected abstract Counter newCounter(Meter.Id id, String description);
+    protected abstract LongTaskTimer newLongTaskTimer(Meter.Id id, String description);
+    protected abstract Timer newTimer(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles);
+    protected abstract DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles);
+    protected abstract void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements);
 
     @Override
     public MeterRegistry register(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements) {
-        meterMap.computeIfAbsent(new MeterId(name, tags), id -> {
-            newMeter(id.getConventionName(type), id.getTags(), type, measurements);
+        meterMap.computeIfAbsent(new MeterId(name, tags, type, null), id -> {
+            newMeter(id, type, measurements);
             return new Meter() {
                 @Override
-                public String getName() {
-                    return id.getName();
-                }
-
-                @Override
-                public Iterable<Tag> getTags() {
-                    return id.getTags();
+                public Id getId() {
+                    return id;
                 }
 
                 @Override
@@ -163,8 +158,8 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
         @Override
         public Gauge create() {
-            return registerMeterIfNecessary(Gauge.class, name, tags, id ->
-                newGauge(id.getConventionName(Meter.Type.Gauge, baseUnit), id.getTags(), description, f, obj));
+            return registerMeterIfNecessary(Gauge.class, Meter.Type.Gauge, name, tags, baseUnit, id ->
+                newGauge(id, description, f, obj));
         }
     }
 
@@ -208,8 +203,9 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
         @Override
         public Timer create() {
-            return registerMeterIfNecessary(Timer.class, name, tags, id ->
-                newTimer(id.getConventionName(Meter.Type.Timer), id.getTags(), description, histogram, quantiles));
+            // the base unit for a timer will be determined by the monitoring system if it is part of the convention name
+            return registerMeterIfNecessary(Timer.class, Meter.Type.Timer, name, tags, null, id ->
+                newTimer(id, description, histogram, quantiles));
         }
     }
 
@@ -260,9 +256,8 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
         @Override
         public DistributionSummary create() {
-            return registerMeterIfNecessary(DistributionSummary.class, name, tags, id ->
-                newDistributionSummary(id.getConventionName(Meter.Type.DistributionSummary, baseUnit), id.getTags(),
-                    description, quantiles, histogram));
+            return registerMeterIfNecessary(DistributionSummary.class, Meter.Type.DistributionSummary, name, tags, baseUnit, id ->
+                newDistributionSummary(id, description, histogram, quantiles));
         }
     }
 
@@ -300,8 +295,8 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
         @Override
         public Counter create() {
-            return registerMeterIfNecessary(Counter.class, name, tags, id ->
-                newCounter(id.getConventionName(Meter.Type.Counter, baseUnit), id.getTags(), description));
+            return registerMeterIfNecessary(Counter.class, Meter.Type.Counter, name, tags, baseUnit, id ->
+                newCounter(id, description));
         }
     }
 
@@ -345,8 +340,8 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
         @Override
         public LongTaskTimer create() {
-            return registerMeterIfNecessary(LongTaskTimer.class, name, tags, id ->
-                newLongTaskTimer(id.getConventionName(Meter.Type.LongTaskTimer), id.getTags(), description));
+            return registerMeterIfNecessary(LongTaskTimer.class, Meter.Type.LongTaskTimer, name, tags, null, id ->
+                newLongTaskTimer(id, description));
         }
     }
 
@@ -423,11 +418,13 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
         @Override
         public Optional<Meter> meter() {
-            MeterId id = new MeterId(name, tags);
-
             return meterMap.keySet().stream()
-                .filter(id2 -> id2.getName().equals(id.getName()))
-                .filter(id2 -> id2.getTags().containsAll(id.getTags()))
+                .filter(id -> id.getName().equals(name))
+                .filter(id -> {
+                    List<Tag> idTags = new ArrayList<>();
+                    id.getTags().forEach(idTags::add);
+                    return idTags.containsAll(tags);
+                })
                 .map(meterMap::get)
                 .filter(m -> {
                     for (Measurement measurement : m.measure()) {
@@ -442,11 +439,13 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
         @Override
         public Collection<Meter> meters() {
-            MeterId id = new MeterId(name, tags);
-
             return meterMap.keySet().stream()
-                .filter(id2 -> id2.getName().equals(id.getName()))
-                .filter(id2 -> id2.getTags().containsAll(id.getTags()))
+                .filter(id -> id.getName().equals(name))
+                .filter(id -> {
+                    List<Tag> idTags = new ArrayList<>();
+                    id.getTags().forEach(idTags::add);
+                    return idTags.containsAll(tags);
+                })
                 .map(meterMap::get)
                 .collect(Collectors.toList());
         }
@@ -462,42 +461,41 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         return meterMap.values();
     }
 
-    /**
-     * Used to hold a unique identifier for Meters (a combination of their name and tags). Should
-     * never be exposed to users through a public API.
-     */
-    class MeterId {
+    class MeterId implements Meter.Id {
         private final String name;
-        private final Iterable<Tag> tags;
+        private final List<Tag> tags;
+        private final Meter.Type type;
+        private final String baseUnit;
 
-        MeterId(String name, Iterable<Tag> tags) {
+        MeterId(String name, Iterable<Tag> tags, Meter.Type type, String baseUnit) {
             this.name = name;
-            this.tags = tags;
+            this.tags = Stream.concat(stream(tags.spliterator(), false), commonTags.stream()).collect(Collectors.toList());
+            this.type = type;
+            this.baseUnit = baseUnit;
         }
 
-        String getName() {
+        @Override
+        public String getName() {
             return name;
         }
 
-        /**
-         * The formatted name matching this registry's naming convention
-         */
-        String getConventionName(Meter.Type type, String baseUnit) {
-            return namingConvention.name(name, type, baseUnit);
+        @Override
+        public Iterable<Tag> getTags() {
+            return tags;
         }
 
-        String getConventionName(Meter.Type type) {
-            return getConventionName(type, null);
+        @Override
+        public String getConventionName() {
+            return namingConvention.name(name, type, baseUnit);
         }
 
         /**
          * Tags that are sorted by key and formatted
          */
-        public List<Tag> getTags() {
-            Stream<Tag> formattedTags = stream(tags.spliterator(), false)
-                .map(t -> Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())));
-
-            return Stream.concat(formattedTags, commonTags.stream())
+        @Override
+        public List<Tag> getConventionTags() {
+            return tags.stream()
+                .map(t -> Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())))
                 .sorted(Comparator.comparing(Tag::getKey))
                 .collect(Collectors.toList());
         }
@@ -526,14 +524,14 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         }
     }
 
-    private <M extends Meter> M registerMeterIfNecessary(Class<M> meterType, String name, Iterable<Tag> tags, Function<MeterId, Meter> builder) {
+    private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Type type, String name, Iterable<Tag> tags, String baseUnit, Function<MeterId, Meter> builder) {
         if(name.isEmpty()) {
             throw new IllegalArgumentException("Name must be non-empty");
         }
 
         synchronized (meterMap) {
-            Meter m = meterMap.computeIfAbsent(new MeterId(name, tags), builder);
-            if (!meterType.isInstance(m)) {
+            Meter m = meterMap.computeIfAbsent(new MeterId(name, tags, type, baseUnit), builder);
+            if (!meterClass.isInstance(m)) {
                 throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
             }
             //noinspection unchecked

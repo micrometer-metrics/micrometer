@@ -17,15 +17,15 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.prometheus.internal.CustomPrometheusLongTaskTimer;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.prometheus.internal.CustomPrometheusLongTaskTimer;
 
 public class PrometheusLongTaskTimer extends AbstractMeter implements LongTaskTimer {
     private final CustomPrometheusLongTaskTimer.Child timer;
 
-    PrometheusLongTaskTimer(String name, Iterable<Tag> tags, String description, CustomPrometheusLongTaskTimer.Child timer) {
-        super(name, tags, description);
+    PrometheusLongTaskTimer(Meter.Id id, String description, CustomPrometheusLongTaskTimer.Child timer) {
+        super(id, description);
         this.timer = timer;
     }
 

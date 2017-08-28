@@ -17,17 +17,17 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.prometheus.internal.CustomPrometheusSummary;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.prometheus.internal.CustomPrometheusSummary;
 
 import java.util.concurrent.TimeUnit;
 
 public class PrometheusTimer extends AbstractTimer {
     private CustomPrometheusSummary.Child summary;
 
-    PrometheusTimer(String name, Iterable<Tag> tags, String description, CustomPrometheusSummary.Child summary, Clock clock) {
-        super(name, tags, description, clock);
+    PrometheusTimer(Meter.Id id, String description, CustomPrometheusSummary.Child summary, Clock clock) {
+        super(id, description, clock);
         this.summary = summary;
     }
 

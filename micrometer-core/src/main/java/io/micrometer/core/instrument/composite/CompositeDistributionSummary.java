@@ -17,8 +17,8 @@ package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.noop.NoopDistributionSummary;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
@@ -34,8 +34,8 @@ public class CompositeDistributionSummary extends AbstractMeter implements Distr
     private final Map<MeterRegistry, DistributionSummary> distributionSummaries =
         Collections.synchronizedMap(new LinkedHashMap<>());
 
-    CompositeDistributionSummary(String name, Iterable<Tag> tags, String description, Quantiles quantiles, Histogram histogram) {
-        super(name, tags, description);
+    CompositeDistributionSummary(Meter.Id id, String description, Quantiles quantiles, Histogram histogram) {
+        super(id, description);
         this.quantiles = quantiles;
         this.histogram = histogram;
     }
@@ -65,7 +65,7 @@ public class CompositeDistributionSummary extends AbstractMeter implements Distr
     public void add(MeterRegistry registry) {
         synchronized (distributionSummaries) {
             distributionSummaries.put(registry,
-                registry.summaryBuilder(getName()).tags(getTags()).quantiles(quantiles).histogram(histogram).create());
+                registry.summaryBuilder(getId().getName()).tags(getId().getTags()).quantiles(quantiles).histogram(histogram).create());
         }
     }
 

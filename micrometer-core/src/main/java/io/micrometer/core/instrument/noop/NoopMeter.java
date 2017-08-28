@@ -24,13 +24,28 @@ import java.util.List;
 
 public abstract class NoopMeter implements Meter {
     @Override
-    public String getName() {
-        return "noop";
-    }
+    public Id getId() {
+        return new Meter.Id() {
+            @Override
+            public String getName() {
+                return "noop";
+            }
 
-    @Override
-    public Iterable<Tag> getTags() {
-        return Collections.emptyList();
+            @Override
+            public Iterable<Tag> getTags() {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public String getConventionName() {
+                return "noop";
+            }
+
+            @Override
+            public List<Tag> getConventionTags() {
+                return Collections.emptyList();
+            }
+        };
     }
 
     @Override

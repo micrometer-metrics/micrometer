@@ -16,6 +16,7 @@
 package io.micrometer.prometheus.internal;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 import io.prometheus.client.Collector;
 
@@ -39,11 +40,11 @@ public class CustomPrometheusLongTaskTimer extends Collector {
     private final List<String> tagKeys;
     private final Collection<Child> children = new ConcurrentLinkedQueue<>();
 
-    public CustomPrometheusLongTaskTimer(String name, Iterable<Tag> tags, String description, Clock clock) {
+    public CustomPrometheusLongTaskTimer(Meter.Id id, String description, Clock clock) {
+        this.name = id.getConventionName();
         this.clock = clock;
         this.description = description;
-        this.name = name;
-        this.tagKeys = stream(tags.spliterator(), false).map(Tag::getKey).collect(toList());
+        this.tagKeys = id.getConventionTags().stream().map(Tag::getKey).collect(toList());
     }
 
     public Child child(Iterable<Tag> tags) {

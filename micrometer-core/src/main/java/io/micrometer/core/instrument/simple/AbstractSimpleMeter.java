@@ -17,11 +17,9 @@ package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 
 abstract class AbstractSimpleMeter extends AbstractMeter {
-    AbstractSimpleMeter(String name, Iterable<Tag> tags, String description, Meter.Type type) {
-        super(name, Tags.concat(tags, "simple.type", type.toString().toLowerCase()), description);
+    AbstractSimpleMeter(Meter.Id id, String description) {
+        super(id, description);
     }
 }

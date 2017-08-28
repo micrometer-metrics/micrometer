@@ -21,7 +21,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.micrometer.core.instrument.Statistic.Count;
 import static io.micrometer.core.instrument.Statistic.Total;
@@ -107,5 +109,15 @@ class MeterRegistryTest {
         Counter c = registry.counter("foo");
 
         assertThat(registry.find("foo").tags("k", "v").counter()).containsSame(c);
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(MeterRegistriesProvider.class)
+    @DisplayName("original and convention names are preserved for custom meter types")
+    void aTaleOfTwoNames(MeterRegistry registry) {
+        AtomicInteger n = new AtomicInteger(1);
+        registry.more().counter("my.counter", Collections.emptyList(), n);
+
+        assertThat(registry.find("my.counter").meter()).isPresent();
     }
 }

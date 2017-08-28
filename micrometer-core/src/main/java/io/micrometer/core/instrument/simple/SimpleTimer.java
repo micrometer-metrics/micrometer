@@ -17,7 +17,7 @@ package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -30,8 +30,8 @@ public class SimpleTimer extends AbstractTimer {
     private LongAdder count = new LongAdder();
     private LongAdder totalTime = new LongAdder();
 
-    public SimpleTimer(String name, Iterable<Tag> tags, String description, Clock clock) {
-        super(name, tags, description, clock);
+    public SimpleTimer(Meter.Id id, String description, Clock clock) {
+        super(id, description, clock);
     }
 
     @Override

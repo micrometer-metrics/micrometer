@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.lazy;
 
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 
 import java.util.concurrent.Callable;
@@ -36,13 +35,8 @@ public final class LazyTimer implements Timer {
     }
 
     @Override
-    public String getName() {
-        return timer().getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return timer().getTags();
+    public Id getId() {
+        return timer().getId();
     }
 
     @Override

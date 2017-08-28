@@ -15,10 +15,7 @@
  */
 package io.micrometer.core.instrument.composite;
 
-import io.micrometer.core.instrument.AbstractMeter;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.noop.NoopCounter;
 
 import java.util.Collections;
@@ -28,8 +25,8 @@ import java.util.Map;
 class CompositeCounter extends AbstractMeter implements Counter, CompositeMeter {
     private final Map<MeterRegistry, Counter> counters = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    CompositeCounter(String name, Iterable<Tag> tags, String description) {
-        super(name, tags, description);
+    CompositeCounter(Meter.Id id, String description) {
+        super(id, description);
     }
 
     @Override
@@ -49,7 +46,7 @@ class CompositeCounter extends AbstractMeter implements Counter, CompositeMeter 
     @Override
     public void add(MeterRegistry registry) {
         synchronized (counters) {
-            counters.put(registry, registry.counter(getName(), getTags()));
+            counters.put(registry, registry.counter(getId().getName(), getId().getTags()));
         }
     }
 

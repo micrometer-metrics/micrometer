@@ -15,37 +15,21 @@
  */
 package io.micrometer.core.instrument.spectator;
 
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 
-public class SpectatorGauge implements Gauge {
+public class SpectatorGauge extends AbstractMeter implements Gauge {
     private com.netflix.spectator.api.Gauge gauge;
-    private final String description;
 
-    public SpectatorGauge(com.netflix.spectator.api.Gauge gauge, String description) {
+    SpectatorGauge(Id id, String description, com.netflix.spectator.api.Gauge gauge) {
+        super(id, description);
         this.gauge = gauge;
-        this.description = description;
     }
 
     @Override
     public double value() {
         return gauge.value();
-    }
-
-    @Override
-    public String getName() {
-        return gauge.id().name();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return SpectatorUtils.tags(gauge);
-    }
-
-    @Override
-    public String getDescription() {
-        return description;
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

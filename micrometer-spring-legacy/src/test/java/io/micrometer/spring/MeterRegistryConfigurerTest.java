@@ -15,9 +15,7 @@
  */
 package io.micrometer.spring;
 
-import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,8 +25,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,8 +40,7 @@ public class MeterRegistryConfigurerTest {
 
     @Test
     public void commonTagsAreAppliedToAutoConfiguredBinders() {
-        Optional<Gauge> memUsed = registry.find("jvm.memory.used").gauge();
-        assertThat(memUsed).hasValueSatisfying(g -> assertThat(g.getTags()).contains(Tag.of("region", "us-east-1")));
+        assertThat(registry.find("jvm.memory.used").tags("region", "us-east-1").gauge()).isPresent();
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")

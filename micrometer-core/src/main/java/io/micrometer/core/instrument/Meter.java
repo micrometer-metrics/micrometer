@@ -15,13 +15,16 @@
  */
 package io.micrometer.core.instrument;
 
+import java.util.List;
+
 /**
  * A counter, gauge, timer, or distribution summary that results collects one or more metrics.
  */
 public interface Meter {
-    String getName();
-
-    Iterable<Tag> getTags();
+    /**
+     * A unique combination of name and tags
+     */
+    Meter.Id getId();
 
     String getDescription();
 
@@ -49,5 +52,13 @@ public interface Meter {
         Timer,
         DistributionSummary,
         Other
+    }
+
+    interface Id {
+        String getName();
+        Iterable<Tag> getTags();
+
+        String getConventionName();
+        List<Tag> getConventionTags();
     }
 }

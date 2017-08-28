@@ -17,8 +17,8 @@ package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.noop.NoopGauge;
 
 import java.lang.ref.WeakReference;
@@ -33,8 +33,8 @@ public class CompositeGauge<T> extends AbstractMeter implements Gauge, Composite
 
     private final Map<MeterRegistry, Gauge> gauges = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    CompositeGauge(String name, Iterable<Tag> tags, String description, T obj, ToDoubleFunction<T> f) {
-        super(name, tags, description);
+    CompositeGauge(Meter.Id id, String description, T obj, ToDoubleFunction<T> f) {
+        super(id, description);
         this.ref = new WeakReference<>(obj);
         this.f = f;
     }
@@ -51,7 +51,7 @@ public class CompositeGauge<T> extends AbstractMeter implements Gauge, Composite
         T obj = ref.get();
         if(obj != null) {
             synchronized (gauges) {
-                gauges.put(registry, registry.gaugeBuilder(getName(), obj, f).tags(getTags()).create());
+                gauges.put(registry, registry.gaugeBuilder(getId().getName(), obj, f).tags(getId().getTags()).create());
             }
         }
     }

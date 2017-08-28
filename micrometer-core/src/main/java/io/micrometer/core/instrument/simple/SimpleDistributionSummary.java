@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 
 import java.util.concurrent.atomic.DoubleAdder;
@@ -27,8 +26,8 @@ public class SimpleDistributionSummary extends AbstractSimpleMeter implements Di
     private LongAdder count = new LongAdder();
     private DoubleAdder amount = new DoubleAdder();
 
-    public SimpleDistributionSummary(String name, Iterable<Tag> tags, String description) {
-        super(name, tags, description, Meter.Type.DistributionSummary);
+    public SimpleDistributionSummary(Meter.Id id, String description) {
+        super(id, description);
     }
 
     @Override

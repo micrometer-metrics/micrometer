@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.lazy;
 
 import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Tag;
 
 import java.util.function.Supplier;
 
@@ -34,13 +33,8 @@ public class LazyLongTaskTimer implements LongTaskTimer {
     }
 
     @Override
-    public String getName() {
-        return timer().getName();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return timer().getTags();
+    public Id getId() {
+        return timer().getId();
     }
 
     @Override

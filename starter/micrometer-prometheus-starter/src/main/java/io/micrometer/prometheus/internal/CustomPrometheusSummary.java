@@ -15,6 +15,7 @@
  */
 package io.micrometer.prometheus.internal;
 
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.stats.hist.*;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
@@ -47,12 +48,12 @@ public class CustomPrometheusSummary extends Collector {
 
     private final Collection<Child> children = new ConcurrentLinkedQueue<>();
 
-    public CustomPrometheusSummary(String name, Iterable<Tag> tags, String description) {
-        this.name = name;
+    public CustomPrometheusSummary(Meter.Id id, String description) {
+        this.name = id.getConventionName();
         this.description = description;
         this.countName = name + "_count";
         this.sumName = name + "_sum";
-        this.tagKeys = stream(tags.spliterator(), false).map(Tag::getKey).collect(toList());
+        this.tagKeys = id.getConventionTags().stream().map(Tag::getKey).collect(toList());
     }
 
     public Child child(Iterable<Tag> tags, Quantiles quantiles, Histogram histogram) {

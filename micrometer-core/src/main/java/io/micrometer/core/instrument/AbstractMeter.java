@@ -16,24 +16,17 @@
 package io.micrometer.core.instrument;
 
 public abstract class AbstractMeter implements Meter {
-    private final String name;
-    private final Iterable<Tag> tags;
+    private final Meter.Id id;
     private final String description;
 
-    public AbstractMeter(String name, Iterable<Tag> tags, String description) {
-        this.name = name;
-        this.tags = tags;
+    public AbstractMeter(Id id, String description) {
+        this.id = id;
         this.description = description;
     }
 
     @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return tags;
+    public Id getId() {
+        return id;
     }
 
     public String getDescription() {

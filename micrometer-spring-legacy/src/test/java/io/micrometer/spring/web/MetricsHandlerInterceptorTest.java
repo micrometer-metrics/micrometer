@@ -135,9 +135,8 @@ public class MetricsHandlerInterceptorTest {
     public void recordQuantiles() throws Exception {
         mvc.perform(get("/api/c1/quantiles/10")).andExpect(status().isOk());
 
-        // TODO this is ugly, the way quantiles gauges are added to the meter map with a name normalized form
-        assertThat(registry.find("http_server_requests").tags("quantile", "0.5").gauge()).isNotEmpty();
-        assertThat(registry.find("http_server_requests").tags("quantile", "0.95").gauge()).isNotEmpty();
+        assertThat(registry.find("http.server.requests").tags("quantile", "0.5").gauge()).isNotEmpty();
+        assertThat(registry.find("http.server.requests").tags("quantile", "0.95").gauge()).isNotEmpty();
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")

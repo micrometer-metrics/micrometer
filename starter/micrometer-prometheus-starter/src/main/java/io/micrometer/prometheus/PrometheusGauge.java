@@ -17,14 +17,14 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 
 public class PrometheusGauge extends AbstractMeter implements Gauge {
     private io.prometheus.client.Gauge.Child gauge;
 
-    PrometheusGauge(String name, Iterable<Tag> tags, String description, io.prometheus.client.Gauge.Child gauge) {
-        super(name, tags, description);
+    PrometheusGauge(Meter.Id id, String description, io.prometheus.client.Gauge.Child gauge) {
+        super(id, description);
         this.gauge = gauge;
     }
 

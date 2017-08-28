@@ -28,8 +28,8 @@ import java.util.concurrent.atomic.DoubleAdder;
 public class SimpleCounter extends AbstractSimpleMeter implements Counter {
     private DoubleAdder count = new DoubleAdder();
 
-    public SimpleCounter(String name, Iterable<Tag> tags, String description) {
-        super(name, tags, description, Meter.Type.Counter);
+    public SimpleCounter(Meter.Id id, String description) {
+        super(id, description);
     }
 
     @Override

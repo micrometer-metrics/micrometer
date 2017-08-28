@@ -18,7 +18,6 @@ package io.micrometer.core.instrument.dropwizard;
 import com.codahale.metrics.Meter;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 
 /**
@@ -27,8 +26,8 @@ import io.micrometer.core.instrument.util.MeterEquivalence;
 public class DropwizardCounter extends AbstractMeter implements Counter {
     private final com.codahale.metrics.Meter impl;
 
-    DropwizardCounter(String name, Iterable<Tag> tags, String description, Meter impl) {
-        super(name, tags, description);
+    DropwizardCounter(io.micrometer.core.instrument.Meter.Id id, String description, Meter impl) {
+        super(id, description);
         this.impl = impl;
     }
 

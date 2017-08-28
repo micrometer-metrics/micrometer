@@ -46,48 +46,48 @@ public class CompositeMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(String name, Iterable<Tag> tags, String description, Histogram<?> histogram, Quantiles quantiles) {
-        CompositeTimer timer = new CompositeTimer(name, tags, description, quantiles, histogram, clock);
+    protected Timer newTimer(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
+        CompositeTimer timer = new CompositeTimer(id, description, quantiles, histogram, clock);
         compositeMeters.add(timer);
         registries.forEach(timer::add);
         return timer;
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, String description, Quantiles quantiles, Histogram<?> histogram) {
-        CompositeDistributionSummary ds = new CompositeDistributionSummary(name, tags, description, quantiles, histogram);
+    protected DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
+        CompositeDistributionSummary ds = new CompositeDistributionSummary(id, description, quantiles, histogram);
         compositeMeters.add(ds);
         registries.forEach(ds::add);
         return ds;
     }
 
     @Override
-    protected Counter newCounter(String name, Iterable<Tag> tags, String description) {
-        CompositeCounter counter = new CompositeCounter(name, tags, description);
+    protected Counter newCounter(Meter.Id id, String description) {
+        CompositeCounter counter = new CompositeCounter(id, description);
         compositeMeters.add(counter);
         registries.forEach(counter::add);
         return counter;
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(String name, Iterable<Tag> tags, String description) {
-        CompositeLongTaskTimer longTaskTimer = new CompositeLongTaskTimer(name, tags, description);
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, String description) {
+        CompositeLongTaskTimer longTaskTimer = new CompositeLongTaskTimer(id, description);
         compositeMeters.add(longTaskTimer);
         registries.forEach(longTaskTimer::add);
         return longTaskTimer;
     }
 
     @Override
-    protected <T> Gauge newGauge(String name, Iterable<Tag> tags, String description, ToDoubleFunction<T> f, T obj) {
-        CompositeGauge<T> gauge = new CompositeGauge<>(name, tags, description, obj, f);
+    protected <T> Gauge newGauge(Meter.Id id, String description, ToDoubleFunction<T> f, T obj) {
+        CompositeGauge<T> gauge = new CompositeGauge<>(id, description, obj, f);
         compositeMeters.add(gauge);
         registries.forEach(gauge::add);
         return gauge;
     }
 
     @Override
-    protected void newMeter(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements) {
-        CompositeMeter meter = new CompositeCustomMeter(name, tags, type, measurements);
+    protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+        CompositeMeter meter = new CompositeCustomMeter(id, type, measurements);
         compositeMeters.add(meter);
         registries.forEach(meter::add);
     }

@@ -15,10 +15,15 @@
  */
 package io.micrometer.core.instrument.util;
 
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /**
  * @author Jon Schneider
@@ -28,7 +33,32 @@ class HierarchicalNameMapperTest {
     @Test
     void buildHierarchicalNameFromDimensionalId() {
         HierarchicalNameMapper mapper = HierarchicalNameMapper.DEFAULT;
-        String name = mapper.toHierarchicalName("http_requests", Tags.zip("status", "200", "method", "GET"));
-        assertThat(name).isEqualTo("http_requests.method.GET.status.200");
+        String name = mapper.toHierarchicalName(
+            new Meter.Id() {
+
+                @Override
+                public String getName() {
+                    fail("should not be used");
+                    return null;
+                }
+
+                @Override
+                public Iterable<Tag> getTags() {
+                    fail("should not be used");
+                    return null;
+                }
+
+                @Override
+                public String getConventionName() {
+                    return "httpRequests";
+                }
+
+                @Override
+                public List<Tag> getConventionTags() {
+                    return Tags.zip("status", "200", "method", "GET");
+                }
+            }
+        );
+        assertThat(name).isEqualTo("httpRequests.method.GET.status.200");
     }
 }

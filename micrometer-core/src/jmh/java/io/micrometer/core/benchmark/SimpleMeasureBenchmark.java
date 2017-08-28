@@ -63,12 +63,35 @@ public class SimpleMeasureBenchmark {
         String name = "tested.timer";
         List<Tag> tags = Arrays.asList(Tag.of("tag1", "v1"), Tag.of("tag2", "v2"));
 
-        timer = new SimpleTimer(name, tags, "", Clock.SYSTEM);
-        longTaskTimer = new SimpleLongTaskTimer(name, tags, "", Clock.SYSTEM);
-        counter = new SimpleCounter(name, tags, "");
+        Meter.Id id = new Meter.Id() {
+
+            @Override
+            public String getName() {
+                return name;
+            }
+
+            @Override
+            public Iterable<Tag> getTags() {
+                return tags;
+            }
+
+            @Override
+            public String getConventionName() {
+                return name;
+            }
+
+            @Override
+            public List<Tag> getConventionTags() {
+                return tags;
+            }
+        };
+        
+        timer = new SimpleTimer(id, "", Clock.SYSTEM);
+        longTaskTimer = new SimpleLongTaskTimer(id, "", Clock.SYSTEM);
+        counter = new SimpleCounter(id, "");
         List<Integer> testListReference = Arrays.asList(1, 2);
-        gauge = new SimpleGauge<>(name, tags, "", testListReference, List::size);
-        distributionSummary = new SimpleDistributionSummary(name, tags, "");
+        gauge = new SimpleGauge<>(id, "", testListReference, List::size);
+        distributionSummary = new SimpleDistributionSummary(id, "");
     }
 
     @Benchmark

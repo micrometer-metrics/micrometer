@@ -23,8 +23,8 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.function.ToDoubleFunction;
 import java.util.function.UnaryOperator;
@@ -51,36 +51,36 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected io.micrometer.core.instrument.Counter newCounter(String name, Iterable<Tag> tags, String description) {
-        com.netflix.spectator.api.Counter counter = registry.counter(name, toSpectatorTags(tags));
-        return new SpectatorCounter(counter, description);
+    protected io.micrometer.core.instrument.Counter newCounter(Meter.Id id, String description) {
+        com.netflix.spectator.api.Counter counter = registry.counter(id.getConventionName(), toSpectatorTags(id.getConventionTags()));
+        return new SpectatorCounter(id, description, counter);
     }
 
     @Override
-    protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, String description, Quantiles quantiles, Histogram<?> histogram) {
-        registerQuantilesGaugeIfNecessary(name, tags, quantiles, UnaryOperator.identity());
-        com.netflix.spectator.api.DistributionSummary ds = registry.distributionSummary(name, toSpectatorTags(tags));
-        return new SpectatorDistributionSummary(ds, description);
+    protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
+        registerQuantilesGaugeIfNecessary(id, quantiles, UnaryOperator.identity());
+        com.netflix.spectator.api.DistributionSummary ds = registry.distributionSummary(id.getConventionName(), toSpectatorTags(id.getConventionTags()));
+        return new SpectatorDistributionSummary(id, description, ds);
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(String name, Iterable<Tag> tags, String description, Histogram<?> histogram, Quantiles quantiles) {
+    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
         // scale nanosecond precise quantile values to seconds
-        registerQuantilesGaugeIfNecessary(name, tags, quantiles, t -> t / 1.0e6);
-        registerHistogramCounterIfNecessary(name, tags, histogram);
-        com.netflix.spectator.api.Timer timer = registry.timer(name, toSpectatorTags(tags));
-        return new SpectatorTimer(timer, description, quantiles, config().clock());
+        registerQuantilesGaugeIfNecessary(id, quantiles, t -> t / 1.0e6);
+        registerHistogramCounterIfNecessary(id, histogram);
+        com.netflix.spectator.api.Timer timer = registry.timer(id.getConventionName(), toSpectatorTags(id.getConventionTags()));
+        return new SpectatorTimer(id, description, timer, quantiles, config().clock());
     }
 
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(String name, Iterable<Tag> tags, String description, ToDoubleFunction<T> f, T obj) {
-        Id gaugeId = registry.createId(name, toSpectatorTags(tags));
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, String description, ToDoubleFunction<T> f, T obj) {
+        Id gaugeId = registry.createId(id.getConventionName(), toSpectatorTags(id.getConventionTags()));
         com.netflix.spectator.api.Gauge gauge = new CustomSpectatorToDoubleGauge<>(registry.clock(), gaugeId, obj, f);
         registry.register(gauge);
-        return new SpectatorGauge(gauge, description);
+        return new SpectatorGauge(id, description, gauge);
     }
 
-    private void registerHistogramCounterIfNecessary(String name, Iterable<io.micrometer.core.instrument.Tag> tags, Histogram<?> histogram) {
+    private void registerHistogramCounterIfNecessary(Meter.Id id, Histogram<?> histogram) {
         // FIXME need the heisen-counter to complete
 //        if(histogram != null) {
 //            for (Bucket<?> bucket : histogram.getBuckets()) {
@@ -92,33 +92,34 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
 //        }
     }
 
-    private void registerQuantilesGaugeIfNecessary(String name, Iterable<io.micrometer.core.instrument.Tag> tags, Quantiles quantiles, UnaryOperator<Double> scaling) {
+    private void registerQuantilesGaugeIfNecessary(Meter.Id id, Quantiles quantiles, UnaryOperator<Double> scaling) {
         if (quantiles != null) {
             for (Double q : quantiles.monitored()) {
-                List<com.netflix.spectator.api.Tag> quantileTags = new LinkedList<>(toSpectatorTags(tags));
+                List<Tag> quantileTags = new ArrayList<>();
+                id.getTags().forEach(quantileTags::add);
+
                 if (!Double.isNaN(q)) {
-                    quantileTags.add(new BasicTag("quantile", Double.toString(q)));
-                    quantileTags.add(new BasicTag("statistic", "value"));
-                    registry.gauge(registry.createId(name, quantileTags), q, q2 -> scaling.apply(quantiles.get(q2)));
+                    quantileTags.add(Tag.of("quantile", Double.toString(q)));
+                    gauge(id.getName(), quantileTags, q, q2 -> scaling.apply(quantiles.get(q2)));
                 }
             }
         }
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(String name, Iterable<Tag> tags, String description) {
-        com.netflix.spectator.api.LongTaskTimer timer = registry.longTaskTimer(name, toSpectatorTags(tags));
-        return new SpectatorLongTaskTimer(timer, description);
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, String description) {
+        com.netflix.spectator.api.LongTaskTimer timer = registry.longTaskTimer(id.getName(), toSpectatorTags(id.getTags()));
+        return new SpectatorLongTaskTimer(id, description, timer);
     }
 
     @Override
-    protected void newMeter(String name, Iterable<Tag> tags, Meter.Type type, Iterable<io.micrometer.core.instrument.Measurement> measurements) {
-        Id spectatorId = spectatorId(registry, name, tags);
+    protected void newMeter(Meter.Id id, Meter.Type type, Iterable<io.micrometer.core.instrument.Measurement> measurements) {
+        Id spectatorId = spectatorId(registry, id.getConventionName(), id.getConventionTags());
         com.netflix.spectator.api.AbstractMeter<Id> spectatorMeter = new com.netflix.spectator.api.AbstractMeter<Id>(registry.clock(), spectatorId, spectatorId) {
             @Override
             public Iterable<Measurement> measure() {
                 return stream(measurements.spliterator(), false)
-                    .map(m -> new Measurement(spectatorId(registry, name, tags), clock.wallTime(), m.getValue()))
+                    .map(m -> new Measurement(id, clock.wallTime(), m.getValue()))
                     .collect(toList());
             }
         };

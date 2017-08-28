@@ -18,29 +18,21 @@ package io.micrometer.core.instrument.composite;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 
 public class CompositeCustomMeter implements CompositeMeter {
-    private final String name;
-    private final Iterable<Tag> tags;
+    private final Meter.Id id;
     private final Meter.Type type;
     private final Iterable<Measurement> measurements;
 
-    public CompositeCustomMeter(String name, Iterable<Tag> tags, Type type, Iterable<Measurement> measurements) {
-        this.name = name;
-        this.tags = tags;
+    public CompositeCustomMeter(Meter.Id id, Type type, Iterable<Measurement> measurements) {
+        this.id = id;
         this.type = type;
         this.measurements = measurements;
     }
 
     @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return tags;
+    public Id getId() {
+        return id;
     }
 
     @Override
@@ -55,7 +47,7 @@ public class CompositeCustomMeter implements CompositeMeter {
 
     @Override
     public void add(MeterRegistry registry) {
-        registry.register(name, tags, type, measurements);
+        registry.register(id.getName(), id.getTags(), type, measurements);
     }
 
     @Override

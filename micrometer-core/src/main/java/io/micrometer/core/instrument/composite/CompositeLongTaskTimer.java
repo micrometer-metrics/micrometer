@@ -17,8 +17,8 @@ package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.noop.NoopLongTaskTimer;
 
 import java.util.Collections;
@@ -28,8 +28,8 @@ import java.util.Map;
 public class CompositeLongTaskTimer extends AbstractMeter implements LongTaskTimer, CompositeMeter {
     private final Map<MeterRegistry, LongTaskTimer> timers = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    CompositeLongTaskTimer(String name, Iterable<Tag> tags, String description) {
-        super(name, tags, description);
+    CompositeLongTaskTimer(Meter.Id id, String description) {
+        super(id, description);
     }
 
     @Override
@@ -85,7 +85,7 @@ public class CompositeLongTaskTimer extends AbstractMeter implements LongTaskTim
     @Override
     public void add(MeterRegistry registry) {
         synchronized (timers) {
-            timers.put(registry, registry.more().longTaskTimer(getName(), getTags()));
+            timers.put(registry, registry.more().longTaskTimer(getId().getName(), getId().getTags()));
         }
     }
 

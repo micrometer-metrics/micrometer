@@ -15,17 +15,17 @@
  */
 package io.micrometer.core.instrument.spectator;
 
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 
-public class SpectatorCounter implements Counter {
+public class SpectatorCounter extends AbstractMeter implements Counter {
     private com.netflix.spectator.api.Counter counter;
-    private final String description;
 
-    public SpectatorCounter(com.netflix.spectator.api.Counter counter, String description) {
+    SpectatorCounter(Meter.Id id, String description, com.netflix.spectator.api.Counter counter) {
+        super(id, description);
         this.counter = counter;
-        this.description = description;
     }
 
     @Override
@@ -36,21 +36,6 @@ public class SpectatorCounter implements Counter {
     @Override
     public double count() {
         return counter.count();
-    }
-
-    @Override
-    public String getName() {
-        return counter.id().name();
-    }
-
-    @Override
-    public String getDescription() {
-        return description;
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return SpectatorUtils.tags(counter);
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

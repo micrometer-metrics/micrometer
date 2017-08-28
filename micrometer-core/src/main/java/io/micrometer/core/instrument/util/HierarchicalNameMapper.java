@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.util;
 
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 
 import java.util.ArrayList;
@@ -32,14 +33,14 @@ public interface HierarchicalNameMapper {
      * Sort tags alphabetically by key and append tag key values to the name with '.', e.g.
      * {@code http_server_requests.response.200.method.GET}
      */
-    HierarchicalNameMapper DEFAULT = (name, tags) -> {
+    HierarchicalNameMapper DEFAULT = (id) -> {
         List<Tag> tagsCopy = new ArrayList<>();
-        tags.forEach(tagsCopy::add);
+        tagsCopy.addAll(id.getConventionTags());
         tagsCopy.sort(Comparator.comparing(Tag::getKey));
-        return name + "." + tagsCopy.stream()
+        return id.getConventionName() + "." + tagsCopy.stream()
             .map(t -> t.getKey() + "." + t.getValue())
             .collect(Collectors.joining("."));
     };
 
-    String toHierarchicalName(String name, Iterable<Tag> tags);
+    String toHierarchicalName(Meter.Id id);
 }

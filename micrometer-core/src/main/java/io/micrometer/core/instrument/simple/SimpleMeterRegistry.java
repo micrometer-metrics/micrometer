@@ -38,45 +38,45 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected Counter newCounter(String name, Iterable<Tag> tags, String description) {
-        return new SimpleCounter(name, tags, description);
+    protected Counter newCounter(Meter.Id id, String description) {
+        return new SimpleCounter(id, description);
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, String description, Quantiles quantiles, Histogram<?> histogram) {
-        registerQuantilesGaugeIfNecessary(name, tags, quantiles);
-        return new SimpleDistributionSummary(name, tags, description);
+    protected DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
+        registerQuantilesGaugeIfNecessary(id, quantiles);
+        return new SimpleDistributionSummary(id, description);
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(String name, Iterable<Tag> tags, String description, Histogram<?> histogram, Quantiles quantiles) {
-        registerQuantilesGaugeIfNecessary(name, tags, quantiles);
-        return new SimpleTimer(name, tags, description, config().clock());
+    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
+        registerQuantilesGaugeIfNecessary(id, quantiles);
+        return new SimpleTimer(id, description, config().clock());
     }
 
     @Override
-    protected <T> Gauge newGauge(String name, Iterable<Tag> tags, String description, ToDoubleFunction<T> f, T obj) {
-        return new SimpleGauge<>(name, tags, description, obj, f);
+    protected <T> Gauge newGauge(Meter.Id id, String description, ToDoubleFunction<T> f, T obj) {
+        return new SimpleGauge<>(id, description, obj, f);
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(String name, Iterable<Tag> tags, String description) {
-        return new SimpleLongTaskTimer(name, tags, description, config().clock());
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, String description) {
+        return new SimpleLongTaskTimer(id, description, config().clock());
     }
 
-    private void registerQuantilesGaugeIfNecessary(String name, Iterable<Tag> tags, Quantiles quantiles) {
+    private void registerQuantilesGaugeIfNecessary(Meter.Id id, Quantiles quantiles) {
         if (quantiles != null) {
             for (Double q : quantiles.monitored()) {
                 List<Tag> quantileTags = new LinkedList<>();
-                tags.forEach(quantileTags::add);
+                id.getTags().forEach(quantileTags::add);
                 quantileTags.add(Tag.of("quantile", Double.isNaN(q) ? "NaN" : Double.toString(q)));
-                gauge(name, quantileTags, q, quantiles::get);
+                gauge(id.getName(), quantileTags, q, quantiles::get);
             }
         }
     }
 
     @Override
-    protected void newMeter(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements) {
+    protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         // do nothing, the meter is already registered
     }
 }

@@ -15,17 +15,17 @@
  */
 package io.micrometer.core.instrument.spectator;
 
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 
-public class SpectatorLongTaskTimer implements LongTaskTimer {
+public class SpectatorLongTaskTimer extends AbstractMeter implements LongTaskTimer {
     private final com.netflix.spectator.api.LongTaskTimer timer;
-    private final String description;
 
-    public SpectatorLongTaskTimer(com.netflix.spectator.api.LongTaskTimer timer, String description) {
+    SpectatorLongTaskTimer(Meter.Id id, String description, com.netflix.spectator.api.LongTaskTimer timer) {
+        super(id, description);
         this.timer = timer;
-        this.description = description;
     }
 
     @Override
@@ -51,21 +51,6 @@ public class SpectatorLongTaskTimer implements LongTaskTimer {
     @Override
     public int activeTasks() {
         return timer.activeTasks();
-    }
-
-    @Override
-    public String getName() {
-        return timer.id().name();
-    }
-
-    @Override
-    public Iterable<Tag> getTags() {
-        return SpectatorUtils.tags(timer);
-    }
-
-    @Override
-    public String getDescription() {
-        return description;
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

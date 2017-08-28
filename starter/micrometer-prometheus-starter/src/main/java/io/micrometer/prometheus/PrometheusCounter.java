@@ -17,14 +17,14 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 
 public class PrometheusCounter extends AbstractMeter implements Counter {
     private io.prometheus.client.Counter.Child counter;
 
-    PrometheusCounter(String name, Iterable<Tag> tags, String description, io.prometheus.client.Counter.Child counter) {
-        super(name, tags, description);
+    PrometheusCounter(Meter.Id id, String description, io.prometheus.client.Counter.Child counter) {
+        super(id, description);
         this.counter = counter;
     }
 

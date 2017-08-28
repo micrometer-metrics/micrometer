@@ -45,42 +45,42 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected Counter newCounter(String name, Iterable<Tag> tags, String description) {
-        return new DropwizardCounter(name, tags, description, registry.meter(nameMapper.toHierarchicalName(name, tags)));
+    protected Counter newCounter(Meter.Id id, String description) {
+        return new DropwizardCounter(id, description, registry.meter(nameMapper.toHierarchicalName(id)));
     }
 
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(String name, Iterable<Tag> tags, String description, ToDoubleFunction<T> f, T obj) {
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, String description, ToDoubleFunction<T> f, T obj) {
         final WeakReference<T> ref = new WeakReference<>(obj);
         Gauge<Double> gauge = () -> {
             T obj2 = ref.get();
             return obj2 != null ? f.applyAsDouble(ref.get()) : Double.NaN;
         };
-        registry.register(nameMapper.toHierarchicalName(name, tags), gauge);
-        return new DropwizardGauge(name, tags, description, gauge);
+        registry.register(nameMapper.toHierarchicalName(id), gauge);
+        return new DropwizardGauge(id, description, gauge);
     }
 
     @Override
-    protected Timer newTimer(String name, Iterable<Tag> tags, String description, Histogram<?> histogram, Quantiles quantiles) {
-        return new DropwizardTimer(name, tags, description, registry.timer(nameMapper.toHierarchicalName(name, tags)), clock);
+    protected Timer newTimer(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
+        return new DropwizardTimer(id, description, registry.timer(nameMapper.toHierarchicalName(id)), clock);
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(String name, Iterable<Tag> tags, String description, Quantiles quantiles, Histogram<?> histogram) {
+    protected DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
         // FIXME deal with quantiles, histogram
-        return new DropwizardDistributionSummary(name, tags, description, registry.histogram(nameMapper.toHierarchicalName(name, tags)));
+        return new DropwizardDistributionSummary(id, description, registry.histogram(nameMapper.toHierarchicalName(id)));
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(String name, Iterable<Tag> tags, String description) {
-        LongTaskTimer ltt = new SimpleLongTaskTimer(name, tags, description, clock);
-        registry.register(nameMapper.toHierarchicalName(name, tags) + ".active", (Gauge<Integer>) ltt::activeTasks);
-        registry.register(nameMapper.toHierarchicalName(name, tags) + ".duration", (Gauge<Long>) ltt::duration);
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id, String description) {
+        LongTaskTimer ltt = new SimpleLongTaskTimer(id, description, clock);
+        registry.register(nameMapper.toHierarchicalName(id) + ".active", (Gauge<Integer>) ltt::activeTasks);
+        registry.register(nameMapper.toHierarchicalName(id) + ".duration", (Gauge<Long>) ltt::duration);
         return ltt;
     }
 
     @Override
-    protected void newMeter(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements) {
-        measurements.forEach(ms -> registry.register(nameMapper.toHierarchicalName(name, tags), (Gauge<Double>) ms::getValue));
+    protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+        measurements.forEach(ms -> registry.register(nameMapper.toHierarchicalName(id), (Gauge<Double>) ms::getValue));
     }
 }
