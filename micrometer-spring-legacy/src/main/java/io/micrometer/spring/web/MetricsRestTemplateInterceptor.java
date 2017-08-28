@@ -16,6 +16,7 @@
 package io.micrometer.spring.web;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.spring.MetricsConfigurationProperties;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
@@ -36,10 +37,10 @@ public class MetricsRestTemplateInterceptor implements ClientHttpRequestIntercep
 
     public MetricsRestTemplateInterceptor(MeterRegistry meterRegistry,
                                           RestTemplateTagConfigurer tagProvider,
-                                          String metricName) {
+                                          MetricsConfigurationProperties properties) {
         this.tagProvider = tagProvider;
         this.meterRegistry = meterRegistry;
-        this.metricName = metricName;
+        this.metricName = properties.getWeb().getClientRequestsName();
     }
 
     @Override

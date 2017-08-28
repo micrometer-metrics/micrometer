@@ -19,6 +19,7 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.simple.SimpleLongTaskTimer;
+import io.micrometer.core.instrument.stats.hist.Bucket;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
@@ -62,13 +63,34 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
+        registerQuantilesGaugeIfNecessary(id, quantiles);
+        registerHistogramCounterIfNecessary(id, histogram);
         return new DropwizardTimer(id, description, registry.timer(nameMapper.toHierarchicalName(id)), clock);
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
-        // FIXME deal with quantiles, histogram
+        registerQuantilesGaugeIfNecessary(id, quantiles);
+        registerHistogramCounterIfNecessary(id, histogram);
         return new DropwizardDistributionSummary(id, description, registry.histogram(nameMapper.toHierarchicalName(id)));
+    }
+
+    private void registerQuantilesGaugeIfNecessary(Meter.Id id, Quantiles quantiles) {
+        if (quantiles != null) {
+            for (Double q : quantiles.monitored()) {
+                gauge(id.getName(), Tags.concat(id.getTags(), "quantile", Double.isNaN(q) ? "NaN" : Double.toString(q)),
+                    q, quantiles::get);
+            }
+        }
+    }
+
+    private void registerHistogramCounterIfNecessary(Meter.Id id, Histogram<?> histogram) {
+        if(histogram != null) {
+            for (Bucket<?> bucket : histogram.getBuckets()) {
+                more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.toString()),
+                    bucket, Bucket::getValue);
+            }
+        }
     }
 
     @Override

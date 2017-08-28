@@ -17,6 +17,7 @@ package io.micrometer.spring.web;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.spring.MetricsConfigurationProperties;
 import org.junit.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -40,7 +41,7 @@ public class MetricsRestTemplateInterceptorTest {
         RestTemplate restTemplate = new RestTemplate();
         restTemplate.setInterceptors(singletonList(new MetricsRestTemplateInterceptor(
                 registry, new RestTemplateTagConfigurer(),
-                "http.client.requests"
+                new MetricsConfigurationProperties()
         )));
 
         MockRestServiceServer mockServer = MockRestServiceServer.createServer(restTemplate);

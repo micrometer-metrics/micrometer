@@ -16,11 +16,10 @@
 package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.stats.hist.Bucket;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.function.ToDoubleFunction;
 
 /**
@@ -45,12 +44,14 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
         registerQuantilesGaugeIfNecessary(id, quantiles);
+        registerHistogramCounterIfNecessary(id, histogram);
         return new SimpleDistributionSummary(id, description);
     }
 
     @Override
     protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
         registerQuantilesGaugeIfNecessary(id, quantiles);
+        registerHistogramCounterIfNecessary(id, histogram);
         return new SimpleTimer(id, description, config().clock());
     }
 
@@ -67,10 +68,17 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
     private void registerQuantilesGaugeIfNecessary(Meter.Id id, Quantiles quantiles) {
         if (quantiles != null) {
             for (Double q : quantiles.monitored()) {
-                List<Tag> quantileTags = new LinkedList<>();
-                id.getTags().forEach(quantileTags::add);
-                quantileTags.add(Tag.of("quantile", Double.isNaN(q) ? "NaN" : Double.toString(q)));
-                gauge(id.getName(), quantileTags, q, quantiles::get);
+                gauge(id.getName(), Tags.concat(id.getTags(), "quantile", Double.isNaN(q) ? "NaN" : Double.toString(q)),
+                    q, quantiles::get);
+            }
+        }
+    }
+
+    private void registerHistogramCounterIfNecessary(Meter.Id id, Histogram<?> histogram) {
+        if(histogram != null) {
+            for (Bucket<?> bucket : histogram.getBuckets()) {
+                more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.toString()),
+                    bucket, Bucket::getValue);
             }
         }
     }

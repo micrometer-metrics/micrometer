@@ -20,12 +20,11 @@ import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Measurement;
 import com.netflix.spectator.api.Registry;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.stats.hist.Bucket;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.function.ToDoubleFunction;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
@@ -81,26 +80,19 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
     }
 
     private void registerHistogramCounterIfNecessary(Meter.Id id, Histogram<?> histogram) {
-        // FIXME need the heisen-counter to complete
-//        if(histogram != null) {
-//            for (Bucket<?> bucket : histogram.getBuckets()) {
-//                List<com.netflix.spectator.api.Tag> histogramTags = new LinkedList<>(toSpectatorTags(tags));
-//                histogramTags.add(new BasicTag("bucket", bucket.toString()));
-//                histogramTags.add(new BasicTag("statistic", "histogram"));
-//                registry.counter(registry.createId(tagFormatter.formatName(name), histogramTags)).count();
-//            }
-//        }
+        if(histogram != null) {
+            for (Bucket<?> bucket : histogram.getBuckets()) {
+                more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.toString(), "statistic", "histogram"),
+                    bucket, Bucket::getValue);
+            }
+        }
     }
 
     private void registerQuantilesGaugeIfNecessary(Meter.Id id, Quantiles quantiles, UnaryOperator<Double> scaling) {
         if (quantiles != null) {
             for (Double q : quantiles.monitored()) {
-                List<Tag> quantileTags = new ArrayList<>();
-                id.getTags().forEach(quantileTags::add);
-
                 if (!Double.isNaN(q)) {
-                    quantileTags.add(Tag.of("quantile", Double.toString(q)));
-                    gauge(id.getName(), quantileTags, q, q2 -> scaling.apply(quantiles.get(q2)));
+                    gauge(id.getName(), Tags.concat(id.getTags(), "quantile", Double.toString(q)), q, q2 -> scaling.apply(quantiles.get(q2)));
                 }
             }
         }

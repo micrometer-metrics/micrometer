@@ -16,6 +16,7 @@
 package io.micrometer.spring.web;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.spring.MetricsConfigurationProperties;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -47,9 +48,8 @@ public class MetricsRestTemplateConfiguration {
     @Bean
     MetricsRestTemplateInterceptor clientHttpRequestInterceptor(MeterRegistry meterRegistry,
                                                                 RestTemplateTagConfigurer restTemplateTagConfigurer,
-                                                                Environment environment) {
-        return new MetricsRestTemplateInterceptor(meterRegistry, restTemplateTagConfigurer,
-                environment.getProperty("spring.metrics.web.client_requests.name", "http.client.requests"));
+                                                                MetricsConfigurationProperties properties) {
+        return new MetricsRestTemplateInterceptor(meterRegistry, restTemplateTagConfigurer, properties);
     }
 
     @Bean

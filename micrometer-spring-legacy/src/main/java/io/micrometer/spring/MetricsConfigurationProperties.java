@@ -49,6 +49,8 @@ public class MetricsConfigurationProperties {
 
         private String serverRequestsName = "http.server.requests";
 
+        private String clientRequestsName = "http.client.requests";
+
         public Boolean getAutoTimeServerRequests() {
             return autoTimeServerRequests;
         }
@@ -63,6 +65,14 @@ public class MetricsConfigurationProperties {
 
         public String getServerRequestsName() {
             return serverRequestsName;
+        }
+
+        public void setClientRequestsName(String clientRequestsName) {
+            this.clientRequestsName = clientRequestsName;
+        }
+
+        public String getClientRequestsName() {
+            return clientRequestsName;
         }
     }
 
