@@ -20,11 +20,8 @@ import cern.jet.random.engine.MersenneTwister64;
 import cern.jet.random.engine.RandomEngine;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.micrometer.core.instrument.stats.hist.CumulativeHistogram;
 import io.micrometer.core.instrument.stats.quantile.CKMSQuantiles;
 import io.micrometer.core.samples.utils.SampleRegistries;
-
-import static io.micrometer.core.instrument.stats.hist.CumulativeHistogram.linear;
 
 /**
  * Demonstrates how a histogram can also contain quantiles.
@@ -33,13 +30,13 @@ import static io.micrometer.core.instrument.stats.hist.CumulativeHistogram.linea
  */
 public class HistogramSample {
     public static void main(String[] args) throws InterruptedException {
-        PrometheusMeterRegistry meterRegistry = SampleRegistries.prometheus();
+        PrometheusMeterRegistry registry = SampleRegistries.prometheus();
 
         RandomEngine r = new MersenneTwister64(0);
         Normal dist = new Normal(100, 50, r);
 
-        DistributionSummary hist = meterRegistry.summaryBuilder("hist")
-                .histogram(CumulativeHistogram.buckets(linear(0, 10, 20)))
+        DistributionSummary hist = registry.summaryBuilder("hist")
+                .histogram(registry.histogram().cumulative().linear(0, 10, 20))
                 .quantiles(CKMSQuantiles
                         .quantile(0.95, 0.01)
                         .quantile(0.5, 0.05)

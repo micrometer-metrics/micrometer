@@ -39,29 +39,41 @@ public class RestTemplateTagConfigurer {
      */
     Iterable<Tag> clientHttpRequestTags(HttpRequest request,
                                         ClientHttpResponse response) {
+        return asList(method(request), uri(), status(response), clientName(request));
+    }
+
+    public Tag method(HttpRequest request) {
+        return Tag.of("method", request.getMethod().name());
+    }
+
+    public Tag uri() {
         String urlTemplate = RestTemplateUrlTemplateHolder.getRestTemplateUrlTemplate();
         if (urlTemplate == null) {
             urlTemplate = "none";
         }
 
+        String strippedUrlTemplate = urlTemplate.replaceAll("^https?://[^/]+/", "");
+        return Tag.of("uri", strippedUrlTemplate);
+    }
+
+    public Tag status(ClientHttpResponse response) {
         String status;
         try {
             status = (response == null) ? "CLIENT_ERROR" : ((Integer) response
-                    .getRawStatusCode()).toString();
+                .getRawStatusCode()).toString();
         } catch (IOException e) {
             status = "IO_ERROR";
         }
 
+        return Tag.of("status", status);
+    }
+
+    public Tag clientName(HttpRequest request) {
         String host = request.getURI().getHost();
         if (host == null) {
             host = "none";
         }
 
-        String strippedUrlTemplate = urlTemplate.replaceAll("^https?://[^/]+/", "");
-
-        return asList(Tag.of("method", request.getMethod().name()),
-                Tag.of("uri", strippedUrlTemplate),
-                Tag.of("status", status),
-                Tag.of("clientName", host));
+        return Tag.of("clientName", host);
     }
 }

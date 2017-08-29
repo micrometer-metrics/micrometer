@@ -33,6 +33,7 @@ import java.io.Writer;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
@@ -56,6 +57,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         super(clock);
         this.registry = registry;
         this.config().namingConvention(new PrometheusNamingConvention());
+        this.config().baseTimeUnit(TimeUnit.SECONDS);
     }
 
     /**
@@ -94,7 +96,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
         final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, id.getConventionName(),
             n -> new CustomPrometheusSummary(id, description).register(registry));
-        return new PrometheusTimer(id, description, summary.child(id.getConventionTags(), quantiles, histogram), config().clock());
+        return new PrometheusTimer(id, description, summary.child(id.getConventionTags(), quantiles, histogram), config());
     }
 
     @SuppressWarnings("unchecked")

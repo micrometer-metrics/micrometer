@@ -68,7 +68,7 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
         registerQuantilesGaugeIfNecessary(id, quantiles, t -> t / 1.0e6);
         registerHistogramCounterIfNecessary(id, histogram);
         com.netflix.spectator.api.Timer timer = registry.timer(id.getConventionName(), toSpectatorTags(id.getConventionTags()));
-        return new SpectatorTimer(id, description, timer, quantiles, config().clock());
+        return new SpectatorTimer(id, description, timer, quantiles, config());
     }
 
     @Override
@@ -82,7 +82,7 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
     private void registerHistogramCounterIfNecessary(Meter.Id id, Histogram<?> histogram) {
         if(histogram != null) {
             for (Bucket<?> bucket : histogram.getBuckets()) {
-                more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.toString(), "statistic", "histogram"),
+                more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.toString()),
                     bucket, Bucket::getValue);
             }
         }

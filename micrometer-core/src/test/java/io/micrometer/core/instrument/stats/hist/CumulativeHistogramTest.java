@@ -19,44 +19,56 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.stats.hist.CumulativeHistogram.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.offset;
 
 class CumulativeHistogramTest {
+    // registry implementation knows its monitoring backend requires seconds as the base unit of time
+    private Histogram.Config config = new Histogram.Config(TimeUnit.SECONDS);
 
     @Test
     void linearBuckets() {
-        Histogram<Double> hist = buckets(linear(5, 10, 5));
+        Histogram<Double> hist = config.cumulative().linear(5, 10, 5);
+        hist.observe(4);
+        hist.observe(14);
+        hist.observe(24);
+        hist.observe(34);
+        hist.observe(44);
+        hist.observe(1_000_000);
+
         assertThat(hist.getBuckets().stream().map(b -> b.getTag(Object::toString)))
                 .containsExactlyInAnyOrder("5.0", "15.0", "25.0", "35.0", "45.0", "Infinity");
     }
 
     @Test
     void exponentialBuckets() {
-        Histogram<Double> hist = buckets(exponential(1, 2, 5));
+        Histogram<Double> hist = config.cumulative().exponential(1, 2, 5);
+        hist.observe(0);
+        hist.observe(1.5);
+        hist.observe(3);
+        hist.observe(7);
+        hist.observe(15);
+        hist.observe(1_000_000);
+
         assertThat(hist.getBuckets().stream().map(b -> b.getTag(Object::toString)))
                 .containsExactly("1.0", "2.0", "4.0", "8.0", "16.0", "Infinity");
     }
 
     @Test
     void shiftTimeScales() {
-        TimeScaleCumulativeHistogram hist = buckets(linear(0, 10, 10), TimeUnit.MILLISECONDS);
+        Histogram<Double> hist = config.cumulative().linearTime(TimeUnit.MILLISECONDS, 0, 10, 10);
 
-        // suppose the registry implementation knows its monitoring backend requires seconds as the base unit of time
-        TimeScaleCumulativeHistogram shifted = hist.shiftScale(TimeUnit.SECONDS);
+        // it is assumed that the summary or timer controlling this histogram will also send observations to it in seconds
+        hist.observe(0.075);
+        hist.observe(0.085);
 
-        // then it is assumed that the summary or timer controlling this histogram will also send observations to it in seconds
-        shifted.observe(0.075);
-
-        assertThat(shifted.getBuckets().stream())
+        assertThat(hist.getBuckets().stream())
                 .anySatisfy(b -> {
                     assertThat(b.getTag()).isEqualTo("0.08");
-                    assertThat(b.getValue()).isEqualTo(1, offset(1e-12));
+                    assertThat(b.getValue()).isEqualTo(1);
                 })
                 .anySatisfy(b -> {
                     assertThat(b.getTag()).isEqualTo("0.09");
-                    assertThat(b.getValue()).isEqualTo(1, offset(1e-12));
+                    assertThat(b.getValue()).isEqualTo(1);
                 });
     }
 }

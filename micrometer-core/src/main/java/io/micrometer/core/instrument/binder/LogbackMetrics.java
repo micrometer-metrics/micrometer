@@ -25,6 +25,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 
+/**
+ * @author Jon Schneider
+ */
 public class LogbackMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
@@ -50,22 +53,25 @@ class MetricsTurboFilter extends TurboFilter {
 
     @Override
     public FilterReply decide(Marker marker, Logger logger, Level level, String format, Object[] params, Throwable t) {
-        switch(level.toInt()) {
-            case Level.ERROR_INT:
-                errorCounter.increment();
-                break;
-            case Level.WARN_INT:
-                warnCounter.increment();
-                break;
-            case Level.INFO_INT:
-                infoCounter.increment();
-                break;
-            case Level.DEBUG_INT:
-                debugCounter.increment();
-                break;
-            case Level.TRACE_INT:
-                traceCounter.increment();
-                break;
+        // cannot use logger.isEnabledFor(level), as it would cause a StackOverflowException by calling this filter again!
+        if(logger.getEffectiveLevel().isGreaterOrEqual(level)) {
+            switch (level.toInt()) {
+                case Level.ERROR_INT:
+                    errorCounter.increment();
+                    break;
+                case Level.WARN_INT:
+                    warnCounter.increment();
+                    break;
+                case Level.INFO_INT:
+                    infoCounter.increment();
+                    break;
+                case Level.DEBUG_INT:
+                    debugCounter.increment();
+                    break;
+                case Level.TRACE_INT:
+                    traceCounter.increment();
+                    break;
+            }
         }
 
         return FilterReply.NEUTRAL;

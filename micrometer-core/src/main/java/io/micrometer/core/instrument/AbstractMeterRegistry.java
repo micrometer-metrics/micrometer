@@ -22,6 +22,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
@@ -47,6 +48,8 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
      * names when shipping metrics to hierarchical backends such as Graphite.
      */
     private NamingConvention namingConvention = NamingConvention.snakeCase;
+
+    private TimeUnit baseTimeUnit = TimeUnit.NANOSECONDS;
 
     private MeterRegistry.Config config = new MeterRegistry.Config() {
         @Override
@@ -76,6 +79,17 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         @Override
         public Clock clock() {
             return clock;
+        }
+
+        @Override
+        public Config baseTimeUnit(TimeUnit unit) {
+            baseTimeUnit = unit;
+            return this;
+        }
+
+        @Override
+        public TimeUnit baseTimeUnit() {
+            return baseTimeUnit;
         }
     };
 
@@ -204,7 +218,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         @Override
         public Timer create() {
             // the base unit for a timer will be determined by the monitoring system if it is part of the convention name
-            return registerMeterIfNecessary(Timer.class, Meter.Type.Timer, name, tags, null, id ->
+            return registerMeterIfNecessary(Timer.class, Meter.Type.Timer, name, tags, baseTimeUnit.toString().toLowerCase(), id ->
                 newTimer(id, description, histogram, quantiles));
         }
     }
@@ -537,5 +551,10 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
             //noinspection unchecked
             return (M) m;
         }
+    }
+
+    @Override
+    public Histogram.Config histogram() {
+        return new Histogram.Config(baseTimeUnit);
     }
 }

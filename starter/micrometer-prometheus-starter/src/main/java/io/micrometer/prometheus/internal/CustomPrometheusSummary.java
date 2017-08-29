@@ -17,7 +17,8 @@ package io.micrometer.prometheus.internal;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.stats.hist.*;
+import io.micrometer.core.instrument.stats.hist.Bucket;
+import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 import io.prometheus.client.Collector;
 
@@ -26,7 +27,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Stream;
@@ -86,16 +86,10 @@ public class CustomPrometheusSummary extends Collector {
 
             if (histogram != null) {
                 histogramKeys = new LinkedList<>(tagKeys);
-                if (histogram instanceof CumulativeHistogram)
+                if (histogram.isCumulative())
                     histogramKeys.add("le");
                 else // normal histograms may or may not have buckets with a natural ordering
                     histogramKeys.add("bucket");
-
-                if (histogram instanceof TimeScaleCumulativeHistogram) {
-                    this.histogram = ((TimeScaleCumulativeHistogram) histogram).shiftScale(TimeUnit.SECONDS);
-                } else if (histogram instanceof TimeScaleNormalHistogram) {
-                    this.histogram = ((TimeScaleNormalHistogram) histogram).shiftScale(TimeUnit.SECONDS);
-                }
             }
         }
 

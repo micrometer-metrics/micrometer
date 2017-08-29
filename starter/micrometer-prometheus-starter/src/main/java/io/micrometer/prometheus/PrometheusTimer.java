@@ -18,6 +18,7 @@ package io.micrometer.prometheus;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.prometheus.internal.CustomPrometheusSummary;
 
@@ -25,19 +26,18 @@ import java.util.concurrent.TimeUnit;
 
 public class PrometheusTimer extends AbstractTimer {
     private CustomPrometheusSummary.Child summary;
+    private MeterRegistry.Config config;
 
-    PrometheusTimer(Meter.Id id, String description, CustomPrometheusSummary.Child summary, Clock clock) {
-        super(id, description, clock);
+    PrometheusTimer(Meter.Id id, String description, CustomPrometheusSummary.Child summary, MeterRegistry.Config config) {
+        super(id, description, config.clock());
+        this.config = config;
         this.summary = summary;
     }
 
     @Override
     public void record(long amount, TimeUnit unit) {
         if (amount >= 0) {
-            final double seconds = TimeUnit.NANOSECONDS.convert(amount, unit) / 10e8;
-
-            // Prometheus prefers to receive everything in base units, i.e. seconds
-            summary.observe(seconds);
+            summary.observe(TimeUtils.convert(amount, unit, config.baseTimeUnit()));
         }
     }
 

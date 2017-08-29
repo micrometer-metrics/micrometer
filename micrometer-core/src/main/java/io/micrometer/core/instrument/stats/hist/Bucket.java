@@ -53,7 +53,7 @@ public class Bucket<T> {
         return this;
     }
 
-    public double getValue() {
-        return value.doubleValue();
+    public long getValue() {
+        return value.longValue();
     }
 }

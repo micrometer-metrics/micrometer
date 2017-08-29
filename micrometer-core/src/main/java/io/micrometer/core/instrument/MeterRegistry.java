@@ -15,9 +15,12 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.stats.hist.Histogram;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 
 import static io.micrometer.core.instrument.Tags.zip;
@@ -66,10 +69,21 @@ public interface MeterRegistry {
         NamingConvention namingConvention();
 
         /**
-         * Retrieve the clock used to measure durations of timers and long task timers (and sometimes
+         * @return The clock used to measure durations of timers and long task timers (and sometimes
          * influences publishing behavior).
          */
         Clock clock();
+
+        /**
+         * Use the provided base unit of time, overriding the default for your monitoring system.
+         */
+        Config baseTimeUnit(TimeUnit unit);
+
+        /**
+         * @return The base unit of time that time-based observations are scaled to before publishing
+         * to the monitoring system.
+         */
+        TimeUnit baseTimeUnit();
     }
 
     /**
@@ -319,4 +333,11 @@ public interface MeterRegistry {
      * @return The builder.
      */
     <T> Gauge.Builder gaugeBuilder(String name, T obj, ToDoubleFunction<T> f);
+
+    /**
+     * Begin to build a new Histogram.
+     *
+     * @return A histogram configuration used to build new histograms.
+     */
+    Histogram.Config histogram();
 }

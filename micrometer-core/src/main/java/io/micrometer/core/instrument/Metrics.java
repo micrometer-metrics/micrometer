@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.stats.hist.Histogram;
 
 import java.util.Collection;
 import java.util.Map;
@@ -265,5 +266,9 @@ public class Metrics {
      */
     public static <T> Gauge.Builder gaugeBuilder(String name, T obj, ToDoubleFunction<T> f) {
         return globalRegistry.gaugeBuilder(name, obj, f);
+    }
+
+    public static Histogram.Config histogram() {
+        return globalRegistry.histogram();
     }
 }
