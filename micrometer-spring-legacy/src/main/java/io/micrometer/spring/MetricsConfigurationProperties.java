@@ -49,7 +49,19 @@ public class MetricsConfigurationProperties {
 
         private String serverRequestsName = "http.server.requests";
 
+        /**
+         * Determines whether instrumented server requests ship percentiles histogram buckets by default.
+         * The default can be overriden by adding {@link io.micrometer.core.annotation.Timed} to a request
+         * endpoint and setting {@code percentiles} to true.
+         */
+        private Boolean serverRequestPercentiles = false;
+
         private String clientRequestsName = "http.client.requests";
+
+        /**
+         * Determines whether instrumented client requests ship percentiles histogram buckets by default.
+         */
+        private Boolean clientRequestPercentiles = false;
 
         public Boolean getAutoTimeServerRequests() {
             return autoTimeServerRequests;

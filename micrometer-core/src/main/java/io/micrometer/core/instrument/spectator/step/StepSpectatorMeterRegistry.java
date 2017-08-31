@@ -16,7 +16,10 @@
 package io.micrometer.core.instrument.spectator.step;
 
 import com.netflix.spectator.api.Registry;
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
 
 import java.util.List;
@@ -37,7 +40,7 @@ public abstract class StepSpectatorMeterRegistry extends SpectatorMeterRegistry 
     }
 
     @Override
-    public MeterRegistry register(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements) {
+    public Meter register(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements) {
         List<Measurement> rateMeasurements = StreamSupport.stream(measurements.spliterator(), false)
             .map(m -> {
                 switch (m.getStatistic()) {

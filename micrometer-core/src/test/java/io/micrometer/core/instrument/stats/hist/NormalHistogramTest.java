@@ -26,12 +26,11 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
  * @author Jon Schneider
  */
 class NormalHistogramTest {
-    // registry implementation knows its monitoring backend requires seconds as the base unit of time
-    private Histogram.Config config = new Histogram.Config(TimeUnit.SECONDS);
+    private final TimeUnit timeUnit = TimeUnit.SECONDS;
 
     @Test
     void linearBuckets() {
-        Histogram<Double> hist = config.normal().linear(5, 10, 5);
+        Histogram<Double> hist = Histogram.linear(5, 10, 5).create(timeUnit, Histogram.Type.Normal);
         Arrays.asList(0, 14, 24, 30, 43, 1000).forEach(hist::observe);
         assertThat(hist.getBuckets().stream().map(b -> b.getTag(Object::toString)))
                 .containsExactlyInAnyOrder("5.0", "15.0", "25.0", "35.0", "45.0", "Infinity");
@@ -39,7 +38,7 @@ class NormalHistogramTest {
 
     @Test
     void exponentialBuckets() {
-        Histogram<Double> hist = config.normal().exponential(1, 2, 5);
+        Histogram<Double> hist = Histogram.exponential(1, 2, 5).create(timeUnit, Histogram.Type.Normal);
         Arrays.asList(0d, 1.5, 3d, 7d, 16d, 17d).forEach(hist::observe);
         assertThat(hist.getBuckets().stream().map(b -> b.getTag(Object::toString)))
                 .containsExactly("1.0", "2.0", "4.0", "8.0", "16.0", "Infinity");
@@ -47,7 +46,7 @@ class NormalHistogramTest {
 
     @Test
     void shiftTimeScales() {
-        Histogram<Double> hist = config.normal().linearTime(TimeUnit.MILLISECONDS, 0, 10, 10);
+        Histogram<Double> hist = Histogram.linearTime(TimeUnit.MILLISECONDS, 0, 10, 10).create(timeUnit, Histogram.Type.Normal);
 
         // then it is assumed that the summary or timer controlling this histogram will also send observations to it in seconds
         hist.observe(0.015);

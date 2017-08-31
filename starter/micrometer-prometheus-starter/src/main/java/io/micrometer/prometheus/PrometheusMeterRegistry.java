@@ -57,7 +57,6 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         super(clock);
         this.registry = registry;
         this.config().namingConvention(new PrometheusNamingConvention());
-        this.config().baseTimeUnit(TimeUnit.SECONDS);
     }
 
     /**
@@ -86,17 +85,23 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    public DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
+    public DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles) {
         final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, id.getConventionName(),
             n -> new CustomPrometheusSummary(id, description).register(registry));
-        return new PrometheusDistributionSummary(id, description, summary.child(id.getConventionTags(), quantiles, histogram));
+        return new PrometheusDistributionSummary(id, description, summary.child(id.getConventionTags(), quantiles,
+            buildHistogramIfNecessary(histogram)));
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
+    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles) {
         final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, id.getConventionName(),
             n -> new CustomPrometheusSummary(id, description).register(registry));
-        return new PrometheusTimer(id, description, summary.child(id.getConventionTags(), quantiles, histogram), config());
+        return new PrometheusTimer(id, description, summary.child(id.getConventionTags(), quantiles,
+            buildHistogramIfNecessary(histogram)), config().clock());
+    }
+
+    private Histogram<?> buildHistogramIfNecessary(Histogram.Builder<?> histogram) {
+        return histogram == null ? null : histogram.create(TimeUnit.SECONDS, Histogram.Type.Cumulative);
     }
 
     @SuppressWarnings("unchecked")

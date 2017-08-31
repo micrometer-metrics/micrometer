@@ -29,12 +29,12 @@ import java.util.Map;
 
 public class CompositeDistributionSummary extends AbstractMeter implements DistributionSummary, CompositeMeter {
     private final Quantiles quantiles;
-    private final Histogram histogram;
+    private final Histogram.Builder<?> histogram;
 
     private final Map<MeterRegistry, DistributionSummary> distributionSummaries =
         Collections.synchronizedMap(new LinkedHashMap<>());
 
-    CompositeDistributionSummary(Meter.Id id, String description, Quantiles quantiles, Histogram histogram) {
+    CompositeDistributionSummary(Meter.Id id, String description, Quantiles quantiles, Histogram.Builder<?> histogram) {
         super(id, description);
         this.quantiles = quantiles;
         this.histogram = histogram;

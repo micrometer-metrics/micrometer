@@ -86,12 +86,12 @@ public class SimpleMeasureBenchmark {
             }
         };
         
-        timer = new SimpleTimer(id, "", Clock.SYSTEM);
+        timer = new SimpleTimer(id, "", Clock.SYSTEM, null, null);
         longTaskTimer = new SimpleLongTaskTimer(id, "", Clock.SYSTEM);
         counter = new SimpleCounter(id, "");
         List<Integer> testListReference = Arrays.asList(1, 2);
         gauge = new SimpleGauge<>(id, "", testListReference, List::size);
-        distributionSummary = new SimpleDistributionSummary(id, "");
+        distributionSummary = new SimpleDistributionSummary(id, "", null, null);
     }
 
     @Benchmark

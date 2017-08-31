@@ -15,6 +15,15 @@
  */
 package io.micrometer.core.instrument.stats.hist;
 
+import java.util.Collection;
+
+/**
+ * A mapping from an observed sample to a histogram bucket.
+ *
+ * @param <T> The type of each bucket
+ *
+ * @author Jon Schneider
+ */
 public interface BucketFunction<T> {
     T bucket(double d);
 }

@@ -1,7 +1,5 @@
 package io.micrometer.core.instrument.stats.hist;
 
-import io.micrometer.core.instrument.util.TimeUtils;
-
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -9,161 +7,150 @@ import java.util.concurrent.TimeUnit;
  * @author Jon Schneider
  */
 public class Histogram<T> {
-    private NavigableMap<T, Bucket<T>> buckets = Collections.synchronizedNavigableMap(new TreeMap<T, Bucket<T>>());
+    private final NavigableMap<T, Bucket<T>> buckets = Collections.synchronizedNavigableMap(new TreeMap<T, Bucket<T>>());
     private final BucketFunction<? extends T> f;
-    private final boolean cumulative;
+    private final Type type;
+    private final List<BucketListener<T>> bucketListeners;
+
+    public Histogram(BucketFunction<? extends T> f, Type type, List<BucketListener<T>> listeners) {
+        this.f = f;
+        this.type = type;
+        this.bucketListeners = listeners;
+    }
 
     public Collection<Bucket<T>> getBuckets() {
         return buckets.values();
     }
 
     public boolean isCumulative() {
-        return cumulative;
+        return type.equals(Type.Cumulative);
     }
 
-    public Histogram(BucketFunction<? extends T> f, boolean cumulative) {
-        this.f = f;
-        this.cumulative = cumulative;
+    public Type getType() {
+        return type;
+    }
+
+    public enum Type {
+        Cumulative, Normal
+    }
+
+    public interface Builder<T> {
+        /**
+         * Typically called by a registry implementation, which knows what its base unit of time and
+         * standard histogram type is.
+         */
+        Histogram<T> create(TimeUnit baseTimeUnit, Type defaultType);
+
+        /**
+         * Typically called by a registry implementation for dynamically adding bucket counters.
+         */
+        Builder bucketListener(BucketListener<T> listener);
+
+        /**
+         * Set the histogram type explicitly, overriding the monitoring system's default histogram type.
+         */
+        Builder type(Type type);
+    }
+
+    public static <U> Builder<U> function(BucketFunction<U> f) {
+        return new DefaultHistogramBuilder<>(f);
     }
 
     /**
-     * A histogram configuration from which new histograms can be built.
+     * @param start Leftmost bucket
+     * @param width The interval between nonZeroBuckets
+     * @param count The total number of nonZeroBuckets, yielding {@code count}-1 intervals between them
+     * @return Fixed-width nonZeroBuckets
      */
-    public static class Config {
-        private final TimeUnit baseTimeUnit;
-
-        public Config(TimeUnit baseTimeUnit) {
-            this.baseTimeUnit = baseTimeUnit;
-        }
-
-        public Histogram.Builder cumulative() {
-            return new Histogram.Builder(baseTimeUnit, true);
-        }
-
-        public Histogram.Builder normal() {
-            return new Histogram.Builder(baseTimeUnit, false);
-        }
-
-        public Histogram<Double> percentiles(boolean cumulativeBuckets) {
-            throw new UnsupportedOperationException("Implement me!");
-        }
+    public static Builder<Double> linear(double start, double width, int count) {
+        return new DefaultHistogramBuilder<>(linearFunction(start, width, count));
     }
 
-    public static class Builder {
-        private final TimeUnit baseTimeUnit;
-        private final boolean cumulative;
+    /**
+     * @param unit  The time unit of {@code start}.
+     * @param start Leftmost bucket
+     * @param width The interval between nonZeroBuckets
+     * @param count The total number of nonZeroBuckets, yielding {@code count}-1 intervals between them
+     * @return Fixed-width nonZeroBuckets time scaled
+     */
+    public static Builder<Double> linearTime(TimeUnit unit, double start, double width, int count) {
+        return new TimeScalingHistogramBuilder(linearFunction(start, width, count), unit);
+    }
 
-        Builder(TimeUnit baseTimeUnit, boolean cumulative) {
-            this.baseTimeUnit = baseTimeUnit;
-            this.cumulative = cumulative;
-        }
+    /**
+     * @param start Leftmost bucket is start*factor
+     * @param exp   The exponent
+     * @param count The total number of nonZeroBuckets, yielding {@code count}-1 intervals between them
+     * @return Exponential-width nonZeroBuckets
+     */
+    public static Builder<Double> exponential(double start, double exp, int count) {
+        return new DefaultHistogramBuilder<>(exponentialFunction(start, exp, count));
+    }
 
-        public <U> Histogram<U> function(BucketFunction<U> f) {
-            return new Histogram<>(f, cumulative);
-        }
+    /**
+     * @param unit  The time unit of {@code start}.
+     * @param start Leftmost bucket is start*factor
+     * @param exp   The exponent
+     * @param count The total number of nonZeroBuckets, yielding {@code count}-1 intervals between them
+     * @return Exponential-width nonZeroBuckets
+     */
+    public static Builder<Double> exponentialTime(TimeUnit unit, double start, double exp, int count) {
+        return new TimeScalingHistogramBuilder(exponentialFunction(start, exp, count), unit);
+    }
 
-        /**
-         * @param start Leftmost bucket
-         * @param width The interval between buckets
-         * @param count The total number of buckets, yielding {@code count}-1 intervals between them
-         * @return Fixed-width buckets
-         */
-        public Histogram<Double> linear(double start, double width, int count) {
-            return new Histogram<>(linearFunction(start, width, count), cumulative);
-        }
+    public static Builder<Double> percentiles() {
+        return new DefaultHistogramBuilder<>(percentilesFunction());
+    }
 
-        /**
-         * @param unit The time unit of {@code start}.
-         * @param start Leftmost bucket
-         * @param width The interval between buckets
-         * @param count The total number of buckets, yielding {@code count}-1 intervals between them
-         * @return Fixed-width buckets time scaled
-         */
-        public Histogram<Double> linearTime(TimeUnit unit, double start, double width, int count) {
-            return new Histogram<>(timeScale(linearFunction(start, width, count), unit), cumulative);
-        }
+    public static Builder<Double> percentilesTime() {
+        return new TimeScalingHistogramBuilder(percentilesFunction(), TimeUnit.NANOSECONDS);
+    }
 
-        /**
-         * @param start Leftmost bucket is start*factor
-         * @param exp The exponent
-         * @param count The total number of buckets, yielding {@code count}-1 intervals between them
-         * @return Exponential-width buckets
-         */
-        public Histogram<Double> exponential(double start, double exp, int count) {
-            return new Histogram<>(exponentialFunction(start, exp, count), cumulative);
-        }
+    private static BucketFunction<Double> percentilesFunction() {
+        return PercentileBuckets::bucketFunction;
+    }
 
-        /**
-         * @param unit The time unit of {@code start}.
-         * @param start Leftmost bucket is start*factor
-         * @param exp The exponent
-         * @param count The total number of buckets, yielding {@code count}-1 intervals between them
-         * @return Exponential-width buckets
-         */
-        public Histogram<Double> exponentialTime(TimeUnit unit, double start, double exp, int count) {
-            return new Histogram<>(timeScale(exponentialFunction(start, exp, count), unit), cumulative);
-        }
+    private static BucketFunction<Double> linearFunction(double start, double width, int count) {
+        return d -> {
+            if (d > start + (width * (count - 1)))
+                return Double.POSITIVE_INFINITY;
+            return start + Math.ceil((d - start) / width) * width;
+        };
+    }
 
-        public Histogram<Double> percentiles() {
-            return new Histogram<>(percentilesFunction(), cumulative);
-        }
+    private static BucketFunction<Double> exponentialFunction(double start, double exp, int count) {
+        return d -> {
+            if (d > Math.pow(exp, count - 1))
+                return Double.POSITIVE_INFINITY;
+            if (d - start <= 0)
+                return start;
 
-        public Histogram<Double> percentilesTime() {
-            return new Histogram<>(timeScale(percentilesFunction(), TimeUnit.NANOSECONDS), cumulative);
-        }
-
-        private BucketFunction<Double> percentilesFunction() {
-            return PercentileBucketFunction::bucketFunction;
-        }
-
-        /**
-         * @param f A bucket function scaled to {@code unit}
-         * @param unit The scale of the function
-         * @return A function scaled to {@code baseTimeUnit}
-         */
-        private BucketFunction<Double> timeScale(BucketFunction<Double> f, TimeUnit unit) {
-            return observed -> {
-                double unscaledBucket = f.bucket(TimeUtils.convert(observed, baseTimeUnit, unit));
-                return TimeUtils.convert(unscaledBucket, unit, baseTimeUnit);
-            };
-        }
-
-        private BucketFunction<Double> linearFunction(double start, double width, int count) {
-            return d -> {
-                if (d > start + (width * (count - 1)))
-                    return Double.POSITIVE_INFINITY;
-                return start + Math.ceil((d - start) / width) * width;
-            };
-        }
-
-        private BucketFunction<Double> exponentialFunction(double start, double exp, int count) {
-            return d -> {
-                if (d > Math.pow(exp, count - 1))
-                    return Double.POSITIVE_INFINITY;
-                if (d - start <= 0)
-                    return start;
-
-                double log = Math.log(d) / Math.log(exp);
-                return Math.pow(exp, Math.ceil(log));
-            };
-        }
+            double log = Math.log(d) / Math.log(exp);
+            return Math.pow(exp, Math.ceil(log));
+        };
     }
 
     public void observe(double value) {
         T tag = f.bucket(value);
 
         buckets.compute(tag, (t, b) -> {
-            if(cumulative) {
+            if (isCumulative()) {
                 synchronized (buckets) {
                     buckets.tailMap(t).forEach((tailTag, bucket) -> bucket.increment());
                 }
             }
 
             if (b == null) {
-                if (cumulative) {
+                Bucket<T> bucket;
+
+                if (isCumulative()) {
                     Map.Entry<T, Bucket<T>> ceiling = buckets.ceilingEntry(tag);
-                    return new Bucket<>(tag, ceiling == null ? 1 : ceiling.getValue().getValue() + 1);
-                } else return new Bucket<>(tag, 1);
+                    bucket = new Bucket<>(tag, ceiling == null ? 1 : ceiling.getValue().getValue() + 1);
+                } else bucket = new Bucket<>(tag, 1);
+
+                bucketListeners.forEach(listener -> listener.bucketAdded(bucket));
+
+                return bucket;
             } else
                 return b.increment();
         });

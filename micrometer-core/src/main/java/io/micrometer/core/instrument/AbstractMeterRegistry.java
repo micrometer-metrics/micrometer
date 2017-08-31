@@ -80,17 +80,6 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         public Clock clock() {
             return clock;
         }
-
-        @Override
-        public Config baseTimeUnit(TimeUnit unit) {
-            baseTimeUnit = unit;
-            return this;
-        }
-
-        @Override
-        public TimeUnit baseTimeUnit() {
-            return baseTimeUnit;
-        }
     };
 
     @Override
@@ -105,13 +94,13 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     protected abstract <T> Gauge newGauge(Meter.Id id, String description, ToDoubleFunction<T> f, T obj);
     protected abstract Counter newCounter(Meter.Id id, String description);
     protected abstract LongTaskTimer newLongTaskTimer(Meter.Id id, String description);
-    protected abstract Timer newTimer(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles);
-    protected abstract DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles);
+    protected abstract Timer newTimer(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles);
+    protected abstract DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles);
     protected abstract void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements);
 
     @Override
-    public MeterRegistry register(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements) {
-        meterMap.computeIfAbsent(new MeterId(name, tags, type, null), id -> {
+    public Meter register(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements) {
+        return meterMap.computeIfAbsent(new MeterId(name, tags, type, null), id -> {
             newMeter(id, type, measurements);
             return new Meter() {
                 @Override
@@ -130,7 +119,6 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
                 }
             };
         });
-        return this;
     }
 
     @Override
@@ -185,7 +173,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     private class TimerBuilder implements Timer.Builder {
         private final String name;
         private Quantiles quantiles;
-        private Histogram<?> histogram;
+        private Histogram.Builder<?> histogram;
         private final List<Tag> tags = new ArrayList<>();
         private String description;
 
@@ -199,7 +187,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
             return this;
         }
 
-        public Timer.Builder histogram(Histogram histogram) {
+        public Timer.Builder histogram(Histogram.Builder<?> histogram) {
             this.histogram = histogram;
             return this;
         }
@@ -231,7 +219,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     private class DistributionSummaryBuilder implements DistributionSummary.Builder {
         private final String name;
         private Quantiles quantiles;
-        private Histogram<?> histogram;
+        private Histogram.Builder<?> histogram;
         private final List<Tag> tags = new ArrayList<>();
         private String description;
         private String baseUnit;
@@ -246,7 +234,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
             return this;
         }
 
-        public DistributionSummary.Builder histogram(Histogram<?> histogram) {
+        public DistributionSummary.Builder histogram(Histogram.Builder<?> histogram) {
             this.histogram = histogram;
             return this;
         }
@@ -321,14 +309,13 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         }
 
         @Override
-        public <T> T counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+        public <T> Meter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
             WeakReference<T> ref = new WeakReference<>(obj);
-            register(name, tags, Meter.Type.Counter,
+            return register(name, tags, Meter.Type.Counter,
                 Collections.singletonList(new Measurement(() -> {
                     T obj2 = ref.get();
                     return obj2 != null ? f.applyAsDouble(obj2) : 0;
                 }, Statistic.Count)));
-            return obj;
         }
     };
 
@@ -551,10 +538,5 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
             //noinspection unchecked
             return (M) m;
         }
-    }
-
-    @Override
-    public Histogram.Config histogram() {
-        return new Histogram.Config(baseTimeUnit);
     }
 }

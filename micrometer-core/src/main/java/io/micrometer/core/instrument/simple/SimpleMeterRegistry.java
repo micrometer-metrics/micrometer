@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.stats.hist.Bucket;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 
 /**
@@ -42,17 +43,15 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
+    protected DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles) {
         registerQuantilesGaugeIfNecessary(id, quantiles);
-        registerHistogramCounterIfNecessary(id, histogram);
-        return new SimpleDistributionSummary(id, description);
+        return new SimpleDistributionSummary(id, description, quantiles, registerHistogramCounterIfNecessary(id, histogram));
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
+    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles) {
         registerQuantilesGaugeIfNecessary(id, quantiles);
-        registerHistogramCounterIfNecessary(id, histogram);
-        return new SimpleTimer(id, description, config().clock());
+        return new SimpleTimer(id, description, config().clock(), quantiles, registerHistogramCounterIfNecessary(id, histogram));
     }
 
     @Override
@@ -74,13 +73,16 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
         }
     }
 
-    private void registerHistogramCounterIfNecessary(Meter.Id id, Histogram<?> histogram) {
-        if(histogram != null) {
-            for (Bucket<?> bucket : histogram.getBuckets()) {
-                more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.toString()),
-                    bucket, Bucket::getValue);
-            }
+    private Histogram<?> registerHistogramCounterIfNecessary(Meter.Id id, Histogram.Builder<?> histogramBuilder) {
+        if (histogramBuilder != null) {
+            return histogramBuilder
+                .bucketListener(bucket -> {
+                    more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.toString()),
+                        bucket, Bucket::getValue);
+                })
+                .create(TimeUnit.NANOSECONDS, Histogram.Type.Normal);
         }
+        return null;
     }
 
     @Override

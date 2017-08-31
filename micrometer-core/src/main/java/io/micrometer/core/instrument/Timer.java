@@ -112,7 +112,7 @@ public interface Timer extends Meter {
     interface Builder {
         Builder quantiles(Quantiles quantiles);
 
-        Builder histogram(Histogram<?> histogram);
+        Builder histogram(Histogram.Builder<?> histogram);
 
         Builder tags(Iterable<Tag> tags);
         default Builder tags(String... tags) {

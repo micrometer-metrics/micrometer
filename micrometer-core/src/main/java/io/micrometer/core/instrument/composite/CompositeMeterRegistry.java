@@ -46,7 +46,7 @@ public class CompositeMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
+    protected Timer newTimer(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles) {
         CompositeTimer timer = new CompositeTimer(id, description, quantiles, histogram, clock);
         compositeMeters.add(timer);
         registries.forEach(timer::add);
@@ -54,7 +54,7 @@ public class CompositeMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
+    protected DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles) {
         CompositeDistributionSummary ds = new CompositeDistributionSummary(id, description, quantiles, histogram);
         compositeMeters.add(ds);
         registries.forEach(ds::add);

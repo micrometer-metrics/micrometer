@@ -73,17 +73,6 @@ public interface MeterRegistry {
          * influences publishing behavior).
          */
         Clock clock();
-
-        /**
-         * Use the provided base unit of time, overriding the default for your monitoring system.
-         */
-        Config baseTimeUnit(TimeUnit unit);
-
-        /**
-         * @return The base unit of time that time-based observations are scaled to before publishing
-         * to the monitoring system.
-         */
-        TimeUnit baseTimeUnit();
     }
 
     /**
@@ -204,12 +193,12 @@ public interface MeterRegistry {
          * Tracks a monotonically increasing value, automatically incrementing the counter whenever
          * the value is observed.
          */
-        <T> T counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f);
+        <T> Meter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f);
 
         /**
          * Tracks a number, maintaining a weak reference on it.
          */
-        default <T extends Number> T counter(String name, Iterable<Tag> tags, T number) {
+        default <T extends Number> Meter counter(String name, Iterable<Tag> tags, T number) {
             return counter(name, tags, number, Number::doubleValue);
         }
     }
@@ -227,7 +216,7 @@ public interface MeterRegistry {
      * @param measurements A sequence of measurements describing how to sample the meter.
      * @return The registry.
      */
-    MeterRegistry register(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements);
+    Meter register(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements);
 
     /**
      * Register a gauge that reports the value of the object after the function
@@ -333,11 +322,4 @@ public interface MeterRegistry {
      * @return The builder.
      */
     <T> Gauge.Builder gaugeBuilder(String name, T obj, ToDoubleFunction<T> f);
-
-    /**
-     * Begin to build a new Histogram.
-     *
-     * @return A histogram configuration used to build new histograms.
-     */
-    Histogram.Config histogram();
 }

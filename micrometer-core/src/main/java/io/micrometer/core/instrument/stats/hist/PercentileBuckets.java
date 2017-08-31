@@ -1,15 +1,13 @@
 package io.micrometer.core.instrument.stats.hist;
 
-import com.netflix.spectator.api.histogram.PercentileBuckets;
-
 import java.util.ArrayList;
 
 /**
- * Built off of {@link PercentileBuckets}, but based on observed double values.
+ * Built off of {@link com.netflix.spectator.api.histogram.PercentileBuckets}, but based on observed double values.
  *
  * @author Jon Schneider
  */
-public class PercentileBucketFunction {
+public class PercentileBuckets {
     public static double bucketFunction(double d) {
         return BUCKET_VALUES[indexOf(d)];
     }

@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 Pivotal Software, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package io.micrometer.spring.web;
 
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.WindowSketchQuantiles;
 import io.micrometer.core.instrument.util.AnnotationUtils;
 import io.micrometer.spring.MetricsConfigurationProperties;
@@ -28,20 +29,13 @@ import org.springframework.web.method.HandlerMethod;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import static java.util.stream.StreamSupport.stream;
 
 /**
  * @author Jon Schneider
@@ -71,13 +65,13 @@ public class ControllerMetrics {
         RequestContextHolder.getRequestAttributes().setAttribute(EXCEPTION_ATTRIBUTE, t, RequestAttributes.SCOPE_REQUEST);
     }
 
-    void preHandle(HttpServletRequest request, Object handler) {
+    public void preHandle(HttpServletRequest request, Object handler) {
         request.setAttribute(TIMING_REQUEST_ATTRIBUTE, System.nanoTime());
         request.setAttribute(HANDLER_REQUEST_ATTRIBUTE, handler);
 
         longTaskTimed(handler).forEach(t -> {
-            if(t.value().isEmpty()) {
-                if(handler instanceof HandlerMethod){
+            if (t.name == null) {
+                if (handler instanceof HandlerMethod) {
                     logger.warn("Unable to perform metrics timing on " + ((HandlerMethod) handler).getShortLogMessage() + ": @Timed annotation must have a value used to name the metric");
                 } else {
                     logger.warn("Unable to perform metrics timing for request " + request.getRequestURI() + ": @Timed annotation must have a value used to name the metric");
@@ -88,7 +82,7 @@ public class ControllerMetrics {
         });
     }
 
-    HttpServletResponse record(HttpServletRequest request, HttpServletResponse response, Throwable ex) {
+    public void record(HttpServletRequest request, HttpServletResponse response, Throwable ex) {
         Long startTime = (Long) request.getAttribute(TIMING_REQUEST_ATTRIBUTE);
         Object handler = request.getAttribute(HANDLER_REQUEST_ATTRIBUTE);
 
@@ -97,102 +91,97 @@ public class ControllerMetrics {
 
         // complete any LongTaskTimer tasks running for this method
         longTaskTimed(handler).forEach(t -> {
-            if(!t.value().isEmpty()) {
+            if (t.name != null) {
                 longTaskTimer(t, request, handler).stop(longTaskTimerIds.remove(request));
             }
         });
 
         // record Timer values
         timed(handler).forEach(t -> {
-            String name = properties.getWeb().getServerRequestsName();
-            if (!t.value().isEmpty()) {
-                name = t.value();
+            Timer.Builder timerBuilder = registry.timerBuilder(t.name)
+                .tags(tagConfigurer.httpRequestTags(request, response, thrown))
+                .tags(t.extraTags);
+
+            if (t.quantiles.length > 0) {
+                timerBuilder = timerBuilder.quantiles(WindowSketchQuantiles.quantiles(t.quantiles).create());
             }
 
-            Timer.Builder timerBuilder = registry.timerBuilder(name)
-                    .tags(tagConfigurer.httpRequestTags(request, response, thrown));
-
-            String[] extraTags = t.extraTags();
-            if (extraTags.length > 0) {
-                if (extraTags.length % 2 != 0) {
-                    if (logger.isErrorEnabled()) {
-                        Method method = ((HandlerMethod) handler).getMethod();
-                        String target = method.getDeclaringClass().getName() + "." + method.getName();
-                        logger.error("@Timed extraTags array on method " + target + " size must be even, it is a set of key=value pairs");
-                    }
-                } else {
-                    timerBuilder = timerBuilder.tags(IntStream.range(0, extraTags.length / 2)
-                            .mapToObj(i -> Tag.of(extraTags[i], extraTags[i + 1]))
-                            .collect(Collectors.toList()));
-                }
-            }
-
-            if(t.quantiles().length > 0) {
-                timerBuilder = timerBuilder.quantiles(WindowSketchQuantiles.quantiles(t.quantiles()).create());
+            if (t.percentiles) {
+                timerBuilder = timerBuilder.histogram(Histogram.percentilesTime());
             }
 
             timerBuilder.create().record(endTime - startTime, TimeUnit.NANOSECONDS);
         });
-
-        return response;
     }
 
-    private LongTaskTimer longTaskTimer(Timed t, HttpServletRequest request, Object handler) {
-        Iterable<Tag> tags = tagConfigurer.httpLongRequestTags(request, handler);
-        if(t.extraTags().length > 0) {
-            tags = Stream.concat(stream(tags.spliterator(), false), Tags.zip(t.extraTags()).stream()).collect(toList());
-        }
-        return registry.more().longTaskTimer(t.value(), tags);
+    private LongTaskTimer longTaskTimer(TimerConfig t, HttpServletRequest request, Object handler) {
+        Iterable<Tag> tags = Tags.concat(tagConfigurer.httpLongRequestTags(request, handler), t.extraTags);
+        return registry.more().longTaskTimer(t.name, tags);
     }
 
-    private Set<Timed> longTaskTimed(Object m) {
-        if(!(m instanceof HandlerMethod))
+    private Set<TimerConfig> longTaskTimed(Object m) {
+        if (!(m instanceof HandlerMethod))
             return Collections.emptySet();
 
-        Set<Timed> timed = AnnotationUtils.findTimed(((HandlerMethod) m).getMethod()).filter(Timed::longTask).collect(toSet());
+        Set<TimerConfig> timed = AnnotationUtils.findTimed(((HandlerMethod) m).getMethod()).filter(Timed::longTask)
+            .map(this::fromAnnotation).collect(toSet());
         if (timed.isEmpty()) {
-            return AnnotationUtils.findTimed(((HandlerMethod) m).getBeanType()).filter(Timed::longTask).collect(toSet());
+            return AnnotationUtils.findTimed(((HandlerMethod) m).getBeanType()).filter(Timed::longTask)
+                .map(this::fromAnnotation).collect(toSet());
         }
         return timed;
     }
 
-    private Set<Timed> timed(Object m) {
-        if(!(m instanceof HandlerMethod))
+    private Set<TimerConfig> timed(Object m) {
+        if (!(m instanceof HandlerMethod))
             return Collections.emptySet();
 
-        Set<Timed> timed = AnnotationUtils.findTimed(((HandlerMethod) m).getMethod()).filter(t -> !t.longTask()).collect(toSet());
+        Set<TimerConfig> timed = AnnotationUtils.findTimed(((HandlerMethod) m).getMethod()).filter(t -> !t.longTask())
+            .map(this::fromAnnotation).collect(toSet());
         if (timed.isEmpty()) {
-            timed = AnnotationUtils.findTimed(((HandlerMethod) m).getBeanType()).filter(t -> !t.longTask()).collect(toSet());
-            if(timed.isEmpty() && properties.getWeb().getAutoTimeServerRequests()) {
-                return Collections.singleton(new Timed() {
-                    @Override
-                    public Class<? extends Annotation> annotationType() {
-                        return Timed.class;
-                    }
-
-                    @Override
-                    public String value() {
-                        return "";
-                    }
-
-                    @Override
-                    public String[] extraTags() {
-                        return new String[0];
-                    }
-
-                    @Override
-                    public boolean longTask() {
-                        return false;
-                    }
-
-                    @Override
-                    public double[] quantiles() {
-                        return new double[0];
-                    }
-                });
+            timed = AnnotationUtils.findTimed(((HandlerMethod) m).getBeanType()).filter(t -> !t.longTask())
+                .map(this::fromAnnotation).collect(toSet());
+            if (timed.isEmpty() && properties.getWeb().getAutoTimeServerRequests()) {
+                return Collections.singleton(new TimerConfig());
             }
         }
 
         return timed;
+    }
+
+    private class TimerConfig {
+        String name = properties.getWeb().getServerRequestsName();
+        Iterable<Tag> extraTags = Collections.emptyList();
+        boolean longTask = false;
+        double[] quantiles = new double[0];
+        boolean percentiles = properties.getWeb().getAutoTimeServerRequests();
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            TimerConfig that = (TimerConfig) o;
+
+            return name != null ? name.equals(that.name) : that.name == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return name != null ? name.hashCode() : 0;
+        }
+    }
+
+    private TimerConfig fromAnnotation(Timed timed) {
+        TimerConfig c = new TimerConfig();
+        c.name = timed.value().isEmpty() ? properties.getWeb().getServerRequestsName() : timed.value();
+        if(c.longTask && timed.value().isEmpty())
+            c.name = null; // the user MUST name long task timers, we don't lump them in with regular timers with the same name
+
+        c.extraTags = Tags.zip(timed.extraTags());
+        c.longTask = timed.longTask();
+        c.quantiles = timed.quantiles();
+        c.percentiles = timed.percentiles();
+        return c;
     }
 }

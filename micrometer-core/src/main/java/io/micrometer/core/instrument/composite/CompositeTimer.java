@@ -27,11 +27,11 @@ import java.util.concurrent.TimeUnit;
 
 public class CompositeTimer extends AbstractTimer implements CompositeMeter {
     private final Quantiles quantiles;
-    private final Histogram histogram;
+    private final Histogram.Builder<?> histogram;
 
     private final Map<MeterRegistry, Timer> timers = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    CompositeTimer(Meter.Id id, String description, Quantiles quantiles, Histogram histogram, Clock clock) {
+    CompositeTimer(Meter.Id id, String description, Quantiles quantiles, Histogram.Builder<?> histogram, Clock clock) {
         super(id, description, clock);
         this.quantiles = quantiles;
         this.histogram = histogram;

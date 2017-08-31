@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 Pivotal Software, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
@@ -56,19 +57,27 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
+    protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(Meter.Id id,
+                                                                                       String description,
+                                                                                       Histogram.Builder<?> histogram,
+                                                                                       Quantiles quantiles) {
         registerQuantilesGaugeIfNecessary(id, quantiles, UnaryOperator.identity());
-        com.netflix.spectator.api.DistributionSummary ds = registry.distributionSummary(id.getConventionName(), toSpectatorTags(id.getConventionTags()));
-        return new SpectatorDistributionSummary(id, description, ds);
+        com.netflix.spectator.api.DistributionSummary ds = registry.distributionSummary(id.getConventionName(),
+            toSpectatorTags(id.getConventionTags()));
+        return new SpectatorDistributionSummary(id, description, ds, quantiles,
+            registerHistogramCounterIfNecessary(id, histogram));
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, String description, Histogram<?> histogram, Quantiles quantiles) {
+    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id,
+                                                           String description,
+                                                           Histogram.Builder<?> histogram,
+                                                           Quantiles quantiles) {
         // scale nanosecond precise quantile values to seconds
         registerQuantilesGaugeIfNecessary(id, quantiles, t -> t / 1.0e6);
-        registerHistogramCounterIfNecessary(id, histogram);
         com.netflix.spectator.api.Timer timer = registry.timer(id.getConventionName(), toSpectatorTags(id.getConventionTags()));
-        return new SpectatorTimer(id, description, timer, quantiles, config());
+        return new SpectatorTimer(id, description, timer, clock, quantiles,
+            registerHistogramCounterIfNecessary(id, histogram));
     }
 
     @Override
@@ -79,13 +88,16 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
         return new SpectatorGauge(id, description, gauge);
     }
 
-    private void registerHistogramCounterIfNecessary(Meter.Id id, Histogram<?> histogram) {
-        if(histogram != null) {
-            for (Bucket<?> bucket : histogram.getBuckets()) {
-                more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.toString()),
-                    bucket, Bucket::getValue);
-            }
+    private Histogram<?> registerHistogramCounterIfNecessary(Meter.Id id, Histogram.Builder<?> histogramBuilder) {
+        if (histogramBuilder != null) {
+            return histogramBuilder
+                .bucketListener(bucket -> {
+                    more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.toString()),
+                        bucket, Bucket::getValue);
+                })
+                .create(TimeUnit.NANOSECONDS, Histogram.Type.Normal);
         }
+        return null;
     }
 
     private void registerQuantilesGaugeIfNecessary(Meter.Id id, Quantiles quantiles, UnaryOperator<Double> scaling) {

@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.core.instrument.stats.hist.Histogram;
 
 import java.util.Collection;
 import java.util.Map;
@@ -137,14 +136,14 @@ public class Metrics {
          * Tracks a monotonically increasing value, automatically incrementing the counter whenever
          * the value is observed.
          */
-        public <T> T counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+        public <T> Meter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
             return globalRegistry.more().counter(name, tags, obj, f);
         }
 
         /**
          * Tracks a number, maintaining a weak reference on it.
          */
-        public <T extends Number> T counter(String name, Iterable<Tag> tags, T number) {
+        public <T extends Number> Meter counter(String name, Iterable<Tag> tags, T number) {
             return globalRegistry.more().counter(name, tags, number);
         }
     }
@@ -158,7 +157,7 @@ public class Metrics {
         return more;
     };
 
-    public static MeterRegistry register(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements) {
+    public static Meter register(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements) {
         return globalRegistry.register(name, tags, type, measurements);
     }
 
@@ -266,9 +265,5 @@ public class Metrics {
      */
     public static <T> Gauge.Builder gaugeBuilder(String name, T obj, ToDoubleFunction<T> f) {
         return globalRegistry.gaugeBuilder(name, obj, f);
-    }
-
-    public static Histogram.Config histogram() {
-        return globalRegistry.histogram();
     }
 }
