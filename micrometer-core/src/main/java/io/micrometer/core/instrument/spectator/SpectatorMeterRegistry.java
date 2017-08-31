@@ -92,7 +92,7 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
         if (histogramBuilder != null) {
             return histogramBuilder
                 .bucketListener(bucket -> {
-                    more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.toString()),
+                    more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.getTag()),
                         bucket, Bucket::getValue);
                 })
                 .create(TimeUnit.NANOSECONDS, Histogram.Type.Normal);

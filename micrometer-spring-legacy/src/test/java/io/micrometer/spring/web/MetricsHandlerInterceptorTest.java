@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 Pivotal Software, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,9 @@
 package io.micrometer.spring.web;
 
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,6 +41,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 
 import static io.micrometer.core.instrument.Statistic.Count;
+import static java.util.stream.StreamSupport.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
@@ -80,20 +83,20 @@ public class MetricsHandlerInterceptorTest {
     public void timedControllerClass() throws Exception {
         mvc.perform(get("/api/c2/10")).andExpect(status().isOk());
         assertThat(registry.find("http.server.requests").tags("status", "200").timer())
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+            .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
     @Test
     public void badClientRequest() throws Exception {
         mvc.perform(get("/api/c1/oops")).andExpect(status().is4xxClientError());
         assertThat(registry.find("http.server.requests").tags("status", "400").timer())
-                .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+            .hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
     @Test
     public void unhandledError() throws Exception {
         assertThatCode(() -> mvc.perform(get("/api/c1/unhandledError/10")).andExpect(status().isOk()))
-                .hasCauseInstanceOf(RuntimeException.class);
+            .hasCauseInstanceOf(RuntimeException.class);
         assertThat(registry.find("http.server.requests").tags("exception", "RuntimeException")
             .value(Count, 1.0).timer()).isPresent();
     }
@@ -101,8 +104,8 @@ public class MetricsHandlerInterceptorTest {
     @Test
     public void longRunningRequest() throws Exception {
         MvcResult result = mvc.perform(get("/api/c1/long/10"))
-                .andExpect(request().asyncStarted())
-                .andReturn();
+            .andExpect(request().asyncStarted())
+            .andReturn();
 
         // while the mapping is running, it contributes to the activeTasks count
         assertThat(registry.find("my.long.request").tags("region", "test")
@@ -139,8 +142,17 @@ public class MetricsHandlerInterceptorTest {
         assertThat(registry.find("http.server.requests").tags("quantile", "0.95").gauge()).isNotEmpty();
     }
 
+    @Test
+    public void recordPercentiles() throws Exception {
+        mvc.perform(get("/api/c1/percentiles/10")).andExpect(status().isOk());
+
+        assertThat(registry.find("http.server.requests").meters().stream()
+            .flatMap(m -> stream(m.getId().getTags().spliterator(), false))
+            .map(Tag::getKey)).contains("bucket");
+    }
+
     @SpringBootApplication(scanBasePackages = "isolated")
-    @Import({ Controller1.class, Controller2.class })
+    @Import({Controller1.class, Controller2.class})
     static class App {
         @Bean
         MeterRegistry registry() {
@@ -197,6 +209,12 @@ public class MetricsHandlerInterceptorTest {
         @Timed(quantiles = {0.5, 0.95})
         @GetMapping("/quantiles/{id}")
         public String quantiles(@PathVariable String id) {
+            return id;
+        }
+
+        @Timed(percentiles = true)
+        @GetMapping("/percentiles/{id}")
+        public String percentiles(@PathVariable String id) {
             return id;
         }
 
