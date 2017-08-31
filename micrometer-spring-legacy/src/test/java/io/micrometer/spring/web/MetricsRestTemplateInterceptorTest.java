@@ -16,6 +16,7 @@
 package io.micrometer.spring.web;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.spring.MetricsConfigurationProperties;
 import org.junit.Test;
@@ -28,6 +29,7 @@ import org.springframework.web.client.RestTemplate;
 
 import static io.micrometer.core.instrument.Statistic.Count;
 import static java.util.Collections.singletonList;
+import static java.util.stream.StreamSupport.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -39,9 +41,13 @@ public class MetricsRestTemplateInterceptorTest {
         MeterRegistry registry = new SimpleMeterRegistry();
 
         RestTemplate restTemplate = new RestTemplate();
+
+        MetricsConfigurationProperties properties = new MetricsConfigurationProperties();
+        properties.getWeb().setClientRequestPercentiles(true);
+
         restTemplate.setInterceptors(singletonList(new MetricsRestTemplateInterceptor(
                 registry, new RestTemplateTagConfigurer(),
-                new MetricsConfigurationProperties()
+            properties
         )));
 
         MockRestServiceServer mockServer = MockRestServiceServer.createServer(restTemplate);
@@ -54,6 +60,10 @@ public class MetricsRestTemplateInterceptorTest {
         // the uri requires AOP to determine
         assertThat(registry.find("http.client.requests").tags("method", "GET", "uri", "none", "status", "200")
             .value(Count, 1.0).timer()).isPresent();
+
+        assertThat(registry.find("http.client.requests").meters().stream()
+            .flatMap(m -> stream(m.getId().getTags().spliterator(), false))
+            .map(Tag::getKey)).contains("bucket");
 
         assertThat(s).isEqualTo("OK");
 

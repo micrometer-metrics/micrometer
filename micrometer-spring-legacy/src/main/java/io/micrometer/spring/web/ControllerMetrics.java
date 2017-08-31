@@ -154,7 +154,7 @@ public class ControllerMetrics {
         Iterable<Tag> extraTags = Collections.emptyList();
         boolean longTask = false;
         double[] quantiles = new double[0];
-        boolean percentiles = properties.getWeb().getAutoTimeServerRequests();
+        boolean percentiles = properties.getWeb().getServerRequestPercentiles();
 
         @Override
         public boolean equals(Object o) {

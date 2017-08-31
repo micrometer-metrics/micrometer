@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 Pivotal Software, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,8 @@
 package io.micrometer.spring.web;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.spring.MetricsConfigurationProperties;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
@@ -33,14 +35,14 @@ import java.util.concurrent.TimeUnit;
 public class MetricsRestTemplateInterceptor implements ClientHttpRequestInterceptor {
     private final MeterRegistry meterRegistry;
     private final RestTemplateTagConfigurer tagProvider;
-    private final String metricName;
+    private final MetricsConfigurationProperties properties;
 
     public MetricsRestTemplateInterceptor(MeterRegistry meterRegistry,
                                           RestTemplateTagConfigurer tagProvider,
                                           MetricsConfigurationProperties properties) {
         this.tagProvider = tagProvider;
         this.meterRegistry = meterRegistry;
-        this.metricName = properties.getWeb().getClientRequestsName();
+        this.properties = properties;
     }
 
     @Override
@@ -53,8 +55,15 @@ public class MetricsRestTemplateInterceptor implements ClientHttpRequestIntercep
             response = execution.execute(request, body);
             return response;
         } finally {
-            meterRegistry.timer(metricName, tagProvider.clientHttpRequestTags(request, response))
-                    .record(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
+            Timer.Builder builder = meterRegistry.timerBuilder(properties.getWeb().getClientRequestsName())
+                .tags(tagProvider.clientHttpRequestTags(request, response));
+
+            if(properties.getWeb().getClientRequestPercentiles())
+                builder = builder.histogram(Histogram.percentiles());
+
+            builder
+                .create()
+                .record(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
         }
     }
 }

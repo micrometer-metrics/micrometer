@@ -86,6 +86,22 @@ public class MetricsConfigurationProperties {
         public String getClientRequestsName() {
             return clientRequestsName;
         }
+
+        public void setServerRequestPercentiles(Boolean serverRequestPercentiles) {
+            this.serverRequestPercentiles = serverRequestPercentiles;
+        }
+
+        public Boolean getServerRequestPercentiles() {
+            return serverRequestPercentiles;
+        }
+
+        public void setClientRequestPercentiles(Boolean clientRequestPercentiles) {
+            this.clientRequestPercentiles = clientRequestPercentiles;
+        }
+
+        public Boolean getClientRequestPercentiles() {
+            return clientRequestPercentiles;
+        }
     }
 
     public Web getWeb() {
