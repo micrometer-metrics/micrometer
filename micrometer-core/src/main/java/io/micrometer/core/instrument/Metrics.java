@@ -155,7 +155,7 @@ public class Metrics {
      */
     public static More more() {
         return more;
-    };
+    }
 
     public static Meter register(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements) {
         return globalRegistry.register(name, tags, type, measurements);
