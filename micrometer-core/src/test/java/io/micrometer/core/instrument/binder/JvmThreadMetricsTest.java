@@ -21,11 +21,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-class ThreadMetricsTest {
+class JvmThreadMetricsTest {
     @Test
     void threadMetrics() {
         MeterRegistry registry = new SimpleMeterRegistry();
-        new ThreadMetrics().bindTo(registry);
+        new JvmThreadMetrics().bindTo(registry);
 
         assertThat(registry.find("threads.live").gauge())
                 .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));

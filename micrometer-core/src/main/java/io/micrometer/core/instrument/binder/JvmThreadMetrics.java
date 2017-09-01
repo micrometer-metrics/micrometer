@@ -20,7 +20,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 
-public class ThreadMetrics implements MeterBinder {
+public class JvmThreadMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
