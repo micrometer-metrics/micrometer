@@ -26,8 +26,8 @@ public class JvmThreadMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
 
-        registry.gauge("threads.peak", threadBean, ThreadMXBean::getPeakThreadCount);
-        registry.gauge("threads.daemon", threadBean, ThreadMXBean::getDaemonThreadCount);
-        registry.gauge("threads.live", threadBean, ThreadMXBean::getThreadCount);
+        registry.gauge("jvm.threads.peak", threadBean, ThreadMXBean::getPeakThreadCount);
+        registry.gauge("jvm.threads.daemon", threadBean, ThreadMXBean::getDaemonThreadCount);
+        registry.gauge("jvm.threads.live", threadBean, ThreadMXBean::getThreadCount);
     }
 }

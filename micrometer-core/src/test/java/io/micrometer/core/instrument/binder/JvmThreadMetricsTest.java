@@ -27,11 +27,11 @@ class JvmThreadMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         new JvmThreadMetrics().bindTo(registry);
 
-        assertThat(registry.find("threads.live").gauge())
+        assertThat(registry.find("jvm.threads.live").gauge())
                 .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
-        assertThat(registry.find("threads.daemon").gauge())
+        assertThat(registry.find("jvm.threads.daemon").gauge())
                 .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
-        assertThat(registry.find("threads.peak").gauge())
+        assertThat(registry.find("jvm.threads.peak").gauge())
                 .hasValueSatisfying(g ->  assertThat(g.value()).isGreaterThan(0));
     }
 }
