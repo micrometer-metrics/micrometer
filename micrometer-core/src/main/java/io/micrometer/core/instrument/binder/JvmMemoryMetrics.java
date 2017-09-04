@@ -22,8 +22,7 @@ import io.micrometer.core.instrument.Tags;
 import java.lang.management.BufferPoolMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
-
-import static java.util.Collections.singletonList;
+import java.lang.management.MemoryType;
 
 /**
  * Record metrics that report utilization of various memory and buffer pools.
@@ -52,7 +51,8 @@ public class JvmMemoryMetrics implements MeterBinder {
         }
 
         for (MemoryPoolMXBean memoryPoolBean : ManagementFactory.getPlatformMXBeans(MemoryPoolMXBean.class)) {
-            Iterable<Tag> tags = Tags.zip("id", memoryPoolBean.getName());
+            String area = MemoryType.HEAP.equals(memoryPoolBean.getType()) ? "heap" : "nonheap";
+            Iterable<Tag> tags = Tags.zip("id", memoryPoolBean.getName(), "area", area);
 
             registry.gaugeBuilder("jvm.memory.used", memoryPoolBean, (mem) -> mem.getUsage().getUsed())
                 .baseUnit("bytes")
