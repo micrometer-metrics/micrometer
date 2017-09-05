@@ -49,8 +49,6 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
      */
     private NamingConvention namingConvention = NamingConvention.snakeCase;
 
-    private TimeUnit baseTimeUnit = TimeUnit.NANOSECONDS;
-
     private MeterRegistry.Config config = new MeterRegistry.Config() {
         @Override
         public Config commonTags(Iterable<Tag> tags) {
@@ -206,7 +204,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         @Override
         public Timer create() {
             // the base unit for a timer will be determined by the monitoring system if it is part of the convention name
-            return registerMeterIfNecessary(Timer.class, Meter.Type.Timer, name, tags, baseTimeUnit.toString().toLowerCase(), id ->
+            return registerMeterIfNecessary(Timer.class, Meter.Type.Timer, name, tags, null, id ->
                 newTimer(id, description, histogram, quantiles));
         }
     }
