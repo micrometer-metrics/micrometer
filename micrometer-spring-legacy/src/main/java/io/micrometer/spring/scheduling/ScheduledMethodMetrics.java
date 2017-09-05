@@ -32,12 +32,12 @@ import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 
 @Aspect
-public class MetricsSchedulingAspect {
-    private static final Log logger = LogFactory.getLog(MetricsSchedulingAspect.class);
+public class ScheduledMethodMetrics {
+    private static final Log logger = LogFactory.getLog(ScheduledMethodMetrics.class);
 
     private final MeterRegistry registry;
 
-    public MetricsSchedulingAspect(MeterRegistry registry) {
+    public ScheduledMethodMetrics(MeterRegistry registry) {
         this.registry = registry;
     }
 

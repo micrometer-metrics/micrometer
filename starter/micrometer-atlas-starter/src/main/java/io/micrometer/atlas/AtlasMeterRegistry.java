@@ -1,12 +1,12 @@
 /**
  * Copyright 2017 Pivotal Software, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,22 @@
  */
 package io.micrometer.atlas;
 
+import com.netflix.spectator.api.histogram.PercentileBuckets;
+import com.netflix.spectator.api.histogram.PercentileDistributionSummary;
+import com.netflix.spectator.api.histogram.PercentileTimer;
 import com.netflix.spectator.atlas.AtlasConfig;
 import com.netflix.spectator.atlas.AtlasRegistry;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.NamingConvention;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.spectator.SpectatorDistributionSummary;
+import io.micrometer.core.instrument.spectator.SpectatorTimer;
 import io.micrometer.core.instrument.spectator.step.StepSpectatorMeterRegistry;
+import io.micrometer.core.instrument.stats.hist.Bucket;
+import io.micrometer.core.instrument.stats.hist.Histogram;
+import io.micrometer.core.instrument.stats.quantile.Quantiles;
+
+import java.awt.*;
+import java.util.concurrent.TimeUnit;
+import java.util.function.UnaryOperator;
 
 /**
  * @author Jon Schneider
@@ -61,5 +72,43 @@ public class AtlasMeterRegistry extends StepSpectatorMeterRegistry {
 
     private AtlasRegistry getAtlasRegistry() {
         return (AtlasRegistry) this.getSpectatorRegistry();
+    }
+
+    // Precomputed values for the corresponding buckets. This is done to avoid expensive
+    // String.format calls when creating new instances of a percentile variant. The
+    // String.format calls uses regex internally to parse out the `%` substitutions which
+    // has a lot of overhead.
+    private static final String[] TAG_VALUES;
+
+    static {
+        int length = PercentileBuckets.length();
+        TAG_VALUES = new String[length];
+        for (int i = 0; i < length; ++i) {
+            TAG_VALUES[i] = String.format("T%04X", i);
+        }
+    }
+
+    @Override
+    protected Timer newTimer(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles) {
+        if (histogram != null && histogram.create(TimeUnit.NANOSECONDS, Histogram.Type.Normal).isPercentiles()) {
+            // scale nanosecond precise quantile values to seconds
+            registerQuantilesGaugeIfNecessary(id, quantiles, t -> t / 1.0e6);
+            com.netflix.spectator.api.Timer timer = PercentileTimer.get(getSpectatorRegistry(), getSpectatorRegistry().createId(id.getConventionName(), toSpectatorTags(id.getConventionTags())));
+            return new SpectatorTimer(id, description, timer, clock, quantiles, null);
+        }
+
+        return super.newTimer(id, description, histogram, quantiles);
+    }
+
+    @Override
+    protected DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles) {
+        if(histogram != null && histogram.create(TimeUnit.NANOSECONDS, Histogram.Type.Normal).isPercentiles()) {
+            registerQuantilesGaugeIfNecessary(id, quantiles, UnaryOperator.identity());
+            com.netflix.spectator.api.DistributionSummary ds = PercentileDistributionSummary.get(getSpectatorRegistry(), getSpectatorRegistry().createId(id.getConventionName(),
+                toSpectatorTags(id.getConventionTags())));
+            return new SpectatorDistributionSummary(id, description, ds, quantiles, null);
+        }
+
+        return super.newDistributionSummary(id, description, histogram, quantiles);
     }
 }

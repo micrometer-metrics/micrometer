@@ -22,19 +22,25 @@ public class Bucket<T> {
     private final T tag;
 
     /**
+     * {@code true} if this bucket is used in an aggregable percentile approximation.
+     */
+    private final boolean percentile;
+
+    /**
      * Cached string representation of {@code tag}.
      */
     private String tagStr;
 
     LongAdder value = new LongAdder();
 
-    public Bucket(T tag) {
+    public Bucket(T tag, boolean percentile, long initialValue) {
         this.tag = tag;
+        this.percentile = percentile;
+        this.value.add(initialValue);
     }
 
-    public Bucket(T tag, long initialValue) {
-        this.tag = tag;
-        this.value.add(initialValue);
+    public boolean isPercentile() {
+        return percentile;
     }
 
     public String getTag() {

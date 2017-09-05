@@ -28,7 +28,7 @@ import io.micrometer.spring.export.graphite.GraphiteExportConfiguration;
 import io.micrometer.spring.export.influx.InfluxExportConfiguration;
 import io.micrometer.spring.export.jmx.JmxExportConfiguration;
 import io.micrometer.spring.export.prometheus.PrometheusExportConfiguration;
-import io.micrometer.spring.scheduling.MetricsSchedulingAspect;
+import io.micrometer.spring.scheduling.ScheduledMethodMetrics;
 import io.micrometer.spring.web.MetricsRestTemplateConfiguration;
 import io.micrometer.spring.web.MetricsServletRequestConfiguration;
 import org.springframework.beans.factory.ObjectProvider;
@@ -104,8 +104,8 @@ class MetricsConfiguration {
     @Bean
     @ConditionalOnClass(name = "org.aspectj.lang.ProceedingJoinPoint")
     @ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)
-    public MetricsSchedulingAspect metricsSchedulingAspect(MeterRegistry registry) {
-        return new MetricsSchedulingAspect(registry);
+    public ScheduledMethodMetrics metricsSchedulingAspect(MeterRegistry registry) {
+        return new ScheduledMethodMetrics(registry);
     }
 
     @Configuration

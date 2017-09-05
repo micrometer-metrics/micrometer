@@ -49,13 +49,13 @@ public class ControllerMetrics {
 
     private final MeterRegistry registry;
     private MetricsConfigurationProperties properties;
-    private final WebmvcTagConfigurer tagConfigurer;
+    private final WebServletTagConfigurer tagConfigurer;
 
     private final Map<HttpServletRequest, Long> longTaskTimerIds = Collections.synchronizedMap(new IdentityHashMap<>());
 
     public ControllerMetrics(MeterRegistry registry,
                              MetricsConfigurationProperties properties,
-                             WebmvcTagConfigurer tagConfigurer) {
+                             WebServletTagConfigurer tagConfigurer) {
         this.registry = registry;
         this.properties = properties;
         this.tagConfigurer = tagConfigurer;

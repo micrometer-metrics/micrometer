@@ -26,11 +26,13 @@ public class Histogram<T> {
     private final BucketFunction<? extends T> f;
     private final Type type;
     private final List<BucketListener<T>> bucketListeners;
+    private final boolean percentiles;
 
-    public Histogram(BucketFunction<? extends T> f, Type type, List<BucketListener<T>> listeners) {
+    public Histogram(BucketFunction<? extends T> f, Type type, List<BucketListener<T>> listeners, boolean percentiles) {
         this.f = f;
         this.type = type;
         this.bucketListeners = listeners;
+        this.percentiles = percentiles;
     }
 
     public Collection<Bucket<T>> getBuckets() {
@@ -39,6 +41,10 @@ public class Histogram<T> {
 
     public boolean isCumulative() {
         return type.equals(Type.Cumulative);
+    }
+
+    public boolean isPercentiles() {
+        return percentiles;
     }
 
     public Type getType() {
@@ -65,6 +71,12 @@ public class Histogram<T> {
          * Set the histogram type explicitly, overriding the monitoring system's default histogram type.
          */
         Builder type(Type type);
+
+        /**
+         * Hacky, but Atlas :percentiles math requires a different tag key than what we would place on
+         * an ordinary histogram
+         */
+        Builder usedForPercentiles();
     }
 
     public static <U> Builder<U> function(BucketFunction<U> f) {
@@ -114,11 +126,11 @@ public class Histogram<T> {
     }
 
     public static Builder<Double> percentiles() {
-        return new DefaultHistogramBuilder<>(percentilesFunction());
+        return new DefaultHistogramBuilder<>(percentilesFunction()).usedForPercentiles();
     }
 
     public static Builder<Double> percentilesTime() {
-        return new TimeScalingHistogramBuilder(percentilesFunction(), TimeUnit.NANOSECONDS);
+        return new TimeScalingHistogramBuilder(percentilesFunction(), TimeUnit.NANOSECONDS).usedForPercentiles();
     }
 
     private static BucketFunction<Double> percentilesFunction() {
@@ -160,8 +172,8 @@ public class Histogram<T> {
 
                 if (isCumulative()) {
                     Map.Entry<T, Bucket<T>> ceiling = buckets.ceilingEntry(tag);
-                    bucket = new Bucket<>(tag, ceiling == null ? 1 : ceiling.getValue().getValue() + 1);
-                } else bucket = new Bucket<>(tag, 1);
+                    bucket = new Bucket<>(tag, percentiles, ceiling == null ? 1 : ceiling.getValue().getValue() + 1);
+                } else bucket = new Bucket<>(tag, percentiles, 1);
 
                 bucketListeners.forEach(listener -> listener.bucketAdded(bucket));
 

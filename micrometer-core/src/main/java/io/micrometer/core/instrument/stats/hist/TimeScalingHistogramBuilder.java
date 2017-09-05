@@ -26,6 +26,7 @@ class TimeScalingHistogramBuilder implements Histogram.Builder<Double> {
     private final TimeUnit fUnits;
     private Histogram.Type type = null;
     private List<BucketListener<Double>> bucketListeners = new ArrayList<>();
+    private boolean percentiles = false;
 
     TimeScalingHistogramBuilder(BucketFunction<Double> f, TimeUnit fUnits) {
         this.f = f;
@@ -34,17 +35,17 @@ class TimeScalingHistogramBuilder implements Histogram.Builder<Double> {
 
     @Override
     public Histogram<Double> create(TimeUnit baseTimeUnit, Histogram.Type defaultType) {
-        return new Histogram<>(timeScale(f, baseTimeUnit), type == null ? defaultType : type, bucketListeners);
+        return new Histogram<>(timeScale(f, baseTimeUnit), type == null ? defaultType : type, bucketListeners, percentiles);
     }
 
     @Override
-    public Histogram.Builder type(Histogram.Type type) {
+    public Histogram.Builder<Double> type(Histogram.Type type) {
         this.type = type;
         return this;
     }
 
     @Override
-    public Histogram.Builder bucketListener(BucketListener<Double> listener) {
+    public Histogram.Builder<Double> bucketListener(BucketListener<Double> listener) {
         bucketListeners.add(listener);
         return this;
     }
@@ -54,5 +55,11 @@ class TimeScalingHistogramBuilder implements Histogram.Builder<Double> {
             double unscaledBucket = f.bucket(TimeUtils.convert(observed, baseTimeUnit, fUnits));
             return TimeUtils.convert(unscaledBucket, fUnits, baseTimeUnit);
         };
+    }
+
+    @Override
+    public Histogram.Builder<Double> usedForPercentiles() {
+        this.percentiles = true;
+        return this;
     }
 }

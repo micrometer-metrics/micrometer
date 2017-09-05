@@ -29,7 +29,7 @@ public class SpectatorTimer extends AbstractTimer {
     private final Quantiles quantiles;
     private final Histogram<?> histogram;
 
-    SpectatorTimer(Id id, String description, Timer timer,
+    public SpectatorTimer(Id id, String description, Timer timer,
                    Clock clock, Quantiles quantiles, Histogram<?> histogram) {
         super(id, description, clock);
         this.timer = timer;

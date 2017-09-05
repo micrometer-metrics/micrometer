@@ -27,7 +27,7 @@ public class PersonController {
     private List<String> people = Arrays.asList("mike", "suzy");
 
     @GetMapping("/api/people")
-    @Timed(quantiles = 0.95)
+    @Timed(percentiles = true)
     public List<String> allPeople() {
         return people;
     }

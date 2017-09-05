@@ -36,15 +36,15 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 @EnableConfigurationProperties(MetricsConfigurationProperties.class)
 public class MetricsServletRequestConfiguration extends WebMvcConfigurerAdapter {
     @Bean
-    @ConditionalOnMissingBean(WebmvcTagConfigurer.class)
-    WebmvcTagConfigurer webmvcTagConfigurer() {
-        return new WebmvcTagConfigurer();
+    @ConditionalOnMissingBean(WebServletTagConfigurer.class)
+    WebServletTagConfigurer webmvcTagConfigurer() {
+        return new WebServletTagConfigurer();
     }
 
     @Bean
     ControllerMetrics controllerMetrics(MeterRegistry registry,
                                         MetricsConfigurationProperties properties,
-                                        WebmvcTagConfigurer configurer) {
+                                        WebServletTagConfigurer configurer) {
         return new ControllerMetrics(registry, properties, configurer);
     }
 

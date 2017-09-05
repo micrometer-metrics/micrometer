@@ -44,7 +44,7 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
         this.registry = registry;
     }
 
-    private Collection<com.netflix.spectator.api.Tag> toSpectatorTags(Iterable<io.micrometer.core.instrument.Tag> tags) {
+    protected Collection<com.netflix.spectator.api.Tag> toSpectatorTags(Iterable<io.micrometer.core.instrument.Tag> tags) {
         return stream(tags.spliterator(), false)
             .map(t -> new BasicTag(t.getKey(), t.getValue()))
             .collect(toList());
@@ -88,7 +88,7 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
         return new SpectatorGauge(id, description, gauge);
     }
 
-    private Histogram<?> registerHistogramCounterIfNecessary(Meter.Id id, Histogram.Builder<?> histogramBuilder) {
+    protected Histogram<?> registerHistogramCounterIfNecessary(Meter.Id id, Histogram.Builder<?> histogramBuilder) {
         if (histogramBuilder != null) {
             return histogramBuilder
                 .bucketListener(bucket -> {
@@ -100,7 +100,7 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
         return null;
     }
 
-    private void registerQuantilesGaugeIfNecessary(Meter.Id id, Quantiles quantiles, UnaryOperator<Double> scaling) {
+    protected void registerQuantilesGaugeIfNecessary(Meter.Id id, Quantiles quantiles, UnaryOperator<Double> scaling) {
         if (quantiles != null) {
             for (Double q : quantiles.monitored()) {
                 if (!Double.isNaN(q)) {

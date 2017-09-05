@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @TestPropertySource(properties = "metrics.useGlobalRegistry=false")
-public class MetricsSchedulingAspectTest {
+public class ScheduledMethodMetricsTest {
 
     static CountDownLatch longTaskStarted = new CountDownLatch(1);
     static CountDownLatch longTaskShouldComplete = new CountDownLatch(1);

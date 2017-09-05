@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.binder.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.LogbackMetrics;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.stats.hist.Histogram;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,7 +120,6 @@ public class MetricsConfigurationTest {
 
     @RestController
     static class PersonController {
-        @Timed
         @GetMapping("/api/people")
         Set<String> personName() {
             return Collections.singleton("Jon");

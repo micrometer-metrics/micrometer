@@ -23,6 +23,7 @@ class DefaultHistogramBuilder<T> implements Histogram.Builder<T> {
     private final BucketFunction<T> f;
     private Histogram.Type type = null;
     private List<BucketListener<T>> bucketListeners = new ArrayList<>();
+    private boolean percentiles = false;
 
     DefaultHistogramBuilder(BucketFunction<T> f) {
         this.f = f;
@@ -30,18 +31,24 @@ class DefaultHistogramBuilder<T> implements Histogram.Builder<T> {
 
     @Override
     public Histogram<T> create(TimeUnit baseTimeUnit, Histogram.Type defaultType) {
-        return new Histogram<>(f, type == null ? defaultType : type, bucketListeners);
+        return new Histogram<>(f, type == null ? defaultType : type, bucketListeners, percentiles);
     }
 
     @Override
-    public Histogram.Builder bucketListener(BucketListener<T> listener) {
+    public Histogram.Builder<T> bucketListener(BucketListener<T> listener) {
         bucketListeners.add(listener);
         return this;
     }
 
     @Override
-    public Histogram.Builder type(Histogram.Type type) {
+    public Histogram.Builder<T> type(Histogram.Type type) {
         this.type = type;
+        return this;
+    }
+
+    @Override
+    public Histogram.Builder<T> usedForPercentiles() {
+        this.percentiles = true;
         return this;
     }
 }

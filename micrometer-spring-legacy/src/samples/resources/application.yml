@@ -28,3 +28,6 @@ metrics:
   influx.enabled: false
   jmx.enabled: false
   prometheus.enabled: false
+
+# % of the time, blow up on the Roulette endpoint
+roulette.frequency: 0.8
