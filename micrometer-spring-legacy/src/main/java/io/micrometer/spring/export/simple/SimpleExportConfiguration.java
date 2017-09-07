@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.export.prometheus;
+package io.micrometer.spring.export.simple;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.micrometer.spring.export.MetricsExporter;
+import io.micrometer.spring.export.prometheus.PrometheusActuatorEndpoint;
 import io.prometheus.client.CollectorRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -27,33 +29,18 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConditionalOnClass(name = "io.micrometer.prometheus.PrometheusMeterRegistry")
-@EnableConfigurationProperties(PrometheusConfigurationProperties.class)
-public class PrometheusExportConfiguration {
-    @ConditionalOnProperty(value = "metrics.prometheus.enabled", matchIfMissing = true)
+@EnableConfigurationProperties(SimpleConfigurationProperties.class)
+public class SimpleExportConfiguration {
+    @ConditionalOnProperty(value = "metrics.simple.enabled", matchIfMissing = true)
+    @ConditionalOnMissingBean(MetricsExporter.class) // steps out of the way the moment any other monitoring system is configured
     @Bean
-    MetricsExporter prometheusExporter(CollectorRegistry collectorRegistry, Clock clock) {
-        return () -> new PrometheusMeterRegistry(collectorRegistry, clock);
-    }
-
-    @ConditionalOnMissingBean
-    @Bean
-    CollectorRegistry collectorRegistry() {
-        return new CollectorRegistry(true);
+    MetricsExporter simpleExporter(Clock clock) {
+        return () -> new SimpleMeterRegistry(clock);
     }
 
     @ConditionalOnMissingBean
     @Bean
     Clock clock() {
         return Clock.SYSTEM;
-    }
-
-    @ConditionalOnClass(name = "org.springframework.boot.actuate.endpoint.Endpoint")
-    @Configuration
-    static class PrometheusScrapeEndpointConfiguration {
-        @Bean
-        public PrometheusActuatorEndpoint prometheusEndpoint(CollectorRegistry collectorRegistry) {
-            return new PrometheusActuatorEndpoint(collectorRegistry);
-        }
     }
 }

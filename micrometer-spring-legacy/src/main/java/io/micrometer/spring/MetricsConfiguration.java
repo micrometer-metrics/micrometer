@@ -28,6 +28,7 @@ import io.micrometer.spring.export.graphite.GraphiteExportConfiguration;
 import io.micrometer.spring.export.influx.InfluxExportConfiguration;
 import io.micrometer.spring.export.jmx.JmxExportConfiguration;
 import io.micrometer.spring.export.prometheus.PrometheusExportConfiguration;
+import io.micrometer.spring.export.simple.SimpleExportConfiguration;
 import io.micrometer.spring.scheduling.ScheduledMethodMetrics;
 import io.micrometer.spring.web.MetricsRestTemplateConfiguration;
 import io.micrometer.spring.web.MetricsServletRequestConfiguration;
@@ -63,7 +64,8 @@ import java.util.Collection;
     GraphiteExportConfiguration.class,
     InfluxExportConfiguration.class,
     JmxExportConfiguration.class,
-    PrometheusExportConfiguration.class
+    PrometheusExportConfiguration.class,
+    SimpleExportConfiguration.class
 })
 class MetricsConfiguration {
     @ConditionalOnMissingBean(MeterRegistry.class)
