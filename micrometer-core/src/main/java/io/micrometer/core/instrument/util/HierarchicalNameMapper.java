@@ -40,6 +40,7 @@ public interface HierarchicalNameMapper {
         tagsCopy.sort(Comparator.comparing(Tag::getKey));
         return id.getConventionName(convention) + "." + tagsCopy.stream()
             .map(t -> t.getKey() + "." + t.getValue())
+            .map(nameSegment -> nameSegment.replace(" ", "_"))
             .collect(Collectors.joining("."));
     };
 
