@@ -24,6 +24,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Collect metrics from Caffeine's com.github.benmanes.caffeine.cache.Cache.
  * <p>
@@ -33,6 +35,7 @@ import io.micrometer.core.instrument.Tags;
  * CaffeineCacheMetrics.monitor(registry, cache, "mycache", "region", "test");
  * }</pre>
  * <p>
+ *
  * @author Clint Checketts
  */
 public class CaffeineCacheMetrics implements MeterBinder {
@@ -113,18 +116,36 @@ public class CaffeineCacheMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        registry.gauge(name + ".estimated.size", tags, cache, Cache::estimatedSize);
+        registry.gauge(registry.createId(name + ".estimated.size", tags,
+            "The approximate number of entries in this cache"),
+            cache, Cache::estimatedSize);
 
-        registry.more().counter(name + ".requests", Tags.zip("result", "miss"), cache, c -> c.stats().missCount());
-        registry.more().counter(name + ".requests", Tags.zip("result", "hit"), cache, c -> c.stats().hitCount());
-        registry.more().counter(name + ".evictions", tags, cache, c -> c.stats().evictionCount());
-        registry.gauge(name + ".eviction.weight", tags, cache, c -> c.stats().evictionWeight());
+        registry.more().counter(registry.createId(name + ".requests", Tags.zip("result", "miss"),
+            "the number of times cache lookup methods have returned an uncached (newly loaded) value, or null"),
+            cache, c -> c.stats().missCount());
+        registry.more().counter(registry.createId(name + ".requests", Tags.zip("result", "hit"),
+            "The number of times cache lookup methods have returned a cached value."),
+            cache, c -> c.stats().hitCount());
+        registry.more().counter(registry.createId(name + ".evictions", tags, "cache evictions"),
+            cache, c -> c.stats().evictionCount());
+
+        registry.gauge(registry.createId(name + ".eviction.weight", tags,
+            "The sum of weights of evicted entries. This total does not include manual invalidations."),
+            cache, c -> c.stats().evictionWeight());
 
         if (cache instanceof LoadingCache) {
             // dividing these gives you a measure of load latency
-            registry.more().counter(name + ".load.duration", tags, cache, c -> c.stats().totalLoadTime());
-            registry.more().counter(name + ".load", Tags.concat(tags, "result", "success"), cache, c -> c.stats().loadSuccessCount());
-            registry.more().counter(name + ".load", Tags.concat(tags, "result", "failure"), cache, c -> c.stats().loadFailureCount());
+            registry.more().timeGauge(registry.createId(name + ".load.duration", tags,
+                "The time the cache has spent loading new values"),
+                cache, TimeUnit.NANOSECONDS, c -> c.stats().totalLoadTime());
+
+            registry.more().counter(registry.createId(name + ".load", Tags.concat(tags, "result", "success"),
+                "The number of times cache lookup methods have successfully loaded a new value"),
+                cache, c -> c.stats().loadSuccessCount());
+            registry.more().counter(registry.createId(name + ".load", Tags.concat(tags, "result", "failure"),
+                "The number of times {@link Cache} lookup methods failed to load a new value, either " +
+                    "because no value was found or an exception was thrown while loading"),
+                cache, c -> c.stats().loadFailureCount());
         }
     }
 }

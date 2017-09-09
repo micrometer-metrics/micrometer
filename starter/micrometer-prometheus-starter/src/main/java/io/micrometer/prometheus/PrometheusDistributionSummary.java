@@ -24,8 +24,8 @@ import io.micrometer.prometheus.internal.CustomPrometheusSummary;
 public class PrometheusDistributionSummary extends AbstractMeter implements DistributionSummary {
     private final CustomPrometheusSummary.Child summary;
 
-    PrometheusDistributionSummary(Meter.Id id, String description, CustomPrometheusSummary.Child summary) {
-        super(id, description);
+    PrometheusDistributionSummary(Meter.Id id, CustomPrometheusSummary.Child summary) {
+        super(id);
         this.summary = summary;
     }
 

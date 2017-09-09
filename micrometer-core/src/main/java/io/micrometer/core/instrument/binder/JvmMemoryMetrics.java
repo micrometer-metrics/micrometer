@@ -24,50 +24,61 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
 
+import static java.util.Collections.emptyList;
+
 /**
  * Record metrics that report utilization of various memory and buffer pools.
  *
  * @see MemoryPoolMXBean
  * @see BufferPoolMXBean
+ *
+ * @author Jon Schneider
  */
 public class JvmMemoryMetrics implements MeterBinder {
+    private final Iterable<Tag> tags;
+
+    public JvmMemoryMetrics() {
+        this(emptyList());
+    }
+
+    public JvmMemoryMetrics(Iterable<Tag> tags) {
+        this.tags = tags;
+    }
 
     @Override
     public void bindTo(MeterRegistry registry) {
         for (BufferPoolMXBean bufferPoolBean : ManagementFactory.getPlatformMXBeans(BufferPoolMXBean.class)) {
-            Iterable<Tag> tags = Tags.zip("id", bufferPoolBean.getName());
+            Iterable<Tag> tagsWithId = Tags.concat(tags, "id", bufferPoolBean.getName());
 
-            registry.gauge("jvm.buffer.count", tags, bufferPoolBean, BufferPoolMXBean::getCount);
+            registry.gauge(registry.createId("jvm.buffer.count", tagsWithId,
+                "An estimate of the number of buffers in the pool"),
+                bufferPoolBean, BufferPoolMXBean::getCount);
 
-            registry.gaugeBuilder("jvm.buffer.memory.used", bufferPoolBean, BufferPoolMXBean::getMemoryUsed)
-                .baseUnit("bytes")
-                .tags(tags)
-                .create();
+            registry.gauge(registry.createId("jvm.buffer.memory.used", tagsWithId,
+                "An estimate of the memory that the Java virtual machine is using for this buffer pool",
+                "bytes"),
+                bufferPoolBean, BufferPoolMXBean::getMemoryUsed);
 
-            registry.gaugeBuilder("jvm.buffer.total.capacity", bufferPoolBean, BufferPoolMXBean::getTotalCapacity)
-                .baseUnit("bytes")
-                .tags(tags)
-                .create();
+            registry.gauge(registry.createId("jvm.buffer.total.capacity", tagsWithId,
+                "An estimate of the total capacity of the buffers in this pool",
+                "bytes"),
+                bufferPoolBean, BufferPoolMXBean::getTotalCapacity);
         }
 
         for (MemoryPoolMXBean memoryPoolBean : ManagementFactory.getPlatformMXBeans(MemoryPoolMXBean.class)) {
             String area = MemoryType.HEAP.equals(memoryPoolBean.getType()) ? "heap" : "nonheap";
-            Iterable<Tag> tags = Tags.zip("id", memoryPoolBean.getName(), "area", area);
+            Iterable<Tag> tagsWithId = Tags.concat(tags,"id", memoryPoolBean.getName(), "area", area);
 
-            registry.gaugeBuilder("jvm.memory.used", memoryPoolBean, (mem) -> mem.getUsage().getUsed())
-                .baseUnit("bytes")
-                .tags(tags)
-                .create();
+            registry.gauge(registry.createId("jvm.memory.used", tagsWithId,
+                "The amount of used memory", "bytes"), memoryPoolBean, (mem) -> mem.getUsage().getUsed());
 
-            registry.gaugeBuilder("jvm.memory.committed", memoryPoolBean, (mem) -> mem.getUsage().getCommitted())
-                .baseUnit("bytes")
-                .tags(tags)
-                .create();
+            registry.gauge(registry.createId("jvm.memory.committed", tagsWithId,
+                "The amount of memory in bytes that is committed for  the Java virtual machine to use", "bytes"),
+                memoryPoolBean, (mem) -> mem.getUsage().getCommitted());
 
-            registry.gaugeBuilder("jvm.memory.max", memoryPoolBean, (mem) -> mem.getUsage().getMax())
-                .baseUnit("bytes")
-                .tags(tags)
-                .create();
+            registry.gauge(registry.createId("jvm.memory.max", tagsWithId,
+                "The maximum amount of memory in bytes that can be used for memory management", "bytes"),
+                memoryPoolBean, (mem) -> mem.getUsage().getMax());
         }
     }
 }

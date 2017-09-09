@@ -48,9 +48,9 @@ public class CustomPrometheusSummary extends Collector {
 
     private final Collection<Child> children = new ConcurrentLinkedQueue<>();
 
-    public CustomPrometheusSummary(Meter.Id id, String description) {
+    public CustomPrometheusSummary(Meter.Id id) {
         this.name = id.getConventionName();
-        this.description = description;
+        this.description = id.getDescription();
         this.countName = name + "_count";
         this.sumName = name + "_sum";
         this.tagKeys = id.getConventionTags().stream().map(Tag::getKey).collect(toList());

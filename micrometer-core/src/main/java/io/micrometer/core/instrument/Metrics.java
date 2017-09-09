@@ -16,9 +16,12 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.stats.hist.Histogram;
+import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 
 /**
@@ -36,13 +39,10 @@ public class Metrics {
     }
 
     /**
-     * Build a new Counter, which is registered with this registry once {@link Counter.Builder#create()} is called.
-     *
-     * @param name The name of the counter (which is the only requirement for a new counter).
-     * @return The builder.
+     * Tracks a monotonically increasing value.
      */
-    public static Counter.Builder counterBuilder(String name) {
-        return globalRegistry.counterBuilder(name);
+    public static Counter counter(Meter.Id id) {
+        return globalRegistry.counter(id);
     }
 
     /**
@@ -60,13 +60,10 @@ public class Metrics {
     }
 
     /**
-     * Build a new Distribution Summary, which is registered with this registry once {@link DistributionSummary.Builder#create()} is called.
-     *
-     * @param name The name of the distribution summary (which is the only requirement for a new distribution summary).
-     * @return The builder.
+     * Measures the sample distribution of events.
      */
-    public static DistributionSummary.Builder summaryBuilder(String name) {
-        return globalRegistry.summaryBuilder(name);
+    public static DistributionSummary summary(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
+        return globalRegistry.summary(id, histogram, quantiles);
     }
 
     /**
@@ -84,13 +81,10 @@ public class Metrics {
     }
 
     /**
-     * Build a new Timer, which is registered with this registry once {@link Timer.Builder#create()} is called.
-     *
-     * @param name The name of the timer (which is the only requirement for a new timer).
-     * @return The builder.
+     * Measures the time taken for short tasks and the count of these tasks.
      */
-    public static Timer.Builder timerBuilder(String name) {
-        return globalRegistry.timerBuilder(name);
+    public static Timer timer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
+        return globalRegistry.timer(id, histogram, quantiles);
     }
 
     /**
@@ -109,42 +103,32 @@ public class Metrics {
 
     static class More {
         /**
-         * Measures the time taken for short tasks.
+         * Measures the time taken for long tasks.
          */
-        public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
-            return globalRegistry.more().longTaskTimer(name, tags);
-        }
-
-        /**
-         * Measures the time taken for short tasks.
-         */
-        public LongTaskTimer longTaskTimer(String name, String... tags) {
-            return globalRegistry.more().longTaskTimer(name, tags);
-        }
-
-        /**
-         * Build a new LongTaskTimer, which is registered with this registry once {@link LongTaskTimer.Builder#create()} is called.
-         *
-         * @param name The name of the timer (which is the only requirement for a new timer).
-         * @return The builder.
-         */
-        public LongTaskTimer.Builder longTaskTimerBuilder(String name) {
-            return globalRegistry.more().longTaskTimerBuilder(name);
+        public LongTaskTimer longTaskTimer(Meter.Id id) {
+            return globalRegistry.more().longTaskTimer(id);
         }
 
         /**
          * Tracks a monotonically increasing value, automatically incrementing the counter whenever
          * the value is observed.
          */
-        public <T> Meter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-            return globalRegistry.more().counter(name, tags, obj, f);
+        public <T> Meter counter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+            return globalRegistry.more().counter(id, obj, f);
         }
 
         /**
          * Tracks a number, maintaining a weak reference on it.
          */
-        public <T extends Number> Meter counter(String name, Iterable<Tag> tags, T number) {
-            return globalRegistry.more().counter(name, tags, number);
+        public <T extends Number> Meter counter(Meter.Id id, T number) {
+            return globalRegistry.more().counter(id, number);
+        }
+
+        /**
+         * A gauge that tracks a time value, to be scaled to the monitoring system's base time unit.
+         */
+        public <T> Gauge timeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
+            return globalRegistry.more().timeGauge(id, obj, fUnit, f);
         }
     }
 
@@ -157,8 +141,8 @@ public class Metrics {
         return more;
     }
 
-    public static Meter register(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements) {
-        return globalRegistry.register(name, tags, type, measurements);
+    public static Meter register(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+        return globalRegistry.register(id, type, measurements);
     }
 
     /**
@@ -256,14 +240,23 @@ public class Metrics {
     }
 
     /**
-     * Build a new Gauge, which is registered with this registry once {@link Gauge.Builder#create()} is called.
+     * Register a gauge that reports the value of the object after the function
+     * {@code f} is applied. The registration will keep a weak reference to the object so it will
+     * not prevent garbage collection. Applying {@code f} on the object should be thread safe.
+     * <p>
+     * If multiple gauges are registered with the same id, then the values will be aggregated and
+     * the sum will be reported. For example, registering multiple gauges for active threads in
+     * a thread pool with the same id would produce a value that is the overall number
+     * of active threads. For other behaviors, manage it on the user side and avoid multiple
+     * registrations.
      *
-     * @param name The name of the gauge.
-     * @param obj  Object used to compute a value.
-     * @param f    Function that is applied on the value for the number.
-     * @return The builder.
+     * @param id  Id of the gauge being registered.
+     * @param obj Object used to compute a value.
+     * @param f   Function that is applied on the value for the number.
+     * @return The number that was passed in so the registration can be done as part of an assignment
+     * statement.
      */
-    public static <T> Gauge.Builder gaugeBuilder(String name, T obj, ToDoubleFunction<T> f) {
-        return globalRegistry.gaugeBuilder(name, obj, f);
+    public static <T> Gauge gauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+        return globalRegistry.gauge(id, obj, f);
     }
 }

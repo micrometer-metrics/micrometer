@@ -23,8 +23,8 @@ import io.micrometer.core.instrument.util.MeterEquivalence;
 public class SpectatorLongTaskTimer extends AbstractMeter implements LongTaskTimer {
     private final com.netflix.spectator.api.LongTaskTimer timer;
 
-    SpectatorLongTaskTimer(Meter.Id id, String description, com.netflix.spectator.api.LongTaskTimer timer) {
-        super(id, description);
+    SpectatorLongTaskTimer(Meter.Id id, com.netflix.spectator.api.LongTaskTimer timer) {
+        super(id);
         this.timer = timer;
     }
 

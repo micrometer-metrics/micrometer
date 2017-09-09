@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.stats.hist.Histogram;
+import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
 import java.util.Collection;
 import java.util.Map;
@@ -90,29 +91,32 @@ public interface MeterRegistry {
         Search value(Statistic statistic, double value);
 
         Optional<Timer> timer();
+
         Optional<Counter> counter();
+
         Optional<Gauge> gauge();
+
         Optional<DistributionSummary> summary();
+
         Optional<LongTaskTimer> longTaskTimer();
+
         Optional<Meter> meter();
+
         Collection<Meter> meters();
     }
 
     Search find(String name);
 
     /**
-     * Build a new Counter, which is registered with this registry once {@link Counter.Builder#create()} is called.
-     *
-     * @param name The name of the counter (which is the only requirement for a new counter).
-     * @return The builder.
+     * Tracks a monotonically increasing value.
      */
-    Counter.Builder counterBuilder(String name);
+    Counter counter(Meter.Id id);
 
     /**
      * Tracks a monotonically increasing value.
      */
     default Counter counter(String name, Iterable<Tag> tags) {
-        return counterBuilder(name).tags(tags).create();
+        return counter(createId(name, tags, null));
     }
 
     /**
@@ -123,18 +127,15 @@ public interface MeterRegistry {
     }
 
     /**
-     * Build a new Distribution Summary, which is registered with this registry once {@link DistributionSummary.Builder#create()} is called.
-     *
-     * @param name The name of the distribution summary (which is the only requirement for a new distribution summary).
-     * @return The builder.
+     * Measures the sample distribution of events.
      */
-    DistributionSummary.Builder summaryBuilder(String name);
+    DistributionSummary summary(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles);
 
     /**
      * Measures the sample distribution of events.
      */
     default DistributionSummary summary(String name, Iterable<Tag> tags) {
-        return summaryBuilder(name).tags(tags).create();
+        return summary(createId(name, tags, null), null, null);
     }
 
     /**
@@ -145,22 +146,19 @@ public interface MeterRegistry {
     }
 
     /**
-     * Build a new Timer, which is registered with this registry once {@link Timer.Builder#create()} is called.
-     *
-     * @param name The name of the timer (which is the only requirement for a new timer).
-     * @return The builder.
+     * Measures the time taken for short tasks and the count of these tasks.
      */
-    Timer.Builder timerBuilder(String name);
+    Timer timer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles);
 
     /**
-     * Measures the time taken for short tasks.
+     * Measures the time taken for short tasks and the count of these tasks.
      */
     default Timer timer(String name, Iterable<Tag> tags) {
-        return timerBuilder(name).tags(tags).create();
+        return timer(createId(name, tags, null), null, null);
     }
 
     /**
-     * Measures the time taken for short tasks.
+     * Measures the time taken for short tasks and the count of these tasks.
      */
     default Timer timer(String name, String... tags) {
         return timer(name, zip(tags));
@@ -168,39 +166,27 @@ public interface MeterRegistry {
 
     interface More {
         /**
-         * Measures the time taken for short tasks.
+         * Measures the time taken for long tasks.
          */
-        default LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
-            return longTaskTimerBuilder(name).tags(tags).create();
-        }
-
-        /**
-         * Measures the time taken for short tasks.
-         */
-        default LongTaskTimer longTaskTimer(String name, String... tags) {
-            return longTaskTimer(name, zip(tags));
-        }
-
-        /**
-         * Build a new LongTaskTimer, which is registered with this registry once {@link LongTaskTimer.Builder#create()} is called.
-         *
-         * @param name The name of the timer (which is the only requirement for a new timer).
-         * @return The builder.
-         */
-        LongTaskTimer.Builder longTaskTimerBuilder(String name);
+        LongTaskTimer longTaskTimer(Meter.Id id);
 
         /**
          * Tracks a monotonically increasing value, automatically incrementing the counter whenever
          * the value is observed.
          */
-        <T> Meter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f);
+        <T> Meter counter(Meter.Id id, T obj, ToDoubleFunction<T> f);
 
         /**
          * Tracks a number, maintaining a weak reference on it.
          */
-        default <T extends Number> Meter counter(String name, Iterable<Tag> tags, T number) {
-            return counter(name, tags, number, Number::doubleValue);
+        default <T extends Number> Meter counter(Meter.Id id, T number) {
+            return counter(id, number, Number::doubleValue);
         }
+
+        /**
+         * A gauge that tracks a time value, to be scaled to the monitoring system's base time unit.
+         */
+        <T> Gauge timeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f);
     }
 
     /**
@@ -210,13 +196,31 @@ public interface MeterRegistry {
 
     /**
      * Register a custom meter type.
-     * @param name Name of the meter being registered.
-     * @param tags Sequence of dimensions for breaking down the name.
+     * @param id Id of the meter being registered.
      * @param type Meter type, which may be used by naming conventions to normalize the name.
      * @param measurements A sequence of measurements describing how to sample the meter.
      * @return The registry.
      */
-    Meter register(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements);
+    Meter register(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements);
+
+    /**
+     * Register a gauge that reports the value of the object after the function
+     * {@code f} is applied. The registration will keep a weak reference to the object so it will
+     * not prevent garbage collection. Applying {@code f} on the object should be thread safe.
+     * <p>
+     * If multiple gauges are registered with the same id, then the values will be aggregated and
+     * the sum will be reported. For example, registering multiple gauges for active threads in
+     * a thread pool with the same id would produce a value that is the overall number
+     * of active threads. For other behaviors, manage it on the user side and avoid multiple
+     * registrations.
+     *
+     * @param id  Id of the gauge being registered.
+     * @param obj Object used to compute a value.
+     * @param f   Function that is applied on the value for the number.
+     * @return The number that was passed in so the registration can be done as part of an assignment
+     * statement.
+     */
+    <T> Gauge gauge(Meter.Id id, T obj, ToDoubleFunction<T> f);
 
     /**
      * Register a gauge that reports the value of the object after the function
@@ -237,7 +241,7 @@ public interface MeterRegistry {
      * statement.
      */
     default <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        gaugeBuilder(name, obj, f).tags(tags).create();
+        gauge(createId(name, tags, null), obj, f);
         return obj;
     }
 
@@ -313,13 +317,9 @@ public interface MeterRegistry {
         return gauge(name, tags, map, Map::size);
     }
 
-    /**
-     * Build a new Gauge, which is registered with this registry once {@link Gauge.Builder#create()} is called.
-     *
-     * @param name The name of the gauge.
-     * @param obj  Object used to compute a value.
-     * @param f    Function that is applied on the value for the number.
-     * @return The builder.
-     */
-    <T> Gauge.Builder gaugeBuilder(String name, T obj, ToDoubleFunction<T> f);
+    default Meter.Id createId(String name, Iterable<Tag> tags, String description) {
+        return createId(name, tags, description, null);
+    }
+
+    Meter.Id createId(String name, Iterable<Tag> tags, String description, String baseUnit);
 }

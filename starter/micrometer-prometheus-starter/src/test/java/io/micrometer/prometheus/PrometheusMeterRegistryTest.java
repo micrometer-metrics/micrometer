@@ -15,9 +15,8 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.stats.quantile.GKQuantiles;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
@@ -26,14 +25,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Enumeration;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -46,19 +44,21 @@ class PrometheusMeterRegistryTest {
     @BeforeEach
     void before() {
         prometheusRegistry = new CollectorRegistry();
-        registry = new PrometheusMeterRegistry(prometheusRegistry);
+        registry = new PrometheusMeterRegistry(k -> null, prometheusRegistry, Clock.SYSTEM);
+    }
+
+    @Test
+    void baseUnitMakesItToScrape() {
+        AtomicInteger n = new AtomicInteger(0);
+        Gauge.builder("gauge", n, AtomicInteger::get).baseUnit("bytes").register(registry);
+        assertThat(registry.scrape()).contains("gauge_bytes");
     }
 
     @DisplayName("quantiles are given as a separate sample with a key of 'quantile'")
     @Test
     void quantiles() {
-        registry.timerBuilder("timer")
-            .quantiles(GKQuantiles.quantiles(0.5).create())
-            .create();
-
-        registry.summaryBuilder("ds")
-            .quantiles(GKQuantiles.quantiles(0.5).create())
-            .create();
+        Timer.builder("timer").quantiles(GKQuantiles.quantiles(0.5).create()).register(registry);
+        DistributionSummary.builder("ds").quantiles(GKQuantiles.quantiles(0.5).create()).register(registry);
 
         assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndTagKey("timer_duration_seconds", "quantile"));
         assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndTagKey("ds", "quantile"));
@@ -79,7 +79,7 @@ class PrometheusMeterRegistryTest {
     @DisplayName("custom meters can be typed")
     @Test
     void typedCustomMeters() {
-        registry.register("name", emptyList(), Meter.Type.Counter,
+        registry.register(registry.createId("name", emptyList(), null), Meter.Type.Counter,
             Collections.singletonList(new Measurement(() -> 1.0, Statistic.Count)));
 
         assertThat(registry.getPrometheusRegistry().metricFamilySamples().nextElement().type)
@@ -97,11 +97,11 @@ class PrometheusMeterRegistryTest {
     @DisplayName("description text is bound to 'help' on Prometheus collectors")
     @Test
     void helpText() {
-        registry.timerBuilder("timer").description("my timer").create();
-        registry.counterBuilder("counter").description("my counter").create();
-        registry.summaryBuilder("summary").description("my summary").create();
-        registry.gaugeBuilder("gauge", new AtomicInteger(), AtomicInteger::doubleValue).description("my gauge").create();
-        registry.more().longTaskTimerBuilder("long.task.timer").description("my long task timer").create();
+        Timer.builder("timer").description("my timer").register(registry);;
+        Counter.builder("counter").description("my counter").register(registry);;
+        DistributionSummary.builder("summary").description("my summary").register(registry);;
+        Gauge.builder("gauge", new AtomicInteger(), AtomicInteger::doubleValue).description("my gauge").register(registry);;
+        LongTaskTimer.builder("long.task.timer").description("my long task timer").register(registry);;
 
         assertThat(registry.scrape())
             .contains("HELP timer_duration_seconds my timer")

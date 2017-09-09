@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.ManagementFactory;
@@ -23,11 +24,26 @@ import java.lang.management.ManagementFactory;
 import static java.util.Collections.emptyList;
 
 public class ClassLoaderMetrics implements MeterBinder {
+    private final Iterable<Tag> tags;
+
+    public ClassLoaderMetrics() {
+        this(emptyList());
+    }
+
+    public ClassLoaderMetrics(Iterable<Tag> tags) {
+        this.tags = tags;
+    }
+
     @Override
     public void bindTo(MeterRegistry registry) {
         ClassLoadingMXBean classLoadingBean = ManagementFactory.getClassLoadingMXBean();
 
-        registry.gauge("jvm.classes.loaded", classLoadingBean, ClassLoadingMXBean::getLoadedClassCount);
-        registry.more().counter("jvm.classes.unloaded", emptyList(), classLoadingBean, ClassLoadingMXBean::getUnloadedClassCount);
+        registry.gauge(registry.createId("jvm.classes.loaded", tags,
+            "The number of classes that are currently loaded in the Java virtual machine."),
+            classLoadingBean, ClassLoadingMXBean::getLoadedClassCount);
+
+        registry.more().counter(registry.createId("jvm.classes.unloaded", tags,
+            "The total number of classes unloaded since the Java virtual machine has started execution"),
+            classLoadingBean, ClassLoadingMXBean::getUnloadedClassCount);
     }
 }

@@ -22,8 +22,8 @@ import io.micrometer.core.instrument.util.MeterEquivalence;
 public class SpectatorGauge extends AbstractMeter implements Gauge {
     private com.netflix.spectator.api.Gauge gauge;
 
-    SpectatorGauge(Id id, String description, com.netflix.spectator.api.Gauge gauge) {
-        super(id, description);
+    SpectatorGauge(Id id, com.netflix.spectator.api.Gauge gauge) {
+        super(id);
         this.gauge = gauge;
     }
 

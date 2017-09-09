@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.simple;
 
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 
 import java.util.concurrent.atomic.DoubleAdder;
@@ -25,11 +25,11 @@ import java.util.concurrent.atomic.DoubleAdder;
 /**
  * @author Jon Schneider
  */
-public class SimpleCounter extends AbstractSimpleMeter implements Counter {
+public class SimpleCounter extends AbstractMeter implements Counter {
     private DoubleAdder count = new DoubleAdder();
 
-    public SimpleCounter(Meter.Id id, String description) {
-        super(id, description);
+    public SimpleCounter(Meter.Id id) {
+        super(id);
     }
 
     @Override

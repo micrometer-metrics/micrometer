@@ -15,17 +15,17 @@
  */
 package io.micrometer.core.instrument.binder;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.lang.management.RuntimeMXBean;
-
-import org.junit.jupiter.api.Test;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.Test;
+
+import java.lang.management.RuntimeMXBean;
+
+import static java.util.Collections.emptyList;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Uptime metrics.
@@ -47,9 +47,9 @@ class UptimeMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         RuntimeMXBean runtimeMXBean = mock(RuntimeMXBean.class);
         when(runtimeMXBean.getUptime()).thenReturn(1337L);
-        new UptimeMetrics(runtimeMXBean).bindTo(registry);
+        new UptimeMetrics(runtimeMXBean, emptyList()).bindTo(registry);
 
-        assertThat(registry.find("uptime").value(Statistic.Value, 1337.0).meter()).isPresent();
+        assertThat(registry.find("uptime").value(Statistic.Value, 1.337e9).meter()).isPresent();
     }
 
 }

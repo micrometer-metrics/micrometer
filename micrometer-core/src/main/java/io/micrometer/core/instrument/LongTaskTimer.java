@@ -15,7 +15,9 @@
  */
 package io.micrometer.core.instrument;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -126,15 +128,35 @@ public interface LongTaskTimer extends Meter {
         return Type.LongTaskTimer;
     }
 
-    interface Builder {
-        Builder tags(Iterable<Tag> tags);
+    static Builder builder(String name) {
+        return new Builder(name);
+    }
 
-        default Builder tags(String... tags) {
+    class Builder {
+        private final String name;
+        private final List<Tag> tags = new ArrayList<>();
+        private String description;
+
+        private Builder(String name) {
+            this.name = name;
+        }
+
+        public Builder tags(String... tags) {
             return tags(Tags.zip(tags));
         }
 
-        Builder description(String description);
+        public Builder tags(Iterable<Tag> tags) {
+            tags.forEach(this.tags::add);
+            return this;
+        }
 
-        LongTaskTimer create();
+        public Builder description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public LongTaskTimer register(MeterRegistry registry) {
+            return registry.more().longTaskTimer(registry.createId(name, tags, description));
+        }
     }
 }

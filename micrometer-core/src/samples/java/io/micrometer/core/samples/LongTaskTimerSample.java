@@ -19,6 +19,7 @@ import cern.jet.random.Normal;
 import cern.jet.random.engine.MersenneTwister64;
 import cern.jet.random.engine.RandomEngine;
 import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.samples.utils.SampleRegistries;
 import reactor.core.publisher.Flux;
 
@@ -28,9 +29,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.util.Collections.emptyList;
+
 public class LongTaskTimerSample {
     public static void main(String[] args) {
-        LongTaskTimer timer = SampleRegistries.influx().more().longTaskTimer("longTaskTimer");
+        MeterRegistry registry = SampleRegistries.influx();
+        LongTaskTimer timer = registry.more().longTaskTimer(registry.createId("longTaskTimer", emptyList(), null));
 
         RandomEngine r = new MersenneTwister64(0);
         Normal incomingRequests = new Normal(0, 1, r);

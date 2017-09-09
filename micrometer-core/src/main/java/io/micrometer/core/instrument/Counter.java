@@ -15,7 +15,9 @@
  */
 package io.micrometer.core.instrument;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Used to measure the rate of change based on calls to increment.
@@ -50,17 +52,41 @@ public interface Counter extends Meter {
         return Type.Counter;
     }
 
-    interface Builder {
-        Builder tags(Iterable<Tag> tags);
+    static Builder builder(String name) {
+        return new Builder(name);
+    }
 
-        default Builder tags(String... tags) {
+    class Builder {
+        private final String name;
+        private final List<Tag> tags = new ArrayList<>();
+        private String description;
+        private String baseUnit;
+
+        private Builder(String name) {
+            this.name = name;
+        }
+
+        public Builder tags(String... tags) {
             return tags(Tags.zip(tags));
         }
 
-        Builder baseUnit(String unit);
+        public Builder tags(Iterable<Tag> tags) {
+            tags.forEach(this.tags::add);
+            return this;
+        }
 
-        Builder description(String description);
+        public Builder description(String description) {
+            this.description = description;
+            return this;
+        }
 
-        Counter create();
+        public Builder baseUnit(String unit) {
+            this.baseUnit = unit;
+            return this;
+        }
+
+        public Counter register(MeterRegistry registry) {
+            return registry.counter(registry.createId(name, tags, description, baseUnit));
+        }
     }
 }

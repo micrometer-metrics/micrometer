@@ -33,8 +33,8 @@ public class SimpleTimer extends AbstractTimer {
     private final Quantiles quantiles;
     private final Histogram<?> histogram;
 
-    public SimpleTimer(Id id, String description, Clock clock, Quantiles quantiles, Histogram<?> histogram) {
-        super(id, description, clock);
+    public SimpleTimer(Id id, Clock clock, Quantiles quantiles, Histogram<?> histogram) {
+        super(id, clock);
         this.quantiles = quantiles;
         this.histogram = histogram;
     }

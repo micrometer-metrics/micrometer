@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.simple;
 
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
@@ -23,14 +24,14 @@ import io.micrometer.core.instrument.util.MeterEquivalence;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
-public class SimpleDistributionSummary extends AbstractSimpleMeter implements DistributionSummary {
+public class SimpleDistributionSummary extends AbstractMeter implements DistributionSummary {
     private LongAdder count = new LongAdder();
     private DoubleAdder amount = new DoubleAdder();
     private final Quantiles quantiles;
     private final Histogram<?> histogram;
 
-    public SimpleDistributionSummary(Id id, String description, Quantiles quantiles, Histogram<?> histogram) {
-        super(id, description);
+    public SimpleDistributionSummary(Id id, Quantiles quantiles, Histogram<?> histogram) {
+        super(id);
         this.quantiles = quantiles;
         this.histogram = histogram;
     }

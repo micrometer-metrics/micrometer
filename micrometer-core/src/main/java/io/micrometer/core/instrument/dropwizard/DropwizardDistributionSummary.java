@@ -32,8 +32,8 @@ public class DropwizardDistributionSummary extends AbstractMeter implements Dist
     private final Quantiles quantiles;
     private final Histogram<?> histogram;
 
-    DropwizardDistributionSummary(Id id, String description, com.codahale.metrics.Histogram impl, Quantiles quantiles, Histogram<?> histogram) {
-        super(id, description);
+    DropwizardDistributionSummary(Id id, com.codahale.metrics.Histogram impl, Quantiles quantiles, Histogram<?> histogram) {
+        super(id);
         this.impl = impl;
         this.quantiles = quantiles;
         this.histogram = histogram;

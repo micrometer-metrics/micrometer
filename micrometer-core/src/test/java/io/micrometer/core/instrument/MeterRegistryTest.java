@@ -116,7 +116,7 @@ class MeterRegistryTest {
     @DisplayName("original and convention names are preserved for custom meter types")
     void aTaleOfTwoNames(MeterRegistry registry) {
         AtomicInteger n = new AtomicInteger(1);
-        registry.more().counter("my.counter", Collections.emptyList(), n);
+        registry.more().counter(registry.createId("my.counter", Collections.emptyList(), null), n);
 
         assertThat(registry.find("my.counter").meter()).isPresent();
     }

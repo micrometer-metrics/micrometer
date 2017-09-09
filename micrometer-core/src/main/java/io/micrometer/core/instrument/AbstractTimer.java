@@ -24,8 +24,8 @@ import java.util.function.Supplier;
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
     protected Clock clock;
 
-    protected AbstractTimer(Meter.Id id, String description, Clock clock) {
-        super(id, description);
+    protected AbstractTimer(Meter.Id id, Clock clock) {
+        super(id);
         this.clock = clock;
     }
 

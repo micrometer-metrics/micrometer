@@ -89,26 +89,26 @@ public class AtlasMeterRegistry extends StepSpectatorMeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles) {
+    protected Timer newTimer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
         if (histogram != null && histogram.create(TimeUnit.NANOSECONDS, Histogram.Type.Normal).isPercentiles()) {
             // scale nanosecond precise quantile values to seconds
             registerQuantilesGaugeIfNecessary(id, quantiles, t -> t / 1.0e6);
             com.netflix.spectator.api.Timer timer = PercentileTimer.get(getSpectatorRegistry(), getSpectatorRegistry().createId(id.getConventionName(), toSpectatorTags(id.getConventionTags())));
-            return new SpectatorTimer(id, description, timer, clock, quantiles, null);
+            return new SpectatorTimer(id, timer, clock, quantiles, null);
         }
 
-        return super.newTimer(id, description, histogram, quantiles);
+        return super.newTimer(id, histogram, quantiles);
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles) {
+    protected DistributionSummary newDistributionSummary(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
         if(histogram != null && histogram.create(TimeUnit.NANOSECONDS, Histogram.Type.Normal).isPercentiles()) {
             registerQuantilesGaugeIfNecessary(id, quantiles, UnaryOperator.identity());
             com.netflix.spectator.api.DistributionSummary ds = PercentileDistributionSummary.get(getSpectatorRegistry(), getSpectatorRegistry().createId(id.getConventionName(),
                 toSpectatorTags(id.getConventionTags())));
-            return new SpectatorDistributionSummary(id, description, ds, quantiles, null);
+            return new SpectatorDistributionSummary(id, ds, quantiles, null);
         }
 
-        return super.newDistributionSummary(id, description, histogram, quantiles);
+        return super.newDistributionSummary(id, histogram, quantiles);
     }
 }

@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.stats.hist.Bucket;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
+import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
@@ -51,48 +52,45 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected io.micrometer.core.instrument.Counter newCounter(Meter.Id id, String description) {
+    protected io.micrometer.core.instrument.Counter newCounter(Meter.Id id) {
         com.netflix.spectator.api.Counter counter = registry.counter(id.getConventionName(), toSpectatorTags(id.getConventionTags()));
-        return new SpectatorCounter(id, description, counter);
+        return new SpectatorCounter(id, counter);
     }
 
     @Override
     protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(Meter.Id id,
-                                                                                       String description,
                                                                                        Histogram.Builder<?> histogram,
                                                                                        Quantiles quantiles) {
         registerQuantilesGaugeIfNecessary(id, quantiles, UnaryOperator.identity());
         com.netflix.spectator.api.DistributionSummary ds = registry.distributionSummary(id.getConventionName(),
             toSpectatorTags(id.getConventionTags()));
-        return new SpectatorDistributionSummary(id, description, ds, quantiles,
+        return new SpectatorDistributionSummary(id, ds, quantiles,
             registerHistogramCounterIfNecessary(id, histogram));
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id,
-                                                           String description,
-                                                           Histogram.Builder<?> histogram,
-                                                           Quantiles quantiles) {
+    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
         // scale nanosecond precise quantile values to seconds
+        id.setBaseUnit("nanoseconds");
         registerQuantilesGaugeIfNecessary(id, quantiles, t -> t / 1.0e6);
         com.netflix.spectator.api.Timer timer = registry.timer(id.getConventionName(), toSpectatorTags(id.getConventionTags()));
-        return new SpectatorTimer(id, description, timer, clock, quantiles,
+        return new SpectatorTimer(id, timer, clock, quantiles,
             registerHistogramCounterIfNecessary(id, histogram));
     }
 
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, String description, ToDoubleFunction<T> f, T obj) {
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
         Id gaugeId = registry.createId(id.getConventionName(), toSpectatorTags(id.getConventionTags()));
         com.netflix.spectator.api.Gauge gauge = new CustomSpectatorToDoubleGauge<>(registry.clock(), gaugeId, obj, f);
         registry.register(gauge);
-        return new SpectatorGauge(id, description, gauge);
+        return new SpectatorGauge(id, gauge);
     }
 
     protected Histogram<?> registerHistogramCounterIfNecessary(Meter.Id id, Histogram.Builder<?> histogramBuilder) {
         if (histogramBuilder != null) {
             return histogramBuilder
                 .bucketListener(bucket -> {
-                    more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.getTag()),
+                    more().counter(createId(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.getTag()), null),
                         bucket, Bucket::getValue);
                 })
                 .create(TimeUnit.NANOSECONDS, Histogram.Type.Normal);
@@ -111,9 +109,9 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id, String description) {
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
         com.netflix.spectator.api.LongTaskTimer timer = registry.longTaskTimer(id.getName(), toSpectatorTags(id.getTags()));
-        return new SpectatorLongTaskTimer(id, description, timer);
+        return new SpectatorLongTaskTimer(id, timer);
     }
 
     @Override
@@ -142,5 +140,11 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
             .flatMap(t -> Stream.of(t.getKey(), t.getValue()))
             .toArray(String[]::new);
         return registry.createId(name, flattenedTags);
+    }
+
+    @Override
+    protected <T> io.micrometer.core.instrument.Gauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
+        id.setBaseUnit("nanoseconds");
+        return newGauge(id, obj, obj2 -> TimeUtils.convert(f.applyAsDouble(obj2), fUnit, TimeUnit.NANOSECONDS));
     }
 }

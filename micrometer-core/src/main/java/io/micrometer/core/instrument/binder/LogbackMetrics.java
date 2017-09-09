@@ -22,17 +22,31 @@ import ch.qos.logback.classic.turbo.TurboFilter;
 import ch.qos.logback.core.spi.FilterReply;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
+
+import static java.util.Collections.emptyList;
 
 /**
  * @author Jon Schneider
  */
 public class LogbackMetrics implements MeterBinder {
+    private final Iterable<Tag> tags;
+
+    public LogbackMetrics() {
+        this(emptyList());
+    }
+
+    public LogbackMetrics(Iterable<Tag> tags) {
+        this.tags = tags;
+    }
+
     @Override
     public void bindTo(MeterRegistry registry) {
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-        context.addTurboFilter(new MetricsTurboFilter(registry));
+        context.addTurboFilter(new MetricsTurboFilter(registry, tags));
     }
 }
 
@@ -43,12 +57,21 @@ class MetricsTurboFilter extends TurboFilter {
     private final Counter debugCounter;
     private final Counter traceCounter;
 
-    MetricsTurboFilter(MeterRegistry registry) {
-        errorCounter = registry.counter("logback.events", "level", "error");
-        warnCounter = registry.counter("logback.events", "level", "warn");
-        infoCounter = registry.counter("logback.events", "level", "info");
-        debugCounter = registry.counter("logback.events", "level", "debug");
-        traceCounter = registry.counter("logback.events", "level", "trace");
+    MetricsTurboFilter(MeterRegistry registry, Iterable<Tag> tags) {
+        errorCounter = registry.counter(registry.createId("logback.events", Tags.concat(tags,"level", "error"),
+            "Number of error level events that made it to the logs"));
+
+        warnCounter = registry.counter(registry.createId("logback.events", Tags.concat(tags,"level", "warn"),
+            "Number of warn level events that made it to the logs"));
+
+        infoCounter = registry.counter(registry.createId("logback.events", Tags.concat(tags,"level", "info"),
+            "Number of info level events that made it to the logs"));
+
+        debugCounter = registry.counter(registry.createId("logback.events", Tags.concat(tags,"level", "debug"),
+            "Number of debug level events that made it to the logs"));
+
+        traceCounter = registry.counter(registry.createId("logback.events", Tags.concat(tags,"level", "trace"),
+            "Number of trace level events that made it to the logs"));
     }
 
     @Override

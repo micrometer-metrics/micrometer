@@ -31,8 +31,8 @@ public class DropwizardTimer extends AbstractTimer {
     private final Quantiles quantiles;
     private final Histogram<?> histogram;
 
-    DropwizardTimer(Id id, String description, Timer impl, Clock clock, Quantiles quantiles, Histogram<?> histogram) {
-        super(id, description, clock);
+    DropwizardTimer(Id id, Timer impl, Clock clock, Quantiles quantiles, Histogram<?> histogram) {
+        super(id, clock);
         this.impl = impl;
         this.quantiles = quantiles;
         this.histogram = histogram;

@@ -87,7 +87,6 @@ public interface NamingConvention {
     default String name(String name, Meter.Type type) {
         return name(name, type, null);
     }
-
     String name(String name, Meter.Type type, String baseUnit);
 
     default String tagKey(String key) { return key; }

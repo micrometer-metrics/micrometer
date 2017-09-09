@@ -40,7 +40,7 @@ public abstract class StepSpectatorMeterRegistry extends SpectatorMeterRegistry 
     }
 
     @Override
-    public Meter register(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements) {
+    public Meter register(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         List<Measurement> rateMeasurements = StreamSupport.stream(measurements.spliterator(), false)
             .map(m -> {
                 switch (m.getStatistic()) {
@@ -55,6 +55,6 @@ public abstract class StepSpectatorMeterRegistry extends SpectatorMeterRegistry 
                 }
             }).collect(Collectors.toList());
 
-        return super.register(name, tags, type, rateMeasurements);
+        return super.register(id, type, rateMeasurements);
     }
 }

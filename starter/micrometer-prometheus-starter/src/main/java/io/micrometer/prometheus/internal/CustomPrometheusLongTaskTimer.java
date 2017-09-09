@@ -40,10 +40,10 @@ public class CustomPrometheusLongTaskTimer extends Collector {
     private final List<String> tagKeys;
     private final Collection<Child> children = new ConcurrentLinkedQueue<>();
 
-    public CustomPrometheusLongTaskTimer(Meter.Id id, String description, Clock clock) {
+    public CustomPrometheusLongTaskTimer(Meter.Id id, Clock clock) {
         this.name = id.getConventionName();
+        this.description = id.getDescription();
         this.clock = clock;
-        this.description = description;
         this.tagKeys = id.getConventionTags().stream().map(Tag::getKey).collect(toList());
     }
 
@@ -69,7 +69,7 @@ public class CustomPrometheusLongTaskTimer extends Collector {
             List<String> activeTasksKeys = new LinkedList<>(tagKeys);
             activeTasksKeys.add("statistic");
             List<String> activeTasksValues = new LinkedList<>(tagValues);
-            activeTasksValues.add("activeTasks");
+            activeTasksValues.add("active_tasks");
             samples.add(new MetricFamilySamples.Sample(name, activeTasksKeys, activeTasksValues, activeTasks()));
 
             List<String> durationKeys = new LinkedList<>(tagKeys);

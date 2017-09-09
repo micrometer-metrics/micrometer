@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.stats.hist.Bucket;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
+import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
@@ -38,30 +39,32 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected Counter newCounter(Meter.Id id, String description) {
-        return new SimpleCounter(id, description);
+    protected Counter newCounter(Meter.Id id) {
+        return new SimpleCounter(id);
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles) {
+    protected DistributionSummary newDistributionSummary(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
         registerQuantilesGaugeIfNecessary(id, quantiles);
-        return new SimpleDistributionSummary(id, description, quantiles, registerHistogramCounterIfNecessary(id, histogram));
+        return new SimpleDistributionSummary(id, quantiles, registerHistogramCounterIfNecessary(id, histogram));
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles) {
+    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
+        id.setBaseUnit("nanoseconds");
         registerQuantilesGaugeIfNecessary(id, quantiles);
-        return new SimpleTimer(id, description, config().clock(), quantiles, registerHistogramCounterIfNecessary(id, histogram));
+        return new SimpleTimer(id, config().clock(), quantiles, registerHistogramCounterIfNecessary(id, histogram));
     }
 
     @Override
-    protected <T> Gauge newGauge(Meter.Id id, String description, ToDoubleFunction<T> f, T obj) {
-        return new SimpleGauge<>(id, description, obj, f);
+    protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+        return new SimpleGauge<>(id, obj, f);
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id, String description) {
-        return new SimpleLongTaskTimer(id, description, config().clock());
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
+        id.setBaseUnit("nanoseconds");
+        return new SimpleLongTaskTimer(id, config().clock());
     }
 
     private void registerQuantilesGaugeIfNecessary(Meter.Id id, Quantiles quantiles) {
@@ -77,7 +80,7 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
         if (histogramBuilder != null) {
             return histogramBuilder
                 .bucketListener(bucket -> {
-                    more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.getTag()),
+                    more().counter(createId(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.getTag()), null),
                         bucket, Bucket::getValue);
                 })
                 .create(TimeUnit.NANOSECONDS, Histogram.Type.Normal);
@@ -88,5 +91,11 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
     @Override
     protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         // do nothing, the meter is already registered
+    }
+
+    @Override
+    protected <T> io.micrometer.core.instrument.Gauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
+        id.setBaseUnit("nanoseconds");
+        return newGauge(id, obj, obj2 -> TimeUtils.convert(f.applyAsDouble(obj2), fUnit, TimeUnit.NANOSECONDS));
     }
 }

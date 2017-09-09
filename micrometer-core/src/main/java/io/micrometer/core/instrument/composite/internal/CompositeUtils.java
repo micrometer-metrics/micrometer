@@ -13,13 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.simple;
+package io.micrometer.core.instrument.composite.internal;
 
-import io.micrometer.core.instrument.AbstractMeter;
-import io.micrometer.core.instrument.Meter;
-
-abstract class AbstractSimpleMeter extends AbstractMeter {
-    AbstractSimpleMeter(Meter.Id id, String description) {
-        super(id, description);
-    }
+public class CompositeUtils {
+    private CompositeUtils() {}
 }

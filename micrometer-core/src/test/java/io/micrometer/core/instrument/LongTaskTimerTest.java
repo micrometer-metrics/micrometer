@@ -20,6 +20,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import static io.micrometer.core.instrument.MockClock.clock;
+import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -29,7 +30,7 @@ class LongTaskTimerTest {
     @ParameterizedTest
     @ArgumentsSource(MeterRegistriesProvider.class)
     void record(MeterRegistry registry) {
-        LongTaskTimer t = registry.more().longTaskTimer("myTimer");
+        LongTaskTimer t = registry.more().longTaskTimer(registry.createId("myTimer", emptyList(), null));
 
         long tId = t.start();
         clock(registry).addAndGetNanos(10);

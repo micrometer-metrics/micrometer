@@ -15,12 +15,15 @@
  */
 package io.micrometer.core.instrument.binder;
 
+import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.util.concurrent.TimeUnit;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 
 /**
  * Uptime metrics.
@@ -30,19 +33,25 @@ import io.micrometer.core.instrument.MeterRegistry;
 public class UptimeMetrics implements MeterBinder {
 
     private final RuntimeMXBean runtimeMXBean;
+    private final Iterable<Tag> tags;
 
     public UptimeMetrics() {
-        this(ManagementFactory.getRuntimeMXBean());
+        this(emptyList());
+    }
+
+    public UptimeMetrics(Iterable<Tag> tags) {
+        this(ManagementFactory.getRuntimeMXBean(), tags);
     }
 
     // VisibleForTesting
-    UptimeMetrics(RuntimeMXBean runtimeMXBean) {
+    UptimeMetrics(RuntimeMXBean runtimeMXBean, Iterable<Tag> tags) {
         this.runtimeMXBean = requireNonNull(runtimeMXBean);
+        this.tags = tags;
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        registry.gauge("uptime", runtimeMXBean, (x) -> Long.valueOf(x.getUptime()).doubleValue());
+        registry.more().timeGauge(registry.createId("uptime", tags, "The uptime of the Java virtual machine"),
+            runtimeMXBean, TimeUnit.MILLISECONDS, x -> Long.valueOf(x.getUptime()).doubleValue());
     }
-
 }
