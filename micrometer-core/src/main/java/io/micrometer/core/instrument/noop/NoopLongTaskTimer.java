@@ -17,6 +17,8 @@ package io.micrometer.core.instrument.noop;
 
 import io.micrometer.core.instrument.LongTaskTimer;
 
+import java.util.concurrent.TimeUnit;
+
 public class NoopLongTaskTimer extends NoopMeter implements LongTaskTimer {
     public static NoopLongTaskTimer INSTANCE = new NoopLongTaskTimer();
 
@@ -33,12 +35,12 @@ public class NoopLongTaskTimer extends NoopMeter implements LongTaskTimer {
     }
 
     @Override
-    public long duration(long task) {
+    public double duration(long task, TimeUnit unit) {
         return -1;
     }
 
     @Override
-    public long duration() {
+    public double duration(TimeUnit unit) {
         return 0;
     }
 

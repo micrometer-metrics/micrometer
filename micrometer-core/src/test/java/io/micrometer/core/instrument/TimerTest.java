@@ -57,7 +57,7 @@ class TimerTest {
         t.record(-42, TimeUnit.MILLISECONDS);
 
         assertAll(() -> assertEquals(0L, t.count()),
-                () -> assertEquals(0, t.totalTimeNanos(), 1.0e-12));
+                () -> assertEquals(0, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
     }
 
     @DisplayName("zero times contribute to the count of overall events but do not add to total time")
@@ -69,7 +69,7 @@ class TimerTest {
         clock(registry).addAndGet(1, TimeUnit.SECONDS);
 
         assertAll(() -> assertEquals(1L, t.count()),
-                () -> assertEquals(0L, t.totalTimeNanos()));
+                () -> assertEquals(0L, t.totalTime(TimeUnit.NANOSECONDS)));
     }
 
     @DisplayName("record a runnable task")
@@ -83,7 +83,7 @@ class TimerTest {
             clock(registry).addAndGet(1, TimeUnit.SECONDS);
         } finally {
             assertAll(() -> assertEquals(1L, t.count()),
-                    () -> assertEquals(10, t.totalTimeNanos() ,1.0e-12));
+                    () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS) ,1.0e-12));
         }
     }
 
@@ -103,6 +103,6 @@ class TimerTest {
         clock(registry).addAndGet(1, TimeUnit.SECONDS);
 
         assertAll(() -> assertEquals(1L, t.count()),
-                () -> assertEquals(10, t.totalTimeNanos(), 1.0e-12));
+                () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
     }
 }

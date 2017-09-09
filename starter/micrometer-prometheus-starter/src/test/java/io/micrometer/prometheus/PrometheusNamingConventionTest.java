@@ -39,6 +39,7 @@ class PrometheusNamingConventionTest {
     @Test
     void unitsAreAppendedToTimers() {
         assertThat(convention.name("timer", Meter.Type.Timer)).isEqualTo("timer_duration_seconds");
+        assertThat(convention.name("timer", Meter.Type.LongTaskTimer)).isEqualTo("timer_duration_seconds");
     }
 
     @Test

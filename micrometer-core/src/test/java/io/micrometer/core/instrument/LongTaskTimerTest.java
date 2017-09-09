@@ -19,6 +19,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
+import java.util.concurrent.TimeUnit;
+
 import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -35,15 +37,17 @@ class LongTaskTimerTest {
         long tId = t.start();
         clock(registry).addAndGetNanos(10);
 
-        assertAll(() -> assertEquals(10, t.duration()),
-                () -> assertEquals(10, t.duration(tId)),
-                () -> assertEquals(1, t.activeTasks()));
+        assertAll(() -> assertEquals(10, t.duration(TimeUnit.NANOSECONDS)),
+            () -> assertEquals(0.01, t.duration(TimeUnit.MICROSECONDS)),
+            () -> assertEquals(10, t.duration(tId, TimeUnit.NANOSECONDS)),
+            () -> assertEquals(0.01, t.duration(tId, TimeUnit.MICROSECONDS)),
+            () -> assertEquals(1, t.activeTasks()));
 
         clock(registry).addAndGetNanos(10);
         t.stop(tId);
 
-        assertAll(() -> assertEquals(0, t.duration()),
-                () -> assertEquals(-1, t.duration(tId)),
-                () -> assertEquals(0, t.activeTasks()));
+        assertAll(() -> assertEquals(0, t.duration(TimeUnit.NANOSECONDS)),
+            () -> assertEquals(-1, t.duration(tId, TimeUnit.NANOSECONDS)),
+            () -> assertEquals(0, t.activeTasks()));
     }
 }

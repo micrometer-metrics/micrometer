@@ -102,7 +102,7 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
         LongTaskTimer ltt = new SimpleLongTaskTimer(id, clock);
         registry.register(nameMapper.toHierarchicalName(id) + ".active", (Gauge<Integer>) ltt::activeTasks);
-        registry.register(nameMapper.toHierarchicalName(id) + ".duration", (Gauge<Long>) ltt::duration);
+        registry.register(nameMapper.toHierarchicalName(id) + ".duration", (Gauge<Double>) () -> ltt.duration(TimeUnit.NANOSECONDS));
         return ltt;
     }
 

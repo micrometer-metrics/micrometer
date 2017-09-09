@@ -91,18 +91,11 @@ public interface Timer extends Meter {
      */
     double totalTime(TimeUnit unit);
 
-    /**
-     * The total time in nanoseconds of all recorded events since this timer was created.
-     */
-    default double totalTimeNanos() {
-        return totalTime(TimeUnit.NANOSECONDS);
-    }
-
     @Override
     default Iterable<Measurement> measure() {
         return Arrays.asList(
             new Measurement(() -> (double) count(), Statistic.Count),
-            new Measurement(this::totalTimeNanos, Statistic.Total)
+            new Measurement(() -> totalTime(TimeUnit.NANOSECONDS), Statistic.Total)
         );
     }
 

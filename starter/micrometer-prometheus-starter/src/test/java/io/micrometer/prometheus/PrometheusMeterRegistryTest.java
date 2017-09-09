@@ -108,7 +108,7 @@ class PrometheusMeterRegistryTest {
             .contains("HELP summary my summary")
             .contains("HELP gauge my gauge")
             .contains("HELP counter_total my counter")
-            .contains("HELP long_task_timer my long task timer");
+            .contains("HELP long_task_timer_duration_seconds my long task timer");
     }
 
     private Condition<Enumeration<Collector.MetricFamilySamples>> withNameAndTagKey(String name, String tagKey) {

@@ -21,6 +21,8 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.prometheus.internal.CustomPrometheusLongTaskTimer;
 
+import java.util.concurrent.TimeUnit;
+
 public class PrometheusLongTaskTimer extends AbstractMeter implements LongTaskTimer {
     private final CustomPrometheusLongTaskTimer.Child timer;
 
@@ -40,13 +42,13 @@ public class PrometheusLongTaskTimer extends AbstractMeter implements LongTaskTi
     }
 
     @Override
-    public long duration(long task) {
-        return timer.duration(task);
+    public double duration(long task, TimeUnit unit) {
+        return timer.duration(task, unit);
     }
 
     @Override
-    public long duration() {
-        return timer.duration();
+    public double duration(TimeUnit unit) {
+        return timer.duration(unit);
     }
 
     @Override

@@ -20,10 +20,12 @@ import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.noop.NoopLongTaskTimer;
+import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class CompositeLongTaskTimer extends AbstractMeter implements LongTaskTimer, CompositeMeter {
     private final Map<MeterRegistry, LongTaskTimer> timers = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -53,22 +55,22 @@ public class CompositeLongTaskTimer extends AbstractMeter implements LongTaskTim
     }
 
     @Override
-    public long duration(long task) {
+    public double duration(long task, TimeUnit unit) {
         synchronized (timers) {
             return timers.values().stream()
-                .map(ltt -> ltt.duration(task))
+                .map(ltt -> ltt.duration(task, unit))
                 .reduce((t1, t2) -> t2 == -1 ? t1 : t2)
-                .orElse(NoopLongTaskTimer.INSTANCE.duration(task));
+                .orElse(NoopLongTaskTimer.INSTANCE.duration(task, unit));
         }
     }
 
     @Override
-    public long duration() {
+    public double duration(TimeUnit unit) {
         synchronized (timers) {
             return timers.values().stream()
-                .map(LongTaskTimer::duration)
+                .map(ltt -> ltt.duration(unit))
                 .reduce((t1, t2) -> t2)
-                .orElse(NoopLongTaskTimer.INSTANCE.duration());
+                .orElse(NoopLongTaskTimer.INSTANCE.duration(unit));
         }
     }
 

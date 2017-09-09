@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -101,14 +102,15 @@ public interface LongTaskTimer extends Meter {
      * Returns the current duration for an active task.
      *
      * @param task Id for the task to stop. This should be the value returned from {@link #start()}.
+     * @param unit The time unit to scale the returned value to.
      * @return Duration for the task in nanoseconds. A -1 value will be returned for an unknown task.
      */
-    long duration(long task);
+    double duration(long task, TimeUnit unit);
 
     /**
      * Returns the cumulative duration of all current tasks in nanoseconds.
      */
-    long duration();
+    double duration(TimeUnit unit);
 
     /**
      * Returns the current number of tasks being executed.
@@ -119,7 +121,7 @@ public interface LongTaskTimer extends Meter {
     default Iterable<Measurement> measure() {
         return Arrays.asList(
             new Measurement(() -> (double) activeTasks(), Statistic.Count),
-            new Measurement(() -> (double) duration(), Statistic.Total)
+            new Measurement(() -> duration(TimeUnit.NANOSECONDS), Statistic.Total)
         );
     }
 

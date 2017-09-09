@@ -20,9 +20,11 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class SimpleLongTaskTimer extends AbstractMeter implements LongTaskTimer {
@@ -54,19 +56,19 @@ public class SimpleLongTaskTimer extends AbstractMeter implements LongTaskTimer 
     }
 
     @Override
-    public long duration(long task) {
+    public double duration(long task, TimeUnit unit) {
         Long startTime = tasks.get(task);
-        return (startTime != null) ? (clock.monotonicTime() - startTime) : -1L;
+        return (startTime != null) ? TimeUtils.nanosToUnit(clock.monotonicTime() - startTime, unit) : -1L;
     }
 
     @Override
-    public long duration() {
+    public double duration(TimeUnit unit) {
         long now = clock.monotonicTime();
         long sum = 0L;
         for (long startTime : tasks.values()) {
             sum += now - startTime;
         }
-        return sum;
+        return TimeUtils.nanosToUnit(sum, unit);
     }
 
     @Override
