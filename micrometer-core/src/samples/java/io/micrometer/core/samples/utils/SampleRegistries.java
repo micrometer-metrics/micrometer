@@ -36,7 +36,7 @@ import java.util.Properties;
 
 public class SampleRegistries {
     public static PrometheusMeterRegistry prometheus() {
-        PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry();
+        PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(k -> null);
 
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);

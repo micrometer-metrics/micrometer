@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.simple;
 
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.MeterEquivalence;
@@ -22,12 +23,12 @@ import io.micrometer.core.instrument.util.MeterEquivalence;
 import java.lang.ref.WeakReference;
 import java.util.function.ToDoubleFunction;
 
-public class SimpleGauge<T> extends AbstractSimpleMeter implements Gauge {
+public class SimpleGauge<T> extends AbstractMeter implements Gauge {
     private final WeakReference<T> ref;
     private final ToDoubleFunction<T> value;
 
-    public SimpleGauge(Meter.Id id, String description, T obj, ToDoubleFunction<T> value) {
-        super(id, description);
+    public SimpleGauge(Meter.Id id, T obj, ToDoubleFunction<T> value) {
+        super(id);
         this.ref = new WeakReference<>(obj);
         this.value = value;
     }

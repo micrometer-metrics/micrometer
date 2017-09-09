@@ -26,11 +26,11 @@ public class SpectatorDistributionSummary extends AbstractMeter implements Distr
     private final Quantiles quantiles;
     private final Histogram<?> histogram;
 
-    public SpectatorDistributionSummary(Id id, String description,
-                                 com.netflix.spectator.api.DistributionSummary distributionSummary,
-                                 Quantiles quantiles,
-                                 Histogram<?> histogram) {
-        super(id, description);
+    public SpectatorDistributionSummary(Id id,
+                                        com.netflix.spectator.api.DistributionSummary distributionSummary,
+                                        Quantiles quantiles,
+                                        Histogram<?> histogram) {
+        super(id);
         this.distributionSummary = distributionSummary;
         this.quantiles = quantiles;
         this.histogram = histogram;

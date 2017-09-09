@@ -17,10 +17,11 @@ package io.micrometer.core.instrument.binder;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.LoadingCache;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Jon Schneider
@@ -69,18 +70,31 @@ public class GuavaCacheMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        registry.gauge(name + ".size", tags, cache, Cache::size);
+        registry.gauge(registry.createId(name + ".estimated.size", tags,
+            "The approximate number of entries in this cache"),
+            cache, Cache::size);
 
-        registry.more().counter(name + ".requests", Tags.zip("result", "miss"), cache, c -> c.stats().missCount());
-        registry.more().counter(name + ".requests", Tags.zip("result", "hit"), cache, c -> c.stats().hitCount());
-        registry.more().counter(name + ".evictions", tags, cache, c -> c.stats().evictionCount());
+        registry.more().counter(registry.createId(name + ".requests", Tags.zip("result", "miss"),
+            "the number of times cache lookup methods have returned an uncached (newly loaded) value, or null"),
+            cache, c -> c.stats().missCount());
+        registry.more().counter(registry.createId(name + ".requests", Tags.zip("result", "hit"),
+            "The number of times cache lookup methods have returned a cached value."),
+            cache, c -> c.stats().hitCount());
+        registry.more().counter(registry.createId(name + ".evictions", tags, "cache evictions"),
+            cache, c -> c.stats().evictionCount());
 
-        if (cache instanceof LoadingCache) {
+        if (cache instanceof com.github.benmanes.caffeine.cache.LoadingCache) {
             // dividing these gives you a measure of load latency
-            // FIXME function tracking timer!
-            registry.more().counter(name + ".load.duration", tags, cache, c -> c.stats().totalLoadTime());
-            registry.more().counter(name + ".load", Tags.concat(tags, "result", "success"), cache, c -> c.stats().loadSuccessCount());
-            registry.more().counter(name + ".load", Tags.concat(tags, "result", "failure"), cache, c -> c.stats().loadExceptionCount());
+            registry.more().timeGauge(registry.createId(name + ".load.duration", tags,
+                "The time the cache has spent loading new values"),
+                cache, TimeUnit.NANOSECONDS, c -> c.stats().totalLoadTime());
+
+            registry.more().counter(registry.createId(name + ".load", Tags.concat(tags, "result", "success"),
+                "The number of times cache lookup methods have successfully loaded a new value"),
+                cache, c -> c.stats().loadSuccessCount());
+            registry.more().counter(registry.createId(name + ".load", Tags.concat(tags, "result", "failure"),
+                "The number of times cache lookup methods threw an exception while loading a new value"),
+                cache, c -> c.stats().loadExceptionCount());
         }
     }
 }

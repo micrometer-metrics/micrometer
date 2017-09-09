@@ -15,7 +15,10 @@
  */
 package io.micrometer.core.instrument;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.function.ToDoubleFunction;
 
 public interface Gauge extends Meter {
     /**
@@ -34,17 +37,45 @@ public interface Gauge extends Meter {
         return Type.Gauge;
     }
 
-    interface Builder {
-        Builder tags(Iterable<Tag> tags);
+    static <T> Builder builder(String name, T obj, ToDoubleFunction<T> f) {
+        return new Builder<>(name, obj, f);
+    }
 
-        default Builder tags(String... tags) {
-            return tags(Tags.zip(tags));
+    class Builder<T> {
+        private final String name;
+        private final T obj;
+        private final ToDoubleFunction<T> f;
+        private final List<Tag> tags = new ArrayList<>();
+        private String description;
+        private String baseUnit;
+
+        private Builder(String name, T obj, ToDoubleFunction<T> f) {
+            this.name = name;
+            this.obj = obj;
+            this.f = f;
         }
 
-        Builder description(String description);
+        public Builder tags(String... tags) {
+            return tags(Tags.zip(tags));
+        }
+        
+        public Builder tags(Iterable<Tag> tags) {
+            tags.forEach(this.tags::add);
+            return this;
+        }
 
-        Builder baseUnit(String unit);
+        public Builder description(String description) {
+            this.description = description;
+            return this;
+        }
 
-        Gauge create();
+        public Builder baseUnit(String unit) {
+            this.baseUnit = unit;
+            return this;
+        }
+
+        public Gauge register(MeterRegistry registry) {
+            return registry.gauge(registry.createId(name, tags, description, baseUnit), obj, f);
+        }
     }
 }

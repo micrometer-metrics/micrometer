@@ -16,18 +16,38 @@
 package io.micrometer.core.instrument.binder;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 
+import static java.util.Collections.emptyList;
+
 public class JvmThreadMetrics implements MeterBinder {
+    private final Iterable<Tag> tags;
+
+    public JvmThreadMetrics() {
+        this(emptyList());
+    }
+
+    public JvmThreadMetrics(Iterable<Tag> tags) {
+        this.tags = tags;
+    }
 
     @Override
     public void bindTo(MeterRegistry registry) {
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
 
-        registry.gauge("jvm.threads.peak", threadBean, ThreadMXBean::getPeakThreadCount);
-        registry.gauge("jvm.threads.daemon", threadBean, ThreadMXBean::getDaemonThreadCount);
-        registry.gauge("jvm.threads.live", threadBean, ThreadMXBean::getThreadCount);
+        registry.gauge(registry.createId("jvm.threads.peak", tags,
+            "the peak live thread count since the Java virtual machine started or peak was reset"),
+            threadBean, ThreadMXBean::getPeakThreadCount);
+
+        registry.gauge(registry.createId("jvm.threads.daemon", tags,
+            "The current number of live daemon threads"),
+            threadBean, ThreadMXBean::getDaemonThreadCount);
+
+        registry.gauge(registry.createId("jvm.threads.live", tags,
+            "The current number of live threads including both daemon and non-daemon threads"),
+            threadBean, ThreadMXBean::getThreadCount);
     }
 }

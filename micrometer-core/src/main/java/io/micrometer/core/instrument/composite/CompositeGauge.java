@@ -28,13 +28,13 @@ import java.util.Map;
 import java.util.function.ToDoubleFunction;
 
 public class CompositeGauge<T> extends AbstractMeter implements Gauge, CompositeMeter {
-    private final WeakReference<T> ref;
-    private final ToDoubleFunction<T> f;
+    protected final WeakReference<T> ref;
+    protected final ToDoubleFunction<T> f;
 
-    private final Map<MeterRegistry, Gauge> gauges = Collections.synchronizedMap(new LinkedHashMap<>());
+    protected final Map<MeterRegistry, Gauge> gauges = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    CompositeGauge(Meter.Id id, String description, T obj, ToDoubleFunction<T> f) {
-        super(id, description);
+    CompositeGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+        super(id);
         this.ref = new WeakReference<>(obj);
         this.f = f;
     }
@@ -51,7 +51,7 @@ public class CompositeGauge<T> extends AbstractMeter implements Gauge, Composite
         T obj = ref.get();
         if(obj != null) {
             synchronized (gauges) {
-                gauges.put(registry, registry.gaugeBuilder(getId().getName(), obj, f).tags(getId().getTags()).create());
+                gauges.put(registry, registry.gauge(getId(), obj, f));
             }
         }
     }

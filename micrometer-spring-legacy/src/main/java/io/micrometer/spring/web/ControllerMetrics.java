@@ -98,9 +98,10 @@ public class ControllerMetrics {
 
         // record Timer values
         timed(handler).forEach(t -> {
-            Timer.Builder timerBuilder = registry.timerBuilder(t.name)
+            Timer.Builder timerBuilder = Timer.builder(t.name)
                 .tags(tagConfigurer.httpRequestTags(request, response, thrown))
-                .tags(t.extraTags);
+                .tags(t.extraTags)
+                .description("Timer of servlet request");
 
             if (t.quantiles.length > 0) {
                 timerBuilder = timerBuilder.quantiles(WindowSketchQuantiles.quantiles(t.quantiles).create());
@@ -110,13 +111,13 @@ public class ControllerMetrics {
                 timerBuilder = timerBuilder.histogram(Histogram.percentilesTime());
             }
 
-            timerBuilder.create().record(endTime - startTime, TimeUnit.NANOSECONDS);
+            timerBuilder.register(registry).record(endTime - startTime, TimeUnit.NANOSECONDS);
         });
     }
 
     private LongTaskTimer longTaskTimer(TimerConfig t, HttpServletRequest request, Object handler) {
         Iterable<Tag> tags = Tags.concat(tagConfigurer.httpLongRequestTags(request, handler), t.extraTags);
-        return registry.more().longTaskTimer(t.name, tags);
+        return registry.more().longTaskTimer(registry.createId(t.name, tags, "Timer of long servlet request"));
     }
 
     private Set<TimerConfig> longTaskTimed(Object m) {

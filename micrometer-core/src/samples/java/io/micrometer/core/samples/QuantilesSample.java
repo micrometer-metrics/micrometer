@@ -18,8 +18,8 @@ package io.micrometer.core.samples;
 import cern.jet.random.Normal;
 import cern.jet.random.engine.MersenneTwister64;
 import cern.jet.random.engine.RandomEngine;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.micrometer.core.instrument.stats.quantile.CKMSQuantiles;
 import io.micrometer.core.instrument.stats.quantile.Frugal2UQuantiles;
 import io.micrometer.core.instrument.stats.quantile.GKQuantiles;
@@ -35,32 +35,32 @@ import java.util.concurrent.TimeUnit;
  */
 public class QuantilesSample {
     public static void main(String[] args) {
-        PrometheusMeterRegistry registry = SampleRegistries.prometheus();
+        MeterRegistry registry = SampleRegistries.prometheus();
 
         RandomEngine r = new MersenneTwister64(0);
         Normal dist = new Normal(100, 50, r);
 
-        Timer ckmsTimer = registry.timerBuilder("random.ckms")
+        Timer ckmsTimer = Timer.builder("random.ckms")
                 .quantiles(CKMSQuantiles
                         .quantile(0.5, 0.05)
                         .quantile(0.95, 0.01)
                         .create())
-                .create();
+                .register(registry);
 
-        Timer frugalTimer = registry.timerBuilder("random.frugal")
+        Timer frugalTimer = Timer.builder("random.frugal")
                 .quantiles(Frugal2UQuantiles
                         .quantile(0.5, 10)
                         .quantile(0.95, 10)
                         .create())
-                .create();
+                .register(registry);
 
-        Timer gkTimer = registry.timerBuilder("random.gk")
+        Timer gkTimer = Timer.builder("random.gk")
                 .quantiles(GKQuantiles.quantiles(0.5, 0.95).create())
-                .create();
+                .register(registry);
 
-        Timer windowTimer = registry.timerBuilder("random.window")
+        Timer windowTimer = Timer.builder("random.window")
                 .quantiles(WindowSketchQuantiles.quantiles(0.5, 0.95).create())
-                .create();
+                .register(registry);
 
         //noinspection InfiniteLoopStatement
         while(true) {

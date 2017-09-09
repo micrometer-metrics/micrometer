@@ -20,6 +20,7 @@ import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Meter;
 import com.netflix.spectator.api.Registry;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.stats.quantile.GKQuantiles;
 import org.assertj.core.api.Condition;
@@ -43,15 +44,15 @@ class SpectatorMeterRegistryTest {
         SpectatorMeterRegistry registry = new SpectatorMeterRegistry(new DefaultRegistry(), Clock.SYSTEM) {};
         Registry spectatorRegistry = registry.getSpectatorRegistry();
 
-        Timer timer = registry.timerBuilder("timer")
+        Timer timer = Timer.builder("timer")
                 .quantiles(GKQuantiles.quantiles(0.5, 0.95).create())
-                .create();
+                .register(registry);
 
         timer.record(100, TimeUnit.MILLISECONDS);
 
-        registry.summaryBuilder("ds")
+        DistributionSummary.builder("ds")
                 .quantiles(GKQuantiles.quantiles(0.5).create())
-                .create();
+                .register(registry);
 
         assertThat(spectatorRegistry).haveAtLeastOne(withNameAndQuantile("timer"));
         assertThat(spectatorRegistry).haveAtLeastOne(withNameAndQuantile("ds"));

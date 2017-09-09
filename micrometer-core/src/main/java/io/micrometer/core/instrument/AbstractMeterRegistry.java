@@ -38,7 +38,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
      */
     private final List<Tag> commonTags = new ArrayList<>();
 
-    private final ConcurrentMap<MeterId, Meter> meterMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Meter.Id, Meter> meterMap = new ConcurrentHashMap<>();
 
     /**
      * We'll use snake case as a general-purpose default for registries because it is the most
@@ -89,26 +89,34 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         this.clock = clock;
     }
 
-    protected abstract <T> Gauge newGauge(Meter.Id id, String description, ToDoubleFunction<T> f, T obj);
-    protected abstract Counter newCounter(Meter.Id id, String description);
-    protected abstract LongTaskTimer newLongTaskTimer(Meter.Id id, String description);
-    protected abstract Timer newTimer(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles);
-    protected abstract DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles);
+    protected abstract <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f);
+
+    protected abstract Counter newCounter(Meter.Id id);
+
+    protected abstract LongTaskTimer newLongTaskTimer(Meter.Id id);
+
+    protected abstract Timer newTimer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles);
+
+    protected abstract DistributionSummary newDistributionSummary(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles);
+
     protected abstract void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements);
 
+    protected abstract <T> Gauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f);
+
     @Override
-    public Meter register(String name, Iterable<Tag> tags, Meter.Type type, Iterable<Measurement> measurements) {
-        return meterMap.computeIfAbsent(new MeterId(name, tags, type, null), id -> {
-            newMeter(id, type, measurements);
+    public Meter register(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+        return meterMap.computeIfAbsent(id, id2 -> {
+            id2.setType(type);
+            newMeter(id2, type, measurements);
             return new Meter() {
                 @Override
                 public Id getId() {
-                    return id;
+                    return id2;
                 }
 
                 @Override
-                public String getDescription() {
-                    return null;
+                public Type getType() {
+                    return type;
                 }
 
                 @Override
@@ -120,229 +128,68 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     }
 
     @Override
-    public final <T> Gauge.Builder gaugeBuilder(String name, T obj, ToDoubleFunction<T> f) {
-        return new GaugeBuilder<>(name, obj, f);
-    }
-
-    private class GaugeBuilder<T> implements Gauge.Builder {
-        private final String name;
-        private final T obj;
-        private final ToDoubleFunction<T> f;
-        private final List<Tag> tags = new ArrayList<>();
-        private String description;
-        private String baseUnit;
-
-        private GaugeBuilder(String name, T obj, ToDoubleFunction<T> f) {
-            this.name = name;
-            this.obj = obj;
-            this.f = f;
-        }
-
-        @Override
-        public Gauge.Builder tags(Iterable<Tag> tags) {
-            tags.forEach(this.tags::add);
-            return this;
-        }
-
-        @Override
-        public Gauge.Builder description(String description) {
-            this.description = description;
-            return this;
-        }
-
-        @Override
-        public Gauge.Builder baseUnit(String unit) {
-            this.baseUnit = unit;
-            return this;
-        }
-
-        @Override
-        public Gauge create() {
-            return registerMeterIfNecessary(Gauge.class, Meter.Type.Gauge, name, tags, baseUnit, id ->
-                newGauge(id, description, f, obj));
-        }
+    public Counter counter(Meter.Id id) {
+        return registerMeterIfNecessary(Counter.class, id, id2 -> {
+            id2.setType(Meter.Type.Counter);
+            return newCounter(id2);
+        });
     }
 
     @Override
-    public Timer.Builder timerBuilder(String name) {
-        return new TimerBuilder(name);
-    }
-
-    private class TimerBuilder implements Timer.Builder {
-        private final String name;
-        private Quantiles quantiles;
-        private Histogram.Builder<?> histogram;
-        private final List<Tag> tags = new ArrayList<>();
-        private String description;
-
-        private TimerBuilder(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public Timer.Builder quantiles(Quantiles quantiles) {
-            this.quantiles = quantiles;
-            return this;
-        }
-
-        public Timer.Builder histogram(Histogram.Builder<?> histogram) {
-            this.histogram = histogram;
-            return this;
-        }
-
-        @Override
-        public Timer.Builder tags(Iterable<Tag> tags) {
-            tags.forEach(this.tags::add);
-            return this;
-        }
-
-        public Timer.Builder description(String description) {
-            this.description = description;
-            return this;
-        }
-
-        @Override
-        public Timer create() {
-            // the base unit for a timer will be determined by the monitoring system if it is part of the convention name
-            return registerMeterIfNecessary(Timer.class, Meter.Type.Timer, name, tags, null, id ->
-                newTimer(id, description, histogram, quantiles));
-        }
+    public <T> Gauge gauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+        return registerMeterIfNecessary(Gauge.class, id, id2 -> {
+            id2.setType(Meter.Type.Gauge);
+            return newGauge(id2, obj, f);
+        });
     }
 
     @Override
-    public DistributionSummary.Builder summaryBuilder(String name) {
-        return new DistributionSummaryBuilder(name);
-    }
-
-    private class DistributionSummaryBuilder implements DistributionSummary.Builder {
-        private final String name;
-        private Quantiles quantiles;
-        private Histogram.Builder<?> histogram;
-        private final List<Tag> tags = new ArrayList<>();
-        private String description;
-        private String baseUnit;
-
-        private DistributionSummaryBuilder(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public DistributionSummary.Builder quantiles(Quantiles quantiles) {
-            this.quantiles = quantiles;
-            return this;
-        }
-
-        public DistributionSummary.Builder histogram(Histogram.Builder<?> histogram) {
-            this.histogram = histogram;
-            return this;
-        }
-
-        @Override
-        public DistributionSummary.Builder tags(Iterable<Tag> tags) {
-            tags.forEach(this.tags::add);
-            return this;
-        }
-
-        public DistributionSummary.Builder description(String description) {
-            this.description = description;
-            return this;
-        }
-
-        @Override
-        public DistributionSummary.Builder baseUnit(String unit) {
-            this.baseUnit = unit;
-            return this;
-        }
-
-        @Override
-        public DistributionSummary create() {
-            return registerMeterIfNecessary(DistributionSummary.class, Meter.Type.DistributionSummary, name, tags, baseUnit, id ->
-                newDistributionSummary(id, description, histogram, quantiles));
-        }
+    public Timer timer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
+        return registerMeterIfNecessary(Timer.class, id, id2 -> {
+            id2.setType(Meter.Type.Timer);
+            return newTimer(id2, histogram, quantiles);
+        });
     }
 
     @Override
-    public Counter.Builder counterBuilder(String name) {
-        return new CounterBuilder(name);
-    }
-
-    private class CounterBuilder implements Counter.Builder {
-        private final String name;
-        private final List<Tag> tags = new ArrayList<>();
-        private String description;
-        private String baseUnit;
-
-        private CounterBuilder(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public Counter.Builder tags(Iterable<Tag> tags) {
-            tags.forEach(this.tags::add);
-            return this;
-        }
-
-        public Counter.Builder description(String description) {
-            this.description = description;
-            return this;
-        }
-
-        @Override
-        public Counter.Builder baseUnit(String unit) {
-            this.baseUnit = unit;
-            return this;
-        }
-
-        @Override
-        public Counter create() {
-            return registerMeterIfNecessary(Counter.class, Meter.Type.Counter, name, tags, baseUnit, id ->
-                newCounter(id, description));
-        }
+    public DistributionSummary summary(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
+        return registerMeterIfNecessary(DistributionSummary.class, id, id2 -> {
+            id2.setType(Meter.Type.DistributionSummary);
+            return newDistributionSummary(id2, histogram, quantiles);
+        });
     }
 
     private MeterRegistry.More more = new MeterRegistry.More() {
         @Override
-        public LongTaskTimer.Builder longTaskTimerBuilder(String name) {
-            return new LongTaskTimerBuilder(name);
+        public LongTaskTimer longTaskTimer(Meter.Id id) {
+            return registerMeterIfNecessary(LongTaskTimer.class, id, id2 -> {
+                id2.setType(Meter.Type.LongTaskTimer);
+                return newLongTaskTimer(id2);
+            });
+        }
+
+        public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
+            return longTaskTimer(createId(name, tags, null));
         }
 
         @Override
-        public <T> Meter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+        public <T> Meter counter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
             WeakReference<T> ref = new WeakReference<>(obj);
-            return register(name, tags, Meter.Type.Counter,
+            return register(id, Meter.Type.Counter,
                 Collections.singletonList(new Measurement(() -> {
                     T obj2 = ref.get();
                     return obj2 != null ? f.applyAsDouble(obj2) : 0;
                 }, Statistic.Count)));
         }
+
+        @Override
+        public <T> Gauge timeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
+            return registerMeterIfNecessary(Gauge.class, id, id2 -> {
+                id2.setType(Meter.Type.Gauge);
+                return newTimeGauge(id2, obj, fUnit, f);
+            });
+        }
     };
-
-    private class LongTaskTimerBuilder implements LongTaskTimer.Builder {
-        private final String name;
-        private final List<Tag> tags = new ArrayList<>();
-        private String description;
-
-        private LongTaskTimerBuilder(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public LongTaskTimer.Builder tags(Iterable<Tag> tags) {
-            tags.forEach(this.tags::add);
-            return this;
-        }
-
-        public LongTaskTimer.Builder description(String description) {
-            this.description = description;
-            return this;
-        }
-
-        @Override
-        public LongTaskTimer create() {
-            return registerMeterIfNecessary(LongTaskTimer.class, Meter.Type.LongTaskTimer, name, tags, null, id ->
-                newLongTaskTimer(id, description));
-        }
-    }
 
     @Override
     public More more() {
@@ -420,14 +267,18 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
             return meterMap.keySet().stream()
                 .filter(id -> id.getName().equals(name))
                 .filter(id -> {
+                    if(tags.isEmpty())
+                        return true;
                     List<Tag> idTags = new ArrayList<>();
                     id.getTags().forEach(idTags::add);
                     return idTags.containsAll(tags);
                 })
                 .map(meterMap::get)
                 .filter(m -> {
+                    if(valueAsserts.isEmpty())
+                        return true;
                     for (Measurement measurement : m.measure()) {
-                        if(valueAsserts.getOrDefault(measurement.getStatistic(), measurement.getValue()) != measurement.getValue()) {
+                        if (valueAsserts.getOrDefault(measurement.getStatistic(), measurement.getValue()) != measurement.getValue()) {
                             return false;
                         }
                     }
@@ -463,14 +314,20 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     class MeterId implements Meter.Id {
         private final String name;
         private final List<Tag> tags;
-        private final Meter.Type type;
-        private final String baseUnit;
+        private String baseUnit;
+        private final String description;
 
-        MeterId(String name, Iterable<Tag> tags, Meter.Type type, String baseUnit) {
+        /**
+         * Set after this id has been bound to a specific meter, effectively precluding it from use by a meter of a
+         * different type.
+         */
+        private Meter.Type type;
+
+        MeterId(String name, Iterable<Tag> tags, String baseUnit, String description) {
             this.name = name;
             this.tags = Stream.concat(stream(tags.spliterator(), false), commonTags.stream()).collect(Collectors.toList());
-            this.type = type;
             this.baseUnit = baseUnit;
+            this.description = description;
         }
 
         @Override
@@ -484,8 +341,17 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         }
 
         @Override
+        public String getBaseUnit() {
+            return baseUnit;
+        }
+
+        @Override
         public String getConventionName() {
             return namingConvention.name(name, type, baseUnit);
+        }
+
+        public String getDescription() {
+            return description;
         }
 
         /**
@@ -521,20 +387,36 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
             result = 31 * result + (tags != null ? tags.hashCode() : 0);
             return result;
         }
-    }
 
-    private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Type type, String name, Iterable<Tag> tags, String baseUnit, Function<MeterId, Meter> builder) {
-        if(name.isEmpty()) {
-            throw new IllegalArgumentException("Name must be non-empty");
+        public void setType(Meter.Type type) {
+            this.type = type;
         }
 
+        @Override
+        public void setBaseUnit(String baseUnit) {
+            this.baseUnit = baseUnit;
+        }
+    }
+
+    private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id, Function<Meter.Id, Meter> builder) {
         synchronized (meterMap) {
-            Meter m = meterMap.computeIfAbsent(new MeterId(name, tags, type, baseUnit), builder);
+            MeterId idWithCommonTags = new MeterId(id.getName(), Tags.concat(id.getTags(), config().commonTags()),
+                id.getBaseUnit(), id.getDescription());
+
+            Meter m = meterMap.computeIfAbsent(idWithCommonTags, builder);
             if (!meterClass.isInstance(m)) {
                 throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
             }
             //noinspection unchecked
             return (M) m;
         }
+    }
+
+    @Override
+    public Meter.Id createId(String name, Iterable<Tag> tag, String description, String baseUnit) {
+        if (name.isEmpty()) {
+            throw new IllegalArgumentException("Name must be non-empty");
+        }
+        return new MeterId(name, tag, baseUnit, description);
     }
 }

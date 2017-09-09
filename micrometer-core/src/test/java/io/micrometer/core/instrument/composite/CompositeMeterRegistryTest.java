@@ -16,12 +16,15 @@
 package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.NamingConvention;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.micrometer.core.instrument.Statistic.Count;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,7 +41,26 @@ class CompositeMeterRegistryTest {
         composite.counter("counter").increment();
     }
 
+    @DisplayName("base units on meters that support them are passed through underlying registries")
+    @Test
+    void baseUnitsPreserved() {
+        SimpleMeterRegistry simple = new SimpleMeterRegistry();
+        composite.add(simple);
+
+        Counter.builder("counter").baseUnit("bytes").register(composite);
+        DistributionSummary.builder("summary").baseUnit("bytes").register(composite);
+        Gauge.builder("gauge", new AtomicInteger(0), AtomicInteger::get).baseUnit("bytes").register(composite);
+
+        assertThat(simple.find("counter").counter())
+            .hasValueSatisfying(c -> assertThat(c.getId().getBaseUnit()).isEqualTo("bytes"));
+        assertThat(simple.find("summary").summary())
+            .hasValueSatisfying(s -> assertThat(s.getId().getBaseUnit()).isEqualTo("bytes"));
+        assertThat(simple.find("gauge").gauge())
+            .hasValueSatisfying(g -> assertThat(g.getId().getBaseUnit()).isEqualTo("bytes"));
+    }
+
     @DisplayName("metrics stop receiving updates when their registry parent is removed from a composite")
+    @Test
     void metricAfterRegistryRemove() {
         SimpleMeterRegistry simple = new SimpleMeterRegistry();
         composite.add(simple);

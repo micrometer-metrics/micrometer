@@ -18,6 +18,7 @@ package io.micrometer.spring.scheduling;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.stats.quantile.WindowSketchQuantiles;
 import io.micrometer.core.instrument.util.AnnotationUtils;
@@ -61,14 +62,18 @@ public class ScheduledMethodMetrics {
 
         for (Timed timed : AnnotationUtils.findTimed(method).toArray(Timed[]::new)) {
             if(timed.longTask())
-                longTaskTimer = registry.more().longTaskTimer(timed.value(), timed.extraTags());
+                longTaskTimer = registry.more().longTaskTimer(registry.createId(timed.value(), Tags.zip(timed.extraTags()),
+                    "Timer of @Scheduled long task"));
             else {
-                Timer.Builder timerBuilder = registry.timerBuilder(timed.value())
-                        .tags(timed.extraTags());
+                Timer.Builder timerBuilder = Timer.builder(timed.value())
+                        .tags(timed.extraTags())
+                        .description("Timer of @Scheduled task");
+
                 if(timed.quantiles().length > 0) {
                     timerBuilder = timerBuilder.quantiles(WindowSketchQuantiles.quantiles(timed.quantiles()).create());
                 }
-                shortTaskTimer = timerBuilder.create();
+
+                shortTaskTimer = timerBuilder.register(registry);
             }
         }
 

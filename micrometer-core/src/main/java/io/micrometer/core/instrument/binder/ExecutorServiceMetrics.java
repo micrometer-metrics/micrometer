@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.internal.TimedExecutorService;
 
@@ -138,20 +139,40 @@ public class ExecutorServiceMetrics implements MeterBinder {
             return;
         }
 
-        // queued tasks = tasks - completed - active
-        registry.more().counter(name + ".tasks", emptyList(), tp, tpRef -> tpRef.getTaskCount() + tpRef.getCompletedTaskCount() + tpRef.getActiveCount());
-        registry.more().counter(name + ".completed", emptyList(), tp, ThreadPoolExecutor::getCompletedTaskCount);
+        registry.more().counter(registry.createId(name + ".completed", tags, null,
+                "The approximate total number of tasks that have completed execution"),
+            tp, ThreadPoolExecutor::getCompletedTaskCount);
 
-        registry.gauge(name + ".active", tp, ThreadPoolExecutor::getActiveCount);
-        registry.gauge(name + ".queue.size", tags, tp, tpRef -> tpRef.getQueue().size());
-        registry.gauge(name + ".pool.size", tags, tp, ThreadPoolExecutor::getPoolSize);
+        registry.gauge(registry.createId(name + ".active", tags, null,
+            "The approximate number of threads that are actively executing tasks"),
+            tp, ThreadPoolExecutor::getActiveCount);
+
+        registry.gauge(registry.createId(name + ".queued", tags,
+            "The approximate number of threads that are queued for execution"),
+            tp, tpRef -> tpRef.getQueue().size());
+
+        registry.gauge(registry.createId(name + ".pool", tags,
+            "The current number of threads in the pool"),
+        tp, ThreadPoolExecutor::getPoolSize);
     }
 
     private void monitor(MeterRegistry registry, ForkJoinPool fj) {
-        registry.more().counter(name + ".steal.count", emptyList(), fj, ForkJoinPool::getStealCount);
+        registry.more().counter(registry.createId(name + ".steals", emptyList(),
+            "Estimate of the total number of tasks stolen from " +
+                "one thread's work queue by another. The reported value " +
+                "underestimates the actual total number of steals when the pool " +
+                "is not quiescent"), fj, ForkJoinPool::getStealCount);
 
-        registry.gauge(name + ".queued.tasks", fj, ForkJoinPool::getQueuedTaskCount);
-        registry.gauge(name + ".active", fj, ForkJoinPool::getActiveThreadCount);
-        registry.gauge(name + ".running.threads", fj, ForkJoinPool::getRunningThreadCount);
+        registry.gauge(registry.createId(name + ".queued", tags,
+            "An estimate of the total number of tasks currently held in queues by worker threads"),
+            fj, ForkJoinPool::getQueuedTaskCount);
+
+        registry.gauge(registry.createId(name + ".active", tags,
+            "An estimate of the number of threads that are currently stealing or executing tasks"),
+            fj, ForkJoinPool::getActiveThreadCount);
+
+        registry.gauge(registry.createId(name + ".running", tags,
+            "An estimate of the number of worker threads that are not blocked waiting to join tasks or for other managed synchronization",
+            "threads"), fj, ForkJoinPool::getRunningThreadCount);
     }
 }

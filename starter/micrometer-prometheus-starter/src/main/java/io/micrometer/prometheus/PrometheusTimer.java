@@ -26,8 +26,8 @@ import java.util.concurrent.TimeUnit;
 public class PrometheusTimer extends AbstractTimer {
     private CustomPrometheusSummary.Child summary;
 
-    PrometheusTimer(Meter.Id id, String description, CustomPrometheusSummary.Child summary, Clock clock) {
-        super(id, description, clock);
+    PrometheusTimer(Meter.Id id, CustomPrometheusSummary.Child summary, Clock clock) {
+        super(id, clock);
         this.summary = summary;
     }
 

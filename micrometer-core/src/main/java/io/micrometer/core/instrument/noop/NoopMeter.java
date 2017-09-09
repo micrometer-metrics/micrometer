@@ -37,6 +37,16 @@ public abstract class NoopMeter implements Meter {
             }
 
             @Override
+            public String getBaseUnit() {
+                return null;
+            }
+
+            @Override
+            public String getDescription() {
+                return null;
+            }
+
+            @Override
             public String getConventionName() {
                 return "noop";
             }
@@ -45,12 +55,16 @@ public abstract class NoopMeter implements Meter {
             public List<Tag> getConventionTags() {
                 return Collections.emptyList();
             }
-        };
-    }
 
-    @Override
-    public String getDescription() {
-        return null;
+            @Override
+            public void setType(Type type) {
+            }
+
+            @Override
+            public void setBaseUnit(String baseUnit) {
+
+            }
+        };
     }
 
     @Override

@@ -19,6 +19,8 @@ import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.GcInfo;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 
 import javax.management.NotificationEmitter;
 import javax.management.openmbean.CompositeData;
@@ -31,6 +33,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static java.util.Collections.emptyList;
+
 /**
  * Record metrics that report a number of statistics related to garbage
  * collection emanating from the MXBean and also adds information about GC causes.
@@ -40,37 +44,37 @@ import java.util.concurrent.atomic.AtomicLong;
 public class JvmGcMetrics implements MeterBinder {
     private String youngGenPoolName;
     private String oldGenPoolName;
+    private Iterable<Tag> tags;
 
     public JvmGcMetrics() {
+        this(emptyList());
+    }
+
+    public JvmGcMetrics(Iterable<Tag> tags) {
         for (MemoryPoolMXBean mbean : ManagementFactory.getMemoryPoolMXBeans()) {
             if (isYoungGenPool(mbean.getName()))
                 youngGenPoolName = mbean.getName();
             if (isOldGenPool(mbean.getName()))
                 oldGenPoolName = mbean.getName();
         }
+        this.tags = tags;
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        // Max size of old generation memory pool
         AtomicLong maxDataSize = new AtomicLong(0L);
-        registry.gaugeBuilder("jvm.gc.max.data.size", maxDataSize, AtomicLong::get)
-            .baseUnit("bytes")
-            .create();
+        registry.gauge(registry.createId("jvm.gc.max.data.size", tags,
+            "Max size of old generation memory pool", "bytes"), maxDataSize, AtomicLong::get);
 
-        // Size of old generation memory pool after a full GC
         AtomicLong liveDataSize = new AtomicLong(0L);
-        registry.gaugeBuilder("jvm.gc.live.data.size", liveDataSize, AtomicLong::get)
-            .baseUnit("bytes")
-            .create();
+        registry.gauge(registry.createId("jvm.gc.live.data.size", tags,
+            "Size of old generation memory pool after a full GC", "bytes"), liveDataSize, AtomicLong::get);
 
-        // Incremented for any positive increases in the size of the old generation memory pool
-        // before GC to after GC
-        Counter promotionRate = registry.counter("jvm.gc.promotion.rate");
+        Counter promotionRate = registry.counter(registry.createId("jvm.gc.promotion.rate", tags,
+            "Count of positive increases in the size of the old generation memory pool before GC to after GC"));
 
-        // Incremented for the increase in the size of the young generation memory pool after one GC
-        // to before the next
-        Counter allocationRate = registry.counter("jvm.gc.allocation.rate");
+        Counter allocationRate = registry.counter(registry.createId("jvm.gc.allocation.rate", tags,
+            "Incremented for an increase in the size of the young generation memory pool after one GC to before the next"));
 
         // start watching for GC notifications
         final AtomicLong youngGenSizeAfter = new AtomicLong(0L);
@@ -83,9 +87,17 @@ public class JvmGcMetrics implements MeterBinder {
                         CompositeData cd = (CompositeData) notification.getUserData();
                         GarbageCollectionNotificationInfo notificationInfo = GarbageCollectionNotificationInfo.from(cd);
 
-                        registry.timer((isConcurrentPhase(notificationInfo) ? "jvm.gc.concurrent.phase.time" : "jvm.gc.pause"),
-                                "action", notificationInfo.getGcAction(), "cause", notificationInfo.getGcCause()
-                        ).record(notificationInfo.getGcInfo().getDuration(), TimeUnit.MILLISECONDS);
+                        if(isConcurrentPhase(notificationInfo)) {
+                            registry.timer(registry.createId("jvm.gc.concurrent.phase.time",
+                                Tags.zip("action", notificationInfo.getGcAction(), "cause", notificationInfo.getGcCause()),
+                                "Time spent in concurrent phase"), null, null)
+                                .record(notificationInfo.getGcInfo().getDuration(), TimeUnit.MILLISECONDS);
+                        } else {
+                            registry.timer(registry.createId("jvm.gc.pause",
+                                Tags.zip("action", notificationInfo.getGcAction(), "cause", notificationInfo.getGcCause()),
+                                "Time spent in GC pause"), null, null)
+                                .record(notificationInfo.getGcInfo().getDuration(), TimeUnit.MILLISECONDS);
+                        }
 
                         GcInfo gcInfo = notificationInfo.getGcInfo();
 

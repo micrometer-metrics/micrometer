@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.simple;
 
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter;
@@ -24,13 +25,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class SimpleLongTaskTimer extends AbstractSimpleMeter implements LongTaskTimer {
+public class SimpleLongTaskTimer extends AbstractMeter implements LongTaskTimer {
     private final ConcurrentMap<Long, Long> tasks = new ConcurrentHashMap<>();
     private final AtomicLong nextTask = new AtomicLong(0L);
     private final Clock clock;
 
-    public SimpleLongTaskTimer(Meter.Id id, String description, Clock clock) {
-        super(id, description);
+    public SimpleLongTaskTimer(Meter.Id id, Clock clock) {
+        super(id);
         this.clock = clock;
     }
 

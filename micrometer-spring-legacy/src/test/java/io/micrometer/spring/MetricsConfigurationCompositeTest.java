@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @TestPropertySource(properties = {
     "metrics.useGlobalRegistry=false",
-    "metrics.datadog.enabled=false"
+    "metrics.datadog.enabled=false" // this requires an API key
 })
 public class MetricsConfigurationCompositeTest {
     @Autowired

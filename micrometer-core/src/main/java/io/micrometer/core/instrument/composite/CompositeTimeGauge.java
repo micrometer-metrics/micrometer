@@ -15,38 +15,26 @@
  */
 package io.micrometer.core.instrument.composite;
 
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 
-public class CompositeCustomMeter implements CompositeMeter {
-    private final Meter.Id id;
-    private final Meter.Type type;
-    private final Iterable<Measurement> measurements;
+import java.util.concurrent.TimeUnit;
+import java.util.function.ToDoubleFunction;
 
-    public CompositeCustomMeter(Meter.Id id, Type type, Iterable<Measurement> measurements) {
-        this.id = id;
-        this.type = type;
-        this.measurements = measurements;
-    }
+public class CompositeTimeGauge<T> extends CompositeGauge<T> {
+    private final TimeUnit fUnit;
 
-    @Override
-    public Id getId() {
-        return id;
-    }
-
-    @Override
-    public Iterable<Measurement> measure() {
-        return measurements;
+    CompositeTimeGauge(Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
+        super(id, obj, f);
+        this.fUnit = fUnit;
     }
 
     @Override
     public void add(MeterRegistry registry) {
-        registry.register(id, type, measurements);
-    }
-
-    @Override
-    public void remove(MeterRegistry registry) {
-        // do nothing
+        T obj = ref.get();
+        if(obj != null) {
+            synchronized (gauges) {
+                gauges.put(registry, registry.more().timeGauge(getId(), obj, fUnit, f));
+            }
+        }
     }
 }

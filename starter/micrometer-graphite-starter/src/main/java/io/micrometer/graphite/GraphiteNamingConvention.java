@@ -50,7 +50,7 @@ public class GraphiteNamingConvention implements NamingConvention {
      */
     private String format(String name) {
         String sanitized = Normalizer.normalize(name, Normalizer.Form.NFKD);
-        sanitized = NamingConvention.camelCase.tagKey(name);
+        sanitized = NamingConvention.camelCase.tagKey(sanitized);
         return blacklistedChars.matcher(sanitized).replaceAll("_");
     }
 }

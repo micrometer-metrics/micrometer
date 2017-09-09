@@ -27,9 +27,9 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
-import static io.micrometer.core.instrument.LazyMetrics.lazyCounter;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -53,6 +53,7 @@ class MeterRegistryInjectionTest {
     void injectWithDagger() {
         DagConfiguration conf = DaggerDagConfiguration.create();
         MyComponent component = conf.component();
+        component.after(); // @PostConstruct is not automatically called
         component.performanceCriticalFeature();
         assertThat(component.registry)
                 .isInstanceOf(SimpleMeterRegistry.class)
@@ -63,6 +64,7 @@ class MeterRegistryInjectionTest {
     void injectWithGuice() {
         Injector injector = Guice.createInjector(new GuiceConfiguration());
         MyComponent component = injector.getInstance(MyComponent.class);
+        component.after(); // @PostConstruct is not automatically called
         component.performanceCriticalFeature();
         assertThat(component.registry)
                 .isInstanceOf(SimpleMeterRegistry.class)
@@ -114,7 +116,12 @@ class MyComponent {
     @Inject MeterRegistry registry;
 
     // for performance-critical uses, it is best to store a meter in a field
-    Counter counter = lazyCounter(() -> registry.counter("feature.counter"));
+    Counter counter;
+
+    @PostConstruct
+    public void after() {
+        counter = registry.counter("feature.counter");
+    }
 
     void performanceCriticalFeature() {
         counter.increment();

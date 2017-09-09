@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 
 /**
@@ -46,40 +47,48 @@ public class CompositeMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles) {
-        CompositeTimer timer = new CompositeTimer(id, description, quantiles, histogram, clock);
+    protected Timer newTimer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
+        CompositeTimer timer = new CompositeTimer(id, quantiles, histogram, clock);
         compositeMeters.add(timer);
         registries.forEach(timer::add);
         return timer;
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, String description, Histogram.Builder<?> histogram, Quantiles quantiles) {
-        CompositeDistributionSummary ds = new CompositeDistributionSummary(id, description, quantiles, histogram);
+    protected DistributionSummary newDistributionSummary(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
+        CompositeDistributionSummary ds = new CompositeDistributionSummary(id, quantiles, histogram);
         compositeMeters.add(ds);
         registries.forEach(ds::add);
         return ds;
     }
 
     @Override
-    protected Counter newCounter(Meter.Id id, String description) {
-        CompositeCounter counter = new CompositeCounter(id, description);
+    protected Counter newCounter(Meter.Id id) {
+        CompositeCounter counter = new CompositeCounter(id);
         compositeMeters.add(counter);
         registries.forEach(counter::add);
         return counter;
     }
 
     @Override
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id, String description) {
-        CompositeLongTaskTimer longTaskTimer = new CompositeLongTaskTimer(id, description);
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
+        CompositeLongTaskTimer longTaskTimer = new CompositeLongTaskTimer(id);
         compositeMeters.add(longTaskTimer);
         registries.forEach(longTaskTimer::add);
         return longTaskTimer;
     }
 
     @Override
-    protected <T> Gauge newGauge(Meter.Id id, String description, ToDoubleFunction<T> f, T obj) {
-        CompositeGauge<T> gauge = new CompositeGauge<>(id, description, obj, f);
+    protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+        CompositeGauge<T> gauge = new CompositeGauge<>(id, obj, f);
+        compositeMeters.add(gauge);
+        registries.forEach(gauge::add);
+        return gauge;
+    }
+
+    @Override
+    protected <T> Gauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
+        CompositeTimeGauge<T> gauge = new CompositeTimeGauge<>(id, obj, fUnit, f);
         compositeMeters.add(gauge);
         registries.forEach(gauge::add);
         return gauge;

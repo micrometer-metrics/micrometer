@@ -26,8 +26,6 @@ public interface Meter {
      */
     Meter.Id getId();
 
-    String getDescription();
-
     /**
      * Get a set of measurements. Should always return
      * the same number of measurements and in the same order, regardless of the
@@ -57,8 +55,23 @@ public interface Meter {
     interface Id {
         String getName();
         Iterable<Tag> getTags();
+        String getBaseUnit();
+        String getDescription();
 
         String getConventionName();
         List<Tag> getConventionTags();
+
+        /**
+         * Associate this id with a specific type, sometimes used in the determinatio of a
+         * convention name. This association is 1-1 since an id can only be used once per registry
+         * across all types.
+         */
+        void setType(Meter.Type type);
+
+        /**
+         * For use by registry implementations to change the identifier's base unit when it is determined
+         * solely by the implementation, e.g. identifiers associated with timers.
+         */
+        void setBaseUnit(String baseUnit);
     }
 }

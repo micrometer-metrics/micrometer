@@ -16,6 +16,7 @@
 package io.micrometer.spring.export.prometheus;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.micrometer.spring.export.MetricsExporter;
 import io.prometheus.client.CollectorRegistry;
@@ -32,8 +33,8 @@ import org.springframework.context.annotation.Configuration;
 public class PrometheusExportConfiguration {
     @ConditionalOnProperty(value = "metrics.prometheus.enabled", matchIfMissing = true)
     @Bean
-    MetricsExporter prometheusExporter(CollectorRegistry collectorRegistry, Clock clock) {
-        return () -> new PrometheusMeterRegistry(collectorRegistry, clock);
+    MetricsExporter prometheusExporter(PrometheusConfig config, CollectorRegistry collectorRegistry, Clock clock) {
+        return () -> new PrometheusMeterRegistry(config, collectorRegistry, clock);
     }
 
     @ConditionalOnMissingBean

@@ -18,7 +18,9 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -109,18 +111,48 @@ public interface Timer extends Meter {
         return Type.Timer;
     }
 
-    interface Builder {
-        Builder quantiles(Quantiles quantiles);
+    static Builder builder(String name) {
+        return new Builder(name);
+    }
 
-        Builder histogram(Histogram.Builder<?> histogram);
+    class Builder {
+        private final String name;
+        private Quantiles quantiles;
+        private Histogram.Builder<?> histogram;
+        private final List<Tag> tags = new ArrayList<>();
+        private String description;
 
-        Builder tags(Iterable<Tag> tags);
-        default Builder tags(String... tags) {
+        private Builder(String name) {
+            this.name = name;
+        }
+
+        public Builder quantiles(Quantiles quantiles) {
+            this.quantiles = quantiles;
+            return this;
+        }
+
+        public Builder histogram(Histogram.Builder<?> histogram) {
+            this.histogram = histogram;
+            return this;
+        }
+
+        public Builder tags(Iterable<Tag> tags) {
+            tags.forEach(this.tags::add);
+            return this;
+        }
+
+        public Builder tags(String... tags) {
             return tags(Tags.zip(tags));
         }
 
-        Builder description(String description);
+        public Builder description(String description) {
+            this.description = description;
+            return this;
+        }
 
-        Timer create();
+        public Timer register(MeterRegistry registry) {
+            // the base unit for a timer will be determined by the monitoring system if it is part of the convention name
+            return registry.timer(registry.createId(name, tags, description), histogram, quantiles);
+        }
     }
 }

@@ -16,7 +16,7 @@
 package io.micrometer.core.benchmark;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.simple.*;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.runner.Runner;
@@ -27,6 +27,8 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import static java.util.Collections.emptyList;
 
 /**
  * @author Dmitry Poluyanov
@@ -39,7 +41,6 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 public class SimpleMeasureBenchmark {
-
     private Timer timer;
     private LongTaskTimer longTaskTimer;
     private Counter counter;
@@ -60,38 +61,15 @@ public class SimpleMeasureBenchmark {
 
     @Setup
     public void setup() {
-        String name = "tested.timer";
-        List<Tag> tags = Arrays.asList(Tag.of("tag1", "v1"), Tag.of("tag2", "v2"));
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        timer = registry.timer("timer");
+        longTaskTimer = registry.more().longTaskTimer(registry.createId("longTask", emptyList(), null));
+        counter = registry.counter("counter");
 
-        Meter.Id id = new Meter.Id() {
-
-            @Override
-            public String getName() {
-                return name;
-            }
-
-            @Override
-            public Iterable<Tag> getTags() {
-                return tags;
-            }
-
-            @Override
-            public String getConventionName() {
-                return name;
-            }
-
-            @Override
-            public List<Tag> getConventionTags() {
-                return tags;
-            }
-        };
-        
-        timer = new SimpleTimer(id, "", Clock.SYSTEM, null, null);
-        longTaskTimer = new SimpleLongTaskTimer(id, "", Clock.SYSTEM);
-        counter = new SimpleCounter(id, "");
         List<Integer> testListReference = Arrays.asList(1, 2);
-        gauge = new SimpleGauge<>(id, "", testListReference, List::size);
-        distributionSummary = new SimpleDistributionSummary(id, "", null, null);
+        gauge = registry.gauge(registry.createId("gauge", emptyList(), null), testListReference, List::size);
+
+        distributionSummary = registry.summary("summary");
     }
 
     @Benchmark

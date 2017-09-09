@@ -17,19 +17,13 @@ package io.micrometer.core.instrument;
 
 public abstract class AbstractMeter implements Meter {
     private final Meter.Id id;
-    private final String description;
 
-    public AbstractMeter(Id id, String description) {
+    public AbstractMeter(Id id) {
         this.id = id;
-        this.description = description;
     }
 
     @Override
     public Id getId() {
         return id;
-    }
-
-    public String getDescription() {
-        return description;
     }
 }

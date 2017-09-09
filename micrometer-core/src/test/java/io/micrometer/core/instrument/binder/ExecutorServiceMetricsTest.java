@@ -70,18 +70,18 @@ class ExecutorServiceMetricsTest {
         pool.submit(() -> System.out.println("boop"));
 
         taskStart.await(1, TimeUnit.SECONDS);
-        assertThat(registry.find("beep.pool.queue.size").value(Value, 1.0).gauge()).isPresent();
+        assertThat(registry.find("beep.pool.queued").value(Value, 1.0).gauge()).isPresent();
 
         taskComplete.countDown();
         pool.awaitTermination(1, TimeUnit.SECONDS);
 
         assertThat(registry.find("beep.pool").value(Count, 2.0).timer()).isPresent();
-        assertThat(registry.find("beep.pool.queue.size").value(Value, 0.0).gauge()).isPresent();
+        assertThat(registry.find("beep.pool.queued").value(Value, 0.0).gauge()).isPresent();
     }
 
     private void assertThreadPoolExecutorMetrics() {
-        assertThat(registry.find("exec.tasks").meter()).isPresent();
-        assertThat(registry.find("exec.queue.size").gauge()).isPresent();
-        assertThat(registry.find("exec.pool.size").gauge()).isPresent();
+        assertThat(registry.find("exec.completed").meter()).isPresent();
+        assertThat(registry.find("exec.queued").gauge()).isPresent();
+        assertThat(registry.find("exec.pool").gauge()).isPresent();
     }
 }

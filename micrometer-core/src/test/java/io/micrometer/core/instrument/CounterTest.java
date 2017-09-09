@@ -62,7 +62,7 @@ class CounterTest {
     @ArgumentsSource(MeterRegistriesProvider.class)
     void functionTrackingCounter(MeterRegistry registry) {
         AtomicLong n = new AtomicLong(0);
-        registry.more().counter("tracking", emptyList(), n);
+        registry.more().counter(registry.createId("tracking", emptyList(), null), n);
         n.incrementAndGet();
 
         clock(registry).addAndGet(1, TimeUnit.SECONDS);

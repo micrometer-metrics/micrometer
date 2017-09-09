@@ -32,7 +32,7 @@ public class TimerSample {
     public static void main(String[] args) {
         MeterRegistry registry = SampleRegistries.atlas();
         GKQuantiles quantiles = GKQuantiles.quantiles(0.95, 0.5).error(0.05).create();
-        Timer timer = registry.timerBuilder("timer").quantiles(quantiles).create();
+        Timer timer = Timer.builder("timer").quantiles(quantiles).register(registry);
 
         RandomEngine r = new MersenneTwister64(0);
         Normal incomingRequests = new Normal(0, 1, r);
