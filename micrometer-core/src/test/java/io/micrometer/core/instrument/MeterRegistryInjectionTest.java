@@ -18,9 +18,6 @@ package io.micrometer.core.instrument;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import dagger.Component;
-import dagger.Module;
-import dagger.Provides;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -49,16 +46,16 @@ class MeterRegistryInjectionTest {
                 .matches(r -> r.find("feature.counter").counter().isPresent());
     }
 
-    @Test
-    void injectWithDagger() {
-        DagConfiguration conf = DaggerDagConfiguration.create();
-        MyComponent component = conf.component();
-        component.after(); // @PostConstruct is not automatically called
-        component.performanceCriticalFeature();
-        assertThat(component.registry)
-                .isInstanceOf(SimpleMeterRegistry.class)
-                .matches(r -> r.find("feature.counter").counter().isPresent());
-    }
+//    @Test
+//    void injectWithDagger() {
+//        DagConfiguration conf = DaggerDagConfiguration.create();
+//        MyComponent component = conf.component();
+//        component.after(); // @PostConstruct is not automatically called
+//        component.performanceCriticalFeature();
+//        assertThat(component.registry)
+//                .isInstanceOf(SimpleMeterRegistry.class)
+//                .matches(r -> r.find("feature.counter").counter().isPresent());
+//    }
 
     @Test
     void injectWithGuice() {
@@ -79,18 +76,18 @@ class MeterRegistryInjectionTest {
     }
 }
 
-@Component(modules = DagConfiguration.RegistryConf.class)
-interface DagConfiguration {
-    MyComponent component();
-
-    @Module
-    class RegistryConf {
-        @Provides
-        static MeterRegistry registry() {
-            return new SimpleMeterRegistry();
-        }
-    }
-}
+//@Component(modules = DagConfiguration.RegistryConf.class)
+//interface DagConfiguration {
+//    MyComponent component();
+//
+//    @Module
+//    class RegistryConf {
+//        @Provides
+//        static MeterRegistry registry() {
+//            return new SimpleMeterRegistry();
+//        }
+//    }
+//}
 
 @Configuration
 class SpringConfiguration {
