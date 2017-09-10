@@ -69,3 +69,7 @@ dependencies {
     samplesCompile 'org.springframework.integration:spring-integration-ws'
     samplesCompile 'org.springframework.integration:spring-integration-xml'
 }
+
+license {
+    exclude "**/META-INF/*.json"
+}
