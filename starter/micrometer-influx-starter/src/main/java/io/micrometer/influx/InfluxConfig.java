@@ -76,7 +76,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      * {@code http://localhost:8086/write}.
      */
     default String uri() {
-        String v = get(prefix() + "uri");
+        String v = get(prefix() + ".uri");
         return (v == null) ? "http://localhost:8086/write" : v;
     }
 
