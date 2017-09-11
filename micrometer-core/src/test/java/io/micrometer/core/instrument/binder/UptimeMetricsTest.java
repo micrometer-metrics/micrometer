@@ -40,6 +40,7 @@ class UptimeMetricsTest {
         new UptimeMetrics().bindTo(registry);
 
         assertThat(registry.find("uptime").meter()).isPresent();
+        assertThat(registry.find("starttime").meter()).isPresent();
     }
 
     @Test
@@ -47,9 +48,11 @@ class UptimeMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         RuntimeMXBean runtimeMXBean = mock(RuntimeMXBean.class);
         when(runtimeMXBean.getUptime()).thenReturn(1337L);
+        when(runtimeMXBean.getStartTime()).thenReturn(4711L);
         new UptimeMetrics(runtimeMXBean, emptyList()).bindTo(registry);
 
         assertThat(registry.find("uptime").value(Statistic.Value, 1.337e9).meter()).isPresent();
+        assertThat(registry.find("starttime").value(Statistic.Value, 4.711e9).meter()).isPresent();
     }
 
 }
