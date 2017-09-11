@@ -36,7 +36,7 @@ dependencies {
     testCompile 'org.junit.jupiter:junit-jupiter-params:5.0.0-M5'
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.0-M5'
 
-	testCompile "org.mockito:mockito-core:2.+"
+	testCompile "org.mockito:mockito-core:2.10.0"
 
     testCompile 'javax.inject:javax.inject:1'
     testCompile 'org.springframework:spring-context:4.3.9.RELEASE'
