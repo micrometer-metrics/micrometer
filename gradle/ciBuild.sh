@@ -11,16 +11,17 @@ elif [ -z $CIRCLE_TAG ]; then
   openssl aes-256-cbc -d -in gradle.properties.enc -out gradle.properties -k $KEY
   ./gradlew clean build $SWITCHES
 elif [ $CIRCLE_TAG ]; then
-  echo -e 'Build Branch for Release => Branch ['$CIRCLE_BRANCH']  Tag ['$CIRCLE_TAG']'
-  openssl aes-256-cbc -d -in gradle.properties.enc -out gradle.properties -k $KEY
-  case "$CIRCLE_TAG" in
-  *-rc\.*)
-    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true clean build candidate $SWITCHES
-    ;;
-  *)
-    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true clean build final $SWITCHES
-    ;;
-  esac
+  echo "Release builds are disabled until we can work out CircleCI timeouts"
+#  echo -e 'Build Branch for Release => Branch ['$CIRCLE_BRANCH']  Tag ['$CIRCLE_TAG']'
+#  openssl aes-256-cbc -d -in gradle.properties.enc -out gradle.properties -k $KEY
+#  case "$CIRCLE_TAG" in
+#  *-rc\.*)
+#    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true clean build candidate $SWITCHES
+#    ;;
+#  *)
+#    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true clean build final $SWITCHES
+#    ;;
+#  esac
 else
   echo -e 'WARN: Should not be here => Branch ['$CIRCLE_BRANCH']  Tag ['$CIRCLE_TAG']  Pull Request ['$CIRCLE_PR_NUMBER']'
   ./gradlew clean build $SWITCHES
