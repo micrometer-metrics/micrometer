@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static io.micrometer.core.instrument.MockClock.clock;
 import static io.micrometer.core.instrument.Statistic.Count;
 import static io.micrometer.core.instrument.Statistic.Total;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -95,8 +96,9 @@ class MeterRegistryTest {
         Timer t = registry.timer("timer");
         t.record(10, TimeUnit.NANOSECONDS);
 
-        assertThat(registry.find("counter").value(Count, 1.0).counter()).isPresent();
+        clock(registry).addAndGet(1, TimeUnit.SECONDS);
 
+        assertThat(registry.find("counter").value(Count, 1.0).counter()).isPresent();
         assertThat(registry.find("timer").value(Count, 1.0).timer()).isPresent();
         assertThat(registry.find("timer").value(Total, 10.0).timer()).isPresent();
     }

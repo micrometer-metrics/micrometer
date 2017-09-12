@@ -35,7 +35,7 @@ class CompositeCounter extends AbstractMeter implements Counter, CompositeMeter 
     @Override
     public void increment(double amount) {
         synchronized (counters) {
-            counters.values().forEach(Counter::increment);
+            counters.values().forEach(c -> c.increment(amount));
         }
     }
 

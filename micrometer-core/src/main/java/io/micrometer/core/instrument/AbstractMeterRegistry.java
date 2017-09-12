@@ -273,6 +273,11 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
         @Override
         public Optional<Meter> meter() {
+            return meters().stream().findAny();
+        }
+
+        @Override
+        public Collection<Meter> meters() {
             return meterMap.keySet().stream()
                 .filter(id -> id.getName().equals(name))
                 .filter(id -> {
@@ -287,25 +292,13 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
                     if(valueAsserts.isEmpty())
                         return true;
                     for (Measurement measurement : m.measure()) {
-                        if (valueAsserts.getOrDefault(measurement.getStatistic(), measurement.getValue()) != measurement.getValue()) {
+                        if (valueAsserts.containsKey(measurement.getStatistic()) &&
+                            Math.abs(valueAsserts.get(measurement.getStatistic()) - measurement.getValue()) > 1e-7) {
                             return false;
                         }
                     }
                     return true;
                 })
-                .findAny();
-        }
-
-        @Override
-        public Collection<Meter> meters() {
-            return meterMap.keySet().stream()
-                .filter(id -> id.getName().equals(name))
-                .filter(id -> {
-                    List<Tag> idTags = new ArrayList<>();
-                    id.getTags().forEach(idTags::add);
-                    return idTags.containsAll(tags);
-                })
-                .map(meterMap::get)
                 .collect(Collectors.toList());
         }
     }

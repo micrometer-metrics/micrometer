@@ -31,8 +31,10 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static io.micrometer.core.instrument.Statistic.Count;
+import static io.micrometer.core.instrument.Statistic.Total;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
@@ -70,6 +72,8 @@ public class ScheduledMethodMetricsTest {
         // make sure longBeep continues running until we have a chance to observe it in the active state
         longTaskShouldComplete.countDown();
         while(scheduler.getActiveCount() > 0) {}
+
+        Thread.sleep(10);
 
         assertThat(registry.find("long.beep").value(Count, 0.0).longTaskTimer()).isPresent();
     }
