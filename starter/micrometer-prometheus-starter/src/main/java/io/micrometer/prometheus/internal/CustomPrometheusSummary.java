@@ -16,12 +16,14 @@
 package io.micrometer.prometheus.internal;
 
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.NamingConvention;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.stats.hist.Bucket;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 import io.prometheus.client.Collector;
 
+import java.rmi.Naming;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -40,20 +42,16 @@ import static java.util.stream.StreamSupport.stream;
  * @author Jon Schneider
  */
 public class CustomPrometheusSummary extends Collector {
-    private final String name;
-    private final String description;
+    private final PrometheusCollectorId id;
     private final String countName;
     private final String sumName;
-    private final List<String> tagKeys;
 
     private final Collection<Child> children = new ConcurrentLinkedQueue<>();
 
-    public CustomPrometheusSummary(Meter.Id id) {
-        this.name = id.getConventionName();
-        this.description = id.getDescription();
-        this.countName = name + "_count";
-        this.sumName = name + "_sum";
-        this.tagKeys = id.getConventionTags().stream().map(Tag::getKey).collect(toList());
+    public CustomPrometheusSummary(PrometheusCollectorId id) {
+        this.id = id;
+        this.countName = id.getName() + "_count";
+        this.sumName = id.getName() + "_sum";
     }
 
     public Child child(Iterable<Tag> tags, Quantiles quantiles, Histogram histogram) {
@@ -80,12 +78,12 @@ public class CustomPrometheusSummary extends Collector {
             this.tagValues = stream(tags.spliterator(), false).map(Tag::getValue).collect(toList());
 
             if (quantiles != null) {
-                quantileKeys = new LinkedList<>(tagKeys);
+                quantileKeys = new LinkedList<>(id.getTagKeys());
                 quantileKeys.add("quantile");
             }
 
             if (histogram != null) {
-                histogramKeys = new LinkedList<>(tagKeys);
+                histogramKeys = new LinkedList<>(id.getTagKeys());
                 if (histogram.isCumulative())
                     histogramKeys.add("le");
                 else // normal histograms may or may not have buckets with a natural ordering
@@ -101,7 +99,7 @@ public class CustomPrometheusSummary extends Collector {
                 for (Double q : quantiles.monitored()) {
                     List<String> quantileValues = new LinkedList<>(tagValues);
                     quantileValues.add(Collector.doubleToGoString(q));
-                    samples.add(new MetricFamilySamples.Sample(name, quantileKeys, quantileValues, quantiles.get(q)));
+                    samples.add(new MetricFamilySamples.Sample(id.getName(), quantileKeys, quantileValues, quantiles.get(q)));
                 }
             }
 
@@ -110,12 +108,12 @@ public class CustomPrometheusSummary extends Collector {
                     List<String> histogramValues = new LinkedList<>(tagValues);
                     histogramValues.add(b.getTag(bucket ->
                             bucket instanceof Double ? Collector.doubleToGoString((Double) bucket) : bucket.toString()));
-                    samples.add(new MetricFamilySamples.Sample(name + "_bucket", histogramKeys, histogramValues, b.getValue()));
+                    samples.add(new MetricFamilySamples.Sample(id.getName() + "_bucket", histogramKeys, histogramValues, b.getValue()));
                 }
             }
 
-            samples.add(new MetricFamilySamples.Sample(countName, tagKeys, tagValues, count.sum()));
-            samples.add(new MetricFamilySamples.Sample(sumName, tagKeys, tagValues, sum.sum()));
+            samples.add(new MetricFamilySamples.Sample(countName, id.getTagKeys(), tagValues, count.sum()));
+            samples.add(new MetricFamilySamples.Sample(sumName, id.getTagKeys(), tagValues, sum.sum()));
 
             return samples.build();
         }
@@ -143,7 +141,7 @@ public class CustomPrometheusSummary extends Collector {
     @Override
     public List<MetricFamilySamples> collect() {
         Type type = children.stream().anyMatch(c -> c.histogram != null) ? Type.HISTOGRAM : Type.SUMMARY;
-        return Collections.singletonList(new MetricFamilySamples(name, type, description == null ? " " : description, children.stream()
+        return Collections.singletonList(new MetricFamilySamples(id.getName(), type, id.getDescription(), children.stream()
                 .flatMap(Child::collect).collect(toList())));
     }
 }

@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.prometheus.internal.CustomPrometheusCollector;
 import io.micrometer.prometheus.internal.CustomPrometheusLongTaskTimer;
 import io.micrometer.prometheus.internal.CustomPrometheusSummary;
+import io.micrometer.prometheus.internal.PrometheusCollectorId;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Gauge;
@@ -38,6 +39,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Jon Schneider
@@ -75,9 +78,9 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public Counter newCounter(Meter.Id id) {
-        io.prometheus.client.Counter counter = collectorByName(io.prometheus.client.Counter.class, id.getConventionName(),
+        io.prometheus.client.Counter counter = collectorByName(io.prometheus.client.Counter.class, getConventionName(id),
             n -> buildCollector(id, io.prometheus.client.Counter.build()));
-        return new PrometheusCounter(id, counter.labels(id.getConventionTags().stream()
+        return new PrometheusCounter(id, counter.labels(getConventionTags(id).stream()
             .map(Tag::getValue)
             .collect(Collectors.toList())
             .toArray(new String[]{})));
@@ -85,18 +88,18 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     public DistributionSummary newDistributionSummary(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
-        final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, id.getConventionName(),
-            n -> new CustomPrometheusSummary(id).register(registry));
-        return new PrometheusDistributionSummary(id, summary.child(id.getConventionTags(), quantiles,
+        final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, getConventionName(id),
+            n -> new CustomPrometheusSummary(collectorId(id)).register(registry));
+        return new PrometheusDistributionSummary(id, summary.child(getConventionTags(id), quantiles,
             buildHistogramIfNecessary(histogram)));
     }
 
     @Override
     protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
         id.setBaseUnit("seconds");
-        final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, id.getConventionName(),
-            n -> new CustomPrometheusSummary(id).register(registry));
-        return new PrometheusTimer(id, summary.child(id.getConventionTags(), quantiles,
+        final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, getConventionName(id),
+            n -> new CustomPrometheusSummary(collectorId(id)).register(registry));
+        return new PrometheusTimer(id, summary.child(getConventionTags(id), quantiles,
             buildHistogramIfNecessary(histogram)), config().clock());
     }
 
@@ -108,10 +111,10 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     @Override
     protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
         final WeakReference<T> ref = new WeakReference<>(obj);
-        io.prometheus.client.Gauge gauge = collectorByName(Gauge.class, id.getConventionName(),
+        io.prometheus.client.Gauge gauge = collectorByName(Gauge.class, getConventionName(id),
             i -> buildCollector(id, io.prometheus.client.Gauge.build()));
 
-        String[] labelValues = id.getConventionTags().stream()
+        String[] labelValues = getConventionTags(id).stream()
             .map(Tag::getValue)
             .collect(Collectors.toList())
             .toArray(new String[]{});
@@ -130,14 +133,14 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        final CustomPrometheusLongTaskTimer longTaskTimer = collectorByName(CustomPrometheusLongTaskTimer.class, id.getConventionName(),
-            n -> new CustomPrometheusLongTaskTimer(id, config().clock()).register(registry));
-        return new PrometheusLongTaskTimer(id, longTaskTimer.child(id.getConventionTags()));
+        final CustomPrometheusLongTaskTimer longTaskTimer = collectorByName(CustomPrometheusLongTaskTimer.class, getConventionName(id),
+            n -> new CustomPrometheusLongTaskTimer(collectorId(id), config().clock()).register(registry));
+        return new PrometheusLongTaskTimer(id, longTaskTimer.child(getConventionTags(id)));
     }
 
     @Override
     protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
-        CustomPrometheusCollector c = (CustomPrometheusCollector) collectorMap.computeIfAbsent(id.getConventionName(), name2 -> {
+        CustomPrometheusCollector c = (CustomPrometheusCollector) collectorMap.computeIfAbsent(getConventionName(id), name2 -> {
             Collector.Type promType = Collector.Type.UNTYPED;
             switch (type) {
                 case Counter:
@@ -152,12 +155,12 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
                     break;
             }
 
-            Collector collector = new CustomPrometheusCollector(id, promType);
+            Collector collector = new CustomPrometheusCollector(id, config().namingConvention(), promType);
             registry.register(collector);
             return collector;
         });
 
-        c.child(id.getConventionTags(), measurements);
+        c.child(getConventionTags(id), measurements);
     }
 
     /**
@@ -170,9 +173,9 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     private <B extends SimpleCollector.Builder<B, C>, C extends SimpleCollector<D>, D> C buildCollector(Meter.Id id,
                                                                                                         SimpleCollector.Builder<B, C> builder) {
         return builder
-            .name(id.getConventionName())
+            .name(getConventionName(id))
             .help(!sendDescriptions || id.getDescription() == null ? " " : id.getDescription())
-            .labelNames(id.getConventionTags().stream()
+            .labelNames(getConventionTags(id).stream()
                 .map(Tag::getKey)
                 .collect(Collectors.toList())
                 .toArray(new String[]{}))
@@ -194,5 +197,11 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     protected <T> io.micrometer.core.instrument.Gauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
         id.setBaseUnit("seconds");
         return newGauge(id, obj, obj2 -> TimeUtils.convert(f.applyAsDouble(obj2), fUnit, TimeUnit.SECONDS));
+    }
+
+    private PrometheusCollectorId collectorId(Meter.Id id) {
+        return new PrometheusCollectorId(getConventionName(id),
+            getConventionTags(id).stream().map(Tag::getKey).collect(toList()),
+            id.getDescription());
     }
 }

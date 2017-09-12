@@ -49,7 +49,7 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     protected Counter newCounter(Meter.Id id) {
-        return new DropwizardCounter(id, registry.meter(nameMapper.toHierarchicalName(id)));
+        return new DropwizardCounter(id, registry.meter(hierarchicalName(id)));
     }
 
     @Override
@@ -59,7 +59,7 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
             T obj2 = ref.get();
             return obj2 != null ? f.applyAsDouble(ref.get()) : Double.NaN;
         };
-        registry.register(nameMapper.toHierarchicalName(id), gauge);
+        registry.register(hierarchicalName(id), gauge);
         return new DropwizardGauge(id, gauge);
     }
 
@@ -67,14 +67,14 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
     protected Timer newTimer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
         id.setBaseUnit("nanoseconds");
         registerQuantilesGaugeIfNecessary(id, quantiles);
-        return new DropwizardTimer(id, registry.timer(nameMapper.toHierarchicalName(id)), clock,
+        return new DropwizardTimer(id, registry.timer(hierarchicalName(id)), clock,
             quantiles, registerHistogramCounterIfNecessary(id, histogram));
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
         registerQuantilesGaugeIfNecessary(id, quantiles);
-        return new DropwizardDistributionSummary(id, registry.histogram(nameMapper.toHierarchicalName(id)),
+        return new DropwizardDistributionSummary(id, registry.histogram(hierarchicalName(id)),
             quantiles, registerHistogramCounterIfNecessary(id, histogram));
     }
 
@@ -101,19 +101,23 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
 
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
         LongTaskTimer ltt = new SimpleLongTaskTimer(id, clock);
-        registry.register(nameMapper.toHierarchicalName(id) + ".active", (Gauge<Integer>) ltt::activeTasks);
-        registry.register(nameMapper.toHierarchicalName(id) + ".duration", (Gauge<Double>) () -> ltt.duration(TimeUnit.NANOSECONDS));
+        registry.register(hierarchicalName(id) + ".active", (Gauge<Integer>) ltt::activeTasks);
+        registry.register(hierarchicalName(id) + ".duration", (Gauge<Double>) () -> ltt.duration(TimeUnit.NANOSECONDS));
         return ltt;
     }
 
     @Override
     protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
-        measurements.forEach(ms -> registry.register(nameMapper.toHierarchicalName(id), (Gauge<Double>) ms::getValue));
+        measurements.forEach(ms -> registry.register(hierarchicalName(id), (Gauge<Double>) ms::getValue));
     }
 
     @Override
     protected <T> io.micrometer.core.instrument.Gauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
         id.setBaseUnit("nanoseconds");
         return newGauge(id, obj, obj2 -> TimeUtils.convert(f.applyAsDouble(obj2), fUnit, TimeUnit.NANOSECONDS));
+    }
+    
+    private String hierarchicalName(Meter.Id id) {
+        return nameMapper.toHierarchicalName(id, config().namingConvention());
     }
 }

@@ -17,6 +17,9 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.ClassLoaderMetrics;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.stats.quantile.GKQuantiles;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
@@ -109,6 +112,16 @@ class PrometheusMeterRegistryTest {
             .contains("HELP gauge my gauge")
             .contains("HELP counter_total my counter")
             .contains("HELP long_task_timer_duration_seconds my long task timer");
+    }
+
+    @Test
+    void namingConventionOfCustomMeters() {
+        CompositeMeterRegistry composite = new CompositeMeterRegistry();
+        composite.add(registry);
+
+        registry.more().counter(registry.createId("my.custom", emptyList(), null), 0);
+        assertThat(registry.scrape())
+            .contains("my_custom");
     }
 
     private Condition<Enumeration<Collector.MetricFamilySamples>> withNameAndTagKey(String name, String tagKey) {

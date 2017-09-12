@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.noop;
 
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.NamingConvention;
 import io.micrometer.core.instrument.Tag;
 
 import java.util.Collections;
@@ -47,12 +48,12 @@ public abstract class NoopMeter implements Meter {
             }
 
             @Override
-            public String getConventionName() {
+            public String getConventionName(NamingConvention convention) {
                 return "noop";
             }
 
             @Override
-            public List<Tag> getConventionTags() {
+            public List<Tag> getConventionTags(NamingConvention convention) {
                 return Collections.emptyList();
             }
 

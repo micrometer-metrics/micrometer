@@ -16,14 +16,12 @@
 package io.micrometer.prometheus.internal;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.prometheus.client.Collector;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -36,22 +34,17 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
 public class CustomPrometheusLongTaskTimer extends Collector {
+    private final PrometheusCollectorId id;
     private final Clock clock;
-    private final String name;
     private final String activeTasksName;
     private final String durationName;
-    private final String description;
-    private final List<String> tagKeys;
     private final Collection<Child> children = new ConcurrentLinkedQueue<>();
 
-    public CustomPrometheusLongTaskTimer(Meter.Id id, Clock clock) {
-        this.name = id.getConventionName();
-        this.description = id.getDescription();
+    public CustomPrometheusLongTaskTimer(PrometheusCollectorId id, Clock clock) {
+        this.id = id;
         this.clock = clock;
-        this.tagKeys = id.getConventionTags().stream().map(Tag::getKey).collect(toList());
-
-        this.activeTasksName = name + "_active_count";
-        this.durationName = name + "_sum";
+        this.activeTasksName = id.getName() + "_active_count";
+        this.durationName = id.getName() + "_sum";
     }
 
     public Child child(Iterable<Tag> tags) {
@@ -72,8 +65,8 @@ public class CustomPrometheusLongTaskTimer extends Collector {
         @Override
         public Stream<MetricFamilySamples.Sample> collect() {
             Stream.Builder<MetricFamilySamples.Sample> samples = Stream.builder();
-            samples.add(new MetricFamilySamples.Sample(activeTasksName, tagKeys, tagValues, activeTasks()));
-            samples.add(new MetricFamilySamples.Sample(durationName, tagKeys, tagValues, duration(TimeUnit.SECONDS)));
+            samples.add(new MetricFamilySamples.Sample(activeTasksName, id.getTagKeys(), tagValues, activeTasks()));
+            samples.add(new MetricFamilySamples.Sample(durationName, id.getTagKeys(), tagValues, duration(TimeUnit.SECONDS)));
             return samples.build();
         }
 
@@ -114,7 +107,7 @@ public class CustomPrometheusLongTaskTimer extends Collector {
 
     @Override
     public List<MetricFamilySamples> collect() {
-        return Collections.singletonList(new MetricFamilySamples(name, Type.UNTYPED, description == null ? " " : description, children.stream()
+        return Collections.singletonList(new MetricFamilySamples(id.getName(), Type.UNTYPED, id.getDescription(), children.stream()
                 .flatMap(Child::collect).collect(toList())));
     }
 }

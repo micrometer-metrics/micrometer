@@ -93,7 +93,7 @@ public class AtlasMeterRegistry extends StepSpectatorMeterRegistry {
         if (histogram != null && histogram.create(TimeUnit.NANOSECONDS, Histogram.Type.Normal).isPercentiles()) {
             // scale nanosecond precise quantile values to seconds
             registerQuantilesGaugeIfNecessary(id, quantiles, t -> t / 1.0e6);
-            com.netflix.spectator.api.Timer timer = PercentileTimer.get(getSpectatorRegistry(), getSpectatorRegistry().createId(id.getConventionName(), toSpectatorTags(id.getConventionTags())));
+            com.netflix.spectator.api.Timer timer = PercentileTimer.get(getSpectatorRegistry(), getSpectatorRegistry().createId(getConventionName(id), toSpectatorTags(getConventionTags(id))));
             return new SpectatorTimer(id, timer, clock, quantiles, null);
         }
 
@@ -104,8 +104,8 @@ public class AtlasMeterRegistry extends StepSpectatorMeterRegistry {
     protected DistributionSummary newDistributionSummary(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
         if(histogram != null && histogram.create(TimeUnit.NANOSECONDS, Histogram.Type.Normal).isPercentiles()) {
             registerQuantilesGaugeIfNecessary(id, quantiles, UnaryOperator.identity());
-            com.netflix.spectator.api.DistributionSummary ds = PercentileDistributionSummary.get(getSpectatorRegistry(), getSpectatorRegistry().createId(id.getConventionName(),
-                toSpectatorTags(id.getConventionTags())));
+            com.netflix.spectator.api.DistributionSummary ds = PercentileDistributionSummary.get(getSpectatorRegistry(), getSpectatorRegistry().createId(getConventionName(id),
+                toSpectatorTags(getConventionTags(id))));
             return new SpectatorDistributionSummary(id, ds, quantiles, null);
         }
 

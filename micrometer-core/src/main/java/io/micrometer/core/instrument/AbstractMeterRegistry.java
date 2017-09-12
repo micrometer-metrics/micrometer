@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.internal.MeterId;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
@@ -102,6 +103,14 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     protected abstract void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements);
 
     protected abstract <T> Gauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f);
+
+    protected List<Tag> getConventionTags(Meter.Id id) {
+        return id.getConventionTags(config().namingConvention());
+    }
+
+    protected String getConventionName(Meter.Id id) {
+        return id.getConventionName(config().namingConvention());
+    }
 
     @Override
     public Meter register(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
@@ -311,95 +320,10 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         return meterMap.values();
     }
 
-    class MeterId implements Meter.Id {
-        private final String name;
-        private final List<Tag> tags;
-        private String baseUnit;
-        private final String description;
-
-        /**
-         * Set after this id has been bound to a specific meter, effectively precluding it from use by a meter of a
-         * different type.
-         */
-        private Meter.Type type;
-
-        MeterId(String name, Iterable<Tag> tags, String baseUnit, String description) {
-            this.name = name;
-            this.tags = Stream.concat(stream(tags.spliterator(), false), commonTags.stream()).collect(Collectors.toList());
-            this.baseUnit = baseUnit;
-            this.description = description;
-        }
-
-        @Override
-        public String getName() {
-            return name;
-        }
-
-        @Override
-        public Iterable<Tag> getTags() {
-            return tags;
-        }
-
-        @Override
-        public String getBaseUnit() {
-            return baseUnit;
-        }
-
-        @Override
-        public String getConventionName() {
-            return namingConvention.name(name, type, baseUnit);
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        /**
-         * Tags that are sorted by key and formatted
-         */
-        @Override
-        public List<Tag> getConventionTags() {
-            return tags.stream()
-                .map(t -> Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())))
-                .sorted(Comparator.comparing(Tag::getKey))
-                .collect(Collectors.toList());
-        }
-
-        @Override
-        public String toString() {
-            return "MeterId{" +
-                "name='" + name + '\'' +
-                ", tags=" + tags +
-                '}';
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            MeterId meterId = (MeterId) o;
-            return (name != null ? name.equals(meterId.name) : meterId.name == null) && (tags != null ? tags.equals(meterId.tags) : meterId.tags == null);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = name != null ? name.hashCode() : 0;
-            result = 31 * result + (tags != null ? tags.hashCode() : 0);
-            return result;
-        }
-
-        public void setType(Meter.Type type) {
-            this.type = type;
-        }
-
-        @Override
-        public void setBaseUnit(String baseUnit) {
-            this.baseUnit = baseUnit;
-        }
-    }
-
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id, Function<Meter.Id, Meter> builder) {
         synchronized (meterMap) {
+            // If the id is coming down from a composite registry it will already have the common tags of the composite.
+            // This adds common tags of the registry within the composite.
             MeterId idWithCommonTags = new MeterId(id.getName(), Tags.concat(id.getTags(), config().commonTags()),
                 id.getBaseUnit(), id.getDescription());
 
@@ -413,10 +337,10 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     }
 
     @Override
-    public Meter.Id createId(String name, Iterable<Tag> tag, String description, String baseUnit) {
+    public Meter.Id createId(String name, Iterable<Tag> tags, String description, String baseUnit) {
         if (name.isEmpty()) {
             throw new IllegalArgumentException("Name must be non-empty");
         }
-        return new MeterId(name, tag, baseUnit, description);
+        return new MeterId(name, Tags.concat(tags, config().commonTags()), baseUnit, description);
     }
 }

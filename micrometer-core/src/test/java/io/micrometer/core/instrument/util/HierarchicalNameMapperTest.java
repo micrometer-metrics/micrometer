@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.util;
 
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.NamingConvention;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import org.junit.jupiter.api.Test;
@@ -29,13 +30,11 @@ import static org.assertj.core.api.Assertions.fail;
  * @author Jon Schneider
  */
 class HierarchicalNameMapperTest {
-
     @Test
     void buildHierarchicalNameFromDimensionalId() {
         HierarchicalNameMapper mapper = HierarchicalNameMapper.DEFAULT;
         String name = mapper.toHierarchicalName(
             new Meter.Id() {
-
                 @Override
                 public String getName() {
                     fail("should not be used");
@@ -59,12 +58,12 @@ class HierarchicalNameMapperTest {
                 }
 
                 @Override
-                public String getConventionName() {
+                public String getConventionName(NamingConvention convention) {
                     return "httpRequests";
                 }
 
                 @Override
-                public List<Tag> getConventionTags() {
+                public List<Tag> getConventionTags(NamingConvention convention) {
                     return Tags.zip("status", "200", "method", "GET");
                 }
 
@@ -75,7 +74,8 @@ class HierarchicalNameMapperTest {
                 @Override
                 public void setBaseUnit(String baseUnit) {
                 }
-            }
+            },
+            NamingConvention.snakeCase
         );
         assertThat(name).isEqualTo("httpRequests.method.GET.status.200");
     }

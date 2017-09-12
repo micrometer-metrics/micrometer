@@ -58,8 +58,8 @@ public interface Meter {
         String getBaseUnit();
         String getDescription();
 
-        String getConventionName();
-        List<Tag> getConventionTags();
+        String getConventionName(NamingConvention convention);
+        List<Tag> getConventionTags(NamingConvention convention);
 
         /**
          * Associate this id with a specific type, sometimes used in the determinatio of a
