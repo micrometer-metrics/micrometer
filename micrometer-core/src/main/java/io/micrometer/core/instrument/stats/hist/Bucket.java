@@ -62,4 +62,12 @@ public class Bucket<T> {
     public long getValue() {
         return value.longValue();
     }
+
+    @Override
+    public String toString() {
+        return "Bucket{" +
+            "tag='" + tag + '\'' +
+            ", value=" + value +
+            '}';
+    }
 }

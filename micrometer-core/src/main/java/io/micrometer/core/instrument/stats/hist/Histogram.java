@@ -171,8 +171,8 @@ public class Histogram<T> {
                 Bucket<T> bucket;
 
                 if (isCumulative()) {
-                    Map.Entry<T, Bucket<T>> ceiling = buckets.ceilingEntry(tag);
-                    bucket = new Bucket<>(tag, percentiles, ceiling == null ? 1 : ceiling.getValue().getValue() + 1);
+                    Map.Entry<T, Bucket<T>> floor = buckets.floorEntry(tag);
+                    bucket = new Bucket<>(tag, percentiles, floor == null ? 1 : floor.getValue().getValue() + 1);
                 } else bucket = new Bucket<>(tag, percentiles, 1);
 
                 bucketListeners.forEach(listener -> listener.bucketAdded(bucket));

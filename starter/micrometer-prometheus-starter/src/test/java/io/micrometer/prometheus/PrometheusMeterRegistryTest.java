@@ -16,10 +16,7 @@
 package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.binder.ClassLoaderMetrics;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.stats.quantile.GKQuantiles;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
@@ -28,13 +25,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**

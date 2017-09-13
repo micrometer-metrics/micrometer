@@ -15,15 +15,34 @@
  */
 package io.micrometer.core.instrument.stats.hist;
 
+import io.micrometer.core.Issue;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CumulativeHistogramTest {
     // registry implementation knows its monitoring backend requires seconds as the base unit of time
     private TimeUnit timeUnit = TimeUnit.SECONDS;
+
+    @Issue("#120")
+    @Test
+    void dynamicallyAddBucketsAsSamplesAreSeen() {
+        Histogram<Double> histogram = Histogram.linear(0, 10, 20).create(timeUnit, Histogram.Type.Cumulative);
+
+        histogram.observe(15);
+        histogram.observe(75);
+        histogram.observe(5);
+
+        Map<Double, Long> buckets = histogram.getBuckets().stream()
+            .collect(Collectors.toMap(b -> Double.parseDouble(b.getTag()), Bucket::getValue));
+        assertThat(buckets.get(10.0)).isEqualTo(1);
+        assertThat(buckets.get(20.0)).isEqualTo(2);
+        assertThat(buckets.get(80.0)).isEqualTo(3);
+    }
 
     @Test
     void linearBuckets() {
