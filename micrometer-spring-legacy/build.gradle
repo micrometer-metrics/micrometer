@@ -62,6 +62,10 @@ dependencies {
 
     testRuntime 'org.apache.httpcomponents:httpclient:4.4+'
 
+    testCompile 'org.springframework.integration:spring-integration-java-dsl'
+    testCompile 'org.springframework.integration:spring-integration-ws'
+    testCompile 'org.springframework.integration:spring-integration-xml'
+
     samplesCompile 'colt:colt:1.2.0'
     samplesCompile 'org.springframework.boot:spring-boot-starter-web'
     samplesCompile 'org.springframework.boot:spring-boot-actuator'
