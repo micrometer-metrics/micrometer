@@ -39,7 +39,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
      */
     private final List<Tag> commonTags = new ArrayList<>();
 
-    private final ConcurrentMap<Meter.Id, Meter> meterMap = new ConcurrentHashMap<>();
+    private final Map<Meter.Id, Meter> meterMap = new HashMap<>();
 
     /**
      * We'll use snake case as a general-purpose default for registries because it is the most
@@ -114,26 +114,28 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
     @Override
     public Meter register(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
-        return meterMap.computeIfAbsent(id, id2 -> {
-            id2.setType(type);
-            newMeter(id2, type, measurements);
-            return new Meter() {
-                @Override
-                public Id getId() {
-                    return id2;
-                }
+        synchronized (meterMap) {
+            return meterMap.computeIfAbsent(id, id2 -> {
+                id2.setType(type);
+                newMeter(id2, type, measurements);
+                return new Meter() {
+                    @Override
+                    public Id getId() {
+                        return id2;
+                    }
 
-                @Override
-                public Type getType() {
-                    return type;
-                }
+                    @Override
+                    public Type getType() {
+                        return type;
+                    }
 
-                @Override
-                public Iterable<Measurement> measure() {
-                    return measurements;
-                }
-            };
-        });
+                    @Override
+                    public Iterable<Measurement> measure() {
+                        return measurements;
+                    }
+                };
+            });
+        }
     }
 
     @Override
@@ -278,28 +280,30 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
         @Override
         public Collection<Meter> meters() {
-            return meterMap.keySet().stream()
-                .filter(id -> id.getName().equals(name))
-                .filter(id -> {
-                    if(tags.isEmpty())
-                        return true;
-                    List<Tag> idTags = new ArrayList<>();
-                    id.getTags().forEach(idTags::add);
-                    return idTags.containsAll(tags);
-                })
-                .map(meterMap::get)
-                .filter(m -> {
-                    if(valueAsserts.isEmpty())
-                        return true;
-                    for (Measurement measurement : m.measure()) {
-                        if (valueAsserts.containsKey(measurement.getStatistic()) &&
-                            Math.abs(valueAsserts.get(measurement.getStatistic()) - measurement.getValue()) > 1e-7) {
-                            return false;
+            synchronized (meterMap) {
+                return meterMap.keySet().stream()
+                    .filter(id -> id.getName().equals(name))
+                    .filter(id -> {
+                        if (tags.isEmpty())
+                            return true;
+                        List<Tag> idTags = new ArrayList<>();
+                        id.getTags().forEach(idTags::add);
+                        return idTags.containsAll(tags);
+                    })
+                    .map(meterMap::get)
+                    .filter(m -> {
+                        if (valueAsserts.isEmpty())
+                            return true;
+                        for (Measurement measurement : m.measure()) {
+                            if (valueAsserts.containsKey(measurement.getStatistic()) &&
+                                Math.abs(valueAsserts.get(measurement.getStatistic()) - measurement.getValue()) > 1e-7) {
+                                return false;
+                            }
                         }
-                    }
-                    return true;
-                })
-                .collect(Collectors.toList());
+                        return true;
+                    })
+                    .collect(Collectors.toList());
+            }
         }
     }
 
@@ -314,12 +318,12 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     }
 
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id, Function<Meter.Id, Meter> builder) {
-        synchronized (meterMap) {
-            // If the id is coming down from a composite registry it will already have the common tags of the composite.
-            // This adds common tags of the registry within the composite.
-            MeterId idWithCommonTags = new MeterId(id.getName(), Tags.concat(id.getTags(), config().commonTags()),
-                id.getBaseUnit(), id.getDescription());
+        // If the id is coming down from a composite registry it will already have the common tags of the composite.
+        // This adds common tags of the registry within the composite.
+        MeterId idWithCommonTags = new MeterId(id.getName(), Tags.concat(id.getTags(), config().commonTags()),
+            id.getBaseUnit(), id.getDescription());
 
+        synchronized (meterMap) {
             Meter m = meterMap.computeIfAbsent(idWithCommonTags, builder);
             if (!meterClass.isInstance(m)) {
                 throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");

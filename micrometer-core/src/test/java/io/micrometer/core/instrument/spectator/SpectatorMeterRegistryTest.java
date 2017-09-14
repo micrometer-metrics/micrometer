@@ -41,25 +41,25 @@ class SpectatorMeterRegistryTest {
     @DisplayName("quantiles are registered as a separate gauge")
     @Test
     void quantiles() {
-        SpectatorMeterRegistry registry = new SpectatorMeterRegistry(new DefaultRegistry(), Clock.SYSTEM) {};
+        SpectatorMeterRegistry registry = new SpectatorMeterRegistry(null, new DefaultRegistry(), Clock.SYSTEM) {};
         Registry spectatorRegistry = registry.getSpectatorRegistry();
 
         Timer timer = Timer.builder("timer")
-                .quantiles(GKQuantiles.quantiles(0.5, 0.95).create())
-                .register(registry);
+            .quantiles(GKQuantiles.quantiles(0.5, 0.95).create())
+            .register(registry);
 
         timer.record(100, TimeUnit.MILLISECONDS);
 
         DistributionSummary.builder("ds")
-                .quantiles(GKQuantiles.quantiles(0.5).create())
-                .register(registry);
+            .quantiles(GKQuantiles.quantiles(0.5).create())
+            .register(registry);
 
         assertThat(spectatorRegistry).haveAtLeastOne(withNameAndQuantile("timer"));
         assertThat(spectatorRegistry).haveAtLeastOne(withNameAndQuantile("ds"));
 
         assertThat(spectatorRegistry).haveAtLeast(2,
-                new Condition<>(m -> quantilePredicate("timer").test(m.id()) && m.measure().iterator().next().value() != Double.NaN,
-                        "a meter with at least two quantiles where both quantiles have a value"));
+            new Condition<>(m -> quantilePredicate("timer").test(m.id()) && m.measure().iterator().next().value() != Double.NaN,
+                "a meter with at least two quantiles where both quantiles have a value"));
     }
 
     private Condition<Meter> withNameAndQuantile(String name) {

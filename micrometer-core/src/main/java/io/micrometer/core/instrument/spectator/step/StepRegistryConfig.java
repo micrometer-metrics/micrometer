@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.spectator.step;
 
-import com.netflix.spectator.api.RegistryConfig;
+import io.micrometer.core.instrument.spectator.SpectatorConf;
 
 import java.time.Duration;
 
@@ -25,12 +25,7 @@ import java.time.Duration;
  *
  * @author Jon Schneider
  */
-public interface StepRegistryConfig extends RegistryConfig {
-    /**
-     * Property prefix to prepend to configuration names.
-     */
-    String prefix();
-    
+public interface StepRegistryConfig extends SpectatorConf {
     /**
      * Returns the step size (reporting frequency) to use. The default is 10 seconds.
      */

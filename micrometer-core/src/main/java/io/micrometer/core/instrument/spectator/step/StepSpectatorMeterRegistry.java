@@ -34,8 +34,8 @@ import java.util.stream.StreamSupport;
 public abstract class StepSpectatorMeterRegistry extends SpectatorMeterRegistry {
     private long stepMillis;
 
-    public StepSpectatorMeterRegistry(Registry registry, Clock clock, long stepMillis) {
-        super(registry, clock);
+    public StepSpectatorMeterRegistry(StepRegistryConfig config, Registry registry, Clock clock, long stepMillis) {
+        super(config, registry, clock);
         this.stepMillis = stepMillis;
     }
 

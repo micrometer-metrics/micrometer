@@ -37,7 +37,7 @@ public class AtlasMeterRegistry extends StepSpectatorMeterRegistry {
     public AtlasMeterRegistry(AtlasConfig config, Clock clock) {
         // The Spectator Atlas registry will do tag formatting for us, so we'll just pass through
         // tag keys and values with the identity formatter.
-        super(new AtlasRegistry(new com.netflix.spectator.api.Clock() {
+        super(null, new AtlasRegistry(new com.netflix.spectator.api.Clock() {
             @Override
             public long wallTime() {
                 return clock.wallTime();

@@ -20,7 +20,7 @@ import io.micrometer.core.instrument.spectator.step.StepSpectatorMeterRegistry;
 
 public class InfluxMeterRegistry extends StepSpectatorMeterRegistry {
     public InfluxMeterRegistry(InfluxConfig config, Clock clock) {
-        super(new InfluxRegistry(config, new com.netflix.spectator.api.Clock() {
+        super(config, new InfluxRegistry(config, new com.netflix.spectator.api.Clock() {
             @Override
             public long wallTime() {
                 return clock.wallTime();

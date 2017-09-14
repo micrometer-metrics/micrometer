@@ -20,8 +20,8 @@ import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Measurement;
 import com.netflix.spectator.api.Registry;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.stats.hist.Bucket;
-import io.micrometer.core.instrument.stats.hist.Histogram;
+import io.micrometer.core.instrument.spectator.step.StepRegistryConfig;
+import io.micrometer.core.instrument.stats.hist.*;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 import io.micrometer.core.instrument.util.TimeUtils;
 
@@ -39,10 +39,12 @@ import static java.util.stream.StreamSupport.stream;
  */
 public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
     private final Registry registry;
+    private final SpectatorConf spectatorConf;
 
-    public SpectatorMeterRegistry(Registry registry, Clock clock) {
+    public SpectatorMeterRegistry(SpectatorConf config, Registry registry, Clock clock) {
         super(clock);
         this.registry = registry;
+        this.spectatorConf = config;
     }
 
     protected Collection<com.netflix.spectator.api.Tag> toSpectatorTags(Iterable<io.micrometer.core.instrument.Tag> tags) {
@@ -89,6 +91,17 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
     protected Histogram<?> registerHistogramCounterIfNecessary(Meter.Id id, Histogram.Builder<?> histogramBuilder) {
         if (histogramBuilder != null) {
             Histogram<?> hist = histogramBuilder.create(Histogram.Summation.Normal);
+
+            if(hist instanceof PercentileHistogram || hist instanceof PercentileTimeHistogram) {
+                @SuppressWarnings("unchecked") Histogram<Double> percentileHist = (Histogram<Double>) hist;
+
+                double max = (double) spectatorConf.timerPercentilesMax().toNanos();
+                double min = (double) spectatorConf.timerPercentilesMin().toNanos();
+
+                percentileHist.filterBuckets(BucketFilter.clampMax(max));
+                percentileHist.filterBuckets(BucketFilter.clampMin(min));
+            }
+
             for (Bucket<?> bucket : hist.getBuckets()) {
                 more().counter(createId(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.getTagString()), null),
                     bucket, Bucket::getValue);
