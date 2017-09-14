@@ -89,12 +89,14 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
 
     private Histogram<?> registerHistogramCounterIfNecessary(Meter.Id id, Histogram.Builder<?> histogramBuilder) {
         if (histogramBuilder != null) {
-            return histogramBuilder
-                .bucketListener(bucket -> {
-                    more().counter(createId(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.getTag()), null),
-                        bucket, Bucket::getValue);
-                })
-                .create(TimeUnit.NANOSECONDS, Histogram.Type.Normal);
+            Histogram<?> hist = histogramBuilder.create(Histogram.Summation.Normal);
+
+            for (Bucket<?> bucket : hist.getBuckets()) {
+                more().counter(createId(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.getTagString()), null),
+                    bucket, Bucket::getValue);
+            }
+
+            return hist;
         }
         return null;
     }

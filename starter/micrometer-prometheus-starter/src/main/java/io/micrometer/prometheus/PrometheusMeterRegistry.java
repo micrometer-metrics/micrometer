@@ -16,7 +16,7 @@
 package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.stats.hist.Histogram;
+import io.micrometer.core.instrument.stats.hist.*;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.prometheus.internal.CustomPrometheusCollector;
@@ -49,6 +49,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
     private final CollectorRegistry registry;
     private final ConcurrentMap<String, Collector> collectorMap = new ConcurrentHashMap<>();
     private final boolean sendDescriptions;
+    private final PrometheusConfig prometheusConfig;
 
     public PrometheusMeterRegistry(PrometheusConfig config) {
         this(config, new CollectorRegistry(), Clock.SYSTEM);
@@ -59,6 +60,7 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         this.registry = registry;
         this.config().namingConvention(new PrometheusNamingConvention());
         this.sendDescriptions = config.descriptions();
+        this.prometheusConfig = config;
     }
 
     /**
@@ -99,12 +101,35 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         id.setBaseUnit("seconds");
         final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, getConventionName(id),
             n -> new CustomPrometheusSummary(collectorId(id)).register(registry));
-        return new PrometheusTimer(id, summary.child(getConventionTags(id), quantiles,
-            buildHistogramIfNecessary(histogram)), config().clock());
+        return new PrometheusTimer(id, summary.child(getConventionTags(id), quantiles, buildHistogramIfNecessary(histogram)), config().clock());
     }
 
-    private Histogram<?> buildHistogramIfNecessary(Histogram.Builder<?> histogram) {
-        return histogram == null ? null : histogram.create(TimeUnit.SECONDS, Histogram.Type.Cumulative);
+    private <T> Histogram<T> buildHistogramIfNecessary(Histogram.Builder<T> builder) {
+        if(builder == null)
+            return null;
+
+        Histogram<T> hist = builder.create(Histogram.Summation.Cumulative);
+
+        if(hist instanceof PercentileHistogram || hist instanceof PercentileTimeHistogram) {
+            @SuppressWarnings("unchecked") Histogram<Double> percentileHist = (Histogram<Double>) hist;
+
+            // we divide nanos by 1e9 to get the fractional seconds value of the clamps
+            double max = (double) prometheusConfig.timerPercentilesMax().toNanos() / 1e9;
+            double min = (double) prometheusConfig.timerPercentilesMin().toNanos() / 1e9;
+
+            percentileHist.filterBuckets(BucketFilter.clampMax(max));
+            percentileHist.filterBuckets(BucketFilter.clampMin(min));
+        }
+        if(hist instanceof DoubleHistogram) {
+            ((DoubleHistogram) hist).infinityBucket();
+        }
+        if(hist instanceof TimeHistogram) {
+            TimeHistogram timeHist = (TimeHistogram) hist;
+            timeHist.bucketTimeScale(TimeUnit.SECONDS);
+            timeHist.infinityBucket();
+        }
+
+        return hist;
     }
 
     @SuppressWarnings("unchecked")

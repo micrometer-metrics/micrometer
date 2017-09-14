@@ -15,15 +15,12 @@
  */
 package io.micrometer.prometheus.internal;
 
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.NamingConvention;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.stats.hist.Bucket;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 import io.prometheus.client.Collector;
 
-import java.rmi.Naming;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -106,7 +103,7 @@ public class CustomPrometheusSummary extends Collector {
             if (histogram != null) {
                 for (Bucket<?> b : histogram.getBuckets()) {
                     List<String> histogramValues = new LinkedList<>(tagValues);
-                    histogramValues.add(b.getTag(bucket ->
+                    histogramValues.add(b.getTagString(bucket ->
                             bucket instanceof Double ? Collector.doubleToGoString((Double) bucket) : bucket.toString()));
                     samples.add(new MetricFamilySamples.Sample(id.getName() + "_bucket", histogramKeys, histogramValues, b.getValue()));
                 }

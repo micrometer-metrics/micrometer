@@ -15,10 +15,8 @@
  */
 package io.micrometer.spring.samples;
 
-import io.micrometer.core.instrument.binder.ClassLoaderMetrics;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages = "io.micrometer.spring.samples.components")
@@ -26,10 +24,5 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class PrometheusSample {
     public static void main(String[] args) {
         new SpringApplicationBuilder(PrometheusSample.class).profiles("prometheus").run(args);
-    }
-
-    @Bean
-    public ClassLoaderMetrics clm() {
-        return new ClassLoaderMetrics();
     }
 }

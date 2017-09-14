@@ -15,6 +15,8 @@
  */
 package io.micrometer.prometheus;
 
+import java.time.Duration;
+
 public interface PrometheusConfig {
     default String prefix() {
         return "prometheus";
@@ -38,4 +40,23 @@ public interface PrometheusConfig {
      *     Value for the key or null if no key is present.
      */
     String get(String k);
+
+    /**
+     * A bucket filter clamping the bucket domain of timer percentiles histograms to some max value.
+     * This is used to limit the number of buckets shipped to Prometheus to save on storage.
+     */
+    default Duration timerPercentilesMax() {
+        String v = get(prefix() + ".timerPercentilesMax");
+        return v == null ? Duration.ofMinutes(2) : Duration.parse(v);
+    }
+
+    /**
+     * A bucket filter clamping the bucket domain of timer percentiles histograms to some min value.
+     * This is used to limit the number of buckets shipped to Prometheus to save on storage.
+     */
+    default Duration timerPercentilesMin() {
+        String v = get(prefix() + ".timerPercentilesMin");
+        // default is 0.1 ms
+        return v == null ? Duration.ofNanos(100000) : Duration.parse(v);
+    }
 }

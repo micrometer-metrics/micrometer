@@ -15,17 +15,19 @@
  */
 package io.micrometer.core.instrument.stats.hist;
 
-import java.util.Collection;
+public class PercentileHistogram extends DoubleHistogram {
+    public PercentileHistogram(BucketFunction<Double> f, Summation summation) {
+        super(f, summation);
+    }
 
-/**
- * A mapping from an observed sample to a histogram bucket.
- *
- * @param <T> The type of each bucket
- *
- * @author Jon Schneider
- */
-public interface BucketFunction<T> {
-    T bucket(double d);
+    public static class Builder extends Histogram.Builder<Double> {
+        Builder() {
+            super(PercentileBucketFunction.INSTANCE);
+        }
 
-    Collection<? extends Bucket<T>> buckets();
+        @Override
+        public PercentileHistogram create(Summation defaultSummationMode) {
+            return new PercentileHistogram(f, summation);
+        }
+    }
 }

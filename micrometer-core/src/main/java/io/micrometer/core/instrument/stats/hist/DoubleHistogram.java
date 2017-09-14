@@ -15,17 +15,12 @@
  */
 package io.micrometer.core.instrument.stats.hist;
 
-import java.util.Collection;
+public class DoubleHistogram extends DefaultHistogram<Double> {
+    DoubleHistogram(BucketFunction<Double> f, Summation summation) {
+        super(f, summation);
+    }
 
-/**
- * A mapping from an observed sample to a histogram bucket.
- *
- * @param <T> The type of each bucket
- *
- * @author Jon Schneider
- */
-public interface BucketFunction<T> {
-    T bucket(double d);
-
-    Collection<? extends Bucket<T>> buckets();
+    public void infinityBucket() {
+        buckets.put(Double.POSITIVE_INFINITY, new Bucket<>(Double.POSITIVE_INFINITY, buckets.size()));
+    }
 }

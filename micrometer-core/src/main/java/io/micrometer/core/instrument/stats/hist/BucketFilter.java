@@ -15,6 +15,23 @@
  */
 package io.micrometer.core.instrument.stats.hist;
 
-public interface BucketListener<T> {
-    void bucketAdded(Bucket<T> bucket);
+/**
+ * @author Jon Schneider
+ */
+public interface BucketFilter<T> {
+    /**
+     * Rejects buckets greater than {@code max}.
+     */
+    static <U extends Comparable<U>> BucketFilter<U> clampMax(U max) {
+        return bucket -> bucket.getTag().compareTo(max) <= 0;
+    }
+
+    /**
+     * Rejects buckets less than {@code min}.
+     */
+    static <U extends Comparable<U>> BucketFilter<U> clampMin(U min) {
+        return bucket -> bucket.getTag().compareTo(min) >= 0;
+    }
+
+    boolean shouldPublish(Bucket<T> bucket);
 }

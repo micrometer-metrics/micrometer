@@ -18,6 +18,7 @@ package io.micrometer.spring.export.prometheus;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.micrometer.spring.export.DurationConverter;
 import io.micrometer.spring.export.MetricsExporter;
 import io.prometheus.client.CollectorRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -26,9 +27,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 @Configuration
 @ConditionalOnClass(name = "io.micrometer.prometheus.PrometheusMeterRegistry")
+@Import(DurationConverter.class)
 @EnableConfigurationProperties(PrometheusConfigurationProperties.class)
 public class PrometheusExportConfiguration {
     @ConditionalOnProperty(value = "metrics.prometheus.enabled", matchIfMissing = true)

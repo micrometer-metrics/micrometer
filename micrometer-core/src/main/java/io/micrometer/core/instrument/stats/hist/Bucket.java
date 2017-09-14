@@ -22,9 +22,9 @@ public class Bucket<T> {
     private final T tag;
 
     /**
-     * {@code true} if this bucket is used in an aggregable percentile approximation.
+     * The index of the bucket in its domain, prior to filtering
      */
-    private final boolean percentile;
+    private final Integer index;
 
     /**
      * Cached string representation of {@code tag}.
@@ -33,21 +33,20 @@ public class Bucket<T> {
 
     LongAdder value = new LongAdder();
 
-    public Bucket(T tag, boolean percentile, long initialValue) {
+    public Bucket(T tag, int index) {
         this.tag = tag;
-        this.percentile = percentile;
-        this.value.add(initialValue);
+        this.index = index;
     }
 
-    public boolean isPercentile() {
-        return percentile;
+    public T getTag() {
+        return tag;
     }
 
-    public String getTag() {
-        return getTag(Object::toString);
+    public String getTagString() {
+        return getTagString(Object::toString);
     }
 
-    public String getTag(Function<T, String> tagSerializer) {
+    public String getTagString(Function<T, String> tagSerializer) {
         if(tagStr != null)
             return tagStr;
         tagStr = tagSerializer == null ? tag.toString() : tagSerializer.apply(tag);
@@ -66,8 +65,12 @@ public class Bucket<T> {
     @Override
     public String toString() {
         return "Bucket{" +
-            "tag='" + tag + '\'' +
+            "tag=" + tag +
             ", value=" + value +
             '}';
+    }
+
+    public Integer getIndex() {
+        return index;
     }
 }

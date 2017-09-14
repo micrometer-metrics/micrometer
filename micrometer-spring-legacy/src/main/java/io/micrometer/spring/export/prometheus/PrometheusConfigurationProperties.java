@@ -20,6 +20,8 @@ import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.spring.export.RegistryConfigurationProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.time.Duration;
+
 /**
  * Exists solely to aid in autocompletion of Prometheus enablement in .properties and .yml.
  *
@@ -39,6 +41,14 @@ public class PrometheusConfigurationProperties extends RegistryConfigurationProp
 
     public void setDescriptions(Boolean descriptions) {
         set("descriptions", descriptions);
+    }
+
+    public void setTimerPercentilesMax(Duration percentilesMax) {
+        set("timerPercentilesMax", percentilesMax);
+    }
+
+    public void setTimerPercentilesMin(Duration percentilesMin) {
+        set("timerPercentilesMin", percentilesMin);
     }
 
     @Override
