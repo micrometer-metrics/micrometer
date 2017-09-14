@@ -56,7 +56,6 @@ public interface PrometheusConfig {
      */
     default Duration timerPercentilesMin() {
         String v = get(prefix() + ".timerPercentilesMin");
-        // default is 0.1 ms
-        return v == null ? Duration.ofNanos(100000) : Duration.parse(v);
+        return v == null ? Duration.ofMillis(10) : Duration.parse(v);
     }
 }

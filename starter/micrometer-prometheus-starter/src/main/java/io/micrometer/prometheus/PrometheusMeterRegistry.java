@@ -117,7 +117,8 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
             double max = (double) prometheusConfig.timerPercentilesMax().toNanos() / 1e9;
             double min = (double) prometheusConfig.timerPercentilesMin().toNanos() / 1e9;
 
-            percentileHist.filterBuckets(BucketFilter.clampMax(max));
+            BucketFilter<Double> clampMax = BucketFilter.clampMax(max);
+            percentileHist.filterBuckets(b -> b.getTag() == Double.POSITIVE_INFINITY || clampMax.shouldPublish(b));
             percentileHist.filterBuckets(BucketFilter.clampMin(min));
         }
         if(hist instanceof DoubleHistogram) {

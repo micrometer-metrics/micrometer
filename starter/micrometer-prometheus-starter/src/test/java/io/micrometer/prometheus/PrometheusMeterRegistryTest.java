@@ -17,6 +17,7 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.GKQuantiles;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Collections.emptyList;
@@ -120,6 +122,23 @@ class PrometheusMeterRegistryTest {
         registry.more().counter(registry.createId("my.custom", emptyList(), null), 0);
         assertThat(registry.scrape())
             .contains("my_custom");
+    }
+
+    @Test
+    void percentileTimersContainPositiveInfinity() {
+        Timer timer = Timer.builder("my.timer").histogram(Histogram.percentilesTime()).register(registry);
+        timer.record(1, TimeUnit.MILLISECONDS);
+
+        assertThat(registry.scrape()).contains("le=\"+Inf\"");
+    }
+
+    @Test
+    void percentileTimersAreClampedByDefault() {
+        Timer timer = Timer.builder("my.timer").histogram(Histogram.percentilesTime()).register(registry);
+        timer.record(1, TimeUnit.MILLISECONDS);
+
+        assertThat(Arrays.stream(registry.scrape().split("\n")).filter(l -> l.contains("le=")))
+            .hasSize(62);
     }
 
     private Condition<Enumeration<Collector.MetricFamilySamples>> withNameAndTagKey(String name, String tagKey) {
