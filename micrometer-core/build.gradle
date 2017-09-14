@@ -49,8 +49,8 @@ dependencies {
     testCompile 'org.assertj:assertj-core:3.+'
 
     ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx'].each { sys ->
-        samplesCompile project(":micrometer-$sys-starter")
-        testCompile project(":micrometer-$sys-starter")
+        samplesCompile project(":micrometer-registry-$sys")
+        testCompile project(":micrometer-registry-$sys")
     }
 
     jmh 'org.openjdk.jmh:jmh-core:latest.release'

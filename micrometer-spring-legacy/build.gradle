@@ -36,7 +36,7 @@ dependencies {
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
 
     ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx'].each { sys ->
-        compile project(":micrometer-$sys-starter"), optional
+        compile project(":micrometer-registry-$sys"), optional
     }
 
     compile 'org.springframework.integration:spring-integration-core', optional
