@@ -16,8 +16,8 @@
 package io.micrometer.spring.scheduling;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.ExecutorServiceMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.spring.SpringMeters;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -42,7 +42,7 @@ public class ExecutorServiceMetricsTest {
         ThreadPoolTaskExecutor exec = new ThreadPoolTaskExecutor();
         exec.initialize();
 
-        SpringMeters.monitor(registry, exec, "exec");
+        ExecutorServiceMetrics.monitor(registry, exec.getThreadPoolExecutor(), "exec");
         assertThreadPoolExecutorMetrics("exec");
     }
 
@@ -51,7 +51,7 @@ public class ExecutorServiceMetricsTest {
         ThreadPoolTaskScheduler sched = new ThreadPoolTaskScheduler();
         sched.initialize();
 
-        SpringMeters.monitor(registry, sched, "sched");
+        ExecutorServiceMetrics.monitor(registry, sched.getScheduledExecutor(), "sched");
         assertThreadPoolExecutorMetrics("sched");
     }
 

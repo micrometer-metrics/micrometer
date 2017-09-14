@@ -115,7 +115,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     @Override
     public Meter register(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         synchronized (meterMap) {
-            return meterMap.computeIfAbsent(id, id2 -> {
+            return registerMeterIfNecessary(Meter.class, id, id2 -> {
                 id2.setType(type);
                 newMeter(id2, type, measurements);
                 return new Meter() {
@@ -324,7 +324,12 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
             id.getBaseUnit(), id.getDescription());
 
         synchronized (meterMap) {
-            Meter m = meterMap.computeIfAbsent(idWithCommonTags, builder);
+            Meter m = meterMap.get(idWithCommonTags);
+            if(m == null) {
+                m = builder.apply(idWithCommonTags);
+                meterMap.put(idWithCommonTags, m);
+            }
+
             if (!meterClass.isInstance(m)) {
                 throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
             }

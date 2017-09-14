@@ -2,4 +2,4 @@ org.springframework.boot.env.EnvironmentPostProcessor=\
 io.micrometer.spring.MetricsEnvironmentPostProcessor
 
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-io.micrometer.spring.MetricsConfiguration
+io.micrometer.spring.autoconfigure.MetricsAutoConfiguration

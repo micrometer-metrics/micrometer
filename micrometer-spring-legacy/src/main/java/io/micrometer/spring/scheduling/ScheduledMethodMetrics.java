@@ -50,7 +50,7 @@ public class ScheduledMethodMetrics {
         if (method.getDeclaringClass().isInterface()) {
             try {
                 method = pjp.getTarget().getClass().getDeclaredMethod(pjp.getSignature().getName(),
-                        method.getParameterTypes());
+                    method.getParameterTypes());
             } catch (final SecurityException | NoSuchMethodException e) {
                 logger.warn("Unable to perform metrics timing on " + signature, e);
                 return pjp.proceed();
@@ -61,15 +61,15 @@ public class ScheduledMethodMetrics {
         LongTaskTimer longTaskTimer = null;
 
         for (Timed timed : AnnotationUtils.findTimed(method).toArray(Timed[]::new)) {
-            if(timed.longTask())
+            if (timed.longTask())
                 longTaskTimer = registry.more().longTaskTimer(registry.createId(timed.value(), Tags.zip(timed.extraTags()),
                     "Timer of @Scheduled long task"));
             else {
                 Timer.Builder timerBuilder = Timer.builder(timed.value())
-                        .tags(timed.extraTags())
-                        .description("Timer of @Scheduled task");
+                    .tags(timed.extraTags())
+                    .description("Timer of @Scheduled task");
 
-                if(timed.quantiles().length > 0) {
+                if (timed.quantiles().length > 0) {
                     timerBuilder = timerBuilder.quantiles(WindowSketchQuantiles.quantiles(timed.quantiles()).create());
                 }
 
@@ -77,14 +77,12 @@ public class ScheduledMethodMetrics {
             }
         }
 
-        if(shortTaskTimer != null && longTaskTimer != null) {
+        if (shortTaskTimer != null && longTaskTimer != null) {
             final Timer finalTimer = shortTaskTimer;
             return recordThrowable(longTaskTimer, () -> recordThrowable(finalTimer, pjp::proceed));
-        }
-        else if(shortTaskTimer != null) {
+        } else if (shortTaskTimer != null) {
             return recordThrowable(shortTaskTimer, pjp::proceed);
-        }
-        else if(longTaskTimer != null) {
+        } else if (longTaskTimer != null) {
             return recordThrowable(longTaskTimer, pjp::proceed);
         }
 

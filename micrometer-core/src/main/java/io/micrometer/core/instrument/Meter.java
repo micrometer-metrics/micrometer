@@ -62,7 +62,7 @@ public interface Meter {
         List<Tag> getConventionTags(NamingConvention convention);
 
         /**
-         * Associate this id with a specific type, sometimes used in the determinatio of a
+         * Associate this id with a specific type, sometimes used in the determination of a
          * convention name. This association is 1-1 since an id can only be used once per registry
          * across all types.
          */

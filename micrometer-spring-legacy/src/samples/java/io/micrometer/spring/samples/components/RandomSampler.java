@@ -35,8 +35,8 @@ public class RandomSampler {
 
     public RandomSampler(MeterRegistry registry) {
         this.summary = IntStream.range(0, 1)
-                .mapToObj(n -> registry.summary("random" + n))
-                .collect(Collectors.toList());
+            .mapToObj(n -> registry.summary("random" + n))
+            .collect(Collectors.toList());
     }
 
     @Scheduled(fixedRate = 10)

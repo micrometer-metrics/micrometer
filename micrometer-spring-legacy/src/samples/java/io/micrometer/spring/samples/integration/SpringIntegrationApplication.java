@@ -37,7 +37,7 @@ public class SpringIntegrationApplication {
         ConfigurableApplicationContext ctx = SpringApplication.run(SpringIntegrationApplication.class, args);
         TempConverter converter = ctx.getBean(TempConverter.class);
 
-        for(int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 1000; i++) {
             System.out.println(converter.fahrenheitToCelcius(68.0f));
             Thread.sleep(10);
         }
@@ -54,17 +54,17 @@ public class SpringIntegrationApplication {
     @Bean
     public IntegrationFlow convert() {
         return f -> f
-                .transform(payload ->
-                    "<FahrenheitToCelsius xmlns=\"https://www.w3schools.com/xml/\">"
-                            + "<Fahrenheit>" + payload + "</Fahrenheit>"
-                            + "</FahrenheitToCelsius>", e -> e.id("toXml"))
-                .enrichHeaders(h -> h
-                        .header(WebServiceHeaders.SOAP_ACTION,
-                                "https://www.w3schools.com/xml/FahrenheitToCelsius"))
-                .handle(new SimpleWebServiceOutboundGateway(
-                        "https://www.w3schools.com/xml/tempconvert.asmx"), e -> e.id("w3schools"))
-                .transform(Transformers.xpath("/*[local-name()=\"FahrenheitToCelsiusResponse\"]"
-                        + "/*[local-name()=\"FahrenheitToCelsiusResult\"]"), e -> e.id("toResponse"));
+            .transform(payload ->
+                "<FahrenheitToCelsius xmlns=\"https://www.w3schools.com/xml/\">"
+                    + "<Fahrenheit>" + payload + "</Fahrenheit>"
+                    + "</FahrenheitToCelsius>", e -> e.id("toXml"))
+            .enrichHeaders(h -> h
+                .header(WebServiceHeaders.SOAP_ACTION,
+                    "https://www.w3schools.com/xml/FahrenheitToCelsius"))
+            .handle(new SimpleWebServiceOutboundGateway(
+                "https://www.w3schools.com/xml/tempconvert.asmx"), e -> e.id("w3schools"))
+            .transform(Transformers.xpath("/*[local-name()=\"FahrenheitToCelsiusResponse\"]"
+                + "/*[local-name()=\"FahrenheitToCelsiusResult\"]"), e -> e.id("toResponse"));
     }
 
 }

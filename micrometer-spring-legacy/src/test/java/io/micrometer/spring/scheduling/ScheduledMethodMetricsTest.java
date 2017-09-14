@@ -24,11 +24,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@TestPropertySource(properties = "metrics.useGlobalRegistry=false")
+@TestPropertySource(properties = "spring.metrics.useGlobalRegistry=false")
 public class ScheduledMethodMetricsTest {
 
     static CountDownLatch longTaskStarted = new CountDownLatch(1);
@@ -71,7 +73,8 @@ public class ScheduledMethodMetricsTest {
 
         // make sure longBeep continues running until we have a chance to observe it in the active state
         longTaskShouldComplete.countDown();
-        while(scheduler.getActiveCount() > 0) {}
+        while (scheduler.getActiveCount() > 0) {
+        }
 
         Thread.sleep(10);
 
@@ -115,7 +118,8 @@ public class ScheduledMethodMetricsTest {
             System.out.println("beep");
         }
 
-        @Scheduled(fixedDelay = 100_000) // not instrumented because it isn't @Timed
+        @Scheduled(fixedDelay = 100_000)
+            // not instrumented because it isn't @Timed
         void notTimed() {
             System.out.println("beep");
         }

@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Tag;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static java.util.stream.StreamSupport.stream;
@@ -92,14 +93,13 @@ public class MeterId implements Meter.Id {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MeterId meterId = (MeterId) o;
-        return (name != null ? name.equals(meterId.name) : meterId.name == null) && (tags != null ? tags.equals(meterId.tags) : meterId.tags == null);
+        return Objects.equals(name, meterId.name) &&
+            Objects.equals(tags, meterId.tags);
     }
 
     @Override
     public int hashCode() {
-        int result = name != null ? name.hashCode() : 0;
-        result = 31 * result + (tags != null ? tags.hashCode() : 0);
-        return result;
+        return Objects.hash(name, tags);
     }
 
     public void setType(Meter.Type type) {
