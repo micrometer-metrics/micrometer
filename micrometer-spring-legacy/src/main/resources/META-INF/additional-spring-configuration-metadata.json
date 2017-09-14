@@ -1,0 +1,46 @@
+{
+  "properties": [
+    {
+      "name": "metrics.atlas.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable metrics for Atlas.",
+      "defaultValue": true
+    },
+    {
+      "name": "metrics.datadog.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable metrics for DataDog.",
+      "defaultValue": true
+    },
+    {
+      "name": "metrics.ganglia.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable metrics for Ganglia.",
+      "defaultValue": true
+    },
+    {
+      "name": "metrics.graphite.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable metrics for Graphite.",
+      "defaultValue": true
+    },
+    {
+      "name": "metrics.influx.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable metrics for Influxdb.",
+      "defaultValue": true
+    },
+    {
+      "name": "metrics.jmx.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable metrics for JMX.",
+      "defaultValue": true
+    },
+    {
+      "name": "metrics.prometheus.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable metrics for Prometheus.",
+      "defaultValue": true
+    }
+  ]
+}
