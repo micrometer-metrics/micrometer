@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-metrics.prometheus.enabled: true
+spring.metrics.prometheus.enabled: true

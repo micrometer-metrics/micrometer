@@ -17,7 +17,9 @@ package io.micrometer.spring.autoconfigure.export.influx;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.influx.InfluxConfig;
+import io.micrometer.influx.InfluxConsistency;
 import io.micrometer.influx.InfluxMeterRegistry;
+import io.micrometer.spring.autoconfigure.export.DefaultStepRegistryConfig;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -27,6 +29,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+
+import java.time.Duration;
 
 /**
  * Configuration for exporting metrics to Influx.
@@ -38,6 +42,67 @@ import org.springframework.context.annotation.Import;
 @Import(StringToDurationConverter.class)
 @EnableConfigurationProperties(InfluxProperties.class)
 public class InfluxExportConfiguration {
+
+    private class DefaultInfluxConfig extends DefaultStepRegistryConfig implements InfluxConfig {
+        private final InfluxProperties props;
+        private final InfluxConfig defaults = k -> null;
+
+        public DefaultInfluxConfig(InfluxProperties props) {
+            super(props);
+            this.props = props;
+        }
+
+        @Override
+        public String db() {
+            return props.getDb() == null ? defaults.db() : props.getDb();
+        }
+
+        @Override
+        public InfluxConsistency consistency() {
+            return props.getConsistency() == null ? defaults.consistency() : props.getConsistency();
+        }
+
+        @Override
+        public String userName() {
+            return props.getUserName() == null ? defaults.userName() : props.getUserName();
+        }
+
+        @Override
+        public String password() {
+            return props.getPassword() == null ? defaults.password() : props.getPassword();
+        }
+
+        @Override
+        public String retentionPolicy() {
+            return props.getRetentionPolicy() == null ? defaults.retentionPolicy() : props.getRetentionPolicy();
+        }
+
+        @Override
+        public String uri() {
+            return props.getUri() == null ? defaults.uri() : props.getUri();
+        }
+
+        @Override
+        public boolean compressed() {
+            return props.getCompressed() == null ? defaults.compressed() : props.getCompressed();
+        }
+
+        @Override
+        public Duration timerPercentilesMax() {
+            return props.getTimerPercentilesMax();
+        }
+
+        @Override
+        public Duration timerPercentilesMin() {
+            return props.getTimerPercentilesMin();
+        }
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(InfluxConfig.class)
+    public InfluxConfig influxConfig(InfluxProperties props) {
+        return new DefaultInfluxConfig(props);
+    }
 
     @Bean
     @ConditionalOnProperty(value = "spring.metrics.influx.enabled", matchIfMissing = true)

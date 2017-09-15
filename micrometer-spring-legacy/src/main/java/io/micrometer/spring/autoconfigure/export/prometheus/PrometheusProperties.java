@@ -15,9 +15,9 @@
  */
 package io.micrometer.spring.autoconfigure.export.prometheus;
 
-import io.micrometer.prometheus.PrometheusConfig;
-import io.micrometer.spring.autoconfigure.export.RegistryProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import java.time.Duration;
 
 /**
  * {@link ConfigurationProperties} for configuring metrics export to Prometheus.
@@ -25,25 +25,59 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @author Jon Schneider
  */
 @ConfigurationProperties(prefix = "spring.metrics.prometheus")
-public class PrometheusProperties extends RegistryProperties implements PrometheusConfig {
+public class PrometheusProperties {
+    /**
+     * Enable publishing to Prometheus.
+     */
+    private Boolean enabled = true;
 
-    private boolean enabled = true;
+    /**
+     * Enable publishing descriptions as part of the scrape payload to Prometheus.
+     * Turn this off to minimize the amount of data sent on each scrape.
+     */
+    private Boolean descriptions = true;
 
-    public boolean isEnabled() {
-        return this.enabled;
+    /**
+     * The bucket filter clamping the bucket domain of timer percentiles histograms to some max value.
+     * This is used to limit the number of buckets shipped to Prometheus to save on storage.
+     */
+    private Duration timerPercentilesMax = Duration.ofMinutes(2);
+
+    /**
+     * The bucket filter clamping the bucket domain of timer percentiles histograms to some min value.
+     * This is used to limit the number of buckets shipped to Prometheus to save on storage.
+     */
+    private Duration timerPercentilesMin = Duration.ofMillis(10);
+
+    public Boolean getEnabled() {
+        return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
     }
 
+    public Boolean getDescriptions() {
+        return descriptions;
+    }
+
     public void setDescriptions(Boolean descriptions) {
-        set("descriptions", descriptions);
+        this.descriptions = descriptions;
     }
 
-    @Override
-    public String prefix() {
-        return "spring.metrics.prometheus";
+    public Duration getTimerPercentilesMax() {
+        return timerPercentilesMax;
     }
 
+    public void setTimerPercentilesMax(Duration timerPercentilesMax) {
+        this.timerPercentilesMax = timerPercentilesMax;
+    }
+
+    public Duration getTimerPercentilesMin() {
+        return timerPercentilesMin;
+    }
+
+    public void setTimerPercentilesMin(Duration timerPercentilesMin) {
+        this.timerPercentilesMin = timerPercentilesMin;
+    }
 }

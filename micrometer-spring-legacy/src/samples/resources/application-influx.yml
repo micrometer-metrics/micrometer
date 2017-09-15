@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-metrics:
+spring.metrics:
   influx:
     enabled: true
     step: PT10S

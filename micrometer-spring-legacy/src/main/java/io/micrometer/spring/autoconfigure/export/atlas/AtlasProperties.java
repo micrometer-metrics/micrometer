@@ -16,10 +16,14 @@
 package io.micrometer.spring.autoconfigure.export.atlas;
 
 import com.netflix.spectator.atlas.AtlasConfig;
-import io.micrometer.spring.autoconfigure.export.RegistryProperties;
+import io.micrometer.spring.autoconfigure.export.StepRegistryProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * {@link ConfigurationProperties} for configuring Atlas metrics export.
@@ -27,63 +31,96 @@ import java.time.Duration;
  * @author Jon Schneider
  */
 @ConfigurationProperties(prefix = "spring.metrics.atlas")
-public class AtlasProperties extends RegistryProperties implements AtlasConfig {
+public class AtlasProperties extends StepRegistryProperties {
+    /**
+     * The URI for the Atlas backend
+     */
+    private String uri;
 
-    @Override
-    protected String prefix() {
-        return "spring.metrics.atlas";
-    }
+    /**
+     * The TTL for meters that do not have any activity. After this period the meter
+     * will be considered expired and will not get reported.
+     */
+    private Duration meterTimeToLive;
 
-    public void setStep(Duration step) {
-        set("step", step);
-    }
+    /**
+     * Enable streaming to Atlas LWC.
+     */
+    private Boolean lwcEnabled;
 
-    public void setMeterTTL(Duration meterTTL) {
-        set("meterTTL", meterTTL);
-    }
+    /**
+     * The frequency for refreshing config settings from the LWC service.
+     */
+    private Duration configRefreshFrequency;
 
-    public void setEnabled(Boolean enabled) {
-        set("enabled", enabled);
-    }
+    /**
+     * The TTL for subscriptions from the LWC service
+     */
+    private Duration configTimeToLive;
 
-    public void setNumThreads(Integer numThreads) {
-        set("numThreads", numThreads);
+    /**
+     * The URI for the Atlas LWC endpoint to retrieve current subscriptions.
+     */
+    private String configUri;
+
+    /**
+     * The URI for the Atlas LWC endpoint to evaluate the data for a subscription.
+     */
+    private String evalUri;
+
+    public String getUri() {
+        return uri;
     }
 
     public void setUri(String uri) {
-        set("uri", uri);
+        this.uri = uri;
     }
 
-    public void setLwcEnabled(boolean lwcEnabled) {
-        set("lwcEnabled", lwcEnabled);
+    public Duration getMeterTimeToLive() {
+        return meterTimeToLive;
+    }
+
+    public void setMeterTimeToLive(Duration meterTimeToLive) {
+        this.meterTimeToLive = meterTimeToLive;
+    }
+
+    public Boolean getLwcEnabled() {
+        return lwcEnabled;
+    }
+
+    public void setLwcEnabled(Boolean lwcEnabled) {
+        this.lwcEnabled = lwcEnabled;
+    }
+
+    public Duration getConfigRefreshFrequency() {
+        return configRefreshFrequency;
     }
 
     public void setConfigRefreshFrequency(Duration configRefreshFrequency) {
-        set("configRefreshFrequency", configRefreshFrequency);
+        this.configRefreshFrequency = configRefreshFrequency;
     }
 
-    public void setConfigTTL(Duration configTTL) {
-        set("configTTL", configTTL);
+    public Duration getConfigTimeToLive() {
+        return configTimeToLive;
+    }
+
+    public void setConfigTimeToLive(Duration configTimeToLive) {
+        this.configTimeToLive = configTimeToLive;
+    }
+
+    public String getConfigUri() {
+        return configUri;
     }
 
     public void setConfigUri(String configUri) {
-        set("configUri", configUri);
+        this.configUri = configUri;
+    }
+
+    public String getEvalUri() {
+        return evalUri;
     }
 
     public void setEvalUri(String evalUri) {
-        set("evalUri", evalUri);
+        this.evalUri = evalUri;
     }
-
-    public void setConnectTimeout(Duration connectTimeout) {
-        set("connectTimeout", connectTimeout);
-    }
-
-    public void setReadTimeout(Duration readTimeout) {
-        set("readTimeout", readTimeout);
-    }
-
-    public void setBatchSize(Integer batchSize) {
-        set("batchSize", batchSize);
-    }
-
 }

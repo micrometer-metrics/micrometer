@@ -28,6 +28,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.Duration;
+
 /**
  * Configuration for exporting metrics to Prometheus.
  *
@@ -37,6 +39,41 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnClass(PrometheusMeterRegistry.class)
 @EnableConfigurationProperties(PrometheusProperties.class)
 public class PrometheusExportConfiguration {
+
+    private class DefaultPrometheusConfig implements PrometheusConfig {
+        private final PrometheusProperties props;
+        private final PrometheusConfig defaults = k -> null;
+
+        private DefaultPrometheusConfig(PrometheusProperties props) {
+            this.props = props;
+        }
+
+        @Override
+        public String get(String k) {
+            return null;
+        }
+
+        @Override
+        public boolean descriptions() {
+            return props.getDescriptions() == null ? defaults.descriptions() : props.getDescriptions();
+        }
+
+        @Override
+        public Duration timerPercentilesMax() {
+            return props.getTimerPercentilesMax();
+        }
+
+        @Override
+        public Duration timerPercentilesMin() {
+            return props.getTimerPercentilesMin();
+        }
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public PrometheusConfig prometheusConfig(PrometheusProperties props) {
+        return new DefaultPrometheusConfig(props);
+    }
 
     @Bean
     @ConditionalOnProperty(value = "spring.metrics.prometheus.enabled", matchIfMissing = true)

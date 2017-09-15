@@ -15,6 +15,7 @@
  */
 package io.micrometer.spring.autoconfigure.export.ganglia;
 
+import info.ganglia.gmetric4j.gmetric.GMetric;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.ganglia.GangliaConfig;
@@ -29,6 +30,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Configuration for exporting metrics to Ganglia.
  *
@@ -39,6 +43,71 @@ import org.springframework.context.annotation.Import;
 @Import(StringToDurationConverter.class)
 @EnableConfigurationProperties(GangliaProperties.class)
 public class GangliaExportConfiguration {
+
+    private class DefaultGangliaConfig implements GangliaConfig {
+        private final GangliaProperties props;
+        private final GangliaConfig defaults = k -> null;
+
+        private DefaultGangliaConfig(GangliaProperties props) {
+            this.props = props;
+        }
+
+        @Override
+        public String get(String k) {
+            return null;
+        }
+
+        @Override
+        public boolean enabled() {
+            return props.getEnabled();
+        }
+
+        @Override
+        public Duration step() {
+            return props.getStep();
+        }
+
+        @Override
+        public TimeUnit rateUnits() {
+            return props.getRateUnits() == null ? defaults.rateUnits() : props.getRateUnits();
+        }
+
+        @Override
+        public TimeUnit durationUnits() {
+            return props.getDurationUnits() == null ? defaults.durationUnits() : props.getDurationUnits();
+        }
+
+        @Override
+        public String protocolVersion() {
+            return props.getProtocolVersion() == null ? defaults.protocolVersion() : props.getProtocolVersion();
+        }
+
+        @Override
+        public GMetric.UDPAddressingMode addressingMode() {
+            return props.getAddressingMode() == null ? defaults.addressingMode() : props.getAddressingMode();
+        }
+
+        @Override
+        public int ttl() {
+            return props.getTimeToLive() == null ? defaults.ttl() : props.getTimeToLive();
+        }
+
+        @Override
+        public String host() {
+            return props.getHost() == null ? defaults.host() : props.getHost();
+        }
+
+        @Override
+        public int port() {
+            return props.getPort() == null ? defaults.port() : props.getPort();
+        }
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public GangliaConfig gangliaConfig(GangliaProperties props) {
+        return new DefaultGangliaConfig(props);
+    }
 
     @Bean
     @ConditionalOnProperty(value = "spring.metrics.ganglia.enabled", matchIfMissing = true)

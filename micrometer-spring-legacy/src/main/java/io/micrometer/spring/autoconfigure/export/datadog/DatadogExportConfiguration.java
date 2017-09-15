@@ -18,6 +18,7 @@ package io.micrometer.spring.autoconfigure.export.datadog;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.datadog.DatadogConfig;
 import io.micrometer.datadog.DatadogMeterRegistry;
+import io.micrometer.spring.autoconfigure.export.DefaultStepRegistryConfig;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -27,6 +28,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+
+import java.time.Duration;
 
 /**
  * Configuration for exporting metrics to Datadog.
@@ -38,6 +41,42 @@ import org.springframework.context.annotation.Import;
 @Import(StringToDurationConverter.class)
 @EnableConfigurationProperties(DatadogProperties.class)
 public class DatadogExportConfiguration {
+
+    private class DefaultDatadogConfig extends DefaultStepRegistryConfig implements DatadogConfig {
+        private final DatadogProperties props;
+        private final DatadogConfig defaults = k -> null;
+
+        private DefaultDatadogConfig(DatadogProperties props) {
+            super(props);
+            this.props = props;
+        }
+
+        @Override
+        public String apiKey() {
+            return props.getApiKey();
+        }
+
+        @Override
+        public String hostTag() {
+            return props.getHostKey() == null ? defaults.hostTag() : props.getHostKey();
+        }
+
+        @Override
+        public Duration timerPercentilesMax() {
+            return props.getTimerPercentilesMax();
+        }
+
+        @Override
+        public Duration timerPercentilesMin() {
+            return props.getTimerPercentilesMin();
+        }
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public DatadogConfig datadogConfig(DatadogProperties props) {
+        return new DefaultDatadogConfig(props);
+    }
 
     @Bean
     @ConditionalOnProperty(value = "spring.metrics.datadog.enabled", matchIfMissing = true)

@@ -16,8 +16,6 @@
 package io.micrometer.spring.autoconfigure.export.ganglia;
 
 import info.ganglia.gmetric4j.gmetric.GMetric;
-import io.micrometer.ganglia.GangliaConfig;
-import io.micrometer.spring.autoconfigure.export.RegistryProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
@@ -29,47 +27,121 @@ import java.util.concurrent.TimeUnit;
  * @author Jon Schneider
  */
 @ConfigurationProperties(prefix = "spring.metrics.ganglia")
-public class GangliaProperties extends RegistryProperties implements GangliaConfig {
+public class GangliaProperties {
+    /**
+     * Enable publishing to the backend.
+     */
+    private Boolean enabled = true;
 
-    @Override
-    public String prefix() {
-        return "spring.metrics.ganglia";
-    }
+    /**
+     * The step size (reporting frequency) to use.
+     */
+    private Duration step = Duration.ofMinutes(1);
 
-    public void setStep(Duration step) {
-        set("step", step);
-    }
+    /**
+     * The base time unit used to report rates.
+     */
+    private TimeUnit rateUnits;
 
-    public void setRateUnits(TimeUnit rateUnits) {
-        set("rateUnits", rateUnits);
-    }
+    /**
+     * The base time unit used to report durations.
+     */
+    private TimeUnit durationUnits;
 
-    public void setDurationUnits(TimeUnit durationUnits) {
-        set("durationUnits", durationUnits);
-    }
+    /**
+     * Ganglia protocol version. Must be either 3.1 or 3.0.
+     */
+    private String protocolVersion;
 
-    public void setProtocolVersion(String protocolVersion) {
-        set("protocolVersion", protocolVersion);
-    }
+    /**
+     * The UDP addressing mode, either unicast or multicast.
+     */
+    private GMetric.UDPAddressingMode addressingMode;
 
-    public void setAddressingMode(GMetric.UDPAddressingMode addressingMode) {
-        set("addressingMode", addressingMode);
-    }
+    /**
+     * The TTL for metrics on Ganglia.
+     */
+    private Integer timeToLive;
 
-    public void setTtl(Integer ttl) {
-        set("ttl", ttl);
-    }
+    /**
+     * Ganglia host used for publishing.
+     */
+    private String host;
 
-    public void setHost(String host) {
-        set("host", host);
-    }
+    /**
+     * Ganglia port used for publishing.
+     */
+    private Integer port;
 
-    public void setPort(Integer port) {
-        set("port", port);
+    public Boolean getEnabled() {
+        return enabled;
     }
 
     public void setEnabled(Boolean enabled) {
-        set("enabled", enabled);
+        this.enabled = enabled;
     }
 
+    public Duration getStep() {
+        return step;
+    }
+
+    public void setStep(Duration step) {
+        this.step = step;
+    }
+
+    public TimeUnit getRateUnits() {
+        return rateUnits;
+    }
+
+    public void setRateUnits(TimeUnit rateUnits) {
+        this.rateUnits = rateUnits;
+    }
+
+    public TimeUnit getDurationUnits() {
+        return durationUnits;
+    }
+
+    public void setDurationUnits(TimeUnit durationUnits) {
+        this.durationUnits = durationUnits;
+    }
+
+    public String getProtocolVersion() {
+        return protocolVersion;
+    }
+
+    public void setProtocolVersion(String protocolVersion) {
+        this.protocolVersion = protocolVersion;
+    }
+
+    public GMetric.UDPAddressingMode getAddressingMode() {
+        return addressingMode;
+    }
+
+    public void setAddressingMode(GMetric.UDPAddressingMode addressingMode) {
+        this.addressingMode = addressingMode;
+    }
+
+    public Integer getTimeToLive() {
+        return timeToLive;
+    }
+
+    public void setTimeToLive(Integer timeToLive) {
+        this.timeToLive = timeToLive;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    public Integer getPort() {
+        return port;
+    }
+
+    public void setPort(Integer port) {
+        this.port = port;
+    }
 }

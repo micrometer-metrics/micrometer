@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-metrics:
+spring.metrics:
   atlas:
     enabled: true
     step: PT10S

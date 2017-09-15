@@ -27,8 +27,7 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
-     * The tag that will be mapped to "host" when shipping metrics to Influx, or {@code null} if
-     * host should be omitted on publishing.
+     * The db to send metrics to. Defaults to "mydb".
      */
     default String db() {
         String v = get(prefix() + ".db");
@@ -36,7 +35,7 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
-     * Sets the write consistency for the point. The Influx default is 'one'. Must
+     * Sets the write consistency for each point. The Influx default is 'one'. Must
      * be one of 'any', 'one', 'quorum', or 'all'.
      *
      * Only available for InfluxEnterprise clusters.

@@ -29,6 +29,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Configuration for exporting metrics to Graphite.
  *
@@ -40,6 +43,56 @@ import org.springframework.context.annotation.Import;
 @EnableConfigurationProperties(GraphiteProperties.class)
 public class GraphiteExportConfiguration {
 
+    private class DefaultGraphiteConfig implements GraphiteConfig {
+        private final GraphiteProperties props;
+        private final GraphiteConfig defaults = k -> null;
+
+        public DefaultGraphiteConfig(GraphiteProperties props) {
+            this.props = props;
+        }
+
+        @Override
+        public String get(String k) {
+            return null;
+        }
+
+        @Override
+        public boolean enabled() {
+            return props.getEnabled();
+        }
+
+        @Override
+        public Duration step() {
+            return props.getStep();
+        }
+
+        @Override
+        public TimeUnit rateUnits() {
+            return props.getRateUnits() == null ? defaults.rateUnits() : props.getRateUnits();
+        }
+
+        @Override
+        public TimeUnit durationUnits() {
+            return props.getDurationUnits() == null ? defaults.durationUnits() : props.getDurationUnits();
+        }
+
+        @Override
+        public String host() {
+            return props.getHost() == null ? defaults.host() : props.getHost();
+        }
+
+        @Override
+        public int port() {
+            return props.getPort() == null ? defaults.port() : props.getPort();
+        }
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public GraphiteConfig graphiteConfig(GraphiteProperties props) {
+        return new DefaultGraphiteConfig(props);
+    }
+    
     @Bean
     @ConditionalOnProperty(value = "spring.metrics.graphite.enabled", matchIfMissing = true)
     public MetricsExporter graphiteExporter(GraphiteConfig config,
