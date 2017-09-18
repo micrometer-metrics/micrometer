@@ -22,7 +22,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 public class DefaultHistogram<T> implements Histogram<T> {
-    protected final NavigableMap<T, Bucket<T>> buckets = Collections.synchronizedNavigableMap(new TreeMap<T, Bucket<T>>());
+    protected final NavigableMap<T, Bucket<T>> buckets;
     private final BucketFunction<? extends T> f;
     private final Summation summation;
     private final Collection<BucketFilter<T>> domainFilters = new ArrayList<>();
@@ -41,7 +41,16 @@ public class DefaultHistogram<T> implements Histogram<T> {
     DefaultHistogram(BucketFunction<T> f, Summation summation) {
         this.f = f;
         this.summation = summation;
-        this.buckets.putAll(f.buckets().stream().collect(toMap(Bucket::getTag, Function.identity())));
+        this.buckets = f.buckets().stream().collect(
+            toMap(
+                Bucket::getTag,
+                Function.identity(),
+                (u, v) -> {
+                    throw new IllegalStateException(String.format("Duplicate key %s", u));
+                },
+                TreeMap::new
+            )
+        );
     }
 
     @Override
@@ -73,9 +82,7 @@ public class DefaultHistogram<T> implements Histogram<T> {
             bucket.increment();
 
         if (isCumulative()) {
-            synchronized (buckets) {
-                buckets.tailMap(tag, false).forEach((tailTag, tailBucket) -> tailBucket.increment());
-            }
+            buckets.tailMap(tag, false).forEach((tailTag, tailBucket) -> tailBucket.increment());
         }
     }
 

@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.stats.hist;
 
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 
 public class Bucket<T> {
@@ -30,7 +31,7 @@ public class Bucket<T> {
      */
     private String tagStr;
 
-    Long value = 0L;
+    LongAdder value = new LongAdder();
 
     public Bucket(T tag, int index) {
         this.tag = tag;
@@ -53,12 +54,12 @@ public class Bucket<T> {
     }
 
     public Bucket<T> increment() {
-        this.value++;
+        this.value.increment();
         return this;
     }
 
     public long getValue() {
-        return value;
+        return value.longValue();
     }
 
     @Override
