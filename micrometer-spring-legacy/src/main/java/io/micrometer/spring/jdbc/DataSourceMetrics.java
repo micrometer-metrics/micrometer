@@ -30,33 +30,25 @@ import java.util.Collection;
  * @author Jon Schneider
  */
 public class DataSourceMetrics implements MeterBinder {
+    private final DataSource dataSource;
+    private final DataSourcePoolMetadata poolMetadata;
     private final String name;
     private final Iterable<Tag> tags;
-    private final DataSourcePoolMetadata poolMetadata;
-
-    // prevents the poolMetadata that we base the gauges on from being garbage collected
-    private static Collection<DataSourcePoolMetadata> instrumentedPools = new ArrayList<>();
 
     public DataSourceMetrics(DataSource dataSource, Collection<DataSourcePoolMetadataProvider> metadataProviders, String name, Iterable<Tag> tags) {
         this.name = name;
         this.tags = tags;
-
+        this.dataSource = dataSource;
         DataSourcePoolMetadataProvider provider = new DataSourcePoolMetadataProviders(metadataProviders);
-        poolMetadata = provider.getDataSourcePoolMetadata(dataSource);
-        instrumentedPools.add(poolMetadata);
+        this.poolMetadata = provider.getDataSourcePoolMetadata(dataSource);
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
         if (poolMetadata != null) {
-            if (poolMetadata.getActive() != null)
-                registry.gauge(name + ".active.connections", tags, poolMetadata, DataSourcePoolMetadata::getActive);
-
-            if (poolMetadata.getMax() != null)
-                registry.gauge(name + ".max.connections", tags, poolMetadata, DataSourcePoolMetadata::getMax);
-
-            if (poolMetadata.getMin() != null)
-                registry.gauge(name + ".min.connections", tags, poolMetadata, DataSourcePoolMetadata::getMin);
+            registry.gauge(name + ".active.connections", tags, dataSource, dataSource -> poolMetadata.getActive());
+            registry.gauge(name + ".max.connections", tags, dataSource, dataSource -> poolMetadata.getMax());
+            registry.gauge(name + ".min.connections", tags, dataSource, dataSource -> poolMetadata.getMin());
         }
     }
 }
