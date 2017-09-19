@@ -53,6 +53,7 @@ dependencies {
     // for testing DataSource metrics
     testCompile 'org.hsqldb:hsqldb'
     testCompile 'org.springframework.boot:spring-boot-starter-jdbc'
+    testCompile 'com.zaxxer:HikariCP'
 
     // for use in mock servers
     testCompile 'org.apache.tomcat.embed:tomcat-embed-core:8.5.15'

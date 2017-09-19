@@ -30,6 +30,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.sql.DataSource;
+
 import java.sql.SQLException;
 import java.util.Collection;
 
@@ -37,7 +38,7 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 /**
- * @author Jon Schneider
+ * @author Arthur Gavlyukovskiy
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -45,9 +46,9 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
     "spring.datasource.generate-unique-name=true",
     "management.security.enabled=false",
     "spring.metrics.useGlobalRegistry=false",
-    "spring.datasource.type=org.apache.tomcat.jdbc.pool.DataSource"
+    "spring.datasource.type=com.zaxxer.hikari.HikariDataSource"
 })
-public class DataSourceMetricsTest {
+public class DataSourceMetricsHikariTest {
     @Autowired
     DataSource dataSource;
 
@@ -56,8 +57,7 @@ public class DataSourceMetricsTest {
 
     @Test
     public void dataSourceIsInstrumented() throws SQLException, InterruptedException {
-        dataSource.getConnection().getMetaData();
-        assertThat(registry.find("data.source.max.connections").meter()).isPresent();
+        assertThat(registry.find("data.source.active.connections").meter()).isPresent();
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")
