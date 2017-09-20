@@ -15,10 +15,10 @@ elif [ $CIRCLE_TAG ]; then
   openssl aes-256-cbc -d -in gradle.properties.enc -out gradle.properties -k $KEY
   case "$CIRCLE_TAG" in
   *-rc\.*)
-    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true clean build candidate $SWITCHES
+    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true candidate $SWITCHES
     ;;
   *)
-    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true clean build final $SWITCHES
+    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true final $SWITCHES
     ;;
   esac
 else
