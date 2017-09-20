@@ -14,7 +14,7 @@ deployment:
   publish:
     branch: master
     commands:
-      - ./gradlew/deploy.sh
+      - ./gradle/deploy.sh
 dependencies:
   override:
     - ./gradlew downloadDependencies --console=plain
