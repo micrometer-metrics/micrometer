@@ -42,9 +42,11 @@ public class PercentileBucketFunction implements BucketFunction<Double> {
     @Override
     public Collection<? extends Bucket<Double>> buckets() {
         List<Bucket<Double>> domain = new ArrayList<>();
-        for (int i = 0; i < BUCKET_VALUES.length; i++) {
+        int i = 0;
+        for (; i < BUCKET_VALUES.length; i++) {
             domain.add(new Bucket<>(BUCKET_VALUES[i], i));
         }
+        domain.add(new Bucket<>(Double.POSITIVE_INFINITY, i));
         return domain;
     }
 

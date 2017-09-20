@@ -18,7 +18,7 @@ package io.micrometer.core.instrument.stats.hist;
 import java.util.concurrent.TimeUnit;
 
 public class PercentileTimeHistogram extends TimeHistogram {
-    PercentileTimeHistogram(DoubleHistogram delegate, TimeUnit fUnits) {
+    PercentileTimeHistogram(Histogram<Double> delegate, TimeUnit fUnits) {
         super(delegate, fUnits);
     }
 
@@ -32,7 +32,7 @@ public class PercentileTimeHistogram extends TimeHistogram {
 
         @Override
         public PercentileTimeHistogram create(Summation defaultSummationMode) {
-            return new PercentileTimeHistogram(new DoubleHistogram(f, summation == null ? defaultSummationMode : summation), fUnits);
+            return new PercentileTimeHistogram(new DefaultHistogram<>(f, summation == null ? defaultSummationMode : summation), fUnits);
         }
     }
 }

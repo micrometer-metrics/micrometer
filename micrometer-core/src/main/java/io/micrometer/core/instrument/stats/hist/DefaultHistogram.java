@@ -45,9 +45,7 @@ public class DefaultHistogram<T> implements Histogram<T> {
             toMap(
                 Bucket::getTag,
                 Function.identity(),
-                (u, v) -> {
-                    throw new IllegalStateException(String.format("Duplicate key %s", u));
-                },
+                (u, v) -> u,
                 TreeMap::new
             )
         );

@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.stats.hist;
 
-public class PercentileHistogram extends DoubleHistogram {
+public class PercentileHistogram extends DefaultHistogram<Double> {
     public PercentileHistogram(BucketFunction<Double> f, Summation summation) {
         super(f, summation);
     }
@@ -27,7 +27,7 @@ public class PercentileHistogram extends DoubleHistogram {
 
         @Override
         public PercentileHistogram create(Summation defaultSummationMode) {
-            return new PercentileHistogram(f, summation);
+            return new PercentileHistogram(f, summation == null ? defaultSummationMode : summation);
         }
     }
 }

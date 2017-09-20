@@ -25,11 +25,11 @@ import java.util.stream.Collectors;
  * @author Jon Schneider
  */
 public class TimeHistogram implements Histogram<Double> {
-    private final DoubleHistogram delegate;
+    private final Histogram<Double> delegate;
     private final TimeUnit fUnits;
     private TimeUnit bucketTimeScale = TimeUnit.NANOSECONDS;
 
-    TimeHistogram(DoubleHistogram delegate, TimeUnit fUnits) {
+    TimeHistogram(Histogram<Double> delegate, TimeUnit fUnits) {
         this.delegate = delegate;
         this.fUnits = fUnits;
     }
@@ -44,7 +44,7 @@ public class TimeHistogram implements Histogram<Double> {
 
         @Override
         public TimeHistogram create(Summation defaultSummationMode) {
-            return new TimeHistogram(new DoubleHistogram(f, summation == null ? defaultSummationMode : summation),
+            return new TimeHistogram(new DefaultHistogram<>(f, summation == null ? defaultSummationMode : summation),
                 fUnits);
         }
     }
@@ -71,10 +71,6 @@ public class TimeHistogram implements Histogram<Double> {
     @Override
     public Histogram<Double> filterBuckets(BucketFilter<Double> filter) {
         return delegate.filterBuckets(bucket -> filter.shouldPublish(scaled(bucket)));
-    }
-
-    public void infinityBucket() {
-        delegate.infinityBucket();
     }
 
     @Override

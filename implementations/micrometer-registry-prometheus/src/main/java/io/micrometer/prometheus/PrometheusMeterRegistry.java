@@ -121,13 +121,9 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
             percentileHist.filterBuckets(b -> b.getTag() == Double.POSITIVE_INFINITY || clampMax.shouldPublish(b));
             percentileHist.filterBuckets(BucketFilter.clampMin(min));
         }
-        if(hist instanceof DoubleHistogram) {
-            ((DoubleHistogram) hist).infinityBucket();
-        }
         if(hist instanceof TimeHistogram) {
             TimeHistogram timeHist = (TimeHistogram) hist;
             timeHist.bucketTimeScale(TimeUnit.SECONDS);
-            timeHist.infinityBucket();
         }
 
         return hist;
