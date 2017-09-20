@@ -46,7 +46,7 @@ public class DataSourceMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         if (poolMetadata != null) {
-            registry.gauge(name + ".active.connections", tags, dataSource, dataSource -> poolMetadata.getActive());
+            registry.gauge(name + ".active.connections", tags, dataSource, dataSource -> poolMetadata.getActive() != null ? poolMetadata.getActive() : 0);
             registry.gauge(name + ".max.connections", tags, dataSource, dataSource -> poolMetadata.getMax());
             registry.gauge(name + ".min.connections", tags, dataSource, dataSource -> poolMetadata.getMin());
         }
