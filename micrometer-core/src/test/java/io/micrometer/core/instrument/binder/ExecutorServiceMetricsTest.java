@@ -16,12 +16,14 @@
 package io.micrometer.core.instrument.binder;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +38,28 @@ class ExecutorServiceMetricsTest {
     @BeforeEach
     void before() {
         registry = new SimpleMeterRegistry();
+    }
+
+    @DisplayName("Normal executor can be instrumented after being initialized")
+    @Test
+    void executor() throws InterruptedException {
+        CountDownLatch lock = new CountDownLatch(1);
+        Executor exec = r -> {
+            r.run();
+            lock.countDown();
+        };
+        Executor executor = ExecutorServiceMetrics.monitor(registry, exec, "exec");
+        executor.execute(() -> System.out.println("hello"));
+        lock.await();
+        assertThat(registry.find("exec").timer()).map(Timer::count).hasValue(1L);
+    }
+
+    @DisplayName("thread pool executor can be instrumented even treat as Executor")
+    @Test
+    void executorCasting() {
+        Executor exec = Executors.newFixedThreadPool(2);
+        ExecutorServiceMetrics.monitor(registry, exec, "exec");
+        assertThreadPoolExecutorMetrics();
     }
 
     @DisplayName("thread pool executor can be instrumented after being initialized")
