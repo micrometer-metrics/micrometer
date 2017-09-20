@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
  */
 public interface Histogram<T> {
     Collection<Bucket<T>> getBuckets();
-    Histogram<T> filterBuckets(BucketFilter<T> filter);
     Bucket<T> getBucket(T tag);
     void observe(double value);
     boolean isCumulative();
@@ -37,9 +36,15 @@ public interface Histogram<T> {
     abstract class Builder<T> {
         BucketFunction<T> f;
         Summation summation = null;
+        Collection<BucketFilter<T>> domainFilters = new ArrayList<>();
 
         Builder(BucketFunction<T> f) {
             this.f = f;
+        }
+
+        public Builder<T> filterBuckets(BucketFilter<T> filter) {
+            this.domainFilters.add(filter);
+            return this;
         }
 
         public Builder<T> summation(Summation summation) {

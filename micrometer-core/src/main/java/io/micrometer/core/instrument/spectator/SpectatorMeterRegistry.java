@@ -20,8 +20,10 @@ import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Measurement;
 import com.netflix.spectator.api.Registry;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.spectator.step.StepRegistryConfig;
-import io.micrometer.core.instrument.stats.hist.*;
+import io.micrometer.core.instrument.stats.hist.Bucket;
+import io.micrometer.core.instrument.stats.hist.BucketFilter;
+import io.micrometer.core.instrument.stats.hist.Histogram;
+import io.micrometer.core.instrument.stats.hist.PercentileTimeHistogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 import io.micrometer.core.instrument.util.TimeUtils;
 
@@ -88,19 +90,23 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
         return new SpectatorGauge(id, gauge);
     }
 
-    protected Histogram<?> registerHistogramCounterIfNecessary(Meter.Id id, Histogram.Builder<?> histogramBuilder) {
-        if (histogramBuilder != null) {
-            Histogram<?> hist = histogramBuilder.create(Histogram.Summation.Normal);
+    protected Histogram<?> registerHistogramCounterIfNecessary(Meter.Id id, Histogram.Builder<?> builder) {
+        if (builder != null) {
+            if(builder instanceof PercentileTimeHistogram.Builder) {
+                PercentileTimeHistogram.Builder percentileHistBuilder = (PercentileTimeHistogram.Builder) builder;
 
-            if(hist instanceof PercentileHistogram || hist instanceof PercentileTimeHistogram) {
-                @SuppressWarnings("unchecked") Histogram<Double> percentileHist = (Histogram<Double>) hist;
+                if(spectatorConf.timerPercentilesMax() != null) {
+                    double max = (double) spectatorConf.timerPercentilesMax().toNanos();
+                    percentileHistBuilder.filterBuckets(BucketFilter.clampMax(max));
+                }
 
-                double max = (double) spectatorConf.timerPercentilesMax().toNanos();
-                double min = (double) spectatorConf.timerPercentilesMin().toNanos();
-
-                percentileHist.filterBuckets(BucketFilter.clampMax(max));
-                percentileHist.filterBuckets(BucketFilter.clampMin(min));
+                if(spectatorConf.timerPercentilesMin() != null) {
+                    double min = (double) spectatorConf.timerPercentilesMin().toNanos();
+                    percentileHistBuilder.filterBuckets(BucketFilter.clampMin(min));
+                }
             }
+
+            Histogram<?> hist = builder.create(Histogram.Summation.Normal);
 
             for (Bucket<?> bucket : hist.getBuckets()) {
                 more().counter(createId(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.getTagString()), null),

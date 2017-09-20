@@ -16,7 +16,10 @@
 package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.stats.hist.*;
+import io.micrometer.core.instrument.stats.hist.BucketFilter;
+import io.micrometer.core.instrument.stats.hist.Histogram;
+import io.micrometer.core.instrument.stats.hist.PercentileTimeHistogram;
+import io.micrometer.core.instrument.stats.hist.TimeHistogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.prometheus.internal.CustomPrometheusCollector;
@@ -108,25 +111,27 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         if(builder == null)
             return null;
 
-        Histogram<T> hist = builder.create(Histogram.Summation.Cumulative);
-
-        if(hist instanceof PercentileHistogram || hist instanceof PercentileTimeHistogram) {
-            @SuppressWarnings("unchecked") Histogram<Double> percentileHist = (Histogram<Double>) hist;
+        if(builder instanceof PercentileTimeHistogram.Builder) {
+            PercentileTimeHistogram.Builder percentileHistBuilder = (PercentileTimeHistogram.Builder) builder;
 
             // we divide nanos by 1e9 to get the fractional seconds value of the clamps
-            double max = (double) prometheusConfig.timerPercentilesMax().toNanos() / 1e9;
-            double min = (double) prometheusConfig.timerPercentilesMin().toNanos() / 1e9;
+            if(prometheusConfig.timerPercentilesMax() != null) {
+                double max = (double) prometheusConfig.timerPercentilesMax().toNanos() / 1e9;
+                BucketFilter<Double> clampMax = BucketFilter.clampMax(max);
+                percentileHistBuilder.filterBuckets(b -> b.getTag() == Double.POSITIVE_INFINITY || clampMax.shouldPublish(b));
+            }
 
-            BucketFilter<Double> clampMax = BucketFilter.clampMax(max);
-            percentileHist.filterBuckets(b -> b.getTag() == Double.POSITIVE_INFINITY || clampMax.shouldPublish(b));
-            percentileHist.filterBuckets(BucketFilter.clampMin(min));
+            if(prometheusConfig.timerPercentilesMin() != null) {
+                double min = (double) prometheusConfig.timerPercentilesMin().toNanos() / 1e9;
+                percentileHistBuilder.filterBuckets(BucketFilter.clampMin(min));
+            }
         }
-        if(hist instanceof TimeHistogram) {
-            TimeHistogram timeHist = (TimeHistogram) hist;
+        else if(builder instanceof TimeHistogram.Builder) {
+            TimeHistogram.Builder timeHist = (TimeHistogram.Builder) builder;
             timeHist.bucketTimeScale(TimeUnit.SECONDS);
         }
 
-        return hist;
+        return builder.create(Histogram.Summation.Cumulative);
     }
 
     @SuppressWarnings("unchecked")

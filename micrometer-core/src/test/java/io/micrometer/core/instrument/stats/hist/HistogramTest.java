@@ -16,12 +16,10 @@
 package io.micrometer.core.instrument.stats.hist;
 
 import io.micrometer.core.Issue;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,9 +31,9 @@ class HistogramTest {
     @Issue("#120")
     void useFiltersToClampBucketDomains(Histogram.Summation summation) {
         Histogram<Double> histogram = Histogram.linear(1, 1, 10)
-            .create(summation)
             .filterBuckets(BucketFilter.clampMax(8.0))
-            .filterBuckets(BucketFilter.clampMin(5.0));
+            .filterBuckets(BucketFilter.clampMin(5.0))
+            .create(summation);
 
         IntStream.range(0, 11).forEach(histogram::observe);
 

@@ -39,13 +39,13 @@ public class DatadogProperties extends StepRegistryProperties {
     private String hostKey;
 
     /**
-     * The bucket filter clamping the bucket domain of timer percentiles histograms to some max value.
+     * Used to create a bucket filter clamping the bucket domain of timer percentiles histograms to some max value.
      * This is used to limit the number of buckets shipped to Prometheus to save on storage.
      */
     private Duration timerPercentilesMax = Duration.ofMinutes(2);
 
     /**
-     * The bucket filter clamping the bucket domain of timer percentiles histograms to some min value.
+     * Used to create a bucket filter clamping the bucket domain of timer percentiles histograms to some min value.
      * This is used to limit the number of buckets shipped to Prometheus to save on storage.
      */
     private Duration timerPercentilesMin = Duration.ofMillis(10);

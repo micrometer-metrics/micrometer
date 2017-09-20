@@ -17,6 +17,8 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.stats.hist.Bucket;
+import io.micrometer.core.instrument.stats.hist.BucketFilter;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.GKQuantiles;
 import io.prometheus.client.Collector;
@@ -147,7 +149,9 @@ class PrometheusMeterRegistryTest {
         DistributionSummary widthSizes = DistributionSummary.builder("screen.width.pixels")
             .tags("page", "home")
             .description("Distribution of screen 'width'")
-            .histogram(Histogram.percentiles())
+            .histogram(Histogram.percentiles()
+                .filterBuckets(BucketFilter.clampMax(1000.0))
+                .filterBuckets(BucketFilter.clampMin(100.0)))
             .register(registry);
 
         widthSizes.record(1024);

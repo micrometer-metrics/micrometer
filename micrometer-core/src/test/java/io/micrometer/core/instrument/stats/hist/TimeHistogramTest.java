@@ -27,8 +27,9 @@ class TimeHistogramTest {
     @ParameterizedTest
     @EnumSource(Histogram.Summation.class)
     void linearTimeBuckets(Histogram.Summation summation) {
-        TimeHistogram hist = Histogram.linearTime(TimeUnit.SECONDS, 1, 1, 3).create(summation);
-        hist.bucketTimeScale(TimeUnit.MILLISECONDS);
+        TimeHistogram hist = Histogram.linearTime(TimeUnit.SECONDS, 1, 1, 3)
+            .bucketTimeScale(TimeUnit.MILLISECONDS)
+            .create(summation);
 
         assertThat(hist.getBuckets().stream().map(Bucket::getTag))
             .containsExactly(1000.0, 2000.0, 3000.0, Double.POSITIVE_INFINITY);
@@ -42,8 +43,9 @@ class TimeHistogramTest {
     @ParameterizedTest
     @EnumSource(Histogram.Summation.class)
     void exponentialTimeBuckets(Histogram.Summation summation) {
-        TimeHistogram hist = Histogram.exponentialTime(TimeUnit.SECONDS, 1, 2, 3).create(summation);
-        hist.bucketTimeScale(TimeUnit.MILLISECONDS);
+        TimeHistogram hist = Histogram.exponentialTime(TimeUnit.SECONDS, 1, 2, 3)
+            .bucketTimeScale(TimeUnit.MILLISECONDS)
+            .create(summation);
 
         assertThat(hist.getBuckets().stream().map(Bucket::getTag))
             .containsExactly(1000.0, 2000.0, 4000.0, Double.POSITIVE_INFINITY);
@@ -56,11 +58,11 @@ class TimeHistogramTest {
 
     @Test
     void filtersScaledToFunctionTimeUnits() {
-        TimeHistogram hist = Histogram.linearTime(TimeUnit.SECONDS, 1, 2, 3).create(Histogram.Summation.Normal);
-        hist.bucketTimeScale(TimeUnit.MILLISECONDS);
-
-        // the clamp will be assumed to be in the bucket time scale (milliseconds in this case)
-        hist.filterBuckets(BucketFilter.clampMax(1000.0));
+        TimeHistogram hist = Histogram.linearTime(TimeUnit.SECONDS, 1, 2, 3)
+            .bucketTimeScale(TimeUnit.MILLISECONDS)
+            // the clamp will be assumed to be in the bucket time scale (milliseconds in this case)
+            .filterBuckets(BucketFilter.clampMax(1000.0))
+            .create(Histogram.Summation.Normal);
 
         assertThat(hist.getBuckets().stream().map(Bucket::getTag)).containsExactly(1000.0);
     }

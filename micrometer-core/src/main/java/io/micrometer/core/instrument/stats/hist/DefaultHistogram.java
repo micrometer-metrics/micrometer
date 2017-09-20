@@ -15,7 +15,9 @@
  */
 package io.micrometer.core.instrument.stats.hist;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.function.Function;
 
 import static java.util.stream.Collectors.toList;
@@ -25,7 +27,7 @@ public class DefaultHistogram<T> implements Histogram<T> {
     protected final NavigableMap<T, Bucket<T>> buckets;
     private final BucketFunction<? extends T> f;
     private final Summation summation;
-    private final Collection<BucketFilter<T>> domainFilters = new ArrayList<>();
+    private final Collection<BucketFilter<T>> domainFilters;
 
     public static class Builder<U> extends Histogram.Builder<U> {
         Builder(BucketFunction<U> f) {
@@ -33,14 +35,25 @@ public class DefaultHistogram<T> implements Histogram<T> {
         }
 
         @Override
+        public Builder<U> summation(Summation summation) {
+            return (Builder<U>) super.summation(summation);
+        }
+
+        @Override
+        public Builder<U> filterBuckets(BucketFilter<U> filter) {
+            return (Builder<U>) super.filterBuckets(filter);
+        }
+
+        @Override
         public DefaultHistogram<U> create(Summation defaultSummationMode) {
-            return new DefaultHistogram<>(f, summation == null ? defaultSummationMode : summation);
+            return new DefaultHistogram<>(f, domainFilters, summation == null ? defaultSummationMode : summation);
         }
     }
 
-    DefaultHistogram(BucketFunction<T> f, Summation summation) {
+    DefaultHistogram(BucketFunction<T> f, Collection<BucketFilter<T>> domainFilters, Summation summation) {
         this.f = f;
         this.summation = summation;
+        this.domainFilters = domainFilters;
         this.buckets = f.buckets().stream().collect(
             toMap(
                 Bucket::getTag,
@@ -58,12 +71,6 @@ public class DefaultHistogram<T> implements Histogram<T> {
         return buckets.values().stream()
             .filter(bucket -> domainFilters.stream().allMatch(filter -> filter.shouldPublish(bucket)))
             .collect(toList());
-    }
-
-    @Override
-    public Histogram<T> filterBuckets(BucketFilter<T> filter) {
-        domainFilters.add(filter);
-        return this;
     }
 
     @Override

@@ -21,21 +21,25 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
+
 /**
  * @author Jon Schneider
  */
 public class TimeHistogram implements Histogram<Double> {
     private final Histogram<Double> delegate;
     private final TimeUnit fUnits;
-    private TimeUnit bucketTimeScale = TimeUnit.NANOSECONDS;
+    private final TimeUnit bucketTimeScale;
 
-    TimeHistogram(Histogram<Double> delegate, TimeUnit fUnits) {
+    TimeHistogram(Histogram<Double> delegate, TimeUnit bucketTimeScale, TimeUnit fUnits) {
         this.delegate = delegate;
         this.fUnits = fUnits;
+        this.bucketTimeScale = bucketTimeScale;
     }
 
     public static class Builder extends Histogram.Builder<Double> {
-        private final TimeUnit fUnits;
+        final TimeUnit fUnits;
+        TimeUnit bucketTimeScale = TimeUnit.NANOSECONDS;
 
         Builder(BucketFunction<Double> f, TimeUnit fUnits) {
             super(f);
@@ -43,34 +47,44 @@ public class TimeHistogram implements Histogram<Double> {
         }
 
         @Override
-        public TimeHistogram create(Summation defaultSummationMode) {
-            return new TimeHistogram(new DefaultHistogram<>(f, summation == null ? defaultSummationMode : summation),
-                fUnits);
+        public Builder summation(Summation summation) {
+            return (Builder) super.summation(summation);
         }
-    }
 
-    /**
-     * Set the time scale that the buckets should be represented in. For example, if the bucket function is a linear
-     * function from 1-10 ms and the {@code bucketTimeScale} is seconds, then the buckets that are reported will be
-     * [0.001, ..., 0.01]. Future values observed by this histogram will also be assumed to be in {@code bucketTimeScale}
-     * units and scaled to the bucket function's base unit.
-     *
-     * @param bucketTimeScale Should always correspond to the base time unit of the monitoring system for consistency.
-     */
-    public void bucketTimeScale(TimeUnit bucketTimeScale) {
-        this.bucketTimeScale = bucketTimeScale;
+        @Override
+        public Builder filterBuckets(BucketFilter<Double> filter) {
+            return (Builder) super.filterBuckets(filter);
+        }
+
+        /**
+         * Set the time scale that the buckets should be represented in. For example, if the bucket function is a linear
+         * function from 1-10 ms and the {@code bucketTimeScale} is seconds, then the buckets that are reported will be
+         * [0.001, ..., 0.01]. Future values observed by this histogram will also be assumed to be in {@code bucketTimeScale}
+         * units and scaled to the bucket function's base unit.
+         *
+         * @param bucketTimeScale Should always correspond to the base time unit of the monitoring system for consistency.
+         */
+        public Builder bucketTimeScale(TimeUnit bucketTimeScale) {
+            this.bucketTimeScale = bucketTimeScale;
+            return this;
+        }
+
+        @Override
+        public TimeHistogram create(Summation defaultSummationMode) {
+            Collection<BucketFilter<Double>> scaledFilters = domainFilters.stream()
+                .map(filter -> (BucketFilter<Double>) bucket -> filter.shouldPublish(scaled(bucket, bucketTimeScale, fUnits)))
+                .collect(toList());
+
+            return new TimeHistogram(new DefaultHistogram<>(f, scaledFilters,
+                summation == null ? defaultSummationMode : summation), bucketTimeScale, fUnits);
+        }
     }
 
     @Override
     public Collection<Bucket<Double>> getBuckets() {
         return delegate.getBuckets().stream()
-            .map(this::scaled)
-            .collect(Collectors.toList());
-    }
-
-    @Override
-    public Histogram<Double> filterBuckets(BucketFilter<Double> filter) {
-        return delegate.filterBuckets(bucket -> filter.shouldPublish(scaled(bucket)));
+            .map(unscaledBucket -> scaled(unscaledBucket, bucketTimeScale, fUnits))
+            .collect(toList());
     }
 
     @Override
@@ -88,7 +102,7 @@ public class TimeHistogram implements Histogram<Double> {
         return delegate.isCumulative();
     }
 
-    private Bucket<Double> scaled(Bucket<Double> unscaledBucket) {
+    private static Bucket<Double> scaled(Bucket<Double> unscaledBucket, TimeUnit bucketTimeScale, TimeUnit fUnits) {
         return new Bucket<Double>(TimeUtils.convert(unscaledBucket.getTag(), fUnits, bucketTimeScale), unscaledBucket.getIndex()) {
             @Override
             public long getValue() {

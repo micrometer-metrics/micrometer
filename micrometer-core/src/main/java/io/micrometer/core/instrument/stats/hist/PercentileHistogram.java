@@ -15,9 +15,11 @@
  */
 package io.micrometer.core.instrument.stats.hist;
 
+import java.util.Collection;
+
 public class PercentileHistogram extends DefaultHistogram<Double> {
-    public PercentileHistogram(BucketFunction<Double> f, Summation summation) {
-        super(f, summation);
+    public PercentileHistogram(BucketFunction<Double> f, Collection<BucketFilter<Double>> domainFilters, Summation summation) {
+        super(f, domainFilters, summation);
     }
 
     public static class Builder extends Histogram.Builder<Double> {
@@ -26,8 +28,18 @@ public class PercentileHistogram extends DefaultHistogram<Double> {
         }
 
         @Override
+        public Builder summation(Summation summation) {
+            return (Builder) super.summation(summation);
+        }
+
+        @Override
+        public Builder filterBuckets(BucketFilter<Double> filter) {
+            return (Builder) super.filterBuckets(filter);
+        }
+
+        @Override
         public PercentileHistogram create(Summation defaultSummationMode) {
-            return new PercentileHistogram(f, summation == null ? defaultSummationMode : summation);
+            return new PercentileHistogram(f, domainFilters, summation == null ? defaultSummationMode : summation);
         }
     }
 }

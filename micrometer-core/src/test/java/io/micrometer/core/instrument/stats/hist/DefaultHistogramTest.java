@@ -86,8 +86,7 @@ class DefaultHistogramTest {
     @ParameterizedTest
     @ArgumentsSource(ProvidedHistogramFunctions.class)
     void valuesAboveClampedMaxStillAccumulatedToInfinityBucket(Histogram.Builder<Double> builder) {
-        Histogram<Double> hist = builder.create(Cumulative);
-        hist.filterBuckets(BucketFilter.clampMax(3.0));
+        Histogram<Double> hist = builder.filterBuckets(BucketFilter.clampMax(3.0)).create(Cumulative);
         hist.observe(5);
 
         assertThat(hist.getBucket(Double.POSITIVE_INFINITY))

@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.prometheus;
+package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.stats.hist.HistogramConfig;
-
-public interface PrometheusConfig extends HistogramConfig {
-    /**
-     * {@code true} if meter descriptions should be sent to Prometheus.
-     * Turn this off to minimize the amount of data sent on each scrape.
-     */
-    default boolean descriptions() {
-        String v = get(prefix() + ".descriptions");
-        return v == null || Boolean.valueOf(v);
+public interface MeterRegistryConfig {
+    default String prefix() {
+        return "prometheus";
     }
+
+    /**
+     * Get the value associated with a key.
+     *
+     * @param k
+     *     Key to lookup in the config.
+     * @return
+     *     Value for the key or null if no key is present.
+     */
+    String get(String k);
 }
