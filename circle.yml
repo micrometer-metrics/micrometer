@@ -2,9 +2,6 @@ machine:
   java:
     version: oraclejdk8
 test:
-  override:
-    - ./gradle/ciBuild.sh:
-      timeout: 1200
   post:
     - mkdir -p $CIRCLE_TEST_REPORTS/junit/
     - find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
@@ -14,9 +11,10 @@ general:
     - "build/libs"
     - "build/publications"
 deployment:
-  release:
-    tag: /v.*/
-    owner: micrometer-metrics
+  publish:
+    branch: master
+    commands:
+      - ./gradlew/deploy.sh
 dependencies:
   override:
     - ./gradlew downloadDependencies --console=plain

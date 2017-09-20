@@ -25,9 +25,9 @@ dependencies {
     compile 'ch.qos.logback:logback-classic:latest.release', optional
 
     // reactor
-    compile 'io.projectreactor:reactor-core:3.1.0.BUILD-SNAPSHOT', optional
+    compile 'io.projectreactor:reactor-core:3.1.0.RC1', optional
 
-    testCompile 'io.projectreactor.addons:reactor-test:3.1.0.BUILD-SNAPSHOT'
+    testCompile 'io.projectreactor.addons:reactor-test:3.1.0.RC1'
     testCompile 'io.projectreactor.ipc:reactor-netty:latest.release'
 
     // JUnit 5
