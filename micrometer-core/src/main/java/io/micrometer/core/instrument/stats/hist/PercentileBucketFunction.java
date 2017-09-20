@@ -57,7 +57,7 @@ public class PercentileBucketFunction implements BucketFunction<Double> {
         if (v <= 0) {
             return 0;
         } else if (v <= 4) {
-            return (int) v;
+            return (int) v - 1;
         } else {
             int lz = Long.numberOfLeadingZeros((long) v);
             int shift = 64 - lz - 1;
@@ -72,7 +72,9 @@ public class PercentileBucketFunction implements BucketFunction<Double> {
             long delta = base / 3;
             int offset = (int) ((v - base) / delta);
             int pos = offset + POWER_OF_4_INDEX[shift / 2];
-            return (pos >= BUCKET_VALUES.length - 1) ? BUCKET_VALUES.length - 1 : pos + 1;
+            return (pos >= BUCKET_VALUES.length - 1) ? BUCKET_VALUES.length - 1 :
+                // buckets are right inclusive!
+                BUCKET_VALUES[pos] == v ? pos : pos + 1;
         }
     }
 

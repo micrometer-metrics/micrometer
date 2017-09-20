@@ -141,6 +141,36 @@ class PrometheusMeterRegistryTest {
             .hasSize(62);
     }
 
+    @Issue("#127")
+    @Test
+    void percentileHistogramsAccumulateToInfinityEvenWhenClamped() {
+        DistributionSummary widthSizes = DistributionSummary.builder("screen.width.pixels")
+            .tags("page", "home")
+            .description("Distribution of screen 'width'")
+            .histogram(Histogram.percentiles())
+            .register(registry);
+
+        widthSizes.record(1024);
+
+        assertThat(registry.scrape())
+            .contains("screen_width_pixels_bucket{page=\"home\",le=\"+Inf\",} 1.0");
+    }
+
+    @Issue("#127")
+    @Test
+    void percentileHistogramsWhenValueIsLessThanTheSmallestBucket() {
+        DistributionSummary speedIndexRatings = DistributionSummary.builder("speed.index")
+            .tags("page", "home")
+            .description("Distribution of 'speed index' ratings")
+            .histogram(Histogram.percentiles())
+            .register(registry);
+
+        speedIndexRatings.record(0);
+
+        assertThat(registry.scrape())
+            .contains("speed_index_bucket{page=\"home\",le=\"+Inf\",} 1.0");
+    }
+
     private Condition<Enumeration<Collector.MetricFamilySamples>> withNameAndTagKey(String name, String tagKey) {
         return new Condition<>(m -> {
             while (m.hasMoreElements()) {
