@@ -16,6 +16,9 @@
 package io.micrometer.core.instrument.binder.jvm;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MeterRegistry.Search;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -36,6 +39,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 class ExecutorServiceMetricsTest {
     private MeterRegistry registry;
 
+    private Iterable<Tag> userTags = Tags.zip("userTagKey", "userTagValue");
+
     @BeforeEach
     void before() {
         registry = new SimpleMeterRegistry();
@@ -49,17 +54,17 @@ class ExecutorServiceMetricsTest {
             r.run();
             lock.countDown();
         };
-        Executor executor = ExecutorServiceMetrics.monitor(registry, exec, "exec");
+        Executor executor = ExecutorServiceMetrics.monitor(registry, exec, "exec", userTags);
         executor.execute(() -> System.out.println("hello"));
         lock.await();
-        assertThat(registry.find("exec").timer()).map(Timer::count).hasValue(1L);
+        assertThat(registry.find("exec").tags(userTags).timer()).map(Timer::count).hasValue(1L);
     }
 
     @DisplayName("ExecutorService is casted from Executor when necessary")
     @Test
     void executorCasting() {
         Executor exec = Executors.newFixedThreadPool(2);
-        ExecutorServiceMetrics.monitor(registry, exec, "exec");
+        ExecutorServiceMetrics.monitor(registry, exec, "exec", userTags);
         assertThreadPoolExecutorMetrics();
     }
 
@@ -67,7 +72,7 @@ class ExecutorServiceMetricsTest {
     @Test
     void threadPoolExecutor() {
         ExecutorService exec = Executors.newFixedThreadPool(2);
-        ExecutorServiceMetrics.monitor(registry, exec, "exec");
+        ExecutorServiceMetrics.monitor(registry, exec, "exec", userTags);
         assertThreadPoolExecutorMetrics();
     }
 
@@ -75,14 +80,14 @@ class ExecutorServiceMetricsTest {
     @Test
     void scheduledThreadPoolExecutor() {
         ExecutorService exec = Executors.newScheduledThreadPool(2);
-        ExecutorServiceMetrics.monitor(registry, exec, "exec");
+        ExecutorServiceMetrics.monitor(registry, exec, "exec", userTags);
         assertThreadPoolExecutorMetrics();
     }
 
     @DisplayName("ExecutorService can be monitored with a default set of metrics")
     @Test
     void monitorExecutorService() throws InterruptedException {
-        ExecutorService pool = ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadExecutor(), "beep.pool");
+        ExecutorService pool = ExecutorServiceMetrics.monitor(registry, Executors.newSingleThreadExecutor(), "beep.pool", userTags);
         CountDownLatch taskStart = new CountDownLatch(1);
         CountDownLatch taskComplete = new CountDownLatch(1);
 
@@ -95,18 +100,18 @@ class ExecutorServiceMetricsTest {
         pool.submit(() -> System.out.println("boop"));
 
         taskStart.await(1, TimeUnit.SECONDS);
-        assertThat(registry.find("beep.pool.queued").value(Value, 1.0).gauge()).isPresent();
+        assertThat(registry.find("beep.pool.queued").tags(userTags).value(Value, 1.0).gauge()).isPresent();
 
         taskComplete.countDown();
         pool.awaitTermination(1, TimeUnit.SECONDS);
 
-        assertThat(registry.find("beep.pool").value(Count, 2.0).timer()).isPresent();
-        assertThat(registry.find("beep.pool.queued").value(Value, 0.0).gauge()).isPresent();
+        assertThat(registry.find("beep.pool").tags(userTags).value(Count, 2.0).timer()).isPresent();
+        assertThat(registry.find("beep.pool.queued").tags(userTags).value(Value, 0.0).gauge()).isPresent();
     }
 
     private void assertThreadPoolExecutorMetrics() {
-        assertThat(registry.find("exec.completed").meter()).isPresent();
-        assertThat(registry.find("exec.queued").gauge()).isPresent();
-        assertThat(registry.find("exec.pool").gauge()).isPresent();
+        assertThat(registry.find("exec.completed").tags(userTags).meter()).isPresent();
+        assertThat(registry.find("exec.queued").tags(userTags).gauge()).isPresent();
+        assertThat(registry.find("exec.pool").tags(userTags).gauge()).isPresent();
     }
 }

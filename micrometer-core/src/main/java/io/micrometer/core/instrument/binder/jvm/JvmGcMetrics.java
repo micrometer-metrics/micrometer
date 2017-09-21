@@ -90,12 +90,12 @@ public class JvmGcMetrics implements MeterBinder {
 
                         if(isConcurrentPhase(notificationInfo)) {
                             registry.timer(registry.createId("jvm.gc.concurrent.phase.time",
-                                Tags.zip("action", notificationInfo.getGcAction(), "cause", notificationInfo.getGcCause()),
+                                Tags.concat(tags, "action", notificationInfo.getGcAction(), "cause", notificationInfo.getGcCause()),
                                 "Time spent in concurrent phase"), null, null)
                                 .record(notificationInfo.getGcInfo().getDuration(), TimeUnit.MILLISECONDS);
                         } else {
                             registry.timer(registry.createId("jvm.gc.pause",
-                                Tags.zip("action", notificationInfo.getGcAction(), "cause", notificationInfo.getGcCause()),
+                                Tags.concat(tags, "action", notificationInfo.getGcAction(), "cause", notificationInfo.getGcCause()),
                                 "Time spent in GC pause"), null, null)
                                 .record(notificationInfo.getGcInfo().getDuration(), TimeUnit.MILLISECONDS);
                         }
