@@ -13,34 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.core.tck;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static io.micrometer.core.instrument.MockClock.clock;
+import static io.micrometer.core.MockClock.clock;
 import static org.junit.jupiter.api.Assertions.*;
 
-class TimerTest {
+interface TimerTest {
 
+    @DisplayName("record throwables")
     @Test
-    void recordThrowable() {
+    default void recordThrowable() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
         Supplier<String> timed = () -> registry.timer("timer").record(() -> "");
         timed.get();
     }
 
+    @Test
     @DisplayName("total time and count are preserved for a single timing")
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    void record(MeterRegistry registry) {
+    default void record(MeterRegistry registry) {
         Timer t = registry.timer("myTimer");
         t.record(42, TimeUnit.MILLISECONDS);
         clock(registry).addAndGet(1, TimeUnit.SECONDS);
@@ -49,10 +49,9 @@ class TimerTest {
                 () -> assertEquals(42, t.totalTime(TimeUnit.MILLISECONDS), 1.0e-12));
     }
 
+    @Test
     @DisplayName("negative times are discarded by the Timer")
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    void recordNegative(MeterRegistry registry) {
+    default void recordNegative(MeterRegistry registry) {
         Timer t = registry.timer("myTimer");
         t.record(-42, TimeUnit.MILLISECONDS);
 
@@ -60,10 +59,9 @@ class TimerTest {
                 () -> assertEquals(0, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
     }
 
+    @Test
     @DisplayName("zero times contribute to the count of overall events but do not add to total time")
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    void recordZero(MeterRegistry registry) {
+    default void recordZero(MeterRegistry registry) {
         Timer t = registry.timer("myTimer");
         t.record(0, TimeUnit.MILLISECONDS);
         clock(registry).addAndGet(1, TimeUnit.SECONDS);
@@ -72,10 +70,9 @@ class TimerTest {
                 () -> assertEquals(0L, t.totalTime(TimeUnit.NANOSECONDS)));
     }
 
+    @Test
     @DisplayName("record a runnable task")
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    void recordWithRunnable(MeterRegistry registry) throws Exception {
+    default void recordWithRunnable(MeterRegistry registry) throws Exception {
         Timer t = registry.timer("myTimer");
 
         try {
@@ -87,10 +84,9 @@ class TimerTest {
         }
     }
 
+    @Test
     @DisplayName("callable task that throws exception is still recorded")
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    void recordCallableException(MeterRegistry registry) {
+    default void recordCallableException(MeterRegistry registry) {
         Timer t = registry.timer("myTimer");
 
         assertThrows(Exception.class, () -> {

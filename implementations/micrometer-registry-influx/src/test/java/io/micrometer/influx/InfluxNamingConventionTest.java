@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.assertj.core.api.Assertions.fail;
 
 class InfluxNamingConventionTest {
     private InfluxNamingConvention convention = new InfluxNamingConvention();

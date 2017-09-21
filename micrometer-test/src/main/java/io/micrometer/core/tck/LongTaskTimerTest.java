@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.core.tck;
 
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.MockClock.clock;
+import static io.micrometer.core.MockClock.clock;
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class LongTaskTimerTest {
+interface LongTaskTimerTest {
 
+    @Test
     @DisplayName("total time is preserved for a single timing")
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    void record(MeterRegistry registry) {
+    default void record(MeterRegistry registry) {
         LongTaskTimer t = registry.more().longTaskTimer(registry.createId("myTimer", emptyList(), null));
 
         long tId = t.start();

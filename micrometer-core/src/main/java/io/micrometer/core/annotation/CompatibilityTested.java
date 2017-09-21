@@ -17,17 +17,11 @@ package io.micrometer.core.annotation;
 
 import java.lang.annotation.*;
 
-@Target({ElementType.TYPE, ElementType.METHOD})
-@Repeatable(TimedSet.class)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Timed {
-    String value() default "";
-
-    String[] extraTags() default {};
-
-    boolean longTask() default false;
-
-    double[] quantiles() default {};
-
-    boolean percentiles() default false;
+/**
+ * Marks a registry implementation to be exercised by the technology compatibility kit in micrometer-test.
+ *
+ * @author Jon Schneider
+ */
+@Target({ElementType.TYPE})
+public @interface CompatibilityTested {
 }

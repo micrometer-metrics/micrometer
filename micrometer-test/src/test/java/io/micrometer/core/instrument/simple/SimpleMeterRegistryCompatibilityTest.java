@@ -13,21 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.annotation;
+package io.micrometer.core.instrument.simple;
 
-import java.lang.annotation.*;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
+import io.micrometer.core.MockClock;
+import io.micrometer.core.tck.RegistryResolver;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@Target({ElementType.TYPE, ElementType.METHOD})
-@Repeatable(TimedSet.class)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Timed {
-    String value() default "";
-
-    String[] extraTags() default {};
-
-    boolean longTask() default false;
-
-    double[] quantiles() default {};
-
-    boolean percentiles() default false;
+public class SimpleMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+    @Override
+    public MeterRegistry registry() {
+        return new SimpleMeterRegistry(new MockClock());
+    }
 }

@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.annotation;
+package io.micrometer.jmx;
 
-import java.lang.annotation.*;
+import io.micrometer.core.MockClock;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
-@Target({ElementType.TYPE, ElementType.METHOD})
-@Repeatable(TimedSet.class)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Timed {
-    String value() default "";
-
-    String[] extraTags() default {};
-
-    boolean longTask() default false;
-
-    double[] quantiles() default {};
-
-    boolean percentiles() default false;
+public class JmxMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+    @Override
+    public MeterRegistry registry() {
+        return new JmxMeterRegistry(HierarchicalNameMapper.DEFAULT, new MockClock());
+    }
 }

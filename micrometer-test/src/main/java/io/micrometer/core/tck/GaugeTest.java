@@ -13,75 +13,73 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.core.tck;
 
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Statistic;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Collections.emptyList;
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-class GaugeTest {
-
+interface GaugeTest {
+    @Test
     @DisplayName("gauges attached to a number are updated when their values are observed")
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    void numericGauge(MeterRegistry registry) {
+    default void numericGauge(MeterRegistry registry) {
         AtomicInteger n = registry.gauge("my.gauge", new AtomicInteger(0));
         n.set(1);
 
-        Gauge g = singleGauge(registry);
-        assertEquals(1, g.value(), 1.0e-12);
+        Gauge g = registry.find("my.gauge").gauge().orElse(null);
+        assertNotNull(g);
+        assertThat(g.value()).isEqualTo(1);
 
         n.set(2);
-        assertEquals(2, g.value(), 1.0e-12);
+        assertThat(g.value()).isEqualTo(2);
     }
 
+    @Test
     @DisplayName("gauges attached to an object are updated when their values are observed")
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    void objectGauge(MeterRegistry registry) {
+    default void objectGauge(MeterRegistry registry) {
         List<String> list = registry.gauge("my.gauge", emptyList(), new ArrayList<>(), List::size);
         list.addAll(Arrays.asList("a", "b"));
 
-        assertEquals(2, singleGauge(registry).value());
+        Gauge g = registry.find("my.gauge").gauge().orElse(null);
+        assertNotNull(g);
+        assertThat(g.value()).isEqualTo(2);
     }
 
+    @Test
     @DisplayName("gauges can be directly associated with collection size")
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    void collectionSizeGauge(MeterRegistry registry) {
+    default void collectionSizeGauge(MeterRegistry registry) {
         List<String> list = registry.gaugeCollectionSize("my.gauge", emptyList(), new ArrayList<>());
         list.addAll(Arrays.asList("a", "b"));
 
-        assertEquals(2, singleGauge(registry).value());
+        Gauge g = registry.find("my.gauge").gauge().orElse(null);
+        assertNotNull(g);
+        assertThat(g.value()).isEqualTo(2);
     }
 
+    @Test
     @DisplayName("gauges can be directly associated with map entry size")
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    void mapSizeGauge(MeterRegistry registry) {
+    default void mapSizeGauge(MeterRegistry registry) {
         Map<String, Integer> map = registry.gaugeMapSize("my.gauge", emptyList(), new HashMap<>());
         map.put("a", 1);
 
-        assertEquals(1, singleGauge(registry).value());
-    }
-    
-    @DisplayName("gauges that reference an object that is garbage collected report NaN")
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    void garbageCollectedSourceObject(MeterRegistry registry) {
-        registry.gauge("my.gauge", emptyList(), (Map) null, Map::size);
-        assertThat(registry.find("my.gauge").value(Statistic.Value, 0).gauge()).isPresent();
+        Gauge g = registry.find("my.gauge").gauge().orElse(null);
+        assertNotNull(g);
+        assertThat(g.value()).isEqualTo(1);
     }
 
-    private Gauge singleGauge(MeterRegistry registry) {
-        return (Gauge) registry.getMeters().stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException("Expected a gauge to be registered"));
+    @Test
+    @DisplayName("gauges that reference an object that is garbage collected report NaN")
+    default void garbageCollectedSourceObject(MeterRegistry registry) {
+        registry.gauge("my.gauge", emptyList(), (Map) null, Map::size);
+        assertThat(registry.find("my.gauge").value(Statistic.Value, 0).gauge()).isPresent();
     }
 }

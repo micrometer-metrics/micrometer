@@ -13,27 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.core.tck;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Statistic;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static io.micrometer.core.instrument.MockClock.clock;
+import static io.micrometer.core.MockClock.clock;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class CounterTest {
+interface CounterTest {
 
     @DisplayName("multiple increments are maintained")
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    void increment(MeterRegistry registry) {
+    @Test
+    default void increment(MeterRegistry registry) {
         Counter c = registry.counter("myCounter");
         c.increment();
         clock(registry).addAndGet(1, TimeUnit.SECONDS);
@@ -46,21 +48,20 @@ class CounterTest {
         assertThat(c.count()).isGreaterThanOrEqualTo(2.0);
     }
 
+    @Test
     @DisplayName("increment by a non-negative amount")
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    void incrementAmount(MeterRegistry registry) {
+    default void incrementAmount(MeterRegistry registry) {
         Counter c = registry.counter("myCounter");
         c.increment(2);
         c.increment(0);
         clock(registry).addAndGet(1, TimeUnit.SECONDS);
+
         assertEquals(2L, c.count());
     }
 
+    @Test
     @DisplayName("function-tracking counter increments by change in a monotonically increasing function when observed")
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    void functionTrackingCounter(MeterRegistry registry) {
+    default void functionTrackingCounter(MeterRegistry registry) {
         AtomicLong n = new AtomicLong(0);
         registry.more().counter(registry.createId("tracking", emptyList(), null), n);
         n.incrementAndGet();

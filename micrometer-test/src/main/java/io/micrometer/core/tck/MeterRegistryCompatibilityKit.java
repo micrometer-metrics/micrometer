@@ -13,32 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.core.tck;
 
-import io.micrometer.prometheus.PrometheusMeterRegistry;
-import org.assertj.core.api.AbstractThrowableAssert;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.*;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static io.micrometer.core.instrument.MockClock.clock;
+import static io.micrometer.core.MockClock.clock;
 import static io.micrometer.core.instrument.Statistic.Count;
 import static io.micrometer.core.instrument.Statistic.Total;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.fail;
 
 /**
- * A suite of tests applicable to all MeterRegistry implementations
  * @author Jon Schneider
  */
-class MeterRegistryTest {
+@ExtendWith(RegistryResolver.class)
+public abstract class MeterRegistryCompatibilityKit {
+    public abstract MeterRegistry registry();
 
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
+    @Test
+    @DisplayName("compatibility test provides a non-null registry instance")
+    void registryIsNotNull(MeterRegistry registry) {
+        assertThat(registry).isNotNull();
+    }
+
+    @Test
     @DisplayName("meters with the same name and tags are registered once")
     void uniqueMeters(MeterRegistry registry) {
         registry.counter("foo");
@@ -47,25 +57,7 @@ class MeterRegistryTest {
         assertThat(registry.getMeters().size()).isEqualTo(1);
     }
 
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    @DisplayName("same meter name but subset of tags")
-    void tagSubsets(MeterRegistry registry) {
-        registry.counter("foo", "k", "v");
-
-        AbstractThrowableAssert<?, ? extends Throwable> subsetAssert = assertThatCode(() ->
-                registry.counter("foo", "k", "v", "k2", "v2"));
-
-        if (registry instanceof PrometheusMeterRegistry) {
-            // Prometheus requires a fixed set of tags per meter
-            subsetAssert.hasMessage("Incorrect number of labels.");
-        } else {
-            subsetAssert.doesNotThrowAnyException();
-        }
-    }
-
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
+    @Test
     @DisplayName("find meters by name and class type matching a subset of their tags")
     void findMeters(MeterRegistry registry) {
         Counter c1 = registry.counter("foo", "k", "v");
@@ -75,8 +67,7 @@ class MeterRegistryTest {
         assertThat(registry.find("bar").tags("k", "v").counter()).containsSame(c2);
     }
 
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
+    @Test
     @DisplayName("find meters by name and type matching a subset of their tags")
     void findMetersByType(MeterRegistry registry) {
         Counter c1 = registry.counter("foo", "k", "v");
@@ -86,8 +77,7 @@ class MeterRegistryTest {
         assertThat(registry.find("bar").tags("k", "v").counter()).containsSame(c2);
     }
 
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
+    @Test
     @DisplayName("find meters by name and value")
     void findMetersByValue(MeterRegistry registry) {
         Counter c = registry.counter("counter");
@@ -103,8 +93,7 @@ class MeterRegistryTest {
         assertThat(registry.find("timer").value(Total, 10.0).timer()).isPresent();
     }
 
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
+    @Test
     @DisplayName("common tags are added to every measurement")
     void addCommonTags(MeterRegistry registry) {
         registry.config().commonTags("k", "v");
@@ -113,8 +102,7 @@ class MeterRegistryTest {
         assertThat(registry.find("foo").tags("k", "v").counter()).containsSame(c);
     }
 
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
+    @Test
     @DisplayName("original and convention names are preserved for custom meter types")
     void aTaleOfTwoNames(MeterRegistry registry) {
         AtomicInteger n = new AtomicInteger(1);
@@ -122,4 +110,25 @@ class MeterRegistryTest {
 
         assertThat(registry.find("my.counter").meter()).isPresent();
     }
+
+    @DisplayName("counters")
+    @Nested
+    class CounterTck implements CounterTest {}
+
+    @DisplayName("distribution summaries")
+    @Nested
+    class DistributionSummaryTck implements DistributionSummaryTest {}
+
+    @DisplayName("gauges")
+    @Nested
+    class GaugeTck implements GaugeTest {}
+
+    @DisplayName("long task timers")
+    @Nested
+    class LongTaskTimerTck implements LongTaskTimerTest {}
+
+    @DisplayName("timers")
+    @Nested
+    class TimerTck implements TimerTest {}
 }
+

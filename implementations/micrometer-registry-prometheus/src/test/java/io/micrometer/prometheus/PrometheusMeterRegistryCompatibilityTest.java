@@ -15,18 +15,14 @@
  */
 package io.micrometer.prometheus;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
+import io.micrometer.core.MockClock;
+import io.prometheus.client.CollectorRegistry;
 
-/**
- * Marks a test as related to a Github issue.
- *
- * @author Jon Schneider
- */
-@Target({ ElementType.TYPE, ElementType.METHOD })
-@Retention(RetentionPolicy.SOURCE)
-public @interface Issue {
-    String value();
+class PrometheusMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+    @Override
+    public MeterRegistry registry() {
+        return new PrometheusMeterRegistry(k -> null, new CollectorRegistry(true), new MockClock());
+    }
 }

@@ -35,7 +35,7 @@ public class JmxMeterRegistry extends DropwizardMeterRegistry {
 
         this.reporter = JmxReporter.forRegistry(getDropwizardRegistry()).build();
         this.reporter.start();
-    }
+}
 
     public void stop() {
         this.reporter.stop();

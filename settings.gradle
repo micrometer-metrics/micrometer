@@ -2,6 +2,8 @@ rootProject.name = 'micrometer'
 
 include 'micrometer-core'
 include 'micrometer-spring-legacy'
+include 'micrometer-samples'
+include 'micrometer-test'
 
 ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx'].each { sys ->
     include "micrometer-registry-$sys"

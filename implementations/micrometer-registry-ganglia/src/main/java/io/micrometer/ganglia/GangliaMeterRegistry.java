@@ -17,6 +17,7 @@ package io.micrometer.ganglia;
 
 import com.codahale.metrics.ganglia.GangliaReporter;
 import info.ganglia.gmetric4j.gmetric.GMetric;
+import io.micrometer.core.annotation.CompatibilityTested;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
@@ -24,6 +25,7 @@ import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+@CompatibilityTested
 public class GangliaMeterRegistry extends DropwizardMeterRegistry {
     private final GangliaReporter reporter;
     private final GangliaConfig config;

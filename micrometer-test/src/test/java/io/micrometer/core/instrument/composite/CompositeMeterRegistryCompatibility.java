@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.annotation;
+package io.micrometer.core.instrument.composite;
 
-import java.lang.annotation.*;
+import io.micrometer.core.MockClock;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
-@Target({ElementType.TYPE, ElementType.METHOD})
-@Repeatable(TimedSet.class)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Timed {
-    String value() default "";
-
-    String[] extraTags() default {};
-
-    boolean longTask() default false;
-
-    double[] quantiles() default {};
-
-    boolean percentiles() default false;
+class CompositeMeterRegistryCompatibility extends MeterRegistryCompatibilityKit {
+    @Override
+    public MeterRegistry registry() {
+        return new CompositeMeterRegistry(new MockClock()) {{
+            add(new SimpleMeterRegistry(clock));
+        }};
+    }
 }

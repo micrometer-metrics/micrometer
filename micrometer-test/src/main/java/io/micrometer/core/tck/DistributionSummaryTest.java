@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.core.tck;
 
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.MockClock.clock;
+import static io.micrometer.core.MockClock.clock;
 import static org.junit.jupiter.api.Assertions.*;
 
-class DistributionSummaryTest {
+interface DistributionSummaryTest {
 
+    @Test
     @DisplayName("multiple recordings are maintained")
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    void record(MeterRegistry registry) {
+    default void record(MeterRegistry registry) {
         DistributionSummary ds = registry.summary("myDistributionSummary");
 
         ds.record(10);
@@ -46,10 +46,9 @@ class DistributionSummaryTest {
                 () -> assertTrue(ds.totalAmount() >= 20L));
     }
 
+    @Test
     @DisplayName("negative quantities are ignored")
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    void recordNegative(MeterRegistry registry) {
+    default void recordNegative(MeterRegistry registry) {
         DistributionSummary ds = registry.summary("myDistributionSummary");
 
         ds.record(-10);
@@ -57,10 +56,9 @@ class DistributionSummaryTest {
                 () -> assertEquals(0L, ds.totalAmount()));
     }
 
+    @Test
     @DisplayName("record zero")
-    @ParameterizedTest
-    @ArgumentsSource(MeterRegistriesProvider.class)
-    void recordZero(MeterRegistry registry) {
+    default void recordZero(MeterRegistry registry) {
         DistributionSummary ds = registry.summary("myDistributionSummary");
 
         ds.record(0);

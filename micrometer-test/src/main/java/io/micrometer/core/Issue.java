@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.annotation;
+package io.micrometer.core;
 
-import java.lang.annotation.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-@Target({ElementType.TYPE, ElementType.METHOD})
-@Repeatable(TimedSet.class)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Timed {
-    String value() default "";
-
-    String[] extraTags() default {};
-
-    boolean longTask() default false;
-
-    double[] quantiles() default {};
-
-    boolean percentiles() default false;
+/**
+ * Marks a test as related to a Github issue.
+ *
+ * @author Jon Schneider
+ */
+@Target({ ElementType.TYPE, ElementType.METHOD })
+@Retention(RetentionPolicy.SOURCE)
+public @interface Issue {
+    String value();
 }
