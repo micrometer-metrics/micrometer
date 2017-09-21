@@ -54,7 +54,7 @@ class ExecutorServiceMetricsTest {
         assertThat(registry.find("exec").timer()).map(Timer::count).hasValue(1L);
     }
 
-    @DisplayName("thread pool executor can be instrumented even treat as Executor")
+    @DisplayName("ExecutorService is casted from Executor when necessary")
     @Test
     void executorCasting() {
         Executor exec = Executors.newFixedThreadPool(2);
