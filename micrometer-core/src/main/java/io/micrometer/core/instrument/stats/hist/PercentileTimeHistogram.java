@@ -44,7 +44,7 @@ public class PercentileTimeHistogram extends TimeHistogram {
 
         @Override
         public PercentileTimeHistogram create(Summation defaultSummationMode) {
-            return new PercentileTimeHistogram(new DefaultHistogram<>(f, domainFilters,
+            return new PercentileTimeHistogram(new DefaultHistogram<>(f, scaledDomainFilters(),
                 summation == null ? defaultSummationMode : summation), bucketTimeScale, fUnits);
         }
     }

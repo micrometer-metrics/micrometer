@@ -125,6 +125,8 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
                 double min = (double) prometheusConfig.timerPercentilesMin().toNanos() / 1e9;
                 percentileHistBuilder.filterBuckets(BucketFilter.clampMin(min));
             }
+
+            percentileHistBuilder.bucketTimeScale(TimeUnit.SECONDS);
         }
         else if(builder instanceof TimeHistogram.Builder) {
             TimeHistogram.Builder timeHist = (TimeHistogram.Builder) builder;

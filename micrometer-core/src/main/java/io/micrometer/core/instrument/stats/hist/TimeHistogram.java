@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -71,12 +70,14 @@ public class TimeHistogram implements Histogram<Double> {
 
         @Override
         public TimeHistogram create(Summation defaultSummationMode) {
-            Collection<BucketFilter<Double>> scaledFilters = domainFilters.stream()
-                .map(filter -> (BucketFilter<Double>) bucket -> filter.shouldPublish(scaled(bucket, bucketTimeScale, fUnits)))
-                .collect(toList());
-
-            return new TimeHistogram(new DefaultHistogram<>(f, scaledFilters,
+            return new TimeHistogram(new DefaultHistogram<>(f, scaledDomainFilters(),
                 summation == null ? defaultSummationMode : summation), bucketTimeScale, fUnits);
+        }
+
+        Collection<BucketFilter<Double>> scaledDomainFilters() {
+            return domainFilters.stream()
+                        .map(filter -> (BucketFilter<Double>) bucket -> filter.shouldPublish(scaled(bucket, bucketTimeScale, fUnits)))
+                        .collect(toList());
         }
     }
 

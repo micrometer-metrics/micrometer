@@ -69,7 +69,11 @@ public class DefaultHistogram<T> implements Histogram<T> {
         if (domainFilters.isEmpty())
             return buckets.values();
         return buckets.values().stream()
-            .filter(bucket -> domainFilters.stream().allMatch(filter -> filter.shouldPublish(bucket)))
+            .filter(bucket ->
+                // kinda hacky, but for the sake of Prometheus, double-based numeric cumulative histograms must ship +Inf
+                isCumulative() && bucket.getTag().equals(Double.POSITIVE_INFINITY) ||
+                domainFilters.stream().allMatch(filter -> filter.shouldPublish(bucket))
+            )
             .collect(toList());
     }
 
