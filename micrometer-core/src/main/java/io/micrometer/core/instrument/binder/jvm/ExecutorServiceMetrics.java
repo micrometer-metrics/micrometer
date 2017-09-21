@@ -159,7 +159,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
     }
 
     private void monitor(MeterRegistry registry, ForkJoinPool fj) {
-        registry.more().counter(registry.createId(name + ".steals", emptyList(),
+        registry.more().counter(registry.createId(name + ".steals", tags,
             "Estimate of the total number of tasks stolen from " +
                 "one thread's work queue by another. The reported value " +
                 "underestimates the actual total number of steals when the pool " +

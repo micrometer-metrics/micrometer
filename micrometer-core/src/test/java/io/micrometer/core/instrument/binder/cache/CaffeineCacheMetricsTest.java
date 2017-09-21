@@ -18,6 +18,9 @@ package io.micrometer.core.instrument.binder.cache;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
@@ -32,11 +35,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CaffeineCacheMetricsTest {
     private SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
+    private Iterable<Tag> userTags = Tags.zip("userTagKey", "userTagValue");
+
     @Test
     void cacheExposesMetricsForHitMissAndEviction() throws Exception {
         // Run cleanup in same thread, to remove async behavior with evictions
         Cache<String, String> cache = Caffeine.newBuilder().maximumSize(2).recordStats().executor(Runnable::run).build();
-        CaffeineCacheMetrics.monitor(registry, cache, "c");
+        CaffeineCacheMetrics.monitor(registry, cache, "c", userTags);
 
         cache.getIfPresent("user1");
         cache.getIfPresent("user1");
@@ -48,9 +53,9 @@ class CaffeineCacheMetricsTest {
         cache.put("user3", "Third User");
         cache.put("user4", "Fourth User");
 
-        assertThat(registry.find("c.requests").tags("result", "hit").value(Count, 1.0).meter()).isPresent();
-        assertThat(registry.find("c.requests").tags("result", "miss").value(Count, 2.0).meter()).isPresent();
-        assertThat(registry.find("c.evictions").value(Count, 2.0));
+        assertThat(registry.find("c.requests").tags("result", "hit").tags(userTags).value(Count, 1.0).meter()).isPresent();
+        assertThat(registry.find("c.requests").tags("result", "miss").tags(userTags).value(Count, 2.0).meter()).isPresent();
+        assertThat(registry.find("c.evictions").tags(userTags).value(Count, 2.0));
     }
 
     @SuppressWarnings("unchecked")
@@ -62,7 +67,7 @@ class CaffeineCacheMetricsTest {
                 if (key % 2 == 0)
                     throw new Exception("no evens!");
                 return key.toString();
-            }), "c");
+            }), "c", userTags);
 
         cache.get(1);
         cache.get(1);
@@ -72,9 +77,9 @@ class CaffeineCacheMetricsTest {
         }
         cache.get(3);
 
-        assertThat(registry.find("c.requests").tags("result", "hit").value(Count, 1.0).meter()).isPresent();
-        assertThat(registry.find("c.requests").tags("result", "miss").value(Count, 3.0).meter()).isPresent();
-        assertThat(registry.find("c.load").tags("result", "failure").value(Count, 1.0).meter()).isPresent();
-        assertThat(registry.find("c.load").tags("result", "success").value(Count, 2.0).meter()).isPresent();
+        assertThat(registry.find("c.requests").tags("result", "hit").tags(userTags).value(Count, 1.0).meter()).isPresent();
+        assertThat(registry.find("c.requests").tags("result", "miss").tags(userTags).value(Count, 3.0).meter()).isPresent();
+        assertThat(registry.find("c.load").tags("result", "failure").tags(userTags).value(Count, 1.0).meter()).isPresent();
+        assertThat(registry.find("c.load").tags("result", "success").tags(userTags).value(Count, 2.0).meter()).isPresent();
     }
 }
