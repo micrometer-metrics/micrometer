@@ -15,9 +15,17 @@
  */
 package io.micrometer.core.instrument.stats.hist;
 
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.EnumSource;
 
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+
+import static io.micrometer.core.instrument.stats.hist.Histogram.Summation.Cumulative;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DefaultHistogramTest {
@@ -46,5 +54,43 @@ class DefaultHistogramTest {
         assertThat(exp.bucket(1)).isEqualTo(1);
         assertThat(exp.bucket(3)).isEqualTo(4);
         assertThat(exp.bucket(10)).isEqualTo(Double.POSITIVE_INFINITY);
+    }
+
+    private static class ProvidedHistogramFunctions implements ArgumentsProvider {
+
+        @Override
+        public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
+            return
+                Stream.of(
+                    Histogram.linear(1, 2, 3),
+                    Histogram.linearTime(TimeUnit.NANOSECONDS, 1, 2, 3),
+                    Histogram.exponential(1, 2, 3),
+                    Histogram.exponentialTime(TimeUnit.NANOSECONDS, 1, 2, 3),
+                    Histogram.percentiles(),
+                    Histogram.percentilesTime()
+                ).map(Arguments::of);
+        }
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(ProvidedHistogramFunctions.class)
+    void cumulativeHistogramsContainPositiveInfinityBucket(Histogram.Builder<Double> builder) {
+        Histogram<Double> hist = builder.create(Cumulative);
+        hist.observe(1000);
+
+        assertThat(hist.getBucket(Double.POSITIVE_INFINITY))
+            .isNotNull()
+            .satisfies(b -> assertThat(b.getValue()).isEqualTo(1));
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(ProvidedHistogramFunctions.class)
+    void valuesAboveClampedMaxStillAccumulatedToInfinityBucket(Histogram.Builder<Double> builder) {
+        Histogram<Double> hist = builder.filterBuckets(BucketFilter.clampMax(3.0)).create(Cumulative);
+        hist.observe(5);
+
+        assertThat(hist.getBucket(Double.POSITIVE_INFINITY))
+            .isNotNull()
+            .satisfies(b -> assertThat(b.getValue()).isEqualTo(1));
     }
 }

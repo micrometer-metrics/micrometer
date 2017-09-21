@@ -16,12 +16,10 @@
 package io.micrometer.core.instrument.stats.hist;
 
 import io.micrometer.core.Issue;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,16 +30,26 @@ class HistogramTest {
     @EnumSource(Histogram.Summation.class)
     @Issue("#120")
     void useFiltersToClampBucketDomains(Histogram.Summation summation) {
-        Histogram<Double> histogram = Histogram.linear(1, 1, 10)
-            .create(summation)
+        Histogram<Double> hist = Histogram.linear(1, 1, 10)
             .filterBuckets(BucketFilter.clampMax(8.0))
-            .filterBuckets(BucketFilter.clampMin(5.0));
+            .filterBuckets(BucketFilter.clampMin(5.0))
+            .create(summation);
 
-        IntStream.range(0, 11).forEach(histogram::observe);
+        IntStream.range(0, 11).forEach(hist::observe);
 
-        assertThat(histogram.getBuckets().stream().map(Bucket::getTag))
+        assertThat(hist.getBuckets().stream().map(Bucket::getTag))
             .contains(5.0, 6.0, 7.0, 8.0)
             .doesNotContain(1.0, 2.0, 3.0, 4.0, 9.0, 10.0);
+    }
+
+    @Issue("#127")
+    @Test
+    void bucketFiltersDoNotEliminateInfinityBucketForCumulativeHistograms() {
+        Histogram<Double> hist = Histogram.linear(1, 1, 2)
+            .filterBuckets(BucketFilter.clampMax(1.0))
+            .create(Histogram.Summation.Cumulative);
+
+        assertThat(hist.getBuckets()).anySatisfy(b -> assertThat(b.getTag()).isEqualTo(Double.POSITIVE_INFINITY));
     }
 
     @Test

@@ -15,15 +15,18 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.core.instrument.stats.hist.HistogramConfig;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public interface PrometheusConfig extends HistogramConfig {
-    /**
-     * {@code true} if meter descriptions should be sent to Prometheus.
-     * Turn this off to minimize the amount of data sent on each scrape.
-     */
-    default boolean descriptions() {
-        String v = get(prefix() + ".descriptions");
-        return v == null || Boolean.valueOf(v);
-    }
+/**
+ * Marks a test as related to a Github issue.
+ *
+ * @author Jon Schneider
+ */
+@Target({ ElementType.TYPE, ElementType.METHOD })
+@Retention(RetentionPolicy.SOURCE)
+public @interface Issue {
+    String value();
 }

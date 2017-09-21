@@ -14,9 +14,25 @@ Micrometer is the instrumentation library underpinning Spring Boot 2.0's metrics
 
 Join the [Micrometer Slack](http://slack.micrometer.io) to share your questions, concerns, and feature requests.
 
+## Snapshot builds
+
+Snapshots are published to `repo.spring.io` for every successful build on the master branch.
+
+To use:
+
+```groovy
+repositories {
+    maven { url 'https://repo.spring.io/libs-snapshot' }
+}
+
+dependencies {
+    compile 'io.micrometer:micrometer-core:latest.integration'
+}
+```
+
 ## Building Locally
 
-Run `./gradlew pTML` to publish a snapshot to your Maven local repo. To consume:
+Run `./gradlew pTML` to publish a Maven-style snapshot to your Maven local repo. To consume:
 
 ```groovy
 repositories {
@@ -27,6 +43,8 @@ dependencies {
     compile 'io.micrometer:micrometer-core:latest.integration'
 }
 ```
+
+The build automatically calculates the "next" version for you when publishing snapshots.
 
 -------------------------------------
 _Licensed under [Apache Software License 2.0](www.apache.org/licenses/LICENSE-2.0)_

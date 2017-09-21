@@ -18,21 +18,34 @@ package io.micrometer.core.instrument.stats.hist;
 import java.util.concurrent.TimeUnit;
 
 public class PercentileTimeHistogram extends TimeHistogram {
-    PercentileTimeHistogram(DoubleHistogram delegate, TimeUnit fUnits) {
-        super(delegate, fUnits);
+    PercentileTimeHistogram(Histogram<Double> delegate, TimeUnit bucketTimeScale, TimeUnit fUnits) {
+        super(delegate, bucketTimeScale, fUnits);
     }
 
-    public static class Builder extends Histogram.Builder<Double> {
-        private final TimeUnit fUnits;
-
+    public static class Builder extends TimeHistogram.Builder {
         Builder(TimeUnit fUnits) {
-            super(PercentileBucketFunction.INSTANCE);
-            this.fUnits = fUnits;
+            super(PercentileBucketFunction.INSTANCE, fUnits);
+        }
+
+        @Override
+        public Builder summation(Summation summation) {
+            return (Builder) super.summation(summation);
+        }
+
+        @Override
+        public Builder filterBuckets(BucketFilter<Double> filter) {
+            return (Builder) super.filterBuckets(filter);
+        }
+
+        @Override
+        public Builder bucketTimeScale(TimeUnit bucketTimeScale) {
+            return (Builder) super.bucketTimeScale(bucketTimeScale);
         }
 
         @Override
         public PercentileTimeHistogram create(Summation defaultSummationMode) {
-            return new PercentileTimeHistogram(new DoubleHistogram(f, summation == null ? defaultSummationMode : summation), fUnits);
+            return new PercentileTimeHistogram(new DefaultHistogram<>(f, scaledDomainFilters(),
+                summation == null ? defaultSummationMode : summation), bucketTimeScale, fUnits);
         }
     }
 }
