@@ -19,7 +19,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.GuavaCacheMetrics;
+import io.micrometer.core.instrument.binder.cache.GuavaCacheMetrics;
 import io.micrometer.core.samples.utils.SampleRegistries;
 import reactor.core.publisher.Mono;
 

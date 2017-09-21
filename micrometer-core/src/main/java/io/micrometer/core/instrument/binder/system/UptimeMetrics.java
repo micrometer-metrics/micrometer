@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder;
+package io.micrometer.core.instrument.binder.system;
 
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.MeterBinder;
 
 /**
  * Uptime metrics.

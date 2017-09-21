@@ -13,25 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder;
+package io.micrometer.core.instrument.binder.jvm;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-class JvmThreadMetricsTest {
+class ClassLoaderMetricsTest {
     @Test
-    void threadMetrics() {
+    void classLoadingMetrics() {
         MeterRegistry registry = new SimpleMeterRegistry();
-        new JvmThreadMetrics().bindTo(registry);
+        new ClassLoaderMetrics().bindTo(registry);
 
-        assertThat(registry.find("jvm.threads.live").gauge())
+        assertThat(registry.find("jvm.classes.loaded").gauge())
                 .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
-        assertThat(registry.find("jvm.threads.daemon").gauge())
-                .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
-        assertThat(registry.find("jvm.threads.peak").gauge())
-                .hasValueSatisfying(g ->  assertThat(g.value()).isGreaterThan(0));
     }
 }
