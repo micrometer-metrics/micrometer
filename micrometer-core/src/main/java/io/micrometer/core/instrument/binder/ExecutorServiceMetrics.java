@@ -17,8 +17,7 @@ package io.micrometer.core.instrument.binder;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.internal.TimedExecutor;
 import io.micrometer.core.instrument.internal.TimedExecutorService;
 
 import java.lang.reflect.Field;
@@ -46,8 +45,10 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @return The instrumented executor, proxied.
      */
     public static Executor monitor(MeterRegistry registry, Executor executor, String name, Iterable<Tag> tags) {
-        final Timer commandTimer = registry.timer(name, tags);
-        return commandTimer::record;
+        if (executor instanceof ExecutorService) {
+            return monitor(registry, (ExecutorService) executor, name, tags);
+        }
+        return new TimedExecutor(registry, executor, name, tags);
     }
 
     /**
