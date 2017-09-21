@@ -56,23 +56,29 @@ public class DatabaseTableMetrics implements MeterBinder {
         new DatabaseTableMetrics(ds, tableName, name, tags).bindTo(registry);
     }
 
+    private final String query;
     private final String tableName;
     private final String name;
     private final Iterable<Tag> tags;
     private final DataSource dataSource;
 
     public DatabaseTableMetrics(DataSource dataSource, String tableName, String name, Iterable<Tag> tags) {
+        this(dataSource, "SELECT COUNT(1) FROM " + tableName, tableName, name, tags);
+    }
+
+    public DatabaseTableMetrics(DataSource dataSource, String query, String tableName, String name, Iterable<Tag> tags) {
+        this.dataSource = dataSource;
+        this.query = query;
         this.tableName = tableName;
         this.name = name;
         this.tags = tags;
-        this.dataSource = dataSource;
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
         registry.gauge(name, Tags.concat(tags,"table", tableName), dataSource, ds -> {
             try (Connection conn = ds.getConnection();
-                 PreparedStatement ps = conn.prepareStatement("SELECT COUNT(1) FROM " + tableName);
+                 PreparedStatement ps = conn.prepareStatement(query);
                  ResultSet rs = ps.executeQuery()) {
                 rs.next();
                 return rs.getInt(1);
