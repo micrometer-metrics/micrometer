@@ -76,10 +76,10 @@ public class GuavaCacheMetrics implements MeterBinder {
             cache, Cache::size);
 
         registry.more().counter(registry.createId(name + ".requests", Tags.concat(tags, "result", "miss"),
-            "the number of times cache lookup methods have returned an uncached (newly loaded) value, or null"),
+            "The number of times cache lookup methods have returned an uncached (newly loaded) value, or null"),
             cache, c -> c.stats().missCount());
         registry.more().counter(registry.createId(name + ".requests", Tags.concat(tags, "result", "hit"),
-            "The number of times cache lookup methods have returned a cached value."),
+            "The number of times cache lookup methods have returned a cached value"),
             cache, c -> c.stats().hitCount());
         registry.more().counter(registry.createId(name + ".evictions", tags, "cache evictions"),
             cache, c -> c.stats().evictionCount());
