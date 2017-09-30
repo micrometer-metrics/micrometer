@@ -15,18 +15,17 @@
  */
 package io.micrometer.core.instrument.composite;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.NamingConvention;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.micrometer.core.instrument.Statistic.Count;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -34,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class CompositeMeterRegistryTest {
     private CompositeMeterRegistry composite = new CompositeMeterRegistry();
+    private SimpleMeterRegistry simple = new SimpleMeterRegistry();
 
     @Test
     void metricsAreInitiallyNoop() {
@@ -44,7 +44,6 @@ class CompositeMeterRegistryTest {
     @DisplayName("base units on meters that support them are passed through underlying registries")
     @Test
     void baseUnitsPreserved() {
-        SimpleMeterRegistry simple = new SimpleMeterRegistry();
         composite.add(simple);
 
         Counter.builder("counter").baseUnit("bytes").register(composite);
@@ -62,7 +61,6 @@ class CompositeMeterRegistryTest {
     @DisplayName("metrics stop receiving updates when their registry parent is removed from a composite")
     @Test
     void metricAfterRegistryRemove() {
-        SimpleMeterRegistry simple = new SimpleMeterRegistry();
         composite.add(simple);
 
         Counter compositeCounter = composite.counter("counter");
@@ -93,7 +91,6 @@ class CompositeMeterRegistryTest {
         // increments are being NOOPd until there is a registry in the composite
         assertThat(compositeCounter.count()).isEqualTo(0);
 
-        SimpleMeterRegistry simple = new SimpleMeterRegistry();
         composite.add(simple);
 
         compositeCounter.increment();
@@ -107,7 +104,6 @@ class CompositeMeterRegistryTest {
     @DisplayName("metrics that are created after a registry is added to that registry")
     @Test
     void registryBeforeMetricAdd() {
-        SimpleMeterRegistry simple = new SimpleMeterRegistry();
         composite.add(simple);
         composite.counter("counter").increment();
 
@@ -117,7 +113,6 @@ class CompositeMeterRegistryTest {
     @DisplayName("metrics follow the naming convention of each registry in the composite")
     @Test
     void namingConventions() {
-        SimpleMeterRegistry simple = new SimpleMeterRegistry();
         simple.config().namingConvention(NamingConvention.camelCase);
 
         composite.add(simple);
@@ -129,7 +124,6 @@ class CompositeMeterRegistryTest {
     @DisplayName("common tags added to the composite affect meters registered with registries in the composite")
     @Test
     void commonTags() {
-        SimpleMeterRegistry simple = new SimpleMeterRegistry();
         simple.config().commonTags("instance", "local"); // added alongside other common tags in the composite
         simple.config().commonTags("region", "us-west-1"); // overriden by the composite
 
@@ -141,5 +135,23 @@ class CompositeMeterRegistryTest {
 
         assertThat(simple.find("counter").tags("region", "us-east-1", "stack", "test",
             "instance", "local").counter()).isPresent();
+    }
+
+    @DisplayName("function timer base units are delegated to registries in the composite")
+    @Test
+    void functionTimerUnits() {
+        composite.add(simple);
+        Object o = new Object();
+
+        composite.more().timer(composite.createId("function.timer", emptyList(), "test"),
+            o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
+
+        Optional<Iterable<Measurement>> measurements = simple.find("function.timer").meter().map(Meter::measure);
+        assertThat(measurements).isPresent();
+        assertThat(measurements.get())
+            .anySatisfy(ms -> {
+                assertThat(ms.getStatistic()).isEqualTo(Statistic.Total);
+                assertThat(ms.getValue()).isEqualTo(1e6);
+            });
     }
 }

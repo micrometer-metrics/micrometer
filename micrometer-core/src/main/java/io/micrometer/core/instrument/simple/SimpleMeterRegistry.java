@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.stats.hist.Bucket;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
@@ -23,6 +24,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 /**
  * A minimal meter registry implementation primarily used for tests.
@@ -88,6 +90,13 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
             return hist;
         }
         return null;
+    }
+
+    @Override
+    protected <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+        id.setBaseUnit("nanoseconds");
+        return new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits,
+            TimeUnit.NANOSECONDS);
     }
 
     @Override

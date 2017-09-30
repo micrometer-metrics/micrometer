@@ -13,15 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.annotation;
+package io.micrometer.core.instrument.noop;
 
-import java.lang.annotation.*;
+import io.micrometer.core.instrument.FunctionTimer;
 
-/**
- * Marks a registry implementation to be exercised by the technology compatibility kit in micrometer-test.
- *
- * @author Jon Schneider
- */
-@Target({ElementType.TYPE})
-public @interface CompatibilityTested {
+import java.util.concurrent.TimeUnit;
+
+public class NoopFunctionTimer extends NoopMeter implements FunctionTimer {
+    public static final NoopFunctionTimer INSTANCE = new NoopFunctionTimer();
+
+    private NoopFunctionTimer() {}
+
+    @Override
+    public long count() {
+        return 0;
+    }
+
+    @Override
+    public double totalTime(TimeUnit unit) {
+        return 0;
+    }
+
+    @Override
+    public TimeUnit baseTimeUnit() {
+        return TimeUnit.NANOSECONDS;
+    }
 }

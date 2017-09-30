@@ -52,7 +52,7 @@ class JCacheMetricsTest {
         cache.put(1, "test");
 
         MeterRegistry registry = new SimpleMeterRegistry();
-        new JCacheMetrics(cache, "jcache", emptyList()).bindTo(registry);
+        JCacheMetrics.monitor(registry, cache, "jcache", emptyList());
 
         assertThat(registry.find("jcache.puts").tags("name", "a").value(Statistic.Value, 1.0).gauge()).isPresent();
     }

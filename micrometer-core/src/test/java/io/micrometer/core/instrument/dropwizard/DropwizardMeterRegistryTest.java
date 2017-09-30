@@ -15,10 +15,11 @@
  */
 package io.micrometer.core.instrument.dropwizard;
 
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,5 +32,16 @@ class DropwizardMeterRegistryTest {
 
         assertThat(registry.find("gauge").gauge())
             .hasValueSatisfying(g -> assertThat(g.value()).isEqualTo(Double.NaN));
+    }
+
+    @Test
+    void customMeasurementsThatDifferOnlyInTagValue() {
+        MeterRegistry registry = new DropwizardMeterRegistry(HierarchicalNameMapper.DEFAULT, Clock.SYSTEM);
+        registry.register(registry.createId("my.custom", emptyList(), ""),
+            Meter.Type.Gauge,
+            Arrays.asList(
+                new Measurement(() -> 1.0, Statistic.Count),
+                new Measurement(() -> 2.0, Statistic.Total)
+            ));
     }
 }

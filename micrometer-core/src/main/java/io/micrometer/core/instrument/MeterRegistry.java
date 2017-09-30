@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 import static io.micrometer.core.instrument.Tags.zip;
 import static java.util.Collections.emptyList;
@@ -174,7 +176,15 @@ public interface MeterRegistry {
          * Tracks a monotonically increasing value, automatically incrementing the counter whenever
          * the value is observed.
          */
-        <T> Meter counter(Meter.Id id, T obj, ToDoubleFunction<T> f);
+        <T> FunctionCounter counter(Meter.Id id, T obj, ToDoubleFunction<T> f);
+
+        /**
+         * A timer that tracks monotonically increasing functions for count and totalTime.
+         */
+        <T> FunctionTimer timer(Meter.Id id, T obj,
+                                ToLongFunction<T> countFunction,
+                                ToDoubleFunction<T> totalTimeFunction,
+                                TimeUnit totalTimeFunctionUnits);
 
         /**
          * Tracks a number, maintaining a weak reference on it.
@@ -196,8 +206,9 @@ public interface MeterRegistry {
 
     /**
      * Register a custom meter type.
-     * @param id Id of the meter being registered.
-     * @param type Meter type, which may be used by naming conventions to normalize the name.
+     *
+     * @param id           Id of the meter being registered.
+     * @param type         Meter type, which may be used by naming conventions to normalize the name.
      * @param measurements A sequence of measurements describing how to sample the meter.
      * @return The registry.
      */

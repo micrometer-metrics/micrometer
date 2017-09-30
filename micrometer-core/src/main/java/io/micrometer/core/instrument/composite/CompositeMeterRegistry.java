@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 /**
  * The clock of the composite effectively overrides the clocks of the registries it manages without actually
@@ -92,6 +93,14 @@ public class CompositeMeterRegistry extends AbstractMeterRegistry {
         compositeMeters.add(gauge);
         registries.forEach(gauge::add);
         return gauge;
+    }
+
+    @Override
+    protected <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+        CompositeFunctionTimer<T> ft = new CompositeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
+        compositeMeters.add(ft);
+        registries.forEach(ft::add);
+        return ft;
     }
 
     @Override

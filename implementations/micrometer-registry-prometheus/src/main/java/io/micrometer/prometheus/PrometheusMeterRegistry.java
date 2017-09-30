@@ -16,16 +16,14 @@
 package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.stats.hist.BucketFilter;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.hist.PercentileTimeHistogram;
 import io.micrometer.core.instrument.stats.hist.TimeHistogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.prometheus.internal.CustomPrometheusCollector;
-import io.micrometer.prometheus.internal.CustomPrometheusLongTaskTimer;
-import io.micrometer.prometheus.internal.CustomPrometheusSummary;
-import io.micrometer.prometheus.internal.PrometheusCollectorId;
+import io.micrometer.prometheus.internal.*;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Gauge;
@@ -41,6 +39,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
@@ -165,6 +164,20 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         final CustomPrometheusLongTaskTimer longTaskTimer = collectorByName(CustomPrometheusLongTaskTimer.class, getConventionName(id),
             n -> new CustomPrometheusLongTaskTimer(collectorId(id), config().clock()).register(registry));
         return new PrometheusLongTaskTimer(id, longTaskTimer.child(getConventionTags(id)));
+    }
+
+    @Override
+    protected <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+        FunctionTimer ft = new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits,
+            TimeUnit.SECONDS);
+
+        id.setBaseUnit("seconds");
+        CustomPrometheusFunctionTimer pft = collectorByName(CustomPrometheusFunctionTimer.class, getConventionName(id),
+            n -> new CustomPrometheusFunctionTimer(collectorId(id)).register(registry));
+
+        pft.child(getConventionTags(id), ft);
+
+        return ft;
     }
 
     @Override

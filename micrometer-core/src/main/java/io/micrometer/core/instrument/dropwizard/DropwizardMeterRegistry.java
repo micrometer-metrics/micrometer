@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.dropwizard;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.simple.SimpleLongTaskTimer;
 import io.micrometer.core.instrument.stats.hist.Bucket;
 import io.micrometer.core.instrument.stats.hist.Histogram;
@@ -28,6 +29,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 /**
  * @author Jon Schneider
@@ -109,8 +111,21 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
+    protected <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+        id.setBaseUnit("nanoseconds");
+        FunctionTimer ft = new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits,
+            TimeUnit.NANOSECONDS);
+        newMeter(id, Meter.Type.Timer, ft.measure());
+        return ft;
+    }
+
+    @Override
     protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
-        measurements.forEach(ms -> registry.register(hierarchicalName(id), (Gauge<Double>) ms::getValue));
+        measurements.forEach(ms -> {
+            Meter.Id idWithStatTag = createId(id.getName(), Tags.concat(id.getTags(), "statistic", ms.getStatistic().toString().toLowerCase()),
+                id.getDescription(), id.getBaseUnit());
+            registry.register(hierarchicalName(idWithStatTag), (Gauge<Double>) ms::getValue);
+        });
     }
 
     @Override
@@ -118,7 +133,7 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
         id.setBaseUnit("nanoseconds");
         return newGauge(id, obj, obj2 -> TimeUtils.convert(f.applyAsDouble(obj2), fUnit, TimeUnit.NANOSECONDS));
     }
-    
+
     private String hierarchicalName(Meter.Id id) {
         return nameMapper.toHierarchicalName(id, config().namingConvention());
     }

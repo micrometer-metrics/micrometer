@@ -15,28 +15,31 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.core.instrument.MeterRegistry;
+import com.hazelcast.config.Config;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
+import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.CacheManager;
-import net.sf.ehcache.Element;
 import org.junit.jupiter.api.Test;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class EhCache2MetricsTest {
+class HazelcastCacheMetricsTest {
     @Test
-    void cacheExposesMetrics() {
-        CacheManager cacheManager = CacheManager.newInstance();
-        cacheManager.addCache("a");
-        Cache c = cacheManager.getCache("a");
+    void cacheMetrics() {
+        Config config = new Config();
+        HazelcastInstance h = Hazelcast.newHazelcastInstance(config);
+        IMap<String, String> map = h.getMap("my-distributed-map");
 
-        MeterRegistry registry = new SimpleMeterRegistry();
-        EhCache2Metrics.monitor(registry, c, "ehcache", emptyList());
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        HazelcastCacheMetrics.monitor(registry, map, "cache",emptyList());
 
-        c.put(new Element("k", "v", 1));
+        map.put("key", "value");
+        map.get("key");
 
-        assertThat(registry.find("ehcache.size").tags("name", "a").gauge()).isPresent();
+        assertThat(registry.find("cache.gets").value(Statistic.Count, 1.0).meter()).isPresent();
+        assertThat(registry.find("cache.puts").value(Statistic.Count, 1.0).meter()).isPresent();
     }
 }

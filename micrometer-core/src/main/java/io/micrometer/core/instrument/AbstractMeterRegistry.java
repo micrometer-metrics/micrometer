@@ -15,19 +15,18 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.internal.MeterId;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.stream.StreamSupport.stream;
 
@@ -103,6 +102,8 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     protected abstract void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements);
 
     protected abstract <T> Gauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f);
+
+    protected abstract <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits);
 
     protected List<Tag> getConventionTags(Meter.Id id) {
         return id.getConventionTags(config().namingConvention());
@@ -184,13 +185,39 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         }
 
         @Override
-        public <T> Meter counter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+        public <T> FunctionCounter counter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
             WeakReference<T> ref = new WeakReference<>(obj);
-            return register(id, Meter.Type.Counter,
-                Collections.singletonList(new Measurement(() -> {
-                    T obj2 = ref.get();
-                    return obj2 != null ? f.applyAsDouble(obj2) : 0;
-                }, Statistic.Count)));
+
+            return registerMeterIfNecessary(FunctionCounter.class, id, id2 -> {
+                id2.setType(Meter.Type.Counter);
+                FunctionCounter fc = new FunctionCounter() {
+                    private volatile double last = 0.0;
+
+                    @Override
+                    public double count() {
+                        T obj2 = ref.get();
+                        return obj2 != null ? (last = f.applyAsDouble(obj2)) : last;
+                    }
+
+                    @Override
+                    public Id getId() {
+                        return id2;
+                    }
+                };
+                newMeter(id2, Meter.Type.Counter, fc.measure());
+                return fc;
+            });
+        }
+
+        @Override
+        public <T> FunctionTimer timer(Meter.Id id, T obj,
+                                       ToLongFunction<T> countFunction,
+                                       ToDoubleFunction<T> totalTimeFunction,
+                                       TimeUnit totalTimeFunctionUnits) {
+            return registerMeterIfNecessary(FunctionTimer.class, id, id2 -> {
+                id2.setType(Meter.Type.Timer);
+                return newFunctionTimer(id2, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
+            });
         }
 
         @Override
@@ -325,7 +352,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
         synchronized (meterMap) {
             Meter m = meterMap.get(idWithCommonTags);
-            if(m == null) {
+            if (m == null) {
                 m = builder.apply(idWithCommonTags);
                 meterMap.put(idWithCommonTags, m);
             }

@@ -22,99 +22,128 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.statistics.StatisticsGateway;
 
+import javax.cache.Cache;
+
 /**
  * @author Jon Schneider
  */
 public class EhCache2Metrics implements MeterBinder {
-    private final Ehcache cache;
     private final String name;
     private final Iterable<Tag> tags;
+    private final StatisticsGateway stats;
 
+    /**
+     * Record metrics on a JCache cache.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param cache    The cache to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     * @see com.google.common.cache.CacheStats
+     */
+    public static Ehcache monitor(MeterRegistry registry, Ehcache cache, String name, String... tags) {
+        return monitor(registry, cache, name, Tags.zip(tags));
+    }
+
+    /**
+     * Record metrics on a JCache cache.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param cache    The cache to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     * @see com.google.common.cache.CacheStats
+     */
+    public static Ehcache monitor(MeterRegistry registry, Ehcache cache, String name, Iterable<Tag> tags) {
+        new EhCache2Metrics(cache, name, tags).bindTo(registry);
+        return cache;
+    }
+    
     public EhCache2Metrics(Ehcache cache, String name, Iterable<Tag> tags) {
-        this.cache = cache;
+        this.stats = cache.getStatistics();
         this.name = name;
         this.tags = Tags.concat(tags, "name", cache.getName());
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        StatisticsGateway s = cache.getStatistics();
-
         registry.gauge(registry.createId(name + ".size", Tags.concat(tags, "where", "local"),
             "The number of entries held locally in this cache"),
-            cache, c -> c.getStatistics().getSize());
+            stats, StatisticsGateway::getSize);
         registry.gauge(registry.createId(name + ".size", Tags.concat(tags, "where", "remote"),
             "The number of entries held remotely in this cache"),
-            cache, c -> c.getStatistics().getRemoteSize());
+            stats, StatisticsGateway::getRemoteSize);
 
         registry.more().counter(registry.createId(name + ".evictions", tags, "Cache evictions"),
-            cache, c -> c.getStatistics().cacheEvictedCount());
+            stats, StatisticsGateway::cacheEvictedCount);
         registry.more().counter(registry.createId(name + ".removals", tags, "Cache removals"),
-            cache, c -> c.getStatistics().cacheRemoveCount());
+            stats, StatisticsGateway::cacheRemoveCount);
 
         registry.more().counter(registry.createId(name + ".puts", Tags.concat(tags, "result", "added"), "Cache puts resulting in a new key/value pair"),
-            cache, c -> c.getStatistics().cachePutAddedCount());
+            stats, StatisticsGateway::cachePutAddedCount);
         registry.more().counter(registry.createId(name + ".puts", Tags.concat(tags, "result", "updated"), "Cache puts resulting in an updated value"),
-            cache, c -> c.getStatistics().cachePutAddedCount());
+            stats, StatisticsGateway::cachePutAddedCount);
 
-        countRequests(registry);
-        countCommitTransactions(registry);
-        countRollbackTransactions(registry);
-        countRecoveryTransactions(registry);
+        requestMetrics(registry);
+        commitTransactionMetrics(registry);
+        rollbackTransactionMetrics(registry);
+        recoveryTransactionMetrics(registry);
 
         registry.gauge(registry.createId(name + ".local.offheap.size", tags, "Local off-heap size", "bytes"),
-            cache, c -> c.getStatistics().getLocalOffHeapSize());
+            stats, StatisticsGateway::getLocalOffHeapSize);
         registry.gauge(registry.createId(name + ".local.heap.size", tags, "Local heap size", "bytes"),
-            cache, c -> c.getStatistics().getLocalHeapSizeInBytes());
+            stats, StatisticsGateway::getLocalHeapSizeInBytes);
         registry.gauge(registry.createId(name + ".local.disk.size", tags, "Local disk size", "bytes"),
-            cache, c -> c.getStatistics().getLocalDiskSizeInBytes());
+            stats, StatisticsGateway::getLocalDiskSizeInBytes);
     }
 
-    private void countRequests(MeterRegistry registry) {
+    private void requestMetrics(MeterRegistry registry) {
         registry.more().counter(registry.createId(name + ".requests", Tags.concat(tags, "result", "miss", "reason", "expired"),
             "The number of times cache lookup methods have not returned a value, due to expiry"),
-            cache, c -> c.getStatistics().cacheMissExpiredCount());
+            stats, StatisticsGateway::cacheMissExpiredCount);
 
         registry.more().counter(registry.createId(name + ".requests", Tags.concat(tags, "result", "miss", "reason", "notFound"),
             "The number of times cache lookup methods have not returned a value, because the key was not found"),
-            cache, c -> c.getStatistics().cacheMissNotFoundCount());
+            stats, StatisticsGateway::cacheMissNotFoundCount);
 
         registry.more().counter(registry.createId(name + ".requests", Tags.concat(tags, "result", "hit"),
             "The number of times cache lookup methods have returned a cached value."),
-            cache, c -> c.getStatistics().cacheHitCount());
+            stats, StatisticsGateway::cacheHitCount);
     }
 
-    private void countCommitTransactions(MeterRegistry registry) {
+    private void commitTransactionMetrics(MeterRegistry registry) {
         registry.more().counter(registry.createId(name + ".xa.commits", Tags.concat(tags, "result", "readOnly"),
             "Transaction commits that had a read-only result"),
-            cache, c -> c.getStatistics().xaCommitReadOnlyCount());
+            stats, StatisticsGateway::xaCommitReadOnlyCount);
 
         registry.more().counter(registry.createId(name + ".xa.commits", Tags.concat(tags, "result", "exception"),
             "Transaction commits that failed"),
-            cache, c -> c.getStatistics().xaCommitExceptionCount());
+            stats, StatisticsGateway::xaCommitExceptionCount);
 
         registry.more().counter(registry.createId(name + ".xa.commits", Tags.concat(tags, "result", "committed"),
             "Transaction commits that failed"),
-            cache, c -> c.getStatistics().xaCommitCommittedCount());
+            stats, StatisticsGateway::xaCommitCommittedCount);
     }
 
-    private void countRollbackTransactions(MeterRegistry registry) {
+    private void rollbackTransactionMetrics(MeterRegistry registry) {
         registry.more().counter(registry.createId(name + ".xa.rollbacks", Tags.concat(tags, "result", "exception"),
             "Transaction rollbacks that failed"),
-            cache, c -> c.getStatistics().xaRollbackExceptionCount());
+            stats, StatisticsGateway::xaRollbackExceptionCount);
 
         registry.more().counter(registry.createId(name + ".xa.rollbacks", Tags.concat(tags, "result", "success"),
             "Transaction rollbacks that failed"),
-            cache, c -> c.getStatistics().xaRollbackSuccessCount());
+            stats, StatisticsGateway::xaRollbackSuccessCount);
     }
 
-    private void countRecoveryTransactions(MeterRegistry registry) {
+    private void recoveryTransactionMetrics(MeterRegistry registry) {
         registry.more().counter(registry.createId(name + ".xa.recoveries", Tags.concat(tags, "result", "nothing"),
             "Recovery transactions that recovered nothing"),
-            cache, c -> c.getStatistics().xaRecoveryNothingCount());
+            stats, StatisticsGateway::xaRecoveryNothingCount);
 
         registry.more().counter(registry.createId(name + ".xa.recoveries", Tags.concat(tags, "result", "success"),
             "Successful recovery transaction"),
-            cache, c -> c.getStatistics().xaRecoveryRecoveredCount());
+            stats, StatisticsGateway::xaRecoveryRecoveredCount);
     }
 }

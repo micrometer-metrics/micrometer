@@ -20,6 +20,7 @@ import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Measurement;
 import com.netflix.spectator.api.Registry;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.stats.hist.Bucket;
 import io.micrometer.core.instrument.stats.hist.BucketFilter;
 import io.micrometer.core.instrument.stats.hist.Histogram;
@@ -30,6 +31,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
@@ -80,6 +82,15 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
         com.netflix.spectator.api.Timer timer = registry.timer(getConventionName(id), toSpectatorTags(getConventionTags(id)));
         return new SpectatorTimer(id, timer, clock, quantiles,
             registerHistogramCounterIfNecessary(id, histogram));
+    }
+
+    @Override
+    protected <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+        id.setBaseUnit("nanoseconds");
+        FunctionTimer ft = new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits,
+            TimeUnit.NANOSECONDS);
+        newMeter(id, Meter.Type.Timer, ft.measure());
+        return ft;
     }
 
     @Override

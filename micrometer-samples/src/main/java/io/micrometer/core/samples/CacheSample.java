@@ -41,7 +41,7 @@ public class CacheSample {
                 });
 
         MeterRegistry registry = SampleRegistries.prometheus();
-        new GuavaCacheMetrics("inverting.cache", emptyList(), cache).bindTo(registry);
+        new GuavaCacheMetrics(cache, emptyList(), "inverting.cache").bindTo(registry);
 
         for(int i = 0;; i++) {
             cache.getUnchecked(i);

@@ -29,6 +29,35 @@ public class ConcurrentMapCacheMetrics implements MeterBinder {
     private final String name;
     private final Iterable<Tag> tags;
 
+    /**
+     * Record metrics on a ConcurrentMapCache cache.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param cache    The cache to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     * @see com.google.common.cache.CacheStats
+     */
+    public static ConcurrentMapCache monitor(MeterRegistry registry, ConcurrentMapCache cache, String name, String... tags) {
+        return monitor(registry, cache, name, Tags.zip(tags));
+    }
+
+    /**
+     * Record metrics on a ConcurrentMapCache cache.
+     *
+     * @param registry The registry to bind metrics to.
+     * @param cache    The cache to instrument.
+     * @param name     The name prefix of the metrics.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     * @see com.google.common.cache.CacheStats
+     */
+    public static ConcurrentMapCache monitor(MeterRegistry registry, ConcurrentMapCache cache, String name, Iterable<Tag> tags) {
+        new ConcurrentMapCacheMetrics(cache, name, tags).bindTo(registry);
+        return cache;
+    }
+
     public ConcurrentMapCacheMetrics(ConcurrentMapCache cache, String name, Iterable<Tag> tags) {
         this.cache = cache;
         this.name = name;

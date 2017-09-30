@@ -15,9 +15,8 @@
  */
 package io.micrometer.core.tck;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.util.TimeUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -26,12 +25,14 @@ import org.junit.jupiter.api.extension.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.micrometer.core.MockClock.clock;
 import static io.micrometer.core.instrument.Statistic.Count;
 import static io.micrometer.core.instrument.Statistic.Total;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -109,6 +110,26 @@ public abstract class MeterRegistryCompatibilityKit {
         registry.more().counter(registry.createId("my.counter", Collections.emptyList(), null), n);
 
         assertThat(registry.find("my.counter").meter()).isPresent();
+    }
+
+    @Test
+    @DisplayName("function timers respect the base unit of an underlying registry")
+    void functionTimerUnits(MeterRegistry registry) {
+        Object o = new Object();
+
+        registry.more().timer(registry.createId("function.timer", emptyList(), "test"),
+            o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
+
+        Optional<Meter> meter = registry.find("function.timer").meter();
+        assertThat(meter).isPresent();
+
+        Iterable<Measurement> measurements = meter.get().measure();
+        assertThat(measurements)
+            .anySatisfy(ms -> {
+                TimeUnit baseUnit = TimeUnit.valueOf(meter.get().getId().getBaseUnit().toUpperCase());
+                assertThat(ms.getStatistic()).isEqualTo(Statistic.Total);
+                assertThat(TimeUtils.convert(ms.getValue(), baseUnit, TimeUnit.MILLISECONDS)).isEqualTo(1);
+            });
     }
 
     @DisplayName("counters")

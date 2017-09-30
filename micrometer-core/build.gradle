@@ -17,6 +17,7 @@ dependencies {
     compile 'com.github.ben-manes.caffeine:caffeine:2.3.0', optional
     compile 'net.sf.ehcache:ehcache:2.10.3', optional
     compile 'javax.cache:cache-api:1.0.0', optional
+    compile 'com.hazelcast:hazelcast:3.8.+', optional
 
     // log monitoring
     compile 'ch.qos.logback:logback-classic:latest.release', optional
