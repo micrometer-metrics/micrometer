@@ -118,7 +118,7 @@ public class JCacheMetrics implements MeterBinder {
             "The number of times cache lookup methods have not returned a value"),
             objectName, CacheStatistics.CacheMisses::get);
 
-        registry.gauge(registry.createId(name + ".puts", tags, "Cache removals"),
+        registry.gauge(registry.createId(name + ".puts", tags, "Cache puts"),
             objectName, CacheStatistics.CachePuts::get);
 
         registry.gauge(registry.createId(name + ".removals", tags, "Cache removals"),
