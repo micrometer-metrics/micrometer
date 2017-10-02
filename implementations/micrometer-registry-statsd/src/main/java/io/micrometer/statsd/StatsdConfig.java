@@ -35,7 +35,7 @@ public interface StatsdConfig extends MeterRegistryConfig, HistogramConfig {
 
     default String host() {
         String v = get(prefix() + ".host");
-        return (v == null) ? "localhost" : v;
+        return (v == null) ? "127.0.0.1" : v;
     }
 
     default int port() {
