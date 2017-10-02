@@ -350,19 +350,23 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         MeterId idWithCommonTags = new MeterId(id.getName(), Tags.concat(id.getTags(), config().commonTags()),
             id.getBaseUnit(), id.getDescription());
 
-        synchronized (meterMap) {
-            Meter m = meterMap.get(idWithCommonTags);
-            if (m == null) {
-                m = builder.apply(idWithCommonTags);
-                meterMap.put(idWithCommonTags, m);
-            }
+        Meter m = meterMap.get(idWithCommonTags);
 
-            if (!meterClass.isInstance(m)) {
-                throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
+        if (m == null) {
+            m = builder.apply(idWithCommonTags);
+
+            synchronized (meterMap) {
+                Meter m2 = meterMap.putIfAbsent(idWithCommonTags, m);
+                m = m2 == null ? m : m2;
             }
-            //noinspection unchecked
-            return (M) m;
         }
+
+        if (!meterClass.isInstance(m)) {
+            throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
+        }
+
+        //noinspection unchecked
+        return (M) m;
     }
 
     @Override
