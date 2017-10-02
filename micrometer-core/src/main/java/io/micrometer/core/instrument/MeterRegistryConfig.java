@@ -16,9 +16,7 @@
 package io.micrometer.core.instrument;
 
 public interface MeterRegistryConfig {
-    default String prefix() {
-        return "prometheus";
-    }
+    String prefix();
 
     /**
      * Get the value associated with a key.
