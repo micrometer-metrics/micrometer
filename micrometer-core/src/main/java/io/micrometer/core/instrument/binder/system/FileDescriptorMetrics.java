@@ -67,11 +67,11 @@ public class FileDescriptorMetrics implements MeterBinder {
                 osBean, x -> invoke(maxFdsMethod));
     }
 
-    private long invoke(Method method) {
+    private double invoke(Method method) {
         try {
-            return (long) (method != null ? method.invoke(osBean) : -1l);
+            return method != null ? (double) (long) method.invoke(osBean) : Double.NaN;
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-            return -1l;
+            return Double.NaN;
         }
     }
 
@@ -86,5 +86,4 @@ public class FileDescriptorMetrics implements MeterBinder {
             return null;
         }
     }
-
 }

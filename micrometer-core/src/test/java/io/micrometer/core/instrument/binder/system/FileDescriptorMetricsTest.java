@@ -15,35 +15,31 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.Test;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.reflect.InvocationTargetException;
 
-import org.junit.jupiter.api.Test;
-
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * File descriptor metrics.
  *
  * @author Michael Weirauch
  */
-public class FileDescriptorMetricsTest {
+class FileDescriptorMetricsTest {
 
     private interface HotSpotLikeOperatingSystemMXBean extends OperatingSystemMXBean {
-
-        public long getOpenFileDescriptorCount();
-
-        public long getMaxFileDescriptorCount();
-
+        long getOpenFileDescriptorCount();
+        long getMaxFileDescriptorCount();
     }
 
     @Test
@@ -67,39 +63,38 @@ public class FileDescriptorMetricsTest {
         new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
 
         assertThat(registry.find("process.fds.open").tags("some", "tag")
-                .value(Statistic.Value, -1.0).gauge()).isPresent();
-        assertThat(registry.find("process.fds.max").tags("some", "tag").value(Statistic.Value, -1.0)
-                .gauge()).isPresent();
+            .value(Statistic.Value, Double.NaN).gauge()).isPresent();
+        assertThat(registry.find("process.fds.max").tags("some", "tag").value(Statistic.Value, Double.NaN)
+            .gauge()).isPresent();
     }
 
     @Test
     void fileDescriptorMetricsSupportedOsBeanMock() {
         final MeterRegistry registry = new SimpleMeterRegistry();
         final HotSpotLikeOperatingSystemMXBean osBean = mock(
-                HotSpotLikeOperatingSystemMXBean.class);
+            HotSpotLikeOperatingSystemMXBean.class);
         when(osBean.getOpenFileDescriptorCount()).thenReturn(Long.valueOf(512));
         when(osBean.getMaxFileDescriptorCount()).thenReturn(Long.valueOf(1024));
         new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
 
         assertThat(registry.find("process.fds.open").tags("some", "tag")
-                .value(Statistic.Value, 512.0).gauge()).isPresent();
+            .value(Statistic.Value, 512.0).gauge()).isPresent();
         assertThat(registry.find("process.fds.max").tags("some", "tag")
-                .value(Statistic.Value, 1024.0).gauge()).isPresent();
+            .value(Statistic.Value, 1024.0).gauge()).isPresent();
     }
 
     @Test
     void fileDescriptorMetricsInvocationException() {
         final MeterRegistry registry = new SimpleMeterRegistry();
         final HotSpotLikeOperatingSystemMXBean osBean = mock(
-                HotSpotLikeOperatingSystemMXBean.class);
+            HotSpotLikeOperatingSystemMXBean.class);
         when(osBean.getOpenFileDescriptorCount()).thenThrow(InvocationTargetException.class);
         when(osBean.getMaxFileDescriptorCount()).thenThrow(InvocationTargetException.class);
         new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
 
         assertThat(registry.find("process.fds.open").tags("some", "tag")
-                .value(Statistic.Value, -1.0).gauge()).isPresent();
-        assertThat(registry.find("process.fds.max").tags("some", "tag").value(Statistic.Value, -1.0)
-                .gauge()).isPresent();
+            .value(Statistic.Value, Double.NaN).gauge()).isPresent();
+        assertThat(registry.find("process.fds.max").tags("some", "tag").value(Statistic.Value, Double.NaN)
+            .gauge()).isPresent();
     }
-
 }
