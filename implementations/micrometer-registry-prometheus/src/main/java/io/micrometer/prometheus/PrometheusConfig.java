@@ -18,6 +18,11 @@ package io.micrometer.prometheus;
 import io.micrometer.core.instrument.stats.hist.HistogramConfig;
 
 public interface PrometheusConfig extends HistogramConfig {
+    @Override
+    default String prefix() {
+        return "prometheus";
+    }
+
     /**
      * {@code true} if meter descriptions should be sent to Prometheus.
      * Turn this off to minimize the amount of data sent on each scrape.
