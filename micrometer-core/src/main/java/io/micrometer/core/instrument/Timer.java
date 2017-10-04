@@ -95,7 +95,7 @@ public interface Timer extends Meter {
     default Iterable<Measurement> measure() {
         return Arrays.asList(
             new Measurement(() -> (double) count(), Statistic.Count),
-            new Measurement(() -> totalTime(TimeUnit.NANOSECONDS), Statistic.Total)
+            new Measurement(() -> totalTime(TimeUnit.NANOSECONDS), Statistic.TotalTime)
         );
     }
 

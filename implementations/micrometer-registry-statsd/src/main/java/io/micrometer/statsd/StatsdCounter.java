@@ -3,6 +3,7 @@ package io.micrometer.statsd;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.util.MeterEquivalence;
+import org.reactivestreams.Subscriber;
 
 import java.util.concurrent.atomic.DoubleAdder;
 
@@ -11,18 +12,20 @@ import java.util.concurrent.atomic.DoubleAdder;
  */
 public class StatsdCounter extends AbstractMeter implements Counter {
     private DoubleAdder count = new DoubleAdder();
-    private final StatsdMeterRegistry.Writer writer;
+    private final StatsdLineBuilder lineBuilder;
+    private final Subscriber<String> publisher;
 
-    StatsdCounter(Id id, StatsdMeterRegistry.Writer writer) {
+    StatsdCounter(Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher) {
         super(id);
-        this.writer = writer;
+        this.lineBuilder = lineBuilder;
+        this.publisher = publisher;
     }
 
     @Override
     public void increment(double amount) {
         if(amount > 0) {
             count.add(amount);
-            writer.count((long) amount);
+            publisher.onNext(lineBuilder.count((long) amount));
         }
     }
 

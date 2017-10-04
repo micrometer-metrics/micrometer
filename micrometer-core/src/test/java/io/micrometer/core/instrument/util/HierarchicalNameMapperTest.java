@@ -77,6 +77,11 @@ class HierarchicalNameMapperTest {
             }
 
             @Override
+            public Meter.Id withTag(Tag tag) {
+                return null;
+            }
+
+            @Override
             public void setType(Meter.Type type) {
             }
 

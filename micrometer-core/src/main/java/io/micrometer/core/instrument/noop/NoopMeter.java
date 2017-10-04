@@ -58,6 +58,11 @@ public abstract class NoopMeter implements Meter {
             }
 
             @Override
+            public Id withTag(Tag tag) {
+                return null;
+            }
+
+            @Override
             public void setType(Type type) {
             }
 

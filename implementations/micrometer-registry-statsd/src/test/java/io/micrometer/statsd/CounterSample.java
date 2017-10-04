@@ -14,7 +14,17 @@ public class CounterSample {
         Logger logger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         logger.setLevel(Level.DEBUG);
 
-        StatsdMeterRegistry registry = new StatsdMeterRegistry(k -> null, Clock.SYSTEM);
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(new StatsdConfig() {
+            @Override
+            public String get(String k) {
+                return null;
+            }
+
+            @Override
+            public StatsdFlavor flavor() {
+                return StatsdFlavor.Telegraf;
+            }
+        }, Clock.SYSTEM);
 
         Counter counter = registry.counter("my.counter", "k", "v");
 

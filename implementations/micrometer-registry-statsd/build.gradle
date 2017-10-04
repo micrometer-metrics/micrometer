@@ -5,4 +5,6 @@ dependencies {
     compile 'io.projectreactor.ipc:reactor-netty:0.7.0.RELEASE'
 
     testCompile project(':micrometer-test')
+    testCompile 'io.projectreactor:reactor-test:3.1.0.RELEASE'
+    testCompile 'org.junit.jupiter:junit-jupiter-params:5.0.0'
 }

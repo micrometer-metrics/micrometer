@@ -61,6 +61,12 @@ public interface Meter {
         String getConventionName(NamingConvention convention);
         List<Tag> getConventionTags(NamingConvention convention);
 
+        Id withTag(Tag tag);
+
+        default Id withTag(Statistic statistic) {
+            return withTag(Tag.of("statistic", statistic.toString().toLowerCase()));
+        }
+
         /**
          * Associate this id with a specific type, sometimes used in the determination of a
          * convention name. This association is 1-1 since an id can only be used once per registry

@@ -58,8 +58,8 @@ public interface StatsdConfig extends MeterRegistryConfig, HistogramConfig {
      * Determines how often gauges will be polled. When a gauge is polled, its value is recalculated. If the value has changed,
      * it is sent to the statsd server.
      */
-    default Duration gaugePollingFrequency() {
-        String v = get(prefix() + ".gaugePollingFrequency");
+    default Duration pollingFrequency() {
+        String v = get(prefix() + ".pollingFrequency");
         return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
     }
 

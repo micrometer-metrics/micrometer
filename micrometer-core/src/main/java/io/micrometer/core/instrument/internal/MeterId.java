@@ -18,7 +18,9 @@ package io.micrometer.core.instrument.internal;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.NamingConvention;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -43,6 +45,11 @@ public class MeterId implements Meter.Id {
         this.tags = tags;
         this.baseUnit = baseUnit;
         this.description = description;
+    }
+
+    @Override
+    public Meter.Id withTag(Tag tag) {
+        return new MeterId(name, Tags.concat(tags, Collections.singletonList(tag)), baseUnit, description);
     }
 
     @Override

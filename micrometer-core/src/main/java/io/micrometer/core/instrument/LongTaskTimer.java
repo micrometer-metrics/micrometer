@@ -120,8 +120,8 @@ public interface LongTaskTimer extends Meter {
     @Override
     default Iterable<Measurement> measure() {
         return Arrays.asList(
-            new Measurement(() -> (double) activeTasks(), Statistic.Count),
-            new Measurement(() -> duration(TimeUnit.NANOSECONDS), Statistic.Total)
+            new Measurement(() -> (double) activeTasks(), Statistic.ActiveTasks),
+            new Measurement(() -> duration(TimeUnit.NANOSECONDS), Statistic.Duration)
         );
     }
 

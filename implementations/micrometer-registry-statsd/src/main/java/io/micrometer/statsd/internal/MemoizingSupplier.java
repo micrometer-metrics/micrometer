@@ -19,6 +19,10 @@ public class MemoizingSupplier<T> implements Supplier<T> {
         this.delegate = delegate;
     }
 
+    public static <U> MemoizingSupplier<U> memoize(Supplier<U> delegate) {
+        return new MemoizingSupplier<>(delegate);
+    }
+
     @Override
     public T get() {
         // A 2-field variant of Double Checked Locking.

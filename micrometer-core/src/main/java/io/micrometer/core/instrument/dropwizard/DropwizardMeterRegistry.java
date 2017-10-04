@@ -105,8 +105,8 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
 
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
         LongTaskTimer ltt = new SimpleLongTaskTimer(id, clock);
-        registry.register(hierarchicalName(id) + ".active", (Gauge<Integer>) ltt::activeTasks);
-        registry.register(hierarchicalName(id) + ".duration", (Gauge<Double>) () -> ltt.duration(TimeUnit.NANOSECONDS));
+        registry.register(hierarchicalName(id.withTag(Statistic.ActiveTasks)), (Gauge<Integer>) ltt::activeTasks);
+        registry.register(hierarchicalName(id.withTag(Statistic.Duration)), (Gauge<Double>) () -> ltt.duration(TimeUnit.NANOSECONDS));
         return ltt;
     }
 
@@ -121,11 +121,7 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
-        measurements.forEach(ms -> {
-            Meter.Id idWithStatTag = createId(id.getName(), Tags.concat(id.getTags(), "statistic", ms.getStatistic().toString().toLowerCase()),
-                id.getDescription(), id.getBaseUnit());
-            registry.register(hierarchicalName(idWithStatTag), (Gauge<Double>) ms::getValue);
-        });
+        measurements.forEach(ms -> registry.register(hierarchicalName(id.withTag(ms.getStatistic())), (Gauge<Double>) ms::getValue));
     }
 
     @Override

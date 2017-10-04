@@ -45,7 +45,7 @@ public class InfluxNamingConvention implements NamingConvention {
 
     private String format(String name) {
         // https://docs.influxdata.com/influxdb/v1.3/write_protocols/line_protocol_reference/#special-characters
-        return NamingConvention.snakeCase.tagKey(name)
+        return NamingConvention.dot.tagKey(name)
             .replace(",", "\\,")
             .replace(" ", "\\ ")
             .replace("=", "\\=")

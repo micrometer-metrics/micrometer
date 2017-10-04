@@ -23,10 +23,10 @@ dependencies {
     compile 'ch.qos.logback:logback-classic:latest.release', optional
 
     // reactor
-    compile 'io.projectreactor:reactor-core:3.1.0.RC1', optional
+    compile 'io.projectreactor:reactor-core:3.1.0.RELEASE', optional
 
-    testCompile 'io.projectreactor:reactor-test:3.1.0.RC1'
-    testCompile 'io.projectreactor.ipc:reactor-netty:latest.release'
+    testCompile 'io.projectreactor:reactor-test:3.1.0.RELEASE'
+    testCompile 'io.projectreactor.ipc:reactor-netty:0.7.0.RELEASE'
 
     // JUnit 5
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0'
