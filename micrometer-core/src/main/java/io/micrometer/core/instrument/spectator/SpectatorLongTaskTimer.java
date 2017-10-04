@@ -15,14 +15,12 @@
  */
 package io.micrometer.core.instrument.spectator;
 
-import ch.qos.logback.core.util.TimeUtil;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.util.TimeUtils;
 
-import java.sql.Time;
 import java.util.concurrent.TimeUnit;
 
 public class SpectatorLongTaskTimer extends AbstractMeter implements LongTaskTimer {

@@ -15,29 +15,30 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.core.instrument.AbstractTimer;
-import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.AbstractMeter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
-import io.micrometer.core.instrument.util.TimeUtils;
-import org.reactivestreams.Processor;
+import io.micrometer.core.instrument.util.MeterEquivalence;
+import org.reactivestreams.Subscriber;
 
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
-public class StatsdTimer extends AbstractTimer implements Timer {
+public class StatsdDistributionSummary extends AbstractMeter implements DistributionSummary {
     private LongAdder count = new LongAdder();
-    private LongAdder totalTime = new LongAdder();
+    private DoubleAdder amount = new DoubleAdder();
 
     private final StatsdLineBuilder lineBuilder;
-    private final Processor<String, String> publisher;
+    private final Subscriber<String> publisher;
     private final Quantiles quantiles;
     private final Histogram<?> histogram;
 
-    StatsdTimer(Id id, StatsdLineBuilder lineBuilder, Processor<String, String> publisher, Clock clock, Quantiles quantiles, Histogram<?> histogram) {
-        super(id, clock);
+    public StatsdDistributionSummary(Meter.Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher,
+                                     Quantiles quantiles, Histogram<?> histogram) {
+        super(id);
         this.lineBuilder = lineBuilder;
         this.publisher = publisher;
         this.quantiles = quantiles;
@@ -45,19 +46,17 @@ public class StatsdTimer extends AbstractTimer implements Timer {
     }
 
     @Override
-    public void record(long amount, TimeUnit unit) {
+    public void record(double amount) {
         if (amount >= 0) {
             count.increment();
+            this.amount.add(amount);
 
-            long nanoAmount = TimeUnit.NANOSECONDS.convert(amount, unit);
-            totalTime.add(nanoAmount);
-
-            publisher.onNext(lineBuilder.count(1) + "\n" + lineBuilder.count(nanoAmount, Statistic.TotalTime));
+            publisher.onNext(lineBuilder.count(1) + "\n" + lineBuilder.count((long) amount, Statistic.Total));
 
             if (quantiles != null)
-                quantiles.observe(nanoAmount);
+                quantiles.observe(amount);
             if (histogram != null)
-                histogram.observe(nanoAmount);
+                histogram.observe(amount);
         }
     }
 
@@ -67,7 +66,18 @@ public class StatsdTimer extends AbstractTimer implements Timer {
     }
 
     @Override
-    public double totalTime(TimeUnit unit) {
-        return TimeUtils.nanosToUnit(totalTime.doubleValue(), unit);
+    public double totalAmount() {
+        return amount.doubleValue();
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object o) {
+        return MeterEquivalence.equals(this, o);
+    }
+
+    @Override
+    public int hashCode() {
+        return MeterEquivalence.hashCode(this);
     }
 }

@@ -104,6 +104,11 @@ public class CompositeMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
+    protected TimeUnit getBaseTimeUnit() {
+        return null;
+    }
+
+    @Override
     protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         CompositeMeter meter = new CompositeCustomMeter(id, type, measurements);
         compositeMeters.add(meter);

@@ -25,7 +25,6 @@ import java.lang.reflect.Field;
 import java.util.concurrent.*;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 
 /**
  * Monitors the status of executor service pools. Does not record timings on operations executed in the {@link ExecutorService},

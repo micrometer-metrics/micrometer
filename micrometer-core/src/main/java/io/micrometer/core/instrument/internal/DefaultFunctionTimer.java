@@ -16,13 +16,10 @@
 package io.micrometer.core.instrument.internal;
 
 import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;

@@ -1,7 +1,25 @@
+/**
+ * Copyright 2017 Pivotal Software, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.stats.hist.Bucket;
+import io.micrometer.core.instrument.stats.hist.BucketFilter;
 import io.micrometer.core.instrument.stats.hist.Histogram;
+import io.micrometer.core.instrument.stats.hist.PercentileTimeHistogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.handler.logging.LoggingHandler;
@@ -27,7 +45,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
 
 /**
  * @author Jon Schneider
@@ -131,26 +148,77 @@ public class StatsdMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
+        registerQuantilesGaugeIfNecessary(id, quantiles);
         return new StatsdTimer(id, lineBuilder(id), publisher, clock, quantiles,
-            histogram == null ? null : histogram.create(Histogram.Summation.Normal));
+            histogram == null ? null : registerHistogramCounterIfNecessary(id, histogram));
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
-        return null;
+        registerQuantilesGaugeIfNecessary(id, quantiles);
+        return new StatsdDistributionSummary(id, lineBuilder(id), publisher, quantiles, registerHistogramCounterIfNecessary(id, histogram));
     }
 
     @Override
     protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+        measurements.forEach(ms -> {
+            StatsdLineBuilder line = lineBuilder(id);
+            switch(ms.getStatistic()) {
+                case Count:
+                case Total:
+                case TotalTime:
+                case SumOfSquares:
+                    pollableMeters.add(() -> publisher.onNext(line.count((long) ms.getValue(), ms.getStatistic())));
+                    break;
+                case Value:
+                case ActiveTasks:
+                case Duration:
+                case Unknown:
+                    pollableMeters.add(() -> publisher.onNext(line.gauge(ms.getValue(), ms.getStatistic())));
+                    break;
+            }
+        });
     }
 
     @Override
-    protected <T> Gauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
-        return null;
+    protected TimeUnit getBaseTimeUnit() {
+        return TimeUnit.NANOSECONDS;
     }
 
-    @Override
-    protected <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+    private void registerQuantilesGaugeIfNecessary(Meter.Id id, Quantiles quantiles) {
+        if (quantiles != null) {
+            for (Double q : quantiles.monitored()) {
+                if (!Double.isNaN(q)) {
+                    gauge(id.getName(), Tags.concat(id.getTags(), "quantile", Double.toString(q)), q, quantiles::get);
+                }
+            }
+        }
+    }
+
+    private Histogram<?> registerHistogramCounterIfNecessary(Meter.Id id, Histogram.Builder<?> builder) {
+        if (builder != null) {
+            if(builder instanceof PercentileTimeHistogram.Builder) {
+                PercentileTimeHistogram.Builder percentileHistBuilder = (PercentileTimeHistogram.Builder) builder;
+
+                if(statsdConfig.timerPercentilesMax() != null) {
+                    double max = (double) statsdConfig.timerPercentilesMax().toNanos();
+                    percentileHistBuilder.filterBuckets(BucketFilter.clampMax(max));
+                }
+
+                if(statsdConfig.timerPercentilesMin() != null) {
+                    double min = (double) statsdConfig.timerPercentilesMin().toNanos();
+                    percentileHistBuilder.filterBuckets(BucketFilter.clampMin(min));
+                }
+            }
+
+            Histogram<?> hist = builder.create(Histogram.Summation.Normal);
+
+            for (Bucket<?> bucket : hist.getBuckets()) {
+                more().counter(createId(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.getTagString()), null),
+                    bucket, Bucket::getValue);
+            }
+            return hist;
+        }
         return null;
     }
 

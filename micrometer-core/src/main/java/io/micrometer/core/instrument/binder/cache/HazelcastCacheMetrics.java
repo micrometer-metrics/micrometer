@@ -15,8 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.hazelcast.core.IMap;
 import com.hazelcast.monitor.LocalMapStats;
 import io.micrometer.core.instrument.MeterRegistry;

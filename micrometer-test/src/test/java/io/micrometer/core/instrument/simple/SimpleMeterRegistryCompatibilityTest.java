@@ -15,11 +15,9 @@
  */
 package io.micrometer.core.instrument.simple;
 
+import io.micrometer.core.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
-import io.micrometer.core.MockClock;
-import io.micrometer.core.tck.RegistryResolver;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 public class SimpleMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @Override

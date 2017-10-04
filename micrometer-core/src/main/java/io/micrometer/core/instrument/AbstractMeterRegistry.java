@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.internal.MeterId;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
+import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -101,9 +102,18 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
     protected abstract void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements);
 
-    protected abstract <T> Gauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f);
+    protected <T> Gauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
+        id.setBaseUnit(getBaseTimeUnitStr());
+        return newGauge(id, obj, obj2 -> TimeUtils.convert(f.applyAsDouble(obj2), fUnit, getBaseTimeUnit()));
+    }
 
-    protected abstract <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits);
+    protected <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+        id.setBaseUnit(getBaseTimeUnitStr());
+        FunctionTimer ft = new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits,
+            TimeUnit.NANOSECONDS);
+        newMeter(id, Meter.Type.Timer, ft.measure());
+        return ft;
+    }
 
     protected List<Tag> getConventionTags(Meter.Id id) {
         return id.getConventionTags(config().namingConvention());
@@ -111,6 +121,14 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
     protected String getConventionName(Meter.Id id) {
         return id.getConventionName(config().namingConvention());
+    }
+
+    protected abstract TimeUnit getBaseTimeUnit();
+
+    private String getBaseTimeUnitStr() {
+        if(getBaseTimeUnit() == null)
+            return null;
+        return getBaseTimeUnit().toString().toLowerCase();
     }
 
     @Override
@@ -159,6 +177,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     public Timer timer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
         return registerMeterIfNecessary(Timer.class, id, id2 -> {
             id2.setType(Meter.Type.Timer);
+            id2.setBaseUnit(getBaseTimeUnitStr());
             return newTimer(id2, histogram, quantiles);
         });
     }
@@ -176,6 +195,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
         public LongTaskTimer longTaskTimer(Meter.Id id) {
             return registerMeterIfNecessary(LongTaskTimer.class, id, id2 -> {
                 id2.setType(Meter.Type.LongTaskTimer);
+                id2.setBaseUnit(getBaseTimeUnitStr());
                 return newLongTaskTimer(id2);
             });
         }

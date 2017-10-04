@@ -19,7 +19,6 @@ import com.netflix.spectator.api.Registry;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.spectator.SpectatorMeterRegistry;
 
 import java.util.List;

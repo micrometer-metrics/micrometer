@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.hist.PercentileTimeHistogram;
 import io.micrometer.core.instrument.stats.hist.TimeHistogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.prometheus.internal.*;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
@@ -100,7 +99,6 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
-        id.setBaseUnit("seconds");
         final CustomPrometheusSummary summary = collectorByName(CustomPrometheusSummary.class, getConventionName(id),
             n -> new CustomPrometheusSummary(collectorId(id)).register(registry));
         return new PrometheusTimer(id, summary.child(getConventionTags(id), quantiles, buildHistogramIfNecessary(histogram)), config().clock());
@@ -235,15 +233,14 @@ public class PrometheusMeterRegistry extends AbstractMeterRegistry {
         return (C) collector;
     }
 
-    @Override
-    protected <T> io.micrometer.core.instrument.Gauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
-        id.setBaseUnit("seconds");
-        return newGauge(id, obj, obj2 -> TimeUtils.convert(f.applyAsDouble(obj2), fUnit, TimeUnit.SECONDS));
-    }
-
     private PrometheusCollectorId collectorId(Meter.Id id) {
         return new PrometheusCollectorId(getConventionName(id),
             getConventionTags(id).stream().map(Tag::getKey).collect(toList()),
             id.getDescription());
+    }
+
+    @Override
+    protected TimeUnit getBaseTimeUnit() {
+        return TimeUnit.SECONDS;
     }
 }

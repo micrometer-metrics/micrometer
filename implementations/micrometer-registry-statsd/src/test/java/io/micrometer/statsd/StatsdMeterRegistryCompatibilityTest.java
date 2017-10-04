@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.prometheus;
+package io.micrometer.statsd;
 
 import io.micrometer.core.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
-import io.prometheus.client.CollectorRegistry;
 
-class PrometheusMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+public class StatsdMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @Override
     public MeterRegistry registry() {
-        return new PrometheusMeterRegistry(k -> null, new CollectorRegistry(true), new MockClock());
+        return new StatsdMeterRegistry(k -> null, new MockClock());
     }
 }
