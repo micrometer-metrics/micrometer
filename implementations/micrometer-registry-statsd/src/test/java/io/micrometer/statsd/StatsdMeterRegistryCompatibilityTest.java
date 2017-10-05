@@ -15,11 +15,20 @@
  */
 package io.micrometer.statsd;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import io.micrometer.core.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
+import org.junit.jupiter.api.BeforeAll;
+import org.slf4j.LoggerFactory;
 
 public class StatsdMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+    @BeforeAll
+    static void before() {
+        ((Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).setLevel(Level.INFO);
+    }
+
     @Override
     public MeterRegistry registry() {
         return new StatsdMeterRegistry(k -> null, new MockClock());

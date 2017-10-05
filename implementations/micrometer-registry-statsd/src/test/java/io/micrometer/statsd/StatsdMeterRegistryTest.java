@@ -15,13 +15,17 @@
  */
 package io.micrometer.statsd;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import io.micrometer.core.MockClock;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.netty.channel.ChannelOption;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.slf4j.LoggerFactory;
 import reactor.core.Disposable;
 import reactor.core.Disposables;
 import reactor.core.publisher.Flux;
@@ -52,6 +56,11 @@ class StatsdMeterRegistryTest {
     private static final int PORT = 8126;
     private MockClock mockClock = new MockClock();
 
+    @BeforeAll
+    static void before() {
+        ((Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).setLevel(Level.INFO);
+    }
+
     private void assertLines(Consumer<StatsdMeterRegistry> registryAction, StatsdFlavor flavor, String... expected) {
         final CountDownLatch bindLatch = new CountDownLatch(1);
         final CountDownLatch receiveLatch = new CountDownLatch(1);
@@ -68,7 +77,6 @@ class StatsdMeterRegistryTest {
             .newHandler((in, out) -> {
                 in.receive()
                     .asString()
-                    .log()
                     .subscribe(line -> {
                         // ignore gauges monitoring the registry itself
                         if(line.startsWith("statsd"))
@@ -83,7 +91,7 @@ class StatsdMeterRegistryTest {
             .subscribe(server::replace);
 
         try {
-            assertTrue(bindLatch.await(10, TimeUnit.SECONDS));
+            assertTrue(bindLatch.await(1, TimeUnit.SECONDS));
 
             try {
                 registryAction.accept(registry);
