@@ -33,6 +33,9 @@ import static java.util.Collections.emptyList;
  * over the set of meters instrumenting your application, and then further iterate over each meter's metrics, generally
  * resulting in a time series in the metrics backend for each combination of metrics and dimensions.
  *
+ * MeterRegistry may be used in a reactive context. As such, implementations must not negatively impact the calling
+ * thread, e.g. it should respond immediately by avoiding IO call, deep stack recursion or any coordination.
+ *
  * @author Jon Schneider
  */
 public interface MeterRegistry {
