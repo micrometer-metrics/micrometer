@@ -98,6 +98,7 @@ public abstract class MeterRegistryCompatibilityKit {
         Counter c = registry.counter("foo");
 
         assertThat(registry.find("foo").tags("k", "v").counter()).containsSame(c);
+        assertThat(c.getId().getTags()).hasSize(1);
     }
 
     @Test

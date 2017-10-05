@@ -27,4 +27,13 @@ class IdTest {
         MeterId id = new MeterId("my.id", emptyList(), null, null);
         assertThat(id.withTag(Statistic.TotalTime).getTags()).contains(Tag.of("statistic", "totalTime"));
     }
+
+    @Test
+    void equalsAndHashCode() {
+        MeterId id = new MeterId("my.id", emptyList(), null, null);
+        MeterId id2 = new MeterId("my.id", emptyList(), null, null);
+
+        assertThat(id).isEqualTo(id2);
+        assertThat(id.hashCode()).isEqualTo(id2.hashCode());
+    }
 }

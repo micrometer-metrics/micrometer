@@ -30,7 +30,7 @@ import static java.util.stream.StreamSupport.stream;
 
 public class MeterId implements Meter.Id {
     private final String name;
-    private final Iterable<Tag> tags;
+    private final List<Tag> tags;
     private String baseUnit;
     private final String description;
 
@@ -42,7 +42,12 @@ public class MeterId implements Meter.Id {
 
     public MeterId(String name, Iterable<Tag> tags, String baseUnit, String description) {
         this.name = name;
-        this.tags = tags;
+
+        this.tags = Collections.unmodifiableList(stream(tags.spliterator(), false)
+            .sorted(Comparator.comparing(Tag::getKey))
+            .distinct()
+            .collect(Collectors.toList()));
+
         this.baseUnit = baseUnit;
         this.description = description;
     }
@@ -81,9 +86,8 @@ public class MeterId implements Meter.Id {
      */
     @Override
     public List<Tag> getConventionTags(NamingConvention namingConvention) {
-        return stream(tags.spliterator(), false)
+        return tags.stream()
             .map(t -> Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())))
-            .sorted(Comparator.comparing(Tag::getKey))
             .collect(Collectors.toList());
     }
 
@@ -100,8 +104,7 @@ public class MeterId implements Meter.Id {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MeterId meterId = (MeterId) o;
-        return Objects.equals(name, meterId.name) &&
-            Objects.equals(tags, meterId.tags);
+        return Objects.equals(name, meterId.name) && Objects.equals(tags, meterId.tags);
     }
 
     @Override
