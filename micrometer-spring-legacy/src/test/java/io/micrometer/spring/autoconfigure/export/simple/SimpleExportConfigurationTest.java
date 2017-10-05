@@ -39,7 +39,8 @@ import static org.assertj.core.api.Assertions.assertThat;
     "spring.metrics.ganglia.enabled=false",
     "spring.metrics.graphite.enabled=false",
     "spring.metrics.influx.enabled=false",
-    "spring.metrics.jmx.enabled=false"
+    "spring.metrics.jmx.enabled=false",
+    "spring.metrics.statsd.enabled=false",
 })
 public class SimpleExportConfigurationTest {
     @Autowired

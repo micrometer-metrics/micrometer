@@ -34,6 +34,11 @@ import java.util.stream.Collectors;
 public interface NamingConvention {
     NamingConvention identity = (name, type, baseUnit) -> name;
 
+    /**
+     * This maps to identity because we suggest using dot notation everywhere in Micrometer-instrumented code
+     */
+    NamingConvention dot = identity;
+
     NamingConvention snakeCase = new NamingConvention() {
         @Override
         public String name(String name, Meter.Type type, String baseUnit) {

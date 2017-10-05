@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
-import javax.annotation.processing.Processor;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 

@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import java.beans.Introspector;
 import java.util.List;
 
 /**
@@ -60,6 +61,14 @@ public interface Meter {
 
         String getConventionName(NamingConvention convention);
         List<Tag> getConventionTags(NamingConvention convention);
+
+        Id withTag(Tag tag);
+
+        default Id withTag(Statistic statistic) {
+            if(statistic == null)
+                return this;
+            return withTag(Tag.of("statistic", Introspector.decapitalize(statistic.toString())));
+        }
 
         /**
          * Associate this id with a specific type, sometimes used in the determination of a

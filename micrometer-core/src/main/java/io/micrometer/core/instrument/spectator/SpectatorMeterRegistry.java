@@ -20,18 +20,15 @@ import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Measurement;
 import com.netflix.spectator.api.Registry;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.stats.hist.Bucket;
 import io.micrometer.core.instrument.stats.hist.BucketFilter;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.hist.PercentileTimeHistogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
-import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
@@ -77,20 +74,10 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
     @Override
     protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
         // scale nanosecond precise quantile values to seconds
-        id.setBaseUnit("nanoseconds");
         registerQuantilesGaugeIfNecessary(id, quantiles, t -> t / 1.0e6);
         com.netflix.spectator.api.Timer timer = registry.timer(getConventionName(id), toSpectatorTags(getConventionTags(id)));
         return new SpectatorTimer(id, timer, clock, quantiles,
             registerHistogramCounterIfNecessary(id, histogram));
-    }
-
-    @Override
-    protected <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
-        id.setBaseUnit("nanoseconds");
-        FunctionTimer ft = new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits,
-            TimeUnit.NANOSECONDS);
-        newMeter(id, Meter.Type.Timer, ft.measure());
-        return ft;
     }
 
     @Override
@@ -173,8 +160,7 @@ public abstract class SpectatorMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
-        id.setBaseUnit("nanoseconds");
-        return newGauge(id, obj, obj2 -> TimeUtils.convert(f.applyAsDouble(obj2), fUnit, TimeUnit.NANOSECONDS));
+    protected TimeUnit getBaseTimeUnit() {
+        return TimeUnit.NANOSECONDS;
     }
 }

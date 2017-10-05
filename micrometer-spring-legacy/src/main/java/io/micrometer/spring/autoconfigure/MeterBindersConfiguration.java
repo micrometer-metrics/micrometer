@@ -15,9 +15,9 @@
  */
 package io.micrometer.spring.autoconfigure;
 
+import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
-import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.system.UptimeMetrics;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;

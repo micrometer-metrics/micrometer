@@ -15,10 +15,10 @@
  */
 package io.micrometer.graphite;
 
+import io.micrometer.core.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
-import io.micrometer.core.MockClock;
 
 class GraphiteMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @Override

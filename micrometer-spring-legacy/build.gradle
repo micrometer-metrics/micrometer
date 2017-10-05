@@ -11,6 +11,7 @@ dependencyManagement {
     }
     dependencies {
         dependency 'org.assertj:assertj-core:3.8.0'
+        dependency 'io.projectreactor:reactor-core:3.1.0.RELEASE'
     }
 }
 
@@ -35,7 +36,7 @@ dependencies {
     compile 'javax.servlet:javax.servlet-api:3.1.0', optional
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
 
-    ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx'].each { sys ->
+    ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd'].each { sys ->
         compile project(":micrometer-registry-$sys"), optional
     }
 

@@ -16,21 +16,15 @@
 package io.micrometer.core.instrument.binder.jvm;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.MeterRegistry.Search;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static io.micrometer.core.instrument.Statistic.Count;
 import static io.micrometer.core.instrument.Statistic.Value;

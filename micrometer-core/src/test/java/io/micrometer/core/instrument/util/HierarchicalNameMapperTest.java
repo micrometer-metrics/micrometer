@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -30,55 +31,68 @@ import static org.assertj.core.api.Assertions.fail;
  * @author Jon Schneider
  */
 class HierarchicalNameMapperTest {
+    private HierarchicalNameMapper mapper = HierarchicalNameMapper.DEFAULT;
 
     @Test
     void buildHierarchicalNameFromDimensionalId() {
-        HierarchicalNameMapper mapper = HierarchicalNameMapper.DEFAULT;
         String name = mapper.toHierarchicalName(
-            new Meter.Id() {
-                @Override
-                public String getName() {
-                    fail("should not be used");
-                    return null;
-                }
-
-                @Override
-                public Iterable<Tag> getTags() {
-                    fail("should not be used");
-                    return null;
-                }
-
-                @Override
-                public String getBaseUnit() {
-                    return null;
-                }
-
-                @Override
-                public String getDescription() {
-                    return null;
-                }
-
-                @Override
-                public String getConventionName(NamingConvention convention) {
-                    return "httpRequests";
-                }
-
-                @Override
-                public List<Tag> getConventionTags(NamingConvention convention) {
-                    return Tags.zip("status", "200", "method", "GET",
-                        "other", "With Spaces");
-                }
-
-                @Override
-                public void setType(Meter.Type type) {
-                }
-
-                @Override
-                public void setBaseUnit(String baseUnit) {
-                }
-            },
-            NamingConvention.snakeCase
+            createId("httpRequests", Tags.zip("method", "GET", "other", "With Spaces", "status", "200")),
+            NamingConvention.camelCase
         );
         assertThat(name).isEqualTo("httpRequests.method.GET.other.With_Spaces.status.200");
+    }
+
+    private Meter.Id createId(String conventionName, List<Tag> conventionTags) {
+        return new Meter.Id() {
+            @Override
+            public String getName() {
+                fail("should not be used");
+                return null;
+            }
+
+            @Override
+            public Iterable<Tag> getTags() {
+                return conventionTags;
+            }
+
+            @Override
+            public String getBaseUnit() {
+                return null;
+            }
+
+            @Override
+            public String getDescription() {
+                return null;
+            }
+
+            @Override
+            public String getConventionName(NamingConvention convention) {
+                return conventionName;
+            }
+
+            @Override
+            public List<Tag> getConventionTags(NamingConvention convention) {
+                return conventionTags;
+            }
+
+            @Override
+            public Meter.Id withTag(Tag tag) {
+                return null;
+            }
+
+            @Override
+            public void setType(Meter.Type type) {
+            }
+
+            @Override
+            public void setBaseUnit(String baseUnit) {
+            }
+        };
+    }
+
+    @Test
+    void noTags() {
+        assertThat(mapper.toHierarchicalName(createId("httpRequests", emptyList()), NamingConvention.camelCase))
+            .isEqualTo("httpRequests");
     }
 }

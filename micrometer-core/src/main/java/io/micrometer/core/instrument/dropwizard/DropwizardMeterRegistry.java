@@ -18,18 +18,15 @@ package io.micrometer.core.instrument.dropwizard;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.simple.SimpleLongTaskTimer;
 import io.micrometer.core.instrument.stats.hist.Bucket;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
-import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
 
 /**
  * @author Jon Schneider
@@ -67,7 +64,6 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
-        id.setBaseUnit("nanoseconds");
         registerQuantilesGaugeIfNecessary(id, quantiles);
         return new DropwizardTimer(id, registry.timer(hierarchicalName(id)), clock,
             quantiles, registerHistogramCounterIfNecessary(id, histogram));
@@ -105,33 +101,19 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
 
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
         LongTaskTimer ltt = new SimpleLongTaskTimer(id, clock);
-        registry.register(hierarchicalName(id) + ".active", (Gauge<Integer>) ltt::activeTasks);
-        registry.register(hierarchicalName(id) + ".duration", (Gauge<Double>) () -> ltt.duration(TimeUnit.NANOSECONDS));
+        registry.register(hierarchicalName(id.withTag(Statistic.ActiveTasks)), (Gauge<Integer>) ltt::activeTasks);
+        registry.register(hierarchicalName(id.withTag(Statistic.Duration)), (Gauge<Double>) () -> ltt.duration(TimeUnit.NANOSECONDS));
         return ltt;
     }
 
     @Override
-    protected <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
-        id.setBaseUnit("nanoseconds");
-        FunctionTimer ft = new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits,
-            TimeUnit.NANOSECONDS);
-        newMeter(id, Meter.Type.Timer, ft.measure());
-        return ft;
-    }
-
-    @Override
     protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
-        measurements.forEach(ms -> {
-            Meter.Id idWithStatTag = createId(id.getName(), Tags.concat(id.getTags(), "statistic", ms.getStatistic().toString().toLowerCase()),
-                id.getDescription(), id.getBaseUnit());
-            registry.register(hierarchicalName(idWithStatTag), (Gauge<Double>) ms::getValue);
-        });
+        measurements.forEach(ms -> registry.register(hierarchicalName(id.withTag(ms.getStatistic())), (Gauge<Double>) ms::getValue));
     }
 
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
-        id.setBaseUnit("nanoseconds");
-        return newGauge(id, obj, obj2 -> TimeUtils.convert(f.applyAsDouble(obj2), fUnit, TimeUnit.NANOSECONDS));
+    protected TimeUnit getBaseTimeUnit() {
+        return TimeUnit.NANOSECONDS;
     }
 
     private String hierarchicalName(Meter.Id id) {

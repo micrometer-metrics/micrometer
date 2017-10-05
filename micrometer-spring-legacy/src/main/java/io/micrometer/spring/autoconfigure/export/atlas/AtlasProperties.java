@@ -15,15 +15,10 @@
  */
 package io.micrometer.spring.autoconfigure.export.atlas;
 
-import com.netflix.spectator.atlas.AtlasConfig;
 import io.micrometer.spring.autoconfigure.export.StepRegistryProperties;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Bean;
 
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * {@link ConfigurationProperties} for configuring Atlas metrics export.

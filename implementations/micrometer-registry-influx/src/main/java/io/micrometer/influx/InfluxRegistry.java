@@ -35,6 +35,7 @@ import java.util.stream.StreamSupport;
 import java.util.zip.GZIPOutputStream;
 
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Jon Schneider
@@ -81,7 +82,7 @@ public class InfluxRegistry extends AbstractStepRegistry {
                     con.setRequestProperty("Authorization", "Basic " + encoded);
                 }
 
-                String body = batch.stream()
+                List<String> bodyLines = batch.stream()
                         .filter(m -> !Double.isNaN(m.value()))
                         .map(m -> {
                             String field = StreamSupport.stream(m.id().tags().spliterator(), false)
@@ -96,16 +97,20 @@ public class InfluxRegistry extends AbstractStepRegistry {
                                     .collect(joining(""));
 
                             return m.id().name() + tags + " " + field + "=" + m.value() + " " + time;
-                        }).collect(joining("\n"));
+                        })
+                        .collect(toList());
+
+                String body = String.join("\n", bodyLines);
 
                 if(compressed)
                     con.setRequestProperty("Content-Encoding", "gzip");
 
-                try (OutputStream os = con.getOutputStream();
-                     GZIPOutputStream gz = new GZIPOutputStream(os)) {
+                try (OutputStream os = con.getOutputStream()) {
                     if(compressed) {
-                        gz.write(body.getBytes());
-                        gz.flush();
+                        try(GZIPOutputStream gz = new GZIPOutputStream(os)) {
+                            gz.write(body.getBytes());
+                            gz.flush();
+                        }
                     }
                     else {
                         os.write(body.getBytes());
@@ -118,7 +123,7 @@ public class InfluxRegistry extends AbstractStepRegistry {
                 if (status >= 200 && status < 300) {
                     logger.info("successfully sent " + batch.size() + " metrics to influx");
                 } else if (status >= 400) {
-                    try (InputStream in = (status >= 400) ? con.getErrorStream() : con.getInputStream()) {
+                    try (InputStream in = con.getErrorStream()) {
                         logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
                                 .lines().collect(joining("\n")));
                     }

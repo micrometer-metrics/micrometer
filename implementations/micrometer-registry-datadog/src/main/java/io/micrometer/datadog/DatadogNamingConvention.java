@@ -30,13 +30,15 @@ public class DatadogNamingConvention implements NamingConvention {
      */
     @Override
     public String name(String name, Meter.Type type, String baseUnit) {
-        String sanitized = NamingConvention.camelCase.name(name, type, baseUnit);
+        String sanitized = name;
 
         // Metrics that don't start with a letter get dropped on the floor by the Datadog publish API,
         // so we will prepend them with 'm_'.
         if(!Character.isLetter(sanitized.charAt(0))) {
-            sanitized = "m_" + sanitized;
+            sanitized = "m." + sanitized;
         }
+
+        sanitized = NamingConvention.dot.name(sanitized, type, baseUnit);
 
         if(sanitized.length() > 200)
             return sanitized.substring(0, 200);
@@ -49,10 +51,11 @@ public class DatadogNamingConvention implements NamingConvention {
      */
     @Override
     public String tagKey(String key) {
+        String sanitized = key;
         if(Character.isDigit(key.charAt(0))) {
-            return "m_" + key;
+            sanitized = "m." + key;
         }
-        return NamingConvention.camelCase.tagKey(key);
+        return NamingConvention.dot.tagKey(sanitized);
     }
 
     /**

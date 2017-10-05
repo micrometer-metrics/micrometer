@@ -20,7 +20,6 @@ import io.micrometer.atlas.AtlasMeterRegistry;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.spring.autoconfigure.export.DefaultStepRegistryConfig;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
-import io.micrometer.spring.autoconfigure.export.StepRegistryProperties;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;

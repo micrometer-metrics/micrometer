@@ -20,10 +20,8 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +32,6 @@ import static io.micrometer.core.instrument.Statistic.Count;
 import static io.micrometer.core.instrument.Statistic.Total;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 /**
  * @author Jon Schneider
@@ -55,7 +52,7 @@ public abstract class MeterRegistryCompatibilityKit {
         registry.counter("foo");
         registry.counter("foo");
 
-        assertThat(registry.getMeters().size()).isEqualTo(1);
+        assertThat(registry.find("foo").meters().size()).isEqualTo(1);
     }
 
     @Test

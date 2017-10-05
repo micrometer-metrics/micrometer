@@ -71,7 +71,7 @@ public abstract class AbstractStepRegistry extends AbstractRegistry {
                         .withFrequency(Scheduler.Policy.FIXED_RATE_SKIP_IF_LONG, step)
                         .withInitialDelay(Duration.ofMillis(getInitialDelay(stepMillis)))
                         .withStopOnFailure(false);
-                scheduler = new Scheduler(this, "spring-metrics-publisher", numThreads);
+                scheduler = new Scheduler(this, "micrometer-publisher", numThreads);
                 scheduler.schedule(options, this::pushMetrics);
                 logger.info("started collecting metrics every {}", step);
             } else {

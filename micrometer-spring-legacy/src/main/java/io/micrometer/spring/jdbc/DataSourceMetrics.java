@@ -23,7 +23,6 @@ import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetada
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProviders;
 
 import javax.sql.DataSource;
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**

@@ -17,11 +17,7 @@ package io.micrometer.core.instrument.util;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.NamingConvention;
-import io.micrometer.core.instrument.Tag;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -35,13 +31,16 @@ public interface HierarchicalNameMapper {
      * {@code http_server_requests.response.200.method.GET}
      */
     HierarchicalNameMapper DEFAULT = (id, convention) -> {
-        List<Tag> tagsCopy = new ArrayList<>();
-        tagsCopy.addAll(id.getConventionTags(convention));
-        tagsCopy.sort(Comparator.comparing(Tag::getKey));
-        return id.getConventionName(convention) + "." + tagsCopy.stream()
-            .map(t -> t.getKey() + "." + t.getValue())
-            .map(nameSegment -> nameSegment.replace(" ", "_"))
-            .collect(Collectors.joining("."));
+        String tags = "";
+
+        if(id.getTags().iterator().hasNext()) {
+            tags = "." + id.getConventionTags(convention).stream()
+                .map(t -> t.getKey() + "." + t.getValue())
+                .map(nameSegment -> nameSegment.replace(" ", "_"))
+                .collect(Collectors.joining("."));
+        }
+
+        return id.getConventionName(convention) + tags;
     };
 
     String toHierarchicalName(Meter.Id id, NamingConvention convention);

@@ -16,15 +16,12 @@
 package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.stats.hist.Bucket;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
-import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
 
 /**
  * A minimal meter registry implementation primarily used for tests.
@@ -53,7 +50,6 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
-        id.setBaseUnit("nanoseconds");
         registerQuantilesGaugeIfNecessary(id, quantiles);
         return new SimpleTimer(id, config().clock(), quantiles, registerHistogramCounterIfNecessary(id, histogram));
     }
@@ -65,7 +61,6 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        id.setBaseUnit("nanoseconds");
         return new SimpleLongTaskTimer(id, config().clock());
     }
 
@@ -93,20 +88,12 @@ public class SimpleMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
-        id.setBaseUnit("nanoseconds");
-        return new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits,
-            TimeUnit.NANOSECONDS);
-    }
-
-    @Override
     protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         // do nothing, the meter is already registered
     }
 
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
-        id.setBaseUnit("nanoseconds");
-        return newGauge(id, obj, obj2 -> TimeUtils.convert(f.applyAsDouble(obj2), fUnit, TimeUnit.NANOSECONDS));
+    protected TimeUnit getBaseTimeUnit() {
+        return TimeUnit.NANOSECONDS;
     }
 }

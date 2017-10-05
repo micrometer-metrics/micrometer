@@ -19,6 +19,9 @@ public enum Statistic {
     /** The sum of the amounts recorded. */
     Total,
 
+    /** The sum of the times recorded. */
+    TotalTime,
+
     /** Rate per second for calls. */
     Count,
 
@@ -31,5 +34,11 @@ public enum Statistic {
     /** Instantaneous value, such as those reported by gauges **/
     Value,
 
-    Unknown
+    Unknown,
+
+    /** Number of currently active tasks for a long task timer. */
+    ActiveTasks,
+
+    /** Duration of a running task in a long task timer. */
+    Duration,
 }

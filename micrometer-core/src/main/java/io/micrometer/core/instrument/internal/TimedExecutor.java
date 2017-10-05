@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument.internal;
 
-import java.util.concurrent.Executor;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
+
+import java.util.concurrent.Executor;
 
 /**
  * An {@link Executor} that is timed

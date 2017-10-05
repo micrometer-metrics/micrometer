@@ -29,6 +29,7 @@ import io.micrometer.spring.autoconfigure.export.influx.InfluxExportConfiguratio
 import io.micrometer.spring.autoconfigure.export.jmx.JmxExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.prometheus.PrometheusExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.simple.SimpleExportConfiguration;
+import io.micrometer.spring.autoconfigure.export.statsd.StatsdExportConfiguration;
 import io.micrometer.spring.autoconfigure.web.client.RestTemplateMetricsConfiguration;
 import io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsConfiguration;
 import io.micrometer.spring.integration.SpringIntegrationMetrics;
@@ -57,9 +58,10 @@ import java.util.Collection;
 @ConditionalOnClass(Timed.class)
 @EnableConfigurationProperties(MetricsProperties.class)
 @Import({MeterBindersConfiguration.class, WebMvcMetricsConfiguration.class,
-    RestTemplateMetricsConfiguration.class, AtlasExportConfiguration.class, DatadogExportConfiguration.class,
-    GangliaExportConfiguration.class, GraphiteExportConfiguration.class,
-    InfluxExportConfiguration.class, JmxExportConfiguration.class,
+    RestTemplateMetricsConfiguration.class, AtlasExportConfiguration.class,
+    DatadogExportConfiguration.class, GangliaExportConfiguration.class,
+    GraphiteExportConfiguration.class, InfluxExportConfiguration.class,
+    JmxExportConfiguration.class, StatsdExportConfiguration.class,
     PrometheusExportConfiguration.class, SimpleExportConfiguration.class})
 public class MetricsAutoConfiguration {
 

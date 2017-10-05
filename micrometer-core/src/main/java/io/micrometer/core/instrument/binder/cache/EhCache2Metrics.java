@@ -22,8 +22,6 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.statistics.StatisticsGateway;
 
-import javax.cache.Cache;
-
 /**
  * @author Jon Schneider
  */

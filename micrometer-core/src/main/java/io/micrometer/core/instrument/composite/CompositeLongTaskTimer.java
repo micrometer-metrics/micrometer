@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.noop.NoopLongTaskTimer;
-import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
