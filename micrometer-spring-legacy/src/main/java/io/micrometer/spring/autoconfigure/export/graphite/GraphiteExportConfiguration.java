@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.graphite.GraphiteConfig;
 import io.micrometer.graphite.GraphiteMeterRegistry;
+import io.micrometer.graphite.GraphiteProtocol;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -84,6 +85,11 @@ public class GraphiteExportConfiguration {
         @Override
         public int port() {
             return props.getPort() == null ? defaults.port() : props.getPort();
+        }
+
+        @Override
+        public GraphiteProtocol protocol() {
+            return props.getProtocol() == null ? defaults.protocol() : props.getProtocol();
         }
     }
 

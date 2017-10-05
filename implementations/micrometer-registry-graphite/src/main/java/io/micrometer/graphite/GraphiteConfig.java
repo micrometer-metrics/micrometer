@@ -74,4 +74,21 @@ public interface GraphiteConfig {
         String v = get(prefix() + ".enabled");
         return v == null || Boolean.valueOf(v);
     }
+
+    /**
+     * Protocol to use while shipping data to Graphite.
+     */
+    default GraphiteProtocol protocol() {
+        String v = get(prefix() + ".protocol");
+
+        if(v == null)
+            return GraphiteProtocol.Pickled;
+
+        for (GraphiteProtocol flavor : GraphiteProtocol.values()) {
+            if(flavor.toString().equalsIgnoreCase(v))
+                return flavor;
+        }
+
+        throw new IllegalArgumentException("Unrecognized graphite protocol '" + v + "' (check property " + prefix() + ".protocol)");
+    }
 }

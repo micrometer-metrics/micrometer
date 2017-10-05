@@ -15,7 +15,9 @@
  */
 package io.micrometer.graphite;
 
+import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
+import com.codahale.metrics.graphite.GraphiteSender;
 import com.codahale.metrics.graphite.PickledGraphite;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
@@ -43,11 +45,20 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
         this.config = config;
         this.config().namingConvention(new GraphiteNamingConvention());
 
-        final PickledGraphite pickledGraphite = new PickledGraphite(new InetSocketAddress(config.host(), config.port()));
+        GraphiteSender sender;
+        switch(config.protocol()) {
+            case Plaintext:
+                sender = new Graphite(new InetSocketAddress(config.host(), config.port()));
+                break;
+            case Pickled:
+            default:
+                sender = new PickledGraphite(new InetSocketAddress(config.host(), config.port()));
+        }
+
         this.reporter = GraphiteReporter.forRegistry(getDropwizardRegistry())
                 .convertRatesTo(config.rateUnits())
                 .convertDurationsTo(config.durationUnits())
-                .build(pickledGraphite);
+                .build(sender);
 
         if(config.enabled())
             start();

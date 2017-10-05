@@ -15,6 +15,7 @@
  */
 package io.micrometer.spring.autoconfigure.export.graphite;
 
+import io.micrometer.graphite.GraphiteProtocol;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
@@ -56,6 +57,11 @@ public class GraphiteProperties {
      * Graphite port used for publishing.
      */
     private Integer port;
+
+    /**
+     * Protocol to use while shipping data to Graphite.
+     */
+    private GraphiteProtocol protocol = GraphiteProtocol.Pickled;
 
     public Boolean getEnabled() {
         return enabled;
@@ -103,5 +109,13 @@ public class GraphiteProperties {
 
     public void setPort(Integer port) {
         this.port = port;
+    }
+
+    public GraphiteProtocol getProtocol() {
+        return protocol;
+    }
+
+    public void setProtocol(GraphiteProtocol protocol) {
+        this.protocol = protocol;
     }
 }
