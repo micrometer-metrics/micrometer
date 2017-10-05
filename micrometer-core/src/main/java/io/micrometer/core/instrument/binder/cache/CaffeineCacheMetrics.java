@@ -47,7 +47,7 @@ public class CaffeineCacheMetrics implements MeterBinder {
      * @param registry The registry to bind metrics to.
      * @param cache    The cache to instrument.
      * @param name     The name prefix of the metrics.
-     * @param tags     Tags to apply to all recorded metrics.
+     * @param tags     Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
     public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String name, String... tags) {
@@ -77,7 +77,7 @@ public class CaffeineCacheMetrics implements MeterBinder {
      * @param registry The registry to bind metrics to.
      * @param cache    The cache to instrument.
      * @param name     The name prefix of the metrics.
-     * @param tags     Tags to apply to all recorded metrics.
+     * @param tags     Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
     public static <C extends AsyncLoadingCache> C monitor(MeterRegistry registry, C cache, String name, String... tags) {

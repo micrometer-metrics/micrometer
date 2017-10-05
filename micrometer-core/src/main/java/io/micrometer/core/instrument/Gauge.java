@@ -55,6 +55,10 @@ public interface Gauge extends Meter {
             this.f = f;
         }
 
+        /**
+         * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         * @return
+         */
         public Builder tags(String... tags) {
             return tags(Tags.zip(tags));
         }

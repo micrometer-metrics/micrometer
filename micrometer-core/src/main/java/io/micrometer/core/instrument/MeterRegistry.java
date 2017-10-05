@@ -49,6 +49,7 @@ public interface MeterRegistry {
 
         /**
          * Append a list of common tags to apply to all metrics reported to the monitoring system.
+         * Must be an even number of arguments representing key/value pairs of tags.
          */
         default Config commonTags(String... tags) {
             commonTags(zip(tags));
@@ -83,6 +84,9 @@ public interface MeterRegistry {
     Config config();
 
     interface Search {
+        /**
+         * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         */
         default Search tags(String... tags) {
             return tags(Tags.zip(tags));
         }
@@ -122,6 +126,9 @@ public interface MeterRegistry {
 
     /**
      * Tracks a monotonically increasing value.
+     *
+     * @param name The base metric name
+     * @param tags MUST be an even number of arguments representing key/value pairs of tags.
      */
     default Counter counter(String name, String... tags) {
         return counter(name, zip(tags));
@@ -141,6 +148,9 @@ public interface MeterRegistry {
 
     /**
      * Measures the sample distribution of events.
+     *
+     * @param name The base metric name
+     * @param tags MUST be an even number of arguments representing key/value pairs of tags.
      */
     default DistributionSummary summary(String name, String... tags) {
         return summary(name, zip(tags));
@@ -160,6 +170,9 @@ public interface MeterRegistry {
 
     /**
      * Measures the time taken for short tasks and the count of these tasks.
+     *
+     * @param name The base metric name
+     * @param tags MUST be an even number of arguments representing key/value pairs of tags.
      */
     default Timer timer(String name, String... tags) {
         return timer(name, zip(tags));

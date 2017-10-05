@@ -37,7 +37,7 @@ public class DatabaseTableMetrics implements MeterBinder {
      * @param ds        The data source to use to run the row count query.
      * @param tableName The name of the table to report table size for.
      * @param name      The name prefix of the metrics.
-     * @param tags      Tags to apply to all recorded metrics.
+     * @param tags      Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
      */
     public static void monitor(MeterRegistry registry, DataSource ds, String tableName, String name, String... tags) {
         monitor(registry, ds, tableName, name, Tags.zip(tags));

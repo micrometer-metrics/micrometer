@@ -72,6 +72,9 @@ public interface DistributionSummary extends Meter {
             return this;
         }
 
+        /**
+         * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         */
         public Builder tags(String... tags) {
             return tags(Tags.zip(tags));
         }

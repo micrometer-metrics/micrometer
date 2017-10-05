@@ -54,6 +54,9 @@ public class Metrics {
 
     /**
      * Tracks a monotonically increasing value.
+     *
+     * @param name The base metric name
+     * @param tags MUST be an even number of arguments representing key/value pairs of tags.
      */
     public static Counter counter(String name, String... tags) {
         return globalRegistry.counter(name, tags);
@@ -75,6 +78,9 @@ public class Metrics {
 
     /**
      * Measures the sample distribution of events.
+     *
+     * @param name The base metric name
+     * @param tags MUST be an even number of arguments representing key/value pairs of tags.
      */
     public static DistributionSummary summary(String name, String... tags) {
         return globalRegistry.summary(name, tags);
@@ -96,6 +102,9 @@ public class Metrics {
 
     /**
      * Measures the time taken for short tasks.
+     *
+     * @param name The base metric name
+     * @param tags MUST be an even number of arguments representing key/value pairs of tags.
      */
     public static Timer timer(String name, String... tags) {
         return globalRegistry.timer(name, tags);
