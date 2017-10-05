@@ -51,10 +51,11 @@ public class DatadogNamingConvention implements NamingConvention {
      */
     @Override
     public String tagKey(String key) {
+        String sanitized = key;
         if(Character.isDigit(key.charAt(0))) {
-            return "m." + key;
+            sanitized = "m." + key;
         }
-        return NamingConvention.dot.tagKey(key);
+        return NamingConvention.dot.tagKey(sanitized);
     }
 
     /**

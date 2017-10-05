@@ -20,14 +20,19 @@ import io.micrometer.core.instrument.NamingConvention;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 
+import java.beans.Introspector;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.micrometer.statsd.internal.MemoizingSupplier.memoize;
+import static java.beans.Introspector.decapitalize;
+import static java.util.stream.Stream.*;
 
 class StatsdLineBuilder {
     private final Meter.Id id;
@@ -64,19 +69,19 @@ class StatsdLineBuilder {
         // service:payroll,region:us-west
         this.datadogTagString = memoize(() ->
             id.getTags().iterator().hasNext() ?
-                "," + id.getConventionTags(convention).stream()
+                id.getConventionTags(convention).stream()
                     .map(t -> t.getKey() + ":" + t.getValue())
                     .collect(Collectors.joining(","))
-                : ""
+                : null
         );
 
         // service=payroll,region=us-west
         this.telegrafTagString = memoize(() ->
             id.getTags().iterator().hasNext() ?
-                "," + id.getConventionTags(convention).stream()
+                id.getConventionTags(convention).stream()
                     .map(t -> t.getKey() + "=" + t.getValue())
                     .collect(Collectors.joining(","))
-                : ""
+                : null
         );
     }
 
@@ -96,15 +101,44 @@ class StatsdLineBuilder {
         return line(NUMBER_FORMATTERS.get().format(amount), stat, "g");
     }
 
+    String histogram(double amount) {
+        return line(NUMBER_FORMATTERS.get().format(amount), null, "h");
+    }
+
+    String timing(double timeMs) {
+        return line(NUMBER_FORMATTERS.get().format(timeMs), null, "ms");
+    }
+
     private String line(String amount, Statistic stat, String type) {
         switch (flavor) {
             case Etsy:
-                return HierarchicalNameMapper.DEFAULT.toHierarchicalName(id.withTag(stat), convention) + ":" + amount + "|" + type;
+                return metricName(stat) + ":" + amount + "|" + type;
             case Datadog:
-                return convention.name(id.getName(), Meter.Type.Counter, id.getBaseUnit()) + ":" + amount + "|" + type + "|#statistic:" + stat.toString().toLowerCase() + datadogTagString.get();
+                return metricName(stat) + ":" + amount + "|" + type + tags(stat, datadogTagString.get(),":", "|#");
             case Telegraf:
             default:
-                return convention.name(id.getName(), Meter.Type.Counter, id.getBaseUnit()) + ",statistic=" + stat.toString().toLowerCase() + telegrafTagString.get() + ":" + amount + "|" + type;
+                return metricName(stat) + tags(stat, telegrafTagString.get(),"=", ",") + ":" + amount + "|" + type;
+        }
+    }
+
+    private String tags(Statistic stat, String otherTags, String keyValueSeparator, String preamble) {
+        String tags = of(stat == null ? null : "statistic" + keyValueSeparator + decapitalize(stat.toString()), otherTags)
+            .filter(Objects::nonNull)
+            .collect(Collectors.joining(","));
+
+        if(!tags.isEmpty())
+            tags = preamble + tags;
+        return tags;
+    }
+
+    private String metricName(Statistic stat) {
+        switch (flavor) {
+            case Etsy:
+                return HierarchicalNameMapper.DEFAULT.toHierarchicalName(id.withTag(stat), convention);
+            case Datadog:
+            case Telegraf:
+            default:
+                return convention.name(id.getName(), Meter.Type.Counter, id.getBaseUnit());
         }
     }
 }

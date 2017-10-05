@@ -50,9 +50,9 @@ public class StatsdGauge<T> extends AbstractMeter implements Gauge, StatsdPollab
     @Override
     public void poll() {
         double val = value();
-        if(lastValue.getAndSet(val) != val) {
+//        if(lastValue.getAndSet(val) != val) {
             publisher.onNext(lineBuilder.gauge(val));
-        }
+//        }
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

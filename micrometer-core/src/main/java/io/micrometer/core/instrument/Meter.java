@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import java.beans.Introspector;
 import java.util.List;
 
 /**
@@ -64,7 +65,7 @@ public interface Meter {
         Id withTag(Tag tag);
 
         default Id withTag(Statistic statistic) {
-            return withTag(Tag.of("statistic", statistic.toString().toLowerCase()));
+            return withTag(Tag.of("statistic", Introspector.decapitalize(statistic.toString())));
         }
 
         /**

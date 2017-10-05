@@ -20,17 +20,26 @@ import io.micrometer.core.instrument.stats.hist.HistogramConfig;
 
 import java.time.Duration;
 
+/**
+ * @author Jon Schneider
+ */
 public interface StatsdConfig extends MeterRegistryConfig, HistogramConfig {
     @Override
     default String prefix() {
         return "statsd";
     }
 
+    /**
+     * Choose which variant of the StatsD line protocol to use.
+     */
     default StatsdFlavor flavor() {
         String v = get(prefix() + ".flavor");
 
+        // Datadog is the default because it is more frequently requested than
+        // vanilla StatsD (Etsy), and Telegraf supports Datadog's format with a configuration
+        // option.
         if(v == null)
-            return StatsdFlavor.Etsy;
+            return StatsdFlavor.Datadog;
 
         for (StatsdFlavor flavor : StatsdFlavor.values()) {
             if(flavor.toString().equalsIgnoreCase(v))
@@ -48,11 +57,17 @@ public interface StatsdConfig extends MeterRegistryConfig, HistogramConfig {
         return v == null || Boolean.valueOf(v);
     }
 
+    /**
+     * The host name of the StatsD agent.
+     */
     default String host() {
         String v = get(prefix() + ".host");
-        return (v == null) ? "127.0.0.1" : v;
+        return (v == null) ? "localhost" : v;
     }
 
+    /**
+     * The UDP port of the StatsD agent.
+     */
     default int port() {
         String v = get(prefix() + ".port");
         return (v == null) ? 8125 : Integer.parseInt(v);
@@ -63,21 +78,29 @@ public interface StatsdConfig extends MeterRegistryConfig, HistogramConfig {
      *   1. Fast Ethernet (1432) - This is most likely for Intranets.
      *   2. Gigabit Ethernet (8932) - Jumbo frames can make use of this feature much more efficient.
      *   3. Commodity Internet (512) - If you are routing over the internet a value in this range will be reasonable. You might be able to go higher, but you are at the mercy of all the hops in your route.
+     *
+     * FIXME implement packet-limiting the StatsD publisher
      */
     default int maxPacketLength() {
         String v = get(prefix() + ".maxPacketLength");
-        return (v == null) ? 512 : Integer.parseInt(v);
+
+        // 1400 is the value that Datadog has chosen in their client. Seems to work well
+        // for most cases.
+        return (v == null) ? 1400 : Integer.parseInt(v);
     }
 
     /**
      * Determines how often gauges will be polled. When a gauge is polled, its value is recalculated. If the value has changed,
-     * it is sent to the statsd server.
+     * it is sent to the StatsD server.
      */
     default Duration pollingFrequency() {
         String v = get(prefix() + ".pollingFrequency");
         return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
     }
 
+    /**
+     * Governs the maximum size of the queue of items waiting to be sent to a StatsD agent over UDP.
+     */
     default int queueSize() {
         String v = get(prefix() + ".queueSize");
         return v == null ? Integer.MAX_VALUE : Integer.parseInt(v);

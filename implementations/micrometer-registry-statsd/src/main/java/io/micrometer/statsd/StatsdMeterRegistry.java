@@ -23,10 +23,8 @@ import io.micrometer.core.instrument.stats.hist.PercentileTimeHistogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.handler.logging.LoggingHandler;
-import org.reactivestreams.Processor;
 import reactor.core.Disposable;
 import reactor.core.Disposables;
-import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.UnicastProcessor;
@@ -52,7 +50,7 @@ import java.util.function.ToDoubleFunction;
 public class StatsdMeterRegistry extends AbstractMeterRegistry {
     private final StatsdConfig statsdConfig;
 
-    private volatile Processor<String, String> publisher;
+    private volatile UnicastProcessor<String> publisher;
 
     private Disposable.Swap udpClient = Disposables.swap();
 
@@ -65,17 +63,26 @@ public class StatsdMeterRegistry extends AbstractMeterRegistry {
         super(clock);
 
         this.statsdConfig = config;
-        config().namingConvention(NamingConvention.camelCase);
 
-        this.publisher = DirectProcessor.create();
+        switch (statsdConfig.flavor()) {
+            case Datadog:
+                config().namingConvention(NamingConvention.dot);
+                break;
+            default:
+                config().namingConvention(NamingConvention.camelCase);
+        }
+
+        this.publisher = UnicastProcessor.create(Queues.<String>get(statsdConfig.queueSize()).get());
+        gauge("statsd.queue.size", this.publisher, UnicastProcessor::size);
+        gauge("statsd.queue.capacity", this.publisher, UnicastProcessor::getBufferSize);
 
         if (config.enabled())
             start();
     }
 
     public void start() {
-        this.publisher = UnicastProcessor.create(Queues.<String>get(statsdConfig.queueSize()).get());
-
+        // TODO this will get simpler when this issue is addressed:
+        // https://github.com/reactor/reactor-netty/issues/174
         Mono
             .<NettyContext>create(sink -> {
                 ClientOptions options = new ClientOptions(ClientOptions.builder()
@@ -124,7 +131,6 @@ public class StatsdMeterRegistry extends AbstractMeterRegistry {
     public void stop() {
         udpClient.dispose();
         meterPoller.dispose();
-        this.publisher = DirectProcessor.create();
     }
 
     @Override
@@ -163,7 +169,7 @@ public class StatsdMeterRegistry extends AbstractMeterRegistry {
     protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         measurements.forEach(ms -> {
             StatsdLineBuilder line = lineBuilder(id);
-            switch(ms.getStatistic()) {
+            switch (ms.getStatistic()) {
                 case Count:
                 case Total:
                 case TotalTime:
@@ -182,7 +188,7 @@ public class StatsdMeterRegistry extends AbstractMeterRegistry {
 
     @Override
     protected TimeUnit getBaseTimeUnit() {
-        return TimeUnit.NANOSECONDS;
+        return TimeUnit.MILLISECONDS;
     }
 
     private void registerQuantilesGaugeIfNecessary(Meter.Id id, Quantiles quantiles) {
@@ -197,16 +203,16 @@ public class StatsdMeterRegistry extends AbstractMeterRegistry {
 
     private Histogram<?> registerHistogramCounterIfNecessary(Meter.Id id, Histogram.Builder<?> builder) {
         if (builder != null) {
-            if(builder instanceof PercentileTimeHistogram.Builder) {
+            if (builder instanceof PercentileTimeHistogram.Builder) {
                 PercentileTimeHistogram.Builder percentileHistBuilder = (PercentileTimeHistogram.Builder) builder;
 
-                if(statsdConfig.timerPercentilesMax() != null) {
-                    double max = (double) statsdConfig.timerPercentilesMax().toNanos();
+                if (statsdConfig.timerPercentilesMax() != null) {
+                    double max = (double) statsdConfig.timerPercentilesMax().toMillis();
                     percentileHistBuilder.filterBuckets(BucketFilter.clampMax(max));
                 }
 
-                if(statsdConfig.timerPercentilesMin() != null) {
-                    double min = (double) statsdConfig.timerPercentilesMin().toNanos();
+                if (statsdConfig.timerPercentilesMin() != null) {
+                    double min = (double) statsdConfig.timerPercentilesMin().toMillis();
                     percentileHistBuilder.filterBuckets(BucketFilter.clampMin(min));
                 }
             }

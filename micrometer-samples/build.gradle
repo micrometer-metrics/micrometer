@@ -4,7 +4,7 @@ dependencies {
     compile project(':micrometer-core')
     compile 'colt:colt:1.2.0'
 
-    ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx'].each { sys ->
+    ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd'].each { sys ->
         compile project(":micrometer-registry-$sys")
     }
 }

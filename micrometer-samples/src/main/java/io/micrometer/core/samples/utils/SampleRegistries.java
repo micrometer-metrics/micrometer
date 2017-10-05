@@ -27,6 +27,9 @@ import io.micrometer.influx.InfluxConfig;
 import io.micrometer.influx.InfluxMeterRegistry;
 import io.micrometer.jmx.JmxMeterRegistry;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.micrometer.statsd.StatsdConfig;
+import io.micrometer.statsd.StatsdFlavor;
+import io.micrometer.statsd.StatsdMeterRegistry;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -89,6 +92,20 @@ public class SampleRegistries {
         };
 
         return new DatadogMeterRegistry(config);
+    }
+
+    public static StatsdMeterRegistry datadogStatsd() {
+        return new StatsdMeterRegistry(new StatsdConfig() {
+            @Override
+            public String get(String k) {
+                return null;
+            }
+
+            @Override
+            public StatsdFlavor flavor() {
+                return StatsdFlavor.Datadog;
+            }
+        }, Clock.SYSTEM);
     }
 
     public static GangliaMeterRegistry ganglia() {

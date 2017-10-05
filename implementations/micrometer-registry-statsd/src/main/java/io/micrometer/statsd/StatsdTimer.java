@@ -17,7 +17,6 @@ package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
@@ -25,11 +24,12 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import org.reactivestreams.Processor;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
 public class StatsdTimer extends AbstractTimer implements Timer {
     private LongAdder count = new LongAdder();
-    private LongAdder totalTime = new LongAdder();
+    private DoubleAdder totalTime = new DoubleAdder();
 
     private final StatsdLineBuilder lineBuilder;
     private final Processor<String, String> publisher;
@@ -49,15 +49,15 @@ public class StatsdTimer extends AbstractTimer implements Timer {
         if (amount >= 0) {
             count.increment();
 
-            long nanoAmount = TimeUnit.NANOSECONDS.convert(amount, unit);
-            totalTime.add(nanoAmount);
+            double msAmount = TimeUtils.convert(amount, unit, TimeUnit.MILLISECONDS);
+            totalTime.add(msAmount);
 
-            publisher.onNext(lineBuilder.count(1) + "\n" + lineBuilder.count(nanoAmount, Statistic.TotalTime));
+            publisher.onNext(lineBuilder.timing(msAmount));
 
             if (quantiles != null)
-                quantiles.observe(nanoAmount);
+                quantiles.observe(msAmount);
             if (histogram != null)
-                histogram.observe(nanoAmount);
+                histogram.observe(msAmount);
         }
     }
 
@@ -68,6 +68,6 @@ public class StatsdTimer extends AbstractTimer implements Timer {
 
     @Override
     public double totalTime(TimeUnit unit) {
-        return TimeUtils.nanosToUnit(totalTime.doubleValue(), unit);
+        return TimeUtils.millisToUnit(totalTime.doubleValue(), unit);
     }
 }

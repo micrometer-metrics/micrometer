@@ -18,7 +18,6 @@ package io.micrometer.statsd;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 import io.micrometer.core.instrument.util.MeterEquivalence;
@@ -36,8 +35,8 @@ public class StatsdDistributionSummary extends AbstractMeter implements Distribu
     private final Quantiles quantiles;
     private final Histogram<?> histogram;
 
-    public StatsdDistributionSummary(Meter.Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher,
-                                     Quantiles quantiles, Histogram<?> histogram) {
+    StatsdDistributionSummary(Meter.Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher,
+                              Quantiles quantiles, Histogram<?> histogram) {
         super(id);
         this.lineBuilder = lineBuilder;
         this.publisher = publisher;
@@ -51,7 +50,7 @@ public class StatsdDistributionSummary extends AbstractMeter implements Distribu
             count.increment();
             this.amount.add(amount);
 
-            publisher.onNext(lineBuilder.count(1) + "\n" + lineBuilder.count((long) amount, Statistic.Total));
+            publisher.onNext(lineBuilder.histogram(amount));
 
             if (quantiles != null)
                 quantiles.observe(amount);

@@ -28,6 +28,9 @@ public enum StatsdFlavor {
 
     /**
      * https://www.influxdata.com/blog/getting-started-with-sending-statsd-metrics-to-telegraf-influxdb/
+     *
+     * For gauges to work as expected, you should set `delete_gauges = false` in your input options as documented here:
+     * https://github.com/influxdata/telegraf/tree/master/plugins/inputs/statsd
      */
     Telegraf
 }
