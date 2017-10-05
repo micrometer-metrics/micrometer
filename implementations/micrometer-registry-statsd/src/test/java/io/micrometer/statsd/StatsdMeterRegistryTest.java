@@ -59,6 +59,8 @@ class StatsdMeterRegistryTest {
         final AtomicReference<String> result = new AtomicReference<>();
         final Disposable.Swap server = Disposables.swap();
 
+        final StatsdMeterRegistry registry = registry(flavor);
+
         Consumer<ClientOptions.Builder<?>> opts = builder -> builder.option(ChannelOption.SO_REUSEADDR, true)
             .connectAddress(() -> new InetSocketAddress(PORT));
 
@@ -68,6 +70,10 @@ class StatsdMeterRegistryTest {
                     .asString()
                     .log()
                     .subscribe(line -> {
+                        // ignore gauges monitoring the registry itself
+                        if(line.startsWith("statsd"))
+                            return;
+
                         result.set(line);
                         receiveLatch.countDown();
                     });
@@ -77,10 +83,10 @@ class StatsdMeterRegistryTest {
             .subscribe(server::replace);
 
         try {
-            assertTrue(bindLatch.await(1, TimeUnit.SECONDS));
+            assertTrue(bindLatch.await(10, TimeUnit.SECONDS));
 
             try {
-                registryAction.accept(registry(flavor));
+                registryAction.accept(registry);
             } catch (Throwable t) {
                 fail("Failed to perform registry action", t);
             }
@@ -91,6 +97,7 @@ class StatsdMeterRegistryTest {
             fail("Failed to wait for line", e);
         } finally {
             server.dispose();
+            registry.stop();
         }
     }
 
@@ -127,7 +134,7 @@ class StatsdMeterRegistryTest {
                 line = "myCounter.myTag.val.statistic.count:2|c";
                 break;
             case Datadog:
-                line = "myCounter:2|c|#statistic:count,myTag:val";
+                line = "my.counter:2|c|#statistic:count,my.tag:val";
                 break;
             case Telegraf:
                 line = "myCounter,statistic=count,myTag=val:2|c";
@@ -145,10 +152,11 @@ class StatsdMeterRegistryTest {
                 line = "myGauge.myTag.val.statistic.value:2|g";
                 break;
             case Datadog:
-                line = "myGauge:2|g|#statistic:value,myTag:val";
+                line = "my.gauge:2|g|#statistic:value,my.tag:val";
                 break;
             case Telegraf:
                 line = "myGauge,statistic=value,myTag=val:2|g";
+                break;
         }
 
         Integer n = 2;
@@ -158,29 +166,38 @@ class StatsdMeterRegistryTest {
     @ParameterizedTest
     @EnumSource(StatsdFlavor.class)
     void timerLineProtocol(StatsdFlavor flavor) {
-        String[] lines = null;
+        String line = null;
         switch (flavor) {
             case Etsy:
-                lines = new String[]{
-                    "myTimer.myTag.val.statistic.count:1|c",
-                    "myTimer.myTag.val.statistic.totaltime:1000000|c",
-                };
+                line = "myTimer.myTag.val:1|ms";
                 break;
             case Datadog:
-                lines = new String[]{
-                    "myTimer:1|c|#statistic:count,myTag:val",
-                    "myTimer:1000000|c|#statistic:totaltime,myTag:val",
-                };
+                line = "my.timer:1|ms|#my.tag:val";
                 break;
             case Telegraf:
-                lines = new String[]{
-                    "myTimer,statistic=count,myTag=val:1|c",
-                    "myTimer,statistic=totaltime,myTag=val:1000000|c",
-                };
+                line = "myTimer,myTag=val:1|ms";
         }
 
         assertLines(r -> r.timer("my.timer", "my.tag", "val").record(1, TimeUnit.MILLISECONDS),
-            flavor, lines);
+            flavor, line);
+    }
+
+    @ParameterizedTest
+    @EnumSource(StatsdFlavor.class)
+    void summaryLineProtocol(StatsdFlavor flavor) {
+        String line = null;
+        switch (flavor) {
+            case Etsy:
+                line = "mySummary.myTag.val:1|h";
+                break;
+            case Datadog:
+                line = "my.summary:1|h|#my.tag:val";
+                break;
+            case Telegraf:
+                line = "mySummary,myTag=val:1|h";
+        }
+
+        assertLines(r -> r.summary("my.summary", "my.tag", "val").record(1), flavor, line);
     }
 
     @ParameterizedTest
@@ -195,19 +212,19 @@ class StatsdMeterRegistryTest {
                     case Etsy:
                         lines = new String[]{
                             "myLongTask.myTag.val.statistic.activetasks:1|c",
-                            "myLongTaskDuration.myTag.val.statistic.value:1000000|c",
+                            "myLongTaskDuration.myTag.val.statistic.value:1|c",
                         };
                         break;
                     case Datadog:
                         lines = new String[]{
-                            "myLongTask:1|c|#statistic:activetasks,myTag:val",
-                            "myLongTask:1000000|c|#statistic:duration,myTag:val",
+                            "my.long.task:1|c|#statistic:activetasks,myTag:val",
+                            "my.long.task:1|c|#statistic:duration,myTag:val",
                         };
                         break;
                     case Telegraf:
                         lines = new String[]{
                             "myLongTask,statistic=activetasks,myTag=val:1|c",
-                            "myLongTask,statistic=duration,myTag=val:1000000|c",
+                            "myLongTask,statistic=duration,myTag=val:1|c",
                         };
                 }
 

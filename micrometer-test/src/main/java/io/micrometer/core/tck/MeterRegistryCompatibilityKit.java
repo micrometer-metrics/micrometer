@@ -52,7 +52,7 @@ public abstract class MeterRegistryCompatibilityKit {
         registry.counter("foo");
         registry.counter("foo");
 
-        assertThat(registry.getMeters().size()).isEqualTo(1);
+        assertThat(registry.find("foo").meters().size()).isEqualTo(1);
     }
 
     @Test

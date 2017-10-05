@@ -109,8 +109,7 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
     protected <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
         id.setBaseUnit(getBaseTimeUnitStr());
-        FunctionTimer ft = new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits,
-            TimeUnit.NANOSECONDS);
+        FunctionTimer ft = new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
         newMeter(id, Meter.Type.Timer, ft.measure());
         return ft;
     }

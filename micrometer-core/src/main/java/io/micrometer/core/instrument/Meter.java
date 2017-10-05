@@ -65,6 +65,8 @@ public interface Meter {
         Id withTag(Tag tag);
 
         default Id withTag(Statistic statistic) {
+            if(statistic == null)
+                return this;
             return withTag(Tag.of("statistic", Introspector.decapitalize(statistic.toString())));
         }
 
