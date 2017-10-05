@@ -132,28 +132,26 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
 
     @Override
     public Meter register(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
-        synchronized (meterMap) {
-            return registerMeterIfNecessary(Meter.class, id, id2 -> {
-                id2.setType(type);
-                newMeter(id2, type, measurements);
-                return new Meter() {
-                    @Override
-                    public Id getId() {
-                        return id2;
-                    }
+        return registerMeterIfNecessary(Meter.class, id, id2 -> {
+            id2.setType(type);
+            newMeter(id2, type, measurements);
+            return new Meter() {
+                @Override
+                public Id getId() {
+                    return id2;
+                }
 
-                    @Override
-                    public Type getType() {
-                        return type;
-                    }
+                @Override
+                public Type getType() {
+                    return type;
+                }
 
-                    @Override
-                    public Iterable<Measurement> measure() {
-                        return measurements;
-                    }
-                };
-            });
-        }
+                @Override
+                public Iterable<Measurement> measure() {
+                    return measurements;
+                }
+            };
+        });
     }
 
     @Override
@@ -176,7 +174,6 @@ public abstract class AbstractMeterRegistry implements MeterRegistry {
     public Timer timer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
         return registerMeterIfNecessary(Timer.class, id, id2 -> {
             id2.setType(Meter.Type.Timer);
-            id2.setBaseUnit(getBaseTimeUnitStr());
             return newTimer(id2, histogram, quantiles);
         });
     }
