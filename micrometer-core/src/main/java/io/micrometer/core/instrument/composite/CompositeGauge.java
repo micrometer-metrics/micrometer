@@ -25,13 +25,14 @@ import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.ToDoubleFunction;
 
 public class CompositeGauge<T> extends AbstractMeter implements Gauge, CompositeMeter {
     protected final WeakReference<T> ref;
     protected final ToDoubleFunction<T> f;
 
-    protected final Map<MeterRegistry, Gauge> gauges = Collections.synchronizedMap(new LinkedHashMap<>());
+    protected final Map<MeterRegistry, Gauge> gauges = new ConcurrentHashMap<>();
 
     CompositeGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
         super(id);
@@ -41,25 +42,19 @@ public class CompositeGauge<T> extends AbstractMeter implements Gauge, Composite
 
     @Override
     public double value() {
-        synchronized (gauges) {
-            return gauges.values().stream().findFirst().orElse(NoopGauge.INSTANCE).value();
-        }
+        return gauges.values().stream().findFirst().orElse(NoopGauge.INSTANCE).value();
     }
 
     @Override
     public void add(MeterRegistry registry) {
         T obj = ref.get();
         if(obj != null) {
-            synchronized (gauges) {
-                gauges.put(registry, registry.gauge(getId(), obj, f));
-            }
+            gauges.put(registry, registry.gauge(getId(), obj, f));
         }
     }
 
     @Override
     public void remove(MeterRegistry registry) {
-        synchronized (gauges) {
-            gauges.remove(registry);
-        }
+        gauges.remove(registry);
     }
 }

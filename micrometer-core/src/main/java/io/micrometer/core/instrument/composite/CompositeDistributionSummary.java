@@ -23,16 +23,14 @@ import io.micrometer.core.instrument.noop.NoopDistributionSummary;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CompositeDistributionSummary extends AbstractMeter implements DistributionSummary, CompositeMeter {
     private final Quantiles quantiles;
     private final Histogram.Builder<?> histogram;
 
-    private final Map<MeterRegistry, DistributionSummary> distributionSummaries =
-        Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<MeterRegistry, DistributionSummary> distributionSummaries = new ConcurrentHashMap<>();
 
     CompositeDistributionSummary(Meter.Id id, Quantiles quantiles, Histogram.Builder<?> histogram) {
         super(id);
@@ -42,36 +40,26 @@ public class CompositeDistributionSummary extends AbstractMeter implements Distr
 
     @Override
     public void record(double amount) {
-        synchronized (distributionSummaries) {
-            distributionSummaries.values().forEach(ds -> ds.record(amount));
-        }
+        distributionSummaries.values().forEach(ds -> ds.record(amount));
     }
 
     @Override
     public long count() {
-        synchronized (distributionSummaries) {
-            return distributionSummaries.values().stream().findFirst().orElse(NoopDistributionSummary.INSTANCE).count();
-        }
+        return distributionSummaries.values().stream().findFirst().orElse(NoopDistributionSummary.INSTANCE).count();
     }
 
     @Override
     public double totalAmount() {
-        synchronized (distributionSummaries) {
-            return distributionSummaries.values().stream().findFirst().orElse(NoopDistributionSummary.INSTANCE).totalAmount();
-        }
+        return distributionSummaries.values().stream().findFirst().orElse(NoopDistributionSummary.INSTANCE).totalAmount();
     }
 
     @Override
     public void add(MeterRegistry registry) {
-        synchronized (distributionSummaries) {
-            distributionSummaries.put(registry, registry.summary(getId(), histogram, quantiles));
-        }
+        distributionSummaries.put(registry, registry.summary(getId(), histogram, quantiles));
     }
 
     @Override
     public void remove(MeterRegistry registry) {
-        synchronized (distributionSummaries) {
-            distributionSummaries.remove(registry);
-        }
+        distributionSummaries.remove(registry);
     }
 }

@@ -21,13 +21,12 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.noop.NoopLongTaskTimer;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class CompositeLongTaskTimer extends AbstractMeter implements LongTaskTimer, CompositeMeter {
-    private final Map<MeterRegistry, LongTaskTimer> timers = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<MeterRegistry, LongTaskTimer> timers = new ConcurrentHashMap<>();
 
     CompositeLongTaskTimer(Meter.Id id) {
         super(id);
@@ -35,65 +34,51 @@ public class CompositeLongTaskTimer extends AbstractMeter implements LongTaskTim
 
     @Override
     public long start() {
-        synchronized (timers) {
-            return timers.values().stream()
-                .map(LongTaskTimer::start)
-                .reduce((t1, t2) -> t2)
-                .orElse(NoopLongTaskTimer.INSTANCE.start());
-        }
+        return timers.values().stream()
+            .map(LongTaskTimer::start)
+            .reduce((t1, t2) -> t2)
+            .orElse(NoopLongTaskTimer.INSTANCE.start());
     }
 
     @Override
     public long stop(long task) {
-        synchronized (timers) {
-            return timers.values().stream()
-                .map(ltt -> ltt.stop(task))
-                .reduce((t1, t2) -> t2 == -1 ? t1 : t2)
-                .orElse(NoopLongTaskTimer.INSTANCE.stop(task));
-        }
+        return timers.values().stream()
+            .map(ltt -> ltt.stop(task))
+            .reduce((t1, t2) -> t2 == -1 ? t1 : t2)
+            .orElse(NoopLongTaskTimer.INSTANCE.stop(task));
     }
 
     @Override
     public double duration(long task, TimeUnit unit) {
-        synchronized (timers) {
-            return timers.values().stream()
-                .map(ltt -> ltt.duration(task, unit))
-                .reduce((t1, t2) -> t2 == -1 ? t1 : t2)
-                .orElse(NoopLongTaskTimer.INSTANCE.duration(task, unit));
-        }
+        return timers.values().stream()
+            .map(ltt -> ltt.duration(task, unit))
+            .reduce((t1, t2) -> t2 == -1 ? t1 : t2)
+            .orElse(NoopLongTaskTimer.INSTANCE.duration(task, unit));
     }
 
     @Override
     public double duration(TimeUnit unit) {
-        synchronized (timers) {
-            return timers.values().stream()
-                .map(ltt -> ltt.duration(unit))
-                .reduce((t1, t2) -> t2)
-                .orElse(NoopLongTaskTimer.INSTANCE.duration(unit));
-        }
+        return timers.values().stream()
+            .map(ltt -> ltt.duration(unit))
+            .reduce((t1, t2) -> t2)
+            .orElse(NoopLongTaskTimer.INSTANCE.duration(unit));
     }
 
     @Override
     public int activeTasks() {
-        synchronized (timers) {
-            return timers.values().stream()
-                .map(LongTaskTimer::activeTasks)
-                .reduce((t1, t2) -> t2)
-                .orElse(NoopLongTaskTimer.INSTANCE.activeTasks());
-        }
+        return timers.values().stream()
+            .map(LongTaskTimer::activeTasks)
+            .reduce((t1, t2) -> t2)
+            .orElse(NoopLongTaskTimer.INSTANCE.activeTasks());
     }
 
     @Override
     public void add(MeterRegistry registry) {
-        synchronized (timers) {
-            timers.put(registry, registry.more().longTaskTimer(getId()));
-        }
+        timers.put(registry, registry.more().longTaskTimer(getId()));
     }
 
     @Override
     public void remove(MeterRegistry registry) {
-        synchronized (timers) {
-            timers.remove(registry);
-        }
+        timers.remove(registry);
     }
 }

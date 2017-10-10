@@ -20,16 +20,15 @@ import io.micrometer.core.instrument.noop.NoopTimer;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class CompositeTimer extends AbstractTimer implements CompositeMeter {
     private final Quantiles quantiles;
     private final Histogram.Builder<?> histogram;
 
-    private final Map<MeterRegistry, Timer> timers = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<MeterRegistry, Timer> timers = new ConcurrentHashMap<>();
 
     CompositeTimer(Meter.Id id, Quantiles quantiles, Histogram.Builder<?> histogram, Clock clock) {
         super(id, clock);
@@ -39,36 +38,26 @@ public class CompositeTimer extends AbstractTimer implements CompositeMeter {
 
     @Override
     public void record(long amount, TimeUnit unit) {
-        synchronized (timers) {
-            timers.values().forEach(ds -> ds.record(amount, unit));
-        }
+        timers.values().forEach(ds -> ds.record(amount, unit));
     }
 
     @Override
     public long count() {
-        synchronized (timers) {
-            return timers.values().stream().findFirst().orElse(NoopTimer.INSTANCE).count();
-        }
+        return timers.values().stream().findFirst().orElse(NoopTimer.INSTANCE).count();
     }
 
     @Override
     public double totalTime(TimeUnit unit) {
-        synchronized (timers) {
-            return timers.values().stream().findFirst().orElse(NoopTimer.INSTANCE).totalTime(unit);
-        }
+        return timers.values().stream().findFirst().orElse(NoopTimer.INSTANCE).totalTime(unit);
     }
 
     @Override
     public void add(MeterRegistry registry) {
-        synchronized (timers) {
-            timers.put(registry, registry.timer(getId(), histogram, quantiles));
-        }
+        timers.put(registry, registry.timer(getId(), histogram, quantiles));
     }
 
     @Override
     public void remove(MeterRegistry registry) {
-        synchronized (timers) {
-            timers.remove(registry);
-        }
+        timers.remove(registry);
     }
 }

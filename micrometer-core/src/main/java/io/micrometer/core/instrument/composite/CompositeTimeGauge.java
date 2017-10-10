@@ -32,9 +32,7 @@ public class CompositeTimeGauge<T> extends CompositeGauge<T> {
     public void add(MeterRegistry registry) {
         T obj = ref.get();
         if(obj != null) {
-            synchronized (gauges) {
-                gauges.put(registry, registry.more().timeGauge(getId(), obj, fUnit, f));
-            }
+            gauges.put(registry, registry.more().timeGauge(getId(), obj, fUnit, f));
         }
     }
 }

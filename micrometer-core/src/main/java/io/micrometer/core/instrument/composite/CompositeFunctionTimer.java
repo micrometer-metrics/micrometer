@@ -25,6 +25,7 @@ import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
@@ -35,9 +36,9 @@ public class CompositeFunctionTimer<T> extends AbstractMeter implements Function
     private final ToDoubleFunction<T> totalTimeFunction;
     private final TimeUnit totalTimeFunctionUnits;
 
-    private final Map<MeterRegistry, FunctionTimer> functionTimers = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<MeterRegistry, FunctionTimer> functionTimers = new ConcurrentHashMap<>();
 
-    public CompositeFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+    CompositeFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
         super(id);
         this.ref = new WeakReference<>(obj);
         this.countFunction = countFunction;
@@ -49,38 +50,28 @@ public class CompositeFunctionTimer<T> extends AbstractMeter implements Function
     public void add(MeterRegistry registry) {
         T obj = ref.get();
         if(obj != null) {
-            synchronized (functionTimers) {
-                functionTimers.put(registry, registry.more().timer(getId(), obj, countFunction,
-                    totalTimeFunction, totalTimeFunctionUnits));
-            }
+            functionTimers.put(registry, registry.more().timer(getId(), obj, countFunction,
+                totalTimeFunction, totalTimeFunctionUnits));
         }
     }
 
     @Override
     public void remove(MeterRegistry registry) {
-        synchronized (functionTimers) {
-            functionTimers.remove(registry);
-        }
+        functionTimers.remove(registry);
     }
 
     @Override
     public long count() {
-        synchronized (functionTimers) {
-            return functionTimers.values().stream().findFirst().orElse(NoopFunctionTimer.INSTANCE).count();
-        }
+        return functionTimers.values().stream().findFirst().orElse(NoopFunctionTimer.INSTANCE).count();
     }
 
     @Override
     public double totalTime(TimeUnit unit) {
-        synchronized (functionTimers) {
-            return functionTimers.values().stream().findFirst().orElse(NoopFunctionTimer.INSTANCE).totalTime(unit);
-        }
+        return functionTimers.values().stream().findFirst().orElse(NoopFunctionTimer.INSTANCE).totalTime(unit);
     }
 
     @Override
     public TimeUnit baseTimeUnit() {
-        synchronized (functionTimers) {
-            return functionTimers.values().stream().findFirst().orElse(NoopFunctionTimer.INSTANCE).baseTimeUnit();
-        }
+        return functionTimers.values().stream().findFirst().orElse(NoopFunctionTimer.INSTANCE).baseTimeUnit();
     }
 }

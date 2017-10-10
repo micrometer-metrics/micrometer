@@ -24,7 +24,7 @@ public class CompositeCustomMeter implements CompositeMeter {
     private final Meter.Type type;
     private final Iterable<Measurement> measurements;
 
-    public CompositeCustomMeter(Meter.Id id, Type type, Iterable<Measurement> measurements) {
+    CompositeCustomMeter(Meter.Id id, Type type, Iterable<Measurement> measurements) {
         this.id = id;
         this.type = type;
         this.measurements = measurements;

@@ -21,12 +21,11 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.noop.NoopCounter;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 class CompositeCounter extends AbstractMeter implements Counter, CompositeMeter {
-    private final Map<MeterRegistry, Counter> counters = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<MeterRegistry, Counter> counters = new ConcurrentHashMap<>();
 
     CompositeCounter(Meter.Id id) {
         super(id);
@@ -34,29 +33,21 @@ class CompositeCounter extends AbstractMeter implements Counter, CompositeMeter 
 
     @Override
     public void increment(double amount) {
-        synchronized (counters) {
-            counters.values().forEach(c -> c.increment(amount));
-        }
+        counters.values().forEach(c -> c.increment(amount));
     }
 
     @Override
     public double count() {
-        synchronized (counters) {
-            return counters.values().stream().findFirst().orElse(NoopCounter.INSTANCE).count();
-        }
+        return counters.values().stream().findFirst().orElse(NoopCounter.INSTANCE).count();
     }
 
     @Override
     public void add(MeterRegistry registry) {
-        synchronized (counters) {
-            counters.put(registry, registry.counter(getId()));
-        }
+        counters.put(registry, registry.counter(getId()));
     }
 
     @Override
     public void remove(MeterRegistry registry) {
-        synchronized (counters) {
-            counters.remove(registry);
-        }
+        counters.remove(registry);
     }
 }
