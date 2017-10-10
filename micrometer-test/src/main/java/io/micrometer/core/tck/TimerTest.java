@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -47,6 +48,17 @@ interface TimerTest {
 
         assertAll(() -> assertEquals(1L, t.count()),
                 () -> assertEquals(42, t.totalTime(TimeUnit.MILLISECONDS), 1.0e-12));
+    }
+
+    @Test
+    @DisplayName("record durations")
+    default void recordDuration(MeterRegistry registry) {
+        Timer t = registry.timer("myTimer");
+        t.record(Duration.ofMillis(42));
+        clock(registry).addAndGet(1, TimeUnit.SECONDS);
+
+        assertAll(() -> assertEquals(1L, t.count()),
+            () -> assertEquals(42, t.totalTime(TimeUnit.MILLISECONDS), 1.0e-12));
     }
 
     @Test

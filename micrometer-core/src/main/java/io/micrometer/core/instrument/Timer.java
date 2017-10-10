@@ -18,6 +18,7 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,6 +40,15 @@ public interface Timer extends Meter {
      * @param unit   Time unit for the amount being recorded.
      */
     void record(long amount, TimeUnit unit);
+
+    /**
+     * Updates the statistics kept by the counter with the specified amount.
+     *
+     * @param duration Duration of a single event being measured by this timer.
+     */
+    default void record(Duration duration) {
+        record(duration.toNanos(), TimeUnit.NANOSECONDS);
+    }
 
     /**
      * Executes the Supplier `f` and records the time taken.
