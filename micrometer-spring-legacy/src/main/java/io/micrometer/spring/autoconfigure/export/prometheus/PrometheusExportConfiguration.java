@@ -96,7 +96,7 @@ public class PrometheusExportConfiguration {
     }
 
     @ManagementContextConfiguration
-//    @ConditionalOnClass(AbstractEndpoint.class)
+    @ConditionalOnClass(AbstractEndpoint.class)
     public static class PrometheusScrapeEndpointConfiguration {
         @Bean
         public PrometheusScrapeEndpoint prometheusEndpoint(
