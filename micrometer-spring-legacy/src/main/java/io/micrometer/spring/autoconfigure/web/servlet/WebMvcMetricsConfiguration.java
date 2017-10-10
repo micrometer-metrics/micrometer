@@ -16,10 +16,10 @@
 package io.micrometer.spring.autoconfigure.web.servlet;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.spring.WebMvcMetrics;
 import io.micrometer.spring.autoconfigure.MetricsProperties;
 import io.micrometer.spring.web.servlet.DefaultWebMvcTagsProvider;
 import io.micrometer.spring.web.servlet.MetricsHandlerInterceptor;
+import io.micrometer.spring.web.servlet.WebMvcMetrics;
 import io.micrometer.spring.web.servlet.WebMvcTagsProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;

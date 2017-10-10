@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring;
+package io.micrometer.spring.web.servlet;
 
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.WindowSketchQuantiles;
-import io.micrometer.spring.web.servlet.WebMvcTagsProvider;
+import io.micrometer.spring.TimedUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.ObjectUtils;
@@ -81,7 +81,7 @@ public class WebMvcMetrics {
             RequestAttributes.SCOPE_REQUEST);
     }
 
-    public void preHandle(HttpServletRequest request, Object handler) {
+    void preHandle(HttpServletRequest request, Object handler) {
         request.setAttribute(TIMING_REQUEST_ATTRIBUTE, System.nanoTime());
         request.setAttribute(HANDLER_REQUEST_ATTRIBUTE, handler);
         longTaskTimed(handler).forEach((config) -> {
@@ -106,7 +106,7 @@ public class WebMvcMetrics {
             + ": @Timed annotation must have a value used to name the metric");
     }
 
-    public void record(HttpServletRequest request, HttpServletResponse response, Throwable ex) {
+    void record(HttpServletRequest request, HttpServletResponse response, Throwable ex) {
         Object handler = request.getAttribute(HANDLER_REQUEST_ATTRIBUTE);
         Long startTime = (Long) request.getAttribute(TIMING_REQUEST_ATTRIBUTE);
         long endTime = System.nanoTime();

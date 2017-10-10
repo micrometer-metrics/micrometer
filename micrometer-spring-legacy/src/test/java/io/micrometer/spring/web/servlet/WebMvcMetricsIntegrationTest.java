@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.spring.TimedUtilsTest;
-import io.micrometer.spring.WebMvcMetrics;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
