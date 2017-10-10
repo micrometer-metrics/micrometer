@@ -23,6 +23,11 @@ import io.micrometer.core.instrument.spectator.step.StepRegistryConfig;
  * @author Jon Schneider
  */
 public interface DatadogConfig extends StepRegistryConfig {
+    /**
+     * Accept configuration defaults
+     */
+    DatadogConfig DEFAULT = k -> null;
+
     @Override
     default String prefix() {
         return "datadog";

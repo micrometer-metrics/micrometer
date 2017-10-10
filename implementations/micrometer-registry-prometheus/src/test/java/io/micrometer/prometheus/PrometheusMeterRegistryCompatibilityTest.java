@@ -23,6 +23,6 @@ import io.prometheus.client.CollectorRegistry;
 class PrometheusMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @Override
     public MeterRegistry registry() {
-        return new PrometheusMeterRegistry(k -> null, new CollectorRegistry(true), new MockClock());
+        return new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, new CollectorRegistry(true), new MockClock());
     }
 }

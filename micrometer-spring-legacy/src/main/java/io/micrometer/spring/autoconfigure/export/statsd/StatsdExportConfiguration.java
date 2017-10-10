@@ -44,7 +44,6 @@ public class StatsdExportConfiguration {
 
     private class DefaultStatsdConfig implements StatsdConfig {
         private final StatsdProperties props;
-        private final StatsdConfig defaults = k -> null;
 
         private DefaultStatsdConfig(StatsdProperties props) {
             this.props = props;
@@ -57,7 +56,7 @@ public class StatsdExportConfiguration {
 
         @Override
         public StatsdFlavor flavor() {
-            return props.getFlavor() == null ? defaults.flavor() : props.getFlavor();
+            return props.getFlavor() == null ? DEFAULT.flavor() : props.getFlavor();
         }
 
         @Override
@@ -67,27 +66,27 @@ public class StatsdExportConfiguration {
 
         @Override
         public String host() {
-            return props.getHost() == null ? defaults.host() : props.getHost();
+            return props.getHost() == null ? DEFAULT.host() : props.getHost();
         }
 
         @Override
         public int port() {
-            return props.getPort() == null ? defaults.port() : props.getPort();
+            return props.getPort() == null ? DEFAULT.port() : props.getPort();
         }
 
         @Override
         public int maxPacketLength() {
-            return props.getMaxPacketLength() == null ? defaults.maxPacketLength() : props.getMaxPacketLength();
+            return props.getMaxPacketLength() == null ? DEFAULT.maxPacketLength() : props.getMaxPacketLength();
         }
 
         @Override
         public Duration pollingFrequency() {
-            return props.getPollingFrequency() == null ? defaults.pollingFrequency() : props.getPollingFrequency();
+            return props.getPollingFrequency() == null ? DEFAULT.pollingFrequency() : props.getPollingFrequency();
         }
 
         @Override
         public int queueSize() {
-            return props.getQueueSize() == null ? defaults.queueSize() : props.getQueueSize();
+            return props.getQueueSize() == null ? DEFAULT.queueSize() : props.getQueueSize();
         }
     }
 

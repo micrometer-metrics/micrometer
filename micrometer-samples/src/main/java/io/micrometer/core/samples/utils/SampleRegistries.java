@@ -26,6 +26,7 @@ import io.micrometer.graphite.GraphiteMeterRegistry;
 import io.micrometer.influx.InfluxConfig;
 import io.micrometer.influx.InfluxMeterRegistry;
 import io.micrometer.jmx.JmxMeterRegistry;
+import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.micrometer.statsd.StatsdConfig;
 import io.micrometer.statsd.StatsdFlavor;
@@ -39,7 +40,7 @@ import java.util.Properties;
 
 public class SampleRegistries {
     public static PrometheusMeterRegistry prometheus() {
-        PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(k -> null);
+        PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
 
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);

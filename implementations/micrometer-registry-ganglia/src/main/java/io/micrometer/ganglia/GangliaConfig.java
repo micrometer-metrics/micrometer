@@ -25,6 +25,11 @@ import java.util.concurrent.TimeUnit;
  */
 public interface GangliaConfig {
     /**
+     * Accept configuration defaults
+     */
+    GangliaConfig DEFAULT = k -> null;
+
+    /**
      * Get the value associated with a key.
      *
      * @param k

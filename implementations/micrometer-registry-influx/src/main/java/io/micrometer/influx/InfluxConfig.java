@@ -21,6 +21,11 @@ import io.micrometer.core.instrument.spectator.step.StepRegistryConfig;
  * @author Jon Schneider
  */
 public interface InfluxConfig extends StepRegistryConfig {
+    /**
+     * Accept configuration defaults
+     */
+    InfluxConfig DEFAULT = k -> null;
+
     @Override
     default String prefix() {
         return "influx";

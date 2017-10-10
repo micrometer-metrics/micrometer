@@ -24,6 +24,11 @@ import java.time.Duration;
  * @author Jon Schneider
  */
 public interface StatsdConfig extends MeterRegistryConfig, HistogramConfig {
+    /**
+     * Accept configuration defaults
+     */
+    StatsdConfig DEFAULT = k -> null;
+
     @Override
     default String prefix() {
         return "statsd";

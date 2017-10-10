@@ -49,7 +49,7 @@ class PrometheusMeterRegistryTest {
     @BeforeEach
     void before() {
         prometheusRegistry = new CollectorRegistry();
-        registry = new PrometheusMeterRegistry(k -> null, prometheusRegistry, Clock.SYSTEM);
+        registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry, Clock.SYSTEM);
     }
 
     @Test

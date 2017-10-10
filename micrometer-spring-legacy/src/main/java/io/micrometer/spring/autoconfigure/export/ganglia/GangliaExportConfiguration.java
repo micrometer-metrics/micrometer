@@ -46,7 +46,6 @@ public class GangliaExportConfiguration {
 
     private class DefaultGangliaConfig implements GangliaConfig {
         private final GangliaProperties props;
-        private final GangliaConfig defaults = k -> null;
 
         private DefaultGangliaConfig(GangliaProperties props) {
             this.props = props;
@@ -69,37 +68,37 @@ public class GangliaExportConfiguration {
 
         @Override
         public TimeUnit rateUnits() {
-            return props.getRateUnits() == null ? defaults.rateUnits() : props.getRateUnits();
+            return props.getRateUnits() == null ? DEFAULT.rateUnits() : props.getRateUnits();
         }
 
         @Override
         public TimeUnit durationUnits() {
-            return props.getDurationUnits() == null ? defaults.durationUnits() : props.getDurationUnits();
+            return props.getDurationUnits() == null ? DEFAULT.durationUnits() : props.getDurationUnits();
         }
 
         @Override
         public String protocolVersion() {
-            return props.getProtocolVersion() == null ? defaults.protocolVersion() : props.getProtocolVersion();
+            return props.getProtocolVersion() == null ? DEFAULT.protocolVersion() : props.getProtocolVersion();
         }
 
         @Override
         public GMetric.UDPAddressingMode addressingMode() {
-            return props.getAddressingMode() == null ? defaults.addressingMode() : props.getAddressingMode();
+            return props.getAddressingMode() == null ? DEFAULT.addressingMode() : props.getAddressingMode();
         }
 
         @Override
         public int ttl() {
-            return props.getTimeToLive() == null ? defaults.ttl() : props.getTimeToLive();
+            return props.getTimeToLive() == null ? DEFAULT.ttl() : props.getTimeToLive();
         }
 
         @Override
         public String host() {
-            return props.getHost() == null ? defaults.host() : props.getHost();
+            return props.getHost() == null ? DEFAULT.host() : props.getHost();
         }
 
         @Override
         public int port() {
-            return props.getPort() == null ? defaults.port() : props.getPort();
+            return props.getPort() == null ? DEFAULT.port() : props.getPort();
         }
     }
 

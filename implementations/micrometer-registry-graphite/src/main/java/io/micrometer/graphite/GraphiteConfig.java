@@ -23,6 +23,11 @@ import java.util.concurrent.TimeUnit;
  */
 public interface GraphiteConfig {
     /**
+     * Accept configuration defaults
+     */
+    GraphiteConfig DEFAULT = k -> null;
+
+    /**
      * Get the value associated with a key.
      *
      * @param k

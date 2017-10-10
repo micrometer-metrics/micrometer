@@ -18,6 +18,11 @@ package io.micrometer.prometheus;
 import io.micrometer.core.instrument.stats.hist.HistogramConfig;
 
 public interface PrometheusConfig extends HistogramConfig {
+    /**
+     * Accept configuration defaults
+     */
+    PrometheusConfig DEFAULT = k -> null;
+
     @Override
     default String prefix() {
         return "prometheus";

@@ -45,7 +45,6 @@ public class InfluxExportConfiguration {
 
     private class DefaultInfluxConfig extends DefaultStepRegistryConfig implements InfluxConfig {
         private final InfluxProperties props;
-        private final InfluxConfig defaults = k -> null;
 
         public DefaultInfluxConfig(InfluxProperties props) {
             super(props);
@@ -54,37 +53,37 @@ public class InfluxExportConfiguration {
 
         @Override
         public String db() {
-            return props.getDb() == null ? defaults.db() : props.getDb();
+            return props.getDb() == null ? DEFAULT.db() : props.getDb();
         }
 
         @Override
         public InfluxConsistency consistency() {
-            return props.getConsistency() == null ? defaults.consistency() : props.getConsistency();
+            return props.getConsistency() == null ? DEFAULT.consistency() : props.getConsistency();
         }
 
         @Override
         public String userName() {
-            return props.getUserName() == null ? defaults.userName() : props.getUserName();
+            return props.getUserName() == null ? DEFAULT.userName() : props.getUserName();
         }
 
         @Override
         public String password() {
-            return props.getPassword() == null ? defaults.password() : props.getPassword();
+            return props.getPassword() == null ? DEFAULT.password() : props.getPassword();
         }
 
         @Override
         public String retentionPolicy() {
-            return props.getRetentionPolicy() == null ? defaults.retentionPolicy() : props.getRetentionPolicy();
+            return props.getRetentionPolicy() == null ? DEFAULT.retentionPolicy() : props.getRetentionPolicy();
         }
 
         @Override
         public String uri() {
-            return props.getUri() == null ? defaults.uri() : props.getUri();
+            return props.getUri() == null ? DEFAULT.uri() : props.getUri();
         }
 
         @Override
         public boolean compressed() {
-            return props.getCompressed() == null ? defaults.compressed() : props.getCompressed();
+            return props.getCompressed() == null ? DEFAULT.compressed() : props.getCompressed();
         }
 
         @Override

@@ -46,7 +46,6 @@ public class GraphiteExportConfiguration {
 
     private class DefaultGraphiteConfig implements GraphiteConfig {
         private final GraphiteProperties props;
-        private final GraphiteConfig defaults = k -> null;
 
         public DefaultGraphiteConfig(GraphiteProperties props) {
             this.props = props;
@@ -69,27 +68,27 @@ public class GraphiteExportConfiguration {
 
         @Override
         public TimeUnit rateUnits() {
-            return props.getRateUnits() == null ? defaults.rateUnits() : props.getRateUnits();
+            return props.getRateUnits() == null ? DEFAULT.rateUnits() : props.getRateUnits();
         }
 
         @Override
         public TimeUnit durationUnits() {
-            return props.getDurationUnits() == null ? defaults.durationUnits() : props.getDurationUnits();
+            return props.getDurationUnits() == null ? DEFAULT.durationUnits() : props.getDurationUnits();
         }
 
         @Override
         public String host() {
-            return props.getHost() == null ? defaults.host() : props.getHost();
+            return props.getHost() == null ? DEFAULT.host() : props.getHost();
         }
 
         @Override
         public int port() {
-            return props.getPort() == null ? defaults.port() : props.getPort();
+            return props.getPort() == null ? DEFAULT.port() : props.getPort();
         }
 
         @Override
         public GraphiteProtocol protocol() {
-            return props.getProtocol() == null ? defaults.protocol() : props.getProtocol();
+            return props.getProtocol() == null ? DEFAULT.protocol() : props.getProtocol();
         }
     }
 
