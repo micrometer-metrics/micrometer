@@ -47,7 +47,7 @@ final class DatadogRegistry extends AbstractStepRegistry {
         super(config, clock);
 
         try {
-            this.metricsEndpoint = URI.create("https://app.datadoghq.com/api/v1/series?api_key=" + config.apiKey()).toURL();
+            this.metricsEndpoint = URI.create(config.uri()).toURL();
         } catch (MalformedURLException e) {
             // not possible
             throw new RuntimeException(e);

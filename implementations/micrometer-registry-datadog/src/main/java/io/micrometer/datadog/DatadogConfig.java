@@ -43,4 +43,13 @@ public interface DatadogConfig extends StepRegistryConfig {
         String v = get(prefix() + ".hostTag");
         return v == null ? "instance" : v;
     }
+
+    /**
+     * The URI to ship metrics to. If you need to publish metrics to an internal proxy en route to
+     * datadoghq, you can define the location of the proxy with this.
+     */
+    default String uri() {
+        String v = get(prefix() + ".apiHost");
+        return v == null ? "https://app.datadoghq.com/api/v1/series?api_key=" + apiKey() : v;
+    }
 }
