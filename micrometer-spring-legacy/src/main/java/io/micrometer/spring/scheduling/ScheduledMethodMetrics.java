@@ -21,13 +21,14 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.stats.quantile.WindowSketchQuantiles;
-import io.micrometer.core.instrument.util.AnnotationUtils;
+import io.micrometer.spring.TimedUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.core.annotation.AnnotationUtils;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
@@ -60,7 +61,7 @@ public class ScheduledMethodMetrics {
         Timer shortTaskTimer = null;
         LongTaskTimer longTaskTimer = null;
 
-        for (Timed timed : AnnotationUtils.findTimed(method).toArray(Timed[]::new)) {
+        for (Timed timed : TimedUtils.findTimedAnnotations(method).toArray(Timed[]::new)) {
             if (timed.longTask())
                 longTaskTimer = registry.more().longTaskTimer(registry.createId(timed.value(), Tags.zip(timed.extraTags()),
                     "Timer of @Scheduled long task"));

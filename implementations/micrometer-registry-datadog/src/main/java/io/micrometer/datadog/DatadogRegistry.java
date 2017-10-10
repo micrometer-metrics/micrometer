@@ -111,7 +111,7 @@ final class DatadogRegistry extends AbstractStepRegistry {
                 if (status >= 200 && status < 300) {
                     logger.info("successfully sent " + batch.size() + " metrics to datadog");
                 } else if (status >= 400) {
-                    try (InputStream in = (status >= 400) ? con.getErrorStream() : con.getInputStream()) {
+                    try (InputStream in = con.getErrorStream()) {
                         logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
                                 .lines().collect(joining("\n")));
                     }

@@ -15,6 +15,7 @@
  */
 package io.micrometer.spring.web.servlet;
 
+import io.micrometer.spring.WebMvcMetrics;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;

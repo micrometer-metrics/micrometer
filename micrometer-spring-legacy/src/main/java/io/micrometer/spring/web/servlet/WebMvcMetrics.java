@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.web.servlet;
+package io.micrometer.spring;
 
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.stats.hist.Histogram;
 import io.micrometer.core.instrument.stats.quantile.WindowSketchQuantiles;
-import io.micrometer.core.instrument.util.AnnotationUtils;
+import io.micrometer.spring.web.servlet.WebMvcTagsProvider;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.ObjectUtils;
@@ -30,7 +30,6 @@ import org.springframework.web.method.HandlerMethod;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -38,7 +37,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Support class for Spring MVC metrics.
@@ -83,7 +81,7 @@ public class WebMvcMetrics {
             RequestAttributes.SCOPE_REQUEST);
     }
 
-    void preHandle(HttpServletRequest request, Object handler) {
+    public void preHandle(HttpServletRequest request, Object handler) {
         request.setAttribute(TIMING_REQUEST_ATTRIBUTE, System.nanoTime());
         request.setAttribute(HANDLER_REQUEST_ATTRIBUTE, handler);
         longTaskTimed(handler).forEach((config) -> {
@@ -108,7 +106,7 @@ public class WebMvcMetrics {
             + ": @Timed annotation must have a value used to name the metric");
     }
 
-    void record(HttpServletRequest request, HttpServletResponse response, Throwable ex) {
+    public void record(HttpServletRequest request, HttpServletResponse response, Throwable ex) {
         Object handler = request.getAttribute(HANDLER_REQUEST_ATTRIBUTE);
         Long startTime = (Long) request.getAttribute(TIMING_REQUEST_ATTRIBUTE);
         long endTime = System.nanoTime();
@@ -202,20 +200,13 @@ public class WebMvcMetrics {
     }
 
     private Set<TimerConfig> getNonLongTaskAnnotationConfig(AnnotatedElement element) {
-        return findTimedAnnotations(element).filter((t) -> !t.longTask())
+        return TimedUtils.findTimedAnnotations(element).filter((t) -> !t.longTask())
             .map(this::fromAnnotation).collect(Collectors.toSet());
     }
 
     private Set<TimerConfig> getLongTaskAnnotationConfig(AnnotatedElement element) {
-        return findTimedAnnotations(element).filter(Timed::longTask)
+        return TimedUtils.findTimedAnnotations(element).filter(Timed::longTask)
             .map(this::fromAnnotation).collect(Collectors.toSet());
-    }
-
-    private Stream<Timed> findTimedAnnotations(AnnotatedElement element) {
-        if (element instanceof Class<?>) {
-            return AnnotationUtils.findTimed((Class<?>) element);
-        }
-        return AnnotationUtils.findTimed((Method) element);
     }
 
     private TimerConfig fromAnnotation(Timed timed) {
@@ -263,15 +254,15 @@ public class WebMvcMetrics {
             return this.name;
         }
 
-        public Iterable<Tag> getExtraTags() {
+        Iterable<Tag> getExtraTags() {
             return this.extraTags;
         }
 
-        public double[] getQuantiles() {
+        double[] getQuantiles() {
             return this.quantiles;
         }
 
-        public boolean isPercentiles() {
+        boolean isPercentiles() {
             return this.percentiles;
         }
 

@@ -19,6 +19,8 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.spring.TimedUtilsTest;
+import io.micrometer.spring.WebMvcMetrics;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,7 +45,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Integration tests for {@link WebMvcMetrics}.
+ * Integration tests for {@link TimedUtilsTest}.
  *
  * @author Jon Schneider
  */

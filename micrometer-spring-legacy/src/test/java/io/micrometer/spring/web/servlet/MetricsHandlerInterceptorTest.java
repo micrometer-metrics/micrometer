@@ -20,6 +20,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.spring.TimedUtilsTest;
+import io.micrometer.spring.WebMvcMetrics;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,6 +43,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 import javax.servlet.http.HttpServletRequest;
+import java.lang.annotation.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.StreamSupport;
@@ -82,6 +85,18 @@ public class MetricsHandlerInterceptorTest {
         assertThat(this.registry.find("http.server.requests")
             .tags("status", "200", "uri", "/api/c1/{id}", "public", "true")
             .value(Statistic.Count, 1.0).timer()).isPresent();
+    }
+
+    @Test
+    public void subclassedTimedMethod() throws Exception {
+        this.mvc.perform(get("/api/c1/metaTimed/10")).andExpect(status().isOk());
+
+        assertThat(this.registry.find("http.server.requests")
+            .tags("status", "200", "uri", "/api/c1/metaTimed/{id}")
+            .value(Statistic.Count, 1.0).timer()).isPresent();
+
+        assertThat(this.registry.find("http.server.requests")
+            .tags("quantile", "0.95").gauge()).isPresent();
     }
 
     @Test
@@ -169,6 +184,12 @@ public class MetricsHandlerInterceptorTest {
             .map(Tag::getKey)).contains("bucket");
     }
 
+    @Target({ElementType.METHOD})
+    @Retention(RetentionPolicy.RUNTIME)
+    @Timed(quantiles = 0.95)
+    public @interface Timed95 {
+    }
+
     @Configuration
     @EnableWebMvc
     @Import({Controller1.class, Controller2.class})
@@ -199,9 +220,7 @@ public class MetricsHandlerInterceptorTest {
                 registry.addInterceptor(
                     new MetricsHandlerInterceptor(this.webMvcMetrics));
             }
-
         }
-
     }
 
     @RestController
@@ -262,6 +281,12 @@ public class MetricsHandlerInterceptorTest {
         @Timed(percentiles = true)
         @GetMapping("/percentiles/{id}")
         public String percentiles(@PathVariable String id) {
+            return id;
+        }
+
+        @Timed95
+        @GetMapping("/metaTimed/{id}")
+        public String meta(@PathVariable String id) {
             return id;
         }
 

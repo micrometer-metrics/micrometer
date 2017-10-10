@@ -17,9 +17,10 @@ package io.micrometer.core.annotation;
 
 import java.lang.annotation.*;
 
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.METHOD})
 @Repeatable(TimedSet.class)
 @Retention(RetentionPolicy.RUNTIME)
+@Inherited
 public @interface Timed {
     String value() default "";
 
