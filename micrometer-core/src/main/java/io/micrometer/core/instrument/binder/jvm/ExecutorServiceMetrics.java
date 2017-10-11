@@ -140,11 +140,11 @@ public class ExecutorServiceMetrics implements MeterBinder {
             return;
         }
 
-        registry.more().counter(registry.createId(name + ".completed", tags, null,
+        registry.more().counter(registry.createId(name + ".completed", tags,
                 "The approximate total number of tasks that have completed execution"),
             tp, ThreadPoolExecutor::getCompletedTaskCount);
 
-        registry.gauge(registry.createId(name + ".active", tags, null,
+        registry.gauge(registry.createId(name + ".active", tags,
             "The approximate number of threads that are actively executing tasks"),
             tp, ThreadPoolExecutor::getActiveCount);
 
