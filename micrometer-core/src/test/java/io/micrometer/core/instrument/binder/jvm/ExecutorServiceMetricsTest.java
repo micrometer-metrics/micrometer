@@ -106,6 +106,8 @@ class ExecutorServiceMetricsTest {
     private void assertThreadPoolExecutorMetrics() {
         assertThat(registry.find("exec.completed").tags(userTags).meter()).isPresent();
         assertThat(registry.find("exec.queued").tags(userTags).gauge()).isPresent();
+        assertThat(registry.find("exec.active").tags(userTags).gauge()).isPresent();
         assertThat(registry.find("exec.pool").tags(userTags).gauge()).isPresent();
+        assertThat(registry.find("exec").tags(userTags).timer()).isPresent();
     }
 }
