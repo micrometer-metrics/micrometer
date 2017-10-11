@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,12 +101,30 @@ public class MetricsAutoConfigurationTest {
             .hasAtLeastOneElementOfType(JvmMemoryMetrics.class);
     }
 
+    @Test
+    public void registryConfigurersAreAppliedBeforeRegistryIsInjectableElsewhere() {
+        assertThat(this.registry.find("my.thing").tags("common", "tag").gauge()).isPresent();
+    }
+
     @SpringBootApplication(scanBasePackages = "ignored")
     @Import(PersonController.class)
     static class MetricsApp {
         @Bean
-        public MeterRegistry registry() {
-            return new SimpleMeterRegistry();
+        public MetricsExporter simpleExporter() {
+            return SimpleMeterRegistry::new;
+        }
+
+        @Bean
+        public MeterRegistryConfigurer commonTags() {
+            return r -> r.config().commonTags("common", "tag");
+        }
+
+        private class MyThing {}
+
+        @Bean
+        public MyThing myBinder(MeterRegistry registry) {
+            registry.gauge("my.thing", 0);
+            return new MyThing();
         }
 
         @Bean
