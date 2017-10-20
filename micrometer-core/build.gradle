@@ -21,6 +21,9 @@ dependencies {
     compile 'javax.cache:cache-api:1.0.0', optional
     compile 'com.hazelcast:hazelcast:3.8.+', optional
 
+    // server runtime monitoring
+    compile 'org.eclipse.jetty:jetty-server:9.4.7.v20170914', optional
+
     // log monitoring
     compile 'ch.qos.logback:logback-classic:latest.release', optional
 
@@ -42,6 +45,7 @@ dependencies {
     // dependency injection tests
     testCompile 'javax.inject:javax.inject:1'
     testCompile 'org.springframework:spring-context:4.3.9.RELEASE'
+    testCompile 'org.springframework:spring-test:4.3.9.RELEASE'
     testCompile 'com.google.inject:guice:4.1.0'
 
     // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
