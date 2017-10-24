@@ -54,7 +54,7 @@ public class UptimeMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         registry.more().timeGauge(registry.createId("process.uptime", tags, "The uptime of the Java virtual machine"),
             runtimeMXBean, TimeUnit.MILLISECONDS, x -> Long.valueOf(x.getUptime()).doubleValue());
-        registry.more().timeGauge(registry.createId("process.starttime", tags, "The starttime of the Java virtual machine"),
+        registry.more().timeGauge(registry.createId("process.start.time", tags, "The start time of the Java virtual machine"),
             runtimeMXBean, TimeUnit.MILLISECONDS, x -> Long.valueOf(x.getStartTime()).doubleValue());
     }
 }
