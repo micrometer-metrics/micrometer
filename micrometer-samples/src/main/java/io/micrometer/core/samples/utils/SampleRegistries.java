@@ -109,6 +109,18 @@ public class SampleRegistries {
         }, Clock.SYSTEM);
     }
 
+    public static StatsdMeterRegistry telegrafStatsd = new StatsdMeterRegistry(new StatsdConfig() {
+        @Override
+        public String get(String k) {
+            return null;
+        }
+
+        @Override
+        public StatsdFlavor flavor() {
+            return StatsdFlavor.Telegraf;
+        }
+    }, Clock.SYSTEM);
+
     public static GangliaMeterRegistry ganglia() {
         return new GangliaMeterRegistry();
     }
