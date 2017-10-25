@@ -42,7 +42,7 @@ public class JmxExportConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public Clock clock() {
+    public Clock micrometerClock() {
         return Clock.SYSTEM;
     }
 
