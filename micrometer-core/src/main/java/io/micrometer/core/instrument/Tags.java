@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -26,6 +27,9 @@ import static java.util.stream.StreamSupport.stream;
  * @author Jon Schneider
  */
 public final class Tags {
+    @SuppressWarnings("unchecked")
+    public static final List<Tag> EMPTY = Collections.EMPTY_LIST;
+
     private Tags() {}
 
     public static List<Tag> zip(String... keyValues) {

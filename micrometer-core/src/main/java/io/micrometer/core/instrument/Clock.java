@@ -37,6 +37,11 @@ public interface Clock {
      */
     long monotonicTime();
 
+
+    default long nanosSince(long startNanos) {
+        return monotonicTime() - startNanos;
+    }
+
     Clock SYSTEM = new Clock() {
         @Override
         public long wallTime() {
