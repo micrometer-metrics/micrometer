@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -140,40 +142,49 @@ public class ExecutorServiceMetrics implements MeterBinder {
             return;
         }
 
-        registry.more().counter(registry.createId(name + ".completed", tags,
-                "The approximate total number of tasks that have completed execution"),
-            tp, ThreadPoolExecutor::getCompletedTaskCount);
+        FunctionCounter.builder(name + ".completed", tp, ThreadPoolExecutor::getCompletedTaskCount)
+            .tags(tags)
+            .description("The approximate total number of tasks that have completed execution")
+            .register(registry);
 
-        registry.gauge(registry.createId(name + ".active", tags,
-            "The approximate number of threads that are actively executing tasks"),
-            tp, ThreadPoolExecutor::getActiveCount);
+        Gauge.builder(name + ".active", tp, ThreadPoolExecutor::getActiveCount)
+            .tags(tags)
+            .description("The approximate number of threads that are actively executing tasks")
+            .register(registry);
 
-        registry.gauge(registry.createId(name + ".queued", tags,
-            "The approximate number of threads that are queued for execution"),
-            tp, tpRef -> tpRef.getQueue().size());
+        Gauge.builder(name + ".queued", tp, tpRef -> tpRef.getQueue().size())
+            .tags(tags)
+            .description("The approximate number of threads that are queued for execution")
+            .register(registry);
 
-        registry.gauge(registry.createId(name + ".pool", tags,
-            "The current number of threads in the pool"),
-        tp, ThreadPoolExecutor::getPoolSize);
+        Gauge.builder(name + ".pool", tp, ThreadPoolExecutor::getPoolSize)
+            .tags(tags)
+            .description("The current number of threads in the pool")
+            .register(registry);
     }
 
     private void monitor(MeterRegistry registry, ForkJoinPool fj) {
-        registry.more().counter(registry.createId(name + ".steals", tags,
-            "Estimate of the total number of tasks stolen from " +
+        FunctionCounter.builder(name + ".steals", fj, ForkJoinPool::getStealCount)
+            .tags(tags)
+            .description("Estimate of the total number of tasks stolen from " +
                 "one thread's work queue by another. The reported value " +
                 "underestimates the actual total number of steals when the pool " +
-                "is not quiescent"), fj, ForkJoinPool::getStealCount);
+                "is not quiescent")
+            .register(registry);
 
-        registry.gauge(registry.createId(name + ".queued", tags,
-            "An estimate of the total number of tasks currently held in queues by worker threads"),
-            fj, ForkJoinPool::getQueuedTaskCount);
+        Gauge.builder(name + ".queued", fj, ForkJoinPool::getQueuedTaskCount)
+            .tags(tags)
+            .description("An estimate of the total number of tasks currently held in queues by worker threads")
+            .register(registry);
 
-        registry.gauge(registry.createId(name + ".active", tags,
-            "An estimate of the number of threads that are currently stealing or executing tasks"),
-            fj, ForkJoinPool::getActiveThreadCount);
+        Gauge.builder(name + ".active", fj, ForkJoinPool::getActiveThreadCount)
+            .tags(tags)
+            .description("An estimate of the number of threads that are currently stealing or executing tasks")
+            .register(registry);
 
-        registry.gauge(registry.createId(name + ".running", tags,
-            "An estimate of the number of worker threads that are not blocked waiting to join tasks or for other managed synchronization",
-            "threads"), fj, ForkJoinPool::getRunningThreadCount);
+        Gauge.builder(name + ".running", fj, ForkJoinPool::getRunningThreadCount)
+            .tags(tags)
+            .description("An estimate of the number of worker threads that are not blocked waiting to join tasks or for other managed synchronization threads")
+            .register(registry);
     }
 }

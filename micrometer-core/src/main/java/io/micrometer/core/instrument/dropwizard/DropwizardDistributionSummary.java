@@ -15,10 +15,10 @@
  */
 package io.micrometer.core.instrument.dropwizard;
 
-import io.micrometer.core.instrument.AbstractMeter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.stats.hist.Histogram;
-import io.micrometer.core.instrument.stats.quantile.Quantiles;
+import io.micrometer.core.instrument.AbstractDistributionSummary;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 
 import java.util.concurrent.atomic.DoubleAdder;
@@ -26,28 +26,23 @@ import java.util.concurrent.atomic.DoubleAdder;
 /**
  * @author Jon Schneider
  */
-public class DropwizardDistributionSummary extends AbstractMeter implements DistributionSummary {
+public class DropwizardDistributionSummary extends AbstractDistributionSummary {
     private final com.codahale.metrics.Histogram impl;
     private final DoubleAdder totalAmount = new DoubleAdder();
-    private final Quantiles quantiles;
-    private final Histogram<?> histogram;
+    private final StepDouble max;
 
-    DropwizardDistributionSummary(Id id, com.codahale.metrics.Histogram impl, Quantiles quantiles, Histogram<?> histogram) {
-        super(id);
+    DropwizardDistributionSummary(Id id, Clock clock, com.codahale.metrics.Histogram impl, StatsConfig statsConfig) {
+        super(id, clock, statsConfig);
         this.impl = impl;
-        this.quantiles = quantiles;
-        this.histogram = histogram;
+        this.max = new StepDouble(clock, 60000);
     }
 
     @Override
-    public void record(double amount) {
+    protected void recordNonNegative(double amount) {
         if (amount >= 0) {
             impl.update((long) amount);
             totalAmount.add(amount);
-            if (quantiles != null)
-                quantiles.observe(amount);
-            if (histogram != null)
-                histogram.observe(amount);
+            max.getCurrent().add(Math.max(amount - max.getCurrent().doubleValue(), 0));
         }
     }
 
@@ -59,6 +54,11 @@ public class DropwizardDistributionSummary extends AbstractMeter implements Dist
     @Override
     public double totalAmount() {
         return totalAmount.doubleValue();
+    }
+
+    @Override
+    public double max() {
+        return max.poll();
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

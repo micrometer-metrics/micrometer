@@ -15,7 +15,10 @@
  */
 package io.micrometer.core.tck;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.util.TimeUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -23,11 +26,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Collections;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static io.micrometer.core.MockClock.clock;
+import static io.micrometer.core.instrument.MockClock.clock;
 import static io.micrometer.core.instrument.Statistic.Count;
 import static io.micrometer.core.instrument.Statistic.Total;
 import static java.util.Collections.emptyList;
@@ -84,7 +86,7 @@ public abstract class MeterRegistryCompatibilityKit {
         Timer t = registry.timer("timer");
         t.record(10, TimeUnit.NANOSECONDS);
 
-        clock(registry).addAndGet(1, TimeUnit.SECONDS);
+        clock(registry).addSeconds(1);
 
         assertThat(registry.find("counter").value(Count, 1.0).counter()).isPresent();
         assertThat(registry.find("timer").value(Count, 1.0).timer()).isPresent();
@@ -105,8 +107,7 @@ public abstract class MeterRegistryCompatibilityKit {
     @DisplayName("original and convention names are preserved for custom meter types")
     void aTaleOfTwoNames(MeterRegistry registry) {
         AtomicInteger n = new AtomicInteger(1);
-        registry.more().counter(registry.createId("my.counter", Collections.emptyList(), null), n);
-
+        registry.more().counter("my.counter", Collections.emptyList(), n);
         assertThat(registry.find("my.counter").meter()).isPresent();
     }
 
@@ -115,39 +116,43 @@ public abstract class MeterRegistryCompatibilityKit {
     void functionTimerUnits(MeterRegistry registry) {
         Object o = new Object();
 
-        registry.more().timer(registry.createId("function.timer", emptyList(), "test"),
+        registry.more().timer("function.timer", emptyList(),
             o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
 
-        Optional<Meter> meter = registry.find("function.timer").meter();
-        assertThat(meter).isPresent();
-
-        Iterable<Measurement> measurements = meter.get().measure();
-        assertThat(measurements)
-            .anySatisfy(ms -> {
-                TimeUnit baseUnit = TimeUnit.valueOf(meter.get().getId().getBaseUnit().toUpperCase());
-                assertThat(ms.getStatistic()).isEqualTo(Statistic.Total);
-                assertThat(TimeUtils.convert(ms.getValue(), baseUnit, TimeUnit.MILLISECONDS)).isEqualTo(1);
-            });
+        assertThat(registry.find("function.timer").meter())
+            .hasValueSatisfying(meter ->
+                assertThat(meter.measure())
+                    .anySatisfy(ms -> {
+                        TimeUnit baseUnit = TimeUnit.valueOf(meter.getId().getBaseUnit().toUpperCase());
+                        assertThat(ms.getStatistic()).isEqualTo(Statistic.TotalTime);
+                        assertThat(TimeUtils.convert(ms.getValue(), baseUnit, TimeUnit.MILLISECONDS)).isEqualTo(1);
+                    })
+            );
     }
 
     @DisplayName("counters")
     @Nested
-    class CounterTck implements CounterTest {}
+    class CounterTck implements CounterTest {
+    }
 
     @DisplayName("distribution summaries")
     @Nested
-    class DistributionSummaryTck implements DistributionSummaryTest {}
+    class DistributionSummaryTck implements DistributionSummaryTest {
+    }
 
     @DisplayName("gauges")
     @Nested
-    class GaugeTck implements GaugeTest {}
+    class GaugeTck implements GaugeTest {
+    }
 
     @DisplayName("long task timers")
     @Nested
-    class LongTaskTimerTck implements LongTaskTimerTest {}
+    class LongTaskTimerTck implements LongTaskTimerTest {
+    }
 
     @DisplayName("timers")
     @Nested
-    class TimerTck implements TimerTest {}
+    class TimerTck implements TimerTest {
+    }
 }
 

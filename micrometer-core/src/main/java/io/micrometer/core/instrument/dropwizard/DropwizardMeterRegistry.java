@@ -18,22 +18,22 @@ package io.micrometer.core.instrument.dropwizard;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.simple.SimpleLongTaskTimer;
-import io.micrometer.core.instrument.stats.hist.Bucket;
-import io.micrometer.core.instrument.stats.hist.Histogram;
-import io.micrometer.core.instrument.stats.quantile.Quantiles;
+import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 
 import java.lang.ref.WeakReference;
+import java.text.DecimalFormat;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 
 /**
  * @author Jon Schneider
  */
-public class DropwizardMeterRegistry extends AbstractMeterRegistry {
+public class DropwizardMeterRegistry extends MeterRegistry {
     private final MetricRegistry registry;
     private final HierarchicalNameMapper nameMapper;
+    private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
 
     public DropwizardMeterRegistry(HierarchicalNameMapper nameMapper, Clock clock) {
         super(clock);
@@ -63,44 +63,45 @@ public class DropwizardMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
-        registerQuantilesGaugeIfNecessary(id, quantiles);
-        return new DropwizardTimer(id, registry.timer(hierarchicalName(id)), clock,
-            quantiles, registerHistogramCounterIfNecessary(id, histogram));
+    protected Timer newTimer(Meter.Id id, StatsConfig statsConfig) {
+        DropwizardTimer timer = new DropwizardTimer(id, registry.timer(hierarchicalName(id)), clock, statsConfig);
+
+        for (double percentile : statsConfig.getPercentiles()) {
+            gauge(id.getName(), Tags.concat(id.getTags(), "percentile", percentileFormat.format(percentile)),
+                percentile, p -> timer.percentile(p, getBaseTimeUnit()));
+        }
+
+        if(statsConfig.isPublishingHistogram()) {
+            for (Long bucket : statsConfig.getHistogramBuckets(false)) {
+                more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", Long.toString(bucket)),
+                    timer, t -> t.histogramCountAtValue(bucket));
+            }
+        }
+
+        return timer;
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
-        registerQuantilesGaugeIfNecessary(id, quantiles);
-        return new DropwizardDistributionSummary(id, registry.histogram(hierarchicalName(id)),
-            quantiles, registerHistogramCounterIfNecessary(id, histogram));
-    }
+    protected DistributionSummary newDistributionSummary(Meter.Id id, StatsConfig statsConfig) {
+        DropwizardDistributionSummary summary = new DropwizardDistributionSummary(id, clock, registry.histogram(hierarchicalName(id)), statsConfig);
 
-    private void registerQuantilesGaugeIfNecessary(Meter.Id id, Quantiles quantiles) {
-        if (quantiles != null) {
-            for (Double q : quantiles.monitored()) {
-                gauge(id.getName(), Tags.concat(id.getTags(), "quantile", Double.isNaN(q) ? "NaN" : Double.toString(q)),
-                    q, quantiles::get);
+        for (double percentile : statsConfig.getPercentiles()) {
+            gauge(id.getName(), Tags.concat(id.getTags(), "percentile", percentileFormat.format(percentile)),
+                percentile, summary::percentile);
+        }
+
+        if(statsConfig.isPublishingHistogram()) {
+            for (Long bucket : statsConfig.getHistogramBuckets(false)) {
+                more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", Long.toString(bucket)),
+                    summary, s -> s.histogramCountAtValue(bucket));
             }
         }
-    }
 
-    private Histogram<?> registerHistogramCounterIfNecessary(Meter.Id id, Histogram.Builder<?> histogramBuilder) {
-        if (histogramBuilder != null) {
-            Histogram<?> hist = histogramBuilder.create(Histogram.Summation.Normal);
-
-            for (Bucket<?> bucket : hist.getBuckets()) {
-                more().counter(createId(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.getTagString()), null),
-                    bucket, Bucket::getValue);
-            }
-
-            return hist;
-        }
-        return null;
+        return summary;
     }
 
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        LongTaskTimer ltt = new SimpleLongTaskTimer(id, clock);
+        LongTaskTimer ltt = new DefaultLongTaskTimer(id, clock);
         registry.register(hierarchicalName(id.withTag(Statistic.ActiveTasks)), (Gauge<Integer>) ltt::activeTasks);
         registry.register(hierarchicalName(id.withTag(Statistic.Duration)), (Gauge<Double>) () -> ltt.duration(TimeUnit.NANOSECONDS));
         return ltt;

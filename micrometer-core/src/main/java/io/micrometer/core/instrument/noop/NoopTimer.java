@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.noop;
 
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.histogram.StatsConfig;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -57,5 +58,25 @@ public class NoopTimer extends NoopMeter implements Timer {
     @Override
     public double totalTime(TimeUnit unit) {
         return 0;
+    }
+
+    @Override
+    public double max(TimeUnit unit) {
+        return 0;
+    }
+
+    @Override
+    public double percentile(double percentile, TimeUnit unit) {
+        return 0;
+    }
+
+    @Override
+    public double histogramCountAtValue(long valueNanos) {
+        return 0;
+    }
+
+    @Override
+    public StatsConfig statsConfig() {
+        return new StatsConfig();
     }
 }

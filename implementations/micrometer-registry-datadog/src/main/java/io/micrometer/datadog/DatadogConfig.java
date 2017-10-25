@@ -15,7 +15,7 @@
  */
 package io.micrometer.datadog;
 
-import io.micrometer.core.instrument.spectator.step.StepRegistryConfig;
+import io.micrometer.core.instrument.step.StepRegistryConfig;
 
 /**
  * Configuration for Datadog exporting.

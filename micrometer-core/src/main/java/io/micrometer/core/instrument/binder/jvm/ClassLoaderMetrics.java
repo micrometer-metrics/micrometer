@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -39,12 +41,14 @@ public class ClassLoaderMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         ClassLoadingMXBean classLoadingBean = ManagementFactory.getClassLoadingMXBean();
 
-        registry.gauge(registry.createId("jvm.classes.loaded", tags,
-            "The number of classes that are currently loaded in the Java virtual machine."),
-            classLoadingBean, ClassLoadingMXBean::getLoadedClassCount);
+        Gauge.builder("jvm.classes.loaded", classLoadingBean, ClassLoadingMXBean::getLoadedClassCount)
+            .tags(tags)
+            .description("The number of classes that are currently loaded in the Java virtual machine.")
+            .register(registry);
 
-        registry.more().counter(registry.createId("jvm.classes.unloaded", tags,
-            "The total number of classes unloaded since the Java virtual machine has started execution"),
-            classLoadingBean, ClassLoadingMXBean::getUnloadedClassCount);
+        FunctionCounter.builder("jvm.classes.unloaded", classLoadingBean, ClassLoadingMXBean::getUnloadedClassCount)
+            .tags(tags)
+            .description("The total number of classes unloaded since the Java virtual machine has started execution")
+            .register(registry);
     }
 }

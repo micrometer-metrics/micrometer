@@ -15,47 +15,40 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.core.instrument.AbstractMeter;
-import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.AbstractDistributionSummary;
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.stats.hist.Histogram;
-import io.micrometer.core.instrument.stats.quantile.Quantiles;
+import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import org.reactivestreams.Subscriber;
 
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
-public class StatsdDistributionSummary extends AbstractMeter implements DistributionSummary {
-    private LongAdder count = new LongAdder();
-    private DoubleAdder amount = new DoubleAdder();
+public class StatsdDistributionSummary extends AbstractDistributionSummary {
+    private final LongAdder count = new LongAdder();
+    private final DoubleAdder amount = new DoubleAdder();
+    private final StepDouble max;
 
     private final StatsdLineBuilder lineBuilder;
     private final Subscriber<String> publisher;
-    private final Quantiles quantiles;
-    private final Histogram<?> histogram;
 
-    StatsdDistributionSummary(Meter.Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher,
-                              Quantiles quantiles, Histogram<?> histogram) {
-        super(id);
+    StatsdDistributionSummary(Meter.Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher, Clock clock,
+                              StatsConfig statsConfig, long stepMillis) {
+        super(id, clock, statsConfig);
+        this.max = new StepDouble(clock, stepMillis);
         this.lineBuilder = lineBuilder;
         this.publisher = publisher;
-        this.quantiles = quantiles;
-        this.histogram = histogram;
     }
 
     @Override
-    public void record(double amount) {
+    protected void recordNonNegative(double amount) {
         if (amount >= 0) {
             count.increment();
             this.amount.add(amount);
-
+            max.getCurrent().add(Math.max(amount - max.getCurrent().doubleValue(), 0));
             publisher.onNext(lineBuilder.histogram(amount));
-
-            if (quantiles != null)
-                quantiles.observe(amount);
-            if (histogram != null)
-                histogram.observe(amount);
         }
     }
 
@@ -67,6 +60,15 @@ public class StatsdDistributionSummary extends AbstractMeter implements Distribu
     @Override
     public double totalAmount() {
         return amount.doubleValue();
+    }
+
+    /**
+     * The StatsD agent will likely compute max with a different window, so the value may not match what you see here.
+     * This value is not exported to the agent, and is only for diagnostic use.
+     */
+    @Override
+    public double max() {
+        return max.poll();
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

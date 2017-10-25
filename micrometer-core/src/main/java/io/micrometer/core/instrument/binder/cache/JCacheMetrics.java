@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -110,21 +111,29 @@ public class JCacheMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        registry.gauge(registry.createId(name + ".requests", Tags.concat(tags, "result", "hit"),
-            "The number of times cache lookup methods have returned a cached value"),
-            objectName, CacheStatistics.CacheHits::get);
+        Gauge.builder(name + ".requests", objectName, CacheStatistics.CacheHits::get)
+            .tags(tags).tags("result", "hit")
+            .description("The number of times cache lookup methods have returned a cached value")
+            .register(registry);
 
-        registry.gauge(registry.createId(name + ".requests", Tags.concat(tags, "result", "miss"),
-            "The number of times cache lookup methods have not returned a value"),
-            objectName, CacheStatistics.CacheMisses::get);
+        Gauge.builder(name + ".requests", objectName, CacheStatistics.CacheMisses::get)
+            .tags(tags).tags("result", "miss")
+            .description("The number of times cache lookup methods have not returned a value")
+            .register(registry);
 
-        registry.gauge(registry.createId(name + ".puts", tags, "Cache puts"),
-            objectName, CacheStatistics.CachePuts::get);
+        Gauge.builder(name + ".puts", objectName, CacheStatistics.CachePuts::get)
+            .tags(tags)
+            .description("Cache puts")
+            .register(registry);
 
-        registry.gauge(registry.createId(name + ".removals", tags, "Cache removals"),
-            objectName, CacheStatistics.CacheRemovals::get);
+        Gauge.builder(name + ".removals", objectName, CacheStatistics.CacheRemovals::get)
+            .tags(tags)
+            .description("Cache removals")
+            .register(registry);
 
-        registry.gauge(registry.createId(name + ".evictions", tags, "Cache evictions"),
-            objectName, CacheStatistics.CacheEvictions::get);
+        Gauge.builder(name + ".evictions", objectName, CacheStatistics.CacheEvictions::get)
+            .tags(tags)
+            .description("Cache evictions")
+            .register(registry);
     }
 }

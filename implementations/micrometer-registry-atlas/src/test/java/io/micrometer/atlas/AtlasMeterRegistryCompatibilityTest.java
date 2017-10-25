@@ -16,7 +16,7 @@
 package io.micrometer.atlas;
 
 import com.netflix.spectator.atlas.AtlasConfig;
-import io.micrometer.core.MockClock;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 

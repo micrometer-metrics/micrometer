@@ -59,8 +59,8 @@ public class ScheduledMethodMetricsTest {
         while(scheduler.getActiveCount() > 0) {}
 
         assertThat(registry.find("beeper").value(Count, 1.0).timer()).isPresent();
-        assertThat(registry.find("beeper").tags("quantile", "0.5").gauge()).isNotEmpty();
-        assertThat(registry.find("beeper").tags("quantile", "0.95").gauge()).isNotEmpty();
+        assertThat(registry.find("beeper").tags("percentile", "50").gauge()).isNotEmpty();
+        assertThat(registry.find("beeper").tags("percentile", "95").gauge()).isNotEmpty();
     }
 
     @Test
@@ -103,7 +103,7 @@ public class ScheduledMethodMetricsTest {
             System.out.println("beep");
         }
 
-        @Timed(value = "beeper", quantiles = {0.5, 0.95})
+        @Timed(value = "beeper", percentiles = {0.50, 0.95})
         @Scheduled(fixedDelay = 100_000)
         void shortBeep() {
             shortBeepsExecuted.countDown();

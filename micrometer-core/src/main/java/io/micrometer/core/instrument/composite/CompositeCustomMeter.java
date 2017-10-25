@@ -42,7 +42,11 @@ public class CompositeCustomMeter implements CompositeMeter {
 
     @Override
     public void add(MeterRegistry registry) {
-        registry.register(id, type, measurements);
+        Meter.builder(id.getName(), type, measurements)
+            .tags(id.getTags())
+            .description(id.getDescription())
+            .baseUnit(id.getBaseUnit())
+            .register(registry);
     }
 
     @Override

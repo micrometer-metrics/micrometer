@@ -16,11 +16,12 @@
 package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.TimeGauge;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 
-public class CompositeTimeGauge<T> extends CompositeGauge<T> {
+public class CompositeTimeGauge<T> extends CompositeGauge<T> implements TimeGauge {
     private final TimeUnit fUnit;
 
     CompositeTimeGauge(Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
@@ -32,7 +33,16 @@ public class CompositeTimeGauge<T> extends CompositeGauge<T> {
     public void add(MeterRegistry registry) {
         T obj = ref.get();
         if(obj != null) {
-            gauges.put(registry, registry.more().timeGauge(getId(), obj, fUnit, f));
+            gauges.put(registry, TimeGauge.builder(getId().getName(), obj, fUnit, f)
+                .tags(getId().getTags())
+                .description(getId().getDescription())
+                .register(registry));
         }
+    }
+
+    @Override
+    public TimeUnit getBaseTimeUnit() {
+        return gauges.values().stream().findFirst().map(tg -> ((TimeGauge) tg).getBaseTimeUnit())
+            .orElse(TimeUnit.SECONDS);
     }
 }

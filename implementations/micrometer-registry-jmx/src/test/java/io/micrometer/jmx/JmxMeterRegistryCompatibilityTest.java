@@ -17,7 +17,7 @@ package io.micrometer.jmx;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import io.micrometer.core.MockClock;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;

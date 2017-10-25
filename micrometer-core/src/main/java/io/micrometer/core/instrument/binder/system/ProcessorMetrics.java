@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -41,16 +42,19 @@ public class ProcessorMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         Runtime runtime = Runtime.getRuntime();
-        registry.gauge(registry.createId("cpu", tags,
-            "The number of processors available to the Java virtual machine"),
-            runtime, Runtime::availableProcessors);
+
+        Gauge.builder("cpu", runtime, Runtime::availableProcessors)
+            .tags(tags)
+            .description("The number of processors available to the Java virtual machine")
+            .register(registry);
 
         OperatingSystemMXBean operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
         if(operatingSystemBean != null && operatingSystemBean.getSystemLoadAverage() >= 0) {
-            registry.gauge(registry.createId("cpu.load.average", tags,
-                "The sum of the number of runnable entities queued to available processors and the number " +
-                    "of runnable entities running on the available processors averaged over a period of time"),
-                operatingSystemBean, OperatingSystemMXBean::getSystemLoadAverage);
+            Gauge.builder("cpu.load.average", operatingSystemBean, OperatingSystemMXBean::getSystemLoadAverage)
+                .tags(tags)
+                .description("The sum of the number of runnable entities queued to available processors and the number " +
+                    "of runnable entities running on the available processors averaged over a period of time")
+                .register(registry);
         }
     }
 }

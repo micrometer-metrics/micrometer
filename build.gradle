@@ -36,9 +36,6 @@ subprojects {
 
     repositories {
         mavenCentral()
-
-        // TODO just temporarily, for reactor release candidates
-        maven { url 'https://repo.spring.io/libs-milestone' }
     }
 
     if (project.extensions.findByName('bintray')) {

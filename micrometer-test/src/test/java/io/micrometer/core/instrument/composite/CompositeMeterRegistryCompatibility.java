@@ -15,8 +15,9 @@
  */
 package io.micrometer.core.instrument.composite;
 
-import io.micrometer.core.MockClock;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
@@ -24,7 +25,7 @@ class CompositeMeterRegistryCompatibility extends MeterRegistryCompatibilityKit 
     @Override
     public MeterRegistry registry() {
         return new CompositeMeterRegistry(new MockClock()) {{
-            add(new SimpleMeterRegistry(clock));
+            add(new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock));
         }};
     }
 }

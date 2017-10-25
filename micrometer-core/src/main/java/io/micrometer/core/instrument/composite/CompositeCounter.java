@@ -43,7 +43,11 @@ class CompositeCounter extends AbstractMeter implements Counter, CompositeMeter 
 
     @Override
     public void add(MeterRegistry registry) {
-        counters.put(registry, registry.counter(getId()));
+        counters.put(registry, Counter.builder(getId().getName())
+            .tags(getId().getTags())
+            .description(getId().getDescription())
+            .baseUnit(getId().getBaseUnit())
+            .register(registry));
     }
 
     @Override

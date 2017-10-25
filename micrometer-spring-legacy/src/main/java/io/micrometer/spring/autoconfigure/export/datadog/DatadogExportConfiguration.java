@@ -29,8 +29,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import java.time.Duration;
-
 /**
  * Configuration for exporting metrics to Datadog.
  *
@@ -59,16 +57,6 @@ public class DatadogExportConfiguration {
         @Override
         public String hostTag() {
             return props.getHostKey() == null ? defaults.hostTag() : props.getHostKey();
-        }
-
-        @Override
-        public Duration timerPercentilesMax() {
-            return props.getTimerPercentilesMax();
-        }
-
-        @Override
-        public Duration timerPercentilesMin() {
-            return props.getTimerPercentilesMin();
         }
     }
 

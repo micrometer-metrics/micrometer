@@ -24,6 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -59,12 +60,15 @@ public class FileDescriptorMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        registry.gauge(
-                registry.createId("process.fds.open", tags, "The open file descriptor count"),
-                osBean, x -> invoke(openFdsMethod));
-        registry.gauge(
-                registry.createId("process.fds.max", tags, "The maximum file descriptor count"),
-                osBean, x -> invoke(maxFdsMethod));
+        Gauge.builder("process.open.fds", osBean, x -> invoke(openFdsMethod))
+            .tags(tags)
+            .description("The open file descriptor count")
+            .register(registry);
+
+        Gauge.builder("process.max.fds", osBean, x -> invoke(maxFdsMethod))
+            .tags(tags)
+            .description("The maximum file descriptor count")
+            .register(registry);
     }
 
     private double invoke(Method method) {
@@ -77,7 +81,6 @@ public class FileDescriptorMetrics implements MeterBinder {
 
     private Method detectMethod(String name) {
         Objects.requireNonNull(name);
-
         try {
             final Method method = osBean.getClass().getDeclaredMethod(name);
             method.setAccessible(true);

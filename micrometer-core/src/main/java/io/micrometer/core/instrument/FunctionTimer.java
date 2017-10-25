@@ -15,8 +15,12 @@
  */
 package io.micrometer.core.instrument;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 public interface FunctionTimer extends Meter {
     /**
@@ -29,13 +33,72 @@ public interface FunctionTimer extends Meter {
      */
     double totalTime(TimeUnit unit);
 
+    default double mean(TimeUnit unit) {
+        return count() == 0 ? 0 : totalTime(unit) / count();
+    }
+
     TimeUnit baseTimeUnit();
 
     @Override
     default Iterable<Measurement> measure() {
         return Arrays.asList(
             new Measurement(() -> (double) count(), Statistic.Count),
-            new Measurement(() -> totalTime(baseTimeUnit()), Statistic.Total)
+            new Measurement(() -> totalTime(baseTimeUnit()), Statistic.TotalTime)
         );
+    }
+
+    static <T> Builder<T> builder(String name, T obj, ToLongFunction<T> countFunction,
+                                  ToDoubleFunction<T> totalTimeFunction,
+                                  TimeUnit totalTimeFunctionUnits) {
+        return new Builder<>(name, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
+    }
+
+    class Builder<T> {
+        private final String name;
+        private final T obj;
+        private final ToLongFunction<T> countFunction;
+        private final ToDoubleFunction<T> totalTimeFunction;
+        private final TimeUnit totalTimeFunctionUnits;
+        private final List<Tag> tags = new ArrayList<>();
+        private String description;
+        private String baseUnit;
+
+        private Builder(String name, T obj,
+                        ToLongFunction<T> countFunction,
+                        ToDoubleFunction<T> totalTimeFunction,
+                        TimeUnit totalTimeFunctionUnits) {
+            this.name = name;
+            this.obj = obj;
+            this.countFunction = countFunction;
+            this.totalTimeFunction = totalTimeFunction;
+            this.totalTimeFunctionUnits = totalTimeFunctionUnits;
+        }
+
+        /**
+         * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         */
+        public Builder<T> tags(String... tags) {
+            return tags(Tags.zip(tags));
+        }
+
+        public Builder<T> tags(Iterable<Tag> tags) {
+            tags.forEach(this.tags::add);
+            return this;
+        }
+
+        public Builder<T> description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder<T> baseUnit(String unit) {
+            this.baseUnit = unit;
+            return this;
+        }
+
+        public FunctionTimer register(MeterRegistry registry) {
+            return registry.more().timer(new Meter.Id(name, tags, baseUnit, description), obj, countFunction, totalTimeFunction,
+                totalTimeFunctionUnits);
+        }
     }
 }

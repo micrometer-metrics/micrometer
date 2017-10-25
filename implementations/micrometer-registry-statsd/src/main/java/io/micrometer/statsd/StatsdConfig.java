@@ -16,14 +16,13 @@
 package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.MeterRegistryConfig;
-import io.micrometer.core.instrument.stats.hist.HistogramConfig;
 
 import java.time.Duration;
 
 /**
  * @author Jon Schneider
  */
-public interface StatsdConfig extends MeterRegistryConfig, HistogramConfig {
+public interface StatsdConfig extends MeterRegistryConfig {
     /**
      * Accept configuration defaults
      */
@@ -109,5 +108,14 @@ public interface StatsdConfig extends MeterRegistryConfig, HistogramConfig {
     default int queueSize() {
         String v = get(prefix() + ".queueSize");
         return v == null ? Integer.MAX_VALUE : Integer.parseInt(v);
+    }
+
+    /**
+     * Returns the step size to use in computing windowed statistics like max. The default is 10 seconds.
+     * To get the most out of these statistics, align the step interval to be close to your scrape interval.
+     */
+    default Duration step() {
+        String v = get(prefix() + ".step");
+        return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
     }
 }

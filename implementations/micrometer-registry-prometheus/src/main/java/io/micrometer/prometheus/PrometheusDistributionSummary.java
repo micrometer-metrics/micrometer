@@ -15,35 +15,45 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.core.instrument.AbstractMeter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.AbstractDistributionSummary;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.prometheus.internal.CustomPrometheusSummary;
 
-public class PrometheusDistributionSummary extends AbstractMeter implements DistributionSummary {
-    private final CustomPrometheusSummary.Child summary;
+import java.util.concurrent.atomic.DoubleAdder;
+import java.util.concurrent.atomic.LongAdder;
 
-    PrometheusDistributionSummary(Meter.Id id, CustomPrometheusSummary.Child summary) {
-        super(id);
-        this.summary = summary;
+public class PrometheusDistributionSummary extends AbstractDistributionSummary {
+    private LongAdder count = new LongAdder();
+    private DoubleAdder amount = new DoubleAdder();
+    private StepDouble max;
+
+    PrometheusDistributionSummary(Id id, Clock clock, StatsConfig statsConfig, long maxStepMillis) {
+        super(id, clock, statsConfig);
+        this.max = new StepDouble(clock, maxStepMillis);
     }
 
     @Override
-    public void record(double amount) {
-        if (amount >= 0) {
-            summary.observe(amount);
-        }
+    protected void recordNonNegative(double amount) {
+        count.increment();
+        this.amount.add(amount);
+        max.getCurrent().add(Math.max(amount - max.getCurrent().doubleValue(), 0));
     }
 
     @Override
     public long count() {
-        return summary.count();
+        return count.longValue();
     }
 
     @Override
     public double totalAmount() {
-        return summary.sum();
+        return amount.doubleValue();
+    }
+
+    @Override
+    public double max() {
+        return max.poll();
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

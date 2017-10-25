@@ -18,17 +18,22 @@ package io.micrometer.core.instrument.binder.logging;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
+
+import static io.micrometer.core.instrument.MockClock.clock;
 import static io.micrometer.core.instrument.Statistic.Count;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LogbackMetricsTest {
     @Test
     void logbackLevelMetrics() {
-        MeterRegistry registry = new SimpleMeterRegistry();
+        MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
         new LogbackMetrics().bindTo(registry);
 
         assertThat(registry.find("logback.events").value(Count, 0.0).counter()).isPresent();
@@ -40,6 +45,7 @@ class LogbackMetricsTest {
         logger.error("error");
         logger.debug("debug"); // shouldn't record a metric
 
+        clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("logback.events").tags("level", "warn").value(Count, 1.0).counter()).isPresent();
         assertThat(registry.find("logback.events").tags("level", "debug").value(Count, 0.0).counter()).isPresent();
     }

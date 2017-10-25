@@ -17,8 +17,6 @@ package io.micrometer.spring.web.servlet;
 
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.stats.hist.Histogram;
-import io.micrometer.core.instrument.stats.quantile.WindowSketchQuantiles;
 import io.micrometer.spring.TimedUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -145,24 +143,22 @@ public class WebMvcMetrics {
         Timer.Builder builder = Timer.builder(config.getName())
             .tags(this.tagsProvider.httpRequestTags(request, response, thrown))
             .tags(config.getExtraTags()).description("Timer of servlet request");
-        if (config.getQuantiles().length > 0) {
-            WindowSketchQuantiles quantiles = WindowSketchQuantiles
-                .quantiles(config.getQuantiles()).create();
-            builder = builder.quantiles(quantiles);
+        if (config.getPercentiles().length > 0) {
+            builder = builder.publishPercentiles(config.getPercentiles());
         }
-        if (config.isPercentiles()) {
-            builder = builder.histogram(Histogram.percentilesTime());
+        if (config.isHistogram()) {
+            builder = builder.publishPercentileHistogram();
         }
         return builder;
     }
 
     private LongTaskTimer longTaskTimer(TimerConfig config, HttpServletRequest request,
                                         Object handler) {
-        Iterable<Tag> tags = Tags.concat(
-            this.tagsProvider.httpLongRequestTags(request, handler),
-            config.getExtraTags());
-        return this.registry.more().longTaskTimer(this.registry.createId(config.getName(),
-            tags, "Timer of long servlet request"));
+        return LongTaskTimer.builder(config.getName())
+            .tags(this.tagsProvider.httpLongRequestTags(request, handler))
+            .tags(config.getExtraTags())
+            .description("Timer of long servlet request")
+            .register(registry);
     }
 
     private Set<TimerConfig> longTaskTimed(Object handler) {
@@ -223,22 +219,22 @@ public class WebMvcMetrics {
 
         private final Iterable<Tag> extraTags;
 
-        private final double[] quantiles;
+        private final double[] percentiles;
 
-        private final boolean percentiles;
+        private final boolean histogram;
 
-        TimerConfig(String name, boolean percentiles) {
+        TimerConfig(String name, boolean histogram) {
             this.name = name;
             this.extraTags = Collections.emptyList();
-            this.quantiles = new double[0];
-            this.percentiles = percentiles;
+            this.percentiles = new double[0];
+            this.histogram = histogram;
         }
 
         TimerConfig(Timed timed, Supplier<String> name) {
             this.name = buildName(timed, name);
             this.extraTags = Tags.zip(timed.extraTags());
-            this.quantiles = timed.quantiles();
             this.percentiles = timed.percentiles();
+            this.histogram = timed.histogram();
         }
 
         private String buildName(Timed timed, Supplier<String> name) {
@@ -258,12 +254,12 @@ public class WebMvcMetrics {
             return this.extraTags;
         }
 
-        double[] getQuantiles() {
-            return this.quantiles;
+        double[] getPercentiles() {
+            return this.percentiles;
         }
 
-        boolean isPercentiles() {
-            return this.percentiles;
+        boolean isHistogram() {
+            return this.histogram;
         }
 
         @Override

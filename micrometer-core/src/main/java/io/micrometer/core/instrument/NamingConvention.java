@@ -75,7 +75,7 @@ public interface NamingConvention {
                     continue;
 
                 if (i == 0) {
-                    conventionName.append(str.toLowerCase());
+                    conventionName.append(str);
                 } else {
                     final char firstChar = str.charAt(0);
                     if (Character.isTitleCase(firstChar)) {

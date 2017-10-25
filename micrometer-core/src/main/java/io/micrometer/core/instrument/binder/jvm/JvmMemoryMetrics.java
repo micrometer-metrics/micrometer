@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -51,35 +52,43 @@ public class JvmMemoryMetrics implements MeterBinder {
         for (BufferPoolMXBean bufferPoolBean : ManagementFactory.getPlatformMXBeans(BufferPoolMXBean.class)) {
             Iterable<Tag> tagsWithId = Tags.concat(tags, "id", bufferPoolBean.getName());
 
-            registry.gauge(registry.createId("jvm.buffer.count", tagsWithId,
-                "An estimate of the number of buffers in the pool"),
-                bufferPoolBean, BufferPoolMXBean::getCount);
+            Gauge.builder("jvm.buffer.count", bufferPoolBean, BufferPoolMXBean::getCount)
+                .tags(tagsWithId)
+                .description("An estimate of the number of buffers in the pool")
+                .register(registry);
 
-            registry.gauge(registry.createId("jvm.buffer.memory.used", tagsWithId,
-                "An estimate of the memory that the Java virtual machine is using for this buffer pool",
-                "bytes"),
-                bufferPoolBean, BufferPoolMXBean::getMemoryUsed);
+            Gauge.builder("jvm.buffer.memory.used", bufferPoolBean, BufferPoolMXBean::getMemoryUsed)
+                .tags(tagsWithId)
+                .description("An estimate of the memory that the Java virtual machine is using for this buffer pool bytes")
+                .register(registry);
 
-            registry.gauge(registry.createId("jvm.buffer.total.capacity", tagsWithId,
-                "An estimate of the total capacity of the buffers in this pool",
-                "bytes"),
-                bufferPoolBean, BufferPoolMXBean::getTotalCapacity);
+            Gauge.builder("jvm.buffer.total.capacity", bufferPoolBean, BufferPoolMXBean::getTotalCapacity)
+                .tags(tagsWithId)
+                .description("An estimate of the total capacity of the buffers in this pool bytes")
+                .register(registry);
         }
 
         for (MemoryPoolMXBean memoryPoolBean : ManagementFactory.getPlatformMXBeans(MemoryPoolMXBean.class)) {
             String area = MemoryType.HEAP.equals(memoryPoolBean.getType()) ? "heap" : "nonheap";
             Iterable<Tag> tagsWithId = Tags.concat(tags,"id", memoryPoolBean.getName(), "area", area);
 
-            registry.gauge(registry.createId("jvm.memory.used", tagsWithId,
-                "The amount of used memory", "bytes"), memoryPoolBean, (mem) -> mem.getUsage().getUsed());
+            Gauge.builder("jvm.memory.used", memoryPoolBean, (mem) -> mem.getUsage().getUsed())
+                .tags(tagsWithId)
+                .description("The amount of used memory")
+                .baseUnit("bytes")
+                .register(registry);
 
-            registry.gauge(registry.createId("jvm.memory.committed", tagsWithId,
-                "The amount of memory in bytes that is committed for  the Java virtual machine to use", "bytes"),
-                memoryPoolBean, (mem) -> mem.getUsage().getCommitted());
+            Gauge.builder("jvm.memory.committed", memoryPoolBean, (mem) -> mem.getUsage().getCommitted())
+                .tags(tagsWithId)
+                .description("The amount of memory in bytes that is committed for  the Java virtual machine to use")
+                .baseUnit("bytes")
+                .register(registry);
 
-            registry.gauge(registry.createId("jvm.memory.max", tagsWithId,
-                "The maximum amount of memory in bytes that can be used for memory management", "bytes"),
-                memoryPoolBean, (mem) -> mem.getUsage().getMax());
+            Gauge.builder("jvm.memory.max", memoryPoolBean, (mem) -> mem.getUsage().getMax())
+                .tags(tagsWithId)
+                .description("The maximum amount of memory in bytes that can be used for memory management")
+                .baseUnit("bytes")
+                .register(registry);
         }
     }
 }

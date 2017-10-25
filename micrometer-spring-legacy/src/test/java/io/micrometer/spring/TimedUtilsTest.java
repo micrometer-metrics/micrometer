@@ -82,7 +82,7 @@ public class TimedUtilsTest {
 
     @Target({ElementType.TYPE, ElementType.METHOD})
     @Retention(RetentionPolicy.RUNTIME)
-    @Timed(quantiles = 0.95)
+    @Timed(percentiles = 0.95)
     @interface Timed95 {
     }
 

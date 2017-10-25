@@ -79,7 +79,7 @@ public interface Gauge extends Meter {
         }
 
         public Gauge register(MeterRegistry registry) {
-            return registry.gauge(registry.createId(name, tags, description, baseUnit), obj, f);
+            return registry.gauge(new Meter.Id(name, tags, baseUnit, description), obj, f);
         }
     }
 }

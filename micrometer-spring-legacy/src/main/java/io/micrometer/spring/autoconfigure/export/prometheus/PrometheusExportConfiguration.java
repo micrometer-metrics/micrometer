@@ -63,13 +63,8 @@ public class PrometheusExportConfiguration {
         }
 
         @Override
-        public Duration timerPercentilesMax() {
-            return props.getTimerPercentilesMax();
-        }
-
-        @Override
-        public Duration timerPercentilesMin() {
-            return props.getTimerPercentilesMin();
+        public Duration step() {
+            return props.getStep() == null ? defaults.step() : props.getStep();
         }
     }
 

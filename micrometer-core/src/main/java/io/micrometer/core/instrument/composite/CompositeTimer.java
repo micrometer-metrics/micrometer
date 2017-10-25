@@ -15,25 +15,27 @@
  */
 package io.micrometer.core.instrument.composite;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.AbstractMeter;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.histogram.StatsConfig;
 import io.micrometer.core.instrument.noop.NoopTimer;
-import io.micrometer.core.instrument.stats.hist.Histogram;
-import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
+import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
-public class CompositeTimer extends AbstractTimer implements CompositeMeter {
-    private final Quantiles quantiles;
-    private final Histogram.Builder<?> histogram;
-
+public class CompositeTimer extends AbstractMeter implements Timer, CompositeMeter {
     private final Map<MeterRegistry, Timer> timers = new ConcurrentHashMap<>();
+    private final StatsConfig statsConfig;
 
-    CompositeTimer(Meter.Id id, Quantiles quantiles, Histogram.Builder<?> histogram, Clock clock) {
-        super(id, clock);
-        this.quantiles = quantiles;
-        this.histogram = histogram;
+    CompositeTimer(Meter.Id id, StatsConfig statsConfig) {
+        super(id);
+        this.statsConfig = statsConfig;
     }
 
     @Override
@@ -42,22 +44,93 @@ public class CompositeTimer extends AbstractTimer implements CompositeMeter {
     }
 
     @Override
+    public void record(Duration duration) {
+        firstTimer().record(duration);
+    }
+
+    @Override
+    public <T> T record(Supplier<T> f) {
+        return firstTimer().record(f);
+    }
+
+    @Override
+    public <T> T recordCallable(Callable<T> f) throws Exception {
+        return firstTimer().recordCallable(f);
+    }
+
+    @Override
+    public void record(Runnable f) {
+        firstTimer().record(f);
+    }
+
+    @Override
+    public Runnable wrap(Runnable f) {
+        return firstTimer().wrap(f);
+    }
+
+    @Override
+    public <T> Callable<T> wrap(Callable<T> f) {
+        return firstTimer().wrap(f);
+    }
+
+    @Override
     public long count() {
-        return timers.values().stream().findFirst().orElse(NoopTimer.INSTANCE).count();
+        return firstTimer().count();
     }
 
     @Override
     public double totalTime(TimeUnit unit) {
-        return timers.values().stream().findFirst().orElse(NoopTimer.INSTANCE).totalTime(unit);
+        return firstTimer().totalTime(unit);
+    }
+
+    @Override
+    public double max(TimeUnit unit) {
+        return firstTimer().max(unit);
+    }
+
+    @Override
+    public double percentile(double percentile, TimeUnit unit) {
+        return firstTimer().percentile(percentile, unit);
+    }
+
+    @Override
+    public double histogramCountAtValue(long valueNanos) {
+        return firstTimer().histogramCountAtValue(valueNanos);
+    }
+
+    private Timer firstTimer() {
+        return timers.values().stream().findFirst().orElse(NoopTimer.INSTANCE);
     }
 
     @Override
     public void add(MeterRegistry registry) {
-        timers.put(registry, registry.timer(getId(), histogram, quantiles));
+        long[] slaNanos = statsConfig.getSlaBoundaries();
+        Duration[] sla = new Duration[slaNanos.length];
+        for(int i = 0; i < slaNanos.length; i++) {
+            sla[i] = Duration.ofNanos(slaNanos[i]);
+        }
+
+        Timer.Builder builder = Timer.builder(getId().getName())
+            .tags(getId().getTags())
+            .description(getId().getDescription())
+            .maximumExpectedValue(Duration.ofNanos(statsConfig.getMaximumExpectedValue()))
+            .minimumExpectedValue(Duration.ofNanos(statsConfig.getMinimumExpectedValue()))
+            .publishPercentiles(statsConfig.getPercentiles())
+            .sla(sla);
+
+        if(statsConfig.isPercentileHistogram())
+            builder = builder.publishPercentileHistogram();
+
+        timers.put(registry, builder.register(registry));
     }
 
     @Override
     public void remove(MeterRegistry registry) {
         timers.remove(registry);
+    }
+
+    @Override
+    public StatsConfig statsConfig() {
+        return statsConfig;
     }
 }

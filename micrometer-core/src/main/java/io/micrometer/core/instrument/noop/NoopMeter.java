@@ -17,64 +17,19 @@ package io.micrometer.core.instrument.noop;
 
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.NamingConvention;
-import io.micrometer.core.instrument.Tag;
 
-import java.util.Collections;
 import java.util.List;
+
+import static java.util.Collections.emptyList;
 
 public abstract class NoopMeter implements Meter {
     @Override
     public Id getId() {
-        return new Meter.Id() {
-            @Override
-            public String getName() {
-                return "noop";
-            }
-
-            @Override
-            public Iterable<Tag> getTags() {
-                return Collections.emptyList();
-            }
-
-            @Override
-            public String getBaseUnit() {
-                return null;
-            }
-
-            @Override
-            public String getDescription() {
-                return null;
-            }
-
-            @Override
-            public String getConventionName(NamingConvention convention) {
-                return "noop";
-            }
-
-            @Override
-            public List<Tag> getConventionTags(NamingConvention convention) {
-                return Collections.emptyList();
-            }
-
-            @Override
-            public Id withTag(Tag tag) {
-                return null;
-            }
-
-            @Override
-            public void setType(Type type) {
-            }
-
-            @Override
-            public void setBaseUnit(String baseUnit) {
-
-            }
-        };
+        return null;
     }
 
     @Override
     public List<Measurement> measure() {
-        return Collections.emptyList();
+        return emptyList();
     }
 }

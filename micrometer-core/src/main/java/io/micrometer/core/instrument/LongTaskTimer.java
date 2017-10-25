@@ -161,7 +161,7 @@ public interface LongTaskTimer extends Meter {
         }
 
         public LongTaskTimer register(MeterRegistry registry) {
-            return registry.more().longTaskTimer(registry.createId(name, tags, description));
+            return registry.more().longTaskTimer(new Meter.Id(name, tags, null, description));
         }
     }
 }

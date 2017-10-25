@@ -58,23 +58,24 @@ public class CompositeLongTaskTimer extends AbstractMeter implements LongTaskTim
 
     @Override
     public double duration(TimeUnit unit) {
-        return timers.values().stream()
-            .map(ltt -> ltt.duration(unit))
-            .reduce((t1, t2) -> t2)
-            .orElse(NoopLongTaskTimer.INSTANCE.duration(unit));
+        return firstLongTaskTimer().duration(unit);
+    }
+
+    private LongTaskTimer firstLongTaskTimer() {
+        return timers.values().stream().findFirst().orElse(NoopLongTaskTimer.INSTANCE);
     }
 
     @Override
     public int activeTasks() {
-        return timers.values().stream()
-            .map(LongTaskTimer::activeTasks)
-            .reduce((t1, t2) -> t2)
-            .orElse(NoopLongTaskTimer.INSTANCE.activeTasks());
+        return firstLongTaskTimer().activeTasks();
     }
 
     @Override
     public void add(MeterRegistry registry) {
-        timers.put(registry, registry.more().longTaskTimer(getId()));
+        timers.put(registry, LongTaskTimer.builder(getId().getName())
+            .tags(getId().getTags())
+            .description(getId().getDescription())
+            .register(registry));
     }
 
     @Override

@@ -22,6 +22,17 @@ import io.micrometer.core.instrument.NamingConvention;
  * @author Jon Schneider
  */
 public class InfluxNamingConvention implements NamingConvention {
+    private final NamingConvention basic;
+
+    /**
+     * @param basic Creates basic structure of a name. By default,
+     *              telegraf's configuration option for {@code metric_separator}
+     *              is an underscore, which corresponds to {@link NamingConvention#snakeCase}.
+     */
+    public InfluxNamingConvention(NamingConvention basic) {
+        this.basic = basic;
+    }
+
     @Override
     public String name(String name, Meter.Type type, String baseUnit) {
         return format(name.replace("=", "_"));
@@ -45,7 +56,7 @@ public class InfluxNamingConvention implements NamingConvention {
 
     private String format(String name) {
         // https://docs.influxdata.com/influxdb/v1.3/write_protocols/line_protocol_reference/#special-characters
-        return NamingConvention.camelCase.tagKey(name)
+        return basic.tagKey(name)
             .replace(",", "\\,")
             .replace(" ", "\\ ")
             .replace("=", "\\=")

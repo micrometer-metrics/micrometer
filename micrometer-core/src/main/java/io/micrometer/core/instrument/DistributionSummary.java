@@ -15,8 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.stats.hist.Histogram;
-import io.micrometer.core.instrument.stats.quantile.Quantiles;
+import io.micrometer.core.instrument.histogram.StatsConfig;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,30 +45,37 @@ public interface DistributionSummary extends Meter {
      */
     double totalAmount();
 
+    default double mean() {
+        return count() == 0 ? 0 : totalAmount() / count();
+    }
+
+    /**
+     * The maximum time of a single event.
+     */
+    double max();
+
+    /**
+     * The value at a specific percentile. This value is non-aggregable across dimensions.
+     */
+    double percentile(double percentile);
+
+    double histogramCountAtValue(long value);
+
+    StatsConfig statsConfig();
+
     static Builder builder(String name) {
         return new Builder(name);
     }
 
     class Builder {
         private final String name;
-        private Quantiles quantiles;
-        private Histogram.Builder<?> histogram;
         private final List<Tag> tags = new ArrayList<>();
         private String description;
         private String baseUnit;
+        private StatsConfig statsConfig = new StatsConfig();
 
         private Builder(String name) {
             this.name = name;
-        }
-
-        public Builder quantiles(Quantiles quantiles) {
-            this.quantiles = quantiles;
-            return this;
-        }
-
-        public Builder histogram(Histogram.Builder<?> histogram) {
-            this.histogram = histogram;
-            return this;
         }
 
         /**
@@ -84,6 +90,11 @@ public interface DistributionSummary extends Meter {
             return this;
         }
 
+        public Builder percentiles(StatsConfig statsConfig) {
+            this.statsConfig = statsConfig;
+            return this;
+        }
+
         public Builder description(String description) {
             this.description = description;
             return this;
@@ -94,8 +105,43 @@ public interface DistributionSummary extends Meter {
             return this;
         }
 
+        /**
+         * Produces an additional time series for each requested percentile. This percentile
+         * is computed locally, and so can't be aggregated with percentiles computed across other
+         * dimensions (e.g. in a different instance). Use {@link #publishPercentileHistogram()}
+         * to publish a histogram that can be used to generate aggregable percentile approximations.
+         *
+         * @param percentiles Percentiles to compute and publish. The 95th percentile should be expressed as {@code 95.0}
+         */
+        public Builder publishPercentiles(double... percentiles) {
+            this.statsConfig.setPercentiles(percentiles);
+            return this;
+        }
+
+        /**
+         * Adds histogram buckets usable for generating aggregable percentile approximations in monitoring
+         * systems that have query facilities to do so (e.g. Prometheus' {@code histogram_quantile},
+         * Atlas' {@code :percentiles}).
+         */
+        public Builder publishPercentileHistogram() {
+            this.statsConfig.setPercentileHistogram(true);
+            return this;
+        }
+
+        /**
+         * Publish at a minimum a histogram containing your defined SLA boundaries. When used in conjunction with
+         * {@link Builder#publishPercentileHistogram()}, the boundaries defined here are included alongside
+         * other buckets used to generate aggregable percentile approximations.
+         *
+         * @param sla Publish SLA boundaries in the set of histogram buckets shipped to the monitoring system.
+         */
+        public Builder sla(long... sla) {
+            this.statsConfig.setSlaBoundaries(sla);
+            return this;
+        }
+
         public DistributionSummary register(MeterRegistry registry) {
-            return registry.summary(registry.createId(name, tags, description, baseUnit), histogram, quantiles);
+            return registry.summary(new Meter.Id(name, tags, baseUnit, description), statsConfig);
         }
     }
 
@@ -106,4 +152,5 @@ public interface DistributionSummary extends Meter {
             new Measurement(this::totalAmount, Statistic.Total)
         );
     }
+
 }

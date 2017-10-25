@@ -37,11 +37,9 @@ class DropwizardMeterRegistryTest {
     @Test
     void customMeasurementsThatDifferOnlyInTagValue() {
         MeterRegistry registry = new DropwizardMeterRegistry(HierarchicalNameMapper.DEFAULT, Clock.SYSTEM);
-        registry.register(registry.createId("my.custom", emptyList(), ""),
-            Meter.Type.Gauge,
-            Arrays.asList(
-                new Measurement(() -> 1.0, Statistic.Count),
-                new Measurement(() -> 2.0, Statistic.Total)
-            ));
+        Meter.builder("my.custom", Meter.Type.Gauge, Arrays.asList(
+            new Measurement(() -> 1.0, Statistic.Count),
+            new Measurement(() -> 2.0, Statistic.Total)
+        )).register(registry);
     }
 }

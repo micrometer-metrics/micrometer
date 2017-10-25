@@ -52,8 +52,8 @@ class FileDescriptorMetricsTest {
         final MeterRegistry registry = new SimpleMeterRegistry();
         new FileDescriptorMetrics().bindTo(registry);
 
-        assertThat(registry.find("process.fds.open").gauge()).isPresent();
-        assertThat(registry.find("process.fds.max").gauge()).isPresent();
+        assertThat(registry.find("process.open.fds").gauge()).isPresent();
+        assertThat(registry.find("process.max.fds").gauge()).isPresent();
     }
 
     @Test
@@ -62,9 +62,9 @@ class FileDescriptorMetricsTest {
         final OperatingSystemMXBean osBean = mock(OperatingSystemMXBean.class);
         new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
 
-        assertThat(registry.find("process.fds.open").tags("some", "tag")
+        assertThat(registry.find("process.open.fds").tags("some", "tag")
             .value(Statistic.Value, Double.NaN).gauge()).isPresent();
-        assertThat(registry.find("process.fds.max").tags("some", "tag").value(Statistic.Value, Double.NaN)
+        assertThat(registry.find("process.max.fds").tags("some", "tag").value(Statistic.Value, Double.NaN)
             .gauge()).isPresent();
     }
 
@@ -77,9 +77,9 @@ class FileDescriptorMetricsTest {
         when(osBean.getMaxFileDescriptorCount()).thenReturn(Long.valueOf(1024));
         new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
 
-        assertThat(registry.find("process.fds.open").tags("some", "tag")
+        assertThat(registry.find("process.open.fds").tags("some", "tag")
             .value(Statistic.Value, 512.0).gauge()).isPresent();
-        assertThat(registry.find("process.fds.max").tags("some", "tag")
+        assertThat(registry.find("process.max.fds").tags("some", "tag")
             .value(Statistic.Value, 1024.0).gauge()).isPresent();
     }
 
@@ -92,9 +92,9 @@ class FileDescriptorMetricsTest {
         when(osBean.getMaxFileDescriptorCount()).thenThrow(InvocationTargetException.class);
         new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
 
-        assertThat(registry.find("process.fds.open").tags("some", "tag")
+        assertThat(registry.find("process.open.fds").tags("some", "tag")
             .value(Statistic.Value, Double.NaN).gauge()).isPresent();
-        assertThat(registry.find("process.fds.max").tags("some", "tag").value(Statistic.Value, Double.NaN)
+        assertThat(registry.find("process.max.fds").tags("some", "tag").value(Statistic.Value, Double.NaN)
             .gauge()).isPresent();
     }
 }

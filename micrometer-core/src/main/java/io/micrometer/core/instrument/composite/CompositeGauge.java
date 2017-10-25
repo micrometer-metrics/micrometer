@@ -22,8 +22,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.noop.NoopGauge;
 
 import java.lang.ref.WeakReference;
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.ToDoubleFunction;
@@ -49,7 +47,11 @@ public class CompositeGauge<T> extends AbstractMeter implements Gauge, Composite
     public void add(MeterRegistry registry) {
         T obj = ref.get();
         if(obj != null) {
-            gauges.put(registry, registry.gauge(getId(), obj, f));
+            gauges.put(registry, Gauge.builder(getId().getName(), obj, f)
+                .tags(getId().getTags())
+                .description(getId().getDescription())
+                .baseUnit(getId().getBaseUnit())
+                .register(registry));
         }
     }
 

@@ -16,12 +16,15 @@
 package io.micrometer.core.instrument.binder.system;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.lang.management.RuntimeMXBean;
 
+import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
@@ -36,7 +39,7 @@ class UptimeMetricsTest {
 
     @Test
     void uptimeMetricsRuntime() {
-        MeterRegistry registry = new SimpleMeterRegistry();
+        MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
         new UptimeMetrics().bindTo(registry);
 
         assertThat(registry.find("process.uptime").meter()).isPresent();
@@ -45,14 +48,14 @@ class UptimeMetricsTest {
 
     @Test
     void uptimeMetricsMock() {
-        MeterRegistry registry = new SimpleMeterRegistry();
+        MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
         RuntimeMXBean runtimeMXBean = mock(RuntimeMXBean.class);
         when(runtimeMXBean.getUptime()).thenReturn(1337L);
         when(runtimeMXBean.getStartTime()).thenReturn(4711L);
         new UptimeMetrics(runtimeMXBean, emptyList()).bindTo(registry);
 
-        assertThat(registry.find("process.uptime").value(Statistic.Value, 1.337e9).meter()).isPresent();
-        assertThat(registry.find("process.start.time").value(Statistic.Value, 4.711e9).meter()).isPresent();
+        clock(registry).add(SimpleConfig.DEFAULT_STEP);
+        assertThat(registry.find("process.uptime").value(Statistic.Value, 1.337).meter()).isPresent();
+        assertThat(registry.find("process.start.time").value(Statistic.Value, 4.711).meter()).isPresent();
     }
-
 }

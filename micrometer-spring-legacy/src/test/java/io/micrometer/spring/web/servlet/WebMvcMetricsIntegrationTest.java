@@ -16,8 +16,11 @@
 package io.micrometer.spring.web.servlet;
 
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.spring.TimedUtilsTest;
 import org.junit.Before;
@@ -58,6 +61,9 @@ public class WebMvcMetricsIntegrationTest {
     @Autowired
     private SimpleMeterRegistry registry;
 
+    @Autowired
+    private MockClock clock;
+
     private MockMvc mvc;
 
     @Before
@@ -68,6 +74,8 @@ public class WebMvcMetricsIntegrationTest {
     @Test
     public void handledExceptionIsRecordedInMetricTag() throws Exception {
         this.mvc.perform(get("/api/handledError")).andExpect(status().is5xxServerError());
+
+        clock.add(SimpleConfig.DEFAULT_STEP);
         assertThat(this.registry.find("http.server.requests")
             .tags("exception", "Exception1").value(Statistic.Count, 1.0).timer())
             .isPresent();
@@ -77,6 +85,8 @@ public class WebMvcMetricsIntegrationTest {
     public void rethrownExceptionIsRecordedInMetricTag() throws Exception {
         assertThatCode(() -> this.mvc.perform(get("/api/rethrownError"))
             .andExpect(status().is5xxServerError()));
+
+        clock.add(SimpleConfig.DEFAULT_STEP);
         assertThat(this.registry.find("http.server.requests")
             .tags("exception", "Exception2").value(Statistic.Count, 1.0).timer())
             .isPresent();
@@ -92,8 +102,13 @@ public class WebMvcMetricsIntegrationTest {
         }
 
         @Bean
-        MeterRegistry registry() {
-            return new SimpleMeterRegistry();
+        MockClock clock() {
+            return new MockClock();
+        }
+
+        @Bean
+        MeterRegistry meterRegistry(Clock clock) {
+            return new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
         }
 
         @RestController
@@ -158,7 +173,5 @@ public class WebMvcMetricsIntegrationTest {
         ResponseEntity<String> rethrowError(Exception2 ex) throws Throwable {
             throw ex;
         }
-
     }
-
 }

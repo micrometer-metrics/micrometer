@@ -28,7 +28,7 @@ public @interface Timed {
 
     boolean longTask() default false;
 
-    double[] quantiles() default {};
+    double[] percentiles() default {};
 
-    boolean percentiles() default false;
+    boolean histogram() default false;
 }

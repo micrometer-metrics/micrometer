@@ -29,12 +29,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.util.Collections.emptyList;
-
 public class LongTaskTimerSample {
     public static void main(String[] args) {
         MeterRegistry registry = SampleRegistries.influx();
-        LongTaskTimer timer = registry.more().longTaskTimer(registry.createId("longTaskTimer", emptyList(), null));
+        LongTaskTimer timer = registry.more().longTaskTimer("longTaskTimer");
 
         RandomEngine r = new MersenneTwister64(0);
         Normal incomingRequests = new Normal(0, 1, r);

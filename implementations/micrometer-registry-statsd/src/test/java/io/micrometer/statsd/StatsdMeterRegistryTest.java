@@ -17,7 +17,7 @@ package io.micrometer.statsd;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import io.micrometer.core.MockClock;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
@@ -211,7 +211,7 @@ class StatsdMeterRegistryTest {
     @ParameterizedTest
     @EnumSource(StatsdFlavor.class)
     void longTaskTimerLineProtocol(StatsdFlavor flavor) {
-        final Function<MeterRegistry, LongTaskTimer> ltt = r -> r.more().longTaskTimer(r.createId("my.long.task", Tags.zip("my.tag", "val"), ""));
+        final Function<MeterRegistry, LongTaskTimer> ltt = r -> r.more().longTaskTimer("my.long.task", "my.tag", "val");
 
         StepVerifier
             .withVirtualTime(() -> {
@@ -239,7 +239,7 @@ class StatsdMeterRegistryTest {
                 assertLines(r -> ltt.apply(r).start(), flavor, lines);
                 return null;
             })
-            .then(() -> mockClock.addAndGet(10, TimeUnit.MILLISECONDS))
+            .then(() -> mockClock.add(10, TimeUnit.MILLISECONDS))
             .thenAwait(Duration.ofMillis(10));
     }
 }

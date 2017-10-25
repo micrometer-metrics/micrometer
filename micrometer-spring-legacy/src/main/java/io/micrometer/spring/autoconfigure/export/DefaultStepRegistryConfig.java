@@ -15,7 +15,7 @@
  */
 package io.micrometer.spring.autoconfigure.export;
 
-import io.micrometer.core.instrument.spectator.step.StepRegistryConfig;
+import io.micrometer.core.instrument.step.StepRegistryConfig;
 
 import java.time.Duration;
 

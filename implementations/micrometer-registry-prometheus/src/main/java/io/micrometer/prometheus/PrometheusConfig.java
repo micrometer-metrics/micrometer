@@ -15,9 +15,11 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.core.instrument.stats.hist.HistogramConfig;
+import io.micrometer.core.instrument.MeterRegistryConfig;
 
-public interface PrometheusConfig extends HistogramConfig {
+import java.time.Duration;
+
+public interface PrometheusConfig extends MeterRegistryConfig {
     /**
      * Accept configuration defaults
      */
@@ -35,5 +37,14 @@ public interface PrometheusConfig extends HistogramConfig {
     default boolean descriptions() {
         String v = get(prefix() + ".descriptions");
         return v == null || Boolean.valueOf(v);
+    }
+
+    /**
+     * Returns the step size to use in computing windowed statistics like max. The default is 10 seconds.
+     * To get the most out of these statistics, align the step interval to be close to your scrape interval.
+     */
+    default Duration step() {
+        String v = get(prefix() + ".step");
+        return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
     }
 }

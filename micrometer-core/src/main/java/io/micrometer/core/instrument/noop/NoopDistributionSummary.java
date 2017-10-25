@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.noop;
 
 import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.histogram.StatsConfig;
 
 public class NoopDistributionSummary extends NoopMeter implements DistributionSummary {
     public static final NoopDistributionSummary INSTANCE = new NoopDistributionSummary();
@@ -34,5 +35,25 @@ public class NoopDistributionSummary extends NoopMeter implements DistributionSu
     @Override
     public double totalAmount() {
         return 0;
+    }
+
+    @Override
+    public double max() {
+        return 0;
+    }
+
+    @Override
+    public double percentile(double percentile) {
+        return 0;
+    }
+
+    @Override
+    public double histogramCountAtValue(long value) {
+        return 0;
+    }
+
+    @Override
+    public StatsConfig statsConfig() {
+        return new StatsConfig();
     }
 }

@@ -18,8 +18,8 @@ package io.micrometer.core.instrument.dropwizard;
 import com.codahale.metrics.Timer;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.stats.hist.Histogram;
-import io.micrometer.core.instrument.stats.quantile.Quantiles;
+import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -28,27 +28,22 @@ import java.util.concurrent.atomic.AtomicLong;
 public class DropwizardTimer extends AbstractTimer {
     private final Timer impl;
     private final AtomicLong totalTime = new AtomicLong(0);
-    private final Quantiles quantiles;
-    private final Histogram<?> histogram;
+    private final StepDouble max;
 
-    DropwizardTimer(Id id, Timer impl, Clock clock, Quantiles quantiles, Histogram<?> histogram) {
-        super(id, clock);
+    DropwizardTimer(Id id, Timer impl, Clock clock, StatsConfig statsConfig) {
+        super(id, clock, statsConfig);
         this.impl = impl;
-        this.quantiles = quantiles;
-        this.histogram = histogram;
+        this.max = new StepDouble(clock, 60000);
     }
 
     @Override
-    public void record(long amount, TimeUnit unit) {
+    protected void recordNonNegative(long amount, TimeUnit unit) {
         if (amount >= 0) {
             impl.update(amount, unit);
 
             long nanoAmount = TimeUnit.NANOSECONDS.convert(amount, unit);
+            max.getCurrent().add(Math.max(nanoAmount - max.getCurrent().doubleValue(), 0));
             totalTime.addAndGet(nanoAmount);
-            if (quantiles != null)
-                quantiles.observe(nanoAmount);
-            if (histogram != null)
-                histogram.observe(nanoAmount);
         }
     }
 
@@ -59,6 +54,11 @@ public class DropwizardTimer extends AbstractTimer {
 
     @Override
     public double totalTime(TimeUnit unit) {
-        return TimeUtils.convert(totalTime.get(), TimeUnit.NANOSECONDS, unit);
+        return TimeUtils.nanosToUnit(totalTime.get(), unit);
+    }
+
+    @Override
+    public double max(TimeUnit unit) {
+        return TimeUtils.nanosToUnit(max.poll(), unit);
     }
 }

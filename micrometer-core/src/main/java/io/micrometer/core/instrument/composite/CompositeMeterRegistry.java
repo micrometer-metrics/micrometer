@@ -16,8 +16,7 @@
 package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.stats.hist.Histogram;
-import io.micrometer.core.instrument.stats.quantile.Quantiles;
+import io.micrometer.core.instrument.histogram.StatsConfig;
 
 import java.util.Collection;
 import java.util.Set;
@@ -34,7 +33,7 @@ import java.util.function.ToLongFunction;
  *
  * @author Jon Schneider
  */
-public class CompositeMeterRegistry extends AbstractMeterRegistry {
+public class CompositeMeterRegistry extends MeterRegistry {
     private final Set<MeterRegistry> registries = ConcurrentHashMap.newKeySet();
     private Collection<CompositeMeter> compositeMeters = new CopyOnWriteArrayList<>();
 
@@ -48,16 +47,16 @@ public class CompositeMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
-        CompositeTimer timer = new CompositeTimer(id, quantiles, histogram, clock);
+    protected Timer newTimer(Meter.Id id, StatsConfig statsConfig) {
+        CompositeTimer timer = new CompositeTimer(id, statsConfig);
         compositeMeters.add(timer);
         registries.forEach(timer::add);
         return timer;
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
-        CompositeDistributionSummary ds = new CompositeDistributionSummary(id, quantiles, histogram);
+    protected DistributionSummary newDistributionSummary(Meter.Id id, StatsConfig statsConfig) {
+        CompositeDistributionSummary ds = new CompositeDistributionSummary(id, statsConfig);
         compositeMeters.add(ds);
         registries.forEach(ds::add);
         return ds;
@@ -88,7 +87,7 @@ public class CompositeMeterRegistry extends AbstractMeterRegistry {
     }
 
     @Override
-    protected <T> Gauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
+    protected <T> TimeGauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
         CompositeTimeGauge<T> gauge = new CompositeTimeGauge<>(id, obj, fUnit, f);
         compositeMeters.add(gauge);
         registries.forEach(gauge::add);

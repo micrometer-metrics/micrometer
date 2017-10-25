@@ -15,27 +15,51 @@
  */
 package io.micrometer.datadog;
 
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.spectator.step.StepSpectatorMeterRegistry;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.step.StepMeterRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.text.DecimalFormat;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.StreamSupport.stream;
 
 /**
  * @author Jon Schneider
  */
-public class DatadogMeterRegistry extends StepSpectatorMeterRegistry {
-    public DatadogMeterRegistry(DatadogConfig config, Clock clock) {
-        super(config, new DatadogRegistry(config, new com.netflix.spectator.api.Clock() {
-            @Override
-            public long wallTime() {
-                return clock.wallTime();
-            }
+public class DatadogMeterRegistry extends StepMeterRegistry {
+    private final URL metricsEndpoint;
+    private final Logger logger = LoggerFactory.getLogger(DatadogMeterRegistry.class);
+    private final DatadogConfig config;
+    private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
 
-            @Override
-            public long monotonicTime() {
-                return clock.monotonicTime();
-            }
-        }), clock, config.step().toMillis());
+    public DatadogMeterRegistry(DatadogConfig config, Clock clock) {
+        super(config, clock);
 
         this.config().namingConvention(new DatadogNamingConvention());
+
+        try {
+            this.metricsEndpoint = URI.create(config.uri()).toURL();
+        } catch (MalformedURLException e) {
+            // not possible
+            throw new RuntimeException(e);
+        }
+
+        this.config = config;
 
         start();
     }
@@ -44,15 +68,141 @@ public class DatadogMeterRegistry extends StepSpectatorMeterRegistry {
         this(config, Clock.SYSTEM);
     }
 
-    public void start() {
-        getDatadogRegistry().start();
+    @Override
+    protected void publish() {
+        try {
+            for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
+                HttpURLConnection con = (HttpURLConnection) metricsEndpoint.openConnection();
+                con.setConnectTimeout((int) config.connectTimeout().toMillis());
+                con.setReadTimeout((int) config.readTimeout().toMillis());
+                con.setRequestMethod("POST");
+                con.setRequestProperty("Content-Type", "application/json");
+                con.setDoOutput(true);
+
+                /*
+                Example post body from Datadog API docs. Type seems to be irrelevant. Host and tags are optional.
+                "{ \"series\" :
+                        [{\"metric\":\"test.metric\",
+                          \"points\":[[$currenttime, 20]],
+                          \"type\":\"gauge\",
+                          \"host\":\"test.example.com\",
+                          \"tags\":[\"environment:test\"]}
+                        ]
+                }"
+                */
+
+                String body = "{\"series\":[" +
+                    batch.stream().flatMap(m -> {
+                        if (m instanceof Timer) {
+                            return writeTimer((Timer) m);
+                        } else if (m instanceof DistributionSummary) {
+                            return writeSummary((DistributionSummary) m);
+                        } else if (m instanceof FunctionTimer) {
+                            return writeTimer((FunctionTimer) m);
+                        } else {
+                            return writeMeter(m);
+                        }
+                    }).collect(joining(",")) +
+                    "]}";
+
+                try (OutputStream os = con.getOutputStream()) {
+                    os.write(body.getBytes());
+                    os.flush();
+                }
+
+                int status = con.getResponseCode();
+
+                if (status >= 200 && status < 300) {
+                    logger.info("successfully sent " + batch.size() + " metrics to datadog");
+                } else if (status >= 400) {
+                    try (InputStream in = con.getErrorStream()) {
+                        logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
+                            .lines().collect(joining("\n")));
+                    }
+                } else {
+                    logger.error("failed to send metrics: http " + status);
+                }
+
+                con.disconnect();
+            }
+        } catch (Exception e) {
+            logger.warn("failed to send metrics", e);
+        }
     }
 
-    public void stop() {
-        getDatadogRegistry().stop();
+    private Stream<String> writeTimer(FunctionTimer timer) {
+        Function<String, Meter.Id> withSuffix = (String suffix) -> timer.getId().withName(timer.getId().getName() + "." + suffix);
+        long wallTime = clock.wallTime();
+
+        // we can't know anything about max and percentiles originating from a function timer
+        return Stream.of(
+            writeMetric(withSuffix.apply("count"), wallTime, timer.count()),
+            writeMetric(withSuffix.apply("avg"), wallTime, timer.mean(getBaseTimeUnit())));
     }
 
-    private DatadogRegistry getDatadogRegistry() {
-        return (DatadogRegistry) this.getSpectatorRegistry();
+    private Stream<String> writeTimer(Timer timer) {
+        Function<String, Meter.Id> withSuffix = (String suffix) -> timer.getId().withName(timer.getId().getName() + "." + suffix);
+        long wallTime = clock.wallTime();
+
+        Stream.Builder<String> metrics = Stream.builder();
+
+        metrics.add(writeMetric(withSuffix.apply("sum"), wallTime, timer.totalTime(getBaseTimeUnit())));
+        metrics.add(writeMetric(withSuffix.apply("count"), wallTime, timer.count()));
+        metrics.add(writeMetric(withSuffix.apply("avg"), wallTime, timer.mean(getBaseTimeUnit())));
+        metrics.add(writeMetric(withSuffix.apply("max"), wallTime, timer.max(getBaseTimeUnit())));
+
+        for (double percentile : timer.statsConfig().getPercentiles()) {
+            metrics.add(writeMetric(withSuffix.apply(percentileFormat.format(percentile) + "percentile"), wallTime, timer.percentile(percentile, getBaseTimeUnit())));
+        }
+
+        return metrics.build();
+    }
+
+    private Stream<String> writeSummary(DistributionSummary summary) {
+        Function<String, Meter.Id> withSuffix = (String suffix) -> summary.getId().withName(summary.getId().getName() + "." + suffix);
+        long wallTime = clock.wallTime();
+
+        Stream.Builder<String> metrics = Stream.builder();
+
+        metrics.add(writeMetric(withSuffix.apply("sum"), wallTime, summary.totalAmount()));
+        metrics.add(writeMetric(withSuffix.apply("count"), wallTime, summary.count()));
+        metrics.add(writeMetric(withSuffix.apply("avg"), wallTime, summary.mean()));
+        metrics.add(writeMetric(withSuffix.apply("max"), wallTime, summary.max()));
+
+        for (double percentile : summary.statsConfig().getPercentiles()) {
+            metrics.add(writeMetric(withSuffix.apply(percentileFormat.format(percentile) + "percentile"), wallTime, summary.percentile(percentile)));
+        }
+
+        return metrics.build();
+    }
+
+    private Stream<String> writeMeter(Meter m) {
+        long wallTime = clock.wallTime();
+        return stream(m.measure().spliterator(), false)
+            .map(ms -> writeMetric(m.getId().withTag(ms.getStatistic()), wallTime, ms.getValue()));
+    }
+
+    private String writeMetric(Meter.Id id, long wallTime, double value) {
+        Iterable<Tag> tags = id.getTags();
+
+        String host = config.hostTag() == null ? "" : stream(tags.spliterator(), false)
+            .filter(t -> config.hostTag().equals(t.getKey()))
+            .findAny()
+            .map(t -> ",\"host\":" + t.getValue())
+            .orElse("");
+
+        String tagsArray = tags.iterator().hasNext() ?
+            ",\"tags\":[" +
+                stream(tags.spliterator(), false)
+                    .map(t -> "\"" + t.getKey() + ":" + t.getValue() + "\"")
+                    .collect(joining(",")) + "]" : "";
+
+        return "{\"metric\":\"" + id.getConventionName(config().namingConvention()) + "\"," +
+            "\"points\":[[" + (wallTime / 1000) + ", " + value + "]]" + host + tagsArray + "}";
+    }
+
+    @Override
+    protected TimeUnit getBaseTimeUnit() {
+        return TimeUnit.MILLISECONDS;
     }
 }

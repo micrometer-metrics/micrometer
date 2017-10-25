@@ -18,9 +18,7 @@ package io.micrometer.spring.scheduling;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.stats.quantile.WindowSketchQuantiles;
 import io.micrometer.spring.TimedUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,7 +26,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.core.annotation.AnnotationUtils;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
@@ -63,15 +60,17 @@ public class ScheduledMethodMetrics {
 
         for (Timed timed : TimedUtils.findTimedAnnotations(method).toArray(Timed[]::new)) {
             if (timed.longTask())
-                longTaskTimer = registry.more().longTaskTimer(registry.createId(timed.value(), Tags.zip(timed.extraTags()),
-                    "Timer of @Scheduled long task"));
+                longTaskTimer = LongTaskTimer.builder(timed.value())
+                    .tags(timed.extraTags())
+                    .description("Timer of @Scheduled long task")
+                    .register(registry);
             else {
                 Timer.Builder timerBuilder = Timer.builder(timed.value())
                     .tags(timed.extraTags())
                     .description("Timer of @Scheduled task");
 
-                if (timed.quantiles().length > 0) {
-                    timerBuilder = timerBuilder.quantiles(WindowSketchQuantiles.quantiles(timed.quantiles()).create());
+                if (timed.percentiles().length > 0) {
+                    timerBuilder = timerBuilder.publishPercentiles(timed.percentiles());
                 }
 
                 shortTaskTimer = timerBuilder.register(registry);

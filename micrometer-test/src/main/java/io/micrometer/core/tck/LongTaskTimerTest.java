@@ -22,8 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.MockClock.clock;
-import static java.util.Collections.emptyList;
+import static io.micrometer.core.instrument.MockClock.clock;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -32,10 +31,10 @@ interface LongTaskTimerTest {
     @Test
     @DisplayName("total time is preserved for a single timing")
     default void record(MeterRegistry registry) {
-        LongTaskTimer t = registry.more().longTaskTimer(registry.createId("myTimer", emptyList(), null));
+        LongTaskTimer t = registry.more().longTaskTimer("myTimer");
 
         long tId = t.start();
-        clock(registry).addAndGetNanos(10);
+        clock(registry).add(10, TimeUnit.NANOSECONDS);
 
         assertAll(() -> assertEquals(10, t.duration(TimeUnit.NANOSECONDS)),
             () -> assertEquals(0.01, t.duration(TimeUnit.MICROSECONDS)),
@@ -43,7 +42,7 @@ interface LongTaskTimerTest {
             () -> assertEquals(0.01, t.duration(tId, TimeUnit.MICROSECONDS)),
             () -> assertEquals(1, t.activeTasks()));
 
-        clock(registry).addAndGetNanos(10);
+        clock(registry).add(10, TimeUnit.NANOSECONDS);
         t.stop(tId);
 
         assertAll(() -> assertEquals(0, t.duration(TimeUnit.NANOSECONDS)),

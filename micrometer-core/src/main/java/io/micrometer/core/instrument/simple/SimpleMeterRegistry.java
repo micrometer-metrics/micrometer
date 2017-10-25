@@ -16,84 +16,74 @@
 package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.stats.hist.Bucket;
-import io.micrometer.core.instrument.stats.hist.Histogram;
-import io.micrometer.core.instrument.stats.quantile.Quantiles;
+import io.micrometer.core.instrument.histogram.PercentileHistogramBuckets;
+import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.step.StepMeterRegistry;
 
+import java.text.DecimalFormat;
 import java.util.concurrent.TimeUnit;
-import java.util.function.ToDoubleFunction;
 
 /**
  * A minimal meter registry implementation primarily used for tests.
  *
  * @author Jon Schneider
  */
-public class SimpleMeterRegistry extends AbstractMeterRegistry {
+public class SimpleMeterRegistry extends StepMeterRegistry {
+    private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
+
     public SimpleMeterRegistry() {
-        this(Clock.SYSTEM);
+        this(SimpleConfig.DEFAULT, Clock.SYSTEM);
     }
 
-    public SimpleMeterRegistry(Clock clock) {
-        super(clock);
-    }
-
-    @Override
-    protected Counter newCounter(Meter.Id id) {
-        return new SimpleCounter(id);
+    public SimpleMeterRegistry(SimpleConfig config, Clock clock) {
+        super(config, clock);
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
-        registerQuantilesGaugeIfNecessary(id, quantiles);
-        return new SimpleDistributionSummary(id, quantiles, registerHistogramCounterIfNecessary(id, histogram));
+    protected void publish() {
+        // don't publish anywhere
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
-        registerQuantilesGaugeIfNecessary(id, quantiles);
-        return new SimpleTimer(id, config().clock(), quantiles, registerHistogramCounterIfNecessary(id, histogram));
-    }
+    protected DistributionSummary newDistributionSummary(Meter.Id id, StatsConfig statsConfig) {
+        DistributionSummary summary = super.newDistributionSummary(id, statsConfig);
 
-    @Override
-    protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
-        return new SimpleGauge<>(id, obj, f);
-    }
+        for (double percentile : statsConfig.getPercentiles()) {
+            gauge(id.getName(), Tags.concat(id.getTags(), "percentile", percentileFormat.format(percentile)),
+                percentile, summary::percentile);
+        }
 
-    @Override
-    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        return new SimpleLongTaskTimer(id, config().clock());
-    }
-
-    private void registerQuantilesGaugeIfNecessary(Meter.Id id, Quantiles quantiles) {
-        if (quantiles != null) {
-            for (Double q : quantiles.monitored()) {
-                gauge(id.getName(), Tags.concat(id.getTags(), "quantile", Double.isNaN(q) ? "NaN" : Double.toString(q)),
-                    q, quantiles::get);
+        if(statsConfig.isPublishingHistogram()) {
+            for (Long bucket : statsConfig.getHistogramBuckets(false)) {
+                more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", Long.toString(bucket)),
+                    summary, s -> s.histogramCountAtValue(bucket));
             }
         }
-    }
 
-    private Histogram<?> registerHistogramCounterIfNecessary(Meter.Id id, Histogram.Builder<?> histogramBuilder) {
-        if (histogramBuilder != null) {
-            Histogram<?> hist = histogramBuilder.create(Histogram.Summation.Normal);
-
-            for (Bucket<?> bucket : hist.getBuckets()) {
-                more().counter(createId(id.getName(), Tags.concat(id.getTags(), "bucket", bucket.getTagString()), null),
-                    bucket, Bucket::getValue);
-            }
-
-            return hist;
-        }
-        return null;
+        return summary;
     }
 
     @Override
-    protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
-        // do nothing, the meter is already registered
+    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, StatsConfig statsConfig) {
+        Timer timer = super.newTimer(id, statsConfig);
+
+        for (double percentile : statsConfig.getPercentiles()) {
+            gauge(id.getName(), Tags.concat(id.getTags(), "percentile", percentileFormat.format(percentile)),
+                percentile, p -> timer.percentile(p, getBaseTimeUnit()));
+        }
+
+        if(statsConfig.isPublishingHistogram()) {
+            for (Long bucket : statsConfig.getHistogramBuckets(false)) {
+                more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", Long.toString(bucket)),
+                    timer, t -> t.histogramCountAtValue(bucket));
+            }
+        }
+
+        return timer;
     }
 
     @Override
     protected TimeUnit getBaseTimeUnit() {
-        return TimeUnit.NANOSECONDS;
+        return TimeUnit.SECONDS;
     }
 }

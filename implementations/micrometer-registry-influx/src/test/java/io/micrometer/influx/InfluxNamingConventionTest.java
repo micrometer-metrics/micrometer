@@ -16,13 +16,14 @@
 package io.micrometer.influx;
 
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.NamingConvention;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 class InfluxNamingConventionTest {
-    private InfluxNamingConvention convention = new InfluxNamingConvention();
+    private InfluxNamingConvention convention = new InfluxNamingConvention(NamingConvention.snakeCase);
 
     @Test
     void name() {

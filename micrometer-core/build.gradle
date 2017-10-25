@@ -8,8 +8,10 @@ apply plugin: 'me.champeau.gradle.jmh'
 apply plugin: 'nebula.optional-base'
 
 dependencies {
+    compile 'org.hdrhistogram:HdrHistogram:2.1.10'
+    compile 'org.latencyutils:LatencyUtils:2.0.3'
+
     // instrumentation options
-    compile 'com.netflix.spectator:spectator-api:latest.release', optional
     compile 'io.dropwizard.metrics:metrics-core:3.+', optional
 
     // cache monitoring

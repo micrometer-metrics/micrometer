@@ -52,7 +52,8 @@ public class PrometheusNamingConvention implements NamingConvention {
 
         switch (type) {
             case Counter:
-                conventionName += "_total";
+                if(!conventionName.endsWith("_total"))
+                    conventionName += "_total";
                 break;
             case Timer:
             case LongTaskTimer:

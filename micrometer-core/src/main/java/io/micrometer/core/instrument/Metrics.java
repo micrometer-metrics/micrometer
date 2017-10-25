@@ -16,8 +16,6 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.core.instrument.stats.hist.Histogram;
-import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
 import java.util.Collection;
 import java.util.Map;
@@ -41,13 +39,6 @@ public class Metrics {
     /**
      * Tracks a monotonically increasing value.
      */
-    public static Counter counter(Meter.Id id) {
-        return globalRegistry.counter(id);
-    }
-
-    /**
-     * Tracks a monotonically increasing value.
-     */
     public static Counter counter(String name, Iterable<Tag> tags) {
         return globalRegistry.counter(name, tags);
     }
@@ -65,13 +56,6 @@ public class Metrics {
     /**
      * Measures the sample distribution of events.
      */
-    public static DistributionSummary summary(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
-        return globalRegistry.summary(id, histogram, quantiles);
-    }
-
-    /**
-     * Measures the sample distribution of events.
-     */
     public static DistributionSummary summary(String name, Iterable<Tag> tags) {
         return globalRegistry.summary(name, tags);
     }
@@ -84,13 +68,6 @@ public class Metrics {
      */
     public static DistributionSummary summary(String name, String... tags) {
         return globalRegistry.summary(name, tags);
-    }
-
-    /**
-     * Measures the time taken for short tasks and the count of these tasks.
-     */
-    public static Timer timer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles) {
-        return globalRegistry.timer(id, histogram, quantiles);
     }
 
     /**
@@ -114,30 +91,37 @@ public class Metrics {
         /**
          * Measures the time taken for long tasks.
          */
-        public LongTaskTimer longTaskTimer(Meter.Id id) {
-            return globalRegistry.more().longTaskTimer(id);
+        public LongTaskTimer longTaskTimer(String name, String... tags) {
+            return globalRegistry.more().longTaskTimer(name, tags);
+        }
+
+        /**
+         * Measures the time taken for long tasks.
+         */
+        public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
+            return globalRegistry.more().longTaskTimer(name, tags);
         }
 
         /**
          * Tracks a monotonically increasing value, automatically incrementing the counter whenever
          * the value is observed.
          */
-        public <T> Meter counter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
-            return globalRegistry.more().counter(id, obj, f);
+        public <T> Meter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+            return globalRegistry.more().counter(name, tags, obj, f);
         }
 
         /**
          * Tracks a number, maintaining a weak reference on it.
          */
-        public <T extends Number> Meter counter(Meter.Id id, T number) {
-            return globalRegistry.more().counter(id, number);
+        public <T extends Number> Meter counter(String name, Iterable<Tag> tags, T number) {
+            return globalRegistry.more().counter(name, tags, number);
         }
 
         /**
          * A gauge that tracks a time value, to be scaled to the monitoring system's base time unit.
          */
-        public <T> Gauge timeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
-            return globalRegistry.more().timeGauge(id, obj, fUnit, f);
+        public <T> Gauge timeGauge(String name, Iterable<Tag> tags, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
+            return globalRegistry.more().timeGauge(name, tags, obj, fUnit, f);
         }
     }
 
@@ -148,10 +132,6 @@ public class Metrics {
      */
     public static More more() {
         return more;
-    }
-
-    public static Meter register(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
-        return globalRegistry.register(id, type, measurements);
     }
 
     /**
@@ -246,26 +226,5 @@ public class Metrics {
      */
     public static <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
         return globalRegistry.gaugeMapSize(name, tags, map);
-    }
-
-    /**
-     * Register a gauge that reports the value of the object after the function
-     * {@code f} is applied. The registration will keep a weak reference to the object so it will
-     * not prevent garbage collection. Applying {@code f} on the object should be thread safe.
-     * <p>
-     * If multiple gauges are registered with the same id, then the values will be aggregated and
-     * the sum will be reported. For example, registering multiple gauges for active threads in
-     * a thread pool with the same id would produce a value that is the overall number
-     * of active threads. For other behaviors, manage it on the user side and avoid multiple
-     * registrations.
-     *
-     * @param id  Id of the gauge being registered.
-     * @param obj Object used to compute a value.
-     * @param f   Function that is applied on the value for the number.
-     * @return The number that was passed in so the registration can be done as part of an assignment
-     * statement.
-     */
-    public static <T> Gauge gauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
-        return globalRegistry.gauge(id, obj, f);
     }
 }

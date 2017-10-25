@@ -16,7 +16,9 @@
 package io.micrometer.spring.integration;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,12 +33,22 @@ import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.support.Transformers;
 import org.springframework.integration.ws.SimpleWebServiceOutboundGateway;
 import org.springframework.integration.ws.WebServiceHeaders;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
+@TestPropertySource(properties = {
+    "spring.metrics.useGlobalRegistry=false",
+    "spring.metrics.atlas.enabled=false",
+    "spring.metrics.datadog.enabled=false",
+    "spring.metrics.ganglia.enabled=false",
+    "spring.metrics.influx.enabled=false",
+    "spring.metrics.jmx.enabled=false",
+    "spring.metrics.statsd.enabled=false"
+})
 public class SpringIntegrationMetricsTest {
     @Autowired
     TestSpringIntegrationApplication.TempConverter converter;
@@ -44,10 +56,14 @@ public class SpringIntegrationMetricsTest {
     @Autowired
     MeterRegistry registry;
 
+    @Autowired
+    MockClock clock;
+
     @Test
     public void springIntegrationMetrics() {
         converter.fahrenheitToCelcius(68.0f);
 
+        clock.add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("spring.integration.channel.sends")
             .tags("channel", "convert.input").value(Statistic.Count, 1).meter()).isPresent();
         assertThat(registry.find("spring.integration.handler.duration.min").meter()).isPresent();
@@ -58,8 +74,8 @@ public class SpringIntegrationMetricsTest {
     @IntegrationComponentScan
     public static class TestSpringIntegrationApplication {
         @Bean
-        MeterRegistry meterRegistry() {
-            return new SimpleMeterRegistry();
+        MockClock clock() {
+            return new MockClock();
         }
 
         @MessagingGateway

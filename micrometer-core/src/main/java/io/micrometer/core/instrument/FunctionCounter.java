@@ -15,7 +15,10 @@
  */
 package io.micrometer.core.instrument;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.function.ToDoubleFunction;
 
 /**
  * A counter that tracks a monotonically increasing function.
@@ -36,5 +39,50 @@ public interface FunctionCounter extends Meter {
     @Override
     default Meter.Type getType() {
         return Meter.Type.Counter;
+    }
+
+    static <T> Builder<T> builder(String name, T obj, ToDoubleFunction<T> f) {
+        return new Builder<>(name, obj, f);
+    }
+
+    class Builder<T> {
+        private final String name;
+        private final T obj;
+        private final ToDoubleFunction<T> f;
+        private final List<Tag> tags = new ArrayList<>();
+        private String description;
+        private String baseUnit;
+
+        private Builder(String name, T obj, ToDoubleFunction<T> f) {
+            this.name = name;
+            this.obj = obj;
+            this.f = f;
+        }
+
+        /**
+         * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         */
+        public Builder<T> tags(String... tags) {
+            return tags(Tags.zip(tags));
+        }
+
+        public Builder<T> tags(Iterable<Tag> tags) {
+            tags.forEach(this.tags::add);
+            return this;
+        }
+
+        public Builder<T> description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder<T> baseUnit(String unit) {
+            this.baseUnit = unit;
+            return this;
+        }
+
+        public FunctionCounter register(MeterRegistry registry) {
+            return registry.more().counter(new Meter.Id(name, tags, baseUnit, description), obj, f);
+        }
     }
 }

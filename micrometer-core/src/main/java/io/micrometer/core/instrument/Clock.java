@@ -15,12 +15,14 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.step.StepLong;
+
 public interface Clock {
     /**
      * Current wall time in milliseconds since the epoch. Typically equivalent to
      * System.currentTimeMillis. Should not be used to determine durations. Used
      * for timestamping metrics being pushed to a monitoring system or for determination
-     * of step boundaries (e.g. {@link com.netflix.spectator.impl.StepLong}.
+     * of step boundaries (e.g. {@link StepLong}.
      *
      * @return Wall time in milliseconds
      */

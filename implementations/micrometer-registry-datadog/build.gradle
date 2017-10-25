@@ -3,9 +3,7 @@ apply plugin: 'nebula.optional-base'
 
 dependencies {
     compile project(':micrometer-core')
-    compile 'com.netflix.spectator:spectator-api:latest.release'
-
-    compile 'com.datadoghq:java-dogstatsd-client:latest.release', optional
+    compile 'org.slf4j:slf4j-api:latest.release'
 
     testCompile project(':micrometer-test')
 }

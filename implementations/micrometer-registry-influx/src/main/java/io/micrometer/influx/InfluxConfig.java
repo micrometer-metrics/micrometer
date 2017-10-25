@@ -15,7 +15,7 @@
  */
 package io.micrometer.influx;
 
-import io.micrometer.core.instrument.spectator.step.StepRegistryConfig;
+import io.micrometer.core.instrument.step.StepRegistryConfig;
 
 /**
  * @author Jon Schneider
@@ -81,7 +81,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      */
     default String uri() {
         String v = get(prefix() + ".uri");
-        return (v == null) ? "http://localhost:8086/write" : v;
+        return (v == null) ? "http://localhost:8086" : v;
     }
 
     /**

@@ -17,7 +17,6 @@ package io.micrometer.spring.web.client;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.stats.hist.Histogram;
 import org.springframework.core.NamedThreadLocal;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
@@ -98,7 +97,7 @@ class MetricsClientHttpRequestInterceptor implements ClientHttpRequestIntercepto
             .tags(this.tagProvider.getTags(urlTemplate.get(), request, response))
             .description("Timer of RestTemplate operation");
         if (this.recordPercentiles) {
-            builder = builder.histogram(Histogram.percentilesTime());
+            builder = builder.publishPercentileHistogram();
         }
         return builder;
     }

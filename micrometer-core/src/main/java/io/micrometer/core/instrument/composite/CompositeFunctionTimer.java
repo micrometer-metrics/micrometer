@@ -22,8 +22,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.noop.NoopFunctionTimer;
 
 import java.lang.ref.WeakReference;
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -50,8 +48,12 @@ public class CompositeFunctionTimer<T> extends AbstractMeter implements Function
     public void add(MeterRegistry registry) {
         T obj = ref.get();
         if(obj != null) {
-            functionTimers.put(registry, registry.more().timer(getId(), obj, countFunction,
-                totalTimeFunction, totalTimeFunctionUnits));
+            FunctionTimer.Builder<T> builder = FunctionTimer
+                .builder(getId().getName(), obj, countFunction, totalTimeFunction, totalTimeFunctionUnits)
+                .tags(getId().getTags())
+                .description(getId().getDescription())
+                .baseUnit(getId().getBaseUnit());
+            functionTimers.put(registry, builder.register(registry));
         }
     }
 

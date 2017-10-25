@@ -20,22 +20,24 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 
-public class PrometheusCounter extends AbstractMeter implements Counter {
-    private io.prometheus.client.Counter.Child counter;
+import java.util.concurrent.atomic.DoubleAdder;
 
-    PrometheusCounter(Meter.Id id,io.prometheus.client.Counter.Child counter) {
+public class PrometheusCounter extends AbstractMeter implements Counter {
+    private DoubleAdder count = new DoubleAdder();
+
+    PrometheusCounter(Meter.Id id) {
         super(id);
-        this.counter = counter;
     }
 
     @Override
     public void increment(double amount) {
-        counter.inc(amount);
+        if(amount > 0)
+            count.add(amount);
     }
 
     @Override
     public double count() {
-        return counter.get();
+        return count.doubleValue();
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

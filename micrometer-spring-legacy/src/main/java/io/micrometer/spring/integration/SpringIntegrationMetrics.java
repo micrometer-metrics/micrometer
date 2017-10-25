@@ -15,9 +15,7 @@
  */
 package io.micrometer.spring.integration;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.integration.support.management.*;
@@ -48,14 +46,20 @@ public class SpringIntegrationMetrics implements MeterBinder, SmartInitializingS
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        registry.gauge(registry.createId("spring.integration.channelNames", tags, "The number of spring integration channels"),
-            configurer, c -> c.getChannelNames().length);
+        Gauge.builder("spring.integration.channelNames", configurer, c -> c.getChannelNames().length)
+            .tags(tags)
+            .description("The number of spring integration channels")
+            .register(registry);
 
-        registry.gauge(registry.createId("spring.integration.handlerNames", tags, "The number of spring integration handlers"),
-            configurer, c -> c.getHandlerNames().length);
+        Gauge.builder("spring.integration.handlerNames", configurer, c -> c.getHandlerNames().length)
+            .tags(tags)
+            .description("The number of spring integration handlers")
+            .register(registry);
 
-        registry.gauge(registry.createId("spring.integration.sourceNames", tags, "The number of spring integration sources"),
-            configurer, c -> c.getSourceNames().length);
+        Gauge.builder("spring.integration.sourceNames" ,configurer, c -> c.getSourceNames().length)
+            .tags(tags)
+            .description("The number of spring integration sources")
+            .register(registry);
 
         registries.add(registry);
     }
@@ -64,8 +68,11 @@ public class SpringIntegrationMetrics implements MeterBinder, SmartInitializingS
         for (String source : configurer.getSourceNames()) {
             MessageSourceMetrics sourceMetrics = configurer.getSourceMetrics(source);
             Iterable<Tag> tagsWithSource = Tags.concat(tags, "source", source);
-            registry.more().counter(registry.createId("spring.integration.source.messages", tagsWithSource, "The number of successful handler calls"),
-                sourceMetrics, MessageSourceMetrics::getMessageCount);
+
+            FunctionCounter.builder("spring.integration.source.messages", sourceMetrics, MessageSourceMetrics::getMessageCount)
+                .tags(tagsWithSource)
+                .description("The number of successful handler calls")
+                .register(registry);
         }
     }
 
@@ -77,17 +84,25 @@ public class SpringIntegrationMetrics implements MeterBinder, SmartInitializingS
             // creation as shown in the SpringIntegrationApplication sample.
             Iterable<Tag> tagsWithHandler = Tags.concat(tags, "handler", handler);
 
-            registry.more().timeGauge(registry.createId("spring.integration.handler.duration.max", tagsWithHandler, "The maximum handler duration"),
-                handlerMetrics, TimeUnit.MILLISECONDS, MessageHandlerMetrics::getMaxDuration);
+            TimeGauge.builder("spring.integration.handler.duration.max", handlerMetrics, TimeUnit.MILLISECONDS, MessageHandlerMetrics::getMaxDuration)
+                .tags(tagsWithHandler)
+                .description("The maximum handler duration")
+                .register(registry);
 
-            registry.more().timeGauge(registry.createId("spring.integration.handler.duration.min", tagsWithHandler, "The minimum handler duration"),
-                handlerMetrics, TimeUnit.MILLISECONDS, MessageHandlerMetrics::getMinDuration);
+            TimeGauge.builder("spring.integration.handler.duration.min", handlerMetrics, TimeUnit.MILLISECONDS, MessageHandlerMetrics::getMinDuration)
+                .tags(tagsWithHandler)
+                .description("The minimum handler duration")
+                .register(registry);
 
-            registry.more().timeGauge(registry.createId("spring.integration.handler.duration.mean", tagsWithHandler, "The mean handler duration"),
-                handlerMetrics, TimeUnit.MILLISECONDS, MessageHandlerMetrics::getMeanDuration);
+            TimeGauge.builder("spring.integration.handler.duration.mean", handlerMetrics, TimeUnit.MILLISECONDS, MessageHandlerMetrics::getMeanDuration)
+                .tags(tagsWithHandler)
+                .description("The mean handler duration")
+                .register(registry);
 
-            registry.gauge(registry.createId("spring.integration.handler.activeCount", tagsWithHandler, "The number of active handlers"),
-                handlerMetrics, MessageHandlerMetrics::getActiveCount);
+            Gauge.builder("spring.integration.handler.activeCount", handlerMetrics, MessageHandlerMetrics::getActiveCount)
+                .tags(tagsWithHandler)
+                .description("The number of active handlers")
+                .register(registry);
         }
     }
 
@@ -96,18 +111,21 @@ public class SpringIntegrationMetrics implements MeterBinder, SmartInitializingS
             MessageChannelMetrics channelMetrics = configurer.getChannelMetrics(channel);
             Iterable<Tag> tagsWithChannel = Tags.concat(tags, "channel", channel);
 
-            registry.more().counter(registry.createId("spring.integration.channel.sendErrors", tagsWithChannel,
-                "The number of failed sends (either throwing an exception or rejected by the channel)"),
-                channelMetrics, MessageChannelMetrics::getSendErrorCount);
+            FunctionCounter.builder("spring.integration.channel.sendErrors", channelMetrics, MessageChannelMetrics::getSendErrorCount)
+                .tags(tagsWithChannel)
+                .description("The number of failed sends (either throwing an exception or rejected by the channel)")
+                .register(registry);
 
-            registry.more().counter(registry.createId("spring.integration.channel.sends", tagsWithChannel,
-                "The number of successful sends"),
-                channelMetrics, MessageChannelMetrics::getSendCount);
+            FunctionCounter.builder("spring.integration.channel.sends", channelMetrics, MessageChannelMetrics::getSendCount)
+                .tags(tagsWithChannel)
+                .description("The number of successful sends")
+                .register(registry);
 
             if (channelMetrics instanceof PollableChannelManagement) {
-                registry.more().counter(registry.createId("spring.integration.receives", tagsWithChannel,
-                    "The number of messages received"),
-                    (PollableChannelManagement) channelMetrics, PollableChannelManagement::getReceiveCount);
+                FunctionCounter.builder("spring.integration.receives", (PollableChannelManagement) channelMetrics, PollableChannelManagement::getReceiveCount)
+                    .tags(tagsWithChannel)
+                    .description("The number of messages received")
+                    .register(registry);
             }
         }
     }

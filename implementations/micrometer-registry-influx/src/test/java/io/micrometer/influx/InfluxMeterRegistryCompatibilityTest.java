@@ -15,7 +15,7 @@
  */
 package io.micrometer.influx;
 
-import io.micrometer.core.MockClock;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 

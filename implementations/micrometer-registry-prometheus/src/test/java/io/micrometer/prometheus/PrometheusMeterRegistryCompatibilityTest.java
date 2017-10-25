@@ -15,7 +15,7 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.core.MockClock;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import io.prometheus.client.CollectorRegistry;

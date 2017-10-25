@@ -25,7 +25,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static io.micrometer.core.MockClock.clock;
+import static io.micrometer.core.instrument.MockClock.clock;
 import static org.junit.jupiter.api.Assertions.*;
 
 interface TimerTest {
@@ -44,7 +44,7 @@ interface TimerTest {
     default void record(MeterRegistry registry) {
         Timer t = registry.timer("myTimer");
         t.record(42, TimeUnit.MILLISECONDS);
-        clock(registry).addAndGet(1, TimeUnit.SECONDS);
+        clock(registry).addSeconds(1);
 
         assertAll(() -> assertEquals(1L, t.count()),
                 () -> assertEquals(42, t.totalTime(TimeUnit.MILLISECONDS), 1.0e-12));
@@ -55,7 +55,7 @@ interface TimerTest {
     default void recordDuration(MeterRegistry registry) {
         Timer t = registry.timer("myTimer");
         t.record(Duration.ofMillis(42));
-        clock(registry).addAndGet(1, TimeUnit.SECONDS);
+        clock(registry).addSeconds(1);
 
         assertAll(() -> assertEquals(1L, t.count()),
             () -> assertEquals(42, t.totalTime(TimeUnit.MILLISECONDS), 1.0e-12));
@@ -76,7 +76,7 @@ interface TimerTest {
     default void recordZero(MeterRegistry registry) {
         Timer t = registry.timer("myTimer");
         t.record(0, TimeUnit.MILLISECONDS);
-        clock(registry).addAndGet(1, TimeUnit.SECONDS);
+        clock(registry).addSeconds(1);
 
         assertAll(() -> assertEquals(1L, t.count()),
                 () -> assertEquals(0L, t.totalTime(TimeUnit.NANOSECONDS)));
@@ -88,8 +88,8 @@ interface TimerTest {
         Timer t = registry.timer("myTimer");
 
         try {
-            t.record(() -> clock(registry).addAndGetNanos(10));
-            clock(registry).addAndGet(1, TimeUnit.SECONDS);
+            t.record(() -> clock(registry).add(10, TimeUnit.NANOSECONDS));
+            clock(registry).addSeconds(1);
         } finally {
             assertAll(() -> assertEquals(1L, t.count()),
                     () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS) ,1.0e-12));
@@ -103,12 +103,12 @@ interface TimerTest {
 
         assertThrows(Exception.class, () -> {
             t.recordCallable(() -> {
-                clock(registry).addAndGetNanos(10);
+                clock(registry).add(10, TimeUnit.NANOSECONDS);
                 throw new Exception("uh oh");
             });
         });
 
-        clock(registry).addAndGet(1, TimeUnit.SECONDS);
+        clock(registry).addSeconds(1);
 
         assertAll(() -> assertEquals(1L, t.count()),
                 () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));

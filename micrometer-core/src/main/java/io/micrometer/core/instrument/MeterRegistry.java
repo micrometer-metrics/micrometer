@@ -15,18 +15,21 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.stats.hist.Histogram;
-import io.micrometer.core.instrument.stats.quantile.Quantiles;
+import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
+import io.micrometer.core.instrument.util.TimeUtils;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
+import java.lang.ref.WeakReference;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
+import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.Tags.zip;
 import static java.util.Collections.emptyList;
+import static java.util.stream.StreamSupport.stream;
 
 /**
  * Creates and manages your application's set of meters. Exporters use the meter registry to iterate
@@ -38,186 +41,113 @@ import static java.util.Collections.emptyList;
  *
  * @author Jon Schneider
  */
-public interface MeterRegistry {
-    /**
-     * @return The set of registered meters.
-     */
-    Collection<Meter> getMeters();
+public abstract class MeterRegistry {
+    protected final Clock clock;
 
-    interface Config {
-        /**
-         * Append a list of common tags to apply to all metrics reported to the monitoring system.
-         */
-        Config commonTags(Iterable<Tag> tags);
-
-        /**
-         * Append a list of common tags to apply to all metrics reported to the monitoring system.
-         * Must be an even number of arguments representing key/value pairs of tags.
-         */
-        default Config commonTags(String... tags) {
-            commonTags(zip(tags));
-            return this;
-        }
-
-        /**
-         * @return The list of common tags in use on this registry.
-         */
-        Iterable<Tag> commonTags();
-
-        /**
-         * Use the provided naming convention, overriding the default for your monitoring system.
-         */
-        Config namingConvention(NamingConvention convention);
-
-        /**
-         * @return The naming convention currently in use on this registry.
-         */
-        NamingConvention namingConvention();
-
-        /**
-         * @return The clock used to measure durations of timers and long task timers (and sometimes
-         * influences publishing behavior).
-         */
-        Clock clock();
+    public MeterRegistry(Clock clock) {
+        this.clock = clock;
     }
 
     /**
-     * Access to configuration options for this registry.
+     * List of common tags to append to every metric, stored pre-formatted.
      */
-    Config config();
+    private final List<Tag> commonTags = new ArrayList<>();
 
-    interface Search {
-        /**
-         * @param tags Must be an even number of arguments representing key/value pairs of tags.
-         */
-        default Search tags(String... tags) {
-            return tags(Tags.zip(tags));
-        }
+    private final Map<Meter.Id, Meter> meterMap = new HashMap<>();
 
-        Search tags(Iterable<Tag> tags);
+    /**
+     * We'll use snake case as a general-purpose default for registries because it is the most
+     * likely to result in a portable name. Camel casing is also perfectly acceptable. '-' and '.'
+     * separators can pose problems for some monitoring systems. '-' is interpreted as metric
+     * subtraction in some (including Prometheus), and '.' is used to flatten tags into hierarchical
+     * names when shipping metrics to hierarchical backends such as Graphite.
+     */
+    private NamingConvention namingConvention = NamingConvention.snakeCase;
 
-        Search value(Statistic statistic, double value);
+    protected abstract <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f);
 
-        Optional<Timer> timer();
+    protected abstract Counter newCounter(Meter.Id id);
 
-        Optional<Counter> counter();
+    protected abstract LongTaskTimer newLongTaskTimer(Meter.Id id);
 
-        Optional<Gauge> gauge();
+    protected abstract Timer newTimer(Meter.Id id, StatsConfig statsConfig);
 
-        Optional<DistributionSummary> summary();
+    protected abstract DistributionSummary newDistributionSummary(Meter.Id id, StatsConfig statsConfig);
 
-        Optional<LongTaskTimer> longTaskTimer();
+    protected abstract void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements);
 
-        Optional<Meter> meter();
+    protected <T> TimeGauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
+        TimeUnit baseTimeUnit = getBaseTimeUnit();
+        id.setBaseUnit(getBaseTimeUnitStr());
+        Gauge gauge = newGauge(id, obj, obj2 -> TimeUtils.convert(f.applyAsDouble(obj2), fUnit, getBaseTimeUnit()));
 
-        Collection<Meter> meters();
+        return new TimeGauge() {
+            @Override
+            public Id getId() {
+                return id;
+            }
+
+            @Override
+            public double value() {
+                return gauge.value();
+            }
+
+            @Override
+            public TimeUnit getBaseTimeUnit() {
+                return baseTimeUnit;
+            }
+        };
     }
 
-    Search find(String name);
-
-    /**
-     * Tracks a monotonically increasing value.
-     */
-    Counter counter(Meter.Id id);
-
-    /**
-     * Tracks a monotonically increasing value.
-     */
-    default Counter counter(String name, Iterable<Tag> tags) {
-        return counter(createId(name, tags, null));
+    protected <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+        FunctionTimer ft = new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
+        newMeter(id, Meter.Type.Timer, ft.measure());
+        return ft;
     }
 
-    /**
-     * Tracks a monotonically increasing value.
-     *
-     * @param name The base metric name
-     * @param tags MUST be an even number of arguments representing key/value pairs of tags.
-     */
-    default Counter counter(String name, String... tags) {
-        return counter(name, zip(tags));
+    protected List<Tag> getConventionTags(Meter.Id id) {
+        return id.getConventionTags(config().namingConvention());
     }
 
-    /**
-     * Measures the sample distribution of events.
-     */
-    DistributionSummary summary(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles);
-
-    /**
-     * Measures the sample distribution of events.
-     */
-    default DistributionSummary summary(String name, Iterable<Tag> tags) {
-        return summary(createId(name, tags, null), null, null);
+    protected String getConventionName(Meter.Id id) {
+        return id.getConventionName(config().namingConvention());
     }
 
-    /**
-     * Measures the sample distribution of events.
-     *
-     * @param name The base metric name
-     * @param tags MUST be an even number of arguments representing key/value pairs of tags.
-     */
-    default DistributionSummary summary(String name, String... tags) {
-        return summary(name, zip(tags));
+    protected abstract TimeUnit getBaseTimeUnit();
+
+    private String getBaseTimeUnitStr() {
+        if(getBaseTimeUnit() == null)
+            return null;
+        return getBaseTimeUnit().toString().toLowerCase();
     }
 
-    /**
-     * Measures the time taken for short tasks and the count of these tasks.
-     */
-    Timer timer(Meter.Id id, Histogram.Builder<?> histogram, Quantiles quantiles);
-
-    /**
-     * Measures the time taken for short tasks and the count of these tasks.
-     */
-    default Timer timer(String name, Iterable<Tag> tags) {
-        return timer(createId(name, tags, null), null, null);
+    Counter counter(Meter.Id id) {
+        return registerMeterIfNecessary(Counter.class, id, id2 -> {
+            id2.setType(Meter.Type.Counter);
+            return newCounter(id2);
+        });
     }
 
-    /**
-     * Measures the time taken for short tasks and the count of these tasks.
-     *
-     * @param name The base metric name
-     * @param tags MUST be an even number of arguments representing key/value pairs of tags.
-     */
-    default Timer timer(String name, String... tags) {
-        return timer(name, zip(tags));
+    <T> Gauge gauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+        return registerMeterIfNecessary(Gauge.class, id, id2 -> {
+            id2.setType(Meter.Type.Gauge);
+            return newGauge(id2, obj, f);
+        });
     }
 
-    interface More {
-        /**
-         * Measures the time taken for long tasks.
-         */
-        LongTaskTimer longTaskTimer(Meter.Id id);
-
-        /**
-         * Tracks a monotonically increasing value, automatically incrementing the counter whenever
-         * the value is observed.
-         */
-        <T> FunctionCounter counter(Meter.Id id, T obj, ToDoubleFunction<T> f);
-
-        /**
-         * A timer that tracks monotonically increasing functions for count and totalTime.
-         */
-        <T> FunctionTimer timer(Meter.Id id, T obj,
-                                ToLongFunction<T> countFunction,
-                                ToDoubleFunction<T> totalTimeFunction,
-                                TimeUnit totalTimeFunctionUnits);
-
-        /**
-         * Tracks a number, maintaining a weak reference on it.
-         */
-        default <T extends Number> Meter counter(Meter.Id id, T number) {
-            return counter(id, number, Number::doubleValue);
-        }
-
-        /**
-         * A gauge that tracks a time value, to be scaled to the monitoring system's base time unit.
-         */
-        <T> Gauge timeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f);
+    Timer timer(Meter.Id id, StatsConfig statsConfig) {
+        return registerMeterIfNecessary(Timer.class, id, id2 -> {
+            id2.setType(Meter.Type.Timer);
+            return newTimer(id2, statsConfig);
+        });
     }
 
-    /**
-     * Access to less frequently used meter types and patterns.
-     */
-    More more();
+    DistributionSummary summary(Meter.Id id, StatsConfig statsConfig) {
+        return registerMeterIfNecessary(DistributionSummary.class, id, id2 -> {
+            id2.setType(Meter.Type.DistributionSummary);
+            return newDistributionSummary(id2, statsConfig);
+        });
+    }
 
     /**
      * Register a custom meter type.
@@ -227,26 +157,362 @@ public interface MeterRegistry {
      * @param measurements A sequence of measurements describing how to sample the meter.
      * @return The registry.
      */
-    Meter register(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements);
+    Meter register(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+        return registerMeterIfNecessary(Meter.class, id, id2 -> {
+            id2.setType(type);
+            newMeter(id2, type, measurements);
+            return new Meter() {
+                @Override
+                public Id getId() {
+                    return id2;
+                }
+
+                @Override
+                public Type getType() {
+                    return type;
+                }
+
+                @Override
+                public Iterable<Measurement> measure() {
+                    return measurements;
+                }
+            };
+        });
+    }
+
+    // ---------------------
 
     /**
-     * Register a gauge that reports the value of the object after the function
-     * {@code f} is applied. The registration will keep a weak reference to the object so it will
-     * not prevent garbage collection. Applying {@code f} on the object should be thread safe.
-     * <p>
-     * If multiple gauges are registered with the same id, then the values will be aggregated and
-     * the sum will be reported. For example, registering multiple gauges for active threads in
-     * a thread pool with the same id would produce a value that is the overall number
-     * of active threads. For other behaviors, manage it on the user side and avoid multiple
-     * registrations.
-     *
-     * @param id  Id of the gauge being registered.
-     * @param obj Object used to compute a value.
-     * @param f   Function that is applied on the value for the number.
-     * @return The number that was passed in so the registration can be done as part of an assignment
-     * statement.
+     * @return The set of registered meters.
      */
-    <T> Gauge gauge(Meter.Id id, T obj, ToDoubleFunction<T> f);
+    public Collection<Meter> getMeters() {
+        return meterMap.values();
+    }
+
+    /**
+     * Access to configuration options for this registry.
+     */
+    public class Config {
+        /**
+         * Append a list of common tags to apply to all metrics reported to the monitoring system.
+         */
+        public Config commonTags(Iterable<Tag> tags) {
+            stream(tags.spliterator(), false)
+                .map(t -> Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())))
+                .forEach(commonTags::add);
+            return this;
+        }
+
+        /**
+         * Append a list of common tags to apply to all metrics reported to the monitoring system.
+         * Must be an even number of arguments representing key/value pairs of tags.
+         */
+        public Config commonTags(String... tags) {
+            commonTags(zip(tags));
+            return this;
+        }
+
+        /**
+         * @return The list of common tags in use on this registry.
+         */
+        public Iterable<Tag> commonTags() {
+            return commonTags;
+        }
+
+        /**
+         * Use the provided naming convention, overriding the default for your monitoring system.
+         */
+        public Config namingConvention(NamingConvention convention) {
+            namingConvention = convention;
+            return this;
+        }
+
+        /**
+         * @return The naming convention currently in use on this registry.
+         */
+        public NamingConvention namingConvention() {
+            return namingConvention;
+        }
+
+        /**
+         * @return The clock used to measure durations of timers and long task timers (and sometimes
+         * influences publishing behavior).
+         */
+        public Clock clock() {
+            return clock;
+        }
+    }
+
+    private final Config config = new Config();
+
+    public Config config() {
+        return config;
+    }
+
+    public class Search {
+        /**
+         * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         */
+        private final String name;
+        private List<Tag> tags = new ArrayList<>();
+        private Map<Statistic, Double> valueAsserts = new HashMap<>();
+
+        Search(String name) {
+            this.name = name;
+        }
+
+        public Search tags(Iterable<Tag> tags) {
+            tags.forEach(this.tags::add);
+            return this;
+        }
+
+        public Search tags(String... tags) {
+            return tags(Tags.zip(tags));
+        }
+
+        public Search value(Statistic statistic, double value) {
+            valueAsserts.put(statistic, value);
+            return this;
+        }
+
+        public Optional<Timer> timer() {
+            return meters()
+                .stream()
+                .filter(m -> m instanceof Timer)
+                .findAny()
+                .map(Timer.class::cast);
+        }
+
+        public Optional<Counter> counter() {
+            return meters()
+                .stream()
+                .filter(m -> m instanceof Counter)
+                .findAny()
+                .map(Counter.class::cast);
+        }
+
+        public Optional<Gauge> gauge() {
+            return meters()
+                .stream()
+                .filter(m -> m instanceof Gauge)
+                .findAny()
+                .map(Gauge.class::cast);
+        }
+
+        public Optional<DistributionSummary> summary() {
+            return meters()
+                .stream()
+                .filter(m -> m instanceof DistributionSummary)
+                .findAny()
+                .map(DistributionSummary.class::cast);
+        }
+
+        public Optional<LongTaskTimer> longTaskTimer() {
+            return meters()
+                .stream()
+                .filter(m -> m instanceof LongTaskTimer)
+                .findAny()
+                .map(LongTaskTimer.class::cast);
+        }
+
+        public Optional<Meter> meter() {
+            return meters().stream().findAny();
+        }
+
+        public Collection<Meter> meters() {
+            synchronized (meterMap) {
+                return meterMap.keySet().stream()
+                    .filter(id -> id.getName().equals(name))
+                    .filter(id -> {
+                        if (tags.isEmpty())
+                            return true;
+                        List<Tag> idTags = new ArrayList<>();
+                        id.getTags().forEach(idTags::add);
+                        return idTags.containsAll(tags);
+                    })
+                    .map(meterMap::get)
+                    .filter(m -> {
+                        if (valueAsserts.isEmpty())
+                            return true;
+                        for (Measurement measurement : m.measure()) {
+                            if (valueAsserts.containsKey(measurement.getStatistic()) &&
+                                Math.abs(valueAsserts.get(measurement.getStatistic()) - measurement.getValue()) > 1e-7) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    })
+                    .collect(Collectors.toList());
+            }
+        }
+    }
+
+    public Search find(String name) {
+        return new Search(name);
+    }
+
+    /**
+     * Tracks a monotonically increasing value.
+     */
+    public Counter counter(String name, Iterable<Tag> tags) {
+        return counter(createId(name, tags, null));
+    }
+
+    /**
+     * Tracks a monotonically increasing value.
+     *
+     * @param name The base metric name
+     * @param tags MUST be an even number of arguments representing key/value pairs of tags.
+     */
+    public Counter counter(String name, String... tags) {
+        return counter(name, zip(tags));
+    }
+
+    /**
+     * Measures the sample distribution of events.
+     */
+    public DistributionSummary summary(String name, Iterable<Tag> tags) {
+        return summary(createId(name, tags, null), new StatsConfig());
+    }
+
+    /**
+     * Measures the sample distribution of events.
+     *
+     * @param name The base metric name
+     * @param tags MUST be an even number of arguments representing key/value pairs of tags.
+     */
+    public DistributionSummary summary(String name, String... tags) {
+        return summary(name, zip(tags));
+    }
+
+    /**
+     * Measures the time taken for short tasks and the count of these tasks.
+     */
+    public Timer timer(String name, Iterable<Tag> tags) {
+        return timer(createId(name, tags, null), new StatsConfig());
+    }
+
+    /**
+     * Measures the time taken for short tasks and the count of these tasks.
+     *
+     * @param name The base metric name
+     * @param tags MUST be an even number of arguments representing key/value pairs of tags.
+     */
+    public Timer timer(String name, String... tags) {
+        return timer(name, zip(tags));
+    }
+
+    public class More {
+        /**
+         * Measures the time taken for long tasks.
+         */
+        public LongTaskTimer longTaskTimer(String name, String... tags) {
+            return longTaskTimer(name, Tags.zip(tags));
+        }
+
+        /**
+         * Measures the time taken for long tasks.
+         */
+        public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
+            return longTaskTimer(createId(name, tags, null));
+        }
+
+        /**
+         * Only used by {@link LongTaskTimer#builder(String)}
+         */
+        LongTaskTimer longTaskTimer(Meter.Id id) {
+            return registerMeterIfNecessary(LongTaskTimer.class, id, id2 -> {
+                id2.setType(Meter.Type.LongTaskTimer);
+                id2.setBaseUnit(getBaseTimeUnitStr());
+                return newLongTaskTimer(id2);
+            });
+        }
+
+        /**
+         * Tracks a monotonically increasing value, automatically incrementing the counter whenever
+         * the value is observed.
+         */
+        public <T> FunctionCounter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+            return counter(createId(name, tags, null), obj, f);
+        }
+
+        /**
+         * Tracks a number, maintaining a weak reference on it.
+         */
+        public <T extends Number> FunctionCounter counter(String name, Iterable<Tag> tags, T number) {
+            return counter(createId(name, tags, null), number, Number::doubleValue);
+        }
+
+        <T> FunctionCounter counter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+            WeakReference<T> ref = new WeakReference<>(obj);
+
+            return registerMeterIfNecessary(FunctionCounter.class, id, id2 -> {
+                id2.setType(Meter.Type.Counter);
+                FunctionCounter fc = new FunctionCounter() {
+                    private volatile double last = 0.0;
+
+                    @Override
+                    public double count() {
+                        T obj2 = ref.get();
+                        return obj2 != null ? (last = f.applyAsDouble(obj2)) : last;
+                    }
+
+                    @Override
+                    public Id getId() {
+                        return id2;
+                    }
+                };
+                newMeter(id2, Meter.Type.Counter, fc.measure());
+                return fc;
+            });
+        }
+
+        /**
+         * A timer that tracks monotonically increasing functions for count and totalTime.
+         */
+        public <T> FunctionTimer timer(String name, Iterable<Tag> tags, T obj,
+                                ToLongFunction<T> countFunction,
+                                ToDoubleFunction<T> totalTimeFunction,
+                                TimeUnit totalTimeFunctionUnits) {
+            return timer(createId(name, tags, null), obj, countFunction,
+                totalTimeFunction, totalTimeFunctionUnits);
+        }
+
+        <T> FunctionTimer timer(Meter.Id id, T obj,
+                                ToLongFunction<T> countFunction,
+                                ToDoubleFunction<T> totalTimeFunction,
+                                TimeUnit totalTimeFunctionUnits) {
+            return registerMeterIfNecessary(FunctionTimer.class, id, id2 -> {
+                id2.setType(Meter.Type.Timer);
+                id2.setBaseUnit(getBaseTimeUnitStr());
+                return newFunctionTimer(id2, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
+            });
+        }
+
+        /**
+         * A gauge that tracks a time value, to be scaled to the monitoring system's base time unit.
+         */
+        public <T> TimeGauge timeGauge(String name, Iterable<Tag> tags, T obj,
+                                   TimeUnit fUnit, ToDoubleFunction<T> f) {
+            return timeGauge(createId(name, tags, null), obj, fUnit, f);
+        }
+
+        <T> TimeGauge timeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
+            return registerMeterIfNecessary(TimeGauge.class, id, id2 -> {
+                id2.setType(Meter.Type.Gauge);
+                return newTimeGauge(id2, obj, fUnit, f);
+            });
+        }
+    }
+
+    private final More more = new More();
+
+    /**
+     * Access to less frequently used meter types and patterns.
+     */
+    public More more() {
+        return more;
+    }
 
     /**
      * Register a gauge that reports the value of the object after the function
@@ -266,7 +532,7 @@ public interface MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    default <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+    public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
         gauge(createId(name, tags, null), obj, f);
         return obj;
     }
@@ -280,7 +546,7 @@ public interface MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    default <T extends Number> T gauge(String name, Iterable<Tag> tags, T number) {
+    public <T extends Number> T gauge(String name, Iterable<Tag> tags, T number) {
         return gauge(name, tags, number, Number::doubleValue);
     }
 
@@ -292,7 +558,7 @@ public interface MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    default <T extends Number> T gauge(String name, T number) {
+    public <T extends Number> T gauge(String name, T number) {
         return gauge(name, emptyList(), number);
     }
 
@@ -305,7 +571,7 @@ public interface MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    default <T> T gauge(String name, T obj, ToDoubleFunction<T> f) {
+    public <T> T gauge(String name, T obj, ToDoubleFunction<T> f) {
         return gauge(name, emptyList(), obj, f);
     }
 
@@ -322,7 +588,7 @@ public interface MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    default <T extends Collection<?>> T gaugeCollectionSize(String name, Iterable<Tag> tags, T collection) {
+    public <T extends Collection<?>> T gaugeCollectionSize(String name, Iterable<Tag> tags, T collection) {
         return gauge(name, tags, collection, Collection::size);
     }
 
@@ -339,13 +605,39 @@ public interface MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    default <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
+    public <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
         return gauge(name, tags, map, Map::size);
     }
 
-    default Meter.Id createId(String name, Iterable<Tag> tags, String description) {
-        return createId(name, tags, description, null);
+    private Meter.Id createId(String name, Iterable<Tag> tags, String description) {
+        if (name.isEmpty()) {
+            throw new IllegalArgumentException("Name must be non-empty");
+        }
+        return new Meter.Id(name, tags, description, null);
     }
 
-    Meter.Id createId(String name, Iterable<Tag> tags, String description, String baseUnit);
+    private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id, Function<Meter.Id, Meter> builder) {
+        // If the id is coming down from a composite registry it will already have the common tags of the composite.
+        // This adds common tags of the registry within the composite.
+        Meter.Id idWithCommonTags = new Meter.Id(id.getName(), Tags.concat(id.getTags(), config().commonTags()),
+            id.getBaseUnit(), id.getDescription());
+
+        Meter m = meterMap.get(idWithCommonTags);
+
+        if (m == null) {
+            m = builder.apply(idWithCommonTags);
+
+            synchronized (meterMap) {
+                Meter m2 = meterMap.putIfAbsent(idWithCommonTags, m);
+                m = m2 == null ? m : m2;
+            }
+        }
+
+        if (!meterClass.isInstance(m)) {
+            throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
+        }
+
+        //noinspection unchecked
+        return (M) m;
+    }
 }

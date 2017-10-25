@@ -16,12 +16,12 @@
 package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.spring.autoconfigure.export.MetricsExporter;
+import io.micrometer.core.instrument.simple.SimpleConfig;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +73,9 @@ public class MetricsAutoConfigurationTest {
     @Autowired
     private MeterRegistry registry;
 
+    @Autowired
+    private MockClock clock;
+
     @SuppressWarnings("unchecked")
     @Test
     public void restTemplateIsInstrumented() {
@@ -83,6 +86,8 @@ public class MetricsAutoConfigurationTest {
             "{\"message\": \"hello\"}", MediaType.APPLICATION_JSON));
         assertThat(this.external.getForObject("/api/external", Map.class))
             .containsKey("message");
+
+        clock.add(SimpleConfig.DEFAULT_STEP);
         assertThat(this.registry.find("http.client.requests").value(Statistic.Count, 1.0)
             .timer()).isPresent();
     }
@@ -90,6 +95,8 @@ public class MetricsAutoConfigurationTest {
     @Test
     public void requestMappingIsInstrumented() {
         this.loopback.getForObject("/api/people", Set.class);
+
+        clock.add(SimpleConfig.DEFAULT_STEP);
         assertThat(this.registry.find("http.server.requests").value(Statistic.Count, 1.0)
             .timer()).isPresent();
     }
@@ -110,8 +117,8 @@ public class MetricsAutoConfigurationTest {
     @Import(PersonController.class)
     static class MetricsApp {
         @Bean
-        public MetricsExporter simpleExporter() {
-            return SimpleMeterRegistry::new;
+        MockClock mockClock() {
+            return new MockClock();
         }
 
         @Bean
@@ -136,12 +143,10 @@ public class MetricsAutoConfigurationTest {
 
     @RestController
     static class PersonController {
-
         @GetMapping("/api/people")
         Set<String> personName() {
             return Collections.singleton("Jon");
         }
 
     }
-
 }

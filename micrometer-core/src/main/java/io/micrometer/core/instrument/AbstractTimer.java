@@ -15,18 +15,25 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.TimeWindowLatencyHistogram;
 import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
-    protected Clock clock;
+    protected final Clock clock;
+    private final StatsConfig statsConfig;
+    protected final TimeWindowLatencyHistogram histogram;
 
-    protected AbstractTimer(Meter.Id id, Clock clock) {
+    protected AbstractTimer(Meter.Id id, Clock clock, StatsConfig statsConfig) {
         super(id);
         this.clock = clock;
+        this.statsConfig = statsConfig;
+        this.histogram = new TimeWindowLatencyHistogram(clock, statsConfig);
     }
 
     @Override
@@ -75,6 +82,26 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
         }
     }
 
+    @Override
+    public final void record(long amount, TimeUnit unit) {
+        if(amount >= 0) {
+            histogram.record((long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS));
+            recordNonNegative(amount, unit);
+        }
+    }
+
+    protected abstract void recordNonNegative(long amount, TimeUnit unit);
+
+    @Override
+    public double percentile(double percentile, TimeUnit unit) {
+        return histogram.percentile(percentile, unit);
+    }
+
+    @Override
+    public double histogramCountAtValue(long valueNanos) {
+        return histogram.histogramCountAtValue(valueNanos);
+    }
+
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object o) {
@@ -84,5 +111,9 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     @Override
     public int hashCode() {
         return MeterEquivalence.hashCode(this);
+    }
+
+    public StatsConfig statsConfig() {
+        return statsConfig;
     }
 }

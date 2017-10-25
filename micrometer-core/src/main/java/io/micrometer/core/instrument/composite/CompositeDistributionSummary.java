@@ -19,23 +19,19 @@ import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.histogram.StatsConfig;
 import io.micrometer.core.instrument.noop.NoopDistributionSummary;
-import io.micrometer.core.instrument.stats.hist.Histogram;
-import io.micrometer.core.instrument.stats.quantile.Quantiles;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CompositeDistributionSummary extends AbstractMeter implements DistributionSummary, CompositeMeter {
-    private final Quantiles quantiles;
-    private final Histogram.Builder<?> histogram;
-
     private final Map<MeterRegistry, DistributionSummary> distributionSummaries = new ConcurrentHashMap<>();
+    private final StatsConfig statsConfig;
 
-    CompositeDistributionSummary(Meter.Id id, Quantiles quantiles, Histogram.Builder<?> histogram) {
+    CompositeDistributionSummary(Meter.Id id, StatsConfig statsConfig) {
         super(id);
-        this.quantiles = quantiles;
-        this.histogram = histogram;
+        this.statsConfig = statsConfig;
     }
 
     @Override
@@ -45,21 +41,55 @@ public class CompositeDistributionSummary extends AbstractMeter implements Distr
 
     @Override
     public long count() {
-        return distributionSummaries.values().stream().findFirst().orElse(NoopDistributionSummary.INSTANCE).count();
+        return firstSummary().count();
     }
 
     @Override
     public double totalAmount() {
-        return distributionSummaries.values().stream().findFirst().orElse(NoopDistributionSummary.INSTANCE).totalAmount();
+        return firstSummary().totalAmount();
+    }
+
+    @Override
+    public double max() {
+        return firstSummary().max();
+    }
+
+    @Override
+    public double histogramCountAtValue(long value) {
+        return firstSummary().histogramCountAtValue(value);
+    }
+
+    private DistributionSummary firstSummary() {
+        return distributionSummaries.values().stream().findFirst().orElse(NoopDistributionSummary.INSTANCE);
+    }
+
+    @Override
+    public double percentile(double percentile) {
+        return firstSummary().percentile(percentile);
     }
 
     @Override
     public void add(MeterRegistry registry) {
-        distributionSummaries.put(registry, registry.summary(getId(), histogram, quantiles));
+        DistributionSummary.Builder builder = DistributionSummary.builder(getId().getName())
+            .tags(getId().getTags())
+            .description(getId().getDescription())
+            .baseUnit(getId().getBaseUnit())
+            .publishPercentiles(statsConfig.getPercentiles())
+            .sla(statsConfig.getSlaBoundaries());
+
+        if(statsConfig.isPercentileHistogram())
+            builder = builder.publishPercentileHistogram();
+
+        distributionSummaries.put(registry, builder.register(registry));
     }
 
     @Override
     public void remove(MeterRegistry registry) {
         distributionSummaries.remove(registry);
+    }
+
+    @Override
+    public StatsConfig statsConfig() {
+        return statsConfig;
     }
 }

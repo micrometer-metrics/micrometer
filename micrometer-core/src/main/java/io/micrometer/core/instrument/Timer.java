@@ -15,8 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.stats.hist.Histogram;
-import io.micrometer.core.instrument.stats.quantile.Quantiles;
+import io.micrometer.core.instrument.histogram.StatsConfig;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -92,14 +91,32 @@ public interface Timer extends Meter {
     <T> Callable<T> wrap(Callable<T> f);
 
     /**
-     * The number of times that record has been called since this timer was created.
+     * The number of times that record has been called on this timer.
      */
     long count();
 
     /**
-     * The total time of all recorded events since this timer was created.
+     * The total time of recorded events.
      */
     double totalTime(TimeUnit unit);
+
+    default double mean(TimeUnit unit) {
+        return count() == 0 ? 0 : totalTime(unit) / count();
+    }
+
+    /**
+     * The maximum time of a single event.
+     */
+    double max(TimeUnit unit);
+
+    /**
+     * The latency at a specific percentile. This value is non-aggregable across dimensions.
+     */
+    double percentile(double percentile, TimeUnit unit);
+
+    double histogramCountAtValue(long valueNanos);
+
+    StatsConfig statsConfig();
 
     @Override
     default Iterable<Measurement> measure() {
@@ -120,27 +137,69 @@ public interface Timer extends Meter {
 
     class Builder {
         private final String name;
-        private Quantiles quantiles;
-        private Histogram.Builder<?> histogram;
         private final List<Tag> tags = new ArrayList<>();
         private String description;
+        private final StatsConfig statsConfig;
 
         private Builder(String name) {
             this.name = name;
-        }
-
-        public Builder quantiles(Quantiles quantiles) {
-            this.quantiles = quantiles;
-            return this;
-        }
-
-        public Builder histogram(Histogram.Builder<?> histogram) {
-            this.histogram = histogram;
-            return this;
+            this.statsConfig = new StatsConfig();
+            minimumExpectedValue(Duration.ofMillis(1));
+            maximumExpectedValue(Duration.ofSeconds(30));
         }
 
         public Builder tags(Iterable<Tag> tags) {
             tags.forEach(this.tags::add);
+            return this;
+        }
+
+        /**
+         * Produces an additional time series for each requested percentile. This percentile
+         * is computed locally, and so can't be aggregated with percentiles computed across other
+         * dimensions (e.g. in a different instance). Use {@link #publishPercentileHistogram()}
+         * to publish a histogram that can be used to generate aggregable percentile approximations.
+         *
+         * @param percentiles Percentiles to compute and publish. The 95th percentile should be expressed as {@code 95.0}
+         */
+        public Builder publishPercentiles(double... percentiles) {
+            this.statsConfig.setPercentiles(percentiles);
+            return this;
+        }
+
+        /**
+         * Adds histogram buckets usable for generating aggregable percentile approximations in monitoring
+         * systems that have query facilities to do so (e.g. Prometheus' {@code histogram_quantile},
+         * Atlas' {@code :percentiles}).
+         *
+         */
+        public Builder publishPercentileHistogram() {
+            this.statsConfig.setPercentileHistogram(true);
+            return this;
+        }
+
+        /**
+         * Publish at a minimum a histogram containing your defined SLA boundaries. When used in conjunction with
+         * {@link Builder#publishPercentileHistogram()}, the boundaries defined here are included alongside
+         * other buckets used to generate aggregable percentile approximations.
+         *
+         * @param sla Publish SLA boundaries in the set of histogram buckets shipped to the monitoring system.
+         */
+        public Builder sla(Duration... sla) {
+            long[] slaNano = new long[sla.length];
+            for (int i = 0; i < slaNano.length; i++) {
+                slaNano[i] = sla[i].toNanos();
+            }
+            this.statsConfig.setSlaBoundaries(slaNano);
+            return this;
+        }
+
+        public Builder minimumExpectedValue(Duration min) {
+            this.statsConfig.setMinimumExpectedValue(min.toNanos());
+            return this;
+        }
+
+        public Builder maximumExpectedValue(Duration max) {
+            this.statsConfig.setMaximumExpectedValue(max.toNanos());
             return this;
         }
 
@@ -157,8 +216,8 @@ public interface Timer extends Meter {
         }
 
         public Timer register(MeterRegistry registry) {
-            // the base unit for a timer will be determined by the monitoring system if it is part of the convention name
-            return registry.timer(registry.createId(name, tags, description), histogram, quantiles);
+            // the base unit for a timer will be determined by the monitoring system implementation
+            return registry.timer(new Meter.Id(name, tags, null, description), statsConfig);
         }
     }
 }

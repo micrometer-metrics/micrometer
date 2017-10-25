@@ -28,6 +28,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+
 /**
  * Validate that the default composite registry is filled with implementations
  * available on the classpath
@@ -36,7 +37,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @TestPropertySource(properties = {
     "spring.metrics.useGlobalRegistry=false",
-    "spring.metrics.datadog.enabled=false" // this requires an API key
+    "spring.metrics.atlas.enabled=false",
+    "spring.metrics.datadog.enabled=false",
+    "spring.metrics.ganglia.enabled=false",
+    "spring.metrics.influx.enabled=false",
+    "spring.metrics.jmx.enabled=false",
+    "spring.metrics.statsd.enabled=false",
+    "spring.metrics.prometheus.enabled=true"
 })
 public class MetricsConfigurationCompositeTest {
     @Autowired
@@ -45,8 +52,7 @@ public class MetricsConfigurationCompositeTest {
     @Test
     public void compositeContainsImplementationsOnClasspath() {
         assertThat(registry.getRegistries())
-            .hasAtLeastOneElementOfType(PrometheusMeterRegistry.class)
-            .hasAtLeastOneElementOfType(GraphiteMeterRegistry.class);
+            .hasAtLeastOneElementOfType(PrometheusMeterRegistry.class);
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")

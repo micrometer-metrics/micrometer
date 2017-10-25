@@ -15,7 +15,10 @@
  */
 package io.micrometer.spring.web.servlet;
 
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,6 +57,9 @@ public class MetricsHandlerInterceptorAutoTimedTest {
     private MeterRegistry registry;
 
     @Autowired
+    private MockClock clock;
+
+    @Autowired
     private WebApplicationContext context;
 
     private MockMvc mvc;
@@ -66,6 +72,8 @@ public class MetricsHandlerInterceptorAutoTimedTest {
     @Test
     public void metricsCanBeAutoTimed() throws Exception {
         this.mvc.perform(get("/api/10")).andExpect(status().isOk());
+
+        clock.add(SimpleConfig.DEFAULT_STEP);
         assertThat(this.registry.find("http.server.requests").tags("status", "200").timer())
             .hasValueSatisfying((t) -> assertThat(t.count()).isEqualTo(1));
     }
@@ -74,10 +82,14 @@ public class MetricsHandlerInterceptorAutoTimedTest {
     @EnableWebMvc
     @Import(Controller.class)
     static class TestConfiguration {
+        @Bean
+        MockClock clock() {
+            return new MockClock();
+        }
 
         @Bean
-        MeterRegistry meterRegistry() {
-            return new SimpleMeterRegistry();
+        MeterRegistry meterRegistry(Clock clock) {
+            return new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
         }
 
         @Bean
@@ -107,12 +119,9 @@ public class MetricsHandlerInterceptorAutoTimedTest {
     @RestController
     @RequestMapping("/api")
     static class Controller {
-
         @GetMapping("/{id}")
         public String successful(@PathVariable Long id) {
             return id.toString();
         }
-
     }
-
 }

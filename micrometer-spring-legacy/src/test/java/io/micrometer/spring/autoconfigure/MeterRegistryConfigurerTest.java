@@ -16,12 +16,12 @@
 package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -32,7 +32,18 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jon Schneider
  */
 @RunWith(SpringRunner.class)
-@TestPropertySource(properties = "spring.metrics.useGlobalRegistry=false")
+@SpringBootTest
+@TestPropertySource(properties = {
+    "spring.metrics.useGlobalRegistry=false",
+    "spring.metrics.atlas.enabled=false",
+    "spring.metrics.prometheus.enabled=false",
+    "spring.metrics.datadog.enabled=false",
+    "spring.metrics.ganglia.enabled=false",
+    "spring.metrics.graphite.enabled=false",
+    "spring.metrics.influx.enabled=false",
+    "spring.metrics.jmx.enabled=false",
+    "spring.metrics.statsd.enabled=false"
+})
 public class MeterRegistryConfigurerTest {
 
     @Autowired
@@ -47,11 +58,6 @@ public class MeterRegistryConfigurerTest {
     static class MetricsApp {
         public static void main(String[] args) {
             SpringApplication.run(MetricsApp.class);
-        }
-
-        @Bean
-        public MeterRegistry registry() {
-            return new SimpleMeterRegistry();
         }
 
         @Bean

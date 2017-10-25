@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.MockClock.clock;
+import static io.micrometer.core.instrument.MockClock.clock;
 import static org.junit.jupiter.api.Assertions.*;
 
 interface DistributionSummaryTest {
@@ -33,14 +33,14 @@ interface DistributionSummaryTest {
         DistributionSummary ds = registry.summary("myDistributionSummary");
 
         ds.record(10);
-        clock(registry).addAndGet(1, TimeUnit.SECONDS);
+        clock(registry).addSeconds(1);
 
         assertAll(() -> assertEquals(1L, ds.count()),
                 () -> assertEquals(10L, ds.totalAmount()));
 
         ds.record(10);
         ds.record(10);
-        clock(registry).addAndGet(1, TimeUnit.SECONDS);
+        clock(registry).addSeconds(1);
 
         assertAll(() -> assertTrue(ds.count() >= 2L),
                 () -> assertTrue(ds.totalAmount() >= 20L));
@@ -62,7 +62,7 @@ interface DistributionSummaryTest {
         DistributionSummary ds = registry.summary("myDistributionSummary");
 
         ds.record(0);
-        clock(registry).addAndGet(1, TimeUnit.SECONDS);
+        clock(registry).addSeconds(1);
         
         assertAll(() -> assertEquals(1L, ds.count()),
                 () -> assertEquals(0L, ds.totalAmount()));

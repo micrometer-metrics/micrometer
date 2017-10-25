@@ -38,6 +38,12 @@ public class PrometheusProperties {
     private Boolean descriptions = true;
 
     /**
+     * The step size to use in computing windowed statistics like max. The default is 10 seconds.
+     * To get the most out of these statistics, align the step interval to be close to your scrape interval.
+     */
+    private Duration step = Duration.ofSeconds(10);
+
+    /**
      * Used to create a bucket filter clamping the bucket domain of timer percentiles histograms to some max value.
      * This is used to limit the number of buckets shipped to Prometheus to save on storage.
      */
@@ -63,6 +69,14 @@ public class PrometheusProperties {
 
     public void setDescriptions(Boolean descriptions) {
         this.descriptions = descriptions;
+    }
+
+    public Duration getStep() {
+        return step;
+    }
+
+    public void setStep(Duration step) {
+        this.step = step;
     }
 
     public Duration getTimerPercentilesMax() {

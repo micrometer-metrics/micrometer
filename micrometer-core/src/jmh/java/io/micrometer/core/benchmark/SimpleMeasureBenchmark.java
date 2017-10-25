@@ -28,8 +28,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.Collections.emptyList;
-
 /**
  * @author Dmitry Poluyanov
  * @since 22.07.17
@@ -63,11 +61,11 @@ public class SimpleMeasureBenchmark {
     public void setup() {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         timer = registry.timer("timer");
-        longTaskTimer = registry.more().longTaskTimer(registry.createId("longTask", emptyList(), null));
+        longTaskTimer = registry.more().longTaskTimer("longTask");
         counter = registry.counter("counter");
 
         List<Integer> testListReference = Arrays.asList(1, 2);
-        gauge = registry.gauge(registry.createId("gauge", emptyList(), null), testListReference, List::size);
+        gauge = Gauge.builder("gauge", testListReference, List::size).register(registry);
 
         distributionSummary = registry.summary("summary");
     }

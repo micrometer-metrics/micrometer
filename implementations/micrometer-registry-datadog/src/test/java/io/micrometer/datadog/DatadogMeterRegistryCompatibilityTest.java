@@ -15,7 +15,7 @@
  */
 package io.micrometer.datadog;
 
-import io.micrometer.core.MockClock;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
@@ -42,7 +42,7 @@ class DatadogMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKi
 
             @Override
             public Duration step() {
-                return Duration.ofSeconds(1);
+                return Duration.ofMillis(800);
             }
         }, new MockClock());
     }

@@ -15,10 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,6 +24,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.*;
 
+import static io.micrometer.core.instrument.MockClock.clock;
 import static io.micrometer.core.instrument.Statistic.Count;
 import static io.micrometer.core.instrument.Statistic.Value;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -37,7 +36,7 @@ class ExecutorServiceMetricsTest {
 
     @BeforeEach
     void before() {
-        registry = new SimpleMeterRegistry();
+        registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     }
 
     @DisplayName("Normal executor can be instrumented after being initialized")
@@ -51,6 +50,8 @@ class ExecutorServiceMetricsTest {
         Executor executor = ExecutorServiceMetrics.monitor(registry, exec, "exec", userTags);
         executor.execute(() -> System.out.println("hello"));
         lock.await();
+
+        clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("exec").tags(userTags).timer()).map(Timer::count).hasValue(1L);
     }
 
@@ -99,6 +100,7 @@ class ExecutorServiceMetricsTest {
         taskComplete.countDown();
         pool.awaitTermination(1, TimeUnit.SECONDS);
 
+        clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("beep.pool").tags(userTags).value(Count, 2.0).timer()).isPresent();
         assertThat(registry.find("beep.pool.queued").tags(userTags).value(Value, 0.0).gauge()).isPresent();
     }

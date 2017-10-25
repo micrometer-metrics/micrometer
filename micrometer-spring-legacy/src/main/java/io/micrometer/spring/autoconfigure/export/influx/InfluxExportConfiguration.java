@@ -85,16 +85,6 @@ public class InfluxExportConfiguration {
         public boolean compressed() {
             return props.getCompressed() == null ? DEFAULT.compressed() : props.getCompressed();
         }
-
-        @Override
-        public Duration timerPercentilesMax() {
-            return props.getTimerPercentilesMax();
-        }
-
-        @Override
-        public Duration timerPercentilesMin() {
-            return props.getTimerPercentilesMin();
-        }
     }
 
     @Bean

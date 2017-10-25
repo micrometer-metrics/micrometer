@@ -18,8 +18,8 @@ package io.micrometer.statsd;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.stats.hist.Histogram;
-import io.micrometer.core.instrument.stats.quantile.Quantiles;
+import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.TimeUtils;
 import org.reactivestreams.Processor;
 
@@ -28,36 +28,33 @@ import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
 public class StatsdTimer extends AbstractTimer implements Timer {
-    private LongAdder count = new LongAdder();
-    private DoubleAdder totalTime = new DoubleAdder();
+    private final LongAdder count = new LongAdder();
+    private final DoubleAdder totalTime = new DoubleAdder();
+    private StepDouble max;
 
     private final StatsdLineBuilder lineBuilder;
     private final Processor<String, String> publisher;
-    private final Quantiles quantiles;
-    private final Histogram<?> histogram;
 
-    StatsdTimer(Id id, StatsdLineBuilder lineBuilder, Processor<String, String> publisher, Clock clock, Quantiles quantiles, Histogram<?> histogram) {
-        super(id, clock);
+    StatsdTimer(Id id, StatsdLineBuilder lineBuilder, Processor<String, String> publisher, Clock clock,
+                StatsConfig statsConfig, long stepMillis) {
+        super(id, clock, statsConfig);
+        this.max = new StepDouble(clock, stepMillis);
         this.lineBuilder = lineBuilder;
         this.publisher = publisher;
-        this.quantiles = quantiles;
-        this.histogram = histogram;
     }
 
     @Override
-    public void record(long amount, TimeUnit unit) {
+    protected void recordNonNegative(long amount, TimeUnit unit) {
         if (amount >= 0) {
             count.increment();
 
             double msAmount = TimeUtils.convert(amount, unit, TimeUnit.MILLISECONDS);
             totalTime.add(msAmount);
 
-            publisher.onNext(lineBuilder.timing(msAmount));
+            // not necessary to ship max, as most StatsD agents calculate this themselves
+            max.getCurrent().add(Math.max(msAmount - max.getCurrent().doubleValue(), 0));
 
-            if (quantiles != null)
-                quantiles.observe(msAmount);
-            if (histogram != null)
-                histogram.observe(msAmount);
+            publisher.onNext(lineBuilder.timing(msAmount));
         }
     }
 
@@ -68,6 +65,15 @@ public class StatsdTimer extends AbstractTimer implements Timer {
 
     @Override
     public double totalTime(TimeUnit unit) {
-        return TimeUtils.millisToUnit(totalTime.doubleValue(), unit);
+        return TimeUtils.convert(totalTime.doubleValue(), TimeUnit.MILLISECONDS, unit);
+    }
+
+    /**
+     * The StatsD agent will likely compute max with a different window, so the value may not match what you see here.
+     * This value is not exported to the agent, and is only for diagnostic use.
+     */
+    @Override
+    public double max(TimeUnit unit) {
+        return TimeUtils.convert(max.poll(), TimeUnit.MILLISECONDS, unit);
     }
 }

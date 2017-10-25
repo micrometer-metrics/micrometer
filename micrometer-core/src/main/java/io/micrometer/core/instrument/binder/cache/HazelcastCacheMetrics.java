@@ -17,9 +17,7 @@ package io.micrometer.core.instrument.binder.cache;
 
 import com.hazelcast.core.IMap;
 import com.hazelcast.monitor.LocalMapStats;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
 import java.util.concurrent.TimeUnit;
@@ -68,32 +66,41 @@ public class HazelcastCacheMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         LocalMapStats s = cache.getLocalMapStats();
 
-        registry.gauge(registry.createId(name + ".requests", Tags.concat(tags, "result", "hit"),
-            "The number of times cache lookup methods have returned a cached value"),
-            cache, cache -> cache.getLocalMapStats().getHits());
+        Gauge.builder(name + ".requests", cache, cache -> cache.getLocalMapStats().getHits())
+            .tags(tags).tags("result", "hit")
+            .description("The number of times cache lookup methods have returned a cached value")
+            .register(registry);
 
-        registry.gauge(registry.createId(name + ".requests", Tags.concat(tags, "result", "miss"),
-            "The number of times cache lookup methods have not returned a value"),
-            cache, cache -> {
+        Gauge.builder(name + ".requests", cache,
+            cache -> {
                 LocalMapStats stats = cache.getLocalMapStats();
                 return stats.getGetOperationCount() - stats.getHits();
-            });
+            })
+            .tags(tags).tags("result", "miss")
+            .description("The number of times cache lookup methods have not returned a value")
+            .register(registry);
 
-        registry.gauge(registry.createId(name + ".entries", Tags.concat(tags, "ownership", "backup"),
-            "The number of backup entries held by this member"),
-            cache, cache -> cache.getLocalMapStats().getBackupEntryCount());
+        Gauge.builder(name + ".entries", cache, cache -> cache.getLocalMapStats().getBackupEntryCount())
+            .tags(tags).tags("ownership", "backup")
+            .description("The number of backup entries held by this member")
+            .register(registry);
 
-        registry.gauge(registry.createId(name + ".entries", Tags.concat(tags, "ownership", "owned"),
-            "The number of owned entries held by this member"),
-            cache, cache -> cache.getLocalMapStats().getOwnedEntryCount());
+        Gauge.builder(name + ".entries", cache, cache -> cache.getLocalMapStats().getOwnedEntryCount())
+            .tags(tags).tags("ownership", "owned")
+            .description("The number of owned entries held by this member")
+            .register(registry);
 
-        registry.gauge(registry.createId(name + ".entry.memory", Tags.concat(tags, "ownership", "backup"),
-            "Memory cost of backup entries held by this member", "bytes"),
-            cache, cache -> cache.getLocalMapStats().getBackupEntryMemoryCost());
+        Gauge.builder(name + ".entry.memory", cache, cache -> cache.getLocalMapStats().getBackupEntryMemoryCost())
+            .tags(tags).tags("ownership", "backup")
+            .description("Memory cost of backup entries held by this member")
+            .baseUnit("bytes")
+            .register(registry);
 
-        registry.gauge(registry.createId(name + ".entry.memory", Tags.concat(tags, "ownership", "owned"),
-            "Memory cost of owned entries held by this member", "bytes"),
-            cache, cache -> cache.getLocalMapStats().getOwnedEntryMemoryCost());
+        Gauge.builder(name + ".entry.memory", cache, cache -> cache.getLocalMapStats().getOwnedEntryMemoryCost())
+            .tags(tags).tags("ownership", "owned")
+            .description("Memory cost of owned entries held by this member")
+            .baseUnit("bytes")
+            .register(registry);
 
         timings(registry);
         nearCacheMetrics(registry);
@@ -101,38 +108,54 @@ public class HazelcastCacheMetrics implements MeterBinder {
 
     private void nearCacheMetrics(MeterRegistry registry) {
         if (cache.getLocalMapStats().getNearCacheStats() != null) {
-            registry.gauge(registry.createId(name + ".near.requests", Tags.concat(tags, "result", "hit"),
-                "The number of hits (reads) of near cache entries owned by this member"),
-                cache, cache -> cache.getLocalMapStats().getNearCacheStats().getHits());
+            Gauge.builder(name + ".near.requests", cache, cache -> cache.getLocalMapStats().getNearCacheStats().getHits())
+                .tags(tags).tags("result", "hit")
+                .description("The number of hits (reads) of near cache entries owned by this member")
+                .register(registry);
 
-            registry.gauge(registry.createId(name + ".near.requests", Tags.concat(tags, "result", "miss"),
-                "The number of hits (reads) of near cache entries owned by this member"),
-                cache, cache -> cache.getLocalMapStats().getNearCacheStats().getMisses());
+            Gauge.builder(name + ".near.requests", cache, cache -> cache.getLocalMapStats().getNearCacheStats().getMisses())
+                .tags(tags).tags("result", "miss")
+                .description("The number of hits (reads) of near cache entries owned by this member")
+                .register(registry);
 
-            registry.gauge(registry.createId(name + ".near.evictions", tags,
-                "The number of evictions of near cache entries owned by this member"),
-                cache, cache -> cache.getLocalMapStats().getNearCacheStats().getEvictions());
+            Gauge.builder(name + ".near.evictions", cache, cache -> cache.getLocalMapStats().getNearCacheStats().getEvictions())
+                .tags(tags)
+                .description("The number of evictions of near cache entries owned by this member")
+                .register(registry);
 
-            registry.gauge(registry.createId(name + ".near.persistences", tags,
-                "The number of Near Cache key persistences (when the pre-load feature is enabled)"),
-                cache, cache -> cache.getLocalMapStats().getNearCacheStats().getPersistenceCount());
+            Gauge.builder(name + ".near.persistences", cache, cache -> cache.getLocalMapStats().getNearCacheStats().getPersistenceCount())
+                .tags(tags)
+                .description("The number of Near Cache key persistences (when the pre-load feature is enabled)")
+                .register(registry);
         }
     }
 
     private void timings(MeterRegistry registry) {
-        registry.more().timer(registry.createId(name + ".gets", tags, "Cache gets"),
-            cache,
-            cache -> cache.getLocalMapStats().getGetOperationCount(),
-            cache -> cache.getLocalMapStats().getTotalGetLatency(), TimeUnit.NANOSECONDS);
+        FunctionTimer.builder(name + ".gets",
+                cache,
+                cache -> cache.getLocalMapStats().getGetOperationCount(),
+                cache -> cache.getLocalMapStats().getTotalGetLatency(), TimeUnit.NANOSECONDS
+            )
+            .tags(tags)
+            .description("Cache gets")
+            .register(registry);
 
-        registry.more().timer(registry.createId(name + ".puts", tags, "Cache puts"),
-            cache,
-            cache -> cache.getLocalMapStats().getPutOperationCount(),
-            cache -> cache.getLocalMapStats().getTotalPutLatency(), TimeUnit.NANOSECONDS);
+        FunctionTimer.builder(name + ".puts",
+                cache,
+                cache -> cache.getLocalMapStats().getPutOperationCount(),
+                cache -> cache.getLocalMapStats().getTotalPutLatency(), TimeUnit.NANOSECONDS
+            )
+            .tags(tags)
+            .description("Cache puts")
+            .register(registry);
 
-        registry.more().timer(registry.createId(name + ".removals", tags, "Cache removals"),
-            cache,
-            cache -> cache.getLocalMapStats().getRemoveOperationCount(),
-            cache -> cache.getLocalMapStats().getTotalRemoveLatency(), TimeUnit.NANOSECONDS);
+        FunctionTimer.builder(name + ".removals",
+                cache,
+                cache -> cache.getLocalMapStats().getRemoveOperationCount(),
+                cache -> cache.getLocalMapStats().getTotalRemoveLatency(), TimeUnit.NANOSECONDS
+            )
+            .tags(tags)
+            .description("Cache removals")
+            .register(registry);
     }
 }

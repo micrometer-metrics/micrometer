@@ -20,9 +20,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
 import java.util.concurrent.TimeUnit;
@@ -117,36 +115,49 @@ public class CaffeineCacheMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        registry.gauge(registry.createId(name + ".estimated.size", tags,
-            "The approximate number of entries in this cache"),
-            cache, Cache::estimatedSize);
+        Gauge.builder(name + ".estimated.size", cache, Cache::estimatedSize)
+            .tags(tags)
+            .description("The approximate number of entries in this cache")
+            .register(registry);
 
-        registry.more().counter(registry.createId(name + ".requests", Tags.concat(tags, "result", "miss"),
-            "the number of times cache lookup methods have returned an uncached (newly loaded) value, or null"),
-            cache, c -> c.stats().missCount());
-        registry.more().counter(registry.createId(name + ".requests", Tags.concat(tags, "result", "hit"),
-            "The number of times cache lookup methods have returned a cached value."),
-            cache, c -> c.stats().hitCount());
-        registry.more().counter(registry.createId(name + ".evictions", tags, "cache evictions"),
-            cache, c -> c.stats().evictionCount());
+        FunctionCounter.builder(name + ".requests", cache, c -> c.stats().missCount())
+            .tags(tags).tags("result", "miss")
+            .description("the number of times cache lookup methods have returned an uncached (newly loaded) value, or null")
+            .register(registry);
 
-        registry.gauge(registry.createId(name + ".eviction.weight", tags,
-            "The sum of weights of evicted entries. This total does not include manual invalidations."),
-            cache, c -> c.stats().evictionWeight());
+        FunctionCounter.builder(name + ".requests", cache, c -> c.stats().hitCount())
+            .tags(tags).tags("result", "hit")
+            .description("The number of times cache lookup methods have returned a cached value.")
+            .register(registry);
+
+        FunctionCounter.builder(name + ".evictions", cache, c -> c.stats().evictionCount())
+            .tags(tags)
+            .description("cache evictions")
+            .register(registry);
+
+        Gauge.builder(name + ".eviction.weight", cache, c -> c.stats().evictionWeight())
+            .tags(tags)
+            .description("The sum of weights of evicted entries. This total does not include manual invalidations.")
+            .register(registry);
 
         if (cache instanceof LoadingCache) {
             // dividing these gives you a measure of load latency
-            registry.more().timeGauge(registry.createId(name + ".load.duration", tags,
-                "The time the cache has spent loading new values"),
-                cache, TimeUnit.NANOSECONDS, c -> c.stats().totalLoadTime());
+            TimeGauge.builder(name + ".load.duration", cache, TimeUnit.NANOSECONDS, c -> c.stats().totalLoadTime())
+                .tags(tags)
+                .description("The time the cache has spent loading new values")
+                .register(registry);
 
-            registry.more().counter(registry.createId(name + ".load", Tags.concat(tags, "result", "success"),
-                "The number of times cache lookup methods have successfully loaded a new value"),
-                cache, c -> c.stats().loadSuccessCount());
-            registry.more().counter(registry.createId(name + ".load", Tags.concat(tags, "result", "failure"),
-                "The number of times {@link Cache} lookup methods failed to load a new value, either " +
-                    "because no value was found or an exception was thrown while loading"),
-                cache, c -> c.stats().loadFailureCount());
+            FunctionCounter.builder(name + ".load", cache, c -> c.stats().loadSuccessCount())
+                .tags(tags)
+                .tags("result", "success")
+                .description("The number of times cache lookup methods have successfully loaded a new value")
+                .register(registry);
+
+            FunctionCounter.builder(name + ".load", cache, c -> c.stats().loadFailureCount())
+                .tags(tags).tags("result", "failure")
+                .description("The number of times {@link Cache} lookup methods failed to load a new value, either " +
+                    "because no value was found or an exception was thrown while loading")
+                .register(registry);
         }
     }
 }

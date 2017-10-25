@@ -18,9 +18,7 @@ package io.micrometer.core.instrument.binder.cache;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
 import java.util.concurrent.TimeUnit;
@@ -72,32 +70,42 @@ public class GuavaCacheMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        registry.gauge(registry.createId(name + ".estimated.size", tags,
-            "The approximate number of entries in this cache"),
-            cache, Cache::size);
+        Gauge.builder(name + ".estimated.size", cache, Cache::size)
+            .tags(tags)
+            .description("The approximate number of entries in this cache")
+            .register(registry);
 
-        registry.more().counter(registry.createId(name + ".requests", Tags.concat(tags, "result", "miss"),
-            "The number of times cache lookup methods have returned an uncached (newly loaded) value, or null"),
-            cache, c -> c.stats().missCount());
-        registry.more().counter(registry.createId(name + ".requests", Tags.concat(tags, "result", "hit"),
-            "The number of times cache lookup methods have returned a cached value"),
-            cache, c -> c.stats().hitCount());
-        registry.more().counter(registry.createId(name + ".evictions", tags, "cache evictions"),
-            cache, c -> c.stats().evictionCount());
+        FunctionCounter.builder(name + ".requests", cache, c -> c.stats().missCount())
+            .tags(tags).tags("result", "miss")
+            .description("The number of times cache lookup methods have returned an uncached (newly loaded) value, or null")
+            .register(registry);
+
+        FunctionCounter.builder(name + ".requests", cache, c -> c.stats().hitCount())
+            .tags(tags).tags("result", "hit")
+            .description("The number of times cache lookup methods have returned a cached value")
+            .register(registry);
+
+        FunctionCounter.builder(name + ".evictions", cache, c -> c.stats().evictionCount())
+            .tags(tags)
+            .description("Cache evictions")
+            .register(registry);
 
         if (cache instanceof LoadingCache) {
             // dividing these gives you a measure of load latency
-            registry.more().timeGauge(registry.createId(name + ".load.duration", tags,
-                "The time the cache has spent loading new values"),
-                cache, TimeUnit.NANOSECONDS, c -> c.stats().totalLoadTime());
+            TimeGauge.builder(name + ".load.duration", cache, TimeUnit.NANOSECONDS, c -> c.stats().totalLoadTime())
+                .tags(tags)
+                .description("The time the cache has spent loading new values")
+                .register(registry);
 
-            registry.more().counter(registry.createId(name + ".load", Tags.concat(tags, "result", "success"),
-                "The number of times cache lookup methods have successfully loaded a new value"),
-                cache, c -> c.stats().loadSuccessCount());
+            FunctionCounter.builder(name + ".load",cache, c -> c.stats().loadSuccessCount())
+                .tags(tags).tags("result", "success")
+                .description("The number of times cache lookup methods have successfully loaded a new value")
+                .register(registry);
 
-            registry.more().counter(registry.createId(name + ".load", Tags.concat(tags, "result", "failure"),
-                "The number of times cache lookup methods threw an exception while loading a new value"),
-                cache, c -> c.stats().loadExceptionCount());
+            FunctionCounter.builder(name + ".load", cache, c -> c.stats().loadExceptionCount())
+                .tags(tags).tags("result", "failure")
+                .description("The number of times cache lookup methods threw an exception while loading a new value")
+                .register(registry);
         }
     }
 }
