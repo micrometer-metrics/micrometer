@@ -15,6 +15,8 @@
  */
 package io.micrometer.spring.samples.components;
 
+import com.netflix.hystrix.HystrixCommand;
+import com.netflix.hystrix.HystrixCommandGroupKey;
 import io.micrometer.core.annotation.Timed;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,5 +32,55 @@ public class PersonController {
     @Timed(percentiles = true)
     public List<String> allPeople() {
         return people;
+    }
+
+    @GetMapping("/api/fail")
+    public String fail() {
+        return new CommandHelloFailure("World").execute();
+    }
+
+    @GetMapping("/api/ok")
+    public String ok() {
+        return new CommandHelloSuccess("World").execute();
+    }
+
+    public static class CommandHelloFailure extends HystrixCommand<String> {
+
+        private final String name;
+
+        public CommandHelloFailure(String name) {
+            super(HystrixCommandGroupKey.Factory.asKey("ExampleGroup"));
+            this.name = name;
+        }
+
+        @Override
+        protected String run() {
+            throw new RuntimeException("Boom");
+        }
+
+        @Override
+        protected String getFallback() {
+            return "Hello Failure " + name + "!";
+        }
+    }
+
+    public static class CommandHelloSuccess extends HystrixCommand<String> {
+
+        private final String name;
+
+        public CommandHelloSuccess(String name) {
+            super(HystrixCommandGroupKey.Factory.asKey("ExampleGroup"));
+            this.name = name;
+        }
+
+        @Override
+        protected String run() {
+            return "OK";
+        }
+
+        @Override
+        protected String getFallback() {
+            return "Hello Failure " + name + "!";
+        }
     }
 }

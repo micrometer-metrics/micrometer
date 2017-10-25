@@ -36,6 +36,8 @@ dependencies {
     compile 'javax.servlet:javax.servlet-api:3.1.0', optional
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
 
+    compile 'com.netflix.hystrix:hystrix-javanica:1.5.8'
+
     ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd'].each { sys ->
         compile project(":micrometer-registry-$sys"), optional
     }
