@@ -7,4 +7,6 @@ dependencies {
     ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd'].each { sys ->
         compile project(":micrometer-registry-$sys")
     }
+
+    compile 'io.projectreactor.ipc:reactor-netty:latest.release'
 }

@@ -15,36 +15,54 @@
  */
 package io.micrometer.core.samples;
 
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.cache.GuavaCacheMetrics;
 import io.micrometer.core.samples.utils.SampleRegistries;
-import reactor.core.publisher.Mono;
+import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.DelimiterBasedFrameDecoder;
+import reactor.ipc.netty.http.client.HttpClient;
 
 import java.time.Duration;
+import java.util.stream.IntStream;
 
-import static java.util.Collections.emptyList;
+import static io.netty.buffer.Unpooled.wrappedBuffer;
 
+/**
+ * @author Jon Schneider
+ */
 public class CacheSample {
+    private static final int CACHE_SIZE = 10000;
+
+    private static final Cache<String, Integer> guavaCache = CacheBuilder.newBuilder()
+        .maximumSize(CACHE_SIZE)
+        .recordStats() // required
+        .build();
+
     public static void main(String[] args) {
-        LoadingCache<Integer, Integer> cache = CacheBuilder.newBuilder()
-                .maximumSize(10)
-                .recordStats()
-                .build(new CacheLoader<Integer, Integer>() {
-                    @Override
-                    public Integer load(Integer key) {
-                        Mono.delay(Duration.ofMillis(100)).block();
-                        return -1*key;
-                    }
-                });
-
         MeterRegistry registry = SampleRegistries.prometheus();
-        new GuavaCacheMetrics(cache, emptyList(), "inverting.cache").bindTo(registry);
 
-        for(int i = 0;; i++) {
-            cache.getUnchecked(i);
-        }
+        GuavaCacheMetrics.monitor(registry, guavaCache, "book.guava");
+
+        // read all of Frankenstein
+        HttpClient.create("www.gutenberg.org")
+            .get("/cache/epub/84/pg84.txt")
+            .flatMapMany(res -> res.addHandler(wordDecoder()).receive().asString())
+            .delayElements(Duration.ofMillis(10)) // one word per 10 ms
+            .filter(word -> !word.isEmpty())
+            .doOnNext(word -> {
+                if (guavaCache.getIfPresent(word) == null)
+                    guavaCache.put(word, 1);
+            })
+            .blockLast();
+    }
+
+    /** skip things that aren't words, roughly **/
+    private static DelimiterBasedFrameDecoder wordDecoder() {
+        return new DelimiterBasedFrameDecoder(256,
+            IntStream.of('\r', '\n', ' ', '\t', '.', ',', ';', ':', '-')
+                .mapToObj(delim -> wrappedBuffer(new byte[] { (byte) delim }))
+                .toArray(ByteBuf[]::new));
     }
 }
