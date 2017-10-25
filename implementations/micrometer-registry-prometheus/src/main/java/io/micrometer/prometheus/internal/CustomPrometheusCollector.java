@@ -35,10 +35,12 @@ public class CustomPrometheusCollector extends Collector {
     private final Type type;
     private final List<String> tagKeys;
     private final Collection<Child> children = new ConcurrentLinkedQueue<>();
+    private final String description;
 
     public CustomPrometheusCollector(Meter.Id id, NamingConvention convention, Type type) {
         this.type = type;
         this.name = id.getConventionName(convention);
+        this.description = id.getDescription() == null ? " " : id.getDescription();
         this.tagKeys = id.getConventionTags(convention).stream().map(Tag::getKey).collect(toList());
     }
 
@@ -50,7 +52,7 @@ public class CustomPrometheusCollector extends Collector {
 
     @Override
     public List<MetricFamilySamples> collect() {
-        return Collections.singletonList(new MetricFamilySamples(name, type, " ", children.stream()
+        return Collections.singletonList(new MetricFamilySamples(name, type, description, children.stream()
                 .flatMap(Child::collect).collect(toList())));
     }
 
