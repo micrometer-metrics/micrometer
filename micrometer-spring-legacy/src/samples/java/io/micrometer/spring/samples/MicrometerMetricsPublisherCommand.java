@@ -6,15 +6,10 @@ import com.netflix.hystrix.HystrixCommandKey;
 import com.netflix.hystrix.HystrixCommandMetrics;
 import com.netflix.hystrix.HystrixCommandProperties;
 import com.netflix.hystrix.metric.consumer.CumulativeCommandEventCounterStream;
-import com.netflix.hystrix.metric.consumer.RollingCommandEventCounterStream;
-import com.netflix.hystrix.metric.consumer.RollingCommandLatencyDistributionStream;
-import com.netflix.hystrix.metric.consumer.RollingCommandMaxConcurrencyStream;
-import com.netflix.hystrix.metric.consumer.RollingCommandUserLatencyDistributionStream;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
 import com.netflix.hystrix.util.HystrixRollingNumberEvent;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import org.slf4j.Logger;
@@ -38,7 +33,7 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
         this.circuitBreaker = circuitBreaker;
         this.commandKey = commandKey;
         this.properties = properties;
-        tags = Tags.zip("commandGroupKey", commandGroupKey.name(), "key", commandKey.name());
+        tags = Tags.zip("group", commandGroupKey.name(), "key", commandKey.name());
     }
 
     @Override
@@ -46,10 +41,25 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
         Gauge.builder("hystrix.circuit.breaker.open", circuitBreaker, c -> c.isOpen() ? 1 : 0)
             .tags(tags).register(meterRegistry);
 
-        createCounter("hystrix.circuit.breaker.bad.requests", HystrixRollingNumberEvent.BAD_REQUEST);
-        createCounter("hystrix.circuit.breaker.short.circuited", HystrixRollingNumberEvent.SHORT_CIRCUITED);
-        createCounter("hystrix.circuit.breaker.success", HystrixRollingNumberEvent.SUCCESS);
-        createCounter("hystrix.circuit.breaker.failure", HystrixRollingNumberEvent.FALLBACK_SUCCESS);
+        String executionName = "hystrix.execution";
+        String executionDescription = "Execution results. See https://github.com/Netflix/Hystrix/wiki/Metrics-and-Monitoring#command-execution-event-types-comnetflixhystrixhystrixeventtype for type definitions";
+        createCounter(executionName, executionDescription, HystrixRollingNumberEvent.EMIT);
+        createCounter(executionName, executionDescription, HystrixRollingNumberEvent.SUCCESS);
+        createCounter(executionName, executionDescription, HystrixRollingNumberEvent.FAILURE);
+        createCounter(executionName, executionDescription, HystrixRollingNumberEvent.TIMEOUT);
+        createCounter(executionName, executionDescription, HystrixRollingNumberEvent.BAD_REQUEST);
+        createCounter(executionName, executionDescription, HystrixRollingNumberEvent.SHORT_CIRCUITED);
+        createCounter(executionName, executionDescription, HystrixRollingNumberEvent.THREAD_POOL_REJECTED);
+        createCounter(executionName, executionDescription, HystrixRollingNumberEvent.SEMAPHORE_REJECTED);
+
+
+        String fallbackEventName = "hystrix.fallback";
+        String fallbackEventDescription = "Fallback execution results. See https://github.com/Netflix/Hystrix/wiki/Metrics-and-Monitoring#command-fallback-event-types-comnetflixhystrixhystrixeventtype for type definitions";
+        createCounter(fallbackEventName, fallbackEventDescription, HystrixRollingNumberEvent.FALLBACK_EMIT);
+        createCounter(fallbackEventName, fallbackEventDescription, HystrixRollingNumberEvent.FALLBACK_SUCCESS);
+        createCounter(fallbackEventName, fallbackEventDescription, HystrixRollingNumberEvent.FALLBACK_FAILURE);
+        createCounter(fallbackEventName, fallbackEventDescription, HystrixRollingNumberEvent.FALLBACK_REJECTION);
+        createCounter(fallbackEventName, fallbackEventDescription, HystrixRollingNumberEvent.FALLBACK_MISSING);
 
 //        RollingCommandEventCounterStream.getInstance(key, properties).startCachingStreamValuesIfUnstarted();
         CumulativeCommandEventCounterStream.getInstance(commandKey, properties).startCachingStreamValuesIfUnstarted();
@@ -59,10 +69,10 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
 
     }
 
-    private void createCounter(String name, HystrixRollingNumberEvent event) {
+    private void createCounter(String name, String executionDescription, HystrixRollingNumberEvent event) {
 
 
-        meterRegistry.more().counter(meterRegistry.createId(name, tags, " "), metrics, m -> {
+        meterRegistry.more().counter(meterRegistry.createId(name, Tags.concat(tags, "event", event.name().toLowerCase()), executionDescription), metrics, m -> {
                 try {
                     return m.getCumulativeCount(event);
                 } catch (NoSuchFieldError error) {
