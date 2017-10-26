@@ -21,6 +21,9 @@ dependencies {
     compile 'javax.cache:cache-api:1.0.0', optional
     compile 'com.hazelcast:hazelcast:3.8.+', optional
 
+    // hystrix monitoring
+    compile 'com.netflix.hystrix:hystrix-core:1.5.12', optional
+
     // log monitoring
     compile 'ch.qos.logback:logback-classic:latest.release', optional
 

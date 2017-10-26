@@ -20,7 +20,12 @@ import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
@@ -35,7 +40,7 @@ import static java.util.stream.StreamSupport.stream;
  * Creates and manages your application's set of meters. Exporters use the meter registry to iterate
  * over the set of meters instrumenting your application, and then further iterate over each meter's metrics, generally
  * resulting in a time series in the metrics backend for each combination of metrics and dimensions.
- *
+ * <p>
  * MeterRegistry may be used in a reactive context. As such, implementations must not negatively impact the calling
  * thread, e.g. it should respond immediately by avoiding IO call, deep stack recursion or any coordination.
  *
@@ -116,7 +121,7 @@ public abstract class MeterRegistry {
     protected abstract TimeUnit getBaseTimeUnit();
 
     private String getBaseTimeUnitStr() {
-        if(getBaseTimeUnit() == null)
+        if (getBaseTimeUnit() == null)
             return null;
         return getBaseTimeUnit().toString().toLowerCase();
     }
@@ -345,6 +350,18 @@ public abstract class MeterRegistry {
                     .collect(Collectors.toList());
             }
         }
+
+
+        public Optional<Double> firstValue() {
+            Optional<Meter> meter = meter();
+            if (meter.isPresent()) {
+                Optional<Measurement> measurement = stream(meter.get().measure().spliterator(), false).findFirst();
+                if (measurement.isPresent()) {
+                    return Optional.of(measurement.get().getValue());
+                }
+            }
+            return Optional.empty();
+        }
     }
 
     public Search find(String name) {
@@ -471,9 +488,9 @@ public abstract class MeterRegistry {
          * A timer that tracks monotonically increasing functions for count and totalTime.
          */
         public <T> FunctionTimer timer(String name, Iterable<Tag> tags, T obj,
-                                ToLongFunction<T> countFunction,
-                                ToDoubleFunction<T> totalTimeFunction,
-                                TimeUnit totalTimeFunctionUnits) {
+                                       ToLongFunction<T> countFunction,
+                                       ToDoubleFunction<T> totalTimeFunction,
+                                       TimeUnit totalTimeFunctionUnits) {
             return timer(createId(name, tags, null), obj, countFunction,
                 totalTimeFunction, totalTimeFunctionUnits);
         }
@@ -493,7 +510,7 @@ public abstract class MeterRegistry {
          * A gauge that tracks a time value, to be scaled to the monitoring system's base time unit.
          */
         public <T> TimeGauge timeGauge(String name, Iterable<Tag> tags, T obj,
-                                   TimeUnit fUnit, ToDoubleFunction<T> f) {
+                                       TimeUnit fUnit, ToDoubleFunction<T> f) {
             return timeGauge(createId(name, tags, null), obj, fUnit, f);
         }
 
