@@ -103,7 +103,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 // satisfies https://prometheus.io/docs/concepts/metric_types/#summary
                 for (double percentile : statsConfig.getPercentiles()) {
                     List<String> quantileValues = new LinkedList<>(tagValues);
-                    quantileValues.add(Collector.doubleToGoString(percentile / 100));
+                    quantileValues.add(Collector.doubleToGoString(percentile));
                     samples.add(new Collector.MetricFamilySamples.Sample(conventionName, quantileKeys, quantileValues,
                         summary.percentile(percentile)));
                 }
@@ -161,7 +161,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 // satisfies https://prometheus.io/docs/concepts/metric_types/#summary
                 for (double percentile : statsConfig.getPercentiles()) {
                     List<String> quantileValues = new LinkedList<>(tagValues);
-                    quantileValues.add(Collector.doubleToGoString(percentile / 100));
+                    quantileValues.add(Collector.doubleToGoString(percentile));
                     samples.add(new Collector.MetricFamilySamples.Sample(conventionName, quantileKeys, quantileValues,
                         timer.percentile(percentile, TimeUnit.SECONDS)));
                 }

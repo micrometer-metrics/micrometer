@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.histogram.PercentileHistogramBuckets;
 import io.micrometer.core.instrument.histogram.StatsConfig;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.text.DecimalFormat;
 import java.util.concurrent.TimeUnit;
@@ -74,7 +75,8 @@ public class SimpleMeterRegistry extends StepMeterRegistry {
 
         if(statsConfig.isPublishingHistogram()) {
             for (Long bucket : statsConfig.getHistogramBuckets(false)) {
-                more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket", Long.toString(bucket)),
+                more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket",
+                    percentileFormat.format(TimeUtils.nanosToUnit(bucket, getBaseTimeUnit()))),
                     timer, t -> t.histogramCountAtValue(bucket));
             }
         }

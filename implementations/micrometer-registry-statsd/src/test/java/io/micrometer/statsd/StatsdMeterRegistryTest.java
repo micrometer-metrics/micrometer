@@ -145,7 +145,7 @@ class StatsdMeterRegistryTest {
                 line = "my.counter:2|c|#statistic:count,my.tag:val";
                 break;
             case Telegraf:
-                line = "myCounter,statistic=count,myTag=val:2|c";
+                line = "my_counter,statistic=count,my_tag=val:2|c";
         }
 
         assertLines(r -> r.counter("my.counter", "my.tag", "val").increment(2.1), flavor, line);
@@ -163,7 +163,7 @@ class StatsdMeterRegistryTest {
                 line = "my.gauge:2|g|#statistic:value,my.tag:val";
                 break;
             case Telegraf:
-                line = "myGauge,statistic=value,myTag=val:2|g";
+                line = "my_gauge,statistic=value,my_tag=val:2|g";
                 break;
         }
 
@@ -183,7 +183,7 @@ class StatsdMeterRegistryTest {
                 line = "my.timer:1|ms|#my.tag:val";
                 break;
             case Telegraf:
-                line = "myTimer,myTag=val:1|ms";
+                line = "my_timer,my_tag=val:1|ms";
         }
 
         assertLines(r -> r.timer("my.timer", "my.tag", "val").record(1, TimeUnit.MILLISECONDS),
@@ -202,7 +202,7 @@ class StatsdMeterRegistryTest {
                 line = "my.summary:1|h|#my.tag:val";
                 break;
             case Telegraf:
-                line = "mySummary,myTag=val:1|h";
+                line = "my_summary,my_tag=val:1|h";
         }
 
         assertLines(r -> r.summary("my.summary", "my.tag", "val").record(1), flavor, line);

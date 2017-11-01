@@ -16,9 +16,10 @@
 package io.micrometer.spring.web.servlet;
 
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.simple.SimpleConfig;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Statistic;
+import io.micrometer.prometheus.PrometheusConfig;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,9 +47,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
-import java.util.stream.StreamSupport;
 
-import static io.micrometer.core.instrument.simple.SimpleConfig.DEFAULT_STEP;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
@@ -68,10 +67,7 @@ public class MetricsHandlerInterceptorTest {
     private static final CountDownLatch longRequestCountDown = new CountDownLatch(1);
 
     @Autowired
-    private MeterRegistry registry;
-
-    @Autowired
-    private MockClock clock;
+    private PrometheusMeterRegistry registry;
 
     @Autowired
     private WebApplicationContext context;
@@ -87,7 +83,6 @@ public class MetricsHandlerInterceptorTest {
     public void timedMethod() throws Exception {
         this.mvc.perform(get("/api/c1/10")).andExpect(status().isOk());
 
-        clock.add(DEFAULT_STEP);
         assertThat(this.registry.find("http.server.requests")
             .tags("status", "200", "uri", "/api/c1/{id}", "public", "true")
             .value(Statistic.Count, 1.0).timer()).isPresent();
@@ -97,20 +92,15 @@ public class MetricsHandlerInterceptorTest {
     public void subclassedTimedMethod() throws Exception {
         this.mvc.perform(get("/api/c1/metaTimed/10")).andExpect(status().isOk());
 
-        clock.add(DEFAULT_STEP);
         assertThat(this.registry.find("http.server.requests")
             .tags("status", "200", "uri", "/api/c1/metaTimed/{id}")
             .value(Statistic.Count, 1.0).timer()).isPresent();
-
-        assertThat(this.registry.find("http.server.requests")
-            .tags("percentile", "0.95").gauge()).isPresent();
     }
 
     @Test
     public void untimedMethod() throws Exception {
         this.mvc.perform(get("/api/c1/untimed/10")).andExpect(status().isOk());
 
-        clock.add(DEFAULT_STEP);
         assertThat(this.registry.find("http.server.requests")
             .tags("uri", "/api/c1/untimed/10").timer()).isEmpty();
     }
@@ -119,7 +109,6 @@ public class MetricsHandlerInterceptorTest {
     public void timedControllerClass() throws Exception {
         this.mvc.perform(get("/api/c2/10")).andExpect(status().isOk());
 
-        clock.add(DEFAULT_STEP);
         assertThat(this.registry.find("http.server.requests").tags("status", "200")
             .value(Statistic.Count, 1.0)
             .timer()).isPresent();
@@ -129,7 +118,6 @@ public class MetricsHandlerInterceptorTest {
     public void badClientRequest() throws Exception {
         this.mvc.perform(get("/api/c1/oops")).andExpect(status().is4xxClientError());
 
-        clock.add(DEFAULT_STEP);
         assertThat(this.registry.find("http.server.requests").tags("status", "400")
             .value(Statistic.Count, 1.0)
             .timer()).isPresent();
@@ -140,7 +128,6 @@ public class MetricsHandlerInterceptorTest {
         assertThatCode(() -> this.mvc.perform(get("/api/c1/unhandledError/10"))
             .andExpect(status().isOk())).hasCauseInstanceOf(RuntimeException.class);
 
-        clock.add(DEFAULT_STEP);
         assertThat(this.registry.find("http.server.requests")
             .tags("exception", "RuntimeException").value(Statistic.Count, 1.0)
             .timer()).isPresent();
@@ -151,8 +138,6 @@ public class MetricsHandlerInterceptorTest {
         MvcResult result = this.mvc.perform(get("/api/c1/long/10"))
             .andExpect(request().asyncStarted()).andReturn();
 
-        clock.add(DEFAULT_STEP);
-
         // while the mapping is running, it contributes to the activeTasks count
         assertThat(this.registry.find("my.long.request").tags("region", "test")
             .value(Statistic.Count, 1.0).longTaskTimer()).isPresent();
@@ -162,7 +147,6 @@ public class MetricsHandlerInterceptorTest {
 
         this.mvc.perform(asyncDispatch(result)).andExpect(status().isOk());
 
-        clock.add(DEFAULT_STEP);
         assertThat(this.registry.find("http.server.requests").tags("status", "200")
             .value(Statistic.Count, 1.0).timer()).isPresent();
     }
@@ -171,7 +155,6 @@ public class MetricsHandlerInterceptorTest {
     public void endpointThrowsError() throws Exception {
         this.mvc.perform(get("/api/c1/error/10")).andExpect(status().is4xxClientError());
 
-        clock.add(DEFAULT_STEP);
         assertThat(this.registry.find("http.server.requests").tags("status", "422")
             .value(Statistic.Count, 1.0).timer()).isPresent();
     }
@@ -180,7 +163,6 @@ public class MetricsHandlerInterceptorTest {
     public void regexBasedRequestMapping() throws Exception {
         this.mvc.perform(get("/api/c1/regex/.abc")).andExpect(status().isOk());
 
-        clock.add(DEFAULT_STEP);
         assertThat(this.registry.find("http.server.requests")
             .tags("uri", "/api/c1/regex/{id:\\.[a-z]+}").value(Statistic.Count, 1.0)
             .timer()).isPresent();
@@ -190,21 +172,16 @@ public class MetricsHandlerInterceptorTest {
     public void recordQuantiles() throws Exception {
         this.mvc.perform(get("/api/c1/percentiles/10")).andExpect(status().isOk());
 
-        assertThat(this.registry.find("http.server.requests").tags("percentile", "0.5")
-            .gauge()).isNotEmpty();
-        assertThat(this.registry.find("http.server.requests").tags("percentile", "0.95")
-            .gauge()).isNotEmpty();
+        assertThat(this.registry.scrape()).contains("quantile=\"0.5\"");
+        assertThat(this.registry.scrape()).contains("quantile=\"0.95\"");
     }
 
     @Test
     public void recordHistogram() throws Exception {
         this.mvc.perform(get("/api/c1/histogram/10")).andExpect(status().isOk());
 
-        clock.add(DEFAULT_STEP);
-        assertThat(this.registry.find("http.server.requests").meters()
-            .stream().flatMap((m) -> StreamSupport
-                .stream(m.getId().getTags().spliterator(), false))
-            .map(Tag::getKey)).contains("bucket");
+        assertThat(this.registry.scrape()).contains("le=\"0.001\"");
+        assertThat(this.registry.scrape()).contains("le=\"30.0\"");
     }
 
     @Target({ElementType.METHOD})
@@ -218,13 +195,8 @@ public class MetricsHandlerInterceptorTest {
     @Import({Controller1.class, Controller2.class})
     static class TestConfiguration {
         @Bean
-        MockClock clock() {
-            return new MockClock();
-        }
-
-        @Bean
-        MeterRegistry meterRegistry(Clock clock) {
-            return new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
+        MeterRegistry meterRegistry() {
+            return new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
         }
 
         @Bean
