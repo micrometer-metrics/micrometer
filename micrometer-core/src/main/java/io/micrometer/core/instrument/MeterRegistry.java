@@ -625,9 +625,8 @@ public abstract class MeterRegistry {
         Meter m = meterMap.get(idWithCommonTags);
 
         if (m == null) {
-            m = builder.apply(idWithCommonTags);
-
             synchronized (meterMap) {
+                m = builder.apply(idWithCommonTags);
                 Meter m2 = meterMap.putIfAbsent(idWithCommonTags, m);
                 m = m2 == null ? m : m2;
             }

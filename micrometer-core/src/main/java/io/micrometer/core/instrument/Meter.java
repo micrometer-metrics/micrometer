@@ -153,6 +153,10 @@ public interface Meter {
             this.type = type;
         }
 
+        public Type getType() {
+            return type;
+        }
+
         /**
          * For use by registry implementations to change the identifier's base unit when it is determined
          * solely by the implementation, e.g. identifiers associated with timers.

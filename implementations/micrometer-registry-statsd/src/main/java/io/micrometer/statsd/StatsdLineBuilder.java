@@ -138,7 +138,7 @@ class StatsdLineBuilder {
             case Datadog:
             case Telegraf:
             default:
-                return convention.name(id.getName(), Meter.Type.Counter, id.getBaseUnit());
+                return convention.name(id.getName(), id.getType(), id.getBaseUnit());
         }
     }
 }
