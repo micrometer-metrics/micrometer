@@ -49,13 +49,13 @@ public class SimpleMeterRegistry extends StepMeterRegistry {
         DistributionSummary summary = super.newDistributionSummary(id, statsConfig);
 
         for (double percentile : statsConfig.getPercentiles()) {
-            gauge(id.getName(), Tags.concat(id.getTags(), "percentile", percentileFormat.format(percentile)),
+            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
                 percentile, summary::percentile);
         }
 
         if(statsConfig.isPublishingHistogram()) {
             for (Long bucket : statsConfig.getHistogramBuckets(false)) {
-                more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", Long.toString(bucket)),
+                more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket", Long.toString(bucket)),
                     summary, s -> s.histogramCountAtValue(bucket));
             }
         }
@@ -68,13 +68,13 @@ public class SimpleMeterRegistry extends StepMeterRegistry {
         Timer timer = super.newTimer(id, statsConfig);
 
         for (double percentile : statsConfig.getPercentiles()) {
-            gauge(id.getName(), Tags.concat(id.getTags(), "percentile", percentileFormat.format(percentile)),
+            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
                 percentile, p -> timer.percentile(p, getBaseTimeUnit()));
         }
 
         if(statsConfig.isPublishingHistogram()) {
             for (Long bucket : statsConfig.getHistogramBuckets(false)) {
-                more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", Long.toString(bucket)),
+                more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket", Long.toString(bucket)),
                     timer, t -> t.histogramCountAtValue(bucket));
             }
         }

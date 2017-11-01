@@ -67,13 +67,13 @@ public class DropwizardMeterRegistry extends MeterRegistry {
         DropwizardTimer timer = new DropwizardTimer(id, registry.timer(hierarchicalName(id)), clock, statsConfig);
 
         for (double percentile : statsConfig.getPercentiles()) {
-            gauge(id.getName(), Tags.concat(id.getTags(), "percentile", percentileFormat.format(percentile)),
+            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
                 percentile, p -> timer.percentile(p, getBaseTimeUnit()));
         }
 
         if(statsConfig.isPublishingHistogram()) {
             for (Long bucket : statsConfig.getHistogramBuckets(false)) {
-                more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", Long.toString(bucket)),
+                more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket", Long.toString(bucket)),
                     timer, t -> t.histogramCountAtValue(bucket));
             }
         }
@@ -86,13 +86,13 @@ public class DropwizardMeterRegistry extends MeterRegistry {
         DropwizardDistributionSummary summary = new DropwizardDistributionSummary(id, clock, registry.histogram(hierarchicalName(id)), statsConfig);
 
         for (double percentile : statsConfig.getPercentiles()) {
-            gauge(id.getName(), Tags.concat(id.getTags(), "percentile", percentileFormat.format(percentile)),
+            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
                 percentile, summary::percentile);
         }
 
         if(statsConfig.isPublishingHistogram()) {
             for (Long bucket : statsConfig.getHistogramBuckets(false)) {
-                more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", Long.toString(bucket)),
+                more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket", Long.toString(bucket)),
                     summary, s -> s.histogramCountAtValue(bucket));
             }
         }

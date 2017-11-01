@@ -17,6 +17,7 @@ package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.handler.logging.LoggingHandler;
 import reactor.core.Disposable;
@@ -64,6 +65,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
         switch (statsdConfig.flavor()) {
             case Datadog:
                 config().namingConvention(NamingConvention.dot);
+                break;
+            case Telegraf:
+                config().namingConvention(NamingConvention.snakeCase);
                 break;
             default:
                 config().namingConvention(NamingConvention.camelCase);
@@ -156,26 +160,27 @@ public class StatsdMeterRegistry extends MeterRegistry {
         Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, statsConfig, statsdConfig.step().toMillis());
 
         for (double percentile : statsConfig.getPercentiles()) {
-            switch(statsdConfig.flavor()) {
+            switch (statsdConfig.flavor()) {
                 case Datadog:
-                    gauge(id.getName() + "." + percentileFormat.format(percentile) + "percentile", timer,
+                    gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + "percentile", timer,
                         t -> t.percentile(percentile, getBaseTimeUnit()));
                     break;
                 case Telegraf:
-                    gauge(id.getName() + "_percentile_" + percentileFormat.format(percentile), timer,
+                    gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + ".percentile", timer,
                         t -> t.percentile(percentile, getBaseTimeUnit()));
                     break;
                 case Etsy:
-                    gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
+                    gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile * 100)),
                         timer, t -> t.percentile(percentile, getBaseTimeUnit()));
                     break;
             }
         }
 
-        if(statsConfig.isPublishingHistogram()) {
+        if (statsConfig.isPublishingHistogram()) {
             for (Long bucket : statsConfig.getHistogramBuckets(false)) {
-                more().counter(id.getName(), Tags.concat(getConventionTags(id), "bucket", Long.toString(bucket), null),
-                    timer, t -> t.histogramCountAtValue(bucket));
+                more().counter(id.getName() + ".histogram", Tags.concat(getConventionTags(id), "bucket",
+                    percentileFormat.format(TimeUtils.nanosToUnit(bucket, TimeUnit.MILLISECONDS))),
+                    timer, s -> s.histogramCountAtValue(bucket));
             }
         }
 
@@ -187,26 +192,26 @@ public class StatsdMeterRegistry extends MeterRegistry {
         DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), publisher, clock, statsConfig, statsdConfig.step().toMillis());
 
         for (double percentile : statsConfig.getPercentiles()) {
-            switch(statsdConfig.flavor()) {
+            switch (statsdConfig.flavor()) {
                 case Datadog:
-                    gauge(id.getName() + "." + percentileFormat.format(percentile) + "percentile", summary,
+                    gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + "percentile", summary,
                         s -> s.percentile(percentile));
                     break;
                 case Telegraf:
-                    gauge(id.getName() + "_percentile_" + percentileFormat.format(percentile), summary,
+                    gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + ".percentile", summary,
                         s -> s.percentile(percentile));
                     break;
                 case Etsy:
-                    gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
+                    gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile * 100)),
                         summary, s -> s.percentile(percentile));
                     break;
             }
         }
 
-        if(statsConfig.isPublishingHistogram()) {
+        if (statsConfig.isPublishingHistogram()) {
             for (Long bucket : statsConfig.getHistogramBuckets(false)) {
-                more().counter(id.getName(), Tags.concat(id.getTags(), "bucket", Long.toString(bucket), null),
-                    summary, s -> s.histogramCountAtValue(bucket));
+                more().counter(id.getName() + ".histogram", Tags.concat(getConventionTags(id), "bucket",
+                    Long.toString(bucket)), summary, s -> s.histogramCountAtValue(bucket));
             }
         }
 

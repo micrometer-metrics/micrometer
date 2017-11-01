@@ -42,6 +42,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
     private final DecimalFormat format = new DecimalFormat("#.####");
 
+    // FIXME naming convention not working!
     public InfluxMeterRegistry(InfluxConfig config, Clock clock) {
         super(config, clock);
         this.config().namingConvention(new InfluxNamingConvention(NamingConvention.snakeCase));
@@ -254,7 +255,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             .map(t -> "," + t.getKey() + "=" + t.getValue())
             .collect(joining(""));
 
-        return id.getName()
+        return getConventionName(id)
             + tags + ",metric_type=" + metricType + " "
             + fields.map(Field::toString).collect(joining(","))
             + " " + time;

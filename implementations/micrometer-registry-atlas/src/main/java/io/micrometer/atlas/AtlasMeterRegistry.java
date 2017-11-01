@@ -123,7 +123,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
         }
 
         for (double percentile : statsConfig.getPercentiles()) {
-            gauge(id.getName(), Tags.concat(id.getTags(), "percentile", percentileFormat.format(percentile)),
+            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
                 percentile, p -> timer.percentile(p, TimeUnit.SECONDS));
         }
 

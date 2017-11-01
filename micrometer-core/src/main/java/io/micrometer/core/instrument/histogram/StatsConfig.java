@@ -48,16 +48,13 @@ public class StatsConfig {
 
         if(percentileHistogram && supportsAggregablePercentiles) {
             buckets.addAll(PercentileHistogramBuckets.buckets(this));
+            buckets.add(minimumExpectedValue);
+            buckets.add(maximumExpectedValue);
         }
-
-        buckets.add(minimumExpectedValue);
-        buckets.add(maximumExpectedValue);
 
         for (long slaBoundary : sla) {
             buckets.add(slaBoundary);
         }
-
-        buckets.add(Long.MAX_VALUE);
 
         return buckets;
     }
