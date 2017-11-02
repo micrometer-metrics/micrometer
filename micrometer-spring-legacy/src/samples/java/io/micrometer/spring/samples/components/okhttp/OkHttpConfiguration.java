@@ -1,5 +1,6 @@
 package io.micrometer.spring.samples.components.okhttp;
 
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.spring.autoconfigure.MetricsProperties;
 import okhttp3.OkHttpClient;
@@ -13,18 +14,8 @@ import java.util.function.Function;
 @Configuration
 public class OkHttpConfiguration {
 
-
-	private final MeterRegistry meterRegistry;
-	private final MetricsProperties metricsProperties;
-
-	public OkHttpConfiguration(MeterRegistry meterRegistry, MetricsProperties metricsProperties) {
-
-		this.meterRegistry = meterRegistry;
-		this.metricsProperties = metricsProperties;
-	}
-
 	@Bean
-	public OkHttpClient okHttpClient() {
+	public OkHttpClient okHttpClient(MeterRegistry meterRegistry, MetricsProperties metricsProperties) {
 
 		Function<Request, Optional<String>> urlMapper = request -> {
 			if (request.url().toString().endsWith("ip")) {
