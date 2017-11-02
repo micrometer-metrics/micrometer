@@ -71,7 +71,7 @@ public class OkHttpMicrometerInterceptor implements Interceptor {
 										 Response response) {
 
 		String defaultUri = "";
-		if(emptyUriIfNoMatch) {
+		if(!emptyUriIfNoMatch) {
 			defaultUri = request.url().toString();
 		}
 
