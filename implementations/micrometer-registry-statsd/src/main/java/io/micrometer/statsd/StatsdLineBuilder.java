@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.NamingConvention;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 
-import java.beans.Introspector;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
@@ -28,15 +27,15 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.micrometer.statsd.internal.MemoizingSupplier.memoize;
 import static java.beans.Introspector.decapitalize;
-import static java.util.stream.Stream.*;
+import static java.util.stream.Stream.of;
 
 class StatsdLineBuilder {
     private final Meter.Id id;
     private final StatsdFlavor flavor;
+    private final HierarchicalNameMapper nameMapper;
     private final NamingConvention convention;
 
     private final Supplier<String> datadogTagString;
@@ -61,9 +60,10 @@ class StatsdLineBuilder {
         return numberFormatter;
     });
 
-    StatsdLineBuilder(Meter.Id id, StatsdFlavor flavor, NamingConvention convention) {
+    StatsdLineBuilder(Meter.Id id, StatsdFlavor flavor, HierarchicalNameMapper nameMapper, NamingConvention convention) {
         this.id = id;
         this.flavor = flavor;
+        this.nameMapper = nameMapper;
         this.convention = convention;
 
         // service:payroll,region:us-west
@@ -134,7 +134,7 @@ class StatsdLineBuilder {
     private String metricName(Statistic stat) {
         switch (flavor) {
             case Etsy:
-                return HierarchicalNameMapper.DEFAULT.toHierarchicalName(id.withTag(stat), convention);
+                return nameMapper.toHierarchicalName(id.withTag(stat), convention);
             case Datadog:
             case Telegraf:
             default:

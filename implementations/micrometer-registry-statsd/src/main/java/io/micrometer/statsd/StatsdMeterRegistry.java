@@ -17,6 +17,7 @@ package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.handler.logging.LoggingHandler;
@@ -42,11 +43,15 @@ import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 
+import static java.util.Optional.ofNullable;
+
 /**
  * @author Jon Schneider
  */
 public class StatsdMeterRegistry extends MeterRegistry {
     private final StatsdConfig statsdConfig;
+
+    private final HierarchicalNameMapper nameMapper;
 
     private volatile UnicastProcessor<String> publisher;
 
@@ -58,9 +63,14 @@ public class StatsdMeterRegistry extends MeterRegistry {
     Disposable.Swap meterPoller = Disposables.swap();
 
     public StatsdMeterRegistry(StatsdConfig config, Clock clock) {
+        this(config, null, clock);
+    }
+
+    public StatsdMeterRegistry(StatsdConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
         super(clock);
 
         this.statsdConfig = config;
+        this.nameMapper = ofNullable(nameMapper).orElse(HierarchicalNameMapper.DEFAULT);
 
         switch (statsdConfig.flavor()) {
             case Datadog:
@@ -244,6 +254,6 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private StatsdLineBuilder lineBuilder(Meter.Id id) {
-        return new StatsdLineBuilder(id, statsdConfig.flavor(), config().namingConvention());
+        return new StatsdLineBuilder(id, statsdConfig.flavor(), nameMapper, config().namingConvention());
     }
 }
