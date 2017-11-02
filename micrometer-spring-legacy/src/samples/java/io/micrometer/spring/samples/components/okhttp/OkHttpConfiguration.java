@@ -1,12 +1,14 @@
 package io.micrometer.spring.samples.components.okhttp;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.spring.autoconfigure.MetricsProperties;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -31,6 +33,7 @@ public class OkHttpConfiguration {
 						.metricsName(metricsProperties.getWeb().getClient().getRequestsMetricName())
 						.recordRequestPercentiles(metricsProperties.getWeb().getClient().isRecordRequestPercentiles())
 						.uriMapper(urlMapper)
+						.tags(Arrays.asList(Tag.of("foo", "bar")))
 						.build())
 				.build();
 		return client;

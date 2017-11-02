@@ -9,6 +9,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -21,14 +22,16 @@ public class OkHttpMicrometerInterceptor implements Interceptor {
 	private final String requestsMetricName;
 	private final boolean recordRequestPercentiles;
 	private final Function<Request, String> urlMapper;
-	private MeterRegistry meterRegistry;
+	private final List<Tag> extraTags;
+	private final MeterRegistry meterRegistry;
 
 
-	OkHttpMicrometerInterceptor(MeterRegistry meterRegistry, String requestsMetricName, boolean recordRequestPercentiles, Function<Request, String> urlMapper) {
+	OkHttpMicrometerInterceptor(MeterRegistry meterRegistry, String requestsMetricName, boolean recordRequestPercentiles, Function<Request, String> urlMapper, List<Tag> extraTags) {
 		this.meterRegistry = meterRegistry;
 		this.requestsMetricName = requestsMetricName;
 		this.recordRequestPercentiles = recordRequestPercentiles;
 		this.urlMapper = urlMapper;
+		this.extraTags = extraTags;
 	}
 
 	@Override
@@ -53,12 +56,15 @@ public class OkHttpMicrometerInterceptor implements Interceptor {
 
 	private Timer.Builder getTimeBuilder(Request request, Response response, IOException exception) {
 
-		List<Tag> tags = Arrays.asList(
+		List<Tag> defaultTags = Arrays.asList(
 				Tag.of("method", request.method()),
 				Tag.of("uri", urlMapper.apply(request)),
 				Tag.of("status", getStatusMessage(response, exception)),
 				Tag.of("clientName", request.url().host())
 		);
+
+		List<Tag> tags = new ArrayList<>(defaultTags);
+		tags.addAll(extraTags);
 
 
 		Timer.Builder builder = Timer.builder(this.requestsMetricName)
@@ -88,6 +94,7 @@ public class OkHttpMicrometerInterceptor implements Interceptor {
 		private String name = "okhttp.client";
 		private boolean recordRequestPercentiles = false;
 		private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(MICROMETER_URI_HEADER)).orElse("none");
+		private List<Tag> tags;
 
 		public Builder(MeterRegistry meterRegistry) {
 
@@ -96,6 +103,11 @@ public class OkHttpMicrometerInterceptor implements Interceptor {
 
 		public Builder metricsName(String name) {
 			this.name = name;
+			return this;
+		}
+
+		public Builder tags(List<Tag> tags) {
+			this.tags = tags;
 			return this;
 		}
 
@@ -115,7 +127,7 @@ public class OkHttpMicrometerInterceptor implements Interceptor {
 				throw new IllegalStateException("Need to specify meterRegistry and name");
 			}
 
-			return new OkHttpMicrometerInterceptor(meterRegistry, name, recordRequestPercentiles, uriMapper);
+			return new OkHttpMicrometerInterceptor(meterRegistry, name, recordRequestPercentiles, uriMapper, tags);
 		}
 
 
