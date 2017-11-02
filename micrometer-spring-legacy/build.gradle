@@ -33,8 +33,7 @@ dependencies {
     compile 'org.springframework.boot:spring-boot-starter-aop', optional
     compile 'org.springframework:spring-webmvc'
     compile 'org.springframework:spring-web'
-    compile group: 'com.squareup.okhttp3', name: 'okhttp', version: '3.9.0'
-
+    compile 'com.squareup.okhttp3:okhttp:3.9.0',optional
     compile 'javax.servlet:javax.servlet-api:3.1.0', optional
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
 
