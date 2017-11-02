@@ -21,35 +21,18 @@ public class OkHttpMicrometerInterceptor implements Interceptor {
 	private final boolean recordRequestPercentiles;
 	private final Function<Request, Optional<String>> urlMapper;
 	private final boolean emptyUriIfNoMatch;
-
+	private Function<Response, Optional<String>> statusMapper;
 	private MeterRegistry meterRegistry;
 
 
-	public OkHttpMicrometerInterceptor(MeterRegistry meterRegistry, String requestsMetricName, boolean recordRequestPercentiles) {
-
-		this.meterRegistry = meterRegistry;
-		this.requestsMetricName = requestsMetricName;
-		this.recordRequestPercentiles = recordRequestPercentiles;
-		this.urlMapper = (request) -> Optional.empty();
-		this.emptyUriIfNoMatch = true;
-	}
-
-	public OkHttpMicrometerInterceptor(MeterRegistry meterRegistry, String requestsMetricName, boolean recordRequestPercentiles, Function<Request, Optional<String>> urlMapper) {
+	OkHttpMicrometerInterceptor(MeterRegistry meterRegistry, String requestsMetricName, boolean recordRequestPercentiles, Function<Request, Optional<String>> urlMapper, Function<Response, Optional<String>> statusMapper, boolean emptyUriIfNoMatch) {
 		this.meterRegistry = meterRegistry;
 		this.requestsMetricName = requestsMetricName;
 		this.recordRequestPercentiles = recordRequestPercentiles;
 		this.urlMapper = urlMapper;
-		this.emptyUriIfNoMatch = true;
-	}
-
-	public OkHttpMicrometerInterceptor(MeterRegistry meterRegistry, String requestsMetricName, boolean recordRequestPercentiles, Function<Request, Optional<String>> urlMapper, boolean emptyUriIfNoMatch) {
-		this.meterRegistry = meterRegistry;
-		this.requestsMetricName = requestsMetricName;
-		this.recordRequestPercentiles = recordRequestPercentiles;
-		this.urlMapper = urlMapper;
+		this.statusMapper = statusMapper;
 		this.emptyUriIfNoMatch = emptyUriIfNoMatch;
 	}
-
 
 	@Override
 	public Response intercept(Chain chain) throws IOException {
@@ -71,7 +54,7 @@ public class OkHttpMicrometerInterceptor implements Interceptor {
 										 Response response) {
 
 		String defaultUri = "";
-		if(!emptyUriIfNoMatch) {
+		if (!emptyUriIfNoMatch) {
 			defaultUri = request.url().toString();
 		}
 
@@ -79,12 +62,14 @@ public class OkHttpMicrometerInterceptor implements Interceptor {
 		Optional<String> headerUri = Optional.ofNullable(request.header(MICROMETER_URI_HEADER));
 
 
+		String status = statusMapper.apply(response).orElse("" + response.code());
+
 		String uri = interceptorUri.orElse(headerUri.orElse(defaultUri));
 
 		List<Tag> tags = Arrays.asList(
 				Tag.of("method", request.method()),
 				Tag.of("uri", uri),
-				Tag.of("status", "" + response.code()),
+				Tag.of("status", status),
 				Tag.of("clientName", request.url().host())
 		);
 
@@ -96,5 +81,57 @@ public class OkHttpMicrometerInterceptor implements Interceptor {
 			builder = builder.publishPercentileHistogram();
 		}
 		return builder;
+	}
+
+	public static class Builder {
+
+
+		private MeterRegistry meterRegistry;
+		private String name;
+		private boolean recordRequestPercentiles = false;
+
+		private Function<Request, Optional<String>> uriMapper = (request) -> Optional.empty();
+		private Function<Response, Optional<String>> statusMapper = (request) -> Optional.empty();
+		private boolean emptyUriIfNoMatch = true;
+
+		public Builder meterRegistry(MeterRegistry meterRegistry) {
+			this.meterRegistry = meterRegistry;
+			return this;
+		}
+
+		public Builder metricsName(String name) {
+			this.name = name;
+			return this;
+		}
+
+		public Builder recordRequestPercentiles(boolean recordRequestPercentiles) {
+			this.recordRequestPercentiles = recordRequestPercentiles;
+			return this;
+		}
+
+		public Builder statusMapper(Function<Response, Optional<String>> statusMapper) {
+			this.statusMapper = statusMapper;
+			return this;
+		}
+
+		public Builder uriMapper(Function<Request, Optional<String>> uriMapper) {
+			this.uriMapper = uriMapper;
+			return this;
+		}
+
+		public Builder emptyUriIfNoMatch(boolean empty) {
+			this.emptyUriIfNoMatch = empty;
+			return this;
+		}
+
+		public OkHttpMicrometerInterceptor build() {
+			if (meterRegistry == null || name == null) {
+				throw new IllegalStateException("Need to specify meterRegistry and name");
+			}
+
+			return new OkHttpMicrometerInterceptor(meterRegistry, name, recordRequestPercentiles, uriMapper, statusMapper, emptyUriIfNoMatch);
+		}
+
+
 	}
 }

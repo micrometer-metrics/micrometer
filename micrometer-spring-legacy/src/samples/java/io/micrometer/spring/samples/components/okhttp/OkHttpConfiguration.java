@@ -33,11 +33,16 @@ public class OkHttpConfiguration {
 			return Optional.empty();
 		};
 
+
 		OkHttpClient client = new OkHttpClient.Builder()
-				.addInterceptor(new OkHttpMicrometerInterceptor(meterRegistry,
-						metricsProperties.getWeb().getClient().getRequestsMetricName(),
-						metricsProperties.getWeb().getClient().isRecordRequestPercentiles(), urlMapper,
-						true))
+				.addInterceptor(new OkHttpMicrometerInterceptor.Builder()
+						.meterRegistry(meterRegistry)
+						.emptyUriIfNoMatch(true)
+						.metricsName(metricsProperties.getWeb().getClient().getRequestsMetricName())
+						.recordRequestPercentiles(metricsProperties.getWeb().getClient().isRecordRequestPercentiles())
+						.statusMapper(resp -> Optional.of(("" + resp.code()).substring(0, 1)))
+						.uriMapper(urlMapper)
+						.build())
 				.build();
 		return client;
 	}
