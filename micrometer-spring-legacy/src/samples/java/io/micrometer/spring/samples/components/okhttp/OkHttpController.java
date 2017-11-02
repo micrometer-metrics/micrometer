@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 
+import static io.micrometer.spring.samples.components.okhttp.OkHttpMicrometerInterceptor.MICROMETER_URI_HEADER;
+
 @RestController
 public class OkHttpController {
 
@@ -27,6 +29,20 @@ public class OkHttpController {
 	public JsonNode ip() throws IOException {
 		Request request = new Request.Builder()
 				.url("http://httpbin.org/ip")
+				.header("User-Agent", "OkHttp Example")
+				.build();
+
+
+		ResponseBody body = client.newCall(request).execute().body();
+
+		return mapper.readTree(body.bytes());
+	}
+
+	@GetMapping("/get")
+	public JsonNode get() throws IOException {
+		Request request = new Request.Builder()
+				.url("http://httpbin.org/get")
+				.header(MICROMETER_URI_HEADER, "get")
 				.header("User-Agent", "OkHttp Example")
 				.build();
 

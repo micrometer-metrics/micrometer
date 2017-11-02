@@ -3,8 +3,12 @@ package io.micrometer.spring.samples.components.okhttp;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.spring.autoconfigure.MetricsProperties;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.Optional;
+import java.util.function.Function;
 
 @Configuration
 public class OkHttpConfiguration {
@@ -21,10 +25,19 @@ public class OkHttpConfiguration {
 
 	@Bean
 	public OkHttpClient okHttpClient() {
+
+		Function<Request, Optional<String>> urlMapper = request -> {
+			if (request.url().toString().endsWith("ip")) {
+				return Optional.of(request.url().host());
+			}
+			return Optional.empty();
+		};
+
 		OkHttpClient client = new OkHttpClient.Builder()
 				.addInterceptor(new OkHttpMicrometerInterceptor(meterRegistry,
 						metricsProperties.getWeb().getClient().getRequestsMetricName(),
-						metricsProperties.getWeb().getClient().isRecordRequestPercentiles()))
+						metricsProperties.getWeb().getClient().isRecordRequestPercentiles(), urlMapper,
+						true))
 				.build();
 		return client;
 	}

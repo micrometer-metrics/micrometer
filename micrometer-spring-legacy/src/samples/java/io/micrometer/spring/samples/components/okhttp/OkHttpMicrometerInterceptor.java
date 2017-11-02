@@ -6,19 +6,22 @@ import io.micrometer.core.instrument.Timer;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 public class OkHttpMicrometerInterceptor implements Interceptor {
 
+	public static final String MICROMETER_URI_HEADER = "MICROMETER_URI_HEADER";
 	private final String requestsMetricName;
 	private final boolean recordRequestPercentiles;
-	Logger logger = LoggerFactory.getLogger(OkHttpMicrometerInterceptor.class);
+	private final Function<Request, Optional<String>> urlMapper;
+	private final boolean emptyUriIfNoMatch;
+
 	private MeterRegistry meterRegistry;
 
 
@@ -27,6 +30,24 @@ public class OkHttpMicrometerInterceptor implements Interceptor {
 		this.meterRegistry = meterRegistry;
 		this.requestsMetricName = requestsMetricName;
 		this.recordRequestPercentiles = recordRequestPercentiles;
+		this.urlMapper = (request) -> Optional.empty();
+		this.emptyUriIfNoMatch = true;
+	}
+
+	public OkHttpMicrometerInterceptor(MeterRegistry meterRegistry, String requestsMetricName, boolean recordRequestPercentiles, Function<Request, Optional<String>> urlMapper) {
+		this.meterRegistry = meterRegistry;
+		this.requestsMetricName = requestsMetricName;
+		this.recordRequestPercentiles = recordRequestPercentiles;
+		this.urlMapper = urlMapper;
+		this.emptyUriIfNoMatch = true;
+	}
+
+	public OkHttpMicrometerInterceptor(MeterRegistry meterRegistry, String requestsMetricName, boolean recordRequestPercentiles, Function<Request, Optional<String>> urlMapper, boolean emptyUriIfNoMatch) {
+		this.meterRegistry = meterRegistry;
+		this.requestsMetricName = requestsMetricName;
+		this.recordRequestPercentiles = recordRequestPercentiles;
+		this.urlMapper = urlMapper;
+		this.emptyUriIfNoMatch = emptyUriIfNoMatch;
 	}
 
 
@@ -49,12 +70,25 @@ public class OkHttpMicrometerInterceptor implements Interceptor {
 	private Timer.Builder getTimeBuilder(Request request,
 										 Response response) {
 
+		String defaultUri = "";
+		if(emptyUriIfNoMatch) {
+			defaultUri = request.url().toString();
+		}
+
+		Optional<String> interceptorUri = urlMapper.apply(request);
+		Optional<String> headerUri = Optional.ofNullable(request.header(MICROMETER_URI_HEADER));
+
+
+		String uri = interceptorUri.orElse(headerUri.orElse(defaultUri));
+
 		List<Tag> tags = Arrays.asList(
 				Tag.of("method", request.method()),
-				Tag.of("uri", request.url().toString()), //make it configurable
+				Tag.of("uri", uri),
 				Tag.of("status", "" + response.code()),
 				Tag.of("clientName", request.url().host())
 		);
+
+
 		Timer.Builder builder = Timer.builder(this.requestsMetricName)
 				.tags(tags)
 				.description("Timer of OkHttp operation");
