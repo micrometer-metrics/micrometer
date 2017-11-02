@@ -1,0 +1,38 @@
+package io.micrometer.spring.samples.components.okhttp;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.ResponseBody;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.io.IOException;
+
+@RestController
+public class OkHttpController {
+
+	private OkHttpClient client;
+	private ObjectMapper mapper;
+
+	public OkHttpController(OkHttpClient client, ObjectMapper mapper) {
+
+		this.client = client;
+		this.mapper = mapper;
+	}
+
+
+	@GetMapping("/ip")
+	public JsonNode ip() throws IOException {
+		Request request = new Request.Builder()
+				.url("http://httpbin.org/ip")
+				.header("User-Agent", "OkHttp Example")
+				.build();
+
+
+		ResponseBody body = client.newCall(request).execute().body();
+
+		return mapper.readTree(body.bytes());
+	}
+}
