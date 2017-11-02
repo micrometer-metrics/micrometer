@@ -40,7 +40,6 @@ public class OkHttpConfiguration {
 						.emptyUriIfNoMatch(true)
 						.metricsName(metricsProperties.getWeb().getClient().getRequestsMetricName())
 						.recordRequestPercentiles(metricsProperties.getWeb().getClient().isRecordRequestPercentiles())
-						.statusMapper(resp -> Optional.of(("" + resp.code()).substring(0, 1)))
 						.uriMapper(urlMapper)
 						.build())
 				.build();

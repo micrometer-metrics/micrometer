@@ -21,16 +21,14 @@ public class OkHttpMicrometerInterceptor implements Interceptor {
 	private final boolean recordRequestPercentiles;
 	private final Function<Request, Optional<String>> urlMapper;
 	private final boolean emptyUriIfNoMatch;
-	private Function<Response, Optional<String>> statusMapper;
 	private MeterRegistry meterRegistry;
 
 
-	OkHttpMicrometerInterceptor(MeterRegistry meterRegistry, String requestsMetricName, boolean recordRequestPercentiles, Function<Request, Optional<String>> urlMapper, Function<Response, Optional<String>> statusMapper, boolean emptyUriIfNoMatch) {
+	OkHttpMicrometerInterceptor(MeterRegistry meterRegistry, String requestsMetricName, boolean recordRequestPercentiles, Function<Request, Optional<String>> urlMapper, boolean emptyUriIfNoMatch) {
 		this.meterRegistry = meterRegistry;
 		this.requestsMetricName = requestsMetricName;
 		this.recordRequestPercentiles = recordRequestPercentiles;
 		this.urlMapper = urlMapper;
-		this.statusMapper = statusMapper;
 		this.emptyUriIfNoMatch = emptyUriIfNoMatch;
 	}
 
@@ -62,14 +60,12 @@ public class OkHttpMicrometerInterceptor implements Interceptor {
 		Optional<String> headerUri = Optional.ofNullable(request.header(MICROMETER_URI_HEADER));
 
 
-		String status = statusMapper.apply(response).orElse("" + response.code());
-
 		String uri = interceptorUri.orElse(headerUri.orElse(defaultUri));
 
 		List<Tag> tags = Arrays.asList(
 				Tag.of("method", request.method()),
 				Tag.of("uri", uri),
-				Tag.of("status", status),
+				Tag.of("status", "" + response.code()),
 				Tag.of("clientName", request.url().host())
 		);
 
@@ -129,7 +125,7 @@ public class OkHttpMicrometerInterceptor implements Interceptor {
 				throw new IllegalStateException("Need to specify meterRegistry and name");
 			}
 
-			return new OkHttpMicrometerInterceptor(meterRegistry, name, recordRequestPercentiles, uriMapper, statusMapper, emptyUriIfNoMatch);
+			return new OkHttpMicrometerInterceptor(meterRegistry, name, recordRequestPercentiles, uriMapper, emptyUriIfNoMatch);
 		}
 
 
