@@ -31,6 +31,6 @@ public class StatsdMeterRegistryCompatibilityTest extends MeterRegistryCompatibi
 
     @Override
     public MeterRegistry registry() {
-        return new StatsdMeterRegistry(StatsdConfig.DEFAULT, new MockClock());
+        return new StatsdMeterRegistry(StatsdConfig.DEFAULT, null, new MockClock());
     }
 }
