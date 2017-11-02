@@ -15,17 +15,7 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.NamingConvention;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.histogram.StatsConfig;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.instrument.util.TimeUtils;
