@@ -31,6 +31,8 @@ dependencies {
     // reactor
     compile 'io.projectreactor:reactor-core:3.1.0.RELEASE', optional
 
+    compile 'com.squareup.okhttp3:okhttp:3.9.0',optional
+
     testCompile 'io.projectreactor:reactor-test:3.1.0.RELEASE'
     testCompile 'io.projectreactor.ipc:reactor-netty:0.7.0.RELEASE'
 
@@ -38,6 +40,7 @@ dependencies {
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0'
     testCompile 'org.junit.jupiter:junit-jupiter-params:5.0.0'
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.0'
+
     // Eclipse still needs this (as of 4.7.1a)
     testRuntime 'org.junit.platform:junit-platform-launcher:1.0.0'
 
