@@ -31,6 +31,7 @@ dependencies {
     compile 'org.springframework.boot:spring-boot'
     compile 'org.springframework.boot:spring-boot-actuator', optional
     compile 'org.springframework.boot:spring-boot-starter-aop', optional
+    compile 'org.springframework.boot:spring-boot-starter-security', optional
     compile 'org.springframework:spring-webmvc'
     compile 'org.springframework:spring-web'
     compile 'javax.servlet:javax.servlet-api:3.1.0', optional
@@ -67,6 +68,8 @@ dependencies {
     testCompile 'org.springframework.integration:spring-integration-java-dsl'
     testCompile 'org.springframework.integration:spring-integration-ws'
     testCompile 'org.springframework.integration:spring-integration-xml'
+
+    testCompile 'org.springframework.security:spring-security-test'
 
     samplesCompile 'colt:colt:1.2.0'
     samplesCompile 'org.springframework.boot:spring-boot-starter-web'

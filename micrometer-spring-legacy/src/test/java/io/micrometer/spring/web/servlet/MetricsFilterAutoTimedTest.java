@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,21 +38,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Tests for {@link MetricsHandlerInterceptor} with auto-timed server requests.
- *
  * @author Jon Schneider
  */
 @RunWith(SpringRunner.class)
 @WebAppConfiguration
-public class MetricsHandlerInterceptorAutoTimedTest {
+public class MetricsFilterAutoTimedTest {
 
     @Autowired
     private MeterRegistry registry;
@@ -80,7 +77,7 @@ public class MetricsHandlerInterceptorAutoTimedTest {
 
     @Configuration
     @EnableWebMvc
-    @Import(Controller.class)
+    @Import({Controller.class, WebMvcMetricsConfiguration.class})
     static class TestConfiguration {
         @Bean
         MockClock clock() {
@@ -91,29 +88,6 @@ public class MetricsHandlerInterceptorAutoTimedTest {
         MeterRegistry meterRegistry(Clock clock) {
             return new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
         }
-
-        @Bean
-        WebMvcMetrics webMvcMetrics(MeterRegistry meterRegistry) {
-            return new WebMvcMetrics(meterRegistry, new DefaultWebMvcTagsProvider(),
-                "http.server.requests", true, true);
-        }
-
-        @Configuration
-        static class HandlerInterceptorConfiguration extends WebMvcConfigurerAdapter {
-            private final WebMvcMetrics webMvcMetrics;
-
-            HandlerInterceptorConfiguration(WebMvcMetrics webMvcMetrics) {
-                this.webMvcMetrics = webMvcMetrics;
-            }
-
-            @Override
-            public void addInterceptors(InterceptorRegistry registry) {
-                registry.addInterceptor(
-                    new MetricsHandlerInterceptor(this.webMvcMetrics));
-            }
-
-        }
-
     }
 
     @RestController

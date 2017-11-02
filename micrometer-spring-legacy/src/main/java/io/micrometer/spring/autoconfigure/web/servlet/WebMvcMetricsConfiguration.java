@@ -18,7 +18,7 @@ package io.micrometer.spring.autoconfigure.web.servlet;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.spring.autoconfigure.MetricsProperties;
 import io.micrometer.spring.web.servlet.DefaultWebMvcTagsProvider;
-import io.micrometer.spring.web.servlet.MetricsHandlerInterceptor;
+import io.micrometer.spring.web.servlet.MetricsFilter;
 import io.micrometer.spring.web.servlet.WebMvcMetrics;
 import io.micrometer.spring.web.servlet.WebMvcTagsProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -26,9 +26,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.DispatcherServlet;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 /**
  * Configures instrumentation of Spring Web MVC servlet-based request mappings.
@@ -55,25 +55,7 @@ public class WebMvcMetricsConfiguration {
     }
 
     @Bean
-    public MetricsHandlerInterceptor webMetricsInterceptor(WebMvcMetrics controllerMetrics) {
-        return new MetricsHandlerInterceptor(controllerMetrics);
+    public MetricsFilter webMetricsFilter(WebMvcMetrics controllerMetrics, WebApplicationContext ctx) {
+        return new MetricsFilter(controllerMetrics, new HandlerMappingIntrospector(ctx));
     }
-
-    @Configuration
-    public class MetricsServletRequestInterceptorConfiguration extends WebMvcConfigurerAdapter {
-
-        private final MetricsHandlerInterceptor handlerInterceptor;
-
-        public MetricsServletRequestInterceptorConfiguration(
-            MetricsHandlerInterceptor handlerInterceptor) {
-            this.handlerInterceptor = handlerInterceptor;
-        }
-
-        @Override
-        public void addInterceptors(InterceptorRegistry registry) {
-            registry.addInterceptor(this.handlerInterceptor);
-        }
-
-    }
-
 }

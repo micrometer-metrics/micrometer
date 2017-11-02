@@ -24,21 +24,20 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 import javax.servlet.http.HttpServletRequest;
 import java.lang.annotation.ElementType;
@@ -56,13 +55,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Tests for {@link MetricsHandlerInterceptor}.
- *
  * @author Jon Schneider
  */
 @RunWith(SpringRunner.class)
-@WebAppConfiguration
-public class MetricsHandlerInterceptorTest {
+@SpringBootTest
+@AutoConfigureMockMvc
+@TestPropertySource(properties = "security.ignored=/**")
+public class MetricsFilterTest {
 
     private static final CountDownLatch longRequestCountDown = new CountDownLatch(1);
 
@@ -72,11 +71,17 @@ public class MetricsHandlerInterceptorTest {
     @Autowired
     private WebApplicationContext context;
 
+    @Autowired
+    private MetricsFilter filter;
+
     private MockMvc mvc;
 
     @Before
     public void setupMockMvc() {
-        this.mvc = MockMvcBuilders.webAppContextSetup(this.context).build();
+        this.mvc = MockMvcBuilders
+            .webAppContextSetup(this.context)
+            .addFilters(filter)
+            .build();
     }
 
     @Test
@@ -124,9 +129,10 @@ public class MetricsHandlerInterceptorTest {
     }
 
     @Test
-    public void udefanhandledError() throws Exception {
+    public void unhandledError() throws Exception {
         assertThatCode(() -> this.mvc.perform(get("/api/c1/unhandledError/10"))
-            .andExpect(status().isOk())).hasCauseInstanceOf(RuntimeException.class);
+            .andExpect(status().isOk()))
+            .hasCauseInstanceOf(RuntimeException.class);
 
         assertThat(this.registry.find("http.server.requests")
             .tags("exception", "RuntimeException").value(Statistic.Count, 1.0)
@@ -190,35 +196,13 @@ public class MetricsHandlerInterceptorTest {
     public @interface Timed95 {
     }
 
-    @Configuration
-    @EnableWebMvc
+    @SpringBootApplication(scanBasePackages = "ignored")
     @Import({Controller1.class, Controller2.class})
-    static class TestConfiguration {
+    static class MetricsFilterApp {
         @Bean
         MeterRegistry meterRegistry() {
+            // one of the few registries that support aggregable percentiles
             return new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-        }
-
-        @Bean
-        WebMvcMetrics webMvcMetrics(MeterRegistry meterRegistry) {
-            return new WebMvcMetrics(meterRegistry, new DefaultWebMvcTagsProvider(),
-                "http.server.requests", true, true);
-        }
-
-        @Configuration
-        static class HandlerInterceptorConfiguration extends WebMvcConfigurerAdapter {
-
-            private final WebMvcMetrics webMvcMetrics;
-
-            HandlerInterceptorConfiguration(WebMvcMetrics webMvcMetrics) {
-                this.webMvcMetrics = webMvcMetrics;
-            }
-
-            @Override
-            public void addInterceptors(InterceptorRegistry registry) {
-                registry.addInterceptor(
-                    new MetricsHandlerInterceptor(this.webMvcMetrics));
-            }
         }
     }
 
@@ -232,10 +216,8 @@ public class MetricsHandlerInterceptorTest {
             return id.toString();
         }
 
-        @Timed // contains dimensions for status, etc. that can't be known until after the
-        // response is sent
-        @Timed(value = "my.long.request", extraTags = {"region",
-            "test"}, longTask = true) // in progress metric
+        @Timed
+        @Timed(value = "my.long.request", extraTags = {"region", "test"}, longTask = true)
         @GetMapping("/long/{id}")
         public Callable<String> takesLongTimeToSatisfy(@PathVariable Long id) {
             return () -> {
@@ -294,19 +276,15 @@ public class MetricsHandlerInterceptorTest {
         ModelAndView defaultErrorHandler(HttpServletRequest request, Exception e) {
             return new ModelAndView("myerror");
         }
-
     }
 
     @RestController
     @Timed
     @RequestMapping("/api/c2")
     static class Controller2 {
-
         @GetMapping("/{id}")
         public String successful(@PathVariable Long id) {
             return id.toString();
         }
-
     }
-
 }

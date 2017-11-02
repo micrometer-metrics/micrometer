@@ -16,7 +16,6 @@
 package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.graphite.GraphiteMeterRegistry;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
