@@ -29,7 +29,7 @@ class ProcessorMetricsTest {
 
         assertThat(registry.find("cpu").gauge())
                 .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
-        assertThat(registry.find("cpu.load.average").gauge())
+        assertThat(registry.find("system.load.average.1m").gauge())
                 .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
     }
 }
