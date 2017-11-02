@@ -87,7 +87,7 @@ class MetricsTurboFilter extends TurboFilter {
     @Override
     public FilterReply decide(Marker marker, Logger logger, Level level, String format, Object[] params, Throwable t) {
         // cannot use logger.isEnabledFor(level), as it would cause a StackOverflowException by calling this filter again!
-        if(level.isGreaterOrEqual(logger.getEffectiveLevel())) {
+        if(level.isGreaterOrEqual(logger.getEffectiveLevel()) && format != null) {
             switch (level.toInt()) {
                 case Level.ERROR_INT:
                     errorCounter.increment();

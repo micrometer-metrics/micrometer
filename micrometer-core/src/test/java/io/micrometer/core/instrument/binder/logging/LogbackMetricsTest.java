@@ -17,12 +17,16 @@ package io.micrometer.core.instrument.binder.logging;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
+import org.slf4j.helpers.BasicMarker;
+import org.slf4j.helpers.BasicMarkerFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -31,14 +35,18 @@ import static io.micrometer.core.instrument.Statistic.Count;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LogbackMetricsTest {
+    private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+    private Logger logger = (Logger) LoggerFactory.getLogger("foo");
+
+    @BeforeEach
+    void bindLogbackMetrics() {
+        new LogbackMetrics().bindTo(registry);
+    }
+
     @Test
     void logbackLevelMetrics() {
-        MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-        new LogbackMetrics().bindTo(registry);
-
         assertThat(registry.find("logback.events").value(Count, 0.0).counter()).isPresent();
 
-        Logger logger = (Logger) LoggerFactory.getLogger("foo");
         logger.setLevel(Level.INFO);
 
         logger.warn("warn");
@@ -48,5 +56,14 @@ class LogbackMetricsTest {
         clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("logback.events").tags("level", "warn").value(Count, 1.0).counter()).isPresent();
         assertThat(registry.find("logback.events").tags("level", "debug").value(Count, 0.0).counter()).isPresent();
+    }
+
+    @Issue("#183")
+    @Test
+    void isLevelEnabledDoesntContributeToCounts() {
+        logger.isErrorEnabled();
+
+        clock(registry).add(SimpleConfig.DEFAULT_STEP);
+        assertThat(registry.find("logback.events").tags("level", "error").value(Count, 0.0).counter()).isPresent();
     }
 }
