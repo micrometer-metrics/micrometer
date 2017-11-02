@@ -22,11 +22,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication(scanBasePackages = "io.micrometer.spring.samples.components")
 @EnableScheduling
 public class PrometheusSample {
-
-
-	public static void main(String[] args) {
-		new SpringApplicationBuilder(PrometheusSample.class).profiles("prometheus").run(args);
-	}
-
-
+    public static void main(String[] args) {
+        new SpringApplicationBuilder(PrometheusSample.class).profiles("prometheus").run(args);
+    }
 }
