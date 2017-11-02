@@ -72,6 +72,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
     // VisibleForTesting
     Disposable.Swap meterPoller = Disposables.swap();
 
+    public StatsdMeterRegistry(StatsdConfig config, Clock clock) {
+        this(config, null, clock);
+    }
+
     public StatsdMeterRegistry(StatsdConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
         super(clock);
 

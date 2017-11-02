@@ -130,7 +130,7 @@ class StatsdMeterRegistryTest {
             public Duration pollingFrequency() {
                 return Duration.ofMillis(1);
             }
-        }, null, mockClock);
+        }, mockClock);
     }
 
     @ParameterizedTest
