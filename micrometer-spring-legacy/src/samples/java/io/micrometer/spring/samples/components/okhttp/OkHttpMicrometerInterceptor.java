@@ -6,6 +6,7 @@ import io.micrometer.core.instrument.Timer;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.springframework.http.client.ClientHttpResponse;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -38,18 +39,22 @@ public class OkHttpMicrometerInterceptor implements Interceptor {
 
 		long startTime = System.nanoTime();
 		Response response = null;
+		IOException e = null;
 		try {
 			response = chain.proceed(request);
 			return response;
+		} catch (IOException err) {
+			e = err;
+			throw e;
 		} finally {
-			getTimeBuilder(request, response).register(this.meterRegistry)
+			getTimeBuilder(request, response, e).register(this.meterRegistry)
 					.record(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
 
 		}
 	}
 
 	private Timer.Builder getTimeBuilder(Request request,
-										 Response response) {
+										 Response response, IOException exception) {
 
 		String defaultUri = "";
 		if (!emptyUriIfNoMatch) {
@@ -59,13 +64,21 @@ public class OkHttpMicrometerInterceptor implements Interceptor {
 		Optional<String> interceptorUri = urlMapper.apply(request);
 		Optional<String> headerUri = Optional.ofNullable(request.header(MICROMETER_URI_HEADER));
 
+		String status;
+		if (exception != null) {
+			status = "IO_ERROR";
+		} else if (response == null) {
+			status = "CLIENT_ERROR";
+		} else {
+			status = "" + response.code();
+		}
 
 		String uri = interceptorUri.orElse(headerUri.orElse(defaultUri));
 
 		List<Tag> tags = Arrays.asList(
 				Tag.of("method", request.method()),
 				Tag.of("uri", uri),
-				Tag.of("status", "" + response.code()),
+				Tag.of("status", status),
 				Tag.of("clientName", request.url().host())
 		);
 

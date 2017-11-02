@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,10 +33,9 @@ public class OkHttpController {
 				.header("User-Agent", "OkHttp Example")
 				.build();
 
-
-		ResponseBody body = client.newCall(request).execute().body();
-
-		return mapper.readTree(body.bytes());
+		try (Response response = client.newCall(request).execute()) {
+			return mapper.readTree(response.body().bytes());
+		}
 	}
 
 	@GetMapping("/get")
@@ -47,8 +47,8 @@ public class OkHttpController {
 				.build();
 
 
-		ResponseBody body = client.newCall(request).execute().body();
-
-		return mapper.readTree(body.bytes());
+		try (Response response = client.newCall(request).execute()) {
+			return mapper.readTree(response.body().bytes());
+		}
 	}
 }
