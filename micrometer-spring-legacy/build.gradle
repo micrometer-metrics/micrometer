@@ -48,8 +48,6 @@ dependencies {
 
     testCompile 'org.springframework.boot:spring-boot-starter-web'
     testCompile 'org.springframework.boot:spring-boot-actuator'
-
-    testCompile 'junit:junit:4.+'
     testCompile 'org.springframework.boot:spring-boot-starter-test'
 
     // for testing DataSource metrics
