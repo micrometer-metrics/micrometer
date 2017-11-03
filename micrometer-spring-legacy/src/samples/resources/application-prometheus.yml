@@ -14,4 +14,11 @@
 # limitations under the License.
 #
 
-spring.metrics.prometheus.enabled: true
+spring.metrics.prometheus.enabled: false
+
+
+clint.metrics.filter:
+  ALL.enabled: false
+  jvm.enabled: true
+  jvm.memory.used: enabled
+
