@@ -37,9 +37,14 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -47,6 +52,7 @@ import java.lang.annotation.Target;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 
+import static io.micrometer.spring.web.servlet.MetricsFilterTest.RedirectAndNotFoundFilter.TEST_MISBEHAVE_HEADER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
@@ -81,7 +87,7 @@ public class MetricsFilterTest {
     public void setupMockMvc() {
         this.mvc = MockMvcBuilders
             .webAppContextSetup(this.context)
-            .addFilters(filter)
+            .addFilters(filter, new RedirectAndNotFoundFilter())
             .build();
     }
 
@@ -127,6 +133,23 @@ public class MetricsFilterTest {
         assertThat(this.registry.find("http.server.requests").tags("status", "400")
             .value(Statistic.Count, 1.0)
             .timer()).isPresent();
+    }
+
+
+    @Test //These aren't recorded due to not having the @Timed annotation
+    public void redirectRequest() throws Exception {
+        this.mvc.perform(get("/api/redirect")
+            .header(TEST_MISBEHAVE_HEADER,"302")).andExpect(status().is4xxClientError());
+
+        assertThat(this.registry.find("http.server.requests").meter()).isNotPresent();
+    }
+
+    @Test //These aren't recorded due to not having the @Timed annotation
+    public void notFoundRequest() throws Exception {
+        this.mvc.perform(get("/api/not/found")
+        .header(TEST_MISBEHAVE_HEADER,"404")).andExpect(status().is4xxClientError());
+
+        assertThat(this.registry.find("http.server.requests").meter()).isNotPresent();
     }
 
     @Test
@@ -287,6 +310,21 @@ public class MetricsFilterTest {
         @GetMapping("/{id}")
         public String successful(@PathVariable Long id) {
             return id.toString();
+        }
+    }
+
+    static class RedirectAndNotFoundFilter extends OncePerRequestFilter {
+
+        static final String TEST_MISBEHAVE_HEADER = "x-test-misbehave-status";
+
+        @Override
+        protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+            String misbehave = request.getHeader(TEST_MISBEHAVE_HEADER);
+            if(misbehave != null) {
+                response.setStatus(Integer.parseInt(misbehave));
+            } else {
+                filterChain.doFilter(request, response);
+            }
         }
     }
 }
