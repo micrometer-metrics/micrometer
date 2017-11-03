@@ -50,7 +50,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Integration tests for {@link TimedUtilsTest}.
+ * Integration tests for {@link WebMvcMetrics}.
  *
  * @author Jon Schneider
  */

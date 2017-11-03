@@ -80,5 +80,8 @@ public class MetricsFilter extends OncePerRequestFilter {
                 }
             }
         }
+        else {
+            filterChain.doFilter(request, response);
+        }
     }
 }
