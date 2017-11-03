@@ -10,6 +10,8 @@ import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 import org.springframework.web.servlet.handler.MatchableHandlerMapping;
 import org.springframework.web.util.NestedServletException;
 
+import javax.servlet.AsyncEvent;
+import javax.servlet.AsyncListener;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -17,9 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * FIXME Add 3xx redirects to the "unmapped" class of requests for metrics, see https://github.com/spring-projects/spring-boot/commit/d0cf6b534bf55b718ea8bf0f2e311a974f523e1b#diff-21d31563f43a6c81400762a5b655fda0
- * FIXME Add 404 same as above
- * FIXME Deal with async requests, see https://github.com/spring-projects/spring-boot/commit/b8b4ea489e91280ebb88327d8c11d6b483a03566#diff-21d31563f43a6c81400762a5b655fda0
+ * Intercepts incoming HTTP requests and records metrics about execution time and results.
  *
  * @author Jon Schneider
  */
@@ -32,6 +32,11 @@ public class MetricsFilter extends OncePerRequestFilter {
     public MetricsFilter(WebMvcMetrics webMvcMetrics, HandlerMappingIntrospector mappingIntrospector) {
         this.webMvcMetrics = webMvcMetrics;
         this.mappingIntrospector = mappingIntrospector;
+    }
+
+    @Override
+    protected boolean shouldNotFilterAsyncDispatch() {
+        return false;
     }
 
     @Override
@@ -51,7 +56,44 @@ public class MetricsFilter extends OncePerRequestFilter {
                 this.webMvcMetrics.preHandle(request, handlerObject);
                 try {
                     filterChain.doFilter(request, response);
-                    this.webMvcMetrics.record(request, response, null);
+
+                    if(!request.isAsyncStarted()) {
+                        this.webMvcMetrics.record(request, response, null);
+                    }
+                    else {
+                        request.getAsyncContext().addListener(new AsyncListener() {
+                            @Override
+                            public void onComplete(AsyncEvent event) throws IOException {
+                                record(event);
+                            }
+
+                            @Override
+                            public void onTimeout(AsyncEvent event) throws IOException {
+                                record(event);
+                            }
+
+                            @Override
+                            public void onError(AsyncEvent event) throws IOException {
+                                record(event);
+                            }
+
+                            @Override
+                            public void onStartAsync(AsyncEvent event) throws IOException {
+                            }
+
+                            private void record(AsyncEvent event) {
+                                if(event.getSuppliedResponse() instanceof HttpServletResponse &&
+                                    event.getSuppliedRequest() instanceof HttpServletRequest) {
+                                    MetricsFilter.this.webMvcMetrics.record(
+                                        (HttpServletRequest) event.getSuppliedRequest(),
+                                        (HttpServletResponse) event.getSuppliedResponse(),
+                                        event.getThrowable()
+                                    );
+                                }
+                            }
+                        });
+                    }
+
                 } catch (NestedServletException e) {
                     this.webMvcMetrics.record(request, response, e.getCause());
                     throw e;

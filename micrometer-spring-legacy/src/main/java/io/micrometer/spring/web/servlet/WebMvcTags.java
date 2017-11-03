@@ -75,7 +75,7 @@ public final class WebMvcTags {
             }
         } else {
             // Long task timers won't be initiated if there is no handler found, as they aren't auto-timed.
-            // If no handler is found, redirects and 404s aren't possible.
+            // If no handler is found, 30
         }
 
         String uri = (String) request
