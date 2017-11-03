@@ -56,10 +56,12 @@ public interface MeterFilter {
      * This is only called when filtering new timers and distribution summaries (i.e. those meter types
      * that use {@link HistogramConfig}).
      *
+     *
+     * @param id Id with {@link MeterFilter#map} transformations applied.
      * @param config A histogram configuration guaranteed to be non-null.
      * @return Overrides to any part of the histogram config, when applicable.
      */
-    default HistogramConfig configure(HistogramConfig config) {
+    default HistogramConfig configure(Meter.Id id, HistogramConfig config) {
         return config;
     }
 
