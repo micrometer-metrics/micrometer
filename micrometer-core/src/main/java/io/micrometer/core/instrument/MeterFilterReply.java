@@ -13,17 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.noop;
+package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.Gauge;
-
-public class NoopGauge extends NoopMeter implements Gauge {
-    public NoopGauge(Id id) {
-        super(id);
-    }
-
-    @Override
-    public double value() {
-        return 0;
-    }
+public enum MeterFilterReply {
+    DENY, NEUTRAL, ACCEPT
 }

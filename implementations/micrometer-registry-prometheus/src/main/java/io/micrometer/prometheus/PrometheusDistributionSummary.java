@@ -17,7 +17,7 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 
@@ -29,8 +29,8 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     private DoubleAdder amount = new DoubleAdder();
     private StepDouble max;
 
-    PrometheusDistributionSummary(Id id, Clock clock, StatsConfig statsConfig, long maxStepMillis) {
-        super(id, clock, statsConfig);
+    PrometheusDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig, long maxStepMillis) {
+        super(id, clock, histogramConfig);
         this.max = new StepDouble(clock, maxStepMillis);
     }
 

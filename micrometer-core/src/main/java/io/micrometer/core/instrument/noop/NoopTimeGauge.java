@@ -15,11 +15,18 @@
  */
 package io.micrometer.core.instrument.noop;
 
-import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.TimeGauge;
 
-public class NoopGauge extends NoopMeter implements Gauge {
-    public NoopGauge(Id id) {
+import java.util.concurrent.TimeUnit;
+
+public class NoopTimeGauge extends NoopMeter implements TimeGauge {
+    public NoopTimeGauge(Id id) {
         super(id);
+    }
+
+    @Override
+    public TimeUnit getBaseTimeUnit() {
+        return null;
     }
 
     @Override

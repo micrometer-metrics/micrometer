@@ -16,14 +16,12 @@
 package io.micrometer.core.instrument.step;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
+import java.util.concurrent.*;
 import java.util.function.ToDoubleFunction;
 
 /**
@@ -34,6 +32,7 @@ import java.util.function.ToDoubleFunction;
 public abstract class StepMeterRegistry extends MeterRegistry {
     private final StepRegistryConfig config;
     private ScheduledFuture<?> publisher;
+    protected final Map<Meter, HistogramConfig> histogramConfigs = new ConcurrentHashMap<>();
 
     public StepMeterRegistry(StepRegistryConfig config, Clock clock) {
         super(clock);
@@ -77,17 +76,29 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, StatsConfig statsConfig) {
-        return new StepTimer(id, clock, statsConfig, config.step().toMillis());
+    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
+        HistogramConfig merged = histogramConfig.merge(HistogramConfig.builder()
+            .histogramExpiry(config.step())
+            .build());
+
+        Timer timer = new StepTimer(id, clock, histogramConfig, config.step().toMillis());
+        histogramConfigs.put(timer, merged);
+        return timer;
+    }
+
+    @Override
+    protected DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
+        HistogramConfig merged = histogramConfig.merge(HistogramConfig.builder()
+            .histogramExpiry(config.step())
+            .build());
+
+        DistributionSummary summary = new StepDistributionSummary(id, clock, merged, this.config.step().toMillis());;
+        histogramConfigs.put(summary, merged);
+        return summary;
     }
 
     @Override
     protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         // nothing special to do here
-    }
-
-    @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, StatsConfig statsConfig) {
-        return new StepDistributionSummary(id, clock, statsConfig, config.step().toMillis());
     }
 }

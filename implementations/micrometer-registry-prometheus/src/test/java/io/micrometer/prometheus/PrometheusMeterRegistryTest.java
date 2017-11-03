@@ -192,7 +192,7 @@ class PrometheusMeterRegistryTest {
         assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0);
         assertThat(registry.scrape()).contains("my_timer_duration_seconds_max 0.0");
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
+        clock(registry).add(PrometheusConfig.DEFAULT.step());
         assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(1);
         assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(1000);
 
@@ -209,7 +209,7 @@ class PrometheusMeterRegistryTest {
         assertThat(summary.max()).isEqualTo(0);
         assertThat(registry.scrape()).contains("my_summary_max 0.0");
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
+        clock(registry).add(PrometheusConfig.DEFAULT.step());
         assertThat(summary.max()).isEqualTo(10);
 
         assertThat(registry.scrape()).contains("my_summary_max 10.0");

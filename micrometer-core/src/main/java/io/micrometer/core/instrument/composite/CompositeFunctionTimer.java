@@ -64,16 +64,20 @@ public class CompositeFunctionTimer<T> extends AbstractMeter implements Function
 
     @Override
     public long count() {
-        return functionTimers.values().stream().findFirst().orElse(NoopFunctionTimer.INSTANCE).count();
+        return first().count();
     }
 
     @Override
     public double totalTime(TimeUnit unit) {
-        return functionTimers.values().stream().findFirst().orElse(NoopFunctionTimer.INSTANCE).totalTime(unit);
+        return first().totalTime(unit);
     }
 
     @Override
     public TimeUnit baseTimeUnit() {
-        return functionTimers.values().stream().findFirst().orElse(NoopFunctionTimer.INSTANCE).baseTimeUnit();
+        return first().baseTimeUnit();
+    }
+
+    private FunctionTimer first() {
+        return functionTimers.values().stream().findFirst().orElse(new NoopFunctionTimer(getId()));
     }
 }

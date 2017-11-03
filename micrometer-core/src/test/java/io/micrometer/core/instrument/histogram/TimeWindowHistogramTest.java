@@ -16,18 +16,14 @@
 package io.micrometer.core.instrument.histogram;
 
 import io.micrometer.core.instrument.MockClock;
-import org.HdrHistogram.DoubleHistogram;
-import org.HdrHistogram.DoubleRecorder;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TimeWindowHistogramTest {
-    private StatsConfig statsConfig = new StatsConfig();
-
     @Test
     void histogramsAreCumulative() {
-        TimeWindowHistogram histogram = new TimeWindowHistogram(new MockClock(), statsConfig);
+        TimeWindowHistogram histogram = new TimeWindowHistogram(new MockClock(), HistogramConfig.DEFAULT);
         histogram.record(3);
 
         assertThat(histogram.histogramCountAtValue(3)).isEqualTo(1);
@@ -44,16 +40,17 @@ class TimeWindowHistogramTest {
 
     @Test
     void sampleValueAboveMaximumExpectedValue() {
-        statsConfig.setMaximumExpectedValue(2);
-
-        TimeWindowHistogram histogram = new TimeWindowHistogram(new MockClock(), statsConfig);
+        TimeWindowHistogram histogram = new TimeWindowHistogram(new MockClock(), HistogramConfig.builder()
+            .maximumExpectedValue(2L)
+            .build()
+            .merge(HistogramConfig.DEFAULT));
         histogram.record(3);
         assertThat(histogram.histogramCountAtValue(3)).isEqualTo(1);
     }
 
     @Test
     void recordValuesThatExceedTheDynamicRange() {
-        TimeWindowHistogram histogram = new TimeWindowHistogram(new MockClock(), statsConfig);
+        TimeWindowHistogram histogram = new TimeWindowHistogram(new MockClock(), HistogramConfig.DEFAULT);
 
         // If the dynamic range of the underlying recorder isn't pushed very far to the right, a small value will be handled normally.
         // Doing this primes the 1e-8 sample for failure

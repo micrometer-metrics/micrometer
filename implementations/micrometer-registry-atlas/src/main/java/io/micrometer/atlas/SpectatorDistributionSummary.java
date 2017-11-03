@@ -19,7 +19,7 @@ import com.netflix.spectator.api.Measurement;
 import com.netflix.spectator.api.Statistic;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,8 +33,8 @@ public class SpectatorDistributionSummary extends AbstractDistributionSummary {
     SpectatorDistributionSummary(Id id,
                                  com.netflix.spectator.api.DistributionSummary distributionSummary,
                                  Clock clock,
-                                 StatsConfig statsConfig) {
-        super(id, clock, statsConfig);
+                                 HistogramConfig histogramConfig) {
+        super(id, clock, histogramConfig);
         this.summary = distributionSummary;
     }
 

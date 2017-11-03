@@ -19,19 +19,20 @@ import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.noop.NoopDistributionSummary;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CompositeDistributionSummary extends AbstractMeter implements DistributionSummary, CompositeMeter {
     private final Map<MeterRegistry, DistributionSummary> distributionSummaries = new ConcurrentHashMap<>();
-    private final StatsConfig statsConfig;
+    private final HistogramConfig histogramConfig;
 
-    CompositeDistributionSummary(Meter.Id id, StatsConfig statsConfig) {
+    CompositeDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
         super(id);
-        this.statsConfig = statsConfig;
+        this.histogramConfig = histogramConfig;
     }
 
     @Override
@@ -60,7 +61,7 @@ public class CompositeDistributionSummary extends AbstractMeter implements Distr
     }
 
     private DistributionSummary firstSummary() {
-        return distributionSummaries.values().stream().findFirst().orElse(NoopDistributionSummary.INSTANCE);
+        return distributionSummaries.values().stream().findFirst().orElse(new NoopDistributionSummary(getId()));
     }
 
     @Override
@@ -74,11 +75,13 @@ public class CompositeDistributionSummary extends AbstractMeter implements Distr
             .tags(getId().getTags())
             .description(getId().getDescription())
             .baseUnit(getId().getBaseUnit())
-            .publishPercentiles(statsConfig.getPercentiles())
-            .sla(statsConfig.getSlaBoundaries());
-
-        if(statsConfig.isPercentileHistogram())
-            builder = builder.publishPercentileHistogram();
+            .publishPercentiles(histogramConfig.getPercentiles())
+            .publishPercentileHistogram(histogramConfig.isPercentileHistogram())
+            .maximumExpectedValue(histogramConfig.getMaximumExpectedValue())
+            .minimumExpectedValue(histogramConfig.getMinimumExpectedValue())
+            .histogramBufferLength(histogramConfig.getHistogramBufferLength())
+            .histogramExpiry(histogramConfig.getHistogramExpiry())
+            .sla(histogramConfig.getSlaBoundaries());
 
         distributionSummaries.put(registry, builder.register(registry));
     }
@@ -86,10 +89,5 @@ public class CompositeDistributionSummary extends AbstractMeter implements Distr
     @Override
     public void remove(MeterRegistry registry) {
         distributionSummaries.remove(registry);
-    }
-
-    @Override
-    public StatsConfig statsConfig() {
-        return statsConfig;
     }
 }

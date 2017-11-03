@@ -18,22 +18,17 @@ package io.micrometer.core.instrument.histogram;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.util.TimeUtils;
-import org.HdrHistogram.DoubleRecorder;
-import org.LatencyUtils.LatencyStats;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
-import org.terracotta.statistics.derived.LatencySampling;
 
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TimeWindowLatencyHistogramTest {
-    private StatsConfig statsConfig = new StatsConfig();
-
     @Test
     void histogramsAreCumulative() {
-        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(Clock.SYSTEM, statsConfig);
+        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(Clock.SYSTEM, HistogramConfig.DEFAULT);
         histogram.record(1);
         histogram.record(2);
 
@@ -44,9 +39,10 @@ class TimeWindowLatencyHistogramTest {
 
     @Test
     void sampleValueAboveMaximumExpectedValue() {
-        statsConfig.setMaximumExpectedValue(2);
-
-        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(Clock.SYSTEM, statsConfig);
+        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(Clock.SYSTEM, HistogramConfig.builder()
+            .maximumExpectedValue(2L)
+            .build()
+            .merge(HistogramConfig.DEFAULT));
         histogram.record(3);
         assertThat(histogram.histogramCountAtValue(3)).isEqualTo(1);
         assertThat(histogram.histogramCountAtValue(Long.MAX_VALUE)).isEqualTo(1);
@@ -54,10 +50,11 @@ class TimeWindowLatencyHistogramTest {
 
     @Test
     void recordValuesThatExceedTheDynamicRange() {
-        statsConfig.setMinimumExpectedValue(1);
-        statsConfig.setMaximumExpectedValue(100);
-
-        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), statsConfig);
+        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), HistogramConfig.builder()
+            .minimumExpectedValue(1L)
+            .maximumExpectedValue(100L)
+            .build()
+            .merge(HistogramConfig.DEFAULT));
 
         // Always too large, regardless of bounds.
         histogram.record(Long.MAX_VALUE);
@@ -65,7 +62,7 @@ class TimeWindowLatencyHistogramTest {
 
     @Test
     void percentiles() {
-        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), statsConfig);
+        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), HistogramConfig.DEFAULT);
 
         for(int i = 1; i <= 10; i++) {
             histogram.record((long) TimeUtils.millisToUnit(i, TimeUnit.NANOSECONDS));
@@ -78,13 +75,13 @@ class TimeWindowLatencyHistogramTest {
 
     @Test
     void percentilesWithNoSamples() {
-        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), statsConfig);
+        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), HistogramConfig.DEFAULT);
         assertThat(histogram.percentile(0.5, TimeUnit.MILLISECONDS)).isEqualTo(0);
     }
 
     @Test
     void percentilesChangeWithMoreRecentSamples() {
-        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), statsConfig);
+        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), HistogramConfig.DEFAULT);
 
         for(int i = 1; i <= 10; i++) {
             histogram.record((long) TimeUtils.millisToUnit(i, TimeUnit.NANOSECONDS));

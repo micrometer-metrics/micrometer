@@ -23,7 +23,7 @@ import com.netflix.spectator.api.histogram.PercentileTimer;
 import com.netflix.spectator.atlas.AtlasConfig;
 import com.netflix.spectator.atlas.AtlasRegistry;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 
 import java.text.DecimalFormat;
 import java.time.Duration;
@@ -85,21 +85,21 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(Meter.Id id, StatsConfig statsConfig) {
+    protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
         com.netflix.spectator.api.DistributionSummary internalSummary = registry.distributionSummary(spectatorId(id));
 
-        if(statsConfig.isPercentileHistogram()) {
+        if(histogramConfig.isPercentileHistogram()) {
             // This doesn't report the normal count/totalTime/max stats, so we treat it as additive
             PercentileDistributionSummary.get(registry, spectatorId(id));
         }
 
-        SpectatorDistributionSummary summary = new SpectatorDistributionSummary(id, internalSummary, clock, statsConfig);
+        SpectatorDistributionSummary summary = new SpectatorDistributionSummary(id, internalSummary, clock, histogramConfig);
 
-        for (long sla : statsConfig.getSlaBoundaries()) {
+        for (long sla : histogramConfig.getSlaBoundaries()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "sla", Long.toString(sla)), sla, summary::histogramCountAtValue);
         }
 
-        for (double percentile : statsConfig.getPercentiles()) {
+        for (double percentile : histogramConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
                 percentile, summary::percentile);
         }
@@ -108,21 +108,21 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, StatsConfig statsConfig) {
+    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
         com.netflix.spectator.api.Timer internalTimer = registry.timer(spectatorId(id));
 
-        if(statsConfig.isPercentileHistogram()) {
+        if(histogramConfig.isPercentileHistogram()) {
             // This doesn't report the normal count/totalTime/max stats, so we treat it as additive
             PercentileTimer.get(registry, spectatorId(id));
         }
 
-        SpectatorTimer timer = new SpectatorTimer(id, internalTimer, clock, statsConfig);
+        SpectatorTimer timer = new SpectatorTimer(id, internalTimer, clock, histogramConfig);
 
-        for (long sla : statsConfig.getSlaBoundaries()) {
+        for (long sla : histogramConfig.getSlaBoundaries()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "sla", Duration.ofNanos(sla).toString()), sla, timer::histogramCountAtValue);
         }
 
-        for (double percentile : statsConfig.getPercentiles()) {
+        for (double percentile : histogramConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
                 percentile, p -> timer.percentile(p, TimeUnit.SECONDS));
         }

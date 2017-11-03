@@ -18,7 +18,7 @@ package io.micrometer.prometheus;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.TimeUtils;
 
@@ -30,8 +30,8 @@ public class PrometheusTimer extends AbstractTimer implements Timer {
     private final LongAdder totalTime = new LongAdder();
     private final StepDouble max;
 
-    PrometheusTimer(Id id, Clock clock, StatsConfig statsConfig, long maxStepMillis) {
-        super(id, clock, statsConfig);
+    PrometheusTimer(Id id, Clock clock, HistogramConfig histogramConfig, long maxStepMillis) {
+        super(id, clock, histogramConfig);
         this.max = new StepDouble(clock, maxStepMillis);
     }
 

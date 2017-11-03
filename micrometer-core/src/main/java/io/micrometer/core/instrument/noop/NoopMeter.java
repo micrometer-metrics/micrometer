@@ -15,17 +15,16 @@
  */
 package io.micrometer.core.instrument.noop;
 
+import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
 
 import java.util.List;
 
 import static java.util.Collections.emptyList;
 
-public abstract class NoopMeter implements Meter {
-    @Override
-    public Id getId() {
-        return null;
+public class NoopMeter extends AbstractMeter {
+    public NoopMeter(Id id) {
+        super(id);
     }
 
     @Override

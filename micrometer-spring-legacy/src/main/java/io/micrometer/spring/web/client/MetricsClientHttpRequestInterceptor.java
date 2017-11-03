@@ -93,13 +93,9 @@ class MetricsClientHttpRequestInterceptor implements ClientHttpRequestIntercepto
 
     private Timer.Builder getTimeBuilder(HttpRequest request,
                                          ClientHttpResponse response) {
-        Timer.Builder builder = Timer.builder(this.metricName)
+        return Timer.builder(this.metricName)
             .tags(this.tagProvider.getTags(urlTemplate.get(), request, response))
-            .description("Timer of RestTemplate operation");
-        if (this.recordPercentiles) {
-            builder = builder.publishPercentileHistogram();
-        }
-        return builder;
+            .description("Timer of RestTemplate operation")
+            .publishPercentileHistogram(this.recordPercentiles);
     }
-
 }

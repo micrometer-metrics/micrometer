@@ -68,7 +68,7 @@ public interface Meter {
          */
         private Type type;
 
-        Id(String name, Iterable<Tag> tags, String baseUnit, String description) {
+        public Id(String name, Iterable<Tag> tags, String baseUnit, String description) {
             this.name = name;
 
             this.tags = Collections.unmodifiableList(stream(tags.spliterator(), false)
@@ -88,10 +88,6 @@ public interface Meter {
             if(statistic == null)
                 return this;
             return withTag(Tag.of("statistic", Introspector.decapitalize(statistic.toString())));
-        }
-
-        public Id withName(String newName) {
-            return new Id(newName, tags, baseUnit, description);
         }
 
         public String getName() {

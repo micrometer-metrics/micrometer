@@ -19,7 +19,7 @@ import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.noop.NoopTimer;
 
 import java.time.Duration;
@@ -31,11 +31,11 @@ import java.util.function.Supplier;
 
 public class CompositeTimer extends AbstractMeter implements Timer, CompositeMeter {
     private final Map<MeterRegistry, Timer> timers = new ConcurrentHashMap<>();
-    private final StatsConfig statsConfig;
+    private final HistogramConfig histogramConfig;
 
-    CompositeTimer(Meter.Id id, StatsConfig statsConfig) {
+    CompositeTimer(Meter.Id id, HistogramConfig histogramConfig) {
         super(id);
-        this.statsConfig = statsConfig;
+        this.histogramConfig = histogramConfig;
     }
 
     @Override
@@ -99,12 +99,12 @@ public class CompositeTimer extends AbstractMeter implements Timer, CompositeMet
     }
 
     private Timer firstTimer() {
-        return timers.values().stream().findFirst().orElse(NoopTimer.INSTANCE);
+        return timers.values().stream().findFirst().orElse(new NoopTimer(getId()));
     }
 
     @Override
     public void add(MeterRegistry registry) {
-        long[] slaNanos = statsConfig.getSlaBoundaries();
+        long[] slaNanos = histogramConfig.getSlaBoundaries();
         Duration[] sla = new Duration[slaNanos.length];
         for(int i = 0; i < slaNanos.length; i++) {
             sla[i] = Duration.ofNanos(slaNanos[i]);
@@ -113,13 +113,15 @@ public class CompositeTimer extends AbstractMeter implements Timer, CompositeMet
         Timer.Builder builder = Timer.builder(getId().getName())
             .tags(getId().getTags())
             .description(getId().getDescription())
-            .maximumExpectedValue(Duration.ofNanos(statsConfig.getMaximumExpectedValue()))
-            .minimumExpectedValue(Duration.ofNanos(statsConfig.getMinimumExpectedValue()))
-            .publishPercentiles(statsConfig.getPercentiles())
+            .maximumExpectedValue(Duration.ofNanos(histogramConfig.getMaximumExpectedValue()))
+            .minimumExpectedValue(Duration.ofNanos(histogramConfig.getMinimumExpectedValue()))
+            .publishPercentiles(histogramConfig.getPercentiles())
+            .publishPercentileHistogram(histogramConfig.isPercentileHistogram())
+            .maximumExpectedValue(Duration.ofNanos(histogramConfig.getMaximumExpectedValue()))
+            .minimumExpectedValue(Duration.ofNanos(histogramConfig.getMinimumExpectedValue()))
+            .histogramBufferLength(histogramConfig.getHistogramBufferLength())
+            .histogramExpiry(histogramConfig.getHistogramExpiry())
             .sla(sla);
-
-        if(statsConfig.isPercentileHistogram())
-            builder = builder.publishPercentileHistogram();
 
         timers.put(registry, builder.register(registry));
     }
@@ -127,10 +129,5 @@ public class CompositeTimer extends AbstractMeter implements Timer, CompositeMet
     @Override
     public void remove(MeterRegistry registry) {
         timers.remove(registry);
-    }
-
-    @Override
-    public StatsConfig statsConfig() {
-        return statsConfig;
     }
 }

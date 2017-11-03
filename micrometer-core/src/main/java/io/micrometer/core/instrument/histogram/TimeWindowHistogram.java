@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.histogram;
 
+import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Clock;
 import org.HdrHistogram.DoubleHistogram;
 import org.HdrHistogram.DoubleRecorder;
@@ -24,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author Jon Schneider
  */
+@Incubating(since = "1.0.0-rc.3")
 public class TimeWindowHistogram {
     private final Clock clock;
 
@@ -36,9 +38,9 @@ public class TimeWindowHistogram {
     private long lastRotateTimestampMillis;
     private final long durationBetweenRotatesMillis;
 
-    public TimeWindowHistogram(Clock clock, StatsConfig statsConfig) {
+    public TimeWindowHistogram(Clock clock, HistogramConfig histogramConfig) {
         this.clock = clock;
-        int ageBuckets = statsConfig.getAgeBuckets();
+        int ageBuckets = histogramConfig.getHistogramBufferLength();
         this.recorderRingBuffer = new DoubleRecorder[ageBuckets];
         this.intervalHistogram = new DoubleHistogram(3);
         this.accumulatedHistogram = new DoubleHistogram(3);
@@ -47,7 +49,7 @@ public class TimeWindowHistogram {
         }
         this.currentBucket = 0;
         this.lastRotateTimestampMillis = clock.wallTime();
-        this.durationBetweenRotatesMillis = statsConfig.getMaxAge().toMillis() / ageBuckets;
+        this.durationBetweenRotatesMillis = histogramConfig.getHistogramExpiry().toMillis() / ageBuckets;
     }
 
     public double percentile(double percentile) {

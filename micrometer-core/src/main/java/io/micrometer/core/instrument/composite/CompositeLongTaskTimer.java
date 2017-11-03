@@ -37,7 +37,7 @@ public class CompositeLongTaskTimer extends AbstractMeter implements LongTaskTim
         return timers.values().stream()
             .map(LongTaskTimer::start)
             .reduce((t1, t2) -> t2)
-            .orElse(NoopLongTaskTimer.INSTANCE.start());
+            .orElse(-1L);
     }
 
     @Override
@@ -45,7 +45,7 @@ public class CompositeLongTaskTimer extends AbstractMeter implements LongTaskTim
         return timers.values().stream()
             .map(ltt -> ltt.stop(task))
             .reduce((t1, t2) -> t2 == -1 ? t1 : t2)
-            .orElse(NoopLongTaskTimer.INSTANCE.stop(task));
+            .orElse(-1L);
     }
 
     @Override
@@ -53,7 +53,7 @@ public class CompositeLongTaskTimer extends AbstractMeter implements LongTaskTim
         return timers.values().stream()
             .map(ltt -> ltt.duration(task, unit))
             .reduce((t1, t2) -> t2 == -1 ? t1 : t2)
-            .orElse(NoopLongTaskTimer.INSTANCE.duration(task, unit));
+            .orElse(-1.0);
     }
 
     @Override
@@ -61,13 +61,13 @@ public class CompositeLongTaskTimer extends AbstractMeter implements LongTaskTim
         return firstLongTaskTimer().duration(unit);
     }
 
-    private LongTaskTimer firstLongTaskTimer() {
-        return timers.values().stream().findFirst().orElse(NoopLongTaskTimer.INSTANCE);
-    }
-
     @Override
     public int activeTasks() {
         return firstLongTaskTimer().activeTasks();
+    }
+
+    private LongTaskTimer firstLongTaskTimer() {
+        return timers.values().stream().findFirst().orElse(new NoopLongTaskTimer(getId()));
     }
 
     @Override

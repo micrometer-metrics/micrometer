@@ -50,7 +50,7 @@ public class ProcessorMetrics implements MeterBinder {
 
         OperatingSystemMXBean operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
         if(operatingSystemBean != null && operatingSystemBean.getSystemLoadAverage() >= 0) {
-            Gauge.builder("cpu.load.average", operatingSystemBean, OperatingSystemMXBean::getSystemLoadAverage)
+            Gauge.builder("system.load.average.1m", operatingSystemBean, OperatingSystemMXBean::getSystemLoadAverage)
                 .tags(tags)
                 .description("The sum of the number of runnable entities queued to available processors and the number " +
                     "of runnable entities running on the available processors averaged over a period of time")

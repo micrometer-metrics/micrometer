@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.noop;
+package io.micrometer.core.annotation;
 
-import io.micrometer.core.instrument.Gauge;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
 
-public class NoopGauge extends NoopMeter implements Gauge {
-    public NoopGauge(Id id) {
-        super(id);
-    }
-
-    @Override
-    public double value() {
-        return 0;
-    }
+/**
+ * This is a feature that may still yet change before 1.0.0 GA.
+ */
+@Target({ElementType.METHOD, ElementType.TYPE})
+public @interface Incubating {
+    String since();
 }

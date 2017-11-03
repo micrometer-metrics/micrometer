@@ -16,7 +16,7 @@
 package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
@@ -88,20 +88,20 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    public DistributionSummary newDistributionSummary(Meter.Id id, StatsConfig statsConfig) {
+    public DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
         MicrometerCollector collector = collectorByName(id, Collector.Type.SUMMARY);
-        PrometheusDistributionSummary summary = new PrometheusDistributionSummary(id, clock, statsConfig, prometheusConfig.step().toMillis());
+        PrometheusDistributionSummary summary = new PrometheusDistributionSummary(id, clock, histogramConfig, prometheusConfig.step().toMillis());
         List<String> tagValues = tagValues(id);
 
         collector.add((conventionName, tagKeys) -> {
             Stream.Builder<Collector.MetricFamilySamples.Sample> samples = Stream.builder();
 
-            if (statsConfig.getPercentiles().length > 0) {
+            if (histogramConfig.getPercentiles().length > 0) {
                 List<String> quantileKeys = new LinkedList<>(tagKeys);
                 quantileKeys.add("quantile");
 
                 // satisfies https://prometheus.io/docs/concepts/metric_types/#summary
-                for (double percentile : statsConfig.getPercentiles()) {
+                for (double percentile : histogramConfig.getPercentiles()) {
                     List<String> quantileValues = new LinkedList<>(tagValues);
                     quantileValues.add(Collector.doubleToGoString(percentile));
                     samples.add(new Collector.MetricFamilySamples.Sample(conventionName, quantileKeys, quantileValues,
@@ -109,7 +109,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 }
             }
 
-            if (statsConfig.isPublishingHistogram()) {
+            if (histogramConfig.isPublishingHistogram()) {
                 // Prometheus doesn't balk at a metric being BOTH a histogram and a summary
                 collector.setType(Collector.Type.HISTOGRAM);
 
@@ -117,7 +117,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 histogramKeys.add("le");
 
                 // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
-                for (long bucket : statsConfig.getHistogramBuckets(true)) {
+                for (long bucket : histogramConfig.getHistogramBuckets(true)) {
                     List<String> histogramValues = new LinkedList<>(tagValues);
                     if (bucket == Long.MAX_VALUE) {
                         histogramValues.add("+Inf");
@@ -146,20 +146,20 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, StatsConfig statsConfig) {
+    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
         MicrometerCollector collector = collectorByName(id, Collector.Type.SUMMARY);
-        PrometheusTimer timer = new PrometheusTimer(id, clock, statsConfig, prometheusConfig.step().toMillis());
+        PrometheusTimer timer = new PrometheusTimer(id, clock, histogramConfig, prometheusConfig.step().toMillis());
         List<String> tagValues = tagValues(id);
 
         collector.add((conventionName, tagKeys) -> {
             Stream.Builder<Collector.MetricFamilySamples.Sample> samples = Stream.builder();
 
-            if (statsConfig.getPercentiles().length > 0) {
+            if (histogramConfig.getPercentiles().length > 0) {
                 List<String> quantileKeys = new LinkedList<>(tagKeys);
                 quantileKeys.add("quantile");
 
                 // satisfies https://prometheus.io/docs/concepts/metric_types/#summary
-                for (double percentile : statsConfig.getPercentiles()) {
+                for (double percentile : histogramConfig.getPercentiles()) {
                     List<String> quantileValues = new LinkedList<>(tagValues);
                     quantileValues.add(Collector.doubleToGoString(percentile));
                     samples.add(new Collector.MetricFamilySamples.Sample(conventionName, quantileKeys, quantileValues,
@@ -167,7 +167,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 }
             }
 
-            if (statsConfig.isPublishingHistogram()) {
+            if (histogramConfig.isPublishingHistogram()) {
                 // Prometheus doesn't balk at a metric being BOTH a histogram and a summary
                 collector.setType(Collector.Type.HISTOGRAM);
 
@@ -175,7 +175,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 histogramKeys.add("le");
 
                 // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
-                for (long bucket : statsConfig.getHistogramBuckets(true)) {
+                for (long bucket : histogramConfig.getHistogramBuckets(true)) {
                     List<String> histogramValues = new LinkedList<>(tagValues);
                     if (bucket == Long.MAX_VALUE) {
                         histogramValues.add("+Inf");

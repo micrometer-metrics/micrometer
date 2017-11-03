@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.histogram;
 
+import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.util.TimeUtils;
 import org.HdrHistogram.Histogram;
@@ -23,9 +24,10 @@ import org.LatencyUtils.LatencyStats;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Incubating(since = "1.0.0-rc.3")
 public class TimeWindowLatencyHistogram {
     private final Clock clock;
-    private final StatsConfig config;
+    private final HistogramConfig config;
     private final LatencyStats[] ringBuffer;
     private int currentBucket;
     private long lastRotateTimestampMillis;
@@ -34,17 +36,17 @@ public class TimeWindowLatencyHistogram {
     private final AtomicBoolean accumulatedHistogramStale = new AtomicBoolean(false);
     private final Histogram accumulatedHistogram;
 
-    public TimeWindowLatencyHistogram(Clock clock, StatsConfig statsConfig) {
+    public TimeWindowLatencyHistogram(Clock clock, HistogramConfig histogramConfig) {
         this.clock = clock;
-        this.config = statsConfig;
-        int ageBuckets = statsConfig.getAgeBuckets();
+        this.config = histogramConfig;
+        int ageBuckets = histogramConfig.getHistogramBufferLength();
         this.ringBuffer = new LatencyStats[ageBuckets];
         for (int i = 0; i < ageBuckets; i++) {
             this.ringBuffer[i] = buildLatencyStats();
         }
         this.currentBucket = 0;
         this.lastRotateTimestampMillis = clock.wallTime();
-        this.durationBetweenRotatesMillis = statsConfig.getMaxAge().toMillis() / ageBuckets;
+        this.durationBetweenRotatesMillis = histogramConfig.getHistogramExpiry().toMillis() / ageBuckets;
         this.accumulatedHistogram = new Histogram(ringBuffer[0].getIntervalHistogram());
     }
 

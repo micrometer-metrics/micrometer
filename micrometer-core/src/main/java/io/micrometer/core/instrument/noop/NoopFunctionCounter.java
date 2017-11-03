@@ -15,15 +15,15 @@
  */
 package io.micrometer.core.instrument.noop;
 
-import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.FunctionCounter;
 
-public class NoopGauge extends NoopMeter implements Gauge {
-    public NoopGauge(Id id) {
+public class NoopFunctionCounter extends NoopMeter implements FunctionCounter {
+    public NoopFunctionCounter(Id id) {
         super(id);
     }
 
     @Override
-    public double value() {
+    public double count() {
         return 0;
     }
 }

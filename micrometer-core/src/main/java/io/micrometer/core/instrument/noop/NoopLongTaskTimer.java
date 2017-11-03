@@ -20,9 +20,9 @@ import io.micrometer.core.instrument.LongTaskTimer;
 import java.util.concurrent.TimeUnit;
 
 public class NoopLongTaskTimer extends NoopMeter implements LongTaskTimer {
-    public static NoopLongTaskTimer INSTANCE = new NoopLongTaskTimer();
-
-    private NoopLongTaskTimer() {}
+    public NoopLongTaskTimer(Id id) {
+        super(id);
+    }
 
     @Override
     public long start() {

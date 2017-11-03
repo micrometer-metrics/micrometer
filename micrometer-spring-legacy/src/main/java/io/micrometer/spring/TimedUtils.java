@@ -23,14 +23,17 @@ import java.lang.reflect.AnnotatedElement;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-public class TimedUtils {
+public final class TimedUtils {
+    private TimedUtils() {
+    }
+
     public static Stream<Timed> findTimedAnnotations(AnnotatedElement element) {
         Timed t = AnnotationUtils.findAnnotation(element, Timed.class);
-        if(t != null)
+        if (t != null)
             return Stream.of(t);
 
         TimedSet ts = AnnotationUtils.findAnnotation(element, TimedSet.class);
-        if(ts != null) {
+        if (ts != null) {
             return Arrays.stream(ts.value());
         }
 
