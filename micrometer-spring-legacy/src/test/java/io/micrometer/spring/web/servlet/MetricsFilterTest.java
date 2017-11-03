@@ -30,7 +30,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -38,7 +37,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -67,12 +65,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@AutoConfigureMockMvc
 @TestPropertySource(properties = "security.ignored=/**")
 public class MetricsFilterTest {
-
-    private static final CountDownLatch longRequestCountDown = new CountDownLatch(1);
-
     @Autowired
     private PrometheusMeterRegistry registry;
 
@@ -174,14 +168,19 @@ public class MetricsFilterTest {
     @Test
     public void longRunningRequest() throws Exception {
         MvcResult result = this.mvc.perform(get("/api/c1/long/10"))
-            .andExpect(request().asyncStarted()).andReturn();
+            .andExpect(request().asyncStarted())
+            .andReturn();
+
+        // the request is not prematurely recorded as complete
+        assertThat(this.registry.find("http.server.requests")
+            .tags("uri", "/api/c1/async").timer()).isNotPresent();
 
         // while the mapping is running, it contributes to the activeTasks count
         assertThat(this.registry.find("my.long.request").tags("region", "test")
             .value(Statistic.Count, 1.0).longTaskTimer()).isPresent();
 
         // once the mapping completes, we can gather information about status, etc.
-        longRequestCountDown.countDown();
+        asyncLatch.countDown();
 
         this.mvc.perform(asyncDispatch(result)).andExpect(status().isOk());
 
@@ -220,23 +219,6 @@ public class MetricsFilterTest {
 
         assertThat(this.registry.scrape()).contains("le=\"0.001\"");
         assertThat(this.registry.scrape()).contains("le=\"30.0\"");
-    }
-
-    @Test
-    public void asyncResponse() throws Exception {
-        MvcResult result = mvc.perform(get("/api/c1/async")).andExpect(status().isOk())
-            .andExpect(request().asyncStarted())
-            .andReturn();
-
-        assertThat(this.registry.find("http.server.requests").timer()).isNotPresent();
-
-        asyncLatch.countDown();
-
-        mvc.perform(asyncDispatch(result)).andExpect(status().isCreated());
-
-        assertThat(this.registry.find("http.server.requests")
-            .tags("uri", "/api/c1/async").value(Statistic.Count, 1.0)
-            .timer()).isPresent();
     }
 
     @Target({ElementType.METHOD})
@@ -281,7 +263,7 @@ public class MetricsFilterTest {
         public Callable<String> takesLongTimeToSatisfy(@PathVariable Long id) {
             return () -> {
                 try {
-                    longRequestCountDown.await();
+                    asyncLatch.await();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -328,20 +310,6 @@ public class MetricsFilterTest {
         @GetMapping("/metaTimed/{id}")
         public String meta(@PathVariable String id) {
             return id;
-        }
-
-        @Timed
-        @GetMapping("/async")
-        DeferredResult<ResponseEntity<String>> create() {
-            final DeferredResult<ResponseEntity<String>> result = new DeferredResult<>();
-            new Thread(() -> {
-                try {
-                    asyncLatch.await();
-                    result.setResult(new ResponseEntity<>("Done", HttpStatus.CREATED));
-                } catch (InterruptedException ex) {
-                }
-            }).start();
-            return result;
         }
 
         @ExceptionHandler(IllegalStateException.class)

@@ -69,9 +69,14 @@ public class WebMvcMetricsIntegrationTest {
 
     private MockMvc mvc;
 
+    @Autowired
+    private MetricsFilter filter;
+
     @Before
     public void setupMockMvc() {
-        this.mvc = MockMvcBuilders.webAppContextSetup(this.context).build();
+        this.mvc = MockMvcBuilders.webAppContextSetup(this.context)
+            .addFilters(filter)
+            .build();
     }
 
     @Test

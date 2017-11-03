@@ -10,8 +10,6 @@ import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 import org.springframework.web.servlet.handler.MatchableHandlerMapping;
 import org.springframework.web.util.NestedServletException;
 
-import javax.servlet.AsyncEvent;
-import javax.servlet.AsyncListener;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -57,43 +55,10 @@ public class MetricsFilter extends OncePerRequestFilter {
                 try {
                     filterChain.doFilter(request, response);
 
+                    // when an async operation is complete, the whole filter gets called again with isAsyncStarted = false
                     if(!request.isAsyncStarted()) {
                         this.webMvcMetrics.record(request, response, null);
                     }
-                    else {
-                        request.getAsyncContext().addListener(new AsyncListener() {
-                            @Override
-                            public void onComplete(AsyncEvent event) throws IOException {
-                                record(event);
-                            }
-
-                            @Override
-                            public void onTimeout(AsyncEvent event) throws IOException {
-                                record(event);
-                            }
-
-                            @Override
-                            public void onError(AsyncEvent event) throws IOException {
-                                record(event);
-                            }
-
-                            @Override
-                            public void onStartAsync(AsyncEvent event) throws IOException {
-                            }
-
-                            private void record(AsyncEvent event) {
-                                if(event.getSuppliedResponse() instanceof HttpServletResponse &&
-                                    event.getSuppliedRequest() instanceof HttpServletRequest) {
-                                    MetricsFilter.this.webMvcMetrics.record(
-                                        (HttpServletRequest) event.getSuppliedRequest(),
-                                        (HttpServletResponse) event.getSuppliedResponse(),
-                                        event.getThrowable()
-                                    );
-                                }
-                            }
-                        });
-                    }
-
                 } catch (NestedServletException e) {
                     this.webMvcMetrics.record(request, response, e.getCause());
                     throw e;

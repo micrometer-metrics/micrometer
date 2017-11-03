@@ -123,8 +123,12 @@ public class WebMvcMetrics {
     private void completeLongTimerTask(HttpServletRequest request, Object handler,
                                        TimerConfig config) {
         if (config.getName() != null) {
-            longTaskTimer(config, request, handler)
-                .stop(this.longTaskTimerIds.remove(request));
+            Long timerId = this.longTaskTimerIds.remove(request);
+            LongTaskTimer longTaskTimer = longTaskTimer(config, request, handler);
+
+            if(timerId != null) {
+                longTaskTimer.stop(timerId);
+            }
         }
     }
 
@@ -178,7 +182,7 @@ public class WebMvcMetrics {
     private Set<TimerConfig> timed(Object handler) {
         if (handler instanceof HandlerMethod) {
             return timed((HandlerMethod) handler);
-        } else if(handler instanceof ResourceHttpRequestHandler && this.autoTimeRequests) {
+        } else if (handler instanceof ResourceHttpRequestHandler && this.autoTimeRequests) {
             return Collections.singleton(new TimerConfig(getServerRequestName(),
                 this.recordAsPercentiles));
         }
