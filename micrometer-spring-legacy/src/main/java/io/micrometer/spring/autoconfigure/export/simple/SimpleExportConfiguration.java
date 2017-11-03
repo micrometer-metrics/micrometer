@@ -43,7 +43,7 @@ public class SimpleExportConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public Clock simpleRegistryClock() {
+    public Clock micrometerClock() {
         return Clock.SYSTEM;
     }
 

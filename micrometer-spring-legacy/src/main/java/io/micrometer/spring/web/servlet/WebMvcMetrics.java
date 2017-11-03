@@ -142,12 +142,10 @@ public class WebMvcMetrics {
                                           HttpServletResponse response, Throwable thrown, TimerConfig config) {
         Timer.Builder builder = Timer.builder(config.getName())
             .tags(this.tagsProvider.httpRequestTags(request, response, thrown))
-            .tags(config.getExtraTags()).description("Timer of servlet request");
+            .tags(config.getExtraTags()).description("Timer of servlet request")
+            .publishPercentileHistogram(config.histogram);
         if (config.getPercentiles().length > 0) {
             builder = builder.publishPercentiles(config.getPercentiles());
-        }
-        if (config.isHistogram()) {
-            builder = builder.publishPercentileHistogram();
         }
         return builder;
     }
