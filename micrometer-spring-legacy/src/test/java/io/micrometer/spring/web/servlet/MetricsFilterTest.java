@@ -51,6 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -131,11 +132,12 @@ public class MetricsFilterTest {
     @Test
     public void unhandledError() throws Exception {
         assertThatCode(() -> this.mvc.perform(get("/api/c1/unhandledError/10"))
-            .andExpect(status().isOk()))
-            .hasCauseInstanceOf(RuntimeException.class);
+            .andExpect(status().isOk())
+            .andDo(print()))
+            .hasRootCauseInstanceOf(RuntimeException.class);
 
         assertThat(this.registry.find("http.server.requests")
-            .tags("exception", "RuntimeException").value(Statistic.Count, 1.0)
+            .tags("exception", "NestedServletException").value(Statistic.Count, 1.0)
             .timer()).isPresent();
     }
 
@@ -238,13 +240,13 @@ public class MetricsFilterTest {
         @Timed
         @GetMapping("/error/{id}")
         public String alwaysThrowsException(@PathVariable Long id) {
-            throw new IllegalStateException("Boom on $id!");
+            throw new IllegalStateException("Boom on "+id+"!");
         }
 
         @Timed
         @GetMapping("/unhandledError/{id}")
         public String alwaysThrowsUnhandledException(@PathVariable Long id) {
-            throw new RuntimeException("Boom on $id!");
+            throw new RuntimeException("Boom on "+id+"!");
         }
 
         @Timed

@@ -46,14 +46,14 @@ public class MetricsFilter extends OncePerRequestFilter {
                     try {
                         filterChain.doFilter(request, response);
                         this.webMvcMetrics.record(request, response, null);
-                    } catch (RuntimeException e) {
+                    } catch (Exception e) {
                         this.webMvcMetrics.record(request, response, e);
                         throw e;
                     }
                 }
             }
         } catch(Exception e) {
-            logger.debug("Unable to time request", e);
+            throw new RuntimeException("Unable to time request",e);
         }
     }
 }
