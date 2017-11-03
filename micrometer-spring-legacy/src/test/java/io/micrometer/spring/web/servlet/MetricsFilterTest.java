@@ -24,23 +24,27 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -48,6 +52,7 @@ import java.lang.annotation.Target;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 
+import static io.micrometer.spring.web.servlet.MetricsFilterTest.RedirectAndNotFoundFilter.TEST_MISBEHAVE_HEADER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
@@ -56,27 +61,32 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Tests for {@link MetricsHandlerInterceptor}.
- *
  * @author Jon Schneider
  */
 @RunWith(SpringRunner.class)
-@WebAppConfiguration
-public class MetricsHandlerInterceptorTest {
-
-    private static final CountDownLatch longRequestCountDown = new CountDownLatch(1);
-
+@SpringBootTest
+@TestPropertySource(properties = "security.ignored=/**")
+public class MetricsFilterTest {
     @Autowired
     private PrometheusMeterRegistry registry;
 
     @Autowired
     private WebApplicationContext context;
 
+    @Autowired
+    private MetricsFilter filter;
+
     private MockMvc mvc;
+
+    @Autowired
+    private CountDownLatch asyncLatch;
 
     @Before
     public void setupMockMvc() {
-        this.mvc = MockMvcBuilders.webAppContextSetup(this.context).build();
+        this.mvc = MockMvcBuilders
+            .webAppContextSetup(this.context)
+            .addFilters(filter, new RedirectAndNotFoundFilter())
+            .build();
     }
 
     @Test
@@ -123,10 +133,32 @@ public class MetricsHandlerInterceptorTest {
             .timer()).isPresent();
     }
 
+
     @Test
-    public void udefanhandledError() throws Exception {
+    public void redirectRequest() throws Exception {
+        this.mvc.perform(get("/api/redirect")
+            .header(TEST_MISBEHAVE_HEADER, "302")).andExpect(status().is3xxRedirection());
+
+        assertThat(this.registry.find("http.server.requests")
+            .tags("uri", "REDIRECTION")
+            .tags("status", "302").timer()).isPresent();
+    }
+
+    @Test
+    public void notFoundRequest() throws Exception {
+        this.mvc.perform(get("/api/not/found")
+            .header(TEST_MISBEHAVE_HEADER, "404")).andExpect(status().is4xxClientError());
+
+        assertThat(this.registry.find("http.server.requests")
+            .tags("uri", "NOT_FOUND")
+            .tags("status", "404").timer()).isPresent();
+    }
+
+    @Test
+    public void unhandledError() throws Exception {
         assertThatCode(() -> this.mvc.perform(get("/api/c1/unhandledError/10"))
-            .andExpect(status().isOk())).hasCauseInstanceOf(RuntimeException.class);
+            .andExpect(status().isOk()))
+            .hasRootCauseInstanceOf(RuntimeException.class);
 
         assertThat(this.registry.find("http.server.requests")
             .tags("exception", "RuntimeException").value(Statistic.Count, 1.0)
@@ -136,14 +168,19 @@ public class MetricsHandlerInterceptorTest {
     @Test
     public void longRunningRequest() throws Exception {
         MvcResult result = this.mvc.perform(get("/api/c1/long/10"))
-            .andExpect(request().asyncStarted()).andReturn();
+            .andExpect(request().asyncStarted())
+            .andReturn();
+
+        // the request is not prematurely recorded as complete
+        assertThat(this.registry.find("http.server.requests")
+            .tags("uri", "/api/c1/async").timer()).isNotPresent();
 
         // while the mapping is running, it contributes to the activeTasks count
         assertThat(this.registry.find("my.long.request").tags("region", "test")
             .value(Statistic.Count, 1.0).longTaskTimer()).isPresent();
 
         // once the mapping completes, we can gather information about status, etc.
-        longRequestCountDown.countDown();
+        asyncLatch.countDown();
 
         this.mvc.perform(asyncDispatch(result)).andExpect(status().isOk());
 
@@ -190,41 +227,29 @@ public class MetricsHandlerInterceptorTest {
     public @interface Timed95 {
     }
 
-    @Configuration
-    @EnableWebMvc
+    @SpringBootApplication(scanBasePackages = "ignored")
     @Import({Controller1.class, Controller2.class})
-    static class TestConfiguration {
+    static class MetricsFilterApp {
         @Bean
         MeterRegistry meterRegistry() {
+            // one of the few registries that support aggregable percentiles
             return new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
         }
 
         @Bean
-        WebMvcMetrics webMvcMetrics(MeterRegistry meterRegistry) {
-            return new WebMvcMetrics(meterRegistry, new DefaultWebMvcTagsProvider(),
-                "http.server.requests", true, true);
-        }
-
-        @Configuration
-        static class HandlerInterceptorConfiguration extends WebMvcConfigurerAdapter {
-
-            private final WebMvcMetrics webMvcMetrics;
-
-            HandlerInterceptorConfiguration(WebMvcMetrics webMvcMetrics) {
-                this.webMvcMetrics = webMvcMetrics;
-            }
-
-            @Override
-            public void addInterceptors(InterceptorRegistry registry) {
-                registry.addInterceptor(
-                    new MetricsHandlerInterceptor(this.webMvcMetrics));
-            }
+        CountDownLatch asyncLatch() {
+            return new CountDownLatch(1);
         }
     }
 
     @RestController
     @RequestMapping("/api/c1")
     static class Controller1 {
+        private final CountDownLatch asyncLatch;
+
+        public Controller1(CountDownLatch asyncLatch) {
+            this.asyncLatch = asyncLatch;
+        }
 
         @Timed(extraTags = {"public", "true"})
         @GetMapping("/{id}")
@@ -232,15 +257,13 @@ public class MetricsHandlerInterceptorTest {
             return id.toString();
         }
 
-        @Timed // contains dimensions for status, etc. that can't be known until after the
-        // response is sent
-        @Timed(value = "my.long.request", extraTags = {"region",
-            "test"}, longTask = true) // in progress metric
+        @Timed
+        @Timed(value = "my.long.request", extraTags = {"region", "test"}, longTask = true)
         @GetMapping("/long/{id}")
         public Callable<String> takesLongTimeToSatisfy(@PathVariable Long id) {
             return () -> {
                 try {
-                    longRequestCountDown.await();
+                    asyncLatch.await();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -256,13 +279,13 @@ public class MetricsHandlerInterceptorTest {
         @Timed
         @GetMapping("/error/{id}")
         public String alwaysThrowsException(@PathVariable Long id) {
-            throw new IllegalStateException("Boom on $id!");
+            throw new IllegalStateException("Boom on " + id + "!");
         }
 
         @Timed
         @GetMapping("/unhandledError/{id}")
         public String alwaysThrowsUnhandledException(@PathVariable Long id) {
-            throw new RuntimeException("Boom on $id!");
+            throw new RuntimeException("Boom on " + id + "!");
         }
 
         @Timed
@@ -294,19 +317,30 @@ public class MetricsHandlerInterceptorTest {
         ModelAndView defaultErrorHandler(HttpServletRequest request, Exception e) {
             return new ModelAndView("myerror");
         }
-
     }
 
     @RestController
     @Timed
     @RequestMapping("/api/c2")
     static class Controller2 {
-
         @GetMapping("/{id}")
         public String successful(@PathVariable Long id) {
             return id.toString();
         }
-
     }
 
+    static class RedirectAndNotFoundFilter extends OncePerRequestFilter {
+
+        static final String TEST_MISBEHAVE_HEADER = "x-test-misbehave-status";
+
+        @Override
+        protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+            String misbehave = request.getHeader(TEST_MISBEHAVE_HEADER);
+            if (misbehave != null) {
+                response.setStatus(Integer.parseInt(misbehave));
+            } else {
+                filterChain.doFilter(request, response);
+            }
+        }
+    }
 }

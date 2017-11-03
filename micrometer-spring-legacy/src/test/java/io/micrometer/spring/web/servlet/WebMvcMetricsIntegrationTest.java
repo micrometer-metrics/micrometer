@@ -23,12 +23,14 @@ import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.spring.TimedUtilsTest;
+import io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -40,6 +42,7 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -47,7 +50,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Integration tests for {@link TimedUtilsTest}.
+ * Integration tests for {@link WebMvcMetrics}.
  *
  * @author Jon Schneider
  */
@@ -66,9 +69,14 @@ public class WebMvcMetricsIntegrationTest {
 
     private MockMvc mvc;
 
+    @Autowired
+    private MetricsFilter filter;
+
     @Before
     public void setupMockMvc() {
-        this.mvc = MockMvcBuilders.webAppContextSetup(this.context).build();
+        this.mvc = MockMvcBuilders.webAppContextSetup(this.context)
+            .addFilters(filter)
+            .build();
     }
 
     @Test
@@ -93,14 +101,9 @@ public class WebMvcMetricsIntegrationTest {
     }
 
     @Configuration
+    @EnableWebMvc
+    @Import(WebMvcMetricsConfiguration.class)
     static class TestConfiguration {
-
-        @Bean
-        WebMvcMetrics webMvcMetrics(MeterRegistry meterRegistry) {
-            return new WebMvcMetrics(meterRegistry, new DefaultWebMvcTagsProvider(),
-                "http.server.requests", true, true);
-        }
-
         @Bean
         MockClock clock() {
             return new MockClock();
@@ -131,22 +134,6 @@ public class WebMvcMetricsIntegrationTest {
                 throw new Exception2();
             }
 
-        }
-
-        @Configuration
-        @EnableWebMvc
-        static class HandlerInterceptorConfiguration extends WebMvcConfigurerAdapter {
-            private final WebMvcMetrics webMvcMetrics;
-
-            HandlerInterceptorConfiguration(WebMvcMetrics webMvcMetrics) {
-                this.webMvcMetrics = webMvcMetrics;
-            }
-
-            @Override
-            public void addInterceptors(InterceptorRegistry registry) {
-                registry.addInterceptor(
-                    new MetricsHandlerInterceptor(this.webMvcMetrics));
-            }
         }
     }
 

@@ -16,6 +16,7 @@
 package io.micrometer.spring.web.servlet;
 
 import io.micrometer.core.instrument.Tag;
+import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerMapping;
 
@@ -64,7 +65,19 @@ public final class WebMvcTags {
      * @param request the request
      * @return the uri tag derived from the request
      */
-    public static Tag uri(HttpServletRequest request) {
+    public static Tag uri(HttpServletRequest request, HttpServletResponse response) {
+        if(response != null) {
+            HttpStatus status = HttpStatus.valueOf(response.getStatus());
+            if (status.is3xxRedirection()) {
+                return Tag.of("uri", "REDIRECTION");
+            } else if (status.equals(HttpStatus.NOT_FOUND)) {
+                return Tag.of("uri", "NOT_FOUND");
+            }
+        } else {
+            // Long task timers won't be initiated if there is no handler found, as they aren't auto-timed.
+            // If no handler is found, 30
+        }
+
         String uri = (String) request
             .getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
         if (uri == null) {
