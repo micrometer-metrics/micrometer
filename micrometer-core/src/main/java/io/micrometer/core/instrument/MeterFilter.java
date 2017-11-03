@@ -20,7 +20,7 @@ import static java.util.stream.StreamSupport.stream;
  * @author Jon Schneider
  */
 @Incubating(since = "1.0.0-rc.3")
-interface MeterFilter {
+public interface MeterFilter {
     /**
      * @param id Id with {@link MeterFilter#map} transformations applied.
      * @return After all transformations, should a real meter be registered for this id, or should it be no-op'd.
