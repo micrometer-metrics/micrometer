@@ -628,7 +628,7 @@ public abstract class MeterRegistry {
         HistogramConfig mappedConfig = config;
         if (mappedConfig != null) {
             for (MeterFilter filter : filters) {
-                mappedConfig = filter.configure(mappedConfig);
+                mappedConfig = filter.configure(mappedId, mappedConfig);
             }
         }
 

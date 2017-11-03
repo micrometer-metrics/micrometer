@@ -59,7 +59,7 @@ class MeterRegistryTest {
 
         registry.config().meterFilter(new MeterFilter() {
             @Override
-            public HistogramConfig configure(HistogramConfig config) {
+            public HistogramConfig configure(Meter.Id mappedId, HistogramConfig config) {
                 return HistogramConfig.builder()
                     .percentilesHistogram(true)
                     .build()
