@@ -18,9 +18,9 @@ package io.micrometer.core.instrument.noop;
 import io.micrometer.core.instrument.Gauge;
 
 public class NoopGauge extends NoopMeter implements Gauge {
-    public static final NoopGauge INSTANCE = new NoopGauge();
-
-    private NoopGauge() {}
+    public NoopGauge(Id id) {
+        super(id);
+    }
 
     @Override
     public double value() {

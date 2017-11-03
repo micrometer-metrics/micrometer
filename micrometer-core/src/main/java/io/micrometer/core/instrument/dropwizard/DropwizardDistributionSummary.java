@@ -17,7 +17,7 @@ package io.micrometer.core.instrument.dropwizard;
 
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 
@@ -31,8 +31,8 @@ public class DropwizardDistributionSummary extends AbstractDistributionSummary {
     private final DoubleAdder totalAmount = new DoubleAdder();
     private final StepDouble max;
 
-    DropwizardDistributionSummary(Id id, Clock clock, com.codahale.metrics.Histogram impl, StatsConfig statsConfig) {
-        super(id, clock, statsConfig);
+    DropwizardDistributionSummary(Id id, Clock clock, com.codahale.metrics.Histogram impl, HistogramConfig histogramConfig) {
+        super(id, clock, histogramConfig);
         this.impl = impl;
         this.max = new StepDouble(clock, 60000);
     }

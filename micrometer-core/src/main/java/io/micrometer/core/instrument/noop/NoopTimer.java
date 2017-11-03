@@ -16,16 +16,16 @@
 package io.micrometer.core.instrument.noop;
 
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class NoopTimer extends NoopMeter implements Timer {
-    public static final NoopTimer INSTANCE = new NoopTimer();
-
-    private NoopTimer() {}
+    public NoopTimer(Id id) {
+        super(id);
+    }
 
     @Override
     public void record(long amount, TimeUnit unit) {
@@ -73,10 +73,5 @@ public class NoopTimer extends NoopMeter implements Timer {
     @Override
     public double histogramCountAtValue(long valueNanos) {
         return 0;
-    }
-
-    @Override
-    public StatsConfig statsConfig() {
-        return new StatsConfig();
     }
 }

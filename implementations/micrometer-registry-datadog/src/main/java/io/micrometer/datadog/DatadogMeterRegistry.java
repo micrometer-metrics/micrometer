@@ -16,8 +16,9 @@
 package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.MeterPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +32,9 @@ import java.net.URI;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
@@ -46,6 +48,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(DatadogMeterRegistry.class);
     private final DatadogConfig config;
     private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
+    private final Map<Meter, HistogramConfig> histogramConfigs = new ConcurrentHashMap<>();
 
     public DatadogMeterRegistry(DatadogConfig config, Clock clock) {
         super(config, clock);
@@ -131,46 +134,43 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<String> writeTimer(FunctionTimer timer) {
-        Function<String, Meter.Id> withSuffix = (String suffix) -> timer.getId().withName(timer.getId().getName() + "." + suffix);
         long wallTime = clock.wallTime();
 
         // we can't know anything about max and percentiles originating from a function timer
         return Stream.of(
-            writeMetric(withSuffix.apply("count"), wallTime, timer.count()),
-            writeMetric(withSuffix.apply("avg"), wallTime, timer.mean(getBaseTimeUnit())));
+            writeMetric(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
+            writeMetric(idWithSuffix(timer.getId(), "avg"), wallTime, timer.mean(getBaseTimeUnit())));
     }
 
     private Stream<String> writeTimer(Timer timer) {
-        Function<String, Meter.Id> withSuffix = (String suffix) -> timer.getId().withName(timer.getId().getName() + "." + suffix);
         long wallTime = clock.wallTime();
 
         Stream.Builder<String> metrics = Stream.builder();
 
-        metrics.add(writeMetric(withSuffix.apply("sum"), wallTime, timer.totalTime(getBaseTimeUnit())));
-        metrics.add(writeMetric(withSuffix.apply("count"), wallTime, timer.count()));
-        metrics.add(writeMetric(withSuffix.apply("avg"), wallTime, timer.mean(getBaseTimeUnit())));
-        metrics.add(writeMetric(withSuffix.apply("max"), wallTime, timer.max(getBaseTimeUnit())));
+        metrics.add(writeMetric(idWithSuffix(timer.getId(), "sum"), wallTime, timer.totalTime(getBaseTimeUnit())));
+        metrics.add(writeMetric(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()));
+        metrics.add(writeMetric(idWithSuffix(timer.getId(), "avg"), wallTime, timer.mean(getBaseTimeUnit())));
+        metrics.add(writeMetric(idWithSuffix(timer.getId(), "max"), wallTime, timer.max(getBaseTimeUnit())));
 
-        for (double percentile : timer.statsConfig().getPercentiles()) {
-            metrics.add(writeMetric(withSuffix.apply(percentileFormat.format(percentile) + "percentile"), wallTime, timer.percentile(percentile, getBaseTimeUnit())));
+        for (double percentile : histogramConfigs.get(timer).getPercentiles()) {
+            metrics.add(writeMetric(idWithSuffix(timer.getId(), percentileFormat.format(percentile) + "percentile"), wallTime, timer.percentile(percentile, getBaseTimeUnit())));
         }
 
         return metrics.build();
     }
 
     private Stream<String> writeSummary(DistributionSummary summary) {
-        Function<String, Meter.Id> withSuffix = (String suffix) -> summary.getId().withName(summary.getId().getName() + "." + suffix);
         long wallTime = clock.wallTime();
 
         Stream.Builder<String> metrics = Stream.builder();
 
-        metrics.add(writeMetric(withSuffix.apply("sum"), wallTime, summary.totalAmount()));
-        metrics.add(writeMetric(withSuffix.apply("count"), wallTime, summary.count()));
-        metrics.add(writeMetric(withSuffix.apply("avg"), wallTime, summary.mean()));
-        metrics.add(writeMetric(withSuffix.apply("max"), wallTime, summary.max()));
+        metrics.add(writeMetric(idWithSuffix(summary.getId(), "sum"), wallTime, summary.totalAmount()));
+        metrics.add(writeMetric(idWithSuffix(summary.getId(), "count"), wallTime, summary.count()));
+        metrics.add(writeMetric(idWithSuffix(summary.getId(), "avg"), wallTime, summary.mean()));
+        metrics.add(writeMetric(idWithSuffix(summary.getId(), "max"), wallTime, summary.max()));
 
-        for (double percentile : summary.statsConfig().getPercentiles()) {
-            metrics.add(writeMetric(withSuffix.apply(percentileFormat.format(percentile) + "percentile"), wallTime, summary.percentile(percentile)));
+        for (double percentile : histogramConfigs.get(summary).getPercentiles()) {
+            metrics.add(writeMetric(idWithSuffix(summary.getId(),percentileFormat.format(percentile) + "percentile"), wallTime, summary.percentile(percentile)));
         }
 
         return metrics.build();
@@ -204,5 +204,12 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
+    }
+
+    /**
+     * Copy tags, unit, and description from an existing id, but change the name.
+     */
+    private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
+        return new Meter.Id(id.getName() + "." + suffix, id.getTags(), id.getBaseUnit(), id.getDescription());
     }
 }

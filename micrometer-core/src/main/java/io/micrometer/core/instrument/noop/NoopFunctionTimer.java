@@ -16,13 +16,14 @@
 package io.micrometer.core.instrument.noop;
 
 import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Meter;
 
 import java.util.concurrent.TimeUnit;
 
 public class NoopFunctionTimer extends NoopMeter implements FunctionTimer {
-    public static final NoopFunctionTimer INSTANCE = new NoopFunctionTimer();
-
-    private NoopFunctionTimer() {}
+    public NoopFunctionTimer(Id id) {
+        super(id);
+    }
 
     @Override
     public long count() {

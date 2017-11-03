@@ -40,7 +40,7 @@ public class CompositeGauge<T> extends AbstractMeter implements Gauge, Composite
 
     @Override
     public double value() {
-        return gauges.values().stream().findFirst().orElse(NoopGauge.INSTANCE).value();
+        return gauges.values().stream().findFirst().orElse(new NoopGauge(getId())).value();
     }
 
     @Override

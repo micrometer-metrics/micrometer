@@ -15,8 +15,9 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -61,8 +62,6 @@ public interface DistributionSummary extends Meter {
 
     double histogramCountAtValue(long value);
 
-    StatsConfig statsConfig();
-
     static Builder builder(String name) {
         return new Builder(name);
     }
@@ -72,7 +71,7 @@ public interface DistributionSummary extends Meter {
         private final List<Tag> tags = new ArrayList<>();
         private String description;
         private String baseUnit;
-        private StatsConfig statsConfig = new StatsConfig();
+        private HistogramConfig.Builder histogramConfigBuilder = HistogramConfig.builder();
 
         private Builder(String name) {
             this.name = name;
@@ -87,11 +86,6 @@ public interface DistributionSummary extends Meter {
 
         public Builder tags(Iterable<Tag> tags) {
             tags.forEach(this.tags::add);
-            return this;
-        }
-
-        public Builder percentiles(StatsConfig statsConfig) {
-            this.statsConfig = statsConfig;
             return this;
         }
 
@@ -114,7 +108,7 @@ public interface DistributionSummary extends Meter {
          * @param percentiles Percentiles to compute and publish. The 95th percentile should be expressed as {@code 95.0}
          */
         public Builder publishPercentiles(double... percentiles) {
-            this.statsConfig.setPercentiles(percentiles);
+            this.histogramConfigBuilder.percentiles(percentiles);
             return this;
         }
 
@@ -124,7 +118,16 @@ public interface DistributionSummary extends Meter {
          * Atlas' {@code :percentiles}).
          */
         public Builder publishPercentileHistogram() {
-            this.statsConfig.setPercentileHistogram(true);
+            return publishPercentileHistogram(true);
+        }
+
+        /**
+         * Adds histogram buckets usable for generating aggregable percentile approximations in monitoring
+         * systems that have query facilities to do so (e.g. Prometheus' {@code histogram_quantile},
+         * Atlas' {@code :percentiles}).
+         */
+        public Builder publishPercentileHistogram(Boolean enabled) {
+            this.histogramConfigBuilder.percentilesHistogram(enabled);
             return this;
         }
 
@@ -136,12 +139,32 @@ public interface DistributionSummary extends Meter {
          * @param sla Publish SLA boundaries in the set of histogram buckets shipped to the monitoring system.
          */
         public Builder sla(long... sla) {
-            this.statsConfig.setSlaBoundaries(sla);
+            this.histogramConfigBuilder.sla(sla);
+            return this;
+        }
+
+        public Builder minimumExpectedValue(Long min) {
+            this.histogramConfigBuilder.minimumExpectedValue(min);
+            return this;
+        }
+
+        public Builder maximumExpectedValue(Long max) {
+            this.histogramConfigBuilder.maximumExpectedValue(max);
+            return this;
+        }
+
+        public Builder histogramExpiry(Duration expiry) {
+            this.histogramConfigBuilder.histogramExpiry(expiry);
+            return this;
+        }
+
+        public Builder histogramBufferLength(Integer bufferLength) {
+            this.histogramConfigBuilder.histogramBufferLength(bufferLength);
             return this;
         }
 
         public DistributionSummary register(MeterRegistry registry) {
-            return registry.summary(new Meter.Id(name, tags, baseUnit, description), statsConfig);
+            return registry.summary(new Meter.Id(name, tags, baseUnit, description), histogramConfigBuilder.build());
         }
     }
 

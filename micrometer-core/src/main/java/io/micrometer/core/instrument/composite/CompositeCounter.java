@@ -38,7 +38,7 @@ class CompositeCounter extends AbstractMeter implements Counter, CompositeMeter 
 
     @Override
     public double count() {
-        return counters.values().stream().findFirst().orElse(NoopCounter.INSTANCE).count();
+        return counters.values().stream().findFirst().orElse(new NoopCounter(getId())).count();
     }
 
     @Override

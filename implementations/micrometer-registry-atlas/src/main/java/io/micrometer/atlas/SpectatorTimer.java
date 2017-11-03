@@ -18,15 +18,13 @@ package io.micrometer.atlas;
 import com.netflix.spectator.api.Measurement;
 import com.netflix.spectator.api.Statistic;
 import com.netflix.spectator.api.Timer;
-import com.netflix.spectator.impl.StepLong;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.util.TimeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Field;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.stream.StreamSupport.stream;
@@ -35,7 +33,7 @@ public class SpectatorTimer extends AbstractTimer {
     private final com.netflix.spectator.api.Timer timer;
     private final Logger logger = LoggerFactory.getLogger(SpectatorTimer.class);
 
-    public SpectatorTimer(Id id, Timer timer, Clock clock, StatsConfig statsConf) {
+    public SpectatorTimer(Id id, Timer timer, Clock clock, HistogramConfig statsConf) {
         super(id, clock, statsConf);
         this.timer = timer;
     }

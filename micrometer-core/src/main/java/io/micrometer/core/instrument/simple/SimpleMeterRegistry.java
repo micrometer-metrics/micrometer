@@ -16,8 +16,7 @@
 package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.histogram.PercentileHistogramBuckets;
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.TimeUtils;
 
@@ -46,16 +45,16 @@ public class SimpleMeterRegistry extends StepMeterRegistry {
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, StatsConfig statsConfig) {
-        DistributionSummary summary = super.newDistributionSummary(id, statsConfig);
+    protected DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
+        DistributionSummary summary = super.newDistributionSummary(id, histogramConfig);
 
-        for (double percentile : statsConfig.getPercentiles()) {
+        for (double percentile : histogramConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
                 percentile, summary::percentile);
         }
 
-        if(statsConfig.isPublishingHistogram()) {
-            for (Long bucket : statsConfig.getHistogramBuckets(false)) {
+        if(histogramConfig.isPublishingHistogram()) {
+            for (Long bucket : histogramConfig.getHistogramBuckets(false)) {
                 more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket", Long.toString(bucket)),
                     summary, s -> s.histogramCountAtValue(bucket));
             }
@@ -65,16 +64,16 @@ public class SimpleMeterRegistry extends StepMeterRegistry {
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, StatsConfig statsConfig) {
-        Timer timer = super.newTimer(id, statsConfig);
+    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
+        Timer timer = super.newTimer(id, histogramConfig);
 
-        for (double percentile : statsConfig.getPercentiles()) {
+        for (double percentile : histogramConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
                 percentile, p -> timer.percentile(p, getBaseTimeUnit()));
         }
 
-        if(statsConfig.isPublishingHistogram()) {
-            for (Long bucket : statsConfig.getHistogramBuckets(false)) {
+        if(histogramConfig.isPublishingHistogram()) {
+            for (Long bucket : histogramConfig.getHistogramBuckets(false)) {
                 more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket",
                     percentileFormat.format(TimeUtils.nanosToUnit(bucket, getBaseTimeUnit()))),
                     timer, t -> t.histogramCountAtValue(bucket));

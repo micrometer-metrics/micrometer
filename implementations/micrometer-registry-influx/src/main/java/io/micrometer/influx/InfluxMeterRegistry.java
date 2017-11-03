@@ -16,6 +16,7 @@
 package io.micrometer.influx;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import org.slf4j.Logger;
@@ -27,6 +28,8 @@ import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
@@ -228,7 +231,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         fields.add(new Field("mean", timer.mean(getBaseTimeUnit())));
         fields.add(new Field("upper", timer.max(getBaseTimeUnit())));
 
-        for (double percentile : timer.statsConfig().getPercentiles()) {
+        for (double percentile : histogramConfigs.get(timer).getPercentiles()) {
             fields.add(new Field(format.format(percentile) + "_percentile", timer.percentile(percentile, getBaseTimeUnit())));
         }
 
@@ -243,7 +246,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         fields.add(new Field("mean", summary.mean()));
         fields.add(new Field("upper", summary.max()));
 
-        for (double percentile : summary.statsConfig().getPercentiles()) {
+        for (double percentile : histogramConfigs.get(summary).getPercentiles()) {
             fields.add(new Field(format.format(percentile) + "_percentile", summary.percentile(percentile)));
         }
 

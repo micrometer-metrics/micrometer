@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -116,8 +116,6 @@ public interface Timer extends Meter {
 
     double histogramCountAtValue(long valueNanos);
 
-    StatsConfig statsConfig();
-
     @Override
     default Iterable<Measurement> measure() {
         return Arrays.asList(
@@ -139,11 +137,11 @@ public interface Timer extends Meter {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
         private String description;
-        private final StatsConfig statsConfig;
+        private final HistogramConfig.Builder histogramConfigBuilder;
 
         private Builder(String name) {
             this.name = name;
-            this.statsConfig = new StatsConfig();
+            this.histogramConfigBuilder = new HistogramConfig.Builder();
             minimumExpectedValue(Duration.ofMillis(1));
             maximumExpectedValue(Duration.ofSeconds(30));
         }
@@ -162,7 +160,7 @@ public interface Timer extends Meter {
          * @param percentiles Percentiles to compute and publish. The 95th percentile should be expressed as {@code 95.0}
          */
         public Builder publishPercentiles(double... percentiles) {
-            this.statsConfig.setPercentiles(percentiles);
+            this.histogramConfigBuilder.percentiles(percentiles);
             return this;
         }
 
@@ -170,10 +168,18 @@ public interface Timer extends Meter {
          * Adds histogram buckets usable for generating aggregable percentile approximations in monitoring
          * systems that have query facilities to do so (e.g. Prometheus' {@code histogram_quantile},
          * Atlas' {@code :percentiles}).
-         *
          */
         public Builder publishPercentileHistogram() {
-            this.statsConfig.setPercentileHistogram(true);
+            return publishPercentileHistogram(true);
+        }
+
+        /**
+         * Adds histogram buckets usable for generating aggregable percentile approximations in monitoring
+         * systems that have query facilities to do so (e.g. Prometheus' {@code histogram_quantile},
+         * Atlas' {@code :percentiles}).
+         */
+        public Builder publishPercentileHistogram(Boolean enabled) {
+            this.histogramConfigBuilder.percentilesHistogram(enabled);
             return this;
         }
 
@@ -189,17 +195,27 @@ public interface Timer extends Meter {
             for (int i = 0; i < slaNano.length; i++) {
                 slaNano[i] = sla[i].toNanos();
             }
-            this.statsConfig.setSlaBoundaries(slaNano);
+            this.histogramConfigBuilder.sla(slaNano);
             return this;
         }
 
         public Builder minimumExpectedValue(Duration min) {
-            this.statsConfig.setMinimumExpectedValue(min.toNanos());
+            this.histogramConfigBuilder.minimumExpectedValue(min.toNanos());
             return this;
         }
 
         public Builder maximumExpectedValue(Duration max) {
-            this.statsConfig.setMaximumExpectedValue(max.toNanos());
+            this.histogramConfigBuilder.maximumExpectedValue(max.toNanos());
+            return this;
+        }
+
+        public Builder histogramExpiry(Duration expiry) {
+            this.histogramConfigBuilder.histogramExpiry(expiry);
+            return this;
+        }
+
+        public Builder histogramBufferLength(Integer bufferLength) {
+            this.histogramConfigBuilder.histogramBufferLength(bufferLength);
             return this;
         }
 
@@ -217,7 +233,7 @@ public interface Timer extends Meter {
 
         public Timer register(MeterRegistry registry) {
             // the base unit for a timer will be determined by the monitoring system implementation
-            return registry.timer(new Meter.Id(name, tags, null, description), statsConfig);
+            return registry.timer(new Meter.Id(name, tags, null, description), histogramConfigBuilder.build());
         }
     }
 }

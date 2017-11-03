@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.TimeWindowLatencyHistogram;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.util.TimeUtils;
@@ -26,14 +26,14 @@ import java.util.function.Supplier;
 
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
     protected final Clock clock;
-    private final StatsConfig statsConfig;
+    private final HistogramConfig histogramConfig;
     protected final TimeWindowLatencyHistogram histogram;
 
-    protected AbstractTimer(Meter.Id id, Clock clock, StatsConfig statsConfig) {
+    protected AbstractTimer(Meter.Id id, Clock clock, HistogramConfig histogramConfig) {
         super(id);
         this.clock = clock;
-        this.statsConfig = statsConfig;
-        this.histogram = new TimeWindowLatencyHistogram(clock, statsConfig);
+        this.histogramConfig = histogramConfig;
+        this.histogram = new TimeWindowLatencyHistogram(clock, histogramConfig);
     }
 
     @Override
@@ -113,7 +113,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
         return MeterEquivalence.hashCode(this);
     }
 
-    public StatsConfig statsConfig() {
-        return statsConfig;
+    public HistogramConfig statsConfig() {
+        return histogramConfig;
     }
 }

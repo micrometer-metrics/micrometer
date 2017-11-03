@@ -71,8 +71,8 @@ public class PercentileHistogramBuckets {
      * timers and distribution summaries because monitoring systems like Prometheus require us to report the
      * same buckets at every interval, regardless of where actual samples have been observed.
      */
-    public static NavigableSet<Long> buckets(StatsConfig statsConfig) {
-        return PERCENTILE_BUCKETS.subSet(statsConfig.getMinimumExpectedValue(), true,
-            statsConfig.getMaximumExpectedValue(), true);
+    public static NavigableSet<Long> buckets(HistogramConfig histogramConfig) {
+        return PERCENTILE_BUCKETS.subSet(histogramConfig.getMinimumExpectedValue(), true,
+            histogramConfig.getMaximumExpectedValue(), true);
     }
 }

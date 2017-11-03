@@ -15,17 +15,15 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.TimeWindowHistogram;
 
 public abstract class AbstractDistributionSummary extends AbstractMeter implements DistributionSummary {
     private final TimeWindowHistogram histogram;
-    private final StatsConfig statsConfig;
 
-    public AbstractDistributionSummary(Id id, Clock clock, StatsConfig statsConfig) {
+    public AbstractDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig) {
         super(id);
-        this.statsConfig = statsConfig;
-        this.histogram = new TimeWindowHistogram(clock, statsConfig);
+        this.histogram = new TimeWindowHistogram(clock, histogramConfig);
     }
 
     @Override
@@ -46,10 +44,5 @@ public abstract class AbstractDistributionSummary extends AbstractMeter implemen
     @Override
     public double histogramCountAtValue(long value) {
         return histogram.histogramCountAtValue(value);
-    }
-
-    @Override
-    public StatsConfig statsConfig() {
-        return statsConfig;
     }
 }

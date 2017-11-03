@@ -16,12 +16,11 @@
 package io.micrometer.core.instrument.noop;
 
 import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.histogram.StatsConfig;
 
 public class NoopDistributionSummary extends NoopMeter implements DistributionSummary {
-    public static final NoopDistributionSummary INSTANCE = new NoopDistributionSummary();
-
-    private NoopDistributionSummary() {}
+    public NoopDistributionSummary(Id id) {
+        super(id);
+    }
 
     @Override
     public void record(double amount) {
@@ -50,10 +49,5 @@ public class NoopDistributionSummary extends NoopMeter implements DistributionSu
     @Override
     public double histogramCountAtValue(long value) {
         return 0;
-    }
-
-    @Override
-    public StatsConfig statsConfig() {
-        return new StatsConfig();
     }
 }

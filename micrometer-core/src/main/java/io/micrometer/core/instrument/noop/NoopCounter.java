@@ -18,10 +18,9 @@ package io.micrometer.core.instrument.noop;
 import io.micrometer.core.instrument.Counter;
 
 public class NoopCounter extends NoopMeter implements Counter {
-
-    public static final NoopCounter INSTANCE = new NoopCounter();
-
-    private NoopCounter() {}
+    public NoopCounter(Id id) {
+        super(id);
+    }
 
     @Override
     public void increment(double amount) {

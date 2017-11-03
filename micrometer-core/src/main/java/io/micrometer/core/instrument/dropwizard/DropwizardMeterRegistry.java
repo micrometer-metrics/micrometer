@@ -18,7 +18,7 @@ package io.micrometer.core.instrument.dropwizard;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 
@@ -63,16 +63,16 @@ public class DropwizardMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, StatsConfig statsConfig) {
-        DropwizardTimer timer = new DropwizardTimer(id, registry.timer(hierarchicalName(id)), clock, statsConfig);
+    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
+        DropwizardTimer timer = new DropwizardTimer(id, registry.timer(hierarchicalName(id)), clock, histogramConfig);
 
-        for (double percentile : statsConfig.getPercentiles()) {
+        for (double percentile : histogramConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
                 percentile, p -> timer.percentile(p, getBaseTimeUnit()));
         }
 
-        if(statsConfig.isPublishingHistogram()) {
-            for (Long bucket : statsConfig.getHistogramBuckets(false)) {
+        if(histogramConfig.isPublishingHistogram()) {
+            for (Long bucket : histogramConfig.getHistogramBuckets(false)) {
                 more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket", Long.toString(bucket)),
                     timer, t -> t.histogramCountAtValue(bucket));
             }
@@ -82,16 +82,16 @@ public class DropwizardMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, StatsConfig statsConfig) {
-        DropwizardDistributionSummary summary = new DropwizardDistributionSummary(id, clock, registry.histogram(hierarchicalName(id)), statsConfig);
+    protected DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
+        DropwizardDistributionSummary summary = new DropwizardDistributionSummary(id, clock, registry.histogram(hierarchicalName(id)), histogramConfig);
 
-        for (double percentile : statsConfig.getPercentiles()) {
+        for (double percentile : histogramConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
                 percentile, summary::percentile);
         }
 
-        if(statsConfig.isPublishingHistogram()) {
-            for (Long bucket : statsConfig.getHistogramBuckets(false)) {
+        if(histogramConfig.isPublishingHistogram()) {
+            for (Long bucket : histogramConfig.getHistogramBuckets(false)) {
                 more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket", Long.toString(bucket)),
                     summary, s -> s.histogramCountAtValue(bucket));
             }

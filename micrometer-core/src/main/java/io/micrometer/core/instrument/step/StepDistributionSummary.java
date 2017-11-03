@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument.step;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 
 import java.util.Arrays;
 
@@ -25,8 +25,8 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
     private final StepDouble total;
     private final StepDouble max;
 
-    public StepDistributionSummary(Id id, Clock clock, StatsConfig statsConfig, long stepMillis) {
-        super(id, clock, statsConfig);
+    public StepDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig, long stepMillis) {
+        super(id, clock, histogramConfig);
         this.count = new StepLong(clock, stepMillis);
         this.total = new StepDouble(clock, stepMillis);
         this.max = new StepDouble(clock, stepMillis);

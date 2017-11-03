@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 
 import java.util.Collection;
 import java.util.Set;
@@ -47,16 +47,16 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, StatsConfig statsConfig) {
-        CompositeTimer timer = new CompositeTimer(id, statsConfig);
+    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
+        CompositeTimer timer = new CompositeTimer(id, histogramConfig);
         compositeMeters.add(timer);
         registries.forEach(timer::add);
         return timer;
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, StatsConfig statsConfig) {
-        CompositeDistributionSummary ds = new CompositeDistributionSummary(id, statsConfig);
+    protected DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
+        CompositeDistributionSummary ds = new CompositeDistributionSummary(id, histogramConfig);
         compositeMeters.add(ds);
         registries.forEach(ds::add);
         return ds;

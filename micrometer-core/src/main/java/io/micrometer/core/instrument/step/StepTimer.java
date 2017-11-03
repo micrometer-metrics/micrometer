@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument.step;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.Arrays;
@@ -33,8 +33,8 @@ public class StepTimer extends AbstractTimer {
     /**
      * Create a new instance.
      */
-    public StepTimer(Id id, Clock clock, StatsConfig statsConfig, long step) {
-        super(id, clock, statsConfig);
+    public StepTimer(Id id, Clock clock, HistogramConfig histogramConfig, long step) {
+        super(id, clock, histogramConfig);
         this.count = new StepLong(clock, step);
         this.total = new StepLong(clock, step);
         this.max = new StepLong(clock, step);

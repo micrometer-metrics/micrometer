@@ -16,7 +16,7 @@
 package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.histogram.StatsConfig;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.netty.bootstrap.Bootstrap;
@@ -166,10 +166,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
 
     @Override
-    protected Timer newTimer(Meter.Id id, StatsConfig statsConfig) {
-        Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, statsConfig, statsdConfig.step().toMillis());
+    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
+        Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, histogramConfig, statsdConfig.step().toMillis());
 
-        for (double percentile : statsConfig.getPercentiles()) {
+        for (double percentile : histogramConfig.getPercentiles()) {
             switch (statsdConfig.flavor()) {
                 case Datadog:
                     gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + "percentile", timer,
@@ -186,8 +186,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
             }
         }
 
-        if (statsConfig.isPublishingHistogram()) {
-            for (Long bucket : statsConfig.getHistogramBuckets(false)) {
+        if (histogramConfig.isPublishingHistogram()) {
+            for (Long bucket : histogramConfig.getHistogramBuckets(false)) {
                 more().counter(id.getName() + ".histogram", Tags.concat(getConventionTags(id), "bucket",
                     percentileFormat.format(TimeUtils.nanosToUnit(bucket, TimeUnit.MILLISECONDS))),
                     timer, s -> s.histogramCountAtValue(bucket));
@@ -198,10 +198,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, StatsConfig statsConfig) {
-        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), publisher, clock, statsConfig, statsdConfig.step().toMillis());
+    protected DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
+        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), publisher, clock, histogramConfig, statsdConfig.step().toMillis());
 
-        for (double percentile : statsConfig.getPercentiles()) {
+        for (double percentile : histogramConfig.getPercentiles()) {
             switch (statsdConfig.flavor()) {
                 case Datadog:
                     gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + "percentile", summary,
@@ -218,8 +218,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
             }
         }
 
-        if (statsConfig.isPublishingHistogram()) {
-            for (Long bucket : statsConfig.getHistogramBuckets(false)) {
+        if (histogramConfig.isPublishingHistogram()) {
+            for (Long bucket : histogramConfig.getHistogramBuckets(false)) {
                 more().counter(id.getName() + ".histogram", Tags.concat(getConventionTags(id), "bucket",
                     Long.toString(bucket)), summary, s -> s.histogramCountAtValue(bucket));
             }
