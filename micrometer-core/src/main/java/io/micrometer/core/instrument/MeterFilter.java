@@ -6,6 +6,7 @@ import io.micrometer.core.instrument.histogram.HistogramConfig;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.util.stream.StreamSupport.stream;
@@ -103,5 +104,27 @@ public interface MeterFilter {
                 return new Meter.Id(id.getName(), tags, id.getBaseUnit(), id.getDescription());
             }
         };
+    }
+
+    static MeterFilter accept(Predicate<Meter.Id> iff) {
+        return new MeterFilter() {
+            @Override
+            public MeterFilterReply accept(Meter.Id id) {
+                return iff.test(id) ? MeterFilterReply.ACCEPT : MeterFilterReply.NEUTRAL;
+            }
+        };
+    }
+
+    static MeterFilter deny(Predicate<Meter.Id> iff) {
+        return new MeterFilter() {
+            @Override
+            public MeterFilterReply accept(Meter.Id id) {
+                return iff.test(id) ? MeterFilterReply.DENY : MeterFilterReply.NEUTRAL;
+            }
+        };
+    }
+
+    static MeterFilter denyNameStartsWith(String prefix) {
+        return deny(id -> id.getName().startsWith(prefix));
     }
 }
