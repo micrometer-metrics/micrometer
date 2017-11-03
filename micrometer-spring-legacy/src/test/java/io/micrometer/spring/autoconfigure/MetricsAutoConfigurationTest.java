@@ -41,7 +41,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -83,9 +82,9 @@ public class MetricsAutoConfigurationTest {
             .build();
         server.expect(once(), requestTo("/api/external"))
             .andExpect(method(HttpMethod.GET)).andRespond(withSuccess(
-            "{\"message\": \"hello\"}", MediaType.APPLICATION_JSON));
-        assertThat(this.external.getForObject("/api/external", Map.class))
-            .containsKey("message");
+            "hello", MediaType.APPLICATION_JSON));
+        assertThat(this.external.getForObject("/api/external", String.class))
+            .isEqualTo("hello");
 
         clock.add(SimpleConfig.DEFAULT_STEP);
         assertThat(this.registry.find("http.client.requests").value(Statistic.Count, 1.0)
@@ -94,7 +93,7 @@ public class MetricsAutoConfigurationTest {
 
     @Test
     public void requestMappingIsInstrumented() {
-        this.loopback.getForObject("/api/people", Set.class);
+        this.loopback.getForObject("/api/people", String.class);
 
         clock.add(SimpleConfig.DEFAULT_STEP);
         assertThat(this.registry.find("http.server.requests").value(Statistic.Count, 1.0)
@@ -144,9 +143,8 @@ public class MetricsAutoConfigurationTest {
     @RestController
     static class PersonController {
         @GetMapping("/api/people")
-        Set<String> personName() {
-            return Collections.singleton("Jon");
+        String personName() {
+            return "Jon";
         }
-
     }
 }
