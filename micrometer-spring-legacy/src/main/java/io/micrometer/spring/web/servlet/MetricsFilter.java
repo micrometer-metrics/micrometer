@@ -8,6 +8,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 import org.springframework.web.servlet.handler.MatchableHandlerMapping;
+import org.springframework.web.util.NestedServletException;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -35,25 +36,27 @@ public class MetricsFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        HandlerExecutionChain handler;
         try {
             MatchableHandlerMapping matchableHandlerMapping = mappingIntrospector.getMatchableHandlerMapping(request);
-            HandlerExecutionChain handler = matchableHandlerMapping.getHandler(request);
+            handler = matchableHandlerMapping.getHandler(request);
+        } catch (Exception e) {
+            logger.debug("Unable to time request", e);
+            return;
+        }
 
-            if (handler != null) {
-                Object handlerObject = handler.getHandler();
-                if (handlerObject != null) {
-                    this.webMvcMetrics.preHandle(request, handlerObject);
-                    try {
-                        filterChain.doFilter(request, response);
-                        this.webMvcMetrics.record(request, response, null);
-                    } catch (Exception e) {
-                        this.webMvcMetrics.record(request, response, e);
-                        throw e;
-                    }
+        if (handler != null) {
+            Object handlerObject = handler.getHandler();
+            if (handlerObject != null) {
+                this.webMvcMetrics.preHandle(request, handlerObject);
+                try {
+                    filterChain.doFilter(request, response);
+                    this.webMvcMetrics.record(request, response, null);
+                } catch (NestedServletException e) {
+                    this.webMvcMetrics.record(request, response, e.getCause());
+                    throw e;
                 }
             }
-        } catch(Exception e) {
-            throw new RuntimeException("Unable to time request",e);
         }
     }
 }

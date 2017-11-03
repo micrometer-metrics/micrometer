@@ -24,6 +24,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -177,14 +178,17 @@ public class WebMvcMetrics {
     private Set<TimerConfig> timed(Object handler) {
         if (handler instanceof HandlerMethod) {
             return timed((HandlerMethod) handler);
+        } else if(handler instanceof ResourceHttpRequestHandler && this.autoTimeRequests) {
+            return Collections.singleton(new TimerConfig(getServerRequestName(),
+                this.recordAsPercentiles));
         }
         return Collections.emptySet();
     }
 
     private Set<TimerConfig> timed(HandlerMethod handler) {
-        Set<TimerConfig> config = getNonLongTaskAnnotationConfig(handler.getMethod());
+        Set<TimerConfig> config = getShortTaskAnnotationConfig(handler.getMethod());
         if (config.isEmpty()) {
-            config = getNonLongTaskAnnotationConfig(handler.getBeanType());
+            config = getShortTaskAnnotationConfig(handler.getBeanType());
             if (config.isEmpty() && this.autoTimeRequests) {
                 return Collections.singleton(new TimerConfig(getServerRequestName(),
                     this.recordAsPercentiles));
@@ -193,7 +197,7 @@ public class WebMvcMetrics {
         return config;
     }
 
-    private Set<TimerConfig> getNonLongTaskAnnotationConfig(AnnotatedElement element) {
+    private Set<TimerConfig> getShortTaskAnnotationConfig(AnnotatedElement element) {
         return TimedUtils.findTimedAnnotations(element).filter((t) -> !t.longTask())
             .map(this::fromAnnotation).collect(Collectors.toSet());
     }

@@ -37,7 +37,7 @@ public class DefaultWebMvcTagsProvider implements WebMvcTagsProvider {
      */
     @Override
     public Iterable<Tag> httpLongRequestTags(HttpServletRequest request, Object handler) {
-        return Arrays.asList(WebMvcTags.method(request), WebMvcTags.uri(request));
+        return Arrays.asList(WebMvcTags.method(request), WebMvcTags.uri(request, null));
     }
 
     /**
@@ -51,7 +51,7 @@ public class DefaultWebMvcTagsProvider implements WebMvcTagsProvider {
     @Override
     public Iterable<Tag> httpRequestTags(HttpServletRequest request,
                                          HttpServletResponse response, Throwable ex) {
-        return Arrays.asList(WebMvcTags.method(request), WebMvcTags.uri(request),
+        return Arrays.asList(WebMvcTags.method(request), WebMvcTags.uri(request, response),
             WebMvcTags.exception(ex), WebMvcTags.status(response));
     }
 

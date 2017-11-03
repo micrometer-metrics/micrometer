@@ -57,7 +57,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -136,31 +135,34 @@ public class MetricsFilterTest {
     }
 
 
-    @Test //These aren't recorded due to not having the @Timed annotation
+    @Test
     public void redirectRequest() throws Exception {
         this.mvc.perform(get("/api/redirect")
-            .header(TEST_MISBEHAVE_HEADER,"302")).andExpect(status().is4xxClientError());
+            .header(TEST_MISBEHAVE_HEADER, "302")).andExpect(status().is3xxRedirection());
 
-        assertThat(this.registry.find("http.server.requests").meter()).isNotPresent();
+        assertThat(this.registry.find("http.server.requests")
+            .tags("uri", "REDIRECTION")
+            .tags("status", "302").timer()).isPresent();
     }
 
-    @Test //These aren't recorded due to not having the @Timed annotation
+    @Test
     public void notFoundRequest() throws Exception {
         this.mvc.perform(get("/api/not/found")
-        .header(TEST_MISBEHAVE_HEADER,"404")).andExpect(status().is4xxClientError());
+            .header(TEST_MISBEHAVE_HEADER, "404")).andExpect(status().is4xxClientError());
 
-        assertThat(this.registry.find("http.server.requests").meter()).isNotPresent();
+        assertThat(this.registry.find("http.server.requests")
+            .tags("uri", "NOT_FOUND")
+            .tags("status", "404").timer()).isPresent();
     }
 
     @Test
     public void unhandledError() throws Exception {
         assertThatCode(() -> this.mvc.perform(get("/api/c1/unhandledError/10"))
-            .andExpect(status().isOk())
-            .andDo(print()))
+            .andExpect(status().isOk()))
             .hasRootCauseInstanceOf(RuntimeException.class);
 
         assertThat(this.registry.find("http.server.requests")
-            .tags("exception", "NestedServletException").value(Statistic.Count, 1.0)
+            .tags("exception", "RuntimeException").value(Statistic.Count, 1.0)
             .timer()).isPresent();
     }
 
@@ -263,13 +265,13 @@ public class MetricsFilterTest {
         @Timed
         @GetMapping("/error/{id}")
         public String alwaysThrowsException(@PathVariable Long id) {
-            throw new IllegalStateException("Boom on "+id+"!");
+            throw new IllegalStateException("Boom on " + id + "!");
         }
 
         @Timed
         @GetMapping("/unhandledError/{id}")
         public String alwaysThrowsUnhandledException(@PathVariable Long id) {
-            throw new RuntimeException("Boom on "+id+"!");
+            throw new RuntimeException("Boom on " + id + "!");
         }
 
         @Timed
@@ -320,7 +322,7 @@ public class MetricsFilterTest {
         @Override
         protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
             String misbehave = request.getHeader(TEST_MISBEHAVE_HEADER);
-            if(misbehave != null) {
+            if (misbehave != null) {
                 response.setStatus(Integer.parseInt(misbehave));
             } else {
                 filterChain.doFilter(request, response);
