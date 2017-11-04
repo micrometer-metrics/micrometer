@@ -37,7 +37,7 @@ public interface Gauge extends Meter {
         return Type.Gauge;
     }
 
-    static <T> Builder builder(String name, T obj, ToDoubleFunction<T> f) {
+    static <T> Builder<T> builder(String name, T obj, ToDoubleFunction<T> f) {
         return new Builder<>(name, obj, f);
     }
 
