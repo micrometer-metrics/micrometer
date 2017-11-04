@@ -104,11 +104,11 @@ public class MeterFilterConfigProperties implements MeterFilter {
     }
 
 
-    private String findConfigFor(Meter.Id id, String propertyName) {
+    protected String findConfigFor(Meter.Id id, String propertyName) {
         return findMostSpecificRule(id.getName(), propertyName, filter, null);
     }
 
-    private String findMostSpecificRule(String name, String suffix, Map<String, String> map, String defaultVal) {
+    protected String findMostSpecificRule(String name, String suffix, Map<String, String> map, String defaultVal) {
         String filterStatus = defaultVal;
 
         String filterLookup = null;
