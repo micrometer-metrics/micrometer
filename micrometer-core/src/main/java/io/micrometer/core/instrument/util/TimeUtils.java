@@ -199,7 +199,7 @@ public final class TimeUtils {
     private static final long C6 = C5 * 24L;
 
     public static Duration simpleParse(String time){
-        String timeLower = time.toLowerCase().trim();
+        String timeLower = time.toLowerCase().replaceAll("[,_ ]","");
         if(timeLower.endsWith("ns")) {
             return Duration.ofNanos(Long.parseLong(timeLower.substring(0,timeLower.length()-2)));
         } else if(timeLower.endsWith("ms")) {

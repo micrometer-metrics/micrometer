@@ -20,6 +20,12 @@ class TimeUtilsTest {
     }
 
     @Test
+    void simpleParseHandlesSpacesCommasAndUnderscores() {
+        assertThat(TimeUtils.simpleParse("7,000 ms")).isEqualByComparingTo(Duration.ofMillis(7000));
+        assertThat(TimeUtils.simpleParse("7_000ms ")).isEqualByComparingTo(Duration.ofMillis(7000));
+    }
+
+    @Test
     void cantParseDecimal(){
         assertThatThrownBy(() -> TimeUtils.simpleParse("1.1s"))
             .isInstanceOf(NumberFormatException.class);
