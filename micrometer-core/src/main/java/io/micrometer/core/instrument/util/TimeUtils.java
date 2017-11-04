@@ -15,6 +15,10 @@
  */
 package io.micrometer.core.instrument.util;
 
+import java.time.Duration;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -193,4 +197,22 @@ public final class TimeUtils {
     private static final long C4 = C3 * 60L;
     private static final long C5 = C4 * 60L;
     private static final long C6 = C5 * 24L;
+
+    public static Duration simpleParse(String time){
+        String timeLower = time.toLowerCase().trim();
+        if(timeLower.endsWith("ns")) {
+            return Duration.ofNanos(Long.parseLong(timeLower.substring(0,timeLower.length()-2)));
+        } else if(timeLower.endsWith("ms")) {
+            return Duration.ofMillis(Long.parseLong(timeLower.substring(0,timeLower.length()-2)));
+        } else if(timeLower.endsWith("s")) {
+            return Duration.ofSeconds(Long.parseLong(timeLower.substring(0,timeLower.length()-1)));
+        } else if(timeLower.endsWith("m")) {
+            return Duration.ofMinutes(Long.parseLong(timeLower.substring(0,timeLower.length()-1)));
+        } else if(timeLower.endsWith("h")) {
+            return Duration.ofHours(Long.parseLong(timeLower.substring(0,timeLower.length()-1)));
+        } else if(timeLower.endsWith("d")) {
+            return Duration.of(Long.parseLong(timeLower.substring(0,timeLower.length()-1)), ChronoUnit.DAYS);
+        }
+        throw new DateTimeParseException("Unable to parse "+time+" into duration", timeLower, 0);
+    }
 }

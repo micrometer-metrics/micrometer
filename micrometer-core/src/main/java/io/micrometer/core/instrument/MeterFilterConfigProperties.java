@@ -1,11 +1,8 @@
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterFilter;
-import io.micrometer.core.instrument.MeterFilterReply;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.util.TimeUtils;
 
-import java.time.Duration;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Map;
@@ -41,7 +38,7 @@ public class MeterFilterConfigProperties implements MeterFilter {
         HistogramConfig.Builder builder = HistogramConfig.builder();
         String durationExpiry = findConfigFor(id, "durationExpiry");
         if (durationExpiry != null) {
-            builder.histogramExpiry(Duration.parse(durationExpiry));
+            builder.histogramExpiry(TimeUtils.simpleParse(durationExpiry));
         }
 
         String histogramBufferLength = findConfigFor(id, "histogramBufferLength");
@@ -100,7 +97,7 @@ public class MeterFilterConfigProperties implements MeterFilter {
 
     private Long tryDurationParseToNanos(String dur) {
         try {
-            return Duration.parse(dur).toNanos();
+            return TimeUtils.simpleParse(dur).toNanos();
         } catch (DateTimeParseException e) {
             return null;
         }

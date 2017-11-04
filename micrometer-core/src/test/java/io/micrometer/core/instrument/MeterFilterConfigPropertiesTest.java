@@ -19,11 +19,11 @@ public class MeterFilterConfigPropertiesTest {
         sut.getFilter().put("ALL.enabled","false");
         sut.getFilter().put("ALL.percentiles","0.3,0.4");
         sut.getFilter().put("ALL.percentileHistogram","false");
-        sut.getFilter().put("ALL.maximumExpectedValue","PT7S");
+        sut.getFilter().put("ALL.maximumExpectedValue","7s");
         sut.getFilter().put("ALL.minimumExpectedValue","10000000");
         sut.getFilter().put("ALL.histogramBufferLength","100");
-        sut.getFilter().put("ALL.durationExpiry","PT60S");
-        sut.getFilter().put("ALL.sla","PT0.1S,PT1S");
+        sut.getFilter().put("ALL.durationExpiry","1m");
+        sut.getFilter().put("ALL.sla","100ms, 1s");
         sut.getFilter().put("jvm.enabled","true");
         sut.getFilter().put("jvm.my.daemon.enabled","false");
         sut.getFilter().put("jvm.memory.used","enabled");
