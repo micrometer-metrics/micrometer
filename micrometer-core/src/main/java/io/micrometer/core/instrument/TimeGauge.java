@@ -32,7 +32,7 @@ public interface TimeGauge extends Gauge {
         return TimeUtils.convert(value(), getBaseTimeUnit(), unit);
     }
 
-    static <T> Builder builder(String name, T obj, TimeUnit fUnits, ToDoubleFunction<T> f) {
+    static <T> Builder<T> builder(String name, T obj, TimeUnit fUnits, ToDoubleFunction<T> f) {
         return new Builder<>(name, obj, fUnits, f);
     }
 
