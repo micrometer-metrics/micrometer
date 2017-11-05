@@ -59,12 +59,14 @@ public class JvmMemoryMetrics implements MeterBinder {
 
             Gauge.builder("jvm.buffer.memory.used", bufferPoolBean, BufferPoolMXBean::getMemoryUsed)
                 .tags(tagsWithId)
-                .description("An estimate of the memory that the Java virtual machine is using for this buffer pool bytes")
+                .description("An estimate of the memory that the Java virtual machine is using for this buffer pool")
+                .baseUnit("bytes")
                 .register(registry);
 
             Gauge.builder("jvm.buffer.total.capacity", bufferPoolBean, BufferPoolMXBean::getTotalCapacity)
                 .tags(tagsWithId)
-                .description("An estimate of the total capacity of the buffers in this pool bytes")
+                .description("An estimate of the total capacity of the buffers in this pool")
+                .baseUnit("bytes")
                 .register(registry);
         }
 
