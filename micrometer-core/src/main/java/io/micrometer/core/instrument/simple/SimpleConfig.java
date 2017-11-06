@@ -23,7 +23,7 @@ public interface SimpleConfig extends StepRegistryConfig {
     SimpleConfig DEFAULT = k -> null;
 
     // Useful in tests
-    Duration DEFAULT_STEP = Duration.ofSeconds(10);
+    Duration DEFAULT_STEP = Duration.ofMinutes(1);
 
     @Override
     default String prefix() {
