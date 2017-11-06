@@ -9,20 +9,24 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class MeterFilterConfigProperties implements MeterFilter {
-    private final Map<String, String> filter = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    private final Map<String, String> overrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
-    public Map<String, String> getFilter() {
-        return filter;
+    public Map<String, String> getOverrides() {
+        return overrides;
     }
 
     @Override
     public MeterFilterReply accept(Meter.Id id) {
-        String rule = findConfigFor(id, "enabled");
+        ConfigurationRule rule = findConfigFor(id, "enabled");
 
-        if ("true".equalsIgnoreCase(rule) || "enabled".equalsIgnoreCase(rule)) {
+        if ("true".equalsIgnoreCase(rule.getValue()) || "enabled".equalsIgnoreCase(rule.getValue())) {
             return MeterFilterReply.ACCEPT;
-        } else if ("false".equalsIgnoreCase(rule) || "disabled".equalsIgnoreCase(rule)) {
+        } else if ("false".equalsIgnoreCase(rule.getValue()) || "disabled".equalsIgnoreCase(rule.getValue())) {
             return MeterFilterReply.DENY;
+        }
+
+        if (rule.getValue() != null) {
+            throw new ConfigurationException("Error parsing rule "+rule.getRule()+" value:"+rule.getValue());
         }
 
         return MeterFilterReply.NEUTRAL;
@@ -34,66 +38,81 @@ public class MeterFilterConfigProperties implements MeterFilter {
     }
 
     @Override
-    public HistogramConfig configure(Meter.Id id, HistogramConfig config) {
+    public HistogramConfig configure(Meter.Id id, HistogramConfig histogramConfig) {
         HistogramConfig.Builder builder = HistogramConfig.builder();
-        String durationExpiry = findConfigFor(id, "durationExpiry");
-        if (durationExpiry != null) {
-            builder.histogramExpiry(TimeUtils.simpleParse(durationExpiry));
-        }
+        checkConfig(id,"durationExpiry", (config) ->
+            builder.histogramExpiry(TimeUtils.simpleParse(config)));
 
-        String histogramBufferLength = findConfigFor(id, "histogramBufferLength");
-        if (histogramBufferLength != null) {
-            builder.histogramBufferLength(Integer.parseInt(histogramBufferLength));
-        }
+        checkConfig(id,"histogramBufferLength", (config) ->
+            builder.histogramBufferLength(Integer.parseInt(config)));
 
-        String percentileHistogram = findConfigFor(id, "percentileHistogram");
-        if (percentileHistogram != null) {
-            builder.percentilesHistogram(Boolean.parseBoolean(percentileHistogram));
-        }
+        checkConfig(id,"percentileHistogram", (config) ->{
+                checkBoolean(config);
+                builder.percentilesHistogram(Boolean.parseBoolean(config));
+            });
 
-        String percentiles = findConfigFor(id, "percentiles");
-        if (percentiles != null) {
-            double[] percentilesDbl = Arrays.stream(percentiles.split(","))
+        checkConfig(id,"percentiles", (config) -> {
+            double[] percentilesDbl = Arrays.stream(config.split(","))
                 .mapToDouble(Double::parseDouble)
                 .toArray();
             builder.percentiles(percentilesDbl);
-        }
+        });
 
-        String maxVal = findConfigFor(id, "maximumExpectedValue");
-        if (maxVal != null) {
-            Long maxValParse = tryDurationParseToNanos(maxVal);
-            if(maxValParse == null) {
-                maxValParse = Long.parseLong(maxVal);
+        checkConfig(id,"maximumExpectedValue", (config) -> {
+            Long maxValParse = tryDurationParseToNanos(config);
+            if (maxValParse == null) {
+                maxValParse = Long.parseLong(config);
             }
             builder.maximumExpectedValue(maxValParse);
-        }
+        });
 
-        String minVal = findConfigFor(id, "minimumExpectedValue");
-        if (minVal != null) {
-            Long minValParse = tryDurationParseToNanos(minVal);
-            if(minValParse == null) {
-                minValParse = Long.parseLong(minVal);
+
+        checkConfig(id,"minimumExpectedValue", (config) -> {
+            Long minValParse = tryDurationParseToNanos(config);
+            if (minValParse == null) {
+                minValParse = Long.parseLong(config);
             }
             builder.minimumExpectedValue(minValParse);
-        }
+        });
 
-        String sla = findConfigFor(id, "sla");
-        if (sla != null) {
-            long[] slas = Arrays.stream(sla.split(","))
-                .mapToLong( s -> {
+        checkConfig(id,"sla", (config) -> {
+            long[] slas = Arrays.stream(config.split(","))
+                .mapToLong(s -> {
                     Long l = tryDurationParseToNanos(s);
-                    if(l == null) {
+                    if (l == null) {
                         l = Long.parseLong(s);
                     }
                     return l;
                 })
                 .toArray();
             builder.sla(slas);
-        }
+        });
 
-
-        return builder.build().merge(config);
+        return builder.build().merge(histogramConfig);
     }
+
+    private void checkBoolean(String config) {
+        if(!config.equalsIgnoreCase("false")
+            && !config.equalsIgnoreCase("true")) {
+            throw new ConfigurationException("Invalid boolean:"+ config);
+        }
+    }
+
+    private void checkConfig(Meter.Id id, String configKey, ConfigCallback callback) {
+        ConfigurationRule rule = findConfigFor(id, configKey);
+        try {
+            if(rule != null && rule.getValue() != null) {
+                callback.configure(rule.getValue());
+            }
+        } catch (Exception e) {
+            throw new ConfigurationException("Error parsing rule "+rule.getRule()+" value:"+rule.getValue(), e);
+        }
+    }
+
+    interface ConfigCallback {
+        void configure(String configValu) throws Exception;
+    }
+
 
     private Long tryDurationParseToNanos(String dur) {
         try {
@@ -104,39 +123,60 @@ public class MeterFilterConfigProperties implements MeterFilter {
     }
 
 
-    protected String findConfigFor(Meter.Id id, String propertyName) {
-        return findMostSpecificRule(id.getName(), propertyName, filter, null);
+    @SuppressWarnings("WeakerAccess")
+    protected ConfigurationRule findConfigFor(Meter.Id id, String propertyName) {
+        return findMostSpecificRule(id.getName(), propertyName, overrides, null);
     }
 
-    protected String findMostSpecificRule(String name, String suffix, Map<String, String> map, String defaultVal) {
-        String filterStatus = defaultVal;
+    @SuppressWarnings("WeakerAccess")
+    protected ConfigurationRule findMostSpecificRule(String name, String suffix, Map<String, String> map, String defaultVal) {
+        ConfigurationRule filterStatus = new ConfigurationRule("DEFAULT", defaultVal);
 
         String filterLookup = null;
         if (suffix != null) {
-            filterLookup = map.get(name + "." + suffix);
+            String rule = name + "." + suffix;
+            filterLookup = map.get(rule);
             if (filterLookup != null) {
-                filterStatus = filterLookup;
+                filterStatus = new ConfigurationRule(rule, filterLookup);
             }
         }
 
         if (filterLookup == null) {
             filterLookup = map.get(name);
             if (filterLookup != null) {
-                filterStatus = filterLookup;
+                filterStatus = new ConfigurationRule(name, filterLookup);
             } else if (name.contains(".")) {
                 filterStatus = findMostSpecificRule(name.substring(0, name.lastIndexOf(".")), suffix, map, defaultVal);
             }
         }
 
-        if (filterStatus == null || filterStatus.equals(defaultVal)) {
-            filterLookup = map.get("ALL." + suffix);
+        if (filterStatus.value == null || filterStatus.value.equals(defaultVal)) {
+            String rule = "ALL." + suffix;
+            filterLookup = map.get(rule);
             if (filterLookup != null) {
-                filterStatus = filterLookup;
+                filterStatus = new ConfigurationRule(rule, filterLookup);
             }
         }
 
         return filterStatus;
     }
 
+    public static class ConfigurationRule {
+        private final String rule;
+        private final String value;
+
+        public ConfigurationRule(String rule, String value) {
+            this.rule = rule;
+            this.value = value;
+        }
+
+        public String getRule() {
+            return rule;
+        }
+
+        public String getValue() {
+            return value;
+        }
+    }
 
 }

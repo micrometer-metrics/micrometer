@@ -34,23 +34,4 @@ public class PrometheusSample {
     public static void main(String[] args) {
         new SpringApplicationBuilder(PrometheusSample.class).profiles("prometheus").run(args);
     }
-
-    @Bean
-    @ConfigurationProperties("clint.metrics")
-    public MeterFilterConfigProperties meterFilterConfigProperties(){
-        return new MeterFilterConfigProperties();
-    }
-
-    @Bean
-    public MetricsExporter prometheusExporter(PrometheusConfig config,
-                                              MeterFilterConfigProperties meterFilterConfigProperties,
-                                              CollectorRegistry collectorRegistry, Clock clock) {
-        return () -> {
-            PrometheusMeterRegistry prometheusMeterRegistry = new PrometheusMeterRegistry(config, collectorRegistry, clock);
-            prometheusMeterRegistry.config().meterFilter(meterFilterConfigProperties);
-            return  prometheusMeterRegistry;
-        };
-    }
-
-
 }
