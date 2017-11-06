@@ -30,21 +30,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SpectatorTimerTest {
     @Test
     void timerMax() {
-        AtlasMeterRegistry registry = new AtlasMeterRegistry(new AtlasConfig() {
-            @Override
-            public String get(String k) {
-                return null;
-            }
-
-            @Override
-            public Duration step() {
-                return Duration.ofSeconds(10);
-            }
-        }, new MockClock());
+        AtlasConfig atlasConfig = k -> null;
+        AtlasMeterRegistry registry = new AtlasMeterRegistry(atlasConfig, new MockClock());
         Timer timer = registry.timer("timer");
 
         timer.record(1, TimeUnit.SECONDS);
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
+        clock(registry).add(atlasConfig.step());
         assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(1000);
     }
 }
