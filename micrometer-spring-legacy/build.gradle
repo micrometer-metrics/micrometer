@@ -48,9 +48,12 @@ dependencies {
 
     testCompile 'org.springframework.boot:spring-boot-starter-web'
     testCompile 'org.springframework.boot:spring-boot-actuator'
-
-    testCompile 'junit:junit:4.+'
     testCompile 'org.springframework.boot:spring-boot-starter-test'
+
+    // JUnit 5
+    testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0'
+    testCompile 'org.junit.jupiter:junit-jupiter-params:5.0.0'
+    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.0'
 
     // for testing DataSource metrics
     testCompile 'org.hsqldb:hsqldb'
