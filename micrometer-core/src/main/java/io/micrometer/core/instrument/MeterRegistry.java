@@ -291,6 +291,30 @@ public abstract class MeterRegistry {
                 .map(Gauge.class::cast);
         }
 
+        public Optional<FunctionCounter> functionCounter() {
+            return meters()
+                .stream()
+                .filter(m -> m instanceof FunctionCounter)
+                .findAny()
+                .map(FunctionCounter.class::cast);
+        }
+
+        public Optional<TimeGauge> timeGauge() {
+            return meters()
+                .stream()
+                .filter(m -> m instanceof TimeGauge)
+                .findAny()
+                .map(TimeGauge.class::cast);
+        }
+
+        public Optional<FunctionTimer> functionTimer() {
+            return meters()
+                .stream()
+                .filter(m -> m instanceof FunctionTimer)
+                .findAny()
+                .map(FunctionTimer.class::cast);
+        }
+
         public Optional<DistributionSummary> summary() {
             return meters()
                 .stream()
