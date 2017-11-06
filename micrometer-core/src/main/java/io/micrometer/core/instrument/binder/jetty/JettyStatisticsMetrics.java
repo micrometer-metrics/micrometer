@@ -15,14 +15,16 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.binder.jpa.HibernateMetrics;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
 
-import javax.persistence.EntityManagerFactory;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
