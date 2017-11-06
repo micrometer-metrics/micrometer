@@ -20,6 +20,7 @@ dependencies {
     compile 'net.sf.ehcache:ehcache:2.10.3', optional
     compile 'javax.cache:cache-api:1.0.0', optional
     compile 'com.hazelcast:hazelcast:3.8.+', optional
+    compile 'org.hibernate:hibernate-entitymanager:5.2.12.Final', optional
 
     // log monitoring
     compile 'ch.qos.logback:logback-classic:latest.release', optional
