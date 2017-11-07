@@ -43,6 +43,7 @@ public class NoopTimer extends NoopMeter implements Timer {
 
     @Override
     public void record(Runnable f) {
+        f.run();
     }
 
     @Override
