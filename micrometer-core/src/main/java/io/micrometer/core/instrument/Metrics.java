@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 /**
  * @author Jon Schneider
@@ -106,22 +107,32 @@ public class Metrics {
          * Tracks a monotonically increasing value, automatically incrementing the counter whenever
          * the value is observed.
          */
-        public <T> Meter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+        public <T> FunctionCounter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
             return globalRegistry.more().counter(name, tags, obj, f);
         }
 
         /**
          * Tracks a number, maintaining a weak reference on it.
          */
-        public <T extends Number> Meter counter(String name, Iterable<Tag> tags, T number) {
+        public <T extends Number> FunctionCounter counter(String name, Iterable<Tag> tags, T number) {
             return globalRegistry.more().counter(name, tags, number);
         }
 
         /**
          * A gauge that tracks a time value, to be scaled to the monitoring system's base time unit.
          */
-        public <T> Gauge timeGauge(String name, Iterable<Tag> tags, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
+        public <T> TimeGauge timeGauge(String name, Iterable<Tag> tags, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
             return globalRegistry.more().timeGauge(name, tags, obj, fUnit, f);
+        }
+
+        /**
+         * A timer that tracks monotonically increasing functions for count and totalTime.
+         */
+        public <T> FunctionTimer timer(String name, Iterable<Tag> tags, T obj,
+                                       ToLongFunction<T> countFunction,
+                                       ToDoubleFunction<T> totalTimeFunction,
+                                       TimeUnit totalTimeFunctionUnits) {
+            return globalRegistry.more().timer(name, tags, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
         }
     }
 

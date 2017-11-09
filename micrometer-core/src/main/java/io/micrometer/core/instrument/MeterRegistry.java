@@ -16,6 +16,8 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.noop.*;
@@ -120,31 +122,20 @@ public abstract class MeterRegistry {
     }
 
     Counter counter(Meter.Id id) {
-        return registerMeterIfNecessary(Counter.class, id, id2 -> {
-            id2.setType(Meter.Type.Counter);
-            return newCounter(id2);
-        }, NoopCounter::new);
+        return registerMeterIfNecessary(Counter.class, id, this::newCounter, NoopCounter::new);
     }
 
     <T> Gauge gauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
-        return registerMeterIfNecessary(Gauge.class, id, id2 -> {
-            id2.setType(Meter.Type.Gauge);
-            return newGauge(id2, obj, f);
-        }, NoopGauge::new);
+        return registerMeterIfNecessary(Gauge.class, id, id2 -> newGauge(id2, obj, f), NoopGauge::new);
     }
 
     Timer timer(Meter.Id id, HistogramConfig histogramConfig) {
-        return registerMeterIfNecessary(Timer.class, id, histogramConfig, (id2, filteredConfig) -> {
-            id2.setType(Meter.Type.Timer);
-            return newTimer(id2, filteredConfig.merge(HistogramConfig.DEFAULT));
-        }, NoopTimer::new);
+        return registerMeterIfNecessary(Timer.class, id, histogramConfig, (id2, filteredConfig) ->
+            newTimer(id2, filteredConfig.merge(HistogramConfig.DEFAULT)), NoopTimer::new);
     }
 
     DistributionSummary summary(Meter.Id id, HistogramConfig histogramConfig) {
-        return registerMeterIfNecessary(DistributionSummary.class, id, histogramConfig, (id2, filteredConfig) -> {
-            id2.setType(Meter.Type.DistributionSummary);
-            return newDistributionSummary(id2, filteredConfig.merge(HistogramConfig.DEFAULT));
-        }, NoopDistributionSummary::new);
+        return registerMeterIfNecessary(DistributionSummary.class, id, histogramConfig, (id2, filteredConfig) -> newDistributionSummary(id2, filteredConfig.merge(HistogramConfig.DEFAULT)), NoopDistributionSummary::new);
     }
 
     /**
@@ -157,7 +148,7 @@ public abstract class MeterRegistry {
      */
     Meter register(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         return registerMeterIfNecessary(Meter.class, id, id2 -> {
-            id2.setType(type);
+            id.setType(type);
             newMeter(id2, type, measurements);
             return new Meter() {
                 @Override
@@ -371,7 +362,7 @@ public abstract class MeterRegistry {
      * Tracks a monotonically increasing value.
      */
     public Counter counter(String name, Iterable<Tag> tags) {
-        return counter(createId(name, tags, null));
+        return Counter.builder(name).tags(tags).register(this);
     }
 
     /**
@@ -388,7 +379,7 @@ public abstract class MeterRegistry {
      * Measures the sample distribution of events.
      */
     public DistributionSummary summary(String name, Iterable<Tag> tags) {
-        return summary(createId(name, tags, null), HistogramConfig.DEFAULT);
+        return DistributionSummary.builder(name).tags(tags).register(this);
     }
 
     /**
@@ -405,7 +396,7 @@ public abstract class MeterRegistry {
      * Measures the time taken for short tasks and the count of these tasks.
      */
     public Timer timer(String name, Iterable<Tag> tags) {
-        return timer(createId(name, tags, null), HistogramConfig.DEFAULT);
+        return Timer.builder(name).tags(tags).register(this);
     }
 
     /**
@@ -430,7 +421,7 @@ public abstract class MeterRegistry {
          * Measures the time taken for long tasks.
          */
         public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
-            return longTaskTimer(createId(name, tags, null));
+            return LongTaskTimer.builder(name).tags(tags).register(MeterRegistry.this);
         }
 
         /**
@@ -438,7 +429,6 @@ public abstract class MeterRegistry {
          */
         LongTaskTimer longTaskTimer(Meter.Id id) {
             return registerMeterIfNecessary(LongTaskTimer.class, id, id2 -> {
-                id2.setType(Meter.Type.LongTaskTimer);
                 id2.setBaseUnit(getBaseTimeUnitStr());
                 return newLongTaskTimer(id2);
             }, NoopLongTaskTimer::new);
@@ -449,21 +439,19 @@ public abstract class MeterRegistry {
          * the value is observed.
          */
         public <T> FunctionCounter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-            return counter(createId(name, tags, null), obj, f);
+            return FunctionCounter.builder(name, obj, f).tags(tags).register(MeterRegistry.this);
         }
 
         /**
          * Tracks a number, maintaining a weak reference on it.
          */
         public <T extends Number> FunctionCounter counter(String name, Iterable<Tag> tags, T number) {
-            return counter(createId(name, tags, null), number, Number::doubleValue);
+            return FunctionCounter.builder(name, number, Number::doubleValue).tags(tags).register(MeterRegistry.this);
         }
 
         <T> FunctionCounter counter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
             WeakReference<T> ref = new WeakReference<>(obj);
-
             return registerMeterIfNecessary(FunctionCounter.class, id, id2 -> {
-                id2.setType(Meter.Type.Counter);
                 FunctionCounter fc = new FunctionCounter() {
                     private volatile double last = 0.0;
 
@@ -490,8 +478,8 @@ public abstract class MeterRegistry {
                                        ToLongFunction<T> countFunction,
                                        ToDoubleFunction<T> totalTimeFunction,
                                        TimeUnit totalTimeFunctionUnits) {
-            return timer(createId(name, tags, null), obj, countFunction,
-                totalTimeFunction, totalTimeFunctionUnits);
+            return FunctionTimer.builder(name, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits)
+                .tags(tags).register(MeterRegistry.this);
         }
 
         <T> FunctionTimer timer(Meter.Id id, T obj,
@@ -499,7 +487,6 @@ public abstract class MeterRegistry {
                                 ToDoubleFunction<T> totalTimeFunction,
                                 TimeUnit totalTimeFunctionUnits) {
             return registerMeterIfNecessary(FunctionTimer.class, id, id2 -> {
-                id2.setType(Meter.Type.Timer);
                 id2.setBaseUnit(getBaseTimeUnitStr());
                 return newFunctionTimer(id2, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
             }, NoopFunctionTimer::new);
@@ -510,14 +497,11 @@ public abstract class MeterRegistry {
          */
         public <T> TimeGauge timeGauge(String name, Iterable<Tag> tags, T obj,
                                        TimeUnit fUnit, ToDoubleFunction<T> f) {
-            return timeGauge(createId(name, tags, null), obj, fUnit, f);
+            return TimeGauge.builder(name, obj, fUnit, f).tags(tags).register(MeterRegistry.this);
         }
 
         <T> TimeGauge timeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
-            return registerMeterIfNecessary(TimeGauge.class, id, id2 -> {
-                id2.setType(Meter.Type.Gauge);
-                return newTimeGauge(id2, obj, fUnit, f);
-            }, NoopTimeGauge::new);
+            return registerMeterIfNecessary(TimeGauge.class, id, id2 -> newTimeGauge(id2, obj, fUnit, f), NoopTimeGauge::new);
         }
     }
 
@@ -549,7 +533,7 @@ public abstract class MeterRegistry {
      * statement.
      */
     public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        gauge(createId(name, tags, null), obj, f);
+        Gauge.builder(name, obj, f).tags(tags).register(this);
         return obj;
     }
 
@@ -623,13 +607,6 @@ public abstract class MeterRegistry {
      */
     public <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
         return gauge(name, tags, map, Map::size);
-    }
-
-    private Meter.Id createId(String name, Iterable<Tag> tags, String description) {
-        if (name.isEmpty()) {
-            throw new IllegalArgumentException("Name must be non-empty");
-        }
-        return new Meter.Id(name, tags, description, null);
     }
 
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id, Function<Meter.Id, Meter> builder,

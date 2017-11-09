@@ -15,7 +15,7 @@
  */
 package io.micrometer.prometheus;
 
-import io.micrometer.core.instrument.MeterRegistryConfig;
+import io.micrometer.core.instrument.config.MeterRegistryConfig;
 
 import java.time.Duration;
 

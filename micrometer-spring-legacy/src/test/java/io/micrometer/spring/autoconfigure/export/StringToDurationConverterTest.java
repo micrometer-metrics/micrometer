@@ -13,26 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.spring.autoconfigure.export;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-import static java.util.Collections.emptyList;
+import java.time.Duration;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class MeterIdTest {
+public class StringToDurationConverterTest {
+    private StringToDurationConverter converter = new StringToDurationConverter();
+
     @Test
-    void withStatistic() {
-        Meter.Id id = new Meter.Id("my.id", emptyList(), null, null, Meter.Type.Timer);
-        assertThat(id.withTag(Statistic.TotalTime).getTags()).contains(Tag.of("statistic", "totalTime"));
+    public void rfc() {
+        assertThat(converter.convert("PT10M")).isEqualTo(Duration.ofMinutes(10));
     }
 
     @Test
-    void equalsAndHashCode() {
-        Meter.Id id = new Meter.Id("my.id", emptyList(), null, null, Meter.Type.Counter);
-        Meter.Id id2 = new Meter.Id("my.id", emptyList(), null, null, Meter.Type.Counter);
+    public void shorthand() {
+        assertThat(converter.convert("10s")).isEqualTo(Duration.ofSeconds(10));
+    }
 
-        assertThat(id).isEqualTo(id2);
-        assertThat(id.hashCode()).isEqualTo(id2.hashCode());
+    @Test
+    public void invalidShorthand() {
+        assertThatThrownBy(() -> converter.convert("10rs"))
+            .isInstanceOf(IllegalArgumentException.class);
     }
 }

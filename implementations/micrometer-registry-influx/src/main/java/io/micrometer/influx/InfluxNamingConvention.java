@@ -16,7 +16,7 @@
 package io.micrometer.influx;
 
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.NamingConvention;
+import io.micrometer.core.instrument.config.NamingConvention;
 
 /**
  * @author Jon Schneider

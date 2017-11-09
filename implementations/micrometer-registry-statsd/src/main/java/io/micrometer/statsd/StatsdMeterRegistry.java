@@ -16,6 +16,7 @@
 package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.instrument.util.TimeUtils;

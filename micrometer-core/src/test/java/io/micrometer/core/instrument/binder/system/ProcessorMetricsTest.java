@@ -27,7 +27,7 @@ class ProcessorMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         new ProcessorMetrics().bindTo(registry);
 
-        assertThat(registry.find("cpu").gauge())
+        assertThat(registry.find("system.cpu.count").gauge())
                 .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
         if (!System.getProperty("os.name").toLowerCase().contains("win")) {   // Not present on Windows
             assertThat(registry.find("system.load.average.1m").gauge())

@@ -82,7 +82,7 @@ public interface FunctionCounter extends Meter {
         }
 
         public FunctionCounter register(MeterRegistry registry) {
-            return registry.more().counter(new Meter.Id(name, tags, baseUnit, description), obj, f);
+            return registry.more().counter(new Meter.Id(name, tags, baseUnit, description, Type.Counter), obj, f);
         }
     }
 }

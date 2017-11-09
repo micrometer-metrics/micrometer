@@ -210,6 +210,6 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
      * Copy tags, unit, and description from an existing id, but change the name.
      */
     private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
-        return new Meter.Id(id.getName() + "." + suffix, id.getTags(), id.getBaseUnit(), id.getDescription());
+        return new Meter.Id(id.getName() + "." + suffix, id.getTags(), id.getBaseUnit(), id.getDescription(), id.getType());
     }
 }

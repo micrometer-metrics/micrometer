@@ -89,7 +89,7 @@ public interface Counter extends Meter {
         }
 
         public Counter register(MeterRegistry registry) {
-            return registry.counter(new Meter.Id(name, tags, baseUnit, description));
+            return registry.counter(new Meter.Id(name, tags, baseUnit, description, Type.Counter));
         }
     }
 }

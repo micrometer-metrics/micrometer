@@ -16,7 +16,7 @@
 package io.micrometer.graphite;
 
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.NamingConvention;
+import io.micrometer.core.instrument.config.NamingConvention;
 
 import java.text.Normalizer;
 import java.util.regex.Pattern;

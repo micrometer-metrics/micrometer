@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 
 import java.util.Collection;

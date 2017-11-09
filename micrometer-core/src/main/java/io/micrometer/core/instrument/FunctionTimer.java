@@ -97,7 +97,7 @@ public interface FunctionTimer extends Meter {
         }
 
         public FunctionTimer register(MeterRegistry registry) {
-            return registry.more().timer(new Meter.Id(name, tags, baseUnit, description), obj, countFunction, totalTimeFunction,
+            return registry.more().timer(new Meter.Id(name, tags, baseUnit, description, Type.Timer), obj, countFunction, totalTimeFunction,
                 totalTimeFunctionUnits);
         }
     }

@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.noop.NoopCounter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;

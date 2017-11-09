@@ -17,10 +17,11 @@ package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,6 +33,8 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
@@ -40,9 +43,6 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.Map;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.ExpectedCount.once;
@@ -57,7 +57,10 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = MetricsAutoConfigurationTest.MetricsApp.class)
-@TestPropertySource(properties = "spring.metrics.use-global-registry=false")
+@TestPropertySource(properties = {
+    "spring.metrics.use-global-registry=false",
+    "spring.metrics.filter.my.timer.enabled=true", // overriden by programmatic filter
+})
 public class MetricsAutoConfigurationTest {
 
     @Autowired
@@ -78,38 +81,41 @@ public class MetricsAutoConfigurationTest {
     @SuppressWarnings("unchecked")
     @Test
     public void restTemplateIsInstrumented() {
-        MockRestServiceServer server = MockRestServiceServer.bindTo(this.external)
-            .build();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(external).build();
         server.expect(once(), requestTo("/api/external"))
             .andExpect(method(HttpMethod.GET)).andRespond(withSuccess(
             "hello", MediaType.APPLICATION_JSON));
-        assertThat(this.external.getForObject("/api/external", String.class))
-            .isEqualTo("hello");
+
+        assertThat(external.getForObject("/api/external", String.class)).isEqualTo("hello");
 
         clock.add(SimpleConfig.DEFAULT_STEP);
-        assertThat(this.registry.find("http.client.requests").value(Statistic.Count, 1.0)
-            .timer()).isPresent();
+        assertThat(registry.find("http.client.requests").timer().map(Timer::count)).isPresent().hasValue(1L);
     }
 
     @Test
     public void requestMappingIsInstrumented() {
-        this.loopback.getForObject("/api/people", String.class);
+        loopback.getForObject("/api/people", String.class);
 
         clock.add(SimpleConfig.DEFAULT_STEP);
-        assertThat(this.registry.find("http.server.requests").value(Statistic.Count, 1.0)
-            .timer()).isPresent();
+        assertThat(registry.find("http.server.requests").timer().map(Timer::count)).isPresent().hasValue(1L);
     }
 
     @Test
     public void automaticallyRegisteredBinders() {
-        assertThat(this.context.getBeansOfType(MeterBinder.class).values())
+        assertThat(context.getBeansOfType(MeterBinder.class).values())
             .hasAtLeastOneElementOfType(LogbackMetrics.class)
             .hasAtLeastOneElementOfType(JvmMemoryMetrics.class);
     }
 
     @Test
     public void registryConfigurersAreAppliedBeforeRegistryIsInjectableElsewhere() {
-        assertThat(this.registry.find("my.thing").tags("common", "tag").gauge()).isPresent();
+        assertThat(registry.find("my.thing").tags("common", "tag").gauge()).isPresent();
+    }
+
+    @Test
+    public void propertyBasedMeterFiltersCanTakeLowerPrecedenceThanProgrammaticallyBoundFilters() {
+        registry.timer("my.timer");
+        assertThat(registry.find("my.timer").timer()).isNotPresent();
     }
 
     @SpringBootApplication(scanBasePackages = "ignored")
@@ -125,7 +131,14 @@ public class MetricsAutoConfigurationTest {
             return r -> r.config().commonTags("common", "tag");
         }
 
-        private class MyThing {}
+        @Bean
+        @Order(Ordered.HIGHEST_PRECEDENCE)
+        public MeterRegistryConfigurer meterFilter() {
+            return r -> r.config().meterFilter(MeterFilter.deny(id -> id.getName().contains("my.timer")));
+        }
+
+        private class MyThing {
+        }
 
         @Bean
         public MyThing myBinder(MeterRegistry registry) {

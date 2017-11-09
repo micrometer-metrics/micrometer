@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.config.MeterFilter;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +29,7 @@ class MeterFilterTest {
     @Test
     void commonTags() {
         MeterFilter filter = MeterFilter.commonTags(Tags.zip("k2", "v2"));
-        Meter.Id id = new Meter.Id("name", Tags.zip("k1", "v1"), null, null);
+        Meter.Id id = new Meter.Id("name", Tags.zip("k1", "v1"), null, null, Meter.Type.Counter);
 
         Meter.Id filteredId = filter.map(id);
         assertThat(filteredId).has(tag("k1", "v1"));
@@ -38,7 +39,7 @@ class MeterFilterTest {
     @Test
     void ignoreTags() {
         MeterFilter filter = MeterFilter.ignoreTags("k1", "k2");
-        Meter.Id id = new Meter.Id("name", Tags.zip("k1", "v1", "k2", "v2", "k3", "v3"), null, null);
+        Meter.Id id = new Meter.Id("name", Tags.zip("k1", "v1", "k2", "v2", "k3", "v3"), null, null, Meter.Type.Counter);
 
         Meter.Id filteredId = filter.map(id);
         assertThat(filteredId).has(tag("k3"));
@@ -50,11 +51,11 @@ class MeterFilterTest {
     void replaceTagValues() {
         MeterFilter filter = MeterFilter.replaceTagValues("status", s -> s.charAt(0) + "xx", "200");
 
-        Meter.Id id = new Meter.Id("name", Tags.zip("status", "400"), null, null);
+        Meter.Id id = new Meter.Id("name", Tags.zip("status", "400"), null, null, Meter.Type.Counter);
         Meter.Id filteredId = filter.map(id);
         assertThat(filteredId).has(tag("status", "4xx"));
 
-        id = new Meter.Id("name", Tags.zip("status", "200"), null, null);
+        id = new Meter.Id("name", Tags.zip("status", "200"), null, null, Meter.Type.Counter);
         filteredId = filter.map(id);
         assertThat(filteredId).has(tag("status", "200"));
     }

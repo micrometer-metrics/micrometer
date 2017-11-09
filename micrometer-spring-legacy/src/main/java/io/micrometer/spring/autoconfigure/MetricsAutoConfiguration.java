@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.spring.SpringEnvironmentMeterFilter;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.atlas.AtlasExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.datadog.DatadogExportConfiguration;
@@ -44,10 +45,13 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.annotation.Order;
+import org.springframework.core.env.Environment;
 import org.springframework.integration.config.EnableIntegrationManagement;
 import org.springframework.integration.support.management.IntegrationManagementConfigurer;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * {@link EnableAutoConfiguration Auto-configuration} for Micrometer-based metrics.
@@ -64,11 +68,16 @@ import java.util.Collection;
     JmxExportConfiguration.class, StatsdExportConfiguration.class,
     PrometheusExportConfiguration.class, SimpleExportConfiguration.class})
 public class MetricsAutoConfiguration {
+    @Bean
+    @Order(0)
+    MeterRegistryConfigurer springEnvironmentMeterFilter(Environment environment) {
+        return r -> r.config().meterFilter(new SpringEnvironmentMeterFilter(environment));
+    }
 
     @Bean
     @ConditionalOnMissingBean(MeterRegistry.class)
     public CompositeMeterRegistry compositeMeterRegistry(
-            ObjectProvider<Collection<MeterRegistryConfigurer>> configurers,
+            ObjectProvider<List<MeterRegistryConfigurer>> configurers,
             ObjectProvider<Collection<MetricsExporter>> exportersProvider) {
 
         CompositeMeterRegistry composite = new CompositeMeterRegistry();

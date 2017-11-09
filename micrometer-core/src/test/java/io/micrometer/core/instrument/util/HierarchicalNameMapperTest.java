@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument.util;
 
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.NamingConvention;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 

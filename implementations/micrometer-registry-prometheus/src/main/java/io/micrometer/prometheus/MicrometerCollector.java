@@ -16,7 +16,7 @@
 package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.NamingConvention;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.Tag;
 import io.prometheus.client.Collector;
 

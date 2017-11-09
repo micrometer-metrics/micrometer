@@ -16,7 +16,7 @@
 package io.micrometer.influx;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import org.slf4j.Logger;
@@ -28,8 +28,6 @@ import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;

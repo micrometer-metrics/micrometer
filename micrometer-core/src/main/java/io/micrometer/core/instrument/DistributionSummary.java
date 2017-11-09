@@ -164,7 +164,7 @@ public interface DistributionSummary extends Meter {
         }
 
         public DistributionSummary register(MeterRegistry registry) {
-            return registry.summary(new Meter.Id(name, tags, baseUnit, description), histogramConfigBuilder.build());
+            return registry.summary(new Meter.Id(name, tags, baseUnit, description, Type.DistributionSummary), histogramConfigBuilder.build());
         }
     }
 

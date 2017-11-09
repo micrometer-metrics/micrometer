@@ -13,8 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.core.instrument.config;
 
-public enum MeterFilterReply {
-    DENY, NEUTRAL, ACCEPT
+public interface MeterRegistryConfig {
+    String prefix();
+
+    /**
+     * Get the value associated with a key.
+     *
+     * @param k
+     *     Key to lookup in the config.
+     * @return
+     *     Value for the key or null if no key is present.
+     */
+    String get(String k);
 }

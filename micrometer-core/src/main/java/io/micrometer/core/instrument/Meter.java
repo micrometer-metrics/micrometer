@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.config.NamingConvention;
+
 import java.beans.Introspector;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -68,7 +70,7 @@ public interface Meter {
          */
         private Type type;
 
-        public Id(String name, Iterable<Tag> tags, String baseUnit, String description) {
+        public Id(String name, Iterable<Tag> tags, String baseUnit, String description, Type type) {
             this.name = name;
 
             this.tags = Collections.unmodifiableList(stream(tags.spliterator(), false)
@@ -78,10 +80,12 @@ public interface Meter {
 
             this.baseUnit = baseUnit;
             this.description = description;
+
+            this.type = type;
         }
 
         public Id withTag(Tag tag) {
-            return new Id(name, Tags.concat(tags, Collections.singletonList(tag)), baseUnit, description);
+            return new Id(name, Tags.concat(tags, Collections.singletonList(tag)), baseUnit, description, type);
         }
 
         public Id withTag(Statistic statistic) {
@@ -206,7 +210,7 @@ public interface Meter {
         }
 
         public Meter register(MeterRegistry registry) {
-            return registry.register(new Meter.Id(name, tags, baseUnit, description), type, measurements);
+            return registry.register(new Meter.Id(name, tags, baseUnit, description, type), type, measurements);
         }
     }
 }

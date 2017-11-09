@@ -19,6 +19,9 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesBindin
 import org.springframework.core.convert.converter.Converter;
 
 import java.time.Duration;
+import java.time.format.DateTimeParseException;
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * A {@link Converter} to create a {@link Duration} from a {@link String}.
@@ -31,7 +34,39 @@ public class StringToDurationConverter implements Converter<String, Duration> {
 
     @Override
     public Duration convert(String source) {
-        return Duration.parse(source);
+        Duration duration = simpleParse(source);
+        try {
+            return duration == null ? Duration.parse(source) : duration;
+        } catch(DateTimeParseException e) {
+            throw new IllegalArgumentException("Cannot convert '" + source + "' to Duration", e);
+        }
     }
 
+    private static Duration simpleParse(String rawTime) {
+        if (rawTime == null || rawTime.isEmpty())
+            return null;
+        if (!Character.isDigit(rawTime.charAt(0)))
+            return null;
+
+        String time = rawTime.toLowerCase();
+        return tryParse(time, "ns", Duration::ofNanos)
+            .orElseGet(() -> tryParse(time, "ms", Duration::ofMillis)
+                .orElseGet(() -> tryParse(time, "s", Duration::ofSeconds)
+                    .orElseGet(() -> tryParse(time, "m", Duration::ofMinutes)
+                        .orElseGet(() -> tryParse(time, "h", Duration::ofHours)
+                            .orElseGet(() -> tryParse(time, "d", Duration::ofDays)
+                                .orElse(null))))));
+    }
+
+    private static Optional<Duration> tryParse(String time, String unit, Function<Long, Duration> toDuration) {
+        if (time.endsWith(unit)) {
+            String trim = time.substring(0, time.lastIndexOf(unit)).trim();
+            try {
+                return Optional.of(toDuration.apply(Long.parseLong(trim)));
+            } catch(NumberFormatException ignore) {
+                return Optional.empty();
+            }
+        }
+        return Optional.empty();
+    }
 }

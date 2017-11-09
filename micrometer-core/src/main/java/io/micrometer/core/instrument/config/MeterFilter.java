@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.core.instrument.config;
 
 import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 
 import java.util.ArrayList;
@@ -72,7 +75,7 @@ public interface MeterFilter {
                 List<Tag> allTags = new ArrayList<>();
                 id.getTags().forEach(allTags::add);
                 tags.forEach(allTags::add);
-                return new Meter.Id(id.getName(), allTags, id.getBaseUnit(), id.getDescription());
+                return new Meter.Id(id.getName(), allTags, id.getBaseUnit(), id.getDescription(), id.getType());
             }
         };
     }
@@ -90,7 +93,7 @@ public interface MeterFilter {
                         return true;
                     }).collect(Collectors.toList());
 
-                return new Meter.Id(id.getName(), tags, id.getBaseUnit(), id.getDescription());
+                return new Meter.Id(id.getName(), tags, id.getBaseUnit(), id.getDescription(), id.getType());
             }
         };
     }
@@ -118,7 +121,7 @@ public interface MeterFilter {
                     })
                     .collect(Collectors.toList());
 
-                return new Meter.Id(id.getName(), tags, id.getBaseUnit(), id.getDescription());
+                return new Meter.Id(id.getName(), tags, id.getBaseUnit(), id.getDescription(), id.getType());
             }
         };
     }

@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.dropwizard;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;

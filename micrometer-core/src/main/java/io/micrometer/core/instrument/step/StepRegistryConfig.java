@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.step;
 
-import io.micrometer.core.instrument.MeterRegistryConfig;
+import io.micrometer.core.instrument.config.MeterRegistryConfig;
 
 import java.time.Duration;
 
