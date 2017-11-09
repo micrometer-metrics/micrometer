@@ -43,7 +43,7 @@ public class ProcessorMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         Runtime runtime = Runtime.getRuntime();
 
-        Gauge.builder("cpu", runtime, Runtime::availableProcessors)
+        Gauge.builder("system.cpu.count", runtime, Runtime::availableProcessors)
             .tags(tags)
             .description("The number of processors available to the Java virtual machine")
             .register(registry);
