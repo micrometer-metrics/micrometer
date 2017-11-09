@@ -22,7 +22,12 @@ import io.micrometer.core.instrument.noop.*;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -360,6 +365,18 @@ public abstract class MeterRegistry {
                     })
                     .collect(Collectors.toList());
             }
+        }
+
+
+        public Optional<Double> firstValue() {
+            Optional<Meter> meter = meter();
+            if (meter.isPresent()) {
+                Optional<Measurement> measurement = stream(meter.get().measure().spliterator(), false).findFirst();
+                if (measurement.isPresent()) {
+                    return Optional.of(measurement.get().getValue());
+                }
+            }
+            return Optional.empty();
         }
     }
 
