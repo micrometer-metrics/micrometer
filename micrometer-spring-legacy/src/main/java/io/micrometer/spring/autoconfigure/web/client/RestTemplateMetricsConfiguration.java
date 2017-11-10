@@ -45,6 +45,7 @@ public class RestTemplateMetricsConfiguration {
     }
 
     @Bean
+    @ConditionalOnClass(name = "org.springframework.boot.web.client.RestTemplateCustomizer")
     public MetricsRestTemplateCustomizer metricsRestTemplateCustomizer(
         MeterRegistry meterRegistry,
         RestTemplateExchangeTagsProvider restTemplateTagConfigurer,
