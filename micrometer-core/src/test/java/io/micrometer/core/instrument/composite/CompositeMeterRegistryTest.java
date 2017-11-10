@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,7 +25,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static io.micrometer.core.instrument.MockClock.clock;
 import static io.micrometer.core.instrument.Statistic.Count;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class CompositeMeterRegistryTest {
     private CompositeMeterRegistry composite = new CompositeMeterRegistry();
-    private SimpleMeterRegistry simple = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+    private SimpleMeterRegistry simple = new SimpleMeterRegistry();
 
     @Test
     void metricsAreInitiallyNoop() {
@@ -69,7 +67,6 @@ class CompositeMeterRegistryTest {
         Counter compositeCounter = composite.counter("counter");
         compositeCounter.increment();
 
-        clock(simple).add(SimpleConfig.DEFAULT_STEP);
         Optional<Counter> simpleCounter = simple.find("counter").counter();
         assertThat(simpleCounter).hasValueSatisfying(c -> assertThat(c.count()).isEqualTo(1));
 
@@ -77,15 +74,13 @@ class CompositeMeterRegistryTest {
         compositeCounter.increment();
 
         // simple counter doesn't receive the increment after simple is removed from the composite
-        clock(simple).add(SimpleConfig.DEFAULT_STEP);
-        assertThat(simpleCounter).hasValueSatisfying(c -> assertThat(c.count()).isEqualTo(0));
+        assertThat(simpleCounter).hasValueSatisfying(c -> assertThat(c.count()).isEqualTo(1));
 
         composite.add(simple);
         compositeCounter.increment();
 
         // now it receives updates again
-        clock(simple).add(SimpleConfig.DEFAULT_STEP);
-        assertThat(simpleCounter).hasValueSatisfying(c -> assertThat(c.count()).isEqualTo(1));
+        assertThat(simpleCounter).hasValueSatisfying(c -> assertThat(c.count()).isEqualTo(2));
     }
 
     @DisplayName("metrics that are created before a registry is added are later added to that registry")
@@ -101,7 +96,6 @@ class CompositeMeterRegistryTest {
 
         compositeCounter.increment();
 
-        clock(simple).add(SimpleConfig.DEFAULT_STEP);
         assertThat(compositeCounter.count()).isEqualTo(1);
 
         // only the increment AFTER simple is added to the composite is counted to it
@@ -114,7 +108,6 @@ class CompositeMeterRegistryTest {
         composite.add(simple);
         composite.counter("counter").increment();
 
-        clock(simple).add(SimpleConfig.DEFAULT_STEP);
         assertThat(simple.find("counter").value(Count, 1.0).counter()).isPresent();
     }
 
@@ -126,7 +119,6 @@ class CompositeMeterRegistryTest {
         composite.add(simple);
         composite.counter("my.counter").increment();
 
-        clock(simple).add(SimpleConfig.DEFAULT_STEP);
         assertThat(simple.find("my.counter").value(Count, 1.0).counter()).isPresent();
     }
 
@@ -155,7 +147,6 @@ class CompositeMeterRegistryTest {
         composite.more().timer("function.timer", emptyList(),
             o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
 
-        clock(simple).add(SimpleConfig.DEFAULT_STEP);
         assertThat(simple.find("function.timer").meter().map(Meter::measure))
             .hasValueSatisfying(measurements ->
                 assertThat(measurements)

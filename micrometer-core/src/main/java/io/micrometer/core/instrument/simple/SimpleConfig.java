@@ -37,4 +37,15 @@ public interface SimpleConfig extends StepRegistryConfig {
         String v = get(prefix() + ".step");
         return v == null ? DEFAULT_STEP : Duration.parse(v);
     }
+
+    default CountingMode mode() {
+        String v = get(prefix() + ".mode");
+        if(v == null)
+            return CountingMode.Cumulative;
+        for (CountingMode countingMode : CountingMode.values()) {
+            if(v.equalsIgnoreCase(countingMode.name()))
+                return countingMode;
+        }
+        throw new IllegalArgumentException("Counting mode must be one of 'cumulative' or 'step' (check property " + prefix() + ".mode)");
+    }
 }

@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.instrument.config.MeterFilter;
-import io.micrometer.core.instrument.simple.SimpleConfig;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +59,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 @TestPropertySource(properties = {
     "spring.metrics.use-global-registry=false",
     "spring.metrics.filter.my.timer.enabled=true", // overriden by programmatic filter
+    "spring.metrics.simple.cumulative.enabled=true",
 })
 public class MetricsAutoConfigurationTest {
 
@@ -75,9 +75,6 @@ public class MetricsAutoConfigurationTest {
     @Autowired
     private MeterRegistry registry;
 
-    @Autowired
-    private MockClock clock;
-
     @SuppressWarnings("unchecked")
     @Test
     public void restTemplateIsInstrumented() {
@@ -88,7 +85,6 @@ public class MetricsAutoConfigurationTest {
 
         assertThat(external.getForObject("/api/external", String.class)).isEqualTo("hello");
 
-        clock.add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("http.client.requests").timer().map(Timer::count)).isPresent().hasValue(1L);
     }
 
@@ -96,7 +92,6 @@ public class MetricsAutoConfigurationTest {
     public void requestMappingIsInstrumented() {
         loopback.getForObject("/api/people", String.class);
 
-        clock.add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("http.server.requests").timer().map(Timer::count)).isPresent().hasValue(1L);
     }
 
