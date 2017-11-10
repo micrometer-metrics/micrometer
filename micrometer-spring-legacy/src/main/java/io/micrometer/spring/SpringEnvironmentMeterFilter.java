@@ -17,6 +17,7 @@ package io.micrometer.spring;
 
 import io.micrometer.core.instrument.config.PropertyMeterFilter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
+import org.springframework.core.convert.ConversionFailedException;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.core.env.Environment;
 
@@ -34,8 +35,13 @@ public class SpringEnvironmentMeterFilter extends PropertyMeterFilter {
 
     @Override
     public <V> V get(String k, Class<V> vClass) {
-        if(conversionService.canConvert(String.class, vClass)) {
-            return conversionService.convert(environment.getProperty("spring.metrics.filter." + k), vClass);
+        if (conversionService.canConvert(String.class, vClass)) {
+            Object val = environment.getProperty("spring.metrics.filter." + k);
+            try {
+                return conversionService.convert(val, vClass);
+            } catch (ConversionFailedException e) {
+                throw new ConfigurationException("Invalid configuration for '" + k + "' value '" + val + "' as " + vClass, e);
+            }
         }
         return null;
     }
