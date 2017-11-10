@@ -32,6 +32,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource(properties = {
@@ -40,6 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
     "spring.metrics.filter.my.timer.maximumExpectedValue=PT10S",
     "spring.metrics.filter.my.timer.minimumExpectedValue=1ms",
     "spring.metrics.filter.my.timer.percentiles=0.5,0.95",
+    "spring.metrics.filter.my.timer.that.is.misconfigured.enabled=troo",
 
     "spring.metrics.filter.my.summary.enabled=true",
     "spring.metrics.filter.my.summary.maximumExpectedValue=100",
@@ -93,6 +95,13 @@ public class SpringEnvironmentMeterFilterTest {
     public void summaryHistogramConfig() {
         registry.summary("my.summary");
         assertThat(histogramConfig.getMaximumExpectedValue()).isEqualTo(100);
+    }
+
+    @Test
+    public void configErrorMessage(){
+        assertThatThrownBy(() -> registry.timer("my.timer.that.is.misconfigured"))
+            .isInstanceOf(ConfigurationException.class)
+            .hasMessage("Invalid configuration for 'my.timer.that.is.misconfigured.enabled' value 'troo' as class java.lang.Boolean");
     }
 
     @Configuration
