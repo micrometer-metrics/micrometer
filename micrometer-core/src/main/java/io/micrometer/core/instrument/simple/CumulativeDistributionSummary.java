@@ -13,45 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.step;
+package io.micrometer.core.instrument.simple;
 
-import io.micrometer.core.instrument.*;
+import com.google.common.util.concurrent.AtomicDouble;
+import io.micrometer.core.instrument.AbstractDistributionSummary;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.step.StepDouble;
+import io.micrometer.core.instrument.step.StepLong;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class StepDistributionSummary extends AbstractDistributionSummary {
-    private final StepLong count;
-    private final StepDouble total;
-    private final StepDouble max;
+public class CumulativeDistributionSummary extends AbstractDistributionSummary {
+    private final AtomicLong count;
+    private final AtomicDouble total;
+    private final AtomicDouble max;
 
-    public StepDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig, long stepMillis) {
+    public CumulativeDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig) {
         super(id, clock, histogramConfig);
-        this.count = new StepLong(clock, stepMillis);
-        this.total = new StepDouble(clock, stepMillis);
-        this.max = new StepDouble(clock, stepMillis);
+        this.count = new AtomicLong();
+        this.total = new AtomicDouble();
+        this.max = new AtomicDouble();
     }
 
     @Override
     protected void recordNonNegative(double amount) {
-        count.getCurrent().add(1);
-        total.getCurrent().add(amount);
-        max.getCurrent().add(Math.max(amount - max.getCurrent().doubleValue(), 0));
+        count.getAndAdd(1);
+        total.getAndAdd(amount);
+        max.set(Math.max(amount, max.get()));
     }
 
     @Override
     public long count() {
-        return (long) count.poll();
+        return count.get();
     }
 
     @Override
     public double totalAmount() {
-        return total.poll();
+        return total.get();
     }
 
     @Override
     public double max() {
-        return max.poll();
+        return max.get();
     }
 
     @Override

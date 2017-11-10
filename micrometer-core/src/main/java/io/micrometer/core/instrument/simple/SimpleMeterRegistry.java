@@ -17,36 +17,51 @@ package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.internal.DefaultGauge;
+import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
+import io.micrometer.core.instrument.step.StepCounter;
+import io.micrometer.core.instrument.step.StepDistributionSummary;
+import io.micrometer.core.instrument.step.StepTimer;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.text.DecimalFormat;
 import java.util.concurrent.TimeUnit;
+import java.util.function.ToDoubleFunction;
 
 /**
  * A minimal meter registry implementation primarily used for tests.
  *
  * @author Jon Schneider
  */
-public class SimpleMeterRegistry extends StepMeterRegistry {
+public class SimpleMeterRegistry extends MeterRegistry {
     private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
+    private final SimpleConfig config;
 
     public SimpleMeterRegistry() {
         this(SimpleConfig.DEFAULT, Clock.SYSTEM);
     }
 
     public SimpleMeterRegistry(SimpleConfig config, Clock clock) {
-        super(config, clock);
-    }
-
-    @Override
-    protected void publish() {
-        // don't publish anywhere
+        super(clock);
+        this.config = config;
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
-        DistributionSummary summary = super.newDistributionSummary(id, histogramConfig);
+        HistogramConfig merged = histogramConfig.merge(HistogramConfig.builder()
+            .histogramExpiry(config.step())
+            .build());
+
+        DistributionSummary summary;
+        switch (config.mode()) {
+            case Cumulative:
+                summary = new CumulativeDistributionSummary(id, clock, merged);
+                break;
+            case Step:
+            default:
+                summary = new StepDistributionSummary(id, clock, merged, config.step().toMillis());
+                break;
+        }
 
         for (double percentile : histogramConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
@@ -64,8 +79,26 @@ public class SimpleMeterRegistry extends StepMeterRegistry {
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
-        Timer timer = super.newTimer(id, histogramConfig);
+    protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+        // nothing to do here
+    }
+
+    @Override
+    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
+        HistogramConfig merged = histogramConfig.merge(HistogramConfig.builder()
+            .histogramExpiry(config.step())
+            .build());
+
+        Timer timer;
+        switch (config.mode()) {
+            case Cumulative:
+                timer = new CumulativeTimer(id, clock, merged);
+                break;
+            case Step:
+            default:
+                timer = new StepTimer(id, clock, merged, config.step().toMillis());
+                break;
+        }
 
         for (double percentile : histogramConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
@@ -81,6 +114,27 @@ public class SimpleMeterRegistry extends StepMeterRegistry {
         }
 
         return timer;
+    }
+
+    @Override
+    protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+        return new DefaultGauge<>(id, obj, f);
+    }
+
+    @Override
+    protected Counter newCounter(Meter.Id id) {
+        switch (config.mode()) {
+            case Cumulative:
+                return new CumulativeCounter(id);
+            case Step:
+            default:
+                return new StepCounter(id, clock, config.step().toMillis());
+        }
+    }
+
+    @Override
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
+        return new DefaultLongTaskTimer(id, clock);
     }
 
     @Override
