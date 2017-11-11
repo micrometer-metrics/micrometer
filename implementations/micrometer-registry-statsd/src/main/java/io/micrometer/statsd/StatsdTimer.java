@@ -21,11 +21,13 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.opentracing.Tracer;
 import org.reactivestreams.Processor;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Supplier;
 
 public class StatsdTimer extends AbstractTimer implements Timer {
     private final LongAdder count = new LongAdder();
@@ -36,8 +38,8 @@ public class StatsdTimer extends AbstractTimer implements Timer {
     private final Processor<String, String> publisher;
 
     StatsdTimer(Id id, StatsdLineBuilder lineBuilder, Processor<String, String> publisher, Clock clock,
-                HistogramConfig histogramConfig, long stepMillis) {
-        super(id, clock, histogramConfig);
+                HistogramConfig histogramConfig, long stepMillis, Supplier<Tracer> tracer) {
+        super(id, clock, histogramConfig, tracer);
         this.max = new StepDouble(clock, stepMillis);
         this.lineBuilder = lineBuilder;
         this.publisher = publisher;

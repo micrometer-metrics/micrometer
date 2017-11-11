@@ -19,6 +19,8 @@ import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.TimeWindowLatencyHistogram;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.opentracing.ActiveSpan;
+import io.opentracing.Tracer;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -27,44 +29,59 @@ import java.util.function.Supplier;
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
     protected final Clock clock;
     private final HistogramConfig histogramConfig;
+    private final Supplier<Tracer> tracer;
     protected final TimeWindowLatencyHistogram histogram;
 
-    protected AbstractTimer(Meter.Id id, Clock clock, HistogramConfig histogramConfig) {
+    protected AbstractTimer(Id id, Clock clock, HistogramConfig histogramConfig, Supplier<Tracer> tracer) {
         super(id);
         this.clock = clock;
         this.histogramConfig = histogramConfig;
+        this.tracer = tracer;
         this.histogram = new TimeWindowLatencyHistogram(clock, histogramConfig);
     }
 
     @Override
     public <T> T recordCallable(Callable<T> f) throws Exception {
         final long s = clock.monotonicTime();
+        ActiveSpan span = createSpan();
         try {
             return f.call();
         } finally {
+            span.deactivate();
             final long e = clock.monotonicTime();
             record(e - s, TimeUnit.NANOSECONDS);
         }
+    }
+
+    private ActiveSpan createSpan() {
+        Tracer.SpanBuilder spanBuilder = tracer.get().buildSpan(getId().getName());
+        getId().getTags().forEach(t -> spanBuilder.withTag(t.getKey(), t.getValue()));
+         return spanBuilder.startActive();
     }
 
     @Override
     public <T> T record(Supplier<T> f) {
         final long s = clock.monotonicTime();
+        ActiveSpan span = createSpan();
         try {
             return f.get();
         } finally {
+            span.deactivate();
             final long e = clock.monotonicTime();
             record(e - s, TimeUnit.NANOSECONDS);
         }
     }
 
+    @SuppressWarnings("Duplicates")
     @Override
     public <T> Callable<T> wrap(Callable<T> f) {
         return () -> {
             final long s = clock.monotonicTime();
+            ActiveSpan span = createSpan();
             try {
                 return f.call();
             } finally {
+                span.deactivate();
                 final long e = clock.monotonicTime();
                 record(e - s, TimeUnit.NANOSECONDS);
             }
@@ -74,9 +91,11 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     @Override
     public void record(Runnable f) {
         final long s = clock.monotonicTime();
+        ActiveSpan span = createSpan();
         try {
             f.run();
         } finally {
+            span.deactivate();
             final long e = clock.monotonicTime();
             record(e - s, TimeUnit.NANOSECONDS);
         }

@@ -65,7 +65,7 @@ public class DropwizardMeterRegistry extends MeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
-        DropwizardTimer timer = new DropwizardTimer(id, registry.timer(hierarchicalName(id)), clock, histogramConfig);
+        DropwizardTimer timer = new DropwizardTimer(id, registry.timer(hierarchicalName(id)), clock, histogramConfig, tracer);
 
         for (double percentile : histogramConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),

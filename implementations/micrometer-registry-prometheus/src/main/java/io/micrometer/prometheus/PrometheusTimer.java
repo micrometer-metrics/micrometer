@@ -21,17 +21,19 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.opentracing.Tracer;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Supplier;
 
 public class PrometheusTimer extends AbstractTimer implements Timer {
     private final LongAdder count = new LongAdder();
     private final LongAdder totalTime = new LongAdder();
     private final StepDouble max;
 
-    PrometheusTimer(Id id, Clock clock, HistogramConfig histogramConfig, long maxStepMillis) {
-        super(id, clock, histogramConfig);
+    PrometheusTimer(Id id, Clock clock, HistogramConfig histogramConfig, long maxStepMillis, Supplier<Tracer> tracer) {
+        super(id, clock, histogramConfig, tracer);
         this.max = new StepDouble(clock, maxStepMillis);
     }
 

@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.handler.logging.LoggingHandler;
+import io.opentracing.Tracer;
 import reactor.core.Disposable;
 import reactor.core.Disposables;
 import reactor.core.publisher.Flux;
@@ -168,7 +169,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
-        Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, histogramConfig, statsdConfig.step().toMillis());
+        Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, histogramConfig, statsdConfig.step().toMillis(),  tracer);
 
         for (double percentile : histogramConfig.getPercentiles()) {
             switch (statsdConfig.flavor()) {

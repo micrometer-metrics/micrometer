@@ -148,7 +148,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     @Override
     protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
         MicrometerCollector collector = collectorByName(id, Collector.Type.SUMMARY);
-        PrometheusTimer timer = new PrometheusTimer(id, clock, histogramConfig, prometheusConfig.step().toMillis());
+        PrometheusTimer timer = new PrometheusTimer(id, clock, histogramConfig, prometheusConfig.step().toMillis(), tracer);
         List<String> tagValues = tagValues(id);
 
         collector.add((conventionName, tagKeys) -> {

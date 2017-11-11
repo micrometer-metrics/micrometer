@@ -29,7 +29,9 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     private DoubleAdder amount = new DoubleAdder();
     private StepDouble max;
 
-    PrometheusDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig, long maxStepMillis) {
+    PrometheusDistributionSummary(Id id, Clock clock,
+                                  HistogramConfig histogramConfig,
+                                  long maxStepMillis) {
         super(id, clock, histogramConfig);
         this.max = new StepDouble(clock, maxStepMillis);
     }
