@@ -143,7 +143,7 @@ public interface Timer extends Meter {
         private String description;
         private final HistogramConfig.Builder histogramConfigBuilder;
 
-        private Builder(String name) {
+        Builder(String name) {
             this.name = name;
             this.histogramConfigBuilder = new HistogramConfig.Builder();
             minimumExpectedValue(Duration.ofMillis(1));
