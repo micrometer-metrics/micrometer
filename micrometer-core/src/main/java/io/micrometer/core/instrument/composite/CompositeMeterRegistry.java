@@ -49,7 +49,7 @@ public class CompositeMeterRegistry extends MeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
-        CompositeTimer timer = new CompositeTimer(id, histogramConfig);
+        CompositeTimer timer = new CompositeTimer(id, clock, histogramConfig, tracer);
         compositeMeters.add(timer);
         registries.forEach(timer::add);
         return timer;

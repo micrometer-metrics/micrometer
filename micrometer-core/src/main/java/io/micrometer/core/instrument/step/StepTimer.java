@@ -18,9 +18,11 @@ package io.micrometer.core.instrument.step;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.opentracing.Tracer;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * @author Jon Schneider
@@ -33,8 +35,8 @@ public class StepTimer extends AbstractTimer {
     /**
      * Create a new instance.
      */
-    public StepTimer(Id id, Clock clock, HistogramConfig histogramConfig, long step) {
-        super(id, clock, histogramConfig);
+    public StepTimer(Id id, Clock clock, HistogramConfig histogramConfig, long step,  Supplier<Tracer> tracer) {
+        super(id, clock, histogramConfig, tracer);
         this.count = new StepLong(clock, step);
         this.total = new StepLong(clock, step);
         this.max = new StepLong(clock, step);

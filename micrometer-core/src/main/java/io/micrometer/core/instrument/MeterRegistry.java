@@ -22,14 +22,19 @@ import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.noop.*;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.opentracing.NoopTracer;
+import io.opentracing.NoopTracerFactory;
+import io.opentracing.Tracer;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.Tags.zip;
@@ -50,10 +55,13 @@ public abstract class MeterRegistry {
 
     public MeterRegistry(Clock clock) {
         this.clock = clock;
+        Tracer noopTracer = NoopTracerFactory.create();
+        tracer = () -> noopTracer;
     }
 
     private final Map<Meter.Id, Meter> meterMap = new HashMap<>();
     private final List<MeterFilter> filters = new ArrayList<>();
+    protected Supplier<Tracer> tracer;
 
     /**
      * We'll use snake case as a general-purpose default for registries because it is the most
@@ -131,7 +139,7 @@ public abstract class MeterRegistry {
 
     Timer timer(Meter.Id id, HistogramConfig histogramConfig) {
         return registerMeterIfNecessary(Timer.class, id, histogramConfig, (id2, filteredConfig) ->
-            newTimer(id2, filteredConfig.merge(HistogramConfig.DEFAULT)), NoopTimer::new);
+            newTimer(id2, filteredConfig.merge(HistogramConfig.DEFAULT)), (newId) -> new NoopTimer(newId, clock, tracer));
     }
 
     DistributionSummary summary(Meter.Id id, HistogramConfig histogramConfig) {
@@ -180,6 +188,15 @@ public abstract class MeterRegistry {
      * Access to configuration options for this registry.
      */
     public class Config {
+
+        public Config setTracer(Tracer tracer) {
+            if (tracer == null) {
+                throw new NullPointerException("Cannot register setTracer that is <null>.");
+            }
+            MeterRegistry.this.tracer = () -> tracer;
+            return this;
+        }
+
         /**
          * Append a list of common tags to apply to all metrics reported to the monitoring system.
          */

@@ -16,7 +16,12 @@
 package io.micrometer.spring.samples.components;
 
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.opentracing.ActiveSpan;
+import io.opentracing.Span;
+import io.opentracing.util.GlobalTracer;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,11 +43,23 @@ public class PersonController {
     @GetMapping("/api/people")
     @Timed(percentiles = {0.5, 0.95, 0.999}, histogram = true)
     public List<String> allPeople() {
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        long startTime = System.nanoTime();
+        Timer.builder("the.timer").tags("first tag", "tagVal0", "otherTag", "otherVal1").register(registry).record(() -> {
+            ActiveSpan orderSpan = GlobalTracer.get().buildSpan("order_span").startActive();
+            Timer.builder("inner.timer")
+                .tags("first tag", "tagVal1").register(registry).record(() -> {
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+            orderSpan.deactivate();
+            Timer.builder("non-callback timer 123").register(registry).record(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
+        });
+
+
+
         return people;
     }
 

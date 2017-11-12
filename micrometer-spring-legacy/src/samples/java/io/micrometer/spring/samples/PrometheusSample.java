@@ -15,8 +15,12 @@
  */
 package io.micrometer.spring.samples;
 
+import io.micrometer.spring.autoconfigure.MeterRegistryConfigurer;
+import io.opentracing.Tracer;
+import io.opentracing.util.GlobalTracer;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages = "io.micrometer.spring.samples.components")
@@ -25,4 +29,36 @@ public class PrometheusSample {
     public static void main(String[] args) {
         new SpringApplicationBuilder(PrometheusSample.class).profiles("prometheus").run(args);
     }
+
+    @Bean
+    public MeterRegistryConfigurer addLogging(Tracer tracer){
+        return registry -> {
+            registry.config().setTracer(tracer);
+        };
+    }
+
+    @Bean
+    public Tracer tracer() {
+        Tracer tracer = new com.uber.jaeger.Configuration(
+            "prometheusSample",
+            new com.uber.jaeger.Configuration.SamplerConfiguration("const", 1),
+            new com.uber.jaeger.Configuration.ReporterConfiguration(
+                true,  // logSpans
+                "localhost",
+                5775,
+                1000,   // flush interval in milliseconds
+                10000)  // max buffered Spans
+        ).getTracer();
+
+        GlobalTracer.register(tracer);
+
+//        Configuration.ReporterConfiguration reporterConfiguration = new Configuration.ReporterConfiguration(true, "localhost", 5775, null, null);
+//        Configuration config = new Configuration("prometheusSample", null, reporterConfiguration);
+////        config.setStatsFactory(...); // optional if you want to get metrics about setTracer behavior
+
+
+
+        return tracer;
+    }
+
 }

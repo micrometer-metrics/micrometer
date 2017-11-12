@@ -75,4 +75,5 @@ dependencies {
     samplesCompile 'org.springframework.integration:spring-integration-java-dsl'
     samplesCompile 'org.springframework.integration:spring-integration-ws'
     samplesCompile 'org.springframework.integration:spring-integration-xml'
+    samplesCompile 'com.uber.jaeger:jaeger-core:0.22.0-RC2'
 }

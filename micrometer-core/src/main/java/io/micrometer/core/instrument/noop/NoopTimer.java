@@ -15,40 +15,86 @@
  */
 package io.micrometer.core.instrument.noop;
 
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.util.TimeUtils;
+import io.opentracing.ActiveSpan;
+import io.opentracing.Tracer;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class NoopTimer extends NoopMeter implements Timer {
-    public NoopTimer(Id id) {
+    private final Clock clock;
+    private final Supplier<Tracer> tracer;
+
+    public NoopTimer(Id id, Clock clock, Supplier<Tracer> tracer) {
         super(id);
+        this.clock = clock;
+        this.tracer = tracer;
+    }
+
+    private ActiveSpan createSpan() {
+        Tracer.SpanBuilder spanBuilder = tracer.get().buildSpan(getId().getName());
+        getId().getTags().forEach(t -> spanBuilder.withTag(t.getKey(), t.getValue()));
+        return spanBuilder.startActive();
     }
 
     @Override
     public void record(long amount, TimeUnit unit) {
+        long durationNs = (long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS);
+
+        Tracer.SpanBuilder spanBuilder = tracer.get().buildSpan(getId().getName());
+        getId().getTags().forEach(t -> spanBuilder.withTag(t.getKey(), t.getValue()));
+//        spanBuilder.withStartTimestamp((long)TimeUtils.nanosToUnit(clock.monotonicTime() - durationNs, TimeUnit.MICROSECONDS));
+        spanBuilder.withStartTimestamp(System.currentTimeMillis() * 1000);
+        spanBuilder.startActive()
+            .log(System.currentTimeMillis() * 1000, "blerp")
+            .deactivate();
     }
 
     @Override
     public <T> T record(Supplier<T> f) {
-        return f.get();
+        ActiveSpan span = createSpan();
+        try {
+            return f.get();
+        } finally {
+            span.deactivate();
+        }
     }
 
     @Override
     public <T> T recordCallable(Callable<T> f) throws Exception {
-        return f.call();
+        ActiveSpan span = createSpan();
+        try {
+            return f.call();
+        } finally {
+            span.deactivate();
+        }
     }
 
     @Override
     public void record(Runnable f) {
-        f.run();
+        ActiveSpan span = createSpan();
+        try {
+            f.run();
+        } finally {
+            span.deactivate();
+        }
     }
 
     @Override
     public <T> Callable<T> wrap(Callable<T> f) {
-        return f;
+        return () -> {
+            ActiveSpan span = createSpan();
+            try {
+                return f.call();
+            } finally {
+                span.deactivate();
+            }
+        };
     }
 
     @Override
