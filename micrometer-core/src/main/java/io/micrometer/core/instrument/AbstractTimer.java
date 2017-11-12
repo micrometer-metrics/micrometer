@@ -103,10 +103,16 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     @Override
     public final void record(long amount, TimeUnit unit) {
+        long durationNs = (long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS);
         if(amount >= 0) {
-            histogram.record((long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS));
+            histogram.record(durationNs);
             recordNonNegative(amount, unit);
         }
+
+        Tracer.SpanBuilder spanBuilder = tracer.get().buildSpan(getId().getName());
+        getId().getTags().forEach(t -> spanBuilder.withTag(t.getKey(), t.getValue()));
+        spanBuilder.withStartTimestamp((long)TimeUtils.nanosToUnit(clock.monotonicTime() - durationNs, TimeUnit.MICROSECONDS));
+        spanBuilder.startActive().deactivate();
     }
 
     protected abstract void recordNonNegative(long amount, TimeUnit unit);

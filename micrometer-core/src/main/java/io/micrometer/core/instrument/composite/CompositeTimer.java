@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.AbstractMeter;
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -32,11 +33,13 @@ import java.util.function.Supplier;
 
 public class CompositeTimer extends AbstractMeter implements Timer, CompositeMeter {
     private final Map<MeterRegistry, Timer> timers = new ConcurrentHashMap<>();
+    private final Clock clock;
     private final HistogramConfig histogramConfig;
     private final Supplier<Tracer> tracer;
 
-    CompositeTimer(Meter.Id id, HistogramConfig histogramConfig, Supplier<Tracer> tracer) {
+    CompositeTimer(Meter.Id id, Clock clock, HistogramConfig histogramConfig, Supplier<Tracer> tracer) {
         super(id);
+        this.clock = clock;
         this.histogramConfig = histogramConfig;
         this.tracer = tracer;
     }
@@ -102,7 +105,7 @@ public class CompositeTimer extends AbstractMeter implements Timer, CompositeMet
     }
 
     private Timer firstTimer() {
-        return timers.values().stream().findFirst().orElse(new NoopTimer(getId(), tracer));
+        return timers.values().stream().findFirst().orElse(new NoopTimer(getId(), clock, tracer));
     }
 
     @Override

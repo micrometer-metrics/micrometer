@@ -15,8 +15,10 @@
  */
 package io.micrometer.core.instrument.noop;
 
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.opentracing.ActiveSpan;
 import io.opentracing.Tracer;
 
@@ -25,10 +27,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class NoopTimer extends NoopMeter implements Timer {
+    private final Clock clock;
     private final Supplier<Tracer> tracer;
 
-    public NoopTimer(Id id, Supplier<Tracer> tracer) {
+    public NoopTimer(Id id, Clock clock, Supplier<Tracer> tracer) {
         super(id);
+        this.clock = clock;
         this.tracer = tracer;
     }
 
@@ -40,6 +44,15 @@ public class NoopTimer extends NoopMeter implements Timer {
 
     @Override
     public void record(long amount, TimeUnit unit) {
+        long durationNs = (long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS);
+
+        Tracer.SpanBuilder spanBuilder = tracer.get().buildSpan(getId().getName());
+        getId().getTags().forEach(t -> spanBuilder.withTag(t.getKey(), t.getValue()));
+//        spanBuilder.withStartTimestamp((long)TimeUtils.nanosToUnit(clock.monotonicTime() - durationNs, TimeUnit.MICROSECONDS));
+        spanBuilder.withStartTimestamp(System.currentTimeMillis() * 1000);
+        spanBuilder.startActive()
+            .log(System.currentTimeMillis() * 1000, "blerp")
+            .deactivate();
     }
 
     @Override

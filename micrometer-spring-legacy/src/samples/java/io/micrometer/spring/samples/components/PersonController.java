@@ -43,6 +43,7 @@ public class PersonController {
     @GetMapping("/api/people")
     @Timed(percentiles = {0.5, 0.95, 0.999}, histogram = true)
     public List<String> allPeople() {
+        long startTime = System.nanoTime();
         Timer.builder("the.timer").tags("first tag", "tagVal0", "otherTag", "otherVal1").register(registry).record(() -> {
             ActiveSpan orderSpan = GlobalTracer.get().buildSpan("order_span").startActive();
             Timer.builder("inner.timer")
@@ -54,7 +55,10 @@ public class PersonController {
                 }
             });
             orderSpan.deactivate();
+            Timer.builder("non-callback timer 123").register(registry).record(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
         });
+
+
 
         return people;
     }

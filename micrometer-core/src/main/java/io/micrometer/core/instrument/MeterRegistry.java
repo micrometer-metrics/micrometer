@@ -139,7 +139,7 @@ public abstract class MeterRegistry {
 
     Timer timer(Meter.Id id, HistogramConfig histogramConfig) {
         return registerMeterIfNecessary(Timer.class, id, histogramConfig, (id2, filteredConfig) ->
-            newTimer(id2, filteredConfig.merge(HistogramConfig.DEFAULT)), (newId) -> new NoopTimer(newId, tracer));
+            newTimer(id2, filteredConfig.merge(HistogramConfig.DEFAULT)), (newId) -> new NoopTimer(newId, clock, tracer));
     }
 
     DistributionSummary summary(Meter.Id id, HistogramConfig histogramConfig) {
