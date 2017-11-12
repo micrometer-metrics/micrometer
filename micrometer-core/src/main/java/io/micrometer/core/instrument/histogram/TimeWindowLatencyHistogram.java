@@ -22,19 +22,31 @@ import org.HdrHistogram.Histogram;
 import org.LatencyUtils.LatencyStats;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.function.ToDoubleFunction;
 
+/**
+ * @author Jon Schneider
+ * @author Trustin Heuiseung Lee
+ */
 @Incubating(since = "1.0.0-rc.3")
 public class TimeWindowLatencyHistogram {
+
+    private static final AtomicIntegerFieldUpdater<TimeWindowLatencyHistogram> rotatingUpdater =
+        AtomicIntegerFieldUpdater.newUpdater(TimeWindowLatencyHistogram.class, "rotating");
+
     private final Clock clock;
     private final HistogramConfig config;
-    private final LatencyStats[] ringBuffer;
-    private int currentBucket;
-    private long lastRotateTimestampMillis;
-    private final long durationBetweenRotatesMillis;
 
-    private final AtomicBoolean accumulatedHistogramStale = new AtomicBoolean(false);
+    private final LatencyStats[] ringBuffer;
     private final Histogram accumulatedHistogram;
+    private volatile boolean accumulatedHistogramStale;
+
+    private final long durationBetweenRotatesMillis;
+    private int currentBucket;
+    private volatile long lastRotateTimestampMillis;
+    @SuppressWarnings({ "unused", "FieldCanBeLocal" })
+    private volatile int rotating; // 0 - not rotating, 1 - rotating
 
     public TimeWindowLatencyHistogram(Clock clock, HistogramConfig histogramConfig) {
         this.clock = clock;
@@ -51,11 +63,11 @@ public class TimeWindowLatencyHistogram {
     }
 
     public double percentile(double percentile, TimeUnit unit) {
-        return TimeUtils.nanosToUnit(current().getValueAtPercentile(percentile * 100), unit);
+        return TimeUtils.nanosToUnit(get(h -> h.getValueAtPercentile(percentile * 100)), unit);
     }
 
     public double histogramCountAtValue(long valueNanos) {
-        return current().getCountBetweenValues(0, valueNanos);
+        return get(h -> h.getCountBetweenValues(0, valueNanos));
     }
 
     public void record(long valueNano) {
@@ -64,35 +76,55 @@ public class TimeWindowLatencyHistogram {
             for (LatencyStats histogram : ringBuffer) {
                 histogram.recordLatency(valueNano);
             }
-            accumulatedHistogramStale.compareAndSet(false, true);
-        } catch(ArrayIndexOutOfBoundsException ignored) {
+        } catch (IndexOutOfBoundsException ignored) {
             // the value is so large (or small) that the dynamic range of the histogram cannot be extended to include it
+        } finally {
+            accumulatedHistogramStale = true;
         }
     }
 
     private void rotate() {
         long timeSinceLastRotateMillis = clock.wallTime() - lastRotateTimestampMillis;
+        if (timeSinceLastRotateMillis <= durationBetweenRotatesMillis) {
+            // Need to wait more for next rotation.
+            return;
+        }
 
-        while (timeSinceLastRotateMillis > durationBetweenRotatesMillis) {
-            ringBuffer[currentBucket] = buildLatencyStats();
-            accumulatedHistogram.reset();
-            if (++currentBucket >= ringBuffer.length) {
-                currentBucket = 0;
+        if (!rotatingUpdater.compareAndSet(this, 0, 1)) {
+            // Being rotated by other thread already.
+            return;
+        }
+
+        try {
+            synchronized (this) {
+                do {
+                    ringBuffer[currentBucket] = buildLatencyStats();
+                    if (++currentBucket >= ringBuffer.length) {
+                        currentBucket = 0;
+                    }
+                    timeSinceLastRotateMillis -= durationBetweenRotatesMillis;
+                    lastRotateTimestampMillis += durationBetweenRotatesMillis;
+                } while (timeSinceLastRotateMillis > durationBetweenRotatesMillis);
+
+                accumulatedHistogram.reset();
+                accumulatedHistogramStale = true;
             }
-            timeSinceLastRotateMillis -= durationBetweenRotatesMillis;
-            lastRotateTimestampMillis += durationBetweenRotatesMillis;
-            accumulatedHistogramStale.compareAndSet(false, true);
+        } finally {
+            rotating = 0;
         }
     }
 
-    private Histogram current() {
+    private double get(ToDoubleFunction<Histogram> func) {
         rotate();
 
-        if(accumulatedHistogramStale.compareAndSet(true, false)) {
-            ringBuffer[currentBucket].addIntervalHistogramTo(accumulatedHistogram);
-        }
+        synchronized (this) {
+            if (accumulatedHistogramStale) {
+                ringBuffer[currentBucket].addIntervalHistogramTo(accumulatedHistogram);
+                accumulatedHistogramStale = false;
+            }
 
-        return accumulatedHistogram;
+            return func.applyAsDouble(accumulatedHistogram);
+        }
     }
 
     private LatencyStats buildLatencyStats() {

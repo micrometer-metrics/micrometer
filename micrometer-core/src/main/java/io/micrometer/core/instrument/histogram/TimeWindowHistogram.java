@@ -20,23 +20,31 @@ import io.micrometer.core.instrument.Clock;
 import org.HdrHistogram.DoubleHistogram;
 import org.HdrHistogram.DoubleRecorder;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.function.ToDoubleFunction;
 
 /**
  * @author Jon Schneider
+ * @author Trustin Heuiseung Lee
  */
 @Incubating(since = "1.0.0-rc.3")
 public class TimeWindowHistogram {
+
+    private static final AtomicIntegerFieldUpdater<TimeWindowHistogram> rotatingUpdater =
+        AtomicIntegerFieldUpdater.newUpdater(TimeWindowHistogram.class, "rotating");
+
     private final Clock clock;
 
     private final DoubleRecorder[] recorderRingBuffer;
     private final DoubleHistogram intervalHistogram;
     private final DoubleHistogram accumulatedHistogram;
-    private final AtomicBoolean accumulatedHistogramStale = new AtomicBoolean(false);
+    private volatile boolean accumulatedHistogramStale;
 
-    private int currentBucket;
-    private long lastRotateTimestampMillis;
     private final long durationBetweenRotatesMillis;
+    private int currentBucket;
+    private volatile long lastRotateTimestampMillis;
+    @SuppressWarnings({ "unused", "FieldCanBeLocal" })
+    private volatile int rotating; // 0 - not rotating, 1 - rotating
 
     public TimeWindowHistogram(Clock clock, HistogramConfig histogramConfig) {
         this.clock = clock;
@@ -53,11 +61,11 @@ public class TimeWindowHistogram {
     }
 
     public double percentile(double percentile) {
-        return current().getValueAtPercentile(percentile * 100);
+        return get(h -> h.getValueAtPercentile(percentile * 100));
     }
 
     public double histogramCountAtValue(double value) {
-        return current().getCountBetweenValues(0, value);
+        return get(h -> h.getCountBetweenValues(0, value));
     }
 
     public void record(double value) {
@@ -66,34 +74,56 @@ public class TimeWindowHistogram {
             for (DoubleRecorder recorder : recorderRingBuffer) {
                 recorder.recordValue(value);
             }
-            accumulatedHistogramStale.compareAndSet(false, true);
-        } catch(ArrayIndexOutOfBoundsException ignored) {
+        } catch (IndexOutOfBoundsException ignored) {
             // the value is so large (or small) that the dynamic range of the histogram cannot be extended to include it
+        } finally {
+            accumulatedHistogramStale = true;
         }
     }
 
     private void rotate() {
         long timeSinceLastRotateMillis = clock.wallTime() - lastRotateTimestampMillis;
-        while (timeSinceLastRotateMillis > durationBetweenRotatesMillis) {
-            recorderRingBuffer[currentBucket].reset();
-            accumulatedHistogram.reset();
-            if (++currentBucket >= recorderRingBuffer.length) {
-                currentBucket = 0;
+        if (timeSinceLastRotateMillis <= durationBetweenRotatesMillis) {
+            // Need to wait more for next rotation.
+            return;
+        }
+
+        if (!rotatingUpdater.compareAndSet(this, 0, 1)) {
+            // Being rotated by other thread already.
+            return;
+        }
+
+
+        try {
+            synchronized (this) {
+                do {
+                    recorderRingBuffer[currentBucket].reset();
+                    if (++currentBucket >= recorderRingBuffer.length) {
+                        currentBucket = 0;
+                    }
+                    timeSinceLastRotateMillis -= durationBetweenRotatesMillis;
+                    lastRotateTimestampMillis += durationBetweenRotatesMillis;
+                } while (timeSinceLastRotateMillis > durationBetweenRotatesMillis);
+
+                accumulatedHistogram.reset();
+                accumulatedHistogramStale = true;
             }
-            timeSinceLastRotateMillis -= durationBetweenRotatesMillis;
-            lastRotateTimestampMillis += durationBetweenRotatesMillis;
-            accumulatedHistogramStale.compareAndSet(false, true);
+        } finally {
+            rotating = 0;
         }
     }
 
-    private DoubleHistogram current() {
+    private double get(ToDoubleFunction<DoubleHistogram> func) {
         rotate();
 
-        if(accumulatedHistogramStale.compareAndSet(true, false)) {
-            recorderRingBuffer[currentBucket].getIntervalHistogramInto(intervalHistogram);
-            accumulatedHistogram.add(intervalHistogram);
-        }
+        synchronized (this) {
+            if (accumulatedHistogramStale) {
+                recorderRingBuffer[currentBucket].getIntervalHistogramInto(intervalHistogram);
+                accumulatedHistogram.add(intervalHistogram);
+                accumulatedHistogramStale = false;
+            }
 
-        return accumulatedHistogram;
+            return func.applyAsDouble(accumulatedHistogram);
+        }
     }
 }
