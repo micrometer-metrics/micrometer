@@ -85,7 +85,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     @Override
     public final void record(long amount, TimeUnit unit) {
         if(amount >= 0) {
-            histogram.record((long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS));
+            histogram.recordLong(TimeUnit.NANOSECONDS.convert(amount, unit));
             recordNonNegative(amount, unit);
         }
     }
@@ -94,7 +94,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     @Override
     public double percentile(double percentile, TimeUnit unit) {
-        return histogram.percentile(percentile, unit);
+        return TimeUtils.nanosToUnit(histogram.percentile(percentile), unit);
     }
 
     @Override

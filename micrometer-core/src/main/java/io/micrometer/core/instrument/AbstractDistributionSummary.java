@@ -21,7 +21,7 @@ import io.micrometer.core.instrument.histogram.TimeWindowHistogram;
 public abstract class AbstractDistributionSummary extends AbstractMeter implements DistributionSummary {
     private final TimeWindowHistogram histogram;
 
-    public AbstractDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig) {
+    protected AbstractDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig) {
         super(id);
         this.histogram = new TimeWindowHistogram(clock, histogramConfig);
     }
@@ -29,7 +29,7 @@ public abstract class AbstractDistributionSummary extends AbstractMeter implemen
     @Override
     public final void record(double amount) {
         if (amount >= 0) {
-            histogram.record(amount);
+            histogram.recordDouble(amount);
             recordNonNegative(amount);
         }
     }

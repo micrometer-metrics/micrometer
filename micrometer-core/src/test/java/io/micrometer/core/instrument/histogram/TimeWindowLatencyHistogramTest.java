@@ -17,20 +17,21 @@ package io.micrometer.core.instrument.histogram;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.util.TimeUtils;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
+import static io.micrometer.core.instrument.util.TimeUtils.millisToUnit;
+import static io.micrometer.core.instrument.util.TimeUtils.nanosToUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TimeWindowLatencyHistogramTest {
     @Test
     void histogramsAreCumulative() {
         TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(Clock.SYSTEM, HistogramConfig.DEFAULT);
-        histogram.record(1);
-        histogram.record(2);
+        histogram.recordLong(1);
+        histogram.recordLong(2);
 
         assertThat(histogram.histogramCountAtValue(1)).isEqualTo(1);
         assertThat(histogram.histogramCountAtValue(2)).isEqualTo(2);
@@ -43,7 +44,7 @@ class TimeWindowLatencyHistogramTest {
             .maximumExpectedValue(2L)
             .build()
             .merge(HistogramConfig.DEFAULT));
-        histogram.record(3);
+        histogram.recordLong(3);
         assertThat(histogram.histogramCountAtValue(3)).isEqualTo(1);
         assertThat(histogram.histogramCountAtValue(Long.MAX_VALUE)).isEqualTo(1);
     }
@@ -57,7 +58,7 @@ class TimeWindowLatencyHistogramTest {
             .merge(HistogramConfig.DEFAULT));
 
         // Always too large, regardless of bounds.
-        histogram.record(Long.MAX_VALUE);
+        histogram.recordLong(Long.MAX_VALUE);
     }
 
     @Test
@@ -65,18 +66,18 @@ class TimeWindowLatencyHistogramTest {
         TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), HistogramConfig.DEFAULT);
 
         for(int i = 1; i <= 10; i++) {
-            histogram.record((long) TimeUtils.millisToUnit(i, TimeUnit.NANOSECONDS));
+            histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
         }
 
-        assertThat(histogram.percentile(0.5, TimeUnit.MILLISECONDS)).isEqualTo(5, Offset.offset(0.1));
-        assertThat(histogram.percentile(0.9, TimeUnit.MILLISECONDS)).isEqualTo(9, Offset.offset(0.1));
-        assertThat(histogram.percentile(0.95, TimeUnit.MILLISECONDS)).isEqualTo(10, Offset.offset(0.1));
+        assertThat(nanosToUnit(histogram.percentile(0.5), TimeUnit.MILLISECONDS)).isEqualTo(5, Offset.offset(0.1));
+        assertThat(nanosToUnit(histogram.percentile(0.9), TimeUnit.MILLISECONDS)).isEqualTo(9, Offset.offset(0.1));
+        assertThat(nanosToUnit(histogram.percentile(0.95), TimeUnit.MILLISECONDS)).isEqualTo(10, Offset.offset(0.1));
     }
 
     @Test
     void percentilesWithNoSamples() {
         TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), HistogramConfig.DEFAULT);
-        assertThat(histogram.percentile(0.5, TimeUnit.MILLISECONDS)).isEqualTo(0);
+        assertThat(nanosToUnit(histogram.percentile(0.5), TimeUnit.MILLISECONDS)).isEqualTo(0);
     }
 
     @Test
@@ -84,17 +85,17 @@ class TimeWindowLatencyHistogramTest {
         TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), HistogramConfig.DEFAULT);
 
         for(int i = 1; i <= 10; i++) {
-            histogram.record((long) TimeUtils.millisToUnit(i, TimeUnit.NANOSECONDS));
+            histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
         }
 
         // baseline median
-        assertThat(histogram.percentile(0.50, TimeUnit.MILLISECONDS)).isEqualTo(5, Offset.offset(0.1));
+        assertThat(nanosToUnit(histogram.percentile(0.50), TimeUnit.MILLISECONDS)).isEqualTo(5, Offset.offset(0.1));
 
         for(int i = 11; i <= 20; i++) {
-            histogram.record((long) TimeUtils.millisToUnit(i, TimeUnit.NANOSECONDS));
+            histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
         }
 
         // median should have moved after seeing 10 more samples
-        assertThat(histogram.percentile(0.50, TimeUnit.MILLISECONDS)).isEqualTo(10, Offset.offset(0.1));
+        assertThat(nanosToUnit(histogram.percentile(0.50), TimeUnit.MILLISECONDS)).isEqualTo(10, Offset.offset(0.1));
     }
 }
