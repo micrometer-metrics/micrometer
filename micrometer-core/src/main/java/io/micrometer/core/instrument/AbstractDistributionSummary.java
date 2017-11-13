@@ -29,7 +29,7 @@ public abstract class AbstractDistributionSummary extends AbstractMeter implemen
     @Override
     public final void record(double amount) {
         if (amount >= 0) {
-            histogram.record((long) amount);
+            histogram.record(amount);
             recordNonNegative(amount);
         }
     }
