@@ -24,11 +24,11 @@ class TimeWindowHistogramTest {
     @Test
     void histogramsAreCumulative() {
         TimeWindowHistogram histogram = new TimeWindowHistogram(new MockClock(), HistogramConfig.DEFAULT);
-        histogram.record(3);
+        histogram.recordDouble(3);
 
         assertThat(histogram.histogramCountAtValue(3)).isEqualTo(1);
 
-        histogram.record(6);
+        histogram.recordDouble(6);
 
         // Proves that the accumulated histogram is truly accumulative, and not just a representation
         // of the last snapshot
@@ -44,7 +44,7 @@ class TimeWindowHistogramTest {
             .maximumExpectedValue(2L)
             .build()
             .merge(HistogramConfig.DEFAULT));
-        histogram.record(3);
+        histogram.recordDouble(3);
         assertThat(histogram.histogramCountAtValue(3)).isEqualTo(1);
     }
 
@@ -54,12 +54,12 @@ class TimeWindowHistogramTest {
 
         // If the dynamic range of the underlying recorder isn't pushed very far to the right, a small value will be handled normally.
         // Doing this primes the 1e-8 sample for failure
-        histogram.record(1000000000);
+        histogram.recordDouble(1000000000);
 
         // This will be out of bounds for the underlying histogram
-        histogram.record(1e-8);
+        histogram.recordDouble(1e-8);
 
         // Regardless of the imputed dynamic bound for the underlying histogram, Double.MAX_VALUE is always too large.
-        histogram.record(Double.MAX_VALUE);
+        histogram.recordDouble(Double.MAX_VALUE);
     }
 }
