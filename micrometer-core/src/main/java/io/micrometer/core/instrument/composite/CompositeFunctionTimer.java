@@ -15,28 +15,24 @@
  */
 package io.micrometer.core.instrument.composite;
 
-import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.noop.NoopFunctionTimer;
 
 import java.lang.ref.WeakReference;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
-public class CompositeFunctionTimer<T> extends AbstractMeter implements FunctionTimer, CompositeMeter {
+class CompositeFunctionTimer<T> extends AbstractCompositeMeter<FunctionTimer> implements FunctionTimer {
     private final WeakReference<T> ref;
     private final ToLongFunction<T> countFunction;
     private final ToDoubleFunction<T> totalTimeFunction;
     private final TimeUnit totalTimeFunctionUnits;
 
-    private final Map<MeterRegistry, FunctionTimer> functionTimers = new ConcurrentHashMap<>();
-
-    CompositeFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+    CompositeFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
+                           ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
         super(id);
         this.ref = new WeakReference<>(obj);
         this.countFunction = countFunction;
@@ -45,39 +41,36 @@ public class CompositeFunctionTimer<T> extends AbstractMeter implements Function
     }
 
     @Override
-    public void add(MeterRegistry registry) {
-        T obj = ref.get();
-        if(obj != null) {
-            FunctionTimer.Builder<T> builder = FunctionTimer
-                .builder(getId().getName(), obj, countFunction, totalTimeFunction, totalTimeFunctionUnits)
-                .tags(getId().getTags())
-                .description(getId().getDescription())
-                .baseUnit(getId().getBaseUnit());
-            functionTimers.put(registry, builder.register(registry));
-        }
-    }
-
-    @Override
-    public void remove(MeterRegistry registry) {
-        functionTimers.remove(registry);
-    }
-
-    @Override
     public long count() {
-        return first().count();
+        return firstChild().count();
     }
 
     @Override
     public double totalTime(TimeUnit unit) {
-        return first().totalTime(unit);
+        return firstChild().totalTime(unit);
     }
 
     @Override
     public TimeUnit baseTimeUnit() {
-        return first().baseTimeUnit();
+        return firstChild().baseTimeUnit();
     }
 
-    private FunctionTimer first() {
-        return functionTimers.values().stream().findFirst().orElse(new NoopFunctionTimer(getId()));
+    @Override
+    FunctionTimer newNoopMeter() {
+        return new NoopFunctionTimer(getId());
+    }
+
+    @Override
+    FunctionTimer registerNewMeter(MeterRegistry registry) {
+        final T obj = ref.get();
+        if (obj == null) {
+            return null;
+        }
+
+        return FunctionTimer.builder(getId().getName(), obj, countFunction,
+                                     totalTimeFunction, totalTimeFunctionUnits)
+                            .tags(getId().getTags())
+                            .description(getId().getDescription())
+                            .baseUnit(getId().getBaseUnit()).register(registry);
     }
 }

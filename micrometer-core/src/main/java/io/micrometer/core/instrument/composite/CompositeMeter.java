@@ -18,7 +18,7 @@ package io.micrometer.core.instrument.composite;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 
-public interface CompositeMeter extends Meter {
+interface CompositeMeter extends Meter {
     void add(MeterRegistry registry);
     void remove(MeterRegistry registry);
 }

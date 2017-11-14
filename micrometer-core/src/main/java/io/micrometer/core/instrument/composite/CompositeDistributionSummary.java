@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.composite;
 
-import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.Meter;
@@ -23,12 +22,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.noop.NoopDistributionSummary;
 
-import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSummary> implements DistributionSummary {
 
-public class CompositeDistributionSummary extends AbstractMeter implements DistributionSummary, CompositeMeter {
-    private final Map<MeterRegistry, DistributionSummary> distributionSummaries = new ConcurrentHashMap<>();
     private final HistogramConfig histogramConfig;
 
     CompositeDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
@@ -38,62 +33,57 @@ public class CompositeDistributionSummary extends AbstractMeter implements Distr
 
     @Override
     public void record(double amount) {
-        distributionSummaries.values().forEach(ds -> ds.record(amount));
+        forEachChild(ds -> ds.record(amount));
     }
 
     @Override
     public long count() {
-        return firstSummary().count();
+        return firstChild().count();
     }
 
     @Override
     public double totalAmount() {
-        return firstSummary().totalAmount();
+        return firstChild().totalAmount();
     }
 
     @Override
     public double max() {
-        return firstSummary().max();
+        return firstChild().max();
     }
 
     @Override
     public double histogramCountAtValue(long value) {
-        return firstSummary().histogramCountAtValue(value);
-    }
-
-    private DistributionSummary firstSummary() {
-        return distributionSummaries.values().stream().findFirst().orElse(new NoopDistributionSummary(getId()));
+        return firstChild().histogramCountAtValue(value);
     }
 
     @Override
     public double percentile(double percentile) {
-        return firstSummary().percentile(percentile);
+        return firstChild().percentile(percentile);
     }
 
     @Override
     public HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
-        return firstSummary().takeSnapshot(supportsAggregablePercentiles);
+        return firstChild().takeSnapshot(supportsAggregablePercentiles);
     }
 
     @Override
-    public void add(MeterRegistry registry) {
-        DistributionSummary.Builder builder = DistributionSummary.builder(getId().getName())
-            .tags(getId().getTags())
-            .description(getId().getDescription())
-            .baseUnit(getId().getBaseUnit())
-            .publishPercentiles(histogramConfig.getPercentiles())
-            .publishPercentileHistogram(histogramConfig.isPercentileHistogram())
-            .maximumExpectedValue(histogramConfig.getMaximumExpectedValue())
-            .minimumExpectedValue(histogramConfig.getMinimumExpectedValue())
-            .histogramBufferLength(histogramConfig.getHistogramBufferLength())
-            .histogramExpiry(histogramConfig.getHistogramExpiry())
-            .sla(histogramConfig.getSlaBoundaries());
-
-        distributionSummaries.put(registry, builder.register(registry));
+    DistributionSummary newNoopMeter() {
+        return new NoopDistributionSummary(getId());
     }
 
     @Override
-    public void remove(MeterRegistry registry) {
-        distributionSummaries.remove(registry);
+    DistributionSummary registerNewMeter(MeterRegistry registry) {
+        return DistributionSummary.builder(getId().getName())
+                                  .tags(getId().getTags())
+                                  .description(getId().getDescription())
+                                  .baseUnit(getId().getBaseUnit())
+                                  .publishPercentiles(histogramConfig.getPercentiles())
+                                  .publishPercentileHistogram(histogramConfig.isPercentileHistogram())
+                                  .maximumExpectedValue(histogramConfig.getMaximumExpectedValue())
+                                  .minimumExpectedValue(histogramConfig.getMinimumExpectedValue())
+                                  .histogramBufferLength(histogramConfig.getHistogramBufferLength())
+                                  .histogramExpiry(histogramConfig.getHistogramExpiry())
+                                  .sla(histogramConfig.getSlaBoundaries())
+                                  .register(registry);
     }
 }

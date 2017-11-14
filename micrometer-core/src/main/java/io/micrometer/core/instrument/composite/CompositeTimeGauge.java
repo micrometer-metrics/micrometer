@@ -17,32 +17,50 @@ package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.noop.NoopTimeGauge;
 
+import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 
-public class CompositeTimeGauge<T> extends CompositeGauge<T> implements TimeGauge {
+class CompositeTimeGauge<T> extends AbstractCompositeMeter<TimeGauge> implements TimeGauge {
+
+    private final WeakReference<T> ref;
+    private final ToDoubleFunction<T> f;
     private final TimeUnit fUnit;
 
     CompositeTimeGauge(Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
-        super(id, obj, f);
+        super(id);
+        ref = new WeakReference<>(obj);
+        this.f = f;
         this.fUnit = fUnit;
     }
 
     @Override
-    public void add(MeterRegistry registry) {
-        T obj = ref.get();
-        if(obj != null) {
-            gauges.put(registry, TimeGauge.builder(getId().getName(), obj, fUnit, f)
-                .tags(getId().getTags())
-                .description(getId().getDescription())
-                .register(registry));
-        }
+    public double value() {
+        return firstChild().value();
     }
 
     @Override
     public TimeUnit getBaseTimeUnit() {
-        return gauges.values().stream().findFirst().map(tg -> ((TimeGauge) tg).getBaseTimeUnit())
-            .orElse(TimeUnit.SECONDS);
+        return firstChild().getBaseTimeUnit();
+    }
+
+    @Override
+    TimeGauge newNoopMeter() {
+        return new NoopTimeGauge(getId());
+    }
+
+    @Override
+    TimeGauge registerNewMeter(MeterRegistry registry) {
+        final T obj = ref.get();
+        if (obj == null) {
+            return null;
+        }
+
+        return TimeGauge.builder(getId().getName(), obj, fUnit, f)
+                        .tags(getId().getTags())
+                        .description(getId().getDescription())
+                        .register(registry);
     }
 }

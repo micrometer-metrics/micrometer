@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -36,7 +37,8 @@ import java.util.function.ToLongFunction;
  */
 public class CompositeMeterRegistry extends MeterRegistry {
     private final Set<MeterRegistry> registries = ConcurrentHashMap.newKeySet();
-    private Collection<CompositeMeter> compositeMeters = new CopyOnWriteArrayList<>();
+    private final Set<MeterRegistry> unmodifiableRegistries = Collections.unmodifiableSet(registries);
+    private final Collection<CompositeMeter> compositeMeters = new CopyOnWriteArrayList<>();
 
     public CompositeMeterRegistry() {
         this(Clock.SYSTEM);
@@ -49,7 +51,7 @@ public class CompositeMeterRegistry extends MeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
-        CompositeTimer timer = new CompositeTimer(id, histogramConfig);
+        CompositeTimer timer = new CompositeTimer(id, clock, histogramConfig);
         compositeMeters.add(timer);
         registries.forEach(timer::add);
         return timer;
@@ -105,7 +107,7 @@ public class CompositeMeterRegistry extends MeterRegistry {
 
     @Override
     protected TimeUnit getBaseTimeUnit() {
-        return null;
+        return TimeUnit.SECONDS;
     }
 
     @Override
@@ -130,6 +132,6 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     public Set<MeterRegistry> getRegistries() {
-        return registries;
+        return unmodifiableRegistries;
     }
 }
