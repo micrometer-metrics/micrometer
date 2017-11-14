@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.noop;
 
+import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 
@@ -74,5 +75,10 @@ public class NoopTimer extends NoopMeter implements Timer {
     @Override
     public double histogramCountAtValue(long valueNanos) {
         return 0;
+    }
+
+    @Override
+    public HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
+        return HistogramSnapshot.empty();
     }
 }

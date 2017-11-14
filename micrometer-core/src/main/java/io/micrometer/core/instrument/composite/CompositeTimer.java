@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.AbstractMeter;
+import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -96,6 +97,11 @@ public class CompositeTimer extends AbstractMeter implements Timer, CompositeMet
     @Override
     public double histogramCountAtValue(long valueNanos) {
         return firstTimer().histogramCountAtValue(valueNanos);
+    }
+
+    @Override
+    public HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
+        return firstTimer().takeSnapshot(supportsAggregablePercentiles);
     }
 
     private Timer firstTimer() {

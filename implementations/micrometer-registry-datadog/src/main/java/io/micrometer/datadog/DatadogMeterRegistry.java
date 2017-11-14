@@ -143,34 +143,36 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<String> writeTimer(Timer timer) {
-        long wallTime = clock.wallTime();
+        final long wallTime = clock.wallTime();
+        final HistogramSnapshot snapshot = timer.takeSnapshot(false);
+        final Stream.Builder<String> metrics = Stream.builder();
 
-        Stream.Builder<String> metrics = Stream.builder();
+        metrics.add(writeMetric(idWithSuffix(timer.getId(), "sum"), wallTime, snapshot.total(getBaseTimeUnit())));
+        metrics.add(writeMetric(idWithSuffix(timer.getId(), "count"), wallTime, snapshot.count()));
+        metrics.add(writeMetric(idWithSuffix(timer.getId(), "avg"), wallTime, snapshot.mean(getBaseTimeUnit())));
+        metrics.add(writeMetric(idWithSuffix(timer.getId(), "max"), wallTime, snapshot.max(getBaseTimeUnit())));
 
-        metrics.add(writeMetric(idWithSuffix(timer.getId(), "sum"), wallTime, timer.totalTime(getBaseTimeUnit())));
-        metrics.add(writeMetric(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()));
-        metrics.add(writeMetric(idWithSuffix(timer.getId(), "avg"), wallTime, timer.mean(getBaseTimeUnit())));
-        metrics.add(writeMetric(idWithSuffix(timer.getId(), "max"), wallTime, timer.max(getBaseTimeUnit())));
-
-        for (double percentile : histogramConfigs.get(timer).getPercentiles()) {
-            metrics.add(writeMetric(idWithSuffix(timer.getId(), percentileFormat.format(percentile) + "percentile"), wallTime, timer.percentile(percentile, getBaseTimeUnit())));
+        for (ValueAtPercentile v : snapshot.percentileValues()) {
+            metrics.add(writeMetric(idWithSuffix(timer.getId(), percentileFormat.format(v.percentile()) + "percentile"),
+                                    wallTime, v.value(getBaseTimeUnit())));
         }
 
         return metrics.build();
     }
 
     private Stream<String> writeSummary(DistributionSummary summary) {
-        long wallTime = clock.wallTime();
+        final long wallTime = clock.wallTime();
+        final HistogramSnapshot snapshot = summary.takeSnapshot(false);
+        final Stream.Builder<String> metrics = Stream.builder();
 
-        Stream.Builder<String> metrics = Stream.builder();
+        metrics.add(writeMetric(idWithSuffix(summary.getId(), "sum"), wallTime, snapshot.total()));
+        metrics.add(writeMetric(idWithSuffix(summary.getId(), "count"), wallTime, snapshot.count()));
+        metrics.add(writeMetric(idWithSuffix(summary.getId(), "avg"), wallTime, snapshot.mean()));
+        metrics.add(writeMetric(idWithSuffix(summary.getId(), "max"), wallTime, snapshot.max()));
 
-        metrics.add(writeMetric(idWithSuffix(summary.getId(), "sum"), wallTime, summary.totalAmount()));
-        metrics.add(writeMetric(idWithSuffix(summary.getId(), "count"), wallTime, summary.count()));
-        metrics.add(writeMetric(idWithSuffix(summary.getId(), "avg"), wallTime, summary.mean()));
-        metrics.add(writeMetric(idWithSuffix(summary.getId(), "max"), wallTime, summary.max()));
-
-        for (double percentile : histogramConfigs.get(summary).getPercentiles()) {
-            metrics.add(writeMetric(idWithSuffix(summary.getId(),percentileFormat.format(percentile) + "percentile"), wallTime, summary.percentile(percentile)));
+        for (ValueAtPercentile v : snapshot.percentileValues()) {
+            metrics.add(writeMetric(idWithSuffix(summary.getId(), percentileFormat.format(v.percentile()) + "percentile"),
+                                    wallTime, v.value()));
         }
 
         return metrics.build();

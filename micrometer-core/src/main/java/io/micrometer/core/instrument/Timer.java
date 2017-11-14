@@ -116,6 +116,8 @@ public interface Timer extends Meter {
 
     double histogramCountAtValue(long valueNanos);
 
+    HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles);
+
     @Override
     default Iterable<Measurement> measure() {
         return Arrays.asList(

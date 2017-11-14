@@ -94,12 +94,18 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     @Override
     public double percentile(double percentile, TimeUnit unit) {
-        return TimeUtils.nanosToUnit(histogram.percentile(percentile), unit);
+        return histogram.percentile(percentile, unit);
     }
 
     @Override
     public double histogramCountAtValue(long valueNanos) {
         return histogram.histogramCountAtValue(valueNanos);
+    }
+
+    @Override
+    public HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
+        return histogram.takeSnapshot(count(), totalTime(TimeUnit.NANOSECONDS), max(TimeUnit.NANOSECONDS),
+                                      supportsAggregablePercentiles);
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

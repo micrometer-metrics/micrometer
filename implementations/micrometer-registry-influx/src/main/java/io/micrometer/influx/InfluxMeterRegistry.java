@@ -222,30 +222,32 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     private String writeTimer(Timer timer) {
-        Stream.Builder<Field> fields = Stream.builder();
+        final HistogramSnapshot snapshot = timer.takeSnapshot(false);
+        final Stream.Builder<Field> fields = Stream.builder();
 
-        fields.add(new Field("sum", timer.totalTime(getBaseTimeUnit())));
-        fields.add(new Field("count", timer.count()));
-        fields.add(new Field("mean", timer.mean(getBaseTimeUnit())));
-        fields.add(new Field("upper", timer.max(getBaseTimeUnit())));
+        fields.add(new Field("sum", snapshot.total(getBaseTimeUnit())));
+        fields.add(new Field("count", snapshot.count()));
+        fields.add(new Field("mean", snapshot.mean(getBaseTimeUnit())));
+        fields.add(new Field("upper", snapshot.max(getBaseTimeUnit())));
 
-        for (double percentile : histogramConfigs.get(timer).getPercentiles()) {
-            fields.add(new Field(format.format(percentile) + "_percentile", timer.percentile(percentile, getBaseTimeUnit())));
+        for (ValueAtPercentile v : snapshot.percentileValues()) {
+            fields.add(new Field(format.format(v.percentile()) + "_percentile", v.value(getBaseTimeUnit())));
         }
 
         return influxLineProtocol(timer.getId(), "histogram", fields.build(), clock.wallTime());
     }
 
     private String writeSummary(DistributionSummary summary) {
-        Stream.Builder<Field> fields = Stream.builder();
+        final HistogramSnapshot snapshot = summary.takeSnapshot(false);
+        final Stream.Builder<Field> fields = Stream.builder();
 
-        fields.add(new Field("sum", summary.totalAmount()));
-        fields.add(new Field("count", summary.count()));
-        fields.add(new Field("mean", summary.mean()));
-        fields.add(new Field("upper", summary.max()));
+        fields.add(new Field("sum", snapshot.total()));
+        fields.add(new Field("count", snapshot.count()));
+        fields.add(new Field("mean", snapshot.mean()));
+        fields.add(new Field("upper", snapshot.max()));
 
-        for (double percentile : histogramConfigs.get(summary).getPercentiles()) {
-            fields.add(new Field(format.format(percentile) + "_percentile", summary.percentile(percentile)));
+        for (ValueAtPercentile v : snapshot.percentileValues()) {
+            fields.add(new Field(format.format(v.percentile()) + "_percentile", v.value()));
         }
 
         return influxLineProtocol(summary.getId(), "histogram", fields.build(), clock.wallTime());

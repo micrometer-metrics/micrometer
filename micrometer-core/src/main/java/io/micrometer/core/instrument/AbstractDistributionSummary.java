@@ -17,13 +17,16 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.TimeWindowHistogram;
+import io.micrometer.core.instrument.util.MeterEquivalence;
 
 public abstract class AbstractDistributionSummary extends AbstractMeter implements DistributionSummary {
     private final TimeWindowHistogram histogram;
+    private final HistogramConfig histogramConfig;
 
     protected AbstractDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig) {
         super(id);
         this.histogram = new TimeWindowHistogram(clock, histogramConfig);
+        this.histogramConfig = histogramConfig;
     }
 
     @Override
@@ -44,5 +47,25 @@ public abstract class AbstractDistributionSummary extends AbstractMeter implemen
     @Override
     public double histogramCountAtValue(long value) {
         return histogram.histogramCountAtValue(value);
+    }
+
+    @Override
+    public HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
+        return histogram.takeSnapshot(count(), totalAmount(), max(), supportsAggregablePercentiles);
+    }
+
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+    @Override
+    public boolean equals(Object o) {
+        return MeterEquivalence.equals(this, o);
+    }
+
+    @Override
+    public int hashCode() {
+        return MeterEquivalence.hashCode(this);
+    }
+
+    public HistogramConfig statsConfig() {
+        return histogramConfig;
     }
 }
