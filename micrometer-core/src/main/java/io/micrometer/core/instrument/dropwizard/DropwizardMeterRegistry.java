@@ -101,6 +101,7 @@ public class DropwizardMeterRegistry extends MeterRegistry {
         return summary;
     }
 
+    @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
         LongTaskTimer ltt = new DefaultLongTaskTimer(id, clock);
         registry.register(hierarchicalName(id.withTag(Statistic.ActiveTasks)), (Gauge<Integer>) ltt::activeTasks);
