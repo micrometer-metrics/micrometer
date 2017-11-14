@@ -19,7 +19,7 @@ import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 
-public class CompositeCustomMeter implements CompositeMeter {
+class CompositeCustomMeter implements CompositeMeter {
     private final Meter.Id id;
     private final Meter.Type type;
     private final Iterable<Measurement> measurements;

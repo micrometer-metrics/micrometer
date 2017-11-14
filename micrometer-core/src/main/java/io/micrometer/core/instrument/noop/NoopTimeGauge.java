@@ -20,13 +20,14 @@ import io.micrometer.core.instrument.TimeGauge;
 import java.util.concurrent.TimeUnit;
 
 public class NoopTimeGauge extends NoopMeter implements TimeGauge {
+
     public NoopTimeGauge(Id id) {
         super(id);
     }
 
     @Override
     public TimeUnit getBaseTimeUnit() {
-        return null;
+        return TimeUnit.NANOSECONDS;
     }
 
     @Override

@@ -59,19 +59,6 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     }
 
     @Override
-    public <T> Callable<T> wrap(Callable<T> f) {
-        return () -> {
-            final long s = clock.monotonicTime();
-            try {
-                return f.call();
-            } finally {
-                final long e = clock.monotonicTime();
-                record(e - s, TimeUnit.NANOSECONDS);
-            }
-        };
-    }
-
-    @Override
     public void record(Runnable f) {
         final long s = clock.monotonicTime();
         try {

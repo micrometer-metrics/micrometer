@@ -48,11 +48,6 @@ public class NoopTimer extends NoopMeter implements Timer {
     }
 
     @Override
-    public <T> Callable<T> wrap(Callable<T> f) {
-        return f;
-    }
-
-    @Override
     public long count() {
         return 0;
     }

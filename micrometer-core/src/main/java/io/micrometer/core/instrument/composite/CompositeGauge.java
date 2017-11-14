@@ -15,48 +15,45 @@
  */
 package io.micrometer.core.instrument.composite;
 
-import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.noop.NoopGauge;
 
 import java.lang.ref.WeakReference;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.ToDoubleFunction;
 
-public class CompositeGauge<T> extends AbstractMeter implements Gauge, CompositeMeter {
-    protected final WeakReference<T> ref;
-    protected final ToDoubleFunction<T> f;
-
-    protected final Map<MeterRegistry, Gauge> gauges = new ConcurrentHashMap<>();
+class CompositeGauge<T> extends AbstractCompositeMeter<Gauge> implements Gauge {
+    private final WeakReference<T> ref;
+    private final ToDoubleFunction<T> f;
 
     CompositeGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
         super(id);
-        this.ref = new WeakReference<>(obj);
+        ref = new WeakReference<>(obj);
         this.f = f;
     }
 
     @Override
     public double value() {
-        return gauges.values().stream().findFirst().orElse(new NoopGauge(getId())).value();
+        return firstChild().value();
     }
 
     @Override
-    public void add(MeterRegistry registry) {
-        T obj = ref.get();
-        if(obj != null) {
-            gauges.put(registry, Gauge.builder(getId().getName(), obj, f)
-                .tags(getId().getTags())
-                .description(getId().getDescription())
-                .baseUnit(getId().getBaseUnit())
-                .register(registry));
+    Gauge newNoopMeter() {
+        return new NoopGauge(getId());
+    }
+
+    @Override
+    Gauge registerNewMeter(MeterRegistry registry) {
+        final T obj = ref.get();
+        if (obj == null) {
+            return null;
         }
-    }
 
-    @Override
-    public void remove(MeterRegistry registry) {
-        gauges.remove(registry);
+        return Gauge.builder(getId().getName(), obj, f)
+                    .tags(getId().getTags())
+                    .description(getId().getDescription())
+                    .baseUnit(getId().getBaseUnit())
+                    .register(registry);
     }
 }

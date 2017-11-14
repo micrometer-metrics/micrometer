@@ -88,7 +88,9 @@ public interface Timer extends Meter {
      * @param f The Callable to time when it is invoked.
      * @return The wrapped Callable.
      */
-    <T> Callable<T> wrap(Callable<T> f);
+    default <T> Callable<T> wrap(Callable<T> f) {
+        return () -> recordCallable(f);
+    }
 
     /**
      * The number of times that record has been called on this timer.
