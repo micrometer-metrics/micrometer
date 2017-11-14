@@ -15,12 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.hystrix;
 
-import com.netflix.hystrix.HystrixCircuitBreaker;
-import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixCommandGroupKey;
-import com.netflix.hystrix.HystrixCommandKey;
-import com.netflix.hystrix.HystrixCommandMetrics;
-import com.netflix.hystrix.HystrixCommandProperties;
+import com.netflix.hystrix.*;
 import com.netflix.hystrix.strategy.properties.HystrixPropertiesCommandDefault;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
@@ -30,12 +25,10 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
-
 import java.time.Duration;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 class MicrometerMetricsPublisherCommandTest {
     private static HystrixCommandGroupKey groupKey = HystrixCommandGroupKey.Factory.asKey("MicrometerGROUP");
@@ -84,12 +77,18 @@ class MicrometerMetricsPublisherCommandTest {
     }
 
     private void assertExecutionMetric(SimpleMeterRegistry registry, String eventType, double count) {
-        Flux.interval(Duration.ofMillis(50))
-            .takeUntil(n -> registry.find("hystrix.execution").tags("event", eventType)
+        try {
+            Flux.interval(Duration.ofMillis(50))
+                .takeUntil(n -> registry.find("hystrix.execution").tags("event", eventType)
+                    .functionCounter()
+                    .map(FunctionCounter::count)
+                    .orElse(0.0) == count)
+                .blockLast(Duration.ofSeconds(30));
+        } catch(RuntimeException e) {
+            assertThat(registry.find("hystrix.execution").tags("event", eventType)
                 .functionCounter()
-                .map(FunctionCounter::count)
-                .orElse(0.0) == count)
-            .blockLast(Duration.ofSeconds(30));
+                .map(FunctionCounter::count)).isEqualTo(count);
+        }
     }
 
     @Test
