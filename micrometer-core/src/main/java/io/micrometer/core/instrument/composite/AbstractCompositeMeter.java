@@ -89,7 +89,6 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
         return i.hasNext() ? i.next().meter() : null;
     }
 
-    @Override
     public final void add(MeterRegistry registry) {
         final T newMeter = registerNewMeter(registry);
         if (newMeter == null) {
@@ -100,7 +99,6 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
         firstMeterUpdater.compareAndSet(this, null, newMeter);
     }
 
-    @Override
     public final void remove(MeterRegistry registry) {
         // Not very efficient, but this operation is expected to be used rarely.
         final AtomicReference<T> meterHolder = new AtomicReference<>();

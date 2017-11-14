@@ -20,9 +20,16 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.noop.NoopLongTaskTimer;
 
+import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> implements LongTaskTimer {
+    private final AtomicLong nextTask = new AtomicLong(0L);
+    private final ConcurrentMap<Long, Collection<TaskIdMapping>> taskMapping = new ConcurrentHashMap<>();
 
     CompositeLongTaskTimer(Meter.Id id) {
         super(id);
@@ -30,29 +37,32 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
 
     @Override
     public long start() {
-        // FIXME: Broken; some children may return different task IDs.
-        return childStream()
-            .mapToLong(LongTaskTimer::start)
-            .reduce((t1, t2) -> t2)
-            .orElse(-1L);
+        long task = nextTask.getAndIncrement();
+        taskMapping.put(task, childStream().map(ltt -> new TaskIdMapping(ltt.start(), ltt)).collect(Collectors.toList()));
+        return task;
     }
 
     @Override
     public long stop(long task) {
-        // FIXME: Broken; some children may return different task IDs.
-        return childStream()
-            .mapToLong(ltt -> ltt.stop(task))
-            .reduce((t1, t2) -> t2 == -1 ? t1 : t2)
-            .orElse(-1L);
+        Collection<TaskIdMapping> mappings = taskMapping.remove(task);
+        long last = 0;
+        if(mappings != null) {
+            for (TaskIdMapping mapping : mappings) {
+                last = mapping.ltt.stop(mapping.id);
+            }
+        }
+        return last;
     }
 
     @Override
     public double duration(long task, TimeUnit unit) {
-        // FIXME: Broken; some children may return different task IDs.
-        return childStream()
-            .mapToDouble(ltt -> ltt.duration(task, unit))
-            .reduce((t1, t2) -> t2 == -1 ? t1 : t2)
-            .orElse(-1.0);
+        Collection<TaskIdMapping> mappings = taskMapping.get(task);
+        if(mappings != null) {
+            for (TaskIdMapping mapping : mappings) {
+                return mapping.ltt.duration(mapping.id, unit);
+            }
+        }
+        return 0.0;
     }
 
     @Override
@@ -76,5 +86,15 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
                             .tags(getId().getTags())
                             .description(getId().getDescription())
                             .register(registry);
+    }
+
+    private static class TaskIdMapping {
+        private final long id;
+        private final LongTaskTimer ltt;
+
+        private TaskIdMapping(long id, LongTaskTimer ltt) {
+            this.id = id;
+            this.ltt = ltt;
+        }
     }
 }
