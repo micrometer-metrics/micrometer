@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
@@ -67,6 +68,11 @@ public class CompositeDistributionSummary extends AbstractMeter implements Distr
     @Override
     public double percentile(double percentile) {
         return firstSummary().percentile(percentile);
+    }
+
+    @Override
+    public HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
+        return firstSummary().takeSnapshot(supportsAggregablePercentiles);
     }
 
     @Override

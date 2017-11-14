@@ -62,6 +62,8 @@ public interface DistributionSummary extends Meter {
 
     double histogramCountAtValue(long value);
 
+    HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles);
+
     static Builder builder(String name) {
         return new Builder(name);
     }

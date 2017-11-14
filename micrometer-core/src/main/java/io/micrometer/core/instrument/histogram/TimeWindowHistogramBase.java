@@ -16,9 +16,16 @@
 package io.micrometer.core.instrument.histogram;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.CountAtValue;
+import io.micrometer.core.instrument.HistogramSnapshot;
+import io.micrometer.core.instrument.ValueAtPercentile;
+import io.micrometer.core.instrument.util.TimeUtils;
+
 import java.lang.reflect.Array;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.function.ToDoubleFunction;
 
 /**
  * @param <T> the type of the buckets in a ring buffer
@@ -36,6 +43,7 @@ abstract class TimeWindowHistogramBase<T, U> {
         AtomicIntegerFieldUpdater.newUpdater(TimeWindowHistogramBase.class, "rotating");
 
     private final Clock clock;
+    private final HistogramConfig histogramConfig;
 
     private final T[] ringBuffer;
     private final U accumulatedHistogram;
@@ -49,6 +57,7 @@ abstract class TimeWindowHistogramBase<T, U> {
 
     TimeWindowHistogramBase(Clock clock, HistogramConfig histogramConfig, Class<T> bucketType) {
         this.clock = clock;
+        this.histogramConfig = histogramConfig;
 
         final int ageBuckets = histogramConfig.getHistogramBufferLength();
         ringBuffer = newRingBuffer(bucketType, ageBuckets, histogramConfig);
@@ -81,11 +90,78 @@ abstract class TimeWindowHistogramBase<T, U> {
     abstract double countAtValue(U accumulatedHistogram, long value);
 
     public final double percentile(double percentile) {
-        return get(h -> valueAtPercentile(h, percentile * 100));
+        rotate();
+        synchronized (this) {
+            accumulateIfStale();
+            return valueAtPercentile(accumulatedHistogram, percentile * 100);
+        }
+    }
+
+    public final double percentile(double percentile, TimeUnit unit) {
+        return TimeUtils.nanosToUnit(percentile(percentile), unit);
     }
 
     public final double histogramCountAtValue(long value) {
-        return get(h -> countAtValue(h, value));
+        rotate();
+        synchronized (this) {
+            accumulateIfStale();
+            return countAtValue(accumulatedHistogram, value);
+        }
+    }
+
+    public final HistogramSnapshot takeSnapshot(long count, double total, double max,
+                                                boolean supportsAggregablePercentiles) {
+        rotate();
+
+        final ValueAtPercentile[] values;
+        final CountAtValue[] counts;
+        synchronized (this) {
+            accumulateIfStale();
+            values = takeValueSnapshot();
+            counts = takeCountSnapshot(supportsAggregablePercentiles);
+        }
+
+        return HistogramSnapshot.of(count, total, max, values, counts);
+    }
+
+    private void accumulateIfStale() {
+        if (accumulatedHistogramStale) {
+            accumulate(ringBuffer[currentBucket], accumulatedHistogram);
+            accumulatedHistogramStale = false;
+        }
+    }
+
+    private ValueAtPercentile[] takeValueSnapshot() {
+        final double[] monitoredPercentiles = histogramConfig.getPercentiles();
+        if (monitoredPercentiles.length <= 0) {
+            return null;
+        }
+
+        final ValueAtPercentile[] values = new ValueAtPercentile[monitoredPercentiles.length];
+        for (int i = 0; i < monitoredPercentiles.length; i++) {
+            final double p = monitoredPercentiles[i];
+            values[i] = ValueAtPercentile.of(p, valueAtPercentile(accumulatedHistogram, p * 100));
+        }
+        return values;
+    }
+
+    private CountAtValue[] takeCountSnapshot(boolean supportsAggregablePercentiles) {
+        if (!histogramConfig.isPublishingHistogram()) {
+            return null;
+        }
+
+        final Set<Long> monitoredValues = histogramConfig.getHistogramBuckets(supportsAggregablePercentiles);
+        if (monitoredValues.isEmpty()) {
+            return null;
+        }
+
+        final CountAtValue[] counts = new CountAtValue[monitoredValues.size()];
+        final Iterator<Long> iterator = monitoredValues.iterator();
+        for (int i = 0; i < counts.length; i++) {
+            final long v = iterator.next();
+            counts[i] = CountAtValue.of(v, countAtValue(accumulatedHistogram, v));
+        }
+        return counts;
     }
 
     public final void recordLong(long value) {
@@ -142,19 +218,6 @@ abstract class TimeWindowHistogramBase<T, U> {
             }
         } finally {
             rotating = 0;
-        }
-    }
-
-    private double get(ToDoubleFunction<U> func) {
-        rotate();
-
-        synchronized (this) {
-            if (accumulatedHistogramStale) {
-                accumulate(ringBuffer[currentBucket], accumulatedHistogram);
-                accumulatedHistogramStale = false;
-            }
-
-            return func.applyAsDouble(accumulatedHistogram);
         }
     }
 }

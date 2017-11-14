@@ -96,20 +96,23 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         collector.add((conventionName, tagKeys) -> {
             Stream.Builder<Collector.MetricFamilySamples.Sample> samples = Stream.builder();
 
-            if (histogramConfig.getPercentiles().length > 0) {
+            final HistogramSnapshot snapshot = summary.takeSnapshot(true);
+            final ValueAtPercentile[] percentileValues = snapshot.percentileValues();
+            final CountAtValue[] histogramCounts = snapshot.histogramCounts();
+            if (percentileValues.length > 0) {
                 List<String> quantileKeys = new LinkedList<>(tagKeys);
                 quantileKeys.add("quantile");
 
                 // satisfies https://prometheus.io/docs/concepts/metric_types/#summary
-                for (double percentile : histogramConfig.getPercentiles()) {
+                for (ValueAtPercentile v : percentileValues) {
                     List<String> quantileValues = new LinkedList<>(tagValues);
-                    quantileValues.add(Collector.doubleToGoString(percentile));
-                    samples.add(new Collector.MetricFamilySamples.Sample(conventionName, quantileKeys, quantileValues,
-                        summary.percentile(percentile)));
+                    quantileValues.add(Collector.doubleToGoString(v.percentile()));
+                    samples.add(new Collector.MetricFamilySamples.Sample(
+                        conventionName, quantileKeys, quantileValues, v.value()));
                 }
             }
 
-            if (histogramConfig.isPublishingHistogram()) {
+            if (histogramCounts.length > 0) {
                 // Prometheus doesn't balk at a metric being BOTH a histogram and a summary
                 collector.setType(Collector.Type.HISTOGRAM);
 
@@ -117,27 +120,28 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 histogramKeys.add("le");
 
                 // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
-                for (long bucket : histogramConfig.getHistogramBuckets(true)) {
+                for (CountAtValue c : histogramCounts) {
                     List<String> histogramValues = new LinkedList<>(tagValues);
+                    final long bucket = c.value();
                     if (bucket == Long.MAX_VALUE) {
                         histogramValues.add("+Inf");
                     } else {
                         histogramValues.add(Collector.doubleToGoString(TimeUtils.nanosToUnit(bucket, TimeUnit.SECONDS)));
                     }
 
-                    samples.add(new Collector.MetricFamilySamples.Sample(conventionName + "_bucket", histogramKeys, histogramValues,
-                        summary.histogramCountAtValue(bucket)));
+                    samples.add(new Collector.MetricFamilySamples.Sample(
+                        conventionName + "_bucket", histogramKeys, histogramValues, c.count()));
                 }
             }
 
-            samples.add(new Collector.MetricFamilySamples.Sample(conventionName + "_count", tagKeys, tagValues,
-                summary.count()));
+            samples.add(new Collector.MetricFamilySamples.Sample(
+                conventionName + "_count", tagKeys, tagValues, snapshot.count()));
 
-            samples.add(new Collector.MetricFamilySamples.Sample(conventionName + "_sum", tagKeys, tagValues,
-                summary.totalAmount()));
+            samples.add(new Collector.MetricFamilySamples.Sample(
+                conventionName + "_sum", tagKeys, tagValues, snapshot.total()));
 
-            samples.add(new Collector.MetricFamilySamples.Sample(conventionName + "_max", tagKeys, tagValues,
-                summary.max()));
+            samples.add(new Collector.MetricFamilySamples.Sample(
+                conventionName + "_max", tagKeys, tagValues, snapshot.max()));
 
             return samples.build();
         });
@@ -154,20 +158,24 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         collector.add((conventionName, tagKeys) -> {
             Stream.Builder<Collector.MetricFamilySamples.Sample> samples = Stream.builder();
 
-            if (histogramConfig.getPercentiles().length > 0) {
+            final HistogramSnapshot snapshot = timer.takeSnapshot(true);
+            final ValueAtPercentile[] percentileValues = snapshot.percentileValues();
+            final CountAtValue[] histogramCounts = snapshot.histogramCounts();
+
+            if (percentileValues.length > 0) {
                 List<String> quantileKeys = new LinkedList<>(tagKeys);
                 quantileKeys.add("quantile");
 
                 // satisfies https://prometheus.io/docs/concepts/metric_types/#summary
-                for (double percentile : histogramConfig.getPercentiles()) {
+                for (ValueAtPercentile v : percentileValues) {
                     List<String> quantileValues = new LinkedList<>(tagValues);
-                    quantileValues.add(Collector.doubleToGoString(percentile));
-                    samples.add(new Collector.MetricFamilySamples.Sample(conventionName, quantileKeys, quantileValues,
-                        timer.percentile(percentile, TimeUnit.SECONDS)));
+                    quantileValues.add(Collector.doubleToGoString(v.percentile()));
+                    samples.add(new Collector.MetricFamilySamples.Sample(
+                        conventionName, quantileKeys, quantileValues, v.value(TimeUnit.SECONDS)));
                 }
             }
 
-            if (histogramConfig.isPublishingHistogram()) {
+            if (histogramCounts.length > 0) {
                 // Prometheus doesn't balk at a metric being BOTH a histogram and a summary
                 collector.setType(Collector.Type.HISTOGRAM);
 
@@ -175,27 +183,27 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 histogramKeys.add("le");
 
                 // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
-                for (long bucket : histogramConfig.getHistogramBuckets(true)) {
-                    List<String> histogramValues = new LinkedList<>(tagValues);
-                    if (bucket == Long.MAX_VALUE) {
+                for (CountAtValue c : histogramCounts) {
+                    final List<String> histogramValues = new LinkedList<>(tagValues);
+                    if (c.value() == Long.MAX_VALUE) {
                         histogramValues.add("+Inf");
                     } else {
-                        histogramValues.add(Collector.doubleToGoString(TimeUtils.nanosToUnit(bucket, TimeUnit.SECONDS)));
+                        histogramValues.add(Collector.doubleToGoString(c.value(TimeUnit.SECONDS)));
                     }
 
-                    samples.add(new Collector.MetricFamilySamples.Sample(conventionName + "_bucket", histogramKeys, histogramValues,
-                        timer.histogramCountAtValue(bucket)));
+                    samples.add(new Collector.MetricFamilySamples.Sample(
+                        conventionName + "_bucket", histogramKeys, histogramValues, c.count()));
                 }
             }
 
-            samples.add(new Collector.MetricFamilySamples.Sample(conventionName + "_count", tagKeys, tagValues,
-                timer.count()));
+            samples.add(new Collector.MetricFamilySamples.Sample(
+                conventionName + "_count", tagKeys, tagValues, snapshot.count()));
 
-            samples.add(new Collector.MetricFamilySamples.Sample(conventionName + "_sum", tagKeys, tagValues,
-                timer.totalTime(TimeUnit.SECONDS)));
+            samples.add(new Collector.MetricFamilySamples.Sample(
+                conventionName + "_sum", tagKeys, tagValues, snapshot.total(TimeUnit.SECONDS)));
 
-            samples.add(new Collector.MetricFamilySamples.Sample(conventionName + "_max", tagKeys, tagValues,
-                timer.max(TimeUnit.SECONDS)));
+            samples.add(new Collector.MetricFamilySamples.Sample(
+                conventionName + "_max", tagKeys, tagValues, snapshot.max(TimeUnit.SECONDS)));
 
             return samples.build();
         });
@@ -311,7 +319,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         return registry;
     }
 
-    private List<String> tagValues(Meter.Id id) {
+    private static List<String> tagValues(Meter.Id id) {
         return stream(id.getTags().spliterator(), false).map(Tag::getValue).collect(toList());
     }
 
