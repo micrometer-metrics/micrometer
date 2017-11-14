@@ -15,39 +15,40 @@
  */
 package io.micrometer.statsd.internal;
 
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /**
  * Modified from Guava's MemoizingSupplier
- * @param <T>
+ * @param <R>
  */
-public class MemoizingSupplier<T> implements Supplier<T> {
+public class MemoizingSupplier<T, R> implements Function<T, R> {
 
-    final Supplier<T> delegate;
-    transient volatile boolean initialized;
+    private final Function<T, R> delegate;
+    private transient volatile boolean initialized;
+    private transient volatile T lastInput;
 
     // "value" does not need to be volatile; visibility piggy-backs
     // on volatile read of "initialized".
-    transient T value;
+    private transient R value;
 
-    public MemoizingSupplier(Supplier<T> delegate) {
+    public MemoizingSupplier(Function<T, R> delegate) {
         this.delegate = delegate;
     }
 
-    public static <U> MemoizingSupplier<U> memoize(Supplier<U> delegate) {
+    public static <U, V> MemoizingSupplier<U, V> memoize(Function<U, V> delegate) {
         return new MemoizingSupplier<>(delegate);
     }
 
     @Override
-    public T get() {
-        // A 2-field variant of Double Checked Locking.
-        if (!initialized) {
+    public R apply(T t) {
+        if (!initialized || t != lastInput) {
             synchronized (this) {
-                if (!initialized) {
-                    T t = delegate.get();
-                    value = t;
+                if (!initialized || t != lastInput) {
+                    lastInput = t;
+                    R r = delegate.apply(t);
+                    value = r;
                     initialized = true;
-                    return t;
+                    return r;
                 }
             }
         }

@@ -255,6 +255,6 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private StatsdLineBuilder lineBuilder(Meter.Id id) {
-        return new StatsdLineBuilder(id, statsdConfig.flavor(), nameMapper, config().namingConvention());
+        return new StatsdLineBuilder(id, statsdConfig.flavor(), nameMapper, config());
     }
 }

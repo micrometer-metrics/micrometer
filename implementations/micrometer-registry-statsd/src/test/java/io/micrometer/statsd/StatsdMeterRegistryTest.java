@@ -17,12 +17,13 @@ package io.micrometer.statsd;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
 import io.netty.channel.ChannelOption;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.slf4j.LoggerFactory;
@@ -37,11 +38,10 @@ import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -63,9 +63,8 @@ class StatsdMeterRegistryTest {
 
     private void assertLines(Consumer<StatsdMeterRegistry> registryAction, StatsdFlavor flavor, String... expected) {
         final CountDownLatch bindLatch = new CountDownLatch(1);
-        final CountDownLatch receiveLatch = new CountDownLatch(1);
+        final CountDownLatch receiveLatch = new CountDownLatch(expected.length);
 
-        final AtomicReference<String> result = new AtomicReference<>();
         final Disposable.Swap server = Disposables.swap();
 
         final StatsdMeterRegistry registry = registry(flavor);
@@ -77,13 +76,14 @@ class StatsdMeterRegistryTest {
             .newHandler((in, out) -> {
                 in.receive()
                     .asString()
+                    .filter(line -> !line.toLowerCase().startsWith("statsd")) // ignore gauges monitoring the registry itself
                     .subscribe(line -> {
-                        // ignore gauges monitoring the registry itself
-                        if(line.startsWith("statsd"))
-                            return;
-
-                        result.set(line);
-                        receiveLatch.countDown();
+                        for (String s : line.split("\n")) {
+                            for (String s1 : expected) {
+                                if(s.equals(s1))
+                                    receiveLatch.countDown();
+                            }
+                        }
                     });
                 return Flux.never();
             })
@@ -99,8 +99,7 @@ class StatsdMeterRegistryTest {
                 fail("Failed to perform registry action", t);
             }
 
-            assertTrue(receiveLatch.await(10, TimeUnit.SECONDS));
-            assertThat(result.get().split("\n")).contains(expected);
+            assertTrue(receiveLatch.await(3, TimeUnit.SECONDS));
         } catch (InterruptedException e) {
             fail("Failed to wait for line", e);
         } finally {
@@ -241,5 +240,16 @@ class StatsdMeterRegistryTest {
             })
             .then(() -> mockClock.add(10, TimeUnit.MILLISECONDS))
             .thenAwait(Duration.ofMillis(10));
+    }
+
+    @Test
+    void customNamingConvention() {
+        AtomicInteger n = new AtomicInteger(1);
+
+        assertLines(r -> {
+            r.gauge("my.gauge", n);
+            r.config().namingConvention((name, type, baseUnit) -> name.toUpperCase());
+            n.addAndGet(1);
+        }, StatsdFlavor.Etsy, "MY.GAUGE.statistic.value:2|g");
     }
 }

@@ -16,8 +16,9 @@
 package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 
 import java.text.DecimalFormat;
@@ -25,7 +26,7 @@ import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.function.Supplier;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static io.micrometer.statsd.internal.MemoizingSupplier.memoize;
@@ -36,10 +37,10 @@ class StatsdLineBuilder {
     private final Meter.Id id;
     private final StatsdFlavor flavor;
     private final HierarchicalNameMapper nameMapper;
-    private final NamingConvention convention;
+    private final MeterRegistry.Config config;
 
-    private final Supplier<String> datadogTagString;
-    private final Supplier<String> telegrafTagString;
+    private final Function<NamingConvention, String> datadogTagString;
+    private final Function<NamingConvention, String> telegrafTagString;
 
     /**
      * Because NumberFormat is not thread-safe we cannot share instances across threads.
@@ -60,14 +61,14 @@ class StatsdLineBuilder {
         return numberFormatter;
     });
 
-    StatsdLineBuilder(Meter.Id id, StatsdFlavor flavor, HierarchicalNameMapper nameMapper, NamingConvention convention) {
+    StatsdLineBuilder(Meter.Id id, StatsdFlavor flavor, HierarchicalNameMapper nameMapper, MeterRegistry.Config config) {
         this.id = id;
         this.flavor = flavor;
         this.nameMapper = nameMapper;
-        this.convention = convention;
+        this.config = config;
 
         // service:payroll,region:us-west
-        this.datadogTagString = memoize(() ->
+        this.datadogTagString = memoize(convention ->
             id.getTags().iterator().hasNext() ?
                 id.getConventionTags(convention).stream()
                     .map(t -> t.getKey() + ":" + t.getValue())
@@ -76,7 +77,7 @@ class StatsdLineBuilder {
         );
 
         // service=payroll,region=us-west
-        this.telegrafTagString = memoize(() ->
+        this.telegrafTagString = memoize(convention ->
             id.getTags().iterator().hasNext() ?
                 id.getConventionTags(convention).stream()
                     .map(t -> t.getKey() + "=" + t.getValue())
@@ -114,10 +115,10 @@ class StatsdLineBuilder {
             case Etsy:
                 return metricName(stat) + ":" + amount + "|" + type;
             case Datadog:
-                return metricName(stat) + ":" + amount + "|" + type + tags(stat, datadogTagString.get(),":", "|#");
+                return metricName(stat) + ":" + amount + "|" + type + tags(stat, datadogTagString.apply(config.namingConvention()),":", "|#");
             case Telegraf:
             default:
-                return metricName(stat) + tags(stat, telegrafTagString.get(),"=", ",") + ":" + amount + "|" + type;
+                return metricName(stat) + tags(stat, telegrafTagString.apply(config.namingConvention()),"=", ",") + ":" + amount + "|" + type;
         }
     }
 
@@ -134,11 +135,11 @@ class StatsdLineBuilder {
     private String metricName(Statistic stat) {
         switch (flavor) {
             case Etsy:
-                return nameMapper.toHierarchicalName(id.withTag(stat), convention);
+                return nameMapper.toHierarchicalName(id.withTag(stat), config.namingConvention());
             case Datadog:
             case Telegraf:
             default:
-                return convention.name(id.getName(), id.getType(), id.getBaseUnit());
+                return config.namingConvention().name(id.getName(), id.getType(), id.getBaseUnit());
         }
     }
 }
