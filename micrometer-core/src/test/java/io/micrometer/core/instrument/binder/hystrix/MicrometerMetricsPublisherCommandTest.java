@@ -28,8 +28,10 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 
 
+import java.time.Duration;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,31 +76,20 @@ class MicrometerMetricsPublisherCommandTest {
 
         List<Tag> tags = Tags.zip("group", "MicrometerGROUP", "key", "MicrometerCOMMAND-A");
 
-        waitForMetrics(registry, tags,"success", 24.0);
+        assertExecutionMetric(registry, "success", 24.0);
         assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "timeout").functionCounter().map(FunctionCounter::count)).hasValue(3.0);
         assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "failure").functionCounter().map(FunctionCounter::count)).hasValue(6.0);
         assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "short_circuited").functionCounter().map(FunctionCounter::count)).hasValue(0.0);
         assertThat(registry.find("hystrix.circuit.breaker.open").tags(tags).gauge().map(Gauge::value)).hasValue(0.0);
     }
 
-    private void waitForMetrics(SimpleMeterRegistry registry, List<Tag> tags, String eventType, double count) {
-        long startTime = System.currentTimeMillis();
-        int waitTimeMs = 5_000;
-
-        double eventsFound = 0.0;
-        while(System.currentTimeMillis() - startTime < waitTimeMs) {
-            eventsFound = registry.find("hystrix.execution").tags(tags).tags("event", eventType)
-                .functionCounter().map(FunctionCounter::count).orElse(0.0);
-            if(eventsFound == count){
-                return;
-            }
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                // no op if interrupted
-            }
-        }
-        fail("Unable to get expected events of type "+eventType+" within "+ waitTimeMs+ "ms. Expected="+count+" found="+eventsFound);
+    private void assertExecutionMetric(SimpleMeterRegistry registry, String eventType, double count) {
+        Flux.interval(Duration.ofMillis(50))
+            .takeUntil(n -> registry.find("hystrix.execution").tags("event", eventType)
+                .functionCounter()
+                .map(FunctionCounter::count)
+                .orElse(0.0) == count)
+            .blockLast(Duration.ofSeconds(30));
     }
 
     @Test
@@ -120,7 +111,7 @@ class MicrometerMetricsPublisherCommandTest {
 
         List<Tag> tags = Tags.zip("group", groupKey.name(), "key", key.name());
 
-        waitForMetrics(registry, tags,"short_circuited", 6.0);
+        assertExecutionMetric(registry, "short_circuited", 6.0);
         assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "success").functionCounter().map(FunctionCounter::count)).hasValue(0.0);
         assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "timeout").functionCounter().map(FunctionCounter::count)).hasValue(0.0);
         assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "failure").functionCounter().map(FunctionCounter::count)).hasValue(0.0);
