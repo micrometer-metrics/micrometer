@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
@@ -25,12 +26,16 @@ import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.micrometer.core.instrument.Tags.zip;
 import static java.util.Collections.emptyList;
@@ -48,11 +53,12 @@ import static java.util.Collections.emptyList;
 public abstract class MeterRegistry {
     protected final Clock clock;
 
-    public MeterRegistry(Clock clock) {
+    protected MeterRegistry(Clock clock) {
         this.clock = clock;
     }
 
-    private final Map<Meter.Id, Meter> meterMap = new HashMap<>();
+    private final ConcurrentMap<Id, Meter> meterMap = new ConcurrentHashMap<>();
+    private final Collection<Meter> immutableMeters = Collections.unmodifiableCollection(meterMap.values());
     private final List<MeterFilter> filters = new ArrayList<>();
 
     /**
@@ -116,8 +122,9 @@ public abstract class MeterRegistry {
     protected abstract TimeUnit getBaseTimeUnit();
 
     private String getBaseTimeUnitStr() {
-        if (getBaseTimeUnit() == null)
+        if (getBaseTimeUnit() == null) {
             return null;
+        }
         return getBaseTimeUnit().toString().toLowerCase();
     }
 
@@ -173,7 +180,7 @@ public abstract class MeterRegistry {
      * @return The set of registered meters.
      */
     public Collection<Meter> getMeters() {
-        return meterMap.values();
+        return immutableMeters;
     }
 
     /**
@@ -193,7 +200,7 @@ public abstract class MeterRegistry {
          * Must be an even number of arguments representing key/value pairs of tags.
          */
         public Config commonTags(String... tags) {
-            return commonTags(Tags.zip(tags));
+            return commonTags(zip(tags));
         }
 
         @Incubating(since = "1.0.0-rc.3")
@@ -233,12 +240,9 @@ public abstract class MeterRegistry {
     }
 
     public class Search {
-        /**
-         * @param tags Must be an even number of arguments representing key/value pairs of tags.
-         */
         private final String name;
-        private List<Tag> tags = new ArrayList<>();
-        private Map<Statistic, Double> valueAsserts = new HashMap<>();
+        private final List<Tag> tags = new ArrayList<>();
+        private final Map<Statistic, Double> valueAsserts = new EnumMap<>(Statistic.class);
 
         Search(String name) {
             this.name = name;
@@ -249,8 +253,11 @@ public abstract class MeterRegistry {
             return this;
         }
 
+        /**
+         * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         */
         public Search tags(String... tags) {
-            return tags(Tags.zip(tags));
+            return tags(zip(tags));
         }
 
         public Search value(Statistic statistic, double value) {
@@ -327,30 +334,31 @@ public abstract class MeterRegistry {
         }
 
         public Collection<Meter> meters() {
-            synchronized (meterMap) {
-                return meterMap.keySet().stream()
-                    .filter(id -> id.getName().equals(name))
-                    .filter(id -> {
-                        if (tags.isEmpty())
-                            return true;
-                        List<Tag> idTags = new ArrayList<>();
-                        id.getTags().forEach(idTags::add);
-                        return idTags.containsAll(tags);
-                    })
-                    .map(meterMap::get)
-                    .filter(m -> {
-                        if (valueAsserts.isEmpty())
-                            return true;
-                        for (Measurement measurement : m.measure()) {
-                            if (valueAsserts.containsKey(measurement.getStatistic()) &&
-                                Math.abs(valueAsserts.get(measurement.getStatistic()) - measurement.getValue()) > 1e-7) {
-                                return false;
-                            }
-                        }
-                        return true;
-                    })
-                    .collect(Collectors.toList());
+            Stream<Entry<Id, Meter>> entryStream =
+                meterMap.entrySet().stream().filter(e -> e.getKey().getName().equals(name));
+
+            if (!tags.isEmpty()) {
+                entryStream = entryStream.filter(e -> {
+                    final List<Tag> idTags = new ArrayList<>();
+                    e.getKey().getTags().forEach(idTags::add);
+                    return idTags.containsAll(tags);
+                });
             }
+
+            Stream<Meter> meterStream = entryStream.map(Map.Entry::getValue);
+            if (!valueAsserts.isEmpty()) {
+                meterStream = meterStream.filter(m -> {
+                    for (Measurement measurement : m.measure()) {
+                        if (valueAsserts.containsKey(measurement.getStatistic()) &&
+                            Math.abs(valueAsserts.get(measurement.getStatistic()) - measurement.getValue()) > 1e-7) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+            }
+
+            return meterStream.collect(Collectors.toList());
         }
     }
 
@@ -414,7 +422,7 @@ public abstract class MeterRegistry {
          * Measures the time taken for long tasks.
          */
         public LongTaskTimer longTaskTimer(String name, String... tags) {
-            return longTaskTimer(name, Tags.zip(tags));
+            return longTaskTimer(name, zip(tags));
         }
 
         /**
@@ -453,7 +461,7 @@ public abstract class MeterRegistry {
             WeakReference<T> ref = new WeakReference<>(obj);
             return registerMeterIfNecessary(FunctionCounter.class, id, id2 -> {
                 FunctionCounter fc = new FunctionCounter() {
-                    private volatile double last = 0.0;
+                    private volatile double last;
 
                     @Override
                     public double count() {
@@ -538,7 +546,7 @@ public abstract class MeterRegistry {
     }
 
     /**
-     * Register a gauge that reports the value of the {@link java.lang.Number}.
+     * Register a gauge that reports the value of the {@link Number}.
      *
      * @param name   Name of the gauge being registered.
      * @param tags   Sequence of dimensions for breaking down the name.
@@ -551,7 +559,7 @@ public abstract class MeterRegistry {
     }
 
     /**
-     * Register a gauge that reports the value of the {@link java.lang.Number}.
+     * Register a gauge that reports the value of the {@link Number}.
      *
      * @param name   Name of the gauge being registered.
      * @param number Thread-safe implementation of {@link Number} used to access the value.
@@ -576,10 +584,10 @@ public abstract class MeterRegistry {
     }
 
     /**
-     * Register a gauge that reports the size of the {@link java.util.Collection}. The registration
+     * Register a gauge that reports the size of the {@link Collection}. The registration
      * will keep a weak reference to the collection so it will not prevent garbage collection.
      * The collection implementation used should be thread safe. Note that calling
-     * {@link java.util.Collection#size()} can be expensive for some collection implementations
+     * {@link Collection#size()} can be expensive for some collection implementations
      * and should be considered before registering.
      *
      * @param name       Name of the gauge being registered.
@@ -593,10 +601,10 @@ public abstract class MeterRegistry {
     }
 
     /**
-     * Register a gauge that reports the size of the {@link java.util.Map}. The registration
+     * Register a gauge that reports the size of the {@link Map}. The registration
      * will keep a weak reference to the collection so it will not prevent garbage collection.
      * The collection implementation used should be thread safe. Note that calling
-     * {@link java.util.Map#size()} can be expensive for some collection implementations
+     * {@link Map#size()} can be expensive for some collection implementations
      * and should be considered before registering.
      *
      * @param name Name of the gauge being registered.
@@ -626,21 +634,38 @@ public abstract class MeterRegistry {
             return noopBuilder.apply(id);
         }
 
-        HistogramConfig mappedConfig = config;
-        if (mappedConfig != null) {
+        final HistogramConfig mappedConfig;
+        if (config != null) {
             for (MeterFilter filter : filters) {
-                mappedConfig = filter.configure(mappedId, mappedConfig);
+                config = filter.configure(mappedId, config);
+                if (config == null) {
+                    break;
+                }
             }
         }
+        mappedConfig = config;
 
         Meter m = meterMap.get(mappedId);
+        if (m != null) {
+            //noinspection unchecked
+            return (M) m;
+        }
 
-        if (m == null) {
-            synchronized (meterMap) {
-                m = builder.apply(mappedId, mappedConfig);
-                Meter m2 = meterMap.putIfAbsent(mappedId, m);
-                m = m2 == null ? m : m2;
+        // Note: we do not use ConcurrentHashMap.computeIfAbsent() here because it can enter an infinite loop
+        // when builder.apply() attempts to register another Meter, i.e. nested registration.
+        synchronized (meterMap) {
+            m = meterMap.get(mappedId);
+            if (m != null) {
+                //noinspection unchecked
+                return (M) m;
             }
+
+            m = builder.apply(mappedId, mappedConfig);
+
+            // We don't even need to use putIfAbsent() because:
+            // 1) This is the only place that updates meterMap.
+            // 2) This block is synchronized.
+            meterMap.put(mappedId, m);
         }
 
         if (!meterClass.isInstance(m)) {
