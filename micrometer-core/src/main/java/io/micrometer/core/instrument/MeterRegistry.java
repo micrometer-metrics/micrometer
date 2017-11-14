@@ -27,8 +27,6 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -57,8 +55,7 @@ public abstract class MeterRegistry {
         this.clock = clock;
     }
 
-    private final ConcurrentMap<Id, Meter> meterMap = new ConcurrentHashMap<>();
-    private final Collection<Meter> immutableMeters = Collections.unmodifiableCollection(meterMap.values());
+    private final Map<Id, Meter> meterMap = new HashMap<>();
     private final List<MeterFilter> filters = new ArrayList<>();
 
     /**
@@ -180,7 +177,9 @@ public abstract class MeterRegistry {
      * @return The set of registered meters.
      */
     public Collection<Meter> getMeters() {
-        return immutableMeters;
+        synchronized (meterMap) {
+            return Collections.unmodifiableCollection(new ArrayList<>(meterMap.values()));
+        }
     }
 
     /**
@@ -634,38 +633,25 @@ public abstract class MeterRegistry {
             return noopBuilder.apply(id);
         }
 
-        final HistogramConfig mappedConfig;
         if (config != null) {
             for (MeterFilter filter : filters) {
-                config = filter.configure(mappedId, config);
-                if (config == null) {
-                    break;
+                HistogramConfig filteredConfig = filter.configure(mappedId, config);
+                if (filteredConfig != null) {
+                    config = filteredConfig;
                 }
             }
         }
-        mappedConfig = config;
 
         Meter m = meterMap.get(mappedId);
-        if (m != null) {
-            //noinspection unchecked
-            return (M) m;
-        }
 
-        // Note: we do not use ConcurrentHashMap.computeIfAbsent() here because it can enter an infinite loop
-        // when builder.apply() attempts to register another Meter, i.e. nested registration.
-        synchronized (meterMap) {
-            m = meterMap.get(mappedId);
-            if (m != null) {
-                //noinspection unchecked
-                return (M) m;
+        if(m == null) {
+            synchronized (meterMap) {
+                m = meterMap.get(mappedId);
+                if (m == null) {
+                    m = builder.apply(mappedId, config);
+                    meterMap.put(mappedId, m);
+                }
             }
-
-            m = builder.apply(mappedId, mappedConfig);
-
-            // We don't even need to use putIfAbsent() because:
-            // 1) This is the only place that updates meterMap.
-            // 2) This block is synchronized.
-            meterMap.put(mappedId, m);
         }
 
         if (!meterClass.isInstance(m)) {
