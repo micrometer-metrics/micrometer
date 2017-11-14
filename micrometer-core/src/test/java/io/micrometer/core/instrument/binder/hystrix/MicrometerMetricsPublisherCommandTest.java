@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 class MicrometerMetricsPublisherCommandTest {
     private static HystrixCommandGroupKey groupKey = HystrixCommandGroupKey.Factory.asKey("MicrometerGROUP");
@@ -55,7 +56,7 @@ class MicrometerMetricsPublisherCommandTest {
         MicrometerMetricsPublisherCommand metricsPublisherCommand = new MicrometerMetricsPublisherCommand(registry, key, groupKey, metrics, circuitBreaker, properties);
         metricsPublisherCommand.initialize();
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 3; i++) {
             new SuccessCommand(key).execute();
             new SuccessCommand(key).execute();
             new SuccessCommand(key).execute();
@@ -71,14 +72,33 @@ class MicrometerMetricsPublisherCommandTest {
             new SuccessCommand(key).execute();
         }
 
-        Thread.sleep(500);
-
         List<Tag> tags = Tags.zip("group", "MicrometerGROUP", "key", "MicrometerCOMMAND-A");
-        assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "success").functionCounter().map(FunctionCounter::count)).hasValue(40.0);
-        assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "timeout").functionCounter().map(FunctionCounter::count)).hasValue(5.0);
-        assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "failure").functionCounter().map(FunctionCounter::count)).hasValue(10.0);
+
+        waitForMetrics(registry, tags,"success", 24.0);
+        assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "timeout").functionCounter().map(FunctionCounter::count)).hasValue(3.0);
+        assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "failure").functionCounter().map(FunctionCounter::count)).hasValue(6.0);
         assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "short_circuited").functionCounter().map(FunctionCounter::count)).hasValue(0.0);
         assertThat(registry.find("hystrix.circuit.breaker.open").tags(tags).gauge().map(Gauge::value)).hasValue(0.0);
+    }
+
+    private void waitForMetrics(SimpleMeterRegistry registry, List<Tag> tags, String eventType, double count) {
+        long startTime = System.currentTimeMillis();
+        int waitTimeMs = 5_000;
+
+        double eventsFound = 0.0;
+        while(System.currentTimeMillis() - startTime < waitTimeMs) {
+            eventsFound = registry.find("hystrix.execution").tags(tags).tags("event", eventType)
+                .functionCounter().map(FunctionCounter::count).orElse(0.0);
+            if(eventsFound == count){
+                return;
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                // no op if interrupted
+            }
+        }
+        fail("Unable to get expected events of type "+eventType+" within "+ waitTimeMs+ "ms. Expected="+count+" found="+eventsFound);
     }
 
     @Test
@@ -98,13 +118,12 @@ class MicrometerMetricsPublisherCommandTest {
         new FailureCommand(key).execute();
         new SuccessCommand(key).execute();
 
-        Thread.sleep(1000);
-
         List<Tag> tags = Tags.zip("group", groupKey.name(), "key", key.name());
+
+        waitForMetrics(registry, tags,"short_circuited", 6.0);
         assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "success").functionCounter().map(FunctionCounter::count)).hasValue(0.0);
         assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "timeout").functionCounter().map(FunctionCounter::count)).hasValue(0.0);
         assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "failure").functionCounter().map(FunctionCounter::count)).hasValue(0.0);
-        assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "short_circuited").functionCounter().map(FunctionCounter::count)).hasValue(6.0);
         assertThat(registry.find("hystrix.fallback").tags(tags).tags("event", "fallback_success").functionCounter().map(FunctionCounter::count)).hasValue(6.0);
         assertThat(registry.find("hystrix.circuit.breaker.open").tags(tags).gauge().map(Gauge::value)).hasValue(1.0);
     }
