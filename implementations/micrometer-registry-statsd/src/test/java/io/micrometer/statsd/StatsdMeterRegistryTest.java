@@ -65,6 +65,7 @@ class StatsdMeterRegistryTest {
     private void assertLines(Consumer<StatsdMeterRegistry> registryAction, StatsdFlavor flavor, String... expected) {
         final CountDownLatch bindLatch = new CountDownLatch(1);
         final CountDownLatch receiveLatch = new CountDownLatch(expected.length);
+        final CountDownLatch terminateLatch = new CountDownLatch(1);
 
         final Disposable.Swap server = Disposables.swap();
 
@@ -89,6 +90,7 @@ class StatsdMeterRegistryTest {
                 return Flux.never();
             })
             .doOnSuccess(v -> bindLatch.countDown())
+            .doOnTerminate(terminateLatch::countDown)
             .subscribe(server::replace);
 
         try {
@@ -106,6 +108,11 @@ class StatsdMeterRegistryTest {
         } finally {
             server.dispose();
             registry.stop();
+            try {
+                terminateLatch.await(3, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                fail("Failed to terminate UDP server listening for StatsD messages", e);
+            }
         }
     }
 
