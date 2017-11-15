@@ -33,7 +33,7 @@ public class HistogramConfig implements Mergeable<HistogramConfig> {
     private Duration histogramExpiry;
     private Integer histogramBufferLength;
 
-    public static HistogramConfig DEFAULT = builder()
+    public static final HistogramConfig DEFAULT = builder()
         .percentilesHistogram(false)
         .percentiles()
         .sla()
@@ -110,7 +110,7 @@ public class HistogramConfig implements Mergeable<HistogramConfig> {
     }
 
     public static class Builder {
-        private HistogramConfig config = new HistogramConfig();
+        private final HistogramConfig config = new HistogramConfig();
 
         public Builder percentilesHistogram(Boolean enabled) {
             config.percentileHistogram = enabled;
