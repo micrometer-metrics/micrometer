@@ -32,7 +32,7 @@ public class MeterPartition extends AbstractList<List<Meter>> {
     private final int size;
 
     public MeterPartition(MeterRegistry registry, int size) {
-        this.list = new ArrayList<>(registry.getMeters());
+        this.list = registry.getMeters();
         this.size = size;
     }
 

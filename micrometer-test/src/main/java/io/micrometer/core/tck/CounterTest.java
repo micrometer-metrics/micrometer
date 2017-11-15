@@ -67,7 +67,7 @@ interface CounterTest {
         n.incrementAndGet();
 
         clock(registry).addSeconds(1);
-        registry.getMeters().forEach(Meter::measure);
+        registry.forEachMeter(Meter::measure);
         assertThat(registry.find("tracking").value(Statistic.Count, 1.0).meter()).isPresent();
     }
 }

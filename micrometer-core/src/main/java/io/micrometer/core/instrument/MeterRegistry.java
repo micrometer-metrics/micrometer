@@ -177,9 +177,9 @@ public abstract class MeterRegistry {
     /**
      * @return The set of registered meters.
      */
-    public Collection<Meter> getMeters() {
+    public List<Meter> getMeters() {
         synchronized (meterMap) {
-            return Collections.unmodifiableCollection(new ArrayList<>(meterMap.values()));
+            return Collections.unmodifiableList(new ArrayList<>(meterMap.values()));
         }
     }
 
@@ -651,6 +651,13 @@ public abstract class MeterRegistry {
             }
         }
 
+        // We cannot use ConcurrentHashMap.computeIfAbsent because of https://bugs.openjdk.java.net/browse/JDK-8062841
+        // It is possible for the registration of meters to cause a secondary registration of other meters, such as
+        // when a registry implementation chooses to register timer percentiles as separate gauges.
+
+        // Furthermore, we cannot avoid synchronization to check for the existence of a meter first because double-checked
+        // locking is unsafe unless the Meter implementation is strictly immutable, and that would be a difficult thing to
+        // guarantee in user-provided implementations: http://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html
         Meter m;
         synchronized (meterMap) {
             m = meterMap.get(mappedId);
