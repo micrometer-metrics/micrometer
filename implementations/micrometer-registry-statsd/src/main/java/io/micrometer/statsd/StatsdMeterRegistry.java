@@ -20,23 +20,14 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.netty.bootstrap.Bootstrap;
-import io.netty.handler.logging.LoggingHandler;
 import reactor.core.Disposable;
 import reactor.core.Disposables;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.core.publisher.UnicastProcessor;
-import reactor.ipc.netty.NettyContext;
 import reactor.ipc.netty.NettyPipeline;
-import reactor.ipc.netty.channel.ChannelOperations;
-import reactor.ipc.netty.channel.ContextHandler;
-import reactor.ipc.netty.options.ClientOptions;
-import reactor.ipc.netty.tcp.TcpResources;
+import reactor.ipc.netty.udp.UdpClient;
 import reactor.util.concurrent.Queues;
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.text.DecimalFormat;
 import java.util.Collection;
 import java.util.Collections;
@@ -93,39 +84,12 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     public void start() {
-        // TODO this will get simpler when this issue is addressed:
-        // https://github.com/reactor/reactor-netty/issues/174
-        Mono
-            .<NettyContext>create(sink -> {
-                ClientOptions options = new ClientOptions(ClientOptions.builder()
-                    .loopResources(TcpResources.get())
-                    .poolResources(TcpResources.get())) {
-                    @Override
-                    protected boolean useDatagramChannel() {
-                        return true;
-                    }
-                };
-
-                Bootstrap b = options.get();
-
-                SocketAddress adr = new InetSocketAddress(statsdConfig.host(), statsdConfig.port());
-                b.remoteAddress(adr);
-
-                ContextHandler<?> h = ContextHandler.newClientContext(sink,
-                    options,
-                    new LoggingHandler(StatsdMeterRegistry.class),
-                    false,
-                    adr,
-                    (ch, c, msg) -> ChannelOperations.bind(ch, (in, out) -> {
-                        out.options(NettyPipeline.SendOptions::flushOnEach)
-                            .sendString(publisher)
-                            .then().subscribe();
-                        return Flux.never();
-                    }, c));
-
-                b.handler(h);
-                h.setFuture(b.connect());
-            })
+        UdpClient.create(statsdConfig.host(), statsdConfig.port())
+            .newHandler((in, out) -> out
+                .options(NettyPipeline.SendOptions::flushOnEach)
+                .sendString(publisher)
+                .neverComplete()
+            )
             .subscribe(client -> {
                 this.udpClient.replace(client);
 

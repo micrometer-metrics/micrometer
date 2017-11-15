@@ -37,7 +37,7 @@ dependencies {
     compile 'com.squareup.okhttp3:okhttp:3.9.0',optional
 
     testCompile 'io.projectreactor:reactor-test:3.1.0.RELEASE'
-    testCompile 'io.projectreactor.ipc:reactor-netty:0.7.0.RELEASE'
+    testCompile 'io.projectreactor.ipc:reactor-netty:0.7.1.RELEASE'
 
     // JUnit 5
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0'

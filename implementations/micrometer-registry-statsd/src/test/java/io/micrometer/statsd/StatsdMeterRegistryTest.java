@@ -32,6 +32,7 @@ import reactor.core.Disposables;
 import reactor.core.publisher.Flux;
 import reactor.ipc.netty.options.ClientOptions;
 import reactor.ipc.netty.udp.UdpClient;
+import reactor.ipc.netty.udp.UdpServer;
 import reactor.test.StepVerifier;
 
 import java.net.InetSocketAddress;
@@ -72,7 +73,7 @@ class StatsdMeterRegistryTest {
         Consumer<ClientOptions.Builder<?>> opts = builder -> builder.option(ChannelOption.SO_REUSEADDR, true)
             .connectAddress(() -> new InetSocketAddress(PORT));
 
-        UdpClient.create(opts)
+        UdpServer.create(opts)
             .newHandler((in, out) -> {
                 in.receive()
                     .asString()
