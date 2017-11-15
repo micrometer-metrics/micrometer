@@ -340,31 +340,33 @@ public abstract class MeterRegistry {
         }
 
         public Collection<Meter> meters() {
-            Stream<Entry<Id, Meter>> entryStream =
-                meterMap.entrySet().stream().filter(e -> e.getKey().getName().equals(name));
+            synchronized (meterMap) {
+                Stream<Entry<Id, Meter>> entryStream =
+                        meterMap.entrySet().stream().filter(e -> e.getKey().getName().equals(name));
 
-            if (!tags.isEmpty()) {
-                entryStream = entryStream.filter(e -> {
-                    final List<Tag> idTags = new ArrayList<>();
-                    e.getKey().getTags().forEach(idTags::add);
-                    return idTags.containsAll(tags);
-                });
-            }
+                if (!tags.isEmpty()) {
+                    entryStream = entryStream.filter(e -> {
+                        final List<Tag> idTags = new ArrayList<>();
+                        e.getKey().getTags().forEach(idTags::add);
+                        return idTags.containsAll(tags);
+                    });
+                }
 
-            Stream<Meter> meterStream = entryStream.map(Map.Entry::getValue);
-            if (!valueAsserts.isEmpty()) {
-                meterStream = meterStream.filter(m -> {
-                    for (Measurement measurement : m.measure()) {
-                        if (valueAsserts.containsKey(measurement.getStatistic()) &&
-                            Math.abs(valueAsserts.get(measurement.getStatistic()) - measurement.getValue()) > 1e-7) {
-                            return false;
+                Stream<Meter> meterStream = entryStream.map(Map.Entry::getValue);
+                if (!valueAsserts.isEmpty()) {
+                    meterStream = meterStream.filter(m -> {
+                        for (Measurement measurement : m.measure()) {
+                            final Double value = valueAsserts.get(measurement.getStatistic());
+                            if (value != null && Math.abs(value - measurement.getValue()) > 1e-7) {
+                                return false;
+                            }
                         }
-                    }
-                    return true;
-                });
-            }
+                        return true;
+                    });
+                }
 
-            return meterStream.collect(Collectors.toList());
+                return meterStream.collect(Collectors.toList());
+            }
         }
     }
 
@@ -649,15 +651,12 @@ public abstract class MeterRegistry {
             }
         }
 
-        Meter m = meterMap.get(mappedId);
-
-        if(m == null) {
-            synchronized (meterMap) {
-                m = meterMap.get(mappedId);
-                if (m == null) {
-                    m = builder.apply(mappedId, config);
-                    meterMap.put(mappedId, m);
-                }
+        Meter m;
+        synchronized (meterMap) {
+            m = meterMap.get(mappedId);
+            if (m == null) {
+                m = builder.apply(mappedId, config);
+                meterMap.put(mappedId, m);
             }
         }
 
