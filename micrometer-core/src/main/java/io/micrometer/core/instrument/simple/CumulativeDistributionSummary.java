@@ -43,7 +43,7 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
     protected void recordNonNegative(double amount) {
         count.getAndAdd(1);
         total.getAndAdd(amount);
-        max.set(Math.max(amount, max.get()));
+        updateMax(amount);
     }
 
     @Override
@@ -69,4 +69,17 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
             new Measurement(this::max, Statistic.Max)
         );
     }
+
+    private void updateMax(double amount) {
+        while (true) {
+            double currentMax = max.get();
+            if (currentMax >= amount) {
+                return;
+            }
+            if (max.compareAndSet(currentMax, amount)) {
+                return;
+            }
+        }
+    }
+
 }
