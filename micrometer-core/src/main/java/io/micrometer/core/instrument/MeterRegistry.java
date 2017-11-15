@@ -29,6 +29,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
@@ -179,6 +180,12 @@ public abstract class MeterRegistry {
     public Collection<Meter> getMeters() {
         synchronized (meterMap) {
             return Collections.unmodifiableCollection(new ArrayList<>(meterMap.values()));
+        }
+    }
+
+    public void forEachMeter(Consumer<? super Meter> consumer) {
+        synchronized (meterMap) {
+            meterMap.values().forEach(consumer);
         }
     }
 

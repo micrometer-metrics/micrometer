@@ -19,11 +19,9 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
@@ -38,7 +36,6 @@ import java.util.function.ToLongFunction;
 public class CompositeMeterRegistry extends MeterRegistry {
     private final Set<MeterRegistry> registries = ConcurrentHashMap.newKeySet();
     private final Set<MeterRegistry> unmodifiableRegistries = Collections.unmodifiableSet(registries);
-    private final Collection<CompositeMeter> compositeMeters = new CopyOnWriteArrayList<>();
 
     public CompositeMeterRegistry() {
         this(Clock.SYSTEM);
@@ -52,7 +49,6 @@ public class CompositeMeterRegistry extends MeterRegistry {
     @Override
     protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
         CompositeTimer timer = new CompositeTimer(id, clock, histogramConfig);
-        compositeMeters.add(timer);
         registries.forEach(timer::add);
         return timer;
     }
@@ -60,7 +56,6 @@ public class CompositeMeterRegistry extends MeterRegistry {
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
         CompositeDistributionSummary ds = new CompositeDistributionSummary(id, histogramConfig);
-        compositeMeters.add(ds);
         registries.forEach(ds::add);
         return ds;
     }
@@ -68,7 +63,6 @@ public class CompositeMeterRegistry extends MeterRegistry {
     @Override
     protected Counter newCounter(Meter.Id id) {
         CompositeCounter counter = new CompositeCounter(id);
-        compositeMeters.add(counter);
         registries.forEach(counter::add);
         return counter;
     }
@@ -76,7 +70,6 @@ public class CompositeMeterRegistry extends MeterRegistry {
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
         CompositeLongTaskTimer longTaskTimer = new CompositeLongTaskTimer(id);
-        compositeMeters.add(longTaskTimer);
         registries.forEach(longTaskTimer::add);
         return longTaskTimer;
     }
@@ -84,7 +77,6 @@ public class CompositeMeterRegistry extends MeterRegistry {
     @Override
     protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
         CompositeGauge<T> gauge = new CompositeGauge<>(id, obj, f);
-        compositeMeters.add(gauge);
         registries.forEach(gauge::add);
         return gauge;
     }
@@ -92,7 +84,6 @@ public class CompositeMeterRegistry extends MeterRegistry {
     @Override
     protected <T> TimeGauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
         CompositeTimeGauge<T> gauge = new CompositeTimeGauge<>(id, obj, fUnit, f);
-        compositeMeters.add(gauge);
         registries.forEach(gauge::add);
         return gauge;
     }
@@ -100,7 +91,6 @@ public class CompositeMeterRegistry extends MeterRegistry {
     @Override
     protected <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
         CompositeFunctionTimer<T> ft = new CompositeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
-        compositeMeters.add(ft);
         registries.forEach(ft::add);
         return ft;
     }
@@ -113,20 +103,19 @@ public class CompositeMeterRegistry extends MeterRegistry {
     @Override
     protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         CompositeMeter meter = new CompositeCustomMeter(id, type, measurements);
-        compositeMeters.add(meter);
         registries.forEach(meter::add);
     }
 
     public CompositeMeterRegistry add(MeterRegistry registry) {
         if(registries.add(registry)) {
-            compositeMeters.forEach(m -> m.add(registry));
+            forEachMeter(m -> ((CompositeMeter) m).add(registry));
         }
         return this;
     }
 
     public CompositeMeterRegistry remove(MeterRegistry registry) {
         if(registries.remove(registry)) {
-            compositeMeters.forEach(m -> m.remove(registry));
+            forEachMeter(m -> ((CompositeMeter) m).remove(registry));
         }
         return this;
     }
