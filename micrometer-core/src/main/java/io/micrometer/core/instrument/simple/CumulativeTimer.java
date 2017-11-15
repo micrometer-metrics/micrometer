@@ -50,7 +50,7 @@ public class CumulativeTimer extends AbstractTimer {
         long nanoAmount = (long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS);
         count.getAndAdd(1);
         total.getAndAdd(nanoAmount);
-        max.set(Math.max(nanoAmount, max.get()));
+        updateMax(nanoAmount);
     }
 
     @Override
@@ -76,4 +76,17 @@ public class CumulativeTimer extends AbstractTimer {
             new Measurement(() -> totalTime(TimeUnit.NANOSECONDS), Statistic.Max)
         );
     }
+
+    private void updateMax(long nanoAmount) {
+        while (true) {
+            long currentMax = max.get();
+            if (currentMax >= nanoAmount) {
+                return;
+            }
+            if (max.compareAndSet(currentMax, nanoAmount)) {
+                return;
+            }
+        }
+    }
+
 }
