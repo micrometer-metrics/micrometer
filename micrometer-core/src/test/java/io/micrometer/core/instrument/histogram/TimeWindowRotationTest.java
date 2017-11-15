@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.histogram;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -30,7 +31,6 @@ import io.micrometer.core.instrument.MockClock;
 
 class TimeWindowRotationTest {
 
-    private static final MockClock clock = new MockClock();
     private static final HistogramConfig histogramConfig =
             HistogramConfig.builder()
                            .percentiles(0.0, 0.5, 0.75, 0.9, 0.99, 0.999, 1.0)
@@ -45,6 +45,61 @@ class TimeWindowRotationTest {
 
     @ParameterizedTest
     @MethodSource("histogramTypes")
+    void percentilesValidation(Class<? extends TimeWindowHistogramBase<?, ?>> histogramType) throws Exception {
+        expectValidationFailure(histogramType, HistogramConfig.builder()
+                                                              .percentiles(-0.01)
+                                                              .build());
+        expectValidationFailure(histogramType, HistogramConfig.builder()
+                                                              .percentiles(1.01)
+                                                              .build());
+    }
+
+    @ParameterizedTest
+    @MethodSource("histogramTypes")
+    void expectedValueRangeValidation(Class<? extends TimeWindowHistogramBase<?, ?>> histogramType) throws Exception {
+        expectValidationFailure(histogramType, HistogramConfig.builder()
+                                                              .minimumExpectedValue(0L)
+                                                              .build());
+        expectValidationFailure(histogramType, HistogramConfig.builder()
+                                                              .minimumExpectedValue(10L)
+                                                              .maximumExpectedValue(9L)
+                                                              .build());
+    }
+
+    @ParameterizedTest
+    @MethodSource("histogramTypes")
+    void slaBoundariesValidation(Class<? extends TimeWindowHistogramBase<?, ?>> histogramType) throws Exception {
+        expectValidationFailure(histogramType, HistogramConfig.builder()
+                                                              .sla(0L)
+                                                              .build());
+    }
+
+    @ParameterizedTest
+    @MethodSource("histogramTypes")
+    void bufferLengthValidation(Class<? extends TimeWindowHistogramBase<?, ?>> histogramType) throws Exception {
+        expectValidationFailure(histogramType, HistogramConfig.builder()
+                                                              .histogramBufferLength(-1)
+                                                              .build());
+    }
+
+    @ParameterizedTest
+    @MethodSource("histogramTypes")
+    void rotationIntervalValidation(Class<? extends TimeWindowHistogramBase<?, ?>> histogramType) throws Exception {
+        expectValidationFailure(histogramType, HistogramConfig.builder()
+                                                              .histogramExpiry(Duration.ofMillis(9))
+                                                              .histogramBufferLength(10)
+                                                              .build());
+    }
+
+    private static void expectValidationFailure(Class<? extends TimeWindowHistogramBase<?, ?>> histogramType,
+                                                HistogramConfig badConfig) {
+        assertThatThrownBy(() -> newHistogram(histogramType, new MockClock(), badConfig.merge(HistogramConfig.DEFAULT)))
+                .hasRootCauseExactlyInstanceOf(IllegalStateException.class)
+                .satisfies(cause -> assertThat(cause.getCause()).hasMessageStartingWith("Invalid HistogramConfig:"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("histogramTypes")
     void timeBasedSlidingWindow(Class<? extends TimeWindowHistogramBase<?, ?>> histogramType) throws Exception {
 
         final MockClock clock = new MockClock();
@@ -52,9 +107,7 @@ class TimeWindowRotationTest {
         clock.add(-1, TimeUnit.NANOSECONDS);
         assertThat(clock.wallTime()).isZero();
 
-        final TimeWindowHistogramBase<?, ?> q =
-                histogramType.getDeclaredConstructor(Clock.class, HistogramConfig.class)
-                             .newInstance(clock, histogramConfig);
+        final TimeWindowHistogramBase<?, ?> q = newHistogram(histogramType, clock, histogramConfig);
 
         q.recordLong(10);
         q.recordLong(20);
@@ -109,5 +162,11 @@ class TimeWindowRotationTest {
         clock.add(1, TimeUnit.MILLISECONDS); // 18000
         assertThat(q.percentile(0.0)).isZero();
         assertThat(q.percentile(1.0)).isZero();
+    }
+
+    private static TimeWindowHistogramBase<?, ?> newHistogram(
+            Class<? extends TimeWindowHistogramBase<?, ?>> histogramType,
+            MockClock clock, HistogramConfig config) throws Exception {
+        return histogramType.getDeclaredConstructor(Clock.class, HistogramConfig.class).newInstance(clock, config);
     }
 }
