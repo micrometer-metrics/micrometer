@@ -18,8 +18,3 @@ management.security.enabled: false
 
 spring.metrics:
   prometheus.enabled: true
-  overrides:
-    ALL.enabled: false
-    jvm.enabled: true
-    jvm.memory.used: disabled
-
