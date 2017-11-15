@@ -21,7 +21,7 @@ import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
-class CompositeMeterRegistryCompatibility extends MeterRegistryCompatibilityKit {
+class CompositeMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @Override
     public MeterRegistry registry() {
         return new CompositeMeterRegistry(new MockClock()) {{

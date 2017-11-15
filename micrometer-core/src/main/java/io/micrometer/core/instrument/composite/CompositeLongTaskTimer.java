@@ -62,7 +62,7 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
                 return mapping.ltt.duration(mapping.id, unit);
             }
         }
-        return 0.0;
+        return -1.0;
     }
 
     @Override
