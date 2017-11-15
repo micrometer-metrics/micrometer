@@ -57,15 +57,54 @@ abstract class TimeWindowHistogramBase<T, U> {
 
     TimeWindowHistogramBase(Clock clock, HistogramConfig histogramConfig, Class<T> bucketType) {
         this.clock = clock;
-        this.histogramConfig = histogramConfig;
+        this.histogramConfig = validateHistogramConfig(histogramConfig);
 
         final int ageBuckets = histogramConfig.getHistogramBufferLength();
+        if (ageBuckets <= 0) {
+            rejectHistogramConfig("histogramBufferLength (" + ageBuckets + ") must be greater than 0.");
+        }
+
         ringBuffer = newRingBuffer(bucketType, ageBuckets, histogramConfig);
         accumulatedHistogram = newAccumulatedHistogram(ringBuffer);
 
         durationBetweenRotatesMillis = histogramConfig.getHistogramExpiry().toMillis() / ageBuckets;
+        if (durationBetweenRotatesMillis <= 0) {
+            rejectHistogramConfig("histogramExpiry (" + histogramConfig.getHistogramExpiry().toMillis() +
+                                  "ms) / histogramBufferLength (" + ageBuckets + ") must be greater than 1.");
+        }
+
         currentBucket = 0;
         lastRotateTimestampMillis = clock.wallTime();
+
+    }
+
+    private static HistogramConfig validateHistogramConfig(HistogramConfig histogramConfig) {
+        // Validate other HistogramConfig properties we will use later in this class.
+        for (double p : histogramConfig.getPercentiles()) {
+            if (p < 0 || p > 1) {
+                rejectHistogramConfig("percentiles must contain only the values between 0.0 and 1.0. " +
+                                      "Found " + p);
+            }
+        }
+
+        final long minimumExpectedValue = histogramConfig.getMinimumExpectedValue();
+        final long maximumExpectedValue = histogramConfig.getMaximumExpectedValue();
+        if (minimumExpectedValue <= 0) {
+            rejectHistogramConfig("minimumExpectedValue (" + minimumExpectedValue + ") must be greater than 0.");
+        }
+        if (maximumExpectedValue < minimumExpectedValue) {
+            rejectHistogramConfig("maximumExpectedValue (" + maximumExpectedValue +
+                                  ") must be equal to or greater than minimumExpectedValue (" +
+                                  minimumExpectedValue + ").");
+        }
+        for (long sla : histogramConfig.getSlaBoundaries()) {
+            if (sla <= 0) {
+                rejectHistogramConfig("slaBoundaries must contain only the values greater than 0. " +
+                                      "Found " + sla);
+            }
+        }
+
+        return histogramConfig;
     }
 
     private T[] newRingBuffer(Class<T> bucketType, int ageBuckets, HistogramConfig histogramConfig) {
@@ -75,6 +114,10 @@ abstract class TimeWindowHistogramBase<T, U> {
             ringBuffer[i] = newBucket(histogramConfig);
         }
         return ringBuffer;
+    }
+
+    private static void rejectHistogramConfig(String msg) {
+        throw new IllegalStateException("Invalid HistogramConfig: " + msg);
     }
 
     abstract T newBucket(HistogramConfig histogramConfig);
