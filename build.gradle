@@ -6,7 +6,7 @@ buildscript {
     }
     dependencies {
         classpath 'org.ow2.asm:asm:5.0.3'
-        classpath 'io.spring.gradle:spring-release-plugin:0.12.0-dev.1.uncommitted+1aec6d1'
+        classpath 'io.spring.gradle:spring-release-plugin:0.12.0-dev.2+38eb8af'
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.2.0'
         classpath 'me.champeau.gradle:jmh-gradle-plugin:0.4.4'
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0'
@@ -21,6 +21,8 @@ plugins {
 apply plugin: 'io.spring.release'
 
 allprojects {
+    apply plugin: 'io.spring.license'
+
     afterEvaluate { project ->
         println "I'm building $project.name with version $project.version"
     }
@@ -31,7 +33,7 @@ subprojects {
     apply plugin: 'java'
 
     if(!project.name.contains('samples')) {
-        apply plugin: 'io.spring.release'
+        apply plugin: 'io.spring.publishing'
 
         contacts {
             'jschneider@pivotal.io' {
