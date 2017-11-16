@@ -153,7 +153,6 @@ public abstract class MeterRegistry {
      */
     Meter register(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         return registerMeterIfNecessary(Meter.class, id, id2 -> {
-            id.setType(type);
             newMeter(id2, type, measurements);
             return new Meter() {
                 @Override
