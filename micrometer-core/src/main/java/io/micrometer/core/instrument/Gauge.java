@@ -33,7 +33,7 @@ public interface Gauge extends Meter {
     }
 
     @Override
-    default Type getType() {
+    default Type type() {
         return Type.Gauge;
     }
 

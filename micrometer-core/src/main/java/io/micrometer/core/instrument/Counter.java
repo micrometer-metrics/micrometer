@@ -48,7 +48,7 @@ public interface Counter extends Meter {
     }
 
     @Override
-    default Type getType() {
+    default Type type() {
         return Type.Counter;
     }
 

@@ -42,8 +42,8 @@ class CompositeTimeGauge<T> extends AbstractCompositeMeter<TimeGauge> implements
     }
 
     @Override
-    public TimeUnit getBaseTimeUnit() {
-        return firstChild().getBaseTimeUnit();
+    public TimeUnit baseTimeUnit() {
+        return firstChild().baseTimeUnit();
     }
 
     @Override

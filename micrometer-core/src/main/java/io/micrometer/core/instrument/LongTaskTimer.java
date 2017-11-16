@@ -126,7 +126,7 @@ public interface LongTaskTimer extends Meter {
     }
 
     @Override
-    default Type getType() {
+    default Type type() {
         return Type.LongTaskTimer;
     }
 

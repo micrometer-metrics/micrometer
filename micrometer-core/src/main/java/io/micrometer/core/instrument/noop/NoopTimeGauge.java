@@ -26,7 +26,7 @@ public class NoopTimeGauge extends NoopMeter implements TimeGauge {
     }
 
     @Override
-    public TimeUnit getBaseTimeUnit() {
+    public TimeUnit baseTimeUnit() {
         return TimeUnit.NANOSECONDS;
     }
 

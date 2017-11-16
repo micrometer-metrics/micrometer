@@ -26,10 +26,10 @@ import java.util.function.ToDoubleFunction;
  * @author Jon Schneider
  */
 public interface TimeGauge extends Gauge {
-    TimeUnit getBaseTimeUnit();
+    TimeUnit baseTimeUnit();
 
     default double value(TimeUnit unit) {
-        return TimeUtils.convert(value(), getBaseTimeUnit(), unit);
+        return TimeUtils.convert(value(), baseTimeUnit(), unit);
     }
 
     static <T> Builder<T> builder(String name, T obj, TimeUnit fUnits, ToDoubleFunction<T> f) {

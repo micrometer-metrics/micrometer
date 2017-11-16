@@ -97,7 +97,7 @@ public abstract class MeterRegistry {
             }
 
             @Override
-            public TimeUnit getBaseTimeUnit() {
+            public TimeUnit baseTimeUnit() {
                 return baseTimeUnit;
             }
         };
@@ -162,7 +162,7 @@ public abstract class MeterRegistry {
                 }
 
                 @Override
-                public Type getType() {
+                public Type type() {
                     return type;
                 }
 

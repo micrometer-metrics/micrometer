@@ -37,7 +37,7 @@ public interface FunctionCounter extends Meter {
     }
 
     @Override
-    default Meter.Type getType() {
+    default Meter.Type type() {
         return Meter.Type.Counter;
     }
 

@@ -80,7 +80,7 @@ public class DefaultFunctionTimer<T> implements FunctionTimer {
         return this.baseTimeUnit;
     }
 
-    public Type getType() {
+    public Type type() {
         return Type.Timer;
     }
 }

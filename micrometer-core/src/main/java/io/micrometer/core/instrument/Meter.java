@@ -39,7 +39,7 @@ public interface Meter {
      */
     Iterable<Measurement> measure();
 
-    default Type getType() {
+    default Type type() {
         return Type.Other;
     }
 
@@ -63,11 +63,6 @@ public interface Meter {
         private final List<Tag> tags;
         private String baseUnit;
         private final String description;
-
-        /**
-         * Set after this id has been bound to a specific meter, effectively precluding it from use by a meter of a
-         * different type.
-         */
         private Type type;
 
         public Id(String name, Iterable<Tag> tags, String baseUnit, String description, Type type) {
@@ -142,15 +137,6 @@ public interface Meter {
         @Override
         public int hashCode() {
             return Objects.hash(name, tags);
-        }
-
-        /**
-         * Associate this id with a specific type, sometimes used in the determination of a
-         * convention name. This association is 1-1 since an id can only be used once per registry
-         * across all types.
-         */
-        public void setType(Meter.Type type) {
-            this.type = type;
         }
 
         public Type getType() {
