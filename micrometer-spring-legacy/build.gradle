@@ -40,6 +40,8 @@ dependencies {
     ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx'].each { sys ->
         compile project(":micrometer-registry-$sys"), optional
     }
+    
+    compile project(":micrometer-jersey2"), optional
 
     compile 'org.springframework.integration:spring-integration-core', optional
 
