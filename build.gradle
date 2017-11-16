@@ -52,6 +52,9 @@ subprojects {
     repositories {
         mavenCentral()
     }
+
+    def check = tasks.findByName('check')
+    if(check) project.rootProject.tasks.releaseCheck.dependsOn check
 }
 
 task wrapper(type: Wrapper) {
