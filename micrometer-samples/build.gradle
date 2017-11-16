@@ -1,5 +1,3 @@
-springPublishing.publishingEnabled = false
-
 dependencies {
     compile project(':micrometer-core')
     compile 'colt:colt:1.2.0'
