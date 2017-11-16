@@ -31,5 +31,4 @@ spring.metrics:
   prometheus.enabled: false
   statsd.enabled: false
 
-# % of the time, blow up on the Roulette endpoint
-roulette.frequency: 0.8
+security.ignored: /**

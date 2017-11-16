@@ -46,6 +46,11 @@ public class PersonController {
         return people;
     }
 
+    @GetMapping("/api/fail")
+    public String fail() {
+        throw new RuntimeException("boom");
+    }
+
     @GetMapping("/api/stats")
     public Map<String, Number> stats() {
         return registry.find("http.server.requests").tags("uri", "/api/people")
