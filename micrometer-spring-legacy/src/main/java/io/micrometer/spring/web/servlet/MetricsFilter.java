@@ -60,6 +60,7 @@ public class MetricsFilter extends OncePerRequestFilter {
             handler = matchableHandlerMapping.getHandler(request);
         } catch (Exception e) {
             logger.debug("Unable to time request", e);
+            filterChain.doFilter(request, response);
             return;
         }
 
