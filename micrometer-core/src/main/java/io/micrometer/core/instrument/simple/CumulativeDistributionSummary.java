@@ -21,8 +21,6 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.step.StepDouble;
-import io.micrometer.core.instrument.step.StepLong;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;

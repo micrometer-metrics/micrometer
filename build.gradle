@@ -26,6 +26,7 @@ allprojects {
 
 subprojects {
     apply plugin: 'java'
+    apply plugin: 'checkstyle'
 
     if(!project.name.contains('samples')) {
         apply plugin: 'io.spring.publishing'
@@ -46,6 +47,11 @@ subprojects {
 
     repositories {
         mavenCentral()
+    }
+
+    checkstyle {
+        toolVersion = '8.4'
+        configFile = rootProject.file('config/checkstyle/checkstyle.xml')
     }
 
     def check = tasks.findByName('check')
