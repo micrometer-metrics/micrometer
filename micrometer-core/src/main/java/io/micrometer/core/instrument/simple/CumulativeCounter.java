@@ -15,26 +15,27 @@
  */
 package io.micrometer.core.instrument.simple;
 
-import com.google.common.util.concurrent.AtomicDouble;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Counter;
 
+import java.util.concurrent.atomic.DoubleAdder;
+
 public class CumulativeCounter extends AbstractMeter implements Counter {
-    private final AtomicDouble value;
+    private final DoubleAdder value;
 
     /** Create a new instance. */
     public CumulativeCounter(Id id) {
         super(id);
-        this.value = new AtomicDouble();
+        this.value = new DoubleAdder();
     }
 
     @Override
     public void increment(double amount) {
-        value.getAndAdd(amount);
+        value.add(amount);
     }
 
     @Override
     public double count() {
-        return value.get();
+        return value.sum();
     }
 }
