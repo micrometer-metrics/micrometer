@@ -57,22 +57,18 @@ public final class DefaultJerseyTagsProvider implements JerseyTagsProvider {
     }
 
     private static Tag method(RequestEvent event) {
-        final String httpMethod = event.getContainerRequest().getRequest().getMethod();
+        final String httpMethod = event.getContainerRequest().getMethod();
         return Tag.of(TAG_METHOD, httpMethod);
     }
 
     private static Tag uri(RequestEvent event, int statusCode) {
-        String uri;
+        final String uri;
         if (statusCode == 404) {
             uri = "NOT_FOUND";
         } else if (isRedirect(statusCode)) {
             uri = "REDIRECTION";
         } else {
             uri = templatedUri(event);
-        }
-        if (uri == null || uri.trim().length() == 0) {
-            // better safe then sorry?
-            uri = "/";
         }
         return Tag.of(TAG_URI, uri);
     }
@@ -112,10 +108,11 @@ public final class DefaultJerseyTagsProvider implements JerseyTagsProvider {
             Collections.reverse(matchedTemplates);
         }
         final StringBuilder sb = new StringBuilder();
+        sb.append(uriInfo.getBaseUri().getPath());
         for (UriTemplate uriTemplate : matchedTemplates) {
             sb.append(uriTemplate.getTemplate());
         }
-        return sb.toString().replaceAll("//", "/");
+        return sb.toString().replaceAll("//+", "/");
     }
 
 }
