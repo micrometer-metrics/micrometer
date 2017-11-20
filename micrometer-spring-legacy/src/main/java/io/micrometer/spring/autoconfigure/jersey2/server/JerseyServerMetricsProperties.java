@@ -28,6 +28,8 @@ public class JerseyServerMetricsProperties {
     private boolean enabled = true;
 
     private String requestsMetricName = "http.server.requests";
+    
+    private boolean autoTimeRequests = true;
 
     public boolean isEnabled() {
         return enabled;
@@ -43,6 +45,14 @@ public class JerseyServerMetricsProperties {
 
     public void setRequestsMetricName(String requestsMetricName) {
         this.requestsMetricName = requestsMetricName;
+    }
+
+    public boolean isAutoTimeRequests() {
+        return autoTimeRequests;
+    }
+
+    public void setAutoTimeRequests(boolean autoTimeRequests) {
+        this.autoTimeRequests = autoTimeRequests;
     }
 
 }

@@ -17,6 +17,8 @@ package io.micrometer.jersey2.server;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.glassfish.jersey.server.monitoring.RequestEvent;
@@ -39,13 +41,16 @@ public class MicrometerRequestEventListener implements RequestEventListener {
 
     private final String metricName;
 
+    private final boolean autoTimeRequests;
+
     private Long startTime;
 
     public MicrometerRequestEventListener(MeterRegistry meterRegistry,
-            JerseyTagsProvider tagsProvider, String metricName) {
+            JerseyTagsProvider tagsProvider, String metricName, boolean autoTimeRequests) {
         this.meterRegistry = requireNonNull(meterRegistry);
         this.tagsProvider = requireNonNull(tagsProvider);
         this.metricName = requireNonNull(metricName);
+        this.autoTimeRequests = autoTimeRequests;
     }
 
     @Override
@@ -63,14 +68,22 @@ public class MicrometerRequestEventListener implements RequestEventListener {
             if (startTime != null) {
                 final long duration = System.nanoTime() - startTime.longValue();
 
-                final Timer timer = Timer.builder(metricName)
-                        .tags(tagsProvider.httpRequestTags(event)).register(meterRegistry);
-                timer.record(duration, TimeUnit.NANOSECONDS);
+                timers(event).forEach(timer -> timer.record(duration, TimeUnit.NANOSECONDS));
             }
             break;
         default:
             break;
         }
+
+    }
+
+    private Set<Timer> timers(RequestEvent event) {
+        // TODO handle @Timed annotation
+        if (autoTimeRequests) {
+            return Collections.singleton(Timer.builder(metricName)
+                    .tags(tagsProvider.httpRequestTags(event)).register(meterRegistry));
+        }
+        return Collections.emptySet();
     }
 
 }
