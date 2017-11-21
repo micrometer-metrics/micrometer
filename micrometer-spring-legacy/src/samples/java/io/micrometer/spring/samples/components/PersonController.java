@@ -15,6 +15,7 @@
  */
 package io.micrometer.spring.samples.components;
 
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,6 +38,7 @@ public class PersonController {
 
     @GetMapping("/api/people")
     @Timed(percentiles = {0.5, 0.95, 0.999}, histogram = true)
+    @HystrixCommand(fallbackMethod = "fallbackPeople")
     public List<String> allPeople() {
         try {
             Thread.sleep(200);
@@ -44,6 +46,15 @@ public class PersonController {
             e.printStackTrace();
         }
         return people;
+    }
+
+    /**
+     * Fallback for {@link PersonController#allPeople()}
+     * @return people
+     */
+    @SuppressWarnings("unused")
+    public List<String> fallbackPeople() {
+        return Arrays.asList("old mike", "fallback frank");
     }
 
     @GetMapping("/api/fail")
