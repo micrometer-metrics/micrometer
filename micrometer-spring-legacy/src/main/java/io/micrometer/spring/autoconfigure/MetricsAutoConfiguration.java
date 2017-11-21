@@ -19,6 +19,7 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.binder.hystrix.HystrixMetricsBinder;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.spring.SpringEnvironmentMeterFilter;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
@@ -138,4 +139,13 @@ public class MetricsAutoConfiguration {
             }
         }
     }
+
+
+    @Bean
+    @ConditionalOnClass(name = "com.netflix.hystrix.strategy.HystrixPlugins")
+    @ConditionalOnProperty(value = "spring.metrics.hystrix.enabled", matchIfMissing = true)
+    public HystrixMetricsBinder hystrixMetricsBinder() {
+        return new HystrixMetricsBinder();
+    }
+
 }
