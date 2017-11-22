@@ -56,7 +56,7 @@ public abstract class MeterRegistry {
         this.clock = clock;
     }
 
-    private final Map<Id, Meter> meterMap = new HashMap<>();
+    private Map<Id, Meter> meterMap = Collections.emptyMap();
     private final List<MeterFilter> filters = new ArrayList<>();
 
     /**
@@ -177,15 +177,11 @@ public abstract class MeterRegistry {
      * @return The set of registered meters.
      */
     public List<Meter> getMeters() {
-        synchronized (meterMap) {
-            return Collections.unmodifiableList(new ArrayList<>(meterMap.values()));
-        }
+        return Collections.unmodifiableList(new ArrayList<>(meterMap.values()));
     }
 
     public void forEachMeter(Consumer<? super Meter> consumer) {
-        synchronized (meterMap) {
-            meterMap.values().forEach(consumer);
-        }
+        meterMap.values().forEach(consumer);
     }
 
     /**
@@ -339,33 +335,31 @@ public abstract class MeterRegistry {
         }
 
         public Collection<Meter> meters() {
-            synchronized (meterMap) {
-                Stream<Entry<Id, Meter>> entryStream =
-                        meterMap.entrySet().stream().filter(e -> e.getKey().getName().equals(name));
+            Stream<Entry<Id, Meter>> entryStream =
+                    meterMap.entrySet().stream().filter(e -> e.getKey().getName().equals(name));
 
-                if (!tags.isEmpty()) {
-                    entryStream = entryStream.filter(e -> {
-                        final List<Tag> idTags = new ArrayList<>();
-                        e.getKey().getTags().forEach(idTags::add);
-                        return idTags.containsAll(tags);
-                    });
-                }
-
-                Stream<Meter> meterStream = entryStream.map(Map.Entry::getValue);
-                if (!valueAsserts.isEmpty()) {
-                    meterStream = meterStream.filter(m -> {
-                        for (Measurement measurement : m.measure()) {
-                            final Double value = valueAsserts.get(measurement.getStatistic());
-                            if (value != null && Math.abs(value - measurement.getValue()) > 1e-7) {
-                                return false;
-                            }
-                        }
-                        return true;
-                    });
-                }
-
-                return meterStream.collect(Collectors.toList());
+            if (!tags.isEmpty()) {
+                entryStream = entryStream.filter(e -> {
+                    final List<Tag> idTags = new ArrayList<>();
+                    e.getKey().getTags().forEach(idTags::add);
+                    return idTags.containsAll(tags);
+                });
             }
+
+            Stream<Meter> meterStream = entryStream.map(Map.Entry::getValue);
+            if (!valueAsserts.isEmpty()) {
+                meterStream = meterStream.filter(m -> {
+                    for (Measurement measurement : m.measure()) {
+                        final Double value = valueAsserts.get(measurement.getStatistic());
+                        if (value != null && Math.abs(value - measurement.getValue()) > 1e-7) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+            }
+
+            return meterStream.collect(Collectors.toList());
         }
     }
 
@@ -650,21 +644,7 @@ public abstract class MeterRegistry {
             }
         }
 
-        // We cannot use ConcurrentHashMap.computeIfAbsent because of https://bugs.openjdk.java.net/browse/JDK-8062841
-        // It is possible for the registration of meters to cause a secondary registration of other meters, such as
-        // when a registry implementation chooses to register timer percentiles as separate gauges.
-
-        // Furthermore, we cannot avoid synchronization to check for the existence of a meter first because double-checked
-        // locking is unsafe unless the Meter implementation is strictly immutable, and that would be a difficult thing to
-        // guarantee in user-provided implementations: http://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html
-        Meter m;
-        synchronized (meterMap) {
-            m = meterMap.get(mappedId);
-            if (m == null) {
-                m = builder.apply(mappedId, config);
-                meterMap.put(mappedId, m);
-            }
-        }
+        Meter m = getOrCreateMeter(config, builder, mappedId);
 
         if (!meterClass.isInstance(m)) {
             throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
@@ -672,6 +652,32 @@ public abstract class MeterRegistry {
 
         //noinspection unchecked
         return (M) m;
+    }
+
+    private Meter getOrCreateMeter(HistogramConfig config, BiFunction<Id, HistogramConfig, Meter> builder, Id mappedId) {
+        Meter m = meterMap.get(mappedId);
+
+        if (m == null) {
+            synchronized (this) {
+                m = meterMap.get(mappedId);
+
+                if (m == null) {
+                    m = builder.apply(mappedId, config);
+
+                    register(mappedId, m);
+                }
+            }
+        }
+        return m;
+    }
+
+    private void register(Id id, Meter meter) {
+        HashMap<Id, Meter> newMeterMap = new HashMap<>();
+
+        newMeterMap.putAll(meterMap);
+        newMeterMap.put(id, meter);
+
+        meterMap = Collections.unmodifiableMap(newMeterMap);
     }
 
     private boolean accept(Meter.Id id) {
