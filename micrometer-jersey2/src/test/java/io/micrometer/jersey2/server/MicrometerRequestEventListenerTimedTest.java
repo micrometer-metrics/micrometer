@@ -32,7 +32,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.jersey2.server.resources.TestResource;
+import io.micrometer.jersey2.server.resources.TimedResource;
 
 /**
  * @author Michael Weirauch
@@ -56,18 +56,41 @@ public class MicrometerRequestEventListenerTimedTest extends JerseyTest {
 
         final ResourceConfig config = new ResourceConfig();
         config.register(listener);
-        config.register(TestResource.class);
+        config.register(TimedResource.class);
 
         return config;
     }
 
     @Test
-    public void resourcesAreNotAutoTimed() {
-        target("hello").request().get();
+    public void resourcesAndNotFoundsAreNotAutoTimed() {
+        target("not-timed").request().get();
+        target("not-found").request().get();
 
-        Optional<Timer> timerHello = registry.find(METRIC_NAME)
-                .tags(tagsFrom("GET", "/hello", 200, null)).timer();
-        assertThat(timerHello).isEmpty();
+        Optional<Timer> notTimed = registry.find(METRIC_NAME)
+                .tags(tagsFrom("GET", "/not-timed", 200, null)).timer();
+        assertThat(notTimed).isEmpty();
+
+        Optional<Timer> notFound = registry.find(METRIC_NAME)
+                .tags(tagsFrom("GET", "NOT_FOUND", 404, null)).timer();
+        assertThat(notFound).isEmpty();
+    }
+
+    @Test
+    public void resourcesWithAnnotationAreTimed() {
+        target("timed").request().get();
+        target("multi-timed").request().get();
+
+        Optional<Timer> timed = registry.find(METRIC_NAME)
+                .tags(tagsFrom("GET", "/timed", 200, null)).timer();
+        assertThat(timed).hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+
+        Optional<Timer> multiTimed1 = registry.find("multi1")
+                .tags(tagsFrom("GET", "/multi-timed", 200, null)).timer();
+        assertThat(multiTimed1).hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+
+        Optional<Timer> multiTimed2 = registry.find("multi2")
+                .tags(tagsFrom("GET", "/multi-timed", 200, null)).timer();
+        assertThat(multiTimed2).hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
     }
 
     private static Iterable<Tag> tagsFrom(String method, String uri, int status, String exception) {

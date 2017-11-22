@@ -17,15 +17,26 @@ package io.micrometer.jersey2.server;
 
 import static java.util.Objects.requireNonNull;
 
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
+import org.glassfish.jersey.server.model.ResourceMethod;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.server.monitoring.RequestEventListener;
 
+import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.Timer.Builder;
 
 /**
  * Micrometer {@link RequestEventListener} recording metrics for Jersey server
@@ -68,7 +79,10 @@ public class MicrometerRequestEventListener implements RequestEventListener {
             if (startTime != null) {
                 final long duration = System.nanoTime() - startTime.longValue();
 
-                timers(event).forEach(timer -> timer.record(duration, TimeUnit.NANOSECONDS));
+                timerConfigs(event).forEach((config) -> {
+                    final Builder builder = timerBuilder(event, config);
+                    builder.register(meterRegistry).record(duration, TimeUnit.NANOSECONDS);
+                });
             }
             break;
         default:
@@ -77,13 +91,123 @@ public class MicrometerRequestEventListener implements RequestEventListener {
 
     }
 
-    private Set<Timer> timers(RequestEvent event) {
-        // TODO handle @Timed annotation
-        if (autoTimeRequests) {
-            return Collections.singleton(Timer.builder(metricName)
-                    .tags(tagsProvider.httpRequestTags(event)).register(meterRegistry));
+    private Set<TimerConfig> timerConfigs(RequestEvent event) {
+        final ResourceMethod matchingResourceMethod = event.getUriInfo().getMatchedResourceMethod();
+        final Set<TimerConfig> timerConfigs = new HashSet<>();
+        if (matchingResourceMethod != null) {
+            timerConfigs.addAll(
+                    timerConfigs(matchingResourceMethod.getInvocable().getHandlingMethod()));
         }
-        return Collections.emptySet();
+
+        /*
+         * Given we didn't find any matching resource method, 404s will be only
+         * recorded when auto-time-requests is enabled. On par with WebMVC
+         * instrumentation.
+         */
+        if (timerConfigs.isEmpty() && autoTimeRequests) {
+            // TODO recordAsPercentiles
+            timerConfigs.add(new TimerConfig(metricName, false));
+        }
+
+        return timerConfigs;
+    }
+
+    private Set<TimerConfig> timerConfigs(Method method) {
+        return timerConfigs(method.getAnnotationsByType(Timed.class));
+    }
+
+    private Set<TimerConfig> timerConfigs(Timed[] annotations) {
+        if (annotations == null) {
+            return Collections.emptySet();
+        }
+        return Arrays.stream(annotations).map(a -> timerConfig(a)).collect(Collectors.toSet());
+    }
+
+    private TimerConfig timerConfig(Timed annotation) {
+        return new TimerConfig(annotation, () -> metricName);
+    }
+
+    private Timer.Builder timerBuilder(RequestEvent event, TimerConfig config) {
+        final Timer.Builder builder = Timer.builder(config.getName())
+                .tags(this.tagsProvider.httpRequestTags(event)).tags(config.getExtraTags())
+                .description("Timer of servlet request")
+                .publishPercentileHistogram(config.isHistogram());
+        if (config.getPercentiles().length > 0) {
+            builder.publishPercentiles(config.getPercentiles());
+        }
+        return builder;
+    }
+
+    /**
+     * An adjusted copy from WebMvcMetrics.
+     */
+    private static class TimerConfig {
+
+        private final String name;
+
+        private final Iterable<Tag> extraTags;
+
+        private final double[] percentiles;
+
+        private final boolean histogram;
+
+        TimerConfig(String name, boolean histogram) {
+            this.name = name;
+            this.extraTags = Collections.emptyList();
+            this.percentiles = new double[0];
+            this.histogram = histogram;
+        }
+
+        TimerConfig(Timed timed, Supplier<String> name) {
+            this.name = buildName(timed, name);
+            this.extraTags = Tags.zip(timed.extraTags());
+            this.percentiles = timed.percentiles();
+            this.histogram = timed.histogram();
+        }
+
+        private String buildName(Timed timed, Supplier<String> nameSupplier) {
+            if (timed.longTask() && timed.value().isEmpty()) {
+                // the user MUST name long task timers, we don't lump them in
+                // with regular
+                // timers with the same name
+                return null;
+            }
+            return (timed.value().isEmpty() ? nameSupplier.get() : timed.value());
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        Iterable<Tag> getExtraTags() {
+            return this.extraTags;
+        }
+
+        double[] getPercentiles() {
+            return this.percentiles;
+        }
+
+        boolean isHistogram() {
+            return this.histogram;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            TimerConfig other = (TimerConfig) o;
+            return Objects.equals(this.name, other.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(this.name);
+        }
+
     }
 
 }
