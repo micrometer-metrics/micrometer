@@ -40,12 +40,16 @@ public class MicrometerApplicationEventListener implements ApplicationEventListe
 
     private final boolean autoTimeRequests;
 
+    private final boolean recordRequestPercentiles;
+
     public MicrometerApplicationEventListener(MeterRegistry meterRegistry,
-            JerseyTagsProvider tagsProvider, String metricName, boolean autoTimeRequests) {
+            JerseyTagsProvider tagsProvider, String metricName, boolean autoTimeRequests,
+            boolean recordRequestPercentiles) {
         this.meterRegistry = requireNonNull(meterRegistry);
         this.tagsProvider = requireNonNull(tagsProvider);
         this.metricName = requireNonNull(metricName);
         this.autoTimeRequests = autoTimeRequests;
+        this.recordRequestPercentiles = recordRequestPercentiles;
     }
 
     @Override
@@ -56,7 +60,7 @@ public class MicrometerApplicationEventListener implements ApplicationEventListe
     @Override
     public RequestEventListener onRequest(RequestEvent requestEvent) {
         return new MicrometerRequestEventListener(meterRegistry, tagsProvider, metricName,
-                autoTimeRequests);
+                autoTimeRequests, recordRequestPercentiles);
     }
 
 }

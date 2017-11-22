@@ -53,7 +53,7 @@ public class MicrometerRequestEventListenerTest extends JerseyTest {
         registry = new SimpleMeterRegistry();
 
         final MicrometerApplicationEventListener listener = new MicrometerApplicationEventListener(
-                registry, new DefaultJerseyTagsProvider(), METRIC_NAME, true);
+                registry, new DefaultJerseyTagsProvider(), METRIC_NAME, true, false);
 
         final ResourceConfig config = new ResourceConfig();
         config.register(listener);

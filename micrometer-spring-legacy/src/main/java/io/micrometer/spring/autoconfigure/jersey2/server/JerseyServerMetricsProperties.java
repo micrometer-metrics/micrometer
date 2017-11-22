@@ -28,8 +28,10 @@ public class JerseyServerMetricsProperties {
     private boolean enabled = true;
 
     private String requestsMetricName = "http.server.requests";
-    
+
     private boolean autoTimeRequests = true;
+
+    private boolean recordRequestPercentiles = false;
 
     public boolean isEnabled() {
         return enabled;
@@ -53,6 +55,14 @@ public class JerseyServerMetricsProperties {
 
     public void setAutoTimeRequests(boolean autoTimeRequests) {
         this.autoTimeRequests = autoTimeRequests;
+    }
+
+    public boolean isRecordRequestPercentiles() {
+        return recordRequestPercentiles;
+    }
+
+    public void setRecordRequestPercentiles(boolean recordRequestPercentiles) {
+        this.recordRequestPercentiles = recordRequestPercentiles;
     }
 
 }

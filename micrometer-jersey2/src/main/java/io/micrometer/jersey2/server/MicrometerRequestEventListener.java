@@ -54,14 +54,18 @@ public class MicrometerRequestEventListener implements RequestEventListener {
 
     private final boolean autoTimeRequests;
 
+    private final boolean recordRequestPercentiles;
+
     private Long startTime;
 
     public MicrometerRequestEventListener(MeterRegistry meterRegistry,
-            JerseyTagsProvider tagsProvider, String metricName, boolean autoTimeRequests) {
+            JerseyTagsProvider tagsProvider, String metricName, boolean autoTimeRequests,
+            boolean recordRequestPercentiles) {
         this.meterRegistry = requireNonNull(meterRegistry);
         this.tagsProvider = requireNonNull(tagsProvider);
         this.metricName = requireNonNull(metricName);
         this.autoTimeRequests = autoTimeRequests;
+        this.recordRequestPercentiles = recordRequestPercentiles;
     }
 
     @Override
@@ -105,8 +109,7 @@ public class MicrometerRequestEventListener implements RequestEventListener {
          * instrumentation.
          */
         if (timerConfigs.isEmpty() && autoTimeRequests) {
-            // TODO recordAsPercentiles
-            timerConfigs.add(new TimerConfig(metricName, false));
+            timerConfigs.add(new TimerConfig(metricName, recordRequestPercentiles));
         }
 
         return timerConfigs;
@@ -168,8 +171,7 @@ public class MicrometerRequestEventListener implements RequestEventListener {
         private String buildName(Timed timed, Supplier<String> nameSupplier) {
             if (timed.longTask() && timed.value().isEmpty()) {
                 // the user MUST name long task timers, we don't lump them in
-                // with regular
-                // timers with the same name
+                // with regular timers with the same name
                 return null;
             }
             return (timed.value().isEmpty() ? nameSupplier.get() : timed.value());

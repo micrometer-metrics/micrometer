@@ -50,7 +50,8 @@ public class JerseyServerMetricsConfiguration {
             JerseyServerMetricsProperties properties, JerseyTagsProvider tagsProvider) {
         return (config) -> {
             config.register(new MicrometerApplicationEventListener(meterRegistry, tagsProvider,
-                    properties.getRequestsMetricName(), properties.isAutoTimeRequests()));
+                    properties.getRequestsMetricName(), properties.isAutoTimeRequests(),
+                    properties.isRecordRequestPercentiles()));
         };
     }
 
