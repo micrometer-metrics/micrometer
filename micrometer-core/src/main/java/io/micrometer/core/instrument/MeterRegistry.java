@@ -56,7 +56,7 @@ public abstract class MeterRegistry {
         this.clock = clock;
     }
 
-    private Map<Id, Meter> meterMap = Collections.emptyMap();
+    private volatile Map<Id, Meter> meterMap = Collections.emptyMap();
     private final List<MeterFilter> filters = new ArrayList<>();
 
     /**
