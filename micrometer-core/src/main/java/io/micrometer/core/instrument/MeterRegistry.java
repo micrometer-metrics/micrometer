@@ -271,67 +271,43 @@ public abstract class MeterRegistry {
         }
 
         public Optional<Timer> timer() {
-            return meters()
-                .stream()
-                .filter(m -> m instanceof Timer)
-                .findAny()
-                .map(Timer.class::cast);
+            return findAny(Timer.class);
         }
 
         public Optional<Counter> counter() {
-            return meters()
-                .stream()
-                .filter(m -> m instanceof Counter)
-                .findAny()
-                .map(Counter.class::cast);
+            return findAny(Counter.class);
         }
 
         public Optional<Gauge> gauge() {
-            return meters()
-                .stream()
-                .filter(m -> m instanceof Gauge)
-                .findAny()
-                .map(Gauge.class::cast);
+            return findAny(Gauge.class);
         }
 
         public Optional<FunctionCounter> functionCounter() {
-            return meters()
-                .stream()
-                .filter(m -> m instanceof FunctionCounter)
-                .findAny()
-                .map(FunctionCounter.class::cast);
+            return findAny(FunctionCounter.class);
         }
 
         public Optional<TimeGauge> timeGauge() {
-            return meters()
-                .stream()
-                .filter(m -> m instanceof TimeGauge)
-                .findAny()
-                .map(TimeGauge.class::cast);
+            return findAny(TimeGauge.class);
         }
 
         public Optional<FunctionTimer> functionTimer() {
-            return meters()
-                .stream()
-                .filter(m -> m instanceof FunctionTimer)
-                .findAny()
-                .map(FunctionTimer.class::cast);
+            return findAny(FunctionTimer.class);
         }
 
         public Optional<DistributionSummary> summary() {
-            return meters()
-                .stream()
-                .filter(m -> m instanceof DistributionSummary)
-                .findAny()
-                .map(DistributionSummary.class::cast);
+            return findAny(DistributionSummary.class);
         }
 
         public Optional<LongTaskTimer> longTaskTimer() {
+            return findAny(LongTaskTimer.class);
+        }
+
+        private <T> Optional<T> findAny(Class<T> clazz) {
             return meters()
                 .stream()
-                .filter(m -> m instanceof LongTaskTimer)
+                .filter(m -> clazz.isInstance(m))
                 .findAny()
-                .map(LongTaskTimer.class::cast);
+                .map(clazz::cast);
         }
 
         public Optional<Meter> meter() {
