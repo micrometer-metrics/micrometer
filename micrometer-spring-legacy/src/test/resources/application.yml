@@ -28,3 +28,4 @@ spring.metrics:
   prometheus.enabled: false
   statsd.enabled: false
   cloudwatch.enabled: false
+  newrelic.enabled: false

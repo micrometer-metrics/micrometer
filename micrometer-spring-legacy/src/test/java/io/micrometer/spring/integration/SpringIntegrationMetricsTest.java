@@ -47,7 +47,8 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
     "spring.metrics.ganglia.enabled=false",
     "spring.metrics.influx.enabled=false",
     "spring.metrics.jmx.enabled=false",
-    "spring.metrics.statsd.enabled=false"
+    "spring.metrics.statsd.enabled=false",
+    "spring.metrics.newrelic.enabled=false"
 })
 public class SpringIntegrationMetricsTest {
     @Autowired

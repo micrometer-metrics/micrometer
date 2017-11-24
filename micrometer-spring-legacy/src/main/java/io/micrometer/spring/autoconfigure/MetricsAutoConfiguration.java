@@ -25,6 +25,7 @@ import io.micrometer.spring.SpringEnvironmentMeterFilter;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.atlas.AtlasExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.datadog.DatadogExportConfiguration;
+import io.micrometer.spring.autoconfigure.export.datadog.NewRelicExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.ganglia.GangliaExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.graphite.GraphiteExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.influx.InfluxExportConfiguration;
@@ -66,8 +67,9 @@ import java.util.List;
     RestTemplateMetricsConfiguration.class, AtlasExportConfiguration.class,
     DatadogExportConfiguration.class, GangliaExportConfiguration.class,
     GraphiteExportConfiguration.class, InfluxExportConfiguration.class,
-    JmxExportConfiguration.class, StatsdExportConfiguration.class,
-    PrometheusExportConfiguration.class, SimpleExportConfiguration.class})
+    NewRelicExportConfiguration.class, JmxExportConfiguration.class,
+    StatsdExportConfiguration.class, PrometheusExportConfiguration.class,
+    SimpleExportConfiguration.class})
 public class MetricsAutoConfiguration {
     @Bean
     @Order(0)

@@ -32,4 +32,10 @@ class NamingConventionTest {
         String name = NamingConvention.snakeCase.name("a.Name.with.Words", Meter.Type.Counter);
         assertThat(name).isEqualTo("a_Name_with_Words");
     }
+
+    @Test
+    void upperCamelCase() {
+        String name = NamingConvention.upperCamelCase.name("a.name.with.words", Meter.Type.Counter);
+        assertThat(name).isEqualTo("ANameWithWords");
+    }
 }

@@ -91,6 +91,23 @@ public interface NamingConvention {
         }
     };
 
+    NamingConvention upperCamelCase = new NamingConvention() {
+        @Override
+        public String name(String name, Meter.Type type, String baseUnit) {
+            String lowerCamel = camelCase.name(name, type, baseUnit);
+            return capitalize(lowerCamel);
+        }
+
+        private String capitalize(String name) {
+            if (name == null || name.length() == 0) {
+                return name;
+            }
+            char chars[] = name.toCharArray();
+            chars[0] = Character.toUpperCase(chars[0]);
+            return new String(chars);
+        }
+    };
+
     default String name(String name, Meter.Type type) {
         return name(name, type, null);
     }

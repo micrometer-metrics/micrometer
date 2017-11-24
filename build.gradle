@@ -39,7 +39,7 @@ subprojects {
         }
 
         if (project.extensions.findByName('bintray')) {
-            bintray.labels = ['micrometer', 'atlas', 'metrics', 'prometheus', 'spectator', 'influx']
+            bintray.labels = ['micrometer', 'atlas', 'metrics', 'prometheus', 'spectator', 'influx', 'new-relic']
         }
     }
 

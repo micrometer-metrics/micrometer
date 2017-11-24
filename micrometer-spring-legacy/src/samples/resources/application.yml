@@ -30,5 +30,6 @@ spring.metrics:
   jmx.enabled: false
   prometheus.enabled: false
   statsd.enabled: false
+  newrelic.enabled: false
 
 security.ignored: /**

@@ -35,16 +35,7 @@ public class LatencySample {
         .publishPercentileHistogram()
         .register(registry);
 
-    void bar() {
-        registry.timer("bar.latency")
-            .record(() -> {
-                // do something here
-            });
-    }
-
     void run() {
-
-
         Flux.interval(Duration.ofMillis(1))
             .doOnEach(n -> recordGaussian(10))
             .subscribe();

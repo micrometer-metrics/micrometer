@@ -32,10 +32,6 @@ public class Measurement {
         this.statistic = statistic;
     }
 
-    public Supplier<Double> getValueFunction() {
-        return f;
-    }
-
     /**
      * Value for the measurement.
      */

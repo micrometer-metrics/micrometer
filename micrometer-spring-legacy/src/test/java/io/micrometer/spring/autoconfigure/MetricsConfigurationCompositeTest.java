@@ -42,7 +42,8 @@ import static org.assertj.core.api.Assertions.assertThat;
     "spring.metrics.influx.enabled=false",
     "spring.metrics.jmx.enabled=false",
     "spring.metrics.statsd.enabled=false",
-    "spring.metrics.prometheus.enabled=true"
+    "spring.metrics.prometheus.enabled=true",
+    "spring.metrics.newrelic.enabled=false"
 })
 public class MetricsConfigurationCompositeTest {
     @Autowired

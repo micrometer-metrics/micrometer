@@ -29,7 +29,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static io.micrometer.statsd.internal.MemoizingSupplier.memoize;
+import static io.micrometer.statsd.internal.MemoizingFunction.memoize;
 import static java.beans.Introspector.decapitalize;
 import static java.util.stream.Stream.of;
 
