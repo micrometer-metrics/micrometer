@@ -185,15 +185,16 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
                 for (CountAtValue c : histogramCounts) {
                     final List<String> histogramValues = new LinkedList<>(tagValues);
-                    if (c.value() == Long.MAX_VALUE) {
-                        histogramValues.add("+Inf");
-                    } else {
-                        histogramValues.add(Collector.doubleToGoString(c.value(TimeUnit.SECONDS)));
-                    }
-
+                    histogramValues.add(Collector.doubleToGoString(c.value(TimeUnit.SECONDS)));
                     samples.add(new Collector.MetricFamilySamples.Sample(
                         conventionName + "_bucket", histogramKeys, histogramValues, c.count()));
                 }
+
+                // the +Inf bucket should always equal `count`
+                final List<String> histogramValues = new LinkedList<>(tagValues);
+                histogramValues.add("+Inf");
+                samples.add(new Collector.MetricFamilySamples.Sample(
+                    conventionName + "_bucket", histogramKeys, histogramValues, snapshot.count()));
             }
 
             samples.add(new Collector.MetricFamilySamples.Sample(

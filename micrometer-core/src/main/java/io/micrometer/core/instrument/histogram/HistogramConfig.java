@@ -67,7 +67,6 @@ public class HistogramConfig implements Mergeable<HistogramConfig> {
             buckets.addAll(PercentileHistogramBuckets.buckets(this));
             buckets.add(minimumExpectedValue);
             buckets.add(maximumExpectedValue);
-            buckets.add(Long.MAX_VALUE);
         }
 
         for (long slaBoundary : sla) {

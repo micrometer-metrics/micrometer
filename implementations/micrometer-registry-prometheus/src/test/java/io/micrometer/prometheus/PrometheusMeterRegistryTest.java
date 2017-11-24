@@ -159,17 +159,14 @@ class PrometheusMeterRegistryTest {
     @Issue("#127")
     @Test
     void percentileHistogramsAccumulateToInfinityEvenWhenClamped() {
-        // the underlying histogram is clamped implicitly by HdrHistogram
-        DistributionSummary widthSizes = DistributionSummary.builder("screen.width.pixels")
-            .tags("page", "home")
-            .description("Distribution of screen 'width'")
+        Timer t = Timer.builder("t1")
             .publishPercentileHistogram()
             .register(registry);
 
-        widthSizes.record(1024);
+        t.record(106, TimeUnit.SECONDS);
 
         assertThat(registry.scrape())
-            .contains("screen_width_pixels_bucket{page=\"home\",le=\"+Inf\",} 1.0");
+            .contains("t1_duration_seconds_bucket{le=\"+Inf\",} 1.0");
     }
 
     @Issue("#127")
