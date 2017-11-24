@@ -288,9 +288,6 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                         case TotalTime:
                             name += "_sum";
                             break;
-                        case Count:
-                            name += "_count";
-                            break;
                         case Max:
                             name += "_max";
                             break;

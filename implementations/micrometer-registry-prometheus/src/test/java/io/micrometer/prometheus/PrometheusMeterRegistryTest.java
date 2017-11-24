@@ -215,6 +215,15 @@ class PrometheusMeterRegistryTest {
         assertThat(registry.scrape()).contains("my_summary_max 10.0");
     }
 
+    @Issue("#246")
+    @Test
+    void functionCounterNamingConvention() {
+        FunctionCounter.builder("api.requests", 1.0, n -> n).register(registry);
+
+        assertThat(registry.scrape())
+            .contains("api_requests_total 1.0");
+    }
+
     private Condition<Enumeration<Collector.MetricFamilySamples>> withNameAndTagKey(String name, String tagKey) {
         return new Condition<>(m -> {
             while (m.hasMoreElements()) {
