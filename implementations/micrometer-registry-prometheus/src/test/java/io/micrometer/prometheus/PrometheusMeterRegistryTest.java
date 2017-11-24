@@ -169,6 +169,24 @@ class PrometheusMeterRegistryTest {
             .contains("t1_duration_seconds_bucket{le=\"+Inf\",} 1.0");
     }
 
+    @Issue("#247")
+    @Test
+    void distributionPercentileBuckets() {
+        DistributionSummary ds = DistributionSummary.builder("ds")
+            .publishPercentileHistogram()
+            .minimumExpectedValue(1L)
+            .maximumExpectedValue(2100L)
+            .register(registry);
+
+        ds.record(30);
+        ds.record(9);
+        ds.record(62);
+
+        assertThat(registry.scrape())
+            .contains("ds_bucket{le=\"1.0\",}")
+            .contains("ds_bucket{le=\"2100.0\",} 3.0");
+    }
+
     @Issue("#127")
     @Test
     void percentileHistogramsWhenValueIsLessThanTheSmallestBucket() {

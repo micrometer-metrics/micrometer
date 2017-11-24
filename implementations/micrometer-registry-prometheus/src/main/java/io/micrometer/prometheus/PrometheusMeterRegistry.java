@@ -126,7 +126,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     if (bucket == Long.MAX_VALUE) {
                         histogramValues.add("+Inf");
                     } else {
-                        histogramValues.add(Collector.doubleToGoString(TimeUtils.nanosToUnit(bucket, TimeUnit.SECONDS)));
+                        histogramValues.add(Collector.doubleToGoString(bucket));
                     }
 
                     samples.add(new Collector.MetricFamilySamples.Sample(
