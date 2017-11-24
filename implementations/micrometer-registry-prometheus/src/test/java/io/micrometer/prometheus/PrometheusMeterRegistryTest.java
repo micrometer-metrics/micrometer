@@ -18,7 +18,6 @@ package io.micrometer.prometheus;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import org.assertj.core.api.Condition;
@@ -104,15 +103,10 @@ class PrometheusMeterRegistryTest {
     @Test
     void helpText() {
         Timer.builder("timer").description("my timer").register(registry);
-        ;
         Counter.builder("counter").description("my counter").register(registry);
-        ;
         DistributionSummary.builder("summary").description("my summary").register(registry);
-        ;
         Gauge.builder("gauge", new AtomicInteger(), AtomicInteger::doubleValue).description("my gauge").register(registry);
-        ;
         LongTaskTimer.builder("long.task.timer").description("my long task timer").register(registry);
-        ;
 
         assertThat(registry.scrape())
             .contains("HELP timer_duration_seconds my timer")
@@ -120,6 +114,17 @@ class PrometheusMeterRegistryTest {
             .contains("HELP gauge my gauge")
             .contains("HELP counter_total my counter")
             .contains("HELP long_task_timer_duration_seconds my long task timer");
+    }
+
+    @Issue("#249")
+    @Test
+    void type() {
+        Timer.builder("t1").register(registry);
+        Timer.builder("t2").publishPercentileHistogram().register(registry);
+
+        assertThat(registry.scrape())
+            .contains("# TYPE t1_duration_seconds summary")
+            .contains("# TYPE t2_duration_seconds histogram");
     }
 
     @Test
