@@ -56,6 +56,7 @@ public abstract class MeterRegistry {
         this.clock = clock;
     }
 
+    private final Object meterMapLock = new Object();
     private volatile Map<Id, Meter> meterMap = Collections.emptyMap();
     private final List<MeterFilter> filters = new ArrayList<>();
 
@@ -634,7 +635,7 @@ public abstract class MeterRegistry {
         Meter m = meterMap.get(mappedId);
 
         if (m == null) {
-            synchronized (this) {
+            synchronized (meterMapLock) {
                 m = meterMap.get(mappedId);
 
                 if (m == null) {
