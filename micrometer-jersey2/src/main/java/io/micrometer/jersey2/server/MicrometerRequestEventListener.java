@@ -17,21 +17,25 @@ package io.micrometer.jersey2.server;
 
 import static java.util.Objects.requireNonNull;
 
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.model.ResourceMethod;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.server.monitoring.RequestEventListener;
 
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -45,6 +49,12 @@ import io.micrometer.core.instrument.Timer.Builder;
  * @author Michael Weirauch
  */
 public class MicrometerRequestEventListener implements RequestEventListener {
+
+    private static final Logger log = Logger
+            .getLogger(MicrometerRequestEventListener.class.getSimpleName());
+
+    private static final Map<ContainerRequest, Long> longTaskTimerIds = Collections
+            .synchronizedMap(new IdentityHashMap<>());
 
     private final MeterRegistry meterRegistry;
 
@@ -78,30 +88,46 @@ public class MicrometerRequestEventListener implements RequestEventListener {
             if (startTime == null) {
                 startTime = Long.valueOf(System.nanoTime());
             }
+            timerConfigs(event, true).stream().forEach((config) -> {
+                if (config.getName() == null) {
+                    log.warning("Unable to perform metrics timing for request '"
+                            + event.getUriInfo().getRequestUri()
+                            + "': @Timed annotation must have a value used to name the metric");
+                    return;
+                }
+                longTaskTimerIds.put(event.getContainerRequest(),
+                        longTaskTimer(event, config).start());
+            });
             break;
         case FINISHED:
             if (startTime != null) {
                 final long duration = System.nanoTime() - startTime.longValue();
 
-                timerConfigs(event).forEach((config) -> {
+                // time the request
+                timerConfigs(event, false).forEach((config) -> {
                     final Builder builder = timerBuilder(event, config);
                     builder.register(meterRegistry).record(duration, TimeUnit.NANOSECONDS);
+                });
+
+                // time any long running task
+                timerConfigs(event, true).stream().forEach((config) -> {
+                    final Long timerId = longTaskTimerIds.remove(event.getContainerRequest());
+                    if (timerId != null) {
+                        final LongTaskTimer longTaskTimer = longTaskTimer(event, config);
+                        longTaskTimer.stop(timerId);
+                    }
                 });
             }
             break;
         default:
             break;
         }
-
     }
 
-    private Set<TimerConfig> timerConfigs(RequestEvent event) {
-        final ResourceMethod matchingResourceMethod = event.getUriInfo().getMatchedResourceMethod();
-        final Set<TimerConfig> timerConfigs = new HashSet<>();
-        if (matchingResourceMethod != null) {
-            timerConfigs.addAll(
-                    timerConfigs(matchingResourceMethod.getInvocable().getHandlingMethod()));
-        }
+    private Set<TimerConfig> timerConfigs(RequestEvent event, boolean selectLongTasks) {
+        final Set<Timed> annotations = annotations(event, selectLongTasks);
+        final Set<TimerConfig> timerConfigs = annotations.stream().map(a -> timerConfig(a))
+                .collect(Collectors.toSet());
 
         /*
          * Given we didn't find any matching resource method, 404s will be only
@@ -115,15 +141,20 @@ public class MicrometerRequestEventListener implements RequestEventListener {
         return timerConfigs;
     }
 
-    private Set<TimerConfig> timerConfigs(Method method) {
-        return timerConfigs(method.getAnnotationsByType(Timed.class));
-    }
+    private Set<Timed> annotations(RequestEvent event, boolean selectLongTasks) {
+        // TODO: @Timed defined at resource class level
+        final Set<Timed> timed = new HashSet<>();
 
-    private Set<TimerConfig> timerConfigs(Timed[] annotations) {
-        if (annotations == null) {
-            return Collections.emptySet();
+        final ResourceMethod matchingResourceMethod = event.getUriInfo().getMatchedResourceMethod();
+        if (matchingResourceMethod != null) {
+            final Timed[] methodAnnotations = matchingResourceMethod.getInvocable()
+                    .getHandlingMethod().getAnnotationsByType(Timed.class);
+            if (methodAnnotations != null) {
+                timed.addAll(Arrays.asList(methodAnnotations));
+            }
         }
-        return Arrays.stream(annotations).map(a -> timerConfig(a)).collect(Collectors.toSet());
+        return timed.stream().filter(a -> a.longTask() == selectLongTasks)
+                .collect(Collectors.toSet());
     }
 
     private TimerConfig timerConfig(Timed annotation) {
@@ -141,8 +172,14 @@ public class MicrometerRequestEventListener implements RequestEventListener {
         return builder;
     }
 
+    private LongTaskTimer longTaskTimer(RequestEvent event, TimerConfig config) {
+        return LongTaskTimer.builder(config.getName())
+                .tags(this.tagsProvider.httpLongRequestTags(event)).tags(config.getExtraTags())
+                .description("Timer of long servlet request").register(meterRegistry);
+    }
+
     /**
-     * An adjusted copy from WebMvcMetrics.
+     * An adjusted copy from WebMvcMetrics. (Move to core?)
      */
     private static class TimerConfig {
 
