@@ -82,7 +82,9 @@ public class MicrometerRequestEventListener implements RequestEventListener {
     public void onEvent(RequestEvent event) {
         switch (event.getType()) {
         case ON_EXCEPTION:
-            startTime = Long.valueOf(System.nanoTime());
+            if (startTime == null) {
+                startTime = Long.valueOf(System.nanoTime());
+            }
             break;
         case REQUEST_MATCHED:
             if (startTime == null) {
