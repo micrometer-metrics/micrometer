@@ -94,6 +94,13 @@ public class DefaultJerseyTagsProviderTest {
                         .isEqualTo(tagsFrom("GET", "/app", 406, "NotAcceptableException"));
     }
 
+    @Test
+    public void longRequestTags() {
+        assertThat(uut.httpLongRequestTags(event("GET", 0, null, "/app", (String[]) null)))
+                .isEqualTo(Tags.zip(DefaultJerseyTagsProvider.TAG_METHOD, "GET",
+                        DefaultJerseyTagsProvider.TAG_URI, "/app"));
+    }
+
     private static RequestEvent event(String method, Integer status, Exception exception,
             String baseUri, String... uriTemplateStrings) {
         Builder builder = new RequestEventImpl.Builder();

@@ -56,6 +56,11 @@ public final class DefaultJerseyTagsProvider implements JerseyTagsProvider {
                 exception(event, statusCode));
     }
 
+    @Override
+    public Iterable<Tag> httpLongRequestTags(RequestEvent event) {
+        return Arrays.asList(method(event), uri(event, 0));
+    }
+
     private static Tag method(RequestEvent event) {
         final String httpMethod = event.getContainerRequest().getMethod();
         return Tag.of(TAG_METHOD, httpMethod);
