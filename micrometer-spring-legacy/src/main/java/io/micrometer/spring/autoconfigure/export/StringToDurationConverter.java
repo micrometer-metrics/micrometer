@@ -16,6 +16,7 @@
 package io.micrometer.spring.autoconfigure.export;
 
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.converter.Converter;
 
 import java.time.Duration;
@@ -30,6 +31,7 @@ import java.util.function.Function;
  * @author Andy Wilkinson
  */
 @ConfigurationPropertiesBinding
+@Order(0)
 public class StringToDurationConverter implements Converter<String, Duration> {
 
     @Override
