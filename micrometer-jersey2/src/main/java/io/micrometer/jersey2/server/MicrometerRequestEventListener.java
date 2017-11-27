@@ -17,6 +17,7 @@ package io.micrometer.jersey2.server;
 
 import static java.util.Objects.requireNonNull;
 
+import java.lang.reflect.AnnotatedElement;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -144,19 +145,29 @@ public class MicrometerRequestEventListener implements RequestEventListener {
     }
 
     private Set<Timed> annotations(RequestEvent event, boolean selectLongTasks) {
-        // TODO: @Timed defined at resource class level
         final Set<Timed> timed = new HashSet<>();
 
         final ResourceMethod matchingResourceMethod = event.getUriInfo().getMatchedResourceMethod();
         if (matchingResourceMethod != null) {
-            final Timed[] methodAnnotations = matchingResourceMethod.getInvocable()
-                    .getHandlingMethod().getAnnotationsByType(Timed.class);
-            if (methodAnnotations != null) {
-                timed.addAll(Arrays.asList(methodAnnotations));
+            // collect on method level
+            timed.addAll(annotations(matchingResourceMethod.getInvocable().getHandlingMethod()));
+
+            // fallback on class level
+            if (timed.isEmpty()) {
+                timed.addAll(annotations(matchingResourceMethod.getInvocable().getHandlingMethod()
+                        .getDeclaringClass()));
             }
         }
         return timed.stream().filter(a -> a.longTask() == selectLongTasks)
                 .collect(Collectors.toSet());
+    }
+
+    private Set<Timed> annotations(AnnotatedElement annotated) {
+        final Timed[] annotations = annotated.getAnnotationsByType(Timed.class);
+        if (annotations != null) {
+            return new HashSet<Timed>(Arrays.asList(annotations));
+        }
+        return Collections.emptySet();
     }
 
     private TimerConfig timerConfig(Timed annotation) {

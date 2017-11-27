@@ -37,6 +37,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.jersey2.server.resources.TimedOnClassResource;
 import io.micrometer.jersey2.server.resources.TimedResource;
 
 /**
@@ -69,6 +70,7 @@ public class MicrometerRequestEventListenerTimedTest extends JerseyTest {
         config.register(listener);
         config.register(
                 new TimedResource(longTaskRequestStartedLatch, longTaskRequestReleaseLatch));
+        config.register(TimedOnClassResource.class);
 
         return config;
     }
@@ -147,6 +149,31 @@ public class MicrometerRequestEventListenerTimedTest extends JerseyTest {
 
         // no other metric is present (the long task timer is not started due to
         // missing name)
+        assertThat(registry.getMeters()).hasSize(1);
+    }
+
+    @Test
+    public void classLevelAnnotationIsInherited() {
+        target("/class/inherited").request().get();
+
+        assertThat(
+                registry.find(METRIC_NAME)
+                        .tags(Tags.concat(tagsFrom("GET", "/class/inherited", 200, null),
+                                Tags.zip("on", "class")))
+                        .value(Statistic.Count, 1.0).timer()).isPresent();
+    }
+
+    @Test
+    public void methodLevelAnnotationOverridesClassLevel() {
+        target("/class/on-method").request().get();
+
+        assertThat(
+                registry.find(METRIC_NAME)
+                        .tags(Tags.concat(tagsFrom("GET", "/class/on-method", 200, null),
+                                Tags.zip("on", "method")))
+                        .value(Statistic.Count, 1.0).timer()).isPresent();
+
+        // class level annotation is not picked up
         assertThat(registry.getMeters()).hasSize(1);
     }
 
