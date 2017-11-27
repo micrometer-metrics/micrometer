@@ -18,3 +18,6 @@ management.security.enabled: false
 
 spring.metrics:
   prometheus.enabled: true
+  filter:
+    hystrix.latency:
+      percentiles: 0.50,0.95,0.999
