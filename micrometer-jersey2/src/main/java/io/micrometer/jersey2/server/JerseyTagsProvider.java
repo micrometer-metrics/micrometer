@@ -35,4 +35,15 @@ public interface JerseyTagsProvider {
      */
     Iterable<Tag> httpRequestTags(RequestEvent event);
 
+    /**
+     * Provides tags to be associated with the
+     * {@link io.micrometer.core.instrument.LongTaskTimer} which instruments the
+     * given long-running {@code event}.
+     *
+     * @param event
+     *            the request event
+     * @return tags to associate with metrics recorded for the request
+     */
+    Iterable<Tag> httpLongRequestTags(RequestEvent event);
+
 }
