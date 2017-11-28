@@ -137,6 +137,11 @@ public class MicrometerRequestEventListener implements RequestEventListener {
         final Set<TimerConfig> timerConfigs = annotations.stream().map(a -> timerConfig(a))
                 .collect(Collectors.toSet());
 
+        // no further special handling
+        if (selectLongTasks) {
+            return timerConfigs;
+        }
+
         /*
          * Given we didn't find any matching resource method, 404s will be only
          * recorded when auto-time-requests is enabled. On par with WebMVC
@@ -169,10 +174,7 @@ public class MicrometerRequestEventListener implements RequestEventListener {
 
     private Set<Timed> annotations(AnnotatedElement annotated) {
         final Timed[] annotations = annotated.getAnnotationsByType(Timed.class);
-        if (annotations != null) {
-            return new HashSet<Timed>(Arrays.asList(annotations));
-        }
-        return Collections.emptySet();
+        return new HashSet<Timed>(Arrays.asList(annotations));
     }
 
     private TimerConfig timerConfig(Timed annotation) {

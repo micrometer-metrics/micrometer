@@ -85,6 +85,9 @@ public class MicrometerRequestEventListenerTest extends JerseyTest {
         Optional<Timer> timerSubName = registry.find(METRIC_NAME)
                 .tags(tagsFrom("GET", "/sub-resource/sub-hello/{name}", 200, null)).timer();
         assertThat(timerSubName).hasValueSatisfying(t -> assertThat(t.count()).isEqualTo(1));
+
+        // assert we are not auto-timing long task @Timed
+        assertThat(registry.getMeters()).hasSize(4);
     }
 
     @Test
