@@ -190,7 +190,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         String host = config.hostTag() == null ? "" : stream(tags.spliterator(), false)
             .filter(t -> config.hostTag().equals(t.getKey()))
             .findAny()
-            .map(t -> ",\"host\":" + t.getValue())
+            .map(t -> ",\"host\":\"" + t.getValue() + "\"")
             .orElse("");
 
         String tagsArray = tags.iterator().hasNext() ?
