@@ -27,6 +27,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -81,49 +82,53 @@ public class MicrometerRequestEventListener implements RequestEventListener {
 
     @Override
     public void onEvent(RequestEvent event) {
-        switch (event.getType()) {
-        case ON_EXCEPTION:
-            if (startTime == null) {
-                startTime = Long.valueOf(System.nanoTime());
-            }
-            break;
-        case REQUEST_MATCHED:
-            if (startTime == null) {
-                startTime = Long.valueOf(System.nanoTime());
-            }
-            timerConfigs(event, true).stream().forEach((config) -> {
-                if (config.getName() == null) {
-                    log.warning("Unable to perform metrics timing for request '"
-                            + event.getUriInfo().getRequestUri()
-                            + "': @Timed annotation must have a value used to name the metric");
-                    return;
+        try {
+            switch (event.getType()) {
+            case ON_EXCEPTION:
+                if (startTime == null) {
+                    startTime = Long.valueOf(System.nanoTime());
                 }
-                longTaskTimerIds.put(event.getContainerRequest(),
-                        longTaskTimer(event, config).start());
-            });
-            break;
-        case FINISHED:
-            if (startTime != null) {
-                final long duration = System.nanoTime() - startTime.longValue();
-
-                // time the request
-                timerConfigs(event, false).forEach((config) -> {
-                    final Builder builder = timerBuilder(event, config);
-                    builder.register(meterRegistry).record(duration, TimeUnit.NANOSECONDS);
-                });
-
-                // time any long running task
+                break;
+            case REQUEST_MATCHED:
+                if (startTime == null) {
+                    startTime = Long.valueOf(System.nanoTime());
+                }
                 timerConfigs(event, true).stream().forEach((config) -> {
-                    final Long timerId = longTaskTimerIds.remove(event.getContainerRequest());
-                    if (timerId != null) {
-                        final LongTaskTimer longTaskTimer = longTaskTimer(event, config);
-                        longTaskTimer.stop(timerId);
+                    if (config.getName() == null) {
+                        logWarning(event,
+                                "@Timed annotation must have a value used to name the metric",
+                                null);
+                        return;
                     }
+                    longTaskTimerIds.put(event.getContainerRequest(),
+                            longTaskTimer(event, config).start());
                 });
+                break;
+            case FINISHED:
+                if (startTime != null) {
+                    final long duration = System.nanoTime() - startTime.longValue();
+
+                    // time the request
+                    timerConfigs(event, false).forEach((config) -> {
+                        final Builder builder = timerBuilder(event, config);
+                        builder.register(meterRegistry).record(duration, TimeUnit.NANOSECONDS);
+                    });
+
+                    // time any long running task
+                    timerConfigs(event, true).stream().forEach((config) -> {
+                        final Long timerId = longTaskTimerIds.remove(event.getContainerRequest());
+                        if (timerId != null) {
+                            final LongTaskTimer longTaskTimer = longTaskTimer(event, config);
+                            longTaskTimer.stop(timerId);
+                        }
+                    });
+                }
+                break;
+            default:
+                break;
             }
-            break;
-        default:
-            break;
+        } catch (Exception e) {
+            logWarning(event, "Unhandled instrumentation error", e);
         }
     }
 
@@ -189,6 +194,13 @@ public class MicrometerRequestEventListener implements RequestEventListener {
         return LongTaskTimer.builder(config.getName())
                 .tags(this.tagsProvider.httpLongRequestTags(event)).tags(config.getExtraTags())
                 .description("Timer of long servlet request").register(meterRegistry);
+    }
+
+    private void logWarning(RequestEvent event, String message, Throwable thrown) {
+        final String uri = event.getUriInfo() != null && event.getUriInfo().getRequestUri() != null
+                ? event.getUriInfo().getRequestUri().toString()
+                : "unknown";
+        log.log(Level.WARNING, "Failed timing request '" + uri + "': " + message, thrown);
     }
 
     /**
