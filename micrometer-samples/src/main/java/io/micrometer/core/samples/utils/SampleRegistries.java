@@ -19,7 +19,6 @@ import com.netflix.spectator.atlas.AtlasConfig;
 import com.sun.net.httpserver.HttpServer;
 import io.micrometer.atlas.AtlasMeterRegistry;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.MockClock;
 import io.micrometer.datadog.DatadogConfig;
 import io.micrometer.datadog.DatadogMeterRegistry;
 import io.micrometer.ganglia.GangliaMeterRegistry;
@@ -61,6 +60,10 @@ public class SampleRegistries {
         }
 
         return prometheusRegistry;
+    }
+
+    public static PrometheusMeterRegistry prometheusPushgateway() {
+        return new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
     }
 
     public static AtlasMeterRegistry atlas() {

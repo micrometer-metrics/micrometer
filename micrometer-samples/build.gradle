@@ -11,5 +11,7 @@ dependencies {
         compile project(":micrometer-registry-$sys")
     }
 
+    compile 'io.prometheus:simpleclient_pushgateway:latest.release'
+
     compile 'io.projectreactor.ipc:reactor-netty:latest.release'
 }
