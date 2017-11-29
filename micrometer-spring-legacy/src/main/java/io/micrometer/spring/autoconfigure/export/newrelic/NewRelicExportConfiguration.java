@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.autoconfigure.export.datadog;
+package io.micrometer.spring.autoconfigure.export.newrelic;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.newrelic.NewRelicConfig;
