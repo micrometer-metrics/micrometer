@@ -16,22 +16,15 @@
 package io.micrometer.core.instrument.binder.hystrix;
 
 import com.netflix.hystrix.*;
-import com.netflix.hystrix.metric.HystrixCommandCompletion;
 import com.netflix.hystrix.metric.HystrixCommandCompletionStream;
-import com.netflix.hystrix.metric.consumer.CumulativeCommandEventCounterStream;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
-import com.netflix.hystrix.util.HystrixRollingNumberEvent;
 import io.micrometer.core.instrument.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rx.functions.Action1;
-import rx.functions.Func0;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.function.ToDoubleFunction;
-import java.util.stream.StreamSupport;
 
 /**
  * @author Clint Checketts
