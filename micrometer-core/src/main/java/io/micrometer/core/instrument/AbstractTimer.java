@@ -18,7 +18,6 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.TimeWindowLatencyHistogram;
 import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;

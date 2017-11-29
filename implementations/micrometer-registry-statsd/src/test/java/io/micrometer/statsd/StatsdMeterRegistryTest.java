@@ -32,7 +32,6 @@ import reactor.core.Disposable;
 import reactor.core.Disposables;
 import reactor.core.publisher.Flux;
 import reactor.ipc.netty.options.ClientOptions;
-import reactor.ipc.netty.udp.UdpClient;
 import reactor.ipc.netty.udp.UdpServer;
 import reactor.test.StepVerifier;
 

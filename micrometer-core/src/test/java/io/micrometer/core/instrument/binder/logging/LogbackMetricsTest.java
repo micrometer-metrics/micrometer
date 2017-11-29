@@ -25,10 +25,6 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
-import org.slf4j.helpers.BasicMarker;
-import org.slf4j.helpers.BasicMarkerFactory;
-
-import java.util.concurrent.TimeUnit;
 
 import static io.micrometer.core.instrument.MockClock.clock;
 import static io.micrometer.core.instrument.Statistic.Count;

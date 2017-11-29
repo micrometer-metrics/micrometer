@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.spring.TimedUtilsTest;
 import io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsConfiguration;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,9 +39,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
-import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;

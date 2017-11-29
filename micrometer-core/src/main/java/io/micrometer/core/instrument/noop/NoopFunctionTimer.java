@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.noop;
 
 import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Meter;
 
 import java.util.concurrent.TimeUnit;
 

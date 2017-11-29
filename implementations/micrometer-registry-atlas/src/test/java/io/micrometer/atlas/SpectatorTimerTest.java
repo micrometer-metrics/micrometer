@@ -18,10 +18,8 @@ package io.micrometer.atlas;
 import com.netflix.spectator.atlas.AtlasConfig;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.simple.SimpleConfig;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import static io.micrometer.core.instrument.MockClock.clock;
