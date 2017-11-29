@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.step.StepLong;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.Arrays;

@@ -20,8 +20,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.TimeUnit;
-
 import static io.micrometer.core.instrument.MockClock.clock;
 import static org.junit.jupiter.api.Assertions.*;
 

@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.Statistic;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static io.micrometer.core.instrument.MockClock.clock;

@@ -18,8 +18,6 @@ package io.micrometer.spring.autoconfigure.export.datadog;
 import io.micrometer.spring.autoconfigure.export.StepRegistryProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.time.Duration;
-
 /**
  * {@link ConfigurationProperties} for configuring Datadog metrics export.
  *
