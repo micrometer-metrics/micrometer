@@ -25,7 +25,7 @@ import io.micrometer.spring.SpringEnvironmentMeterFilter;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.atlas.AtlasExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.datadog.DatadogExportConfiguration;
-import io.micrometer.spring.autoconfigure.export.datadog.NewRelicExportConfiguration;
+import io.micrometer.spring.autoconfigure.export.newrelic.NewRelicExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.ganglia.GangliaExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.graphite.GraphiteExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.influx.InfluxExportConfiguration;
