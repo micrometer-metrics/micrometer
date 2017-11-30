@@ -24,6 +24,7 @@ dependencies {
 
     // server runtime monitoring
     compile 'org.eclipse.jetty:jetty-server:9.4.7.v20170914', optional
+    compile 'org.apache.tomcat.embed:tomcat-embed-core:8.5.23', optional
 
     // hystrix monitoring
     compile 'com.netflix.hystrix:hystrix-core:1.5.12', optional
