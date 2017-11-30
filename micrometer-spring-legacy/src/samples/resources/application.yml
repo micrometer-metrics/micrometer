@@ -31,5 +31,6 @@ spring.metrics:
   prometheus.enabled: false
   statsd.enabled: false
   newrelic.enabled: false
+  tomcat.enabled: false
 
 security.ignored: /**

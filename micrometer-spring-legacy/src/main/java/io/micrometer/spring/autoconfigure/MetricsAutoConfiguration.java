@@ -35,6 +35,7 @@ import io.micrometer.spring.autoconfigure.export.simple.SimpleExportConfiguratio
 import io.micrometer.spring.autoconfigure.export.statsd.StatsdExportConfiguration;
 import io.micrometer.spring.autoconfigure.web.client.RestTemplateMetricsConfiguration;
 import io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsConfiguration;
+import io.micrometer.spring.autoconfigure.web.tomcat.TomcatMetricsConfiguration;
 import io.micrometer.spring.integration.SpringIntegrationMetrics;
 import io.micrometer.spring.scheduling.ScheduledMethodMetrics;
 import org.springframework.beans.factory.ObjectProvider;
@@ -68,7 +69,8 @@ import java.util.List;
     DatadogExportConfiguration.class, GangliaExportConfiguration.class,
     GraphiteExportConfiguration.class, InfluxExportConfiguration.class,
     NewRelicExportConfiguration.class, JmxExportConfiguration.class,
-    StatsdExportConfiguration.class, PrometheusExportConfiguration.class,
+    StatsdExportConfiguration.class,  PrometheusExportConfiguration.class,
+    TomcatMetricsConfiguration.class,
     SimpleExportConfiguration.class})
 public class MetricsAutoConfiguration {
     @Bean
@@ -149,5 +151,10 @@ public class MetricsAutoConfiguration {
     public HystrixMetricsBinder hystrixMetricsBinder() {
         return new HystrixMetricsBinder();
     }
+
+
+
+
+
 
 }
