@@ -263,18 +263,6 @@ public abstract class MeterRegistry {
             return this;
         }
 
-        public Optional<Double> firstValue(){
-            return meters().stream().map(m -> {
-                Iterator<Measurement> measurements = m.measure().iterator();
-                if(measurements.hasNext()) {
-                    return measurements.next().getValue();
-                } else {
-                    return null;
-                }
-            }).findFirst();
-        }
-
-
         public Optional<Timer> timer() {
             return findAny(Timer.class);
         }
