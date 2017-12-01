@@ -258,7 +258,6 @@ public abstract class MeterRegistry {
     public class Search {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
-        private final Map<Statistic, Double> valueAsserts = new EnumMap<>(Statistic.class);
 
         Search(String name) {
             this.name = name;
@@ -274,11 +273,6 @@ public abstract class MeterRegistry {
          */
         public Search tags(String... tags) {
             return tags(zip(tags));
-        }
-
-        public Search value(Statistic statistic, double value) {
-            valueAsserts.put(statistic, value);
-            return this;
         }
 
         public Optional<Timer> timer() {
@@ -337,20 +331,8 @@ public abstract class MeterRegistry {
                 });
             }
 
-            Stream<Meter> meterStream = entryStream.map(Map.Entry::getValue);
-            if (!valueAsserts.isEmpty()) {
-                meterStream = meterStream.filter(m -> {
-                    for (Measurement measurement : m.measure()) {
-                        final Double value = valueAsserts.get(measurement.getStatistic());
-                        if (value != null && Math.abs(value - measurement.getValue()) > 1e-7) {
-                            return false;
-                        }
-                    }
-                    return true;
-                });
-            }
-
-            return meterStream.collect(Collectors.toList());
+            return entryStream.map(Map.Entry::getValue)
+                .collect(Collectors.toList());
         }
     }
 

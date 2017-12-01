@@ -15,17 +15,24 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.Statistic.Count;
-import static io.micrometer.core.instrument.Statistic.Value;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 class ExecutorServiceMetricsTest {
@@ -93,13 +100,13 @@ class ExecutorServiceMetricsTest {
         pool.submit(() -> System.out.println("boop"));
 
         taskStart.await(1, TimeUnit.SECONDS);
-        assertThat(registry.find("beep.pool.queued").tags(userTags).value(Value, 1.0).gauge()).isPresent();
+        assertThat(registry.find("beep.pool.queued").tags(userTags).gauge().map(Gauge::value)).hasValue(1.0);
 
         taskComplete.countDown();
         pool.awaitTermination(1, TimeUnit.SECONDS);
 
-        assertThat(registry.find("beep.pool").tags(userTags).value(Count, 2.0).timer()).isPresent();
-        assertThat(registry.find("beep.pool.queued").tags(userTags).value(Value, 0.0).gauge()).isPresent();
+        assertThat(registry.find("beep.pool").tags(userTags).timer().map(Timer::count)).hasValue(2L);
+        assertThat(registry.find("beep.pool.queued").tags(userTags).gauge().map(Gauge::value)).hasValue(0.0);
     }
 
     private void assertThreadPoolExecutorMetrics() {

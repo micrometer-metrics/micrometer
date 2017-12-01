@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
@@ -63,9 +63,9 @@ class FileDescriptorMetricsTest {
         new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
 
         assertThat(registry.find("process.open.fds").tags("some", "tag")
-            .value(Statistic.Value, Double.NaN).gauge()).isPresent();
-        assertThat(registry.find("process.max.fds").tags("some", "tag").value(Statistic.Value, Double.NaN)
-            .gauge()).isPresent();
+            .gauge().map(Gauge::value)).hasValue(Double.NaN);
+        assertThat(registry.find("process.max.fds").tags("some", "tag")
+            .gauge().map(Gauge::value)).hasValue(Double.NaN);
     }
 
     @Test
@@ -78,9 +78,9 @@ class FileDescriptorMetricsTest {
         new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
 
         assertThat(registry.find("process.open.fds").tags("some", "tag")
-            .value(Statistic.Value, 512.0).gauge()).isPresent();
+            .gauge().map(Gauge::value)).hasValue(512.0);
         assertThat(registry.find("process.max.fds").tags("some", "tag")
-            .value(Statistic.Value, 1024.0).gauge()).isPresent();
+            .gauge().map(Gauge::value)).hasValue(1024.0);
     }
 
     @Test
@@ -93,8 +93,8 @@ class FileDescriptorMetricsTest {
         new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
 
         assertThat(registry.find("process.open.fds").tags("some", "tag")
-            .value(Statistic.Value, Double.NaN).gauge()).isPresent();
-        assertThat(registry.find("process.max.fds").tags("some", "tag").value(Statistic.Value, Double.NaN)
-            .gauge()).isPresent();
+            .gauge().map(Gauge::value)).hasValue(Double.NaN);
+        assertThat(registry.find("process.max.fds").tags("some", "tag")
+            .gauge().map(Gauge::value)).hasValue(Double.NaN);
     }
 }

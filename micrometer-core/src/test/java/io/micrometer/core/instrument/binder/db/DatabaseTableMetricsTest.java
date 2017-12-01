@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.db;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.hsqldb.jdbc.JDBCDataSource;
 import org.junit.jupiter.api.AfterEach;
@@ -58,12 +58,12 @@ class DatabaseTableMetricsTest {
     @Test
     void rowCountGauge() {
         DatabaseTableMetrics.monitor(registry, ds, "foo", "db.table.size");
-        assertThat(registry.find("db.table.size").value(Statistic.Value, 1.0).gauge()).isPresent();
+        assertThat(registry.find("db.table.size").gauge().map(Gauge::value)).hasValue(1.0);
     }
 
     @Test
     void rowCountForNonExistentTable() {
         DatabaseTableMetrics.monitor(registry, ds, "dne", "db.table.size");
-        assertThat(registry.find("db.table.size").value(Statistic.Value, 0.0).gauge()).isPresent();
+        assertThat(registry.find("db.table.size").gauge().map(Gauge::value)).hasValue(0.0);
     }
 }

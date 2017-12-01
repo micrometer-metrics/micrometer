@@ -18,12 +18,12 @@ package io.micrometer.core.instrument.binder.cache;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.core.instrument.Statistic.Count;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -51,9 +51,9 @@ class CaffeineCacheMetricsTest {
         cache.put("user3", "Third User");
         cache.put("user4", "Fourth User");
 
-        assertThat(registry.find("c.requests").tags("result", "hit").tags(userTags).value(Count, 1.0).meter()).isPresent();
-        assertThat(registry.find("c.requests").tags("result", "miss").tags(userTags).value(Count, 2.0).meter()).isPresent();
-        assertThat(registry.find("c.evictions").tags(userTags).value(Count, 2.0));
+        assertThat(registry.find("c.requests").tags("result", "hit").tags(userTags).functionCounter().map(FunctionCounter::count)).hasValue(1.0);
+        assertThat(registry.find("c.requests").tags("result", "miss").tags(userTags).functionCounter().map(FunctionCounter::count)).hasValue(2.0);
+        assertThat(registry.find("c.evictions").tags(userTags).functionCounter().map(FunctionCounter::count)).hasValue(2.0);
     }
 
     @SuppressWarnings("unchecked")
@@ -75,9 +75,9 @@ class CaffeineCacheMetricsTest {
         }
         cache.get(3);
 
-        assertThat(registry.find("c.requests").tags("result", "hit").tags(userTags).value(Count, 1.0).meter()).isPresent();
-        assertThat(registry.find("c.requests").tags("result", "miss").tags(userTags).value(Count, 3.0).meter()).isPresent();
-        assertThat(registry.find("c.load").tags("result", "failure").tags(userTags).value(Count, 1.0).meter()).isPresent();
-        assertThat(registry.find("c.load").tags("result", "success").tags(userTags).value(Count, 2.0).meter()).isPresent();
+        assertThat(registry.find("c.requests").tags("result", "hit").tags(userTags).functionCounter().map(FunctionCounter::count)).hasValue(1.0);
+        assertThat(registry.find("c.requests").tags("result", "miss").tags(userTags).functionCounter().map(FunctionCounter::count)).hasValue(3.0);
+        assertThat(registry.find("c.load").tags("result", "failure").functionCounter().map(FunctionCounter::count)).hasValue(1.0);
+        assertThat(registry.find("c.load").tags("result", "success").functionCounter().map(FunctionCounter::count)).hasValue(2.0);
     }
 }

@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.logging;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
@@ -26,7 +27,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
-import static io.micrometer.core.instrument.Statistic.Count;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LogbackMetricsTest {
@@ -40,7 +40,7 @@ class LogbackMetricsTest {
 
     @Test
     void logbackLevelMetrics() {
-        assertThat(registry.find("logback.events").value(Count, 0.0).counter()).isPresent();
+        assertThat(registry.find("logback.events").counter().map(Counter::count)).hasValue(0.0);
 
         logger.setLevel(Level.INFO);
 
@@ -48,8 +48,8 @@ class LogbackMetricsTest {
         logger.error("error");
         logger.debug("debug"); // shouldn't record a metric
 
-        assertThat(registry.find("logback.events").tags("level", "warn").value(Count, 1.0).counter()).isPresent();
-        assertThat(registry.find("logback.events").tags("level", "debug").value(Count, 0.0).counter()).isPresent();
+        assertThat(registry.find("logback.events").tags("level", "warn").counter().map(Counter::count)).hasValue(1.0);
+        assertThat(registry.find("logback.events").tags("level", "debug").counter().map(Counter::count)).hasValue(0.0);
     }
 
     @Issue("#183")
@@ -57,6 +57,6 @@ class LogbackMetricsTest {
     void isLevelEnabledDoesntContributeToCounts() {
         logger.isErrorEnabled();
 
-        assertThat(registry.find("logback.events").tags("level", "error").value(Count, 0.0).counter()).isPresent();
+        assertThat(registry.find("logback.events").tags("level", "error").counter().map(Counter::count)).hasValue(0.0);
     }
 }

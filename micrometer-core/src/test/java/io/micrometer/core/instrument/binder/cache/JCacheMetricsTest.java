@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.ehcache.jsr107.EhcacheCachingProvider;
 import org.jsr107.ri.spi.RICachingProvider;
@@ -54,7 +54,7 @@ class JCacheMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         JCacheMetrics.monitor(registry, cache, "jcache", emptyList());
 
-        assertThat(registry.find("jcache.puts").tags("name", "a").value(Statistic.Value, 1.0).gauge()).isPresent();
+        assertThat(registry.find("jcache.puts").tags("name", "a").gauge().map(Gauge::value)).hasValue(1.0);
     }
 
     private static Stream<CachingProvider> cachingProviders() {
