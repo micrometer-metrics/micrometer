@@ -85,14 +85,14 @@ public class MetricsAutoConfigurationTest {
 
         assertThat(external.getForObject("/api/external", String.class)).isEqualTo("hello");
 
-        assertThat(registry.find("http.client.requests").timer().map(Timer::count)).isPresent().hasValue(1L);
+        assertThat(registry.mustFind("http.client.requests").timer().count()).isEqualTo(1L);
     }
 
     @Test
     public void requestMappingIsInstrumented() {
         loopback.getForObject("/api/people", String.class);
 
-        assertThat(registry.find("http.server.requests").timer().map(Timer::count)).isPresent().hasValue(1L);
+        assertThat(registry.mustFind("http.server.requests").timer().count()).isEqualTo(1L);
     }
 
     @Test
@@ -104,13 +104,13 @@ public class MetricsAutoConfigurationTest {
 
     @Test
     public void registryConfigurersAreAppliedBeforeRegistryIsInjectableElsewhere() {
-        assertThat(registry.find("my.thing").tags("common", "tag").gauge()).isPresent();
+        registry.mustFind("my.thing").tags("common", "tag").gauge();
     }
 
     @Test
     public void propertyBasedMeterFiltersCanTakeLowerPrecedenceThanProgrammaticallyBoundFilters() {
         registry.timer("my.timer");
-        assertThat(registry.find("my.timer").timer()).isNotPresent();
+        assertThat(registry.mustFind("my.timer").meter()).isNotPresent();
     }
 
     @SpringBootApplication(scanBasePackages = "ignored")

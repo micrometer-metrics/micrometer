@@ -52,8 +52,8 @@ class FileDescriptorMetricsTest {
         final MeterRegistry registry = new SimpleMeterRegistry();
         new FileDescriptorMetrics().bindTo(registry);
 
-        assertThat(registry.find("process.open.fds").gauge()).isPresent();
-        assertThat(registry.find("process.max.fds").gauge()).isPresent();
+        registry.mustFind("process.open.fds").gauge();
+        registry.mustFind("process.max.fds").gauge();
     }
 
     @Test
@@ -62,10 +62,10 @@ class FileDescriptorMetricsTest {
         final OperatingSystemMXBean osBean = mock(OperatingSystemMXBean.class);
         new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
 
-        assertThat(registry.find("process.open.fds").tags("some", "tag")
-            .gauge().map(Gauge::value)).hasValue(Double.NaN);
-        assertThat(registry.find("process.max.fds").tags("some", "tag")
-            .gauge().map(Gauge::value)).hasValue(Double.NaN);
+        assertThat(registry.mustFind("process.open.fds").tags("some", "tag")
+            .gauge().value()).isEqualTo(Double.NaN);
+        assertThat(registry.mustFind("process.max.fds").tags("some", "tag")
+            .gauge().value()).isEqualTo(Double.NaN);
     }
 
     @Test
@@ -77,10 +77,10 @@ class FileDescriptorMetricsTest {
         when(osBean.getMaxFileDescriptorCount()).thenReturn(Long.valueOf(1024));
         new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
 
-        assertThat(registry.find("process.open.fds").tags("some", "tag")
-            .gauge().map(Gauge::value)).hasValue(512.0);
-        assertThat(registry.find("process.max.fds").tags("some", "tag")
-            .gauge().map(Gauge::value)).hasValue(1024.0);
+        assertThat(registry.mustFind("process.open.fds").tags("some", "tag")
+            .gauge().value()).isEqualTo(512.0);
+        assertThat(registry.mustFind("process.max.fds").tags("some", "tag")
+            .gauge().value()).isEqualTo(1024.0);
     }
 
     @Test
@@ -92,9 +92,9 @@ class FileDescriptorMetricsTest {
         when(osBean.getMaxFileDescriptorCount()).thenThrow(InvocationTargetException.class);
         new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
 
-        assertThat(registry.find("process.open.fds").tags("some", "tag")
-            .gauge().map(Gauge::value)).hasValue(Double.NaN);
-        assertThat(registry.find("process.max.fds").tags("some", "tag")
-            .gauge().map(Gauge::value)).hasValue(Double.NaN);
+        assertThat(registry.mustFind("process.open.fds").tags("some", "tag")
+            .gauge().value()).isEqualTo(Double.NaN);
+        assertThat(registry.mustFind("process.max.fds").tags("some", "tag")
+            .gauge().value()).isEqualTo(Double.NaN);
     }
 }

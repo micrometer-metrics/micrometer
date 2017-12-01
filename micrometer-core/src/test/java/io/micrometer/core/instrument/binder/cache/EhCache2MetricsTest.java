@@ -37,6 +37,6 @@ class EhCache2MetricsTest {
 
         c.put(new Element("k", "v", 1));
 
-        assertThat(registry.find("ehcache.size").tags("name", "a").gauge()).isPresent();
+        registry.mustFind("ehcache.size").tags("name", "a").gauge();
     }
 }

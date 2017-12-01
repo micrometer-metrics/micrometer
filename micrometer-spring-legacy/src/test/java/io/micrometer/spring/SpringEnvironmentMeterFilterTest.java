@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import net.sf.ehcache.search.expression.IsNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -75,13 +76,13 @@ public class SpringEnvironmentMeterFilterTest {
     @Test
     public void disable() {
         registry.counter("my.counter");
-        assertThat(registry.find("my.counter").counter()).isNotPresent();
+        assertThat(registry.find("my.counter").counter()).isNull();
     }
 
     @Test
     public void enable() {
         registry.timer("my.timer");
-        assertThat(registry.find("my.timer").timer()).isPresent();
+        registry.mustFind("my.timer").timer();
     }
 
     @Test

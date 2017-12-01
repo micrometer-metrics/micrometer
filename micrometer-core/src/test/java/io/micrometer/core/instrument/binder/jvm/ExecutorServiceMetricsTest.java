@@ -57,7 +57,7 @@ class ExecutorServiceMetricsTest {
         executor.execute(() -> System.out.println("hello"));
         lock.await();
 
-        assertThat(registry.find("exec").tags(userTags).timer()).map(Timer::count).hasValue(1L);
+        assertThat(registry.mustFind("exec").tags(userTags).timer().count()).isEqualTo(1L);
     }
 
     @DisplayName("ExecutorService is casted from Executor when necessary")
@@ -100,20 +100,20 @@ class ExecutorServiceMetricsTest {
         pool.submit(() -> System.out.println("boop"));
 
         taskStart.await(1, TimeUnit.SECONDS);
-        assertThat(registry.find("beep.pool.queued").tags(userTags).gauge().map(Gauge::value)).hasValue(1.0);
+        assertThat(registry.mustFind("beep.pool.queued").tags(userTags).gauge().value()).isEqualTo(1.0);
 
         taskComplete.countDown();
         pool.awaitTermination(1, TimeUnit.SECONDS);
 
-        assertThat(registry.find("beep.pool").tags(userTags).timer().map(Timer::count)).hasValue(2L);
-        assertThat(registry.find("beep.pool.queued").tags(userTags).gauge().map(Gauge::value)).hasValue(0.0);
+        assertThat(registry.mustFind("beep.pool").tags(userTags).timer().count()).isEqualTo(2L);
+        assertThat(registry.mustFind("beep.pool.queued").tags(userTags).gauge().value()).isEqualTo(0.0);
     }
 
     private void assertThreadPoolExecutorMetrics() {
-        assertThat(registry.find("exec.completed").tags(userTags).meter()).isPresent();
-        assertThat(registry.find("exec.queued").tags(userTags).gauge()).isPresent();
-        assertThat(registry.find("exec.active").tags(userTags).gauge()).isPresent();
-        assertThat(registry.find("exec.pool").tags(userTags).gauge()).isPresent();
-        assertThat(registry.find("exec").tags(userTags).timer()).isPresent();
+        registry.mustFind("exec.completed").tags(userTags).meter();
+        registry.mustFind("exec.queued").tags(userTags).gauge();
+        registry.mustFind("exec.active").tags(userTags).gauge();
+        registry.mustFind("exec.pool").tags(userTags).gauge();
+        registry.mustFind("exec").tags(userTags).timer();
     }
 }

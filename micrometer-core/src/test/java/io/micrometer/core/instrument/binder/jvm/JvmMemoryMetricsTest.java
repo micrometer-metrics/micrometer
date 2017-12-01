@@ -41,45 +41,38 @@ public class JvmMemoryMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         new JvmMemoryMetrics().bindTo(registry);
 
-        final Tag directBufferTag = Tag.of("id", "direct");
-        final Tag mappedBufferTag = Tag.of("id", "mapped");
-        assertMeters(registry.find("jvm.buffer.count").meters(), false, null, directBufferTag,
-                mappedBufferTag);
-        assertMeters(registry.find("jvm.buffer.memory.used").meters(), true, "bytes",
-                directBufferTag, mappedBufferTag);
-        assertMeters(registry.find("jvm.buffer.total.capacity").meters(), false, "bytes",
-                directBufferTag, mappedBufferTag);
+        assertJvmBufferMetrics(registry, "direct");
+        assertJvmBufferMetrics(registry, "mapped");
 
-        final Tag heapTag = Tag.of("area", "heap");
-        final Tag nonHeapTag = Tag.of("area", "nonheap");
-        assertMeters(registry.find("jvm.memory.used").meters(), false, "bytes", heapTag,
-                nonHeapTag);
-        assertMeters(registry.find("jvm.memory.committed").meters(), false, "bytes", heapTag,
-                nonHeapTag);
-        assertMeters(registry.find("jvm.memory.max").meters(), true, "bytes", heapTag, nonHeapTag);
+        assertJvmMemoryMetrics(registry, "heap");
+        assertJvmMemoryMetrics(registry, "nonheap");
     }
 
-    private static void assertMeters(Collection<Meter> meters, boolean valueCanBeNegative,
-            String baseUnit, Tag firstTag, Tag secondTag) {
-        // assumes tags to be distributed evenly among meters
-        assertThat(meters).asList().extracting(o -> {
-            return (Gauge) o;
-        }).allSatisfy(g -> {
-            if (valueCanBeNegative) {
-                assertThat(g.value()).isNotNull();
-            } else {
-                assertThat(g.value()).isGreaterThanOrEqualTo(0);
-            }
-            if (baseUnit != null) {
-                assertThat(g.getId().getBaseUnit()).isEqualTo("bytes");
-            }
-        }).areExactly(meters.size() / 2, new Condition<Meter>(g -> {
-            return StreamSupport.stream(g.getId().getTags().spliterator(), false)
-                    .filter(t -> t.equals(firstTag)).count() > 0;
-        }, "carrying " + firstTag)).areExactly(meters.size() / 2, new Condition<Meter>(g -> {
-            return StreamSupport.stream(g.getId().getTags().spliterator(), false)
-                    .filter(t -> t.equals(secondTag)).count() > 0;
-        }, "carrying " + secondTag));
+    private void assertJvmMemoryMetrics(MeterRegistry registry, String area) {
+        Gauge memUsed = registry.mustFind("jvm.memory.used").tags("area", area).gauge();
+        assertThat(memUsed.value()).isGreaterThanOrEqualTo(0);
+        assertThat(memUsed.getId().getBaseUnit()).isEqualTo("bytes");
+
+        Gauge memCommitted = registry.mustFind("jvm.memory.committed").tags("area", area).gauge();
+        assertThat(memCommitted.value()).isNotNull();
+        assertThat(memCommitted.getId().getBaseUnit()).isEqualTo("bytes");
+
+        Gauge memMax = registry.mustFind("jvm.memory.max").tags("area", area).gauge();
+        assertThat(memMax.value()).isNotNull();
+        assertThat(memMax.getId().getBaseUnit()).isEqualTo("bytes");
+    }
+
+    private void assertJvmBufferMetrics(MeterRegistry registry, String bufferId) {
+        assertThat(registry.mustFind("jvm.buffer.count").tags("id", bufferId)
+            .gauge().value()).isGreaterThanOrEqualTo(0);
+
+        Gauge memoryUsedDirect = registry.mustFind("jvm.buffer.memory.used").tags("id", bufferId).gauge();
+        assertThat(memoryUsedDirect.value()).isNotNull();
+        assertThat(memoryUsedDirect.getId().getBaseUnit()).isEqualTo("bytes");
+
+        Gauge bufferTotal = registry.mustFind("jvm.buffer.total.capacity").tags("id", bufferId).gauge();
+        assertThat(bufferTotal.value()).isGreaterThanOrEqualTo(0);
+        assertThat(bufferTotal.getId().getBaseUnit()).isEqualTo("bytes");
     }
 
 }

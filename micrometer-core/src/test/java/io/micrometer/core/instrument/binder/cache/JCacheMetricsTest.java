@@ -54,7 +54,7 @@ class JCacheMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         JCacheMetrics.monitor(registry, cache, "jcache", emptyList());
 
-        assertThat(registry.find("jcache.puts").tags("name", "a").gauge().map(Gauge::value)).hasValue(1.0);
+        assertThat(registry.mustFind("jcache.puts").tags("name", "a").gauge().value()).isEqualTo(1.0);
     }
 
     private static Stream<CachingProvider> cachingProviders() {

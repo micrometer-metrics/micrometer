@@ -51,11 +51,11 @@ public class ThreadPoolTaskExecutorMetricsTest {
         lock.await();
         pool.shutdown();
 
-        assertThat(registry.find("exec").tags(userTags).timer()).map(Timer::count).hasValue(1L);
-        assertThat(registry.find("exec.completed").tags(userTags).meter()).isPresent();
-        assertThat(registry.find("exec.queued").tags(userTags).gauge()).isPresent();
-        assertThat(registry.find("exec.active").tags(userTags).gauge()).isPresent();
-        assertThat(registry.find("exec.pool").tags(userTags).gauge()).isPresent();
+        assertThat(registry.mustFind("exec").tags(userTags).timer().count()).isEqualTo(1L);
+        registry.mustFind("exec.completed").tags(userTags).functionCounter();
+        registry.mustFind("exec.queued").tags(userTags).gauge();
+        registry.mustFind("exec.active").tags(userTags).gauge();
+        registry.mustFind("exec.pool").tags(userTags).gauge();
     }
 
     @Test
@@ -77,12 +77,12 @@ public class ThreadPoolTaskExecutorMetricsTest {
         pool.submit(() -> System.out.println("boop"));
 
         taskStart.await(1, TimeUnit.SECONDS);
-        assertThat(registry.find("beep.pool.queued").tags(userTags).gauge().map(Gauge::value)).hasValue(1.0);
+        assertThat(registry.mustFind("beep.pool.queued").tags(userTags).gauge().value()).isEqualTo(1.0);
 
         taskComplete.countDown();
         pool.shutdown();
 
-        assertThat(registry.find("beep.pool").tags(userTags).timer().map(Timer::count)).hasValue(2L);
-        assertThat(registry.find("beep.pool.queued").tags(userTags).gauge().map(Gauge::value)).hasValue(0.0);
+        assertThat(registry.mustFind("beep.pool").tags(userTags).timer().count()).isEqualTo(2L);
+        assertThat(registry.mustFind("beep.pool.queued").tags(userTags).gauge().value()).isEqualTo(0.0);
     }
 }

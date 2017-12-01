@@ -56,7 +56,7 @@ public class DataSourceMetricsHikariTest {
 
     @Test
     public void dataSourceIsInstrumented() throws SQLException, InterruptedException {
-        assertThat(registry.find("data.source.active.connections").meter()).isPresent();
+        assertThat(registry.mustFind("data.source.active.connections").meter()).isPresent();
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")

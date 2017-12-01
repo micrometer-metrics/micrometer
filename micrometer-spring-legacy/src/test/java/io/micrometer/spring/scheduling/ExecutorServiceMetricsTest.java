@@ -56,8 +56,8 @@ public class ExecutorServiceMetricsTest {
     }
 
     private void assertThreadPoolExecutorMetrics(String name) {
-        assertThat(registry.find(name + ".completed").meter()).isPresent();
-        assertThat(registry.find(name + ".queued").gauge()).isPresent();
-        assertThat(registry.find(name + ".pool").gauge()).isPresent();
+        registry.mustFind(name + ".completed").meter();
+        registry.mustFind(name + ".queued").gauge();
+        registry.mustFind(name + ".pool").gauge();
     }
 }

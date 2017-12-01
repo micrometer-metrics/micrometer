@@ -53,7 +53,7 @@ class HazelcastCacheMetricsTest {
         map.put("key", "value");
         map.get("key");
 
-        assertThat(registry.find("cache.gets").functionTimer().map(FunctionTimer::count)).hasValue(1L);
-        assertThat(registry.find("cache.puts").functionTimer().map(FunctionTimer::count)).hasValue(1L);
+        assertThat(registry.mustFind("cache.gets").functionTimer().count()).isEqualTo(1L);
+        assertThat(registry.mustFind("cache.puts").functionTimer().count()).isEqualTo(1L);
     }
 }

@@ -48,57 +48,57 @@ class HibernateMetricsTest {
     @Test
     void shouldExposeMetricsWhenStatsEnabled() {
         HibernateMetrics.monitor(registry, createEntityManagerFactoryMock(true), "entityManagerFactory");
-        assertThat(registry.find("hibernate.sessions.open").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.sessions.closed").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
+        assertThat(registry.mustFind("hibernate.sessions.open").functionCounter().count()).isEqualTo(42.0);
+        assertThat(registry.mustFind("hibernate.sessions.closed").functionCounter().count()).isEqualTo(42.0);
 
-        assertThat(registry.find("hibernate.transactions").tags("result", "success").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.transactions").tags("result", "failure").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(0.0d);
+        assertThat(registry.mustFind("hibernate.transactions").tags("result", "success").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.transactions").tags("result", "failure").functionCounter().count()).isEqualTo(0.0d);
 
-        assertThat(registry.find("hibernate.optimistic.failures").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.flushes").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.connections.obtained").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
+        assertThat(registry.mustFind("hibernate.optimistic.failures").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.flushes").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.connections.obtained").functionCounter().count()).isEqualTo(42.0d);
 
-        assertThat(registry.find("hibernate.statements").tags("status", "prepared").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.statements").tags("status", "closed").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
+        assertThat(registry.mustFind("hibernate.statements").tags("status", "prepared").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.statements").tags("status", "closed").functionCounter().count()).isEqualTo(42.0d);
 
-        assertThat(registry.find("hibernate.second.level.cache.requests").tags("result", "hit").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.second.level.cache.requests").tags("result", "miss").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.second.level.cache.puts").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
+        assertThat(registry.mustFind("hibernate.second.level.cache.requests").tags("result", "hit").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.second.level.cache.requests").tags("result", "miss").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.second.level.cache.puts").functionCounter().count()).isEqualTo(42.0d);
 
-        assertThat(registry.find("hibernate.entities.deletes").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.entities.fetches").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.entities.inserts").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.entities.loads").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.entities.updates").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
+        assertThat(registry.mustFind("hibernate.entities.deletes").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.entities.fetches").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.entities.inserts").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.entities.loads").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.entities.updates").functionCounter().count()).isEqualTo(42.0d);
 
-        assertThat(registry.find("hibernate.collections.deletes").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.collections.fetches").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.collections.loads").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.collections.recreates").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.collections.updates").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
+        assertThat(registry.mustFind("hibernate.collections.deletes").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.collections.fetches").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.collections.loads").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.collections.recreates").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.collections.updates").functionCounter().count()).isEqualTo(42.0d);
 
-        assertThat(registry.find("hibernate.cache.natural.id.requests").tags("result", "hit").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.cache.natural.id.requests").tags("result", "miss").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.cache.natural.id.puts").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.query.natural.id.executions").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.query.natural.id.executions.max").timeGauge().map(g -> g.value(TimeUnit.MILLISECONDS))).isPresent().hasValue(42.0d);
+        assertThat(registry.mustFind("hibernate.cache.natural.id.requests").tags("result", "hit").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.cache.natural.id.requests").tags("result", "miss").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.cache.natural.id.puts").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.query.natural.id.executions").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.query.natural.id.executions.max").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(42.0d);
 
-        assertThat(registry.find("hibernate.query.executions").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.query.executions.max").timeGauge().map(g -> g.value(TimeUnit.MILLISECONDS))).isPresent().hasValue(42.0d);
+        assertThat(registry.mustFind("hibernate.query.executions").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.query.executions.max").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(42.0d);
 
-        assertThat(registry.find("hibernate.cache.update.timestamps.requests").tags("result", "hit").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.cache.update.timestamps.requests").tags("result", "miss").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.cache.update.timestamps.puts").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
+        assertThat(registry.mustFind("hibernate.cache.update.timestamps.requests").tags("result", "hit").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.cache.update.timestamps.requests").tags("result", "miss").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.cache.update.timestamps.puts").functionCounter().count()).isEqualTo(42.0d);
 
-        assertThat(registry.find("hibernate.cache.query.requests").tags("result", "hit").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.cache.query.requests").tags("result", "miss").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
-        assertThat(registry.find("hibernate.cache.query.puts").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
+        assertThat(registry.mustFind("hibernate.cache.query.requests").tags("result", "hit").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.cache.query.requests").tags("result", "miss").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.mustFind("hibernate.cache.query.puts").functionCounter().count()).isEqualTo(42.0d);
     }
 
     @Test
     void shouldNotExposeMetricsWhenStatsNotEnabled() {
         HibernateMetrics.monitor(registry, createEntityManagerFactoryMock(false), "entityManagerFactory");
-        assertThat(registry.find("hibernate.sessions.open").gauge()).isNotPresent();
+        assertThat(registry.find("hibernate.sessions.open").gauge()).isNull();
     }
 
     private static EntityManagerFactory createEntityManagerFactoryMock(final boolean statsEnabled) {

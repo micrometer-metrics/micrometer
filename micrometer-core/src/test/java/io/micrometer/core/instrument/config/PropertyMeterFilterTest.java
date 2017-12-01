@@ -66,13 +66,13 @@ class PropertyMeterFilterTest {
     @Test
     void disable() {
         registry.counter("my.counter");
-        assertThat(registry.find("my.counter").counter()).isNotPresent();
+        assertThat(registry.find("my.counter").counter()).isNull();
     }
 
     @Test
     void enable() {
         registry.timer("my.timer");
-        assertThat(registry.find("my.timer").timer()).isPresent();
+        registry.mustFind("my.timer").timer();
     }
 
     @Test

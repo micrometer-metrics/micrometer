@@ -34,7 +34,7 @@ public class ConcurrentMapCacheMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         new ConcurrentMapCacheMetrics(cache, "spring.cache", emptyList()).bindTo(registry);
 
-        assertThat(registry.find("spring.cache.size").tags("name", "a")
-            .gauge().map(Gauge::value)).hasValue(1.0);
+        assertThat(registry.mustFind("spring.cache.size").tags("name", "a")
+            .gauge().value()).isEqualTo(1.0);
     }
 }

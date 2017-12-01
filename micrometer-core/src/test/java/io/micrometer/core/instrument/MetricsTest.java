@@ -38,6 +38,6 @@ class MetricsTest {
         Metrics.addRegistry(simple);
         counter.increment();
 
-        assertThat(Metrics.globalRegistry.find("counter").counter().map(Counter::count)).hasValue(1.0);
+        assertThat(Metrics.globalRegistry.mustFind("counter").counter().count()).isEqualTo(1.0);
     }
 }

@@ -53,7 +53,7 @@ public class MeterRegistryConfigurerTest {
 
     @Test
     public void commonTagsAreAppliedToAutoConfiguredBinders() {
-        assertThat(registry.find("jvm.memory.used").tags("region", "us-east-1").gauge()).isPresent();
+        registry.mustFind("jvm.memory.used").tags("region", "us-east-1").gauge();
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")

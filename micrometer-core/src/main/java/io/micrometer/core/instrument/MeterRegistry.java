@@ -258,9 +258,11 @@ public abstract class MeterRegistry {
     public class Search {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
+        private final boolean throwExceptionIfNotFound;
 
-        Search(String name) {
+        Search(String name, boolean throwExceptionIfNotFound) {
             this.name = name;
+            this.throwExceptionIfNotFound = throwExceptionIfNotFound;
         }
 
         public Search tags(Iterable<Tag> tags) {
@@ -275,44 +277,59 @@ public abstract class MeterRegistry {
             return tags(zip(tags));
         }
 
-        public Optional<Timer> timer() {
-            return findAny(Timer.class);
+        public Timer timer() {
+            return findOne(Timer.class);
         }
 
-        public Optional<Counter> counter() {
-            return findAny(Counter.class);
+        public Counter counter() {
+            return findOne(Counter.class);
         }
 
-        public Optional<Gauge> gauge() {
-            return findAny(Gauge.class);
+        public Gauge gauge() {
+            return findOne(Gauge.class);
         }
 
-        public Optional<FunctionCounter> functionCounter() {
-            return findAny(FunctionCounter.class);
+        public FunctionCounter functionCounter() {
+            return findOne(FunctionCounter.class);
         }
 
-        public Optional<TimeGauge> timeGauge() {
-            return findAny(TimeGauge.class);
+        public TimeGauge timeGauge() {
+            return findOne(TimeGauge.class);
         }
 
-        public Optional<FunctionTimer> functionTimer() {
-            return findAny(FunctionTimer.class);
+        public FunctionTimer functionTimer() {
+            return findOne(FunctionTimer.class);
         }
 
-        public Optional<DistributionSummary> summary() {
-            return findAny(DistributionSummary.class);
+        public DistributionSummary summary() {
+            return findOne(DistributionSummary.class);
         }
 
-        public Optional<LongTaskTimer> longTaskTimer() {
-            return findAny(LongTaskTimer.class);
+        public LongTaskTimer longTaskTimer() {
+            return findOne(LongTaskTimer.class);
         }
 
-        private <T> Optional<T> findAny(Class<T> clazz) {
-            return meters()
+        private <T> T findOne(Class<T> clazz) {
+            Optional<T> meter = meters()
                 .stream()
-                .filter(m -> clazz.isInstance(m))
+                .filter(clazz::isInstance)
                 .findAny()
                 .map(clazz::cast);
+
+            if(meter.isPresent()) {
+                return meter.get();
+            }
+
+            String tagDetail = "";
+            if (!tags.isEmpty()) {
+                tagDetail = " with Tags:[" + tags.stream().map(t -> t.getKey()+":"+t.getValue()).collect( Collectors.joining( "," ) ) + "]";
+            }
+
+            if(throwExceptionIfNotFound) {
+                throw new AssertionError("Unable to locate a meter named '"+name+"'"+tagDetail+" of type "+clazz.getCanonicalName());
+            } else {
+                return null;
+            }
         }
 
         public Optional<Meter> meter() {
@@ -337,7 +354,11 @@ public abstract class MeterRegistry {
     }
 
     public Search find(String name) {
-        return new Search(name);
+        return new Search(name, false);
+    }
+
+    public Search mustFind(String name) {
+        return new Search(name, true);
     }
 
     /**

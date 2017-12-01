@@ -15,8 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -59,7 +57,7 @@ class JettyStatisticsMetricsTest {
 
         handler.handle("/testUrl", baseReq, new MockHttpServletRequest(), new MockHttpServletResponse());
 
-        assertThat(registry.find("jetty.requests").functionTimer().map(FunctionTimer::count)).hasValue(1L);
-        assertThat(registry.find("jetty.responses.size").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(772.0);
+        assertThat(registry.mustFind("jetty.requests").functionTimer().count()).isEqualTo(1L);
+        assertThat(registry.mustFind("jetty.responses.size").functionCounter().count()).isEqualTo(772.0);
     }
 }

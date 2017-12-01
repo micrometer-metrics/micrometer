@@ -35,8 +35,7 @@ interface GaugeTest {
         AtomicInteger n = registry.gauge("my.gauge", new AtomicInteger(0));
         n.set(1);
 
-        Gauge g = registry.find("my.gauge").gauge().orElse(null);
-        assertNotNull(g);
+        Gauge g = registry.mustFind("my.gauge").gauge();
         assertThat(g.value()).isEqualTo(1);
 
         n.set(2);
@@ -49,8 +48,7 @@ interface GaugeTest {
         List<String> list = registry.gauge("my.gauge", emptyList(), new ArrayList<>(), List::size);
         list.addAll(Arrays.asList("a", "b"));
 
-        Gauge g = registry.find("my.gauge").gauge().orElse(null);
-        assertNotNull(g);
+        Gauge g = registry.mustFind("my.gauge").gauge();
         assertThat(g.value()).isEqualTo(2);
     }
 
@@ -60,8 +58,7 @@ interface GaugeTest {
         List<String> list = registry.gaugeCollectionSize("my.gauge", emptyList(), new ArrayList<>());
         list.addAll(Arrays.asList("a", "b"));
 
-        Gauge g = registry.find("my.gauge").gauge().orElse(null);
-        assertNotNull(g);
+        Gauge g = registry.mustFind("my.gauge").gauge();
         assertThat(g.value()).isEqualTo(2);
     }
 
@@ -71,8 +68,7 @@ interface GaugeTest {
         Map<String, Integer> map = registry.gaugeMapSize("my.gauge", emptyList(), new HashMap<>());
         map.put("a", 1);
 
-        Gauge g = registry.find("my.gauge").gauge().orElse(null);
-        assertNotNull(g);
+        Gauge g = registry.mustFind("my.gauge").gauge();
         assertThat(g.value()).isEqualTo(1);
     }
 
@@ -80,6 +76,6 @@ interface GaugeTest {
     @DisplayName("gauges that reference an object that is garbage collected report NaN")
     default void garbageCollectedSourceObject(MeterRegistry registry) {
         registry.gauge("my.gauge", emptyList(), (Map) null, Map::size);
-        assertThat(registry.find("my.gauge").gauge().map(Gauge::value)).hasValue(0.0);
+        assertThat(registry.mustFind("my.gauge").gauge().value()).matches(val -> Double.isNaN(val) || val == 0.0);
     }
 }

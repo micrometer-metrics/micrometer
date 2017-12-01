@@ -63,7 +63,7 @@ public class MetricsRestTemplateCustomizerTest {
 
         assertThat(registry.find("http.client.requests")
             .tags("method", "GET", "uri", "/test/{id}", "status", "200")
-            .timer().map(Timer::count)).hasValue(1L);
+            .timer().count()).isEqualTo(1L);
 
         assertThat(result).isEqualTo("OK");
 

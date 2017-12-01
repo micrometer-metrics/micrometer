@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.system;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import net.sf.ehcache.search.expression.IsNull;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -27,11 +28,12 @@ class ProcessorMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         new ProcessorMetrics().bindTo(registry);
 
-        assertThat(registry.find("system.cpu.count").gauge())
-                .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
-        if (!System.getProperty("os.name").toLowerCase().contains("win")) {   // Not present on Windows
+        assertThat(registry.mustFind("system.cpu.count").gauge().value()).isGreaterThan(0);
+        if (System.getProperty("os.name").toLowerCase().contains("win")) {
             assertThat(registry.find("system.load.average.1m").gauge())
-                    .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
+                .describedAs("Not present on windows").isNull();
+        } else {
+            assertThat(registry.mustFind("system.load.average.1m").gauge().value()).isGreaterThan(0);
         }
     }
 }

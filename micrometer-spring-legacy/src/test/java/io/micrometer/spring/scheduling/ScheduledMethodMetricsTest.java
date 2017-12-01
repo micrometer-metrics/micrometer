@@ -60,16 +60,16 @@ public class ScheduledMethodMetricsTest {
         shortBeepsExecuted.await();
         while(scheduler.getActiveCount() > 0) {}
 
-        assertThat(registry.find("beeper").timer().map(Timer::count)).hasValue(1L);
-        assertThat(registry.find("beeper").tags("percentile", "50").gauge()).isNotEmpty();
-        assertThat(registry.find("beeper").tags("percentile", "95").gauge()).isNotEmpty();
+        assertThat(registry.mustFind("beeper").timer().count()).isEqualTo(1L);
+        registry.mustFind("beeper").tags("percentile", "50").gauge();
+        registry.mustFind("beeper").tags("percentile", "95").gauge();
     }
 
     @Test
     public void longTasksAreInstrumented() throws InterruptedException {
         longTaskStarted.await();
 
-        assertThat(registry.find("long.beep").longTaskTimer().map(LongTaskTimer::activeTasks)).hasValue(1);
+        assertThat(registry.mustFind("long.beep").longTaskTimer().activeTasks()).isEqualTo(1);
 
         // make sure longBeep continues running until we have a chance to observe it in the active state
         longTaskShouldComplete.countDown();
@@ -78,7 +78,7 @@ public class ScheduledMethodMetricsTest {
 
         Thread.sleep(10);
 
-        assertThat(registry.find("long.beep").longTaskTimer().map(LongTaskTimer::activeTasks)).hasValue(0);
+        assertThat(registry.mustFind("long.beep").longTaskTimer().activeTasks()).isEqualTo(0);
     }
 
     @SpringBootApplication
