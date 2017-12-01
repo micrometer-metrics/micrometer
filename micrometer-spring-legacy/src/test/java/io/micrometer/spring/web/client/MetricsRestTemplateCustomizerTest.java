@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.Test;
@@ -62,7 +63,7 @@ public class MetricsRestTemplateCustomizerTest {
 
         assertThat(registry.find("http.client.requests")
             .tags("method", "GET", "uri", "/test/{id}", "status", "200")
-            .value(Statistic.Count, 1.0).timer()).isPresent();
+            .timer().map(Timer::count)).hasValue(1L);
 
         assertThat(result).isEqualTo("OK");
 

@@ -16,10 +16,10 @@
 package io.micrometer.spring.web.servlet;
 
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.config.MeterFilter;
-import io.micrometer.core.instrument.config.MeterFilterReply;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
@@ -103,7 +103,7 @@ public class MetricsFilterTest {
 
         assertThat(this.registry.find("http.server.requests")
             .tags("status", "200", "uri", "/api/c1/{id}", "public", "true")
-            .value(Statistic.Count, 1.0).timer()).isPresent();
+            .timer().map(Timer::count)).hasValue(1L);
     }
 
     @Test
@@ -112,7 +112,7 @@ public class MetricsFilterTest {
 
         assertThat(this.registry.find("http.server.requests")
             .tags("status", "200", "uri", "/api/c1/metaTimed/{id}")
-            .value(Statistic.Count, 1.0).timer()).isPresent();
+            .timer().map(Timer::count)).hasValue(1L);
     }
 
     @Test
@@ -128,8 +128,7 @@ public class MetricsFilterTest {
         this.mvc.perform(get("/api/c2/10")).andExpect(status().isOk());
 
         assertThat(this.registry.find("http.server.requests").tags("status", "200")
-            .value(Statistic.Count, 1.0)
-            .timer()).isPresent();
+            .timer().map(Timer::count)).hasValue(1L);
     }
 
     @Test
@@ -137,8 +136,7 @@ public class MetricsFilterTest {
         this.mvc.perform(get("/api/c1/oops")).andExpect(status().is4xxClientError());
 
         assertThat(this.registry.find("http.server.requests").tags("status", "400")
-            .value(Statistic.Count, 1.0)
-            .timer()).isPresent();
+            .timer().map(Timer::count)).hasValue(1L);
     }
 
     @Test
@@ -168,8 +166,8 @@ public class MetricsFilterTest {
             .hasRootCauseInstanceOf(RuntimeException.class);
 
         assertThat(this.registry.find("http.server.requests")
-            .tags("exception", "RuntimeException").value(Statistic.Count, 1.0)
-            .timer()).isPresent();
+            .tags("exception", "RuntimeException")
+            .timer().map(Timer::count)).hasValue(1L);
     }
 
     @Test
@@ -184,7 +182,7 @@ public class MetricsFilterTest {
 
         // while the mapping is running, it contributes to the activeTasks count
         assertThat(this.registry.find("my.long.request").tags("region", "test")
-            .value(Statistic.Count, 1.0).longTaskTimer()).isPresent();
+            .longTaskTimer().map(LongTaskTimer::activeTasks)).hasValue(1);
 
         // once the mapping completes, we can gather information about status, etc.
         asyncLatch.countDown();
@@ -192,7 +190,7 @@ public class MetricsFilterTest {
         this.mvc.perform(asyncDispatch(result)).andExpect(status().isOk());
 
         assertThat(this.registry.find("http.server.requests").tags("status", "200")
-            .value(Statistic.Count, 1.0).timer()).isPresent();
+            .timer().map(Timer::count)).hasValue(1L);
     }
 
     @Test
@@ -200,7 +198,7 @@ public class MetricsFilterTest {
         this.mvc.perform(get("/api/c1/error/10")).andExpect(status().is4xxClientError());
 
         assertThat(this.registry.find("http.server.requests").tags("status", "422")
-            .value(Statistic.Count, 1.0).timer()).isPresent();
+            .timer().map(Timer::count)).hasValue(1L);
     }
 
     @Test
@@ -208,8 +206,8 @@ public class MetricsFilterTest {
         this.mvc.perform(get("/api/c1/regex/.abc")).andExpect(status().isOk());
 
         assertThat(this.registry.find("http.server.requests")
-            .tags("uri", "/api/c1/regex/{id:\\.[a-z]+}").value(Statistic.Count, 1.0)
-            .timer()).isPresent();
+            .tags("uri", "/api/c1/regex/{id:\\.[a-z]+}")
+            .timer().map(Timer::count)).hasValue(1L);
     }
 
     @Test

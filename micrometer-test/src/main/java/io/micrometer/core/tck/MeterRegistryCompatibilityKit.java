@@ -90,9 +90,9 @@ public abstract class MeterRegistryCompatibilityKit {
 
         clock(registry).add(step());
 
-        assertThat(registry.find("counter").value(Count, 1.0).counter()).isPresent();
-        assertThat(registry.find("timer").value(Count, 1.0).timer()).isPresent();
-        assertThat(registry.find("timer").value(Total, 10.0).timer()).isPresent();
+        assertThat(registry.find("counter").counter().map(Counter::count)).hasValue(1.0);
+        assertThat(registry.find("timer").timer().map(Timer::count)).hasValue(1L);
+        assertThat(registry.find("timer").timer().map(ti -> ti.totalTime(TimeUnit.NANOSECONDS))).hasValue(10.0);
     }
 
     @Test

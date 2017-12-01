@@ -80,6 +80,6 @@ interface GaugeTest {
     @DisplayName("gauges that reference an object that is garbage collected report NaN")
     default void garbageCollectedSourceObject(MeterRegistry registry) {
         registry.gauge("my.gauge", emptyList(), (Map) null, Map::size);
-        assertThat(registry.find("my.gauge").value(Statistic.Value, 0).gauge()).isPresent();
+        assertThat(registry.find("my.gauge").gauge().map(Gauge::value)).hasValue(0.0);
     }
 }

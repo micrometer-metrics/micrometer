@@ -16,7 +16,9 @@
 package io.micrometer.spring.scheduling;
 
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -58,7 +60,7 @@ public class ScheduledMethodMetricsTest {
         shortBeepsExecuted.await();
         while(scheduler.getActiveCount() > 0) {}
 
-        assertThat(registry.find("beeper").value(Count, 1.0).timer()).isPresent();
+        assertThat(registry.find("beeper").timer().map(Timer::count)).hasValue(1L);
         assertThat(registry.find("beeper").tags("percentile", "50").gauge()).isNotEmpty();
         assertThat(registry.find("beeper").tags("percentile", "95").gauge()).isNotEmpty();
     }
@@ -67,7 +69,7 @@ public class ScheduledMethodMetricsTest {
     public void longTasksAreInstrumented() throws InterruptedException {
         longTaskStarted.await();
 
-        assertThat(registry.find("long.beep").value(Count, 1.0).longTaskTimer()).isPresent();
+        assertThat(registry.find("long.beep").longTaskTimer().map(LongTaskTimer::activeTasks)).hasValue(1);
 
         // make sure longBeep continues running until we have a chance to observe it in the active state
         longTaskShouldComplete.countDown();
@@ -76,7 +78,7 @@ public class ScheduledMethodMetricsTest {
 
         Thread.sleep(10);
 
-        assertThat(registry.find("long.beep").value(Count, 0.0).longTaskTimer()).isPresent();
+        assertThat(registry.find("long.beep").longTaskTimer().map(LongTaskTimer::activeTasks)).hasValue(0);
     }
 
     @SpringBootApplication

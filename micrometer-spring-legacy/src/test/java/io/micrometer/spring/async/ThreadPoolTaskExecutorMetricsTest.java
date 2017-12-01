@@ -77,12 +77,12 @@ public class ThreadPoolTaskExecutorMetricsTest {
         pool.submit(() -> System.out.println("boop"));
 
         taskStart.await(1, TimeUnit.SECONDS);
-        assertThat(registry.find("beep.pool.queued").tags(userTags).value(Value, 1.0).gauge()).isPresent();
+        assertThat(registry.find("beep.pool.queued").tags(userTags).gauge().map(Gauge::value)).hasValue(1.0);
 
         taskComplete.countDown();
         pool.shutdown();
 
-        assertThat(registry.find("beep.pool").tags(userTags).value(Count, 2.0).timer()).isPresent();
-        assertThat(registry.find("beep.pool.queued").tags(userTags).value(Value, 0.0).gauge()).isPresent();
+        assertThat(registry.find("beep.pool").tags(userTags).timer().map(Timer::count)).hasValue(2L);
+        assertThat(registry.find("beep.pool.queued").tags(userTags).gauge().map(Gauge::value)).hasValue(0.0);
     }
 }

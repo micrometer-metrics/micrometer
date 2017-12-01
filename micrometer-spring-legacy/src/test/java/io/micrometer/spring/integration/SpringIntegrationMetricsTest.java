@@ -15,6 +15,7 @@
  */
 package io.micrometer.spring.integration;
 
+import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Statistic;
@@ -64,7 +65,7 @@ public class SpringIntegrationMetricsTest {
         converter.fahrenheitToCelcius(68.0f);
 
         assertThat(registry.find("spring.integration.channel.sends")
-            .tags("channel", "convert.input").value(Statistic.Count, 1).meter()).isPresent();
+            .tags("channel", "convert.input").functionCounter().map(FunctionCounter::count)).hasValue(1.0);
         assertThat(registry.find("spring.integration.handler.duration.min").meter()).isPresent();
         assertThat(registry.find("spring.integration.sourceNames").meter()).isPresent();
     }

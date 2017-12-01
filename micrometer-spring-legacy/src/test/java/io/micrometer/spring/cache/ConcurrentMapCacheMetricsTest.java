@@ -15,6 +15,7 @@
  */
 package io.micrometer.spring.cache;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -33,7 +34,7 @@ public class ConcurrentMapCacheMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         new ConcurrentMapCacheMetrics(cache, "spring.cache", emptyList()).bindTo(registry);
 
-        assertThat(registry.find("spring.cache.size").tags("name", "a").value(Statistic.Value, 1.0).gauge())
-            .isPresent();
+        assertThat(registry.find("spring.cache.size").tags("name", "a")
+            .gauge().map(Gauge::value)).hasValue(1.0);
     }
 }
