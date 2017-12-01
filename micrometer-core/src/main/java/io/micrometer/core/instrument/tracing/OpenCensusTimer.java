@@ -13,22 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.core.instrument.tracing;
 
-import io.opentracing.ActiveSpan;
-import io.opentracing.Tracer;
+import io.micrometer.core.instrument.HistogramSnapshot;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.opencensus.common.Scope;
+import io.opencensus.trace.AttributeValue;
+import io.opencensus.trace.Tracer;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-public class TracingTimer implements Timer{
+public class OpenCensusTimer implements Timer {
 
-    static Builder builder(String name, Tracer tracer) {
+    public static Builder builder(String name, Tracer tracer) {
         return new Builder(name, tracer);
     }
 
-    static class Builder extends Timer.Builder{
+    public static class Builder extends Timer.Builder{
         private final Tracer tracer;
 
         Builder(String name, Tracer tracer) {
@@ -37,43 +41,43 @@ public class TracingTimer implements Timer{
         }
 
         @Override
-        public Timer register(MeterRegistry registry) {
-            return new TracingTimer(super.register(registry), tracer);
+        public OpenCensusTimer register(MeterRegistry registry) {
+            return new OpenCensusTimer(super.register(registry), tracer);
         }
     }
 
     private final Timer delegate;
     private final Tracer tracer;
 
-    TracingTimer(Timer delegate, Tracer tracer) {
+    OpenCensusTimer(Timer delegate, Tracer tracer) {
         this.delegate = delegate;
         this.tracer = tracer;
     }
 
-    private ActiveSpan createSpan() {
-        Tracer.SpanBuilder spanBuilder = tracer.buildSpan(getId().getName());
-        getId().getTags().forEach(t -> spanBuilder.withTag(t.getKey(), t.getValue()));
-        return spanBuilder.startActive();
+    private Scope createSpan() {
+        Scope spanBuilder = tracer.spanBuilder(getId().getName()).startScopedSpan();
+        getId().getTags().forEach(t -> tracer.getCurrentSpan().putAttribute(t.getKey(), AttributeValue.stringAttributeValue(t.getValue())));
+        return spanBuilder;
     }
 
 
     @Override
     public <T> T record(Supplier<T> f) {
-        try(@SuppressWarnings("unused") ActiveSpan span = createSpan()){
+        try(@SuppressWarnings("unused") Scope span = createSpan()){
             return delegate.record(f);
         }
     }
 
     @Override
     public <T> T recordCallable(Callable<T> f) throws Exception {
-        try(@SuppressWarnings("unused") ActiveSpan span = createSpan()) {
+        try(@SuppressWarnings("unused") Scope span = createSpan()) {
             return delegate.recordCallable(f);
         }
     }
 
     @Override
     public void record(Runnable f) {
-        try(@SuppressWarnings("unused") ActiveSpan span = createSpan()) {
+        try(@SuppressWarnings("unused") Scope span = createSpan()) {
             delegate.record(f);
         }
     }
@@ -81,7 +85,7 @@ public class TracingTimer implements Timer{
     @Override
     public <T> Callable<T> wrap(Callable<T> f) {
         return () -> {
-            try(@SuppressWarnings("unused") ActiveSpan span = createSpan()) {
+            try(@SuppressWarnings("unused") Scope span = createSpan()) {
                 return delegate.wrap(f).call();
             }
         };
@@ -115,6 +119,11 @@ public class TracingTimer implements Timer{
     @Override
     public double histogramCountAtValue(long valueNanos) {
         return delegate.histogramCountAtValue(valueNanos);
+    }
+
+    @Override
+    public HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
+        return delegate.takeSnapshot(supportsAggregablePercentiles);
     }
 
     @Override

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.core.instrument.tracing;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.opentracing.mock.MockSpan;
@@ -26,7 +26,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TracingTimerTest {
+class OpenTracingTimerTest {
 
     private MockTracer tracer;
     private SimpleMeterRegistry registry;
@@ -40,8 +40,8 @@ class TracingTimerTest {
 
     @Test
     void tracingTimer() {
-        TracingTimer.builder("trace.outer.timer", tracer).tags("testTag1","testVal1").register(registry).record(() -> {
-            TracingTimer.builder("trace.inner.timer", tracer).tags("testTag2","testVal2").register(registry).record(() -> {
+        OpenTracingTimer.builder("trace.outer.timer", tracer).tags("testTag1","testVal1").register(registry).record(() -> {
+            OpenTracingTimer.builder("trace.inner.timer", tracer).tags("testTag2","testVal2").register(registry).record(() -> {
                 //Nothing to do here
             });
         });
@@ -58,8 +58,6 @@ class TracingTimerTest {
         assertThat(outerSpan.operationName()).isEqualTo("trace.outer.timer");
         assertThat(outerSpan.tags()).hasSize(2);
         assertThat(outerSpan.tags().get("testTag1")).isEqualTo("testVal1");
-
-
     }
 
 }
