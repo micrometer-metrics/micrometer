@@ -1,39 +1,35 @@
 package io.micrometer.core.instrument.binder.tomcat;
 
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.jetty.JettyStatisticsMetrics;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.catalina.Context;
-import org.apache.catalina.Manager;
 import org.apache.catalina.Session;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.session.ManagerBase;
 import org.apache.catalina.session.StandardSession;
 import org.apache.catalina.session.TooManyActiveSessionsException;
-import org.eclipse.jetty.server.HttpChannelState;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.server.handler.StatisticsHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.Duration;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import static io.micrometer.core.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -89,5 +85,31 @@ class TomcatMetricsTest {
         assertThat(registry.find("tomcat.sessions.created").tags(tags).functionCounter().map(FunctionCounter::count)).hasValue(3.0);
         assertThat(registry.find("tomcat.sessions.alive.max").tags(tags).gauge().map(Gauge::value).get()).isGreaterThan(1.0);
     }
+
+    @Test
+    void jmxMetric() throws Exception {
+        MBeanServer server = mock(MBeanServer.class);
+        Set<ObjectName> names = new HashSet<>();
+        names.add(new ObjectName("Tomcat:type=GlobalRequestProcessor,name=fake"));
+
+        List<Tag> tags = Tags.zip("metricTag", "val1");
+        new TomcatMetrics(null, tags, Duration.ofHours(10), () -> server).bindTo(registry);
+
+        assertThat(registry.find("tomcat.threads.busy").gauge()).describedAs("Metric isn't registered until jmx values is detected").isNotPresent();
+
+        //'Register' JMX values
+        when(server.queryNames(any(), any())).thenReturn(names);
+        when(server.getAttribute(any(), anyString())).thenReturn(32);
+        when(server.getAttribute(any(), eq("currentThreadCount"))).thenReturn("badInt");
+
+        //Wait for register thread to register
+        Thread.sleep(500);
+
+        //Metric is present and reports a value
+        assertThat(registry.find("tomcat.threads.busy").gauge().map(Gauge::value)).hasValue(32.0);
+        assertThat(registry.find("tomcat.threads.current").gauge().map(Gauge::value))
+            .describedAs("When value is bad, it catches exception and returns 0").hasValue(0.0);
+    }
+
 
 }
