@@ -69,7 +69,7 @@ class PrometheusMeterRegistryTest {
             .register(registry);
         DistributionSummary.builder("ds").publishPercentiles(0.5).register(registry);
 
-        assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndTagKey("timer_duration_seconds", "quantile"));
+        assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndTagKey("timer_seconds", "quantile"));
         assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndTagKey("ds", "quantile"));
     }
 
@@ -113,11 +113,11 @@ class PrometheusMeterRegistryTest {
         LongTaskTimer.builder("long.task.timer").description("my long task timer").register(registry);
 
         assertThat(registry.scrape())
-            .contains("HELP timer_duration_seconds my timer")
+            .contains("HELP timer_seconds my timer")
             .contains("HELP summary my summary")
             .contains("HELP gauge my gauge")
             .contains("HELP counter_total my counter")
-            .contains("HELP long_task_timer_duration_seconds my long task timer");
+            .contains("HELP long_task_timer_seconds my long task timer");
     }
 
     @Issue("#249")
@@ -127,8 +127,8 @@ class PrometheusMeterRegistryTest {
         Timer.builder("t2").publishPercentileHistogram().register(registry);
 
         assertThat(registry.scrape())
-            .contains("# TYPE t1_duration_seconds summary")
-            .contains("# TYPE t2_duration_seconds histogram");
+            .contains("# TYPE t1_seconds summary")
+            .contains("# TYPE t2_seconds histogram");
     }
 
     @Test
@@ -170,7 +170,7 @@ class PrometheusMeterRegistryTest {
         t.record(106, TimeUnit.SECONDS);
 
         assertThat(registry.scrape())
-            .contains("t1_duration_seconds_bucket{le=\"+Inf\",} 1.0");
+            .contains("t1_seconds_bucket{le=\"+Inf\",} 1.0");
     }
 
     @Issue("#265")
@@ -246,13 +246,13 @@ class PrometheusMeterRegistryTest {
         timer.record(1, TimeUnit.SECONDS);
 
         assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0);
-        assertThat(registry.scrape()).contains("my_timer_duration_seconds_max 0.0");
+        assertThat(registry.scrape()).contains("my_timer_seconds_max 0.0");
 
         clock(registry).add(PrometheusConfig.DEFAULT.step());
         assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(1);
         assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(1000);
 
-        assertThat(registry.scrape()).contains("my_timer_duration_seconds_max 1.0");
+        assertThat(registry.scrape()).contains("my_timer_seconds_max 1.0");
     }
 
     @Issue("#61")
