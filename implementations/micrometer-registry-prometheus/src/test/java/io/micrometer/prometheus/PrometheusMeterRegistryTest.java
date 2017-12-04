@@ -25,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -43,11 +44,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class PrometheusMeterRegistryTest {
     private PrometheusMeterRegistry registry;
     private CollectorRegistry prometheusRegistry;
+    private MockClock clock;
 
     @BeforeEach
     void before() {
         prometheusRegistry = new CollectorRegistry();
-        registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry, new MockClock());
+        clock = new MockClock();
+        registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry, clock);
     }
 
     @Test
@@ -167,6 +170,22 @@ class PrometheusMeterRegistryTest {
 
         assertThat(registry.scrape())
             .contains("t1_duration_seconds_bucket{le=\"+Inf\",} 1.0");
+    }
+
+    @Issue("#265")
+    @Test
+    void percentileHistogramsNeverReset() {
+        Timer t = Timer.builder("t1")
+            .publishPercentileHistogram()
+            .histogramExpiry(Duration.ofSeconds(60))
+            .sla(Duration.ofMillis(100))
+            .register(registry);
+
+        t.record(100, TimeUnit.MILLISECONDS);
+        clock.addSeconds(60);
+
+        assertThat(registry.scrape())
+            .contains("t1_duration_seconds_bucket{le=\"0.1\",} 1.0");
     }
 
     @Issue("#247")
