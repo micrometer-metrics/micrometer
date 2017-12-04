@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
+import java.util.Optional;
+
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
@@ -70,5 +72,50 @@ class MeterRegistryTest {
         });
         
         registry.timer("my.timer");
+    }
+
+    @Test
+    void registersCounterWithSingleTag() {
+        Counter counter = registry.counter("my.counter", Tag.of("k1", "v1"));
+
+        assertThat(counter.getId().getTags()).containsExactly(Tag.of("k1", "v1"));
+    }
+
+    @Test
+    void registersTimerWithSingleTag() {
+        Timer timer = registry.timer("my.timer", Tag.of("k1", "v1"));
+
+        assertThat(timer.getId().getTags()).containsExactly(Tag.of("k1", "v1"));
+    }
+
+    @Test
+    void registersSummaryWithSingleTag() {
+        DistributionSummary summary = registry.summary("my.summary", Tag.of("k1", "v1"));
+
+        assertThat(summary.getId().getTags()).containsExactly(Tag.of("k1", "v1"));
+    }
+
+    @Test
+    void registersGaugeWithSingleTag() {
+        registry.gauge("my.gauge", Tag.of("k1", "v1"), 1);
+
+        Optional<Meter.Id> gaugeId = registry.getMeters().stream()
+                                        .map(Meter::getId)
+                                        .filter(id -> id.getName().equals("my.gauge"))
+                                        .findFirst();
+
+        assertThat(gaugeId).hasValueSatisfying(id -> assertThat(id.getTags()).contains(Tag.of("k1", "v1")));
+    }
+
+    @Test
+    void registersGaugeWithFunctionWithSingleTag() {
+        registry.gauge("my.gauge", Tag.of("k1", "v1"), 1, it -> Double.MAX_VALUE);
+
+        Optional<Meter.Id> gaugeId = registry.getMeters().stream()
+                                             .map(Meter::getId)
+                                             .filter(id -> id.getName().equals("my.gauge"))
+                                             .findFirst();
+
+        assertThat(gaugeId).hasValueSatisfying(id -> assertThat(id.getTags()).contains(Tag.of("k1", "v1")));
     }
 }
