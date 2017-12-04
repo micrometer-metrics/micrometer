@@ -186,7 +186,7 @@ class PrometheusMeterRegistryTest {
         clock.addSeconds(60);
 
         assertThat(registry.scrape())
-            .contains("t1_duration_seconds_bucket{le=\"0.1\",} 1.0");
+            .contains("t1_seconds_bucket{le=\"0.1\",} 1.0");
     }
 
     @Issue("#265")
