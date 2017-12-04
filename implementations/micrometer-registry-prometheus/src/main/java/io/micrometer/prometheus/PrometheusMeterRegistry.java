@@ -37,6 +37,7 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
@@ -335,7 +336,21 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private MicrometerCollector collectorByName(Meter.Id id, Collector.Type type) {
-        return collectorMap.computeIfAbsent(getConventionName(id),
-            n -> new MicrometerCollector(id, type, config().namingConvention(), prometheusConfig).register(registry));
+        return collectorMap.compute(getConventionName(id), (name, existingCollector) -> {
+            if(existingCollector == null) {
+                return new MicrometerCollector(id, type, config().namingConvention(), prometheusConfig).register(registry);
+            }
+
+            List<String> tagKeys = getConventionTags(id).stream().map(Tag::getKey).collect(toList());
+            if(existingCollector.getTagKeys().size() == tagKeys.size() &&
+                existingCollector.getTagKeys().containsAll(tagKeys)) {
+                return existingCollector;
+            }
+
+            throw new IllegalArgumentException("Prometheus requires that all meters with the same name have the same" +
+                " set of tag keys. There is already an existing meter containing tag keys [" +
+                existingCollector.getTagKeys().stream().collect(joining(", ")) + "]. The meter you are attempting to register" +
+                " has keys [" + tagKeys.stream().collect(joining(", ")) + "].");
+        });
     }
 }

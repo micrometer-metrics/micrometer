@@ -58,6 +58,10 @@ class MicrometerCollector extends Collector {
         this.type = type;
     }
 
+    public List<String> getTagKeys() {
+        return tagKeys;
+    }
+
     @Override
     public List<MetricFamilySamples> collect() {
         String help = config.descriptions() ? id.getDescription() : " ";
