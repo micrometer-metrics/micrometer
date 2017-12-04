@@ -29,7 +29,7 @@ import java.time.Duration;
 public abstract class PropertyMeterFilter implements MeterFilter {
     public abstract <V> V get(String k, Class<V> vClass);
 
-    private <V> V getMostSpecific(String k, String suffix, Class<V> vClass) {
+    protected <V> V getMostSpecific(String k, String suffix, Class<V> vClass) {
         V v = get(k.isEmpty() ? suffix : k + "." + suffix, vClass);
         if(v != null)
             return v;
