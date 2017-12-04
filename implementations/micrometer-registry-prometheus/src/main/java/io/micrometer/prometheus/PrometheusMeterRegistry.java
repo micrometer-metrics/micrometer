@@ -17,6 +17,7 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.internal.DefaultFunctionCounter;
 import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
@@ -240,10 +241,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
         MicrometerCollector collector = collectorByName(id, Collector.Type.SUMMARY);
-        FunctionTimer ft = new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits,
-            TimeUnit.SECONDS);
+        FunctionTimer ft = new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
         List<String> tagValues = tagValues(id);
 
         collector.add((conventionName, tagKeys) -> Stream.of(
@@ -252,6 +252,19 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         ));
 
         return ft;
+    }
+
+    @Override
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+        MicrometerCollector collector = collectorByName(id, Collector.Type.COUNTER);
+        FunctionCounter fc = new DefaultFunctionCounter<>(id, obj, f);
+        List<String> tagValues = tagValues(id);
+
+        collector.add((conventionName, tagKeys) -> Stream.of(
+            new Collector.MetricFamilySamples.Sample(conventionName, tagKeys, tagValues, fc.count())
+        ));
+
+        return fc;
     }
 
     @Override

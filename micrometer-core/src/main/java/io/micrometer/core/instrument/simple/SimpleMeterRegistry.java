@@ -20,6 +20,8 @@ import io.micrometer.core.instrument.cumulative.CumulativeCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
 import io.micrometer.core.instrument.cumulative.CumulativeTimer;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.internal.DefaultFunctionCounter;
+import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.step.StepCounter;
@@ -30,6 +32,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import java.text.DecimalFormat;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 /**
  * A minimal meter registry implementation primarily used for tests.
@@ -138,6 +141,16 @@ public class SimpleMeterRegistry extends MeterRegistry {
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
         return new DefaultLongTaskTimer(id, clock);
+    }
+
+    @Override
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+        return new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
+    }
+
+    @Override
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+        return new DefaultFunctionCounter<>(id, obj, f);
     }
 
     @Override

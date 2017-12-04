@@ -20,11 +20,11 @@ import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.internal.DefaultFunctionCounter;
 import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.noop.*;
 import io.micrometer.core.instrument.util.TimeUtils;
 
-import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
@@ -100,11 +100,9 @@ public abstract class MeterRegistry {
         };
     }
 
-    protected <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
-        FunctionTimer ft = new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
-        newMeter(id, Meter.Type.Timer, ft.measure());
-        return ft;
-    }
+    protected abstract <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits);
+
+    protected abstract <T> FunctionCounter newFunctionCounter(Id id, T obj, ToDoubleFunction<T> f);
 
     protected List<Tag> getConventionTags(Meter.Id id) {
         return id.getConventionTags(config().namingConvention());
@@ -432,25 +430,8 @@ public abstract class MeterRegistry {
         }
 
         <T> FunctionCounter counter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
-            WeakReference<T> ref = new WeakReference<>(obj);
-            return registerMeterIfNecessary(FunctionCounter.class, id, id2 -> {
-                FunctionCounter fc = new FunctionCounter() {
-                    private volatile double last;
-
-                    @Override
-                    public double count() {
-                        T obj2 = ref.get();
-                        return obj2 != null ? (last = f.applyAsDouble(obj2)) : last;
-                    }
-
-                    @Override
-                    public Id getId() {
-                        return id2;
-                    }
-                };
-                newMeter(id2, Meter.Type.Counter, fc.measure());
-                return fc;
-            }, NoopFunctionCounter::new);
+            return registerMeterIfNecessary(FunctionCounter.class, id, id2 -> newFunctionCounter(id2, obj, f),
+                NoopFunctionCounter::new);
         }
 
         /**

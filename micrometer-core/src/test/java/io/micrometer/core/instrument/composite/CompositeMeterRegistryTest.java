@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.composite;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -155,5 +156,16 @@ class CompositeMeterRegistryTest {
                         assertThat(ms.getValue()).isEqualTo(1e-3);
                     })
             );
+    }
+
+    @Issue("#255")
+    @Test
+    void castingFunctionCounter() {
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        CompositeMeterRegistry compositeMeterRegistry = new CompositeMeterRegistry();
+        FunctionCounter.builder("foo", 1L, x -> x)
+            .register(compositeMeterRegistry);
+
+        compositeMeterRegistry.add(registry);
     }
 }

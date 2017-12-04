@@ -20,23 +20,24 @@ import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DropwizardMeterRegistryTest {
+    private final MockClock clock = new MockClock();
+    private final DropwizardMeterRegistry registry = new DropwizardMeterRegistry(HierarchicalNameMapper.DEFAULT, clock);
+
     @Test
     void gaugeOnNullValue() {
-        MeterRegistry registry = new DropwizardMeterRegistry(HierarchicalNameMapper.DEFAULT, Clock.SYSTEM);
         registry.gauge("gauge", emptyList(), null, obj -> 1.0);
-
         assertThat(registry.find("gauge").gauge())
             .hasValueSatisfying(g -> assertThat(g.value()).isEqualTo(Double.NaN));
     }
 
     @Test
     void customMeasurementsThatDifferOnlyInTagValue() {
-        MeterRegistry registry = new DropwizardMeterRegistry(HierarchicalNameMapper.DEFAULT, Clock.SYSTEM);
         Meter.builder("my.custom", Meter.Type.Gauge, Arrays.asList(
             new Measurement(() -> 1.0, Statistic.Count),
             new Measurement(() -> 2.0, Statistic.Total)

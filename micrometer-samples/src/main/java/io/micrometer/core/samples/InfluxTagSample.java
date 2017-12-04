@@ -15,38 +15,20 @@
  */
 package io.micrometer.core.samples;
 
-import cern.jet.random.Normal;
-import cern.jet.random.engine.MersenneTwister64;
-import cern.jet.random.engine.RandomEngine;
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.samples.utils.SampleRegistries;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.util.Collections.emptyList;
-
-public class CounterSample {
+public class InfluxTagSample {
     public static void main(String[] args) {
-        MeterRegistry registry = SampleRegistries.jmx();
-        Counter counter = registry.counter("counter");
+        MeterRegistry registry = SampleRegistries.telegrafStatsd();
+        Counter helloCounter = registry.counter("http.requests", "uri1", "hello1");
 
-        AtomicInteger n = new AtomicInteger(0);
-        registry.more().counter("fcounter", emptyList(), n);
-
-        RandomEngine r = new MersenneTwister64(0);
-        Normal dist = new Normal(0, 1, r);
-
-        Flux.interval(Duration.ofMillis(10))
-                .doOnEach(d -> {
-                    if (dist.nextDouble() + 0.1 > 0) {
-                        counter.increment();
-                        n.incrementAndGet();
-                    }
-                })
-                .blockLast();
+        Flux.interval(Duration.ofMillis(100))
+            .doOnEach(n -> helloCounter.increment())
+            .blockLast();
     }
 }

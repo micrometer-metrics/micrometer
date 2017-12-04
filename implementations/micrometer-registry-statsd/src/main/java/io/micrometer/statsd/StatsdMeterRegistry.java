@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 import static java.util.Optional.ofNullable;
 
@@ -191,6 +192,21 @@ public class StatsdMeterRegistry extends MeterRegistry {
         }
 
         return summary;
+    }
+
+    @Override
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+        StatsdFunctionCounter fc = new StatsdFunctionCounter<>(id, obj, f, lineBuilder(id), publisher);
+        pollableMeters.add(fc);
+        return fc;
+    }
+
+    @Override
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+        StatsdFunctionTimer ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits,
+            getBaseTimeUnit(), lineBuilder(id), publisher);
+        pollableMeters.add(ft);
+        return ft;
     }
 
     @Override

@@ -89,10 +89,17 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> Meter newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
         CompositeFunctionTimer<T> ft = new CompositeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
         registries.forEach(ft::add);
         return ft;
+    }
+
+    @Override
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+        CompositeFunctionCounter<T> fc = new CompositeFunctionCounter<>(id, obj, f);
+        registries.forEach(fc::add);
+        return fc;
     }
 
     @Override

@@ -17,6 +17,8 @@ package io.micrometer.influx;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.internal.DefaultFunctionCounter;
+import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import org.slf4j.Logger;
@@ -29,6 +31,8 @@ import java.text.DecimalFormat;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
@@ -262,6 +266,16 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             + tags + ",metric_type=" + metricType + " "
             + fields.map(Field::toString).collect(joining(","))
             + " " + time;
+    }
+
+    @Override
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+        return new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
+    }
+
+    @Override
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+        return new DefaultFunctionCounter<>(id, obj, f);
     }
 
     @Override

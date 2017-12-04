@@ -19,6 +19,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.cache.GuavaCacheMetrics;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.samples.utils.SampleRegistries;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
@@ -42,8 +43,10 @@ public class CacheSample {
 
     public static void main(String[] args) {
         MeterRegistry registry = SampleRegistries.prometheus();
+        CompositeMeterRegistry composite = new CompositeMeterRegistry();
 
-        GuavaCacheMetrics.monitor(registry, guavaCache, "book.guava");
+        GuavaCacheMetrics.monitor(composite, guavaCache, "book.guava");
+        composite.add(registry);
 
         // read all of Frankenstein
         HttpClient.create("www.gutenberg.org")

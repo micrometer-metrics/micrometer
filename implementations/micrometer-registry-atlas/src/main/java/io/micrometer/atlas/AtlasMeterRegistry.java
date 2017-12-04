@@ -25,12 +25,15 @@ import com.netflix.spectator.atlas.AtlasRegistry;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.internal.DefaultFunctionCounter;
+import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -143,6 +146,20 @@ public class AtlasMeterRegistry extends MeterRegistry {
         com.netflix.spectator.api.Gauge gauge = new SpectatorToDoubleGauge<>(registry.clock(), spectatorId(id), obj, f);
         registry.register(gauge);
         return new SpectatorGauge(id, gauge);
+    }
+
+    @Override
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+        FunctionCounter fc = new DefaultFunctionCounter<>(id, obj, f);
+        newMeter(id, Meter.Type.Counter, fc.measure());
+        return fc;
+    }
+
+    @Override
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+        FunctionTimer ft = new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
+        newMeter(id, Meter.Type.Timer, ft.measure());
+        return ft;
     }
 
     @Override

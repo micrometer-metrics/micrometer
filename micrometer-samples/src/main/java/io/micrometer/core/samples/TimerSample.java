@@ -18,6 +18,7 @@ package io.micrometer.core.samples;
 import cern.jet.random.Normal;
 import cern.jet.random.engine.MersenneTwister64;
 import cern.jet.random.engine.RandomEngine;
+import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.samples.utils.SampleRegistries;
@@ -29,9 +30,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TimerSample {
     public static void main(String[] args) {
-        MeterRegistry registry = SampleRegistries.influx();
+        MeterRegistry registry = SampleRegistries.datadogStatsd();
         Timer timer = Timer.builder("timer")
             .publishPercentiles(0.5, 0.95)
+            .register(registry);
+
+        FunctionTimer.builder("ftimer", timer, Timer::count, t -> t.totalTime(TimeUnit.SECONDS), TimeUnit.SECONDS)
             .register(registry);
 
         RandomEngine r = new MersenneTwister64(0);

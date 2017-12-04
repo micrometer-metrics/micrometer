@@ -27,6 +27,7 @@ import java.lang.ref.WeakReference;
 import java.text.DecimalFormat;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 /**
  * @author Jon Schneider
@@ -35,9 +36,11 @@ public class DropwizardMeterRegistry extends MeterRegistry {
     private final MetricRegistry registry;
     private final HierarchicalNameMapper nameMapper;
     private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
+    private final DropwizardClock dropwizardClock;
 
     public DropwizardMeterRegistry(HierarchicalNameMapper nameMapper, Clock clock) {
         super(clock);
+        this.dropwizardClock = new DropwizardClock(clock);
         this.registry = new MetricRegistry();
         this.nameMapper = nameMapper;
         this.config().namingConvention(NamingConvention.camelCase);
@@ -49,7 +52,9 @@ public class DropwizardMeterRegistry extends MeterRegistry {
 
     @Override
     protected Counter newCounter(Meter.Id id) {
-        return new DropwizardCounter(id, registry.meter(hierarchicalName(id)));
+        com.codahale.metrics.Meter meter = new com.codahale.metrics.Meter(dropwizardClock);
+        registry.register(hierarchicalName(id), meter);
+        return new DropwizardCounter(id, meter);
     }
 
     @Override
@@ -72,7 +77,7 @@ public class DropwizardMeterRegistry extends MeterRegistry {
                 percentile, p -> timer.percentile(p, getBaseTimeUnit()));
         }
 
-        if(histogramConfig.isPublishingHistogram()) {
+        if (histogramConfig.isPublishingHistogram()) {
             for (Long bucket : histogramConfig.getHistogramBuckets(false)) {
                 more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket", Long.toString(bucket)),
                     timer, t -> t.histogramCountAtValue(bucket));
@@ -91,7 +96,7 @@ public class DropwizardMeterRegistry extends MeterRegistry {
                 percentile, summary::percentile);
         }
 
-        if(histogramConfig.isPublishingHistogram()) {
+        if (histogramConfig.isPublishingHistogram()) {
             for (Long bucket : histogramConfig.getHistogramBuckets(false)) {
                 more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket", Long.toString(bucket)),
                     summary, s -> s.histogramCountAtValue(bucket));
@@ -107,6 +112,21 @@ public class DropwizardMeterRegistry extends MeterRegistry {
         registry.register(hierarchicalName(id.withTag(Statistic.ActiveTasks)), (Gauge<Integer>) ltt::activeTasks);
         registry.register(hierarchicalName(id.withTag(Statistic.Duration)), (Gauge<Double>) () -> ltt.duration(TimeUnit.NANOSECONDS));
         return ltt;
+    }
+
+    @Override
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+        DropwizardFunctionTimer ft = new DropwizardFunctionTimer<>(id, clock, obj, countFunction, totalTimeFunction,
+            totalTimeFunctionUnits, getBaseTimeUnit());
+        registry.register(hierarchicalName(id), ft.getDropwizardMeter());
+        return ft;
+    }
+
+    @Override
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+        DropwizardFunctionCounter<T> fc = new DropwizardFunctionCounter<>(id, clock, obj, f);
+        registry.register(hierarchicalName(id), fc.getDropwizardMeter());
+        return fc;
     }
 
     @Override

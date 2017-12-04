@@ -31,7 +31,7 @@ public class StatsdGauge<T> extends AbstractMeter implements Gauge, StatsdPollab
 
     private final WeakReference<T> ref;
     private final ToDoubleFunction<T> value;
-    private final AtomicReference<Double> lastValue = new AtomicReference<>(Double.NEGATIVE_INFINITY);
+    private final AtomicReference<Double> lastValue = new AtomicReference<>(Double.NaN);
 
     StatsdGauge(Meter.Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher, T obj, ToDoubleFunction<T> value) {
         super(id);
@@ -50,9 +50,9 @@ public class StatsdGauge<T> extends AbstractMeter implements Gauge, StatsdPollab
     @Override
     public void poll() {
         double val = value();
-//        if(lastValue.getAndSet(val) != val) {
+        if(lastValue.getAndSet(val) != val) {
             publisher.onNext(lineBuilder.gauge(val));
-//        }
+        }
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
