@@ -345,13 +345,6 @@ public abstract class MeterRegistry {
 
     /**
      * Tracks a monotonically increasing value.
-     */
-    public Counter counter(String name, Tag tag) {
-        return counter(name, Collections.singletonList(tag));
-    }
-
-    /**
-     * Tracks a monotonically increasing value.
      *
      * @param name The base metric name
      * @param tags MUST be an even number of arguments representing key/value pairs of tags.
@@ -369,13 +362,6 @@ public abstract class MeterRegistry {
 
     /**
      * Measures the sample distribution of events.
-     */
-    public DistributionSummary summary(String name, Tag tag) {
-        return summary(name, Arrays.asList(tag));
-    }
-
-    /**
-     * Measures the sample distribution of events.
      *
      * @param name The base metric name
      * @param tags MUST be an even number of arguments representing key/value pairs of tags.
@@ -389,13 +375,6 @@ public abstract class MeterRegistry {
      */
     public Timer timer(String name, Iterable<Tag> tags) {
         return Timer.builder(name).tags(tags).register(this);
-    }
-
-    /**
-     * Measures the time taken for short tasks and the count of these tasks.
-     */
-    public Timer timer(String name, Tag tag) {
-        return timer(name, Collections.singletonList(tag));
     }
 
     /**
@@ -520,28 +499,6 @@ public abstract class MeterRegistry {
     }
 
     /**
-     * Register a gauge that reports the value of the object after the function
-     * {@code f} is applied. The registration will keep a weak reference to the object so it will
-     * not prevent garbage collection. Applying {@code f} on the object should be thread safe.
-     * <p>
-     * If multiple gauges are registered with the same id, then the values will be aggregated and
-     * the sum will be reported. For example, registering multiple gauges for active threads in
-     * a thread pool with the same id would produce a value that is the overall number
-     * of active threads. For other behaviors, manage it on the user side and avoid multiple
-     * registrations.
-     *
-     * @param name Name of the gauge being registered.
-     * @param tag  Dimension for breaking down the name.
-     * @param obj  Object used to compute a value.
-     * @param f    Function that is applied on the value for the number.
-     * @return The number that was passed in so the registration can be done as part of an assignment
-     * statement.
-     */
-    public <T> T gauge(String name, Tag tag, T obj, ToDoubleFunction<T> f) {
-        return gauge(name, Collections.singletonList(tag), obj, f);
-    }
-
-    /**
      * Register a gauge that reports the value of the {@link Number}.
      *
      * @param name   Name of the gauge being registered.
@@ -552,19 +509,6 @@ public abstract class MeterRegistry {
      */
     public <T extends Number> T gauge(String name, Iterable<Tag> tags, T number) {
         return gauge(name, tags, number, Number::doubleValue);
-    }
-
-    /**
-     * Register a gauge that reports the value of the {@link Number}.
-     *
-     * @param name   Name of the gauge being registered.
-     * @param tag    Dimension for breaking down the name.
-     * @param number Thread-safe implementation of {@link Number} used to access the value.
-     * @return The number that was passed in so the registration can be done as part of an assignment
-     * statement.
-     */
-    public <T extends Number> T gauge(String name, Tag tag, T number) {
-        return gauge(name, Collections.singletonList(tag), number);
     }
 
     /**
