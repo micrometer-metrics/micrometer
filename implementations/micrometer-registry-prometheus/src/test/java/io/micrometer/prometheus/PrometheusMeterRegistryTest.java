@@ -174,7 +174,7 @@ class PrometheusMeterRegistryTest {
 
     @Issue("#265")
     @Test
-    void percentileHistogramsNeverReset() {
+    void percentileHistogramsNeverResetForTimers() {
         Timer t = Timer.builder("t1")
             .publishPercentileHistogram()
             .histogramExpiry(Duration.ofSeconds(60))
@@ -186,6 +186,22 @@ class PrometheusMeterRegistryTest {
 
         assertThat(registry.scrape())
             .contains("t1_duration_seconds_bucket{le=\"0.1\",} 1.0");
+    }
+
+    @Issue("#265")
+    @Test
+    void percentileHistogramsNeverResetForSummaries() {
+        DistributionSummary s = DistributionSummary.builder("s1")
+            .publishPercentileHistogram()
+            .histogramExpiry(Duration.ofSeconds(60))
+            .sla(100)
+            .register(registry);
+
+        s.record(100);
+        clock.addSeconds(60);
+
+        assertThat(registry.scrape())
+            .contains("s1_bucket{le=\"100.0\",} 1.0");
     }
 
     @Issue("#247")

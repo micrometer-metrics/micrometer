@@ -96,9 +96,10 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         collector.add((conventionName, tagKeys) -> {
             Stream.Builder<Collector.MetricFamilySamples.Sample> samples = Stream.builder();
 
-            final HistogramSnapshot snapshot = summary.takeSnapshot(true);
+            final HistogramSnapshot snapshot = summary.takeSnapshot(false);
             final ValueAtPercentile[] percentileValues = snapshot.percentileValues();
-            final CountAtValue[] histogramCounts = snapshot.histogramCounts();
+            final CountAtValue[] histogramCounts = summary.percentileBuckets();
+
             if (percentileValues.length > 0) {
                 List<String> quantileKeys = new LinkedList<>(tagKeys);
                 quantileKeys.add("quantile");
@@ -158,9 +159,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         collector.add((conventionName, tagKeys) -> {
             Stream.Builder<Collector.MetricFamilySamples.Sample> samples = Stream.builder();
 
-            final HistogramSnapshot snapshot = timer.takeSnapshot(true);
+            final HistogramSnapshot snapshot = timer.takeSnapshot(false);
             final ValueAtPercentile[] percentileValues = snapshot.percentileValues();
-            final CountAtValue[] histogramCounts = snapshot.histogramCounts();
+            final CountAtValue[] histogramCounts = timer.percentileBuckets();
 
             if (percentileValues.length > 0) {
                 List<String> quantileKeys = new LinkedList<>(tagKeys);

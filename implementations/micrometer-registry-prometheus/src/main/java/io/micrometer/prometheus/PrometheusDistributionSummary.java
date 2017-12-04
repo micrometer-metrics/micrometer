@@ -17,10 +17,13 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.CountAtValue;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.TimeWindowLatencyHistogram;
 import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 
+import java.time.Duration;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -28,10 +31,17 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     private LongAdder count = new LongAdder();
     private DoubleAdder amount = new DoubleAdder();
     private StepDouble max;
+    private final TimeWindowLatencyHistogram percentilesHistogram;
 
     PrometheusDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig, long maxStepMillis) {
         super(id, clock, histogramConfig);
         this.max = new StepDouble(clock, maxStepMillis);
+        this.percentilesHistogram = new TimeWindowLatencyHistogram(clock,
+            HistogramConfig.builder()
+                .histogramExpiry(Duration.ofDays(1825)) // effectively never roll over
+                .histogramBufferLength(1)
+                .build()
+                .merge(histogramConfig));
     }
 
     @Override
@@ -39,6 +49,7 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         count.increment();
         this.amount.add(amount);
         max.getCurrent().add(Math.max(amount - max.getCurrent().doubleValue(), 0));
+        percentilesHistogram.recordDouble(amount);
     }
 
     @Override
@@ -65,5 +76,13 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     @Override
     public int hashCode() {
         return MeterEquivalence.hashCode(this);
+    }
+
+    /**
+     * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is based on a
+     * rolling histogram. Prometheus requires a histogram that accumulates values over the lifetime of the app.
+     */
+    public CountAtValue[] percentileBuckets() {
+        return percentilesHistogram.takeSnapshot(0, 0, 0, true).histogramCounts();
     }
 }
