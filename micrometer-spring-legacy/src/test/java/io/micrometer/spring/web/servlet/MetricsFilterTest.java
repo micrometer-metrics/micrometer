@@ -18,8 +18,7 @@ package io.micrometer.spring.web.servlet;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
-import io.micrometer.prometheus.PrometheusConfig;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -64,10 +63,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@TestPropertySource(properties = "security.ignored=/**")
+@TestPropertySource(properties = {
+    "security.ignored=/**",
+    "spring.metrics.prometheus.enabled=true",
+    "spring.metrics.simple.enabled=true"
+})
 public class MetricsFilterTest {
     @Autowired
-    private PrometheusMeterRegistry registry;
+    private SimpleMeterRegistry registry;
 
     @Autowired
     private WebApplicationContext context;
@@ -208,16 +211,20 @@ public class MetricsFilterTest {
     public void recordQuantiles() throws Exception {
         this.mvc.perform(get("/api/c1/percentiles/10")).andExpect(status().isOk());
 
-        assertThat(this.registry.scrape()).contains("quantile=\"0.5\"");
-        assertThat(this.registry.scrape()).contains("quantile=\"0.95\"");
+        assertThat(this.mvc.perform(get("/prometheus")).andReturn().getResponse()
+            .getContentAsString()).contains("quantile=\"0.5\"");
+        assertThat(this.mvc.perform(get("/prometheus")).andReturn().getResponse()
+            .getContentAsString()).contains("quantile=\"0.95\"");
     }
 
     @Test
     public void recordHistogram() throws Exception {
         this.mvc.perform(get("/api/c1/histogram/10")).andExpect(status().isOk());
 
-        assertThat(this.registry.scrape()).contains("le=\"0.001\"");
-        assertThat(this.registry.scrape()).contains("le=\"30.0\"");
+        assertThat(this.mvc.perform(get("/prometheus")).andReturn().getResponse()
+            .getContentAsString()).contains("le=\"0.001\"");
+        assertThat(this.mvc.perform(get("/prometheus")).andReturn().getResponse()
+            .getContentAsString()).contains("le=\"30.0\"");
     }
 
     @Target({ElementType.METHOD})
@@ -231,8 +238,7 @@ public class MetricsFilterTest {
     static class MetricsFilterApp {
         @Bean
         MeterRegistry meterRegistry() {
-            // one of the few registries that support aggregable percentiles
-            return new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+            return new SimpleMeterRegistry();
         }
 
         @Bean

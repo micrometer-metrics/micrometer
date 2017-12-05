@@ -15,12 +15,14 @@
  */
 package io.micrometer.core.instrument.dropwizard;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;

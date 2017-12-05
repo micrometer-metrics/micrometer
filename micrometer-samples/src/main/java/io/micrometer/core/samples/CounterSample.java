@@ -19,7 +19,6 @@ import cern.jet.random.Normal;
 import cern.jet.random.engine.MersenneTwister64;
 import cern.jet.random.engine.RandomEngine;
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.samples.utils.SampleRegistries;
 import reactor.core.publisher.Flux;

@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.TimeWindowLatencyHistogram;
 import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.TimeUtils;
-import org.LatencyUtils.LatencyStats;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;

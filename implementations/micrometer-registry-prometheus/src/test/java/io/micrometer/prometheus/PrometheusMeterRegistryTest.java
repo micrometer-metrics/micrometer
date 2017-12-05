@@ -32,7 +32,6 @@ import java.util.Enumeration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static io.micrometer.core.instrument.Metrics.counter;
 import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;

@@ -86,7 +86,6 @@ public final class WebMvcTags {
         if (!StringUtils.hasText(uri)) {
             uri = "/";
         }
-
         uri = uri.replaceAll("//+", "/").replaceAll("/$", "");
 
         return Tag.of("uri", uri.isEmpty() ? "root" : uri);
