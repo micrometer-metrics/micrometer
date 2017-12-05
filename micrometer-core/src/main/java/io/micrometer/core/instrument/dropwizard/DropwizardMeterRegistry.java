@@ -136,7 +136,7 @@ public class DropwizardMeterRegistry extends MeterRegistry {
 
     @Override
     protected TimeUnit getBaseTimeUnit() {
-        return TimeUnit.NANOSECONDS;
+        return TimeUnit.MILLISECONDS;
     }
 
     private String hierarchicalName(Meter.Id id) {
