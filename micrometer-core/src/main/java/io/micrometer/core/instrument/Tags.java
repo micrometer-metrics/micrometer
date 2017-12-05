@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -24,6 +25,7 @@ import static java.util.stream.StreamSupport.stream;
 
 /**
  * @author Jon Schneider
+ * @author Maciej Walkowiak
  */
 public final class Tags {
     private Tags() {}
@@ -47,5 +49,9 @@ public final class Tags {
 
     public static Iterable<Tag> concat(Iterable<Tag> tags, String... keyValues) {
         return concat(tags, zip(keyValues));
+    }
+
+    public static Iterable<Tag> singletonList(String tagKey, String tagValue) {
+        return Collections.singletonList(Tag.of(tagKey, tagValue));
     }
 }
