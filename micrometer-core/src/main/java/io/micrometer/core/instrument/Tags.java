@@ -51,7 +51,7 @@ public final class Tags {
         return concat(tags, zip(keyValues));
     }
 
-    public static Iterable<Tag> singletonList(String tagKey, String tagValue) {
+    public static Iterable<Tag> of(String tagKey, String tagValue) {
         return Collections.singletonList(Tag.of(tagKey, tagValue));
     }
 }
