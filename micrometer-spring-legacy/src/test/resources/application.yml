@@ -18,7 +18,7 @@
 logging.level.org.springframework.integration.support.MessageBuilder: WARN
 logging.level.org.springframework.boot: INFO
 
-spring.metrics:
+spring.metrics.export:
   atlas.enabled: false
   datadog.enabled: false
   ganglia.enabled: false
