@@ -86,6 +86,11 @@ public interface FunctionTimer extends Meter {
             return this;
         }
 
+        public Builder<T> tag(String key, String value) {
+            tags.add(Tag.of(key, value));
+            return this;
+        }
+
         public Builder<T> description(String description) {
             this.description = description;
             return this;

@@ -91,6 +91,11 @@ public interface DistributionSummary extends Meter {
             return this;
         }
 
+        public Builder tag(String key, String value) {
+            tags.add(Tag.of(key, value));
+            return this;
+        }
+
         public Builder description(String description) {
             this.description = description;
             return this;

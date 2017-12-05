@@ -155,6 +155,11 @@ public interface Timer extends Meter {
             return this;
         }
 
+        public Builder tag(String key, String value) {
+            tags.add(Tag.of(key, value));
+            return this;
+        }
+
         /**
          * Produces an additional time series for each requested percentile. This percentile
          * is computed locally, and so can't be aggregated with percentiles computed across other

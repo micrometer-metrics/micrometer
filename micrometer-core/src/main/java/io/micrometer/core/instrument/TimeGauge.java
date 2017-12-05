@@ -55,16 +55,21 @@ public interface TimeGauge extends Gauge {
          * @param tags Must be an even number of arguments representing key/value pairs of tags.
          * @return
          */
-        public Builder tags(String... tags) {
+        public Builder<T> tags(String... tags) {
             return tags(Tags.zip(tags));
         }
 
-        public Builder tags(Iterable<Tag> tags) {
+        public Builder<T> tags(Iterable<Tag> tags) {
             tags.forEach(this.tags::add);
             return this;
         }
 
-        public Builder description(String description) {
+        public Builder<T> tag(String key, String value) {
+            tags.add(Tag.of(key, value));
+            return this;
+        }
+
+        public Builder<T> description(String description) {
             this.description = description;
             return this;
         }
