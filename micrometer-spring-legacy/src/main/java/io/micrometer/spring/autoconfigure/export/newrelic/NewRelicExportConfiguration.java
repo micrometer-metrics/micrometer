@@ -73,7 +73,7 @@ public class NewRelicExportConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(value = "spring.metrics.newrelic.enabled", matchIfMissing = true)
+    @ConditionalOnProperty(value = "spring.metrics.export.newrelic.enabled", matchIfMissing = true)
     public MetricsExporter newRelicExporter(NewRelicConfig config, Clock clock) {
         return () -> new NewRelicMeterRegistry(config, clock);
     }

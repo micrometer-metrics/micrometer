@@ -24,7 +24,7 @@ import java.time.Duration;
  *
  * @author Jon Schneider
  */
-@ConfigurationProperties(prefix = "spring.metrics.prometheus")
+@ConfigurationProperties(prefix = "spring.metrics.export.prometheus")
 public class PrometheusProperties {
     /**
      * Enable publishing to Prometheus.

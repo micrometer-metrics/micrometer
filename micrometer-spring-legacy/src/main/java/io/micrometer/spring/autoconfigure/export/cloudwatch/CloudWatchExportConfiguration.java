@@ -66,7 +66,7 @@ public class CloudWatchExportConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(value = "spring.metrics.cloudwatch.enabled", matchIfMissing = true)
+    @ConditionalOnProperty(value = "spring.metrics.export.cloudwatch.enabled", matchIfMissing = true)
     public MetricsExporter cloudwatchExporter(CloudWatchConfig config, Clock clock, AmazonCloudWatchAsync client) {
         return () -> new CloudWatchMeterRegistry(config, clock, client);
     }

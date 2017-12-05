@@ -67,7 +67,7 @@ public class DatadogExportConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(value = "spring.metrics.datadog.enabled", matchIfMissing = true)
+    @ConditionalOnProperty(value = "spring.metrics.export.datadog.enabled", matchIfMissing = true)
     public MetricsExporter datadogExporter(DatadogConfig config, Clock clock) {
         return () -> new DatadogMeterRegistry(config, clock);
     }

@@ -24,7 +24,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @author Jon Schneider
  */
-@ConfigurationProperties(prefix = "spring.metrics.simple")
+@ConfigurationProperties(prefix = "spring.metrics.export.simple")
 public class SimpleProperties {
 
     private boolean enabled = true;

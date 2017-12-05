@@ -25,7 +25,7 @@ import java.time.Duration;
  *
  * @author Jon Schneider
  */
-@ConfigurationProperties(prefix = "spring.metrics.atlas")
+@ConfigurationProperties(prefix = "spring.metrics.export.atlas")
 public class AtlasProperties extends StepRegistryProperties {
     /**
      * The URI for the Atlas backend

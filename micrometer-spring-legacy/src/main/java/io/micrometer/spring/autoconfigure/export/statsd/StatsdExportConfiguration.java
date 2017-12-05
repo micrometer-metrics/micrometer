@@ -98,7 +98,7 @@ public class StatsdExportConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(value = "spring.metrics.statsd.enabled", matchIfMissing = true)
+    @ConditionalOnProperty(value = "spring.metrics.export.statsd.enabled", matchIfMissing = true)
     public MetricsExporter statsdExporter(StatsdConfig config, HierarchicalNameMapper hierarchicalNameMapper, Clock clock) {
         return () -> new StatsdMeterRegistry(config, hierarchicalNameMapper, clock);
     }

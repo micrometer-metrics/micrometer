@@ -92,7 +92,7 @@ public class InfluxExportConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(value = "spring.metrics.influx.enabled", matchIfMissing = true)
+    @ConditionalOnProperty(value = "spring.metrics.export.influx.enabled", matchIfMissing = true)
     public MetricsExporter influxExporter(InfluxConfig config, Clock clock) {
         return () -> new InfluxMeterRegistry(config, clock);
     }

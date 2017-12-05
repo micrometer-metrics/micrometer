@@ -23,7 +23,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @author Jon Schneider
  */
-@ConfigurationProperties(prefix = "spring.metrics.datadog")
+@ConfigurationProperties(prefix = "spring.metrics.export.datadog")
 public class DatadogProperties extends StepRegistryProperties {
     /**
      * Your API key, found in your account settings at datadoghq. This property is required.

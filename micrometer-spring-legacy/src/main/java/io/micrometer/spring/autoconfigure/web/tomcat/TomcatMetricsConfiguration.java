@@ -33,7 +33,7 @@ public class TomcatMetricsConfiguration {
 
         @Bean
         @ConditionalOnClass(name="org.apache.catalina.startup.Tomcat")
-        @ConditionalOnProperty(value = "spring.metrics.tomcat.enabled", matchIfMissing = true)
+        @ConditionalOnProperty(value = "spring.metrics.export.tomcat.enabled", matchIfMissing = true)
         public TomcatMetrics metrics(ApplicationContext applicationContext) {
             Manager manager = null;
             if (applicationContext instanceof EmbeddedWebApplicationContext) {
