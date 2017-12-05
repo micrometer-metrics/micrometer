@@ -16,17 +16,27 @@
 package io.micrometer.spring.web.servlet;
 
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.prometheus.PrometheusConfig;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.micrometer.spring.autoconfigure.export.prometheus.PrometheusScrapeEndpoint;
+import io.prometheus.client.CollectorRegistry;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.autoconfigure.ManagementContextConfiguration;
+import org.springframework.boot.actuate.endpoint.AbstractEndpoint;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -47,6 +57,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Collection;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 
@@ -63,14 +74,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@TestPropertySource(properties = {
-    "security.ignored=/**",
-    "spring.metrics.prometheus.enabled=true",
-    "spring.metrics.simple.enabled=true"
-})
+@TestPropertySource(properties = "security.ignored=/**")
 public class MetricsFilterTest {
     @Autowired
-    private SimpleMeterRegistry registry;
+    private MeterRegistry registry;
+
+    @Autowired
+    private PrometheusMeterRegistry prometheusRegistry;
 
     @Autowired
     private WebApplicationContext context;
@@ -211,20 +221,16 @@ public class MetricsFilterTest {
     public void recordQuantiles() throws Exception {
         this.mvc.perform(get("/api/c1/percentiles/10")).andExpect(status().isOk());
 
-        assertThat(this.mvc.perform(get("/prometheus")).andReturn().getResponse()
-            .getContentAsString()).contains("quantile=\"0.5\"");
-        assertThat(this.mvc.perform(get("/prometheus")).andReturn().getResponse()
-            .getContentAsString()).contains("quantile=\"0.95\"");
+        assertThat(prometheusRegistry.scrape()).contains("quantile=\"0.5\"");
+        assertThat(prometheusRegistry.scrape()).contains("quantile=\"0.95\"");
     }
 
     @Test
     public void recordHistogram() throws Exception {
         this.mvc.perform(get("/api/c1/histogram/10")).andExpect(status().isOk());
 
-        assertThat(this.mvc.perform(get("/prometheus")).andReturn().getResponse()
-            .getContentAsString()).contains("le=\"0.001\"");
-        assertThat(this.mvc.perform(get("/prometheus")).andReturn().getResponse()
-            .getContentAsString()).contains("le=\"30.0\"");
+        assertThat(prometheusRegistry.scrape()).contains("le=\"0.001\"");
+        assertThat(prometheusRegistry.scrape()).contains("le=\"30.0\"");
     }
 
     @Target({ElementType.METHOD})
@@ -236,9 +242,34 @@ public class MetricsFilterTest {
     @SpringBootApplication(scanBasePackages = "ignored")
     @Import({Controller1.class, Controller2.class})
     static class MetricsFilterApp {
+        @Primary
         @Bean
-        MeterRegistry meterRegistry() {
+        MeterRegistry meterRegistry(Collection<MeterRegistry> registries) {
+            CompositeMeterRegistry composite = new CompositeMeterRegistry();
+            registries.forEach(composite::add);
+            return composite;
+        }
+
+        @Bean
+        SimpleMeterRegistry simple() {
             return new SimpleMeterRegistry();
+        }
+
+        @Bean
+        PrometheusMeterRegistry prometheus() {
+            PrometheusMeterRegistry r = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, new CollectorRegistry(), Clock.SYSTEM);
+            r.config().meterFilter(new MeterFilter() {
+                @Override
+                public MeterFilterReply accept(Meter.Id id) {
+                    for (Tag tag : id.getTags()) {
+                        if(tag.getKey().equals("uri") && (tag.getValue().contains("histogram") || tag.getValue().contains("percentiles"))) {
+                            return MeterFilterReply.ACCEPT;
+                        }
+                    }
+                    return MeterFilterReply.DENY;
+                }
+            });
+            return r;
         }
 
         @Bean
