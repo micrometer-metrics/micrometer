@@ -72,7 +72,7 @@ public class CumulativeTimer extends AbstractTimer {
         return Arrays.asList(
             new Measurement(() -> (double) count(), Statistic.Count),
             new Measurement(() -> totalTime(TimeUnit.NANOSECONDS), Statistic.TotalTime),
-            new Measurement(() -> totalTime(TimeUnit.NANOSECONDS), Statistic.Max)
+            new Measurement(() -> max(TimeUnit.NANOSECONDS), Statistic.Max)
         );
     }
 
