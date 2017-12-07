@@ -26,7 +26,7 @@ public interface FunctionTimer extends Meter {
     /**
      * The total number of occurrences of the timed event.
      */
-    long count();
+    double count();
 
     /**
      * The total time of all occurrences of the timed event.
@@ -42,7 +42,7 @@ public interface FunctionTimer extends Meter {
     @Override
     default Iterable<Measurement> measure() {
         return Arrays.asList(
-            new Measurement(() -> (double) count(), Statistic.Count),
+            new Measurement(this::count, Statistic.Count),
             new Measurement(() -> totalTime(baseTimeUnit()), Statistic.TotalTime)
         );
     }

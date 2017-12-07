@@ -119,6 +119,8 @@ public abstract class MeterRegistryCompatibilityKit {
         registry.more().timer("function.timer", emptyList(),
             o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
 
+        clock(registry).addSeconds(1);
+
         assertThat(registry.find("function.timer").meter())
             .hasValueSatisfying(meter ->
                 assertThat(meter.measure())

@@ -17,12 +17,13 @@ package io.micrometer.core.instrument.step;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultGauge;
+import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 
 import java.util.Map;
 import java.util.concurrent.*;
 import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 /**
  * Registry that step-normalizes counts and sums to a rate/second over the publishing interval.
@@ -95,6 +96,16 @@ public abstract class StepMeterRegistry extends MeterRegistry {
         DistributionSummary summary = new StepDistributionSummary(id, clock, merged, this.config.step().toMillis());;
         histogramConfigs.put(summary, merged);
         return summary;
+    }
+
+    @Override
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+        return new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
+    }
+
+    @Override
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+        return new StepFunctionCounter<>(id, clock, config.step().toMillis(), obj, f);
     }
 
     @Override

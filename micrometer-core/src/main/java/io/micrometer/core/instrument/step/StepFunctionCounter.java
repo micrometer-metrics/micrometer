@@ -13,29 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.internal;
+package io.micrometer.core.instrument.step;
 
 import io.micrometer.core.instrument.AbstractMeter;
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Meter;
 
 import java.lang.ref.WeakReference;
 import java.util.function.ToDoubleFunction;
 
-public class DefaultFunctionCounter<T> extends AbstractMeter implements FunctionCounter {
+public class StepFunctionCounter<T> extends AbstractMeter implements FunctionCounter {
     private final WeakReference<T> ref;
     private final ToDoubleFunction<T> f;
     private volatile double last;
+    private StepDouble count;
 
-    public DefaultFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+    public StepFunctionCounter(Id id, Clock clock, long stepMillis, T obj, ToDoubleFunction<T> f) {
         super(id);
         this.ref = new WeakReference<>(obj);
         this.f = f;
+        this.count = new StepDouble(clock, stepMillis);
     }
 
     @Override
     public double count() {
         T obj2 = ref.get();
-        return obj2 != null ? (last = f.applyAsDouble(obj2)) : last;
+        if(obj2 != null) {
+            double prevLast = last;
+            last = f.applyAsDouble(obj2);
+            count.getCurrent().add(last - prevLast);
+        }
+        return count.poll();
     }
 }

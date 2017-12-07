@@ -15,13 +15,13 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.core.instrument.internal.DefaultFunctionCounter;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import org.reactivestreams.Subscriber;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.ToDoubleFunction;
 
-public class StatsdFunctionCounter<T> extends DefaultFunctionCounter<T> implements StatsdPollable {
+public class StatsdFunctionCounter<T> extends CumulativeFunctionCounter<T> implements StatsdPollable {
     private final StatsdLineBuilder lineBuilder;
     private final Subscriber<String> publisher;
     private final AtomicReference<Long> lastValue = new AtomicReference<>(0L);

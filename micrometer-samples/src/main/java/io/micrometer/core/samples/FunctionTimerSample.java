@@ -28,9 +28,9 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class TimerSample {
+public class FunctionTimerSample {
     public static void main(String[] args) {
-        MeterRegistry registry = SampleRegistries.prometheusPushgateway();
+        MeterRegistry registry = SampleRegistries.atlas();
         Timer timer = Timer.builder("timer")
             .publishPercentiles(0.5, 0.95)
             .register(registry);
@@ -44,18 +44,18 @@ public class TimerSample {
 
         AtomicInteger latencyForThisSecond = new AtomicInteger(duration.nextInt());
         Flux.interval(Duration.ofSeconds(1))
-                .doOnEach(d -> latencyForThisSecond.set(duration.nextInt()))
-                .subscribe();
+            .doOnEach(d -> latencyForThisSecond.set(duration.nextInt()))
+            .subscribe();
 
         // the potential for an "incoming request" every 10 ms
         Flux.interval(Duration.ofMillis(10))
-                .doOnEach(d -> {
-                    if (incomingRequests.nextDouble() + 0.4 > 0) {
-                        // pretend the request took some amount of time, such that the time is
-                        // distributed normally with a mean of 250ms
-                        timer.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS);
-                    }
-                })
-                .blockLast();
+            .doOnEach(d -> {
+                if (incomingRequests.nextDouble() + 0.4 > 0) {
+                    // pretend the request took some amount of time, such that the time is
+                    // distributed normally with a mean of 250ms
+                    timer.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS);
+                }
+            })
+            .blockLast();
     }
 }

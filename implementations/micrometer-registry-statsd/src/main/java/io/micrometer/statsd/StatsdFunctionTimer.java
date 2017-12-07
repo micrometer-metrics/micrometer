@@ -15,7 +15,7 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import org.reactivestreams.Subscriber;
 
 import java.util.concurrent.TimeUnit;
@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
-public class StatsdFunctionTimer<T> extends DefaultFunctionTimer<T> implements StatsdPollable {
+public class StatsdFunctionTimer<T> extends CumulativeFunctionTimer<T> implements StatsdPollable {
     private final StatsdLineBuilder lineBuilder;
     private final Subscriber<String> publisher;
     private final AtomicReference<Long> lastCount = new AtomicReference<>(0L);
@@ -40,7 +40,7 @@ public class StatsdFunctionTimer<T> extends DefaultFunctionTimer<T> implements S
     @Override
     public void poll() {
         lastCount.updateAndGet(prevCount -> {
-            long count = count();
+            long count = (long) count();
             long newTimingsCount = count - prevCount;
 
             if(newTimingsCount > 0) {

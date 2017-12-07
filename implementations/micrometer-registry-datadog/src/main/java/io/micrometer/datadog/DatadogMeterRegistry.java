@@ -17,8 +17,6 @@ package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.internal.DefaultFunctionCounter;
-import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import org.slf4j.Logger;
@@ -37,8 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
@@ -210,16 +206,6 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
-    }
-
-    @Override
-    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
-        return new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
-    }
-
-    @Override
-    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
-        return new DefaultFunctionCounter<>(id, obj, f);
     }
 
     /**

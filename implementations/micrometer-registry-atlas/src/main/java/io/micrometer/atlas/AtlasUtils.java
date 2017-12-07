@@ -16,8 +16,10 @@
 package io.micrometer.atlas;
 
 import com.netflix.spectator.atlas.AtlasConfig;
+import io.micrometer.core.instrument.Statistic;
 
 import java.time.Duration;
+import static com.netflix.spectator.api.Statistic.*;
 
 public class AtlasUtils {
     /**
@@ -40,5 +42,25 @@ public class AtlasUtils {
                 return System.getProperty(k);
             }
         };
+    }
+
+    public static com.netflix.spectator.api.Statistic toSpectatorStatistic(Statistic stat) {
+        switch(stat) {
+            case Count:
+                return count;
+            case TotalTime:
+                return totalTime;
+            case Total:
+                return totalAmount;
+            case Value:
+                return gauge;
+            case ActiveTasks:
+                return activeTasks;
+            case Duration:
+                return duration;
+            case Max:
+                return max;
+        }
+        return null;
     }
 }

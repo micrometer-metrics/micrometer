@@ -75,7 +75,7 @@ public class DropwizardFunctionTimer<T> extends AbstractMeter implements Functio
 
             @Override
             public long getCount() {
-                return count();
+                return (long) count();
             }
 
             @Override
@@ -129,7 +129,7 @@ public class DropwizardFunctionTimer<T> extends AbstractMeter implements Functio
     }
 
     @Override
-    public long count() {
+    public double count() {
         T obj = ref.get();
         if (obj == null)
             return lastCount.get();

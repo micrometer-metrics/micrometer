@@ -25,7 +25,7 @@ public class NoopFunctionTimer extends NoopMeter implements FunctionTimer {
     }
 
     @Override
-    public long count() {
+    public double count() {
         return 0;
     }
 

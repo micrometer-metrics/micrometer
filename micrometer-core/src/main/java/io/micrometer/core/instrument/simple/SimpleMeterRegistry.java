@@ -20,8 +20,8 @@ import io.micrometer.core.instrument.cumulative.CumulativeCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
 import io.micrometer.core.instrument.cumulative.CumulativeTimer;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.internal.DefaultFunctionCounter;
-import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.step.StepCounter;
@@ -145,12 +145,12 @@ public class SimpleMeterRegistry extends MeterRegistry {
 
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
-        return new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
+        return new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
     }
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
-        return new DefaultFunctionCounter<>(id, obj, f);
+        return new CumulativeFunctionCounter<>(id, obj, f);
     }
 
     @Override

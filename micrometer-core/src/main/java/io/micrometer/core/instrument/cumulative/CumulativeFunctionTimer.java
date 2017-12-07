@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.internal;
+package io.micrometer.core.instrument.cumulative;
 
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Meter;
@@ -29,7 +29,7 @@ import java.util.function.ToLongFunction;
  *
  * @author Jon Schneider
  */
-public class DefaultFunctionTimer<T> implements FunctionTimer {
+public class CumulativeFunctionTimer<T> implements FunctionTimer {
     private final Meter.Id id;
     private final WeakReference<T> ref;
     private final ToLongFunction<T> countFunction;
@@ -40,8 +40,8 @@ public class DefaultFunctionTimer<T> implements FunctionTimer {
     private volatile long lastCount = 0;
     private volatile double lastTime = 0.0;
 
-    public DefaultFunctionTimer(Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction,
-                                TimeUnit totalTimeFunctionUnits, TimeUnit baseTimeUnit) {
+    public CumulativeFunctionTimer(Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction,
+                                   TimeUnit totalTimeFunctionUnits, TimeUnit baseTimeUnit) {
         this.id = id;
         this.ref = new WeakReference<>(obj);
         this.countFunction = countFunction;
@@ -53,7 +53,7 @@ public class DefaultFunctionTimer<T> implements FunctionTimer {
     /**
      * The total number of occurrences of the timed event.
      */
-    public long count() {
+    public double count() {
         T obj2 = ref.get();
         return obj2 != null ? (lastCount = countFunction.applyAsLong(obj2)) : lastCount;
     }

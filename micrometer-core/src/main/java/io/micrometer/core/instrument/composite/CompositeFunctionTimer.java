@@ -41,7 +41,7 @@ class CompositeFunctionTimer<T> extends AbstractCompositeMeter<FunctionTimer> im
     }
 
     @Override
-    public long count() {
+    public double count() {
         return firstChild().count();
     }
 

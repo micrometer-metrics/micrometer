@@ -25,8 +25,8 @@ import com.netflix.spectator.atlas.AtlasRegistry;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.internal.DefaultFunctionCounter;
-import io.micrometer.core.instrument.internal.DefaultFunctionTimer;
+import io.micrometer.core.instrument.step.StepFunctionCounter;
+import io.micrometer.core.instrument.step.StepFunctionTimer;
 
 import java.text.DecimalFormat;
 import java.time.Duration;
@@ -44,9 +44,12 @@ import static java.util.stream.StreamSupport.stream;
 public class AtlasMeterRegistry extends MeterRegistry {
     private final AtlasRegistry registry;
     private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
+    private final AtlasConfig atlasConfig;
 
     public AtlasMeterRegistry(AtlasConfig config, Clock clock) {
         super(clock);
+
+        this.atlasConfig = config;
 
         this.registry = new AtlasRegistry(new com.netflix.spectator.api.Clock() {
             @Override
@@ -92,7 +95,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
     protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
         com.netflix.spectator.api.DistributionSummary internalSummary = registry.distributionSummary(spectatorId(id));
 
-        if(histogramConfig.isPercentileHistogram()) {
+        if (histogramConfig.isPercentileHistogram()) {
             // This doesn't report the normal count/totalTime/max stats, so we treat it as additive
             PercentileDistributionSummary.get(registry, spectatorId(id));
         }
@@ -115,7 +118,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
     protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
         com.netflix.spectator.api.Timer internalTimer = registry.timer(spectatorId(id));
 
-        if(histogramConfig.isPercentileHistogram()) {
+        if (histogramConfig.isPercentileHistogram()) {
             // This doesn't report the normal count/totalTime/max stats, so we treat it as additive
             PercentileTimer.get(registry, spectatorId(id));
         }
@@ -150,14 +153,14 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
-        FunctionCounter fc = new DefaultFunctionCounter<>(id, obj, f);
+        FunctionCounter fc = new StepFunctionCounter<>(id, clock, atlasConfig.step().toMillis(), obj, f);
         newMeter(id, Meter.Type.Counter, fc.measure());
         return fc;
     }
 
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
-        FunctionTimer ft = new DefaultFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
+        FunctionTimer ft = new StepFunctionTimer<>(id, clock, atlasConfig.step().toMillis(), obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
         newMeter(id, Meter.Type.Timer, ft.measure());
         return ft;
     }
@@ -174,7 +177,11 @@ public class AtlasMeterRegistry extends MeterRegistry {
             @Override
             public Iterable<com.netflix.spectator.api.Measurement> measure() {
                 return stream(measurements.spliterator(), false)
-                    .map(m -> new com.netflix.spectator.api.Measurement(id, clock.wallTime(), m.getValue()))
+                    .map(m -> {
+                        com.netflix.spectator.api.Statistic stat = AtlasUtils.toSpectatorStatistic(m.getStatistic());
+                        Id idWithStat = stat == null ? id : id.withTag("statistic", stat.toString());
+                        return new com.netflix.spectator.api.Measurement(idWithStat, clock.wallTime(), m.getValue());
+                    })
                     .collect(toList());
             }
         };
