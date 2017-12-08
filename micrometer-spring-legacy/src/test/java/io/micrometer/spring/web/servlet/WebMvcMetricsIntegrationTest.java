@@ -81,7 +81,7 @@ public class WebMvcMetricsIntegrationTest {
 
         clock.add(SimpleConfig.DEFAULT_STEP);
         assertThat(this.registry.find("http.server.requests")
-            .tags("exception", "Exception1").value(Statistic.Count, 1.0).timer())
+            .tags("exception", "Exception1", "status", "500").value(Statistic.Count, 1.0).timer())
             .isPresent();
     }
 
@@ -92,7 +92,7 @@ public class WebMvcMetricsIntegrationTest {
 
         clock.add(SimpleConfig.DEFAULT_STEP);
         assertThat(this.registry.find("http.server.requests")
-            .tags("exception", "Exception2").value(Statistic.Count, 1.0).timer())
+            .tags("exception", "Exception2", "status", "500").value(Statistic.Count, 1.0).timer())
             .isPresent();
     }
 
