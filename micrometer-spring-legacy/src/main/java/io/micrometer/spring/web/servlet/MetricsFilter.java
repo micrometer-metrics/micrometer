@@ -15,6 +15,7 @@
  */
 package io.micrometer.spring.web.servlet;
 
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
@@ -76,6 +77,7 @@ public class MetricsFilter extends OncePerRequestFilter {
                         this.webMvcMetrics.record(request, response, null);
                     }
                 } catch (NestedServletException e) {
+                    response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
                     this.webMvcMetrics.record(request, response, e.getCause());
                     throw e;
                 }

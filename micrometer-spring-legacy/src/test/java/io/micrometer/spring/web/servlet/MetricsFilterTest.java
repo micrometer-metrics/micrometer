@@ -141,7 +141,6 @@ public class MetricsFilterTest {
             .timer()).isPresent();
     }
 
-
     @Test
     public void redirectRequest() throws Exception {
         this.mvc.perform(get("/api/redirect")
