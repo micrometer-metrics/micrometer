@@ -29,10 +29,10 @@ import org.springframework.context.annotation.Bean;
 
 import java.util.Collections;
 
+@ConditionalOnClass(name="org.apache.catalina.startup.Tomcat")
 public class TomcatMetricsConfiguration {
 
         @Bean
-        @ConditionalOnClass(name="org.apache.catalina.startup.Tomcat")
         @ConditionalOnProperty(value = "spring.metrics.export.tomcat.enabled", matchIfMissing = true)
         public TomcatMetrics metrics(ApplicationContext applicationContext) {
             Manager manager = null;
