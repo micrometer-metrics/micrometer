@@ -26,6 +26,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "spring.metrics.export.cloudwatch")
 public class CloudWatchProperties extends StepRegistryProperties {
     private String namespace;
+    
+    private Boolean dryRun;
 
     public String getNamespace() {
         return namespace;
@@ -33,5 +35,13 @@ public class CloudWatchProperties extends StepRegistryProperties {
 
     public void setNamespace(String namespace) {
         this.namespace = namespace;
+    }
+
+    public Boolean dryRun() {
+        return dryRun;
+    }
+
+    public void setDryRun(boolean dryRun) {
+        this.dryRun = dryRun;
     }
 }

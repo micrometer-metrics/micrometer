@@ -22,9 +22,15 @@ import com.amazonaws.services.cloudwatch.model.MetricDatum;
 import com.amazonaws.services.cloudwatch.model.PutMetricDataRequest;
 import com.amazonaws.services.cloudwatch.model.PutMetricDataResult;
 import com.amazonaws.services.cloudwatch.model.StandardUnit;
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.HistogramSnapshot;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.ValueAtPercentile;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,8 +38,6 @@ import org.slf4j.LoggerFactory;
 import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -41,20 +45,25 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
 /**
- * @author Dawid Kublik
+ * Send metrics to CloudWatch
  */
 public class CloudWatchMeterRegistry extends StepMeterRegistry {
     private final CloudWatchConfig config;
     private final AmazonCloudWatchAsync amazonCloudWatchAsync;
     private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
     private final Logger logger = LoggerFactory.getLogger(CloudWatchMeterRegistry.class);
-    private final Map<Meter, HistogramConfig> histogramConfigs = new ConcurrentHashMap<>();
 
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock, AmazonCloudWatchAsync amazonCloudWatchAsync) {
         super(config, clock);
         this.amazonCloudWatchAsync = amazonCloudWatchAsync;
         this.config = config;
         this.config().namingConvention(NamingConvention.identity);
+
+        logger.debug("Using batch size of {}", config.batchSize());
+        
+        if (config.dryRun()) {
+            logger.warn("DRY RUN enabled for CloudWatchMeterRegistry. Metrics will be printed to the DEBUG log");
+        }
         start();
     }
 
@@ -73,17 +82,12 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         PutMetricDataRequest putMetricDataRequest = new PutMetricDataRequest()
                 .withNamespace(config.namespace())
                 .withMetricData(metricData);
-        amazonCloudWatchAsync.putMetricDataAsync(putMetricDataRequest, new AsyncHandler<PutMetricDataRequest, PutMetricDataResult>() {
-            @Override
-            public void onError(Exception exception) {
-                logger.error("Error sending metric data.", exception);
-            }
-
-            @Override
-            public void onSuccess(PutMetricDataRequest request, PutMetricDataResult result) {
-                logger.debug("Published metric with namespace:{}", request.getNamespace());
-            }
-        });
+        if (config.dryRun()) {
+           logger.debug("DRY RUN - Would send PutMetricDataRequest: {}", putMetricDataRequest);
+        } else {
+            amazonCloudWatchAsync.putMetricDataAsync(putMetricDataRequest,
+                                                     new PutMetricDataResultLogger());
+        }
     }
 
     private List<MetricDatum> metricData() {
@@ -154,15 +158,16 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     private MetricDatum metricDatum(Meter.Id id, long wallTime, double value) {
         String metricName = id.getConventionName(config().namingConvention());
         List<Tag> tags = id.getConventionTags(config().namingConvention());
+        
         return new MetricDatum()
                 .withMetricName(metricName)
                 .withDimensions(toDimensions(tags))
                 .withTimestamp(new Date(wallTime))
-                .withValue(value)
+                .withValue(CloudWatchUtils.clampMetricValue(value))
                 .withUnit(toStandardUnit(id.getBaseUnit()));
     }
 
-    private StandardUnit toStandardUnit(String unit) {
+    private static StandardUnit toStandardUnit(String unit) {
         if (unit == null) {
             return StandardUnit.None;
         }
@@ -178,7 +183,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     }
 
 
-    private List<Dimension> toDimensions(List<Tag> tags) {
+    private static List<Dimension> toDimensions(List<Tag> tags) {
         return tags.stream()
                 .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
                 .collect(toList());
@@ -192,14 +197,29 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     /**
      * Copy tags, unit, and description from an existing id, but change the name.
      */
-    private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
+    private static Meter.Id idWithSuffix(Meter.Id id, String suffix) {
         return idWithSuffixAndUnit(id, suffix, id.getBaseUnit());
     }
 
     /**
      * Copy tags and description from an existing id, but change the name and unit.
      */
-    private Meter.Id idWithSuffixAndUnit(Meter.Id id, String suffix, String unit) {
-        return new Meter.Id(id.getName() + "." + suffix, id.getTags(), unit, id.getDescription(), id.getType());
+    private static Meter.Id idWithSuffixAndUnit(Meter.Id id, String suffix, String unit) {
+        return new Meter.Id(id.getName() + '.' + suffix, id.getTags(), unit, id.getDescription(), id.getType());
+    }
+
+    /**
+     * Logs result of PutMetricDataRequest
+     */
+    private class PutMetricDataResultLogger implements AsyncHandler<PutMetricDataRequest, PutMetricDataResult> {
+        @Override
+        public void onError(Exception exception) {
+            logger.error("Error sending metric data.", exception);
+        }
+
+        @Override
+        public void onSuccess(PutMetricDataRequest request, PutMetricDataResult result) {
+            logger.debug("Published metric with namespace:{}", request.getNamespace());
+        }
     }
 }

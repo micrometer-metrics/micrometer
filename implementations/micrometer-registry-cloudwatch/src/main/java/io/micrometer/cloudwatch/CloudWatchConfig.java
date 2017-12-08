@@ -43,6 +43,14 @@ public interface CloudWatchConfig extends StepRegistryConfig {
         return v;
     }
 
+    /**
+     * Returns whether to create the CloudWatchMetrics without performing the PUT operation
+     */
+    default boolean dryRun() {
+        String v = get(prefix() + ".dryRun");
+        return Boolean.parseBoolean(v);
+    }
+    
     @Override
     default int batchSize() {
         String v = get(prefix() + ".batchSize");
