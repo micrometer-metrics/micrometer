@@ -46,7 +46,6 @@ public class CloudWatchExportConfiguration {
 
     private class DefaultCloudWatchConfig extends DefaultStepRegistryConfig implements CloudWatchConfig {
         private final CloudWatchProperties props;
-        private final CloudWatchConfig defaults = k -> null;
 
         private DefaultCloudWatchConfig(CloudWatchProperties props) {
             super(props);
@@ -55,7 +54,13 @@ public class CloudWatchExportConfiguration {
 
         @Override
         public String namespace() {
-            return props.getNamespace() == null ? namespace() : props.getNamespace();
+            return props.getNamespace() == null ? DEFAULT.namespace() : props.getNamespace();
+        }
+
+        @Override
+        public int batchSize() {
+            // Override to leverage the CloudWatchConfig batch size instead of StepRegistryConfig
+            return props.getBatchSize() == null ? DEFAULT.batchSize() : props.getBatchSize();
         }
     }
 
