@@ -25,6 +25,7 @@ import com.netflix.spectator.atlas.AtlasRegistry;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.step.StepFunctionCounter;
 import io.micrometer.core.instrument.step.StepFunctionTimer;
 
@@ -171,7 +172,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected void newMeter(Meter.Id id, Meter.Type type, Iterable<io.micrometer.core.instrument.Measurement> measurements) {
+    protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<io.micrometer.core.instrument.Measurement> measurements) {
         Id spectatorId = spectatorId(id);
         com.netflix.spectator.api.AbstractMeter<Id> spectatorMeter = new com.netflix.spectator.api.AbstractMeter<Id>(registry.clock(), spectatorId, spectatorId) {
             @Override
@@ -186,6 +187,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
             }
         };
         registry.register(spectatorMeter);
+        return new DefaultMeter(id, type, measurements);
     }
 
     /**

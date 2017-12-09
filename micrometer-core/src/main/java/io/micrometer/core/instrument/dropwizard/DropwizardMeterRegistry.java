@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
+import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 
 import java.lang.ref.WeakReference;
@@ -130,8 +131,9 @@ public class DropwizardMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+    protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         measurements.forEach(ms -> registry.register(hierarchicalName(id.withTag(ms.getStatistic())), (Gauge<Double>) ms::getValue));
+        return new DefaultMeter(id, type, measurements);
     }
 
     @Override

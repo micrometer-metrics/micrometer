@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
+import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.step.StepCounter;
 import io.micrometer.core.instrument.step.StepDistributionSummary;
 import io.micrometer.core.instrument.step.StepTimer;
@@ -85,8 +86,8 @@ public class SimpleMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
-        // nothing to do here
+    protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+        return new DefaultMeter(id, type, measurements);
     }
 
     @Override

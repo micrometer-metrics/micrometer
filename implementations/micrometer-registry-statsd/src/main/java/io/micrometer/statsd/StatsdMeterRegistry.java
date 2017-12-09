@@ -18,6 +18,7 @@ package io.micrometer.statsd;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.instrument.util.TimeUtils;
 import reactor.core.Disposable;
@@ -210,7 +211,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+    protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         measurements.forEach(ms -> {
             StatsdLineBuilder line = lineBuilder(id);
             switch (ms.getStatistic()) {
@@ -227,6 +228,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
                     break;
             }
         });
+        return new DefaultMeter(id, type, measurements);
     }
 
     @Override

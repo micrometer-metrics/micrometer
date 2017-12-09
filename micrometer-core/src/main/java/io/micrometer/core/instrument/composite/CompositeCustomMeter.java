@@ -18,34 +18,19 @@ package io.micrometer.core.instrument.composite;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.internal.DefaultMeter;
 
-class CompositeCustomMeter implements CompositeMeter {
-    private final Meter.Id id;
-    private final Meter.Type type;
-    private final Iterable<Measurement> measurements;
-
-    CompositeCustomMeter(Meter.Id id, Type type, Iterable<Measurement> measurements) {
-        this.id = id;
-        this.type = type;
-        this.measurements = measurements;
-    }
-
-    @Override
-    public Id getId() {
-        return id;
-    }
-
-    @Override
-    public Iterable<Measurement> measure() {
-        return measurements;
+class CompositeCustomMeter extends DefaultMeter implements CompositeMeter {
+    CompositeCustomMeter(Id id, Type type, Iterable<Measurement> measurements) {
+        super(id, type, measurements);
     }
 
     @Override
     public void add(MeterRegistry registry) {
-        Meter.builder(id.getName(), type, measurements)
-            .tags(id.getTags())
-            .description(id.getDescription())
-            .baseUnit(id.getBaseUnit())
+        Meter.builder(getId().getName(), getType(), measure())
+            .tags(getId().getTags())
+            .description(getId().getDescription())
+            .baseUnit(getId().getBaseUnit())
             .register(registry);
     }
 

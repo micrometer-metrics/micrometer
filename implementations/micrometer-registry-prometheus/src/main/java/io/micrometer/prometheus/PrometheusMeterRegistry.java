@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
+import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
@@ -270,7 +271,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+    protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         Collector.Type promType = Collector.Type.UNTYPED;
         switch (type) {
             case Counter:
@@ -317,6 +318,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     return new Collector.MetricFamilySamples.Sample(name, tagKeys, tagValues, m.getValue());
                 });
         });
+
+        return new DefaultMeter(id, type, measurements);
     }
 
     @Override

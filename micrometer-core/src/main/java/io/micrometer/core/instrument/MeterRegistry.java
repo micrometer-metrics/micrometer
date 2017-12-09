@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.function.*;
 import java.util.stream.Collectors;
@@ -52,7 +53,8 @@ public abstract class MeterRegistry {
 
     private final Object meterMapLock = new Object();
     private volatile Map<Id, Meter> meterMap = Collections.emptyMap();
-    private final List<MeterFilter> filters = new ArrayList<>();
+    private final List<MeterFilter> filters = new CopyOnWriteArrayList<>();
+    private final List<Consumer<Meter>> meterAddedListeners = new CopyOnWriteArrayList<>();
 
     /**
      * We'll use snake case as a general-purpose default for registries because it is the most
@@ -73,7 +75,7 @@ public abstract class MeterRegistry {
 
     protected abstract DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig);
 
-    protected abstract void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements);
+    protected abstract Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements);
 
     protected <T> TimeGauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
         TimeUnit baseTimeUnit = getBaseTimeUnit();
@@ -145,25 +147,7 @@ public abstract class MeterRegistry {
      * @return The registry.
      */
     Meter register(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
-        return registerMeterIfNecessary(Meter.class, id, id2 -> {
-            newMeter(id2, type, measurements);
-            return new Meter() {
-                @Override
-                public Id getId() {
-                    return id2;
-                }
-
-                @Override
-                public Type type() {
-                    return type;
-                }
-
-                @Override
-                public Iterable<Measurement> measure() {
-                    return measurements;
-                }
-            };
-        }, NoopMeter::new);
+        return registerMeterIfNecessary(Meter.class, id, id2 -> newMeter(id2, type, measurements), NoopMeter::new);
     }
 
     /**
@@ -200,6 +184,12 @@ public abstract class MeterRegistry {
         @Incubating(since = "1.0.0-rc.3")
         public Config meterFilter(MeterFilter filter) {
             filters.add(filter);
+            return this;
+        }
+
+        @Incubating(since = "1.0.0-rc.6")
+        public Config onMeterAdded(Consumer<Meter> meter) {
+            meterAddedListeners.add(meter);
             return this;
         }
 
@@ -615,8 +605,10 @@ public abstract class MeterRegistry {
 
                 if (m == null) {
                     m = builder.apply(mappedId, config);
-
                     register(mappedId, m);
+                    for (Consumer<Meter> onAdd : meterAddedListeners) {
+                        onAdd.accept(m);
+                    }
                 }
             }
         }

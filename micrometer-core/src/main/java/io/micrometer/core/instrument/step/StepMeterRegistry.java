@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
+import io.micrometer.core.instrument.internal.DefaultMeter;
 
 import java.util.Map;
 import java.util.concurrent.*;
@@ -109,7 +110,7 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
-        // nothing special to do here
+    protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+        return new DefaultMeter(id, type, measurements);
     }
 }

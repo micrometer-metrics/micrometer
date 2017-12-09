@@ -44,62 +44,47 @@ public class CompositeMeterRegistry extends MeterRegistry {
     public CompositeMeterRegistry(Clock clock) {
         super(clock);
         config().namingConvention(NamingConvention.identity);
+        config().onMeterAdded(m -> registries.forEach(((CompositeMeter) m)::add));
     }
 
     @Override
     protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
-        CompositeTimer timer = new CompositeTimer(id, clock, histogramConfig);
-        registries.forEach(timer::add);
-        return timer;
+        return new CompositeTimer(id, clock, histogramConfig);
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
-        CompositeDistributionSummary ds = new CompositeDistributionSummary(id, histogramConfig);
-        registries.forEach(ds::add);
-        return ds;
+        return new CompositeDistributionSummary(id, histogramConfig);
     }
 
     @Override
     protected Counter newCounter(Meter.Id id) {
-        CompositeCounter counter = new CompositeCounter(id);
-        registries.forEach(counter::add);
-        return counter;
+        return new CompositeCounter(id);
     }
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        CompositeLongTaskTimer longTaskTimer = new CompositeLongTaskTimer(id);
-        registries.forEach(longTaskTimer::add);
-        return longTaskTimer;
+        return new CompositeLongTaskTimer(id);
     }
 
     @Override
     protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
-        CompositeGauge<T> gauge = new CompositeGauge<>(id, obj, f);
-        registries.forEach(gauge::add);
-        return gauge;
+        return new CompositeGauge<>(id, obj, f);
     }
 
     @Override
     protected <T> TimeGauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
-        CompositeTimeGauge<T> gauge = new CompositeTimeGauge<>(id, obj, fUnit, f);
-        registries.forEach(gauge::add);
-        return gauge;
+        return new CompositeTimeGauge<>(id, obj, fUnit, f);
     }
 
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
-        CompositeFunctionTimer<T> ft = new CompositeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
-        registries.forEach(ft::add);
-        return ft;
+        return new CompositeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
     }
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
-        CompositeFunctionCounter<T> fc = new CompositeFunctionCounter<>(id, obj, f);
-        registries.forEach(fc::add);
-        return fc;
+        return new CompositeFunctionCounter<>(id, obj, f);
     }
 
     @Override
@@ -108,13 +93,13 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected void newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
-        CompositeMeter meter = new CompositeCustomMeter(id, type, measurements);
-        registries.forEach(meter::add);
+    protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+        return new CompositeCustomMeter(id, type, measurements);
     }
 
     public CompositeMeterRegistry add(MeterRegistry registry) {
         if(registries.add(registry)) {
+            // in the event of a race, the new meter will be added to this registry via the onMeterAdded listener
             forEachMeter(m -> ((CompositeMeter) m).add(registry));
         }
         return this;
