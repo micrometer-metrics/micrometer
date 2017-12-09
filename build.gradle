@@ -53,6 +53,7 @@ subprojects {
     checkstyle {
         toolVersion = '8.4'
         configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+        configProperties = [ 'checkstyle.config.dir' : rootProject.file('config/checkstyle') ]
     }
 
     def check = tasks.findByName('check')
