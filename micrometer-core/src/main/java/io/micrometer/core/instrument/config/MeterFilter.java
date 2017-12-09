@@ -22,7 +22,12 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -140,6 +145,31 @@ public interface MeterFilter {
             @Override
             public MeterFilterReply accept(Meter.Id id) {
                 return iff.test(id) ? MeterFilterReply.DENY : MeterFilterReply.NEUTRAL;
+            }
+        };
+    }
+
+    /**
+     * Useful for cost-control in monitoring systems which charge directly or indirectly by the
+     * total number of time series you generate.
+     *
+     * While this filter doesn't discriminate between your most critical and less useful metrics in
+     * deciding what to drop (all the metrics you intend to use should fit below this threshold),
+     * it can effectively cap your risk of an accidentally high-cardiality metric costing too much.
+     *
+     * @param maximumTimeSeries The total number of unique name/tag permutations allowed before filtering kicks in.
+     */
+    static MeterFilter maximumAllowableMetrics(int maximumTimeSeries) {
+        return new MeterFilter() {
+            private final Set<Meter.Id> ids = ConcurrentHashMap.newKeySet();
+
+            @Override
+            public MeterFilterReply accept(Meter.Id id) {
+                if(ids.size() > maximumTimeSeries)
+                    return MeterFilterReply.DENY;
+
+                ids.add(id);
+                return ids.size() > maximumTimeSeries ? MeterFilterReply.DENY : MeterFilterReply.NEUTRAL;
             }
         };
     }
