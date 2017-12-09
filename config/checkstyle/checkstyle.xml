@@ -2,6 +2,12 @@
 <!DOCTYPE module PUBLIC "-//Puppy Crawl//DTD Check Configuration 1.2//EN" "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
 <module name="Checker">
 
+    <!-- Root Checks -->
+    <module name="RegexpHeader">
+        <property name="headerFile" value="${checkstyle.config.dir}/checkstyle-header.txt" />
+        <property name="fileExtensions" value="java" />
+    </module>
+
     <!-- TreeWalker Checks -->
     <module name="TreeWalker">
 
