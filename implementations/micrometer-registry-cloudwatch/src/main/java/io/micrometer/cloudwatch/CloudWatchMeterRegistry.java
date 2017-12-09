@@ -158,7 +158,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
                 .withMetricName(metricName)
                 .withDimensions(toDimensions(tags))
                 .withTimestamp(new Date(wallTime))
-                .withValue(value)
+                .withValue(CloudWatchUtils.clampMetricValue(value))
                 .withUnit(toStandardUnit(id.getBaseUnit()));
     }
 
