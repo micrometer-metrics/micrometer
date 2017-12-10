@@ -22,6 +22,7 @@ import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsyncClientBuilder;
 import io.micrometer.cloudwatch.CloudWatchConfig;
 import io.micrometer.cloudwatch.CloudWatchMeterRegistry;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.spring.autoconfigure.export.DefaultStepRegistryConfig;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
@@ -32,6 +33,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Configuration for exporting metrics to CloudWatch.
@@ -44,9 +48,8 @@ import org.springframework.context.annotation.Import;
 @EnableConfigurationProperties(CloudWatchProperties.class)
 public class CloudWatchExportConfiguration {
 
-    private class DefaultCloudWatchConfig extends DefaultStepRegistryConfig implements CloudWatchConfig {
+    private static class DefaultCloudWatchConfig extends DefaultStepRegistryConfig implements CloudWatchConfig {
         private final CloudWatchProperties props;
-        private final CloudWatchConfig defaults = k -> null;
 
         private DefaultCloudWatchConfig(CloudWatchProperties props) {
             super(props);
@@ -55,7 +58,18 @@ public class CloudWatchExportConfiguration {
 
         @Override
         public String namespace() {
-            return props.getNamespace() == null ? namespace() : props.getNamespace();
+            return props.getNamespace() == null ? DEFAULT.namespace() : props.getNamespace();
+        }
+
+        @Override
+        public int batchSize() {
+            // Override to leverage the CloudWatchConfig batch size instead of StepRegistryConfig
+            return props.getBatchSize() == null ? DEFAULT.batchSize() : props.getBatchSize();
+        }
+
+        @Override
+        public boolean dryRun() {
+            return props.dryRun() == null ? DEFAULT.dryRun() : props.dryRun();
         }
     }
 
