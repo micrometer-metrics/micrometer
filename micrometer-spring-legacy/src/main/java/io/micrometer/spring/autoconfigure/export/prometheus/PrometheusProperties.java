@@ -38,10 +38,10 @@ public class PrometheusProperties {
     private Boolean descriptions = true;
 
     /**
-     * The step size to use in computing windowed statistics like max. The default is 10 seconds.
+     * The step size to use in computing windowed statistics like max. The default is 1 minute.
      * To get the most out of these statistics, align the step interval to be close to your scrape interval.
      */
-    private Duration step = Duration.ofSeconds(10);
+    private Duration step = Duration.ofMinutes(1);
 
     public Boolean getEnabled() {
         return enabled;

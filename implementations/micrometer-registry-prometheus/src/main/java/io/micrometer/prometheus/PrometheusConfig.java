@@ -40,7 +40,7 @@ public interface PrometheusConfig extends MeterRegistryConfig {
     }
 
     /**
-     * Returns the step size to use in computing windowed statistics like max. The default is 10 seconds.
+     * Returns the step size to use in computing windowed statistics like max. The default is 1 minute.
      * To get the most out of these statistics, align the step interval to be close to your scrape interval.
      */
     default Duration step() {
