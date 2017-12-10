@@ -75,11 +75,13 @@ public class JvmGcMetrics implements MeterBinder {
             .baseUnit("bytes")
             .register(registry);
 
-        Counter promotionRate = Counter.builder("jvm.gc.promotion.rate").tags(tags)
+        Counter promotionRate = Counter.builder("jvm.gc.memory.promoted").tags(tags)
+            .baseUnit("bytes")
             .description("Count of positive increases in the size of the old generation memory pool before GC to after GC")
             .register(registry);
 
-        Counter allocationRate = Counter.builder("jvm.gc.allocation.rate").tags(tags)
+        Counter allocationRate = Counter.builder("jvm.gc.memory.allocated").tags(tags)
+            .baseUnit("bytes")
             .description("Incremented for an increase in the size of the young generation memory pool after one GC to before the next")
             .register(registry);
 
