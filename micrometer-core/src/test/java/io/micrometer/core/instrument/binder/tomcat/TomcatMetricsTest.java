@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.catalina.Context;
-import org.apache.catalina.Session;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.session.ManagerBase;
 import org.apache.catalina.session.StandardSession;
@@ -27,9 +26,7 @@ import org.apache.catalina.session.TooManyActiveSessionsException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.servlet.ServletException;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,19 +37,19 @@ class TomcatMetricsTest {
     private ManagerBase manager;
 
     @BeforeEach
-    void setup() throws SQLException {
+    void setup() {
         this.registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
         Context context =  new StandardContext();//mock(Context.class);
 
         this.manager = new ManagerBase() {
             @Override
             public void load() throws ClassNotFoundException, IOException {
-
+                //
             }
 
             @Override
             public void unload() throws IOException {
-
+                //
             }
 
             @Override
@@ -64,11 +61,11 @@ class TomcatMetricsTest {
     }
 
     @Test
-    void stats() throws IOException, ServletException {
+    void stats() {
         manager.createSession("first");
         manager.createSession("second");
-        Session thirdSession = manager.createSession("third");
-        try{manager.createSession("forth");} catch(TooManyActiveSessionsException exception) {
+        manager.createSession("third");
+        try{manager.createSession("fourth");} catch(TooManyActiveSessionsException exception) {
             //ignore error, testing rejection
         }
         StandardSession expiredSession = new StandardSession(manager);
@@ -81,9 +78,9 @@ class TomcatMetricsTest {
 
         assertThat(registry.find("tomcat.sessions.active.max").tags(tags).gauge().map(Gauge::value)).hasValue(3.0);
         assertThat(registry.find("tomcat.sessions.active.current").tags(tags).gauge().map(Gauge::value)).hasValue(2.0);
-        assertThat(registry.find("tomcat.sessions.expired").tags(tags).gauge().map(Gauge::value)).hasValue(1.0);
-        assertThat(registry.find("tomcat.sessions.rejected").tags(tags).gauge().map(Gauge::value)).hasValue(1.0);
         assertThat(registry.find("tomcat.sessions.created").tags(tags).functionCounter().map(FunctionCounter::count)).hasValue(3.0);
+        assertThat(registry.find("tomcat.sessions.expired").tags(tags).functionCounter().map(FunctionCounter::count)).hasValue(1.0);
+        assertThat(registry.find("tomcat.sessions.rejected").tags(tags).functionCounter().map(FunctionCounter::count)).hasValue(1.0);
         assertThat(registry.find("tomcat.sessions.alive.max").tags(tags).gauge().map(Gauge::value).get()).isGreaterThan(1.0);
     }
 
