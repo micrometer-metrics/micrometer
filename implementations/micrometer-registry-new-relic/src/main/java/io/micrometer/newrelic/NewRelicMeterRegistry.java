@@ -139,8 +139,11 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
     // TODO HTTP/1.1 Persistent connections are supported
     private void sendEvents(URL insightsEndpoint, List<Event> events) {
+
+        HttpURLConnection con = null;
+
         try {
-            HttpURLConnection con = (HttpURLConnection) insightsEndpoint.openConnection();
+            con = (HttpURLConnection) insightsEndpoint.openConnection();
             con.setConnectTimeout((int) config.connectTimeout().toMillis());
             con.setReadTimeout((int) config.readTimeout().toMillis());
             con.setRequestMethod("POST");
@@ -169,9 +172,21 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                 logger.error("failed to send metrics: http " + status);
             }
 
-            con.disconnect();
         } catch (Throwable e) {
             logger.warn("failed to send metrics", e);
+        }
+        finally {
+            quietlyCloseUrlConnection(con);
+        }
+    }
+
+    private void quietlyCloseUrlConnection(HttpURLConnection con) {
+        if (con == null)
+            return;
+        try {
+            con.disconnect();
+        }
+        catch (Exception ignore) {
         }
     }
 
