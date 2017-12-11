@@ -101,17 +101,17 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
 
     public final void remove(MeterRegistry registry) {
         // Not very efficient, but this operation is expected to be used rarely.
-        final AtomicReference<T> meterHolder = new AtomicReference<>();
+        final AtomicReference<T> firstMeterHolder = new AtomicReference<>();
         children.removeIf(e -> {
             if (e.registry() == registry) {
-                meterHolder.set(e.meter());
+                firstMeterHolder.compareAndSet(null, e.meter());
                 return true;
             } else {
                 return false;
             }
         });
 
-        final T removedMeter = meterHolder.get();
+        final T removedMeter = firstMeterHolder.get();
         if (removedMeter != null) {
             firstMeterUpdater.compareAndSet(this, removedMeter, null);
         }
