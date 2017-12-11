@@ -74,13 +74,17 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     @Override
     protected void publish() {
         try {
+
+            HttpURLConnection con = null;
+
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-                HttpURLConnection con = (HttpURLConnection) metricsEndpoint.openConnection();
-                con.setConnectTimeout((int) config.connectTimeout().toMillis());
-                con.setReadTimeout((int) config.readTimeout().toMillis());
-                con.setRequestMethod("POST");
-                con.setRequestProperty("Content-Type", "application/json");
-                con.setDoOutput(true);
+                try {
+                    con = (HttpURLConnection) metricsEndpoint.openConnection();
+                    con.setConnectTimeout((int) config.connectTimeout().toMillis());
+                    con.setReadTimeout((int) config.readTimeout().toMillis());
+                    con.setRequestMethod("POST");
+                    con.setRequestProperty("Content-Type", "application/json");
+                    con.setDoOutput(true);
 
                 /*
                 Example post body from Datadog API docs. Type seems to be irrelevant. Host and tags are optional.
@@ -94,42 +98,54 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                 }"
                 */
 
-                String body = "{\"series\":[" +
-                    batch.stream().flatMap(m -> {
-                        if (m instanceof Timer) {
-                            return writeTimer((Timer) m);
-                        } else if (m instanceof DistributionSummary) {
-                            return writeSummary((DistributionSummary) m);
-                        } else if (m instanceof FunctionTimer) {
-                            return writeTimer((FunctionTimer) m);
-                        } else {
-                            return writeMeter(m);
-                        }
-                    }).collect(joining(",")) +
-                    "]}";
+                    String body = "{\"series\":[" +
+                        batch.stream().flatMap(m -> {
+                            if (m instanceof Timer) {
+                                return writeTimer((Timer) m);
+                            } else if (m instanceof DistributionSummary) {
+                                return writeSummary((DistributionSummary) m);
+                            } else if (m instanceof FunctionTimer) {
+                                return writeTimer((FunctionTimer) m);
+                            } else {
+                                return writeMeter(m);
+                            }
+                        }).collect(joining(",")) +
+                        "]}";
 
-                try (OutputStream os = con.getOutputStream()) {
-                    os.write(body.getBytes());
-                    os.flush();
-                }
-
-                int status = con.getResponseCode();
-
-                if (status >= 200 && status < 300) {
-                    logger.info("successfully sent " + batch.size() + " metrics to datadog");
-                } else if (status >= 400) {
-                    try (InputStream in = con.getErrorStream()) {
-                        logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                            .lines().collect(joining("\n")));
+                    try (OutputStream os = con.getOutputStream()) {
+                        os.write(body.getBytes());
+                        os.flush();
                     }
-                } else {
-                    logger.error("failed to send metrics: http " + status);
-                }
 
-                con.disconnect();
+                    int status = con.getResponseCode();
+
+                    if (status >= 200 && status < 300) {
+                        logger.info("successfully sent " + batch.size() + " metrics to datadog");
+                    } else if (status >= 400) {
+                        try (InputStream in = con.getErrorStream()) {
+                            logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
+                                .lines().collect(joining("\n")));
+                        }
+                    } else {
+                        logger.error("failed to send metrics: http " + status);
+                    }
+                }
+                finally {
+                    quietlyCloseUrlConnection(con);
+                }
             }
         } catch (Exception e) {
             logger.warn("failed to send metrics", e);
+        }
+    }
+
+    private void quietlyCloseUrlConnection(HttpURLConnection con) {
+        if (con == null)
+            return;
+        try {
+            con.disconnect();
+        }
+        catch (Exception ignore) {
         }
     }
 

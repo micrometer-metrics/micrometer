@@ -56,10 +56,11 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     private void createDatabaseIfNecessary() {
+        HttpURLConnection con = null;
         try {
             URL queryEndpoint = URI.create(config.uri() + "/query?q=" + URLEncoder.encode("CREATE DATABASE \"" + config.db() + "\"", "UTF-8")).toURL();
 
-            HttpURLConnection con = (HttpURLConnection) queryEndpoint.openConnection();
+            con = (HttpURLConnection) queryEndpoint.openConnection();
             con.setConnectTimeout((int) config.connectTimeout().toMillis());
             con.setReadTimeout((int) config.readTimeout().toMillis());
             con.setRequestMethod("POST");
@@ -77,6 +78,9 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         } catch (IOException e) {
             logger.warn("unable to create database '{}'", config.db(), e);
         }
+        finally {
+            quietlyCloseUrlConnection(con);
+        }
     }
 
     @Override
@@ -89,81 +93,96 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 write += "&rp=" + config.retentionPolicy();
             }
             URL influxEndpoint = URI.create(config.uri() + write).toURL();
+            HttpURLConnection con = null;
 
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-                HttpURLConnection con = (HttpURLConnection) influxEndpoint.openConnection();
-                con.setConnectTimeout((int) config.connectTimeout().toMillis());
-                con.setReadTimeout((int) config.readTimeout().toMillis());
-                con.setRequestMethod("POST");
-                con.setRequestProperty("Content-Type", "plain/text");
-                con.setDoOutput(true);
+                try {
+                    con = (HttpURLConnection) influxEndpoint.openConnection();
+                    con.setConnectTimeout((int) config.connectTimeout().toMillis());
+                    con.setReadTimeout((int) config.readTimeout().toMillis());
+                    con.setRequestMethod("POST");
+                    con.setRequestProperty("Content-Type", "plain/text");
+                    con.setDoOutput(true);
 
-                if (config.userName() != null && config.password() != null) {
-                    String encoded = Base64.getEncoder().encodeToString((config.userName() + ":" +
-                        config.password()).getBytes(StandardCharsets.UTF_8));
-                    con.setRequestProperty("Authorization", "Basic " + encoded);
-                }
+                    if (config.userName() != null && config.password() != null) {
+                        String encoded = Base64.getEncoder().encodeToString((config.userName() + ":" +
+                            config.password()).getBytes(StandardCharsets.UTF_8));
+                        con.setRequestProperty("Authorization", "Basic " + encoded);
+                    }
 
-                List<String> bodyLines = batch.stream()
-                    .map(m -> {
-                        if (m instanceof Timer) {
-                            return writeTimer((Timer) m);
-                        } else if (m instanceof DistributionSummary) {
-                            return writeSummary((DistributionSummary) m);
-                        } else if (m instanceof FunctionTimer) {
-                            return writeTimer((FunctionTimer) m);
-                        } else if (m instanceof TimeGauge) {
-                            return writeGauge(m.getId(), ((TimeGauge) m).value(getBaseTimeUnit()));
-                        } else if (m instanceof Gauge) {
-                            return writeGauge(m.getId(), ((Gauge) m).value());
-                        } else if (m instanceof FunctionCounter) {
-                            return writeCounter(m.getId(), ((FunctionCounter) m).count());
-                        } else if (m instanceof Counter) {
-                            return writeCounter(m.getId(), ((Counter) m).count());
-                        } else if (m instanceof LongTaskTimer) {
-                            return writeLongTaskTimer((LongTaskTimer) m);
+                    List<String> bodyLines = batch.stream()
+                        .map(m -> {
+                            if (m instanceof Timer) {
+                                return writeTimer((Timer) m);
+                            } else if (m instanceof DistributionSummary) {
+                                return writeSummary((DistributionSummary) m);
+                            } else if (m instanceof FunctionTimer) {
+                                return writeTimer((FunctionTimer) m);
+                            } else if (m instanceof TimeGauge) {
+                                return writeGauge(m.getId(), ((TimeGauge) m).value(getBaseTimeUnit()));
+                            } else if (m instanceof Gauge) {
+                                return writeGauge(m.getId(), ((Gauge) m).value());
+                            } else if (m instanceof FunctionCounter) {
+                                return writeCounter(m.getId(), ((FunctionCounter) m).count());
+                            } else if (m instanceof Counter) {
+                                return writeCounter(m.getId(), ((Counter) m).count());
+                            } else if (m instanceof LongTaskTimer) {
+                                return writeLongTaskTimer((LongTaskTimer) m);
+                            } else {
+                                return writeMeter(m);
+                            }
+                        })
+                        .collect(toList());
+
+                    String body = String.join("\n", bodyLines);
+
+                    if (config.compressed())
+                        con.setRequestProperty("Content-Encoding", "gzip");
+
+                    try (OutputStream os = con.getOutputStream()) {
+                        if (config.compressed()) {
+                            try (GZIPOutputStream gz = new GZIPOutputStream(os)) {
+                                gz.write(body.getBytes());
+                                gz.flush();
+                            }
                         } else {
-                            return writeMeter(m);
+                            os.write(body.getBytes());
                         }
-                    })
-                    .collect(toList());
+                        os.flush();
+                    }
 
-                String body = String.join("\n", bodyLines);
+                    int status = con.getResponseCode();
 
-                if (config.compressed())
-                    con.setRequestProperty("Content-Encoding", "gzip");
-
-                try (OutputStream os = con.getOutputStream()) {
-                    if (config.compressed()) {
-                        try (GZIPOutputStream gz = new GZIPOutputStream(os)) {
-                            gz.write(body.getBytes());
-                            gz.flush();
+                    if (status >= 200 && status < 300) {
+                        logger.info("successfully sent {} metrics to influx", batch.size());
+                    } else if (status >= 400) {
+                        try (InputStream in = con.getErrorStream()) {
+                            logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
+                                .lines().collect(joining("\n")));
                         }
                     } else {
-                        os.write(body.getBytes());
+                        logger.error("failed to send metrics: http " + status);
                     }
-                    os.flush();
+
                 }
-
-                int status = con.getResponseCode();
-
-                if (status >= 200 && status < 300) {
-                    logger.info("successfully sent {} metrics to influx", batch.size());
-                } else if (status >= 400) {
-                    try (InputStream in = con.getErrorStream()) {
-                        logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                            .lines().collect(joining("\n")));
-                    }
-                } else {
-                    logger.error("failed to send metrics: http " + status);
+                finally {
+                    quietlyCloseUrlConnection(con);
                 }
-
-                con.disconnect();
             }
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Malformed InfluxDB publishing endpoint, see '" + config.prefix() + ".uri'", e);
         } catch (IOException e) {
             logger.warn("failed to send metrics", e);
+        }
+    }
+
+    private void quietlyCloseUrlConnection(HttpURLConnection con) {
+        if (con == null)
+            return;
+        try {
+            con.disconnect();
+        }
+        catch (Exception ignore) {
         }
     }
 
