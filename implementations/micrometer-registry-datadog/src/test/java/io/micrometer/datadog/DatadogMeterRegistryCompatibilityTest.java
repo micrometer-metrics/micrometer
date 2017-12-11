@@ -15,35 +15,51 @@
  */
 package io.micrometer.datadog;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.time.Duration;
+import java.util.HashMap;
+
+import static io.micrometer.core.instrument.Meter.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class DatadogMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
+
     @Override
     public MeterRegistry registry() {
-        return new DatadogMeterRegistry(new DatadogConfig() {
-            @Override
-            public boolean enabled() {
-                return false;
-            }
-
-            @Override
-            public String apiKey() {
-                return "DOESNOTMATTER";
-            }
-
-            @Override
-            public String get(String k) {
-                return null;
-            }
-
-            @Override
-            public Duration step() {
-                return Duration.ofMillis(800);
-            }
-        }, new MockClock());
+        return new DatadogMeterRegistry(new FakeDatadogConfig(), new MockClock());
     }
+
+    static class FakeDatadogConfig implements DatadogConfig {
+        @Override
+        public boolean enabled() {
+            return false;
+        }
+
+        @Override
+        public String apiKey() {
+            return "DOESNOTMATTER";
+        }
+
+        @Override
+        public String get(String k) {
+            return null;
+        }
+
+        @Override
+        public Duration step() {
+            return Duration.ofMillis(800);
+        }
+    }
+
+
 }
