@@ -132,8 +132,6 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
                     .minimumExpectedValue(Duration.ofNanos(histogramConfig.getMinimumExpectedValue()))
                     .publishPercentiles(histogramConfig.getPercentiles())
                     .publishPercentileHistogram(histogramConfig.isPercentileHistogram())
-                    .maximumExpectedValue(Duration.ofNanos(histogramConfig.getMaximumExpectedValue()))
-                    .minimumExpectedValue(Duration.ofNanos(histogramConfig.getMinimumExpectedValue()))
                     .histogramBufferLength(histogramConfig.getHistogramBufferLength())
                     .histogramExpiry(histogramConfig.getHistogramExpiry())
                     .sla(sla)
