@@ -87,10 +87,10 @@ public class TomcatMetrics implements MeterBinder {
         Gauge.builder("tomcat.sessions.active.current", manager, Manager::getActiveSessions)
             .tags(tags)
             .register(reg);
-        Gauge.builder("tomcat.sessions.expired", manager, Manager::getExpiredSessions)
+        FunctionCounter.builder("tomcat.sessions.expired", manager, Manager::getExpiredSessions)
             .tags(tags)
             .register(reg);
-        Gauge.builder("tomcat.sessions.rejected", manager, Manager::getRejectedSessions)
+        FunctionCounter.builder("tomcat.sessions.rejected", manager, Manager::getRejectedSessions)
             .tags(tags)
             .register(reg);
         TimeGauge.builder("tomcat.sessions.alive.max", manager, TimeUnit.SECONDS, Manager::getSessionMaxAliveTime)
@@ -113,10 +113,9 @@ public class TomcatMetrics implements MeterBinder {
                 if(!server.queryNames(new ObjectName("Tomcat:type=GlobalRequestProcessor,*"), null).isEmpty()){
                     return;
                 }
-
                 Thread.sleep(500);
             } catch (Exception e) {
-                e.printStackTrace();
+                //NO OP
             }
         }
 
