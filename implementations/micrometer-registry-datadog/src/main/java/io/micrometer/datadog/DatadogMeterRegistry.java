@@ -138,8 +138,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         // we can't know anything about max and percentiles originating from a function timer
         return Stream.of(
-            writeMetric(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
-            writeMetric(idWithSuffix(timer.getId(), "avg"), wallTime, timer.mean(getBaseTimeUnit())));
+            writeMetric(idWithSuffix(timer.getId(), "count"), Statistic.Count, wallTime, timer.count()),
+            writeMetric(idWithSuffix(timer.getId(), "avg"), Statistic.Value, wallTime, timer.mean(getBaseTimeUnit())));
     }
 
     private Stream<String> writeTimer(Timer timer) {
@@ -147,14 +147,14 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         final HistogramSnapshot snapshot = timer.takeSnapshot(false);
         final Stream.Builder<String> metrics = Stream.builder();
 
-        metrics.add(writeMetric(idWithSuffix(timer.getId(), "sum"), wallTime, snapshot.total(getBaseTimeUnit())));
-        metrics.add(writeMetric(idWithSuffix(timer.getId(), "count"), wallTime, snapshot.count()));
-        metrics.add(writeMetric(idWithSuffix(timer.getId(), "avg"), wallTime, snapshot.mean(getBaseTimeUnit())));
-        metrics.add(writeMetric(idWithSuffix(timer.getId(), "max"), wallTime, snapshot.max(getBaseTimeUnit())));
+        metrics.add(writeMetric(idWithSuffix(timer.getId(), "sum"), Statistic.Total, wallTime, snapshot.total(getBaseTimeUnit())));
+        metrics.add(writeMetric(idWithSuffix(timer.getId(), "count"), Statistic.Count, wallTime, snapshot.count()));
+        metrics.add(writeMetric(idWithSuffix(timer.getId(), "avg"), Statistic.Value, wallTime, snapshot.mean(getBaseTimeUnit())));
+        metrics.add(writeMetric(idWithSuffix(timer.getId(), "max"), Statistic.Max, wallTime, snapshot.max(getBaseTimeUnit())));
 
         for (ValueAtPercentile v : snapshot.percentileValues()) {
             metrics.add(writeMetric(idWithSuffix(timer.getId(), percentileFormat.format(v.percentile()) + "percentile"),
-                                    wallTime, v.value(getBaseTimeUnit())));
+                Statistic.Value, wallTime, v.value(getBaseTimeUnit())));
         }
 
         return metrics.build();
@@ -165,14 +165,14 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         final HistogramSnapshot snapshot = summary.takeSnapshot(false);
         final Stream.Builder<String> metrics = Stream.builder();
 
-        metrics.add(writeMetric(idWithSuffix(summary.getId(), "sum"), wallTime, snapshot.total()));
-        metrics.add(writeMetric(idWithSuffix(summary.getId(), "count"), wallTime, snapshot.count()));
-        metrics.add(writeMetric(idWithSuffix(summary.getId(), "avg"), wallTime, snapshot.mean()));
-        metrics.add(writeMetric(idWithSuffix(summary.getId(), "max"), wallTime, snapshot.max()));
+        metrics.add(writeMetric(idWithSuffix(summary.getId(), "sum"), Statistic.Total, wallTime, snapshot.total()));
+        metrics.add(writeMetric(idWithSuffix(summary.getId(), "count"), Statistic.Count, wallTime, snapshot.count()));
+        metrics.add(writeMetric(idWithSuffix(summary.getId(), "avg"), Statistic.Value, wallTime, snapshot.mean()));
+        metrics.add(writeMetric(idWithSuffix(summary.getId(), "max"), Statistic.Max, wallTime, snapshot.max()));
 
         for (ValueAtPercentile v : snapshot.percentileValues()) {
             metrics.add(writeMetric(idWithSuffix(summary.getId(), percentileFormat.format(v.percentile()) + "percentile"),
-                                    wallTime, v.value()));
+                Statistic.Value, wallTime, v.value()));
         }
 
         return metrics.build();
@@ -181,10 +181,11 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     private Stream<String> writeMeter(Meter m) {
         long wallTime = clock.wallTime();
         return stream(m.measure().spliterator(), false)
-            .map(ms -> writeMetric(m.getId().withTag(ms.getStatistic()), wallTime, ms.getValue()));
+            .map(ms -> writeMetric(m.getId().withTag(ms.getStatistic()), ms.getStatistic(), wallTime, ms.getValue()));
     }
 
-    private String writeMetric(Meter.Id id, long wallTime, double value) {
+    //VisibleForTesting
+    String writeMetric(Meter.Id id, Statistic statistic, long wallTime, double value) {
         Iterable<Tag> tags = id.getTags();
 
         String host = config.hostTag() == null ? "" : stream(tags.spliterator(), false)
@@ -199,8 +200,31 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                     .map(t -> "\"" + t.getKey() + ":" + t.getValue() + "\"")
                     .collect(joining(",")) + "]" : "";
 
+        String type = ",\"type\":\""+asDataDogType(statistic)+"\"";
+
+        String unit = "";
+        if(id.getBaseUnit() != null && !id.getBaseUnit().isEmpty()) {
+            unit = ",\"unit\":\""+id.getBaseUnit()+"\"";
+        }
+
         return "{\"metric\":\"" + id.getConventionName(config().namingConvention()) + "\"," +
-            "\"points\":[[" + (wallTime / 1000) + ", " + value + "]]" + host + tagsArray + "}";
+            "\"points\":[[" + (wallTime / 1000) + ", " + value + "]]" + host + tagsArray + type + unit + "}";
+    }
+
+    private String asDataDogType(Statistic type) {
+        switch(type) {
+            case Count:
+            case Total:
+            case TotalTime:
+                return "count";
+            case Max:
+            case Value:
+            case Unknown:
+            case ActiveTasks:
+            case Duration:
+            default:
+                return "gauge";
+        }
     }
 
     @Override

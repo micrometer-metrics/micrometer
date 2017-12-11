@@ -6,4 +6,5 @@ dependencies {
     compile 'org.slf4j:slf4j-api:latest.release'
 
     testCompile project(':micrometer-test')
+    testCompile 'com.fasterxml.jackson.core:jackson-databind:2.9.3'
 }
