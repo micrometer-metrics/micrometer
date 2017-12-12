@@ -70,7 +70,7 @@ abstract class TimeWindowHistogramBase<T, U> {
         durationBetweenRotatesMillis = histogramConfig.getHistogramExpiry().toMillis() / ageBuckets;
         if (durationBetweenRotatesMillis <= 0) {
             rejectHistogramConfig("histogramExpiry (" + histogramConfig.getHistogramExpiry().toMillis() +
-                                  "ms) / histogramBufferLength (" + ageBuckets + ") must be greater than 1.");
+                                  "ms) / histogramBufferLength (" + ageBuckets + ") must be greater than 0.");
         }
 
         currentBucket = 0;
