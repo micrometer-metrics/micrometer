@@ -28,23 +28,25 @@ import java.util.List;
  */
 public class MetricDatumPartition extends AbstractList<List<MetricDatum>> {
     private final List<MetricDatum> list;
-    private final int size;
+    private final int partitionSize;
+    private final int partitionCount;
 
-    public MetricDatumPartition(List<MetricDatum> metricData, int size) {
+    public MetricDatumPartition(List<MetricDatum> metricData, int partitionSize) {
         this.list = metricData;
-        this.size = size;
+        this.partitionSize = partitionSize;
+        this.partitionCount = MathUtils.divideWithCeilingRoundingMode(list.size(), partitionSize);
     }
 
     @Override
     public List<MetricDatum> get(int index) {
-        int start = index * size;
-        int end = Math.min(start + size, list.size());
+        int start = index * partitionSize;
+        int end = Math.min(start + partitionSize, list.size());
         return list.subList(start, end);
     }
 
     @Override
     public int size() {
-        return MathUtils.divideWithCeilingRoundingMode(list.size(), size);
+        return this.partitionCount;
     }
 
     @Override
@@ -52,7 +54,7 @@ public class MetricDatumPartition extends AbstractList<List<MetricDatum>> {
         return list.isEmpty();
     }
 
-    public static List<List<MetricDatum>> partition(List<MetricDatum> metricData, int size) {
-        return new MetricDatumPartition(metricData, size);
+    public static List<List<MetricDatum>> partition(List<MetricDatum> metricData, int partitionSize) {
+        return new MetricDatumPartition(metricData, partitionSize);
     }
 }
