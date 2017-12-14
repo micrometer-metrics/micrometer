@@ -21,21 +21,31 @@ import cern.jet.random.engine.RandomEngine;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.samples.utils.SampleRegistries;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class FunctionTimerSample {
+    /**
+     * For Atlas: http://localhost:7101/api/v1/graph?q=name,ftimer,:eq,:dist-avg,name,timer,:eq,:dist-avg,1,:axis&s=e-5m&l=0
+     */
     public static void main(String[] args) {
         MeterRegistry registry = SampleRegistries.atlas();
+
         Timer timer = Timer.builder("timer")
             .publishPercentiles(0.5, 0.95)
             .register(registry);
 
-        FunctionTimer.builder("ftimer", timer, Timer::count, t -> t.totalTime(TimeUnit.SECONDS), TimeUnit.SECONDS)
+        Object placeholder = new Object();
+        AtomicLong totalTimeNanos = new AtomicLong(0);
+        AtomicLong totalCount = new AtomicLong(0);
+
+        FunctionTimer.builder("ftimer", placeholder, p -> totalCount.get(), p -> totalTimeNanos.get(), TimeUnit.NANOSECONDS)
             .register(registry);
 
         RandomEngine r = new MersenneTwister64(0);
@@ -54,6 +64,8 @@ public class FunctionTimerSample {
                     // pretend the request took some amount of time, such that the time is
                     // distributed normally with a mean of 250ms
                     timer.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS);
+                    totalCount.incrementAndGet();
+                    totalTimeNanos.addAndGet((long) TimeUtils.millisToUnit(latencyForThisSecond.get(), TimeUnit.NANOSECONDS));
                 }
             })
             .blockLast();
