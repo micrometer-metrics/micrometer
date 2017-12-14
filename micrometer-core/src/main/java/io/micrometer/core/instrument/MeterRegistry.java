@@ -78,9 +78,8 @@ public abstract class MeterRegistry {
     protected abstract Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements);
 
     protected <T> TimeGauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
-        TimeUnit baseTimeUnit = getBaseTimeUnit();
-        id.setBaseUnit(getBaseTimeUnitStr());
-        Gauge gauge = newGauge(id, obj, obj2 -> TimeUtils.convert(f.applyAsDouble(obj2), fUnit, getBaseTimeUnit()));
+        Meter.Id withUnit = id.withBaseUnit(getBaseTimeUnitStr());
+        Gauge gauge = newGauge(withUnit, obj, obj2 -> TimeUtils.convert(f.applyAsDouble(obj2), fUnit, getBaseTimeUnit()));
 
         return new TimeGauge() {
             @Override
@@ -95,7 +94,7 @@ public abstract class MeterRegistry {
 
             @Override
             public TimeUnit baseTimeUnit() {
-                return baseTimeUnit;
+                return getBaseTimeUnit();
             }
         };
     }
@@ -130,8 +129,10 @@ public abstract class MeterRegistry {
     }
 
     Timer timer(Meter.Id id, HistogramConfig histogramConfig) {
-        return registerMeterIfNecessary(Timer.class, id, histogramConfig, (id2, filteredConfig) ->
-            newTimer(id2, filteredConfig.merge(HistogramConfig.DEFAULT)), NoopTimer::new);
+        return registerMeterIfNecessary(Timer.class, id, histogramConfig, (id2, filteredConfig) -> {
+            Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
+            return newTimer(withUnit, filteredConfig.merge(HistogramConfig.DEFAULT));
+        }, NoopTimer::new);
     }
 
     DistributionSummary summary(Meter.Id id, HistogramConfig histogramConfig) {
@@ -397,8 +398,8 @@ public abstract class MeterRegistry {
          */
         LongTaskTimer longTaskTimer(Meter.Id id) {
             return registerMeterIfNecessary(LongTaskTimer.class, id, id2 -> {
-                id2.setBaseUnit(getBaseTimeUnitStr());
-                return newLongTaskTimer(id2);
+                Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
+                return newLongTaskTimer(withUnit);
             }, NoopLongTaskTimer::new);
         }
 
@@ -438,8 +439,8 @@ public abstract class MeterRegistry {
                                 ToDoubleFunction<T> totalTimeFunction,
                                 TimeUnit totalTimeFunctionUnits) {
             return registerMeterIfNecessary(FunctionTimer.class, id, id2 -> {
-                id2.setBaseUnit(getBaseTimeUnitStr());
-                return newFunctionTimer(id2, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
+                Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
+                return newFunctionTimer(withUnit, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
             }, NoopFunctionTimer::new);
         }
 

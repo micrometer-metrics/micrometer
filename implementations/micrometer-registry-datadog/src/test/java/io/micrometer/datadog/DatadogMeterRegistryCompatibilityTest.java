@@ -15,25 +15,13 @@
  */
 package io.micrometer.datadog;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.time.Duration;
-import java.util.HashMap;
-
-import static io.micrometer.core.instrument.Meter.*;
-import static org.assertj.core.api.Assertions.assertThat;
 
 class DatadogMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
-
-
     @Override
     public MeterRegistry registry() {
         return new DatadogMeterRegistry(new FakeDatadogConfig(), new MockClock());
@@ -60,6 +48,4 @@ class DatadogMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKi
             return Duration.ofMillis(800);
         }
     }
-
-
 }

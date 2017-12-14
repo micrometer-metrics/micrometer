@@ -16,26 +16,29 @@
 package io.micrometer.core.samples;
 
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.samples.utils.SampleRegistries;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.util.Collections.emptyList;
-
 public class FunctionCounterSample {
     public static void main(String[] args) {
-        CompositeMeterRegistry registry = new CompositeMeterRegistry();
-        registry.add(SampleRegistries.atlas());
-        registry.add(SampleRegistries.prometheus());
-        registry.add(SampleRegistries.jmx());
+        MeterRegistry registry = SampleRegistries.datadog();
 
         AtomicInteger n = new AtomicInteger(0);
 
-        registry.more().counter("my.fcounter", emptyList(), n);
-        Counter counter = registry.counter("my.counter");
+        FunctionCounter.builder("my.fcounter", n, AtomicInteger::get)
+            .baseUnit("happiness")
+            .description("A counter derived from a monotonically increasing value")
+            .register(registry);
+
+        Counter counter = Counter.builder("my.counter")
+            .baseUnit("happiness")
+            .description("A normal counter")
+            .register(registry);
 
         Flux.interval(Duration.ofMillis(10))
             .doOnEach(i -> {

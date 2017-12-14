@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TimerSample {
     public static void main(String[] args) {
-        MeterRegistry registry = SampleRegistries.prometheusPushgateway();
+        MeterRegistry registry = SampleRegistries.datadog();
         Timer timer = Timer.builder("timer")
             .publishPercentiles(0.5, 0.95)
             .register(registry);

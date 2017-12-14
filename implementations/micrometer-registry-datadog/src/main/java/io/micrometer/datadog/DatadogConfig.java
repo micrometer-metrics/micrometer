@@ -40,6 +40,10 @@ public interface DatadogConfig extends StepRegistryConfig {
         return v;
     }
 
+    default String applicationKey() {
+        return get(prefix() + ".applicationKey");
+    }
+
     /**
      * The tag that will be mapped to "host" when shipping metrics to datadog, or {@code null} if
      * host should be omitted on publishing.
@@ -55,6 +59,17 @@ public interface DatadogConfig extends StepRegistryConfig {
      */
     default String uri() {
         String v = get(prefix() + ".apiHost");
-        return v == null ? "https://app.datadoghq.com/api/v1/series?api_key=" + apiKey() : v;
+        return v == null ? "https://app.datadoghq.com" : v;
     }
+
+    /**
+     * {@code true} if meter descriptions should be sent to Datadog.
+     * Turn this off to minimize the amount of data sent on each scrape.
+     */
+    default boolean descriptions() {
+        String v = get(prefix() + ".descriptions");
+        return v == null || Boolean.valueOf(v);
+    }
+
+
 }

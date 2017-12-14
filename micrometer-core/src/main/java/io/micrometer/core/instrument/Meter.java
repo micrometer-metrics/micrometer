@@ -89,6 +89,10 @@ public interface Meter {
             return withTag(Tag.of("statistic", Introspector.decapitalize(statistic.toString())));
         }
 
+        public Id withBaseUnit(String newBaseUnit) {
+            return new Id(name, tags, newBaseUnit, description, type);
+        }
+
         public String getName() {
             return name;
         }
@@ -141,14 +145,6 @@ public interface Meter {
 
         public Type getType() {
             return type;
-        }
-
-        /**
-         * For use by registry implementations to change the identifier's base unit when it is determined
-         * solely by the implementation, e.g. identifiers associated with timers.
-         */
-        public void setBaseUnit(String baseUnit) {
-            this.baseUnit = baseUnit;
         }
     }
 

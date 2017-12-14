@@ -58,6 +58,11 @@ public class DatadogExportConfiguration {
         public String hostTag() {
             return props.getHostKey() == null ? defaults.hostTag() : props.getHostKey();
         }
+
+        @Override
+        public boolean descriptions() {
+            return props.getDescriptions() == null ? defaults.descriptions() : props.getDescriptions();
+        }
     }
 
     @Bean

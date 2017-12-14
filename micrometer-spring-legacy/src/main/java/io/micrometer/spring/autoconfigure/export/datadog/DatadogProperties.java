@@ -36,6 +36,12 @@ public class DatadogProperties extends StepRegistryProperties {
      */
     private String hostKey;
 
+    /**
+     * Enable publishing descriptions as part of the scrape payload to Datadog.
+     * Turn this off to minimize the number of edit metadata requests on initial meter registration.
+     */
+    private Boolean descriptions = true;
+
     public String getApiKey() {
         return apiKey;
     }
@@ -50,5 +56,13 @@ public class DatadogProperties extends StepRegistryProperties {
 
     public void setHostKey(String hostKey) {
         this.hostKey = hostKey;
+    }
+
+    public Boolean getDescriptions() {
+        return descriptions;
+    }
+
+    public void setDescriptions(Boolean descriptions) {
+        this.descriptions = descriptions;
     }
 }
