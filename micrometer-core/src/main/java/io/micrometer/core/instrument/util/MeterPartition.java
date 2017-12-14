@@ -28,23 +28,25 @@ import java.util.List;
  */
 public class MeterPartition extends AbstractList<List<Meter>> {
     private final List<Meter> list;
-    private final int size;
+    private final int partitionSize;
+    private final int partitionCount;
 
-    public MeterPartition(MeterRegistry registry, int size) {
+    public MeterPartition(MeterRegistry registry, int partitionSize) {
         this.list = registry.getMeters();
-        this.size = size;
+        this.partitionSize = partitionSize;
+        this.partitionCount = MathUtils.divideWithCeilingRoundingMode(list.size(), partitionSize);
     }
 
     @Override
     public List<Meter> get(int index) {
-        int start = index * size;
-        int end = Math.min(start + size, list.size());
+        int start = index * partitionSize;
+        int end = Math.min(start + partitionSize, list.size());
         return list.subList(start, end);
     }
 
     @Override
     public int size() {
-        return MathUtils.divideWithCeilingRoundingMode(list.size(), size);
+        return this.partitionCount;
     }
 
     @Override
@@ -52,7 +54,7 @@ public class MeterPartition extends AbstractList<List<Meter>> {
         return list.isEmpty();
     }
 
-    public static List<List<Meter>> partition(MeterRegistry registry, int size) {
-        return new MeterPartition(registry, size);
+    public static List<List<Meter>> partition(MeterRegistry registry, int partitionSize) {
+        return new MeterPartition(registry, partitionSize);
     }
 }
