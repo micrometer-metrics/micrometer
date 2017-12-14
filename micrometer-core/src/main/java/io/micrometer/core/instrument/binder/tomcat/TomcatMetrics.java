@@ -19,16 +19,13 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.apache.catalina.Manager;
 
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
+import javax.management.*;
 import java.lang.management.ManagementFactory;
-import java.time.Duration;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
+import java.util.function.BiConsumer;
 
 /**
  * @author Clint Checketts
@@ -36,8 +33,7 @@ import java.util.function.Supplier;
  */
 public class TomcatMetrics implements MeterBinder {
     private final Manager manager;
-    private final Duration maxRegistrationWait;
-    private final Supplier<MBeanServer> mBeanServerProvider;
+    private final MBeanServer mBeanServer;
     private final Iterable<Tag> tags;
 
     public static void monitor(MeterRegistry meterRegistry, Manager manager, String... tags) {
@@ -49,29 +45,21 @@ public class TomcatMetrics implements MeterBinder {
     }
 
     public TomcatMetrics(Manager manager, Iterable<Tag> tags) {
-        this(manager, tags, Duration.ofHours(24), ManagementFactory::getPlatformMBeanServer);
+        this(manager, tags, ManagementFactory.getPlatformMBeanServer());
     }
 
-    public TomcatMetrics(Manager manager, Iterable<Tag> tags, Duration maxRegistrationWait, Supplier<MBeanServer> mBeanServerProvider) {
+    public TomcatMetrics(Manager manager, Iterable<Tag> tags, MBeanServer mBeanServer) {
         this.tags = tags;
         this.manager = manager;
-        this.maxRegistrationWait = maxRegistrationWait;
-        this.mBeanServerProvider = mBeanServerProvider;
+        this.mBeanServer = mBeanServer;
     }
 
     @Override
     public void bindTo(MeterRegistry reg) {
-        Thread tomcatRegisterThread = new Thread(() -> {
-            waitForTomcatJmxRegistration();
-
-            MBeanServer server = mBeanServerProvider.get();
-            registerGlobalRequestMetrics(reg, server);
-            registerServletMetrics(reg, server);
-            registerCacheMetrics(reg, server);
-            registerThreadPoolMetrics(reg, server);
-        });
-        tomcatRegisterThread.setName("tomcat-jmx-metrics-register");
-        tomcatRegisterThread.start();
+        registerGlobalRequestMetrics(reg);
+        registerServletMetrics(reg);
+        registerCacheMetrics(reg);
+        registerThreadPoolMetrics(reg);
 
         if (manager == null) {
             // If the binder is created but unable to find the session manager don't register those metrics
@@ -86,11 +74,15 @@ public class TomcatMetrics implements MeterBinder {
             .tags(tags)
             .register(reg);
 
-        Gauge.builder("tomcat.sessions.expired", manager, Manager::getExpiredSessions)
+        FunctionCounter.builder("tomcat.sessions.created", manager, Manager::getSessionCounter)
             .tags(tags)
             .register(reg);
 
-        Gauge.builder("tomcat.sessions.rejected", manager, Manager::getRejectedSessions)
+        FunctionCounter.builder("tomcat.sessions.expired", manager, Manager::getExpiredSessions)
+            .tags(tags)
+            .register(reg);
+
+        FunctionCounter.builder("tomcat.sessions.rejected", manager, Manager::getRejectedSessions)
             .tags(tags)
             .register(reg);
 
@@ -103,122 +95,133 @@ public class TomcatMetrics implements MeterBinder {
             .register(reg);
     }
 
-
-    private void waitForTomcatJmxRegistration() {
-        MBeanServer server = mBeanServerProvider.get();
-        long endWait = System.currentTimeMillis() + maxRegistrationWait.toMillis();
-
-        //noinspection InfiniteLoopStatement
-        while (System.currentTimeMillis() < endWait) {
-            try {
-                if (!server.queryNames(new ObjectName("Tomcat:type=GlobalRequestProcessor,*"), null).isEmpty()) {
-                    return;
-                }
-
-                Thread.sleep(500);
-            } catch (Exception ignored) {
-            }
-        }
-    }
-
-    private void registerThreadPoolMetrics(MeterRegistry reg, MBeanServer server) {
-        for (ObjectName name : findNames(server, "Tomcat:type=ThreadPool,*")) {
-            Iterable<Tag> allTags = Tags.concat(tags, nameTag(name));
-
-            Gauge.builder("tomcat.threads.config.max", server,
+    private void registerThreadPoolMetrics(MeterRegistry reg) {
+        registerMetricsEventually("type", "ThreadPool", (name, allTags) -> {
+            Gauge.builder("tomcat.threads.config.max", mBeanServer,
                 s -> safeDouble(() -> s.getAttribute(name, "maxThreads")))
                 .tags(allTags)
                 .register(reg);
 
-            Gauge.builder("tomcat.threads.busy", server,
+            Gauge.builder("tomcat.threads.busy", mBeanServer,
                 s -> safeDouble(() -> s.getAttribute(name, "currentThreadsBusy")))
                 .tags(allTags)
                 .register(reg);
 
-            Gauge.builder("tomcat.threads.current", server,
+            Gauge.builder("tomcat.threads.current", mBeanServer,
                 s -> safeDouble(() -> s.getAttribute(name, "currentThreadCount")))
                 .tags(allTags)
                 .register(reg);
-        }
+        });
     }
 
-
-    private void registerCacheMetrics(MeterRegistry reg, MBeanServer server) {
-        for (ObjectName name : findNames(server, "Tomcat:type=StringCache,*")) {
-            FunctionCounter.builder("tomcat.cache.access", server,
+    private void registerCacheMetrics(MeterRegistry reg) {
+        registerMetricsEventually("type", "StringCache", (name, allTags) -> {
+            FunctionCounter.builder("tomcat.cache.access", mBeanServer,
                 s -> safeDouble(() -> s.getAttribute(name, "accessCount")))
+                .tags(allTags)
                 .register(reg);
 
-            FunctionCounter.builder("tomcat.cache.hit", server,
+            FunctionCounter.builder("tomcat.cache.hit", mBeanServer,
                 s -> safeDouble(() -> s.getAttribute(name, "hitCount")))
+                .tags(allTags)
                 .register(reg);
-        }
+        });
     }
 
-    private void registerServletMetrics(MeterRegistry reg, MBeanServer server) {
-        for (ObjectName name : findNames(server, "Tomcat:j2eeType=Servlet,*")) {
-            Iterable<Tag> allTags = Tags.concat(tags, nameTag(name));
-
-            FunctionCounter.builder("tomcat.servlet.error", server,
+    private void registerServletMetrics(MeterRegistry reg) {
+        registerMetricsEventually("j2eeType", "Servlet", (name, allTags) -> {
+            FunctionCounter.builder("tomcat.servlet.error", mBeanServer,
                 s -> safeDouble(() -> s.getAttribute(name, "errorCount")))
                 .tags(allTags)
                 .register(reg);
 
-            FunctionTimer.builder("tomcat.servlet.request", server,
+            FunctionTimer.builder("tomcat.servlet.request", mBeanServer,
                 s -> safeLong(() -> s.getAttribute(name, "requestCount")),
                 s -> safeDouble(() -> s.getAttribute(name, "processingTime")), TimeUnit.MILLISECONDS)
                 .tags(allTags)
                 .register(reg);
 
-            TimeGauge.builder("tomcat.servlet.request.max", server, TimeUnit.MILLISECONDS,
+            TimeGauge.builder("tomcat.servlet.request.max", mBeanServer, TimeUnit.MILLISECONDS,
                 s -> safeDouble(() -> s.getAttribute(name, "maxTime")))
                 .tags(allTags)
                 .register(reg);
-        }
+        });
     }
 
-    private void registerGlobalRequestMetrics(MeterRegistry reg, MBeanServer server) {
-        for (ObjectName name : findNames(server, "Tomcat:type=GlobalRequestProcessor,*")) {
-            Iterable<Tag> allTags = Tags.concat(tags, nameTag(name));
-
-            FunctionCounter.builder("tomcat.global.sent", server,
+    private void registerGlobalRequestMetrics(MeterRegistry reg) {
+        registerMetricsEventually("type", "GlobalRequestProcessor", (name, allTags) -> {
+            FunctionCounter.builder("tomcat.global.sent", mBeanServer,
                 s -> safeDouble(() -> s.getAttribute(name, "bytesSent")))
                 .tags(allTags)
                 .baseUnit("bytes")
                 .register(reg);
 
-            FunctionCounter.builder("tomcat.global.received", server,
+            FunctionCounter.builder("tomcat.global.received", mBeanServer,
                 s -> safeDouble(() -> s.getAttribute(name, "bytesReceived")))
                 .tags(allTags)
                 .baseUnit("bytes")
                 .register(reg);
 
-            FunctionCounter.builder("tomcat.global.error", server,
+            FunctionCounter.builder("tomcat.global.error", mBeanServer,
                 s -> safeDouble(() -> s.getAttribute(name, "errorCount")))
                 .tags(allTags)
                 .register(reg);
 
-            FunctionTimer.builder("tomcat.global.request", server,
+            FunctionTimer.builder("tomcat.global.request", mBeanServer,
                 s -> safeLong(() -> s.getAttribute(name, "requestCount")),
                 s -> safeDouble(() -> s.getAttribute(name, "processingTime")), TimeUnit.MILLISECONDS)
                 .tags(allTags)
                 .register(reg);
 
-            TimeGauge.builder("tomcat.global.request.max", server, TimeUnit.MILLISECONDS,
+            TimeGauge.builder("tomcat.global.request.max", mBeanServer, TimeUnit.MILLISECONDS,
                 s -> safeDouble(() -> s.getAttribute(name, "maxTime")))
                 .tags(allTags)
                 .register(reg);
-        }
+        });
     }
 
-    private Set<ObjectName> findNames(MBeanServer server, String query) {
+    /**
+     * If the MBean already exists, register metrics immediately. Otherwise register an MBean registration listener
+     * with the MBeanServer and register metrics when/if the MBean becomes available.
+     */
+    private void registerMetricsEventually(String key, String value, BiConsumer<ObjectName, Iterable<Tag>> perObject) {
         try {
-            return server.queryNames(new ObjectName(query), null);
+            Set<ObjectName> objs = mBeanServer.queryNames(new ObjectName("Tomcat:" + key + "=" + value + ",*"), null);
+            if(!objs.isEmpty()) {
+                // MBean is present, so we can register metrics now.
+                objs.forEach(o -> perObject.accept(o, Tags.concat(tags, nameTag(o))));
+                return;
+            }
         } catch (MalformedObjectNameException e) {
+            // should never happen
             throw new RuntimeException("Error registering Tomcat JMX based metrics", e);
         }
-    }
 
+        // MBean isn't yet registered, so we'll set up a notification to wait for them to be present and register
+        // metrics later.
+        NotificationListener notificationListener = (notification, handback) -> {
+            MBeanServerNotification mbs = (MBeanServerNotification) notification;
+            ObjectName obj = mbs.getMBeanName();
+            perObject.accept(obj, Tags.concat(tags, nameTag(obj)));
+        };
+
+        NotificationFilter filter = (NotificationFilter) notification -> {
+            if (!MBeanServerNotification.REGISTRATION_NOTIFICATION.equals(notification.getType()))
+                return false;
+
+            // we can safely downcast now
+            ObjectName obj = ((MBeanServerNotification) notification).getMBeanName();
+            return obj.getDomain().equals("Tomcat") && obj.getKeyProperty(key).equals(value);
+
+        };
+
+        try {
+            mBeanServer.addNotificationListener(MBeanServerDelegate.DELEGATE_NAME, notificationListener, filter, null);
+        } catch (InstanceNotFoundException e) {
+            // should never happen
+            throw new RuntimeException("Error registering MBean listener", e);
+        }
+    }
 
     private double safeDouble(Callable<Object> callable) {
         try {

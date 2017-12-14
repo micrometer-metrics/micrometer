@@ -19,47 +19,47 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.catalina.Context;
+import org.apache.catalina.LifecycleException;
 import org.apache.catalina.core.StandardContext;
+import org.apache.catalina.core.StandardHost;
 import org.apache.catalina.session.ManagerBase;
 import org.apache.catalina.session.StandardSession;
 import org.apache.catalina.session.TooManyActiveSessionsException;
+import org.apache.catalina.startup.Tomcat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 import javax.servlet.ServletException;
 import java.io.IOException;
-import java.sql.SQLException;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
+/**
+ * @author Clint Checketts
+ * @author Jon Schneider
+ */
 class TomcatMetricsTest {
     private SimpleMeterRegistry registry;
-    private ManagerBase manager;
 
     @BeforeEach
-    void setup() throws SQLException {
+    void setup() {
         this.registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+    }
+
+    @Test
+    void managerBasedMetrics() throws IOException, ServletException {
         Context context = new StandardContext();
 
-        this.manager = new ManagerBase() {
+        ManagerBase manager = new ManagerBase() {
             @Override
             public void load() throws ClassNotFoundException, IOException {
-
             }
 
             @Override
             public void unload() throws IOException {
-
             }
 
             @Override
@@ -67,16 +67,15 @@ class TomcatMetricsTest {
                 return context;
             }
         };
-        manager.setMaxActiveSessions(3);
-    }
 
-    @Test
-    void stats() throws IOException, ServletException {
+        manager.setMaxActiveSessions(3);
+
         manager.createSession("first");
         manager.createSession("second");
+        manager.createSession("third");
 
         try {
-            manager.createSession("forth");
+            manager.createSession("fourth");
         } catch (TooManyActiveSessionsException exception) {
             //ignore error, testing rejection
         }
@@ -91,33 +90,53 @@ class TomcatMetricsTest {
 
         assertThat(registry.find("tomcat.sessions.active.max").tags(tags).gauge().map(Gauge::value)).hasValue(3.0);
         assertThat(registry.find("tomcat.sessions.active.current").tags(tags).gauge().map(Gauge::value)).hasValue(2.0);
-        assertThat(registry.find("tomcat.sessions.expired").tags(tags).gauge().map(Gauge::value)).hasValue(1.0);
-        assertThat(registry.find("tomcat.sessions.rejected").tags(tags).gauge().map(Gauge::value)).hasValue(1.0);
+        assertThat(registry.find("tomcat.sessions.expired").tags(tags).functionCounter().map(FunctionCounter::count)).hasValue(1.0);
+        assertThat(registry.find("tomcat.sessions.rejected").tags(tags).functionCounter().map(FunctionCounter::count)).hasValue(1.0);
         assertThat(registry.find("tomcat.sessions.created").tags(tags).functionCounter().map(FunctionCounter::count)).hasValue(3.0);
         assertThat(registry.find("tomcat.sessions.alive.max").tags(tags).gauge().map(Gauge::value)).isPresent()
             .hasValueSatisfying(val -> assertThat(val).isGreaterThan(1.0));
     }
 
     @Test
-    void jmxMetric() throws Exception {
-        MBeanServer server = mock(MBeanServer.class);
+    void mbeansAvailableAfterBinder() throws LifecycleException, InterruptedException {
+        TomcatMetrics.monitor(registry, null);
 
-        List<Tag> tags = Tags.zip("metricTag", "val1");
-        new TomcatMetrics(null, tags, Duration.ofHours(10), () -> server).bindTo(registry);
+        CountDownLatch latch = new CountDownLatch(1);
+        registry.config().onMeterAdded(m -> {
+            if(m.getId().getName().equals("tomcat.global.received"))
+                latch.countDown();
+        });
 
-        assertThat(registry.find("tomcat.threads.busy").gauge()).describedAs("Metric isn't registered until jmx values is detected").isNotPresent();
+        Tomcat server = new Tomcat();
+        try {
+            StandardHost host = new StandardHost();
+            host.setName("localhost");
+            server.setHost(host);
+            server.setPort(61000);
+            server.start();
 
-        //'Register' JMX values
-        when(server.queryNames(any(), any())).thenReturn(Collections.singleton(new ObjectName("Tomcat:type=GlobalRequestProcessor,name=fake")));
-        when(server.getAttribute(any(), anyString())).thenReturn(32);
-        when(server.getAttribute(any(), eq("currentThreadCount"))).thenReturn("badInt");
+            latch.await(10, TimeUnit.SECONDS);
 
-        //Wait for register thread to register
-        Thread.sleep(500);
+            assertThat(registry.find("tomcat.global.received").functionCounter()).isPresent();
+        } finally {
+            server.stop();
+        }
+    }
 
-        //Metric is present and reports a value
-        assertThat(registry.find("tomcat.threads.busy").gauge().map(Gauge::value)).hasValue(32.0);
-        assertThat(registry.find("tomcat.threads.current").gauge().map(Gauge::value))
-            .describedAs("When value is bad, it catches exception and returns 0").hasValue(0.0);
+    @Test
+    void mbeansAvailableBeforeBinder() throws LifecycleException {
+        Tomcat server = new Tomcat();
+        try {
+            StandardHost host = new StandardHost();
+            host.setName("localhost");
+            server.setHost(host);
+            server.setPort(61000);
+            server.start();
+
+            TomcatMetrics.monitor(registry, null);
+            assertThat(registry.find("tomcat.global.received").functionCounter()).isPresent();
+        } finally {
+            server.stop();
+        }
     }
 }
