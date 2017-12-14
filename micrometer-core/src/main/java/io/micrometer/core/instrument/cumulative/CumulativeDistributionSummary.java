@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.cumulative;
 
-import com.google.common.util.concurrent.AtomicDouble;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
@@ -24,23 +23,32 @@ import io.micrometer.core.instrument.histogram.HistogramConfig;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.DoubleAdder;
 
+/**
+ * Cumulative distribution summary.
+ *
+ * @author Clint Checketts
+ * @author Vladimir Bukhtoyarov
+ * @author Jon Schneider
+ */
 public class CumulativeDistributionSummary extends AbstractDistributionSummary {
+
     private final AtomicLong count;
-    private final AtomicDouble total;
-    private final AtomicDouble max;
+    private final DoubleAdder total;
+    private final AtomicLong maxLongBits;
 
     public CumulativeDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig) {
         super(id, clock, histogramConfig);
         this.count = new AtomicLong();
-        this.total = new AtomicDouble();
-        this.max = new AtomicDouble();
+        this.total = new DoubleAdder();
+        this.maxLongBits = new AtomicLong();
     }
 
     @Override
     protected void recordNonNegative(double amount) {
-        count.getAndAdd(1);
-        total.getAndAdd(amount);
+        count.incrementAndGet();
+        total.add(amount);
         updateMax(amount);
     }
 
@@ -51,12 +59,12 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
 
     @Override
     public double totalAmount() {
-        return total.get();
+        return total.sum();
     }
 
     @Override
     public double max() {
-        return max.get();
+        return Double.longBitsToDouble(maxLongBits.get());
     }
 
     @Override
@@ -69,12 +77,14 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
     }
 
     private void updateMax(double amount) {
+        long amountLongBits = Double.doubleToLongBits(amount);
         while (true) {
-            double currentMax = max.get();
+            long currentMaxLongBits = maxLongBits.get();
+            double currentMax = Double.longBitsToDouble(currentMaxLongBits);
             if (currentMax >= amount) {
                 return;
             }
-            if (max.compareAndSet(currentMax, amount)) {
+            if (maxLongBits.compareAndSet(currentMaxLongBits, amountLongBits)) {
                 return;
             }
         }
