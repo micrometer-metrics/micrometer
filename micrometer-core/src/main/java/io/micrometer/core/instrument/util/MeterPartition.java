@@ -15,16 +15,16 @@
  */
 package io.micrometer.core.instrument.util;
 
-import com.google.common.math.IntMath;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 
-import java.math.RoundingMode;
 import java.util.AbstractList;
 import java.util.List;
 
 /**
- * Modified from {@link com.google.common.collect.Lists#partition(List, int)}
+ * Modified from {@link com.google.common.collect.Lists#partition(List, int)}.
+ *
+ * @author Jon Schneider
  */
 public class MeterPartition extends AbstractList<List<Meter>> {
     private final List<Meter> list;
@@ -44,7 +44,7 @@ public class MeterPartition extends AbstractList<List<Meter>> {
 
     @Override
     public int size() {
-        return IntMath.divide(list.size(), size, RoundingMode.CEILING);
+        return MathUtils.divideWithCeilingRoundingMode(list.size(), size);
     }
 
     @Override
