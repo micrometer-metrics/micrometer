@@ -229,6 +229,9 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     }
 
     private void addToMetadataList(Map<String, DatadogMetricMetadata> metadata, Meter.Id id, String suffix, Statistic stat, String overrideBaseUnit) {
+        if(config.applicationKey() == null)
+            return; // we can't set metadata correctly without the application key
+
         Meter.Id fullId = id;
         if(suffix != null)
             fullId = idWithSuffix(id, suffix);

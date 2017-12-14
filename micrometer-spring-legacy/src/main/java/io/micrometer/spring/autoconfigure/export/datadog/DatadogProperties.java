@@ -31,10 +31,22 @@ public class DatadogProperties extends StepRegistryProperties {
     private String apiKey;
 
     /**
+     * Your application key, found in your account settings at datadoghq. This property is required to properly
+     * set metadata on metrics.
+     */
+    private String applicationKey;
+
+    /**
      * The tag that will be mapped to "host" when shipping metrics to datadog, or {@code null} if
      * host should be omitted on publishing.
      */
     private String hostKey;
+
+    /**
+     * The URI to ship metrics to. If you need to publish metrics to an internal proxy en route to
+     * datadoghq, you can define the location of the proxy with this.
+     */
+    private String uri;
 
     /**
      * Enable publishing descriptions as part of the scrape payload to Datadog.
@@ -50,12 +62,28 @@ public class DatadogProperties extends StepRegistryProperties {
         this.apiKey = apiKey;
     }
 
+    public String getApplicationKey() {
+        return applicationKey;
+    }
+
+    public void setApplicationKey(String applicationKey) {
+        this.applicationKey = applicationKey;
+    }
+
     public String getHostKey() {
         return hostKey;
     }
 
     public void setHostKey(String hostKey) {
         this.hostKey = hostKey;
+    }
+
+    public String getUri() {
+        return uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
     }
 
     public Boolean getDescriptions() {

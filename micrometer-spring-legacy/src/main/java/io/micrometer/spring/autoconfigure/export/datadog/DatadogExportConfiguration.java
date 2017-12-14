@@ -55,8 +55,18 @@ public class DatadogExportConfiguration {
         }
 
         @Override
+        public String applicationKey() {
+            return props.getApplicationKey();
+        }
+
+        @Override
         public String hostTag() {
             return props.getHostKey() == null ? defaults.hostTag() : props.getHostKey();
+        }
+
+        @Override
+        public String uri() {
+            return props.getUri() == null ? defaults.uri() : props.getUri();
         }
 
         @Override
