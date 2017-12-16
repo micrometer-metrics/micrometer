@@ -22,6 +22,7 @@ import org.apache.catalina.Manager;
 import javax.management.*;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -44,8 +45,16 @@ public class TomcatMetrics implements MeterBinder {
         new TomcatMetrics(manager, tags).bindTo(meterRegistry);
     }
 
+    public static MBeanServer getMBeanServer() {
+        List<MBeanServer> mBeanServers = MBeanServerFactory.findMBeanServer(null);
+        if (!mBeanServers.isEmpty()) {
+            return mBeanServers.get(0);
+        }
+        return ManagementFactory.getPlatformMBeanServer();
+    }
+
     public TomcatMetrics(Manager manager, Iterable<Tag> tags) {
-        this(manager, tags, ManagementFactory.getPlatformMBeanServer());
+        this(manager, tags, getMBeanServer());
     }
 
     public TomcatMetrics(Manager manager, Iterable<Tag> tags, MBeanServer mBeanServer) {
