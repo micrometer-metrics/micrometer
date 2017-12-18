@@ -43,7 +43,6 @@ public class JCacheMetrics implements MeterBinder {
         public long get(ObjectName objectName) {
             try {
                 List<MBeanServer> mBeanServers = MBeanServerFactory.findMBeanServer(null);
-                System.out.println("There are " + mBeanServers.size() + " MBean servers");
                 for (MBeanServer mBeanServer : mBeanServers) {
                     try {
                         Object attribute = mBeanServer.getAttribute(objectName, this.toString());
