@@ -29,7 +29,6 @@ import org.apache.catalina.startup.Tomcat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -50,7 +49,7 @@ class TomcatMetricsTest {
     }
 
     @Test
-    void managerBasedMetrics() throws IOException, ServletException {
+    void managerBasedMetrics() {
         Context context = new StandardContext();
 
         ManagerBase manager = new ManagerBase() {
@@ -115,11 +114,12 @@ class TomcatMetricsTest {
             server.setPort(61000);
             server.start();
 
-            latch.await(10, TimeUnit.SECONDS);
+            assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 
             assertThat(registry.find("tomcat.global.received").functionCounter()).isPresent();
         } finally {
             server.stop();
+            server.destroy();
         }
     }
 
@@ -137,6 +137,8 @@ class TomcatMetricsTest {
             assertThat(registry.find("tomcat.global.received").functionCounter()).isPresent();
         } finally {
             server.stop();
+            server.destroy();
         }
     }
+
 }
