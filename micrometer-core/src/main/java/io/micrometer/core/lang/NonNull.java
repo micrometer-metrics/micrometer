@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
 /**
  * A common annotation to declare that annotated elements cannot be {@code null}.
  * Leverages JSR 305 meta-annotations to indicate nullability in Java to common tools with
- * JSR 305 support and used by Kotlin to infer nullability of Spring API.
+ * JSR 305 support and used by Kotlin to infer nullability of the API.
  * <p>
  * <p>Should be used at parameter, return value, and field level. Method overrides should
  * repeat parent {@code @NonNull} annotations unless they behave differently.
