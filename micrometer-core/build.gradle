@@ -8,6 +8,10 @@ apply plugin: 'me.champeau.gradle.jmh'
 apply plugin: 'nebula.optional-base'
 
 dependencies {
+    // JSR-305 only used for non-required meta-annotations
+    compileOnly("com.google.code.findbugs:jsr305:3.0.2")
+    testCompileOnly("com.google.code.findbugs:jsr305:3.0.2")
+
     compile 'org.hdrhistogram:HdrHistogram:2.1.10'
     compile 'org.latencyutils:LatencyUtils:2.0.3'
 
