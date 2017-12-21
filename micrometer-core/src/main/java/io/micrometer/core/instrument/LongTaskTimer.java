@@ -15,6 +15,9 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.util.Assert;
+import io.micrometer.core.lang.Nullable;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,6 +34,7 @@ public interface LongTaskTimer extends Meter {
      * @return The return value of `f`.
      */
     default <T> T recordCallable(Callable<T> f) throws Exception {
+        Assert.notNull(f, "callable");
         long id = start();
         try {
             return f.call();
@@ -46,6 +50,7 @@ public interface LongTaskTimer extends Meter {
      * @return The return value of `f`.
      */
     default <T> T record(Supplier<T> f) throws Exception {
+        Assert.notNull(f, "supplier");
         long id = start();
         try {
             return f.get();
@@ -61,6 +66,7 @@ public interface LongTaskTimer extends Meter {
      *          timer id useful for looking up current duration.
      */
     default void record(Consumer<Long> f) {
+        Assert.notNull(f, "consumer");
         long id = start();
         try {
             f.accept(id);
@@ -75,6 +81,7 @@ public interface LongTaskTimer extends Meter {
      * @param f Function to execute and measure the execution time.
      */
     default void record(Runnable f) {
+        Assert.notNull(f, "runnable");
         long id = start();
         try {
             f.run();
@@ -137,9 +144,10 @@ public interface LongTaskTimer extends Meter {
     class Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
-        private String description;
+        private @Nullable String description;
 
         private Builder(String name) {
+            Assert.notNull(name, "name");
             this.name = name;
         }
 
@@ -151,6 +159,7 @@ public interface LongTaskTimer extends Meter {
         }
 
         public Builder tags(Iterable<Tag> tags) {
+            Assert.notNull(tags, "tags");
             tags.forEach(this.tags::add);
             return this;
         }
@@ -160,12 +169,13 @@ public interface LongTaskTimer extends Meter {
             return this;
         }
 
-        public Builder description(String description) {
+        public Builder description(@Nullable String description) {
             this.description = description;
             return this;
         }
 
         public LongTaskTimer register(MeterRegistry registry) {
+            Assert.notNull(registry, "registry");
             return registry.more().longTaskTimer(new Meter.Id(name, tags, null, description, Type.LongTaskTimer));
         }
     }

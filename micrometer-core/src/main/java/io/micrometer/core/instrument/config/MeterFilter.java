@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.util.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,6 +72,7 @@ public interface MeterFilter {
     }
 
     static MeterFilter commonTags(Iterable<Tag> tags) {
+        Assert.notNull(tags, "tags");
         return new MeterFilter() {
             @Override
             public Meter.Id map(Meter.Id id) {

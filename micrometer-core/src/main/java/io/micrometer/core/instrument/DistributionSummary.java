@@ -16,6 +16,8 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.util.Assert;
+import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -71,11 +73,12 @@ public interface DistributionSummary extends Meter {
     class Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
-        private String description;
-        private String baseUnit;
+        private @Nullable String description;
+        private @Nullable String baseUnit;
         private HistogramConfig.Builder histogramConfigBuilder = HistogramConfig.builder();
 
         private Builder(String name) {
+            Assert.notNull(name,"name");
             this.name = name;
         }
 
@@ -87,6 +90,7 @@ public interface DistributionSummary extends Meter {
         }
 
         public Builder tags(Iterable<Tag> tags) {
+            Assert.notNull(tags,"tags");
             tags.forEach(this.tags::add);
             return this;
         }
@@ -96,12 +100,12 @@ public interface DistributionSummary extends Meter {
             return this;
         }
 
-        public Builder description(String description) {
+        public Builder description(@Nullable String description) {
             this.description = description;
             return this;
         }
 
-        public Builder baseUnit(String unit) {
+        public Builder baseUnit(@Nullable String unit) {
             this.baseUnit = unit;
             return this;
         }
@@ -133,7 +137,7 @@ public interface DistributionSummary extends Meter {
          * systems that have query facilities to do so (e.g. Prometheus' {@code histogram_quantile},
          * Atlas' {@code :percentiles}).
          */
-        public Builder publishPercentileHistogram(Boolean enabled) {
+        public Builder publishPercentileHistogram(boolean enabled) {
             this.histogramConfigBuilder.percentilesHistogram(enabled);
             return this;
         }
@@ -150,12 +154,12 @@ public interface DistributionSummary extends Meter {
             return this;
         }
 
-        public Builder minimumExpectedValue(Long min) {
+        public Builder minimumExpectedValue(long min) {
             this.histogramConfigBuilder.minimumExpectedValue(min);
             return this;
         }
 
-        public Builder maximumExpectedValue(Long max) {
+        public Builder maximumExpectedValue(long max) {
             this.histogramConfigBuilder.maximumExpectedValue(max);
             return this;
         }
@@ -171,6 +175,7 @@ public interface DistributionSummary extends Meter {
         }
 
         public DistributionSummary register(MeterRegistry registry) {
+            Assert.notNull(registry, "registry");
             return registry.summary(new Meter.Id(name, tags, baseUnit, description, Type.DistributionSummary), histogramConfigBuilder.build());
         }
     }

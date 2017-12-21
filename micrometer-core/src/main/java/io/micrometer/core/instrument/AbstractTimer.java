@@ -17,7 +17,9 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.TimeWindowLatencyHistogram;
+import io.micrometer.core.instrument.util.Assert;
 import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +32,8 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     protected AbstractTimer(Meter.Id id, Clock clock, HistogramConfig histogramConfig) {
         super(id);
+        Assert.notNull(clock,"clock");
+        Assert.notNull(histogramConfig,"histogramConfig");
         this.clock = clock;
         this.histogramConfig = histogramConfig;
         this.histogram = new TimeWindowLatencyHistogram(clock, histogramConfig);
@@ -37,6 +41,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     @Override
     public <T> T recordCallable(Callable<T> f) throws Exception {
+        Assert.notNull(f,"callable");
         final long s = clock.monotonicTime();
         try {
             return f.call();
@@ -48,6 +53,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     @Override
     public <T> T record(Supplier<T> f) {
+        Assert.notNull(f,"supplier");
         final long s = clock.monotonicTime();
         try {
             return f.get();
@@ -59,6 +65,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     @Override
     public void record(Runnable f) {
+        Assert.notNull(f,"runnable");
         final long s = clock.monotonicTime();
         try {
             f.run();
@@ -70,6 +77,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     @Override
     public final void record(long amount, TimeUnit unit) {
+        Assert.notNull(unit,"timeUnit");
         if(amount >= 0) {
             histogram.recordLong(TimeUnit.NANOSECONDS.convert(amount, unit));
             recordNonNegative(amount, unit);
@@ -96,7 +104,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         return MeterEquivalence.equals(this, o);
     }
 

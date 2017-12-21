@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.util.Assert;
+
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
@@ -33,15 +35,18 @@ public class MockClock implements Clock {
     }
 
     public static MockClock clock(MeterRegistry registry) {
+        Assert.notNull(registry, "registry");
         return (MockClock) registry.config().clock();
     }
 
     public long add(long amount, TimeUnit unit) {
+        Assert.notNull(unit, "timeUnit");
         timeNanos += unit.toNanos(amount);
         return timeNanos;
     }
 
     public long add(Duration duration) {
+        Assert.notNull(duration, "duration");
         return add(duration.toNanos(), TimeUnit.NANOSECONDS);
     }
 

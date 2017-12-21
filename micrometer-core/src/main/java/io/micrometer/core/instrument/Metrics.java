@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.util.Assert;
 
 import java.util.Collection;
 import java.util.Map;
@@ -30,10 +31,12 @@ public class Metrics {
     public static final CompositeMeterRegistry globalRegistry = new CompositeMeterRegistry();
 
     public static void addRegistry(MeterRegistry registry) {
+        Assert.notNull(registry, "registry");
         globalRegistry.add(registry);
     }
 
     public static void removeRegistry(MeterRegistry registry) {
+        Assert.notNull(registry, "registry");
         globalRegistry.remove(registry);
     }
 

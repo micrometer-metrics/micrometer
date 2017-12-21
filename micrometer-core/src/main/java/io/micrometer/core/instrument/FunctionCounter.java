@@ -15,6 +15,9 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.util.Assert;
+import io.micrometer.core.lang.Nullable;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -50,10 +53,13 @@ public interface FunctionCounter extends Meter {
         private final T obj;
         private final ToDoubleFunction<T> f;
         private final List<Tag> tags = new ArrayList<>();
-        private String description;
-        private String baseUnit;
+        private @Nullable String description;
+        private @Nullable String baseUnit;
 
         private Builder(String name, T obj, ToDoubleFunction<T> f) {
+            Assert.notNull(name, "name");
+            Assert.notNull(obj, "gauge object");
+            Assert.notNull(f, "gauge function");
             this.name = name;
             this.obj = obj;
             this.f = f;
@@ -76,17 +82,18 @@ public interface FunctionCounter extends Meter {
             return this;
         }
 
-        public Builder<T> description(String description) {
+        public Builder<T> description(@Nullable String description) {
             this.description = description;
             return this;
         }
 
-        public Builder<T> baseUnit(String unit) {
+        public Builder<T> baseUnit(@Nullable String unit) {
             this.baseUnit = unit;
             return this;
         }
 
         public FunctionCounter register(MeterRegistry registry) {
+            Assert.notNull(registry, "registry");
             return registry.more().counter(new Meter.Id(name, tags, baseUnit, description, Type.Counter), obj, f);
         }
     }

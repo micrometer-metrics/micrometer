@@ -30,6 +30,8 @@ public final class TimeUtils {
     private TimeUtils() {}
 
     public static double convert(double t, TimeUnit sourceUnit, TimeUnit destinationUnit) {
+        Assert.notNull(sourceUnit,"sourceUnit");
+        Assert.notNull(destinationUnit,"destinationUnit");
         switch(sourceUnit) {
             case NANOSECONDS:
                 return nanosToUnit(t, destinationUnit);
@@ -50,6 +52,7 @@ public final class TimeUtils {
     }
 
     public static double nanosToUnit(double nanos, TimeUnit destinationUnit) {
+        Assert.notNull(destinationUnit,"destinationUnit");
         switch (destinationUnit) {
             case NANOSECONDS:
             default:

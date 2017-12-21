@@ -21,7 +21,9 @@ import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.noop.*;
+import io.micrometer.core.instrument.util.Assert;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -48,6 +50,7 @@ public abstract class MeterRegistry {
     protected final Clock clock;
 
     protected MeterRegistry(Clock clock) {
+        Assert.notNull(clock, "clock");
         this.clock = clock;
     }
 
@@ -111,16 +114,17 @@ public abstract class MeterRegistry {
         return id.getConventionName(config().namingConvention());
     }
 
+    /**
+     * @return the registry's base TimeUnit. Must not be null.
+     */
     protected abstract TimeUnit getBaseTimeUnit();
 
     private String getBaseTimeUnitStr() {
-        if (getBaseTimeUnit() == null) {
-            return null;
-        }
         return getBaseTimeUnit().toString().toLowerCase();
     }
 
     Counter counter(Meter.Id id) {
+        Assert.notNull(id, "id");
         return registerMeterIfNecessary(Counter.class, id, this::newCounter, NoopCounter::new);
     }
 
@@ -159,6 +163,7 @@ public abstract class MeterRegistry {
     }
 
     public void forEachMeter(Consumer<? super Meter> consumer) {
+        Assert.notNull(consumer, "consumer");
         meterMap.values().forEach(consumer);
     }
 
@@ -184,12 +189,14 @@ public abstract class MeterRegistry {
 
         @Incubating(since = "1.0.0-rc.3")
         public Config meterFilter(MeterFilter filter) {
+            Assert.notNull(filter, "filter");
             filters.add(filter);
             return this;
         }
 
         @Incubating(since = "1.0.0-rc.6")
         public Config onMeterAdded(Consumer<Meter> meter) {
+            Assert.notNull(meter, "meter");
             meterAddedListeners.add(meter);
             return this;
         }
@@ -198,6 +205,7 @@ public abstract class MeterRegistry {
          * Use the provided naming convention, overriding the default for your monitoring system.
          */
         public Config namingConvention(NamingConvention convention) {
+            Assert.notNull(convention, "convention");
             namingConvention = convention;
             return this;
         }
@@ -230,10 +238,12 @@ public abstract class MeterRegistry {
         private final Map<Statistic, Double> valueAsserts = new EnumMap<>(Statistic.class);
 
         Search(String name) {
+            Assert.notNull(name, "name");
             this.name = name;
         }
 
         public Search tags(Iterable<Tag> tags) {
+            Assert.notNull(tags, "tags");
             tags.forEach(this.tags::add);
             return this;
         }
@@ -246,6 +256,7 @@ public abstract class MeterRegistry {
         }
 
         public Search value(Statistic statistic, double value) {
+            Assert.notNull(statistic, "statistics");
             valueAsserts.put(statistic, value);
             return this;
         }
@@ -283,9 +294,10 @@ public abstract class MeterRegistry {
         }
 
         private <T> Optional<T> findAny(Class<T> clazz) {
+            Assert.notNull(clazz, "class");
             return meters()
                 .stream()
-                .filter(m -> clazz.isInstance(m))
+                .filter(clazz::isInstance)
                 .findAny()
                 .map(clazz::cast);
         }
@@ -566,7 +578,8 @@ public abstract class MeterRegistry {
         return registerMeterIfNecessary(meterClass, id, null, (id2, conf) -> builder.apply(id2), noopBuilder);
     }
 
-    private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id, HistogramConfig config, BiFunction<Meter.Id, HistogramConfig, Meter> builder,
+    private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id,
+                                                         @Nullable HistogramConfig config, BiFunction<Meter.Id, HistogramConfig, Meter> builder,
                                                          Function<Meter.Id, M> noopBuilder) {
         Meter.Id mappedId = id;
         for (MeterFilter filter : filters) {
@@ -597,7 +610,9 @@ public abstract class MeterRegistry {
         return (M) m;
     }
 
-    private Meter getOrCreateMeter(HistogramConfig config, BiFunction<Id, HistogramConfig, Meter> builder, Id mappedId) {
+    private Meter getOrCreateMeter(@Nullable HistogramConfig config,
+                                   BiFunction<Id, /*Nullable Generic*/ HistogramConfig, Meter> builder,
+                                   Id mappedId) {
         Meter m = meterMap.get(mappedId);
 
         if (m == null) {

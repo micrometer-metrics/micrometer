@@ -16,6 +16,8 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.util.Assert;
+import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -46,6 +48,7 @@ public interface Timer extends Meter {
      * @param duration Duration of a single event being measured by this timer.
      */
     default void record(Duration duration) {
+        Assert.notNull(duration, "duration");
         record(duration.toNanos(), TimeUnit.NANOSECONDS);
     }
 
@@ -79,6 +82,7 @@ public interface Timer extends Meter {
      * @return The wrapped Runnable.
      */
     default Runnable wrap(Runnable f) {
+        Assert.notNull(f, "runnable");
         return () -> record(f);
     }
 
@@ -89,6 +93,7 @@ public interface Timer extends Meter {
      * @return The wrapped Callable.
      */
     default <T> Callable<T> wrap(Callable<T> f) {
+        Assert.notNull(f, "callable");
         return () -> recordCallable(f);
     }
 
@@ -140,10 +145,11 @@ public interface Timer extends Meter {
     class Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
-        private String description;
+        private @Nullable String description;
         private final HistogramConfig.Builder histogramConfigBuilder;
 
         private Builder(String name) {
+            Assert.notNull(name, "name");
             this.name = name;
             this.histogramConfigBuilder = new HistogramConfig.Builder();
             minimumExpectedValue(Duration.ofMillis(1));
@@ -151,6 +157,7 @@ public interface Timer extends Meter {
         }
 
         public Builder tags(Iterable<Tag> tags) {
+            Assert.notNull(tags, "tags");
             tags.forEach(this.tags::add);
             return this;
         }
@@ -168,7 +175,7 @@ public interface Timer extends Meter {
          *
          * @param percentiles Percentiles to compute and publish. The 95th percentile should be expressed as {@code 95.0}
          */
-        public Builder publishPercentiles(double... percentiles) {
+        public Builder publishPercentiles(@Nullable double... percentiles) {
             this.histogramConfigBuilder.percentiles(percentiles);
             return this;
         }
@@ -187,7 +194,7 @@ public interface Timer extends Meter {
          * systems that have query facilities to do so (e.g. Prometheus' {@code histogram_quantile},
          * Atlas' {@code :percentiles}).
          */
-        public Builder publishPercentileHistogram(Boolean enabled) {
+        public Builder publishPercentileHistogram(@Nullable Boolean enabled) {
             this.histogramConfigBuilder.percentilesHistogram(enabled);
             return this;
         }
@@ -200,6 +207,7 @@ public interface Timer extends Meter {
          * @param sla Publish SLA boundaries in the set of histogram buckets shipped to the monitoring system.
          */
         public Builder sla(Duration... sla) {
+            Assert.notNull(sla, "sla");
             long[] slaNano = new long[sla.length];
             for (int i = 0; i < slaNano.length; i++) {
                 slaNano[i] = sla[i].toNanos();
@@ -209,21 +217,23 @@ public interface Timer extends Meter {
         }
 
         public Builder minimumExpectedValue(Duration min) {
+            Assert.notNull(min, "min");
             this.histogramConfigBuilder.minimumExpectedValue(min.toNanos());
             return this;
         }
 
         public Builder maximumExpectedValue(Duration max) {
+            Assert.notNull(max, "max");
             this.histogramConfigBuilder.maximumExpectedValue(max.toNanos());
             return this;
         }
 
-        public Builder histogramExpiry(Duration expiry) {
+        public Builder histogramExpiry(@Nullable Duration expiry) {
             this.histogramConfigBuilder.histogramExpiry(expiry);
             return this;
         }
 
-        public Builder histogramBufferLength(Integer bufferLength) {
+        public Builder histogramBufferLength(@Nullable Integer bufferLength) {
             this.histogramConfigBuilder.histogramBufferLength(bufferLength);
             return this;
         }
@@ -235,12 +245,13 @@ public interface Timer extends Meter {
             return tags(Tags.zip(tags));
         }
 
-        public Builder description(String description) {
+        public Builder description(@Nullable String description) {
             this.description = description;
             return this;
         }
 
         public Timer register(MeterRegistry registry) {
+            Assert.notNull(registry, "registry");
             // the base unit for a timer will be determined by the monitoring system implementation
             return registry.timer(new Meter.Id(name, tags, null, description, Type.Timer), histogramConfigBuilder.build());
         }

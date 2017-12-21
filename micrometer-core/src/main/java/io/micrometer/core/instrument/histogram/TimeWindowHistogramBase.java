@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.CountAtValue;
 import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.ValueAtPercentile;
+import io.micrometer.core.instrument.util.Assert;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.lang.reflect.Array;
@@ -141,6 +142,7 @@ abstract class TimeWindowHistogramBase<T, U> {
     }
 
     public final double percentile(double percentile, TimeUnit unit) {
+        Assert.notNull(unit,"timeUnit");
         return TimeUtils.nanosToUnit(percentile(percentile), unit);
     }
 

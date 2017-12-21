@@ -16,6 +16,8 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.util.Assert;
+import io.micrometer.core.lang.Nullable;
 
 import java.beans.Introspector;
 import java.util.*;
@@ -61,11 +63,14 @@ public interface Meter {
     class Id {
         private final String name;
         private final List<Tag> tags;
-        private String baseUnit;
-        private final String description;
+        private @Nullable String baseUnit;
+        private final @Nullable String description;
         private Type type;
 
-        public Id(String name, Iterable<Tag> tags, String baseUnit, String description, Type type) {
+        public Id(String name, Iterable<Tag> tags, @Nullable String baseUnit, @Nullable String description, Type type) {
+            Assert.notNull(name, "name");
+            Assert.notNull(tags, "tags");
+            Assert.notNull(type, "type");
             this.name = name;
 
             this.tags = Collections.unmodifiableList(stream(tags.spliterator(), false)
@@ -80,16 +85,16 @@ public interface Meter {
         }
 
         public Id withTag(Tag tag) {
+            Assert.notNull(tag, "tag");
             return new Id(name, Tags.concat(tags, Collections.singletonList(tag)), baseUnit, description, type);
         }
 
         public Id withTag(Statistic statistic) {
-            if(statistic == null)
-                return this;
+            Assert.notNull(statistic, "statistic");
             return withTag(Tag.of("statistic", Introspector.decapitalize(statistic.toString())));
         }
 
-        public Id withBaseUnit(String newBaseUnit) {
+        public Id withBaseUnit(@Nullable String newBaseUnit) {
             return new Id(name, tags, newBaseUnit, description, type);
         }
 
@@ -117,6 +122,7 @@ public interface Meter {
          * Tags that are sorted by key and formatted
          */
         public List<Tag> getConventionTags(NamingConvention namingConvention) {
+            Assert.notNull(namingConvention, "namingConvention");
             return tags.stream()
                 .map(t -> Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())))
                 .collect(Collectors.toList());
@@ -131,7 +137,7 @@ public interface Meter {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Meter.Id meterId = (Meter.Id) o;
@@ -160,10 +166,13 @@ public interface Meter {
         private final Type type;
         private final Iterable<Measurement> measurements;
         private final List<Tag> tags = new ArrayList<>();
-        private String description;
-        private String baseUnit;
+        private @Nullable String description;
+        private @Nullable String baseUnit;
 
         private Builder(String name, Type type, Iterable<Measurement> measurements) {
+            Assert.notNull(name, "name");
+            Assert.notNull(type, "type");
+            Assert.notNull(measurements, "measurements");
             this.name = name;
             this.type = type;
             this.measurements = measurements;
@@ -181,17 +190,18 @@ public interface Meter {
             return this;
         }
 
-        public Builder description(String description) {
+        public Builder description(@Nullable String description) {
             this.description = description;
             return this;
         }
 
-        public Builder baseUnit(String unit) {
+        public Builder baseUnit(@Nullable String unit) {
             this.baseUnit = unit;
             return this;
         }
 
         public Meter register(MeterRegistry registry) {
+            Assert.notNull(registry, "registry");
             return registry.register(new Meter.Id(name, tags, baseUnit, description, type), type, measurements);
         }
     }
