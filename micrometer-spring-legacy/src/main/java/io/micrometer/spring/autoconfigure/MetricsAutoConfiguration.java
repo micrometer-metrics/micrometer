@@ -82,13 +82,21 @@ public class MetricsAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(MeterRegistry.class)
     public CompositeMeterRegistry compositeMeterRegistry(
+            MetricsProperties config,
             ObjectProvider<List<MeterRegistryConfigurer>> configurers,
             ObjectProvider<Collection<MetricsExporter>> exportersProvider) {
 
-        CompositeMeterRegistry composite = new CompositeMeterRegistry();
+        CompositeMeterRegistry composite =
+                config.isUseGlobalRegistry() ? Metrics.globalRegistry : new CompositeMeterRegistry();
 
         if (exportersProvider.getIfAvailable() != null) {
-            exportersProvider.getIfAvailable().forEach(exporter -> composite.add(exporter.registry()));
+            exportersProvider.getIfAvailable().forEach(exporter -> {
+                final MeterRegistry childRegistry = exporter.registry();
+                if (composite == childRegistry) {
+                    throw new IllegalStateException("cannot add a CompositeMeterRegistry to itself");
+                }
+                composite.add(childRegistry);
+            });
         }
 
         if (configurers.getIfAvailable() != null) {
@@ -138,7 +146,7 @@ public class MetricsAutoConfiguration {
                 binders.getIfAvailable().forEach(binder -> binder.bindTo(registry));
             }
 
-            if (config.isUseGlobalRegistry()) {
+            if (config.isUseGlobalRegistry() && registry != Metrics.globalRegistry) {
                 Metrics.addRegistry(registry);
             }
         }
