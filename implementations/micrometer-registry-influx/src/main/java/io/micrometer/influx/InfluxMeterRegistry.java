@@ -26,8 +26,10 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
@@ -41,7 +43,7 @@ import static java.util.stream.Collectors.toList;
 public class InfluxMeterRegistry extends StepMeterRegistry {
     private final InfluxConfig config;
     private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
-    private final DecimalFormat format = new DecimalFormat("#.####");
+    private final DecimalFormat format = new DecimalFormat("#.####", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
 
     // FIXME naming convention not working!
     public InfluxMeterRegistry(InfluxConfig config, Clock clock) {
@@ -186,11 +188,11 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private class Field {
+    class Field {
         final String key;
         final double value;
 
-        private Field(String key, double value) {
+        Field(String key, double value) {
             this.key = key;
             this.value = value;
         }
