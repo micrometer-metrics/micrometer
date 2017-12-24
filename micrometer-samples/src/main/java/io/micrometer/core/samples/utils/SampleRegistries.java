@@ -170,8 +170,13 @@ public class SampleRegistries {
         });
     }
 
-    public static NewRelicMeterRegistry newRelic(String apiKey) {
+    public static NewRelicMeterRegistry newRelic(String accountId, String apiKey) {
         return new NewRelicMeterRegistry(new NewRelicConfig() {
+            @Override
+            public String accountId() {
+                return accountId;
+            }
+
             @Override
             public String apiKey() {
                 return apiKey;
