@@ -18,7 +18,7 @@ package io.micrometer.core.samples;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.samples.utils.SampleRegistries;
+import io.micrometer.core.samples.utils.SampleConfig;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class FunctionCounterSample {
     public static void main(String[] args) {
-        MeterRegistry registry = SampleRegistries.datadog();
+        MeterRegistry registry = SampleConfig.myMonitoringSystem();
 
         AtomicInteger n = new AtomicInteger(0);
 

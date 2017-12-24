@@ -20,7 +20,7 @@ import cern.jet.random.engine.MersenneTwister64;
 import cern.jet.random.engine.RandomEngine;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.samples.utils.SampleRegistries;
+import io.micrometer.core.samples.utils.SampleConfig;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class SimulatedEndpointInstrumentation {
     public static void main(String[] args) {
-        MeterRegistry registry = SampleRegistries.newRelic();
+        MeterRegistry registry = SampleConfig.myMonitoringSystem();
 
         Timer e1Success = Timer.builder("http.server.requests")
             .tags("uri", "/api/bar")

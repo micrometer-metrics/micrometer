@@ -22,7 +22,7 @@ import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.samples.utils.SampleRegistries;
+import io.micrometer.core.samples.utils.SampleConfig;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -35,7 +35,7 @@ public class FunctionTimerSample {
      * For Atlas: http://localhost:7101/api/v1/graph?q=name,ftimer,:eq,:dist-avg,name,timer,:eq,:dist-avg,1,:axis&s=e-5m&l=0
      */
     public static void main(String[] args) {
-        MeterRegistry registry = SampleRegistries.atlas();
+        MeterRegistry registry = SampleConfig.myMonitoringSystem();
 
         Timer timer = Timer.builder("timer")
             .publishPercentiles(0.5, 0.95)

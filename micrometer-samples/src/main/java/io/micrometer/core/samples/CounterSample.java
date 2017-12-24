@@ -20,7 +20,7 @@ import cern.jet.random.engine.MersenneTwister64;
 import cern.jet.random.engine.RandomEngine;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.samples.utils.SampleRegistries;
+import io.micrometer.core.samples.utils.SampleConfig;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -30,7 +30,7 @@ import static java.util.Collections.emptyList;
 
 public class CounterSample {
     public static void main(String[] args) {
-        MeterRegistry registry = SampleRegistries.jmx();
+        MeterRegistry registry = SampleConfig.myMonitoringSystem();
         Counter counter = registry.counter("counter");
 
         AtomicInteger n = new AtomicInteger(0);

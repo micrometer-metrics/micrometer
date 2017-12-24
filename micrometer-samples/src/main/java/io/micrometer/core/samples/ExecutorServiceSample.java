@@ -17,7 +17,7 @@ package io.micrometer.core.samples;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
-import io.micrometer.core.samples.utils.SampleRegistries;
+import io.micrometer.core.samples.utils.SampleConfig;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -29,7 +29,7 @@ import static java.util.Collections.emptyList;
 
 public class ExecutorServiceSample {
     public static void main(String[] args) {
-        MeterRegistry registry = SampleRegistries.prometheus();
+        MeterRegistry registry = SampleConfig.myMonitoringSystem();
         ScheduledExecutorService es = Executors.newSingleThreadScheduledExecutor();
         new ExecutorServiceMetrics(es, "executor.sample", emptyList()).bindTo(registry);
 

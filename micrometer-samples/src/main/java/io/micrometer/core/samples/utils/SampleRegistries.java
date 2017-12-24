@@ -19,6 +19,7 @@ import com.netflix.spectator.atlas.AtlasConfig;
 import com.sun.net.httpserver.HttpServer;
 import io.micrometer.atlas.AtlasMeterRegistry;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.datadog.DatadogConfig;
 import io.micrometer.datadog.DatadogMeterRegistry;
 import io.micrometer.ganglia.GangliaMeterRegistry;
@@ -38,9 +39,17 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.Properties;
 
 public class SampleRegistries {
+    public static MeterRegistry pickOne() {
+        throw new RuntimeException("Pick some other method on SampleRegistries to ship sample metrics to the system of your choice");
+    }
+
+    /**
+     * To use pushgateway instead:
+     * new PushGateway("localhost:9091").pushAdd(registry.getPrometheusRegistry(), "samples");
+     * @return
+     */
     public static PrometheusMeterRegistry prometheus() {
         PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
 
@@ -62,10 +71,6 @@ public class SampleRegistries {
         return prometheusRegistry;
     }
 
-    public static PrometheusMeterRegistry prometheusPushgateway() {
-        return new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-    }
-
     public static AtlasMeterRegistry atlas() {
         return new AtlasMeterRegistry(new AtlasConfig() {
             @Override
@@ -80,21 +85,26 @@ public class SampleRegistries {
         }, Clock.SYSTEM);
     }
 
-    public static DatadogMeterRegistry datadog() {
+    public static DatadogMeterRegistry datadog(String apiKey, String applicationKey) {
         DatadogConfig config = new DatadogConfig() {
-            private final Properties props = new Properties();
+            @Override
+            public String apiKey() {
+                return apiKey;
+            }
 
-            {
-                try {
-                    props.load(SampleRegistries.class.getResourceAsStream("/datadog.properties"));
-                } catch (IOException e) {
-                    throw new RuntimeException("must have datadog.properties with datadog.apiKey defined", e);
-                }
+            @Override
+            public String applicationKey() {
+                return applicationKey;
+            }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
             }
 
             @Override
             public String get(String k) {
-                return props.getProperty(k);
+                return null;
             }
         };
 
@@ -137,7 +147,9 @@ public class SampleRegistries {
         return new GraphiteMeterRegistry();
     }
 
-    public static JmxMeterRegistry jmx() { return new JmxMeterRegistry(); }
+    public static JmxMeterRegistry jmx() {
+        return new JmxMeterRegistry();
+    }
 
     public static InfluxMeterRegistry influx() {
         return new InfluxMeterRegistry(new InfluxConfig() {
@@ -158,26 +170,21 @@ public class SampleRegistries {
         });
     }
 
-    public static NewRelicMeterRegistry newRelic() {
+    public static NewRelicMeterRegistry newRelic(String apiKey) {
         return new NewRelicMeterRegistry(new NewRelicConfig() {
-            private final Properties props = new Properties();
-
-            {
-                try {
-                    props.load(SampleRegistries.class.getResourceAsStream("/new-relic.properties"));
-                } catch (IOException e) {
-                    throw new RuntimeException("must have new-relic.properties with newrelic.licenseKey defined", e);
-                }
-            }
-
             @Override
-            public String get (String k){
-                return props.getProperty(k);
+            public String apiKey() {
+                return apiKey;
             }
 
             @Override
             public Duration step() {
                 return Duration.ofSeconds(10);
+            }
+
+            @Override
+            public String get(String k) {
+                return null;
             }
         }, Clock.SYSTEM);
     }

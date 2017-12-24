@@ -20,7 +20,7 @@ import cern.jet.random.engine.MersenneTwister64;
 import cern.jet.random.engine.RandomEngine;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.samples.utils.SampleRegistries;
+import io.micrometer.core.samples.utils.SampleConfig;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class LongTaskTimerSample {
     public static void main(String[] args) {
-        MeterRegistry registry = SampleRegistries.influx();
+        MeterRegistry registry = SampleConfig.myMonitoringSystem();
         LongTaskTimer timer = registry.more().longTaskTimer("longTaskTimer");
 
         RandomEngine r = new MersenneTwister64(0);

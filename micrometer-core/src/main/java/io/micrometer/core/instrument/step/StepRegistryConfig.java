@@ -31,7 +31,7 @@ public interface StepRegistryConfig extends MeterRegistryConfig {
      */
     default Duration step() {
         String v = get(prefix() + ".step");
-        return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
+        return v == null ? Duration.ofMinutes(1) : Duration.parse(v);
     }
 
     /**

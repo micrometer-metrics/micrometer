@@ -21,7 +21,7 @@ import cern.jet.random.engine.RandomEngine;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.samples.utils.SampleRegistries;
+import io.micrometer.core.samples.utils.SampleConfig;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TimerSample {
     public static void main(String[] args) {
-        MeterRegistry registry = SampleRegistries.datadog();
+        MeterRegistry registry = SampleConfig.myMonitoringSystem();
         Timer timer = Timer.builder("timer")
             .publishPercentiles(0.5, 0.95)
             .register(registry);

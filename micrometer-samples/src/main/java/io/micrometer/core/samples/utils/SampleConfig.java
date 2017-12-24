@@ -13,22 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.samples;
+package io.micrometer.core.samples.utils;
 
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.samples.utils.SampleRegistries;
-import reactor.core.publisher.Flux;
 
-import java.time.Duration;
-
-public class InfluxTagSample {
-    public static void main(String[] args) {
-        MeterRegistry registry = SampleRegistries.telegrafStatsd();
-        Counter helloCounter = registry.counter("http.requests", "uri1", "hello1");
-
-        Flux.interval(Duration.ofMillis(100))
-            .doOnEach(n -> helloCounter.increment())
-            .blockLast();
+public class SampleConfig {
+    public static MeterRegistry myMonitoringSystem() {
+        // Pick a monitoring system here to use in your samples. Changes to this file are
+        // barred by .gitignore, so you can feel free to change this to test your PRs without
+        // worry.
+        return SampleRegistries.pickOne();
     }
 }

@@ -17,7 +17,7 @@ package io.micrometer.core.samples;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.samples.utils.SampleRegistries;
+import io.micrometer.core.samples.utils.SampleConfig;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -29,7 +29,7 @@ public class LatencySample {
         new LatencySample().run();
     }
 
-    private MeterRegistry registry = SampleRegistries.jmx();
+    private MeterRegistry registry = SampleConfig.myMonitoringSystem();
     private Random r = new Random();
     private Timer timer = Timer.builder("request")
         .publishPercentileHistogram()
