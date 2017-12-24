@@ -159,11 +159,13 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         addToMetadataList(metadata, id, "count", Statistic.Count, "occurrence");
         addToMetadataList(metadata, id, "avg", Statistic.Value, null);
+        addToMetadataList(metadata, id, "sum", Statistic.TotalTime, null);
 
         // we can't know anything about max and percentiles originating from a function timer
         return Stream.of(
             writeMetric(id, "count", wallTime, timer.count()),
-            writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit())));
+            writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit())),
+            writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit())));
     }
 
     private Stream<String> writeTimer(Timer timer, Map<String, DatadogMetricMetadata> metadata) {
