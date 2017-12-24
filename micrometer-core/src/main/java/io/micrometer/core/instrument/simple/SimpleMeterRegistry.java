@@ -100,11 +100,11 @@ public class SimpleMeterRegistry extends MeterRegistry {
         Timer timer;
         switch (config.mode()) {
             case Cumulative:
-                timer = new CumulativeTimer(id, clock, merged, pauseDetector);
+                timer = new CumulativeTimer(id, clock, merged, pauseDetector, getBaseTimeUnit());
                 break;
             case Step:
             default:
-                timer = new StepTimer(id, clock, merged, pauseDetector, config.step().toMillis());
+                timer = new StepTimer(id, clock, merged, pauseDetector, getBaseTimeUnit(), config.step().toMillis());
                 break;
         }
 

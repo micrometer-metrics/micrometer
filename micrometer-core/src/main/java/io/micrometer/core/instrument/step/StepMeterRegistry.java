@@ -84,7 +84,7 @@ public abstract class StepMeterRegistry extends MeterRegistry {
             .histogramExpiry(config.step())
             .build());
 
-        Timer timer = new StepTimer(id, clock, histogramConfig, pauseDetector, config.step().toMillis());
+        Timer timer = new StepTimer(id, clock, histogramConfig, pauseDetector, getBaseTimeUnit(), config.step().toMillis());
         histogramConfigs.put(timer, merged);
         return timer;
     }

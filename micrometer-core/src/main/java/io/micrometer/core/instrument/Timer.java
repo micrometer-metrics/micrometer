@@ -125,9 +125,12 @@ public interface Timer extends Meter {
     default Iterable<Measurement> measure() {
         return Arrays.asList(
             new Measurement(() -> (double) count(), Statistic.Count),
-            new Measurement(() -> totalTime(TimeUnit.NANOSECONDS), Statistic.TotalTime)
+            new Measurement(() -> totalTime(baseTimeUnit()), Statistic.TotalTime),
+            new Measurement(() -> max(baseTimeUnit()), Statistic.Max)
         );
     }
+
+    TimeUnit baseTimeUnit();
 
     @Override
     default Type type() {

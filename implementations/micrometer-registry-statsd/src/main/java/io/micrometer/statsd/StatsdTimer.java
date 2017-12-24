@@ -37,8 +37,8 @@ public class StatsdTimer extends AbstractTimer implements Timer {
     private final Processor<String, String> publisher;
 
     StatsdTimer(Id id, StatsdLineBuilder lineBuilder, Processor<String, String> publisher, Clock clock,
-                HistogramConfig histogramConfig, PauseDetector pauseDetector, long stepMillis) {
-        super(id, clock, histogramConfig, pauseDetector);
+                HistogramConfig histogramConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis) {
+        super(id, clock, histogramConfig, pauseDetector, baseTimeUnit);
         this.max = new StepDouble(clock, stepMillis);
         this.lineBuilder = lineBuilder;
         this.publisher = publisher;

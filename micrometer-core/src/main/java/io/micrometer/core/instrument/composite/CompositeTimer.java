@@ -114,6 +114,11 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
     }
 
     @Override
+    public TimeUnit baseTimeUnit() {
+        return firstChild().baseTimeUnit();
+    }
+
+    @Override
     Timer newNoopMeter() {
         return new NoopTimer(getId());
     }

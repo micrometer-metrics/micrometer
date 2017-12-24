@@ -32,7 +32,7 @@ public class DropwizardTimer extends AbstractTimer {
     private final StepDouble max;
 
     DropwizardTimer(Id id, Timer impl, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
-        super(id, clock, histogramConfig, pauseDetector);
+        super(id, clock, histogramConfig, pauseDetector, TimeUnit.MILLISECONDS);
         this.impl = impl;
         this.max = new StepDouble(clock, 60000);
     }

@@ -28,12 +28,14 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     protected final Clock clock;
     private final HistogramConfig histogramConfig;
     protected final TimeWindowLatencyHistogram histogram;
+    private final TimeUnit baseTimeUnit;
 
-    protected AbstractTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
+    protected AbstractTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
         super(id);
         this.clock = clock;
         this.histogramConfig = histogramConfig;
         this.histogram = new TimeWindowLatencyHistogram(clock, histogramConfig, pauseDetector);
+        this.baseTimeUnit = baseTimeUnit;
     }
 
     @Override
@@ -93,6 +95,11 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     public HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
         return histogram.takeSnapshot(count(), totalTime(TimeUnit.NANOSECONDS), max(TimeUnit.NANOSECONDS),
                                       supportsAggregablePercentiles);
+    }
+
+    @Override
+    public TimeUnit baseTimeUnit() {
+        return baseTimeUnit;
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

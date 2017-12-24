@@ -135,7 +135,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
-        Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, histogramConfig, pauseDetector, statsdConfig.step().toMillis());
+        Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, histogramConfig, pauseDetector, getBaseTimeUnit(),
+            statsdConfig.step().toMillis());
 
         for (double percentile : histogramConfig.getPercentiles()) {
             switch (statsdConfig.flavor()) {

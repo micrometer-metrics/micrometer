@@ -125,7 +125,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
             PercentileTimer.get(registry, spectatorId(id));
         }
 
-        SpectatorTimer timer = new SpectatorTimer(id, internalTimer, clock, histogramConfig, pauseDetector);
+        SpectatorTimer timer = new SpectatorTimer(id, internalTimer, clock, histogramConfig, pauseDetector, getBaseTimeUnit());
 
         for (long sla : histogramConfig.getSlaBoundaries()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "sla", Duration.ofNanos(sla).toString()), sla, timer::histogramCountAtValue);

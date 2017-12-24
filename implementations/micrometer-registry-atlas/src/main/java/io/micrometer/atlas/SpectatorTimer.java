@@ -31,8 +31,8 @@ import static java.util.stream.StreamSupport.stream;
 public class SpectatorTimer extends AbstractTimer {
     private final com.netflix.spectator.api.Timer timer;
 
-    public SpectatorTimer(Id id, Timer timer, Clock clock, HistogramConfig statsConf, PauseDetector pauseDetector) {
-        super(id, clock, statsConf, pauseDetector);
+    public SpectatorTimer(Id id, Timer timer, Clock clock, HistogramConfig statsConf, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+        super(id, clock, statsConf, pauseDetector, baseTimeUnit);
         this.timer = timer;
     }
 

@@ -38,8 +38,8 @@ public class CumulativeTimer extends AbstractTimer {
     /**
      * Create a new instance.
      */
-    public CumulativeTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
-        super(id, clock, histogramConfig, pauseDetector);
+    public CumulativeTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+        super(id, clock, histogramConfig, pauseDetector, baseTimeUnit);
         this.count = new AtomicLong();
         this.total = new AtomicLong();
         this.max = new AtomicLong();
