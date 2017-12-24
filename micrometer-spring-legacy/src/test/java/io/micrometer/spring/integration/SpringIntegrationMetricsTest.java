@@ -18,7 +18,6 @@ package io.micrometer.spring.integration;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.simple.SimpleConfig;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +62,6 @@ public class SpringIntegrationMetricsTest {
     public void springIntegrationMetrics() {
         converter.fahrenheitToCelcius(68.0f);
 
-        clock.add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("spring.integration.channel.sends")
             .tags("channel", "convert.input").value(Statistic.Count, 1).meter()).isPresent();
         assertThat(registry.find("spring.integration.handler.duration.min").meter()).isPresent();

@@ -22,9 +22,6 @@ import java.time.Duration;
 public interface SimpleConfig extends StepRegistryConfig {
     SimpleConfig DEFAULT = k -> null;
 
-    // Useful in tests
-    Duration DEFAULT_STEP = Duration.ofMinutes(1);
-
     @Override
     default String prefix() {
         return "simple";
@@ -35,7 +32,7 @@ public interface SimpleConfig extends StepRegistryConfig {
      */
     default Duration step() {
         String v = get(prefix() + ".step");
-        return v == null ? DEFAULT_STEP : Duration.parse(v);
+        return v == null ? Duration.ofMinutes(1) : Duration.parse(v);
     }
 
     default CountingMode mode() {

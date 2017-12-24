@@ -33,7 +33,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import static io.micrometer.core.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -57,7 +56,6 @@ public class SpringSecurityTest {
     public void securityAllowsAccess() throws Exception {
         mvc.perform(get("/api/secured")).andExpect(status().isOk());
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("http.server.requests")
             .tags("status", "200")
             .timer()).isPresent();
@@ -67,7 +65,6 @@ public class SpringSecurityTest {
     public void securityBlocksAccess() throws Exception {
         mvc.perform(get("/api/secured")).andExpect(status().isUnauthorized());
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("http.server.requests")
             .tags("status", "401")
             .timer()).isPresent();

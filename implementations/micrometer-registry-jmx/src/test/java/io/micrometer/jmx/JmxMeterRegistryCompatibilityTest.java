@@ -17,12 +17,14 @@ package io.micrometer.jmx;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
 
 public class JmxMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @BeforeAll
@@ -32,6 +34,11 @@ public class JmxMeterRegistryCompatibilityTest extends MeterRegistryCompatibilit
 
     @Override
     public MeterRegistry registry() {
-        return new JmxMeterRegistry(HierarchicalNameMapper.DEFAULT, new MockClock());
+        return new JmxMeterRegistry(JmxConfig.DEFAULT, HierarchicalNameMapper.DEFAULT, new MockClock());
+    }
+
+    @Override
+    public Duration step() {
+        return JmxConfig.DEFAULT.step();
     }
 }

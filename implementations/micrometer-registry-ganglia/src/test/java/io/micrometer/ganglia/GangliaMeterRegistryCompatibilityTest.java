@@ -15,10 +15,12 @@
  */
 package io.micrometer.ganglia;
 
-import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
+
+import java.time.Duration;
 
 class GangliaMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @Override
@@ -34,5 +36,10 @@ class GangliaMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKi
                 return null;
             }
         }, HierarchicalNameMapper.DEFAULT, new MockClock());
+    }
+
+    @Override
+    public Duration step() {
+        return GangliaConfig.DEFAULT.step();
     }
 }

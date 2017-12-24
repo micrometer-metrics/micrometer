@@ -16,12 +16,8 @@
 package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.cumulative.CumulativeCounter;
-import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
-import io.micrometer.core.instrument.cumulative.CumulativeTimer;
+import io.micrometer.core.instrument.cumulative.*;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
-import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
@@ -100,7 +96,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
         Timer timer;
         switch (config.mode()) {
             case Cumulative:
-                timer = new CumulativeTimer(id, clock, merged, pauseDetector, getBaseTimeUnit());
+                timer = new CumulativeTimer(id, clock, merged, pauseDetector, getBaseTimeUnit(), config.step().toMillis());
                 break;
             case Step:
             default:

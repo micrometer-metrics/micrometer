@@ -15,13 +15,14 @@
  */
 package io.micrometer.graphite;
 
-import java.time.Duration;
+import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
+
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author Jon Schneider
  */
-public interface GraphiteConfig {
+public interface GraphiteConfig extends DropwizardConfig {
     /**
      * Accept configuration defaults
      */
@@ -42,14 +43,6 @@ public interface GraphiteConfig {
      */
     default String prefix() {
         return "graphite";
-    }
-
-    /**
-     * Returns the step size (reporting frequency) to use. The default is 10 seconds.
-     */
-    default Duration step() {
-        String v = get(prefix() + ".step");
-        return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
     }
 
     default TimeUnit rateUnits() {

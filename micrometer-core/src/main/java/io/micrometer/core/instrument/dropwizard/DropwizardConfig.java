@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.simple;
+package io.micrometer.core.instrument.dropwizard;
 
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
+import io.micrometer.core.instrument.config.MeterRegistryConfig;
 
 import java.time.Duration;
 
-public class SimpleMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
-    @Override
-    public MeterRegistry registry() {
-        return new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-    }
-
-    @Override
-    public Duration step() {
-        return SimpleConfig.DEFAULT.step();
+public interface DropwizardConfig extends MeterRegistryConfig {
+    /**
+     * Returns the step size (reporting frequency, max decaying) to use. The default is 1 minute.
+     */
+    default Duration step() {
+        String v = get(prefix() + ".step");
+        return v == null ? Duration.ofMinutes(1) : Duration.parse(v);
     }
 }

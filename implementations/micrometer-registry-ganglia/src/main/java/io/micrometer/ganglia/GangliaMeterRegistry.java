@@ -39,7 +39,7 @@ public class GangliaMeterRegistry extends DropwizardMeterRegistry {
     public GangliaMeterRegistry(GangliaConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
         // Technically, Ganglia doesn't have any constraints on metric or tag names, but the encoding of Unicode can look
         // horrible in the UI. So be aware...
-        super(nameMapper, clock);
+        super(config, nameMapper, clock);
         this.config = config;
 
         try {

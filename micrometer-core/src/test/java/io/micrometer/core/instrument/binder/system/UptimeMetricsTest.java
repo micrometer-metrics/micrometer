@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.management.RuntimeMXBean;
 
-import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.mock;
@@ -54,7 +53,6 @@ class UptimeMetricsTest {
         when(runtimeMXBean.getStartTime()).thenReturn(4711L);
         new UptimeMetrics(runtimeMXBean, emptyList()).bindTo(registry);
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("process.uptime").value(Statistic.Value, 1.337).meter()).isPresent();
         assertThat(registry.find("process.start.time").value(Statistic.Value, 4.711).meter()).isPresent();
     }

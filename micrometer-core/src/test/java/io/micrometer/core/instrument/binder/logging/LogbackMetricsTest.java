@@ -26,7 +26,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
-import static io.micrometer.core.instrument.MockClock.clock;
 import static io.micrometer.core.instrument.Statistic.Count;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,7 +48,6 @@ class LogbackMetricsTest {
         logger.error("error");
         logger.debug("debug"); // shouldn't record a metric
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("logback.events").tags("level", "warn").value(Count, 1.0).counter()).isPresent();
         assertThat(registry.find("logback.events").tags("level", "debug").value(Count, 0.0).counter()).isPresent();
     }
@@ -59,7 +57,6 @@ class LogbackMetricsTest {
     void isLevelEnabledDoesntContributeToCounts() {
         logger.isErrorEnabled();
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("logback.events").tags("level", "error").value(Count, 0.0).counter()).isPresent();
     }
 }

@@ -25,7 +25,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.MockClock.clock;
 import static io.micrometer.core.instrument.Statistic.Count;
 import static io.micrometer.core.instrument.Statistic.Value;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -52,7 +51,6 @@ public class ThreadPoolTaskExecutorMetricsTest {
         lock.await();
         pool.shutdown();
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("exec").tags(userTags).timer()).map(Timer::count).hasValue(1L);
         assertThat(registry.find("exec.completed").tags(userTags).meter()).isPresent();
         assertThat(registry.find("exec.queued").tags(userTags).gauge()).isPresent();
@@ -84,7 +82,6 @@ public class ThreadPoolTaskExecutorMetricsTest {
         taskComplete.countDown();
         pool.shutdown();
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("beep.pool").tags(userTags).value(Count, 2.0).timer()).isPresent();
         assertThat(registry.find("beep.pool.queued").tags(userTags).value(Value, 0.0).gauge()).isPresent();
     }

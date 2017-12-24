@@ -15,11 +15,13 @@
  */
 package io.micrometer.core.instrument.composite;
 
-import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
+
+import java.time.Duration;
 
 class CompositeMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @Override
@@ -27,5 +29,10 @@ class CompositeMeterRegistryCompatibilityTest extends MeterRegistryCompatibility
         return new CompositeMeterRegistry(new MockClock()) {{
             add(new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock));
         }};
+    }
+
+    @Override
+    public Duration step() {
+        return SimpleConfig.DEFAULT.step();
     }
 }

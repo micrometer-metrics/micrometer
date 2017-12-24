@@ -18,6 +18,11 @@ package io.micrometer.newrelic;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
 public interface NewRelicConfig extends StepRegistryConfig {
+    /**
+     * Accept configuration defaults
+     */
+    NewRelicConfig DEFAULT = k -> null;
+
     @Override
     default String prefix() {
         return "newrelic";

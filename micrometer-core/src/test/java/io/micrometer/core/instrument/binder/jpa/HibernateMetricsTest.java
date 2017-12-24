@@ -15,24 +15,23 @@
  */
 package io.micrometer.core.instrument.binder.jpa;
 
-import static io.micrometer.core.instrument.MockClock.clock;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
-
-import java.sql.SQLException;
-import java.util.concurrent.TimeUnit;
-
-import javax.persistence.EntityManagerFactory;
-
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import javax.persistence.EntityManagerFactory;
+import java.sql.SQLException;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Marten Deinum
@@ -48,8 +47,6 @@ class HibernateMetricsTest {
 
     @Test
     void shouldExposeMetricsWhenStatsEnabled() {
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
-
         HibernateMetrics.monitor(registry, createEntityManagerFactoryMock(true), "entityManagerFactory");
         assertThat(registry.find("hibernate.sessions.open").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);
         assertThat(registry.find("hibernate.sessions.closed").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(42.0d);

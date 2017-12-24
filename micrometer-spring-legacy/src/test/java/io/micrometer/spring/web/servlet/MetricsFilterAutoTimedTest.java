@@ -75,7 +75,6 @@ public class MetricsFilterAutoTimedTest {
     public void metricsCanBeAutoTimed() throws Exception {
         this.mvc.perform(get("/api/10")).andExpect(status().isOk());
 
-        clock.add(SimpleConfig.DEFAULT_STEP);
         assertThat(this.registry.find("http.server.requests").tags("status", "200").timer())
             .hasValueSatisfying((t) -> assertThat(t.count()).isEqualTo(1));
     }

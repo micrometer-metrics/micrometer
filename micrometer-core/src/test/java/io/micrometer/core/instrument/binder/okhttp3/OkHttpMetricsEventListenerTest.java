@@ -28,7 +28,6 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class OkHttpMetricsEventListenerTest {
@@ -49,7 +48,6 @@ class OkHttpMetricsEventListenerTest {
 
         client.newCall(request).execute().close();
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("okhttp.requests")
             .tags("uri", "/helloworld.txt")
             .tags("status", "200")
@@ -68,7 +66,6 @@ class OkHttpMetricsEventListenerTest {
             // expected
         }
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("okhttp.requests")
             .tags("uri", "NOT_FOUND")
             .timer().map(Timer::count)).isPresent().hasValue(1L);
@@ -94,7 +91,6 @@ class OkHttpMetricsEventListenerTest {
             // expected
         }
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("okhttp.requests")
             .tags("uri", "UNKNOWN")
             .tags("status", "IO_ERROR")

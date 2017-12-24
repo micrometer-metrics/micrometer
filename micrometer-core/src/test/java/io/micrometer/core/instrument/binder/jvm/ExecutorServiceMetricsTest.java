@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.*;
 
-import static io.micrometer.core.instrument.MockClock.clock;
 import static io.micrometer.core.instrument.Statistic.Count;
 import static io.micrometer.core.instrument.Statistic.Value;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -51,7 +50,6 @@ class ExecutorServiceMetricsTest {
         executor.execute(() -> System.out.println("hello"));
         lock.await();
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("exec").tags(userTags).timer()).map(Timer::count).hasValue(1L);
     }
 
@@ -100,7 +98,6 @@ class ExecutorServiceMetricsTest {
         taskComplete.countDown();
         pool.awaitTermination(1, TimeUnit.SECONDS);
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("beep.pool").tags(userTags).value(Count, 2.0).timer()).isPresent();
         assertThat(registry.find("beep.pool.queued").tags(userTags).value(Value, 0.0).gauge()).isPresent();
     }

@@ -15,12 +15,13 @@
  */
 package io.micrometer.core.instrument.step;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.AbstractTimer;
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
+import io.micrometer.core.instrument.util.TimeDecayingMax;
 import io.micrometer.core.instrument.util.TimeUtils;
 
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -29,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 public class StepTimer extends AbstractTimer {
     private final StepLong count;
     private final StepLong total;
-    private final StepLong max;
+    private final TimeDecayingMax max;
 
     /**
      * Create a new instance.
@@ -38,7 +39,7 @@ public class StepTimer extends AbstractTimer {
         super(id, clock, histogramConfig, pauseDetector, baseTimeUnit);
         this.count = new StepLong(clock, step);
         this.total = new StepLong(clock, step);
-        this.max = new StepLong(clock, step);
+        this.max = new TimeDecayingMax(clock, step);
     }
 
     @Override
@@ -46,7 +47,7 @@ public class StepTimer extends AbstractTimer {
         long nanoAmount = (long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS);
         count.getCurrent().add(1);
         total.getCurrent().add(nanoAmount);
-        max.getCurrent().add(Math.max(nanoAmount - max.getCurrent().longValue(), 0));
+        max.record(amount, unit);
     }
 
     @Override
@@ -61,15 +62,6 @@ public class StepTimer extends AbstractTimer {
 
     @Override
     public double max(TimeUnit unit) {
-        return TimeUtils.nanosToUnit(max.poll(), unit);
-    }
-
-    @Override
-    public Iterable<Measurement> measure() {
-        return Arrays.asList(
-            new Measurement(() -> (double) count(), Statistic.Count),
-            new Measurement(() -> totalTime(TimeUnit.NANOSECONDS), Statistic.TotalTime),
-            new Measurement(() -> totalTime(TimeUnit.NANOSECONDS), Statistic.Max)
-        );
+        return max.max(unit);
     }
 }

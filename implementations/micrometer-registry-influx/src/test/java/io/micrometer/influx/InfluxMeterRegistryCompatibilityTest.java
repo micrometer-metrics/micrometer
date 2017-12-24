@@ -15,8 +15,8 @@
  */
 package io.micrometer.influx;
 
-import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
@@ -34,11 +34,11 @@ class InfluxMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit
             public String get(String k) {
                 return null;
             }
-
-            @Override
-            public Duration step() {
-                return Duration.ofSeconds(1);
-            }
         }, new MockClock());
+    }
+
+    @Override
+    public Duration step() {
+        return InfluxConfig.DEFAULT.step();
     }
 }

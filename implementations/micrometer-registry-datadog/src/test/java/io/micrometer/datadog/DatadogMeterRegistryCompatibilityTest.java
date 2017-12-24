@@ -24,28 +24,26 @@ import java.time.Duration;
 class DatadogMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @Override
     public MeterRegistry registry() {
-        return new DatadogMeterRegistry(new FakeDatadogConfig(), new MockClock());
+        return new DatadogMeterRegistry(new DatadogConfig() {
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+
+            @Override
+            public String apiKey() {
+                return "DOESNOTMATTER";
+            }
+
+            @Override
+            public String get(String k) {
+                return null;
+            }
+        }, new MockClock());
     }
 
-    static class FakeDatadogConfig implements DatadogConfig {
-        @Override
-        public boolean enabled() {
-            return false;
-        }
-
-        @Override
-        public String apiKey() {
-            return "DOESNOTMATTER";
-        }
-
-        @Override
-        public String get(String k) {
-            return null;
-        }
-
-        @Override
-        public Duration step() {
-            return Duration.ofMillis(800);
-        }
+    @Override
+    public Duration step() {
+        return DatadogConfig.DEFAULT.step();
     }
 }

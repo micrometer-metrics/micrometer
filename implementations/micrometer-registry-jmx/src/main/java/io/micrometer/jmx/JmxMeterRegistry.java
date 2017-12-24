@@ -26,16 +26,16 @@ import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 public class JmxMeterRegistry extends DropwizardMeterRegistry {
     private final JmxReporter reporter;
 
-    public JmxMeterRegistry() {
-        this(HierarchicalNameMapper.DEFAULT, Clock.SYSTEM);
+    public JmxMeterRegistry(JmxConfig config) {
+        this(config, HierarchicalNameMapper.DEFAULT, Clock.SYSTEM);
     }
 
-    public JmxMeterRegistry(HierarchicalNameMapper nameMapper, Clock clock) {
-        super(nameMapper, clock);
+    public JmxMeterRegistry(JmxConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
+        super(config, nameMapper, clock);
 
         this.reporter = JmxReporter.forRegistry(getDropwizardRegistry()).build();
         this.reporter.start();
-}
+    }
 
     public void stop() {
         this.reporter.stop();

@@ -244,14 +244,13 @@ class PrometheusMeterRegistryTest {
         timer.record(10, TimeUnit.MILLISECONDS);
         timer.record(1, TimeUnit.SECONDS);
 
-        assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0);
-        assertThat(registry.scrape()).contains("my_timer_duration_seconds_max 0.0");
-
-        clock(registry).add(PrometheusConfig.DEFAULT.step());
         assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(1);
         assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(1000);
-
         assertThat(registry.scrape()).contains("my_timer_duration_seconds_max 1.0");
+
+        clock(registry).add(Duration.ofMillis(PrometheusConfig.DEFAULT.step().toMillis() * 3));
+        assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0);
+        assertThat(registry.scrape()).contains("my_timer_duration_seconds_max 0.0");
     }
 
     @Issue("#61")

@@ -22,7 +22,7 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.TimeWindowLatencyHistogram;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
-import io.micrometer.core.instrument.step.StepDouble;
+import io.micrometer.core.instrument.util.TimeDecayingMax;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.time.Duration;
@@ -32,12 +32,12 @@ import java.util.concurrent.atomic.LongAdder;
 public class PrometheusTimer extends AbstractTimer implements Timer {
     private final LongAdder count = new LongAdder();
     private final LongAdder totalTime = new LongAdder();
-    private final StepDouble max;
+    private final TimeDecayingMax max;
     private final TimeWindowLatencyHistogram percentilesHistogram;
 
     PrometheusTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector, long maxStepMillis) {
         super(id, clock, histogramConfig, pauseDetector, TimeUnit.SECONDS);
-        this.max = new StepDouble(clock, maxStepMillis);
+        this.max = new TimeDecayingMax(clock, maxStepMillis);
 
         this.percentilesHistogram = new TimeWindowLatencyHistogram(clock,
             HistogramConfig.builder()
@@ -52,8 +52,8 @@ public class PrometheusTimer extends AbstractTimer implements Timer {
         count.increment();
         long nanoAmount = TimeUnit.NANOSECONDS.convert(amount, unit);
         totalTime.add(nanoAmount);
-        max.getCurrent().add(Math.max(nanoAmount - max.getCurrent().doubleValue(), 0));
         percentilesHistogram.recordLong(nanoAmount);
+        max.record(nanoAmount, TimeUnit.NANOSECONDS);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class PrometheusTimer extends AbstractTimer implements Timer {
 
     @Override
     public double max(TimeUnit unit) {
-        return TimeUtils.nanosToUnit(max.poll(), unit);
+        return max.max(unit);
     }
 
     /**

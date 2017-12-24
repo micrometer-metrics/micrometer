@@ -33,7 +33,6 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import java.sql.SQLException;
 
-import static io.micrometer.core.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -59,8 +58,6 @@ class JettyStatisticsMetricsTest {
         when(resp.getContentCount()).thenReturn(772L);
 
         handler.handle("/testUrl", baseReq, new MockHttpServletRequest(), new MockHttpServletResponse());
-
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
 
         assertThat(registry.find("jetty.requests").value(Statistic.Count, 1.0).meter()).isPresent();
         assertThat(registry.find("jetty.responses.size").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(772.0);

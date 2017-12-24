@@ -39,9 +39,11 @@ public class DropwizardMeterRegistry extends MeterRegistry {
     private final HierarchicalNameMapper nameMapper;
     private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
     private final DropwizardClock dropwizardClock;
+    private final DropwizardConfig dropwizardConfig;
 
-    public DropwizardMeterRegistry(HierarchicalNameMapper nameMapper, Clock clock) {
+    public DropwizardMeterRegistry(DropwizardConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
         super(clock);
+        this.dropwizardConfig = config;
         this.dropwizardClock = new DropwizardClock(clock);
         this.registry = new MetricRegistry();
         this.nameMapper = nameMapper;
@@ -72,7 +74,8 @@ public class DropwizardMeterRegistry extends MeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
-        DropwizardTimer timer = new DropwizardTimer(id, registry.timer(hierarchicalName(id)), clock, histogramConfig, pauseDetector);
+        DropwizardTimer timer = new DropwizardTimer(id, registry.timer(hierarchicalName(id)), clock, histogramConfig, pauseDetector,
+            dropwizardConfig.step().toMillis());
 
         for (double percentile : histogramConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),

@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.simple;
+package io.micrometer.jmx;
 
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
+import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
 
-import java.time.Duration;
-
-public class SimpleMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
-    @Override
-    public MeterRegistry registry() {
-        return new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-    }
+public interface JmxConfig extends DropwizardConfig {
+    /**
+     * Accept configuration defaults
+     */
+    JmxConfig DEFAULT = k -> null;
 
     @Override
-    public Duration step() {
-        return SimpleConfig.DEFAULT.step();
+    default String prefix() {
+        return "jmx";
     }
 }

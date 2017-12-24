@@ -13,22 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.simple;
+package io.micrometer.spring.autoconfigure.export.jmx;
 
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
 
-public class SimpleMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
-    @Override
-    public MeterRegistry registry() {
-        return new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+/**
+ * {@link ConfigurationProperties} for configuring JMX metrics export.
+ *
+ * @author Jon Schneider
+ */
+@ConfigurationProperties(prefix = "spring.metrics.export.jmx")
+public class JmxProperties {
+    /**
+     * The step size (reporting frequency) to use.
+     */
+    private Duration step = Duration.ofMinutes(1);
+
+    public void setStep(Duration step) {
+        this.step = step;
     }
 
-    @Override
-    public Duration step() {
-        return SimpleConfig.DEFAULT.step();
+    public Duration getStep() {
+        return step;
     }
 }

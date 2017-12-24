@@ -29,7 +29,6 @@ import org.springframework.test.web.client.match.MockRestRequestMatchers;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.RestTemplate;
 
-import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.stream.StreamSupport.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -61,7 +60,6 @@ public class MetricsRestTemplateCustomizerTest {
         assertThat(registry.find("http.client.requests").meters())
             .anySatisfy(m -> assertThat(stream(m.getId().getTags().spliterator(), false).map(Tag::getKey)).doesNotContain("bucket"));
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("http.client.requests")
             .tags("method", "GET", "uri", "/test/{id}", "status", "200")
             .value(Statistic.Count, 1.0).timer()).isPresent();

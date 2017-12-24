@@ -22,10 +22,13 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.datadog.DatadogConfig;
 import io.micrometer.datadog.DatadogMeterRegistry;
+import io.micrometer.ganglia.GangliaConfig;
 import io.micrometer.ganglia.GangliaMeterRegistry;
+import io.micrometer.graphite.GraphiteConfig;
 import io.micrometer.graphite.GraphiteMeterRegistry;
 import io.micrometer.influx.InfluxConfig;
 import io.micrometer.influx.InfluxMeterRegistry;
+import io.micrometer.jmx.JmxConfig;
 import io.micrometer.jmx.JmxMeterRegistry;
 import io.micrometer.newrelic.NewRelicConfig;
 import io.micrometer.newrelic.NewRelicMeterRegistry;
@@ -114,6 +117,11 @@ public class SampleRegistries {
     public static StatsdMeterRegistry datadogStatsd() {
         return new StatsdMeterRegistry(new StatsdConfig() {
             @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+
+            @Override
             public String get(String k) {
                 return null;
             }
@@ -128,6 +136,11 @@ public class SampleRegistries {
     public static StatsdMeterRegistry telegrafStatsd() {
         return new StatsdMeterRegistry(new StatsdConfig() {
             @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+
+            @Override
             public String get(String k) {
                 return null;
             }
@@ -140,15 +153,45 @@ public class SampleRegistries {
     }
 
     public static GangliaMeterRegistry ganglia() {
-        return new GangliaMeterRegistry();
+        return new GangliaMeterRegistry(new GangliaConfig() {
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+
+            @Override
+            public String get(String k) {
+                return null;
+            }
+        });
     }
 
     public static GraphiteMeterRegistry graphite() {
-        return new GraphiteMeterRegistry();
+        return new GraphiteMeterRegistry(new GraphiteConfig() {
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+
+            @Override
+            public String get(String k) {
+                return null;
+            }
+        });
     }
 
     public static JmxMeterRegistry jmx() {
-        return new JmxMeterRegistry();
+        return new JmxMeterRegistry(new JmxConfig() {
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+
+            @Override
+            public String get(String k) {
+                return null;
+            }
+        });
     }
 
     public static InfluxMeterRegistry influx() {

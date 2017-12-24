@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,6 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(RegistryResolver.class)
 public abstract class MeterRegistryCompatibilityKit {
     public abstract MeterRegistry registry();
+    public abstract Duration step();
 
     @Test
     @DisplayName("compatibility test provides a non-null registry instance")
@@ -86,7 +88,7 @@ public abstract class MeterRegistryCompatibilityKit {
         Timer t = registry.timer("timer");
         t.record(10, TimeUnit.NANOSECONDS);
 
-        clock(registry).addSeconds(1);
+        clock(registry).add(step());
 
         assertThat(registry.find("counter").value(Count, 1.0).counter()).isPresent();
         assertThat(registry.find("timer").value(Count, 1.0).timer()).isPresent();
@@ -119,7 +121,7 @@ public abstract class MeterRegistryCompatibilityKit {
         registry.more().timer("function.timer", emptyList(),
             o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
 
-        clock(registry).addSeconds(1);
+        clock(registry).add(step());
 
         assertThat(registry.find("function.timer").meter())
             .hasValueSatisfying(meter ->
@@ -135,11 +137,19 @@ public abstract class MeterRegistryCompatibilityKit {
     @DisplayName("counters")
     @Nested
     class CounterTck implements CounterTest {
+        @Override
+        public Duration step() {
+            return MeterRegistryCompatibilityKit.this.step();
+        }
     }
 
     @DisplayName("distribution summaries")
     @Nested
     class DistributionSummaryTck implements DistributionSummaryTest {
+        @Override
+        public Duration step() {
+            return MeterRegistryCompatibilityKit.this.step();
+        }
     }
 
     @DisplayName("gauges")
@@ -155,6 +165,10 @@ public abstract class MeterRegistryCompatibilityKit {
     @DisplayName("timers")
     @Nested
     class TimerTck implements TimerTest {
+        @Override
+        public Duration step() {
+            return MeterRegistryCompatibilityKit.this.step();
+        }
     }
 }
 

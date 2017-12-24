@@ -29,7 +29,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DropwizardMeterRegistryTest {
     private final MockClock clock = new MockClock();
-    private final DropwizardMeterRegistry registry = new DropwizardMeterRegistry(HierarchicalNameMapper.DEFAULT, clock);
+    private final DropwizardMeterRegistry registry = new DropwizardMeterRegistry(
+        new DropwizardConfig() {
+            @Override
+            public String prefix() {
+                return null;
+            }
+
+            @Override
+            public String get(String k) {
+                return null;
+            }
+        }, HierarchicalNameMapper.DEFAULT, clock);
 
     @Test
     void gaugeOnNullValue() {

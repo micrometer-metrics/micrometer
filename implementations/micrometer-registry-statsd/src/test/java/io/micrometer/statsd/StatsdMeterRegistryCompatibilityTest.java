@@ -23,6 +23,8 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+
 public class StatsdMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @BeforeAll
     static void before() {
@@ -32,5 +34,10 @@ public class StatsdMeterRegistryCompatibilityTest extends MeterRegistryCompatibi
     @Override
     public MeterRegistry registry() {
         return new StatsdMeterRegistry(StatsdConfig.DEFAULT, new MockClock());
+    }
+
+    @Override
+    public Duration step() {
+        return StatsdConfig.DEFAULT.step();
     }
 }
