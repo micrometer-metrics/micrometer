@@ -17,6 +17,7 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.TimeWindowLatencyHistogram;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 
 import java.util.concurrent.Callable;
@@ -28,11 +29,11 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     private final HistogramConfig histogramConfig;
     protected final TimeWindowLatencyHistogram histogram;
 
-    protected AbstractTimer(Meter.Id id, Clock clock, HistogramConfig histogramConfig) {
+    protected AbstractTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
         super(id);
         this.clock = clock;
         this.histogramConfig = histogramConfig;
-        this.histogram = new TimeWindowLatencyHistogram(clock, histogramConfig);
+        this.histogram = new TimeWindowLatencyHistogram(clock, histogramConfig, pauseDetector);
     }
 
     @Override

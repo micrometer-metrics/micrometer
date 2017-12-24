@@ -20,9 +20,12 @@ import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.pause.ClockDriftPauseDetector;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.noop.*;
 import io.micrometer.core.instrument.util.TimeUtils;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -55,6 +58,10 @@ public abstract class MeterRegistry {
     private volatile Map<Id, Meter> meterMap = Collections.emptyMap();
     private final List<MeterFilter> filters = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterAddedListeners = new CopyOnWriteArrayList<>();
+    private PauseDetector pauseDetector = new ClockDriftPauseDetector(
+        Duration.ofMillis(100),
+        Duration.ofMillis(100)
+    );
 
     /**
      * We'll use snake case as a general-purpose default for registries because it is the most
@@ -71,7 +78,7 @@ public abstract class MeterRegistry {
 
     protected abstract LongTaskTimer newLongTaskTimer(Meter.Id id);
 
-    protected abstract Timer newTimer(Meter.Id id, HistogramConfig histogramConfig);
+    protected abstract Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector);
 
     protected abstract DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig);
 
@@ -128,10 +135,10 @@ public abstract class MeterRegistry {
         return registerMeterIfNecessary(Gauge.class, id, id2 -> newGauge(id2, obj, f), NoopGauge::new);
     }
 
-    Timer timer(Meter.Id id, HistogramConfig histogramConfig) {
+    Timer timer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetectorOverride) {
         return registerMeterIfNecessary(Timer.class, id, histogramConfig, (id2, filteredConfig) -> {
             Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
-            return newTimer(withUnit, filteredConfig.merge(HistogramConfig.DEFAULT));
+            return newTimer(withUnit, filteredConfig.merge(HistogramConfig.DEFAULT), pauseDetectorOverride);
         }, NoopTimer::new);
     }
 
@@ -215,6 +222,17 @@ public abstract class MeterRegistry {
          */
         public Clock clock() {
             return clock;
+        }
+
+        @Incubating(since = "1.0.0-rc.6")
+        public Config pauseDetector(PauseDetector detector) {
+            pauseDetector = detector;
+            return this;
+        }
+
+        @Incubating(since = "1.0.0-rc.6")
+        public PauseDetector pauseDetector() {
+            return pauseDetector;
         }
     }
 

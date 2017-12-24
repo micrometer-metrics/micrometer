@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.composite;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 
 import java.util.Collections;
 import java.util.Set;
@@ -48,8 +49,8 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
-        return new CompositeTimer(id, clock, histogramConfig);
+    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
+        return new CompositeTimer(id, clock, histogramConfig, pauseDetector);
     }
 
     @Override

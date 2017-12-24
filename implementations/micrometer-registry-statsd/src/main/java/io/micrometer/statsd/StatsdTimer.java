@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.TimeUtils;
 import org.reactivestreams.Processor;
@@ -36,8 +37,8 @@ public class StatsdTimer extends AbstractTimer implements Timer {
     private final Processor<String, String> publisher;
 
     StatsdTimer(Id id, StatsdLineBuilder lineBuilder, Processor<String, String> publisher, Clock clock,
-                HistogramConfig histogramConfig, long stepMillis) {
-        super(id, clock, histogramConfig);
+                HistogramConfig histogramConfig, PauseDetector pauseDetector, long stepMillis) {
+        super(id, clock, histogramConfig, pauseDetector);
         this.max = new StepDouble(clock, stepMillis);
         this.lineBuilder = lineBuilder;
         this.publisher = publisher;

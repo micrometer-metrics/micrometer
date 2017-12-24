@@ -18,6 +18,7 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.noop.NoopCounter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
@@ -53,9 +54,9 @@ class MeterRegistryTest {
     void histogramConfigTransformingMeterFilter() {
         MeterRegistry registry = new SimpleMeterRegistry() {
             @Override
-            protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
+            protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
                 assertThat(histogramConfig.isPublishingHistogram()).isTrue();
-                return super.newTimer(id, histogramConfig);
+                return super.newTimer(id, histogramConfig, pauseDetector);
             }
         };
 
@@ -63,6 +64,7 @@ class MeterRegistryTest {
             @Override
             public HistogramConfig configure(Meter.Id mappedId, HistogramConfig config) {
                 return HistogramConfig.builder()
+                    .percentiles(0.95)
                     .percentilesHistogram(true)
                     .build()
                     .merge(config);

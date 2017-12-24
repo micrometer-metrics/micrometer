@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.step;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
@@ -78,12 +79,12 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
+    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
         HistogramConfig merged = histogramConfig.merge(HistogramConfig.builder()
             .histogramExpiry(config.step())
             .build());
 
-        Timer timer = new StepTimer(id, clock, histogramConfig, config.step().toMillis());
+        Timer timer = new StepTimer(id, clock, histogramConfig, pauseDetector, config.step().toMillis());
         histogramConfigs.put(timer, merged);
         return timer;
     }

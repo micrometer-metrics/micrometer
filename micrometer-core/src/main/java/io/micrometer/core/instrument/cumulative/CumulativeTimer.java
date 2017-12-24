@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.Arrays;
@@ -37,8 +38,8 @@ public class CumulativeTimer extends AbstractTimer {
     /**
      * Create a new instance.
      */
-    public CumulativeTimer(Id id, Clock clock, HistogramConfig histogramConfig) {
-        super(id, clock, histogramConfig);
+    public CumulativeTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
+        super(id, clock, histogramConfig, pauseDetector);
         this.count = new AtomicLong();
         this.total = new AtomicLong();
         this.max = new AtomicLong();

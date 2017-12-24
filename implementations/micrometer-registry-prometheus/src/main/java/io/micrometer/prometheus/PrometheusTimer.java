@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.CountAtValue;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.TimeWindowLatencyHistogram;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.TimeUtils;
 
@@ -34,8 +35,8 @@ public class PrometheusTimer extends AbstractTimer implements Timer {
     private final StepDouble max;
     private final TimeWindowLatencyHistogram percentilesHistogram;
 
-    PrometheusTimer(Id id, Clock clock, HistogramConfig histogramConfig, long maxStepMillis) {
-        super(id, clock, histogramConfig);
+    PrometheusTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector, long maxStepMillis) {
+        super(id, clock, histogramConfig, pauseDetector);
         this.max = new StepDouble(clock, maxStepMillis);
 
         this.percentilesHistogram = new TimeWindowLatencyHistogram(clock,
@@ -43,7 +44,7 @@ public class PrometheusTimer extends AbstractTimer implements Timer {
                 .histogramExpiry(Duration.ofDays(1825)) // effectively never roll over
                 .histogramBufferLength(1)
                 .build()
-                .merge(histogramConfig));
+                .merge(histogramConfig), pauseDetector);
     }
 
     @Override

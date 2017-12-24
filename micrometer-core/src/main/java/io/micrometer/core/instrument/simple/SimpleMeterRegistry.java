@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.cumulative.CumulativeTimer;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
@@ -91,7 +92,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
+    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
         HistogramConfig merged = histogramConfig.merge(HistogramConfig.builder()
             .histogramExpiry(config.step())
             .build());
@@ -99,11 +100,11 @@ public class SimpleMeterRegistry extends MeterRegistry {
         Timer timer;
         switch (config.mode()) {
             case Cumulative:
-                timer = new CumulativeTimer(id, clock, merged);
+                timer = new CumulativeTimer(id, clock, merged, pauseDetector);
                 break;
             case Step:
             default:
-                timer = new StepTimer(id, clock, merged, config.step().toMillis());
+                timer = new StepTimer(id, clock, merged, pauseDetector, config.step().toMillis());
                 break;
         }
 

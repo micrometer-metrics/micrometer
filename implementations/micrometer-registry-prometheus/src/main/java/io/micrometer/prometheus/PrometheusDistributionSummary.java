@@ -19,7 +19,7 @@ import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.CountAtValue;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.histogram.TimeWindowLatencyHistogram;
+import io.micrometer.core.instrument.histogram.TimeWindowHistogram;
 import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 
@@ -31,12 +31,12 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     private LongAdder count = new LongAdder();
     private DoubleAdder amount = new DoubleAdder();
     private StepDouble max;
-    private final TimeWindowLatencyHistogram percentilesHistogram;
+    private final TimeWindowHistogram percentilesHistogram;
 
     PrometheusDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig, long maxStepMillis) {
         super(id, clock, histogramConfig);
         this.max = new StepDouble(clock, maxStepMillis);
-        this.percentilesHistogram = new TimeWindowLatencyHistogram(clock,
+        this.percentilesHistogram = new TimeWindowHistogram(clock,
             HistogramConfig.builder()
                 .histogramExpiry(Duration.ofDays(1825)) // effectively never roll over
                 .histogramBufferLength(1)

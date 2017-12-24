@@ -17,8 +17,16 @@ package io.micrometer.core.instrument.histogram;
 
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.histogram.pause.ClockDriftPauseDetector;
+import io.micrometer.core.instrument.histogram.pause.NoPauseDetector;
 import org.HdrHistogram.Histogram;
 import org.LatencyUtils.LatencyStats;
+import org.LatencyUtils.PauseDetector;
+import org.LatencyUtils.SimplePauseDetector;
+
+import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Jon Schneider
@@ -26,14 +34,42 @@ import org.LatencyUtils.LatencyStats;
  */
 @Incubating(since = "1.0.0-rc.3")
 public class TimeWindowLatencyHistogram extends TimeWindowHistogramBase<LatencyStats, Histogram> {
+    private static Map<io.micrometer.core.instrument.histogram.pause.PauseDetector, PauseDetector> pauseDetectorCache =
+        new ConcurrentHashMap<>();
 
+    private final PauseDetector pauseDetector;
+
+    private static class NoopPauseDetector extends PauseDetector {
+        NoopPauseDetector() {
+            shutdown();
+        }
+    }
+
+    /*VisibleForTesting*/
     public TimeWindowLatencyHistogram(Clock clock, HistogramConfig histogramConfig) {
+        this(clock, histogramConfig, new ClockDriftPauseDetector(Duration.ofMillis(100), Duration.ofMillis(100)));
+    }
+
+    public TimeWindowLatencyHistogram(Clock clock, HistogramConfig histogramConfig,
+                                      io.micrometer.core.instrument.histogram.pause.PauseDetector pauseDetector) {
         super(clock, histogramConfig, LatencyStats.class);
+
+        this.pauseDetector = pauseDetectorCache.computeIfAbsent(pauseDetector, detector -> {
+            if (detector instanceof ClockDriftPauseDetector) {
+                ClockDriftPauseDetector clockDriftPauseDetector = (ClockDriftPauseDetector) detector;
+                return new SimplePauseDetector(clockDriftPauseDetector.getSleepInterval().toNanos(),
+                    clockDriftPauseDetector.getPauseThreshold().toNanos(), 1, false);
+            } else if (detector instanceof NoPauseDetector) {
+                return new NoopPauseDetector();
+            }
+            return new NoopPauseDetector();
+        });
     }
 
     @Override
     LatencyStats newBucket(HistogramConfig histogramConfig) {
         return new LatencyStats.Builder()
+            .pauseDetector(pauseDetector)
             .lowestTrackableLatency(histogramConfig.getMinimumExpectedValue())
             .highestTrackableLatency(histogramConfig.getMaximumExpectedValue())
             .numberOfSignificantValueDigits(NUM_SIGNIFICANT_VALUE_DIGITS)

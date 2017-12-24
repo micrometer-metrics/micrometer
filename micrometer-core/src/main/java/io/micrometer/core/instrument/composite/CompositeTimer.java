@@ -15,12 +15,12 @@
  */
 package io.micrometer.core.instrument.composite;
 
-import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.noop.NoopTimer;
 
 import java.time.Duration;
@@ -29,14 +29,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
-
     private final Clock clock;
     private final HistogramConfig histogramConfig;
+    private final PauseDetector pauseDetector;
 
-    CompositeTimer(Meter.Id id, Clock clock, HistogramConfig histogramConfig) {
+    CompositeTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
         super(id);
         this.clock = clock;
         this.histogramConfig = histogramConfig;
+        this.pauseDetector = pauseDetector;
     }
 
     @Override
@@ -135,6 +136,7 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
                     .histogramBufferLength(histogramConfig.getHistogramBufferLength())
                     .histogramExpiry(histogramConfig.getHistogramExpiry())
                     .sla(sla)
+                    .pauseDetector(pauseDetector)
                     .register(registry);
     }
 }

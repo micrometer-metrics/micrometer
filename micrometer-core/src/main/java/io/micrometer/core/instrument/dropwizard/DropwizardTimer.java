@@ -19,6 +19,7 @@ import com.codahale.metrics.Timer;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.TimeUtils;
 
@@ -30,8 +31,8 @@ public class DropwizardTimer extends AbstractTimer {
     private final AtomicLong totalTime = new AtomicLong(0);
     private final StepDouble max;
 
-    DropwizardTimer(Id id, Timer impl, Clock clock, HistogramConfig histogramConfig) {
-        super(id, clock, histogramConfig);
+    DropwizardTimer(Id id, Timer impl, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
+        super(id, clock, histogramConfig, pauseDetector);
         this.impl = impl;
         this.max = new StepDouble(clock, 60000);
     }

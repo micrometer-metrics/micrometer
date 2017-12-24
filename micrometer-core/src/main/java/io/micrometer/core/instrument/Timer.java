@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -142,6 +143,7 @@ public interface Timer extends Meter {
         private final List<Tag> tags = new ArrayList<>();
         private String description;
         private final HistogramConfig.Builder histogramConfigBuilder;
+        private PauseDetector pauseDetector;
 
         private Builder(String name) {
             this.name = name;
@@ -228,6 +230,11 @@ public interface Timer extends Meter {
             return this;
         }
 
+        public Builder pauseDetector(PauseDetector pauseDetector) {
+            this.pauseDetector = pauseDetector;
+            return this;
+        }
+
         /**
          * @param tags Must be an even number of arguments representing key/value pairs of tags.
          */
@@ -242,7 +249,8 @@ public interface Timer extends Meter {
 
         public Timer register(MeterRegistry registry) {
             // the base unit for a timer will be determined by the monitoring system implementation
-            return registry.timer(new Meter.Id(name, tags, null, description, Type.Timer), histogramConfigBuilder.build());
+            return registry.timer(new Meter.Id(name, tags, null, description, Type.Timer), histogramConfigBuilder.build(),
+                pauseDetector == null ? registry.config().pauseDetector() : pauseDetector);
         }
     }
 }

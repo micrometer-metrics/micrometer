@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
@@ -153,9 +154,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
+    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
         MicrometerCollector collector = collectorByName(id, histogramConfig.isPublishingHistogram() ? Collector.Type.HISTOGRAM : Collector.Type.SUMMARY);
-        PrometheusTimer timer = new PrometheusTimer(id, clock, histogramConfig, prometheusConfig.step().toMillis());
+        PrometheusTimer timer = new PrometheusTimer(id, clock, histogramConfig, pauseDetector, prometheusConfig.step().toMillis());
         List<String> tagValues = tagValues(id);
 
         collector.add((conventionName, tagKeys) -> {

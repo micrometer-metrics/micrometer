@@ -18,6 +18,7 @@ package io.micrometer.statsd;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.instrument.util.TimeUtils;
@@ -133,8 +134,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
 
     @Override
-    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
-        Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, histogramConfig, statsdConfig.step().toMillis());
+    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
+        Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, histogramConfig, pauseDetector, statsdConfig.step().toMillis());
 
         for (double percentile : histogramConfig.getPercentiles()) {
             switch (statsdConfig.flavor()) {
