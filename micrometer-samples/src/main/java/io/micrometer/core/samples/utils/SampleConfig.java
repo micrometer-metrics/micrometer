@@ -17,11 +17,10 @@ package io.micrometer.core.samples.utils;
 
 import io.micrometer.core.instrument.MeterRegistry;
 
+// Run git update-index --assume-unchanged **/SampleConfig.java
 public class SampleConfig {
     public static MeterRegistry myMonitoringSystem() {
-        // Pick a monitoring system here to use in your samples. Changes to this file are
-        // barred by .gitignore, so you can feel free to change this to test your PRs without
-        // worry.
+        // Pick a monitoring system here to use in your samples.
         return SampleRegistries.pickOne();
     }
 }
