@@ -62,5 +62,4 @@ public class MetricsRestTemplateCustomizer implements RestTemplateCustomizer {
         interceptors.addAll(restTemplate.getInterceptors());
         restTemplate.setInterceptors(interceptors);
     }
-
 }
