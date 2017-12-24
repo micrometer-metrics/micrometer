@@ -17,6 +17,7 @@ package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +27,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +46,6 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
     private final Logger logger = LoggerFactory.getLogger(DatadogMeterRegistry.class);
     private final DatadogConfig config;
-    private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
 
     /**
      * Metric names for which we have posted metadata concerning type and base unit
@@ -185,7 +184,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         addToMetadataList(metadata, id, "max", Statistic.Max, null);
 
         for (ValueAtPercentile v : snapshot.percentileValues()) {
-            String suffix = percentileFormat.format(v.percentile()) + "percentile";
+            String suffix = DoubleFormat.toString(v.percentile() * 100) + "percentile";
             metrics.add(writeMetric(id, suffix, wallTime, v.value(getBaseTimeUnit())));
 
             addToMetadataList(metadata, id, suffix, Statistic.Value, null);
@@ -211,7 +210,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         addToMetadataList(metadata, id, "max", Statistic.Max, null);
 
         for (ValueAtPercentile v : snapshot.percentileValues()) {
-            String suffix = percentileFormat.format(v.percentile()) + "percentile";
+            String suffix = DoubleFormat.toString(v.percentile() * 100) + "percentile";
             metrics.add(writeMetric(id, suffix, wallTime, v.value()));
 
             addToMetadataList(metadata, id, suffix, Statistic.Value, null);
