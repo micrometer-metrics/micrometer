@@ -53,7 +53,7 @@ public class PrometheusTimer extends AbstractTimer implements Timer {
         long nanoAmount = TimeUnit.NANOSECONDS.convert(amount, unit);
         totalTime.add(nanoAmount);
         max.getCurrent().add(Math.max(nanoAmount - max.getCurrent().doubleValue(), 0));
-        percentilesHistogram.recordLong(TimeUnit.NANOSECONDS.convert(amount, unit));
+        percentilesHistogram.recordLong(nanoAmount);
     }
 
     @Override
