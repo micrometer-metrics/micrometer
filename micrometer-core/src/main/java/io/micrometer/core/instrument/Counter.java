@@ -31,6 +31,13 @@ public interface Counter extends Meter {
     }
 
     /**
+     * Decrement the counter by one.
+     */
+    default void decrement() {
+        increment(-1.0);
+    }
+
+    /**
      * Update the counter by {@code amount}.
      *
      * @param amount Amount to add to the counter.
