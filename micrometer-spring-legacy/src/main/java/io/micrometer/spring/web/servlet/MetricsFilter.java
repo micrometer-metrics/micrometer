@@ -15,11 +15,11 @@
  */
 package io.micrometer.spring.web.servlet;
 
-import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
@@ -77,7 +77,7 @@ public class MetricsFilter extends OncePerRequestFilter {
                         this.webMvcMetrics.record(request, response, null);
                     }
                 } catch (NestedServletException e) {
-                    response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+                    response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
                     this.webMvcMetrics.record(request, response, e.getCause());
                     throw e;
                 }
