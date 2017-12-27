@@ -24,13 +24,9 @@ import java.util.*;
  * @author Jon Schneider
  */
 class DatadogMetricMetadata {
-    private final Meter.Id id;
-    private final String type;
-    private final String overrideBaseUnit;
-    private final boolean descriptionsEnabled;
 
     // Datadog rejects anything not on this list: https://docs.datadoghq.com/units/
-    private final Set<String> unitWhitelist = new HashSet<>(Arrays.asList(
+    private static final Set<String> UNIT_WHITELIST = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
         "bit", "byte", "kilobyte", "megabyte", "gigabyte", "terabyte", "petabyte", "exobyte",
         "microsecond", "millisecond", "second", "minute", "hour", "day", "week", "nanosecond",
         "fraction", "percent", "percent_nano", "apdex",
@@ -44,18 +40,27 @@ class DatadogMetricMetadata {
         "dollar", "cent",
         "page", "split",
         "hertz", "kilohertz", "megahertz", "gigahertz",
-        "entry"));
+        "entry")));
 
-    private final Map<String, String> pluralizedUnitMapping = new HashMap<>();
+    private static final Map<String, String> PLURALIZED_UNIT_MAPPING;
+
+    static {
+        Map<String, String> pluralizedUnitMapping = new HashMap<>();
+        UNIT_WHITELIST.forEach(unit -> pluralizedUnitMapping.put(unit + "s", unit));
+        pluralizedUnitMapping.put("indices", "index");
+        pluralizedUnitMapping.put("indexes", "index");
+        PLURALIZED_UNIT_MAPPING = Collections.unmodifiableMap(pluralizedUnitMapping);
+    }
+
+    private final Meter.Id id;
+    private final String type;
+    private final String overrideBaseUnit;
+    private final boolean descriptionsEnabled;
 
     DatadogMetricMetadata(Meter.Id id, Statistic statistic, boolean descriptionsEnabled, String overrideBaseUnit) {
         this.id = id;
         this.descriptionsEnabled = descriptionsEnabled;
         this.overrideBaseUnit = overrideBaseUnit;
-
-        this.unitWhitelist.forEach(unit -> pluralizedUnitMapping.put(unit + "s", unit));
-        this.pluralizedUnitMapping.put("indices", "index");
-        this.pluralizedUnitMapping.put("indexes", "index");
 
         switch (statistic) {
             case Count:
@@ -73,8 +78,8 @@ class DatadogMetricMetadata {
 
         String baseUnit = overrideBaseUnit != null ? overrideBaseUnit : id.getBaseUnit();
         if (baseUnit != null) {
-            String whitelistedBaseUnit = unitWhitelist.contains(baseUnit) ? baseUnit :
-                pluralizedUnitMapping.get(baseUnit);
+            String whitelistedBaseUnit = UNIT_WHITELIST.contains(baseUnit) ? baseUnit :
+                PLURALIZED_UNIT_MAPPING.get(baseUnit);
 
             if(whitelistedBaseUnit != null) {
                 body += ",\"unit\":\"" + whitelistedBaseUnit + "\"";
