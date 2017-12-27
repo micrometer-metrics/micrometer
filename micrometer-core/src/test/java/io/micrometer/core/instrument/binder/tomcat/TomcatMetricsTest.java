@@ -35,6 +35,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /**
  * @author Clint Checketts
@@ -75,6 +76,7 @@ class TomcatMetricsTest {
 
         try {
             manager.createSession("fourth");
+            fail("TooManyActiveSessionsException expected.");
         } catch (TooManyActiveSessionsException exception) {
             //ignore error, testing rejection
         }
@@ -92,7 +94,7 @@ class TomcatMetricsTest {
         assertThat(registry.find("tomcat.sessions.expired").tags(tags).functionCounter().map(FunctionCounter::count)).hasValue(1.0);
         assertThat(registry.find("tomcat.sessions.rejected").tags(tags).functionCounter().map(FunctionCounter::count)).hasValue(1.0);
         assertThat(registry.find("tomcat.sessions.created").tags(tags).functionCounter().map(FunctionCounter::count)).hasValue(3.0);
-        assertThat(registry.find("tomcat.sessions.alive.max").tags(tags).gauge().map(Gauge::value)).isPresent()
+        assertThat(registry.find("tomcat.sessions.alive.max").tags(tags).timeGauge().map(TimeGauge::value)).isPresent()
             .hasValueSatisfying(val -> assertThat(val).isGreaterThan(1.0));
     }
 

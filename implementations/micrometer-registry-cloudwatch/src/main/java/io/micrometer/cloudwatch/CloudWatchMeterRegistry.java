@@ -90,13 +90,14 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         return getMeters().stream().flatMap(m -> {
             if (m instanceof Timer) {
                 return metricData((Timer) m);
-            } else if (m instanceof DistributionSummary) {
-                return metricData((DistributionSummary) m);
-            } else if (m instanceof FunctionTimer) {
-                return metricData((FunctionTimer) m);
-            } else {
-                return metricData(m);
             }
+            if (m instanceof DistributionSummary) {
+                return metricData((DistributionSummary) m);
+            }
+            if (m instanceof FunctionTimer) {
+                return metricData((FunctionTimer) m);
+            }
+            return metricData(m);
         }).collect(toList());
     }
 
