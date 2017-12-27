@@ -346,8 +346,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             }
 
             List<String> tagKeys = getConventionTags(id).stream().map(Tag::getKey).collect(toList());
-            if(existingCollector.getTagKeys().size() == tagKeys.size() &&
-                existingCollector.getTagKeys().containsAll(tagKeys)) {
+            if(existingCollector.getTagKeys().equals(tagKeys)) {
                 return existingCollector;
             }
 

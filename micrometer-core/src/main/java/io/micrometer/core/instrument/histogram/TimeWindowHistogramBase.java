@@ -176,7 +176,7 @@ abstract class TimeWindowHistogramBase<T, U> {
 
     private ValueAtPercentile[] takeValueSnapshot() {
         final double[] monitoredPercentiles = histogramConfig.getPercentiles();
-        if (monitoredPercentiles.length <= 0) {
+        if (monitoredPercentiles.length == 0) {
             return null;
         }
 

@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -41,7 +42,7 @@ public class OkHttpMetricsEventListener extends EventListener {
     private final Function<Request, String> urlMapper;
     private final Iterable<Tag> extraTags;
     private final MeterRegistry registry;
-    private final ConcurrentHashMap<Call, CallState> callState = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Call, CallState> callState = new ConcurrentHashMap<>();
 
     private static class CallState {
         final long startTime;
