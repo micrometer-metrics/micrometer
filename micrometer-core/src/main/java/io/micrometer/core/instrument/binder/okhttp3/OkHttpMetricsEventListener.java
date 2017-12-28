@@ -19,12 +19,15 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.util.Assert;
+import io.micrometer.core.lang.Nullable;
 import okhttp3.Call;
 import okhttp3.EventListener;
 import okhttp3.Request;
 import okhttp3.Response;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,9 +48,9 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     private static class CallState {
         final long startTime;
-        Request request;
-        Response response;
-        IOException exception;
+        @Nullable Request request;
+        @Nullable Response response;
+        @Nullable IOException exception;
 
         CallState(long startTime) {
             this.startTime = startTime;
@@ -55,6 +58,10 @@ public class OkHttpMetricsEventListener extends EventListener {
     }
 
     OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper, Iterable<Tag> extraTags) {
+        Assert.notNull(registry, "registry");
+        Assert.notNull(requestsMetricName, "requestsMetricName");
+        Assert.notNull(urlMapper, "urlMapper");
+        Assert.notNull(extraTags, "extraTags");
         this.registry = registry;
         this.requestsMetricName = requestsMetricName;
         this.urlMapper = urlMapper;
@@ -110,7 +117,7 @@ public class OkHttpMetricsEventListener extends EventListener {
             .record(registry.config().clock().monotonicTime() - state.startTime, TimeUnit.NANOSECONDS);
     }
 
-    private String getStatusMessage(Response response, IOException exception) {
+    private String getStatusMessage(@Nullable Response response, @Nullable IOException exception) {
         if (exception != null) {
             return "IO_ERROR";
         }
@@ -130,19 +137,23 @@ public class OkHttpMetricsEventListener extends EventListener {
         private MeterRegistry registry;
         private String name;
         private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(URI_PATTERN)).orElse("none");
-        private List<Tag> tags;
+        private List<Tag> tags = Collections.emptyList();
 
         Builder(MeterRegistry registry, String name) {
+            Assert.notNull(registry, "registry");
+            Assert.notNull(name, "name");
             this.registry = registry;
             this.name = name;
         }
 
         public Builder tags(List<Tag> tags) {
+            Assert.notNull(tags, "tags");
             this.tags = tags;
             return this;
         }
 
         public Builder uriMapper(Function<Request, String> uriMapper) {
+            Assert.notNull(uriMapper, "uriMapper");
             this.uriMapper = uriMapper;
             return this;
         }

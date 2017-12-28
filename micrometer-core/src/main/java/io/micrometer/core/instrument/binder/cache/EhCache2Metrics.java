@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.cache;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.util.Assert;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.statistics.StatisticsGateway;
 
@@ -58,6 +59,9 @@ public class EhCache2Metrics implements MeterBinder {
     }
     
     public EhCache2Metrics(Ehcache cache, String name, Iterable<Tag> tags) {
+        Assert.notNull(cache, "cache");
+        Assert.notNull(tags, "tags");
+        Assert.notNull(name, "name");
         this.stats = cache.getStatistics();
         this.name = name;
         this.tags = Tags.concat(tags, "name", cache.getName());

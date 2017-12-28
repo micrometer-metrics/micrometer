@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.tomcat;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.Nullable;
 import org.apache.catalina.Manager;
 
 import javax.management.*;
@@ -27,31 +28,33 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
+import static io.micrometer.core.instrument.util.Assert.notNull;
+
 /**
  * @author Clint Checketts
  * @author Jon Schneider
  */
 public class TomcatMetrics implements MeterBinder {
-    private final Manager manager;
+    private final @Nullable Manager manager;
     private final MBeanServer mBeanServer;
     private final Iterable<Tag> tags;
 
-    public static void monitor(MeterRegistry meterRegistry, Manager manager, String... tags) {
+    public static void monitor(MeterRegistry meterRegistry, @Nullable Manager manager, String... tags) {
         monitor(meterRegistry, manager, Tags.zip(tags));
     }
 
-    public static void monitor(MeterRegistry meterRegistry, Manager manager, Iterable<Tag> tags) {
+    public static void monitor(MeterRegistry meterRegistry, @Nullable Manager manager, Iterable<Tag> tags) {
         new TomcatMetrics(manager, tags).bindTo(meterRegistry);
     }
 
-    public TomcatMetrics(Manager manager, Iterable<Tag> tags) {
+    public TomcatMetrics(@Nullable Manager manager, Iterable<Tag> tags) {
         this(manager, tags, ManagementFactory.getPlatformMBeanServer());
     }
 
-    public TomcatMetrics(Manager manager, Iterable<Tag> tags, MBeanServer mBeanServer) {
-        this.tags = tags;
+    public TomcatMetrics(@Nullable Manager manager, Iterable<Tag> tags, MBeanServer mBeanServer) {
+        this.tags = notNull(tags, "tags");
         this.manager = manager;
-        this.mBeanServer = mBeanServer;
+        this.mBeanServer = notNull(mBeanServer, "mBeanServer");
     }
 
     @Override

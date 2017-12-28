@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.util.Assert;
 
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.ManagementFactory;
@@ -34,6 +35,7 @@ public class ClassLoaderMetrics implements MeterBinder {
     }
 
     public ClassLoaderMetrics(Iterable<Tag> tags) {
+        Assert.notNull(tags, "tags");
         this.tags = tags;
     }
 

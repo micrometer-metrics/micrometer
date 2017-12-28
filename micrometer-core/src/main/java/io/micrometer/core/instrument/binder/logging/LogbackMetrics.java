@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.util.Assert;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 
@@ -40,6 +41,7 @@ public class LogbackMetrics implements MeterBinder {
     }
 
     public LogbackMetrics(Iterable<Tag> tags) {
+        Assert.notNull(tags, "tags");
         this.tags = tags;
     }
 
@@ -58,6 +60,8 @@ class MetricsTurboFilter extends TurboFilter {
     private final Counter traceCounter;
 
     MetricsTurboFilter(MeterRegistry registry, Iterable<Tag> tags) {
+        Assert.notNull(registry, "registry");
+        Assert.notNull(tags, "tags");
         errorCounter = Counter.builder("logback.events")
             .tags(tags).tags("level", "error")
             .description("Number of error level events that made it to the logs")

@@ -13,18 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder;
+@NonNullApi
+@NonNullFields
+package io.micrometer.core.instrument.binder.okhttp3;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.lang.NonNull;
-
-/**
- * Binders register one or more metrics to provide information about the state
- * of some aspect of the application or its container.
- *
- * Binders are enabled by default if they source data for an alert
- * that is recommended for a production ready app.
- */
-public interface MeterBinder {
-    void bindTo(@NonNull MeterRegistry registry);
-}
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;

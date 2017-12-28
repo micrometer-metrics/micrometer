@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
+import static io.micrometer.core.instrument.util.Assert.notNull;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
@@ -28,6 +29,8 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.util.Assert;
+import io.micrometer.core.lang.Nullable;
 
 /**
  * File descriptor metrics.
@@ -38,8 +41,8 @@ public class FileDescriptorMetrics implements MeterBinder {
 
     private final OperatingSystemMXBean osBean;
     private final Iterable<Tag> tags;
-    private Method openFdsMethod;
-    private Method maxFdsMethod;
+    private @Nullable Method openFdsMethod;
+    private @Nullable Method maxFdsMethod;
 
     public FileDescriptorMetrics() {
         this(emptyList());
@@ -51,8 +54,8 @@ public class FileDescriptorMetrics implements MeterBinder {
 
     // VisibleForTesting
     FileDescriptorMetrics(OperatingSystemMXBean osBean, Iterable<Tag> tags) {
-        this.osBean = requireNonNull(osBean);
-        this.tags = tags;
+        this.osBean = notNull(osBean,"osbean");
+        this.tags = notNull(tags,"tags");
 
         this.openFdsMethod = detectMethod("getOpenFileDescriptorCount");
         this.maxFdsMethod = detectMethod("getMaxFileDescriptorCount");
@@ -60,15 +63,19 @@ public class FileDescriptorMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        Gauge.builder("process.open.fds", osBean, x -> invoke(openFdsMethod))
-            .tags(tags)
-            .description("The open file descriptor count")
-            .register(registry);
+        if(openFdsMethod != null) {
+            Gauge.builder("process.open.fds", osBean, x -> invoke(openFdsMethod))
+                .tags(tags)
+                .description("The open file descriptor count")
+                .register(registry);
+        }
 
-        Gauge.builder("process.max.fds", osBean, x -> invoke(maxFdsMethod))
-            .tags(tags)
-            .description("The maximum file descriptor count")
-            .register(registry);
+        if(maxFdsMethod != null) {
+            Gauge.builder("process.max.fds", osBean, x -> invoke(maxFdsMethod))
+                .tags(tags)
+                .description("The maximum file descriptor count")
+                .register(registry);
+        }
     }
 
     private double invoke(Method method) {
@@ -79,8 +86,7 @@ public class FileDescriptorMetrics implements MeterBinder {
         }
     }
 
-    private Method detectMethod(String name) {
-        Objects.requireNonNull(name);
+    private @Nullable Method detectMethod(String name) {
         try {
             final Method method = osBean.getClass().getDeclaredMethod(name);
             method.setAccessible(true);

@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.util.Assert;
 
 import java.lang.management.BufferPoolMXBean;
 import java.lang.management.ManagementFactory;
@@ -44,6 +45,7 @@ public class JvmMemoryMetrics implements MeterBinder {
     }
 
     public JvmMemoryMetrics(Iterable<Tag> tags) {
+        Assert.notNull(tags, "tags");
         this.tags = tags;
     }
 

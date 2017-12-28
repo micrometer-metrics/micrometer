@@ -22,6 +22,8 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.internal.TimedExecutor;
 import io.micrometer.core.instrument.internal.TimedExecutorService;
+import io.micrometer.core.instrument.util.Assert;
+import io.micrometer.core.lang.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.concurrent.*;
@@ -93,11 +95,13 @@ public class ExecutorServiceMetrics implements MeterBinder {
         return monitor(registry, executor, name, asList(tags));
     }
 
-    private final ExecutorService executorService;
+    private final @Nullable ExecutorService executorService;
     private final String name;
     private final Iterable<Tag> tags;
 
-    public ExecutorServiceMetrics(ExecutorService executorService, String name, Iterable<Tag> tags) {
+    public ExecutorServiceMetrics(@Nullable ExecutorService executorService, String name, Iterable<Tag> tags) {
+        Assert.notNull(name, "name");
+        Assert.notNull(tags, "tags");
         this.name = name;
         this.tags = tags;
         this.executorService = executorService;
@@ -126,7 +130,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * Every ScheduledThreadPoolExecutor created by {@link Executors} is wrapped. Also,
      * {@link Executors#newSingleThreadExecutor()} wrap a regular {@link ThreadPoolExecutor}.
      */
-    private ThreadPoolExecutor unwrapThreadPoolExecutor(ExecutorService executor, Class<?> wrapper) {
+    private @Nullable ThreadPoolExecutor unwrapThreadPoolExecutor(ExecutorService executor, Class<?> wrapper) {
         try {
             Field e = wrapper.getDeclaredField("e");
             e.setAccessible(true);
@@ -137,7 +141,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
         return null;
     }
 
-    private void monitor(MeterRegistry registry, ThreadPoolExecutor tp) {
+    private void monitor(MeterRegistry registry, @Nullable ThreadPoolExecutor tp) {
         if (tp == null) {
             return;
         }

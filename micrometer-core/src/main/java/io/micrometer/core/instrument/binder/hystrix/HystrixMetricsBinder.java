@@ -22,11 +22,13 @@ import com.netflix.hystrix.strategy.executionhook.HystrixCommandExecutionHook;
 import com.netflix.hystrix.strategy.properties.HystrixPropertiesStrategy;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.util.Assert;
 
 public class HystrixMetricsBinder implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
+        Assert.notNull(registry, "registry");
         // Keeps references of existing Hystrix plugins.
         HystrixEventNotifier eventNotifier = HystrixPlugins.getInstance().getEventNotifier();
         HystrixPropertiesStrategy propertiesStrategy = HystrixPlugins.getInstance().getPropertiesStrategy();

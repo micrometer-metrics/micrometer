@@ -19,6 +19,8 @@ import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.GcInfo;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.util.Assert;
+import io.micrometer.core.lang.Nullable;
 
 import javax.management.NotificationEmitter;
 import javax.management.openmbean.CompositeData;
@@ -40,8 +42,8 @@ import static java.util.Collections.emptyList;
  * @see GarbageCollectorMXBean
  */
 public class JvmGcMetrics implements MeterBinder {
-    private String youngGenPoolName;
-    private String oldGenPoolName;
+    private @Nullable String youngGenPoolName;
+    private @Nullable String oldGenPoolName;
     private Iterable<Tag> tags;
 
     public JvmGcMetrics() {
@@ -55,6 +57,7 @@ public class JvmGcMetrics implements MeterBinder {
             if (isOldGenPool(mbean.getName()))
                 oldGenPoolName = mbean.getName();
         }
+        Assert.notNull(tags, "tags");
         this.tags = tags;
     }
 

@@ -19,6 +19,7 @@ import com.netflix.hystrix.*;
 import com.netflix.hystrix.metric.HystrixCommandCompletionStream;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.util.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,6 +71,12 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
     private final HystrixCommandKey commandKey;
 
     public MicrometerMetricsPublisherCommand(MeterRegistry meterRegistry, HystrixCommandKey commandKey, HystrixCommandGroupKey commandGroupKey, HystrixCommandMetrics metrics, HystrixCircuitBreaker circuitBreaker, HystrixCommandProperties properties) {
+        Assert.notNull(meterRegistry, "meterRegistry");
+        Assert.notNull(commandKey, "commandKey");
+        Assert.notNull(commandGroupKey, "commandGroupKey");
+        Assert.notNull(metrics, "metrics");
+        Assert.notNull(circuitBreaker, "circuitBreaker");
+        Assert.notNull(properties, "properties");
         this.meterRegistry = meterRegistry;
         this.metrics = metrics;
         this.circuitBreaker = circuitBreaker;

@@ -20,6 +20,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.util.Assert;
 
 import java.util.concurrent.TimeUnit;
 
@@ -63,6 +64,9 @@ public class GuavaCacheMetrics implements MeterBinder {
     private final Cache<?, ?> cache;
 
     public GuavaCacheMetrics(Cache<?, ?> cache, Iterable<Tag> tags, String name) {
+        Assert.notNull(cache, "cache");
+        Assert.notNull(tags, "tags");
+        Assert.notNull(name, "name");
         this.name = name;
         this.tags = tags;
         this.cache = cache;

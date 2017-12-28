@@ -19,11 +19,13 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.util.Assert;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.concurrent.TimeUnit;
 
+import static io.micrometer.core.instrument.util.Assert.*;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
@@ -47,8 +49,8 @@ public class UptimeMetrics implements MeterBinder {
 
     // VisibleForTesting
     UptimeMetrics(RuntimeMXBean runtimeMXBean, Iterable<Tag> tags) {
-        this.runtimeMXBean = requireNonNull(runtimeMXBean);
-        this.tags = tags;
+        this.runtimeMXBean = notNull(runtimeMXBean, "runtimeMXBean");
+        this.tags = notNull(tags, "tags");
     }
 
     @Override

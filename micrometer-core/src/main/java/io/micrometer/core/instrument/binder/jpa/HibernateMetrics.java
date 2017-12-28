@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.jpa;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.Nullable;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
 
@@ -43,7 +44,7 @@ public class HibernateMetrics implements MeterBinder {
     }
 
     private final Iterable<Tag> tags;
-    private final Statistics stats;
+    private final @Nullable Statistics stats;
 
     private HibernateMetrics(EntityManagerFactory emf, String name, Iterable<Tag> tags) {
         this.tags = Tags.concat(tags, "entityManagerFactory", name);
@@ -51,6 +52,10 @@ public class HibernateMetrics implements MeterBinder {
     }
 
     private void counter(MeterRegistry registry, String name, String description, ToDoubleFunction<Statistics> f, String... extraTags) {
+        if(this.stats == null) {
+            return;
+        }
+
         FunctionCounter.builder(name, stats, f)
             .tags(tags)
             .tags(extraTags)
@@ -60,8 +65,9 @@ public class HibernateMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        if (this.stats == null)
+        if (this.stats == null) {
             return;
+        }
 
         // Session stats
         counter(registry, "hibernate.sessions.open", "Sessions opened", Statistics::getSessionOpenCount);
@@ -162,7 +168,7 @@ public class HibernateMetrics implements MeterBinder {
      * @param emf a {@code EntityManagerFactory}
      * @return the {@code Statistics} from the underlying {@code SessionFactory} or {@code null}.
      */
-    private Statistics getStatistics(EntityManagerFactory emf) {
+    private @Nullable Statistics getStatistics(EntityManagerFactory emf) {
         try {
             SessionFactory sf = emf.unwrap(SessionFactory.class);
             return sf.getStatistics();

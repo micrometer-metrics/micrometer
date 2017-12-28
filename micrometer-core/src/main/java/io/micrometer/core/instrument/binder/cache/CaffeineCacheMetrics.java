@@ -22,6 +22,7 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.util.Assert;
 
 import java.util.concurrent.TimeUnit;
 
@@ -108,6 +109,9 @@ public class CaffeineCacheMetrics implements MeterBinder {
      * @param name  The metric name prefix
      */
     public CaffeineCacheMetrics(Cache<?, ?> cache, Iterable<Tag> tags, String name) {
+        Assert.notNull(cache,"cache");
+        Assert.notNull(tags,"tags");
+        Assert.notNull(name,"name");
         this.name = name;
         this.tags = tags;
         this.cache = cache;

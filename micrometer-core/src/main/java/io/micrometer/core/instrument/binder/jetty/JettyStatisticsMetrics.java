@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.jetty;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.util.Assert;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
 
 import java.util.concurrent.TimeUnit;
@@ -37,6 +38,8 @@ public class JettyStatisticsMetrics implements MeterBinder {
     }
 
     public JettyStatisticsMetrics(StatisticsHandler statisticsHandler, Iterable<Tag> tags) {
+        Assert.notNull(statisticsHandler, "statisticsHandler");
+        Assert.notNull(tags, "tags");
         this.tags = tags;
         this.statisticsHandler = statisticsHandler;
     }

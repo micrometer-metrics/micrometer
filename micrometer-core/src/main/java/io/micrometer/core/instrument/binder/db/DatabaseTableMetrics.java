@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.util.Assert;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -85,6 +86,11 @@ public class DatabaseTableMetrics implements MeterBinder {
      * @param tags       Tags to apply to all recorded metrics.
      */
     public DatabaseTableMetrics(DataSource dataSource, String query, String tableName, String name, Iterable<Tag> tags) {
+        Assert.notNull(dataSource, "dataSource");
+        Assert.notNull(query, "query");
+        Assert.notNull(tableName, "tableName");
+        Assert.notNull(name, "name");
+        Assert.notNull(tags, "tags");
         this.dataSource = dataSource;
         this.query = query;
         this.tableName = tableName;
