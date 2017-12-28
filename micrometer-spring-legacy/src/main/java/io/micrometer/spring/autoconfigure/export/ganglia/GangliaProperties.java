@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Jon Schneider
  */
-@ConfigurationProperties(prefix = "spring.metrics.export.ganglia")
+@ConfigurationProperties(prefix = "management.metrics.export.ganglia")
 public class GangliaProperties {
     /**
      * Enable publishing to the backend.

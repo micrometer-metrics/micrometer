@@ -155,7 +155,7 @@ public class MetricsAutoConfiguration {
 
     @Bean
     @ConditionalOnClass(name = "com.netflix.hystrix.strategy.HystrixPlugins")
-    @ConditionalOnProperty(value = "spring.metrics.export.hystrix.enabled", matchIfMissing = true)
+    @ConditionalOnProperty(value = "management.metrics.export.hystrix.enabled", matchIfMissing = true)
     public HystrixMetricsBinder hystrixMetricsBinder() {
         return new HystrixMetricsBinder();
     }

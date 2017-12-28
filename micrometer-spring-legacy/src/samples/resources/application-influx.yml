@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-spring.metrics.export:
+management.metrics.export:
   influx:
     enabled: true
     step: PT10S

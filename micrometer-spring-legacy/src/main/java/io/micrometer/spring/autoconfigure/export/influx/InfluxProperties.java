@@ -24,7 +24,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @author Jon Schneider
  */
-@ConfigurationProperties(prefix = "spring.metrics.export.influx")
+@ConfigurationProperties(prefix = "management.metrics.export.influx")
 public class InfluxProperties extends StepRegistryProperties {
     /**
      * The tag that will be mapped to "host" when shipping metrics to Influx, or {@code null} if

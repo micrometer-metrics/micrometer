@@ -57,9 +57,9 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = MetricsAutoConfigurationTest.MetricsApp.class)
 @TestPropertySource(properties = {
-    "spring.metrics.use-global-registry=false",
-    "spring.metrics.filter.my.timer.enabled=true", // overriden by programmatic filter
-    "spring.metrics.simple.cumulative.enabled=true",
+    "management.metrics.use-global-registry=false",
+    "management.metrics.filter.my.timer.enabled=true", // overriden by programmatic filter
+    "management.metrics.simple.cumulative.enabled=true",
 })
 public class MetricsAutoConfigurationTest {
 

@@ -95,7 +95,7 @@ public class AtlasExportConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(value = "spring.metrics.export.atlas.enabled", matchIfMissing = true)
+    @ConditionalOnProperty(value = "management.metrics.export.atlas.enabled", matchIfMissing = true)
     public MetricsExporter atlasExporter(AtlasConfig config, Clock clock) {
         return () -> new AtlasMeterRegistry(config, clock);
     }
