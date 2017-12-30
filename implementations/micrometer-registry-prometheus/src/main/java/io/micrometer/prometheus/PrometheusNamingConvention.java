@@ -57,11 +57,8 @@ public class PrometheusNamingConvention implements NamingConvention {
                 break;
             case Timer:
             case LongTaskTimer:
-                if(conventionName.endsWith("_duration")) {
+                if(!conventionName.endsWith("_seconds"))
                     conventionName += "_seconds";
-                }
-                else if(!conventionName.endsWith("_seconds"))
-                    conventionName += "_duration_seconds";
                 break;
         }
 
