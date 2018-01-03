@@ -18,11 +18,26 @@ package io.micrometer.influx;
 import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.micrometer.core.instrument.MockClock;
 
 public class InfluxMeterRegistryFieldToStringTest {
+
+    private Locale originalLocale;
+
+    @BeforeEach
+    public void setUp() {
+        this.originalLocale = Locale.getDefault();
+    }
+
+    @AfterEach
+    public void cleanUp() {
+        Locale.setDefault(this.originalLocale);
+    }
 
 	@Test
 	public void testWithEnglishLocale() {
