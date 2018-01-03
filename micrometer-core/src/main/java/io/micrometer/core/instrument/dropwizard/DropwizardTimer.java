@@ -31,10 +31,10 @@ public class DropwizardTimer extends AbstractTimer {
     private final AtomicLong totalTime = new AtomicLong(0);
     private final TimeDecayingMax max;
 
-    DropwizardTimer(Id id, Timer impl, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector, long maxStepMillis) {
+    DropwizardTimer(Id id, Timer impl, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
         super(id, clock, histogramConfig, pauseDetector, TimeUnit.MILLISECONDS);
         this.impl = impl;
-        this.max = new TimeDecayingMax(clock, maxStepMillis);
+        this.max = new TimeDecayingMax(clock, histogramConfig);
     }
 
     @Override

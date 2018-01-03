@@ -18,6 +18,7 @@ package io.micrometer.prometheus;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import org.assertj.core.api.Condition;
@@ -248,7 +249,7 @@ class PrometheusMeterRegistryTest {
         assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(1000);
         assertThat(registry.scrape()).contains("my_timer_duration_seconds_max 1.0");
 
-        clock(registry).add(Duration.ofMillis(PrometheusConfig.DEFAULT.step().toMillis() * 3));
+        clock(registry).add(Duration.ofMillis(PrometheusConfig.DEFAULT.step().toMillis() * HistogramConfig.DEFAULT.getHistogramBufferLength()));
         assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0);
         assertThat(registry.scrape()).contains("my_timer_duration_seconds_max 0.0");
     }

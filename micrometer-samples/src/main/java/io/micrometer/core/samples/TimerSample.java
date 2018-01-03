@@ -32,7 +32,10 @@ public class TimerSample {
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
         Timer timer = Timer.builder("timer")
-            .publishPercentiles(0.5, 0.95)
+            .publishPercentileHistogram()
+            .publishPercentiles(0.5, 0.95, 0.99)
+            .histogramExpiry(Duration.ofSeconds(10))
+            .histogramBufferLength(3)
             .register(registry);
 
         FunctionTimer.builder("ftimer", timer, Timer::count, t -> t.totalTime(TimeUnit.SECONDS), TimeUnit.SECONDS)
@@ -44,8 +47,8 @@ public class TimerSample {
 
         AtomicInteger latencyForThisSecond = new AtomicInteger(duration.nextInt());
         Flux.interval(Duration.ofSeconds(1))
-                .doOnEach(d -> latencyForThisSecond.set(duration.nextInt()))
-                .subscribe();
+            .doOnEach(d -> latencyForThisSecond.set(duration.nextInt()))
+            .subscribe();
 
         // the potential for an "incoming request" every 10 ms
         Flux.interval(Duration.ofMillis(10))

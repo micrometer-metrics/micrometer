@@ -74,8 +74,7 @@ public class DropwizardMeterRegistry extends MeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
-        DropwizardTimer timer = new DropwizardTimer(id, registry.timer(hierarchicalName(id)), clock, histogramConfig, pauseDetector,
-            dropwizardConfig.step().toMillis());
+        DropwizardTimer timer = new DropwizardTimer(id, registry.timer(hierarchicalName(id)), clock, histogramConfig, pauseDetector);
 
         for (double percentile : histogramConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
@@ -147,5 +146,13 @@ public class DropwizardMeterRegistry extends MeterRegistry {
 
     private String hierarchicalName(Meter.Id id) {
         return nameMapper.toHierarchicalName(id, config().namingConvention());
+    }
+
+    @Override
+    protected HistogramConfig defaultHistogramConfig() {
+        return HistogramConfig.builder()
+            .histogramExpiry(dropwizardConfig.step())
+            .build()
+            .merge(HistogramConfig.DEFAULT);
     }
 }

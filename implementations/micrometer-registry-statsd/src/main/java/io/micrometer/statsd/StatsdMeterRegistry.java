@@ -241,4 +241,12 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private StatsdLineBuilder lineBuilder(Meter.Id id) {
         return new StatsdLineBuilder(id, statsdConfig.flavor(), nameMapper, config());
     }
+
+    @Override
+    protected HistogramConfig defaultHistogramConfig() {
+        return HistogramConfig.builder()
+            .histogramExpiry(statsdConfig.step())
+            .build()
+            .merge(HistogramConfig.DEFAULT);
+    }
 }

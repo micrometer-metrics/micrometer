@@ -94,6 +94,11 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
+    protected HistogramConfig defaultHistogramConfig() {
+        return HistogramConfig.NONE;
+    }
+
+    @Override
     protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         return new CompositeCustomMeter(id, type, measurements);
     }

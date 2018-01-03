@@ -205,11 +205,13 @@ public interface Timer extends Meter {
          * @param sla Publish SLA boundaries in the set of histogram buckets shipped to the monitoring system.
          */
         public Builder sla(Duration... sla) {
-            long[] slaNano = new long[sla.length];
-            for (int i = 0; i < slaNano.length; i++) {
-                slaNano[i] = sla[i].toNanos();
+            if(sla != null) {
+                long[] slaNano = new long[sla.length];
+                for (int i = 0; i < slaNano.length; i++) {
+                    slaNano[i] = sla[i].toNanos();
+                }
+                this.histogramConfigBuilder.sla(slaNano);
             }
-            this.histogramConfigBuilder.sla(slaNano);
             return this;
         }
 

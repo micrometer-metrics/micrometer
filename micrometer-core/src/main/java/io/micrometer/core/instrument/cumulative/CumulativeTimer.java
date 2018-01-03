@@ -36,11 +36,11 @@ public class CumulativeTimer extends AbstractTimer {
     /**
      * Create a new instance.
      */
-    public CumulativeTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis) {
+    public CumulativeTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
         super(id, clock, histogramConfig, pauseDetector, baseTimeUnit);
         this.count = new AtomicLong();
         this.total = new AtomicLong();
-        this.max = new TimeDecayingMax(clock, stepMillis);
+        this.max = new TimeDecayingMax(clock, histogramConfig);
     }
 
     @Override

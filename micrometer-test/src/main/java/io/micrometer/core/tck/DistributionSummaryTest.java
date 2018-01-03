@@ -36,15 +36,17 @@ interface DistributionSummaryTest {
         ds.record(10);
         clock(registry).add(step());
 
+        ds.count();
+
         assertAll(() -> assertEquals(1L, ds.count()),
-                () -> assertEquals(10L, ds.totalAmount()));
+            () -> assertEquals(10L, ds.totalAmount()));
 
         ds.record(10);
         ds.record(10);
         clock(registry).add(step());
 
         assertAll(() -> assertTrue(ds.count() >= 2L),
-                () -> assertTrue(ds.totalAmount() >= 20L));
+            () -> assertTrue(ds.totalAmount() >= 20L));
     }
 
     @Test

@@ -17,12 +17,17 @@ package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.histogram.pause.ClockDriftPauseDetector;
+import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -34,8 +39,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jon Schneider
  */
 class CompositeMeterRegistryTest {
+    private MockClock clock = new MockClock();
     private CompositeMeterRegistry composite = new CompositeMeterRegistry();
-    private SimpleMeterRegistry simple = new SimpleMeterRegistry();
+    private SimpleMeterRegistry simple = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
 
     @Test
     void metricsAreInitiallyNoop() {
@@ -163,9 +169,64 @@ class CompositeMeterRegistryTest {
     void castingFunctionCounter() {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         CompositeMeterRegistry compositeMeterRegistry = new CompositeMeterRegistry();
+
         FunctionCounter.builder("foo", 1L, x -> x)
             .register(compositeMeterRegistry);
 
         compositeMeterRegistry.add(registry);
+    }
+
+    @Test
+    void differentFiltersForCompositeAndChild() {
+        composite.add(simple);
+
+        simple.config().meterFilter(MeterFilter.denyNameStartsWith("deny.child"));
+        composite.config().meterFilter(MeterFilter.denyNameStartsWith("deny.composite"));
+
+        composite.counter("deny.composite");
+        composite.counter("deny.child");
+
+        assertThat(simple.find("deny.composite").meter()).isNotPresent();
+        assertThat(composite.find("deny.composite").meter()).isNotPresent();
+
+        assertThat(simple.find("deny.child").meter()).isNotPresent();
+        assertThat(composite.find("deny.child").meter()).isPresent();
+
+        // if the meter is registered directly to the child, the composite config does not take effect
+        simple.counter("deny.composite");
+        assertThat(simple.find("deny.composite").meter()).isPresent();
+    }
+
+    @Test
+    void histogramConfigDefaultIsNotAffectedByComposite() {
+        composite.add(simple);
+
+        // the histogramExpiry on this timer is determined by the simple registry's default histogram config
+        Timer t = Timer.builder("my.timer")
+            .histogramBufferLength(1)
+            .register(composite);
+
+        t.record(1, TimeUnit.SECONDS);
+        assertThat(t.max(TimeUnit.SECONDS)).isEqualTo(1.0);
+
+        clock.add(SimpleConfig.DEFAULT.step());
+        assertThat(t.max(TimeUnit.SECONDS)).isEqualTo(0.0);
+    }
+
+    @Test
+    void compositePauseDetectorConfigOverridesChild() throws InterruptedException {
+        composite.add(simple);
+
+        CountDownLatch count = new CountDownLatch(1);
+        composite.config().pauseDetector(new ClockDriftPauseDetector(Duration.ofSeconds(1), Duration.ofSeconds(1)) {
+            @Override
+            public Duration getPauseThreshold() {
+                count.countDown();
+                return super.getPauseThreshold();
+            }
+        });
+
+        composite.timer("my.timer");
+        assertThat(count.getCount()).isEqualTo(0);
     }
 }

@@ -35,9 +35,9 @@ public class PrometheusTimer extends AbstractTimer implements Timer {
     private final TimeDecayingMax max;
     private final TimeWindowLatencyHistogram percentilesHistogram;
 
-    PrometheusTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector, long maxStepMillis) {
+    PrometheusTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
         super(id, clock, histogramConfig, pauseDetector, TimeUnit.SECONDS);
-        this.max = new TimeDecayingMax(clock, maxStepMillis);
+        this.max = new TimeDecayingMax(clock, histogramConfig);
 
         this.percentilesHistogram = new TimeWindowLatencyHistogram(clock,
             HistogramConfig.builder()

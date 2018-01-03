@@ -202,4 +202,12 @@ public class AtlasMeterRegistry extends MeterRegistry {
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.SECONDS;
     }
+
+    @Override
+    protected HistogramConfig defaultHistogramConfig() {
+        return HistogramConfig.builder()
+            .histogramExpiry(atlasConfig.step())
+            .build()
+            .merge(HistogramConfig.DEFAULT);
+    }
 }

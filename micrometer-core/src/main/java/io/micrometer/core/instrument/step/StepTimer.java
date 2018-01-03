@@ -35,11 +35,11 @@ public class StepTimer extends AbstractTimer {
     /**
      * Create a new instance.
      */
-    public StepTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit, long step) {
+    public StepTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
         super(id, clock, histogramConfig, pauseDetector, baseTimeUnit);
-        this.count = new StepLong(clock, step);
-        this.total = new StepLong(clock, step);
-        this.max = new TimeDecayingMax(clock, step);
+        this.count = new StepLong(clock, histogramConfig.getHistogramExpiry().toMillis());
+        this.total = new StepLong(clock, histogramConfig.getHistogramExpiry().toMillis());
+        this.max = new TimeDecayingMax(clock, histogramConfig.getHistogramExpiry().toMillis(), histogramConfig.getHistogramBufferLength());
     }
 
     @Override

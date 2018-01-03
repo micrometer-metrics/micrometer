@@ -54,7 +54,17 @@ public class SampleRegistries {
      * @return
      */
     public static PrometheusMeterRegistry prometheus() {
-        PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+        PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(new PrometheusConfig() {
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+
+            @Override
+            public String get(String k) {
+                return null;
+            }
+        });
 
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);

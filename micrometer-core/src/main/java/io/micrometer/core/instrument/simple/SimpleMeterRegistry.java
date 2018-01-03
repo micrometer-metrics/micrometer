@@ -63,7 +63,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
                 break;
             case Step:
             default:
-                summary = new StepDistributionSummary(id, clock, merged, config.step().toMillis());
+                summary = new StepDistributionSummary(id, clock, merged);
                 break;
         }
 
@@ -96,11 +96,11 @@ public class SimpleMeterRegistry extends MeterRegistry {
         Timer timer;
         switch (config.mode()) {
             case Cumulative:
-                timer = new CumulativeTimer(id, clock, merged, pauseDetector, getBaseTimeUnit(), config.step().toMillis());
+                timer = new CumulativeTimer(id, clock, merged, pauseDetector, getBaseTimeUnit());
                 break;
             case Step:
             default:
-                timer = new StepTimer(id, clock, merged, pauseDetector, getBaseTimeUnit(), config.step().toMillis());
+                timer = new StepTimer(id, clock, merged, pauseDetector, getBaseTimeUnit());
                 break;
         }
 
@@ -154,5 +154,13 @@ public class SimpleMeterRegistry extends MeterRegistry {
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.SECONDS;
+    }
+
+    @Override
+    protected HistogramConfig defaultHistogramConfig() {
+        return HistogramConfig.builder()
+            .histogramExpiry(config.step())
+            .build()
+            .merge(HistogramConfig.DEFAULT);
     }
 }

@@ -126,9 +126,13 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
     @Override
     Timer registerNewMeter(MeterRegistry registry) {
         final long[] slaNanos = histogramConfig.getSlaBoundaries();
-        final Duration[] sla = new Duration[slaNanos.length];
-        for (int i = 0; i < slaNanos.length; i++) {
-            sla[i] = Duration.ofNanos(slaNanos[i]);
+
+        Duration[] sla = null;
+        if(slaNanos != null) {
+            sla = new Duration[slaNanos.length];
+            for (int i = 0; i < slaNanos.length; i++) {
+                sla[i] = Duration.ofNanos(slaNanos[i]);
+            }
         }
 
         return Timer.builder(getId().getName())

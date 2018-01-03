@@ -16,9 +16,9 @@
 package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
@@ -156,7 +156,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     @Override
     protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
         MicrometerCollector collector = collectorByName(id, histogramConfig.isPublishingHistogram() ? Collector.Type.HISTOGRAM : Collector.Type.SUMMARY);
-        PrometheusTimer timer = new PrometheusTimer(id, clock, histogramConfig, pauseDetector, prometheusConfig.step().toMillis());
+        PrometheusTimer timer = new PrometheusTimer(id, clock, histogramConfig, pauseDetector);
         List<String> tagValues = tagValues(id);
 
         collector.add((conventionName, tagKeys) -> {
@@ -356,5 +356,13 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 existingCollector.getTagKeys().stream().collect(joining(", ")) + "]. The meter you are attempting to register" +
                 " has keys [" + tagKeys.stream().collect(joining(", ")) + "].");
         });
+    }
+
+    @Override
+    protected HistogramConfig defaultHistogramConfig() {
+        return HistogramConfig.builder()
+            .histogramExpiry(prometheusConfig.step())
+            .build()
+            .merge(HistogramConfig.DEFAULT);
     }
 }

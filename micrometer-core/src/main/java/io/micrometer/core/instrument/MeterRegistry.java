@@ -120,6 +120,18 @@ public abstract class MeterRegistry {
 
     protected abstract TimeUnit getBaseTimeUnit();
 
+    /**
+     * Every custom registry implementation should define a default histogram expiry:
+     *
+     * <pre>
+     * histogramConfig.builder()
+     *    .histogramExpiry(defaultStep)
+     *    .build()
+     *    .merge(HistogramConfig.DEFAULT);
+     * </pre>
+     */
+    protected abstract HistogramConfig defaultHistogramConfig();
+
     private String getBaseTimeUnitStr() {
         if (getBaseTimeUnit() == null) {
             return null;
@@ -138,12 +150,13 @@ public abstract class MeterRegistry {
     Timer timer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetectorOverride) {
         return registerMeterIfNecessary(Timer.class, id, histogramConfig, (id2, filteredConfig) -> {
             Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
-            return newTimer(withUnit, filteredConfig.merge(HistogramConfig.DEFAULT), pauseDetectorOverride);
+            return newTimer(withUnit, filteredConfig.merge(defaultHistogramConfig()), pauseDetectorOverride);
         }, NoopTimer::new);
     }
 
     DistributionSummary summary(Meter.Id id, HistogramConfig histogramConfig) {
-        return registerMeterIfNecessary(DistributionSummary.class, id, histogramConfig, (id2, filteredConfig) -> newDistributionSummary(id2, filteredConfig.merge(HistogramConfig.DEFAULT)), NoopDistributionSummary::new);
+        return registerMeterIfNecessary(DistributionSummary.class, id, histogramConfig, (id2, filteredConfig) ->
+            newDistributionSummary(id2, filteredConfig.merge(defaultHistogramConfig())), NoopDistributionSummary::new);
     }
 
     /**
