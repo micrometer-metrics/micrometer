@@ -68,7 +68,7 @@ public class PrometheusTimer extends AbstractTimer implements Timer {
 
     @Override
     public double max(TimeUnit unit) {
-        return max.max(unit);
+        return max.poll(unit);
     }
 
     /**

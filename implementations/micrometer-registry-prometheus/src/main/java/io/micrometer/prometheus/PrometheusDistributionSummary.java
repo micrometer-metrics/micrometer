@@ -20,8 +20,8 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.CountAtValue;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.TimeWindowHistogram;
-import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.core.instrument.util.TimeDecayingMax;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.DoubleAdder;
@@ -30,12 +30,12 @@ import java.util.concurrent.atomic.LongAdder;
 public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     private LongAdder count = new LongAdder();
     private DoubleAdder amount = new DoubleAdder();
-    private StepDouble max;
+    private TimeDecayingMax max;
     private final TimeWindowHistogram percentilesHistogram;
 
-    PrometheusDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig, long maxStepMillis) {
+    PrometheusDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig) {
         super(id, clock, histogramConfig);
-        this.max = new StepDouble(clock, maxStepMillis);
+        this.max = new TimeDecayingMax(clock, histogramConfig);
         this.percentilesHistogram = new TimeWindowHistogram(clock,
             HistogramConfig.builder()
                 .histogramExpiry(Duration.ofDays(1825)) // effectively never roll over
@@ -48,7 +48,7 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     protected void recordNonNegative(double amount) {
         count.increment();
         this.amount.add(amount);
-        max.getCurrent().add(Math.max(amount - max.getCurrent().doubleValue(), 0));
+        max.record(amount);
         percentilesHistogram.recordDouble(amount);
     }
 

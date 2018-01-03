@@ -261,13 +261,14 @@ class PrometheusMeterRegistryTest {
         summary.record(10);
         summary.record(1);
 
-        assertThat(summary.max()).isEqualTo(0);
-        assertThat(registry.scrape()).contains("my_summary_max 0.0");
-
-        clock(registry).add(PrometheusConfig.DEFAULT.step());
         assertThat(summary.max()).isEqualTo(10);
-
         assertThat(registry.scrape()).contains("my_summary_max 10.0");
+
+        clock(registry).add(PrometheusConfig.DEFAULT.step().toMillis() * HistogramConfig.DEFAULT.getHistogramBufferLength(),
+            TimeUnit.MILLISECONDS);
+        assertThat(summary.max()).isEqualTo(0);
+
+        assertThat(registry.scrape()).contains("my_summary_max 0.0");
     }
 
     @Issue("#246")

@@ -60,7 +60,7 @@ public class TimeDecayingMax {
         }
     }
 
-    public double max(TimeUnit timeUnit) {
+    public double poll(TimeUnit timeUnit) {
         rotate();
         synchronized (this) {
             return TimeUtils.nanosToUnit(ringBuffer[currentBucket].get(), timeUnit);
@@ -70,7 +70,7 @@ public class TimeDecayingMax {
     /**
      * Return an unscaled max. For use by distribution summary implementations.
      */
-    public double max() {
+    public double poll() {
         rotate();
         synchronized (this) {
             return Double.longBitsToDouble(ringBuffer[currentBucket].get());

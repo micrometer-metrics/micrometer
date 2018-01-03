@@ -60,6 +60,6 @@ public class DropwizardTimer extends AbstractTimer {
 
     @Override
     public double max(TimeUnit unit) {
-        return max.max(unit);
+        return max.poll(unit);
     }
 }

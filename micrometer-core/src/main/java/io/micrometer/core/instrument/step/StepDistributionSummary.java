@@ -55,7 +55,7 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
 
     @Override
     public double max() {
-        return max.max();
+        return max.poll();
     }
 
     @Override
