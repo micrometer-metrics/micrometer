@@ -22,7 +22,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @author Jon Schneider
  */
-@ConfigurationProperties("spring.metrics")
+@ConfigurationProperties("management.metrics")
 public class MetricsProperties {
 
     private Web web = new Web();

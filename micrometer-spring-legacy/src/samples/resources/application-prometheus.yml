@@ -16,7 +16,7 @@
 
 management.security.enabled: false
 
-spring.metrics.export:
+management.metrics.export:
   prometheus.enabled: true
   filter:
     hystrix.latency:

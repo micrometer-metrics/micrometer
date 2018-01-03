@@ -34,16 +34,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @TestPropertySource(properties = {
-    "spring.metrics.useGlobalRegistry=false",
-    "spring.metrics.export.atlas.enabled=false",
-    "spring.metrics.export.prometheus.enabled=false",
-    "spring.metrics.export.datadog.enabled=false",
-    "spring.metrics.export.ganglia.enabled=false",
-    "spring.metrics.export.graphite.enabled=false",
-    "spring.metrics.export.influx.enabled=false",
-    "spring.metrics.export.jmx.enabled=false",
-    "spring.metrics.export.statsd.enabled=false",
-    "spring.metrics.export.newrelic.enabled=false"
+    "management.metrics.useGlobalRegistry=false",
+    "management.metrics.export.atlas.enabled=false",
+    "management.metrics.export.prometheus.enabled=false",
+    "management.metrics.export.datadog.enabled=false",
+    "management.metrics.export.ganglia.enabled=false",
+    "management.metrics.export.graphite.enabled=false",
+    "management.metrics.export.influx.enabled=false",
+    "management.metrics.export.jmx.enabled=false",
+    "management.metrics.export.statsd.enabled=false",
+    "management.metrics.export.newrelic.enabled=false"
 })
 public class MeterRegistryConfigurerTest {
 

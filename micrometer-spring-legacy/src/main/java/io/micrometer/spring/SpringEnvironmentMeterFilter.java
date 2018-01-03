@@ -36,7 +36,7 @@ public class SpringEnvironmentMeterFilter extends PropertyMeterFilter {
     @Override
     public <V> V get(String k, Class<V> vClass) {
         if (conversionService.canConvert(String.class, vClass)) {
-            Object val = environment.getProperty("spring.metrics.filter." + k);
+            Object val = environment.getProperty("management.metrics.filter." + k);
             try {
                 return conversionService.convert(val, vClass);
             } catch (ConversionFailedException e) {
