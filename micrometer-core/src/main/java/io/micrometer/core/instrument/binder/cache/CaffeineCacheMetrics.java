@@ -64,7 +64,7 @@ public class CaffeineCacheMetrics implements MeterBinder {
      * @see CacheStats
      */
     public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String name, Iterable<Tag> tags) {
-        new CaffeineCacheMetrics(cache, tags, name).bindTo(registry);
+        new CaffeineCacheMetrics(cache, name, tags).bindTo(registry);
         return cache;
     }
 
@@ -107,7 +107,7 @@ public class CaffeineCacheMetrics implements MeterBinder {
      *              for metrics to be recorded.
      * @param name  The metric name prefix
      */
-    public CaffeineCacheMetrics(Cache<?, ?> cache, Iterable<Tag> tags, String name) {
+    public CaffeineCacheMetrics(Cache<?, ?> cache, String name, Iterable<Tag> tags) {
         this.name = name;
         this.tags = tags;
         this.cache = cache;
