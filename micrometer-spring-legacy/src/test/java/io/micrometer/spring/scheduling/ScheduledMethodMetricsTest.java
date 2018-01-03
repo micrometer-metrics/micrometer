@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@TestPropertySource(properties = "spring.metrics.useGlobalRegistry=false")
+@TestPropertySource(properties = "management.metrics.useGlobalRegistry=false")
 @Ignore("Race condition still...")
 public class ScheduledMethodMetricsTest {
 

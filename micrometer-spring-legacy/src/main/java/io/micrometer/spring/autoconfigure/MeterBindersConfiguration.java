@@ -16,7 +16,9 @@
 package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 import io.micrometer.core.instrument.binder.system.UptimeMetrics;
@@ -35,29 +37,43 @@ import org.springframework.context.annotation.Configuration;
 class MeterBindersConfiguration {
 
     @Bean
-    @ConditionalOnProperty(value = "spring.metrics.binders.jvmmemory.enabled", havingValue = "true", matchIfMissing = true)
+    @ConditionalOnProperty(value = "management.metrics.binders.jvm.enabled", matchIfMissing = true)
+    @ConditionalOnMissingBean
+    public JvmGcMetrics jvmGcMetrics() {
+        return new JvmGcMetrics();
+    }
+
+    @Bean
+    @ConditionalOnProperty(value = "management.metrics.binders.jvm.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
     public JvmMemoryMetrics jvmMemoryMetrics() {
         return new JvmMemoryMetrics();
     }
 
     @Bean
-    @ConditionalOnClass(name = "ch.qos.logback.classic.Logger")
-    @ConditionalOnProperty(value = "spring.metrics.binders.logback.enabled", havingValue = "true", matchIfMissing = true)
+    @ConditionalOnProperty(value = "management.metrics.binders.jvm.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
+    public JvmThreadMetrics jvmThreadMetrics() {
+        return new JvmThreadMetrics();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(LogbackMetrics.class)
+    @ConditionalOnProperty(value = "management.metrics.binders.logback.enabled", matchIfMissing = true)
+    @ConditionalOnClass(name = "ch.qos.logback.classic.Logger")
     public LogbackMetrics logbackMetrics() {
         return new LogbackMetrics();
     }
 
     @Bean
-    @ConditionalOnProperty(value = "spring.metrics.binders.uptime.enabled", havingValue = "true", matchIfMissing = true)
+    @ConditionalOnProperty(value = "management.metrics.binders.uptime.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
     public UptimeMetrics uptimeMetrics() {
         return new UptimeMetrics();
     }
 
     @Bean
-    @ConditionalOnProperty(value = "spring.metrics.binders.processor.enabled", havingValue = "true", matchIfMissing = true)
+    @ConditionalOnProperty(value = "management.metrics.binders.processor.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
     public ProcessorMetrics processorMetrics() {
         return new ProcessorMetrics();

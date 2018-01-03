@@ -25,7 +25,7 @@ import java.time.Duration;
  *
  * @author Jon Schneider
  */
-@ConfigurationProperties(prefix = "spring.metrics.export.statsd")
+@ConfigurationProperties(prefix = "management.metrics.export.statsd")
 public class StatsdProperties {
     /**
      * Enable publishing to the backend.

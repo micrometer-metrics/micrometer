@@ -23,7 +23,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @author Jon Schneider
  */
-@ConfigurationProperties(prefix = "spring.metrics.export.newrelic")
+@ConfigurationProperties(prefix = "management.metrics.export.newrelic")
 public class NewRelicProperties extends StepRegistryProperties {
     /**
      * Your API key, found in your account settings at New Relic. This property is required.

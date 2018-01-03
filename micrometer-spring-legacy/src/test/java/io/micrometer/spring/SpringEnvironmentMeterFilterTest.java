@@ -37,15 +37,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource(properties = {
-    "spring.metrics.filter.enabled=false", // turn off all metrics by default
-    "spring.metrics.filter.my.timer.enabled=true",
-    "spring.metrics.filter.my.timer.maximumExpectedValue=PT10S",
-    "spring.metrics.filter.my.timer.minimumExpectedValue=1ms",
-    "spring.metrics.filter.my.timer.percentiles=0.5,0.95",
-    "spring.metrics.filter.my.timer.that.is.misconfigured.enabled=troo",
+    "management.metrics.filter.enabled=false", // turn off all metrics by default
+    "management.metrics.filter.my.timer.enabled=true",
+    "management.metrics.filter.my.timer.maximumExpectedValue=PT10S",
+    "management.metrics.filter.my.timer.minimumExpectedValue=1ms",
+    "management.metrics.filter.my.timer.percentiles=0.5,0.95",
+    "management.metrics.filter.my.timer.that.is.misconfigured.enabled=troo",
 
-    "spring.metrics.filter.my.summary.enabled=true",
-    "spring.metrics.filter.my.summary.maximumExpectedValue=100",
+    "management.metrics.filter.my.summary.enabled=true",
+    "management.metrics.filter.my.summary.maximumExpectedValue=100",
 })
 public class SpringEnvironmentMeterFilterTest {
     private HistogramConfig histogramConfig;
