@@ -35,7 +35,7 @@ import io.micrometer.jersey2.server.MicrometerApplicationEventListener;
  */
 @Configuration
 @ConditionalOnClass(MicrometerApplicationEventListener.class)
-@ConditionalOnProperty(value = "spring.metrics.jersey2.server.enabled", matchIfMissing = true)
+@ConditionalOnProperty(value = "management.metrics.jersey2.server.enabled", matchIfMissing = true)
 @EnableConfigurationProperties(JerseyServerMetricsProperties.class)
 public class JerseyServerMetricsConfiguration {
 
