@@ -22,7 +22,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @author Michael Weirauch
  */
-@ConfigurationProperties(prefix = "spring.metrics.jersey2.server")
+@ConfigurationProperties(prefix = "management.metrics.jersey2.server")
 public class JerseyServerMetricsProperties {
 
     private boolean enabled = true;
