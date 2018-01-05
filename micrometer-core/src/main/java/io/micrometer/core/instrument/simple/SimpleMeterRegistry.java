@@ -69,7 +69,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
 
         for (double percentile : histogramConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
-                percentile, summary::percentile);
+                summary, s -> summary.percentile(percentile));
         }
 
         if(histogramConfig.isPublishingHistogram()) {
@@ -106,7 +106,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
 
         for (double percentile : histogramConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
-                percentile, p -> timer.percentile(p, getBaseTimeUnit()));
+                timer, t -> t.percentile(percentile, getBaseTimeUnit()));
         }
 
         if(histogramConfig.isPublishingHistogram()) {
