@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.web.client;
+package io.micrometer.spring.autoconfigure.web.client;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -44,9 +44,8 @@ public class RestTemplateMetricsConfigurationTest {
             client.getForObject("http://google.com", String.class);
         } catch (Throwable ignored) {
             // doesn't matter whether the request succeeded or not
-        } finally {
-            assertThat(registry.find("http.client.requests").meter()).isPresent();
         }
+        assertThat(registry.find("http.client.requests").meter()).isPresent();
     }
 }
 

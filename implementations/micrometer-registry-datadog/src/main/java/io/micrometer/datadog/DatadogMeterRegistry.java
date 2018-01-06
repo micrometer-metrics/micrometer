@@ -104,13 +104,14 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                         batch.stream().flatMap(m -> {
                             if (m instanceof Timer) {
                                 return writeTimer((Timer) m, metadataToSend);
-                            } else if (m instanceof DistributionSummary) {
-                                return writeSummary((DistributionSummary) m, metadataToSend);
-                            } else if (m instanceof FunctionTimer) {
-                                return writeTimer((FunctionTimer) m, metadataToSend);
-                            } else {
-                                return writeMeter(m, metadataToSend);
                             }
+                            if (m instanceof DistributionSummary) {
+                                return writeSummary((DistributionSummary) m, metadataToSend);
+                            }
+                            if (m instanceof FunctionTimer) {
+                                return writeTimer((FunctionTimer) m, metadataToSend);
+                            }
+                            return writeMeter(m, metadataToSend);
                         }).collect(joining(",")) +
                         "]}";
 
