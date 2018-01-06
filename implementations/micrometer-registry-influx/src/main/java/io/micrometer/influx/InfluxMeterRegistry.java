@@ -116,23 +116,29 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                         .map(m -> {
                             if (m instanceof Timer) {
                                 return writeTimer((Timer) m);
-                            } else if (m instanceof DistributionSummary) {
-                                return writeSummary((DistributionSummary) m);
-                            } else if (m instanceof FunctionTimer) {
-                                return writeTimer((FunctionTimer) m);
-                            } else if (m instanceof TimeGauge) {
-                                return writeGauge(m.getId(), ((TimeGauge) m).value(getBaseTimeUnit()));
-                            } else if (m instanceof Gauge) {
-                                return writeGauge(m.getId(), ((Gauge) m).value());
-                            } else if (m instanceof FunctionCounter) {
-                                return writeCounter(m.getId(), ((FunctionCounter) m).count());
-                            } else if (m instanceof Counter) {
-                                return writeCounter(m.getId(), ((Counter) m).count());
-                            } else if (m instanceof LongTaskTimer) {
-                                return writeLongTaskTimer((LongTaskTimer) m);
-                            } else {
-                                return writeMeter(m);
                             }
+                            if (m instanceof DistributionSummary) {
+                                return writeSummary((DistributionSummary) m);
+                            }
+                            if (m instanceof FunctionTimer) {
+                                return writeTimer((FunctionTimer) m);
+                            }
+                            if (m instanceof TimeGauge) {
+                                return writeGauge(m.getId(), ((TimeGauge) m).value(getBaseTimeUnit()));
+                            }
+                            if (m instanceof Gauge) {
+                                return writeGauge(m.getId(), ((Gauge) m).value());
+                            }
+                            if (m instanceof FunctionCounter) {
+                                return writeCounter(m.getId(), ((FunctionCounter) m).count());
+                            }
+                            if (m instanceof Counter) {
+                                return writeCounter(m.getId(), ((Counter) m).count());
+                            }
+                            if (m instanceof LongTaskTimer) {
+                                return writeLongTaskTimer((LongTaskTimer) m);
+                            }
+                            return writeMeter(m);
                         })
                         .collect(toList());
 

@@ -103,9 +103,11 @@ public class CaffeineCacheMetrics implements MeterBinder {
     private final Cache<?, ?> cache;
 
     /**
+     * Creates a new {@link CaffeineCacheMetrics} instance.
      * @param cache The cache to be instrumented. You must call {@link Caffeine#recordStats()} prior to building the cache
      *              for metrics to be recorded.
      * @param name  The metric name prefix
+     * @param tags tags to apply to all recorded metrics
      */
     public CaffeineCacheMetrics(Cache<?, ?> cache, String name, Iterable<Tag> tags) {
         this.name = name;
