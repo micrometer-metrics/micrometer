@@ -9,7 +9,9 @@ apply plugin: 'nebula.optional-base'
 
 dependencies {
     compile 'org.hdrhistogram:HdrHistogram:2.1.10'
-    compile 'org.latencyutils:LatencyUtils:2.0.3'
+    compile('org.latencyutils:LatencyUtils:2.0.3') {
+        exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
+    }
 
     // instrumentation options
     compile 'io.dropwizard.metrics:metrics-core:3.+', optional
