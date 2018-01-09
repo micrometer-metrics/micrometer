@@ -14,19 +14,7 @@
 # limitations under the License.
 #
 
-# see https://stackoverflow.com/questions/44474160/spring-integration-display-warning-that-header-is-ignored-for-population-because
-logging.level.org.springframework.integration.support.MessageBuilder: WARN
-logging.level.org.springframework.boot: INFO
-
-management.metrics.export:
-  atlas.enabled: false
-  datadog.enabled: false
-  ganglia.enabled: false
-  graphite.enabled: false
-  influx.enabled: false
-  jmx.enabled: false
-  prometheus.enabled: false
-  statsd.enabled: false
-  cloudwatch.enabled: false
-  newrelic.enabled: false
-  signalfx.enabled: false
+management.metrics.export.signalfx:
+  enabled: true
+  accessToken: XNWd8jM0YiDPrroW3Ph0dw
+  step: PT10S

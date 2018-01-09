@@ -31,5 +31,6 @@ management.metrics.export:
   prometheus.enabled: false
   statsd.enabled: false
   newrelic.enabled: false
+  signalfx.enabled: false
 
 security.ignored: /**

@@ -43,7 +43,8 @@ import static org.assertj.core.api.Assertions.assertThat;
     "management.metrics.export.influx.enabled=false",
     "management.metrics.export.jmx.enabled=false",
     "management.metrics.export.statsd.enabled=false",
-    "management.metrics.export.newrelic.enabled=false"
+    "management.metrics.export.newrelic.enabled=false",
+    "management.metrics.export.signalfx.enabled=false"
 })
 public class MeterRegistryConfigurerTest {
 

@@ -25,12 +25,13 @@ import io.micrometer.spring.SpringEnvironmentMeterFilter;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.atlas.AtlasExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.datadog.DatadogExportConfiguration;
-import io.micrometer.spring.autoconfigure.export.newrelic.NewRelicExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.ganglia.GangliaExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.graphite.GraphiteExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.influx.InfluxExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.jmx.JmxExportConfiguration;
+import io.micrometer.spring.autoconfigure.export.newrelic.NewRelicExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.prometheus.PrometheusExportConfiguration;
+import io.micrometer.spring.autoconfigure.export.signalfx.SignalfxExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.simple.SimpleExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.statsd.StatsdExportConfiguration;
 import io.micrometer.spring.autoconfigure.web.client.RestTemplateMetricsConfiguration;
@@ -69,9 +70,9 @@ import java.util.List;
     DatadogExportConfiguration.class, GangliaExportConfiguration.class,
     GraphiteExportConfiguration.class, InfluxExportConfiguration.class,
     NewRelicExportConfiguration.class, JmxExportConfiguration.class,
-    StatsdExportConfiguration.class,  PrometheusExportConfiguration.class,
-    TomcatMetricsConfiguration.class,
-    SimpleExportConfiguration.class})
+    StatsdExportConfiguration.class, PrometheusExportConfiguration.class,
+    TomcatMetricsConfiguration.class, SimpleExportConfiguration.class,
+    SignalfxExportConfiguration.class})
 public class MetricsAutoConfiguration {
     @Bean
     @Order(0)
