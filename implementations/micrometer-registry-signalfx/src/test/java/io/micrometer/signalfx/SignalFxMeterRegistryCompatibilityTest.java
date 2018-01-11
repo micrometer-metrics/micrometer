@@ -22,16 +22,16 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
 
-public class SignalfxMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+public class SignalFxMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @Override
     public MeterRegistry registry() {
         return new CompositeMeterRegistry(new MockClock()) {{
-            add(new SignalfxMeterRegistry(SignalfxConfig.DEFAULT, clock));
+            add(new SignalFxMeterRegistry(SignalFxConfig.DEFAULT, clock));
         }};
     }
 
     @Override
     public Duration step() {
-        return SignalfxConfig.DEFAULT.step();
+        return SignalFxConfig.DEFAULT.step();
     }
 }

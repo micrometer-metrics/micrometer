@@ -41,13 +41,13 @@ import static java.util.stream.Collectors.joining;
 /**q
  * @author Jon Schneider
  */
-public class SignalfxMeterRegistry extends StepMeterRegistry {
-    private final Logger logger = LoggerFactory.getLogger(SignalfxMeterRegistry.class);
-    private final SignalfxConfig config;
+public class SignalFxMeterRegistry extends StepMeterRegistry {
+    private final Logger logger = LoggerFactory.getLogger(SignalFxMeterRegistry.class);
+    private final SignalFxConfig config;
 
     private final URL postTimeSeriesEndpoint;
 
-    public SignalfxMeterRegistry(SignalfxConfig config, Clock clock) {
+    public SignalFxMeterRegistry(SignalFxConfig config, Clock clock) {
         super(config, clock);
         this.config = config;
 
@@ -58,7 +58,7 @@ public class SignalfxMeterRegistry extends StepMeterRegistry {
             throw new RuntimeException(e);
         }
 
-        config().namingConvention(new SignalfxNamingConvention());
+        config().namingConvention(new SignalFxNamingConvention());
 
         start();
     }
@@ -110,7 +110,7 @@ public class SignalfxMeterRegistry extends StepMeterRegistry {
                     }"
                     */
 
-                    SignalfxPayload payload = new SignalfxPayload();
+                    SignalFxPayload payload = new SignalFxPayload();
 
                     for (Meter meter : batch) {
                         if (meter instanceof Counter) {
@@ -160,9 +160,9 @@ public class SignalfxMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private void addMeter(Meter meter, SignalfxPayload payload, long timestamp) {
+    private void addMeter(Meter meter, SignalFxPayload payload, long timestamp) {
         for (Measurement measurement : meter.measure()) {
-            SignalfxTimeseries ts = new SignalfxTimeseries(meter, NamingConvention.camelCase.tagKey(measurement.getStatistic().toString()),
+            SignalFxTimeseries ts = new SignalFxTimeseries(meter, NamingConvention.camelCase.tagKey(measurement.getStatistic().toString()),
                 measurement.getValue(), timestamp);
 
             switch (measurement.getStatistic()) {
@@ -182,58 +182,58 @@ public class SignalfxMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private void addLongTaskTimer(LongTaskTimer longTaskTimer, SignalfxPayload payload, long timestamp) {
-        payload.gauges.add(new SignalfxTimeseries(longTaskTimer, "activeTasks", longTaskTimer.activeTasks(), timestamp));
-        payload.counters.add(new SignalfxTimeseries(longTaskTimer, "duration", longTaskTimer.duration(getBaseTimeUnit()), timestamp));
+    private void addLongTaskTimer(LongTaskTimer longTaskTimer, SignalFxPayload payload, long timestamp) {
+        payload.gauges.add(new SignalFxTimeseries(longTaskTimer, "activeTasks", longTaskTimer.activeTasks(), timestamp));
+        payload.counters.add(new SignalFxTimeseries(longTaskTimer, "duration", longTaskTimer.duration(getBaseTimeUnit()), timestamp));
     }
 
-    private void addTimeGauge(TimeGauge timeGauge, SignalfxPayload payload, long timestamp) {
-        payload.gauges.add(new SignalfxTimeseries(timeGauge, timeGauge.value(getBaseTimeUnit()), timestamp));
+    private void addTimeGauge(TimeGauge timeGauge, SignalFxPayload payload, long timestamp) {
+        payload.gauges.add(new SignalFxTimeseries(timeGauge, timeGauge.value(getBaseTimeUnit()), timestamp));
     }
 
-    private void addGauge(Gauge gauge, SignalfxPayload payload, long timestamp) {
-        payload.gauges.add(new SignalfxTimeseries(gauge, gauge.value(), timestamp));
+    private void addGauge(Gauge gauge, SignalFxPayload payload, long timestamp) {
+        payload.gauges.add(new SignalFxTimeseries(gauge, gauge.value(), timestamp));
     }
 
-    private void addCounter(Counter counter, SignalfxPayload payload, long timestamp) {
-        payload.counters.add(new SignalfxTimeseries(counter, counter.count(), timestamp));
+    private void addCounter(Counter counter, SignalFxPayload payload, long timestamp) {
+        payload.counters.add(new SignalFxTimeseries(counter, counter.count(), timestamp));
     }
 
-    private void addFunctionCounter(FunctionCounter counter, SignalfxPayload payload, long timestamp) {
-        payload.counters.add(new SignalfxTimeseries(counter, counter.count(), timestamp));
+    private void addFunctionCounter(FunctionCounter counter, SignalFxPayload payload, long timestamp) {
+        payload.counters.add(new SignalFxTimeseries(counter, counter.count(), timestamp));
     }
 
-    private void addTimer(Timer timer, SignalfxPayload payload, long timestamp) {
+    private void addTimer(Timer timer, SignalFxPayload payload, long timestamp) {
         HistogramSnapshot snapshot = timer.takeSnapshot(false);
 
-        payload.counters.add(new SignalfxTimeseries(timer, "count", snapshot.count(), timestamp));
-        payload.counters.add(new SignalfxTimeseries(timer, "totalTime", snapshot.total(getBaseTimeUnit()), timestamp));
-        payload.gauges.add(new SignalfxTimeseries(timer, "avg", snapshot.mean(getBaseTimeUnit()), timestamp));
-        payload.gauges.add(new SignalfxTimeseries(timer, "max", snapshot.max(getBaseTimeUnit()), timestamp));
+        payload.counters.add(new SignalFxTimeseries(timer, "count", snapshot.count(), timestamp));
+        payload.counters.add(new SignalFxTimeseries(timer, "totalTime", snapshot.total(getBaseTimeUnit()), timestamp));
+        payload.gauges.add(new SignalFxTimeseries(timer, "avg", snapshot.mean(getBaseTimeUnit()), timestamp));
+        payload.gauges.add(new SignalFxTimeseries(timer, "max", snapshot.max(getBaseTimeUnit()), timestamp));
 
         for (ValueAtPercentile v : snapshot.percentileValues()) {
             String suffix = DoubleFormat.toString(v.percentile() * 100) + "percentile";
-            payload.gauges.add(new SignalfxTimeseries(timer, suffix, v.value(getBaseTimeUnit()), timestamp));
+            payload.gauges.add(new SignalFxTimeseries(timer, suffix, v.value(getBaseTimeUnit()), timestamp));
         }
     }
 
-    private void addFunctionTimer(FunctionTimer timer, SignalfxPayload payload, long timestamp) {
-        payload.counters.add(new SignalfxTimeseries(timer, "count", timer.count(), timestamp));
-        payload.counters.add(new SignalfxTimeseries(timer, "totalTime", timer.totalTime(getBaseTimeUnit()), timestamp));
-        payload.gauges.add(new SignalfxTimeseries(timer, "avg", timer.mean(getBaseTimeUnit()), timestamp));
+    private void addFunctionTimer(FunctionTimer timer, SignalFxPayload payload, long timestamp) {
+        payload.counters.add(new SignalFxTimeseries(timer, "count", timer.count(), timestamp));
+        payload.counters.add(new SignalFxTimeseries(timer, "totalTime", timer.totalTime(getBaseTimeUnit()), timestamp));
+        payload.gauges.add(new SignalFxTimeseries(timer, "avg", timer.mean(getBaseTimeUnit()), timestamp));
     }
 
-    private void addDistributionSummary(DistributionSummary summary, SignalfxPayload payload, long timestamp) {
+    private void addDistributionSummary(DistributionSummary summary, SignalFxPayload payload, long timestamp) {
         HistogramSnapshot snapshot = summary.takeSnapshot(false);
 
-        payload.counters.add(new SignalfxTimeseries(summary, "count", snapshot.count(), timestamp));
-        payload.counters.add(new SignalfxTimeseries(summary, "total", snapshot.total(), timestamp));
-        payload.gauges.add(new SignalfxTimeseries(summary, "avg", snapshot.mean(), timestamp));
-        payload.gauges.add(new SignalfxTimeseries(summary, "max", snapshot.max(), timestamp));
+        payload.counters.add(new SignalFxTimeseries(summary, "count", snapshot.count(), timestamp));
+        payload.counters.add(new SignalFxTimeseries(summary, "total", snapshot.total(), timestamp));
+        payload.gauges.add(new SignalFxTimeseries(summary, "avg", snapshot.mean(), timestamp));
+        payload.gauges.add(new SignalFxTimeseries(summary, "max", snapshot.max(), timestamp));
 
         for (ValueAtPercentile v : snapshot.percentileValues()) {
             String suffix = DoubleFormat.toString(v.percentile() * 100) + "percentile";
-            payload.gauges.add(new SignalfxTimeseries(summary, suffix, v.value(), timestamp));
+            payload.gauges.add(new SignalFxTimeseries(summary, suffix, v.value(), timestamp));
         }
     }
 
@@ -251,18 +251,18 @@ public class SignalfxMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private class SignalfxPayload {
-        Collection<SignalfxTimeseries> gauges = new ArrayList<>();
-        Collection<SignalfxTimeseries> counters = new ArrayList<>();
+    private class SignalFxPayload {
+        Collection<SignalFxTimeseries> gauges = new ArrayList<>();
+        Collection<SignalFxTimeseries> counters = new ArrayList<>();
 
         String toJson() {
             return "{" +
                 (gauges.isEmpty() ? "" :
-                    "\"gauge\":[" + gauges.stream().map(SignalfxTimeseries::toJson).collect(joining(",")) + "]"
+                    "\"gauge\":[" + gauges.stream().map(SignalFxTimeseries::toJson).collect(joining(",")) + "]"
                 ) +
                 (!gauges.isEmpty() && !counters.isEmpty() ? "," : "") +
                 (counters.isEmpty() ? "" :
-                    "\"counter\":[" + counters.stream().map(SignalfxTimeseries::toJson).collect(joining(",")) + "]"
+                    "\"counter\":[" + counters.stream().map(SignalFxTimeseries::toJson).collect(joining(",")) + "]"
                 ) +
                 "}";
         }
@@ -276,17 +276,17 @@ public class SignalfxMeterRegistry extends StepMeterRegistry {
      * "dimensions": { "host": "testserver" }
      * }
      */
-    private class SignalfxTimeseries {
+    private class SignalFxTimeseries {
         final String metric;
         final double value;
         final long timestamp; // milliseconds since epoch
         final Collection<Tag> dimensions;
 
-        SignalfxTimeseries(Meter meter, double value, long timestamp) {
+        SignalFxTimeseries(Meter meter, double value, long timestamp) {
             this(meter, null, value, timestamp);
         }
 
-        SignalfxTimeseries(Meter meter, String statSuffix, double value, long timestamp) {
+        SignalFxTimeseries(Meter meter, String statSuffix, double value, long timestamp) {
             this.metric = config().namingConvention().name(statSuffix == null ? meter.getId().getName() : meter.getId().getName() + "." + statSuffix,
                 meter.getId().getType(), meter.getId().getBaseUnit());
             this.dimensions = getConventionTags(meter.getId());

@@ -37,7 +37,6 @@ public class TomcatMetricsConfiguration {
         Manager manager = null;
         if (applicationContext instanceof EmbeddedWebApplicationContext) {
             manager = getManagerFromContext((EmbeddedWebApplicationContext) applicationContext);
-
         }
         return new TomcatMetrics(manager, Collections.emptyList());
     }

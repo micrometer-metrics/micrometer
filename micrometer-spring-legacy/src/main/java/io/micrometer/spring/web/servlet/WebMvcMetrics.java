@@ -82,7 +82,7 @@ public class WebMvcMetrics {
 
     void preHandle(HttpServletRequest request, Object handler) {
         if (request.getAttribute(TIMING_REQUEST_ATTRIBUTE) == null) {
-            request.setAttribute(TIMING_REQUEST_ATTRIBUTE, System.nanoTime());
+            request.setAttribute(TIMING_REQUEST_ATTRIBUTE, registry.config().clock().monotonicTime());
         }
         request.setAttribute(HANDLER_REQUEST_ATTRIBUTE, handler);
         longTaskTimed(handler).forEach((config) -> {

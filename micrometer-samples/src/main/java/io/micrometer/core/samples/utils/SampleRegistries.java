@@ -34,8 +34,8 @@ import io.micrometer.newrelic.NewRelicConfig;
 import io.micrometer.newrelic.NewRelicMeterRegistry;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.micrometer.signalfx.SignalfxConfig;
-import io.micrometer.signalfx.SignalfxMeterRegistry;
+import io.micrometer.signalfx.SignalFxConfig;
+import io.micrometer.signalfx.SignalFxMeterRegistry;
 import io.micrometer.statsd.StatsdConfig;
 import io.micrometer.statsd.StatsdFlavor;
 import io.micrometer.statsd.StatsdMeterRegistry;
@@ -249,8 +249,8 @@ public class SampleRegistries {
         }, Clock.SYSTEM);
     }
 
-    public static SignalfxMeterRegistry signalFx(String accessToken) {
-        return new SignalfxMeterRegistry(new SignalfxConfig() {
+    public static SignalFxMeterRegistry signalFx(String accessToken) {
+        return new SignalFxMeterRegistry(new SignalFxConfig() {
             @Override
             public String accessToken() {
                 return accessToken;

@@ -24,7 +24,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @author Jon Schneider
  */
 @ConfigurationProperties(prefix = "management.metrics.export.signalfx")
-public class SignalfxProperties extends StepRegistryProperties {
+public class SignalFxProperties extends StepRegistryProperties {
     /**
      * Your access token, found in your account settings at SignalFX. This property is required.
      */

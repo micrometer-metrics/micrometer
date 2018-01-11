@@ -16,8 +16,8 @@
 package io.micrometer.spring.autoconfigure.export.signalfx;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.signalfx.SignalfxConfig;
-import io.micrometer.signalfx.SignalfxMeterRegistry;
+import io.micrometer.signalfx.SignalFxConfig;
+import io.micrometer.signalfx.SignalFxMeterRegistry;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -36,16 +36,16 @@ import java.time.Duration;
  * @author Jon Schneider
  */
 @Configuration
-@ConditionalOnClass(SignalfxMeterRegistry.class)
-@EnableConfigurationProperties(SignalfxProperties.class)
+@ConditionalOnClass(SignalFxMeterRegistry.class)
+@EnableConfigurationProperties(SignalFxProperties.class)
 @Import(StringToDurationConverter.class)
-public class SignalfxExportConfiguration {
+public class SignalFxExportConfiguration {
 
-    private class DefaultSignalfxConfig implements SignalfxConfig {
-        private final SignalfxProperties props;
-        private final SignalfxConfig defaults = k -> null;
+    private class DefaultSignalFxConfig implements SignalFxConfig {
+        private final SignalFxProperties props;
+        private final SignalFxConfig defaults = k -> null;
 
-        private DefaultSignalfxConfig(SignalfxProperties props) {
+        private DefaultSignalFxConfig(SignalFxProperties props) {
             this.props = props;
         }
 
@@ -72,14 +72,14 @@ public class SignalfxExportConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public SignalfxConfig SignalfxConfig(SignalfxProperties props) {
-        return new SignalfxExportConfiguration.DefaultSignalfxConfig(props);
+    public SignalFxConfig signalfxConfig(SignalFxProperties props) {
+        return new DefaultSignalFxConfig(props);
     }
 
     @Bean
     @ConditionalOnProperty(value = "management.metrics.export.Signalfx.enabled", matchIfMissing = true)
-    public MetricsExporter SignalfxExporter(SignalfxConfig config, Clock clock) {
-        return () -> new SignalfxMeterRegistry(config, clock);
+    public MetricsExporter signalFxExporter(SignalFxConfig config, Clock clock) {
+        return () -> new SignalFxMeterRegistry(config, clock);
     }
 
     @Bean

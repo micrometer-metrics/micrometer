@@ -31,7 +31,7 @@ import io.micrometer.spring.autoconfigure.export.influx.InfluxExportConfiguratio
 import io.micrometer.spring.autoconfigure.export.jmx.JmxExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.newrelic.NewRelicExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.prometheus.PrometheusExportConfiguration;
-import io.micrometer.spring.autoconfigure.export.signalfx.SignalfxExportConfiguration;
+import io.micrometer.spring.autoconfigure.export.signalfx.SignalFxExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.simple.SimpleExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.statsd.StatsdExportConfiguration;
 import io.micrometer.spring.autoconfigure.web.client.RestTemplateMetricsConfiguration;
@@ -72,7 +72,7 @@ import java.util.List;
     NewRelicExportConfiguration.class, JmxExportConfiguration.class,
     StatsdExportConfiguration.class, PrometheusExportConfiguration.class,
     TomcatMetricsConfiguration.class, SimpleExportConfiguration.class,
-    SignalfxExportConfiguration.class})
+    SignalFxExportConfiguration.class})
 public class MetricsAutoConfiguration {
     @Bean
     @Order(0)

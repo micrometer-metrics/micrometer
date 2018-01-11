@@ -22,14 +22,14 @@ import io.micrometer.core.instrument.config.NamingConvention;
  * See https://developers.signalfx.com/reference#section-criteria-for-metric-and-dimension-names-and-values for criteria.
  * @author Jon Schneider
  */
-public class SignalfxNamingConvention implements NamingConvention {
+public class SignalFxNamingConvention implements NamingConvention {
     private final NamingConvention rootConvention;
 
-    public SignalfxNamingConvention() {
+    public SignalFxNamingConvention() {
         this(NamingConvention.dot);
     }
 
-    public SignalfxNamingConvention(NamingConvention rootConvention) {
+    public SignalFxNamingConvention(NamingConvention rootConvention) {
         this.rootConvention = rootConvention;
     }
 

@@ -17,8 +17,8 @@ package io.micrometer.signalfx;
 
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
-public interface SignalfxConfig extends StepRegistryConfig {
-    SignalfxConfig DEFAULT = k -> null;
+public interface SignalFxConfig extends StepRegistryConfig {
+    SignalFxConfig DEFAULT = k -> null;
 
     @Override
     default String prefix() {
