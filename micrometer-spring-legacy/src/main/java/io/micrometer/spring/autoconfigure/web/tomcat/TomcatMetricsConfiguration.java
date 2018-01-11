@@ -29,34 +29,33 @@ import org.springframework.context.annotation.Bean;
 
 import java.util.Collections;
 
-@ConditionalOnClass(name="org.apache.catalina.startup.Tomcat")
+@ConditionalOnClass(name = "org.apache.catalina.startup.Tomcat")
 public class TomcatMetricsConfiguration {
 
-        @Bean
-        @ConditionalOnProperty(value = "management.metrics.export.tomcat.enabled", matchIfMissing = true)
-        public TomcatMetrics metrics(ApplicationContext applicationContext) {
-            Manager manager = null;
-            if (applicationContext instanceof EmbeddedWebApplicationContext) {
-                manager = getManagerFromContext((EmbeddedWebApplicationContext) applicationContext);
+    @Bean
+    public TomcatMetrics metrics(ApplicationContext applicationContext) {
+        Manager manager = null;
+        if (applicationContext instanceof EmbeddedWebApplicationContext) {
+            manager = getManagerFromContext((EmbeddedWebApplicationContext) applicationContext);
 
-            }
-            return new TomcatMetrics(manager, Collections.emptyList());
         }
+        return new TomcatMetrics(manager, Collections.emptyList());
+    }
 
-        private Manager getManagerFromContext(EmbeddedWebApplicationContext applicationContext) {
-            EmbeddedServletContainer embeddedServletContainer = applicationContext.getEmbeddedServletContainer();
-            if (embeddedServletContainer instanceof TomcatEmbeddedServletContainer) {
-                return getManagerFromContainer((TomcatEmbeddedServletContainer) embeddedServletContainer);
-            }
-            return null;
+    private Manager getManagerFromContext(EmbeddedWebApplicationContext applicationContext) {
+        EmbeddedServletContainer embeddedServletContainer = applicationContext.getEmbeddedServletContainer();
+        if (embeddedServletContainer instanceof TomcatEmbeddedServletContainer) {
+            return getManagerFromContainer((TomcatEmbeddedServletContainer) embeddedServletContainer);
         }
+        return null;
+    }
 
-        private Manager getManagerFromContainer(TomcatEmbeddedServletContainer servletContainer) {
-            for (Container container : servletContainer.getTomcat().getHost().findChildren()) {
-                if (container instanceof Context) {
-                    return ((Context) container).getManager();
-                }
+    private Manager getManagerFromContainer(TomcatEmbeddedServletContainer servletContainer) {
+        for (Container container : servletContainer.getTomcat().getHost().findChildren()) {
+            if (container instanceof Context) {
+                return ((Context) container).getManager();
             }
-            return null;
         }
+        return null;
+    }
 }
