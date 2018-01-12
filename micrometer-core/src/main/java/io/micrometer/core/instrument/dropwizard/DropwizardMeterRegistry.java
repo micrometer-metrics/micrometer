@@ -23,10 +23,10 @@ import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 
 import java.lang.ref.WeakReference;
-import java.text.DecimalFormat;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
@@ -37,7 +37,6 @@ import java.util.function.ToLongFunction;
 public class DropwizardMeterRegistry extends MeterRegistry {
     private final MetricRegistry registry;
     private final HierarchicalNameMapper nameMapper;
-    private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
     private final DropwizardClock dropwizardClock;
     private final DropwizardConfig dropwizardConfig;
 
@@ -77,7 +76,8 @@ public class DropwizardMeterRegistry extends MeterRegistry {
         DropwizardTimer timer = new DropwizardTimer(id, registry.timer(hierarchicalName(id)), clock, histogramConfig, pauseDetector);
 
         for (double percentile : histogramConfig.getPercentiles()) {
-            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
+            String formattedPercentile = DoubleFormat.toString(percentile * 100) + "percentile";
+            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", formattedPercentile),
                 timer, t -> t.percentile(percentile, getBaseTimeUnit()));
         }
 
@@ -96,7 +96,8 @@ public class DropwizardMeterRegistry extends MeterRegistry {
         DropwizardDistributionSummary summary = new DropwizardDistributionSummary(id, clock, registry.histogram(hierarchicalName(id)), histogramConfig);
 
         for (double percentile : histogramConfig.getPercentiles()) {
-            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
+            String formattedPercentile = DoubleFormat.toString(percentile * 100) + "percentile";
+            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", formattedPercentile),
                 summary, s -> summary.percentile(percentile));
         }
 

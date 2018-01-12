@@ -36,7 +36,7 @@ public class TimeDecayingMax {
     private int currentBucket;
     private volatile long lastRotateTimestampMillis;
     @SuppressWarnings({ "unused", "FieldCanBeLocal" })
-    private volatile int rotating; // 0 - not rotating, 1 - rotating
+    private volatile int rotating = 0; // 0 - not rotating, 1 - rotating
 
     public TimeDecayingMax(Clock clock, HistogramConfig config) {
         this(clock, config.getHistogramExpiry().toMillis(), config.getHistogramBufferLength());
@@ -45,10 +45,12 @@ public class TimeDecayingMax {
     public TimeDecayingMax(Clock clock, long rotateFrequencyMillis, int bufferLength) {
         this.clock = clock;
         this.durationBetweenRotatesMillis = rotateFrequencyMillis;
+        this.lastRotateTimestampMillis = clock.wallTime();
+        this.currentBucket = 0;
 
-        ringBuffer = new AtomicLong[bufferLength];
+        this.ringBuffer = new AtomicLong[bufferLength];
         for(int i = 0; i < bufferLength; i++) {
-            ringBuffer[i] = new AtomicLong();
+            this.ringBuffer[i] = new AtomicLong();
         }
     }
 
