@@ -84,6 +84,11 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
     }
 
     @Override
+    public TimerContext time() {
+        return firstChild().time();
+    }
+
+    @Override
     public long count() {
         return firstChild().count();
     }

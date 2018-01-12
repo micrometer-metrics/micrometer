@@ -99,6 +99,22 @@ interface TimerTest {
         }
     }
 
+
+    @Test
+    @DisplayName("record with TimerContext")
+    default void recordWithTimerContext(MeterRegistry registry) throws Exception {
+        Timer timer = registry.timer("myTimer");
+        Timer.TimerContext t = timer.time();
+
+        clock(registry).add(10, TimeUnit.NANOSECONDS);
+
+        long duration = t.record();
+        clock(registry).add(step());
+
+        assertAll(() -> assertEquals(1L, timer.count()),
+            () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS) ,1.0e-12));
+    }
+
     @Test
     default void recordMax(MeterRegistry registry) {
         Timer timer = registry.timer("my.timer");

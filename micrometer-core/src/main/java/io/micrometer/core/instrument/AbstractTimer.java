@@ -72,6 +72,11 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     }
 
     @Override
+    public TimerContext time() {
+        return new TimerContext(clock, this);
+    }
+
+    @Override
     public final void record(long amount, TimeUnit unit) {
         if(amount >= 0) {
             histogram.recordLong(TimeUnit.NANOSECONDS.convert(amount, unit));

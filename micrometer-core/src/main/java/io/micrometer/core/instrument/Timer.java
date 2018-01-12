@@ -108,6 +108,13 @@ public interface Timer extends Meter {
     }
 
     /**
+     * Begin timing an operation.
+     *
+     * @return TimerContext
+     */
+    TimerContext time();
+
+    /**
      * The maximum time of a single event.
      */
     double max(TimeUnit unit);
@@ -135,6 +142,30 @@ public interface Timer extends Meter {
     @Override
     default Type type() {
         return Type.Timer;
+    }
+
+
+    class TimerContext {
+        private final long startTime;
+        private final Clock clock;
+        private final Timer timer;
+
+        public TimerContext(Clock clock, Timer timer) {
+            this.clock = clock;
+            this.timer = timer;
+            this.startTime = clock.monotonicTime();
+        }
+
+        /**
+         * Records the duration of the operation
+         *
+         * @return The duration that was record in nanoseconds
+         */
+        public long record(){
+            long durationNs = clock.monotonicTime() - startTime;
+            timer.record(durationNs, TimeUnit.NANOSECONDS);
+            return durationNs;
+        }
     }
 
     static Builder builder(String name) {
