@@ -94,7 +94,7 @@ public interface Timer extends Meter {
     }
 
     /**
-     * The number of times that record has been called on this timer.
+     * The number of times that stop has been called on this timer.
      */
     long count();
 
@@ -110,9 +110,9 @@ public interface Timer extends Meter {
     /**
      * Begin timing an operation.
      *
-     * @return TimerContext
+     * @return Timing
      */
-    TimerContext time();
+    Timing start();
 
     /**
      * The maximum time of a single event.
@@ -144,13 +144,12 @@ public interface Timer extends Meter {
         return Type.Timer;
     }
 
-
-    class TimerContext {
+    class Timing {
         private final long startTime;
         private final Clock clock;
         private final Timer timer;
 
-        public TimerContext(Clock clock, Timer timer) {
+        public Timing(Clock clock, Timer timer) {
             this.clock = clock;
             this.timer = timer;
             this.startTime = clock.monotonicTime();
@@ -159,9 +158,9 @@ public interface Timer extends Meter {
         /**
          * Records the duration of the operation
          *
-         * @return The duration that was record in nanoseconds
+         * @return The duration that was stop in nanoseconds
          */
-        public long record(){
+        public long stop(){
             long durationNs = clock.monotonicTime() - startTime;
             timer.record(durationNs, TimeUnit.NANOSECONDS);
             return durationNs;

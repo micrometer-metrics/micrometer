@@ -72,8 +72,8 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     }
 
     @Override
-    public TimerContext time() {
-        return new TimerContext(clock, this);
+    public Timing start() {
+        return new Timing(clock, this);
     }
 
     @Override

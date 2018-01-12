@@ -48,8 +48,8 @@ public class NoopTimer extends NoopMeter implements Timer {
     }
 
     @Override
-    public TimerContext time() {
-        return new TimerContext(Clock.SYSTEM, this);
+    public Timing start() {
+        return new Timing(Clock.SYSTEM, this);
     }
 
     @Override

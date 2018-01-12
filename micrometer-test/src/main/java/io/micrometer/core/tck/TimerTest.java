@@ -99,16 +99,14 @@ interface TimerTest {
         }
     }
 
-
     @Test
-    @DisplayName("record with TimerContext")
-    default void recordWithTimerContext(MeterRegistry registry) throws Exception {
+    @DisplayName("record with stateful Timing instance")
+    default void recordWithTiming(MeterRegistry registry) throws Exception {
         Timer timer = registry.timer("myTimer");
-        Timer.TimerContext t = timer.time();
+        Timer.Timing t = timer.start();
 
         clock(registry).add(10, TimeUnit.NANOSECONDS);
-
-        long duration = t.record();
+        t.stop();
         clock(registry).add(step());
 
         assertAll(() -> assertEquals(1L, timer.count()),
