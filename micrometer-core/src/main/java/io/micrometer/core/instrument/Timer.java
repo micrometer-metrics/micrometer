@@ -94,7 +94,7 @@ public interface Timer extends Meter {
     }
 
     /**
-     * The number of times that record has been called on this timer.
+     * The number of times that stop has been called on this timer.
      */
     long count();
 
@@ -106,6 +106,13 @@ public interface Timer extends Meter {
     default double mean(TimeUnit unit) {
         return count() == 0 ? 0 : totalTime(unit) / count();
     }
+
+    /**
+     * Begin timing an operation.
+     *
+     * @return Timing
+     */
+    Timing start();
 
     /**
      * The maximum time of a single event.
@@ -135,6 +142,29 @@ public interface Timer extends Meter {
     @Override
     default Type type() {
         return Type.Timer;
+    }
+
+    class Timing {
+        private final long startTime;
+        private final Clock clock;
+        private final Timer timer;
+
+        public Timing(Clock clock, Timer timer) {
+            this.clock = clock;
+            this.timer = timer;
+            this.startTime = clock.monotonicTime();
+        }
+
+        /**
+         * Records the duration of the operation
+         *
+         * @return The duration that was stop in nanoseconds
+         */
+        public long stop(){
+            long durationNs = clock.monotonicTime() - startTime;
+            timer.record(durationNs, TimeUnit.NANOSECONDS);
+            return durationNs;
+        }
     }
 
     static Builder builder(String name) {

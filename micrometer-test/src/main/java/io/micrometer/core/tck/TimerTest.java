@@ -100,6 +100,20 @@ interface TimerTest {
     }
 
     @Test
+    @DisplayName("record with stateful Timing instance")
+    default void recordWithTiming(MeterRegistry registry) throws Exception {
+        Timer timer = registry.timer("myTimer");
+        Timer.Timing t = timer.start();
+
+        clock(registry).add(10, TimeUnit.NANOSECONDS);
+        t.stop();
+        clock(registry).add(step());
+
+        assertAll(() -> assertEquals(1L, timer.count()),
+            () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS) ,1.0e-12));
+    }
+
+    @Test
     default void recordMax(MeterRegistry registry) {
         Timer timer = registry.timer("my.timer");
         timer.record(10, TimeUnit.MILLISECONDS);
