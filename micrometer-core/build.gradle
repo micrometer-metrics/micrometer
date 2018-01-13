@@ -39,6 +39,13 @@ dependencies {
 
     compile 'com.squareup.okhttp3:okhttp:3.9.0',optional
 
+    //tracing
+    compile 'io.opencensus:opencensus-api:0.9.1', optional
+    testCompile 'io.opencensus:opencensus-impl:0.9.1'
+    compile 'io.opentracing:opentracing-api:0.30.0', optional
+    testCompile 'io.opentracing:opentracing-mock:0.30.0'
+    testCompile 'io.opentracing:opentracing-util:0.30.0'
+
     testCompile 'io.projectreactor:reactor-test:3.1.0.RELEASE'
     testCompile 'io.projectreactor.ipc:reactor-netty:0.7.1.RELEASE'
 

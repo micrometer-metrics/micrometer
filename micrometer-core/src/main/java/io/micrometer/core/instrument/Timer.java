@@ -178,7 +178,7 @@ public interface Timer extends Meter {
         private final HistogramConfig.Builder histogramConfigBuilder;
         private PauseDetector pauseDetector;
 
-        private Builder(String name) {
+        protected Builder(String name) {
             this.name = name;
             this.histogramConfigBuilder = new HistogramConfig.Builder();
             minimumExpectedValue(Duration.ofMillis(1));
