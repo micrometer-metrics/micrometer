@@ -16,6 +16,7 @@
 package io.micrometer.core.tck;
 
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Timer;
@@ -121,16 +122,14 @@ public abstract class MeterRegistryCompatibilityKit {
         registry.more().timer("function.timer", emptyList(),
             o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
 
-        assertThat(registry.mustFind("function.timer").meter())
-
-            .hasValueSatisfying(meter ->
-                assertThat(meter.measure())
-                    .anySatisfy(ms -> {
-                        TimeUnit baseUnit = TimeUnit.valueOf(meter.getId().getBaseUnit().toUpperCase());
-                        assertThat(ms.getStatistic()).isEqualTo(Statistic.TotalTime);
-                        assertThat(TimeUtils.convert(ms.getValue(), baseUnit, TimeUnit.MILLISECONDS)).isEqualTo(1);
-                    })
-            );
+        FunctionTimer ft = registry.mustFind("function.timer").functionTimer();
+        clock(registry).add(step());
+        assertThat(ft.measure())
+            .anySatisfy(ms -> {
+                TimeUnit baseUnit = TimeUnit.valueOf(ft.getId().getBaseUnit().toUpperCase());
+                assertThat(ms.getStatistic()).isEqualTo(Statistic.TotalTime);
+                assertThat(TimeUtils.convert(ms.getValue(), baseUnit, TimeUnit.MILLISECONDS)).isEqualTo(1);
+            });
     }
 
     @DisplayName("counters")

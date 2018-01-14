@@ -18,6 +18,7 @@ package io.micrometer.spring.samples.components;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -64,15 +65,21 @@ public class PersonController {
 
     @GetMapping("/api/stats")
     public Map<String, Number> stats() {
-        return registry.find("http.server.requests").tags("uri", "/api/people")
-            .timer()
-            .map(t -> new HashMap<String, Number>() {{
-                put("count", t.count());
-                put("max", t.max(TimeUnit.MILLISECONDS));
-                put("mean", t.mean(TimeUnit.MILLISECONDS));
-                put("50.percentile", t.percentile(0.5, TimeUnit.MILLISECONDS));
-                put("95.percentile", t.percentile(0.95, TimeUnit.MILLISECONDS));
-            }})
-            .orElse(null);
+        Timer t = registry.find("http.server.requests").tags("uri", "/api/people").timer();
+
+        Map<String, Number> result = null;
+
+        if(t != null){
+            result = new HashMap<>();
+
+            result.put("count", t.count());
+            result.put("max", t.max(TimeUnit.MILLISECONDS));
+            result.put("mean", t.mean(TimeUnit.MILLISECONDS));
+            result.put("50.percentile", t.percentile(0.5, TimeUnit.MILLISECONDS));
+            result.put("95.percentile", t.percentile(0.95, TimeUnit.MILLISECONDS));
+        }
+        return result;
+
+
     }
 }
