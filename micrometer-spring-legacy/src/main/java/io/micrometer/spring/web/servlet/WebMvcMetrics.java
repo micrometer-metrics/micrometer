@@ -16,11 +16,11 @@
 package io.micrometer.spring.web.servlet;
 
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.spring.TimedUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.springframework.util.ObjectUtils;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.method.HandlerMethod;
@@ -29,12 +29,8 @@ import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.AnnotatedElement;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -50,12 +46,12 @@ public class WebMvcMetrics {
 
     private static final String EXCEPTION_ATTRIBUTE = "micrometer.requestException";
 
-    private static final Log logger = LogFactory.getLog(WebMvcMetrics.class);
-
-    private final Map<HttpServletRequest, Long> longTaskTimerIds = Collections
+    private final Map<HttpServletRequest, Collection<LongTaskTimer.Sample>> longTaskTimings = Collections
         .synchronizedMap(new IdentityHashMap<>());
 
     private final MeterRegistry registry;
+
+    private final Clock clock;
 
     private final WebMvcTagsProvider tagsProvider;
 
@@ -63,15 +59,16 @@ public class WebMvcMetrics {
 
     private final boolean autoTimeRequests;
 
-    private final boolean recordAsPercentiles;
+    private final boolean percentileHistogram;
 
     public WebMvcMetrics(MeterRegistry registry, WebMvcTagsProvider tagsProvider,
-                         String metricName, boolean autoTimeRequests, boolean recordAsPercentiles) {
+                         String metricName, boolean autoTimeRequests, boolean percentileHistogram) {
         this.registry = registry;
+        this.clock = registry.config().clock();
         this.tagsProvider = tagsProvider;
         this.metricName = metricName;
         this.autoTimeRequests = autoTimeRequests;
-        this.recordAsPercentiles = recordAsPercentiles;
+        this.percentileHistogram = percentileHistogram;
     }
 
     public void tagWithException(Throwable exception) {
@@ -82,211 +79,87 @@ public class WebMvcMetrics {
 
     void preHandle(HttpServletRequest request, Object handler) {
         if (request.getAttribute(TIMING_REQUEST_ATTRIBUTE) == null) {
-            request.setAttribute(TIMING_REQUEST_ATTRIBUTE, registry.config().clock().monotonicTime());
+            request.setAttribute(TIMING_REQUEST_ATTRIBUTE, clock.monotonicTime());
         }
-        request.setAttribute(HANDLER_REQUEST_ATTRIBUTE, handler);
-        longTaskTimed(handler).forEach((config) -> {
-            if (config.getName() == null) {
-                logWarning(request, handler);
-                return;
-            }
-            this.longTaskTimerIds.put(request,
-                longTaskTimer(config, request, handler).start());
-        });
-    }
 
-    private void logWarning(HttpServletRequest request, Object handler) {
-        if (handler instanceof HandlerMethod) {
-            logger.warn("Unable to perform metrics timing on "
-                + ((HandlerMethod) handler).getShortLogMessage()
-                + ": @Timed annotation must have a value used to name the metric");
-            return;
+        request.setAttribute(HANDLER_REQUEST_ATTRIBUTE, handler);
+        Collection<LongTaskTimer.Sample> longTaskSamples = longTaskTimers(handler).stream().map(t -> t.register(registry).start())
+            .collect(Collectors.toList());
+        if(!longTaskSamples.isEmpty()) {
+            this.longTaskTimings.put(request, longTaskSamples);
         }
-        logger.warn("Unable to perform metrics timing for request "
-            + request.getRequestURI()
-            + ": @Timed annotation must have a value used to name the metric");
     }
 
     void record(HttpServletRequest request, HttpServletResponse response, Throwable ex) {
+        completeLongTaskTimers(request);
+
         Object handler = request.getAttribute(HANDLER_REQUEST_ATTRIBUTE);
         Long startTime = (Long) request.getAttribute(TIMING_REQUEST_ATTRIBUTE);
-        long endTime = System.nanoTime();
-        completeLongTimerTasks(request, handler);
-        Throwable thrown = (ex != null ? ex
-            : (Throwable) request.getAttribute(EXCEPTION_ATTRIBUTE));
-        recordTimerTasks(request, response, handler, startTime, endTime, thrown);
+        Throwable thrown = ex != null ? ex : (Throwable) request.getAttribute(EXCEPTION_ATTRIBUTE);
+        completeShortTimers(request, response, handler, startTime, clock.monotonicTime(), thrown);
     }
 
-    private void completeLongTimerTasks(HttpServletRequest request, Object handler) {
-        longTaskTimed(handler)
-            .forEach((config) -> completeLongTimerTask(request, handler, config));
-    }
-
-    private void completeLongTimerTask(HttpServletRequest request, Object handler,
-                                       TimerConfig config) {
-        if (config.getName() != null) {
-            Long timerId = this.longTaskTimerIds.remove(request);
-            LongTaskTimer longTaskTimer = longTaskTimer(config, request, handler);
-
-            if(timerId != null) {
-                longTaskTimer.stop(timerId);
+    private void completeLongTaskTimers(HttpServletRequest request) {
+        Collection<LongTaskTimer.Sample> samples = this.longTaskTimings.remove(request);
+        if (samples != null) {
+            for (LongTaskTimer.Sample sample : samples) {
+                sample.stop();
             }
         }
     }
 
-    private void recordTimerTasks(HttpServletRequest request,
-                                  HttpServletResponse response, Object handler, Long startTime, long endTime,
-                                  Throwable thrown) {
+    private void completeShortTimers(HttpServletRequest request, HttpServletResponse response,
+                                     Object handler, long startTime, long endTime, Throwable thrown) {
+        final long time = endTime - startTime;
+
         // record Timer values
-        timed(handler).forEach((config) -> {
-            Timer.Builder builder = getTimerBuilder(request, response, thrown, config);
-            long amount = endTime - startTime;
-            builder.register(this.registry).record(amount, TimeUnit.NANOSECONDS);
-        });
-    }
-
-    private Timer.Builder getTimerBuilder(HttpServletRequest request,
-                                          HttpServletResponse response, Throwable thrown, TimerConfig config) {
-        Timer.Builder builder = Timer.builder(config.getName())
-            .tags(this.tagsProvider.httpRequestTags(request, response, thrown))
-            .tags(config.getExtraTags()).description("Timer of servlet request")
-            .publishPercentileHistogram(config.histogram);
-        if (config.getPercentiles().length > 0) {
-            builder = builder.publishPercentiles(config.getPercentiles());
+        for (Timer.Builder builder : shortTimers(handler)) {
+            builder
+                .tags(this.tagsProvider.httpRequestTags(request, response, thrown))
+                .register(this.registry)
+                .record(time, TimeUnit.NANOSECONDS);
         }
-        return builder;
     }
 
-    private LongTaskTimer longTaskTimer(TimerConfig config, HttpServletRequest request,
-                                        Object handler) {
-        return LongTaskTimer.builder(config.getName())
-            .tags(this.tagsProvider.httpLongRequestTags(request, handler))
-            .tags(config.getExtraTags())
-            .description("Timer of long servlet request")
-            .register(registry);
-    }
-
-    private Set<TimerConfig> longTaskTimed(Object handler) {
+    private Set<LongTaskTimer.Builder> longTaskTimers(Object handler) {
         if (handler instanceof HandlerMethod) {
-            return longTaskTimed((HandlerMethod) handler);
+            HandlerMethod handlerMethod = (HandlerMethod) handler;
+            Set<LongTaskTimer.Builder> timed = longTimersFromAnnotatedElement(handlerMethod.getMethod());
+            if (timed.isEmpty()) {
+                return longTimersFromAnnotatedElement(handlerMethod.getBeanType());
+            }
+            return timed;
         }
         return Collections.emptySet();
     }
 
-    private Set<TimerConfig> longTaskTimed(HandlerMethod handler) {
-        Set<TimerConfig> timed = getLongTaskAnnotationConfig(handler.getMethod());
-        if (timed.isEmpty()) {
-            return getLongTaskAnnotationConfig(handler.getBeanType());
-        }
-        return timed;
-    }
-
-    private Set<TimerConfig> timed(Object handler) {
+    private Set<Timer.Builder> shortTimers(Object handler) {
         if (handler instanceof HandlerMethod) {
-            return timed((HandlerMethod) handler);
+            HandlerMethod handlerMethod = (HandlerMethod) handler;
+
+            Set<Timer.Builder> timers = shortTimersFromAnnotatedElement(handlerMethod.getMethod());
+            if (timers.isEmpty()) {
+                timers = shortTimersFromAnnotatedElement(handlerMethod.getBeanType());
+                if (timers.isEmpty() && this.autoTimeRequests) {
+                    return Collections.singleton(Timer.builder(metricName)
+                        .publishPercentileHistogram(this.percentileHistogram));
+                }
+                return timers;
+            }
         } else if (handler instanceof ResourceHttpRequestHandler && this.autoTimeRequests) {
-            return Collections.singleton(new TimerConfig(getServerRequestName(),
-                this.recordAsPercentiles));
+            return Collections.singleton(Timer.builder(metricName)
+                .publishPercentileHistogram(this.percentileHistogram));
         }
         return Collections.emptySet();
     }
 
-    private Set<TimerConfig> timed(HandlerMethod handler) {
-        Set<TimerConfig> config = getShortTaskAnnotationConfig(handler.getMethod());
-        if (config.isEmpty()) {
-            config = getShortTaskAnnotationConfig(handler.getBeanType());
-            if (config.isEmpty() && this.autoTimeRequests) {
-                return Collections.singleton(new TimerConfig(getServerRequestName(),
-                    this.recordAsPercentiles));
-            }
-        }
-        return config;
+    private Set<Timer.Builder> shortTimersFromAnnotatedElement(AnnotatedElement element) {
+        return TimedUtils.findTimedAnnotations(element).filter(t -> !t.longTask())
+            .map(t -> Timer.builder(t, metricName)).collect(Collectors.toSet());
     }
 
-    private Set<TimerConfig> getShortTaskAnnotationConfig(AnnotatedElement element) {
-        return TimedUtils.findTimedAnnotations(element).filter((t) -> !t.longTask())
-            .map(this::fromAnnotation).collect(Collectors.toSet());
-    }
-
-    private Set<TimerConfig> getLongTaskAnnotationConfig(AnnotatedElement element) {
+    private Set<LongTaskTimer.Builder> longTimersFromAnnotatedElement(AnnotatedElement element) {
         return TimedUtils.findTimedAnnotations(element).filter(Timed::longTask)
-            .map(this::fromAnnotation).collect(Collectors.toSet());
+            .map(LongTaskTimer::builder).collect(Collectors.toSet());
     }
-
-    private TimerConfig fromAnnotation(Timed timed) {
-        return new TimerConfig(timed, this::getServerRequestName);
-    }
-
-    private String getServerRequestName() {
-        return this.metricName;
-    }
-
-    private static class TimerConfig {
-
-        private final String name;
-
-        private final Iterable<Tag> extraTags;
-
-        private final double[] percentiles;
-
-        private final boolean histogram;
-
-        TimerConfig(String name, boolean histogram) {
-            this.name = name;
-            this.extraTags = Collections.emptyList();
-            this.percentiles = new double[0];
-            this.histogram = histogram;
-        }
-
-        TimerConfig(Timed timed, Supplier<String> name) {
-            this.name = buildName(timed, name);
-            this.extraTags = Tags.zip(timed.extraTags());
-            this.percentiles = timed.percentiles();
-            this.histogram = timed.histogram();
-        }
-
-        private String buildName(Timed timed, Supplier<String> name) {
-            if (timed.longTask() && timed.value().isEmpty()) {
-                // the user MUST name long task timers, we don't lump them in with regular
-                // timers with the same name
-                return null;
-            }
-            return (timed.value().isEmpty() ? name.get() : timed.value());
-        }
-
-        public String getName() {
-            return this.name;
-        }
-
-        Iterable<Tag> getExtraTags() {
-            return this.extraTags;
-        }
-
-        double[] getPercentiles() {
-            return this.percentiles;
-        }
-
-        boolean isHistogram() {
-            return this.histogram;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            TimerConfig other = (TimerConfig) o;
-            return ObjectUtils.nullSafeEquals(this.name, other.name);
-        }
-
-        @Override
-        public int hashCode() {
-            return ObjectUtils.nullSafeHashCode(this.name);
-        }
-
-    }
-
 }

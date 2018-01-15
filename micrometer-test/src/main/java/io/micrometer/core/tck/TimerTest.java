@@ -100,13 +100,13 @@ interface TimerTest {
     }
 
     @Test
-    @DisplayName("record with stateful Timing instance")
+    @DisplayName("record with stateful Sample instance")
     default void recordWithTiming(MeterRegistry registry) throws Exception {
         Timer timer = registry.timer("myTimer");
-        Timer.Timing t = timer.start();
+        Timer.Sample sample = Timer.Sample.start(registry);
 
         clock(registry).add(10, TimeUnit.NANOSECONDS);
-        t.stop();
+        sample.stop(timer);
         clock(registry).add(step());
 
         assertAll(() -> assertEquals(1L, timer.count()),

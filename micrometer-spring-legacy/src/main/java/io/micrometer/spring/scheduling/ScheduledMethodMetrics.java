@@ -90,11 +90,11 @@ public class ScheduledMethodMetrics {
     }
 
     private Object recordThrowable(LongTaskTimer timer, ThrowableCallable f) throws Throwable {
-        long id = timer.start();
+        LongTaskTimer.Sample timing = timer.start();
         try {
             return f.call();
         } finally {
-            timer.stop(id);
+            timing.stop();
         }
     }
 

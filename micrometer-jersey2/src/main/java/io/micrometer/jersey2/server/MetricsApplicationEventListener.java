@@ -15,52 +15,49 @@
  */
 package io.micrometer.jersey2.server;
 
-import static java.util.Objects.requireNonNull;
-
+import io.micrometer.core.instrument.MeterRegistry;
 import org.glassfish.jersey.server.monitoring.ApplicationEvent;
 import org.glassfish.jersey.server.monitoring.ApplicationEventListener;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.server.monitoring.RequestEventListener;
 
-import io.micrometer.core.instrument.MeterRegistry;
+import static java.util.Objects.requireNonNull;
 
 /**
  * The Micrometer {@link ApplicationEventListener} which registers
  * {@link RequestEventListener} for instrumenting Jersey server requests.
- * 
+ *
  * @author Michael Weirauch
  */
-public class MicrometerApplicationEventListener implements ApplicationEventListener {
+public class MetricsApplicationEventListener implements ApplicationEventListener {
 
     private final MeterRegistry meterRegistry;
-
     private final JerseyTagsProvider tagsProvider;
-
     private final String metricName;
-
+    private final AnnotationFinder annotationFinder;
     private final boolean autoTimeRequests;
 
-    private final boolean recordRequestPercentiles;
+    public MetricsApplicationEventListener(MeterRegistry registry, JerseyTagsProvider tagsProvider, String metricName,
+                                           boolean autoTimeRequests) {
+        this(registry, tagsProvider, metricName, autoTimeRequests, AnnotationFinder.DEFAULT);
+    }
 
-    public MicrometerApplicationEventListener(MeterRegistry meterRegistry,
-            JerseyTagsProvider tagsProvider, String metricName, boolean autoTimeRequests,
-            boolean recordRequestPercentiles) {
-        this.meterRegistry = requireNonNull(meterRegistry);
+    public MetricsApplicationEventListener(MeterRegistry registry, JerseyTagsProvider tagsProvider,
+                                           String metricName, boolean autoTimeRequests,
+                                           AnnotationFinder annotationFinder) {
+        this.meterRegistry = requireNonNull(registry);
         this.tagsProvider = requireNonNull(tagsProvider);
         this.metricName = requireNonNull(metricName);
+        this.annotationFinder = requireNonNull(annotationFinder);
         this.autoTimeRequests = autoTimeRequests;
-        this.recordRequestPercentiles = recordRequestPercentiles;
     }
 
     @Override
     public void onEvent(ApplicationEvent event) {
-        //
     }
 
     @Override
     public RequestEventListener onRequest(RequestEvent requestEvent) {
-        return new MicrometerRequestEventListener(meterRegistry, tagsProvider, metricName,
-                autoTimeRequests, recordRequestPercentiles);
+        return new MetricsRequestEventListener(meterRegistry, tagsProvider, metricName, autoTimeRequests, annotationFinder);
     }
-
 }

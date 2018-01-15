@@ -51,7 +51,7 @@ public class TimedResource {
 
     @GET
     @Path("timed")
-    @Timed()
+    @Timed
     public String timed() {
         return "timed";
     }
@@ -89,5 +89,4 @@ public class TimedResource {
     public String longTimedUnnamed() {
         return "long-timed-unnamed";
     }
-
 }

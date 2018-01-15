@@ -43,7 +43,7 @@ public class LongTaskTimerSample {
                 .doOnEach(d -> latencyForThisSecond.set(duration.nextInt()))
                 .subscribe();
 
-        final Map<Long, CountDownLatch> tasks = new ConcurrentHashMap<>();
+        final Map<LongTaskTimer.Sample, CountDownLatch> tasks = new ConcurrentHashMap<>();
 
         // the potential for an "incoming request" every 10 ms
         Flux.interval(Duration.ofSeconds(1))
@@ -57,10 +57,10 @@ public class LongTaskTimerSample {
                     }
 
                     synchronized (tasks) {
-                        for (Map.Entry<Long, CountDownLatch> e : tasks.entrySet()) {
+                        for (Map.Entry<LongTaskTimer.Sample, CountDownLatch> e : tasks.entrySet()) {
                             e.getValue().countDown();
                             if (e.getValue().getCount() == 0) {
-                                timer.stop(e.getKey());
+                                e.getKey().stop();
                                 tasks.remove(e.getKey());
                             }
                         }

@@ -15,6 +15,7 @@
  */
 package io.micrometer.spring.autoconfigure.jersey2.server;
 
+import io.micrometer.jersey2.server.AnnotationFinder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -26,7 +27,11 @@ import org.springframework.context.annotation.Configuration;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.jersey2.server.DefaultJerseyTagsProvider;
 import io.micrometer.jersey2.server.JerseyTagsProvider;
-import io.micrometer.jersey2.server.MicrometerApplicationEventListener;
+import io.micrometer.jersey2.server.MetricsApplicationEventListener;
+import org.springframework.core.annotation.AnnotationUtils;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
 
 /**
  * Configures instrumentation of Jersey server requests.
@@ -34,7 +39,7 @@ import io.micrometer.jersey2.server.MicrometerApplicationEventListener;
  * @author Michael Weirauch
  */
 @Configuration
-@ConditionalOnClass(MicrometerApplicationEventListener.class)
+@ConditionalOnClass(MetricsApplicationEventListener.class)
 @ConditionalOnProperty(value = "management.metrics.jersey2.server.enabled", matchIfMissing = true)
 @EnableConfigurationProperties(JerseyServerMetricsProperties.class)
 public class JerseyServerMetricsConfiguration {
@@ -48,11 +53,13 @@ public class JerseyServerMetricsConfiguration {
     @Bean
     public ResourceConfigCustomizer jerseyResourceConfigCustomizer(MeterRegistry meterRegistry,
             JerseyServerMetricsProperties properties, JerseyTagsProvider tagsProvider) {
-        return (config) -> {
-            config.register(new MicrometerApplicationEventListener(meterRegistry, tagsProvider,
-                    properties.getRequestsMetricName(), properties.isAutoTimeRequests(),
-                    properties.isRecordRequestPercentiles()));
-        };
+        return (config) -> config.register(new MetricsApplicationEventListener(meterRegistry, tagsProvider,
+            properties.getRequestsMetricName(), properties.isAutoTimeRequests(),
+            new AnnotationFinder() {
+                @Override
+                public <A extends Annotation> A findAnnotation(AnnotatedElement annotatedElement, Class<A> annotationType) {
+                    return AnnotationUtils.findAnnotation(annotatedElement, annotationType);
+                }
+            }));
     }
-
 }

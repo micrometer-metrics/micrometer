@@ -31,4 +31,6 @@ public @interface Timed {
     double[] percentiles() default {};
 
     boolean histogram() default false;
+
+    String description() default "";
 }
