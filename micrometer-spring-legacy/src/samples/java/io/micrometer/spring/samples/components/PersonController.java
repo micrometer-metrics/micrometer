@@ -21,10 +21,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 @RestController
@@ -46,6 +44,11 @@ public class PersonController {
             e.printStackTrace();
         }
         return people;
+    }
+
+    @GetMapping("/api/peopleAsync")
+    public CompletableFuture<Collection<String>> personNamesAsync() {
+        return CompletableFuture.supplyAsync(() -> Collections.singletonList("jon"));
     }
 
     /**

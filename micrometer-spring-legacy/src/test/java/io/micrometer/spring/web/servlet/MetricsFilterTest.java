@@ -26,13 +26,11 @@ import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguration;
 import io.prometheus.client.CollectorRegistry;
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -43,9 +41,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
@@ -74,9 +70,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * @author Jon Schneider
+ * @author Nikolay Rybak
  */
 @RunWith(SpringRunner.class)
 @WebAppConfiguration
+@AutoConfigureMockMvc
 @TestPropertySource(properties = "security.ignored=/**")
 public class MetricsFilterTest {
     @Autowired
@@ -86,11 +84,6 @@ public class MetricsFilterTest {
     private PrometheusMeterRegistry prometheusRegistry;
 
     @Autowired
-    private WebApplicationContext context;
-
-    @Autowired
-    private FilterRegistrationBean filterRegistration;
-
     private MockMvc mvc;
 
     @Autowired
@@ -100,14 +93,6 @@ public class MetricsFilterTest {
     @Autowired
     @Qualifier("completableFutureBarrier")
     private CyclicBarrier completableFutureBarrier;
-
-    @Before
-    public void setupMockMvc() {
-        this.mvc = MockMvcBuilders
-            .webAppContextSetup(context)
-            .addFilters(filterRegistration.getFilter(), new RedirectAndNotFoundFilter())
-            .build();
-    }
 
     @Test
     public void timedMethod() throws Exception {
@@ -342,6 +327,11 @@ public class MetricsFilterTest {
                 }
             });
             return r;
+        }
+
+        @Bean
+        RedirectAndNotFoundFilter redirectAndNotFoundFilter() {
+            return new RedirectAndNotFoundFilter();
         }
 
         @Bean(name = "callableBarrier")

@@ -26,6 +26,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -70,7 +71,8 @@ public class SpringSecurityTest {
             .timer()).isPresent();
     }
 
-    @SpringBootApplication
+    @SpringBootApplication(scanBasePackages = "ignore")
+    @Import(Controller.class)
     static class SecurityApp {
         @Bean
         public MeterRegistry registry() {

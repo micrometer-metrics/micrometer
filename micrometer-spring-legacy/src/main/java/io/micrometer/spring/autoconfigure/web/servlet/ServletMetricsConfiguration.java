@@ -24,14 +24,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
-
-import javax.servlet.DispatcherType;
 
 /**
  * Configures instrumentation of Spring Web MVC servlet-based request mappings.
@@ -51,15 +48,12 @@ public class ServletMetricsConfiguration {
     }
 
     @Bean
-    public FilterRegistrationBean webMetricsFilter(MeterRegistry registry, MetricsProperties properties,
-                                                   ServletTagsProvider tagsProvider,
-                                                   WebApplicationContext ctx) {
-        FilterRegistrationBean registrationBean = new FilterRegistrationBean(
-            new MetricsFilter(registry, tagsProvider,
+    public MetricsFilter webMetricsFilter(MeterRegistry registry, MetricsProperties properties,
+                                          ServletTagsProvider tagsProvider,
+                                          WebApplicationContext ctx) {
+        return new MetricsFilter(registry, tagsProvider,
                 properties.getWeb().getServer().getRequestsMetricName(),
                 properties.getWeb().getServer().isAutoTimeRequests(),
-                new HandlerMappingIntrospector(ctx)));
-        registrationBean.setDispatcherTypes(DispatcherType.REQUEST, DispatcherType.ASYNC);
-        return registrationBean;
+                new HandlerMappingIntrospector(ctx));
     }
 }

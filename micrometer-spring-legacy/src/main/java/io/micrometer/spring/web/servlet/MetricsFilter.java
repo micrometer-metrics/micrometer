@@ -96,6 +96,9 @@ public class MetricsFilter extends OncePerRequestFilter {
 
         final Object handlerObject = handler == null ? null : handler.getHandler();
 
+        // If this is the second invocation of the filter in an async request, we don't
+        // want to start sampling again (effectively bumping the active count on any long task timers).
+        // Rather, we'll just use the sampling context we started on the first invocation.
         TimingSampleContext timingContext = asyncTimingContext.remove(request);
         if(timingContext == null) {
             timingContext = new TimingSampleContext(request, handlerObject);

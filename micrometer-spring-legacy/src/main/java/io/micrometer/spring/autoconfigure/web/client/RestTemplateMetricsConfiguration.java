@@ -35,7 +35,7 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 @ConditionalOnClass(name = {
     "org.springframework.web.client.RestTemplate",
-    "org.springframework.boot.web.client.RestTemplateCustomizer"
+    "org.springframework.boot.web.client.RestTemplateCustomizer" // didn't exist until Boot 1.4
 })
 public class RestTemplateMetricsConfiguration {
 
@@ -46,13 +46,10 @@ public class RestTemplateMetricsConfiguration {
     }
 
     @Bean
-    @ConditionalOnClass(name = "org.springframework.boot.web.client.RestTemplateCustomizer")
-    public MetricsRestTemplateCustomizer metricsRestTemplateCustomizer(
-        MeterRegistry meterRegistry,
-        RestTemplateExchangeTagsProvider restTemplateTagConfigurer,
-        MetricsProperties properties) {
+    public MetricsRestTemplateCustomizer metricsRestTemplateCustomizer(MeterRegistry meterRegistry,
+                                                                       RestTemplateExchangeTagsProvider restTemplateTagConfigurer,
+                                                                       MetricsProperties properties) {
         return new MetricsRestTemplateCustomizer(meterRegistry, restTemplateTagConfigurer,
             properties.getWeb().getClient().getRequestsMetricName());
     }
-
 }

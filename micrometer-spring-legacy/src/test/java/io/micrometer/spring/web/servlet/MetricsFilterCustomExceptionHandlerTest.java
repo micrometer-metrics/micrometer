@@ -23,22 +23,20 @@ import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguration;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,17 +44,17 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+
 /**
- * Integration tests for {@link MetricsFilter}.
+ * Tests for {@link MetricsFilter} in the presence of a custom exception handler.
  *
  * @author Jon Schneider
  */
 @RunWith(SpringRunner.class)
 @WebAppConfiguration
-public class MetricsFilterIntegrationTest {
-
-    @Autowired
-    private WebApplicationContext context;
+@AutoConfigureMockMvc
+@TestPropertySource(properties = "security.ignored=/**")
+public class MetricsFilterCustomExceptionHandlerTest {
 
     @Autowired
     private SimpleMeterRegistry registry;
@@ -64,17 +62,8 @@ public class MetricsFilterIntegrationTest {
     @Autowired
     private MockClock clock;
 
-    private MockMvc mvc;
-
     @Autowired
-    private FilterRegistrationBean filterRegistration;
-
-    @Before
-    public void setupMockMvc() {
-        mvc = MockMvcBuilders.webAppContextSetup(context)
-            .addFilters(filterRegistration.getFilter())
-            .build();
-    }
+    private MockMvc mvc;
 
     @Test
     public void handledExceptionIsRecordedInMetricTag() throws Exception {
