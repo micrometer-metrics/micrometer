@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import org.assertj.core.api.Condition;
@@ -60,6 +61,17 @@ class MeterFilterTest {
         id = new Meter.Id("name", Tags.zip("status", "200"), null, null, Meter.Type.Counter);
         filteredId = filter.map(id);
         assertThat(filteredId).has(tag("status", "200"));
+    }
+
+    @Test
+    @Issue("#329")
+    void renameTags() {
+        MeterFilter filter = MeterFilter.renameTag("hystrix", "group", "hystrixgroup");
+        Meter.Id id = new Meter.Id("hystrix.something", Tags.zip("k", "v", "group", "mygroup"), null, null, Meter.Type.Gauge);
+        assertThat(filter.map(id)).has(tag("hystrixgroup", "mygroup"));
+
+        Meter.Id id2 = new Meter.Id("something.else", Tags.zip("group", "mygroup"), null, null, Meter.Type.Gauge);
+        assertThat(filter.map(id2)).has(tag("group", "mygroup"));
     }
 
     @Test
