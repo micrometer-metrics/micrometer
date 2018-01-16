@@ -157,7 +157,7 @@ public class MetricsFilter extends OncePerRequestFilter {
 
         TimingSampleContext(HttpServletRequest request, Object handlerObject) {
             timedAnnotations = annotations(handlerObject);
-            timerSample = Timer.Sample.start(registry);
+            timerSample = Timer.start(registry);
             longTaskTimerSamples = timedAnnotations.stream()
                 .filter(Timed::longTask)
                 .map(t -> LongTaskTimer.builder(t)

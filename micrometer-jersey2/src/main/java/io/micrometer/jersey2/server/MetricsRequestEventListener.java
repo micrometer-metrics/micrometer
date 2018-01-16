@@ -76,7 +76,7 @@ public class MetricsRequestEventListener implements RequestEventListener {
                 timedAnnotations = annotations(event);
 
                 timedAnnotationsOnRequest.put(containerRequest, timedAnnotations);
-                shortTaskSample.put(containerRequest, Timer.Sample.start(registry));
+                shortTaskSample.put(containerRequest, Timer.start(registry));
 
                 List<LongTaskTimer.Sample> longTaskSamples = longTaskTimers(timedAnnotations, event).stream().map(LongTaskTimer::start).collect(Collectors.toList());
                 if (!longTaskSamples.isEmpty()) {

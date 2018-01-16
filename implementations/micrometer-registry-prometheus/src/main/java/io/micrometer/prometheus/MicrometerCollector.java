@@ -16,11 +16,10 @@
 package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.prometheus.client.Collector;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;

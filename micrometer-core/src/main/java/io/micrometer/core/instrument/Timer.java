@@ -138,6 +138,14 @@ public interface Timer extends Meter {
         return Type.Timer;
     }
 
+    static Sample start(MeterRegistry registry) {
+        return new Sample(registry.config().clock());
+    }
+
+    static Sample start(Clock clock) {
+        return new Sample(clock);
+    }
+
     class Sample {
         private final long startTime;
         private final Clock clock;
@@ -147,18 +155,10 @@ public interface Timer extends Meter {
             this.startTime = clock.monotonicTime();
         }
 
-        public static Sample start(Clock clock) {
-            return new Sample(clock);
-        }
-
-        public static Sample start(MeterRegistry registry) {
-            return start(registry.config().clock());
-        }
-
         /**
          * Records the duration of the operation
          *
-         * @return The duration that was stop in nanoseconds
+         * @return The total duration of the sample in nanoseconds
          */
         public long stop(Timer timer){
             long durationNs = clock.monotonicTime() - startTime;
