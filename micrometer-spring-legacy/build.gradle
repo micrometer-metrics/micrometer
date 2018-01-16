@@ -15,10 +15,6 @@ dependencyManagement {
     }
 }
 
-facets {
-    samples
-}
-
 repositories {
     // for spring-cloud-test-support
     maven { url 'https://repo.spring.io/libs-milestone' }
@@ -70,12 +66,4 @@ dependencies {
     testCompile 'org.springframework.integration:spring-integration-xml'
 
     testCompile 'org.springframework.security:spring-security-test'
-
-    samplesCompile 'colt:colt:1.2.0'
-    samplesCompile 'org.springframework.boot:spring-boot-starter-web'
-    samplesCompile 'org.springframework.boot:spring-boot-actuator'
-    samplesCompile 'org.springframework.integration:spring-integration-java-dsl'
-    samplesCompile 'org.springframework.integration:spring-integration-ws'
-    samplesCompile 'org.springframework.integration:spring-integration-xml'
-    samplesCompile 'com.netflix.hystrix:hystrix-javanica:1.5.8'
 }
