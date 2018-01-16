@@ -38,10 +38,13 @@ import static java.util.Objects.requireNonNull;
  */
 public class MetricsRequestEventListener implements RequestEventListener {
 
-    private final Map<ContainerRequest, Timer.Sample> shortTaskTimings = Collections
+    private final Map<ContainerRequest, Timer.Sample> shortTaskSample = Collections
         .synchronizedMap(new IdentityHashMap<>());
 
-    private final Map<ContainerRequest, Collection<LongTaskTimer.Sample>> longTaskTimings = Collections
+    private final Map<ContainerRequest, Collection<LongTaskTimer.Sample>> longTaskSamples = Collections
+        .synchronizedMap(new IdentityHashMap<>());
+
+    private final Map<ContainerRequest, Set<Timed>> timedAnnotationsOnRequest = Collections
         .synchronizedMap(new IdentityHashMap<>());
 
     private final MeterRegistry registry;
@@ -61,28 +64,36 @@ public class MetricsRequestEventListener implements RequestEventListener {
 
     @Override
     public void onEvent(RequestEvent event) {
+        ContainerRequest containerRequest = event.getContainerRequest();
+        Set<Timed> timedAnnotations;
+
         switch (event.getType()) {
             case ON_EXCEPTION:
                 if(!(event.getException() instanceof NotFoundException)) {
                     break;
                 }
             case REQUEST_MATCHED:
-                shortTaskTimings.put(event.getContainerRequest(), Timer.Sample.start(registry));
+                timedAnnotations = annotations(event);
 
-                List<LongTaskTimer.Sample> longTaskSamples = longTaskTimers(event).stream().map(LongTaskTimer::start).collect(Collectors.toList());
+                timedAnnotationsOnRequest.put(containerRequest, timedAnnotations);
+                shortTaskSample.put(containerRequest, Timer.Sample.start(registry));
+
+                List<LongTaskTimer.Sample> longTaskSamples = longTaskTimers(timedAnnotations, event).stream().map(LongTaskTimer::start).collect(Collectors.toList());
                 if (!longTaskSamples.isEmpty()) {
-                    longTaskTimings.put(event.getContainerRequest(), longTaskSamples);
+                    this.longTaskSamples.put(containerRequest, longTaskSamples);
                 }
                 break;
             case FINISHED:
-                Timer.Sample shortSample = shortTaskTimings.remove(event.getContainerRequest());
+                timedAnnotations = timedAnnotationsOnRequest.remove(containerRequest);
+                Timer.Sample shortSample = shortTaskSample.remove(containerRequest);
+
                 if (shortSample != null) {
-                    for (Timer timer : shortTimers(event)) {
+                    for (Timer timer : shortTimers(timedAnnotations, event)) {
                         shortSample.stop(timer);
                     }
                 }
 
-                Collection<LongTaskTimer.Sample> longSamples = longTaskTimings.remove(event.getContainerRequest());
+                Collection<LongTaskTimer.Sample> longSamples = this.longTaskSamples.remove(containerRequest);
                 if (longSamples != null) {
                     for (LongTaskTimer.Sample longSample : longSamples) {
                         longSample.stop();
@@ -92,16 +103,18 @@ public class MetricsRequestEventListener implements RequestEventListener {
         }
     }
 
-    private Set<Timer> shortTimers(RequestEvent event) {
-        final Set<Timed> timed = annotations(event);
-
+    private Set<Timer> shortTimers(Set<Timed> timed, RequestEvent event) {
         /*
          * Given we didn't find any matching resource method, 404s will be only
          * recorded when auto-time-requests is enabled. On par with WebMVC
          * instrumentation.
          */
-        if (timed.isEmpty() && autoTimeRequests) {
+        if ((timed == null || timed.isEmpty()) && autoTimeRequests) {
             return Collections.singleton(registry.timer(metricName, tagsProvider.httpRequestTags(event)));
+        }
+
+        if(timed == null) {
+            return Collections.emptySet();
         }
 
         return timed.stream()
@@ -109,8 +122,8 @@ public class MetricsRequestEventListener implements RequestEventListener {
             .collect(Collectors.toSet());
     }
 
-    private Set<LongTaskTimer> longTaskTimers(RequestEvent event) {
-        return annotations(event).stream()
+    private Set<LongTaskTimer> longTaskTimers(Set<Timed> timed, RequestEvent event) {
+        return timed.stream()
             .filter(Timed::longTask)
             .map(LongTaskTimer::builder)
             .map(b -> b.tags(tagsProvider.httpLongRequestTags(event)).register(registry))

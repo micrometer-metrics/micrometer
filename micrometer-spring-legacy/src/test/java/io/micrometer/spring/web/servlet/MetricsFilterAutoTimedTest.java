@@ -20,7 +20,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsConfiguration;
+import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -81,7 +81,7 @@ public class MetricsFilterAutoTimedTest {
 
     @Configuration
     @EnableWebMvc
-    @Import({Controller.class, WebMvcMetricsConfiguration.class})
+    @Import({Controller.class, ServletMetricsConfiguration.class})
     static class TestConfiguration {
         @Bean
         MockClock clock() {

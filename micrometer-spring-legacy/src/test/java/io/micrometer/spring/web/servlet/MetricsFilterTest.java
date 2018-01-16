@@ -20,22 +20,27 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
+import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguration;
 import io.prometheus.client.CollectorRegistry;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -43,6 +48,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -53,13 +59,14 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.time.Duration;
 import java.util.Collection;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static io.micrometer.core.instrument.MockClock.clock;
 import static io.micrometer.spring.web.servlet.MetricsFilterTest.RedirectAndNotFoundFilter.TEST_MISBEHAVE_HEADER;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
@@ -69,7 +76,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Jon Schneider
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest
+@WebAppConfiguration
 @TestPropertySource(properties = "security.ignored=/**")
 public class MetricsFilterTest {
     @Autowired
@@ -82,139 +89,203 @@ public class MetricsFilterTest {
     private WebApplicationContext context;
 
     @Autowired
-    private MetricsFilter filter;
+    private FilterRegistrationBean filterRegistration;
 
     private MockMvc mvc;
 
     @Autowired
-    private CountDownLatch asyncLatch;
+    @Qualifier("callableBarrier")
+    private CyclicBarrier callableBarrier;
+
+    @Autowired
+    @Qualifier("completableFutureBarrier")
+    private CyclicBarrier completableFutureBarrier;
 
     @Before
     public void setupMockMvc() {
         this.mvc = MockMvcBuilders
-            .webAppContextSetup(this.context)
-            .addFilters(filter, new RedirectAndNotFoundFilter())
+            .webAppContextSetup(context)
+            .addFilters(filterRegistration.getFilter(), new RedirectAndNotFoundFilter())
             .build();
     }
 
     @Test
     public void timedMethod() throws Exception {
-        this.mvc.perform(get("/api/c1/10")).andExpect(status().isOk());
+        mvc.perform(get("/api/c1/10")).andExpect(status().isOk());
 
-        assertThat(this.registry.find("http.server.requests")
+        assertThat(registry.find("http.server.requests")
             .tags("status", "200", "uri", "/api/c1/{id}", "public", "true")
             .value(Statistic.Count, 1.0).timer()).isPresent();
     }
 
     @Test
     public void subclassedTimedMethod() throws Exception {
-        this.mvc.perform(get("/api/c1/metaTimed/10")).andExpect(status().isOk());
+        mvc.perform(get("/api/c1/metaTimed/10")).andExpect(status().isOk());
 
-        assertThat(this.registry.find("http.server.requests")
+        assertThat(registry.find("http.server.requests")
             .tags("status", "200", "uri", "/api/c1/metaTimed/{id}")
             .value(Statistic.Count, 1.0).timer()).isPresent();
     }
 
     @Test
     public void untimedMethod() throws Exception {
-        this.mvc.perform(get("/api/c1/untimed/10")).andExpect(status().isOk());
+        mvc.perform(get("/api/c1/untimed/10")).andExpect(status().isOk());
 
-        assertThat(this.registry.find("http.server.requests")
+        assertThat(registry.find("http.server.requests")
             .tags("uri", "/api/c1/untimed/10").timer()).isEmpty();
     }
 
     @Test
     public void timedControllerClass() throws Exception {
-        this.mvc.perform(get("/api/c2/10")).andExpect(status().isOk());
+        mvc.perform(get("/api/c2/10")).andExpect(status().isOk());
 
-        assertThat(this.registry.find("http.server.requests").tags("status", "200")
+        assertThat(registry.find("http.server.requests").tags("status", "200")
             .value(Statistic.Count, 1.0)
             .timer()).isPresent();
     }
 
     @Test
     public void badClientRequest() throws Exception {
-        this.mvc.perform(get("/api/c1/oops")).andExpect(status().is4xxClientError());
+        mvc.perform(get("/api/c1/oops")).andExpect(status().is4xxClientError());
 
-        assertThat(this.registry.find("http.server.requests").tags("status", "400")
+        assertThat(registry.find("http.server.requests").tags("status", "400")
             .value(Statistic.Count, 1.0)
             .timer()).isPresent();
     }
 
     @Test
     public void redirectRequest() throws Exception {
-        this.mvc.perform(get("/api/redirect")
+        mvc.perform(get("/api/redirect")
             .header(TEST_MISBEHAVE_HEADER, "302")).andExpect(status().is3xxRedirection());
 
-        assertThat(this.registry.find("http.server.requests")
+        assertThat(registry.find("http.server.requests")
             .tags("uri", "REDIRECTION")
             .tags("status", "302").timer()).isPresent();
     }
 
     @Test
     public void notFoundRequest() throws Exception {
-        this.mvc.perform(get("/api/not/found")
-            .header(TEST_MISBEHAVE_HEADER, "404")).andExpect(status().is4xxClientError());
+        mvc.perform(get("/api/not/found")
+            .header(TEST_MISBEHAVE_HEADER, "404"))
+            .andExpect(status().is4xxClientError());
 
-        assertThat(this.registry.find("http.server.requests")
+        assertThat(registry.find("http.server.requests")
             .tags("uri", "NOT_FOUND")
             .tags("status", "404").timer()).isPresent();
     }
 
     @Test
     public void unhandledError() throws Exception {
-        assertThatCode(() -> this.mvc.perform(get("/api/c1/unhandledError/10"))
+        assertThatCode(() -> mvc.perform(get("/api/c1/unhandledError/10"))
             .andExpect(status().isOk()))
             .hasRootCauseInstanceOf(RuntimeException.class);
 
-        assertThat(this.registry.find("http.server.requests")
+        assertThat(registry.find("http.server.requests")
             .tags("exception", "RuntimeException").value(Statistic.Count, 1.0)
             .timer()).isPresent();
     }
 
     @Test
-    public void longRunningRequest() throws Exception {
-        MvcResult result = this.mvc.perform(get("/api/c1/long/10"))
-            .andExpect(request().asyncStarted())
-            .andReturn();
+    public void asyncCallableRequest() throws Exception {
+        final AtomicReference<MvcResult> result = new AtomicReference<>();
+        Thread backgroundRequest = new Thread(() -> {
+            try {
+                result.set(mvc.perform(get("/api/c1/callable/10"))
+                    .andExpect(request().asyncStarted())
+                    .andReturn());
+            } catch (Exception e) {
+                fail("Failed to execute async request", e);
+            }
+        });
+
+        backgroundRequest.start();
 
         // the request is not prematurely recorded as complete
-        assertThat(this.registry.find("http.server.requests")
-            .tags("uri", "/api/c1/async").timer()).isNotPresent();
-
-        // while the mapping is running, it contributes to the activeTasks count
-        assertThat(this.registry.find("my.long.request").tags("region", "test")
-            .value(Statistic.Count, 1.0).longTaskTimer()).isPresent();
+        assertThat(registry.find("http.server.requests")
+            .tags("uri", "/api/c1/callable/{id}").timer()).isNotPresent();
 
         // once the mapping completes, we can gather information about status, etc.
-        asyncLatch.countDown();
+        callableBarrier.await();
+        clock(registry).add(Duration.ofSeconds(2));
 
-        this.mvc.perform(asyncDispatch(result)).andExpect(status().isOk());
+        // while the mapping is running, it contributes to the activeTasks count
+        assertThat(registry.find("my.long.request")
+            .tags("region", "test")
+            .longTaskTimer())
+            .hasValueSatisfying(ltt -> assertThat(ltt.activeTasks()).isEqualTo(1));
 
-        assertThat(this.registry.find("http.server.requests").tags("status", "200")
-            .value(Statistic.Count, 1.0).timer()).isPresent();
+        callableBarrier.await();
+
+        backgroundRequest.join();
+
+        mvc.perform(asyncDispatch(result.get())).andExpect(status().isOk());
+
+        assertThat(registry.find("http.server.requests")
+            .tags("status", "200")
+            .tags("uri", "/api/c1/callable/{id}")
+            .value(Statistic.Count, 1.0)
+            .timer())
+            .isPresent()
+            .hasValueSatisfying(t -> assertThat(t.totalTime(TimeUnit.SECONDS)).isEqualTo(2));
+
+        // once the async dispatch is complete, it should no longer contribute to the activeTasks count
+        assertThat(registry.find("my.long.request")
+            .tags("region", "test")
+            .longTaskTimer())
+            .hasValueSatisfying(ltt -> assertThat(ltt.activeTasks()).isEqualTo(0));
+    }
+
+    @Test
+    public void asyncCompletableFutureRequest() throws Exception {
+        final AtomicReference<MvcResult> result = new AtomicReference<>();
+        Thread backgroundRequest = new Thread(() -> {
+            try {
+                result.set(mvc.perform(get("/api/c1/completableFuture/{id}", 1))
+                    .andExpect(request().asyncStarted())
+                    .andReturn());
+            } catch (Exception e) {
+                fail("Failed to execute async request", e);
+            }
+        });
+
+        backgroundRequest.start();
+
+        completableFutureBarrier.await();
+        clock(registry).add(Duration.ofSeconds(2));
+        completableFutureBarrier.await();
+
+        backgroundRequest.join();
+
+        mvc.perform(asyncDispatch(result.get())).andExpect(status().isOk());
+
+        assertThat(registry.find("http.server.requests")
+            .tags("uri", "/api/c1/completableFuture/{id}")
+            .value(Statistic.Count, 1.0)
+            .timer())
+            .isPresent()
+            .hasValueSatisfying(t -> assertThat(t.totalTime(TimeUnit.SECONDS)).isEqualTo(2));
     }
 
     @Test
     public void endpointThrowsError() throws Exception {
-        this.mvc.perform(get("/api/c1/error/10")).andExpect(status().is4xxClientError());
+        mvc.perform(get("/api/c1/error/10")).andExpect(status().is4xxClientError());
 
-        assertThat(this.registry.find("http.server.requests").tags("status", "422")
+        assertThat(registry.find("http.server.requests").tags("status", "422")
             .value(Statistic.Count, 1.0).timer()).isPresent();
     }
 
     @Test
     public void regexBasedRequestMapping() throws Exception {
-        this.mvc.perform(get("/api/c1/regex/.abc")).andExpect(status().isOk());
+        mvc.perform(get("/api/c1/regex/.abc")).andExpect(status().isOk());
 
-        assertThat(this.registry.find("http.server.requests")
+        assertThat(registry.find("http.server.requests")
             .tags("uri", "/api/c1/regex/{id:\\.[a-z]+}").value(Statistic.Count, 1.0)
             .timer()).isPresent();
     }
 
     @Test
     public void recordQuantiles() throws Exception {
-        this.mvc.perform(get("/api/c1/percentiles/10")).andExpect(status().isOk());
+        mvc.perform(get("/api/c1/percentiles/10")).andExpect(status().isOk());
 
         assertThat(prometheusRegistry.scrape()).contains("quantile=\"0.5\"");
         assertThat(prometheusRegistry.scrape()).contains("quantile=\"0.95\"");
@@ -222,7 +293,7 @@ public class MetricsFilterTest {
 
     @Test
     public void recordHistogram() throws Exception {
-        this.mvc.perform(get("/api/c1/histogram/10")).andExpect(status().isOk());
+        mvc.perform(get("/api/c1/histogram/10")).andExpect(status().isOk());
 
         assertThat(prometheusRegistry.scrape()).contains("le=\"0.001\"");
         assertThat(prometheusRegistry.scrape()).contains("le=\"30.0\"");
@@ -234,30 +305,36 @@ public class MetricsFilterTest {
     public @interface Timed95 {
     }
 
-    @SpringBootApplication(scanBasePackages = "ignored")
-    @Import({Controller1.class, Controller2.class})
+    @Configuration
+    @EnableWebMvc
+    @Import({ServletMetricsConfiguration.class, Controller1.class, Controller2.class})
     static class MetricsFilterApp {
+        @Bean
+        Clock micrometerClock() {
+            return new MockClock();
+        }
+
         @Primary
         @Bean
-        MeterRegistry meterRegistry(Collection<MeterRegistry> registries) {
-            CompositeMeterRegistry composite = new CompositeMeterRegistry();
+        MeterRegistry meterRegistry(Collection<MeterRegistry> registries, Clock clock) {
+            CompositeMeterRegistry composite = new CompositeMeterRegistry(clock);
             registries.forEach(composite::add);
             return composite;
         }
 
         @Bean
-        SimpleMeterRegistry simple() {
-            return new SimpleMeterRegistry();
+        SimpleMeterRegistry simple(Clock clock) {
+            return new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
         }
 
         @Bean
-        PrometheusMeterRegistry prometheus() {
-            PrometheusMeterRegistry r = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, new CollectorRegistry(), Clock.SYSTEM);
+        PrometheusMeterRegistry prometheus(Clock clock) {
+            PrometheusMeterRegistry r = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, new CollectorRegistry(), clock);
             r.config().meterFilter(new MeterFilter() {
                 @Override
                 public MeterFilterReply accept(Meter.Id id) {
                     for (Tag tag : id.getTags()) {
-                        if(tag.getKey().equals("uri") && (tag.getValue().contains("histogram") || tag.getValue().contains("percentiles"))) {
+                        if (tag.getKey().equals("uri") && (tag.getValue().contains("histogram") || tag.getValue().contains("percentiles"))) {
                             return MeterFilterReply.ACCEPT;
                         }
                     }
@@ -267,20 +344,27 @@ public class MetricsFilterTest {
             return r;
         }
 
-        @Bean
-        CountDownLatch asyncLatch() {
-            return new CountDownLatch(1);
+        @Bean(name = "callableBarrier")
+        CyclicBarrier callableBarrier() {
+            return new CyclicBarrier(2);
+        }
+
+        @Bean(name = "completableFutureBarrier")
+        CyclicBarrier completableFutureBarrier() {
+            return new CyclicBarrier(2);
         }
     }
 
     @RestController
     @RequestMapping("/api/c1")
     static class Controller1 {
-        private final CountDownLatch asyncLatch;
+        @Autowired
+        @Qualifier("callableBarrier")
+        private CyclicBarrier callableBarrier;
 
-        public Controller1(CountDownLatch asyncLatch) {
-            this.asyncLatch = asyncLatch;
-        }
+        @Autowired
+        @Qualifier("completableFutureBarrier")
+        private CyclicBarrier completableFutureBarrier;
 
         @Timed(extraTags = {"public", "true"})
         @GetMapping("/{id}")
@@ -290,16 +374,31 @@ public class MetricsFilterTest {
 
         @Timed
         @Timed(value = "my.long.request", extraTags = {"region", "test"}, longTask = true)
-        @GetMapping("/long/{id}")
-        public Callable<String> takesLongTimeToSatisfy(@PathVariable Long id) {
+        @GetMapping("/callable/{id}")
+        public Callable<String> asyncCallable(@PathVariable Long id) throws Exception {
+            callableBarrier.await();
             return () -> {
                 try {
-                    asyncLatch.await();
+                    callableBarrier.await();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
                 return id.toString();
             };
+        }
+
+        @Timed
+        @GetMapping("/completableFuture/{id}")
+        CompletableFuture<String> asyncCompletableFuture(@PathVariable Long id) throws Exception {
+            completableFutureBarrier.await();
+            return CompletableFuture.supplyAsync(() -> {
+                try {
+                    completableFutureBarrier.await();
+                } catch (InterruptedException | BrokenBarrierException e) {
+                    throw new RuntimeException(e);
+                }
+                return id.toString();
+            });
         }
 
         @GetMapping("/untimed/{id}")

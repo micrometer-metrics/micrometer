@@ -58,7 +58,7 @@ public class ScheduledMethodMetrics {
         Timer shortTaskTimer = null;
         LongTaskTimer longTaskTimer = null;
 
-        for (Timed timed : TimedUtils.findTimedAnnotations(method).toArray(Timed[]::new)) {
+        for (Timed timed : TimedUtils.findTimedAnnotations(method)) {
             if (timed.longTask())
                 longTaskTimer = LongTaskTimer.builder(timed.value())
                     .tags(timed.extraTags())

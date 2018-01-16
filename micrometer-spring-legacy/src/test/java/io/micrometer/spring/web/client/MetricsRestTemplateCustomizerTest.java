@@ -45,7 +45,7 @@ public class MetricsRestTemplateCustomizerTest {
         RestTemplate restTemplate = new RestTemplate();
         MetricsRestTemplateCustomizer customizer = new MetricsRestTemplateCustomizer(
             registry, new DefaultRestTemplateExchangeTagsProvider(),
-            "http.client.requests", true);
+            "http.client.requests");
         customizer.customize(restTemplate);
 
         MockRestServiceServer mockServer = MockRestServiceServer

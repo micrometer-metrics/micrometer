@@ -25,14 +25,14 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Factory methods for {@link Tag Tags} associated with a request-response exchange that
- * is handled by Spring MVC.
+ * is instrumented by {@link MetricsFilter}.
  *
  * @author Jon Schneider
  * @author Andy Wilkinson
  */
-public final class WebMvcTags {
+public final class ServletTags {
 
-    private WebMvcTags() {
+    private ServletTags() {
     }
 
     /**

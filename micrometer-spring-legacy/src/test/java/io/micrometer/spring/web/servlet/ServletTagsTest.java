@@ -22,25 +22,25 @@ import org.springframework.web.servlet.HandlerMapping;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WebMvcTagsTest {
+public class ServletTagsTest {
     @Test
     public void uriTrailingSlashesAreSuppressed() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE, "//foo/");
-        assertThat(WebMvcTags.uri(request, null).getValue()).isEqualTo("/foo");
+        assertThat(ServletTags.uri(request, null).getValue()).isEqualTo("/foo");
     }
 
     @Test
     public void redirectsAreShunted() {
         MockHttpServletResponse response = new MockHttpServletResponse();
         response.setStatus(302);
-        assertThat(WebMvcTags.uri(null, response).getValue()).isEqualTo("REDIRECTION");
+        assertThat(ServletTags.uri(null, response).getValue()).isEqualTo("REDIRECTION");
     }
 
     @Test
     public void notFoundsAreShunted() {
         MockHttpServletResponse response = new MockHttpServletResponse();
         response.setStatus(404);
-        assertThat(WebMvcTags.uri(null, response).getValue()).isEqualTo("NOT_FOUND");
+        assertThat(ServletTags.uri(null, response).getValue()).isEqualTo("NOT_FOUND");
     }
 }

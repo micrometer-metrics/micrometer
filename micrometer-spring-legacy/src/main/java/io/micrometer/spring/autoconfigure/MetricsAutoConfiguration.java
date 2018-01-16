@@ -36,7 +36,7 @@ import io.micrometer.spring.autoconfigure.export.simple.SimpleExportConfiguratio
 import io.micrometer.spring.autoconfigure.export.statsd.StatsdExportConfiguration;
 import io.micrometer.spring.autoconfigure.jersey2.server.JerseyServerMetricsConfiguration;
 import io.micrometer.spring.autoconfigure.web.client.RestTemplateMetricsConfiguration;
-import io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsConfiguration;
+import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguration;
 import io.micrometer.spring.autoconfigure.web.tomcat.TomcatMetricsConfiguration;
 import io.micrometer.spring.integration.SpringIntegrationMetrics;
 import io.micrometer.spring.scheduling.ScheduledMethodMetrics;
@@ -66,7 +66,7 @@ import java.util.List;
 @Configuration
 @ConditionalOnClass(Timed.class)
 @EnableConfigurationProperties(MetricsProperties.class)
-@Import({MeterBindersConfiguration.class, WebMvcMetricsConfiguration.class,
+@Import({MeterBindersConfiguration.class, ServletMetricsConfiguration.class,
     RestTemplateMetricsConfiguration.class, AtlasExportConfiguration.class,
     DatadogExportConfiguration.class, GangliaExportConfiguration.class,
     GraphiteExportConfiguration.class, InfluxExportConfiguration.class,

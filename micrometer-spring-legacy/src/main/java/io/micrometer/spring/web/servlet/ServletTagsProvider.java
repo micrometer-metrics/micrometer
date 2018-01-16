@@ -27,7 +27,7 @@ import javax.servlet.http.HttpServletResponse;
  * @author Jon Schneider
  * @author Andy Wilkinson
  */
-public interface WebMvcTagsProvider {
+public interface ServletTagsProvider {
 
     /**
      * Provides tags to be used by {@link LongTaskTimer long task timers}.
@@ -44,10 +44,13 @@ public interface WebMvcTagsProvider {
      *
      * @param request  the request
      * @param response the response
+     * @param handler  the handler for the request
      * @param ex       the current exception, if any
      * @return tags to associate with metrics for the request and response exchange
      */
     Iterable<Tag> httpRequestTags(HttpServletRequest request,
-                                  HttpServletResponse response, Throwable ex);
+                                  HttpServletResponse response,
+                                  Object handler,
+                                  Throwable ex);
 
 }

@@ -22,11 +22,12 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsConfiguration;
+import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -46,13 +47,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Integration tests for {@link WebMvcMetrics}.
+ * Integration tests for {@link MetricsFilter}.
  *
  * @author Jon Schneider
  */
 @RunWith(SpringRunner.class)
 @WebAppConfiguration
-public class WebMvcMetricsIntegrationTest {
+public class MetricsFilterIntegrationTest {
 
     @Autowired
     private WebApplicationContext context;
@@ -66,37 +67,37 @@ public class WebMvcMetricsIntegrationTest {
     private MockMvc mvc;
 
     @Autowired
-    private MetricsFilter filter;
+    private FilterRegistrationBean filterRegistration;
 
     @Before
     public void setupMockMvc() {
-        this.mvc = MockMvcBuilders.webAppContextSetup(this.context)
-            .addFilters(filter)
+        mvc = MockMvcBuilders.webAppContextSetup(context)
+            .addFilters(filterRegistration.getFilter())
             .build();
     }
 
     @Test
     public void handledExceptionIsRecordedInMetricTag() throws Exception {
-        this.mvc.perform(get("/api/handledError")).andExpect(status().is5xxServerError());
+        mvc.perform(get("/api/handledError")).andExpect(status().is5xxServerError());
 
-        assertThat(this.registry.find("http.server.requests")
+        assertThat(registry.find("http.server.requests")
             .tags("exception", "Exception1", "status", "500").value(Statistic.Count, 1.0).timer())
             .isPresent();
     }
 
     @Test
     public void rethrownExceptionIsRecordedInMetricTag() throws Exception {
-        assertThatCode(() -> this.mvc.perform(get("/api/rethrownError"))
+        assertThatCode(() -> mvc.perform(get("/api/rethrownError"))
             .andExpect(status().is5xxServerError()));
 
-        assertThat(this.registry.find("http.server.requests")
+        assertThat(registry.find("http.server.requests")
             .tags("exception", "Exception2", "status", "500").value(Statistic.Count, 1.0).timer())
             .isPresent();
     }
 
     @Configuration
     @EnableWebMvc
-    @Import(WebMvcMetricsConfiguration.class)
+    @Import(ServletMetricsConfiguration.class)
     static class TestConfiguration {
         @Bean
         MockClock clock() {
@@ -112,7 +113,6 @@ public class WebMvcMetricsIntegrationTest {
         @RequestMapping("/api")
         @Timed
         static class Controller1 {
-
             @Bean
             public CustomExceptionHandler controllerAdvice() {
                 return new CustomExceptionHandler();
@@ -127,7 +127,6 @@ public class WebMvcMetricsIntegrationTest {
             public String rethrownError() {
                 throw new Exception2();
             }
-
         }
     }
 
@@ -140,12 +139,9 @@ public class WebMvcMetricsIntegrationTest {
     @ControllerAdvice
     static class CustomExceptionHandler {
 
-        @Autowired
-        WebMvcMetrics metrics;
-
         @ExceptionHandler
         ResponseEntity<String> handleError(Exception1 ex) throws Throwable {
-            this.metrics.tagWithException(ex);
+            MetricsFilter.tagWithException(ex);
             return new ResponseEntity<>("this is a custom exception body",
                 HttpStatus.INTERNAL_SERVER_ERROR);
         }

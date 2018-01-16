@@ -71,23 +71,9 @@ public class MetricsProperties {
         public static class Client {
 
             /**
-             * Whether or not instrumented requests record percentiles histogram buckets
-             * by default.
-             */
-            private boolean recordRequestPercentiles;
-
-            /**
              * Name of the metric for sent requests.
              */
             private String requestsMetricName = "http.client.requests";
-
-            public boolean isRecordRequestPercentiles() {
-                return this.recordRequestPercentiles;
-            }
-
-            public void setRecordRequestPercentiles(boolean recordRequestPercentiles) {
-                this.recordRequestPercentiles = recordRequestPercentiles;
-            }
 
             public String getRequestsMetricName() {
                 return this.requestsMetricName;
@@ -110,13 +96,6 @@ public class MetricsProperties {
             private boolean autoTimeRequests = true;
 
             /**
-             * Whether or not instrumented requests record percentiles histogram buckets
-             * by default. Can be overridden by adding '@Timed' to a request endpoint and
-             * setting 'percentiles' to true.
-             */
-            private boolean recordRequestPercentiles;
-
-            /**
              * Name of the metric for received requests.
              */
             private String requestsMetricName = "http.server.requests";
@@ -129,14 +108,6 @@ public class MetricsProperties {
                 this.autoTimeRequests = autoTimeRequests;
             }
 
-            public boolean isRecordRequestPercentiles() {
-                return this.recordRequestPercentiles;
-            }
-
-            public void setRecordRequestPercentiles(boolean recordRequestPercentiles) {
-                this.recordRequestPercentiles = recordRequestPercentiles;
-            }
-
             public String getRequestsMetricName() {
                 return this.requestsMetricName;
             }
@@ -144,9 +115,6 @@ public class MetricsProperties {
             public void setRequestsMetricName(String requestsMetricName) {
                 this.requestsMetricName = requestsMetricName;
             }
-
         }
-
     }
-
 }

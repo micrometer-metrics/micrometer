@@ -42,20 +42,13 @@ class MetricsClientHttpRequestInterceptor implements ClientHttpRequestIntercepto
         "Rest Template URL Template");
 
     private final MeterRegistry meterRegistry;
-
     private final RestTemplateExchangeTagsProvider tagProvider;
-
     private final String metricName;
 
-    private final boolean recordPercentiles;
-
-    MetricsClientHttpRequestInterceptor(MeterRegistry meterRegistry,
-                                        RestTemplateExchangeTagsProvider tagProvider, String metricName,
-                                        boolean recordPercentiles) {
+    MetricsClientHttpRequestInterceptor(MeterRegistry meterRegistry, String metricName, RestTemplateExchangeTagsProvider tagProvider) {
         this.tagProvider = tagProvider;
         this.meterRegistry = meterRegistry;
         this.metricName = metricName;
-        this.recordPercentiles = recordPercentiles;
     }
 
     @Override
@@ -95,7 +88,6 @@ class MetricsClientHttpRequestInterceptor implements ClientHttpRequestIntercepto
                                          ClientHttpResponse response) {
         return Timer.builder(this.metricName)
             .tags(this.tagProvider.getTags(urlTemplate.get(), request, response))
-            .description("Timer of RestTemplate operation")
-            .publishPercentileHistogram(this.recordPercentiles);
+            .description("Timer of RestTemplate operation");
     }
 }
