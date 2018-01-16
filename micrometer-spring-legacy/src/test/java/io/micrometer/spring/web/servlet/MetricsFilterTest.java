@@ -45,6 +45,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.util.NestedServletException;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -221,6 +222,33 @@ public class MetricsFilterTest {
     }
 
     @Test
+    public void asyncRequestThatThrowsUncheckedException() throws Exception {
+        final MvcResult result = mvc.perform(get("/api/c1/completableFutureException"))
+            .andExpect(request().asyncStarted())
+            .andReturn();
+
+        // once the async dispatch is complete, it should no longer contribute to the activeTasks count
+        assertThat(registry.find("my.long.request.exception")
+            .longTaskTimer())
+            .hasValueSatisfying(ltt -> assertThat(ltt.activeTasks()).isEqualTo(1));
+
+        assertThatExceptionOfType(NestedServletException.class)
+            .isThrownBy(() -> mvc.perform(asyncDispatch(result)))
+            .withRootCauseInstanceOf(RuntimeException.class);
+
+        assertThat(registry.find("http.server.requests")
+            .tags("uri", "/api/c1/completableFutureException")
+            .value(Statistic.Count, 1.0)
+            .timer())
+            .isPresent();
+
+        // once the async dispatch is complete, it should no longer contribute to the activeTasks count
+        assertThat(registry.find("my.long.request.exception")
+            .longTaskTimer())
+            .hasValueSatisfying(ltt -> assertThat(ltt.activeTasks()).isEqualTo(0));
+    }
+
+    @Test
     public void asyncCompletableFutureRequest() throws Exception {
         final AtomicReference<MvcResult> result = new AtomicReference<>();
         Thread backgroundRequest = new Thread(() -> {
@@ -388,6 +416,15 @@ public class MetricsFilterTest {
                     throw new RuntimeException(e);
                 }
                 return id.toString();
+            });
+        }
+
+        @Timed
+        @Timed(value = "my.long.request.exception", longTask = true)
+        @GetMapping("/completableFutureException")
+        CompletableFuture<String> asyncCompletableFutureException() throws Exception {
+            return CompletableFuture.supplyAsync(() -> {
+                throw new RuntimeException("boom");
             });
         }
 

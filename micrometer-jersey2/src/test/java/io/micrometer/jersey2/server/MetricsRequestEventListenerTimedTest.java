@@ -138,12 +138,9 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
 
     @Test
     public void unnamedLongTaskTimerIsNotSupported() {
-        try {
-            target("long-timed-unnamed").request().get();
-            failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
-        } catch(ProcessingException e) {
-            assertThatIllegalArgumentException();
-        }
+        assertThatExceptionOfType(ProcessingException.class)
+            .isThrownBy(() -> target("long-timed-unnamed").request().get())
+            .withCauseInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
