@@ -31,10 +31,8 @@ public interface GraphiteConfig extends DropwizardConfig {
     /**
      * Get the value associated with a key.
      *
-     * @param k
-     *     Key to lookup in the config.
-     * @return
-     *     Value for the key or null if no key is present.
+     * @param k Key to lookup in the config.
+     * @return Value for the key or null if no key is present.
      */
     String get(String k);
 
@@ -74,16 +72,23 @@ public interface GraphiteConfig extends DropwizardConfig {
     }
 
     /**
+     * Prefix all metric names with the given string.
+     */
+    default String metricPrefix() {
+        return get(prefix() + ".metric-prefix");
+    }
+
+    /**
      * Protocol to use while shipping data to Graphite.
      */
     default GraphiteProtocol protocol() {
         String v = get(prefix() + ".protocol");
 
-        if(v == null)
+        if (v == null)
             return GraphiteProtocol.Pickled;
 
         for (GraphiteProtocol flavor : GraphiteProtocol.values()) {
-            if(flavor.toString().equalsIgnoreCase(v))
+            if (flavor.toString().equalsIgnoreCase(v))
                 return flavor;
         }
 
