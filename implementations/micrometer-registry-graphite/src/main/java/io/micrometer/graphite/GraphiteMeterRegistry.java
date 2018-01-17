@@ -20,11 +20,14 @@ import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.graphite.GraphiteSender;
 import com.codahale.metrics.graphite.PickledGraphite;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
+
+import static java.util.Objects.requireNonNull;
 
 public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
 
@@ -58,6 +61,7 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
         this.reporter = GraphiteReporter.forRegistry(getDropwizardRegistry())
                 .convertRatesTo(config.rateUnits())
                 .convertDurationsTo(config.durationUnits())
+                .prefixedWith(config.metricPrefix())
                 .build(sender);
 
         if(config.enabled())
@@ -70,5 +74,10 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
 
     public void start() {
         this.reporter.start(config.step().getSeconds(), TimeUnit.SECONDS);
+    }
+
+    public GraphiteMeterRegistry setNamingConvention(NamingConvention namingConvention) {
+        this.config().namingConvention(requireNonNull(namingConvention));
+        return this;
     }
 }
