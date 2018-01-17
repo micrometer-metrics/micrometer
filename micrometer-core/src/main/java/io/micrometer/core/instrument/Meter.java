@@ -79,6 +79,10 @@ public interface Meter {
             this.type = type;
         }
 
+        public Id withName(String newName) {
+            return new Id(newName, tags, baseUnit, description, type);
+        }
+
         public Id withTag(Tag tag) {
             return new Id(name, Tags.concat(tags, Collections.singletonList(tag)), baseUnit, description, type);
         }

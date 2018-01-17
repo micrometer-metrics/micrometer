@@ -75,10 +75,6 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         start(threadFactory);
     }
 
-    public DatadogMeterRegistry(DatadogConfig config) {
-        this(config, Clock.SYSTEM);
-    }
-
     @Override
     protected void publish() {
         Map<String, DatadogMetricMetadata> metadataToSend = new HashMap<>();

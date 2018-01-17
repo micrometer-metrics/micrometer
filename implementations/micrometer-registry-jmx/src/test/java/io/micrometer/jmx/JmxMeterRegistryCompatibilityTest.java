@@ -34,7 +34,7 @@ public class JmxMeterRegistryCompatibilityTest extends MeterRegistryCompatibilit
 
     @Override
     public MeterRegistry registry() {
-        return new JmxMeterRegistry(JmxConfig.DEFAULT, HierarchicalNameMapper.DEFAULT, new MockClock());
+        return new JmxMeterRegistry(JmxConfig.DEFAULT, new MockClock(), HierarchicalNameMapper.DEFAULT);
     }
 
     @Override

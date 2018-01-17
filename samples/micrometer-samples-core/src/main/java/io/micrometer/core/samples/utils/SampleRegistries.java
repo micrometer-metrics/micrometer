@@ -123,7 +123,7 @@ public class SampleRegistries {
             }
         };
 
-        return new DatadogMeterRegistry(config);
+        return new DatadogMeterRegistry(config, Clock.SYSTEM);
     }
 
     public static StatsdMeterRegistry datadogStatsd() {
@@ -175,7 +175,7 @@ public class SampleRegistries {
             public String get(String k) {
                 return null;
             }
-        });
+        }, Clock.SYSTEM);
     }
 
     public static GraphiteMeterRegistry graphite() {
@@ -189,7 +189,7 @@ public class SampleRegistries {
             public String get(String k) {
                 return null;
             }
-        });
+        }, Clock.SYSTEM);
     }
 
     public static JmxMeterRegistry jmx() {
@@ -203,7 +203,7 @@ public class SampleRegistries {
             public String get(String k) {
                 return null;
             }
-        });
+        }, Clock.SYSTEM);
     }
 
     public static InfluxMeterRegistry influx() {

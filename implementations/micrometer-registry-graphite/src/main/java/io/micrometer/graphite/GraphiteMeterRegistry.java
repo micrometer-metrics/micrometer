@@ -15,10 +15,8 @@
  */
 package io.micrometer.graphite;
 
-import com.codahale.metrics.graphite.Graphite;
-import com.codahale.metrics.graphite.GraphiteReporter;
-import com.codahale.metrics.graphite.GraphiteSender;
-import com.codahale.metrics.graphite.PickledGraphite;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.graphite.*;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
@@ -31,37 +29,49 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
     private final GraphiteReporter reporter;
     private final GraphiteConfig config;
 
-    public GraphiteMeterRegistry() {
-        this(System::getProperty);
+    public GraphiteMeterRegistry(GraphiteConfig config, Clock clock) {
+        this(config, clock, new GraphiteHierarchicalNameMapper(config.tagsAsPrefix()));
     }
 
-    public GraphiteMeterRegistry(GraphiteConfig config) {
-        this(config, HierarchicalNameMapper.DEFAULT, Clock.SYSTEM);
+    public GraphiteMeterRegistry(GraphiteConfig config, Clock clock, HierarchicalNameMapper nameMapper) {
+        this(config, clock, nameMapper, new MetricRegistry());
     }
 
-    public GraphiteMeterRegistry(GraphiteConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
-        super(config, nameMapper, clock);
+    public GraphiteMeterRegistry(GraphiteConfig config, Clock clock, HierarchicalNameMapper nameMapper,
+                                 MetricRegistry metricRegistry) {
+        this(config, clock, nameMapper, metricRegistry, defaultGraphiteReporter(config, metricRegistry));
+    }
+
+    public GraphiteMeterRegistry(GraphiteConfig config, Clock clock, HierarchicalNameMapper nameMapper,
+                                 MetricRegistry metricRegistry, GraphiteReporter reporter) {
+        super(config, metricRegistry, nameMapper, clock);
 
         this.config = config;
         this.config().namingConvention(new GraphiteNamingConvention());
+        this.reporter = reporter;
 
+        if (config.enabled())
+            start();
+    }
+
+    private static GraphiteReporter defaultGraphiteReporter(GraphiteConfig config, MetricRegistry metricRegistry) {
         GraphiteSender sender;
-        switch(config.protocol()) {
+        switch (config.protocol()) {
             case Plaintext:
                 sender = new Graphite(new InetSocketAddress(config.host(), config.port()));
+                break;
+            case Udp:
+                sender = new GraphiteUDP(new InetSocketAddress(config.host(), config.port()));
                 break;
             case Pickled:
             default:
                 sender = new PickledGraphite(new InetSocketAddress(config.host(), config.port()));
         }
 
-        this.reporter = GraphiteReporter.forRegistry(getDropwizardRegistry())
-                .convertRatesTo(config.rateUnits())
-                .convertDurationsTo(config.durationUnits())
-                .build(sender);
-
-        if(config.enabled())
-            start();
+        return GraphiteReporter.forRegistry(metricRegistry)
+            .convertRatesTo(config.rateUnits())
+            .convertDurationsTo(config.durationUnits())
+            .build(sender);
     }
 
     public void stop() {

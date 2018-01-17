@@ -35,7 +35,7 @@ class GraphiteMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityK
             public String get(String k) {
                 return null;
             }
-        }, HierarchicalNameMapper.DEFAULT, new MockClock());
+        }, new MockClock(), HierarchicalNameMapper.DEFAULT);
     }
 
     @Override
