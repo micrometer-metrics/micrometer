@@ -222,7 +222,7 @@ public class SampleRegistries {
             public String get(String k) {
                 return null;
             }
-        });
+        }, Clock.SYSTEM);
     }
 
     public static NewRelicMeterRegistry newRelic(String accountId, String apiKey) {

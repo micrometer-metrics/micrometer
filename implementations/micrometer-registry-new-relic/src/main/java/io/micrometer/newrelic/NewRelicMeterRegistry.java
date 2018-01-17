@@ -35,6 +35,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.stream.Collectors.joining;
@@ -49,10 +51,14 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(NewRelicMeterRegistry.class);
 
     public NewRelicMeterRegistry(NewRelicConfig config, Clock clock) {
+        this(config, clock, Executors.defaultThreadFactory());
+    }
+
+    public NewRelicMeterRegistry(NewRelicConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
         this.config = config;
         config().namingConvention(NamingConvention.camelCase);
-        start();
+        start(threadFactory);
     }
 
     @Override

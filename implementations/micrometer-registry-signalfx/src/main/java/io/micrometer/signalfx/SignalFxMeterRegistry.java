@@ -34,6 +34,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.stream.Collectors.joining;
@@ -48,6 +50,10 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     private final URL postTimeSeriesEndpoint;
 
     public SignalFxMeterRegistry(SignalFxConfig config, Clock clock) {
+        this(config, clock, Executors.defaultThreadFactory());
+    }
+
+    public SignalFxMeterRegistry(SignalFxConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
         this.config = config;
 
@@ -60,7 +66,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
 
         config().namingConvention(new SignalFxNamingConvention());
 
-        start();
+        start(threadFactory);
     }
 
     @Override
