@@ -23,13 +23,13 @@ repositories {
 dependencies {
     compile project(':micrometer-core')
 
-    compile 'org.springframework:spring-beans'
-    compile 'org.springframework.boot:spring-boot'
+    compile 'org.springframework:spring-beans', optional
+    compile 'org.springframework.boot:spring-boot', optional
     compile 'org.springframework.boot:spring-boot-actuator', optional
     compile 'org.springframework.boot:spring-boot-starter-aop', optional
     compile 'org.springframework.boot:spring-boot-starter-security', optional
-    compile 'org.springframework:spring-webmvc'
-    compile 'org.springframework:spring-web'
+    compile 'org.springframework:spring-webmvc', optional
+    compile 'org.springframework:spring-web', optional
     compile 'javax.servlet:javax.servlet-api:3.1.0', optional
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
 
