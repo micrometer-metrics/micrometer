@@ -28,6 +28,8 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * @author Jon Schneider
  * @author Trustin Heuiseung Lee
@@ -54,7 +56,7 @@ public class TimeWindowLatencyHistogram extends TimeWindowHistogramBase<LatencyS
                                       io.micrometer.core.instrument.histogram.pause.PauseDetector pauseDetector) {
         super(clock, histogramConfig, LatencyStats.class);
 
-        this.pauseDetector = pauseDetectorCache.computeIfAbsent(pauseDetector, detector -> {
+        this.pauseDetector = requireNonNull(pauseDetectorCache.computeIfAbsent(pauseDetector, detector -> {
             if (detector instanceof ClockDriftPauseDetector) {
                 ClockDriftPauseDetector clockDriftPauseDetector = (ClockDriftPauseDetector) detector;
                 return new SimplePauseDetector(clockDriftPauseDetector.getSleepInterval().toNanos(),
@@ -63,11 +65,15 @@ public class TimeWindowLatencyHistogram extends TimeWindowHistogramBase<LatencyS
                 return new NoopPauseDetector();
             }
             return new NoopPauseDetector();
-        });
+        }));
+
+        initRingBuffer();
     }
 
     @Override
     LatencyStats newBucket(HistogramConfig histogramConfig) {
+        requireNonNull(pauseDetector);
+
         return new LatencyStats.Builder()
             .pauseDetector(pauseDetector)
             .lowestTrackableLatency(histogramConfig.getMinimumExpectedValue())
