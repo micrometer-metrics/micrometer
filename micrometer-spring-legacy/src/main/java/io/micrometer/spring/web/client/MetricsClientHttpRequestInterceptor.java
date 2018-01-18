@@ -80,14 +80,19 @@ class MetricsClientHttpRequestInterceptor implements ClientHttpRequestIntercepto
                 urlTemplate.set(url);
                 return delegate.expand(url, arguments);
             }
-
         };
     }
 
     private Timer.Builder getTimeBuilder(HttpRequest request,
                                          ClientHttpResponse response) {
         return Timer.builder(this.metricName)
-            .tags(this.tagProvider.getTags(urlTemplate.get(), request, response))
+            .tags(this.tagProvider.getTags(ensureLeadingSlash(urlTemplate.get()), request, response))
             .description("Timer of RestTemplate operation");
+    }
+
+    // This normalization improves tag value matching when one code path requests test/{id} and another
+    // requests /test/{id}
+    private String ensureLeadingSlash(String url) {
+        return url.startsWith("/") ? url : "/" + url;
     }
 }
