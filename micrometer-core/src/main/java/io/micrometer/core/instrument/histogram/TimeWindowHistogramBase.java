@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.CountAtValue;
 import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.ValueAtPercentile;
-import io.micrometer.core.instrument.util.Assert;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.lang.reflect.Array;
@@ -47,7 +46,7 @@ abstract class TimeWindowHistogramBase<T, U> {
     private final HistogramConfig histogramConfig;
 
     private final T[] ringBuffer;
-    private final U accumulatedHistogram;
+    private U accumulatedHistogram;
     private volatile boolean accumulatedHistogramStale;
 
     private final long durationBetweenRotatesMillis;
@@ -65,8 +64,8 @@ abstract class TimeWindowHistogramBase<T, U> {
             rejectHistogramConfig("histogramBufferLength (" + ageBuckets + ") must be greater than 0.");
         }
 
-        ringBuffer = newRingBuffer(bucketType, ageBuckets, histogramConfig);
-        accumulatedHistogram = newAccumulatedHistogram(ringBuffer);
+        //noinspection unchecked
+        ringBuffer = (T[]) Array.newInstance(bucketType, ageBuckets);
 
         durationBetweenRotatesMillis = histogramConfig.getHistogramExpiry().toMillis() / ageBuckets;
         if (durationBetweenRotatesMillis <= 0) {
@@ -76,7 +75,6 @@ abstract class TimeWindowHistogramBase<T, U> {
 
         currentBucket = 0;
         lastRotateTimestampMillis = clock.wallTime();
-
     }
 
     private static HistogramConfig validateHistogramConfig(HistogramConfig histogramConfig) {
@@ -108,13 +106,11 @@ abstract class TimeWindowHistogramBase<T, U> {
         return histogramConfig;
     }
 
-    private T[] newRingBuffer(Class<T> bucketType, int ageBuckets, HistogramConfig histogramConfig) {
-        @SuppressWarnings("unchecked")
-        final T[] ringBuffer = (T[]) Array.newInstance(bucketType, ageBuckets);
-        for (int i = 0; i < ageBuckets; i++) {
+    void initRingBuffer() {
+        for (int i = 0; i < ringBuffer.length; i++) {
             ringBuffer[i] = newBucket(histogramConfig);
         }
-        return ringBuffer;
+        accumulatedHistogram = newAccumulatedHistogram(ringBuffer);
     }
 
     private static void rejectHistogramConfig(String msg) {
@@ -142,7 +138,6 @@ abstract class TimeWindowHistogramBase<T, U> {
     }
 
     public final double percentile(double percentile, TimeUnit unit) {
-        Assert.notNull(unit,"timeUnit");
         return TimeUtils.nanosToUnit(percentile(percentile), unit);
     }
 
@@ -178,7 +173,7 @@ abstract class TimeWindowHistogramBase<T, U> {
 
     private ValueAtPercentile[] takeValueSnapshot() {
         final double[] monitoredPercentiles = histogramConfig.getPercentiles();
-        if (monitoredPercentiles.length <= 0) {
+        if (monitoredPercentiles.length == 0) {
             return null;
         }
 

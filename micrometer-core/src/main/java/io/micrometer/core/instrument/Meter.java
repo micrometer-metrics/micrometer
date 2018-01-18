@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.util.Assert;
 import io.micrometer.core.lang.Nullable;
 
 import java.beans.Introspector;
@@ -68,9 +67,6 @@ public interface Meter {
         private Type type;
 
         public Id(String name, Iterable<Tag> tags, @Nullable String baseUnit, @Nullable String description, Type type) {
-            Assert.notNull(name, "name");
-            Assert.notNull(tags, "tags");
-            Assert.notNull(type, "type");
             this.name = name;
 
             this.tags = Collections.unmodifiableList(stream(tags.spliterator(), false)
@@ -85,12 +81,10 @@ public interface Meter {
         }
 
         public Id withTag(Tag tag) {
-            Assert.notNull(tag, "tag");
             return new Id(name, Tags.concat(tags, Collections.singletonList(tag)), baseUnit, description, type);
         }
 
         public Id withTag(Statistic statistic) {
-            Assert.notNull(statistic, "statistic");
             return withTag(Tag.of("statistic", Introspector.decapitalize(statistic.toString())));
         }
 
@@ -122,7 +116,6 @@ public interface Meter {
          * Tags that are sorted by key and formatted
          */
         public List<Tag> getConventionTags(NamingConvention namingConvention) {
-            Assert.notNull(namingConvention, "namingConvention");
             return tags.stream()
                 .map(t -> Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())))
                 .collect(Collectors.toList());
@@ -170,9 +163,6 @@ public interface Meter {
         private @Nullable String baseUnit;
 
         private Builder(String name, Type type, Iterable<Measurement> measurements) {
-            Assert.notNull(name, "name");
-            Assert.notNull(type, "type");
-            Assert.notNull(measurements, "measurements");
             this.name = name;
             this.type = type;
             this.measurements = measurements;
@@ -201,7 +191,6 @@ public interface Meter {
         }
 
         public Meter register(MeterRegistry registry) {
-            Assert.notNull(registry, "registry");
             return registry.register(new Meter.Id(name, tags, baseUnit, description, type), type, measurements);
         }
     }

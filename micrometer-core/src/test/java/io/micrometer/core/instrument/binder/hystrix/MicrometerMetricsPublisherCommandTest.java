@@ -17,8 +17,6 @@ package io.micrometer.core.instrument.binder.hystrix;
 
 import com.netflix.hystrix.*;
 import com.netflix.hystrix.strategy.properties.HystrixPropertiesCommandDefault;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -72,24 +70,23 @@ class MicrometerMetricsPublisherCommandTest {
         List<Tag> tags = Tags.zip("group", "MicrometerGROUP", "key", "MicrometerCOMMAND-A");
 
         assertExecutionMetric(registry, "success", 24.0);
-        assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "timeout").functionCounter().map(FunctionCounter::count)).hasValue(3.0);
-        assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "failure").functionCounter().map(FunctionCounter::count)).hasValue(6.0);
-        assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "short_circuited").functionCounter().map(FunctionCounter::count)).hasValue(0.0);
-        assertThat(registry.find("hystrix.circuit.breaker.open").tags(tags).gauge().map(Gauge::value)).hasValue(0.0);
+        assertThat(registry.mustFind("hystrix.execution").tags(tags).tags("event", "timeout").functionCounter().count()).isEqualTo(3.0);
+        assertThat(registry.mustFind("hystrix.execution").tags(tags).tags("event", "failure").functionCounter().count()).isEqualTo(6.0);
+        assertThat(registry.mustFind("hystrix.execution").tags(tags).tags("event", "short_circuited").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.mustFind("hystrix.circuit.breaker.open").tags(tags).gauge().value()).isEqualTo(0.0);
     }
 
     private void assertExecutionMetric(SimpleMeterRegistry registry, String eventType, double count) {
         try {
             Flux.interval(Duration.ofMillis(50))
-                .takeUntil(n -> registry.find("hystrix.execution").tags("event", eventType)
+                .takeUntil(n -> registry.mustFind("hystrix.execution").tags("event", eventType)
                     .functionCounter()
-                    .map(FunctionCounter::count)
-                    .orElse(0.0) == count)
+                    .count() == count)
                 .blockLast(Duration.ofSeconds(30));
         } catch(RuntimeException e) {
-            assertThat(registry.find("hystrix.execution").tags("event", eventType)
+            assertThat(registry.mustFind("hystrix.execution").tags("event", eventType)
                 .functionCounter()
-                .map(FunctionCounter::count)).isEqualTo(count);
+                .count()).isEqualTo(count);
         }
     }
 
@@ -114,11 +111,11 @@ class MicrometerMetricsPublisherCommandTest {
         List<Tag> tags = Tags.zip("group", groupKey.name(), "key", key.name());
 
         assertExecutionMetric(registry, "short_circuited", 6.0);
-        assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "success").functionCounter().map(FunctionCounter::count)).hasValue(0.0);
-        assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "timeout").functionCounter().map(FunctionCounter::count)).hasValue(0.0);
-        assertThat(registry.find("hystrix.execution").tags(tags).tags("event", "failure").functionCounter().map(FunctionCounter::count)).hasValue(0.0);
-        assertThat(registry.find("hystrix.fallback").tags(tags).tags("event", "fallback_success").functionCounter().map(FunctionCounter::count)).hasValue(6.0);
-        assertThat(registry.find("hystrix.circuit.breaker.open").tags(tags).gauge().map(Gauge::value)).hasValue(1.0);
+        assertThat(registry.mustFind("hystrix.execution").tags(tags).tags("event", "success").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.mustFind("hystrix.execution").tags(tags).tags("event", "timeout").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.mustFind("hystrix.execution").tags(tags).tags("event", "failure").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.mustFind("hystrix.fallback").tags(tags).tags("event", "fallback_success").functionCounter().count()).isEqualTo(6.0);
+        assertThat(registry.mustFind("hystrix.circuit.breaker.open").tags(tags).gauge().value()).isEqualTo(1.0);
     }
 
     static class SampleCommand extends HystrixCommand<Integer> {

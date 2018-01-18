@@ -17,10 +17,10 @@ package io.micrometer.spring.web.client;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -29,7 +29,6 @@ import org.springframework.test.web.client.match.MockRestRequestMatchers;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.RestTemplate;
 
-import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.stream.StreamSupport.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,17 +39,19 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class MetricsRestTemplateCustomizerTest {
 
+    private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+    private RestTemplate restTemplate = new RestTemplate();
+    private MockRestServiceServer mockServer = MockRestServiceServer.createServer(restTemplate);
+
+    @Before
+    public void before() {
+        MetricsRestTemplateCustomizer customizer = new MetricsRestTemplateCustomizer(
+            registry, new DefaultRestTemplateExchangeTagsProvider(), "http.client.requests");
+        customizer.customize(restTemplate);
+    }
+
     @Test
     public void interceptRestTemplate() {
-        MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-        RestTemplate restTemplate = new RestTemplate();
-        MetricsRestTemplateCustomizer customizer = new MetricsRestTemplateCustomizer(
-            registry, new DefaultRestTemplateExchangeTagsProvider(),
-            "http.client.requests", true);
-        customizer.customize(restTemplate);
-
-        MockRestServiceServer mockServer = MockRestServiceServer
-            .createServer(restTemplate);
         mockServer.expect(MockRestRequestMatchers.requestTo("/test/123"))
             .andExpect(MockRestRequestMatchers.method(HttpMethod.GET))
             .andRespond(MockRestResponseCreators.withSuccess("OK",
@@ -61,11 +62,29 @@ public class MetricsRestTemplateCustomizerTest {
         assertThat(registry.find("http.client.requests").meters())
             .anySatisfy(m -> assertThat(stream(m.getId().getTags().spliterator(), false).map(Tag::getKey)).doesNotContain("bucket"));
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
         assertThat(registry.find("http.client.requests")
             .tags("method", "GET", "uri", "/test/{id}", "status", "200")
-            .value(Statistic.Count, 1.0).timer()).isPresent();
+            .timer().count()).isEqualTo(1L);
 
+        assertThat(result).isEqualTo("OK");
+
+        mockServer.verify();
+    }
+
+    /**
+     * Issue #283
+     */
+    @Test
+    public void normalizeUriToContainLeadingSlash() {
+        mockServer.expect(MockRestRequestMatchers.requestTo("test/123"))
+            .andExpect(MockRestRequestMatchers.method(HttpMethod.GET))
+            .andRespond(MockRestResponseCreators.withSuccess("OK",
+                MediaType.APPLICATION_JSON));
+
+        String result = restTemplate.getForObject("test/{id}", String.class, 123);
+
+        assertThat(registry.find("http.client.requests").tags("uri", "/test/{id}").timer())
+            .isNotNull();
         assertThat(result).isEqualTo("OK");
 
         mockServer.verify();

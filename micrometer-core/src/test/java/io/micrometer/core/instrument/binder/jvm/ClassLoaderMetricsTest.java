@@ -27,7 +27,6 @@ class ClassLoaderMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         new ClassLoaderMetrics().bindTo(registry);
 
-        assertThat(registry.find("jvm.classes.loaded").gauge())
-                .hasValueSatisfying(g -> assertThat(g.value()).isGreaterThan(0));
+        assertThat(registry.mustFind("jvm.classes.loaded").gauge().value()).isGreaterThan(0);
     }
 }

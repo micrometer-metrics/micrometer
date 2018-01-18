@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.core.instrument.Statistic.Count;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -51,9 +50,9 @@ class CaffeineCacheMetricsTest {
         cache.put("user3", "Third User");
         cache.put("user4", "Fourth User");
 
-        assertThat(registry.find("c.requests").tags("result", "hit").tags(userTags).value(Count, 1.0).meter()).isPresent();
-        assertThat(registry.find("c.requests").tags("result", "miss").tags(userTags).value(Count, 2.0).meter()).isPresent();
-        assertThat(registry.find("c.evictions").tags(userTags).value(Count, 2.0));
+        assertThat(registry.mustFind("c.requests").tags("result", "hit").tags(userTags).functionCounter().count()).isEqualTo(1.0);
+        assertThat(registry.mustFind("c.requests").tags("result", "miss").tags(userTags).functionCounter().count()).isEqualTo(2.0);
+        assertThat(registry.mustFind("c.evictions").tags(userTags).functionCounter().count()).isEqualTo(2.0);
     }
 
     @SuppressWarnings("unchecked")
@@ -75,9 +74,9 @@ class CaffeineCacheMetricsTest {
         }
         cache.get(3);
 
-        assertThat(registry.find("c.requests").tags("result", "hit").tags(userTags).value(Count, 1.0).meter()).isPresent();
-        assertThat(registry.find("c.requests").tags("result", "miss").tags(userTags).value(Count, 3.0).meter()).isPresent();
-        assertThat(registry.find("c.load").tags("result", "failure").tags(userTags).value(Count, 1.0).meter()).isPresent();
-        assertThat(registry.find("c.load").tags("result", "success").tags(userTags).value(Count, 2.0).meter()).isPresent();
+        assertThat(registry.mustFind("c.requests").tags("result", "hit").tags(userTags).functionCounter().count()).isEqualTo(1.0);
+        assertThat(registry.mustFind("c.requests").tags("result", "miss").tags(userTags).functionCounter().count()).isEqualTo(3.0);
+        assertThat(registry.mustFind("c.load").tags("result", "failure").functionCounter().count()).isEqualTo(1.0);
+        assertThat(registry.mustFind("c.load").tags("result", "success").functionCounter().count()).isEqualTo(2.0);
     }
 }

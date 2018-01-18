@@ -44,7 +44,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 @TestPropertySource(properties = {
     "spring.datasource.generate-unique-name=true",
     "management.security.enabled=false",
-    "spring.metrics.useGlobalRegistry=false",
+    "management.metrics.useGlobalRegistry=false",
     "spring.datasource.type=org.apache.tomcat.jdbc.pool.DataSource"
 })
 public class DataSourceMetricsTest {

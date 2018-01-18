@@ -18,10 +18,10 @@ package io.micrometer.core.tck;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Statistic;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static io.micrometer.core.instrument.MockClock.clock;
@@ -31,17 +31,18 @@ import static org.assertj.core.api.Assertions.offset;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 interface CounterTest {
+    Duration step();
 
     @DisplayName("multiple increments are maintained")
     @Test
     default void increment(MeterRegistry registry) {
         Counter c = registry.counter("myCounter");
         c.increment();
-        clock(registry).addSeconds(1);
+        clock(registry).add(step());
         assertThat(c.count()).isEqualTo(1.0, offset(1e-12));
         c.increment();
         c.increment();
-        clock(registry).addSeconds(1);
+        clock(registry).add(step());
 
         // in the case of a step aggregating system will be 2, otherwise 3
         assertThat(c.count()).isGreaterThanOrEqualTo(2.0);
@@ -53,7 +54,7 @@ interface CounterTest {
         Counter c = registry.counter("myCounter");
         c.increment(2);
         c.increment(0);
-        clock(registry).addSeconds(1);
+        clock(registry).add(step());
 
         assertEquals(2L, c.count());
     }
@@ -65,8 +66,8 @@ interface CounterTest {
         registry.more().counter("tracking", emptyList(), n);
         n.incrementAndGet();
 
-        clock(registry).addSeconds(1);
+        clock(registry).add(step());
         registry.forEachMeter(Meter::measure);
-        assertThat(registry.find("tracking").value(Statistic.Count, 1.0).meter()).isPresent();
+        assertThat(registry.mustFind("tracking").functionCounter().count()).isEqualTo(1.0);
     }
 }

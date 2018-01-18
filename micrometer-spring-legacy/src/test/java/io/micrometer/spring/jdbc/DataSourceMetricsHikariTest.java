@@ -44,7 +44,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 @TestPropertySource(properties = {
     "spring.datasource.generate-unique-name=true",
     "management.security.enabled=false",
-    "spring.metrics.useGlobalRegistry=false",
+    "management.metrics.useGlobalRegistry=false",
     "spring.datasource.type=com.zaxxer.hikari.HikariDataSource"
 })
 public class DataSourceMetricsHikariTest {
@@ -56,7 +56,7 @@ public class DataSourceMetricsHikariTest {
 
     @Test
     public void dataSourceIsInstrumented() throws SQLException, InterruptedException {
-        assertThat(registry.find("data.source.active.connections").meter()).isPresent();
+        assertThat(registry.mustFind("data.source.active.connections").meter()).isPresent();
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")

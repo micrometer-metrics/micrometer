@@ -16,8 +16,8 @@
 package io.micrometer.atlas;
 
 import com.netflix.spectator.atlas.AtlasConfig;
-import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
@@ -38,8 +38,13 @@ class AtlasMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit 
 
             @Override
             public Duration step() {
-                return Duration.ofSeconds(1);
+                return Duration.ofMinutes(1);
             }
         }, new MockClock());
+    }
+
+    @Override
+    public Duration step() {
+        return Duration.ofMinutes(1);
     }
 }

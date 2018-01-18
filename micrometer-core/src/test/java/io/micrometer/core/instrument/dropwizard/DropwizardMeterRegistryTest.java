@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.dropwizard;
 
+import com.codahale.metrics.MetricRegistry;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
@@ -29,13 +30,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DropwizardMeterRegistryTest {
     private final MockClock clock = new MockClock();
-    private final DropwizardMeterRegistry registry = new DropwizardMeterRegistry(HierarchicalNameMapper.DEFAULT, clock);
+    private final DropwizardMeterRegistry registry = new DropwizardMeterRegistry(
+        new DropwizardConfig() {
+            @Override
+            public String prefix() {
+                return null;
+            }
+
+            @Override
+            public String get(String k) {
+                return null;
+            }
+        }, new MetricRegistry(), HierarchicalNameMapper.DEFAULT, clock);
 
     @Test
     void gaugeOnNullValue() {
         registry.gauge("gauge", emptyList(), null, obj -> 1.0);
-        assertThat(registry.find("gauge").gauge())
-            .hasValueSatisfying(g -> assertThat(g.value()).isEqualTo(Double.NaN));
+        assertThat(registry.mustFind("gauge").gauge().value()).isEqualTo(Double.NaN);
     }
 
     @Test

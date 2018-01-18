@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.util.Assert;
 import io.micrometer.core.lang.Nullable;
 import okhttp3.Call;
 import okhttp3.EventListener;
@@ -31,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -40,11 +40,12 @@ import java.util.function.Function;
  */
 public class OkHttpMetricsEventListener extends EventListener {
     public static final String URI_PATTERN = "URI_PATTERN";
+
     private final String requestsMetricName;
     private final Function<Request, String> urlMapper;
     private final Iterable<Tag> extraTags;
     private final MeterRegistry registry;
-    private final ConcurrentHashMap<Call, CallState> callState = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Call, CallState> callState = new ConcurrentHashMap<>();
 
     private static class CallState {
         final long startTime;
@@ -58,10 +59,6 @@ public class OkHttpMetricsEventListener extends EventListener {
     }
 
     OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper, Iterable<Tag> extraTags) {
-        Assert.notNull(registry, "registry");
-        Assert.notNull(requestsMetricName, "requestsMetricName");
-        Assert.notNull(urlMapper, "urlMapper");
-        Assert.notNull(extraTags, "extraTags");
         this.registry = registry;
         this.requestsMetricName = requestsMetricName;
         this.urlMapper = urlMapper;
@@ -140,20 +137,16 @@ public class OkHttpMetricsEventListener extends EventListener {
         private List<Tag> tags = Collections.emptyList();
 
         Builder(MeterRegistry registry, String name) {
-            Assert.notNull(registry, "registry");
-            Assert.notNull(name, "name");
             this.registry = registry;
             this.name = name;
         }
 
         public Builder tags(List<Tag> tags) {
-            Assert.notNull(tags, "tags");
             this.tags = tags;
             return this;
         }
 
         public Builder uriMapper(Function<Request, String> uriMapper) {
-            Assert.notNull(uriMapper, "uriMapper");
             this.uriMapper = uriMapper;
             return this;
         }

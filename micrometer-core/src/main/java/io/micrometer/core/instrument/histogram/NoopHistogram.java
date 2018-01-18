@@ -68,6 +68,7 @@ final class NoopHistogram extends Histogram {
     @Override
     public void recordConvertedDoubleValueWithCount(double value, long count) {}
 
+    @SuppressWarnings("deprecation")
     @Override
     public void recordValue(long value, long expectedIntervalBetweenValueSamples) {}
 

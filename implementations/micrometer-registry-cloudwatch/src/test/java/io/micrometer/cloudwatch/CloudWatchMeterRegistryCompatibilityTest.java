@@ -15,8 +15,8 @@
  */
 package io.micrometer.cloudwatch;
 
-import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
@@ -39,12 +39,11 @@ class CloudWatchMeterRegistryCompatibilityTest extends MeterRegistryCompatibilit
             public String namespace() {
                 return "DOESNOTMATTER";
             }
-
-            @Override
-            public Duration step() {
-                return Duration.ofMillis(800);
-            }
-
         }, new MockClock(), null);
+    }
+
+    @Override
+    public Duration step() {
+        return CloudWatchConfig.DEFAULT.step();
     }
 }

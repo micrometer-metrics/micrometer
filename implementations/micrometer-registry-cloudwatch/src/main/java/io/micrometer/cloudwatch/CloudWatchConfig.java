@@ -46,7 +46,10 @@ public interface CloudWatchConfig extends StepRegistryConfig {
     @Override
     default int batchSize() {
         String v = get(prefix() + ".batchSize");
-        int vInt = v == null ? MAX_BATCH_SIZE : Integer.parseInt(v);
+        if (v == null) {
+            return MAX_BATCH_SIZE;
+        }
+        int vInt = Integer.parseInt(v);
         if(vInt > MAX_BATCH_SIZE)
             throw new IllegalStateException(prefix() + ".batchSize must be <= " + MAX_BATCH_SIZE);
 

@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.util.TimeDecayingMax;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
@@ -36,20 +37,20 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
 
     private final AtomicLong count;
     private final DoubleAdder total;
-    private final AtomicLong maxLongBits;
+    private final TimeDecayingMax max;
 
     public CumulativeDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig) {
         super(id, clock, histogramConfig);
         this.count = new AtomicLong();
         this.total = new DoubleAdder();
-        this.maxLongBits = new AtomicLong();
+        this.max = new TimeDecayingMax(clock, histogramConfig);
     }
 
     @Override
     protected void recordNonNegative(double amount) {
         count.incrementAndGet();
         total.add(amount);
-        updateMax(amount);
+        max.record(amount);
     }
 
     @Override
@@ -64,7 +65,7 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
 
     @Override
     public double max() {
-        return Double.longBitsToDouble(maxLongBits.get());
+        return max.poll();
     }
 
     @Override
@@ -75,19 +76,4 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
             new Measurement(this::max, Statistic.Max)
         );
     }
-
-    private void updateMax(double amount) {
-        long amountLongBits = Double.doubleToLongBits(amount);
-        while (true) {
-            long currentMaxLongBits = maxLongBits.get();
-            double currentMax = Double.longBitsToDouble(currentMaxLongBits);
-            if (currentMax >= amount) {
-                return;
-            }
-            if (maxLongBits.compareAndSet(currentMaxLongBits, amountLongBits)) {
-                return;
-            }
-        }
-    }
-
 }

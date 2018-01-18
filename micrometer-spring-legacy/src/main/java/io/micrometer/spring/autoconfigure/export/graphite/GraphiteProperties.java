@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Jon Schneider
  */
-@ConfigurationProperties(prefix = "spring.metrics.export.graphite")
+@ConfigurationProperties(prefix = "management.metrics.export.graphite")
 public class GraphiteProperties {
     /**
      * Enable publishing to the backend.

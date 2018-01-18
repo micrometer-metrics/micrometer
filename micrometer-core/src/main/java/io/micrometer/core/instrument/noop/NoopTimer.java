@@ -72,6 +72,11 @@ public class NoopTimer extends NoopMeter implements Timer {
     }
 
     @Override
+    public TimeUnit baseTimeUnit() {
+        return TimeUnit.SECONDS;
+    }
+
+    @Override
     public HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
         return HistogramSnapshot.empty();
     }

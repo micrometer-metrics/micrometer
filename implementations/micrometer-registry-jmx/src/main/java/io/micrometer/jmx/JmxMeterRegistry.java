@@ -16,6 +16,7 @@
 package io.micrometer.jmx;
 
 import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.MetricRegistry;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
@@ -26,16 +27,20 @@ import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 public class JmxMeterRegistry extends DropwizardMeterRegistry {
     private final JmxReporter reporter;
 
-    public JmxMeterRegistry() {
-        this(HierarchicalNameMapper.DEFAULT, Clock.SYSTEM);
+    public JmxMeterRegistry(JmxConfig config, Clock clock) {
+        this(config, clock, HierarchicalNameMapper.DEFAULT);
     }
 
-    public JmxMeterRegistry(HierarchicalNameMapper nameMapper, Clock clock) {
-        super(nameMapper, clock);
+    public JmxMeterRegistry(JmxConfig config, Clock clock, HierarchicalNameMapper nameMapper) {
+        this(config, clock, nameMapper, new MetricRegistry());
+    }
+
+    public JmxMeterRegistry(JmxConfig config, Clock clock, HierarchicalNameMapper nameMapper, MetricRegistry metricRegistry) {
+        super(config, metricRegistry, nameMapper, clock);
 
         this.reporter = JmxReporter.forRegistry(getDropwizardRegistry()).build();
         this.reporter.start();
-}
+    }
 
     public void stop() {
         this.reporter.stop();

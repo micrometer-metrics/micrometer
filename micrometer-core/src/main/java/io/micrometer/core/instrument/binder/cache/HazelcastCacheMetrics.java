@@ -19,7 +19,6 @@ import com.hazelcast.core.IMap;
 import com.hazelcast.monitor.LocalMapStats;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.util.Assert;
 
 import java.util.concurrent.TimeUnit;
 
@@ -58,9 +57,6 @@ public class HazelcastCacheMetrics implements MeterBinder {
     }
 
     public HazelcastCacheMetrics(IMap<?, ?> cache, String name, Iterable<Tag> tags) {
-        Assert.notNull(cache, "cache");
-        Assert.notNull(tags, "tags");
-        Assert.notNull(name, "name");
         this.cache = cache;
         this.name = name;
         this.tags = tags;

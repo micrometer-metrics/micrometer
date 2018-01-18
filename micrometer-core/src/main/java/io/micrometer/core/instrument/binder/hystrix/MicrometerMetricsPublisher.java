@@ -15,15 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.hystrix;
 
-import com.netflix.hystrix.HystrixCircuitBreaker;
-import com.netflix.hystrix.HystrixCommandGroupKey;
-import com.netflix.hystrix.HystrixCommandKey;
-import com.netflix.hystrix.HystrixCommandMetrics;
-import com.netflix.hystrix.HystrixCommandProperties;
+import com.netflix.hystrix.*;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisher;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.util.Assert;
 
 /**
  * @author Clint Checketts
@@ -32,7 +27,6 @@ public class MicrometerMetricsPublisher extends HystrixMetricsPublisher {
     private final MeterRegistry registry;
 
     public MicrometerMetricsPublisher(MeterRegistry registry) {
-        Assert.notNull(registry, "registry");
         this.registry = registry;
     }
 

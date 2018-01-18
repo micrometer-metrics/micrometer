@@ -41,9 +41,8 @@ class MeterRegistryInjectionTest {
         AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(SpringConfiguration.class);
         MyComponent component = ctx.getBean(MyComponent.class);
         component.performanceCriticalFeature();
-        assertThat(component.registry)
-                .isInstanceOf(SimpleMeterRegistry.class)
-                .matches(r -> r.find("feature.counter").counter().isPresent());
+        assertThat(component.registry).isInstanceOf(SimpleMeterRegistry.class);
+        component.registry.mustFind("feature.counter").counter();
     }
 
 //    @Test
@@ -63,9 +62,8 @@ class MeterRegistryInjectionTest {
         MyComponent component = injector.getInstance(MyComponent.class);
         component.after(); // @PostConstruct is not automatically called
         component.performanceCriticalFeature();
-        assertThat(component.registry)
-                .isInstanceOf(SimpleMeterRegistry.class)
-                .matches(r -> r.find("feature.counter").counter().isPresent());
+        assertThat(component.registry).isInstanceOf(SimpleMeterRegistry.class);
+        component.registry.mustFind("feature.counter").counter();
     }
 
     @Test

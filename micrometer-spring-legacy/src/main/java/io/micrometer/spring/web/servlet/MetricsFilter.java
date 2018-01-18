@@ -15,12 +15,20 @@
  */
 package io.micrometer.spring.web.servlet;
 
-import org.apache.http.HttpStatus;
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.spring.TimedUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 import org.springframework.web.servlet.handler.MatchableHandlerMapping;
@@ -31,6 +39,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Intercepts incoming HTTP requests and records metrics about execution time and results.
@@ -39,12 +49,29 @@ import java.io.IOException;
  */
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class MetricsFilter extends OncePerRequestFilter {
-    private final WebMvcMetrics webMvcMetrics;
+    private static final String EXCEPTION_ATTRIBUTE = "micrometer.requestException";
+
+    private final MeterRegistry registry;
+    private final ServletTagsProvider tagsProvider;
+    private final String metricName;
+    private final boolean autoTimeRequests;
     private final HandlerMappingIntrospector mappingIntrospector;
     private final Logger logger = LoggerFactory.getLogger(MetricsFilter.class);
 
-    public MetricsFilter(WebMvcMetrics webMvcMetrics, HandlerMappingIntrospector mappingIntrospector) {
-        this.webMvcMetrics = webMvcMetrics;
+    /**
+     * Since the filter gets called twice for async requests, we need to hold the initial timing context until
+     * the second call.
+     */
+    private final Map<HttpServletRequest, TimingSampleContext> asyncTimingContext = Collections.synchronizedMap(
+        new IdentityHashMap<>());
+
+    public MetricsFilter(MeterRegistry registry, ServletTagsProvider tagsProvider,
+                         String metricName, boolean autoTimeRequests,
+                         HandlerMappingIntrospector mappingIntrospector) {
+        this.registry = registry;
+        this.tagsProvider = tagsProvider;
+        this.metricName = metricName;
+        this.autoTimeRequests = autoTimeRequests;
         this.mappingIntrospector = mappingIntrospector;
     }
 
@@ -55,36 +82,101 @@ public class MetricsFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        HandlerExecutionChain handler;
+        HandlerExecutionChain handler = null;
         try {
             MatchableHandlerMapping matchableHandlerMapping = mappingIntrospector.getMatchableHandlerMapping(request);
-            handler = matchableHandlerMapping.getHandler(request);
+            if(matchableHandlerMapping != null) {
+                handler = matchableHandlerMapping.getHandler(request);
+            }
         } catch (Exception e) {
             logger.debug("Unable to time request", e);
             filterChain.doFilter(request, response);
             return;
         }
 
-        if (handler != null) {
-            Object handlerObject = handler.getHandler();
-            if (handlerObject != null) {
-                this.webMvcMetrics.preHandle(request, handlerObject);
-                try {
-                    filterChain.doFilter(request, response);
+        final Object handlerObject = handler == null ? null : handler.getHandler();
 
-                    // when an async operation is complete, the whole filter gets called again with isAsyncStarted = false
-                    if(!request.isAsyncStarted()) {
-                        this.webMvcMetrics.record(request, response, null);
-                    }
-                } catch (NestedServletException e) {
-                    response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-                    this.webMvcMetrics.record(request, response, e.getCause());
-                    throw e;
+        // If this is the second invocation of the filter in an async request, we don't
+        // want to start sampling again (effectively bumping the active count on any long task timers).
+        // Rather, we'll just use the sampling context we started on the first invocation.
+        TimingSampleContext timingContext = asyncTimingContext.remove(request);
+        if(timingContext == null) {
+            timingContext = new TimingSampleContext(request, handlerObject);
+        }
+
+        try {
+            filterChain.doFilter(request, response);
+
+            if(request.isAsyncSupported()) {
+                // this won't be "started" until after the first call to doFilter
+                if (request.isAsyncStarted()) {
+                    asyncTimingContext.put(request, timingContext);
                 }
             }
+
+            if(!request.isAsyncStarted()) {
+                record(timingContext, response, request,
+                    handlerObject, (Throwable) request.getAttribute(EXCEPTION_ATTRIBUTE));
+            }
+        } catch (NestedServletException e) {
+            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+            record(timingContext, response, request, handlerObject, e.getCause());
+            throw e;
         }
-        else {
-            filterChain.doFilter(request, response);
+    }
+
+    private void record(TimingSampleContext timingContext, HttpServletResponse response, HttpServletRequest request,
+                        Object handlerObject, Throwable e) {
+        for (Timed timedAnnotation : timingContext.timedAnnotations) {
+            timingContext.timerSample.stop(Timer.builder(timedAnnotation, metricName)
+                .tags(tagsProvider.httpRequestTags(request, response, handlerObject, e))
+                .register(registry));
+        }
+
+        if(timingContext.timedAnnotations.isEmpty() && autoTimeRequests) {
+            timingContext.timerSample.stop(Timer.builder(metricName)
+                .tags(tagsProvider.httpRequestTags(request, response, handlerObject, e))
+                .register(registry));
+        }
+
+        for (LongTaskTimer.Sample sample : timingContext.longTaskTimerSamples) {
+            sample.stop();
+        }
+    }
+
+    public static void tagWithException(Throwable exception) {
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+        attributes.setAttribute(EXCEPTION_ATTRIBUTE, exception,
+            RequestAttributes.SCOPE_REQUEST);
+    }
+
+    private class TimingSampleContext {
+        private final Set<Timed> timedAnnotations;
+        private final Timer.Sample timerSample;
+        private final Collection<LongTaskTimer.Sample> longTaskTimerSamples;
+
+        TimingSampleContext(HttpServletRequest request, Object handlerObject) {
+            timedAnnotations = annotations(handlerObject);
+            timerSample = Timer.start(registry);
+            longTaskTimerSamples = timedAnnotations.stream()
+                .filter(Timed::longTask)
+                .map(t -> LongTaskTimer.builder(t)
+                    .tags(tagsProvider.httpLongRequestTags(request, handlerObject))
+                    .register(registry)
+                    .start())
+                .collect(Collectors.toList());
+        }
+
+        private Set<Timed> annotations(Object handler) {
+            if (handler instanceof HandlerMethod) {
+                HandlerMethod handlerMethod = (HandlerMethod) handler;
+                Set<Timed> timed = TimedUtils.findTimedAnnotations(handlerMethod.getMethod());
+                if (timed.isEmpty()) {
+                    return TimedUtils.findTimedAnnotations(handlerMethod.getBeanType());
+                }
+                return timed;
+            }
+            return Collections.emptySet();
         }
     }
 }

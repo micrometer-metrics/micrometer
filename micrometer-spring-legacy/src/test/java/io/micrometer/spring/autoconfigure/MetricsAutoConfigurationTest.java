@@ -17,7 +17,6 @@ package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
@@ -29,6 +28,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -57,9 +57,8 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = MetricsAutoConfigurationTest.MetricsApp.class)
 @TestPropertySource(properties = {
-    "spring.metrics.use-global-registry=false",
-    "spring.metrics.filter.my.timer.enabled=true", // overriden by programmatic filter
-    "spring.metrics.simple.cumulative.enabled=true",
+    "management.metrics.use-global-registry=false",
+    "management.metrics.filter.my.timer.enabled=true" // overriden by programmatic filter
 })
 public class MetricsAutoConfigurationTest {
 
@@ -85,14 +84,14 @@ public class MetricsAutoConfigurationTest {
 
         assertThat(external.getForObject("/api/external", String.class)).isEqualTo("hello");
 
-        assertThat(registry.find("http.client.requests").timer().map(Timer::count)).isPresent().hasValue(1L);
+        assertThat(registry.mustFind("http.client.requests").timer().count()).isEqualTo(1L);
     }
 
     @Test
-    public void requestMappingIsInstrumented() {
+    public void requestMappingIsInstrumented() throws Exception {
         loopback.getForObject("/api/people", String.class);
 
-        assertThat(registry.find("http.server.requests").timer().map(Timer::count)).isPresent().hasValue(1L);
+        assertThat(registry.mustFind("http.server.requests").timer().count()).isEqualTo(1L);
     }
 
     @Test
@@ -104,13 +103,13 @@ public class MetricsAutoConfigurationTest {
 
     @Test
     public void registryConfigurersAreAppliedBeforeRegistryIsInjectableElsewhere() {
-        assertThat(registry.find("my.thing").tags("common", "tag").gauge()).isPresent();
+        registry.mustFind("my.thing").tags("common", "tag").gauge();
     }
 
     @Test
     public void propertyBasedMeterFiltersCanTakeLowerPrecedenceThanProgrammaticallyBoundFilters() {
         registry.timer("my.timer");
-        assertThat(registry.find("my.timer").timer()).isNotPresent();
+        assertThat(registry.mustFind("my.timer").meter()).isNotPresent();
     }
 
     @SpringBootApplication(scanBasePackages = "ignored")
@@ -142,8 +141,8 @@ public class MetricsAutoConfigurationTest {
         }
 
         @Bean
-        public RestTemplate restTemplate() {
-            return new RestTemplate();
+        public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
+            return restTemplateBuilder.build();
         }
 
     }

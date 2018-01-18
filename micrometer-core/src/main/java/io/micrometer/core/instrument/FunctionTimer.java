@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.util.Assert;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.ArrayList;
@@ -37,7 +36,6 @@ public interface FunctionTimer extends Meter {
     double totalTime(TimeUnit unit);
 
     default double mean(TimeUnit unit) {
-        Assert.notNull(unit, "timeUnit");
         return count() == 0 ? 0 : totalTime(unit) / count();
     }
 
@@ -71,11 +69,6 @@ public interface FunctionTimer extends Meter {
                         ToLongFunction<T> countFunction,
                         ToDoubleFunction<T> totalTimeFunction,
                         TimeUnit totalTimeFunctionUnits) {
-            Assert.notNull(name, "name");
-            Assert.notNull(obj, "obj");
-            Assert.notNull(countFunction, "countFunction");
-            Assert.notNull(totalTimeFunction, "totalTimeFunction");
-            Assert.notNull(totalTimeFunctionUnits, "totalTimeFunctionUnits");
             this.name = name;
             this.obj = obj;
             this.countFunction = countFunction;
@@ -91,7 +84,6 @@ public interface FunctionTimer extends Meter {
         }
 
         public Builder<T> tags(Iterable<Tag> tags) {
-            Assert.notNull(tags,"tags");
             tags.forEach(this.tags::add);
             return this;
         }
@@ -112,7 +104,6 @@ public interface FunctionTimer extends Meter {
         }
 
         public FunctionTimer register(MeterRegistry registry) {
-            Assert.notNull(registry,"registry");
             return registry.more().timer(new Meter.Id(name, tags, baseUnit, description, Type.Timer), obj, countFunction, totalTimeFunction,
                 totalTimeFunctionUnits);
         }

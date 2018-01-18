@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.util.Assert;
 
 import javax.cache.Cache;
 import javax.management.*;
@@ -95,9 +94,6 @@ public class JCacheMetrics implements MeterBinder {
     }
 
     public JCacheMetrics(Cache<?, ?> cache, String name, Iterable<Tag> tags) {
-        Assert.notNull(cache, "cache");
-        Assert.notNull(tags, "tags");
-        Assert.notNull(name, "name");
         try {
             String cacheManagerUri = cache.getCacheManager().getURI().toString()
                 .replace(':', '.'); // ehcache's uri is prefixed with 'urn:'

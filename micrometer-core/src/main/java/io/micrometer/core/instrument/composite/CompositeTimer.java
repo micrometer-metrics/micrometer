@@ -15,12 +15,12 @@
  */
 package io.micrometer.core.instrument.composite;
 
-import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.noop.NoopTimer;
 
 import java.time.Duration;
@@ -29,14 +29,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
-
     private final Clock clock;
     private final HistogramConfig histogramConfig;
+    private final PauseDetector pauseDetector;
 
-    CompositeTimer(Meter.Id id, Clock clock, HistogramConfig histogramConfig) {
+    CompositeTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
         super(id);
         this.clock = clock;
         this.histogramConfig = histogramConfig;
+        this.pauseDetector = pauseDetector;
     }
 
     @Override
@@ -113,6 +114,11 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
     }
 
     @Override
+    public TimeUnit baseTimeUnit() {
+        return firstChild().baseTimeUnit();
+    }
+
+    @Override
     Timer newNoopMeter() {
         return new NoopTimer(getId());
     }
@@ -120,21 +126,26 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
     @Override
     Timer registerNewMeter(MeterRegistry registry) {
         final long[] slaNanos = histogramConfig.getSlaBoundaries();
-        final Duration[] sla = new Duration[slaNanos.length];
-        for (int i = 0; i < slaNanos.length; i++) {
-            sla[i] = Duration.ofNanos(slaNanos[i]);
+
+        Duration[] sla = null;
+        if(slaNanos != null) {
+            sla = new Duration[slaNanos.length];
+            for (int i = 0; i < slaNanos.length; i++) {
+                sla[i] = Duration.ofNanos(slaNanos[i]);
+            }
         }
 
         return Timer.builder(getId().getName())
                     .tags(getId().getTags())
                     .description(getId().getDescription())
-                    .maximumExpectedValue(Duration.ofNanos(histogramConfig.getMaximumExpectedValue()))
-                    .minimumExpectedValue(Duration.ofNanos(histogramConfig.getMinimumExpectedValue()))
+                    .maximumExpectedValue(histogramConfig.getMaximumExpectedValue() == null ? null : Duration.ofNanos(histogramConfig.getMaximumExpectedValue()))
+                    .minimumExpectedValue(histogramConfig.getMinimumExpectedValue() == null ? null : Duration.ofNanos(histogramConfig.getMinimumExpectedValue()))
                     .publishPercentiles(histogramConfig.getPercentiles())
                     .publishPercentileHistogram(histogramConfig.isPercentileHistogram())
                     .histogramBufferLength(histogramConfig.getHistogramBufferLength())
                     .histogramExpiry(histogramConfig.getHistogramExpiry())
                     .sla(sla)
+                    .pauseDetector(pauseDetector)
                     .register(registry);
     }
 }

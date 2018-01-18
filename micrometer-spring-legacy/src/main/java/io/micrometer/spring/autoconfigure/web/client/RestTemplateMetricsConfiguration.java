@@ -20,10 +20,8 @@ import io.micrometer.spring.autoconfigure.MetricsProperties;
 import io.micrometer.spring.web.client.DefaultRestTemplateExchangeTagsProvider;
 import io.micrometer.spring.web.client.MetricsRestTemplateCustomizer;
 import io.micrometer.spring.web.client.RestTemplateExchangeTagsProvider;
-import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
@@ -35,7 +33,10 @@ import org.springframework.web.client.RestTemplate;
  * @author Phillip Webb
  */
 @Configuration
-@ConditionalOnClass(name = "org.springframework.web.client.RestTemplate")
+@ConditionalOnClass(name = {
+    "org.springframework.web.client.RestTemplate",
+    "org.springframework.boot.web.client.RestTemplateCustomizer" // didn't exist until Boot 1.4
+})
 public class RestTemplateMetricsConfiguration {
 
     @Bean
@@ -45,57 +46,10 @@ public class RestTemplateMetricsConfiguration {
     }
 
     @Bean
-    @ConditionalOnClass(name = "org.springframework.boot.web.client.RestTemplateCustomizer")
-    public MetricsRestTemplateCustomizer metricsRestTemplateCustomizer(
-        MeterRegistry meterRegistry,
-        RestTemplateExchangeTagsProvider restTemplateTagConfigurer,
-        MetricsProperties properties) {
+    public MetricsRestTemplateCustomizer metricsRestTemplateCustomizer(MeterRegistry meterRegistry,
+                                                                       RestTemplateExchangeTagsProvider restTemplateTagConfigurer,
+                                                                       MetricsProperties properties) {
         return new MetricsRestTemplateCustomizer(meterRegistry, restTemplateTagConfigurer,
-            properties.getWeb().getClient().getRequestsMetricName(),
-            properties.getWeb().getClient().isRecordRequestPercentiles());
+            properties.getWeb().getClient().getRequestsMetricName());
     }
-
-    @Bean
-    public static BeanPostProcessor restTemplateInterceptorPostProcessor(
-        ApplicationContext applicationContext) {
-        return new MetricsInterceptorPostProcessor(applicationContext);
-    }
-
-    /**
-     * {@link BeanPostProcessor} to apply {@link MetricsRestTemplateCustomizer} to any
-     * directly registered {@link RestTemplate} beans.
-     */
-    private static class MetricsInterceptorPostProcessor implements BeanPostProcessor {
-
-        private final ApplicationContext applicationContext;
-
-        private MetricsRestTemplateCustomizer customizer;
-
-        MetricsInterceptorPostProcessor(ApplicationContext applicationContext) {
-            this.applicationContext = applicationContext;
-        }
-
-        @Override
-        public Object postProcessBeforeInitialization(Object bean, String beanName) {
-            return bean;
-        }
-
-        @Override
-        public Object postProcessAfterInitialization(Object bean, String beanName) {
-            if (bean instanceof RestTemplate) {
-                geCustomizer().customize((RestTemplate) bean);
-            }
-            return bean;
-        }
-
-        private MetricsRestTemplateCustomizer geCustomizer() {
-            if (this.customizer == null) {
-                this.customizer = this.applicationContext
-                    .getBean(MetricsRestTemplateCustomizer.class);
-            }
-            return this.customizer;
-        }
-
-    }
-
 }

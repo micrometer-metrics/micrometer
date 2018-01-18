@@ -24,16 +24,11 @@ import java.time.Duration;
 public class SimpleMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @Override
     public MeterRegistry registry() {
-        return new SimpleMeterRegistry(new SimpleConfig() {
-            @Override
-            public String get(String k) {
-                return null;
-            }
+        return new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+    }
 
-            @Override
-            public Duration step() {
-                return Duration.ofSeconds(1);
-            }
-        }, new MockClock());
+    @Override
+    public Duration step() {
+        return SimpleConfig.DEFAULT.step();
     }
 }

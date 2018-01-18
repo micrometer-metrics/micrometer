@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.util.Assert;
 import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
@@ -78,7 +77,6 @@ public interface DistributionSummary extends Meter {
         private HistogramConfig.Builder histogramConfigBuilder = HistogramConfig.builder();
 
         private Builder(String name) {
-            Assert.notNull(name,"name");
             this.name = name;
         }
 
@@ -90,7 +88,6 @@ public interface DistributionSummary extends Meter {
         }
 
         public Builder tags(Iterable<Tag> tags) {
-            Assert.notNull(tags,"tags");
             tags.forEach(this.tags::add);
             return this;
         }
@@ -175,7 +172,6 @@ public interface DistributionSummary extends Meter {
         }
 
         public DistributionSummary register(MeterRegistry registry) {
-            Assert.notNull(registry, "registry");
             return registry.summary(new Meter.Id(name, tags, baseUnit, description, Type.DistributionSummary), histogramConfigBuilder.build());
         }
     }

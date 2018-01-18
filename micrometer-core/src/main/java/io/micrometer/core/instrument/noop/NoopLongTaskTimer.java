@@ -25,8 +25,8 @@ public class NoopLongTaskTimer extends NoopMeter implements LongTaskTimer {
     }
 
     @Override
-    public long start() {
-        return 0;
+    public Sample start() {
+        return new Sample(this, 0);
     }
 
     @Override

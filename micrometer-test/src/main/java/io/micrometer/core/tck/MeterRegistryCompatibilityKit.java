@@ -15,23 +15,19 @@
  */
 package io.micrometer.core.tck;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.util.TimeUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.micrometer.core.instrument.MockClock.clock;
-import static io.micrometer.core.instrument.Statistic.Count;
-import static io.micrometer.core.instrument.Statistic.Total;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -41,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(RegistryResolver.class)
 public abstract class MeterRegistryCompatibilityKit {
     public abstract MeterRegistry registry();
+    public abstract Duration step();
 
     @Test
     @DisplayName("compatibility test provides a non-null registry instance")
@@ -54,7 +51,7 @@ public abstract class MeterRegistryCompatibilityKit {
         registry.counter("foo");
         registry.counter("foo");
 
-        assertThat(registry.find("foo").meters().size()).isEqualTo(1);
+        assertThat(registry.mustFind("foo").meters().size()).isEqualTo(1);
     }
 
     @Test
@@ -63,8 +60,8 @@ public abstract class MeterRegistryCompatibilityKit {
         Counter c1 = registry.counter("foo", "k", "v");
         Counter c2 = registry.counter("bar", "k", "v", "k2", "v");
 
-        assertThat(registry.find("foo").tags("k", "v").counter()).containsSame(c1);
-        assertThat(registry.find("bar").tags("k", "v").counter()).containsSame(c2);
+        assertThat(registry.mustFind("foo").tags("k", "v").counter()).isSameAs(c1);
+        assertThat(registry.mustFind("bar").tags("k", "v").counter()).isSameAs(c2);
     }
 
     @Test
@@ -73,8 +70,8 @@ public abstract class MeterRegistryCompatibilityKit {
         Counter c1 = registry.counter("foo", "k", "v");
         Counter c2 = registry.counter("bar", "k", "v", "k2", "v");
 
-        assertThat(registry.find("foo").tags("k", "v").counter()).containsSame(c1);
-        assertThat(registry.find("bar").tags("k", "v").counter()).containsSame(c2);
+        assertThat(registry.mustFind("foo").tags("k", "v").counter()).isSameAs(c1);
+        assertThat(registry.mustFind("bar").tags("k", "v").counter()).isSameAs(c2);
     }
 
     @Test
@@ -86,11 +83,11 @@ public abstract class MeterRegistryCompatibilityKit {
         Timer t = registry.timer("timer");
         t.record(10, TimeUnit.NANOSECONDS);
 
-        clock(registry).addSeconds(1);
+        clock(registry).add(step());
 
-        assertThat(registry.find("counter").value(Count, 1.0).counter()).isPresent();
-        assertThat(registry.find("timer").value(Count, 1.0).timer()).isPresent();
-        assertThat(registry.find("timer").value(Total, 10.0).timer()).isPresent();
+        assertThat(registry.mustFind("counter").counter().count()).isEqualTo(1.0);
+        assertThat(registry.mustFind("timer").timer().count()).isEqualTo(1L);
+        assertThat(registry.mustFind("timer").timer().totalTime(TimeUnit.NANOSECONDS)).isEqualTo(10.0);
     }
 
     @Test
@@ -99,7 +96,7 @@ public abstract class MeterRegistryCompatibilityKit {
         registry.config().commonTags("k", "v");
         Counter c = registry.counter("foo");
 
-        assertThat(registry.find("foo").tags("k", "v").counter()).containsSame(c);
+        assertThat(registry.mustFind("foo").tags("k", "v").counter()).isSameAs(c);
         assertThat(c.getId().getTags()).hasSize(1);
     }
 
@@ -108,7 +105,7 @@ public abstract class MeterRegistryCompatibilityKit {
     void aTaleOfTwoNames(MeterRegistry registry) {
         AtomicInteger n = new AtomicInteger(1);
         registry.more().counter("my.counter", Collections.emptyList(), n);
-        assertThat(registry.find("my.counter").meter()).isPresent();
+        registry.mustFind("my.counter").functionCounter();
     }
 
     @Test
@@ -119,27 +116,32 @@ public abstract class MeterRegistryCompatibilityKit {
         registry.more().timer("function.timer", emptyList(),
             o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
 
-        clock(registry).addSeconds(1);
-
-        assertThat(registry.find("function.timer").meter())
-            .hasValueSatisfying(meter ->
-                assertThat(meter.measure())
-                    .anySatisfy(ms -> {
-                        TimeUnit baseUnit = TimeUnit.valueOf(meter.getId().getBaseUnit().toUpperCase());
-                        assertThat(ms.getStatistic()).isEqualTo(Statistic.TotalTime);
-                        assertThat(TimeUtils.convert(ms.getValue(), baseUnit, TimeUnit.MILLISECONDS)).isEqualTo(1);
-                    })
-            );
+        FunctionTimer ft = registry.mustFind("function.timer").functionTimer();
+        clock(registry).add(step());
+        assertThat(ft.measure())
+            .anySatisfy(ms -> {
+                TimeUnit baseUnit = TimeUnit.valueOf(ft.getId().getBaseUnit().toUpperCase());
+                assertThat(ms.getStatistic()).isEqualTo(Statistic.TotalTime);
+                assertThat(TimeUtils.convert(ms.getValue(), baseUnit, TimeUnit.MILLISECONDS)).isEqualTo(1);
+            });
     }
 
     @DisplayName("counters")
     @Nested
     class CounterTck implements CounterTest {
+        @Override
+        public Duration step() {
+            return MeterRegistryCompatibilityKit.this.step();
+        }
     }
 
     @DisplayName("distribution summaries")
     @Nested
     class DistributionSummaryTck implements DistributionSummaryTest {
+        @Override
+        public Duration step() {
+            return MeterRegistryCompatibilityKit.this.step();
+        }
     }
 
     @DisplayName("gauges")
@@ -155,6 +157,10 @@ public abstract class MeterRegistryCompatibilityKit {
     @DisplayName("timers")
     @Nested
     class TimerTck implements TimerTest {
+        @Override
+        public Duration step() {
+            return MeterRegistryCompatibilityKit.this.step();
+        }
     }
 }
 

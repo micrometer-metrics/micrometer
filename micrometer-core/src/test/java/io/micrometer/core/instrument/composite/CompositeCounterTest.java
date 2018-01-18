@@ -17,12 +17,10 @@ package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.core.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CompositeCounterTest {
@@ -35,7 +33,6 @@ class CompositeCounterTest {
 
         registry.counter("counter").increment(2.0);
 
-        clock(simple).add(SimpleConfig.DEFAULT_STEP);
-        assertThat(simple.find("counter").value(Statistic.Count, 2.0).counter()).isPresent();
+        assertThat(simple.mustFind("counter").counter().count()).isEqualTo(2.0);
     }
 }

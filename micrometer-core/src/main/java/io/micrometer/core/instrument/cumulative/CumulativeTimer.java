@@ -17,12 +17,11 @@ package io.micrometer.core.instrument.cumulative;
 
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
+import io.micrometer.core.instrument.util.TimeDecayingMax;
 import io.micrometer.core.instrument.util.TimeUtils;
 
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -32,16 +31,16 @@ import java.util.concurrent.atomic.AtomicLong;
 public class CumulativeTimer extends AbstractTimer {
     private final AtomicLong count;
     private final AtomicLong total;
-    private final AtomicLong max;
+    private final TimeDecayingMax max;
 
     /**
      * Create a new instance.
      */
-    public CumulativeTimer(Id id, Clock clock, HistogramConfig histogramConfig) {
-        super(id, clock, histogramConfig);
+    public CumulativeTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+        super(id, clock, histogramConfig, pauseDetector, baseTimeUnit);
         this.count = new AtomicLong();
         this.total = new AtomicLong();
-        this.max = new AtomicLong();
+        this.max = new TimeDecayingMax(clock, histogramConfig);
     }
 
     @Override
@@ -49,12 +48,12 @@ public class CumulativeTimer extends AbstractTimer {
         long nanoAmount = (long) TimeUtils.convert(amount, unit, TimeUnit.NANOSECONDS);
         count.getAndAdd(1);
         total.getAndAdd(nanoAmount);
-        updateMax(nanoAmount);
+        max.record(nanoAmount, TimeUnit.NANOSECONDS);
     }
 
     @Override
     public long count() {
-        return (long) count.get();
+        return count.get();
     }
 
     @Override
@@ -64,28 +63,6 @@ public class CumulativeTimer extends AbstractTimer {
 
     @Override
     public double max(TimeUnit unit) {
-        return TimeUtils.nanosToUnit(max.get(), unit);
+        return max.poll(unit);
     }
-
-    @Override
-    public Iterable<Measurement> measure() {
-        return Arrays.asList(
-            new Measurement(() -> (double) count(), Statistic.Count),
-            new Measurement(() -> totalTime(TimeUnit.NANOSECONDS), Statistic.TotalTime),
-            new Measurement(() -> max(TimeUnit.NANOSECONDS), Statistic.Max)
-        );
-    }
-
-    private void updateMax(long nanoAmount) {
-        while (true) {
-            long currentMax = max.get();
-            if (currentMax >= nanoAmount) {
-                return;
-            }
-            if (max.compareAndSet(currentMax, nanoAmount)) {
-                return;
-            }
-        }
-    }
-
 }

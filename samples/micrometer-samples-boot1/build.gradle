@@ -1,0 +1,24 @@
+plugins {
+    id "io.spring.dependency-management" version "1.0.3.RELEASE"
+}
+
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:1.5.4.RELEASE'
+    }
+}
+
+dependencies {
+    compile project(':micrometer-spring-legacy')
+
+    ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx'].each { sys ->
+        compile project(":micrometer-registry-$sys")
+    }
+
+    compile 'org.springframework.boot:spring-boot-starter-web'
+    compile 'org.springframework.boot:spring-boot-actuator'
+    compile 'org.springframework.integration:spring-integration-java-dsl'
+    compile 'org.springframework.integration:spring-integration-ws'
+    compile 'org.springframework.integration:spring-integration-xml'
+    compile 'com.netflix.hystrix:hystrix-javanica:1.5.8'
+}

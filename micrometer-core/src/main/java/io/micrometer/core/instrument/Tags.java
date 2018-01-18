@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.util.Assert;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,7 +32,6 @@ public final class Tags {
     private Tags() {}
 
     public static List<Tag> zip(String... keyValues) {
-        Assert.notNull(keyValues, "keyValues");
         if (keyValues.length % 2 == 1) {
             throw new IllegalArgumentException("size must be even, it is a set of key=value pairs");
         }
@@ -45,8 +43,6 @@ public final class Tags {
     }
 
     public static Iterable<Tag> concat(Iterable<Tag> tags, Iterable<Tag> otherTags) {
-        Assert.notNull(tags,"tags");
-        Assert.notNull(otherTags,"otherTags");
         if(!otherTags.iterator().hasNext())
             return tags;
         return Stream.concat(stream(tags.spliterator(), false), stream(otherTags.spliterator(), false)).collect(toList());

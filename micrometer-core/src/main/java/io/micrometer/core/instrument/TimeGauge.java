@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.util.Assert;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
@@ -47,10 +46,6 @@ public interface TimeGauge extends Gauge {
         private @Nullable String description;
 
         private Builder(String name, T obj, TimeUnit fUnits, ToDoubleFunction<T> f) {
-            Assert.notNull(name, "name");
-            Assert.notNull(obj, "gauge object");
-            Assert.notNull(fUnits, "timeUnit");
-            Assert.notNull(f, "gauge function");
             this.name = name;
             this.obj = obj;
             this.fUnits = fUnits;
@@ -62,12 +57,10 @@ public interface TimeGauge extends Gauge {
          * @return
          */
         public Builder<T> tags(String... tags) {
-            Assert.notNull(tags, "tags");
             return tags(Tags.zip(tags));
         }
 
         public Builder<T> tags(Iterable<Tag> tags) {
-            Assert.notNull(tags, "tags");
             tags.forEach(this.tags::add);
             return this;
         }
@@ -83,7 +76,6 @@ public interface TimeGauge extends Gauge {
         }
 
         public TimeGauge register(MeterRegistry registry) {
-            Assert.notNull(registry, "registry");
             return registry.more().timeGauge(new Meter.Id(name, tags, null, description, Type.Gauge),
                 obj, fUnits, f);
         }

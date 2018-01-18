@@ -15,9 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.eclipse.jetty.server.HttpChannelState;
@@ -33,7 +31,6 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import java.sql.SQLException;
 
-import static io.micrometer.core.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -60,9 +57,7 @@ class JettyStatisticsMetricsTest {
 
         handler.handle("/testUrl", baseReq, new MockHttpServletRequest(), new MockHttpServletResponse());
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
-
-        assertThat(registry.find("jetty.requests").value(Statistic.Count, 1.0).meter()).isPresent();
-        assertThat(registry.find("jetty.responses.size").functionCounter().map(FunctionCounter::count)).isPresent().hasValue(772.0);
+        assertThat(registry.mustFind("jetty.requests").functionTimer().count()).isEqualTo(1L);
+        assertThat(registry.mustFind("jetty.responses.size").functionCounter().count()).isEqualTo(772.0);
     }
 }

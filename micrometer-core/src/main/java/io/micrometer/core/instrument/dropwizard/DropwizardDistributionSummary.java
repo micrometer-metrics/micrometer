@@ -18,8 +18,8 @@ package io.micrometer.core.instrument.dropwizard;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.core.instrument.util.TimeDecayingMax;
 
 import java.util.concurrent.atomic.DoubleAdder;
 
@@ -29,12 +29,12 @@ import java.util.concurrent.atomic.DoubleAdder;
 public class DropwizardDistributionSummary extends AbstractDistributionSummary {
     private final com.codahale.metrics.Histogram impl;
     private final DoubleAdder totalAmount = new DoubleAdder();
-    private final StepDouble max;
+    private final TimeDecayingMax max;
 
     DropwizardDistributionSummary(Id id, Clock clock, com.codahale.metrics.Histogram impl, HistogramConfig histogramConfig) {
         super(id, clock, histogramConfig);
         this.impl = impl;
-        this.max = new StepDouble(clock, 60000);
+        this.max = new TimeDecayingMax(clock, histogramConfig);
     }
 
     @Override
@@ -42,7 +42,7 @@ public class DropwizardDistributionSummary extends AbstractDistributionSummary {
         if (amount >= 0) {
             impl.update((long) amount);
             totalAmount.add(amount);
-            max.getCurrent().add(Math.max(amount - max.getCurrent().doubleValue(), 0));
+            max.record(amount);
         }
     }
 

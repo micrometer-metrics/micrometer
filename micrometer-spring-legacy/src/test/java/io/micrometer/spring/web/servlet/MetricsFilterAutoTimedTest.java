@@ -20,23 +20,22 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsConfiguration;
-import org.junit.Before;
+import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguration;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,7 +46,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Jon Schneider
  */
 @RunWith(SpringRunner.class)
+@AutoConfigureMockMvc
 @WebAppConfiguration
+@TestPropertySource(properties = "security.ignored=/**")
 public class MetricsFilterAutoTimedTest {
 
     @Autowired
@@ -57,32 +58,18 @@ public class MetricsFilterAutoTimedTest {
     private MockClock clock;
 
     @Autowired
-    private WebApplicationContext context;
-
     private MockMvc mvc;
-
-    @Autowired
-    private MetricsFilter filter;
-
-    @Before
-    public void setupMockMvc() {
-        this.mvc = MockMvcBuilders.webAppContextSetup(this.context)
-            .addFilters(filter)
-            .build();
-    }
 
     @Test
     public void metricsCanBeAutoTimed() throws Exception {
         this.mvc.perform(get("/api/10")).andExpect(status().isOk());
 
-        clock.add(SimpleConfig.DEFAULT_STEP);
-        assertThat(this.registry.find("http.server.requests").tags("status", "200").timer())
-            .hasValueSatisfying((t) -> assertThat(t.count()).isEqualTo(1));
+        assertThat(this.registry.mustFind("http.server.requests").tags("status", "200").timer().count()).isEqualTo(1);
     }
 
     @Configuration
     @EnableWebMvc
-    @Import({Controller.class, WebMvcMetricsConfiguration.class})
+    @Import({Controller.class, ServletMetricsConfiguration.class})
     static class TestConfiguration {
         @Bean
         MockClock clock() {

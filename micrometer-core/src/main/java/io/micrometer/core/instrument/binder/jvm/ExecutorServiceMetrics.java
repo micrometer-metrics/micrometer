@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.internal.TimedExecutor;
 import io.micrometer.core.instrument.internal.TimedExecutorService;
-import io.micrometer.core.instrument.util.Assert;
 import io.micrometer.core.lang.Nullable;
 
 import java.lang.reflect.Field;
@@ -100,8 +99,6 @@ public class ExecutorServiceMetrics implements MeterBinder {
     private final Iterable<Tag> tags;
 
     public ExecutorServiceMetrics(@Nullable ExecutorService executorService, String name, Iterable<Tag> tags) {
-        Assert.notNull(name, "name");
-        Assert.notNull(tags, "tags");
         this.name = name;
         this.tags = tags;
         this.executorService = executorService;

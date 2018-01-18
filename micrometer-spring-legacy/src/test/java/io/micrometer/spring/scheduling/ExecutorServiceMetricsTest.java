@@ -23,8 +23,6 @@ import org.junit.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
 /**
  * @author Jon Schneider
  * @author Clint Checketts
@@ -56,8 +54,8 @@ public class ExecutorServiceMetricsTest {
     }
 
     private void assertThreadPoolExecutorMetrics(String name) {
-        assertThat(registry.find(name + ".completed").meter()).isPresent();
-        assertThat(registry.find(name + ".queued").gauge()).isPresent();
-        assertThat(registry.find(name + ".pool").gauge()).isPresent();
+        registry.mustFind(name + ".completed").meter();
+        registry.mustFind(name + ".queued").gauge();
+        registry.mustFind(name + ".pool").gauge();
     }
 }

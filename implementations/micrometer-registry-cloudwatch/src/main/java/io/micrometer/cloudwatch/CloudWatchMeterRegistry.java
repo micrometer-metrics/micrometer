@@ -17,14 +17,9 @@ package io.micrometer.cloudwatch;
 
 import com.amazonaws.handlers.AsyncHandler;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
-import com.amazonaws.services.cloudwatch.model.Dimension;
-import com.amazonaws.services.cloudwatch.model.MetricDatum;
-import com.amazonaws.services.cloudwatch.model.PutMetricDataRequest;
-import com.amazonaws.services.cloudwatch.model.PutMetricDataResult;
-import com.amazonaws.services.cloudwatch.model.StandardUnit;
+import com.amazonaws.services.cloudwatch.model.*;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,8 +27,8 @@ import org.slf4j.LoggerFactory;
 import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -48,18 +43,19 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     private final AmazonCloudWatchAsync amazonCloudWatchAsync;
     private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
     private final Logger logger = LoggerFactory.getLogger(CloudWatchMeterRegistry.class);
-    private final Map<Meter, HistogramConfig> histogramConfigs = new ConcurrentHashMap<>();
 
-    public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock, AmazonCloudWatchAsync amazonCloudWatchAsync) {
+    public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
+                               AmazonCloudWatchAsync amazonCloudWatchAsync) {
+        this(config, clock, amazonCloudWatchAsync, Executors.defaultThreadFactory());
+    }
+
+    public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
+                                   AmazonCloudWatchAsync amazonCloudWatchAsync, ThreadFactory threadFactory) {
         super(config, clock);
         this.amazonCloudWatchAsync = amazonCloudWatchAsync;
         this.config = config;
         this.config().namingConvention(NamingConvention.identity);
-        start();
-    }
-
-    public CloudWatchMeterRegistry(CloudWatchConfig config, AmazonCloudWatchAsync amazonCloudWatchAsync) {
-        this(config, Clock.SYSTEM, amazonCloudWatchAsync);
+        start(threadFactory);
     }
 
     @Override
@@ -90,13 +86,14 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         return getMeters().stream().flatMap(m -> {
             if (m instanceof Timer) {
                 return metricData((Timer) m);
-            } else if (m instanceof DistributionSummary) {
-                return metricData((DistributionSummary) m);
-            } else if (m instanceof FunctionTimer) {
-                return metricData((FunctionTimer) m);
-            } else {
-                return metricData(m);
             }
+            if (m instanceof DistributionSummary) {
+                return metricData((DistributionSummary) m);
+            }
+            if (m instanceof FunctionTimer) {
+                return metricData((FunctionTimer) m);
+            }
+            return metricData(m);
         }).collect(toList());
     }
 

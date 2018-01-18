@@ -20,11 +20,13 @@ import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.pause.ClockDriftPauseDetector;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.noop.*;
-import io.micrometer.core.instrument.util.Assert;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -50,7 +52,6 @@ public abstract class MeterRegistry {
     protected final Clock clock;
 
     protected MeterRegistry(Clock clock) {
-        Assert.notNull(clock, "clock");
         this.clock = clock;
     }
 
@@ -58,6 +59,10 @@ public abstract class MeterRegistry {
     private volatile Map<Id, Meter> meterMap = Collections.emptyMap();
     private final List<MeterFilter> filters = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterAddedListeners = new CopyOnWriteArrayList<>();
+    private PauseDetector pauseDetector = new ClockDriftPauseDetector(
+        Duration.ofMillis(100),
+        Duration.ofMillis(100)
+    );
 
     /**
      * We'll use snake case as a general-purpose default for registries because it is the most
@@ -74,7 +79,7 @@ public abstract class MeterRegistry {
 
     protected abstract LongTaskTimer newLongTaskTimer(Meter.Id id);
 
-    protected abstract Timer newTimer(Meter.Id id, HistogramConfig histogramConfig);
+    protected abstract Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector);
 
     protected abstract DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig);
 
@@ -119,12 +124,23 @@ public abstract class MeterRegistry {
      */
     protected abstract TimeUnit getBaseTimeUnit();
 
+    /**
+     * Every custom registry implementation should define a default histogram expiry:
+     *
+     * <pre>
+     * histogramConfig.builder()
+     *    .histogramExpiry(defaultStep)
+     *    .build()
+     *    .merge(HistogramConfig.DEFAULT);
+     * </pre>
+     */
+    protected abstract HistogramConfig defaultHistogramConfig();
+
     private String getBaseTimeUnitStr() {
         return getBaseTimeUnit().toString().toLowerCase();
     }
 
     Counter counter(Meter.Id id) {
-        Assert.notNull(id, "id");
         return registerMeterIfNecessary(Counter.class, id, this::newCounter, NoopCounter::new);
     }
 
@@ -132,15 +148,16 @@ public abstract class MeterRegistry {
         return registerMeterIfNecessary(Gauge.class, id, id2 -> newGauge(id2, obj, f), NoopGauge::new);
     }
 
-    Timer timer(Meter.Id id, HistogramConfig histogramConfig) {
+    Timer timer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetectorOverride) {
         return registerMeterIfNecessary(Timer.class, id, histogramConfig, (id2, filteredConfig) -> {
             Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
-            return newTimer(withUnit, filteredConfig.merge(HistogramConfig.DEFAULT));
+            return newTimer(withUnit, filteredConfig.merge(defaultHistogramConfig()), pauseDetectorOverride);
         }, NoopTimer::new);
     }
 
     DistributionSummary summary(Meter.Id id, HistogramConfig histogramConfig) {
-        return registerMeterIfNecessary(DistributionSummary.class, id, histogramConfig, (id2, filteredConfig) -> newDistributionSummary(id2, filteredConfig.merge(HistogramConfig.DEFAULT)), NoopDistributionSummary::new);
+        return registerMeterIfNecessary(DistributionSummary.class, id, histogramConfig, (id2, filteredConfig) ->
+            newDistributionSummary(id2, filteredConfig.merge(defaultHistogramConfig())), NoopDistributionSummary::new);
     }
 
     /**
@@ -163,7 +180,6 @@ public abstract class MeterRegistry {
     }
 
     public void forEachMeter(Consumer<? super Meter> consumer) {
-        Assert.notNull(consumer, "consumer");
         meterMap.values().forEach(consumer);
     }
 
@@ -189,14 +205,12 @@ public abstract class MeterRegistry {
 
         @Incubating(since = "1.0.0-rc.3")
         public Config meterFilter(MeterFilter filter) {
-            Assert.notNull(filter, "filter");
             filters.add(filter);
             return this;
         }
 
         @Incubating(since = "1.0.0-rc.6")
         public Config onMeterAdded(Consumer<Meter> meter) {
-            Assert.notNull(meter, "meter");
             meterAddedListeners.add(meter);
             return this;
         }
@@ -205,7 +219,6 @@ public abstract class MeterRegistry {
          * Use the provided naming convention, overriding the default for your monitoring system.
          */
         public Config namingConvention(NamingConvention convention) {
-            Assert.notNull(convention, "convention");
             namingConvention = convention;
             return this;
         }
@@ -224,6 +237,17 @@ public abstract class MeterRegistry {
         public Clock clock() {
             return clock;
         }
+
+        @Incubating(since = "1.0.0-rc.6")
+        public Config pauseDetector(PauseDetector detector) {
+            pauseDetector = detector;
+            return this;
+        }
+
+        @Incubating(since = "1.0.0-rc.6")
+        public PauseDetector pauseDetector() {
+            return pauseDetector;
+        }
     }
 
     private final Config config = new Config();
@@ -235,15 +259,14 @@ public abstract class MeterRegistry {
     public class Search {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
-        private final Map<Statistic, Double> valueAsserts = new EnumMap<>(Statistic.class);
+        private final boolean throwExceptionIfNotFound;
 
-        Search(String name) {
-            Assert.notNull(name, "name");
+        Search(String name, boolean throwExceptionIfNotFound) {
             this.name = name;
+            this.throwExceptionIfNotFound = throwExceptionIfNotFound;
         }
 
         public Search tags(Iterable<Tag> tags) {
-            Assert.notNull(tags, "tags");
             tags.forEach(this.tags::add);
             return this;
         }
@@ -255,53 +278,71 @@ public abstract class MeterRegistry {
             return tags(zip(tags));
         }
 
-        public Search value(Statistic statistic, double value) {
-            Assert.notNull(statistic, "statistics");
-            valueAsserts.put(statistic, value);
-            return this;
+        @Nullable
+        public Timer timer() {
+            return findOne(Timer.class);
         }
 
-        public Optional<Timer> timer() {
-            return findAny(Timer.class);
+        @Nullable
+        public Counter counter() {
+            return findOne(Counter.class);
         }
 
-        public Optional<Counter> counter() {
-            return findAny(Counter.class);
+        @Nullable
+        public Gauge gauge() {
+            return findOne(Gauge.class);
         }
 
-        public Optional<Gauge> gauge() {
-            return findAny(Gauge.class);
+        @Nullable
+        public FunctionCounter functionCounter() {
+            return findOne(FunctionCounter.class);
         }
 
-        public Optional<FunctionCounter> functionCounter() {
-            return findAny(FunctionCounter.class);
+        @Nullable
+        public TimeGauge timeGauge() {
+            return findOne(TimeGauge.class);
         }
 
-        public Optional<TimeGauge> timeGauge() {
-            return findAny(TimeGauge.class);
+        @Nullable
+        public FunctionTimer functionTimer() {
+            return findOne(FunctionTimer.class);
         }
 
-        public Optional<FunctionTimer> functionTimer() {
-            return findAny(FunctionTimer.class);
+        @Nullable
+        public DistributionSummary summary() {
+            return findOne(DistributionSummary.class);
         }
 
-        public Optional<DistributionSummary> summary() {
-            return findAny(DistributionSummary.class);
+        @Nullable
+        public LongTaskTimer longTaskTimer() {
+            return findOne(LongTaskTimer.class);
         }
 
-        public Optional<LongTaskTimer> longTaskTimer() {
-            return findAny(LongTaskTimer.class);
-        }
-
-        private <T> Optional<T> findAny(Class<T> clazz) {
-            Assert.notNull(clazz, "class");
-            return meters()
+        @Nullable
+        private <T> T findOne(Class<T> clazz) {
+            Optional<T> meter = meters()
                 .stream()
                 .filter(clazz::isInstance)
                 .findAny()
                 .map(clazz::cast);
+
+            if(meter.isPresent()) {
+                return meter.get();
+            }
+
+            String tagDetail = "";
+            if (!tags.isEmpty()) {
+                tagDetail = " with Tags:[" + tags.stream().map(t -> t.getKey()+":"+t.getValue()).collect( Collectors.joining( "," ) ) + "]";
+            }
+
+            if(throwExceptionIfNotFound) {
+                throw new AssertionError("Unable to locate a meter named '"+name+"'"+tagDetail+" of type "+clazz.getCanonicalName());
+            } else {
+                return null;
+            }
         }
 
+        // FIXME make this non-optional
         public Optional<Meter> meter() {
             return meters().stream().findAny();
         }
@@ -318,25 +359,17 @@ public abstract class MeterRegistry {
                 });
             }
 
-            Stream<Meter> meterStream = entryStream.map(Map.Entry::getValue);
-            if (!valueAsserts.isEmpty()) {
-                meterStream = meterStream.filter(m -> {
-                    for (Measurement measurement : m.measure()) {
-                        final Double value = valueAsserts.get(measurement.getStatistic());
-                        if (value != null && Math.abs(value - measurement.getValue()) > 1e-7) {
-                            return false;
-                        }
-                    }
-                    return true;
-                });
-            }
-
-            return meterStream.collect(Collectors.toList());
+            return entryStream.map(Map.Entry::getValue)
+                .collect(Collectors.toList());
         }
     }
 
     public Search find(String name) {
-        return new Search(name);
+        return new Search(name, false);
+    }
+
+    public Search mustFind(String name) {
+        return new Search(name, true);
     }
 
     /**

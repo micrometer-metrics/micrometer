@@ -38,10 +38,10 @@ public class DefaultLongTaskTimer extends AbstractMeter implements LongTaskTimer
     }
 
     @Override
-    public long start() {
+    public Sample start() {
         long task = nextTask.getAndIncrement();
         tasks.put(task, clock.monotonicTime());
-        return task;
+        return new Sample(this, task);
     }
 
     @Override

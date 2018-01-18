@@ -15,22 +15,18 @@
  */
 package io.micrometer.core.instrument.binder.system;
 
-import static io.micrometer.core.instrument.util.Assert.notNull;
-import static java.util.Collections.emptyList;
-import static java.util.Objects.requireNonNull;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Objects;
 
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.util.Assert;
-import io.micrometer.core.lang.Nullable;
+import static java.util.Collections.emptyList;
 
 /**
  * File descriptor metrics.
@@ -41,8 +37,8 @@ public class FileDescriptorMetrics implements MeterBinder {
 
     private final OperatingSystemMXBean osBean;
     private final Iterable<Tag> tags;
-    private @Nullable Method openFdsMethod;
-    private @Nullable Method maxFdsMethod;
+    @Nullable private final Method openFdsMethod;
+    @Nullable private final Method maxFdsMethod;
 
     public FileDescriptorMetrics() {
         this(emptyList());
@@ -54,8 +50,8 @@ public class FileDescriptorMetrics implements MeterBinder {
 
     // VisibleForTesting
     FileDescriptorMetrics(OperatingSystemMXBean osBean, Iterable<Tag> tags) {
-        this.osBean = notNull(osBean,"osbean");
-        this.tags = notNull(tags,"tags");
+        this.osBean = osBean;
+        this.tags = tags;
 
         this.openFdsMethod = detectMethod("getOpenFileDescriptorCount");
         this.maxFdsMethod = detectMethod("getMaxFileDescriptorCount");
@@ -78,7 +74,7 @@ public class FileDescriptorMetrics implements MeterBinder {
         }
     }
 
-    private double invoke(Method method) {
+    private double invoke(@Nullable Method method) {
         try {
             return method != null ? (double) (long) method.invoke(osBean) : Double.NaN;
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
@@ -86,7 +82,8 @@ public class FileDescriptorMetrics implements MeterBinder {
         }
     }
 
-    private @Nullable Method detectMethod(String name) {
+    @Nullable
+    private Method detectMethod(String name) {
         try {
             final Method method = osBean.getClass().getDeclaredMethod(name);
             method.setAccessible(true);

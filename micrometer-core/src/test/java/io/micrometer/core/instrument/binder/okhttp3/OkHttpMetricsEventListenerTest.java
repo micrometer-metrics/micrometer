@@ -18,7 +18,6 @@ package io.micrometer.core.instrument.binder.okhttp3;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import okhttp3.OkHttpClient;
@@ -28,7 +27,6 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class OkHttpMetricsEventListenerTest {
@@ -49,11 +47,9 @@ class OkHttpMetricsEventListenerTest {
 
         client.newCall(request).execute().close();
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
-        assertThat(registry.find("okhttp.requests")
-            .tags("uri", "/helloworld.txt")
-            .tags("status", "200")
-            .timer().map(Timer::count)).isPresent().hasValue(1L);
+        assertThat(registry.mustFind("okhttp.requests")
+            .tags("uri", "/helloworld.txt", "status", "200")
+            .timer().count()).isEqualTo(1L);
     }
 
     @Test
@@ -68,10 +64,9 @@ class OkHttpMetricsEventListenerTest {
             // expected
         }
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
-        assertThat(registry.find("okhttp.requests")
+        assertThat(registry.mustFind("okhttp.requests")
             .tags("uri", "NOT_FOUND")
-            .timer().map(Timer::count)).isPresent().hasValue(1L);
+            .timer().count()).isEqualTo(1L);
     }
 
     @Test
@@ -94,10 +89,8 @@ class OkHttpMetricsEventListenerTest {
             // expected
         }
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
-        assertThat(registry.find("okhttp.requests")
-            .tags("uri", "UNKNOWN")
-            .tags("status", "IO_ERROR")
-            .timer().map(Timer::count)).isPresent().hasValue(1L);
+        assertThat(registry.mustFind("okhttp.requests")
+            .tags("uri", "UNKNOWN", "status", "IO_ERROR")
+            .timer().count()).isEqualTo(1L);
     }
 }

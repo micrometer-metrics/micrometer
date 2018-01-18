@@ -15,28 +15,32 @@
  */
 package io.micrometer.core.instrument.step;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.AbstractDistributionSummary;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.util.TimeDecayingMax;
 
 import java.util.Arrays;
 
 public class StepDistributionSummary extends AbstractDistributionSummary {
     private final StepLong count;
     private final StepDouble total;
-    private final StepDouble max;
+    private final TimeDecayingMax max;
 
-    public StepDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig, long stepMillis) {
+    public StepDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig) {
         super(id, clock, histogramConfig);
-        this.count = new StepLong(clock, stepMillis);
-        this.total = new StepDouble(clock, stepMillis);
-        this.max = new StepDouble(clock, stepMillis);
+        this.count = new StepLong(clock, histogramConfig.getHistogramExpiry().toMillis());
+        this.total = new StepDouble(clock, histogramConfig.getHistogramExpiry().toMillis());
+        this.max = new TimeDecayingMax(clock, histogramConfig);
     }
 
     @Override
     protected void recordNonNegative(double amount) {
         count.getCurrent().add(1);
         total.getCurrent().add(amount);
-        max.getCurrent().add(Math.max(amount - max.getCurrent().doubleValue(), 0));
+        max.record(amount);
     }
 
     @Override

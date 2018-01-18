@@ -17,8 +17,6 @@ package io.micrometer.spring.integration;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.simple.SimpleConfig;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,14 +38,15 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @TestPropertySource(properties = {
-    "spring.metrics.useGlobalRegistry=false",
-    "spring.metrics.export.atlas.enabled=false",
-    "spring.metrics.export.datadog.enabled=false",
-    "spring.metrics.export.ganglia.enabled=false",
-    "spring.metrics.export.influx.enabled=false",
-    "spring.metrics.export.jmx.enabled=false",
-    "spring.metrics.export.statsd.enabled=false",
-    "spring.metrics.export.newrelic.enabled=false"
+    "management.metrics.useGlobalRegistry=false",
+    "management.metrics.export.atlas.enabled=false",
+    "management.metrics.export.datadog.enabled=false",
+    "management.metrics.export.ganglia.enabled=false",
+    "management.metrics.export.influx.enabled=false",
+    "management.metrics.export.jmx.enabled=false",
+    "management.metrics.export.statsd.enabled=false",
+    "management.metrics.export.newrelic.enabled=false",
+    "management.metrics.export.signalfx.enabled=false"
 })
 public class SpringIntegrationMetricsTest {
     @Autowired
@@ -63,11 +62,10 @@ public class SpringIntegrationMetricsTest {
     public void springIntegrationMetrics() {
         converter.fahrenheitToCelcius(68.0f);
 
-        clock.add(SimpleConfig.DEFAULT_STEP);
-        assertThat(registry.find("spring.integration.channel.sends")
-            .tags("channel", "convert.input").value(Statistic.Count, 1).meter()).isPresent();
-        assertThat(registry.find("spring.integration.handler.duration.min").meter()).isPresent();
-        assertThat(registry.find("spring.integration.sourceNames").meter()).isPresent();
+        assertThat(registry.mustFind("spring.integration.channel.sends")
+            .tags("channel", "convert.input").functionCounter().count()).isEqualTo(1.0);
+        assertThat(registry.mustFind("spring.integration.handler.duration.min").meter()).isPresent();
+        assertThat(registry.mustFind("spring.integration.sourceNames").meter()).isPresent();
     }
 
     @SpringBootApplication

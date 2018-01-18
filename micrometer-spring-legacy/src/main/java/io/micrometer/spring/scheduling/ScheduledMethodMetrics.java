@@ -58,7 +58,7 @@ public class ScheduledMethodMetrics {
         Timer shortTaskTimer = null;
         LongTaskTimer longTaskTimer = null;
 
-        for (Timed timed : TimedUtils.findTimedAnnotations(method).toArray(Timed[]::new)) {
+        for (Timed timed : TimedUtils.findTimedAnnotations(method)) {
             if (timed.longTask())
                 longTaskTimer = LongTaskTimer.builder(timed.value())
                     .tags(timed.extraTags())
@@ -90,11 +90,11 @@ public class ScheduledMethodMetrics {
     }
 
     private Object recordThrowable(LongTaskTimer timer, ThrowableCallable f) throws Throwable {
-        long id = timer.start();
+        LongTaskTimer.Sample timing = timer.start();
         try {
             return f.call();
         } finally {
-            timer.stop(id);
+            timing.stop();
         }
     }
 

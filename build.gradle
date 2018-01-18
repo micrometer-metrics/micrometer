@@ -57,6 +57,13 @@ subprojects {
 
     def check = tasks.findByName('check')
     if(check) project.rootProject.tasks.releaseCheck.dependsOn check
+
+    //noinspection GroovyAssignabilityCheck
+    test {
+        // set heap size for the test JVM(s)
+        maxHeapSize = "1500m"
+    }
+
 }
 
 task wrapper(type: Wrapper) {

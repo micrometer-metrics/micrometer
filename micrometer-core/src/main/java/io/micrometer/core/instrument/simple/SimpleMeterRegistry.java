@@ -16,12 +16,9 @@
 package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.cumulative.CumulativeCounter;
-import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
-import io.micrometer.core.instrument.cumulative.CumulativeTimer;
+import io.micrometer.core.instrument.cumulative.*;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
-import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
@@ -66,13 +63,13 @@ public class SimpleMeterRegistry extends MeterRegistry {
                 break;
             case Step:
             default:
-                summary = new StepDistributionSummary(id, clock, merged, config.step().toMillis());
+                summary = new StepDistributionSummary(id, clock, merged);
                 break;
         }
 
         for (double percentile : histogramConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
-                percentile, summary::percentile);
+                summary, s -> summary.percentile(percentile));
         }
 
         if(histogramConfig.isPublishingHistogram()) {
@@ -91,7 +88,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
+    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
         HistogramConfig merged = histogramConfig.merge(HistogramConfig.builder()
             .histogramExpiry(config.step())
             .build());
@@ -99,17 +96,17 @@ public class SimpleMeterRegistry extends MeterRegistry {
         Timer timer;
         switch (config.mode()) {
             case Cumulative:
-                timer = new CumulativeTimer(id, clock, merged);
+                timer = new CumulativeTimer(id, clock, merged, pauseDetector, getBaseTimeUnit());
                 break;
             case Step:
             default:
-                timer = new StepTimer(id, clock, merged, config.step().toMillis());
+                timer = new StepTimer(id, clock, merged, pauseDetector, getBaseTimeUnit());
                 break;
         }
 
         for (double percentile : histogramConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
-                percentile, p -> timer.percentile(p, getBaseTimeUnit()));
+                timer, t -> t.percentile(percentile, getBaseTimeUnit()));
         }
 
         if(histogramConfig.isPublishingHistogram()) {
@@ -157,5 +154,13 @@ public class SimpleMeterRegistry extends MeterRegistry {
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.SECONDS;
+    }
+
+    @Override
+    protected HistogramConfig defaultHistogramConfig() {
+        return HistogramConfig.builder()
+            .histogramExpiry(config.step())
+            .build()
+            .merge(HistogramConfig.DEFAULT);
     }
 }

@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.util.Assert;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -34,7 +33,6 @@ public class JvmThreadMetrics implements MeterBinder {
     }
 
     public JvmThreadMetrics(Iterable<Tag> tags) {
-        Assert.notNull(tags, "tags");
         this.tags = tags;
     }
 
@@ -44,7 +42,7 @@ public class JvmThreadMetrics implements MeterBinder {
 
         Gauge.builder("jvm.threads.peak", threadBean, ThreadMXBean::getPeakThreadCount)
             .tags(tags)
-            .description("the peak live thread count since the Java virtual machine started or peak was reset")
+            .description("The peak live thread count since the Java virtual machine started or peak was reset")
             .register(registry);
 
         Gauge.builder("jvm.threads.daemon", threadBean, ThreadMXBean::getDaemonThreadCount)

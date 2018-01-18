@@ -19,18 +19,31 @@ import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
-import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HazelcastCacheMetricsTest {
+
+    private HazelcastInstance h;
+
+    @BeforeEach
+    void setup(){
+        Config config = new Config();
+        h = Hazelcast.newHazelcastInstance(config);
+    }
+
+    @AfterEach
+    void cleanup(){
+        h.shutdown();
+    }
+
     @Test
     void cacheMetrics() {
-        Config config = new Config();
-        HazelcastInstance h = Hazelcast.newHazelcastInstance(config);
         IMap<String, String> map = h.getMap("my-distributed-map");
 
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
@@ -39,7 +52,7 @@ class HazelcastCacheMetricsTest {
         map.put("key", "value");
         map.get("key");
 
-        assertThat(registry.find("cache.gets").value(Statistic.Count, 1.0).meter()).isPresent();
-        assertThat(registry.find("cache.puts").value(Statistic.Count, 1.0).meter()).isPresent();
+        assertThat(registry.mustFind("cache.gets").functionTimer().count()).isEqualTo(1L);
+        assertThat(registry.mustFind("cache.puts").functionTimer().count()).isEqualTo(1L);
     }
 }

@@ -22,13 +22,13 @@ final class CloudWatchUtils {
 
     /**
      * Minimum allowed value as specified by
-     * #{{@link com.amazonaws.services.cloudwatch.model.MetricDatum#setValue(Double)}}
+     * {@link com.amazonaws.services.cloudwatch.model.MetricDatum#setValue(Double)}
      */
     private static final double MINIMUM_ALLOWED_VALUE = 8.515920e-109;
 
     /**
      * Maximum allowed value as specified by
-     * #{{@link com.amazonaws.services.cloudwatch.model.MetricDatum#setValue(Double)}}
+     * {@link com.amazonaws.services.cloudwatch.model.MetricDatum#setValue(Double)}
      */
     private static final double MAXIMUM_ALLOWED_VALUE = 1.174271e+108;
 
@@ -37,29 +37,24 @@ final class CloudWatchUtils {
 
     /**
      * Clean up metric to be within the allowable range as specified in
-     * #{{@link com.amazonaws.services.cloudwatch.model.MetricDatum#setValue(Double)}}
+     * {@link com.amazonaws.services.cloudwatch.model.MetricDatum#setValue(Double)}
      *
      * @param value unsanitized value
      * @return value clamped to allowable range, 0, or NaN
      */
     static double clampMetricValue(double value) {
-        final double result;
-        if (!Double.isNaN(value)) {
-            double magnitude = Math.abs(value);
-            if (magnitude == 0) {
-                // Leave zero as zero
-                result = 0;
-            } else {
-                // Non-zero magnitude, clamp to allowed range
-                double clampedMag = Math.min(Math.max(magnitude, MINIMUM_ALLOWED_VALUE), MAXIMUM_ALLOWED_VALUE);
-                result = Math.copySign(clampedMag, value);
-            }
-        } else {
-            // Leave as is and let the SDK reject it
-            result = value;
+        // Leave as is and let the SDK reject it
+        if (Double.isNaN(value)) {
+            return value;
         }
-
-        return result;
+        double magnitude = Math.abs(value);
+        if (magnitude == 0) {
+            // Leave zero as zero
+            return 0;
+        }
+        // Non-zero magnitude, clamp to allowed range
+        double clampedMag = Math.min(Math.max(magnitude, MINIMUM_ALLOWED_VALUE), MAXIMUM_ALLOWED_VALUE);
+        return Math.copySign(clampedMag, value);
     }
 
 }

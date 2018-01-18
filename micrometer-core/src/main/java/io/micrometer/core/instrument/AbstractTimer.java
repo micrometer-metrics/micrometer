@@ -17,7 +17,7 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.TimeWindowLatencyHistogram;
-import io.micrometer.core.instrument.util.Assert;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
 
@@ -29,19 +29,18 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     protected final Clock clock;
     private final HistogramConfig histogramConfig;
     protected final TimeWindowLatencyHistogram histogram;
+    private final TimeUnit baseTimeUnit;
 
-    protected AbstractTimer(Meter.Id id, Clock clock, HistogramConfig histogramConfig) {
+    protected AbstractTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
         super(id);
-        Assert.notNull(clock,"clock");
-        Assert.notNull(histogramConfig,"histogramConfig");
         this.clock = clock;
         this.histogramConfig = histogramConfig;
-        this.histogram = new TimeWindowLatencyHistogram(clock, histogramConfig);
+        this.histogram = new TimeWindowLatencyHistogram(clock, histogramConfig, pauseDetector);
+        this.baseTimeUnit = baseTimeUnit;
     }
 
     @Override
     public <T> T recordCallable(Callable<T> f) throws Exception {
-        Assert.notNull(f,"callable");
         final long s = clock.monotonicTime();
         try {
             return f.call();
@@ -53,7 +52,6 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     @Override
     public <T> T record(Supplier<T> f) {
-        Assert.notNull(f,"supplier");
         final long s = clock.monotonicTime();
         try {
             return f.get();
@@ -65,7 +63,6 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     @Override
     public void record(Runnable f) {
-        Assert.notNull(f,"runnable");
         final long s = clock.monotonicTime();
         try {
             f.run();
@@ -77,8 +74,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     @Override
     public final void record(long amount, TimeUnit unit) {
-        Assert.notNull(unit,"timeUnit");
-        if(amount >= 0) {
+        if (amount >= 0) {
             histogram.recordLong(TimeUnit.NANOSECONDS.convert(amount, unit));
             recordNonNegative(amount, unit);
         }
@@ -99,7 +95,12 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     @Override
     public HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
         return histogram.takeSnapshot(count(), totalTime(TimeUnit.NANOSECONDS), max(TimeUnit.NANOSECONDS),
-                                      supportsAggregablePercentiles);
+            supportsAggregablePercentiles);
+    }
+
+    @Override
+    public TimeUnit baseTimeUnit() {
+        return baseTimeUnit;
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

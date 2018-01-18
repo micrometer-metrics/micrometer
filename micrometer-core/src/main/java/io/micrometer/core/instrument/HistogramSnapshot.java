@@ -15,12 +15,11 @@
  */
 package io.micrometer.core.instrument;
 
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
-
-import io.micrometer.core.instrument.util.Assert;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
+
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 public final class HistogramSnapshot {
 

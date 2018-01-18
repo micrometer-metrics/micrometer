@@ -111,11 +111,11 @@ public interface StatsdConfig extends MeterRegistryConfig {
     }
 
     /**
-     * Returns the step size to use in computing windowed statistics like max. The default is 10 seconds.
+     * Returns the step size to use in computing windowed statistics like max. The default is 1 minute.
      * To get the most out of these statistics, align the step interval to be close to your scrape interval.
      */
     default Duration step() {
         String v = get(prefix() + ".step");
-        return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
+        return v == null ? Duration.ofMinutes(1) : Duration.parse(v);
     }
 }

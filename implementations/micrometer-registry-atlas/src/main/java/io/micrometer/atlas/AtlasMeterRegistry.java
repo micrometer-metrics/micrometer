@@ -25,6 +25,7 @@ import com.netflix.spectator.atlas.AtlasRegistry;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.step.StepFunctionCounter;
 import io.micrometer.core.instrument.step.StepFunctionTimer;
@@ -109,14 +110,14 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
         for (double percentile : histogramConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
-                percentile, summary::percentile);
+                summary, s -> s.percentile(percentile));
         }
 
         return summary;
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig) {
+    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
         com.netflix.spectator.api.Timer internalTimer = registry.timer(spectatorId(id));
 
         if (histogramConfig.isPercentileHistogram()) {
@@ -124,7 +125,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
             PercentileTimer.get(registry, spectatorId(id));
         }
 
-        SpectatorTimer timer = new SpectatorTimer(id, internalTimer, clock, histogramConfig);
+        SpectatorTimer timer = new SpectatorTimer(id, internalTimer, clock, histogramConfig, pauseDetector, getBaseTimeUnit());
 
         for (long sla : histogramConfig.getSlaBoundaries()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "sla", Duration.ofNanos(sla).toString()), sla, timer::histogramCountAtValue);
@@ -132,7 +133,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
         for (double percentile : histogramConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
-                percentile, p -> timer.percentile(p, TimeUnit.SECONDS));
+                timer, t -> t.percentile(percentile, TimeUnit.SECONDS));
         }
 
         return timer;
@@ -200,5 +201,13 @@ public class AtlasMeterRegistry extends MeterRegistry {
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.SECONDS;
+    }
+
+    @Override
+    protected HistogramConfig defaultHistogramConfig() {
+        return HistogramConfig.builder()
+            .histogramExpiry(atlasConfig.step())
+            .build()
+            .merge(HistogramConfig.DEFAULT);
     }
 }

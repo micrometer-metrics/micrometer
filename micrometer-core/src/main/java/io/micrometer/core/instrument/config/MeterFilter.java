@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.util.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +35,7 @@ import static java.util.stream.StreamSupport.stream;
  * As requests are made of a {@link MeterRegistry} to create new metrics, allow for filtering out
  * the metric altogether, transforming its ID (name or tags) in some way, and transforming its
  * configuration.
- *
+ * <p>
  * All new metrics should pass through each {@link MeterFilter} in the order in which they were added.
  *
  * @author Jon Schneider
@@ -62,8 +61,7 @@ public interface MeterFilter {
      * This is only called when filtering new timers and distribution summaries (i.e. those meter types
      * that use {@link HistogramConfig}).
      *
-     *
-     * @param id Id with {@link MeterFilter#map} transformations applied.
+     * @param id     Id with {@link MeterFilter#map} transformations applied.
      * @param config A histogram configuration guaranteed to be non-null.
      * @return Overrides to any part of the histogram config, when applicable.
      */
@@ -72,7 +70,6 @@ public interface MeterFilter {
     }
 
     static MeterFilter commonTags(Iterable<Tag> tags) {
-        Assert.notNull(tags, "tags");
         return new MeterFilter() {
             @Override
             public Meter.Id map(Meter.Id id) {
@@ -80,6 +77,25 @@ public interface MeterFilter {
                 id.getTags().forEach(allTags::add);
                 tags.forEach(allTags::add);
                 return new Meter.Id(id.getName(), allTags, id.getBaseUnit(), id.getDescription(), id.getType());
+            }
+        };
+    }
+
+    static MeterFilter renameTag(String metricPrefix, String fromTagKey, String toTagKey) {
+        return new MeterFilter() {
+            @Override
+            public Meter.Id map(Meter.Id id) {
+                if (!id.getName().startsWith(metricPrefix))
+                    return id;
+
+                List<Tag> tags = new ArrayList<>();
+                for (Tag tag : id.getTags()) {
+                    if (tag.getKey().equals(fromTagKey))
+                        tags.add(Tag.of(toTagKey, tag.getValue()));
+                    else tags.add(tag);
+                }
+
+                return new Meter.Id(id.getName(), tags, id.getBaseUnit(), id.getDescription(), id.getType());
             }
         };
     }
@@ -103,11 +119,10 @@ public interface MeterFilter {
     }
 
     /**
-     * @author Clint Checketts
-
-     * @param tagKey The tag key for which replacements should be made
+     * @param tagKey      The tag key for which replacements should be made
      * @param replacement The value to replace with
-     * @param exceptions All a matching tag with this value to retain its original value
+     * @param exceptions  All a matching tag with this value to retain its original value
+     * @author Clint Checketts
      */
     static MeterFilter replaceTagValues(String tagKey, Function<String, String> replacement, String... exceptions) {
         return new MeterFilter() {
@@ -115,10 +130,10 @@ public interface MeterFilter {
             public Meter.Id map(Meter.Id id) {
                 List<Tag> tags = stream(id.getTags().spliterator(), false)
                     .map(t -> {
-                        if(!t.getKey().equals(tagKey))
+                        if (!t.getKey().equals(tagKey))
                             return t;
                         for (String exception : exceptions) {
-                            if(t.getValue().equals(exception))
+                            if (t.getValue().equals(exception))
                                 return t;
                         }
                         return Tag.of(tagKey, replacement.apply(t.getValue()));
@@ -151,7 +166,7 @@ public interface MeterFilter {
     /**
      * Useful for cost-control in monitoring systems which charge directly or indirectly by the
      * total number of time series you generate.
-     *
+     * <p>
      * While this filter doesn't discriminate between your most critical and less useful metrics in
      * deciding what to drop (all the metrics you intend to use should fit below this threshold),
      * it can effectively cap your risk of an accidentally high-cardiality metric costing too much.
@@ -164,7 +179,7 @@ public interface MeterFilter {
 
             @Override
             public MeterFilterReply accept(Meter.Id id) {
-                if(ids.size() > maximumTimeSeries)
+                if (ids.size() > maximumTimeSeries)
                     return MeterFilterReply.DENY;
 
                 ids.add(id);

@@ -15,8 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.util.Assert;
-
 import java.util.function.Supplier;
 
 /**
@@ -30,8 +28,6 @@ public class Measurement {
     private final Statistic statistic;
 
     public Measurement(Supplier<Double> f, Statistic statistic) {
-        Assert.notNull(f, "supplier");
-        Assert.notNull(statistic, "statistic");
         this.f = f;
         this.statistic = statistic;
     }

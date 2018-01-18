@@ -15,13 +15,10 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.util.Assert;
-
 public abstract class AbstractMeter implements Meter {
     private final Meter.Id id;
 
     public AbstractMeter(Id id) {
-        Assert.notNull(id, "id");
         this.id = id;
     }
 

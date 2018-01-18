@@ -15,7 +15,10 @@
  */
 package io.micrometer.spring.async;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.Before;
@@ -25,9 +28,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.MockClock.clock;
-import static io.micrometer.core.instrument.Statistic.Count;
-import static io.micrometer.core.instrument.Statistic.Value;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class ThreadPoolTaskExecutorMetricsTest {
@@ -52,12 +52,11 @@ public class ThreadPoolTaskExecutorMetricsTest {
         lock.await();
         pool.shutdown();
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
-        assertThat(registry.find("exec").tags(userTags).timer()).map(Timer::count).hasValue(1L);
-        assertThat(registry.find("exec.completed").tags(userTags).meter()).isPresent();
-        assertThat(registry.find("exec.queued").tags(userTags).gauge()).isPresent();
-        assertThat(registry.find("exec.active").tags(userTags).gauge()).isPresent();
-        assertThat(registry.find("exec.pool").tags(userTags).gauge()).isPresent();
+        assertThat(registry.mustFind("exec").tags(userTags).timer().count()).isEqualTo(1L);
+        registry.mustFind("exec.completed").tags(userTags).functionCounter();
+        registry.mustFind("exec.queued").tags(userTags).gauge();
+        registry.mustFind("exec.active").tags(userTags).gauge();
+        registry.mustFind("exec.pool").tags(userTags).gauge();
     }
 
     @Test
@@ -79,13 +78,12 @@ public class ThreadPoolTaskExecutorMetricsTest {
         pool.submit(() -> System.out.println("boop"));
 
         taskStart.await(1, TimeUnit.SECONDS);
-        assertThat(registry.find("beep.pool.queued").tags(userTags).value(Value, 1.0).gauge()).isPresent();
+        assertThat(registry.mustFind("beep.pool.queued").tags(userTags).gauge().value()).isEqualTo(1.0);
 
         taskComplete.countDown();
         pool.shutdown();
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
-        assertThat(registry.find("beep.pool").tags(userTags).value(Count, 2.0).timer()).isPresent();
-        assertThat(registry.find("beep.pool.queued").tags(userTags).value(Value, 0.0).gauge()).isPresent();
+        assertThat(registry.mustFind("beep.pool").tags(userTags).timer().count()).isEqualTo(2L);
+        assertThat(registry.mustFind("beep.pool.queued").tags(userTags).gauge().value()).isEqualTo(0.0);
     }
 }

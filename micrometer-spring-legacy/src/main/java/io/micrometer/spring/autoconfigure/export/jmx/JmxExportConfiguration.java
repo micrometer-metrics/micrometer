@@ -17,13 +17,17 @@ package io.micrometer.spring.autoconfigure.export.jmx;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.jmx.JmxConfig;
 import io.micrometer.jmx.JmxMeterRegistry;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.time.Duration;
 
 /**
  * Configuration for exporting metrics to JMX.
@@ -32,12 +36,37 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @ConditionalOnClass(JmxMeterRegistry.class)
+@EnableConfigurationProperties(JmxProperties.class)
 public class JmxExportConfiguration {
 
+    private class DefaultJmxConfig implements JmxConfig {
+        private final JmxProperties props;
+
+        public DefaultJmxConfig(JmxProperties props) {
+            this.props = props;
+        }
+
+        @Override
+        public Duration step() {
+            return props.getStep() == null ? DEFAULT.step() : props.getStep();
+        }
+
+        @Override
+        public String get(String k) {
+            return null;
+        }
+    }
+
     @Bean
-    @ConditionalOnProperty(value = "spring.metrics.export.jmx.enabled", matchIfMissing = true)
-    public MetricsExporter jmxExporter(HierarchicalNameMapper nameMapper, Clock clock) {
-        return () -> new JmxMeterRegistry(nameMapper, clock);
+    @ConditionalOnMissingBean
+    public JmxConfig jmxConfig(JmxProperties props) {
+        return new DefaultJmxConfig(props);
+    }
+
+    @Bean
+    @ConditionalOnProperty(value = "management.metrics.export.jmx.enabled", matchIfMissing = true)
+    public MetricsExporter jmxExporter(JmxConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
+        return () -> new JmxMeterRegistry(config, clock, nameMapper);
     }
 
     @Bean

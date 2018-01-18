@@ -44,6 +44,8 @@ public class HistogramConfig implements Mergeable<HistogramConfig> {
         .histogramBufferLength(5)
         .build();
 
+    public static final HistogramConfig NONE = builder().build();
+
     @Override
     public HistogramConfig merge(HistogramConfig parent) {
         return HistogramConfig.builder()

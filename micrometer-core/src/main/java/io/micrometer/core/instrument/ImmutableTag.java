@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.util.Assert;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.Objects;
@@ -25,8 +24,6 @@ public class ImmutableTag implements Tag {
     private String value;
 
     public ImmutableTag(String key, String value) {
-        Assert.notNull(key,"key");
-        Assert.notNull(value,"value");
         this.key = key;
         this.value = value;
     }

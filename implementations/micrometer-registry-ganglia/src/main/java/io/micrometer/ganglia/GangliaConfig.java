@@ -16,14 +16,14 @@
 package io.micrometer.ganglia;
 
 import info.ganglia.gmetric4j.gmetric.GMetric;
+import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
 
-import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author Jon Schneider
  */
-public interface GangliaConfig {
+public interface GangliaConfig extends DropwizardConfig {
     /**
      * Accept configuration defaults
      */
@@ -44,14 +44,6 @@ public interface GangliaConfig {
      */
     default String prefix() {
         return "ganglia";
-    }
-
-    /**
-     * Returns the step size (reporting frequency) to use. The default is 10 seconds.
-     */
-    default Duration step() {
-        String v = get(prefix() + ".step");
-        return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
     }
 
     default TimeUnit rateUnits() {

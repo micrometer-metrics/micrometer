@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 
-import static io.micrometer.core.instrument.util.Assert.notNull;
 import static java.util.Collections.emptyList;
 
 /**
@@ -37,7 +36,7 @@ public class ProcessorMetrics implements MeterBinder {
     }
 
     public ProcessorMetrics(Iterable<Tag> tags) {
-        this.tags = notNull(tags, "tags");
+        this.tags = tags;
     }
 
     @Override

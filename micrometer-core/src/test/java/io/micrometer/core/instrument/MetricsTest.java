@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
-import static io.micrometer.core.instrument.MockClock.clock;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MetricsTest {
@@ -39,7 +38,6 @@ class MetricsTest {
         Metrics.addRegistry(simple);
         counter.increment();
 
-        clock(simple).add(SimpleConfig.DEFAULT_STEP);
-        assertThat(Metrics.globalRegistry.find("counter").value(Statistic.Count, 1.0).counter()).isPresent();
+        assertThat(Metrics.globalRegistry.mustFind("counter").counter().count()).isEqualTo(1.0);
     }
 }

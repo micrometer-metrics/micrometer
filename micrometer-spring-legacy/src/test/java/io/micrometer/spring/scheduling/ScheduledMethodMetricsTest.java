@@ -33,12 +33,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.concurrent.CountDownLatch;
 
-import static io.micrometer.core.instrument.Statistic.Count;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@TestPropertySource(properties = "spring.metrics.useGlobalRegistry=false")
+@TestPropertySource(properties = "management.metrics.useGlobalRegistry=false")
 @Ignore("Race condition still...")
 public class ScheduledMethodMetricsTest {
 
@@ -58,16 +57,16 @@ public class ScheduledMethodMetricsTest {
         shortBeepsExecuted.await();
         while(scheduler.getActiveCount() > 0) {}
 
-        assertThat(registry.find("beeper").value(Count, 1.0).timer()).isPresent();
-        assertThat(registry.find("beeper").tags("percentile", "50").gauge()).isNotEmpty();
-        assertThat(registry.find("beeper").tags("percentile", "95").gauge()).isNotEmpty();
+        assertThat(registry.mustFind("beeper").timer().count()).isEqualTo(1L);
+        registry.mustFind("beeper").tags("percentile", "50").gauge();
+        registry.mustFind("beeper").tags("percentile", "95").gauge();
     }
 
     @Test
     public void longTasksAreInstrumented() throws InterruptedException {
         longTaskStarted.await();
 
-        assertThat(registry.find("long.beep").value(Count, 1.0).longTaskTimer()).isPresent();
+        assertThat(registry.mustFind("long.beep").longTaskTimer().activeTasks()).isEqualTo(1);
 
         // make sure longBeep continues running until we have a chance to observe it in the active state
         longTaskShouldComplete.countDown();
@@ -76,7 +75,7 @@ public class ScheduledMethodMetricsTest {
 
         Thread.sleep(10);
 
-        assertThat(registry.find("long.beep").value(Count, 0.0).longTaskTimer()).isPresent();
+        assertThat(registry.mustFind("long.beep").longTaskTimer().activeTasks()).isEqualTo(0);
     }
 
     @SpringBootApplication

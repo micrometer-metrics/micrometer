@@ -19,8 +19,8 @@ import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.core.instrument.util.TimeDecayingMax;
 import org.reactivestreams.Subscriber;
 
 import java.util.concurrent.atomic.DoubleAdder;
@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.LongAdder;
 public class StatsdDistributionSummary extends AbstractDistributionSummary {
     private final LongAdder count = new LongAdder();
     private final DoubleAdder amount = new DoubleAdder();
-    private final StepDouble max;
+    private final TimeDecayingMax max;
 
     private final StatsdLineBuilder lineBuilder;
     private final Subscriber<String> publisher;
@@ -37,7 +37,7 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
     StatsdDistributionSummary(Meter.Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher, Clock clock,
                               HistogramConfig histogramConfig, long stepMillis) {
         super(id, clock, histogramConfig);
-        this.max = new StepDouble(clock, stepMillis);
+        this.max = new TimeDecayingMax(clock, histogramConfig);
         this.lineBuilder = lineBuilder;
         this.publisher = publisher;
     }
@@ -47,7 +47,7 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
         if (amount >= 0) {
             count.increment();
             this.amount.add(amount);
-            max.getCurrent().add(Math.max(amount - max.getCurrent().doubleValue(), 0));
+            max.record(amount);
             publisher.onNext(lineBuilder.histogram(amount));
         }
     }

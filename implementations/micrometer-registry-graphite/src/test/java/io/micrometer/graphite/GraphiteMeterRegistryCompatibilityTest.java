@@ -15,10 +15,12 @@
  */
 package io.micrometer.graphite;
 
-import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
+
+import java.time.Duration;
 
 class GraphiteMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @Override
@@ -33,6 +35,11 @@ class GraphiteMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityK
             public String get(String k) {
                 return null;
             }
-        }, HierarchicalNameMapper.DEFAULT, new MockClock());
+        }, new MockClock(), HierarchicalNameMapper.DEFAULT);
+    }
+
+    @Override
+    public Duration step() {
+        return GraphiteConfig.DEFAULT.step();
     }
 }

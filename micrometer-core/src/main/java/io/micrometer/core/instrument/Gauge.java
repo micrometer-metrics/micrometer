@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.util.Assert;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.ArrayList;
@@ -49,13 +48,10 @@ public interface Gauge extends Meter {
         private final T obj;
         private final ToDoubleFunction<T> f;
         private final List<Tag> tags = new ArrayList<>();
-        private @Nullable String description;
-        private @Nullable String baseUnit;
+        @Nullable private String description;
+        @Nullable private String baseUnit;
 
         private Builder(String name, T obj, ToDoubleFunction<T> f) {
-            Assert.notNull(name,"name");
-            Assert.notNull(obj,"gauge object");
-            Assert.notNull(f,"gauge function");
             this.name = name;
             this.obj = obj;
             this.f = f;
@@ -70,7 +66,6 @@ public interface Gauge extends Meter {
         }
         
         public Builder tags(Iterable<Tag> tags) {
-            Assert.notNull(tags,"tags");
             tags.forEach(this.tags::add);
             return this;
         }
@@ -91,7 +86,6 @@ public interface Gauge extends Meter {
         }
 
         public Gauge register(MeterRegistry registry) {
-            Assert.notNull(registry,"registry");
             return registry.gauge(new Meter.Id(name, tags, baseUnit, description, Type.Gauge), obj, f);
         }
     }

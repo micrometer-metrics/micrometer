@@ -19,7 +19,6 @@ import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.GcInfo;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.util.Assert;
 import io.micrometer.core.lang.Nullable;
 
 import javax.management.NotificationEmitter;
@@ -57,7 +56,6 @@ public class JvmGcMetrics implements MeterBinder {
             if (isOldGenPool(mbean.getName()))
                 oldGenPoolName = mbean.getName();
         }
-        Assert.notNull(tags, "tags");
         this.tags = tags;
     }
 
@@ -78,12 +76,12 @@ public class JvmGcMetrics implements MeterBinder {
             .baseUnit("bytes")
             .register(registry);
 
-        Counter promotionRate = Counter.builder("jvm.gc.memory.promoted").tags(tags)
+        Counter promotedBytes = Counter.builder("jvm.gc.memory.promoted").tags(tags)
             .baseUnit("bytes")
             .description("Count of positive increases in the size of the old generation memory pool before GC to after GC")
             .register(registry);
 
-        Counter allocationRate = Counter.builder("jvm.gc.memory.allocated").tags(tags)
+        Counter allocatedBytes = Counter.builder("jvm.gc.memory.allocated").tags(tags)
             .baseUnit("bytes")
             .description("Incremented for an increase in the size of the young generation memory pool after one GC to before the next")
             .register(registry);
@@ -127,7 +125,7 @@ public class JvmGcMetrics implements MeterBinder {
                             final long oldAfter = after.get(oldGenPoolName).getUsed();
                             final long delta = oldAfter - oldBefore;
                             if (delta > 0L) {
-                                promotionRate.increment(delta);
+                                promotedBytes.increment(delta);
                             }
 
                             // Some GC implementations such as G1 can reduce the old gen size as part of a minor GC. To track the
@@ -146,7 +144,7 @@ public class JvmGcMetrics implements MeterBinder {
                             final long delta = youngBefore - youngGenSizeAfter.get();
                             youngGenSizeAfter.set(youngAfter);
                             if (delta > 0L) {
-                                allocationRate.increment(delta);
+                                allocatedBytes.increment(delta);
                             }
                         }
                     }

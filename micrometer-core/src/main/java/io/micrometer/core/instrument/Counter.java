@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.util.Assert;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.ArrayList;
@@ -66,7 +65,6 @@ public interface Counter extends Meter {
         private @Nullable String baseUnit;
 
         private Builder(String name) {
-            Assert.notNull(name,"name");
             this.name = name;
         }
 
@@ -78,7 +76,6 @@ public interface Counter extends Meter {
         }
 
         public Builder tags(Iterable<Tag> tags) {
-            Assert.notNull(tags,"tags");
             tags.forEach(this.tags::add);
             return this;
         }
@@ -99,7 +96,6 @@ public interface Counter extends Meter {
         }
 
         public Counter register(MeterRegistry registry) {
-            Assert.notNull(registry,"registry");
             return registry.counter(new Meter.Id(name, tags, baseUnit, description, Type.Counter));
         }
     }

@@ -21,14 +21,11 @@ import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.util.MeterEquivalence;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static java.util.stream.StreamSupport.stream;
 
 public class SpectatorDistributionSummary extends AbstractDistributionSummary {
     private final com.netflix.spectator.api.DistributionSummary summary;
-    private final Logger logger = LoggerFactory.getLogger(SpectatorDistributionSummary.class);
 
     SpectatorDistributionSummary(Id id,
                                  com.netflix.spectator.api.DistributionSummary distributionSummary,

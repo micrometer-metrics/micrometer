@@ -19,7 +19,8 @@ import com.codahale.metrics.Timer;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.step.StepDouble;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
+import io.micrometer.core.instrument.util.TimeDecayingMax;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -28,12 +29,12 @@ import java.util.concurrent.atomic.AtomicLong;
 public class DropwizardTimer extends AbstractTimer {
     private final Timer impl;
     private final AtomicLong totalTime = new AtomicLong(0);
-    private final StepDouble max;
+    private final TimeDecayingMax max;
 
-    DropwizardTimer(Id id, Timer impl, Clock clock, HistogramConfig histogramConfig) {
-        super(id, clock, histogramConfig);
+    DropwizardTimer(Id id, Timer impl, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
+        super(id, clock, histogramConfig, pauseDetector, TimeUnit.MILLISECONDS);
         this.impl = impl;
-        this.max = new StepDouble(clock, 60000);
+        this.max = new TimeDecayingMax(clock, histogramConfig);
     }
 
     @Override
@@ -42,7 +43,7 @@ public class DropwizardTimer extends AbstractTimer {
             impl.update(amount, unit);
 
             long nanoAmount = TimeUnit.NANOSECONDS.convert(amount, unit);
-            max.getCurrent().add(Math.max(nanoAmount - max.getCurrent().doubleValue(), 0));
+            max.record(nanoAmount, TimeUnit.NANOSECONDS);
             totalTime.addAndGet(nanoAmount);
         }
     }
@@ -59,6 +60,6 @@ public class DropwizardTimer extends AbstractTimer {
 
     @Override
     public double max(TimeUnit unit) {
-        return TimeUtils.nanosToUnit(max.poll(), unit);
+        return max.poll(unit);
     }
 }

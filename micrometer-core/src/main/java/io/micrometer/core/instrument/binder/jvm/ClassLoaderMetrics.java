@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.util.Assert;
 
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.ManagementFactory;
@@ -35,7 +34,6 @@ public class ClassLoaderMetrics implements MeterBinder {
     }
 
     public ClassLoaderMetrics(Iterable<Tag> tags) {
-        Assert.notNull(tags, "tags");
         this.tags = tags;
     }
 
@@ -45,7 +43,7 @@ public class ClassLoaderMetrics implements MeterBinder {
 
         Gauge.builder("jvm.classes.loaded", classLoadingBean, ClassLoadingMXBean::getLoadedClassCount)
             .tags(tags)
-            .description("The number of classes that are currently loaded in the Java virtual machine.")
+            .description("The number of classes that are currently loaded in the Java virtual machine")
             .register(registry);
 
         FunctionCounter.builder("jvm.classes.unloaded", classLoadingBean, ClassLoadingMXBean::getUnloadedClassCount)

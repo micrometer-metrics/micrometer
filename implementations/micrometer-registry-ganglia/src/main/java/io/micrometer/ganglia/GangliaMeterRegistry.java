@@ -15,6 +15,7 @@
  */
 package io.micrometer.ganglia;
 
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ganglia.GangliaReporter;
 import info.ganglia.gmetric4j.gmetric.GMetric;
 import io.micrometer.core.instrument.Clock;
@@ -28,18 +29,18 @@ public class GangliaMeterRegistry extends DropwizardMeterRegistry {
     private final GangliaReporter reporter;
     private final GangliaConfig config;
 
-    public GangliaMeterRegistry() {
-        this(System::getProperty);
+    public GangliaMeterRegistry(GangliaConfig config, Clock clock) {
+        this(config, clock, HierarchicalNameMapper.DEFAULT);
     }
 
-    public GangliaMeterRegistry(GangliaConfig config) {
-        this(config, HierarchicalNameMapper.DEFAULT, Clock.SYSTEM);
+    public GangliaMeterRegistry(GangliaConfig config, Clock clock, HierarchicalNameMapper nameMapper) {
+        this(config, clock, nameMapper, new MetricRegistry());
     }
 
-    public GangliaMeterRegistry(GangliaConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
+    public GangliaMeterRegistry(GangliaConfig config, Clock clock, HierarchicalNameMapper nameMapper, MetricRegistry metricRegistry) {
         // Technically, Ganglia doesn't have any constraints on metric or tag names, but the encoding of Unicode can look
         // horrible in the UI. So be aware...
-        super(nameMapper, clock);
+        super(config, metricRegistry, nameMapper, clock);
         this.config = config;
 
         try {

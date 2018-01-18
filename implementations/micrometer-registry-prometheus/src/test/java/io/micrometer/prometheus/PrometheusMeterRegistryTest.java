@@ -18,6 +18,7 @@ package io.micrometer.prometheus;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import org.assertj.core.api.Condition;
@@ -244,14 +245,13 @@ class PrometheusMeterRegistryTest {
         timer.record(10, TimeUnit.MILLISECONDS);
         timer.record(1, TimeUnit.SECONDS);
 
-        assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0);
-        assertThat(registry.scrape()).contains("my_timer_duration_seconds_max 0.0");
-
-        clock(registry).add(PrometheusConfig.DEFAULT.step());
         assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(1);
         assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(1000);
-
         assertThat(registry.scrape()).contains("my_timer_duration_seconds_max 1.0");
+
+        clock(registry).add(Duration.ofMillis(PrometheusConfig.DEFAULT.step().toMillis() * HistogramConfig.DEFAULT.getHistogramBufferLength()));
+        assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0);
+        assertThat(registry.scrape()).contains("my_timer_duration_seconds_max 0.0");
     }
 
     @Issue("#61")
@@ -261,13 +261,14 @@ class PrometheusMeterRegistryTest {
         summary.record(10);
         summary.record(1);
 
-        assertThat(summary.max()).isEqualTo(0);
-        assertThat(registry.scrape()).contains("my_summary_max 0.0");
-
-        clock(registry).add(PrometheusConfig.DEFAULT.step());
         assertThat(summary.max()).isEqualTo(10);
-
         assertThat(registry.scrape()).contains("my_summary_max 10.0");
+
+        clock(registry).add(PrometheusConfig.DEFAULT.step().toMillis() * HistogramConfig.DEFAULT.getHistogramBufferLength(),
+            TimeUnit.MILLISECONDS);
+        assertThat(summary.max()).isEqualTo(0);
+
+        assertThat(registry.scrape()).contains("my_summary_max 0.0");
     }
 
     @Issue("#246")

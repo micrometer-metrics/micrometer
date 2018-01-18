@@ -44,11 +44,11 @@ public class NewRelicMeterRegistryCompatibilityTest extends MeterRegistryCompati
             public String get(String k) {
                 return null;
             }
-
-            @Override
-            public Duration step() {
-                return Duration.ofMillis(800);
-            }
         }, new MockClock());
+    }
+
+    @Override
+    public Duration step() {
+        return NewRelicConfig.DEFAULT.step();
     }
 }

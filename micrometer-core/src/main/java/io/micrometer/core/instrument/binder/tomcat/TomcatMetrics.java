@@ -23,19 +23,18 @@ import org.apache.catalina.Manager;
 import javax.management.*;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-
-import static io.micrometer.core.instrument.util.Assert.notNull;
 
 /**
  * @author Clint Checketts
  * @author Jon Schneider
  */
 public class TomcatMetrics implements MeterBinder {
-    private final @Nullable Manager manager;
+    @Nullable private final Manager manager;
     private final MBeanServer mBeanServer;
     private final Iterable<Tag> tags;
 
@@ -47,14 +46,22 @@ public class TomcatMetrics implements MeterBinder {
         new TomcatMetrics(manager, tags).bindTo(meterRegistry);
     }
 
+    public static MBeanServer getMBeanServer() {
+        List<MBeanServer> mBeanServers = MBeanServerFactory.findMBeanServer(null);
+        if (!mBeanServers.isEmpty()) {
+            return mBeanServers.get(0);
+        }
+        return ManagementFactory.getPlatformMBeanServer();
+    }
+
     public TomcatMetrics(@Nullable Manager manager, Iterable<Tag> tags) {
-        this(manager, tags, ManagementFactory.getPlatformMBeanServer());
+        this(manager, tags, getMBeanServer());
     }
 
     public TomcatMetrics(@Nullable Manager manager, Iterable<Tag> tags, MBeanServer mBeanServer) {
-        this.tags = notNull(tags, "tags");
+        this.tags = tags;
         this.manager = manager;
-        this.mBeanServer = notNull(mBeanServer, "mBeanServer");
+        this.mBeanServer = mBeanServer;
     }
 
     @Override

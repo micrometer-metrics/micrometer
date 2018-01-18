@@ -29,26 +29,26 @@ import java.util.stream.Collectors;
 
 class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> implements LongTaskTimer {
     private final AtomicLong nextTask = new AtomicLong(0L);
-    private final ConcurrentMap<Long, Collection<TaskIdMapping>> taskMapping = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Long, Collection<Sample>> timings = new ConcurrentHashMap<>();
 
     CompositeLongTaskTimer(Meter.Id id) {
         super(id);
     }
 
     @Override
-    public long start() {
+    public Sample start() {
         long task = nextTask.getAndIncrement();
-        taskMapping.put(task, childStream().map(ltt -> new TaskIdMapping(ltt.start(), ltt)).collect(Collectors.toList()));
-        return task;
+        timings.put(task, childStream().map(LongTaskTimer::start).collect(Collectors.toList()));
+        return new Sample(this, task);
     }
 
     @Override
     public long stop(long task) {
-        Collection<TaskIdMapping> mappings = taskMapping.remove(task);
+        Collection<Sample> childMappings = timings.remove(task);
         long last = 0;
-        if(mappings != null) {
-            for (TaskIdMapping mapping : mappings) {
-                last = mapping.ltt.stop(mapping.id);
+        if(childMappings != null) {
+            for (Sample sample : childMappings) {
+                last = sample.stop();
             }
         }
         return last;
@@ -56,11 +56,9 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
 
     @Override
     public double duration(long task, TimeUnit unit) {
-        Collection<TaskIdMapping> mappings = taskMapping.get(task);
-        if(mappings != null) {
-            for (TaskIdMapping mapping : mappings) {
-                return mapping.ltt.duration(mapping.id, unit);
-            }
+        Collection<Sample> childSamples = timings.get(task);
+        if(childSamples != null) {
+            return childSamples.stream().findFirst().map(c -> c.duration(unit)).orElse(-1.0);
         }
         return -1.0;
     }
@@ -86,15 +84,5 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
                             .tags(getId().getTags())
                             .description(getId().getDescription())
                             .register(registry);
-    }
-
-    private static class TaskIdMapping {
-        private final long id;
-        private final LongTaskTimer ltt;
-
-        private TaskIdMapping(long id, LongTaskTimer ltt) {
-            this.id = id;
-            this.ltt = ltt;
-        }
     }
 }

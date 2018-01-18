@@ -81,7 +81,7 @@ public class HibernateMetrics implements MeterBinder {
         counter(registry, "hibernate.optimistic.failures", "The number of StaleObjectStateExceptions that have occurred",
             Statistics::getOptimisticFailureCount);
 
-        counter(registry, "hibernate.flushes", "The global number of flush executed by sessions (either implicit or explicit)",
+        counter(registry, "hibernate.flushes", "The global number of flushes executed by sessions (either implicit or explicit)",
             Statistics::getFlushCount);
         counter(registry, "hibernate.connections.obtained", "Get the global number of connections asked by the sessions " +
             "(the actual number of connections used may be much smaller depending " +
@@ -165,7 +165,7 @@ public class HibernateMetrics implements MeterBinder {
      * Get the {@code Statistics} object from the underlying {@code SessionFactory}. If it isn't hibernate that is
      * used return {@code null}.
      *
-     * @param emf a {@code EntityManagerFactory}
+     * @param emf an {@code EntityManagerFactory}
      * @return the {@code Statistics} from the underlying {@code SessionFactory} or {@code null}.
      */
     private @Nullable Statistics getStatistics(EntityManagerFactory emf) {

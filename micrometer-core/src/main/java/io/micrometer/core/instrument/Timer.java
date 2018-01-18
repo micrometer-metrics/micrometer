@@ -15,8 +15,9 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.util.Assert;
+import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
@@ -48,7 +49,6 @@ public interface Timer extends Meter {
      * @param duration Duration of a single event being measured by this timer.
      */
     default void record(Duration duration) {
-        Assert.notNull(duration, "duration");
         record(duration.toNanos(), TimeUnit.NANOSECONDS);
     }
 
@@ -82,7 +82,6 @@ public interface Timer extends Meter {
      * @return The wrapped Runnable.
      */
     default Runnable wrap(Runnable f) {
-        Assert.notNull(f, "runnable");
         return () -> record(f);
     }
 
@@ -93,12 +92,11 @@ public interface Timer extends Meter {
      * @return The wrapped Callable.
      */
     default <T> Callable<T> wrap(Callable<T> f) {
-        Assert.notNull(f, "callable");
         return () -> recordCallable(f);
     }
 
     /**
-     * The number of times that record has been called on this timer.
+     * The number of times that stop has been called on this timer.
      */
     long count();
 
@@ -129,27 +127,81 @@ public interface Timer extends Meter {
     default Iterable<Measurement> measure() {
         return Arrays.asList(
             new Measurement(() -> (double) count(), Statistic.Count),
-            new Measurement(() -> totalTime(TimeUnit.NANOSECONDS), Statistic.TotalTime)
+            new Measurement(() -> totalTime(baseTimeUnit()), Statistic.TotalTime),
+            new Measurement(() -> max(baseTimeUnit()), Statistic.Max)
         );
     }
+
+    TimeUnit baseTimeUnit();
 
     @Override
     default Type type() {
         return Type.Timer;
     }
 
+    static Sample start(MeterRegistry registry) {
+        return new Sample(registry.config().clock());
+    }
+
+    static Sample start(Clock clock) {
+        return new Sample(clock);
+    }
+
+    class Sample {
+        private final long startTime;
+        private final Clock clock;
+
+        Sample(Clock clock) {
+            this.clock = clock;
+            this.startTime = clock.monotonicTime();
+        }
+
+        /**
+         * Records the duration of the operation
+         *
+         * @return The total duration of the sample in nanoseconds
+         */
+        public long stop(Timer timer) {
+            long durationNs = clock.monotonicTime() - startTime;
+            timer.record(durationNs, TimeUnit.NANOSECONDS);
+            return durationNs;
+        }
+    }
+
     static Builder builder(String name) {
         return new Builder(name);
+    }
+
+    /**
+     * Create a timer builder from a {@link Timed} annotation.
+     *
+     * @param timed       The annotation instance to base a new timer on.
+     * @param defaultName A default name to use in the event that the value attribute is empty.
+     */
+    static Builder builder(Timed timed, String defaultName) {
+        if (timed.longTask() && timed.value().isEmpty()) {
+            // the user MUST name long task timers, we don't lump them in with regular
+            // timers with the same name
+            throw new IllegalArgumentException("Long tasks instrumented with @Timed require the value attribute to be non-empty");
+        }
+
+        return new Builder(timed.value().isEmpty() ? defaultName : timed.value())
+            .tags(timed.extraTags())
+            .description(timed.description().isEmpty() ? null : timed.description())
+            .publishPercentileHistogram(timed.histogram())
+            .publishPercentiles(timed.percentiles().length > 0 ? timed.percentiles() : null);
     }
 
     class Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
-        private @Nullable String description;
+        @Nullable
+        private String description;
         private final HistogramConfig.Builder histogramConfigBuilder;
+        @Nullable
+        private PauseDetector pauseDetector;
 
         private Builder(String name) {
-            Assert.notNull(name, "name");
             this.name = name;
             this.histogramConfigBuilder = new HistogramConfig.Builder();
             minimumExpectedValue(Duration.ofMillis(1));
@@ -157,7 +209,6 @@ public interface Timer extends Meter {
         }
 
         public Builder tags(Iterable<Tag> tags) {
-            Assert.notNull(tags, "tags");
             tags.forEach(this.tags::add);
             return this;
         }
@@ -206,25 +257,26 @@ public interface Timer extends Meter {
          *
          * @param sla Publish SLA boundaries in the set of histogram buckets shipped to the monitoring system.
          */
-        public Builder sla(Duration... sla) {
-            Assert.notNull(sla, "sla");
-            long[] slaNano = new long[sla.length];
-            for (int i = 0; i < slaNano.length; i++) {
-                slaNano[i] = sla[i].toNanos();
+        public Builder sla(@Nullable Duration... sla) {
+            if (sla != null) {
+                long[] slaNano = new long[sla.length];
+                for (int i = 0; i < slaNano.length; i++) {
+                    slaNano[i] = sla[i].toNanos();
+                }
+                this.histogramConfigBuilder.sla(slaNano);
             }
-            this.histogramConfigBuilder.sla(slaNano);
             return this;
         }
 
-        public Builder minimumExpectedValue(Duration min) {
-            Assert.notNull(min, "min");
-            this.histogramConfigBuilder.minimumExpectedValue(min.toNanos());
+        public Builder minimumExpectedValue(@Nullable Duration min) {
+            if (min != null)
+                this.histogramConfigBuilder.minimumExpectedValue(min.toNanos());
             return this;
         }
 
-        public Builder maximumExpectedValue(Duration max) {
-            Assert.notNull(max, "max");
-            this.histogramConfigBuilder.maximumExpectedValue(max.toNanos());
+        public Builder maximumExpectedValue(@Nullable Duration max) {
+            if (max != null)
+                this.histogramConfigBuilder.maximumExpectedValue(max.toNanos());
             return this;
         }
 
@@ -235,6 +287,11 @@ public interface Timer extends Meter {
 
         public Builder histogramBufferLength(@Nullable Integer bufferLength) {
             this.histogramConfigBuilder.histogramBufferLength(bufferLength);
+            return this;
+        }
+
+        public Builder pauseDetector(PauseDetector pauseDetector) {
+            this.pauseDetector = pauseDetector;
             return this;
         }
 
@@ -251,9 +308,9 @@ public interface Timer extends Meter {
         }
 
         public Timer register(MeterRegistry registry) {
-            Assert.notNull(registry, "registry");
             // the base unit for a timer will be determined by the monitoring system implementation
-            return registry.timer(new Meter.Id(name, tags, null, description, Type.Timer), histogramConfigBuilder.build());
+            return registry.timer(new Meter.Id(name, tags, null, description, Type.Timer), histogramConfigBuilder.build(),
+                pauseDetector == null ? registry.config().pauseDetector() : pauseDetector);
         }
     }
 }

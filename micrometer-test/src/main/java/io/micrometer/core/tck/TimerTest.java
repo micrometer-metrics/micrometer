@@ -17,6 +17,7 @@ package io.micrometer.core.tck;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,9 +27,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static io.micrometer.core.instrument.MockClock.clock;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 interface TimerTest {
+    Duration step();
 
     @DisplayName("record throwables")
     @Test
@@ -44,7 +47,7 @@ interface TimerTest {
     default void record(MeterRegistry registry) {
         Timer t = registry.timer("myTimer");
         t.record(42, TimeUnit.MILLISECONDS);
-        clock(registry).addSeconds(1);
+        clock(registry).add(step());
 
         assertAll(() -> assertEquals(1L, t.count()),
                 () -> assertEquals(42, t.totalTime(TimeUnit.MILLISECONDS), 1.0e-12));
@@ -55,7 +58,7 @@ interface TimerTest {
     default void recordDuration(MeterRegistry registry) {
         Timer t = registry.timer("myTimer");
         t.record(Duration.ofMillis(42));
-        clock(registry).addSeconds(1);
+        clock(registry).add(step());
 
         assertAll(() -> assertEquals(1L, t.count()),
             () -> assertEquals(42, t.totalTime(TimeUnit.MILLISECONDS), 1.0e-12));
@@ -76,7 +79,7 @@ interface TimerTest {
     default void recordZero(MeterRegistry registry) {
         Timer t = registry.timer("myTimer");
         t.record(0, TimeUnit.MILLISECONDS);
-        clock(registry).addSeconds(1);
+        clock(registry).add(step());
 
         assertAll(() -> assertEquals(1L, t.count()),
                 () -> assertEquals(0L, t.totalTime(TimeUnit.NANOSECONDS)));
@@ -89,11 +92,39 @@ interface TimerTest {
 
         try {
             t.record(() -> clock(registry).add(10, TimeUnit.NANOSECONDS));
-            clock(registry).addSeconds(1);
+            clock(registry).add(step());
         } finally {
             assertAll(() -> assertEquals(1L, t.count()),
                     () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS) ,1.0e-12));
         }
+    }
+
+    @Test
+    @DisplayName("record with stateful Sample instance")
+    default void recordWithSample(MeterRegistry registry) throws Exception {
+        Timer timer = registry.timer("myTimer");
+        Timer.Sample sample = Timer.start(registry);
+
+        clock(registry).add(10, TimeUnit.NANOSECONDS);
+        sample.stop(timer);
+        clock(registry).add(step());
+
+        assertAll(() -> assertEquals(1L, timer.count()),
+            () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS) ,1.0e-12));
+    }
+
+    @Test
+    default void recordMax(MeterRegistry registry) {
+        Timer timer = registry.timer("my.timer");
+        timer.record(10, TimeUnit.MILLISECONDS);
+        timer.record(1, TimeUnit.SECONDS);
+
+        clock(registry).add(step()); // for Atlas, which is step rather than ring-buffer based
+        assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(1);
+        assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(1000);
+
+        clock(registry).add(Duration.ofMillis(step().toMillis() * HistogramConfig.DEFAULT.getHistogramBufferLength()));
+        assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0);
     }
 
     @Test
@@ -108,7 +139,7 @@ interface TimerTest {
             });
         });
 
-        clock(registry).addSeconds(1);
+        clock(registry).add(step());
 
         assertAll(() -> assertEquals(1L, t.count()),
                 () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));

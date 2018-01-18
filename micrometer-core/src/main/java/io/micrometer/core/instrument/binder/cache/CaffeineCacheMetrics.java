@@ -22,7 +22,6 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.util.Assert;
 
 import java.util.concurrent.TimeUnit;
 
@@ -65,7 +64,7 @@ public class CaffeineCacheMetrics implements MeterBinder {
      * @see CacheStats
      */
     public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String name, Iterable<Tag> tags) {
-        new CaffeineCacheMetrics(cache, tags, name).bindTo(registry);
+        new CaffeineCacheMetrics(cache, name, tags).bindTo(registry);
         return cache;
     }
 
@@ -104,14 +103,13 @@ public class CaffeineCacheMetrics implements MeterBinder {
     private final Cache<?, ?> cache;
 
     /**
+     * Creates a new {@link CaffeineCacheMetrics} instance.
      * @param cache The cache to be instrumented. You must call {@link Caffeine#recordStats()} prior to building the cache
      *              for metrics to be recorded.
      * @param name  The metric name prefix
+     * @param tags tags to apply to all recorded metrics
      */
-    public CaffeineCacheMetrics(Cache<?, ?> cache, Iterable<Tag> tags, String name) {
-        Assert.notNull(cache,"cache");
-        Assert.notNull(tags,"tags");
-        Assert.notNull(name,"name");
+    public CaffeineCacheMetrics(Cache<?, ?> cache, String name, Iterable<Tag> tags) {
         this.name = name;
         this.tags = tags;
         this.cache = cache;

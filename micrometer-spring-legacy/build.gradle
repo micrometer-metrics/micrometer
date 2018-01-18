@@ -11,12 +11,8 @@ dependencyManagement {
     }
     dependencies {
         dependency 'org.assertj:assertj-core:3.8.0'
-        dependency 'io.projectreactor:reactor-core:3.1.0.RELEASE'
+        dependency 'io.projectreactor:reactor-core:3.1.2.RELEASE'
     }
-}
-
-facets {
-    samples
 }
 
 repositories {
@@ -27,19 +23,21 @@ repositories {
 dependencies {
     compile project(':micrometer-core')
 
-    compile 'org.springframework:spring-beans'
-    compile 'org.springframework.boot:spring-boot'
+    compile 'org.springframework:spring-beans', optional
+    compile 'org.springframework.boot:spring-boot', optional
     compile 'org.springframework.boot:spring-boot-actuator', optional
     compile 'org.springframework.boot:spring-boot-starter-aop', optional
     compile 'org.springframework.boot:spring-boot-starter-security', optional
-    compile 'org.springframework:spring-webmvc'
-    compile 'org.springframework:spring-web'
+    compile 'org.springframework:spring-webmvc', optional
+    compile 'org.springframework:spring-web', optional
     compile 'javax.servlet:javax.servlet-api:3.1.0', optional
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
 
-    ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch'].each { sys ->
+    ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx'].each { sys ->
         compile project(":micrometer-registry-$sys"), optional
     }
+    
+    compile project(":micrometer-jersey2"), optional
 
     compile 'org.springframework.integration:spring-integration-core', optional
 
@@ -68,12 +66,4 @@ dependencies {
     testCompile 'org.springframework.integration:spring-integration-xml'
 
     testCompile 'org.springframework.security:spring-security-test'
-
-    samplesCompile 'colt:colt:1.2.0'
-    samplesCompile 'org.springframework.boot:spring-boot-starter-web'
-    samplesCompile 'org.springframework.boot:spring-boot-actuator'
-    samplesCompile 'org.springframework.integration:spring-integration-java-dsl'
-    samplesCompile 'org.springframework.integration:spring-integration-ws'
-    samplesCompile 'org.springframework.integration:spring-integration-xml'
-    samplesCompile 'com.netflix.hystrix:hystrix-javanica:1.5.8'
 }

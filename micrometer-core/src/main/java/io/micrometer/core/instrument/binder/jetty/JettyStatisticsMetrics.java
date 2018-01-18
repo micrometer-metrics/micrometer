@@ -17,7 +17,6 @@ package io.micrometer.core.instrument.binder.jetty;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.util.Assert;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
 
 import java.util.concurrent.TimeUnit;
@@ -38,8 +37,6 @@ public class JettyStatisticsMetrics implements MeterBinder {
     }
 
     public JettyStatisticsMetrics(StatisticsHandler statisticsHandler, Iterable<Tag> tags) {
-        Assert.notNull(statisticsHandler, "statisticsHandler");
-        Assert.notNull(tags, "tags");
         this.tags = tags;
         this.statisticsHandler = statisticsHandler;
     }
@@ -50,8 +47,8 @@ public class JettyStatisticsMetrics implements MeterBinder {
         bindTimer(reg,"jetty.dispatched", "Dispatch duration", StatisticsHandler::getDispatched, StatisticsHandler::getDispatchedTimeTotal);
 
         bindCounter(reg,"jetty.async.requests", "Total number of async requests", StatisticsHandler::getAsyncRequests);
-        bindCounter(reg,"jetty.async.dispatches", "Total number of requested that have been asynchronously dispatched", StatisticsHandler::getAsyncDispatches);
-        bindCounter(reg,"jetty.async.expires", "Total number of async requests requests that have expired", StatisticsHandler::getExpires);
+        bindCounter(reg,"jetty.async.dispatches", "Total number of requests that have been asynchronously dispatched", StatisticsHandler::getAsyncDispatches);
+        bindCounter(reg,"jetty.async.expires", "Total number of async requests that have expired", StatisticsHandler::getExpires);
         FunctionCounter.builder("jetty.responses.size", statisticsHandler, StatisticsHandler::getResponsesBytesTotal)
             .description("Total number of bytes across all responses")
             .baseUnit("bytes")

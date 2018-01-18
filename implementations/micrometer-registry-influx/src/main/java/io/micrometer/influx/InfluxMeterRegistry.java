@@ -26,8 +26,12 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
@@ -41,18 +45,17 @@ import static java.util.stream.Collectors.toList;
 public class InfluxMeterRegistry extends StepMeterRegistry {
     private final InfluxConfig config;
     private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
-    private final DecimalFormat format = new DecimalFormat("#.####");
+    private final DecimalFormat format = new DecimalFormat("#.####", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
 
-    // FIXME naming convention not working!
-    public InfluxMeterRegistry(InfluxConfig config, Clock clock) {
+    public InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
         this.config().namingConvention(new InfluxNamingConvention(NamingConvention.snakeCase));
         this.config = config;
-        start();
+        start(threadFactory);
     }
 
-    public InfluxMeterRegistry(InfluxConfig config) {
-        this(config, Clock.SYSTEM);
+    public InfluxMeterRegistry(InfluxConfig config, Clock clock) {
+        this(config, clock, Executors.defaultThreadFactory());
     }
 
     private void createDatabaseIfNecessary() {
@@ -114,23 +117,29 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                         .map(m -> {
                             if (m instanceof Timer) {
                                 return writeTimer((Timer) m);
-                            } else if (m instanceof DistributionSummary) {
-                                return writeSummary((DistributionSummary) m);
-                            } else if (m instanceof FunctionTimer) {
-                                return writeTimer((FunctionTimer) m);
-                            } else if (m instanceof TimeGauge) {
-                                return writeGauge(m.getId(), ((TimeGauge) m).value(getBaseTimeUnit()));
-                            } else if (m instanceof Gauge) {
-                                return writeGauge(m.getId(), ((Gauge) m).value());
-                            } else if (m instanceof FunctionCounter) {
-                                return writeCounter(m.getId(), ((FunctionCounter) m).count());
-                            } else if (m instanceof Counter) {
-                                return writeCounter(m.getId(), ((Counter) m).count());
-                            } else if (m instanceof LongTaskTimer) {
-                                return writeLongTaskTimer((LongTaskTimer) m);
-                            } else {
-                                return writeMeter(m);
                             }
+                            if (m instanceof DistributionSummary) {
+                                return writeSummary((DistributionSummary) m);
+                            }
+                            if (m instanceof FunctionTimer) {
+                                return writeTimer((FunctionTimer) m);
+                            }
+                            if (m instanceof TimeGauge) {
+                                return writeGauge(m.getId(), ((TimeGauge) m).value(getBaseTimeUnit()));
+                            }
+                            if (m instanceof Gauge) {
+                                return writeGauge(m.getId(), ((Gauge) m).value());
+                            }
+                            if (m instanceof FunctionCounter) {
+                                return writeCounter(m.getId(), ((FunctionCounter) m).count());
+                            }
+                            if (m instanceof Counter) {
+                                return writeCounter(m.getId(), ((Counter) m).count());
+                            }
+                            if (m instanceof LongTaskTimer) {
+                                return writeLongTaskTimer((LongTaskTimer) m);
+                            }
+                            return writeMeter(m);
                         })
                         .collect(toList());
 
@@ -186,11 +195,11 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private class Field {
+    class Field {
         final String key;
         final double value;
 
-        private Field(String key, double value) {
+        Field(String key, double value) {
             this.key = key;
             this.value = value;
         }

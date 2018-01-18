@@ -26,6 +26,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -33,8 +34,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import static io.micrometer.core.instrument.MockClock.clock;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -57,23 +56,22 @@ public class SpringSecurityTest {
     public void securityAllowsAccess() throws Exception {
         mvc.perform(get("/api/secured")).andExpect(status().isOk());
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
-        assertThat(registry.find("http.server.requests")
+        registry.mustFind("http.server.requests")
             .tags("status", "200")
-            .timer()).isPresent();
+            .timer();
     }
 
     @Test
     public void securityBlocksAccess() throws Exception {
         mvc.perform(get("/api/secured")).andExpect(status().isUnauthorized());
 
-        clock(registry).add(SimpleConfig.DEFAULT_STEP);
-        assertThat(registry.find("http.server.requests")
+        registry.mustFind("http.server.requests")
             .tags("status", "401")
-            .timer()).isPresent();
+            .timer();
     }
 
-    @SpringBootApplication
+    @SpringBootApplication(scanBasePackages = "ignore")
+    @Import(Controller.class)
     static class SecurityApp {
         @Bean
         public MeterRegistry registry() {

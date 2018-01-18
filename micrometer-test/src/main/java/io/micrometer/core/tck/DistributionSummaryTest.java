@@ -20,10 +20,13 @@ import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+
 import static io.micrometer.core.instrument.MockClock.clock;
 import static org.junit.jupiter.api.Assertions.*;
 
 interface DistributionSummaryTest {
+    Duration step();
 
     @Test
     @DisplayName("multiple recordings are maintained")
@@ -31,17 +34,19 @@ interface DistributionSummaryTest {
         DistributionSummary ds = registry.summary("myDistributionSummary");
 
         ds.record(10);
-        clock(registry).addSeconds(1);
+        clock(registry).add(step());
+
+        ds.count();
 
         assertAll(() -> assertEquals(1L, ds.count()),
-                () -> assertEquals(10L, ds.totalAmount()));
+            () -> assertEquals(10L, ds.totalAmount()));
 
         ds.record(10);
         ds.record(10);
-        clock(registry).addSeconds(1);
+        clock(registry).add(step());
 
         assertAll(() -> assertTrue(ds.count() >= 2L),
-                () -> assertTrue(ds.totalAmount() >= 20L));
+            () -> assertTrue(ds.totalAmount() >= 20L));
     }
 
     @Test
@@ -60,7 +65,7 @@ interface DistributionSummaryTest {
         DistributionSummary ds = registry.summary("myDistributionSummary");
 
         ds.record(0);
-        clock(registry).addSeconds(1);
+        clock(registry).add(step());
         
         assertAll(() -> assertEquals(1L, ds.count()),
                 () -> assertEquals(0L, ds.totalAmount()));

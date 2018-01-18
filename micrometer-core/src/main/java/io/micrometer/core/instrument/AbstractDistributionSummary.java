@@ -17,7 +17,6 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.TimeWindowHistogram;
-import io.micrometer.core.instrument.util.Assert;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
 
@@ -27,8 +26,6 @@ public abstract class AbstractDistributionSummary extends AbstractMeter implemen
 
     protected AbstractDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig) {
         super(id);
-        Assert.notNull(clock,"clock");
-        Assert.notNull(histogramConfig,"histogramConfig");
         this.histogram = new TimeWindowHistogram(clock, histogramConfig);
         this.histogramConfig = histogramConfig;
     }
