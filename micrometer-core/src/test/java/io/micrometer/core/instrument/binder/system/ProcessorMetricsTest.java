@@ -19,7 +19,11 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class ProcessorMetricsTest {
     @Test
@@ -32,7 +36,38 @@ class ProcessorMetricsTest {
             assertThat(registry.find("system.load.average.1m").gauge())
                 .describedAs("Not present on windows").isNull();
         } else {
-            assertThat(registry.mustFind("system.load.average.1m").gauge().value()).isGreaterThan(0);
+            assertThat(registry.mustFind("system.load.average.1m").gauge().value()).isGreaterThanOrEqualTo(0);
         }
+    }
+
+    @Test
+    void hotspotCpuMetrics() {
+        OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+        assumeTrue(osBean.getClass().getName().equals("sun.management.OperatingSystemImpl"));
+
+        MeterRegistry registry = new SimpleMeterRegistry();
+        new ProcessorMetrics().bindTo(registry);
+
+        assertThat(registry.mustFind("system.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(0);
+        assertThat(registry.mustFind("process.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(0);
+    }
+
+    @Test
+    void openJ9CpuMetrics() {
+        OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+        assumeTrue(osBean.getClass().getName().equals("com.ibm.lang.management.internal.UnixExtendedOperatingSystem"));
+
+        MeterRegistry registry = new SimpleMeterRegistry();
+        new ProcessorMetrics().bindTo(registry);
+
+        /*
+         * We can't assert on values because these methods are documented to return "-1"
+         * on the first call and a positive value - if supported - on subsequent calls.
+         * This holds true for "system.cpu.usage" but not for "process.cpu.usage". The latter
+         * needs some milliseconds of sleep before it actually returns a positive value
+         * on a supported system. Thread.sleep() is flaky, though.
+         */
+        registry.mustFind("system.cpu.usage").gauge();
+        registry.mustFind("process.cpu.usage").gauge();
     }
 }

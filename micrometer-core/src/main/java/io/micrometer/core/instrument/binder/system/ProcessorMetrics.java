@@ -22,6 +22,9 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Objects;
 
 import static java.util.Collections.emptyList;
 
@@ -30,6 +33,8 @@ import static java.util.Collections.emptyList;
  */
 public class ProcessorMetrics implements MeterBinder {
     private final Iterable<Tag> tags;
+    private Method processCpuUsage;
+    private Method systemCpuUsage;
 
     public ProcessorMetrics() {
         this(emptyList());
@@ -55,6 +60,41 @@ public class ProcessorMetrics implements MeterBinder {
                 .description("The sum of the number of runnable entities queued to available processors and the number " +
                     "of runnable entities running on the available processors averaged over a period of time")
                 .register(registry);
+        }
+
+        systemCpuUsage = detectMethod(operatingSystemBean, "getSystemCpuLoad");
+        if (systemCpuUsage != null) {
+            Gauge.builder("system.cpu.usage", operatingSystemBean, x -> invoke(x,systemCpuUsage))
+                .tags(tags)
+                .description("The \"recent cpu usage\" for the whole system")
+                .register(registry);
+        }
+
+        processCpuUsage = detectMethod(operatingSystemBean, "getProcessCpuLoad");
+        if (processCpuUsage != null) {
+            Gauge.builder("process.cpu.usage", operatingSystemBean, x -> invoke(x,processCpuUsage))
+                .tags(tags)
+                .description("The \"recent cpu usage\" for the Java Virtual Machine process")
+                .register(registry);
+        }
+    }
+
+    private double invoke(OperatingSystemMXBean osBean, Method method) {
+        try {
+            return method != null ? (double) method.invoke(osBean) : Double.NaN;
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            return Double.NaN;
+        }
+    }
+
+    private Method detectMethod(OperatingSystemMXBean osBean, String name) {
+        Objects.requireNonNull(name);
+        try {
+            final Method method = osBean.getClass().getMethod(name);
+            method.setAccessible(true);
+            return method;
+        } catch (NoSuchMethodException | SecurityException e) {
+            return null;
         }
     }
 }
