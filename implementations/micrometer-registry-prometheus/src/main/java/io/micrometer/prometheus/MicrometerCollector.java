@@ -16,13 +16,13 @@
 package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.prometheus.client.Collector;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -36,7 +36,7 @@ class MicrometerCollector extends Collector {
     }
 
     private final Meter.Id id;
-    private final List<Child> children = new ArrayList<>();
+    private final List<Child> children = new CopyOnWriteArrayList<>();
     private Type type;
     private final String conventionName;
     private final List<String> tagKeys;

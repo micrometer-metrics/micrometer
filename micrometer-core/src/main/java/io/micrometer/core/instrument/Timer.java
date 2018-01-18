@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 
@@ -108,13 +109,6 @@ public interface Timer extends Meter {
     }
 
     /**
-     * Begin timing an operation.
-     *
-     * @return Timing
-     */
-    Timing start();
-
-    /**
      * The maximum time of a single event.
      */
     double max(TimeUnit unit);
@@ -144,23 +138,29 @@ public interface Timer extends Meter {
         return Type.Timer;
     }
 
-    class Timing {
+    static Sample start(MeterRegistry registry) {
+        return new Sample(registry.config().clock());
+    }
+
+    static Sample start(Clock clock) {
+        return new Sample(clock);
+    }
+
+    class Sample {
         private final long startTime;
         private final Clock clock;
-        private final Timer timer;
 
-        public Timing(Clock clock, Timer timer) {
+        Sample(Clock clock) {
             this.clock = clock;
-            this.timer = timer;
             this.startTime = clock.monotonicTime();
         }
 
         /**
          * Records the duration of the operation
          *
-         * @return The duration that was stop in nanoseconds
+         * @return The total duration of the sample in nanoseconds
          */
-        public long stop(){
+        public long stop(Timer timer){
             long durationNs = clock.monotonicTime() - startTime;
             timer.record(durationNs, TimeUnit.NANOSECONDS);
             return durationNs;
@@ -169,6 +169,25 @@ public interface Timer extends Meter {
 
     static Builder builder(String name) {
         return new Builder(name);
+    }
+
+    /**
+     * Create a timer builder from a {@link Timed} annotation.
+     * @param timed The annotation instance to base a new timer on.
+     * @param defaultName A default name to use in the event that the value attribute is empty.
+     */
+    static Builder builder(Timed timed, String defaultName) {
+        if (timed.longTask() && timed.value().isEmpty()) {
+            // the user MUST name long task timers, we don't lump them in with regular
+            // timers with the same name
+            throw new IllegalArgumentException("Long tasks instrumented with @Timed require the value attribute to be non-empty");
+        }
+
+        return new Builder(timed.value().isEmpty() ? defaultName : timed.value())
+            .tags(timed.extraTags())
+            .description(timed.description().isEmpty() ? null : timed.description())
+            .publishPercentileHistogram(timed.histogram())
+            .publishPercentiles(timed.percentiles().length > 0 ? timed.percentiles() : null);
     }
 
     class Builder {

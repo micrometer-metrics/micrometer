@@ -45,6 +45,14 @@ public interface GraphiteConfig extends DropwizardConfig {
         return "graphite";
     }
 
+    /**
+     * For the default naming convention, turn the specified tag keys into
+     * part of the metric prefix.
+     */
+    default String[] tagsAsPrefix() {
+        return new String[0];
+    }
+
     default TimeUnit rateUnits() {
         String v = get(prefix() + ".rateUnits");
         return v == null ? TimeUnit.SECONDS : TimeUnit.valueOf(v.toUpperCase());

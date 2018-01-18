@@ -33,7 +33,10 @@ import org.springframework.web.client.RestTemplate;
  * @author Phillip Webb
  */
 @Configuration
-@ConditionalOnClass(name = "org.springframework.web.client.RestTemplate")
+@ConditionalOnClass(name = {
+    "org.springframework.web.client.RestTemplate",
+    "org.springframework.boot.web.client.RestTemplateCustomizer" // didn't exist until Boot 1.4
+})
 public class RestTemplateMetricsConfiguration {
 
     @Bean
@@ -43,14 +46,10 @@ public class RestTemplateMetricsConfiguration {
     }
 
     @Bean
-    @ConditionalOnClass(name = "org.springframework.boot.web.client.RestTemplateCustomizer")
-    public MetricsRestTemplateCustomizer metricsRestTemplateCustomizer(
-        MeterRegistry meterRegistry,
-        RestTemplateExchangeTagsProvider restTemplateTagConfigurer,
-        MetricsProperties properties) {
+    public MetricsRestTemplateCustomizer metricsRestTemplateCustomizer(MeterRegistry meterRegistry,
+                                                                       RestTemplateExchangeTagsProvider restTemplateTagConfigurer,
+                                                                       MetricsProperties properties) {
         return new MetricsRestTemplateCustomizer(meterRegistry, restTemplateTagConfigurer,
-            properties.getWeb().getClient().getRequestsMetricName(),
-            properties.getWeb().getClient().isRecordRequestPercentiles());
+            properties.getWeb().getClient().getRequestsMetricName());
     }
-
 }

@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -53,6 +55,10 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     private final Set<String> verifiedMetadata = ConcurrentHashMap.newKeySet();
 
     public DatadogMeterRegistry(DatadogConfig config, Clock clock) {
+        this(config, clock, Executors.defaultThreadFactory());
+    }
+
+    public DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
 
         this.config().namingConvention(new DatadogNamingConvention());
@@ -66,11 +72,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         this.config = config;
 
-        start();
-    }
-
-    public DatadogMeterRegistry(DatadogConfig config) {
-        this(config, Clock.SYSTEM);
+        start(threadFactory);
     }
 
     @Override

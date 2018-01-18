@@ -32,8 +32,8 @@ public class SpectatorLongTaskTimer extends AbstractMeter implements LongTaskTim
     }
 
     @Override
-    public long start() {
-        return timer.start();
+    public Sample start() {
+        return new Sample(this, timer.start());
     }
 
     @Override

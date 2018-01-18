@@ -40,11 +40,11 @@ public class DropwizardMeterRegistry extends MeterRegistry {
     private final DropwizardClock dropwizardClock;
     private final DropwizardConfig dropwizardConfig;
 
-    public DropwizardMeterRegistry(DropwizardConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
+    public DropwizardMeterRegistry(DropwizardConfig config, MetricRegistry registry, HierarchicalNameMapper nameMapper, Clock clock) {
         super(clock);
         this.dropwizardConfig = config;
         this.dropwizardClock = new DropwizardClock(clock);
-        this.registry = new MetricRegistry();
+        this.registry = registry;
         this.nameMapper = nameMapper;
         this.config().namingConvention(NamingConvention.camelCase);
     }

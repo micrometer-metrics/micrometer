@@ -32,6 +32,7 @@ public class TimeWindowHistogram extends TimeWindowHistogramBase<DoubleRecorder,
     public TimeWindowHistogram(Clock clock, HistogramConfig histogramConfig) {
         super(clock, histogramConfig, DoubleRecorder.class);
         intervalHistogram = new DoubleHistogram(NUM_SIGNIFICANT_VALUE_DIGITS);
+        initRingBuffer();
     }
 
     @Override

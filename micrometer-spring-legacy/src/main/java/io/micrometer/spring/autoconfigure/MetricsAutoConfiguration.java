@@ -34,8 +34,9 @@ import io.micrometer.spring.autoconfigure.export.prometheus.PrometheusExportConf
 import io.micrometer.spring.autoconfigure.export.signalfx.SignalFxExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.simple.SimpleExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.statsd.StatsdExportConfiguration;
+import io.micrometer.spring.autoconfigure.jersey2.server.JerseyServerMetricsConfiguration;
 import io.micrometer.spring.autoconfigure.web.client.RestTemplateMetricsConfiguration;
-import io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsConfiguration;
+import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguration;
 import io.micrometer.spring.autoconfigure.web.tomcat.TomcatMetricsConfiguration;
 import io.micrometer.spring.integration.SpringIntegrationMetrics;
 import io.micrometer.spring.scheduling.ScheduledMethodMetrics;
@@ -65,14 +66,14 @@ import java.util.List;
 @Configuration
 @ConditionalOnClass(Timed.class)
 @EnableConfigurationProperties(MetricsProperties.class)
-@Import({MeterBindersConfiguration.class, WebMvcMetricsConfiguration.class,
+@Import({MeterBindersConfiguration.class, ServletMetricsConfiguration.class,
     RestTemplateMetricsConfiguration.class, AtlasExportConfiguration.class,
     DatadogExportConfiguration.class, GangliaExportConfiguration.class,
     GraphiteExportConfiguration.class, InfluxExportConfiguration.class,
     NewRelicExportConfiguration.class, JmxExportConfiguration.class,
     StatsdExportConfiguration.class, PrometheusExportConfiguration.class,
     TomcatMetricsConfiguration.class, SimpleExportConfiguration.class,
-    SignalFxExportConfiguration.class})
+    SignalFxExportConfiguration.class, JerseyServerMetricsConfiguration.class})
 public class MetricsAutoConfiguration {
     @Bean
     @Order(0)
@@ -153,10 +154,17 @@ public class MetricsAutoConfiguration {
         }
     }
 
+
     @Bean
     @ConditionalOnClass(name = "com.netflix.hystrix.strategy.HystrixPlugins")
     @ConditionalOnProperty(value = "management.metrics.export.hystrix.enabled", matchIfMissing = true)
     public HystrixMetricsBinder hystrixMetricsBinder() {
         return new HystrixMetricsBinder();
     }
+
+
+
+
+
+
 }

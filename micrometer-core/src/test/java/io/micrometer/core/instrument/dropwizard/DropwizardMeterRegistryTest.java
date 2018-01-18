@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.dropwizard;
 
+import com.codahale.metrics.MetricRegistry;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
@@ -40,7 +41,7 @@ class DropwizardMeterRegistryTest {
             public String get(String k) {
                 return null;
             }
-        }, HierarchicalNameMapper.DEFAULT, clock);
+        }, new MetricRegistry(), HierarchicalNameMapper.DEFAULT, clock);
 
     @Test
     void gaugeOnNullValue() {

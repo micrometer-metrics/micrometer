@@ -33,20 +33,20 @@ interface LongTaskTimerTest {
     default void record(MeterRegistry registry) {
         LongTaskTimer t = registry.more().longTaskTimer("myTimer");
 
-        long tId = t.start();
+        LongTaskTimer.Sample sample = t.start();
         clock(registry).add(10, TimeUnit.NANOSECONDS);
 
         assertAll(() -> assertEquals(10, t.duration(TimeUnit.NANOSECONDS)),
             () -> assertEquals(0.01, t.duration(TimeUnit.MICROSECONDS)),
-            () -> assertEquals(10, t.duration(tId, TimeUnit.NANOSECONDS)),
-            () -> assertEquals(0.01, t.duration(tId, TimeUnit.MICROSECONDS)),
+            () -> assertEquals(10, sample.duration(TimeUnit.NANOSECONDS)),
+            () -> assertEquals(0.01, sample.duration(TimeUnit.MICROSECONDS)),
             () -> assertEquals(1, t.activeTasks()));
 
         clock(registry).add(10, TimeUnit.NANOSECONDS);
-        t.stop(tId);
+        sample.stop();
 
         assertAll(() -> assertEquals(0, t.duration(TimeUnit.NANOSECONDS)),
-            () -> assertEquals(-1, t.duration(tId, TimeUnit.NANOSECONDS)),
+            () -> assertEquals(-1, sample.duration(TimeUnit.NANOSECONDS)),
             () -> assertEquals(0, t.activeTasks()));
     }
 }

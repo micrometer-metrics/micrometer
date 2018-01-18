@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.annotation.Timed;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,6 +26,29 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public interface LongTaskTimer extends Meter {
+    class Sample {
+        private final LongTaskTimer timer;
+        private final long task;
+
+        public Sample(LongTaskTimer timer, long task) {
+            this.timer = timer;
+            this.task = task;
+        }
+
+        /**
+         * Records the duration of the operation
+         *
+         * @return The duration that was stop in nanoseconds
+         */
+        public long stop() {
+            return timer.stop(task);
+        }
+
+        public double duration(TimeUnit unit) {
+            return timer.duration(task, unit);
+        }
+    }
+
     /**
      * Executes the callable `f` and records the time taken.
      *
@@ -31,11 +56,11 @@ public interface LongTaskTimer extends Meter {
      * @return The return value of `f`.
      */
     default <T> T recordCallable(Callable<T> f) throws Exception {
-        long id = start();
+        Sample sample = start();
         try {
             return f.call();
         } finally {
-            stop(id);
+            sample.stop();
         }
     }
 
@@ -46,11 +71,11 @@ public interface LongTaskTimer extends Meter {
      * @return The return value of `f`.
      */
     default <T> T record(Supplier<T> f) throws Exception {
-        long id = start();
+        Sample sample = start();
         try {
             return f.get();
         } finally {
-            stop(id);
+            sample.stop();
         }
     }
 
@@ -60,12 +85,12 @@ public interface LongTaskTimer extends Meter {
      * @param f Function to execute and measure the execution time with a reference to the
      *          timer id useful for looking up current duration.
      */
-    default void record(Consumer<Long> f) {
-        long id = start();
+    default void record(Consumer<Sample> f) {
+        Sample sample = start();
         try {
-            f.accept(id);
+            f.accept(sample);
         } finally {
-            stop(id);
+            sample.stop();
         }
     }
 
@@ -75,11 +100,11 @@ public interface LongTaskTimer extends Meter {
      * @param f Function to execute and measure the execution time.
      */
     default void record(Runnable f) {
-        long id = start();
+        Sample sample = start();
         try {
             f.run();
         } finally {
-            stop(id);
+            sample.stop();
         }
     }
 
@@ -88,7 +113,7 @@ public interface LongTaskTimer extends Meter {
      *
      * @return A task id that can be used to look up how long the task has been running.
      */
-    long start();
+    Sample start();
 
     /**
      * Mark a given task as completed.
@@ -132,6 +157,25 @@ public interface LongTaskTimer extends Meter {
 
     static Builder builder(String name) {
         return new Builder(name);
+    }
+
+    /**
+     * Create a timer builder from a {@link Timed} annotation.
+     *
+     * @param timed The annotation instance to base a new timer on.
+     */
+    static Builder builder(Timed timed) {
+        if (!timed.longTask()) {
+            throw new IllegalArgumentException("Cannot build a long task timer from a @Timed annotation that is not marked as a long task");
+        }
+
+        if (timed.value().isEmpty()) {
+            throw new IllegalArgumentException("Long tasks instrumented with @Timed require the value attribute to be non-empty");
+        }
+
+        return new Builder(timed.value())
+            .tags(timed.extraTags())
+            .description(timed.description().isEmpty() ? null : timed.description());
     }
 
     class Builder {

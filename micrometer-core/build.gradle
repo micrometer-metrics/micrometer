@@ -35,11 +35,11 @@ dependencies {
     compile 'ch.qos.logback:logback-classic:latest.release', optional
 
     // reactor
-    compile 'io.projectreactor:reactor-core:3.1.0.RELEASE', optional
+    compile 'io.projectreactor:reactor-core:3.1.2.RELEASE', optional
 
     compile 'com.squareup.okhttp3:okhttp:3.9.0',optional
 
-    testCompile 'io.projectreactor:reactor-test:3.1.0.RELEASE'
+    testCompile 'io.projectreactor:reactor-test:3.1.2.RELEASE'
     testCompile 'io.projectreactor.ipc:reactor-netty:0.7.1.RELEASE'
 
     // JUnit 5

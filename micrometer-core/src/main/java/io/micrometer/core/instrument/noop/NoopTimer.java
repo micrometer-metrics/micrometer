@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.noop;
 
-import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.Timer;
 
@@ -45,11 +44,6 @@ public class NoopTimer extends NoopMeter implements Timer {
     @Override
     public void record(Runnable f) {
         f.run();
-    }
-
-    @Override
-    public Timing start() {
-        return new Timing(Clock.SYSTEM, this);
     }
 
     @Override

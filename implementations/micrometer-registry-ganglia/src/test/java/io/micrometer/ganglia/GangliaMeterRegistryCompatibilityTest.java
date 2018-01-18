@@ -35,7 +35,7 @@ class GangliaMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKi
             public String get(String k) {
                 return null;
             }
-        }, HierarchicalNameMapper.DEFAULT, new MockClock());
+        }, new MockClock(), HierarchicalNameMapper.DEFAULT);
     }
 
     @Override

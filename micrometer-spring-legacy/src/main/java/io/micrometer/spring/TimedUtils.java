@@ -21,22 +21,24 @@ import org.springframework.core.annotation.AnnotationUtils;
 
 import java.lang.reflect.AnnotatedElement;
 import java.util.Arrays;
-import java.util.stream.Stream;
+import java.util.Collections;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class TimedUtils {
     private TimedUtils() {
     }
 
-    public static Stream<Timed> findTimedAnnotations(AnnotatedElement element) {
+    public static Set<Timed> findTimedAnnotations(AnnotatedElement element) {
         Timed t = AnnotationUtils.findAnnotation(element, Timed.class);
         if (t != null)
-            return Stream.of(t);
+            return Collections.singleton(t);
 
         TimedSet ts = AnnotationUtils.findAnnotation(element, TimedSet.class);
         if (ts != null) {
-            return Arrays.stream(ts.value());
+            return Arrays.stream(ts.value()).collect(Collectors.toSet());
         }
 
-        return Stream.empty();
+        return Collections.emptySet();
     }
 }

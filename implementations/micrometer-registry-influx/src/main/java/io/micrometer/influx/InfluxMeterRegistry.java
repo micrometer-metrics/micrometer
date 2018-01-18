@@ -30,6 +30,8 @@ import java.text.DecimalFormatSymbols;
 import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
@@ -45,16 +47,15 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
     private final DecimalFormat format = new DecimalFormat("#.####", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
 
-    // FIXME naming convention not working!
-    public InfluxMeterRegistry(InfluxConfig config, Clock clock) {
+    public InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
         this.config().namingConvention(new InfluxNamingConvention(NamingConvention.snakeCase));
         this.config = config;
-        start();
+        start(threadFactory);
     }
 
-    public InfluxMeterRegistry(InfluxConfig config) {
-        this(config, Clock.SYSTEM);
+    public InfluxMeterRegistry(InfluxConfig config, Clock clock) {
+        this(config, clock, Executors.defaultThreadFactory());
     }
 
     private void createDatabaseIfNecessary() {

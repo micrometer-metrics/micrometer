@@ -29,6 +29,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -58,8 +59,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = MetricsAutoConfigurationTest.MetricsApp.class)
 @TestPropertySource(properties = {
     "management.metrics.use-global-registry=false",
-    "management.metrics.filter.my.timer.enabled=true", // overriden by programmatic filter
-    "management.metrics.simple.cumulative.enabled=true",
+    "management.metrics.filter.my.timer.enabled=true" // overriden by programmatic filter
 })
 public class MetricsAutoConfigurationTest {
 
@@ -89,7 +89,7 @@ public class MetricsAutoConfigurationTest {
     }
 
     @Test
-    public void requestMappingIsInstrumented() {
+    public void requestMappingIsInstrumented() throws Exception {
         loopback.getForObject("/api/people", String.class);
 
         assertThat(registry.mustFind("http.server.requests").timer().count()).isEqualTo(1L);
@@ -142,8 +142,8 @@ public class MetricsAutoConfigurationTest {
         }
 
         @Bean
-        public RestTemplate restTemplate() {
-            return new RestTemplate();
+        public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
+            return restTemplateBuilder.build();
         }
 
     }
