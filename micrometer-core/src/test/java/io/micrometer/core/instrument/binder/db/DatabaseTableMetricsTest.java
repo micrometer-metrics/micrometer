@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.db;
 
-import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.hsqldb.jdbc.JDBCDataSource;

@@ -23,8 +23,6 @@ import org.junit.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
 /**
  * @author Jon Schneider
  * @author Clint Checketts

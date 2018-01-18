@@ -18,7 +18,6 @@ package io.micrometer.core.tck;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Statistic;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

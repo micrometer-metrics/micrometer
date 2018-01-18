@@ -15,19 +15,12 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
-import java.util.Collection;
-import java.util.stream.StreamSupport;
-
-import org.assertj.core.api.Condition;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 /**
  * Tests for {@code JvmMemoryMetrics}.

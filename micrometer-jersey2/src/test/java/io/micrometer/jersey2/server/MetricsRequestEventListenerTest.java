@@ -109,7 +109,7 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
 
         assertThat(registry.mustFind(METRIC_NAME)
             .tags(tagsFrom("REDIRECTION", 302, null)).timer().count())
-            .isEqualTo(2);
+            .isEqualTo(1);
 
         assertThat(registry.mustFind(METRIC_NAME)
             .tags(tagsFrom("REDIRECTION", 307, null)).timer().count())

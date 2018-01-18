@@ -15,7 +15,10 @@
  */
 package io.micrometer.spring.async;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.Before;
@@ -25,8 +28,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.Statistic.Count;
-import static io.micrometer.core.instrument.Statistic.Value;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class ThreadPoolTaskExecutorMetricsTest {

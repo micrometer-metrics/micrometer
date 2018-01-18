@@ -17,8 +17,6 @@ package io.micrometer.core.instrument.binder.hystrix;
 
 import com.netflix.hystrix.*;
 import com.netflix.hystrix.strategy.properties.HystrixPropertiesCommandDefault;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;

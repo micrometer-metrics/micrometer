@@ -15,9 +15,7 @@
  */
 package io.micrometer.spring.cache;
 
-import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.Test;
 import org.springframework.cache.concurrent.ConcurrentMapCache;

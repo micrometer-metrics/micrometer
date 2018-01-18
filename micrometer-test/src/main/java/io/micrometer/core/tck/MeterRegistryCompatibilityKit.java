@@ -15,11 +15,7 @@
  */
 package io.micrometer.core.tck;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.util.TimeUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -32,8 +28,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.micrometer.core.instrument.MockClock.clock;
-import static io.micrometer.core.instrument.Statistic.Count;
-import static io.micrometer.core.instrument.Statistic.Total;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 

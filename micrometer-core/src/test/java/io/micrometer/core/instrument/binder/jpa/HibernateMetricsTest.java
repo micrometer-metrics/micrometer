@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.jpa;
 
-import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
