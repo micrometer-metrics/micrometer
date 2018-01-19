@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 @RestController
 public class PersonController {
-    private List<String> people = Arrays.asList("mike", "suzy");
+    private final List<String> people = Arrays.asList("mike", "suzy");
     private final MeterRegistry registry;
 
     public PersonController(MeterRegistry registry) {
@@ -54,6 +54,7 @@ public class PersonController {
 
     /**
      * Fallback for {@link PersonController#allPeople()}
+     *
      * @return people
      */
     @SuppressWarnings("unused")
@@ -72,7 +73,7 @@ public class PersonController {
 
         Map<String, Number> result = null;
 
-        if(t != null){
+        if (t != null) {
             result = new HashMap<>();
 
             result.put("count", t.count());
