@@ -53,7 +53,8 @@ public class RegistryResolver implements ParameterResolver {
                     break;
                 }
             } while ((clazz = clazz.getEnclosingClass()) != null);
-        } catch (IllegalAccessException | InvocationTargetException ignored) {
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
         }
         fail("This should never happen -- an implementation of registry() was not found");
         return null;

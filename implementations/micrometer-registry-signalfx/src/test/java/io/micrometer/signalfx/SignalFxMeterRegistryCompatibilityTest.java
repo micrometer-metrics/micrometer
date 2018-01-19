@@ -17,7 +17,7 @@ package io.micrometer.signalfx;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
@@ -25,9 +25,23 @@ import java.time.Duration;
 public class SignalFxMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @Override
     public MeterRegistry registry() {
-        return new CompositeMeterRegistry(new MockClock()) {{
-            add(new SignalFxMeterRegistry(SignalFxConfig.DEFAULT, clock));
-        }};
+        return new SignalFxMeterRegistry(new SignalFxConfig() {
+            @Override
+            @Nullable
+            public String get(String k) {
+                return null;
+            }
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+
+            @Override
+            public String accessToken() {
+                return "fake";
+            }
+        }, new MockClock());
     }
 
     @Override
