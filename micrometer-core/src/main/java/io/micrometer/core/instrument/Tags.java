@@ -42,6 +42,10 @@ public final class Tags {
         return ts;
     }
 
+    public static List<Tag> zipNullSafe(String nullValue, String[] rawTags) {
+        return zip(rawTags).stream().map((tag) -> (tag.getValue() == null) ? Tag.of(tag.getKey(), nullValue) : tag).collect(toList());
+    }
+
     public static Iterable<Tag> concat(Iterable<Tag> tags, Iterable<Tag> otherTags) {
         if(!otherTags.iterator().hasNext())
             return tags;
