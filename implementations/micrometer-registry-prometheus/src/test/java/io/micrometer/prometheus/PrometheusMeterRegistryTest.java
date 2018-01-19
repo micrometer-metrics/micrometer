@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import org.assertj.core.api.Condition;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -45,6 +46,11 @@ class PrometheusMeterRegistryTest {
     private CollectorRegistry prometheusRegistry = new CollectorRegistry();
     private MockClock clock = new MockClock();
     private PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry, clock);
+
+    @BeforeEach
+    void before() {
+        registry.config().namingConvention(new PrometheusDurationNamingConvention());
+    }
 
     @Test
     void baseUnitMakesItToScrape() {
