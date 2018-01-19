@@ -21,11 +21,15 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Record metrics related to CPU utilization
@@ -34,6 +38,12 @@ import static java.util.Collections.emptyList;
 @NonNullFields
 public class ProcessorMetrics implements MeterBinder {
     private final Iterable<Tag> tags;
+    @Nullable
+    private OperatingSystemMXBean operatingSystemBean;
+    @Nullable
+    private Method systemCpuUsage;
+    @Nullable
+    private Method processCpuUsage;
 
     public ProcessorMetrics() {
         this(emptyList());
@@ -41,24 +51,61 @@ public class ProcessorMetrics implements MeterBinder {
 
     public ProcessorMetrics(Iterable<Tag> tags) {
         this.tags = tags;
+        this.operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
+        this.systemCpuUsage = detectMethod(operatingSystemBean, "getSystemCpuLoad");
+        this.processCpuUsage = detectMethod(operatingSystemBean, "getProcessCpuLoad");
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
         Runtime runtime = Runtime.getRuntime();
-
         Gauge.builder("system.cpu.count", runtime, Runtime::availableProcessors)
             .tags(tags)
             .description("The number of processors available to the Java virtual machine")
             .register(registry);
 
-        OperatingSystemMXBean operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
-        if(operatingSystemBean != null && operatingSystemBean.getSystemLoadAverage() >= 0) {
+        if (operatingSystemBean != null && operatingSystemBean.getSystemLoadAverage() >= 0) {
             Gauge.builder("system.load.average.1m", operatingSystemBean, OperatingSystemMXBean::getSystemLoadAverage)
                 .tags(tags)
                 .description("The sum of the number of runnable entities queued to available processors and the number " +
                     "of runnable entities running on the available processors averaged over a period of time")
                 .register(registry);
+        }
+
+        if (systemCpuUsage != null) {
+            Gauge.builder("system.cpu.usage", operatingSystemBean, x -> invoke(x, systemCpuUsage))
+                .tags(tags)
+                .description("The \"recent cpu usage\" for the whole system")
+                .register(registry);
+        }
+
+        if (processCpuUsage != null) {
+            Gauge.builder("process.cpu.usage", operatingSystemBean, x -> invoke(x, processCpuUsage))
+                .tags(tags)
+                .description("The \"recent cpu usage\" for the Java Virtual Machine process")
+                .register(registry);
+        }
+    }
+
+    private double invoke(OperatingSystemMXBean osBean, @Nullable Method method) {
+        try {
+            return method != null ? (double) method.invoke(osBean) : Double.NaN;
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            return Double.NaN;
+        }
+    }
+
+    @Nullable
+    private Method detectMethod(@Nullable OperatingSystemMXBean osBean, String name) {
+        requireNonNull(name);
+        if (osBean == null)
+            return null;
+        try {
+            final Method method = osBean.getClass().getMethod(name);
+            method.setAccessible(true);
+            return method;
+        } catch (NoSuchMethodException | SecurityException e) {
+            return null;
         }
     }
 }
