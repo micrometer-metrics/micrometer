@@ -17,6 +17,8 @@ package io.micrometer.signalfx;
 
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
+import java.time.Duration;
+
 public interface SignalFxConfig extends StepRegistryConfig {
     SignalFxConfig DEFAULT = k -> null;
 
@@ -34,10 +36,15 @@ public interface SignalFxConfig extends StepRegistryConfig {
 
     /**
      * The URI to ship metrics to. If you need to publish metrics to an internal proxy en route to
-     * datadoghq, you can define the location of the proxy with this.
+     * SignalFx, you can define the location of the proxy with this.
      */
     default String uri() {
         String v = get(prefix() + ".apiHost");
         return v == null ? "https://ingest.signalfx.com" : v;
+    }
+
+    @Override
+    default Duration step() {
+        return Duration.ofSeconds(10);
     }
 }
