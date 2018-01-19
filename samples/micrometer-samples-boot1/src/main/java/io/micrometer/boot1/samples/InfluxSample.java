@@ -19,7 +19,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@SpringBootApplication(scanBasePackages = "io.micrometer.spring.samples.components")
+import io.micrometer.boot1.samples.components.PersonController;
+
+@SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
 public class InfluxSample {
     public static void main(String[] args) {
