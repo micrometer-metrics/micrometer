@@ -19,11 +19,15 @@ import io.micrometer.core.lang.Nullable;
 
 import java.util.Objects;
 
+import static java.util.Objects.requireNonNull;
+
 public class ImmutableTag implements Tag {
     private String key;
     private String value;
 
     public ImmutableTag(String key, String value) {
+        requireNonNull(key);
+        requireNonNull(value);
         this.key = key;
         this.value = value;
     }
