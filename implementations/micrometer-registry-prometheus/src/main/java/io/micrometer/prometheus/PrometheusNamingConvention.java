@@ -31,10 +31,19 @@ public class PrometheusNamingConvention implements NamingConvention {
 
     private static final Pattern nameChars = Pattern.compile("[^a-zA-Z0-9_:]");
     private static final Pattern tagKeyChars = Pattern.compile("[^a-zA-Z0-9_]");
+    private final String timerSuffix;
+
+    public PrometheusNamingConvention() {
+        this("");
+    }
+
+    public PrometheusNamingConvention(String timerSuffix) {
+        this.timerSuffix = timerSuffix;
+    }
 
     /**
      * Names are snake-cased. They contain a base unit suffix when applicable.
-     *
+     * <p>
      * Names may contain ASCII letters and digits, as well as underscores and colons. They must match the regex
      * [a-zA-Z_:][a-zA-Z0-9_:]*
      */
@@ -42,32 +51,31 @@ public class PrometheusNamingConvention implements NamingConvention {
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
         String conventionName = NamingConvention.snakeCase.name(name, type, baseUnit);
 
-        switch(type) {
+        switch (type) {
             case Counter:
             case DistributionSummary:
             case Gauge:
-                if(baseUnit != null && !conventionName.endsWith("_" + baseUnit))
+                if (baseUnit != null && !conventionName.endsWith("_" + baseUnit))
                     conventionName += "_" + baseUnit;
                 break;
         }
 
         switch (type) {
             case Counter:
-                if(!conventionName.endsWith("_total"))
+                if (!conventionName.endsWith("_total"))
                     conventionName += "_total";
                 break;
             case Timer:
             case LongTaskTimer:
-                if(conventionName.endsWith("_duration")) {
+                if (conventionName.endsWith(timerSuffix)) {
                     conventionName += "_seconds";
-                }
-                else if(!conventionName.endsWith("_seconds"))
-                    conventionName += "_duration_seconds";
+                } else if (!conventionName.endsWith("_seconds"))
+                    conventionName += timerSuffix + "_seconds";
                 break;
         }
 
         String sanitized = nameChars.matcher(conventionName).replaceAll("_");
-        if(!Character.isLetter(sanitized.charAt(0))) {
+        if (!Character.isLetter(sanitized.charAt(0))) {
             sanitized = "m_" + sanitized;
         }
         return sanitized;
@@ -82,7 +90,7 @@ public class PrometheusNamingConvention implements NamingConvention {
         String conventionKey = NamingConvention.snakeCase.tagKey(key);
 
         String sanitized = tagKeyChars.matcher(conventionKey).replaceAll("_");
-        if(!Character.isLetter(sanitized.charAt(0))) {
+        if (!Character.isLetter(sanitized.charAt(0))) {
             sanitized = "m_" + sanitized;
         }
         return sanitized;
