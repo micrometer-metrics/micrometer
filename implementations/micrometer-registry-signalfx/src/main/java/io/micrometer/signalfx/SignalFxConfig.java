@@ -38,6 +38,6 @@ public interface SignalFxConfig extends StepRegistryConfig {
      */
     default String uri() {
         String v = get(prefix() + ".apiHost");
-        return v == null ? "https://ingest.signalfx.com/v2" : v;
+        return v == null ? "https://ingest.signalfx.com" : v;
     }
 }
