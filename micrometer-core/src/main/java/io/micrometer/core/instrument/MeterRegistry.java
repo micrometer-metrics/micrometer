@@ -34,7 +34,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.function.*;
 
-import static io.micrometer.core.instrument.Tags.zip;
+import static io.micrometer.core.instrument.Tags.zipNullSafe;
 import static java.util.Collections.emptyList;
 
 /**
@@ -58,6 +58,7 @@ public abstract class MeterRegistry {
     private volatile Map<Id, Meter> meterMap = Collections.emptyMap();
     private final List<MeterFilter> filters = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterAddedListeners = new CopyOnWriteArrayList<>();
+    private String nullValue = null;
     private PauseDetector pauseDetector = new ClockDriftPauseDetector(
         Duration.ofMillis(100),
         Duration.ofMillis(100)
@@ -199,7 +200,7 @@ public abstract class MeterRegistry {
          * Must be an even number of arguments representing key/value pairs of tags.
          */
         public Config commonTags(String... tags) {
-            return commonTags(zip(tags));
+            return commonTags(zipNullSafe(config().defaultNullValue(), tags));
         }
 
         @Incubating(since = "1.0.0-rc.3")
@@ -247,6 +248,14 @@ public abstract class MeterRegistry {
         public PauseDetector pauseDetector() {
             return pauseDetector;
         }
+
+        public void defaultNullValue(String aNull) {
+            nullValue = aNull;
+        }
+
+        private String defaultNullValue() {
+            return nullValue;
+        }
     }
 
     private final Config config = new Config();
@@ -277,7 +286,7 @@ public abstract class MeterRegistry {
      * @param tags MUST be an even number of arguments representing key/value pairs of tags.
      */
     public Counter counter(String name, String... tags) {
-        return counter(name, zip(tags));
+        return counter(name, zipNullSafe(config.defaultNullValue(), tags));
     }
 
     /**
@@ -294,7 +303,7 @@ public abstract class MeterRegistry {
      * @param tags MUST be an even number of arguments representing key/value pairs of tags.
      */
     public DistributionSummary summary(String name, String... tags) {
-        return summary(name, zip(tags));
+        return summary(name, zipNullSafe(config.defaultNullValue(), tags));
     }
 
     /**
@@ -311,7 +320,7 @@ public abstract class MeterRegistry {
      * @param tags MUST be an even number of arguments representing key/value pairs of tags.
      */
     public Timer timer(String name, String... tags) {
-        return timer(name, zip(tags));
+        return timer(name, zipNullSafe(config.defaultNullValue(), tags));
     }
 
     public class More {
@@ -319,7 +328,7 @@ public abstract class MeterRegistry {
          * Measures the time taken for long tasks.
          */
         public LongTaskTimer longTaskTimer(String name, String... tags) {
-            return longTaskTimer(name, zip(tags));
+            return longTaskTimer(name, zipNullSafe(config.defaultNullValue(), tags));
         }
 
         /**

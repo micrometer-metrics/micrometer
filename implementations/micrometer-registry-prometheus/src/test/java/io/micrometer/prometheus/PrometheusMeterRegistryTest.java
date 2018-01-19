@@ -21,10 +21,14 @@ import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.exporter.common.TextFormat;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
@@ -283,6 +287,17 @@ class PrometheusMeterRegistryTest {
         registry.counter("count", "k", "v", "k2", "v2");
         assertThrows(IllegalArgumentException.class, () -> registry.counter("count", "k", "v"));
     }
+
+    @Test
+    void nullLabels() throws IOException {
+        registry.config().defaultNullValue("null");
+        registry.counter("count", "k", null).increment();
+
+        Writer writer = new StringWriter();
+        TextFormat.write004(writer, registry.getPrometheusRegistry().metricFamilySamples());
+        assertThat(writer.toString()).contains("count_total{k=\"null\",} 1.0");
+    }
+
 
     private Condition<Enumeration<Collector.MetricFamilySamples>> withNameAndQuantile(String name) {
         return new Condition<>(m -> {
