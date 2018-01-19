@@ -16,6 +16,9 @@
 package io.micrometer.spring;
 
 import io.micrometer.core.instrument.config.PropertyMeterFilter;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import org.springframework.core.convert.ConversionFailedException;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -24,6 +27,8 @@ import org.springframework.core.env.Environment;
 /**
  * @author Jon Schneider
  */
+@NonNullApi
+@NonNullFields
 public class SpringEnvironmentMeterFilter extends PropertyMeterFilter {
     private final Environment environment;
     private final DefaultConversionService conversionService = new DefaultConversionService();
@@ -34,6 +39,7 @@ public class SpringEnvironmentMeterFilter extends PropertyMeterFilter {
     }
 
     @Override
+    @Nullable
     public <V> V get(String k, Class<V> vClass) {
         if (conversionService.canConvert(String.class, vClass)) {
             Object val = environment.getProperty("management.metrics.filter." + k);
@@ -44,5 +50,11 @@ public class SpringEnvironmentMeterFilter extends PropertyMeterFilter {
             }
         }
         return null;
+    }
+}
+
+class ConfigurationException extends RuntimeException {
+    ConfigurationException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

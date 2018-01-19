@@ -43,7 +43,7 @@ public interface TimeGauge extends Gauge {
         private final TimeUnit fUnits;
         private final ToDoubleFunction<T> f;
         private final List<Tag> tags = new ArrayList<>();
-        private @Nullable String description;
+        @Nullable private String description;
 
         private Builder(String name, T obj, TimeUnit fUnits, ToDoubleFunction<T> f) {
             this.name = name;

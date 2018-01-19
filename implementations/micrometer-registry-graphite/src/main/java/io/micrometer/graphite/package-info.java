@@ -15,7 +15,7 @@
  */
 @NonNullApi
 @NonNullFields
-package io.micrometer.core.instrument.binder.jpa;
+package io.micrometer.graphite;
 
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;

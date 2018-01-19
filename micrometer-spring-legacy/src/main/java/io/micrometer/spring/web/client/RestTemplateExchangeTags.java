@@ -16,6 +16,7 @@
 package io.micrometer.spring.web.client;
 
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.lang.Nullable;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.util.StringUtils;
@@ -79,11 +80,11 @@ public final class RestTemplateExchangeTags {
      * @param response the response
      * @return the status tag
      */
-    public static Tag status(ClientHttpResponse response) {
+    public static Tag status(@Nullable ClientHttpResponse response) {
         return Tag.of("status", getStatusMessage(response));
     }
 
-    private static String getStatusMessage(ClientHttpResponse response) {
+    private static String getStatusMessage(@Nullable ClientHttpResponse response) {
         try {
             if (response == null) {
                 return "CLIENT_ERROR";

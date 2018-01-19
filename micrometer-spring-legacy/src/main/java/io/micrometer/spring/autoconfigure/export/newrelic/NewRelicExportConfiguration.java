@@ -16,12 +16,13 @@
 package io.micrometer.spring.autoconfigure.export.newrelic;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.newrelic.NewRelicConfig;
 import io.micrometer.newrelic.NewRelicMeterRegistry;
 import io.micrometer.spring.autoconfigure.export.DefaultStepRegistryConfig;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
-import io.micrometer.spring.autoconfigure.export.newrelic.NewRelicProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -41,6 +42,8 @@ import org.springframework.context.annotation.Import;
 @EnableConfigurationProperties(NewRelicProperties.class)
 public class NewRelicExportConfiguration {
 
+    @NonNullApi
+    @NonNullFields
     private class DefaultNewRelicConfig extends DefaultStepRegistryConfig implements NewRelicConfig {
         private final NewRelicProperties props;
         private final NewRelicConfig defaults = k -> null;

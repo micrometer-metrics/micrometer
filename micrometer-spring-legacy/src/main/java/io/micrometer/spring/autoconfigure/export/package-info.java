@@ -15,7 +15,7 @@
  */
 @NonNullApi
 @NonNullFields
-package io.micrometer.core.instrument.binder.cache;
+package io.micrometer.spring.autoconfigure.export;
 
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;

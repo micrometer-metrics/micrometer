@@ -15,7 +15,9 @@
  */
 package io.micrometer.core.instrument.binder.tomcat;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.catalina.Context;
@@ -26,7 +28,6 @@ import org.apache.catalina.session.ManagerBase;
 import org.apache.catalina.session.StandardSession;
 import org.apache.catalina.session.TooManyActiveSessionsException;
 import org.apache.catalina.startup.Tomcat;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -42,12 +43,7 @@ import static org.assertj.core.api.Assertions.fail;
  * @author Jon Schneider
  */
 class TomcatMetricsTest {
-    private SimpleMeterRegistry registry;
-
-    @BeforeEach
-    void setup() {
-        this.registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-    }
+    private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
     @Test
     void managerBasedMetrics() {
@@ -89,12 +85,12 @@ class TomcatMetricsTest {
         List<Tag> tags = Tags.zip("metricTag", "val1");
         TomcatMetrics.monitor(registry, manager, tags);
 
-        assertThat(registry.find("tomcat.sessions.active.max").tags(tags).gauge().value()).isEqualTo(3.0);
-        assertThat(registry.find("tomcat.sessions.active.current").tags(tags).gauge().value()).isEqualTo(2.0);
-        assertThat(registry.find("tomcat.sessions.expired").tags(tags).functionCounter().count()).isEqualTo(1.0);
-        assertThat(registry.find("tomcat.sessions.rejected").tags(tags).functionCounter().count()).isEqualTo(1.0);
-        assertThat(registry.find("tomcat.sessions.created").tags(tags).functionCounter().count()).isEqualTo(3.0);
-        assertThat(registry.find("tomcat.sessions.alive.max").tags(tags).timeGauge().value()).isGreaterThan(1.0);
+        assertThat(registry.mustFind("tomcat.sessions.active.max").tags(tags).gauge().value()).isEqualTo(3.0);
+        assertThat(registry.mustFind("tomcat.sessions.active.current").tags(tags).gauge().value()).isEqualTo(2.0);
+        assertThat(registry.mustFind("tomcat.sessions.expired").tags(tags).functionCounter().count()).isEqualTo(1.0);
+        assertThat(registry.mustFind("tomcat.sessions.rejected").tags(tags).functionCounter().count()).isEqualTo(1.0);
+        assertThat(registry.mustFind("tomcat.sessions.created").tags(tags).functionCounter().count()).isEqualTo(3.0);
+        assertThat(registry.mustFind("tomcat.sessions.alive.max").tags(tags).timeGauge().value()).isGreaterThan(1.0);
     }
 
     @Test
@@ -117,7 +113,7 @@ class TomcatMetricsTest {
 
             assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 
-            assertThat(registry.find("tomcat.global.received").functionCounter()).isNotNull();
+            registry.find("tomcat.global.received").functionCounter();
         } finally {
             server.stop();
             server.destroy();
@@ -135,7 +131,7 @@ class TomcatMetricsTest {
             server.start();
 
             TomcatMetrics.monitor(registry, null);
-            assertThat(registry.find("tomcat.global.received").functionCounter()).isNotNull();
+            registry.find("tomcat.global.received").functionCounter();
         } finally {
             server.stop();
             server.destroy();

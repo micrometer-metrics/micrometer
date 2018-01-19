@@ -15,37 +15,15 @@
  */
 package io.micrometer.atlas;
 
-import com.netflix.spectator.atlas.AtlasConfig;
 import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.lang.Nullable;
 
-import java.time.Duration;
 import static com.netflix.spectator.api.Statistic.*;
 
 public class AtlasUtils {
-    /**
-     * Convenience method for building an Atlas configuration that polls on a {@code step} interval.
-     */
-    public static AtlasConfig pollingConfig(String uri, Duration step) {
-        return new AtlasConfig() {
-            @Override
-            public String uri() {
-                return uri;
-            }
-
-            @Override
-            public Duration step() {
-                return step;
-            }
-
-            @Override
-            public String get(String k) {
-                return System.getProperty(k);
-            }
-        };
-    }
-
-    public static com.netflix.spectator.api.Statistic toSpectatorStatistic(Statistic stat) {
-        switch(stat) {
+    @Nullable
+    static com.netflix.spectator.api.Statistic toSpectatorStatistic(Statistic stat) {
+        switch (stat) {
             case Count:
                 return count;
             case TotalTime:

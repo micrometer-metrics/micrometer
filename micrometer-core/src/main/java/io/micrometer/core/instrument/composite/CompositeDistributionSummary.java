@@ -71,19 +71,20 @@ class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSu
         return new NoopDistributionSummary(getId());
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     DistributionSummary registerNewMeter(MeterRegistry registry) {
         return DistributionSummary.builder(getId().getName())
-                                  .tags(getId().getTags())
-                                  .description(getId().getDescription())
-                                  .baseUnit(getId().getBaseUnit())
-                                  .publishPercentiles(histogramConfig.getPercentiles())
-                                  .publishPercentileHistogram(histogramConfig.isPercentileHistogram())
-                                  .maximumExpectedValue(histogramConfig.getMaximumExpectedValue())
-                                  .minimumExpectedValue(histogramConfig.getMinimumExpectedValue())
-                                  .histogramBufferLength(histogramConfig.getHistogramBufferLength())
-                                  .histogramExpiry(histogramConfig.getHistogramExpiry())
-                                  .sla(histogramConfig.getSlaBoundaries())
-                                  .register(registry);
+            .tags(getId().getTags())
+            .description(getId().getDescription())
+            .baseUnit(getId().getBaseUnit())
+            .publishPercentiles(histogramConfig.getPercentiles())
+            .publishPercentileHistogram(histogramConfig.isPercentileHistogram())
+            .maximumExpectedValue(histogramConfig.getMaximumExpectedValue())
+            .minimumExpectedValue(histogramConfig.getMinimumExpectedValue())
+            .histogramBufferLength(histogramConfig.getHistogramBufferLength())
+            .histogramExpiry(histogramConfig.getHistogramExpiry())
+            .sla(histogramConfig.getSlaBoundaries())
+            .register(registry);
     }
 }

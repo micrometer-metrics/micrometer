@@ -16,6 +16,7 @@
 package io.micrometer.influx;
 
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.lang.Nullable;
 
 /**
  * @author Jon Schneider
@@ -56,6 +57,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      * Authenticate requests with this user. By default is {@code null}, and the registry will not
      * attempt to present credentials to Influx.
      */
+    @Nullable
     default String userName() {
         return get(prefix() + ".userName");
     }
@@ -64,6 +66,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      * Authenticate requests with this password. By default is {@code null}, and the registry will not
      * attempt to present credentials to Influx.
      */
+    @Nullable
     default String password() {
         return get(prefix() + ".password");
     }
@@ -71,6 +74,7 @@ public interface InfluxConfig extends StepRegistryConfig {
     /**
      * Influx writes to the DEFAULT retention policy if one is not specified.
      */
+    @Nullable
     default String retentionPolicy() {
         return get(prefix() + ".retentionPolicy");
     }

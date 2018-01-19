@@ -176,15 +176,15 @@ class CompositeMeterRegistryTest {
         composite.counter("deny.composite");
         composite.counter("deny.child");
 
-        assertThat(simple.find("deny.composite").meter()).isNotPresent();
-        assertThat(composite.find("deny.composite").meter()).isNotPresent();
+        assertThat(simple.find("deny.composite").meter()).isNull();
+        assertThat(composite.find("deny.composite").meter()).isNull();
 
-        assertThat(simple.find("deny.child").meter()).isNotPresent();
-        assertThat(composite.find("deny.child").meter()).isPresent();
+        assertThat(simple.find("deny.child").meter()).isNull();
+        composite.mustFind("deny.child").meter();
 
         // if the meter is registered directly to the child, the composite config does not take effect
         simple.counter("deny.composite");
-        assertThat(simple.find("deny.composite").meter()).isPresent();
+        simple.mustFind("deny.composite").meter();
     }
 
     @Test

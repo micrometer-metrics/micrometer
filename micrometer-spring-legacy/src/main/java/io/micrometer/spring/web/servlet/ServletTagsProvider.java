@@ -17,6 +17,9 @@ package io.micrometer.spring.web.servlet;
 
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.lang.NonNull;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.Nullable;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -27,6 +30,7 @@ import javax.servlet.http.HttpServletResponse;
  * @author Jon Schneider
  * @author Andy Wilkinson
  */
+@NonNullApi
 public interface ServletTagsProvider {
 
     /**
@@ -36,7 +40,8 @@ public interface ServletTagsProvider {
      * @param handler the handler for the request
      * @return tags to associate with metrics recorded for the request
      */
-    Iterable<Tag> httpLongRequestTags(HttpServletRequest request, Object handler);
+    @NonNull
+    Iterable<Tag> httpLongRequestTags(@Nullable HttpServletRequest request, @Nullable Object handler);
 
     /**
      * Provides tags to be associated with metrics for the given {@code request} and
@@ -48,9 +53,9 @@ public interface ServletTagsProvider {
      * @param ex       the current exception, if any
      * @return tags to associate with metrics for the request and response exchange
      */
-    Iterable<Tag> httpRequestTags(HttpServletRequest request,
-                                  HttpServletResponse response,
-                                  Object handler,
-                                  Throwable ex);
-
+    @NonNull
+    Iterable<Tag> httpRequestTags(@Nullable HttpServletRequest request,
+                                  @Nullable HttpServletResponse response,
+                                  @Nullable Object handler,
+                                  @Nullable Throwable ex);
 }

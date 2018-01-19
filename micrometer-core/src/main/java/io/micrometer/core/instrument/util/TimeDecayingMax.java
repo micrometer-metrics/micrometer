@@ -38,6 +38,7 @@ public class TimeDecayingMax {
     @SuppressWarnings({ "unused", "FieldCanBeLocal" })
     private volatile int rotating = 0; // 0 - not rotating, 1 - rotating
 
+    @SuppressWarnings("ConstantConditions")
     public TimeDecayingMax(Clock clock, HistogramConfig config) {
         this(clock, config.getHistogramExpiry().toMillis(), config.getHistogramBufferLength());
     }

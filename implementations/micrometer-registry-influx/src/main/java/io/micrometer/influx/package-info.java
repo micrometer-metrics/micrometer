@@ -15,7 +15,7 @@
  */
 @NonNullApi
 @NonNullFields
-package io.micrometer.core.instrument.binder.system;
+package io.micrometer.influx;
 
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;

@@ -23,6 +23,8 @@ import io.micrometer.core.instrument.noop.NoopCounter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
+import javax.annotation.Nonnull;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MeterRegistryTest {
@@ -54,7 +56,7 @@ class MeterRegistryTest {
     void histogramConfigTransformingMeterFilter() {
         MeterRegistry registry = new SimpleMeterRegistry() {
             @Override
-            protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
+            protected Timer newTimer(@Nonnull Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
                 assertThat(histogramConfig.isPublishingHistogram()).isTrue();
                 return super.newTimer(id, histogramConfig, pauseDetector);
             }

@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.core.lang.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
@@ -61,7 +62,7 @@ public class DropwizardMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
         final WeakReference<T> ref = new WeakReference<>(obj);
         Gauge<Double> gauge = () -> {
             T obj2 = ref.get();
@@ -75,10 +76,12 @@ public class DropwizardMeterRegistry extends MeterRegistry {
     protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
         DropwizardTimer timer = new DropwizardTimer(id, registry.timer(hierarchicalName(id)), clock, histogramConfig, pauseDetector);
 
-        for (double percentile : histogramConfig.getPercentiles()) {
-            String formattedPercentile = DoubleFormat.toString(percentile * 100) + "percentile";
-            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", formattedPercentile),
-                timer, t -> t.percentile(percentile, getBaseTimeUnit()));
+        if (histogramConfig.getPercentiles() != null) {
+            for (double percentile : histogramConfig.getPercentiles()) {
+                String formattedPercentile = DoubleFormat.toString(percentile * 100) + "percentile";
+                gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", formattedPercentile),
+                    timer, t -> t.percentile(percentile, getBaseTimeUnit()));
+            }
         }
 
         if (histogramConfig.isPublishingHistogram()) {
@@ -95,10 +98,12 @@ public class DropwizardMeterRegistry extends MeterRegistry {
     protected DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
         DropwizardDistributionSummary summary = new DropwizardDistributionSummary(id, clock, registry.histogram(hierarchicalName(id)), histogramConfig);
 
-        for (double percentile : histogramConfig.getPercentiles()) {
-            String formattedPercentile = DoubleFormat.toString(percentile * 100) + "percentile";
-            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", formattedPercentile),
-                summary, s -> summary.percentile(percentile));
+        if (histogramConfig.getPercentiles() != null) {
+            for (double percentile : histogramConfig.getPercentiles()) {
+                String formattedPercentile = DoubleFormat.toString(percentile * 100) + "percentile";
+                gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", formattedPercentile),
+                    summary, s -> summary.percentile(percentile));
+            }
         }
 
         if (histogramConfig.isPublishingHistogram()) {

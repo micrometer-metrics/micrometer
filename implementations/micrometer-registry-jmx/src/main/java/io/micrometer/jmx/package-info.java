@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.composite.internal;
+@NonNullApi
+@NonNullFields
+package io.micrometer.jmx;
 
-public class CompositeUtils {
-    private CompositeUtils() {}
-}
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;

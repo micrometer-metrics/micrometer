@@ -109,7 +109,7 @@ public class MetricsAutoConfigurationTest {
     @Test
     public void propertyBasedMeterFiltersCanTakeLowerPrecedenceThanProgrammaticallyBoundFilters() {
         registry.timer("my.timer");
-        assertThat(registry.mustFind("my.timer").meter()).isNotPresent();
+        assertThat(registry.find("my.timer").meter()).isNull();
     }
 
     @SpringBootApplication(scanBasePackages = "ignored")

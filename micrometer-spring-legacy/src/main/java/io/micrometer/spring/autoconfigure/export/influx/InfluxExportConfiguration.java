@@ -16,6 +16,8 @@
 package io.micrometer.spring.autoconfigure.export.influx;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.influx.InfluxConfig;
 import io.micrometer.influx.InfluxConsistency;
 import io.micrometer.influx.InfluxMeterRegistry;
@@ -41,6 +43,8 @@ import org.springframework.context.annotation.Import;
 @EnableConfigurationProperties(InfluxProperties.class)
 public class InfluxExportConfiguration {
 
+    @NonNullApi
+    @NonNullFields
     private class DefaultInfluxConfig extends DefaultStepRegistryConfig implements InfluxConfig {
         private final InfluxProperties props;
 

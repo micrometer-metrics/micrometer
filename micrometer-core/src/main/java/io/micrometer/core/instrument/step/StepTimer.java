@@ -35,6 +35,7 @@ public class StepTimer extends AbstractTimer {
     /**
      * Create a new instance.
      */
+    @SuppressWarnings("ConstantConditions")
     public StepTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
         super(id, clock, histogramConfig, pauseDetector, baseTimeUnit);
         this.count = new StepLong(clock, histogramConfig.getHistogramExpiry().toMillis());

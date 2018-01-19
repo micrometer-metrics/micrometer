@@ -62,8 +62,8 @@ public interface FunctionTimer extends Meter {
         private final ToDoubleFunction<T> totalTimeFunction;
         private final TimeUnit totalTimeFunctionUnits;
         private final List<Tag> tags = new ArrayList<>();
-        private @Nullable String description;
-        private @Nullable String baseUnit;
+        @Nullable private String description;
+        @Nullable private String baseUnit;
 
         private Builder(String name, T obj,
                         ToLongFunction<T> countFunction,

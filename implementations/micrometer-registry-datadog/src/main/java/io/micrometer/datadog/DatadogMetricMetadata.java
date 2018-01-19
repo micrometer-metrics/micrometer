@@ -17,6 +17,7 @@ package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.*;
 
@@ -54,10 +55,11 @@ class DatadogMetricMetadata {
 
     private final Meter.Id id;
     private final String type;
-    private final String overrideBaseUnit;
+    @Nullable private final String overrideBaseUnit;
     private final boolean descriptionsEnabled;
 
-    DatadogMetricMetadata(Meter.Id id, Statistic statistic, boolean descriptionsEnabled, String overrideBaseUnit) {
+    DatadogMetricMetadata(Meter.Id id, Statistic statistic, boolean descriptionsEnabled,
+                          @Nullable String overrideBaseUnit) {
         this.id = id;
         this.descriptionsEnabled = descriptionsEnabled;
         this.overrideBaseUnit = overrideBaseUnit;

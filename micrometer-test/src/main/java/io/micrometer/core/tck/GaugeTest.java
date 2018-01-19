@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("ConstantConditions")
 interface GaugeTest {
     @Test
     @DisplayName("gauges attached to a number are updated when their values are observed")

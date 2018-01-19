@@ -20,6 +20,9 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
@@ -35,6 +38,8 @@ import static java.util.Arrays.asList;
  *
  * @author David Held
  */
+@NonNullApi
+@NonNullFields
 public class ThreadPoolTaskExecutorMetrics implements MeterBinder {
     /**
      * Returns a new {@link ThreadPoolTaskExecutor} with recorded metrics.
@@ -60,7 +65,7 @@ public class ThreadPoolTaskExecutorMetrics implements MeterBinder {
         return monitor(registry, name, asList(tags));
     }
 
-    private final ThreadPoolTaskExecutor executor;
+    @Nullable private final ThreadPoolTaskExecutor executor;
     private final String name;
     private final Iterable<Tag> tags;
 

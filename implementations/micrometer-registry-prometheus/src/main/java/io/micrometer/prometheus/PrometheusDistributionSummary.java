@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.TimeWindowHistogram;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.util.TimeDecayingMax;
+import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.DoubleAdder;
@@ -69,7 +70,7 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         return MeterEquivalence.equals(this, o);
     }
 

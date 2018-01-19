@@ -20,12 +20,16 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.ManagementFactory;
 
 import static java.util.Collections.emptyList;
 
+@NonNullApi
+@NonNullFields
 public class ClassLoaderMetrics implements MeterBinder {
     private final Iterable<Tag> tags;
 

@@ -31,6 +31,7 @@ class AtlasMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit 
                 return false;
             }
 
+            @SuppressWarnings("ConstantConditions")
             @Override
             public String get(String k) {
                 return null;

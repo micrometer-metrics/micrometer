@@ -17,6 +17,7 @@ package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.lang.Nullable;
 
 /**
  * @author Jon Schneider
@@ -29,7 +30,7 @@ public class DatadogNamingConvention implements NamingConvention {
      * all non-alphanumeric characters with '_'.
      */
     @Override
-    public String name(String name, Meter.Type type, String baseUnit) {
+    public String name(String name, Meter.Type type, @Nullable String baseUnit) {
         String sanitized = name;
 
         // Metrics that don't start with a letter get dropped on the floor by the Datadog publish API,

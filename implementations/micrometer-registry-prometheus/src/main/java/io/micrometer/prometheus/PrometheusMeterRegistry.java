@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.micrometer.core.lang.Nullable;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
@@ -218,7 +219,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     @SuppressWarnings("unchecked")
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
         MicrometerCollector collector = collectorByName(id, Collector.Type.GAUGE);
         Gauge gauge = new DefaultGauge(id, obj, f);
         List<String> tagValues = tagValues(id);

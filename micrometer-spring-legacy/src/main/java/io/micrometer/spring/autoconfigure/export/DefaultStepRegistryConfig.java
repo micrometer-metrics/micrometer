@@ -16,6 +16,7 @@
 package io.micrometer.spring.autoconfigure.export;
 
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 
@@ -25,10 +26,11 @@ public abstract class DefaultStepRegistryConfig implements StepRegistryConfig {
     private final StepRegistryConfig defaults = new StepRegistryConfig() {
         @Override
         public String prefix() {
-            return null;
+            return "doesnotmatter";
         }
 
         @Override
+        @Nullable
         public String get(String k) {
             return null;
         }
@@ -40,15 +42,17 @@ public abstract class DefaultStepRegistryConfig implements StepRegistryConfig {
 
     @Override
     public String prefix() {
-        return null;
+        return "doesnotmatter";
     }
 
     @Override
+    @Nullable
     public String get(String k) {
         return null;
     }
 
     @Override
+    @Nullable
     public Duration step() {
         return props.getStep();
     }

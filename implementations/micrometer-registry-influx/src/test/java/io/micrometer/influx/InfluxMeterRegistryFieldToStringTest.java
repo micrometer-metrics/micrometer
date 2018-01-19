@@ -15,32 +15,25 @@
  */
 package io.micrometer.influx;
 
+import io.micrometer.core.instrument.MockClock;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+
 import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+class InfluxMeterRegistryFieldToStringTest {
 
-import io.micrometer.core.instrument.MockClock;
-
-public class InfluxMeterRegistryFieldToStringTest {
-
-    private Locale originalLocale;
-
-    @BeforeEach
-    public void setUp() {
-        this.originalLocale = Locale.getDefault();
-    }
+    private Locale originalLocale = Locale.getDefault();
 
     @AfterEach
-    public void cleanUp() {
+    void cleanUp() {
         Locale.setDefault(this.originalLocale);
     }
 
 	@Test
-	public void testWithEnglishLocale() {
+    void testWithEnglishLocale() {
 		Locale.setDefault(Locale.ENGLISH);
 		InfluxMeterRegistry instance = new InfluxMeterRegistry(k -> null, new MockClock());
 
@@ -50,7 +43,7 @@ public class InfluxMeterRegistryFieldToStringTest {
 	}
 
 	@Test
-	public void testWithEnglishLocaleWithLargerResolution() {
+    void testWithEnglishLocaleWithLargerResolution() {
 		Locale.setDefault(Locale.ENGLISH);
 		InfluxMeterRegistry instance = new InfluxMeterRegistry(k -> null, new MockClock());
 
@@ -60,7 +53,7 @@ public class InfluxMeterRegistryFieldToStringTest {
 	}
 
 	@Test
-	public void testWithSwedishLocale() {
+    void testWithSwedishLocale() {
 		Locale.setDefault(new Locale("sv", "SE"));
 
 		InfluxMeterRegistry instance = new InfluxMeterRegistry(k -> null, new MockClock());

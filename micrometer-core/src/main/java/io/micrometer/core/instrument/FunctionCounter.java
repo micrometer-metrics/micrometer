@@ -52,8 +52,8 @@ public interface FunctionCounter extends Meter {
         private final T obj;
         private final ToDoubleFunction<T> f;
         private final List<Tag> tags = new ArrayList<>();
-        private @Nullable String description;
-        private @Nullable String baseUnit;
+        @Nullable private String description;
+        @Nullable private String baseUnit;
 
         private Builder(String name, T obj, ToDoubleFunction<T> f) {
             this.name = name;

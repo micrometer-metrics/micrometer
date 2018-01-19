@@ -17,6 +17,8 @@ package io.micrometer.spring.autoconfigure.export.jmx;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.Nullable;
 import io.micrometer.jmx.JmxConfig;
 import io.micrometer.jmx.JmxMeterRegistry;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
@@ -39,6 +41,7 @@ import java.time.Duration;
 @EnableConfigurationProperties(JmxProperties.class)
 public class JmxExportConfiguration {
 
+    @NonNullApi
     private class DefaultJmxConfig implements JmxConfig {
         private final JmxProperties props;
 
@@ -52,6 +55,7 @@ public class JmxExportConfiguration {
         }
 
         @Override
+        @Nullable
         public String get(String k) {
             return null;
         }

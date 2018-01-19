@@ -19,6 +19,8 @@ import com.netflix.hystrix.*;
 import com.netflix.hystrix.metric.HystrixCommandCompletionStream;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +31,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Clint Checketts
  */
+@NonNullApi
+@NonNullFields
 public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublisherCommand {
     private static final Logger LOG = LoggerFactory.getLogger(MicrometerMetricsPublisherCommand.class);
     private static final List<HystrixEventType> executionEvents = Arrays.asList(

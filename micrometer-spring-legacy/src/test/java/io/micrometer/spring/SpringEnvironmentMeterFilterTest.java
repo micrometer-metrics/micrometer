@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.lang.NonNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,13 +53,13 @@ public class SpringEnvironmentMeterFilterTest {
 
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock()) {
         @Override
-        protected Timer newTimer(Meter.Id id, HistogramConfig conf, PauseDetector pauseDetector) {
+        protected Timer newTimer(@NonNull Meter.Id id, @NonNull HistogramConfig conf, @NonNull PauseDetector pauseDetector) {
             histogramConfig = conf;
             return super.newTimer(id, conf, pauseDetector);
         }
 
         @Override
-        protected DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig conf) {
+        protected DistributionSummary newDistributionSummary(@NonNull Meter.Id id, @NonNull HistogramConfig conf) {
             histogramConfig = conf;
             return super.newDistributionSummary(id, conf);
         }

@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.core.lang.Nullable;
 import reactor.core.Disposable;
 import reactor.core.Disposables;
 import reactor.core.publisher.Flux;
@@ -38,34 +39,27 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
-import static java.util.Optional.ofNullable;
-
 /**
  * @author Jon Schneider
  */
 public class StatsdMeterRegistry extends MeterRegistry {
     private final StatsdConfig statsdConfig;
-
     private final HierarchicalNameMapper nameMapper;
-
-    private volatile UnicastProcessor<String> publisher;
-
-    private Disposable.Swap udpClient = Disposables.swap();
-
     private final Collection<StatsdPollable> pollableMeters = Collections.synchronizedCollection(new LinkedList<>());
 
-    // VisibleForTesting
-    Disposable.Swap meterPoller = Disposables.swap();
+    private volatile UnicastProcessor<String> publisher;
+    private Disposable.Swap udpClient = Disposables.swap();
+    private Disposable.Swap meterPoller = Disposables.swap();
 
     public StatsdMeterRegistry(StatsdConfig config, Clock clock) {
-        this(config, null, clock);
+        this(config, HierarchicalNameMapper.DEFAULT, clock);
     }
 
     public StatsdMeterRegistry(StatsdConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
         super(clock);
 
         this.statsdConfig = config;
-        this.nameMapper = ofNullable(nameMapper).orElse(HierarchicalNameMapper.DEFAULT);
+        this.nameMapper = nameMapper;
 
         switch (statsdConfig.flavor()) {
             case Datadog:
@@ -113,7 +107,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
         StatsdGauge<T> gauge = new StatsdGauge<>(id, lineBuilder(id), publisher, obj, f);
         pollableMeters.add(gauge);
         return gauge;
@@ -133,6 +127,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
         Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, histogramConfig, pauseDetector, getBaseTimeUnit(),
@@ -166,6 +161,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
         return timer;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
         DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), publisher, clock, histogramConfig, statsdConfig.step().toMillis());

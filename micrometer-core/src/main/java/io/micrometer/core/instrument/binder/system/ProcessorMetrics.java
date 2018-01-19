@@ -19,6 +19,8 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -28,6 +30,8 @@ import static java.util.Collections.emptyList;
 /**
  * Record metrics related to CPU utilization
  */
+@NonNullApi
+@NonNullFields
 public class ProcessorMetrics implements MeterBinder {
     private final Iterable<Tag> tags;
 

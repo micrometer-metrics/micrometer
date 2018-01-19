@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.util.MeterEquivalence;
+import io.micrometer.core.lang.Nullable;
 
 import static java.util.stream.StreamSupport.stream;
 
@@ -69,7 +70,7 @@ public class SpectatorDistributionSummary extends AbstractDistributionSummary {
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         return MeterEquivalence.equals(this, o);
     }
 

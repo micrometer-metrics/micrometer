@@ -18,6 +18,7 @@ package io.micrometer.ganglia;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
@@ -32,6 +33,7 @@ class GangliaMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKi
             }
 
             @Override
+            @Nullable
             public String get(String k) {
                 return null;
             }

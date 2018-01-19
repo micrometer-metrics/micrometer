@@ -21,7 +21,6 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -30,14 +29,8 @@ import java.util.concurrent.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 class ExecutorServiceMetricsTest {
-    private MeterRegistry registry;
-
+    private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     private Iterable<Tag> userTags = Tags.zip("userTagKey", "userTagValue");
-
-    @BeforeEach
-    void before() {
-        registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-    }
 
     @DisplayName("Normal executor can be instrumented after being initialized")
     @Test

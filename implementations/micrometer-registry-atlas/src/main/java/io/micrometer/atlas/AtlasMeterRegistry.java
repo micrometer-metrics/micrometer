@@ -29,6 +29,7 @@ import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.step.StepFunctionCounter;
 import io.micrometer.core.instrument.step.StepFunctionTimer;
+import io.micrometer.core.lang.Nullable;
 
 import java.text.DecimalFormat;
 import java.time.Duration;
@@ -93,6 +94,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
         return new SpectatorCounter(id, registry.counter(spectatorId(id)));
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
         com.netflix.spectator.api.DistributionSummary internalSummary = registry.distributionSummary(spectatorId(id));
@@ -116,6 +118,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
         return summary;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
         com.netflix.spectator.api.Timer internalTimer = registry.timer(spectatorId(id));
@@ -147,7 +150,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
         com.netflix.spectator.api.Gauge gauge = new SpectatorToDoubleGauge<>(registry.clock(), spectatorId(id), obj, f);
         registry.register(gauge);
         return new SpectatorGauge(id, gauge);

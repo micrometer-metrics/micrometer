@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
 
@@ -145,11 +147,11 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         metadataToSend.forEach(this::postMetricMetadata);
     }
 
-    private void quietlyCloseUrlConnection(HttpURLConnection con) {
-        if (con == null)
-            return;
+    private void quietlyCloseUrlConnection(@Nullable HttpURLConnection con) {
         try {
-            con.disconnect();
+            if (con != null) {
+                con.disconnect();
+            }
         } catch (Exception ignore) {
         }
     }
@@ -232,30 +234,31 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
             });
     }
 
-    private void addToMetadataList(Map<String, DatadogMetricMetadata> metadata, Meter.Id id, String suffix, Statistic stat, String overrideBaseUnit) {
-        if(config.applicationKey() == null)
+    private void addToMetadataList(Map<String, DatadogMetricMetadata> metadata, Meter.Id id, @Nullable String suffix,
+                                   Statistic stat, @Nullable String overrideBaseUnit) {
+        if (config.applicationKey() == null)
             return; // we can't set metadata correctly without the application key
 
         Meter.Id fullId = id;
-        if(suffix != null)
+        if (suffix != null)
             fullId = idWithSuffix(id, suffix);
 
         String metricName = getConventionName(fullId);
-        if(!verifiedMetadata.contains(metricName)) {
+        if (!verifiedMetadata.contains(metricName)) {
             metadata.put(metricName, new DatadogMetricMetadata(fullId, stat, config.descriptions(), overrideBaseUnit));
         }
     }
 
     //VisibleForTesting
-    String writeMetric(Meter.Id id, String suffix, long wallTime, double value) {
+    String writeMetric(Meter.Id id, @Nullable String suffix, long wallTime, double value) {
         Meter.Id fullId = id;
-        if(suffix != null)
+        if (suffix != null)
             fullId = idWithSuffix(id, suffix);
 
         Iterable<Tag> tags = fullId.getTags();
 
         String host = config.hostTag() == null ? "" : stream(tags.spliterator(), false)
-            .filter(t -> config.hostTag().equals(t.getKey()))
+            .filter(t -> requireNonNull(config.hostTag()).equals(t.getKey()))
             .findAny()
             .map(t -> ",\"host\":\"" + t.getValue() + "\"")
             .orElse("");
@@ -275,7 +278,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
      */
     private void postMetricMetadata(String metricName, DatadogMetricMetadata metadata) {
         // already posted the metadata for this metric
-        if(verifiedMetadata.contains(metricName))
+        if (verifiedMetadata.contains(metricName))
             return;
 
         HttpURLConnection con = null;
@@ -301,12 +304,11 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                 try (InputStream in = con.getErrorStream()) {
                     String msg = new BufferedReader(new InputStreamReader(in))
                         .lines().collect(joining("\n"));
-                    if(msg.contains("metric_name not found")) {
+                    if (msg.contains("metric_name not found")) {
                         // Do nothing. Metrics that are newly created in Datadog are not immediately available
                         // for metadata modification. We will keep trying this request on subsequent publishes,
                         // where it will eventually succeed.
-                    }
-                    else {
+                    } else {
                         logger.error("failed to send metric metadata: " + msg);
                     }
                 }

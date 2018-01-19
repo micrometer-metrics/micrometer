@@ -33,12 +33,11 @@ import javax.annotation.meta.TypeQualifierDefault;
  * <p>Should be used at package level in association with {@link Nullable}
  * annotations at field level.
  *
- * @since 1.0
  * @see NonNullFields
  * @see Nullable
  * @see NonNull
  */
-@Target(ElementType.PACKAGE)
+@Target({ElementType.PACKAGE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Nonnull

@@ -21,6 +21,7 @@ import com.amazonaws.services.cloudwatch.model.*;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -159,7 +160,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
                 .withUnit(toStandardUnit(id.getBaseUnit()));
     }
 
-    private StandardUnit toStandardUnit(String unit) {
+    private StandardUnit toStandardUnit(@Nullable String unit) {
         if (unit == null) {
             return StandardUnit.None;
         }
@@ -196,7 +197,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     /**
      * Copy tags and description from an existing id, but change the name and unit.
      */
-    private Meter.Id idWithSuffixAndUnit(Meter.Id id, String suffix, String unit) {
+    private Meter.Id idWithSuffixAndUnit(Meter.Id id, String suffix, @Nullable String unit) {
         return new Meter.Id(id.getName() + "." + suffix, id.getTags(), unit, id.getDescription(), id.getType());
     }
 }

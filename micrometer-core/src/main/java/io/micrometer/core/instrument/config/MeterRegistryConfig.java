@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.config;
 
+import io.micrometer.core.lang.Nullable;
+
 public interface MeterRegistryConfig {
     String prefix();
 
@@ -26,5 +28,6 @@ public interface MeterRegistryConfig {
      * @return
      *     Value for the key or null if no key is present.
      */
+    @Nullable
     String get(String k);
 }

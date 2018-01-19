@@ -16,6 +16,7 @@
 package io.micrometer.spring.web.client;
 
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.lang.Nullable;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.util.StringUtils;
@@ -32,7 +33,7 @@ public class DefaultRestTemplateExchangeTagsProvider
 
     @Override
     public Iterable<Tag> getTags(String urlTemplate, HttpRequest request,
-                                 ClientHttpResponse response) {
+                                 @Nullable ClientHttpResponse response) {
         Tag uriTag = StringUtils.hasText(urlTemplate)
             ? RestTemplateExchangeTags.uri(urlTemplate)
             : RestTemplateExchangeTags.uri(request);

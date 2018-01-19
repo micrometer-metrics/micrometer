@@ -17,6 +17,7 @@ package io.micrometer.ganglia;
 
 import info.ganglia.gmetric4j.gmetric.GMetric;
 import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -37,6 +38,7 @@ public interface GangliaConfig extends DropwizardConfig {
      * @return
      *     Value for the key or null if no key is present.
      */
+    @Nullable
     String get(String k);
 
     /**

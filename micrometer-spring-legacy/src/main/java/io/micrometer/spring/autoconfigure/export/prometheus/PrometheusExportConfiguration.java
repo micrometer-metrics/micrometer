@@ -16,6 +16,8 @@
 package io.micrometer.spring.autoconfigure.export.prometheus;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.Nullable;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
@@ -44,6 +46,7 @@ import java.time.Duration;
 @Import(StringToDurationConverter.class)
 public class PrometheusExportConfiguration {
 
+    @NonNullApi
     private class DefaultPrometheusConfig implements PrometheusConfig {
         private final PrometheusProperties props;
         private final PrometheusConfig defaults = k -> null;
@@ -53,6 +56,7 @@ public class PrometheusExportConfiguration {
         }
 
         @Override
+        @Nullable
         public String get(String k) {
             return null;
         }

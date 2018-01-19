@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring;
+@NonNullApi
+@NonNullFields
+package io.micrometer.core.instrument.dropwizard;
 
-public class ConfigurationException extends RuntimeException {
-    public ConfigurationException(String message, Throwable cause) {
-        super(message, cause);
-    }
-}
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;

@@ -70,6 +70,7 @@ public class TimeWindowLatencyHistogram extends TimeWindowHistogramBase<LatencyS
         initRingBuffer();
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     LatencyStats newBucket(HistogramConfig histogramConfig) {
         requireNonNull(pauseDetector);

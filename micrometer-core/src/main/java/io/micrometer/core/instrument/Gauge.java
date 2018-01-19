@@ -39,19 +39,19 @@ public interface Gauge extends Meter {
         return Type.Gauge;
     }
 
-    static <T> Builder<T> builder(String name, T obj, ToDoubleFunction<T> f) {
+    static <T> Builder<T> builder(String name, @Nullable T obj, ToDoubleFunction<T> f) {
         return new Builder<>(name, obj, f);
     }
 
     class Builder<T> {
         private final String name;
-        private final T obj;
+        @Nullable private final T obj;
         private final ToDoubleFunction<T> f;
         private final List<Tag> tags = new ArrayList<>();
         @Nullable private String description;
         @Nullable private String baseUnit;
 
-        private Builder(String name, T obj, ToDoubleFunction<T> f) {
+        private Builder(String name, @Nullable T obj, ToDoubleFunction<T> f) {
             this.name = name;
             this.obj = obj;
             this.f = f;

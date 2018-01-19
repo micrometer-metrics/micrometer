@@ -22,6 +22,8 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 
 import java.util.concurrent.TimeUnit;
 
@@ -37,6 +39,8 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Clint Checketts
  */
+@NonNullApi
+@NonNullFields
 public class CaffeineCacheMetrics implements MeterBinder {
     /**
      * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()} prior to building the cache

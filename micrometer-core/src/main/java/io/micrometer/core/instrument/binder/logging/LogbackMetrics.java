@@ -24,6 +24,8 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 
@@ -32,6 +34,8 @@ import static java.util.Collections.emptyList;
 /**
  * @author Jon Schneider
  */
+@NonNullApi
+@NonNullFields
 public class LogbackMetrics implements MeterBinder {
     private final Iterable<Tag> tags;
 
@@ -50,6 +54,8 @@ public class LogbackMetrics implements MeterBinder {
     }
 }
 
+@NonNullApi
+@NonNullFields
 class MetricsTurboFilter extends TurboFilter {
     private final Counter errorCounter;
     private final Counter warnCounter;

@@ -17,12 +17,16 @@ package io.micrometer.core.instrument.binder.cache;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.statistics.StatisticsGateway;
 
 /**
  * @author Jon Schneider
  */
+@NonNullApi
+@NonNullFields
 public class EhCache2Metrics implements MeterBinder {
     private final String name;
     private final Iterable<Tag> tags;

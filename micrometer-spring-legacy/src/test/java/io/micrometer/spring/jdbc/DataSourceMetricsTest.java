@@ -34,7 +34,6 @@ import java.sql.SQLException;
 import java.util.Collection;
 
 import static java.util.Collections.emptyList;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 /**
  * @author Jon Schneider
@@ -57,7 +56,7 @@ public class DataSourceMetricsTest {
     @Test
     public void dataSourceIsInstrumented() throws SQLException, InterruptedException {
         dataSource.getConnection().getMetaData();
-        assertThat(registry.find("data.source.max.connections").meter()).isPresent();
+        registry.find("data.source.max.connections").meter();
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")

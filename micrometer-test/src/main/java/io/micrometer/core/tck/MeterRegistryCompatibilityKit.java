@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.micrometer.core.instrument.MockClock.clock;
 import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -120,7 +121,7 @@ public abstract class MeterRegistryCompatibilityKit {
         clock(registry).add(step());
         assertThat(ft.measure())
             .anySatisfy(ms -> {
-                TimeUnit baseUnit = TimeUnit.valueOf(ft.getId().getBaseUnit().toUpperCase());
+                TimeUnit baseUnit = TimeUnit.valueOf(requireNonNull(ft.getId().getBaseUnit()).toUpperCase());
                 assertThat(ms.getStatistic()).isEqualTo(Statistic.TotalTime);
                 assertThat(TimeUtils.convert(ms.getValue(), baseUnit, TimeUnit.MILLISECONDS)).isEqualTo(1);
             });

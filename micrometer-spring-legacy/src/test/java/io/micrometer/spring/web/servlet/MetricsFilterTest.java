@@ -22,6 +22,8 @@ import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.lang.NonNull;
+import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguration;
@@ -202,7 +204,7 @@ public class MetricsFilterTest {
 
         mvc.perform(asyncDispatch(result.get())).andExpect(status().isOk());
 
-        assertThat(registry.find("http.server.requests")
+        assertThat(registry.mustFind("http.server.requests")
             .tags("status", "200")
             .tags("uri", "/api/c1/callable/{id}")
             .timer()
@@ -210,7 +212,7 @@ public class MetricsFilterTest {
             .isEqualTo(2L);
 
         // once the async dispatch is complete, it should no longer contribute to the activeTasks count
-        assertThat(registry.find("my.long.request").tags("region", "test").longTaskTimer().activeTasks())
+        assertThat(registry.mustFind("my.long.request").tags("region", "test").longTaskTimer().activeTasks())
             .isEqualTo(0);
     }
 
@@ -221,20 +223,18 @@ public class MetricsFilterTest {
             .andReturn();
 
         // once the async dispatch is complete, it should no longer contribute to the activeTasks count
-        assertThat(registry.find("my.long.request.exception")
-            .longTaskTimer()
-            .activeTasks())
+        assertThat(registry.mustFind("my.long.request.exception").longTaskTimer().activeTasks())
             .isEqualTo(1);
 
         assertThatExceptionOfType(NestedServletException.class)
             .isThrownBy(() -> mvc.perform(asyncDispatch(result)))
             .withRootCauseInstanceOf(RuntimeException.class);
 
-        assertThat(registry.find("http.server.requests")
+        assertThat(registry.mustFind("http.server.requests")
             .tags("uri", "/api/c1/completableFutureException").timer().count()).isEqualTo(1);
 
         // once the async dispatch is complete, it should no longer contribute to the activeTasks count
-        assertThat(registry.find("my.long.request.exception")
+        assertThat(registry.mustFind("my.long.request.exception")
             .longTaskTimer().activeTasks()).isEqualTo(0);
     }
 
@@ -261,7 +261,7 @@ public class MetricsFilterTest {
 
         mvc.perform(asyncDispatch(result.get())).andExpect(status().isOk());
 
-        assertThat(registry.find("http.server.requests").tags("uri", "/api/c1/completableFuture/{id}")
+        assertThat(registry.mustFind("http.server.requests").tags("uri", "/api/c1/completableFuture/{id}")
             .timer().totalTime(TimeUnit.SECONDS)).isEqualTo(2);
     }
 
@@ -331,7 +331,8 @@ public class MetricsFilterTest {
             PrometheusMeterRegistry r = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, new CollectorRegistry(), clock);
             r.config().meterFilter(new MeterFilter() {
                 @Override
-                public MeterFilterReply accept(Meter.Id id) {
+                @NonNull
+                public MeterFilterReply accept(@NonNull Meter.Id id) {
                     for (Tag tag : id.getTags()) {
                         if (tag.getKey().equals("uri") && (tag.getValue().contains("histogram") || tag.getValue().contains("percentiles"))) {
                             return MeterFilterReply.ACCEPT;
@@ -472,6 +473,7 @@ public class MetricsFilterTest {
         }
     }
 
+    @NonNullApi
     static class RedirectAndNotFoundFilter extends OncePerRequestFilter {
 
         static final String TEST_MISBEHAVE_HEADER = "x-test-misbehave-status";

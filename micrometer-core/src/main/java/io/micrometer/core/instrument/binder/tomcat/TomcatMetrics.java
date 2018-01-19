@@ -17,6 +17,8 @@ package io.micrometer.core.instrument.binder.tomcat;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
 import org.apache.catalina.Manager;
 
@@ -33,6 +35,8 @@ import java.util.function.BiConsumer;
  * @author Clint Checketts
  * @author Jon Schneider
  */
+@NonNullApi
+@NonNullFields
 public class TomcatMetrics implements MeterBinder {
     @Nullable private final Manager manager;
     private final MBeanServer mBeanServer;

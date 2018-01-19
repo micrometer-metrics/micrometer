@@ -18,6 +18,7 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
+import io.micrometer.core.lang.Nullable;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.Test;
 
@@ -90,7 +91,7 @@ class MeterFilterTest {
         return tag(tagKey, null);
     }
 
-    private static Condition<Meter.Id> tag(String tagKey, String tagValue) {
+    private static Condition<Meter.Id> tag(String tagKey, @Nullable String tagValue) {
         return new Condition<>(
             id -> stream(id.getTags().spliterator(), false)
                 .anyMatch(t -> t.getKey().equals(tagKey) && (tagValue == null || t.getValue().equals(tagValue))),

@@ -17,6 +17,7 @@ package io.micrometer.influx;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.lang.Nullable;
 
 /**
  * @author Jon Schneider
@@ -34,7 +35,7 @@ public class InfluxNamingConvention implements NamingConvention {
     }
 
     @Override
-    public String name(String name, Meter.Type type, String baseUnit) {
+    public String name(String name, Meter.Type type, @Nullable String baseUnit) {
         return format(name.replace("=", "_"));
     }
 

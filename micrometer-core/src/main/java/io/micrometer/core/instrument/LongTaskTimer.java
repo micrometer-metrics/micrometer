@@ -182,7 +182,7 @@ public interface LongTaskTimer extends Meter {
     class Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
-        private @Nullable String description;
+        @Nullable private String description;
 
         private Builder(String name) {
             this.name = name;

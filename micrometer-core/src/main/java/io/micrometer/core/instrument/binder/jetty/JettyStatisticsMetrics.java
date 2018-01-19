@@ -17,12 +17,16 @@ package io.micrometer.core.instrument.binder.jetty;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
+@NonNullApi
+@NonNullFields
 public class JettyStatisticsMetrics implements MeterBinder {
     private final StatisticsHandler statisticsHandler;
 

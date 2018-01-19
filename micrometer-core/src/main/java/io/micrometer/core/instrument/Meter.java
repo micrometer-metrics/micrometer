@@ -62,8 +62,8 @@ public interface Meter {
     class Id {
         private final String name;
         private final List<Tag> tags;
-        private @Nullable String baseUnit;
-        private final @Nullable String description;
+        @Nullable private String baseUnit;
+        @Nullable private final String description;
         private Type type;
 
         public Id(String name, Iterable<Tag> tags, @Nullable String baseUnit, @Nullable String description, Type type) {
@@ -100,6 +100,7 @@ public interface Meter {
             return tags;
         }
 
+        @Nullable
         public String getBaseUnit() {
             return baseUnit;
         }
@@ -108,6 +109,7 @@ public interface Meter {
             return namingConvention.name(name, type, baseUnit);
         }
 
+        @Nullable
         public String getDescription() {
             return description;
         }
@@ -159,8 +161,8 @@ public interface Meter {
         private final Type type;
         private final Iterable<Measurement> measurements;
         private final List<Tag> tags = new ArrayList<>();
-        private @Nullable String description;
-        private @Nullable String baseUnit;
+        @Nullable private String description;
+        @Nullable private String baseUnit;
 
         private Builder(String name, Type type, Iterable<Measurement> measurements) {
             this.name = name;

@@ -27,8 +27,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = ClientApp.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class RestTemplateMetricsConfigurationTest {
@@ -45,7 +43,7 @@ public class RestTemplateMetricsConfigurationTest {
         } catch (Throwable ignored) {
             // doesn't matter whether the request succeeded or not
         }
-        assertThat(registry.find("http.client.requests").meter()).isPresent();
+        registry.mustFind("http.client.requests").meter();
     }
 }
 

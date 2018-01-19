@@ -16,6 +16,7 @@
 package io.micrometer.spring.autoconfigure.web.tomcat;
 
 import io.micrometer.core.instrument.binder.tomcat.TomcatMetrics;
+import io.micrometer.core.lang.Nullable;
 import org.apache.catalina.Container;
 import org.apache.catalina.Context;
 import org.apache.catalina.Manager;
@@ -40,6 +41,7 @@ public class TomcatMetricsConfiguration {
         return new TomcatMetrics(manager, Collections.emptyList());
     }
 
+    @Nullable
     private Manager getManagerFromContext(EmbeddedWebApplicationContext applicationContext) {
         EmbeddedServletContainer embeddedServletContainer = applicationContext.getEmbeddedServletContainer();
         if (embeddedServletContainer instanceof TomcatEmbeddedServletContainer) {
@@ -48,6 +50,7 @@ public class TomcatMetricsConfiguration {
         return null;
     }
 
+    @Nullable
     private Manager getManagerFromContainer(TomcatEmbeddedServletContainer servletContainer) {
         for (Container container : servletContainer.getTomcat().getHost().findChildren()) {
             if (container instanceof Context) {

@@ -19,6 +19,8 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.spring.TimedUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,6 +32,8 @@ import org.aspectj.lang.reflect.MethodSignature;
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 
+@NonNullApi
+@NonNullFields
 @Aspect
 public class ScheduledMethodMetrics {
     private static final Log logger = LogFactory.getLog(ScheduledMethodMetrics.class);
@@ -39,6 +43,7 @@ public class ScheduledMethodMetrics {
     public ScheduledMethodMetrics(MeterRegistry registry) {
         this.registry = registry;
     }
+
 
     @Around("execution (@org.springframework.scheduling.annotation.Scheduled  * *.*(..))")
     public Object timeScheduledOperation(ProceedingJoinPoint pjp) throws Throwable {
@@ -79,10 +84,13 @@ public class ScheduledMethodMetrics {
 
         if (shortTaskTimer != null && longTaskTimer != null) {
             final Timer finalTimer = shortTaskTimer;
+            //noinspection NullableProblems
             return recordThrowable(longTaskTimer, () -> recordThrowable(finalTimer, pjp::proceed));
         } else if (shortTaskTimer != null) {
+            //noinspection NullableProblems
             return recordThrowable(shortTaskTimer, pjp::proceed);
         } else if (longTaskTimer != null) {
+            //noinspection NullableProblems
             return recordThrowable(longTaskTimer, pjp::proceed);
         }
 

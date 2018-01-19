@@ -17,6 +17,8 @@ package io.micrometer.spring.autoconfigure.export.graphite;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.Nullable;
 import io.micrometer.graphite.GraphiteConfig;
 import io.micrometer.graphite.GraphiteMeterRegistry;
 import io.micrometer.graphite.GraphiteProtocol;
@@ -44,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 @EnableConfigurationProperties(GraphiteProperties.class)
 public class GraphiteExportConfiguration {
 
+    @NonNullApi
     private class DefaultGraphiteConfig implements GraphiteConfig {
         private final GraphiteProperties props;
 
@@ -52,6 +55,7 @@ public class GraphiteExportConfiguration {
         }
 
         @Override
+        @Nullable
         public String get(String k) {
             return null;
         }

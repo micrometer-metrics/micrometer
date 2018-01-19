@@ -16,6 +16,7 @@
 package io.micrometer.graphite;
 
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.lang.Nullable;
 import io.netty.channel.ChannelOption;
 import org.junit.jupiter.api.Test;
 import reactor.core.Disposable;
@@ -50,6 +51,7 @@ class GraphiteMeterRegistryTest {
 
         final GraphiteMeterRegistry registry = new GraphiteMeterRegistry(new GraphiteConfig() {
             @Override
+            @Nullable
             public String get(String k) {
                 return null;
             }

@@ -17,6 +17,7 @@ package io.micrometer.newrelic;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
@@ -41,6 +42,7 @@ public class NewRelicMeterRegistryCompatibilityTest extends MeterRegistryCompati
             }
 
             @Override
+            @Nullable
             public String get(String k) {
                 return null;
             }

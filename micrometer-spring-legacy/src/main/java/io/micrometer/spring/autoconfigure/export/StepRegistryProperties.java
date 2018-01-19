@@ -15,6 +15,8 @@
  */
 package io.micrometer.spring.autoconfigure.export;
 
+import io.micrometer.core.lang.Nullable;
+
 import java.time.Duration;
 
 /**
@@ -39,24 +41,29 @@ public abstract class StepRegistryProperties {
     /**
      * The connection timeout for requests to the backend.
      */
+    @Nullable
     private Duration connectTimeout;
 
     /**
      * The read timeout for requests to the backend.
      */
+    @Nullable
     private Duration readTimeout;
 
     /**
      * The number of threads to use with the metrics publishing scheduler.
      */
+    @Nullable
     private Integer numThreads;
 
     /**
      * The number of measurements per request to use for the backend. If more
      * measurements are found, then multiple requests will be made.
      */
+    @Nullable
     private Integer batchSize;
 
+    @Nullable
     public Duration getStep() {
         return step;
     }
@@ -73,6 +80,7 @@ public abstract class StepRegistryProperties {
         this.enabled = enabled;
     }
 
+    @Nullable
     public Duration getConnectTimeout() {
         return connectTimeout;
     }
@@ -81,6 +89,7 @@ public abstract class StepRegistryProperties {
         this.connectTimeout = connectTimeout;
     }
 
+    @Nullable
     public Duration getReadTimeout() {
         return readTimeout;
     }
@@ -89,6 +98,7 @@ public abstract class StepRegistryProperties {
         this.readTimeout = readTimeout;
     }
 
+    @Nullable
     public Integer getNumThreads() {
         return numThreads;
     }
@@ -97,6 +107,7 @@ public abstract class StepRegistryProperties {
         this.numThreads = numThreads;
     }
 
+    @Nullable
     public Integer getBatchSize() {
         return batchSize;
     }

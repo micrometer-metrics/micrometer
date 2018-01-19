@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -69,7 +70,7 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
         return new CompositeGauge<>(id, obj, f);
     }
 

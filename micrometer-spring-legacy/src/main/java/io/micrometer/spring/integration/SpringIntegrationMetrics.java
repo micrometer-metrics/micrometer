@@ -17,6 +17,8 @@ package io.micrometer.spring.integration;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.integration.support.management.*;
 
@@ -29,6 +31,8 @@ import static java.util.Collections.emptyList;
 /**
  * @author Jon Schneider
  */
+@NonNullApi
+@NonNullFields
 public class SpringIntegrationMetrics implements MeterBinder, SmartInitializingSingleton {
     private final Iterable<Tag> tags;
     private Collection<MeterRegistry> registries = new ArrayList<>();

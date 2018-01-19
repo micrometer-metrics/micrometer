@@ -19,9 +19,13 @@ import com.hazelcast.core.IMap;
 import com.hazelcast.monitor.LocalMapStats;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 
 import java.util.concurrent.TimeUnit;
 
+@NonNullApi
+@NonNullFields
 public class HazelcastCacheMetrics implements MeterBinder {
     private final IMap<?, ?> cache;
     private final String name;

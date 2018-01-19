@@ -22,6 +22,8 @@ import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsyncClientBuilder;
 import io.micrometer.cloudwatch.CloudWatchConfig;
 import io.micrometer.cloudwatch.CloudWatchMeterRegistry;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.spring.autoconfigure.export.DefaultStepRegistryConfig;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
@@ -44,6 +46,8 @@ import org.springframework.context.annotation.Import;
 @EnableConfigurationProperties(CloudWatchProperties.class)
 public class CloudWatchExportConfiguration {
 
+    @NonNullApi
+    @NonNullFields
     private class DefaultCloudWatchConfig extends DefaultStepRegistryConfig implements CloudWatchConfig {
         private final CloudWatchProperties props;
 

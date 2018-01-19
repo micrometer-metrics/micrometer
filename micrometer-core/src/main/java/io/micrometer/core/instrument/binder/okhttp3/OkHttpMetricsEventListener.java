@@ -19,6 +19,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
 import okhttp3.Call;
 import okhttp3.EventListener;
@@ -38,6 +40,8 @@ import java.util.function.Function;
  * @author Bjarte S. Karlsen
  * @author Jon Schneider
  */
+@NonNullApi
+@NonNullFields
 public class OkHttpMetricsEventListener extends EventListener {
     public static final String URI_PATTERN = "URI_PATTERN";
 

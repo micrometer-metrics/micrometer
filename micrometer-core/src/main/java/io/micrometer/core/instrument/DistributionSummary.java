@@ -72,8 +72,8 @@ public interface DistributionSummary extends Meter {
     class Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
-        private @Nullable String description;
-        private @Nullable String baseUnit;
+        @Nullable private String description;
+        @Nullable private String baseUnit;
         private HistogramConfig.Builder histogramConfigBuilder = HistogramConfig.builder();
 
         private Builder(String name) {
@@ -115,7 +115,7 @@ public interface DistributionSummary extends Meter {
          *
          * @param percentiles Percentiles to compute and publish. The 95th percentile should be expressed as {@code 95.0}
          */
-        public Builder publishPercentiles(double... percentiles) {
+        public Builder publishPercentiles(@Nullable double... percentiles) {
             this.histogramConfigBuilder.percentiles(percentiles);
             return this;
         }
@@ -134,7 +134,7 @@ public interface DistributionSummary extends Meter {
          * systems that have query facilities to do so (e.g. Prometheus' {@code histogram_quantile},
          * Atlas' {@code :percentiles}).
          */
-        public Builder publishPercentileHistogram(boolean enabled) {
+        public Builder publishPercentileHistogram(@Nullable Boolean enabled) {
             this.histogramConfigBuilder.percentilesHistogram(enabled);
             return this;
         }
@@ -146,27 +146,27 @@ public interface DistributionSummary extends Meter {
          *
          * @param sla Publish SLA boundaries in the set of histogram buckets shipped to the monitoring system.
          */
-        public Builder sla(long... sla) {
+        public Builder sla(@Nullable long... sla) {
             this.histogramConfigBuilder.sla(sla);
             return this;
         }
 
-        public Builder minimumExpectedValue(long min) {
+        public Builder minimumExpectedValue(@Nullable Long min) {
             this.histogramConfigBuilder.minimumExpectedValue(min);
             return this;
         }
 
-        public Builder maximumExpectedValue(long max) {
+        public Builder maximumExpectedValue(@Nullable Long max) {
             this.histogramConfigBuilder.maximumExpectedValue(max);
             return this;
         }
 
-        public Builder histogramExpiry(Duration expiry) {
+        public Builder histogramExpiry(@Nullable Duration expiry) {
             this.histogramConfigBuilder.histogramExpiry(expiry);
             return this;
         }
 
-        public Builder histogramBufferLength(Integer bufferLength) {
+        public Builder histogramBufferLength(@Nullable Integer bufferLength) {
             this.histogramConfigBuilder.histogramBufferLength(bufferLength);
             return this;
         }

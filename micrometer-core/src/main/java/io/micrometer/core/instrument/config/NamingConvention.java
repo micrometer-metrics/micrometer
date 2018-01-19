@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.config;
 
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -43,7 +44,7 @@ public interface NamingConvention {
 
     NamingConvention snakeCase = new NamingConvention() {
         @Override
-        public String name(String name, Meter.Type type, String baseUnit) {
+        public String name(String name, Meter.Type type, @Nullable String baseUnit) {
             return toSnakeCase(name);
         }
 
@@ -59,7 +60,7 @@ public interface NamingConvention {
 
     NamingConvention camelCase = new NamingConvention() {
         @Override
-        public String name(String name, Meter.Type type, String baseUnit) {
+        public String name(String name, Meter.Type type, @Nullable String baseUnit) {
             return toCamelCase(name);
         }
 
@@ -93,13 +94,13 @@ public interface NamingConvention {
 
     NamingConvention upperCamelCase = new NamingConvention() {
         @Override
-        public String name(String name, Meter.Type type, String baseUnit) {
+        public String name(String name, Meter.Type type, @Nullable String baseUnit) {
             String lowerCamel = camelCase.name(name, type, baseUnit);
             return capitalize(lowerCamel);
         }
 
         private String capitalize(String name) {
-            if (name == null || name.length() == 0) {
+            if (name.length() == 0) {
                 return name;
             }
             char chars[] = name.toCharArray();
@@ -111,7 +112,7 @@ public interface NamingConvention {
     default String name(String name, Meter.Type type) {
         return name(name, type, null);
     }
-    String name(String name, Meter.Type type, String baseUnit);
+    String name(String name, Meter.Type type, @Nullable String baseUnit);
 
     default String tagKey(String key) { return key; }
     default String tagValue(String value) { return value; }

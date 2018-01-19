@@ -16,6 +16,8 @@
 package io.micrometer.spring.autoconfigure.export.signalfx;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.Nullable;
 import io.micrometer.signalfx.SignalFxConfig;
 import io.micrometer.signalfx.SignalFxMeterRegistry;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
@@ -41,6 +43,7 @@ import java.time.Duration;
 @Import(StringToDurationConverter.class)
 public class SignalFxExportConfiguration {
 
+    @NonNullApi
     private class DefaultSignalFxConfig implements SignalFxConfig {
         private final SignalFxProperties props;
         private final SignalFxConfig defaults = k -> null;
@@ -50,6 +53,7 @@ public class SignalFxExportConfiguration {
         }
 
         @Override
+        @Nullable
         public String get(String k) {
             return null;
         }

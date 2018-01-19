@@ -16,6 +16,7 @@
 package io.micrometer.spring.web.client;
 
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.lang.Nullable;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.client.RestTemplate;
@@ -39,6 +40,6 @@ public interface RestTemplateExchangeTagsProvider {
      * @return the tags
      */
     Iterable<Tag> getTags(String urlTemplate, HttpRequest request,
-                          ClientHttpResponse response);
+                          @Nullable ClientHttpResponse response);
 
 }

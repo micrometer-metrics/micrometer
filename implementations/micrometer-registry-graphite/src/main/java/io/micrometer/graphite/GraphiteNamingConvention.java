@@ -17,6 +17,7 @@ package io.micrometer.graphite;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.lang.Nullable;
 
 import java.text.Normalizer;
 import java.util.regex.Pattern;
@@ -29,7 +30,7 @@ public class GraphiteNamingConvention implements NamingConvention {
     private static final Pattern blacklistedChars = Pattern.compile("[{}(),=\\[\\]/]");
 
     @Override
-    public String name(String name, Meter.Type type, String baseUnit) {
+    public String name(String name, Meter.Type type, @Nullable String baseUnit) {
         return format(name);
     }
 

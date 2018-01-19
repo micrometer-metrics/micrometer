@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -186,11 +187,11 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private void quietlyCloseUrlConnection(HttpURLConnection con) {
-        if (con == null)
-            return;
+    private void quietlyCloseUrlConnection(@Nullable HttpURLConnection con) {
         try {
-            con.disconnect();
+            if(con != null) {
+                con.disconnect();
+            }
         }
         catch (Exception ignore) {
         }

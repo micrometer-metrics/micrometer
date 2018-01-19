@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.step.StepCounter;
 import io.micrometer.core.instrument.step.StepDistributionSummary;
 import io.micrometer.core.instrument.step.StepTimer;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.core.lang.Nullable;
 
 import java.text.DecimalFormat;
 import java.util.concurrent.TimeUnit;
@@ -67,9 +68,11 @@ public class SimpleMeterRegistry extends MeterRegistry {
                 break;
         }
 
-        for (double percentile : histogramConfig.getPercentiles()) {
-            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
-                summary, s -> summary.percentile(percentile));
+        if(histogramConfig.getPercentiles() != null) {
+            for (double percentile : histogramConfig.getPercentiles()) {
+                gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
+                    summary, s -> summary.percentile(percentile));
+            }
         }
 
         if(histogramConfig.isPublishingHistogram()) {
@@ -104,9 +107,11 @@ public class SimpleMeterRegistry extends MeterRegistry {
                 break;
         }
 
-        for (double percentile : histogramConfig.getPercentiles()) {
-            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
-                timer, t -> t.percentile(percentile, getBaseTimeUnit()));
+        if(histogramConfig.getPercentiles() != null) {
+            for (double percentile : histogramConfig.getPercentiles()) {
+                gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
+                    timer, t -> t.percentile(percentile, getBaseTimeUnit()));
+            }
         }
 
         if(histogramConfig.isPublishingHistogram()) {
@@ -121,7 +126,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
         return new DefaultGauge<>(id, obj, f);
     }
 

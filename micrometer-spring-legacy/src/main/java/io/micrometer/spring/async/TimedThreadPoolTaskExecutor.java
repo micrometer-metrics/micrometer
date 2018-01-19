@@ -18,6 +18,8 @@ package io.micrometer.spring.async;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.util.concurrent.ListenableFuture;
 
@@ -29,6 +31,8 @@ import java.util.concurrent.Future;
  *
  * @author David Held
  */
+@NonNullApi
+@NonNullFields
 public class TimedThreadPoolTaskExecutor extends ThreadPoolTaskExecutor {
     private final MeterRegistry registry;
     private final String name;

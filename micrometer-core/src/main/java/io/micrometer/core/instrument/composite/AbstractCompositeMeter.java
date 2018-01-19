@@ -15,6 +15,11 @@
  */
 package io.micrometer.core.instrument.composite;
 
+import io.micrometer.core.instrument.AbstractMeter;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.lang.Nullable;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -23,20 +28,19 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import io.micrometer.core.instrument.AbstractMeter;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-
 abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter implements CompositeMeter {
 
     @SuppressWarnings("rawtypes")
     private static final AtomicReferenceFieldUpdater<AbstractCompositeMeter, Meter> firstMeterUpdater =
-            AtomicReferenceFieldUpdater.newUpdater(AbstractCompositeMeter.class, Meter.class, "firstMeter");
+        AtomicReferenceFieldUpdater.newUpdater(AbstractCompositeMeter.class, Meter.class, "firstMeter");
 
     private final List<Entry> children = new CopyOnWriteArrayList<>();
 
     @SuppressWarnings("unused")
+    @Nullable
     private volatile T firstMeter;
+
+    @Nullable
     private volatile T noopMeter;
 
     AbstractCompositeMeter(Id id) {
@@ -44,6 +48,8 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
     }
 
     abstract T newNoopMeter();
+
+    @Nullable
     abstract T registerNewMeter(MeterRegistry registry);
 
     final void forEachChild(Consumer<T> task) {
@@ -55,7 +61,7 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
     }
 
     final T firstChild() {
-        for (;;) {
+        for (; ; ) {
             T firstMeter = this.firstMeter;
             if (firstMeter != null) {
                 return firstMeter;
@@ -76,10 +82,12 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
         if (noopMeter != null) {
             return noopMeter;
         } else {
+            //noinspection ConstantConditions
             return this.noopMeter = newNoopMeter();
         }
     }
 
+    @Nullable
     private T findFirstChild() {
         if (children.isEmpty()) {
             return null;

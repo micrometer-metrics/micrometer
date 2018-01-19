@@ -20,6 +20,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 
 import javax.cache.Cache;
 import javax.management.*;
@@ -30,6 +32,8 @@ import java.util.List;
  *
  * @author Jon Schneider
  */
+@NonNullApi
+@NonNullFields
 public class JCacheMetrics implements MeterBinder {
     /**
      * Defining cache statistics parameters as constants.

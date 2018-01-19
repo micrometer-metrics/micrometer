@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import org.assertj.core.api.Condition;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -43,16 +42,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * @author Jon Schneider
  */
 class PrometheusMeterRegistryTest {
-    private PrometheusMeterRegistry registry;
-    private CollectorRegistry prometheusRegistry;
-    private MockClock clock;
-
-    @BeforeEach
-    void before() {
-        prometheusRegistry = new CollectorRegistry();
-        clock = new MockClock();
-        registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry, clock);
-    }
+    private CollectorRegistry prometheusRegistry = new CollectorRegistry();
+    private MockClock clock = new MockClock();
+    private PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, prometheusRegistry, clock);
 
     @Test
     void baseUnitMakesItToScrape() {
@@ -69,8 +61,8 @@ class PrometheusMeterRegistryTest {
             .register(registry);
         DistributionSummary.builder("ds").publishPercentiles(0.5).register(registry);
 
-        assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndTagKey("timer_duration_seconds", "quantile"));
-        assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndTagKey("ds", "quantile"));
+        assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndQuantile("timer_duration_seconds"));
+        assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndQuantile("ds"));
     }
 
     @DisplayName("custom distribution summaries respect varying tags")
@@ -249,9 +241,14 @@ class PrometheusMeterRegistryTest {
         assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(1000);
         assertThat(registry.scrape()).contains("my_timer_duration_seconds_max 1.0");
 
-        clock(registry).add(Duration.ofMillis(PrometheusConfig.DEFAULT.step().toMillis() * HistogramConfig.DEFAULT.getHistogramBufferLength()));
+        clock(registry).add(Duration.ofMillis(PrometheusConfig.DEFAULT.step().toMillis() * bufferLength()));
         assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0);
         assertThat(registry.scrape()).contains("my_timer_duration_seconds_max 0.0");
+    }
+
+    private int bufferLength() {
+        //noinspection ConstantConditions
+        return HistogramConfig.DEFAULT.getHistogramBufferLength();
     }
 
     @Issue("#61")
@@ -264,7 +261,7 @@ class PrometheusMeterRegistryTest {
         assertThat(summary.max()).isEqualTo(10);
         assertThat(registry.scrape()).contains("my_summary_max 10.0");
 
-        clock(registry).add(PrometheusConfig.DEFAULT.step().toMillis() * HistogramConfig.DEFAULT.getHistogramBufferLength(),
+        clock(registry).add(PrometheusConfig.DEFAULT.step().toMillis() * bufferLength(),
             TimeUnit.MILLISECONDS);
         assertThat(summary.max()).isEqualTo(0);
 
@@ -287,15 +284,15 @@ class PrometheusMeterRegistryTest {
         assertThrows(IllegalArgumentException.class, () -> registry.counter("count", "k", "v"));
     }
 
-    private Condition<Enumeration<Collector.MetricFamilySamples>> withNameAndTagKey(String name, String tagKey) {
+    private Condition<Enumeration<Collector.MetricFamilySamples>> withNameAndQuantile(String name) {
         return new Condition<>(m -> {
             while (m.hasMoreElements()) {
                 Collector.MetricFamilySamples samples = m.nextElement();
-                if (samples.samples.stream().anyMatch(s -> s.name.equals(name) && s.labelNames.contains(tagKey))) {
+                if (samples.samples.stream().anyMatch(s -> s.name.equals(name) && s.labelNames.contains("quantile"))) {
                     return true;
                 }
             }
             return false;
-        }, "a meter with name `%s` and tag `%s`", name, tagKey);
+        }, "a meter with name `%s` and tag `%s`", name, "quantile");
     }
 }

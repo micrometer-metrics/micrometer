@@ -290,7 +290,7 @@ public interface Timer extends Meter {
             return this;
         }
 
-        public Builder pauseDetector(PauseDetector pauseDetector) {
+        public Builder pauseDetector(@Nullable PauseDetector pauseDetector) {
             this.pauseDetector = pauseDetector;
             return this;
         }

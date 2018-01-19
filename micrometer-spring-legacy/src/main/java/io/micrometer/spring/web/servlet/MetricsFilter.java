@@ -19,6 +19,7 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.spring.TimedUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +48,7 @@ import java.util.stream.Collectors;
  *
  * @author Jon Schneider
  */
+@NonNullApi
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class MetricsFilter extends OncePerRequestFilter {
     private static final String EXCEPTION_ATTRIBUTE = "micrometer.requestException";
@@ -80,6 +82,7 @@ public class MetricsFilter extends OncePerRequestFilter {
         return false;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         HandlerExecutionChain handler = null;

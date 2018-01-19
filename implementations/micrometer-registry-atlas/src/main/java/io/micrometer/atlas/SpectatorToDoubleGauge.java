@@ -16,6 +16,7 @@
 package io.micrometer.atlas;
 
 import com.netflix.spectator.api.*;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.Collections;
 import java.util.function.ToDoubleFunction;
@@ -28,7 +29,7 @@ class SpectatorToDoubleGauge<T> extends AbstractMeter<T> implements Gauge {
 
     private final ToDoubleFunction<T> f;
 
-    SpectatorToDoubleGauge(Clock clock, Id id, T obj, ToDoubleFunction<T> f) {
+    SpectatorToDoubleGauge(Clock clock, Id id, @Nullable T obj, ToDoubleFunction<T> f) {
         super(clock, id, obj);
         this.f = f;
     }

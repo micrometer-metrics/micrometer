@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.CountAtValue;
 import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.ValueAtPercentile;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.core.lang.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.Iterator;
@@ -34,6 +35,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
  * @author Jon Schneider
  * @author Trustin Heuiseung Lee
  */
+@SuppressWarnings("ConstantConditions")
 abstract class TimeWindowHistogramBase<T, U> {
 
     static final int NUM_SIGNIFICANT_VALUE_DIGITS = 2;
@@ -46,7 +48,7 @@ abstract class TimeWindowHistogramBase<T, U> {
     private final HistogramConfig histogramConfig;
 
     private final T[] ringBuffer;
-    private U accumulatedHistogram;
+    @Nullable private U accumulatedHistogram;
     private volatile boolean accumulatedHistogramStale;
 
     private final long durationBetweenRotatesMillis;

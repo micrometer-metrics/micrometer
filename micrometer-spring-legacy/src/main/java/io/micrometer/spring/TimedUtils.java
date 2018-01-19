@@ -31,6 +31,7 @@ public final class TimedUtils {
 
     public static Set<Timed> findTimedAnnotations(AnnotatedElement element) {
         Timed t = AnnotationUtils.findAnnotation(element, Timed.class);
+        //noinspection ConstantConditions
         if (t != null)
             return Collections.singleton(t);
 

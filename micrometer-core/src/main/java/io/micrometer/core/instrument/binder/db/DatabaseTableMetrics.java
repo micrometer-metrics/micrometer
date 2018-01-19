@@ -19,6 +19,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -29,6 +31,8 @@ import java.sql.SQLException;
 /**
  * @author Jon Schneider
  */
+@NonNullApi
+@NonNullFields
 public class DatabaseTableMetrics implements MeterBinder {
     /**
      * Record the row count for an individual database table.

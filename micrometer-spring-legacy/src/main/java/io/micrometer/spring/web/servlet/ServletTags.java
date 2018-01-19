@@ -16,6 +16,8 @@
 package io.micrometer.spring.web.servlet;
 
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerMapping;
@@ -30,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
  * @author Jon Schneider
  * @author Andy Wilkinson
  */
+@NonNullApi
 public final class ServletTags {
 
     private ServletTags() {
@@ -42,8 +45,10 @@ public final class ServletTags {
      * @param request the request
      * @return the method tag whose value is a capitalized method (e.g. GET).
      */
-    public static Tag method(HttpServletRequest request) {
-        return Tag.of("method", request.getMethod());
+    public static Tag method(@Nullable HttpServletRequest request) {
+        return request == null ?
+            Tag.of("method", "UNKNOWN") :
+            Tag.of("method", request.getMethod());
     }
 
     /**
@@ -52,8 +57,8 @@ public final class ServletTags {
      * @param response the HTTP response
      * @return the status tag derived from the status of the response
      */
-    public static Tag status(HttpServletResponse response) {
-        return Tag.of("status", ((Integer) response.getStatus()).toString());
+    public static Tag status(@Nullable HttpServletResponse response) {
+        return response == null ? Tag.of("status", "UNKNOWN") : Tag.of("status", ((Integer) response.getStatus()).toString());
     }
 
     /**
@@ -65,8 +70,8 @@ public final class ServletTags {
      * @param request the request
      * @return the uri tag derived from the request
      */
-    public static Tag uri(HttpServletRequest request, HttpServletResponse response) {
-        if(response != null) {
+    public static Tag uri(@Nullable HttpServletRequest request, @Nullable HttpServletResponse response) {
+        if (response != null) {
             HttpStatus status = HttpStatus.valueOf(response.getStatus());
             if (status.is3xxRedirection()) {
                 return Tag.of("uri", "REDIRECTION");
@@ -76,6 +81,10 @@ public final class ServletTags {
         } else {
             // Long task timers won't be initiated if there is no handler found, as they aren't auto-timed.
             // If no handler is found, 30
+        }
+
+        if (request == null) {
+            return Tag.of("uri", "UNKNOWN");
         }
 
         String uri = (String) request
@@ -98,11 +107,9 @@ public final class ServletTags {
      * @param exception the exception, may be {@code null}
      * @return the exception tag derived from the exception
      */
-    public static Tag exception(Throwable exception) {
-        if (exception != null) {
-            return Tag.of("exception", exception.getClass().getSimpleName());
-        }
-        return Tag.of("exception", "None");
+    public static Tag exception(@Nullable Throwable exception) {
+        return exception == null ?
+            Tag.of("exception", "None") :
+            Tag.of("exception", exception.getClass().getSimpleName());
     }
-
 }

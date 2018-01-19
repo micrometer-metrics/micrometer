@@ -19,6 +19,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +28,7 @@ import org.springframework.context.annotation.Configuration;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
+import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -108,18 +110,21 @@ class GuiceConfiguration extends AbstractModule {
 }
 
 class MyComponent {
-    @Inject MeterRegistry registry;
+    @Nullable
+    @Inject
+    MeterRegistry registry;
 
     // for performance-critical uses, it is best to store a meter in a field
+    @Nullable
     Counter counter;
 
     @PostConstruct
-    public void after() {
-        counter = registry.counter("feature.counter");
+    void after() {
+        counter = requireNonNull(registry).counter("feature.counter");
     }
 
     void performanceCriticalFeature() {
-        counter.increment();
+        requireNonNull(counter).increment();
     }
 
     void notPerformanceCriticalFeature() {
@@ -128,5 +133,7 @@ class MyComponent {
         Metrics.counter("infrequent.counter").increment();
     }
 
-    @Inject MyComponent() {}
+    @Inject
+    MyComponent() {
+    }
 }

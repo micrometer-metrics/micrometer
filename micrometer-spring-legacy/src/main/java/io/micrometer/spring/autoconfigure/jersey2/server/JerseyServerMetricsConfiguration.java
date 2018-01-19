@@ -15,7 +15,11 @@
  */
 package io.micrometer.spring.autoconfigure.jersey2.server;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.jersey2.server.AnnotationFinder;
+import io.micrometer.jersey2.server.DefaultJerseyTagsProvider;
+import io.micrometer.jersey2.server.JerseyTagsProvider;
+import io.micrometer.jersey2.server.MetricsApplicationEventListener;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -23,11 +27,6 @@ import org.springframework.boot.autoconfigure.jersey.ResourceConfigCustomizer;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.jersey2.server.DefaultJerseyTagsProvider;
-import io.micrometer.jersey2.server.JerseyTagsProvider;
-import io.micrometer.jersey2.server.MetricsApplicationEventListener;
 import org.springframework.core.annotation.AnnotationUtils;
 
 import java.lang.annotation.Annotation;

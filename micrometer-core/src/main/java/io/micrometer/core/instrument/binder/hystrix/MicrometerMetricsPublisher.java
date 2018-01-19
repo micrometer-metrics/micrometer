@@ -19,10 +19,14 @@ import com.netflix.hystrix.*;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisher;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 
 /**
  * @author Clint Checketts
  */
+@NonNullApi
+@NonNullFields
 public class MicrometerMetricsPublisher extends HystrixMetricsPublisher {
     private final MeterRegistry registry;
 
@@ -31,7 +35,11 @@ public class MicrometerMetricsPublisher extends HystrixMetricsPublisher {
     }
 
     @Override
-    public HystrixMetricsPublisherCommand getMetricsPublisherForCommand(HystrixCommandKey commandKey, HystrixCommandGroupKey commandGroupKey, HystrixCommandMetrics metrics, HystrixCircuitBreaker circuitBreaker, HystrixCommandProperties properties) {
+    public HystrixMetricsPublisherCommand getMetricsPublisherForCommand(HystrixCommandKey commandKey,
+                                                                        HystrixCommandGroupKey commandGroupKey,
+                                                                        HystrixCommandMetrics metrics,
+                                                                        HystrixCircuitBreaker circuitBreaker,
+                                                                        HystrixCommandProperties properties) {
         return new MicrometerMetricsPublisherCommand(registry, commandKey, commandGroupKey, metrics, circuitBreaker, properties);
     }
 }

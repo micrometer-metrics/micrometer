@@ -18,6 +18,9 @@ package io.micrometer.spring.autoconfigure.export.ganglia;
 import info.ganglia.gmetric4j.gmetric.GMetric;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 import io.micrometer.ganglia.GangliaConfig;
 import io.micrometer.ganglia.GangliaMeterRegistry;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
@@ -44,6 +47,8 @@ import java.util.concurrent.TimeUnit;
 @EnableConfigurationProperties(GangliaProperties.class)
 public class GangliaExportConfiguration {
 
+    @NonNullApi
+    @NonNullFields
     private class DefaultGangliaConfig implements GangliaConfig {
         private final GangliaProperties props;
 
@@ -52,6 +57,7 @@ public class GangliaExportConfiguration {
         }
 
         @Override
+        @Nullable
         public String get(String k) {
             return null;
         }

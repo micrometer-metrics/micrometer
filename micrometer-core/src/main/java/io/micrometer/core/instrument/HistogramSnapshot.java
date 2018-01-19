@@ -40,8 +40,8 @@ public final class HistogramSnapshot {
     private final long count;
     private final double total;
     private final double max;
-    private final @Nullable ValueAtPercentile[] percentileValues;
-    private final @Nullable CountAtValue[] histogramCounts;
+    private final ValueAtPercentile[] percentileValues;
+    private final CountAtValue[] histogramCounts;
 
     private HistogramSnapshot(long count, double total, double max,
                               @Nullable ValueAtPercentile[] percentileValues,
@@ -81,11 +81,11 @@ public final class HistogramSnapshot {
         return TimeUtils.nanosToUnit(mean(), unit);
     }
 
-    public @Nullable ValueAtPercentile[] percentileValues() {
+    public ValueAtPercentile[] percentileValues() {
         return percentileValues;
     }
 
-    public @Nullable CountAtValue[] histogramCounts() {
+    public CountAtValue[] histogramCounts() {
         return histogramCounts;
     }
 
@@ -100,11 +100,11 @@ public final class HistogramSnapshot {
         buf.append(mean());
         buf.append(", max=");
         buf.append(max);
-        if (percentileValues != null && percentileValues.length > 0) {
+        if (percentileValues.length > 0) {
             buf.append(", percentileValues=");
             buf.append(Arrays.toString(percentileValues));
         }
-        if (histogramCounts != null && histogramCounts.length > 0) {
+        if (histogramCounts.length > 0) {
             buf.append(", histogramCounts=");
             buf.append(Arrays.toString(histogramCounts));
         }

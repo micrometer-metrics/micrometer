@@ -17,6 +17,8 @@ package io.micrometer.core.instrument.binder.jpa;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
@@ -33,6 +35,8 @@ import java.util.function.ToDoubleFunction;
  * @author Marten Deinum
  * @author Jon Schneider
  */
+@NonNullApi
+@NonNullFields
 public class HibernateMetrics implements MeterBinder {
 
     public static void monitor(MeterRegistry meterRegistry, EntityManagerFactory emf, String name, String... tags) {
@@ -44,7 +48,7 @@ public class HibernateMetrics implements MeterBinder {
     }
 
     private final Iterable<Tag> tags;
-    private final @Nullable Statistics stats;
+    @Nullable private final Statistics stats;
 
     private HibernateMetrics(EntityManagerFactory emf, String name, Iterable<Tag> tags) {
         this.tags = Tags.concat(tags, "entityManagerFactory", name);
@@ -168,7 +172,7 @@ public class HibernateMetrics implements MeterBinder {
      * @param emf an {@code EntityManagerFactory}
      * @return the {@code Statistics} from the underlying {@code SessionFactory} or {@code null}.
      */
-    private @Nullable Statistics getStatistics(EntityManagerFactory emf) {
+    @Nullable private Statistics getStatistics(EntityManagerFactory emf) {
         try {
             SessionFactory sf = emf.unwrap(SessionFactory.class);
             return sf.getStatistics();

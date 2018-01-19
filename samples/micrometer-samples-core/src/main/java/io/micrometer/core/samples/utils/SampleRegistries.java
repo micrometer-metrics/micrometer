@@ -20,6 +20,7 @@ import com.sun.net.httpserver.HttpServer;
 import io.micrometer.atlas.AtlasMeterRegistry;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.lang.Nullable;
 import io.micrometer.datadog.DatadogConfig;
 import io.micrometer.datadog.DatadogMeterRegistry;
 import io.micrometer.ganglia.GangliaConfig;
@@ -63,6 +64,7 @@ public class SampleRegistries {
             }
 
             @Override
+            @Nullable
             public String get(String k) {
                 return null;
             }
@@ -93,7 +95,9 @@ public class SampleRegistries {
                 return Duration.ofSeconds(10);
             }
 
+            @SuppressWarnings("ConstantConditions")
             @Override
+            @Nullable
             public String get(String k) {
                 return null;
             }
@@ -118,6 +122,7 @@ public class SampleRegistries {
             }
 
             @Override
+            @Nullable
             public String get(String k) {
                 return null;
             }
@@ -134,6 +139,7 @@ public class SampleRegistries {
             }
 
             @Override
+            @Nullable
             public String get(String k) {
                 return null;
             }
@@ -153,6 +159,7 @@ public class SampleRegistries {
             }
 
             @Override
+            @Nullable
             public String get(String k) {
                 return null;
             }
@@ -172,6 +179,7 @@ public class SampleRegistries {
             }
 
             @Override
+            @Nullable
             public String get(String k) {
                 return null;
             }
@@ -186,6 +194,7 @@ public class SampleRegistries {
             }
 
             @Override
+            @Nullable
             public String get(String k) {
                 return null;
             }
@@ -200,6 +209,7 @@ public class SampleRegistries {
             }
 
             @Override
+            @Nullable
             public String get(String k) {
                 return null;
             }
@@ -219,6 +229,7 @@ public class SampleRegistries {
             }
 
             @Override
+            @Nullable
             public String get(String k) {
                 return null;
             }
@@ -243,6 +254,7 @@ public class SampleRegistries {
             }
 
             @Override
+            @Nullable
             public String get(String k) {
                 return null;
             }
@@ -262,6 +274,7 @@ public class SampleRegistries {
             }
 
             @Override
+            @Nullable
             public String get(String k) {
                 return null;
             }

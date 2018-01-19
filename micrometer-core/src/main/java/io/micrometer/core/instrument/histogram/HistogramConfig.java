@@ -25,14 +25,14 @@ import java.util.TreeSet;
 
 @Incubating(since = "1.0.0-rc.3")
 public class HistogramConfig implements Mergeable<HistogramConfig> {
-    private @Nullable Boolean percentileHistogram;
-    private @Nullable double[] percentiles;
-    private @Nullable long[] sla;
-    private @Nullable Long minimumExpectedValue;
-    private @Nullable Long maximumExpectedValue;
+    @Nullable private Boolean percentileHistogram;
+    @Nullable private double[] percentiles;
+    @Nullable private long[] sla;
+    @Nullable private Long minimumExpectedValue;
+    @Nullable private Long maximumExpectedValue;
 
-    private Duration histogramExpiry;
-    private Integer histogramBufferLength;
+    @Nullable private Duration histogramExpiry;
+    @Nullable private Integer histogramBufferLength;
 
     public static final HistogramConfig DEFAULT = builder()
         .percentilesHistogram(false)

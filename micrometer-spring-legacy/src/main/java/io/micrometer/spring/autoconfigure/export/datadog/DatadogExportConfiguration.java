@@ -16,6 +16,8 @@
 package io.micrometer.spring.autoconfigure.export.datadog;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.Nullable;
 import io.micrometer.datadog.DatadogConfig;
 import io.micrometer.datadog.DatadogMeterRegistry;
 import io.micrometer.spring.autoconfigure.export.DefaultStepRegistryConfig;
@@ -40,6 +42,7 @@ import org.springframework.context.annotation.Import;
 @EnableConfigurationProperties(DatadogProperties.class)
 public class DatadogExportConfiguration {
 
+    @NonNullApi
     private class DefaultDatadogConfig extends DefaultStepRegistryConfig implements DatadogConfig {
         private final DatadogProperties props;
         private final DatadogConfig defaults = k -> null;
@@ -50,11 +53,13 @@ public class DatadogExportConfiguration {
         }
 
         @Override
+        @Nullable
         public String apiKey() {
             return props.getApiKey();
         }
 
         @Override
+        @Nullable
         public String applicationKey() {
             return props.getApplicationKey();
         }

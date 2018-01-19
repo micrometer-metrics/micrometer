@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
@@ -36,7 +37,7 @@ import java.util.function.ToLongFunction;
  */
 public abstract class StepMeterRegistry extends MeterRegistry {
     private final StepRegistryConfig config;
-    private ScheduledFuture<?> publisher;
+    @Nullable private ScheduledFuture<?> publisher;
 
     public StepMeterRegistry(StepRegistryConfig config, Clock clock) {
         super(clock);
@@ -65,7 +66,7 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     protected abstract void publish();
 
     @Override
-    protected <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
         return new DefaultGauge<>(id, obj, f);
     }
 

@@ -22,6 +22,8 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.internal.TimedExecutor;
 import io.micrometer.core.instrument.internal.TimedExecutorService;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
 
 import java.lang.reflect.Field;
@@ -37,6 +39,8 @@ import static java.util.Arrays.asList;
  * @author Jon Schneider
  * @author Clint Checketts
  */
+@NonNullApi
+@NonNullFields
 public class ExecutorServiceMetrics implements MeterBinder {
     /**
      * Record metrics on the use of an {@link Executor}.
@@ -94,7 +98,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
         return monitor(registry, executor, name, asList(tags));
     }
 
-    private final @Nullable ExecutorService executorService;
+    @Nullable private final ExecutorService executorService;
     private final String name;
     private final Iterable<Tag> tags;
 
@@ -127,7 +131,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * Every ScheduledThreadPoolExecutor created by {@link Executors} is wrapped. Also,
      * {@link Executors#newSingleThreadExecutor()} wrap a regular {@link ThreadPoolExecutor}.
      */
-    private @Nullable ThreadPoolExecutor unwrapThreadPoolExecutor(ExecutorService executor, Class<?> wrapper) {
+    @Nullable private ThreadPoolExecutor unwrapThreadPoolExecutor(ExecutorService executor, Class<?> wrapper) {
         try {
             Field e = wrapper.getDeclaredField("e");
             e.setAccessible(true);

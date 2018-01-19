@@ -29,6 +29,7 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
     private final StepDouble total;
     private final TimeDecayingMax max;
 
+    @SuppressWarnings("ConstantConditions")
     public StepDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig) {
         super(id, clock, histogramConfig);
         this.count = new StepLong(clock, histogramConfig.getHistogramExpiry().toMillis());

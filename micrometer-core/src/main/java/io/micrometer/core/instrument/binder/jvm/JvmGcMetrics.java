@@ -19,6 +19,8 @@ import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.GcInfo;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
 
 import javax.management.NotificationEmitter;
@@ -40,9 +42,11 @@ import static java.util.Collections.emptyList;
  *
  * @see GarbageCollectorMXBean
  */
+@NonNullApi
+@NonNullFields
 public class JvmGcMetrics implements MeterBinder {
-    private @Nullable String youngGenPoolName;
-    private @Nullable String oldGenPoolName;
+    @Nullable private String youngGenPoolName;
+    @Nullable private String oldGenPoolName;
     private Iterable<Tag> tags;
 
     public JvmGcMetrics() {
@@ -169,6 +173,7 @@ public class JvmGcMetrics implements MeterBinder {
 /**
  * Generalization of which parts of the heap are considered "young" or "old" for multiple GC implementations
  */
+@NonNullApi
 enum GcGenerationAge {
     OLD,
     YOUNG,

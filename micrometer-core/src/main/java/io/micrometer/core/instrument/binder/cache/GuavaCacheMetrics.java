@@ -20,12 +20,16 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author Jon Schneider
  */
+@NonNullApi
+@NonNullFields
 public class GuavaCacheMetrics implements MeterBinder {
     /**
      * Record metrics on a Guava cache. You must call {@link CacheBuilder#recordStats()} prior to building the cache

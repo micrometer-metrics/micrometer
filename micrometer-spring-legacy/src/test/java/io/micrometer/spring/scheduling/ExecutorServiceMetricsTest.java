@@ -18,7 +18,6 @@ package io.micrometer.spring.scheduling;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.Before;
 import org.junit.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -28,12 +27,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
  * @author Clint Checketts
  */
 public class ExecutorServiceMetricsTest {
-    private MeterRegistry registry;
-
-    @Before
-    public void before() {
-        registry = new SimpleMeterRegistry();
-    }
+    private MeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
     public void threadPoolTaskExecutor() {

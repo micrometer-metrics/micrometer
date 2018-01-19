@@ -16,6 +16,8 @@
 package io.micrometer.spring.web.servlet;
 
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.Nullable;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -26,6 +28,7 @@ import java.util.Arrays;
  *
  * @author Jon Schneider
  */
+@NonNullApi
 public class DefaultServletTagsProvider implements ServletTagsProvider {
 
     /**
@@ -36,7 +39,7 @@ public class DefaultServletTagsProvider implements ServletTagsProvider {
      * @return A set of tags added to every Spring MVC HTTP request
      */
     @Override
-    public Iterable<Tag> httpLongRequestTags(HttpServletRequest request, Object handler) {
+    public Iterable<Tag> httpLongRequestTags(@Nullable HttpServletRequest request, @Nullable Object handler) {
         return Arrays.asList(ServletTags.method(request), ServletTags.uri(request, null));
     }
 
@@ -49,10 +52,10 @@ public class DefaultServletTagsProvider implements ServletTagsProvider {
      * @return A set of tags added to every Spring MVC HTTP request.
      */
     @Override
-    public Iterable<Tag> httpRequestTags(HttpServletRequest request,
-                                         HttpServletResponse response,
-                                         Object handler,
-                                         Throwable ex) {
+    public Iterable<Tag> httpRequestTags(@Nullable HttpServletRequest request,
+                                         @Nullable HttpServletResponse response,
+                                         @Nullable Object handler,
+                                         @Nullable Throwable ex) {
         return Arrays.asList(ServletTags.method(request), ServletTags.uri(request, response),
             ServletTags.exception(ex), ServletTags.status(response));
     }

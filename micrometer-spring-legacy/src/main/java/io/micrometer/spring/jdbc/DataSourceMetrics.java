@@ -18,6 +18,9 @@ package io.micrometer.spring.jdbc;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadata;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProvider;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProviders;
@@ -28,13 +31,15 @@ import java.util.Collection;
 /**
  * @author Jon Schneider
  */
+@NonNullApi
+@NonNullFields
 public class DataSourceMetrics implements MeterBinder {
     private final DataSource dataSource;
-    private final DataSourcePoolMetadata poolMetadata;
+    @Nullable private final DataSourcePoolMetadata poolMetadata;
     private final String name;
     private final Iterable<Tag> tags;
 
-    public DataSourceMetrics(DataSource dataSource, Collection<DataSourcePoolMetadataProvider> metadataProviders, String name, Iterable<Tag> tags) {
+    public DataSourceMetrics(DataSource dataSource, @Nullable Collection<DataSourcePoolMetadataProvider> metadataProviders, String name, Iterable<Tag> tags) {
         this.name = name;
         this.tags = tags;
         this.dataSource = dataSource;

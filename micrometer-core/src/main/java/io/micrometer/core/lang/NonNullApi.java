@@ -17,11 +17,7 @@ package io.micrometer.core.lang;
 
 import javax.annotation.Nonnull;
 import javax.annotation.meta.TypeQualifierDefault;
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * A common annotation to declare that parameters and return values
@@ -36,9 +32,8 @@ import java.lang.annotation.Target;
  * @see NonNullFields
  * @see Nullable
  * @see NonNull
- * @since 1.0
  */
-@Target(ElementType.PACKAGE)
+@Target({ElementType.PACKAGE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Nonnull

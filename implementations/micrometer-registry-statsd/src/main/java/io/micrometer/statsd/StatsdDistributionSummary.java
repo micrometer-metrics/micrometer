@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.util.TimeDecayingMax;
+import io.micrometer.core.lang.Nullable;
 import org.reactivestreams.Subscriber;
 
 import java.util.concurrent.atomic.DoubleAdder;
@@ -73,7 +74,7 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         return MeterEquivalence.equals(this, o);
     }
 

@@ -17,6 +17,7 @@ package io.micrometer.spring.web.client;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.lang.Nullable;
 import org.springframework.core.NamedThreadLocal;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
@@ -84,7 +85,7 @@ class MetricsClientHttpRequestInterceptor implements ClientHttpRequestIntercepto
     }
 
     private Timer.Builder getTimeBuilder(HttpRequest request,
-                                         ClientHttpResponse response) {
+                                         @Nullable ClientHttpResponse response) {
         return Timer.builder(this.metricName)
             .tags(this.tagProvider.getTags(ensureLeadingSlash(urlTemplate.get()), request, response))
             .description("Timer of RestTemplate operation");
@@ -92,7 +93,7 @@ class MetricsClientHttpRequestInterceptor implements ClientHttpRequestIntercepto
 
     // This normalization improves tag value matching when one code path requests test/{id} and another
     // requests /test/{id}
-    private String ensureLeadingSlash(String url) {
+    private String ensureLeadingSlash(@Nullable String url) {
         if(url == null)
             return "/";
         return url.startsWith("/") ? url : "/" + url;

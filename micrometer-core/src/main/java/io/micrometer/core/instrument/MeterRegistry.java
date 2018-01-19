@@ -23,17 +23,16 @@ import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.pause.ClockDriftPauseDetector;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.noop.*;
+import io.micrometer.core.instrument.search.RequiredSearch;
+import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.function.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.micrometer.core.instrument.Tags.zip;
 import static java.util.Collections.emptyList;
@@ -73,7 +72,7 @@ public abstract class MeterRegistry {
      */
     private NamingConvention namingConvention = NamingConvention.snakeCase;
 
-    protected abstract <T> Gauge newGauge(Meter.Id id, T obj, ToDoubleFunction<T> f);
+    protected abstract <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f);
 
     protected abstract Counter newCounter(Meter.Id id);
 
@@ -126,7 +125,7 @@ public abstract class MeterRegistry {
 
     /**
      * Every custom registry implementation should define a default histogram expiry:
-     *
+     * <p>
      * <pre>
      * histogramConfig.builder()
      *    .histogramExpiry(defaultStep)
@@ -144,7 +143,7 @@ public abstract class MeterRegistry {
         return registerMeterIfNecessary(Counter.class, id, this::newCounter, NoopCounter::new);
     }
 
-    <T> Gauge gauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+    <T> Gauge gauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
         return registerMeterIfNecessary(Gauge.class, id, id2 -> newGauge(id2, obj, f), NoopGauge::new);
     }
 
@@ -256,120 +255,12 @@ public abstract class MeterRegistry {
         return config;
     }
 
-    public class Search {
-        private final String name;
-        private final List<Tag> tags = new ArrayList<>();
-        private final boolean throwExceptionIfNotFound;
-
-        Search(String name, boolean throwExceptionIfNotFound) {
-            this.name = name;
-            this.throwExceptionIfNotFound = throwExceptionIfNotFound;
-        }
-
-        public Search tags(Iterable<Tag> tags) {
-            tags.forEach(this.tags::add);
-            return this;
-        }
-
-        /**
-         * @param tags Must be an even number of arguments representing key/value pairs of tags.
-         */
-        public Search tags(String... tags) {
-            return tags(zip(tags));
-        }
-
-        @Nullable
-        public Timer timer() {
-            return findOne(Timer.class);
-        }
-
-        @Nullable
-        public Counter counter() {
-            return findOne(Counter.class);
-        }
-
-        @Nullable
-        public Gauge gauge() {
-            return findOne(Gauge.class);
-        }
-
-        @Nullable
-        public FunctionCounter functionCounter() {
-            return findOne(FunctionCounter.class);
-        }
-
-        @Nullable
-        public TimeGauge timeGauge() {
-            return findOne(TimeGauge.class);
-        }
-
-        @Nullable
-        public FunctionTimer functionTimer() {
-            return findOne(FunctionTimer.class);
-        }
-
-        @Nullable
-        public DistributionSummary summary() {
-            return findOne(DistributionSummary.class);
-        }
-
-        @Nullable
-        public LongTaskTimer longTaskTimer() {
-            return findOne(LongTaskTimer.class);
-        }
-
-        @Nullable
-        private <T> T findOne(Class<T> clazz) {
-            Optional<T> meter = meters()
-                .stream()
-                .filter(clazz::isInstance)
-                .findAny()
-                .map(clazz::cast);
-
-            if(meter.isPresent()) {
-                return meter.get();
-            }
-
-            String tagDetail = "";
-            if (!tags.isEmpty()) {
-                tagDetail = " with Tags:[" + tags.stream().map(t -> t.getKey()+":"+t.getValue()).collect( Collectors.joining( "," ) ) + "]";
-            }
-
-            if(throwExceptionIfNotFound) {
-                throw new AssertionError("Unable to locate a meter named '"+name+"'"+tagDetail+" of type "+clazz.getCanonicalName());
-            } else {
-                return null;
-            }
-        }
-
-        // FIXME make this non-optional
-        public Optional<Meter> meter() {
-            return meters().stream().findAny();
-        }
-
-        public Collection<Meter> meters() {
-            Stream<Entry<Id, Meter>> entryStream =
-                    meterMap.entrySet().stream().filter(e -> e.getKey().getName().equals(name));
-
-            if (!tags.isEmpty()) {
-                entryStream = entryStream.filter(e -> {
-                    final List<Tag> idTags = new ArrayList<>();
-                    e.getKey().getTags().forEach(idTags::add);
-                    return idTags.containsAll(tags);
-                });
-            }
-
-            return entryStream.map(Map.Entry::getValue)
-                .collect(Collectors.toList());
-        }
-    }
-
     public Search find(String name) {
-        return new Search(name, false);
+        return new Search(this, name);
     }
 
-    public Search mustFind(String name) {
-        return new Search(name, true);
+    public RequiredSearch mustFind(String name) {
+        return new RequiredSearch(this, name);
     }
 
     /**
@@ -529,7 +420,7 @@ public abstract class MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    public <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+    @Nullable public <T> T gauge(String name, Iterable<Tag> tags, @Nullable T obj, ToDoubleFunction<T> f) {
         Gauge.builder(name, obj, f).tags(tags).register(this);
         return obj;
     }
@@ -543,7 +434,7 @@ public abstract class MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    public <T extends Number> T gauge(String name, Iterable<Tag> tags, T number) {
+    @Nullable public <T extends Number> T gauge(String name, Iterable<Tag> tags, T number) {
         return gauge(name, tags, number, Number::doubleValue);
     }
 
@@ -555,7 +446,7 @@ public abstract class MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    public <T extends Number> T gauge(String name, T number) {
+    @Nullable public <T extends Number> T gauge(String name, T number) {
         return gauge(name, emptyList(), number);
     }
 
@@ -568,7 +459,7 @@ public abstract class MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    public <T> T gauge(String name, T obj, ToDoubleFunction<T> f) {
+    @Nullable public <T> T gauge(String name, T obj, ToDoubleFunction<T> f) {
         return gauge(name, emptyList(), obj, f);
     }
 
@@ -585,7 +476,7 @@ public abstract class MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    public <T extends Collection<?>> T gaugeCollectionSize(String name, Iterable<Tag> tags, T collection) {
+    @Nullable public <T extends Collection<?>> T gaugeCollectionSize(String name, Iterable<Tag> tags, T collection) {
         return gauge(name, tags, collection, Collection::size);
     }
 
@@ -602,7 +493,7 @@ public abstract class MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    public <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
+    @Nullable public <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
         return gauge(name, tags, map, Map::size);
     }
 

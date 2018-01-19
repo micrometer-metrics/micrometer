@@ -61,8 +61,8 @@ public interface Counter extends Meter {
     class Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
-        private @Nullable String description;
-        private @Nullable String baseUnit;
+        @Nullable private String description;
+        @Nullable private String baseUnit;
 
         private Builder(String name) {
             this.name = name;

@@ -17,6 +17,7 @@ package io.micrometer.cloudwatch;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.lang.Nullable;
 import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
@@ -24,8 +25,10 @@ import java.time.Duration;
 class CloudWatchMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @Override
     public MeterRegistry registry() {
+        //noinspection ConstantConditions
         return new CloudWatchMeterRegistry(new CloudWatchConfig() {
             @Override
+            @Nullable
             public String get(String k) {
                 return null;
             }

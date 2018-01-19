@@ -17,6 +17,7 @@ package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.lang.NonNullApi;
 
 /**
  * Callback interface that can be used to customize auto-configured {@link MeterRegistry
@@ -28,6 +29,7 @@ import io.micrometer.core.instrument.MeterRegistry;
  * @author Jon Schneider
  */
 @FunctionalInterface
+@NonNullApi
 public interface MeterRegistryConfigurer {
 
     /**

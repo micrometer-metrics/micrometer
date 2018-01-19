@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -34,10 +35,11 @@ class DropwizardMeterRegistryTest {
         new DropwizardConfig() {
             @Override
             public String prefix() {
-                return null;
+                return "dropwizard";
             }
 
             @Override
+            @Nullable
             public String get(String k) {
                 return null;
             }

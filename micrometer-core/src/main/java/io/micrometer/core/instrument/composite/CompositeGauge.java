@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.noop.NoopGauge;
+import io.micrometer.core.lang.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.function.ToDoubleFunction;
@@ -27,7 +28,7 @@ class CompositeGauge<T> extends AbstractCompositeMeter<Gauge> implements Gauge {
     private final WeakReference<T> ref;
     private final ToDoubleFunction<T> f;
 
-    CompositeGauge(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+    CompositeGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
         super(id);
         ref = new WeakReference<>(obj);
         this.f = f;

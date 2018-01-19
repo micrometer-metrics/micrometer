@@ -17,6 +17,8 @@ package io.micrometer.spring.autoconfigure.export.statsd;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.Nullable;
 import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import io.micrometer.statsd.StatsdConfig;
@@ -43,6 +45,7 @@ import java.time.Duration;
 @EnableConfigurationProperties(StatsdProperties.class)
 public class StatsdExportConfiguration {
 
+    @NonNullApi
     private class DefaultStatsdConfig implements StatsdConfig {
         private final StatsdProperties props;
 
@@ -51,6 +54,7 @@ public class StatsdExportConfiguration {
         }
 
         @Override
+        @Nullable
         public String get(String k) {
             return null;
         }

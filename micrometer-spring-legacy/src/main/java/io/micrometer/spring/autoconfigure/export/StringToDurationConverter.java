@@ -15,6 +15,7 @@
  */
 package io.micrometer.spring.autoconfigure.export;
 
+import io.micrometer.core.lang.Nullable;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.converter.Converter;
@@ -35,16 +36,17 @@ import java.util.function.Function;
 public class StringToDurationConverter implements Converter<String, Duration> {
 
     @Override
-    public Duration convert(String source) {
+    public Duration convert(@Nullable String source) {
         Duration duration = simpleParse(source);
         try {
             return duration == null ? Duration.parse(source) : duration;
-        } catch(DateTimeParseException e) {
+        } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Cannot convert '" + source + "' to Duration", e);
         }
     }
 
-    private static Duration simpleParse(String rawTime) {
+    @Nullable
+    private static Duration simpleParse(@Nullable String rawTime) {
         if (rawTime == null || rawTime.isEmpty())
             return null;
         if (!Character.isDigit(rawTime.charAt(0)))
@@ -65,7 +67,7 @@ public class StringToDurationConverter implements Converter<String, Duration> {
             String trim = time.substring(0, time.lastIndexOf(unit)).trim();
             try {
                 return Optional.of(toDuration.apply(Long.parseLong(trim)));
-            } catch(NumberFormatException ignore) {
+            } catch (NumberFormatException ignore) {
                 return Optional.empty();
             }
         }

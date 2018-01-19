@@ -17,6 +17,7 @@ package io.micrometer.signalfx;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.lang.Nullable;
 
 /**
  * See https://developers.signalfx.com/reference#section-criteria-for-metric-and-dimension-names-and-values for criteria.
@@ -37,7 +38,7 @@ public class SignalFxNamingConvention implements NamingConvention {
      * Metric (the metric name) can be any non-empty UTF-8 string, with a maximum length <= 256 characters
      */
     @Override
-    public String name(String name, Meter.Type type, String baseUnit) {
+    public String name(String name, Meter.Type type, @Nullable String baseUnit) {
         String formattedName = rootConvention.name(name, type, baseUnit);
         return formattedName.length() > 256 ? formattedName.substring(0, 256) : formattedName;
     }

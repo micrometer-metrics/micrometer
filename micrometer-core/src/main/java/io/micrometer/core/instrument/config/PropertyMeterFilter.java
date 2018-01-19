@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.config;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 
@@ -27,8 +28,10 @@ import java.time.Duration;
  * @author Jon Schneider
  */
 public abstract class PropertyMeterFilter implements MeterFilter {
+    @Nullable
     public abstract <V> V get(String k, Class<V> vClass);
 
+    @Nullable
     protected <V> V getMostSpecific(String k, String suffix, Class<V> vClass) {
         V v = get(k.isEmpty() ? suffix : k + "." + suffix, vClass);
         if(v != null)

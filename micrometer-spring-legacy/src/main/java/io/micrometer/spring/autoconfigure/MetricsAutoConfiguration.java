@@ -81,6 +81,7 @@ public class MetricsAutoConfiguration {
         return r -> r.config().meterFilter(new SpringEnvironmentMeterFilter(environment));
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Bean
     @ConditionalOnMissingBean(MeterRegistry.class)
     public CompositeMeterRegistry compositeMeterRegistry(
@@ -141,6 +142,7 @@ public class MetricsAutoConfiguration {
     @Configuration
     static class MeterRegistryConfigurationSupport {
 
+        @SuppressWarnings("ConstantConditions")
         MeterRegistryConfigurationSupport(MeterRegistry registry,
                                           MetricsProperties config,
                                           ObjectProvider<Collection<MeterBinder>> binders) {

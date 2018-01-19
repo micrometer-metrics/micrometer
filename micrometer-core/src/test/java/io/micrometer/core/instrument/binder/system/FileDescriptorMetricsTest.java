@@ -35,6 +35,7 @@ import static org.mockito.Mockito.when;
  * @author Michael Weirauch
  */
 class FileDescriptorMetricsTest {
+    private MeterRegistry registry = new SimpleMeterRegistry();
 
     private interface HotSpotLikeOperatingSystemMXBean extends OperatingSystemMXBean {
         long getOpenFileDescriptorCount();
@@ -48,7 +49,6 @@ class FileDescriptorMetricsTest {
         final OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
         assumeTrue(osBean instanceof com.sun.management.UnixOperatingSystemMXBean);
 
-        final MeterRegistry registry = new SimpleMeterRegistry();
         new FileDescriptorMetrics().bindTo(registry);
 
         registry.mustFind("process.open.fds").gauge();
@@ -57,19 +57,15 @@ class FileDescriptorMetricsTest {
 
     @Test
     void fileDescriptorMetricsUnsupportedOsBeanMock() {
-        final MeterRegistry registry = new SimpleMeterRegistry();
         final OperatingSystemMXBean osBean = mock(OperatingSystemMXBean.class);
         new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
 
-        assertThat(registry.mustFind("process.open.fds").tags("some", "tag")
-            .gauge().value()).isEqualTo(Double.NaN);
-        assertThat(registry.mustFind("process.max.fds").tags("some", "tag")
-            .gauge().value()).isEqualTo(Double.NaN);
+        assertThat(registry.find("process.open.fds").gauge()).isNull();
+        assertThat(registry.find("process.max.fds").gauge()).isNull();
     }
 
     @Test
     void fileDescriptorMetricsSupportedOsBeanMock() {
-        final MeterRegistry registry = new SimpleMeterRegistry();
         final HotSpotLikeOperatingSystemMXBean osBean = mock(
             HotSpotLikeOperatingSystemMXBean.class);
         when(osBean.getOpenFileDescriptorCount()).thenReturn(Long.valueOf(512));
@@ -84,7 +80,6 @@ class FileDescriptorMetricsTest {
 
     @Test
     void fileDescriptorMetricsInvocationException() {
-        final MeterRegistry registry = new SimpleMeterRegistry();
         final HotSpotLikeOperatingSystemMXBean osBean = mock(
             HotSpotLikeOperatingSystemMXBean.class);
         when(osBean.getOpenFileDescriptorCount()).thenThrow(InvocationTargetException.class);

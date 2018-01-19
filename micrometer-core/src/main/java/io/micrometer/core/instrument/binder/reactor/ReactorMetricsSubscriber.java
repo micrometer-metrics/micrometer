@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.reactor;
+package io.micrometer.core.instrument.binder.reactor;
 
 import io.micrometer.core.instrument.Tag;
 import org.reactivestreams.Subscription;

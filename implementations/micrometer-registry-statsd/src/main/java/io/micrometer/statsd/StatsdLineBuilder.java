@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.core.lang.Nullable;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -110,7 +111,7 @@ class StatsdLineBuilder {
         return line(NUMBER_FORMATTERS.get().format(timeMs), null, "ms");
     }
 
-    private String line(String amount, Statistic stat, String type) {
+    private String line(String amount, @Nullable Statistic stat, String type) {
         switch (flavor) {
             case Etsy:
                 return metricName(stat) + ":" + amount + "|" + type;
@@ -122,7 +123,7 @@ class StatsdLineBuilder {
         }
     }
 
-    private String tags(Statistic stat, String otherTags, String keyValueSeparator, String preamble) {
+    private String tags(@Nullable Statistic stat, String otherTags, String keyValueSeparator, String preamble) {
         String tags = of(stat == null ? null : "statistic" + keyValueSeparator + decapitalize(stat.toString()), otherTags)
             .filter(Objects::nonNull)
             .collect(Collectors.joining(","));
@@ -132,10 +133,10 @@ class StatsdLineBuilder {
         return tags;
     }
 
-    private String metricName(Statistic stat) {
+    private String metricName(@Nullable Statistic stat) {
         switch (flavor) {
             case Etsy:
-                return nameMapper.toHierarchicalName(id.withTag(stat), config.namingConvention());
+                return nameMapper.toHierarchicalName(stat != null ? id.withTag(stat) : id, config.namingConvention());
             case Datadog:
             case Telegraf:
             default:

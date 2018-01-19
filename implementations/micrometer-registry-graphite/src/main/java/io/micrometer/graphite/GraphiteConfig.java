@@ -16,6 +16,7 @@
 package io.micrometer.graphite;
 
 import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -36,6 +37,7 @@ public interface GraphiteConfig extends DropwizardConfig {
      * @return
      *     Value for the key or null if no key is present.
      */
+    @Nullable
     String get(String k);
 
     /**

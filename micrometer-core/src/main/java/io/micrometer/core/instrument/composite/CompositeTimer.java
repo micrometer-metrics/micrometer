@@ -123,6 +123,7 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
         return new NoopTimer(getId());
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     Timer registerNewMeter(MeterRegistry registry) {
         final long[] slaNanos = histogramConfig.getSlaBoundaries();
@@ -138,8 +139,8 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
         return Timer.builder(getId().getName())
                     .tags(getId().getTags())
                     .description(getId().getDescription())
-                    .maximumExpectedValue(histogramConfig.getMaximumExpectedValue() == null ? null : Duration.ofNanos(histogramConfig.getMaximumExpectedValue()))
-                    .minimumExpectedValue(histogramConfig.getMinimumExpectedValue() == null ? null : Duration.ofNanos(histogramConfig.getMinimumExpectedValue()))
+                    .maximumExpectedValue(Duration.ofNanos(histogramConfig.getMaximumExpectedValue()))
+                    .minimumExpectedValue(Duration.ofNanos(histogramConfig.getMinimumExpectedValue()))
                     .publishPercentiles(histogramConfig.getPercentiles())
                     .publishPercentileHistogram(histogramConfig.isPercentileHistogram())
                     .histogramBufferLength(histogramConfig.getHistogramBufferLength())

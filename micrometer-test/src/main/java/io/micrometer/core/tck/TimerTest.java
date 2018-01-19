@@ -123,6 +123,7 @@ interface TimerTest {
         assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(1);
         assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(1000);
 
+        //noinspection ConstantConditions
         clock(registry).add(Duration.ofMillis(step().toMillis() * HistogramConfig.DEFAULT.getHistogramBufferLength()));
         assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0);
     }

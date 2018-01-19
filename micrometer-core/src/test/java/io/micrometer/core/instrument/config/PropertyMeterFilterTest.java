@@ -22,9 +22,11 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PropertyMeterFilterTest {
@@ -48,7 +50,7 @@ class PropertyMeterFilterTest {
         }
     };
 
-    private HistogramConfig histogramConfig;
+    @Nullable private HistogramConfig histogramConfig;
 
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock()) {
         @Override
@@ -78,6 +80,6 @@ class PropertyMeterFilterTest {
     @Test
     void summaryHistogramConfig() {
         registry.summary("my.summary");
-        assertThat(histogramConfig.getMaximumExpectedValue()).isEqualTo(100);
+        assertThat(requireNonNull(histogramConfig).getMaximumExpectedValue()).isEqualTo(100);
     }
 }

@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.lang.Nullable;
 import io.netty.channel.ChannelOption;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -120,6 +121,7 @@ class StatsdMeterRegistryTest {
     private StatsdMeterRegistry registry(StatsdFlavor flavor) {
         return new StatsdMeterRegistry(new StatsdConfig() {
             @Override
+            @Nullable
             public String get(String k) {
                 return null;
             }

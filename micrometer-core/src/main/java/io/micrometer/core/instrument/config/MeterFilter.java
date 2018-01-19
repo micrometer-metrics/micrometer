@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,6 +66,7 @@ public interface MeterFilter {
      * @param config A histogram configuration guaranteed to be non-null.
      * @return Overrides to any part of the histogram config, when applicable.
      */
+    @Nullable
     default HistogramConfig configure(Meter.Id id, HistogramConfig config) {
         return config;
     }

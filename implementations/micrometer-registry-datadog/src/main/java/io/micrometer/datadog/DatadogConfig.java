@@ -16,6 +16,7 @@
 package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.lang.Nullable;
 
 /**
  * Configuration for Datadog exporting.
@@ -40,6 +41,7 @@ public interface DatadogConfig extends StepRegistryConfig {
         return v;
     }
 
+    @Nullable
     default String applicationKey() {
         return get(prefix() + ".applicationKey");
     }
@@ -48,6 +50,7 @@ public interface DatadogConfig extends StepRegistryConfig {
      * The tag that will be mapped to "host" when shipping metrics to datadog, or {@code null} if
      * host should be omitted on publishing.
      */
+    @Nullable
     default String hostTag() {
         String v = get(prefix() + ".hostTag");
         return v == null ? "instance" : v;

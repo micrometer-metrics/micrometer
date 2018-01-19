@@ -64,8 +64,8 @@ public class SpringIntegrationMetricsTest {
 
         assertThat(registry.mustFind("spring.integration.channel.sends")
             .tags("channel", "convert.input").functionCounter().count()).isEqualTo(1.0);
-        assertThat(registry.mustFind("spring.integration.handler.duration.min").meter()).isPresent();
-        assertThat(registry.mustFind("spring.integration.sourceNames").meter()).isPresent();
+        registry.mustFind("spring.integration.handler.duration.min").meter();
+        registry.mustFind("spring.integration.sourceNames").meter();
     }
 
     @SpringBootApplication
