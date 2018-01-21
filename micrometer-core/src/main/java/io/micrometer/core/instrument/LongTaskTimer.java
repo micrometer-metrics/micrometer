@@ -71,7 +71,7 @@ public interface LongTaskTimer extends Meter {
      * @param f Function to execute and measure the execution time.
      * @return The return value of `f`.
      */
-    default <T> T record(Supplier<T> f) throws Exception {
+    default <T> T record(Supplier<T> f) {
         Sample sample = start();
         try {
             return f.get();
