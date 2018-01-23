@@ -20,8 +20,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.lang.NonNullApi;
 
 /**
- * Callback interface that can be used to customize auto-configured {@link MeterRegistry
- * MeterRegistries}.
+ * Callback interface that can be used to customize the primary auto-configured {@link MeterRegistry}.
  * <p>
  * Configurers are guaranteed to be applied before any {@link Meter} is registered with
  * the registry.
