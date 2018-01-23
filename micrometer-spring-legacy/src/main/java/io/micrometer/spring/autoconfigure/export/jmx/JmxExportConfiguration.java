@@ -44,7 +44,8 @@ public class JmxExportConfiguration {
 
     @Bean
     @ConditionalOnProperty(value = "management.metrics.export.jmx.enabled", matchIfMissing = true)
-    public JmxMeterRegistry jmxExporter(JmxConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
+    @ConditionalOnMissingBean
+    public JmxMeterRegistry jmxMeterRegistry(JmxConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
         return new JmxMeterRegistry(config, clock, nameMapper);
     }
 

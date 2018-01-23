@@ -42,16 +42,16 @@ import org.springframework.context.annotation.Import;
 @EnableConfigurationProperties(CloudWatchProperties.class)
 public class CloudWatchExportConfiguration {
 
-    // FIXME
     @Bean
     @ConditionalOnMissingBean
     public CloudWatchConfig cloudwatchConfig(CloudWatchProperties props) {
-        return null;
+        return new CloudWatchPropertiesConfigAdapter(props);
     }
 
     @Bean
     @ConditionalOnProperty(value = "management.metrics.export.cloudwatch.enabled", matchIfMissing = true)
-    public CloudWatchMeterRegistry cloudwatchExporter(CloudWatchConfig config, Clock clock, AmazonCloudWatchAsync client) {
+    @ConditionalOnMissingBean
+    public CloudWatchMeterRegistry cloudWatchMeterRegistry(CloudWatchConfig config, Clock clock, AmazonCloudWatchAsync client) {
         return new CloudWatchMeterRegistry(config, clock, client);
     }
 

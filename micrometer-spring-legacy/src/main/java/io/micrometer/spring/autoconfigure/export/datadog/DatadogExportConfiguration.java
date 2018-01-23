@@ -47,7 +47,7 @@ public class DatadogExportConfiguration {
     @Bean
     @ConditionalOnProperty(value = "management.metrics.export.datadog.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
-    public DatadogMeterRegistry datadogExporter(DatadogConfig config, Clock clock) {
+    public DatadogMeterRegistry datadogMeterRegistry(DatadogConfig config, Clock clock) {
         return new DatadogMeterRegistry(config, clock);
     }
 

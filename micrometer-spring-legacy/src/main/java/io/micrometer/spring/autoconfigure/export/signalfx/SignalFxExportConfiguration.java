@@ -38,48 +38,16 @@ import org.springframework.context.annotation.Import;
 @Import(StringToDurationConverter.class)
 public class SignalFxExportConfiguration {
 
-//    @NonNullApi
-//    private class DefaultSignalFxConfig implements SignalFxConfig {
-//        private final SignalFxProperties props;
-//        private final SignalFxConfig defaults = k -> null;
-//
-//        private DefaultSignalFxConfig(SignalFxProperties props) {
-//            this.props = props;
-//        }
-//
-//        @Override
-//        @Nullable
-//        public String get(String k) {
-//            return null;
-//        }
-//
-//        @Override
-//        public String accessToken() {
-//            return props.getAccessToken() == null ? defaults.accessToken() : props.getAccessToken();
-//        }
-//
-//        @Override
-//        public String uri() {
-//            return props.getUri() == null ? defaults.uri() : props.getUri();
-//        }
-//
-//        @Override
-//        public Duration step() {
-//            return props.getStep() == null ? defaults.step() : props.getStep();
-//        }
-//    }
-
-    // FIXME
     @Bean
     @ConditionalOnMissingBean
     public SignalFxConfig signalfxConfig(SignalFxProperties props) {
-        return null;
+        return new SignalFxPropertiesConfigAdapter(props);
     }
 
     @Bean
-    @ConditionalOnProperty(value = "management.metrics.export.Signalfx.enabled", matchIfMissing = true)
+    @ConditionalOnProperty(value = "management.metrics.export.signalfx.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
-    public SignalFxMeterRegistry signalFxExporter(SignalFxConfig config, Clock clock) {
+    public SignalFxMeterRegistry signalFxMeterRegistry(SignalFxConfig config, Clock clock) {
         return new SignalFxMeterRegistry(config, clock);
     }
 

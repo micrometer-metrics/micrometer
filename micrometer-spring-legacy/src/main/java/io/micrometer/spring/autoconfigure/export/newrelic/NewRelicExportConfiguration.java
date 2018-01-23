@@ -38,43 +38,16 @@ import org.springframework.context.annotation.Import;
 @EnableConfigurationProperties(NewRelicProperties.class)
 public class NewRelicExportConfiguration {
 
-//    @NonNullApi
-//    @NonNullFields
-//    private class DefaultNewRelicConfig extends DefaultStepRegistryConfig implements NewRelicConfig {
-//        private final NewRelicProperties props;
-//        private final NewRelicConfig defaults = k -> null;
-//
-//        private DefaultNewRelicConfig(NewRelicProperties props) {
-//            super(props);
-//            this.props = props;
-//        }
-//
-//        @Override
-//        public String apiKey() {
-//            return props.getApiKey() == null ? defaults.apiKey() : props.getApiKey();
-//        }
-//
-//        @Override
-//        public String accountId() {
-//            return props.getAccountId() == null ? defaults.accountId() : props.getAccountId();
-//        }
-//
-//        @Override
-//        public String uri() {
-//            return props.getUri() == null ? defaults.uri() : props.getUri();
-//        }
-//    }
-
-    // FIXME
     @Bean
     @ConditionalOnMissingBean
     public NewRelicConfig newRelicConfig(NewRelicProperties props) {
-        return null;
+        return new NewRelicPropertiesConfigAdapter(props);
     }
 
     @Bean
     @ConditionalOnProperty(value = "management.metrics.export.newrelic.enabled", matchIfMissing = true)
-    public NewRelicMeterRegistry newRelicExporter(NewRelicConfig config, Clock clock) {
+    @ConditionalOnMissingBean
+    public NewRelicMeterRegistry newRelicMeterRegistry(NewRelicConfig config, Clock clock) {
         return new NewRelicMeterRegistry(config, clock);
     }
 

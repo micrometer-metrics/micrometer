@@ -48,8 +48,7 @@ public class GraphiteExportConfiguration {
     @Bean
     @ConditionalOnProperty(value = "management.metrics.export.graphite.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
-    public GraphiteMeterRegistry graphiteExporter(GraphiteConfig config,
-                                                  HierarchicalNameMapper nameMapper, Clock clock) {
+    public GraphiteMeterRegistry graphiteMeterRegistry(GraphiteConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
         return new GraphiteMeterRegistry(config, clock, nameMapper);
     }
 
