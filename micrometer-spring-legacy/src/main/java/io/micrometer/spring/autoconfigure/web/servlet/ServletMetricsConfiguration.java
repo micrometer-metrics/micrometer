@@ -52,8 +52,8 @@ public class ServletMetricsConfiguration {
                                           ServletTagsProvider tagsProvider,
                                           WebApplicationContext ctx) {
         return new MetricsFilter(registry, tagsProvider,
-                properties.getWeb().getServer().getRequestsMetricName(),
-                properties.getWeb().getServer().isAutoTimeRequests(),
-                new HandlerMappingIntrospector(ctx));
+            properties.getWeb().getServer().getRequestsMetricName(),
+            properties.getWeb().getServer().isAutoTimeRequests(),
+            new HandlerMappingIntrospector(ctx));
     }
 }

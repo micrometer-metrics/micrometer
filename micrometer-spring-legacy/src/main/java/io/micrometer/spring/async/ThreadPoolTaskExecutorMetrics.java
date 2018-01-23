@@ -41,6 +41,16 @@ import static java.util.Arrays.asList;
 @NonNullApi
 @NonNullFields
 public class ThreadPoolTaskExecutorMetrics implements MeterBinder {
+    @Nullable
+    private final ThreadPoolTaskExecutor executor;
+    private final String name;
+    private final Iterable<Tag> tags;
+    public ThreadPoolTaskExecutorMetrics(ThreadPoolTaskExecutor executor, String name, Iterable<Tag> tags) {
+        this.name = name;
+        this.tags = tags;
+        this.executor = executor;
+    }
+
     /**
      * Returns a new {@link ThreadPoolTaskExecutor} with recorded metrics.
      *
@@ -63,16 +73,6 @@ public class ThreadPoolTaskExecutorMetrics implements MeterBinder {
      */
     public static Executor monitor(MeterRegistry registry, String name, Tag... tags) {
         return monitor(registry, name, asList(tags));
-    }
-
-    @Nullable private final ThreadPoolTaskExecutor executor;
-    private final String name;
-    private final Iterable<Tag> tags;
-
-    public ThreadPoolTaskExecutorMetrics(ThreadPoolTaskExecutor executor, String name, Iterable<Tag> tags) {
-        this.name = name;
-        this.tags = tags;
-        this.executor = executor;
     }
 
     @Override

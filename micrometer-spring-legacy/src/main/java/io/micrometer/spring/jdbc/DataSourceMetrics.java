@@ -35,7 +35,8 @@ import java.util.Collection;
 @NonNullFields
 public class DataSourceMetrics implements MeterBinder {
     private final DataSource dataSource;
-    @Nullable private final DataSourcePoolMetadata poolMetadata;
+    @Nullable
+    private final DataSourcePoolMetadata poolMetadata;
     private final String name;
     private final Iterable<Tag> tags;
 

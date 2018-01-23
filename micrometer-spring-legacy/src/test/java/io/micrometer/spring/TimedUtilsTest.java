@@ -59,6 +59,12 @@ public class TimedUtilsTest {
             .isNotEmpty();
     }
 
+    @Target({ElementType.TYPE, ElementType.METHOD})
+    @Retention(RetentionPolicy.RUNTIME)
+    @Timed(percentiles = 0.95)
+    @interface Timed95 {
+    }
+
     @Timed
     static class TimedClass {
         @Timed
@@ -78,12 +84,6 @@ public class TimedUtilsTest {
         public void foo() {
             super.foo();
         }
-    }
-
-    @Target({ElementType.TYPE, ElementType.METHOD})
-    @Retention(RetentionPolicy.RUNTIME)
-    @Timed(percentiles = 0.95)
-    @interface Timed95 {
     }
 
 }

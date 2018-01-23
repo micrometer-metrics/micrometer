@@ -55,7 +55,8 @@ public class ScheduledMethodMetricsTest {
     @Test
     public void shortTasksAreInstrumented() throws InterruptedException {
         shortBeepsExecuted.await();
-        while(scheduler.getActiveCount() > 0) {}
+        while (scheduler.getActiveCount() > 0) {
+        }
 
         assertThat(registry.mustFind("beeper").timer().count()).isEqualTo(1L);
         registry.mustFind("beeper").tags("percentile", "50").gauge();

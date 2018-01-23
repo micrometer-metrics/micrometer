@@ -17,12 +17,8 @@ package io.micrometer.spring.autoconfigure.export.statsd;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.Nullable;
-import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import io.micrometer.statsd.StatsdConfig;
-import io.micrometer.statsd.StatsdFlavor;
 import io.micrometer.statsd.StatsdMeterRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -31,8 +27,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-
-import java.time.Duration;
 
 /**
  * Configuration for exporting metrics to a StatsD agent.
@@ -45,66 +39,17 @@ import java.time.Duration;
 @EnableConfigurationProperties(StatsdProperties.class)
 public class StatsdExportConfiguration {
 
-    @NonNullApi
-    private class DefaultStatsdConfig implements StatsdConfig {
-        private final StatsdProperties props;
-
-        private DefaultStatsdConfig(StatsdProperties props) {
-            this.props = props;
-        }
-
-        @Override
-        @Nullable
-        public String get(String k) {
-            return null;
-        }
-
-        @Override
-        public StatsdFlavor flavor() {
-            return props.getFlavor() == null ? DEFAULT.flavor() : props.getFlavor();
-        }
-
-        @Override
-        public boolean enabled() {
-            return props.getEnabled();
-        }
-
-        @Override
-        public String host() {
-            return props.getHost() == null ? DEFAULT.host() : props.getHost();
-        }
-
-        @Override
-        public int port() {
-            return props.getPort() == null ? DEFAULT.port() : props.getPort();
-        }
-
-        @Override
-        public int maxPacketLength() {
-            return props.getMaxPacketLength() == null ? DEFAULT.maxPacketLength() : props.getMaxPacketLength();
-        }
-
-        @Override
-        public Duration pollingFrequency() {
-            return props.getPollingFrequency() == null ? DEFAULT.pollingFrequency() : props.getPollingFrequency();
-        }
-
-        @Override
-        public int queueSize() {
-            return props.getQueueSize() == null ? DEFAULT.queueSize() : props.getQueueSize();
-        }
-    }
-
     @Bean
     @ConditionalOnMissingBean(StatsdConfig.class)
     public StatsdConfig statsdConfig(StatsdProperties props) {
-        return new DefaultStatsdConfig(props);
+        return new StatsdPropertiesConfigAdapter(props);
     }
 
     @Bean
     @ConditionalOnProperty(value = "management.metrics.export.statsd.enabled", matchIfMissing = true)
-    public MetricsExporter statsdExporter(StatsdConfig config, HierarchicalNameMapper hierarchicalNameMapper, Clock clock) {
-        return () -> new StatsdMeterRegistry(config, hierarchicalNameMapper, clock);
+    @ConditionalOnMissingBean
+    public StatsdMeterRegistry statsdExporter(StatsdConfig config, HierarchicalNameMapper hierarchicalNameMapper, Clock clock) {
+        return new StatsdMeterRegistry(config, hierarchicalNameMapper, clock);
     }
 
     @Bean

@@ -28,43 +28,44 @@ import java.util.concurrent.TimeUnit;
  */
 @ConfigurationProperties(prefix = "management.metrics.export.graphite")
 public class GraphiteProperties {
-    /**
-     * Enable publishing to the backend.
-     */
-    private Boolean enabled = true;
 
     /**
-     * The step size (reporting frequency) to use.
+     * Enable publishing to Graphite.
      */
-    private Duration step = Duration.ofMinutes(1);
+    private Boolean enabled;
 
     /**
-     * The base time unit used to report rates.
+     * Step size (i.e. reporting frequency) to use.
+     */
+    private Duration step;
+
+    /**
+     * Base time unit used to report rates.
      */
     private TimeUnit rateUnits;
 
     /**
-     * The base time unit used to report durations.
+     * Base time unit used to report durations.
      */
     private TimeUnit durationUnits;
 
     /**
-     * Graphite host used for publishing.
+     * Host of the Graphite server to receive exported metrics.
      */
     private String host;
 
     /**
-     * Graphite port used for publishing.
+     * Port of the Graphite server to receive exported metrics.
      */
     private Integer port;
 
     /**
      * Protocol to use while shipping data to Graphite.
      */
-    private GraphiteProtocol protocol = GraphiteProtocol.Pickled;
+    private GraphiteProtocol protocol;
 
     public Boolean getEnabled() {
-        return enabled;
+        return this.enabled;
     }
 
     public void setEnabled(Boolean enabled) {
@@ -72,7 +73,7 @@ public class GraphiteProperties {
     }
 
     public Duration getStep() {
-        return step;
+        return this.step;
     }
 
     public void setStep(Duration step) {
@@ -80,7 +81,7 @@ public class GraphiteProperties {
     }
 
     public TimeUnit getRateUnits() {
-        return rateUnits;
+        return this.rateUnits;
     }
 
     public void setRateUnits(TimeUnit rateUnits) {
@@ -88,7 +89,7 @@ public class GraphiteProperties {
     }
 
     public TimeUnit getDurationUnits() {
-        return durationUnits;
+        return this.durationUnits;
     }
 
     public void setDurationUnits(TimeUnit durationUnits) {
@@ -96,7 +97,7 @@ public class GraphiteProperties {
     }
 
     public String getHost() {
-        return host;
+        return this.host;
     }
 
     public void setHost(String host) {
@@ -104,7 +105,7 @@ public class GraphiteProperties {
     }
 
     public Integer getPort() {
-        return port;
+        return this.port;
     }
 
     public void setPort(Integer port) {
@@ -112,10 +113,11 @@ public class GraphiteProperties {
     }
 
     public GraphiteProtocol getProtocol() {
-        return protocol;
+        return this.protocol;
     }
 
     public void setProtocol(GraphiteProtocol protocol) {
         this.protocol = protocol;
     }
+
 }

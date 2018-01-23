@@ -35,9 +35,8 @@ import static java.util.Collections.emptyList;
 @NonNullFields
 public class SpringIntegrationMetrics implements MeterBinder, SmartInitializingSingleton {
     private final Iterable<Tag> tags;
-    private Collection<MeterRegistry> registries = new ArrayList<>();
-
     private final IntegrationManagementConfigurer configurer;
+    private Collection<MeterRegistry> registries = new ArrayList<>();
 
     public SpringIntegrationMetrics(IntegrationManagementConfigurer configurer) {
         this(configurer, emptyList());
@@ -60,7 +59,7 @@ public class SpringIntegrationMetrics implements MeterBinder, SmartInitializingS
             .description("The number of spring integration handlers")
             .register(registry);
 
-        Gauge.builder("spring.integration.sourceNames" ,configurer, c -> c.getSourceNames().length)
+        Gauge.builder("spring.integration.sourceNames", configurer, c -> c.getSourceNames().length)
             .tags(tags)
             .description("The number of spring integration sources")
             .register(registry);

@@ -100,7 +100,7 @@ public class SpringEnvironmentMeterFilterTest {
     }
 
     @Test
-    public void configErrorMessage(){
+    public void configErrorMessage() {
         assertThatThrownBy(() -> registry.timer("my.timer.that.is.misconfigured"))
             .isInstanceOf(ConfigurationException.class)
             .hasMessage("Invalid configuration for 'my.timer.that.is.misconfigured.enabled' value 'troo' as class java.lang.Boolean");

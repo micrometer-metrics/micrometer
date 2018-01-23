@@ -16,11 +16,8 @@
 package io.micrometer.spring.autoconfigure.export.signalfx;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.Nullable;
 import io.micrometer.signalfx.SignalFxConfig;
 import io.micrometer.signalfx.SignalFxMeterRegistry;
-import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -29,8 +26,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-
-import java.time.Duration;
 
 /**
  * Configuration for exporting metrics to Signalfx.
@@ -43,47 +38,49 @@ import java.time.Duration;
 @Import(StringToDurationConverter.class)
 public class SignalFxExportConfiguration {
 
-    @NonNullApi
-    private class DefaultSignalFxConfig implements SignalFxConfig {
-        private final SignalFxProperties props;
-        private final SignalFxConfig defaults = k -> null;
+//    @NonNullApi
+//    private class DefaultSignalFxConfig implements SignalFxConfig {
+//        private final SignalFxProperties props;
+//        private final SignalFxConfig defaults = k -> null;
+//
+//        private DefaultSignalFxConfig(SignalFxProperties props) {
+//            this.props = props;
+//        }
+//
+//        @Override
+//        @Nullable
+//        public String get(String k) {
+//            return null;
+//        }
+//
+//        @Override
+//        public String accessToken() {
+//            return props.getAccessToken() == null ? defaults.accessToken() : props.getAccessToken();
+//        }
+//
+//        @Override
+//        public String uri() {
+//            return props.getUri() == null ? defaults.uri() : props.getUri();
+//        }
+//
+//        @Override
+//        public Duration step() {
+//            return props.getStep() == null ? defaults.step() : props.getStep();
+//        }
+//    }
 
-        private DefaultSignalFxConfig(SignalFxProperties props) {
-            this.props = props;
-        }
-
-        @Override
-        @Nullable
-        public String get(String k) {
-            return null;
-        }
-
-        @Override
-        public String accessToken() {
-            return props.getAccessToken() == null ? defaults.accessToken() : props.getAccessToken();
-        }
-
-        @Override
-        public String uri() {
-            return props.getUri() == null ? defaults.uri() : props.getUri();
-        }
-
-        @Override
-        public Duration step() {
-            return props.getStep() == null ? defaults.step() : props.getStep();
-        }
-    }
-
+    // FIXME
     @Bean
     @ConditionalOnMissingBean
     public SignalFxConfig signalfxConfig(SignalFxProperties props) {
-        return new DefaultSignalFxConfig(props);
+        return null;
     }
 
     @Bean
     @ConditionalOnProperty(value = "management.metrics.export.Signalfx.enabled", matchIfMissing = true)
-    public MetricsExporter signalFxExporter(SignalFxConfig config, Clock clock) {
-        return () -> new SignalFxMeterRegistry(config, clock);
+    @ConditionalOnMissingBean
+    public SignalFxMeterRegistry signalFxExporter(SignalFxConfig config, Clock clock) {
+        return new SignalFxMeterRegistry(config, clock);
     }
 
     @Bean

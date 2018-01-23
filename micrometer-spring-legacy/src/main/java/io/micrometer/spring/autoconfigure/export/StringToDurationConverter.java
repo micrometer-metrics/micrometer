@@ -35,16 +35,6 @@ import java.util.function.Function;
 @Order(0)
 public class StringToDurationConverter implements Converter<String, Duration> {
 
-    @Override
-    public Duration convert(@Nullable String source) {
-        Duration duration = simpleParse(source);
-        try {
-            return duration == null ? Duration.parse(source) : duration;
-        } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException("Cannot convert '" + source + "' to Duration", e);
-        }
-    }
-
     @Nullable
     private static Duration simpleParse(@Nullable String rawTime) {
         if (rawTime == null || rawTime.isEmpty())
@@ -72,5 +62,15 @@ public class StringToDurationConverter implements Converter<String, Duration> {
             }
         }
         return Optional.empty();
+    }
+
+    @Override
+    public Duration convert(@Nullable String source) {
+        Duration duration = simpleParse(source);
+        try {
+            return duration == null ? Duration.parse(source) : duration;
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Cannot convert '" + source + "' to Duration", e);
+        }
     }
 }

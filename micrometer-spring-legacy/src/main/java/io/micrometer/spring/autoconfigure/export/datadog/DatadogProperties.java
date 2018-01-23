@@ -25,37 +25,38 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "management.metrics.export.datadog")
 public class DatadogProperties extends StepRegistryProperties {
+
     /**
-     * Your API key, found in your account settings at datadoghq. This property is required.
+     * Datadog API key.
      */
     private String apiKey;
 
     /**
-     * Your application key, found in your account settings at datadoghq. This property is required to properly
-     * set metadata on metrics.
+     * Datadog application key. Not strictly required, but improves the Datadog
+     * experience by sending meter descriptions, types, and base units to Datadog.
      */
     private String applicationKey;
 
     /**
-     * The tag that will be mapped to "host" when shipping metrics to datadog, or {@code null} if
-     * host should be omitted on publishing.
+     * Whether to publish descriptions metadata to Datadog. Turn this off to minimize the
+     * amount of metadata sent.
      */
-    private String hostKey;
+    private Boolean descriptions;
 
     /**
-     * The URI to ship metrics to. If you need to publish metrics to an internal proxy en route to
-     * datadoghq, you can define the location of the proxy with this.
+     * Tag that will be mapped to "host" when shipping metrics to Datadog. Can be
+     * omitted if host should be omitted on publishing.
+     */
+    private String hostTag;
+
+    /**
+     * URI to ship metrics to. If you need to publish metrics to an internal proxy
+     * en-route to Datadog, you can define the location of the proxy with this.
      */
     private String uri;
 
-    /**
-     * Enable publishing descriptions as part of the scrape payload to Datadog.
-     * Turn this off to minimize the number of edit metadata requests on initial meter registration.
-     */
-    private Boolean descriptions = true;
-
     public String getApiKey() {
-        return apiKey;
+        return this.apiKey;
     }
 
     public void setApiKey(String apiKey) {
@@ -63,34 +64,34 @@ public class DatadogProperties extends StepRegistryProperties {
     }
 
     public String getApplicationKey() {
-        return applicationKey;
+        return this.applicationKey;
     }
 
     public void setApplicationKey(String applicationKey) {
         this.applicationKey = applicationKey;
     }
 
-    public String getHostKey() {
-        return hostKey;
-    }
-
-    public void setHostKey(String hostKey) {
-        this.hostKey = hostKey;
-    }
-
-    public String getUri() {
-        return uri;
-    }
-
-    public void setUri(String uri) {
-        this.uri = uri;
-    }
-
     public Boolean getDescriptions() {
-        return descriptions;
+        return this.descriptions;
     }
 
     public void setDescriptions(Boolean descriptions) {
         this.descriptions = descriptions;
+    }
+
+    public String getHostTag() {
+        return this.hostTag;
+    }
+
+    public void setHostTag(String hostTag) {
+        this.hostTag = hostTag;
+    }
+
+    public String getUri() {
+        return this.uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
     }
 }

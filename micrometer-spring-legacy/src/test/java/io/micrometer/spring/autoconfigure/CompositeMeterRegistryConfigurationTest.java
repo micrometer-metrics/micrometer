@@ -15,7 +15,9 @@
  */
 package io.micrometer.spring.autoconfigure;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.jmx.JmxMeterRegistry;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,36 +29,26 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
-/**
- * Validate that the default composite registry is filled with implementations
- * available on the classpath
- */
 @RunWith(SpringRunner.class)
-@SpringBootTest
+@SpringBootTest(classes = CompositeMeterRegistryConfigurationTest.MetricsApp.class)
 @TestPropertySource(properties = {
-    "management.metrics.useGlobalRegistry=false",
-    "management.metrics.export.atlas.enabled=false",
-    "management.metrics.export.datadog.enabled=false",
-    "management.metrics.export.ganglia.enabled=false",
-    "management.metrics.export.influx.enabled=false",
-    "management.metrics.export.jmx.enabled=false",
-    "management.metrics.export.statsd.enabled=false",
+    "management.metrics.export.jmx.enabled=true",
     "management.metrics.export.prometheus.enabled=true",
-    "management.metrics.export.newrelic.enabled=false",
-    "management.metrics.export.signalfx.enabled=false"
 })
-public class MetricsConfigurationCompositeTest {
+public class CompositeMeterRegistryConfigurationTest {
     @Autowired
-    CompositeMeterRegistry registry;
+    MeterRegistry registry;
 
     @Test
-    public void compositeContainsImplementationsOnClasspath() {
-        assertThat(registry.getRegistries())
+    public void compositeRegistryIsCreated() {
+        assertThat(registry).isInstanceOf(CompositeMeterRegistry.class);
+
+        assertThat(((CompositeMeterRegistry) registry).getRegistries())
+            .hasAtLeastOneElementOfType(JmxMeterRegistry.class)
             .hasAtLeastOneElementOfType(PrometheusMeterRegistry.class);
     }
 
-    @SpringBootApplication(scanBasePackages = "isolated")
+    @SpringBootApplication(scanBasePackages = "ignored")
     static class MetricsApp {
     }
 }

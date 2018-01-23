@@ -16,12 +16,8 @@
 package io.micrometer.spring.autoconfigure.export.newrelic;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.newrelic.NewRelicConfig;
 import io.micrometer.newrelic.NewRelicMeterRegistry;
-import io.micrometer.spring.autoconfigure.export.DefaultStepRegistryConfig;
-import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -42,43 +38,44 @@ import org.springframework.context.annotation.Import;
 @EnableConfigurationProperties(NewRelicProperties.class)
 public class NewRelicExportConfiguration {
 
-    @NonNullApi
-    @NonNullFields
-    private class DefaultNewRelicConfig extends DefaultStepRegistryConfig implements NewRelicConfig {
-        private final NewRelicProperties props;
-        private final NewRelicConfig defaults = k -> null;
+//    @NonNullApi
+//    @NonNullFields
+//    private class DefaultNewRelicConfig extends DefaultStepRegistryConfig implements NewRelicConfig {
+//        private final NewRelicProperties props;
+//        private final NewRelicConfig defaults = k -> null;
+//
+//        private DefaultNewRelicConfig(NewRelicProperties props) {
+//            super(props);
+//            this.props = props;
+//        }
+//
+//        @Override
+//        public String apiKey() {
+//            return props.getApiKey() == null ? defaults.apiKey() : props.getApiKey();
+//        }
+//
+//        @Override
+//        public String accountId() {
+//            return props.getAccountId() == null ? defaults.accountId() : props.getAccountId();
+//        }
+//
+//        @Override
+//        public String uri() {
+//            return props.getUri() == null ? defaults.uri() : props.getUri();
+//        }
+//    }
 
-        private DefaultNewRelicConfig(NewRelicProperties props) {
-            super(props);
-            this.props = props;
-        }
-
-        @Override
-        public String apiKey() {
-            return props.getApiKey() == null ? defaults.apiKey() : props.getApiKey();
-        }
-
-        @Override
-        public String accountId() {
-            return props.getAccountId() == null ? defaults.accountId() : props.getAccountId();
-        }
-
-        @Override
-        public String uri() {
-            return props.getUri() == null ? defaults.uri() : props.getUri();
-        }
-    }
-
+    // FIXME
     @Bean
     @ConditionalOnMissingBean
     public NewRelicConfig newRelicConfig(NewRelicProperties props) {
-        return new DefaultNewRelicConfig(props);
+        return null;
     }
 
     @Bean
     @ConditionalOnProperty(value = "management.metrics.export.newrelic.enabled", matchIfMissing = true)
-    public MetricsExporter newRelicExporter(NewRelicConfig config, Clock clock) {
-        return () -> new NewRelicMeterRegistry(config, clock);
+    public NewRelicMeterRegistry newRelicExporter(NewRelicConfig config, Clock clock) {
+        return new NewRelicMeterRegistry(config, clock);
     }
 
     @Bean

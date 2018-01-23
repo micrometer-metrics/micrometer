@@ -21,50 +21,52 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.time.Duration;
 
 /**
- * {@link ConfigurationProperties} for configuring Influx metrics export.
+ * {@link ConfigurationProperties} for configuring StatsD metrics export.
  *
  * @author Jon Schneider
+ * @author Stephane Nicoll
  */
 @ConfigurationProperties(prefix = "management.metrics.export.statsd")
 public class StatsdProperties {
-    /**
-     * Enable publishing to the backend.
-     */
-    private Boolean enabled = true;
 
     /**
-     * Choose which variant of the StatsD line protocol to use.
+     * Export metrics to StatsD.
+     */
+    private Boolean enabled;
+
+    /**
+     * StatsD line protocol to use.
      */
     private StatsdFlavor flavor = StatsdFlavor.Datadog;
 
     /**
-     * The host name of the StatsD agent.
+     * Host of the StatsD server to receive exported metrics.
      */
     private String host = "localhost";
 
     /**
-     * The UDP port of the StatsD agent.
+     * Port of the StatsD server to receive exported metrics.
      */
     private Integer port = 8125;
 
     /**
-     * The total length of a single payload should be kept within your network's MTU.
+     * Total length of a single payload should be kept within your network's MTU.
      */
     private Integer maxPacketLength = 1400;
 
     /**
-     * Determines how often gauges will be polled. When a gauge is polled, its value is recalculated. If the value has changed,
-     * it is sent to the StatsD server.
+     * How often gauges will be polled. When a gauge is polled, its value is
+     * recalculated and if the value has changed, it is sent to the StatsD server.
      */
     private Duration pollingFrequency = Duration.ofSeconds(10);
 
     /**
-     * Governs the maximum size of the queue of items waiting to be sent to a StatsD agent over UDP.
+     * Maximum size of the queue of items waiting to be sent to the StatsD server.
      */
     private Integer queueSize = Integer.MAX_VALUE;
 
     public Boolean getEnabled() {
-        return enabled;
+        return this.enabled;
     }
 
     public void setEnabled(Boolean enabled) {
@@ -72,7 +74,7 @@ public class StatsdProperties {
     }
 
     public StatsdFlavor getFlavor() {
-        return flavor;
+        return this.flavor;
     }
 
     public void setFlavor(StatsdFlavor flavor) {
@@ -80,7 +82,7 @@ public class StatsdProperties {
     }
 
     public String getHost() {
-        return host;
+        return this.host;
     }
 
     public void setHost(String host) {
@@ -88,7 +90,7 @@ public class StatsdProperties {
     }
 
     public Integer getPort() {
-        return port;
+        return this.port;
     }
 
     public void setPort(Integer port) {
@@ -96,7 +98,7 @@ public class StatsdProperties {
     }
 
     public Integer getMaxPacketLength() {
-        return maxPacketLength;
+        return this.maxPacketLength;
     }
 
     public void setMaxPacketLength(Integer maxPacketLength) {
@@ -104,7 +106,7 @@ public class StatsdProperties {
     }
 
     public Duration getPollingFrequency() {
-        return pollingFrequency;
+        return this.pollingFrequency;
     }
 
     public void setPollingFrequency(Duration pollingFrequency) {
@@ -112,10 +114,11 @@ public class StatsdProperties {
     }
 
     public Integer getQueueSize() {
-        return queueSize;
+        return this.queueSize;
     }
 
     public void setQueueSize(Integer queueSize) {
         this.queueSize = queueSize;
     }
+
 }

@@ -29,6 +29,12 @@ public class ConcurrentMapCacheMetrics implements MeterBinder {
     private final String name;
     private final Iterable<Tag> tags;
 
+    public ConcurrentMapCacheMetrics(ConcurrentMapCache cache, String name, Iterable<Tag> tags) {
+        this.cache = cache;
+        this.name = name;
+        this.tags = tags;
+    }
+
     /**
      * Record metrics on a ConcurrentMapCache cache.
      *
@@ -56,12 +62,6 @@ public class ConcurrentMapCacheMetrics implements MeterBinder {
     public static ConcurrentMapCache monitor(MeterRegistry registry, ConcurrentMapCache cache, String name, Iterable<Tag> tags) {
         new ConcurrentMapCacheMetrics(cache, name, tags).bindTo(registry);
         return cache;
-    }
-
-    public ConcurrentMapCacheMetrics(ConcurrentMapCache cache, String name, Iterable<Tag> tags) {
-        this.cache = cache;
-        this.name = name;
-        this.tags = tags;
     }
 
     @Override

@@ -26,35 +26,36 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "management.metrics.export.influx")
 public class InfluxProperties extends StepRegistryProperties {
+
     /**
-     * The tag that will be mapped to "host" when shipping metrics to Influx, or {@code null} if
-     * host should be omitted on publishing.
+     * Tag that will be mapped to "host" when shipping metrics to Influx. Can be
+     * omitted if host should be omitted on publishing.
      */
     private String db;
 
     /**
-     * The write consistency for each point.
+     * Write consistency for each point.
      */
     private InfluxConsistency consistency;
 
     /**
-     * Authenticate requests with this user. If not specified,
-     * the registry will not attempt to present credentials to Influx.
+     * Login user of the Influx server.
      */
     private String userName;
 
     /**
-     * Authenticate requests with this password.
+     * Login password of the Influx server.
      */
     private String password;
 
     /**
-     * Influx writes to the DEFAULT retention policy if one is not specified.
+     * Retention policy to use (Influx writes to the DEFAULT retention policy if one is
+     * not specified).
      */
     private String retentionPolicy;
 
     /**
-     * The URI for the Influx backend.
+     * URI of the Influx server.
      */
     private String uri;
 
@@ -64,7 +65,7 @@ public class InfluxProperties extends StepRegistryProperties {
     private Boolean compressed;
 
     public String getDb() {
-        return db;
+        return this.db;
     }
 
     public void setDb(String db) {
@@ -72,7 +73,7 @@ public class InfluxProperties extends StepRegistryProperties {
     }
 
     public InfluxConsistency getConsistency() {
-        return consistency;
+        return this.consistency;
     }
 
     public void setConsistency(InfluxConsistency consistency) {
@@ -80,7 +81,7 @@ public class InfluxProperties extends StepRegistryProperties {
     }
 
     public String getUserName() {
-        return userName;
+        return this.userName;
     }
 
     public void setUserName(String userName) {
@@ -88,7 +89,7 @@ public class InfluxProperties extends StepRegistryProperties {
     }
 
     public String getPassword() {
-        return password;
+        return this.password;
     }
 
     public void setPassword(String password) {
@@ -96,7 +97,7 @@ public class InfluxProperties extends StepRegistryProperties {
     }
 
     public String getRetentionPolicy() {
-        return retentionPolicy;
+        return this.retentionPolicy;
     }
 
     public void setRetentionPolicy(String retentionPolicy) {
@@ -104,7 +105,7 @@ public class InfluxProperties extends StepRegistryProperties {
     }
 
     public String getUri() {
-        return uri;
+        return this.uri;
     }
 
     public void setUri(String uri) {
@@ -112,10 +113,11 @@ public class InfluxProperties extends StepRegistryProperties {
     }
 
     public Boolean getCompressed() {
-        return compressed;
+        return this.compressed;
     }
 
     public void setCompressed(Boolean compressed) {
         this.compressed = compressed;
     }
+
 }

@@ -16,9 +16,9 @@
 package io.micrometer.spring.autoconfigure.export.simple;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -35,21 +35,26 @@ import org.springframework.context.annotation.Configuration;
 public class SimpleExportConfiguration {
 
     @Bean
+    @ConditionalOnMissingBean
+    public SimpleConfig simpleRegistryConfig(SimpleProperties props) {
+        return new SimplePropertiesConfigAdapter(props);
+    }
+
+    /**
+     * Since {@link SimpleMeterRegistry} is an in-memory metrics store that doesn't publish anywhere,
+     * it is only configured when a real monitoring system implementation is not present. In this case,
+     * it backs the metrics displayed in the metrics actuator endpoint.
+     */
+    @Bean
     @ConditionalOnProperty(value = "management.metrics.export.simple.enabled", matchIfMissing = true)
-    @ConditionalOnMissingBean(MetricsExporter.class)
-    public MetricsExporter simpleExporter(SimpleConfig config, Clock clock) {
-        return () -> new SimpleMeterRegistry(config, clock);
+    @ConditionalOnMissingBean(MeterRegistry.class)
+    public SimpleMeterRegistry simpleMeterRegistry(SimpleConfig config, Clock clock) {
+        return new SimpleMeterRegistry(config, clock);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public Clock micrometerClock() {
         return Clock.SYSTEM;
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public SimpleConfig simpleRegistryConfig() {
-        return SimpleConfig.DEFAULT;
     }
 }

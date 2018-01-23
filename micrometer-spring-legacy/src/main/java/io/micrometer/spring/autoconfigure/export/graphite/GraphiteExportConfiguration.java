@@ -17,12 +17,8 @@ package io.micrometer.spring.autoconfigure.export.graphite;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.Nullable;
 import io.micrometer.graphite.GraphiteConfig;
 import io.micrometer.graphite.GraphiteMeterRegistry;
-import io.micrometer.graphite.GraphiteProtocol;
-import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -31,9 +27,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Configuration for exporting metrics to Graphite.
@@ -46,67 +39,18 @@ import java.util.concurrent.TimeUnit;
 @EnableConfigurationProperties(GraphiteProperties.class)
 public class GraphiteExportConfiguration {
 
-    @NonNullApi
-    private class DefaultGraphiteConfig implements GraphiteConfig {
-        private final GraphiteProperties props;
-
-        public DefaultGraphiteConfig(GraphiteProperties props) {
-            this.props = props;
-        }
-
-        @Override
-        @Nullable
-        public String get(String k) {
-            return null;
-        }
-
-        @Override
-        public boolean enabled() {
-            return props.getEnabled();
-        }
-
-        @Override
-        public Duration step() {
-            return props.getStep();
-        }
-
-        @Override
-        public TimeUnit rateUnits() {
-            return props.getRateUnits() == null ? DEFAULT.rateUnits() : props.getRateUnits();
-        }
-
-        @Override
-        public TimeUnit durationUnits() {
-            return props.getDurationUnits() == null ? DEFAULT.durationUnits() : props.getDurationUnits();
-        }
-
-        @Override
-        public String host() {
-            return props.getHost() == null ? DEFAULT.host() : props.getHost();
-        }
-
-        @Override
-        public int port() {
-            return props.getPort() == null ? DEFAULT.port() : props.getPort();
-        }
-
-        @Override
-        public GraphiteProtocol protocol() {
-            return props.getProtocol() == null ? DEFAULT.protocol() : props.getProtocol();
-        }
-    }
-
     @Bean
     @ConditionalOnMissingBean
     public GraphiteConfig graphiteConfig(GraphiteProperties props) {
-        return new DefaultGraphiteConfig(props);
+        return new GraphitePropertiesConfigAdapter(props);
     }
-    
+
     @Bean
     @ConditionalOnProperty(value = "management.metrics.export.graphite.enabled", matchIfMissing = true)
-    public MetricsExporter graphiteExporter(GraphiteConfig config,
-                                            HierarchicalNameMapper nameMapper, Clock clock) {
-        return () -> new GraphiteMeterRegistry(config, clock, nameMapper);
+    @ConditionalOnMissingBean
+    public GraphiteMeterRegistry graphiteExporter(GraphiteConfig config,
+                                                  HierarchicalNameMapper nameMapper, Clock clock) {
+        return new GraphiteMeterRegistry(config, clock, nameMapper);
     }
 
     @Bean

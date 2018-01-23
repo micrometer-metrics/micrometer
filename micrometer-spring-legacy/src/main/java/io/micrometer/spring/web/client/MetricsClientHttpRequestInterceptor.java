@@ -94,7 +94,7 @@ class MetricsClientHttpRequestInterceptor implements ClientHttpRequestIntercepto
     // This normalization improves tag value matching when one code path requests test/{id} and another
     // requests /test/{id}
     private String ensureLeadingSlash(@Nullable String url) {
-        if(url == null)
+        if (url == null)
             return "/";
         return url.startsWith("/") ? url : "/" + url;
     }

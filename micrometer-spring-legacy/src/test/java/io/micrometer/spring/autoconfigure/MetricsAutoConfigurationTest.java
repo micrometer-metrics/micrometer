@@ -56,10 +56,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = MetricsAutoConfigurationTest.MetricsApp.class)
-@TestPropertySource(properties = {
-    "management.metrics.use-global-registry=false",
-    "management.metrics.filter.my.timer.enabled=true" // overriden by programmatic filter
-})
+@TestPropertySource(properties = "management.metrics.filter.my.timer.enabled=true" /* overriden by programmatic filter */)
 public class MetricsAutoConfigurationTest {
 
     @Autowired
@@ -88,7 +85,7 @@ public class MetricsAutoConfigurationTest {
     }
 
     @Test
-    public void requestMappingIsInstrumented() throws Exception {
+    public void requestMappingIsInstrumented() {
         loopback.getForObject("/api/people", String.class);
 
         assertThat(registry.mustFind("http.server.requests").timer().count()).isEqualTo(1L);
@@ -102,7 +99,7 @@ public class MetricsAutoConfigurationTest {
     }
 
     @Test
-    public void registryConfigurersAreAppliedBeforeRegistryIsInjectableElsewhere() {
+    public void registryCustomizersAreAppliedBeforeRegistryIsInjectableElsewhere() {
         registry.mustFind("my.thing").tags("common", "tag").gauge();
     }
 
@@ -121,21 +118,19 @@ public class MetricsAutoConfigurationTest {
         }
 
         @Bean
-        public MeterRegistryConfigurer commonTags() {
+        public MeterRegistryCustomizer commonTags() {
             return r -> r.config().commonTags("common", "tag");
         }
 
         @Bean
         @Order(Ordered.HIGHEST_PRECEDENCE)
-        public MeterRegistryConfigurer meterFilter() {
+        public MeterRegistryCustomizer meterFilter() {
             return r -> r.config().meterFilter(MeterFilter.deny(id -> id.getName().contains("my.timer")));
-        }
-
-        private class MyThing {
         }
 
         @Bean
         public MyThing myBinder(MeterRegistry registry) {
+            // this should have the common tag
             registry.gauge("my.thing", 0);
             return new MyThing();
         }
@@ -143,6 +138,9 @@ public class MetricsAutoConfigurationTest {
         @Bean
         public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
             return restTemplateBuilder.build();
+        }
+
+        private class MyThing {
         }
 
     }

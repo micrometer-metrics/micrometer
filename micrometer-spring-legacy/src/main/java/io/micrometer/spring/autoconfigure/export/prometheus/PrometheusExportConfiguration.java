@@ -16,11 +16,8 @@
 package io.micrometer.spring.autoconfigure.export.prometheus;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.Nullable;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import io.prometheus.client.CollectorRegistry;
 import org.springframework.boot.actuate.autoconfigure.ManagementContextConfiguration;
@@ -33,8 +30,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import java.time.Duration;
-
 /**
  * Configuration for exporting metrics to Prometheus.
  *
@@ -46,43 +41,18 @@ import java.time.Duration;
 @Import(StringToDurationConverter.class)
 public class PrometheusExportConfiguration {
 
-    @NonNullApi
-    private class DefaultPrometheusConfig implements PrometheusConfig {
-        private final PrometheusProperties props;
-        private final PrometheusConfig defaults = k -> null;
-
-        private DefaultPrometheusConfig(PrometheusProperties props) {
-            this.props = props;
-        }
-
-        @Override
-        @Nullable
-        public String get(String k) {
-            return null;
-        }
-
-        @Override
-        public boolean descriptions() {
-            return props.getDescriptions() == null ? defaults.descriptions() : props.getDescriptions();
-        }
-
-        @Override
-        public Duration step() {
-            return props.getStep() == null ? defaults.step() : props.getStep();
-        }
-    }
-
     @Bean
     @ConditionalOnMissingBean
     public PrometheusConfig prometheusConfig(PrometheusProperties props) {
-        return new DefaultPrometheusConfig(props);
+        return new PrometheusPropertiesConfigAdapter(props);
     }
 
     @Bean
     @ConditionalOnProperty(value = "management.metrics.export.prometheus.enabled", matchIfMissing = true)
-    public MetricsExporter prometheusExporter(PrometheusConfig config,
-                                              CollectorRegistry collectorRegistry, Clock clock) {
-        return () -> new PrometheusMeterRegistry(config, collectorRegistry, clock);
+    @ConditionalOnMissingBean
+    public PrometheusMeterRegistry prometheusExporter(PrometheusConfig config,
+                                                      CollectorRegistry collectorRegistry, Clock clock) {
+        return new PrometheusMeterRegistry(config, collectorRegistry, clock);
     }
 
     @Bean

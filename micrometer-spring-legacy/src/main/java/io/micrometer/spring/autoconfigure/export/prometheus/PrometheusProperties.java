@@ -26,25 +26,25 @@ import java.time.Duration;
  */
 @ConfigurationProperties(prefix = "management.metrics.export.prometheus")
 public class PrometheusProperties {
+
     /**
      * Enable publishing to Prometheus.
      */
-    private Boolean enabled = true;
+    private Boolean enabled;
 
     /**
-     * Enable publishing descriptions as part of the scrape payload to Prometheus.
-     * Turn this off to minimize the amount of data sent on each scrape.
+     * Enable publishing descriptions as part of the scrape payload to Prometheus. Turn
+     * this off to minimize the amount of data sent on each scrape.
      */
-    private Boolean descriptions = true;
+    private Boolean descriptions;
 
     /**
-     * The step size to use in computing windowed statistics like max. The default is 1 minute.
-     * To get the most out of these statistics, align the step interval to be close to your scrape interval.
+     * Step size (i.e. reporting frequency) to use.
      */
-    private Duration step = Duration.ofMinutes(1);
+    private Duration step;
 
     public Boolean getEnabled() {
-        return enabled;
+        return this.enabled;
     }
 
     public void setEnabled(Boolean enabled) {
@@ -52,7 +52,7 @@ public class PrometheusProperties {
     }
 
     public Boolean getDescriptions() {
-        return descriptions;
+        return this.descriptions;
     }
 
     public void setDescriptions(Boolean descriptions) {
@@ -60,10 +60,11 @@ public class PrometheusProperties {
     }
 
     public Duration getStep() {
-        return step;
+        return this.step;
     }
 
     public void setStep(Duration step) {
         this.step = step;
     }
+
 }

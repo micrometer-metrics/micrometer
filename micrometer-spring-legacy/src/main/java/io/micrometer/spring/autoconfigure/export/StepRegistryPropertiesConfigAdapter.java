@@ -16,69 +16,60 @@
 package io.micrometer.spring.autoconfigure.export;
 
 import io.micrometer.core.instrument.step.StepRegistryConfig;
-import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 
-public abstract class DefaultStepRegistryConfig implements StepRegistryConfig {
-    private final StepRegistryProperties props;
+/**
+ * Base class for {@link StepRegistryProperties} to {@link StepRegistryConfig} adapters.
+ *
+ * @param <T> The properties type
+ * @author Jon Schneider
+ * @author Phillip Webb
+ */
+public abstract class StepRegistryPropertiesConfigAdapter<T extends StepRegistryProperties>
+    extends PropertiesConfigAdapter<T> implements StepRegistryConfig {
 
-    private final StepRegistryConfig defaults = new StepRegistryConfig() {
-        @Override
-        public String prefix() {
-            return "doesnotmatter";
-        }
-
-        @Override
-        @Nullable
-        public String get(String k) {
-            return null;
-        }
-    };
-
-    public DefaultStepRegistryConfig(StepRegistryProperties props) {
-        this.props = props;
+    public StepRegistryPropertiesConfigAdapter(T properties) {
+        super(properties);
     }
 
     @Override
     public String prefix() {
-        return "doesnotmatter";
+        return null;
     }
 
     @Override
-    @Nullable
     public String get(String k) {
         return null;
     }
 
     @Override
-    @Nullable
     public Duration step() {
-        return props.getStep();
+        return get(T::getStep, StepRegistryConfig.super::step);
     }
 
     @Override
     public boolean enabled() {
-        return props.getEnabled();
+        return get(T::getEnabled, StepRegistryConfig.super::enabled);
     }
 
     @Override
     public Duration connectTimeout() {
-        return props.getConnectTimeout() == null ? defaults.connectTimeout() : props.getConnectTimeout();
+        return get(T::getConnectTimeout, StepRegistryConfig.super::connectTimeout);
     }
 
     @Override
     public Duration readTimeout() {
-        return props.getReadTimeout() == null ? defaults.readTimeout() : props.getReadTimeout();
+        return get(T::getReadTimeout, StepRegistryConfig.super::readTimeout);
     }
 
     @Override
     public int numThreads() {
-        return props.getNumThreads() == null ? defaults.numThreads() : props.getNumThreads();
+        return get(T::getNumThreads, StepRegistryConfig.super::numThreads);
     }
 
     @Override
     public int batchSize() {
-        return props.getBatchSize() == null ? defaults.batchSize() : props.getBatchSize();
+        return get(T::getBatchSize, StepRegistryConfig.super::batchSize);
     }
 }

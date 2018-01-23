@@ -16,12 +16,8 @@
 package io.micrometer.spring.autoconfigure.export.datadog;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.Nullable;
 import io.micrometer.datadog.DatadogConfig;
 import io.micrometer.datadog.DatadogMeterRegistry;
-import io.micrometer.spring.autoconfigure.export.DefaultStepRegistryConfig;
-import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -42,54 +38,17 @@ import org.springframework.context.annotation.Import;
 @EnableConfigurationProperties(DatadogProperties.class)
 public class DatadogExportConfiguration {
 
-    @NonNullApi
-    private class DefaultDatadogConfig extends DefaultStepRegistryConfig implements DatadogConfig {
-        private final DatadogProperties props;
-        private final DatadogConfig defaults = k -> null;
-
-        private DefaultDatadogConfig(DatadogProperties props) {
-            super(props);
-            this.props = props;
-        }
-
-        @Override
-        @Nullable
-        public String apiKey() {
-            return props.getApiKey();
-        }
-
-        @Override
-        @Nullable
-        public String applicationKey() {
-            return props.getApplicationKey();
-        }
-
-        @Override
-        public String hostTag() {
-            return props.getHostKey() == null ? defaults.hostTag() : props.getHostKey();
-        }
-
-        @Override
-        public String uri() {
-            return props.getUri() == null ? defaults.uri() : props.getUri();
-        }
-
-        @Override
-        public boolean descriptions() {
-            return props.getDescriptions() == null ? defaults.descriptions() : props.getDescriptions();
-        }
-    }
-
     @Bean
     @ConditionalOnMissingBean
     public DatadogConfig datadogConfig(DatadogProperties props) {
-        return new DefaultDatadogConfig(props);
+        return new DatadogPropertiesConfigAdapter(props);
     }
 
     @Bean
     @ConditionalOnProperty(value = "management.metrics.export.datadog.enabled", matchIfMissing = true)
-    public MetricsExporter datadogExporter(DatadogConfig config, Clock clock) {
-        return () -> new DatadogMeterRegistry(config, clock);
+    @ConditionalOnMissingBean
+    public DatadogMeterRegistry datadogExporter(DatadogConfig config, Clock clock) {
+        return new DatadogMeterRegistry(config, clock);
     }
 
     @Bean

@@ -13,25 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.autoconfigure.export;
+package io.micrometer.spring.autoconfigure.export.jmx;
 
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.jmx.JmxConfig;
+import io.micrometer.spring.autoconfigure.export.PropertiesConfigAdapter;
+
+import java.time.Duration;
 
 /**
- * A {@code MetricsExporter} can be used to export metrics, typically to an external
- * server running as a separate process.
+ * Adapter to convert {@link JmxProperties} to a {@link JmxConfig}.
  *
  * @author Jon Schneider
- * @author Andy Wilkinson
  */
-@FunctionalInterface
-public interface MetricsExporter {
+class JmxPropertiesConfigAdapter extends PropertiesConfigAdapter<JmxProperties> implements JmxConfig {
 
-    /**
-     * Returns the {@link MeterRegistry} used to register metrics with the exporter.
-     *
-     * @return the meter registry
-     */
-    MeterRegistry registry();
+    JmxPropertiesConfigAdapter(JmxProperties properties) {
+        super(properties);
+    }
+
+    @Override
+    public String get(String k) {
+        return null;
+    }
+
+    @Override
+    public Duration step() {
+        return get(JmxProperties::getStep, JmxConfig.super::step);
+    }
 
 }

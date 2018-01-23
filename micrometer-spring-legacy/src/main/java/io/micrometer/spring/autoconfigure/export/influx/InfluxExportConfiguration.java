@@ -16,13 +16,8 @@
 package io.micrometer.spring.autoconfigure.export.influx;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.influx.InfluxConfig;
-import io.micrometer.influx.InfluxConsistency;
 import io.micrometer.influx.InfluxMeterRegistry;
-import io.micrometer.spring.autoconfigure.export.DefaultStepRegistryConfig;
-import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -43,62 +38,16 @@ import org.springframework.context.annotation.Import;
 @EnableConfigurationProperties(InfluxProperties.class)
 public class InfluxExportConfiguration {
 
-    @NonNullApi
-    @NonNullFields
-    private class DefaultInfluxConfig extends DefaultStepRegistryConfig implements InfluxConfig {
-        private final InfluxProperties props;
-
-        public DefaultInfluxConfig(InfluxProperties props) {
-            super(props);
-            this.props = props;
-        }
-
-        @Override
-        public String db() {
-            return props.getDb() == null ? DEFAULT.db() : props.getDb();
-        }
-
-        @Override
-        public InfluxConsistency consistency() {
-            return props.getConsistency() == null ? DEFAULT.consistency() : props.getConsistency();
-        }
-
-        @Override
-        public String userName() {
-            return props.getUserName() == null ? DEFAULT.userName() : props.getUserName();
-        }
-
-        @Override
-        public String password() {
-            return props.getPassword() == null ? DEFAULT.password() : props.getPassword();
-        }
-
-        @Override
-        public String retentionPolicy() {
-            return props.getRetentionPolicy() == null ? DEFAULT.retentionPolicy() : props.getRetentionPolicy();
-        }
-
-        @Override
-        public String uri() {
-            return props.getUri() == null ? DEFAULT.uri() : props.getUri();
-        }
-
-        @Override
-        public boolean compressed() {
-            return props.getCompressed() == null ? DEFAULT.compressed() : props.getCompressed();
-        }
-    }
-
     @Bean
     @ConditionalOnMissingBean(InfluxConfig.class)
     public InfluxConfig influxConfig(InfluxProperties props) {
-        return new DefaultInfluxConfig(props);
+        return new InfluxPropertiesConfigAdapter(props);
     }
 
     @Bean
     @ConditionalOnProperty(value = "management.metrics.export.influx.enabled", matchIfMissing = true)
-    public MetricsExporter influxExporter(InfluxConfig config, Clock clock) {
-        return () -> new InfluxMeterRegistry(config, clock);
+    public InfluxMeterRegistry influxExporter(InfluxConfig config, Clock clock) {
+        return new InfluxMeterRegistry(config, clock);
     }
 
     @Bean

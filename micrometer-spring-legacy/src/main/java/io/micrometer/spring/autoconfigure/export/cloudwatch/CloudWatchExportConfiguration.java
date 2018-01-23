@@ -22,10 +22,6 @@ import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsyncClientBuilder;
 import io.micrometer.cloudwatch.CloudWatchConfig;
 import io.micrometer.cloudwatch.CloudWatchMeterRegistry;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.spring.autoconfigure.export.DefaultStepRegistryConfig;
-import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -46,38 +42,17 @@ import org.springframework.context.annotation.Import;
 @EnableConfigurationProperties(CloudWatchProperties.class)
 public class CloudWatchExportConfiguration {
 
-    @NonNullApi
-    @NonNullFields
-    private class DefaultCloudWatchConfig extends DefaultStepRegistryConfig implements CloudWatchConfig {
-        private final CloudWatchProperties props;
-
-        private DefaultCloudWatchConfig(CloudWatchProperties props) {
-            super(props);
-            this.props = props;
-        }
-
-        @Override
-        public String namespace() {
-            return props.getNamespace() == null ? DEFAULT.namespace() : props.getNamespace();
-        }
-
-        @Override
-        public int batchSize() {
-            // Override to leverage the CloudWatchConfig batch size instead of StepRegistryConfig
-            return props.getBatchSize() == null ? DEFAULT.batchSize() : props.getBatchSize();
-        }
-    }
-
+    // FIXME
     @Bean
     @ConditionalOnMissingBean
     public CloudWatchConfig cloudwatchConfig(CloudWatchProperties props) {
-        return new DefaultCloudWatchConfig(props);
+        return null;
     }
 
     @Bean
     @ConditionalOnProperty(value = "management.metrics.export.cloudwatch.enabled", matchIfMissing = true)
-    public MetricsExporter cloudwatchExporter(CloudWatchConfig config, Clock clock, AmazonCloudWatchAsync client) {
-        return () -> new CloudWatchMeterRegistry(config, clock, client);
+    public CloudWatchMeterRegistry cloudwatchExporter(CloudWatchConfig config, Clock clock, AmazonCloudWatchAsync client) {
+        return new CloudWatchMeterRegistry(config, clock, client);
     }
 
     @Bean

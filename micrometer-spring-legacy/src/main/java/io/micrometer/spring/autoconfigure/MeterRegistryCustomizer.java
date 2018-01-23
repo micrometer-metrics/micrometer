@@ -30,7 +30,7 @@ import io.micrometer.core.lang.NonNullApi;
  */
 @FunctionalInterface
 @NonNullApi
-public interface MeterRegistryConfigurer {
+public interface MeterRegistryCustomizer {
 
     /**
      * Configure the given {@code registry}.
@@ -38,5 +38,4 @@ public interface MeterRegistryConfigurer {
      * @param registry the registry to configure
      */
     void configureRegistry(MeterRegistry registry);
-
 }

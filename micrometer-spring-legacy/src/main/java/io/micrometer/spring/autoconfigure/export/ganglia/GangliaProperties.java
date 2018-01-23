@@ -28,23 +28,24 @@ import java.util.concurrent.TimeUnit;
  */
 @ConfigurationProperties(prefix = "management.metrics.export.ganglia")
 public class GangliaProperties {
-    /**
-     * Enable publishing to the backend.
-     */
-    private Boolean enabled = true;
 
     /**
-     * The step size (reporting frequency) to use.
+     * Enable publishing to Ganglia.
      */
-    private Duration step = Duration.ofMinutes(1);
+    private Boolean enabled;
 
     /**
-     * The base time unit used to report rates.
+     * Step size (i.e. reporting frequency) to use.
+     */
+    private Duration step;
+
+    /**
+     * Base time unit used to report rates.
      */
     private TimeUnit rateUnits;
 
     /**
-     * The base time unit used to report durations.
+     * Base time unit used to report durations.
      */
     private TimeUnit durationUnits;
 
@@ -54,27 +55,27 @@ public class GangliaProperties {
     private String protocolVersion;
 
     /**
-     * The UDP addressing mode, either unicast or multicast.
+     * UDP addressing mode, either unicast or multicast.
      */
     private GMetric.UDPAddressingMode addressingMode;
 
     /**
-     * The TTL for metrics on Ganglia.
+     * Time to live for metrics on Ganglia.
      */
     private Integer timeToLive;
 
     /**
-     * Ganglia host used for publishing.
+     * Host of the Ganglia server to receive exported metrics.
      */
     private String host;
 
     /**
-     * Ganglia port used for publishing.
+     * Port of the Ganglia server to receive exported metrics.
      */
     private Integer port;
 
     public Boolean getEnabled() {
-        return enabled;
+        return this.enabled;
     }
 
     public void setEnabled(Boolean enabled) {
@@ -82,7 +83,7 @@ public class GangliaProperties {
     }
 
     public Duration getStep() {
-        return step;
+        return this.step;
     }
 
     public void setStep(Duration step) {
@@ -90,7 +91,7 @@ public class GangliaProperties {
     }
 
     public TimeUnit getRateUnits() {
-        return rateUnits;
+        return this.rateUnits;
     }
 
     public void setRateUnits(TimeUnit rateUnits) {
@@ -98,7 +99,7 @@ public class GangliaProperties {
     }
 
     public TimeUnit getDurationUnits() {
-        return durationUnits;
+        return this.durationUnits;
     }
 
     public void setDurationUnits(TimeUnit durationUnits) {
@@ -106,7 +107,7 @@ public class GangliaProperties {
     }
 
     public String getProtocolVersion() {
-        return protocolVersion;
+        return this.protocolVersion;
     }
 
     public void setProtocolVersion(String protocolVersion) {
@@ -114,7 +115,7 @@ public class GangliaProperties {
     }
 
     public GMetric.UDPAddressingMode getAddressingMode() {
-        return addressingMode;
+        return this.addressingMode;
     }
 
     public void setAddressingMode(GMetric.UDPAddressingMode addressingMode) {
@@ -122,7 +123,7 @@ public class GangliaProperties {
     }
 
     public Integer getTimeToLive() {
-        return timeToLive;
+        return this.timeToLive;
     }
 
     public void setTimeToLive(Integer timeToLive) {
@@ -130,7 +131,7 @@ public class GangliaProperties {
     }
 
     public String getHost() {
-        return host;
+        return this.host;
     }
 
     public void setHost(String host) {
@@ -138,10 +139,11 @@ public class GangliaProperties {
     }
 
     public Integer getPort() {
-        return port;
+        return this.port;
     }
 
     public void setPort(Integer port) {
         this.port = port;
     }
+
 }

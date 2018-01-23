@@ -15,12 +15,10 @@
  */
 package io.micrometer.spring.autoconfigure.export;
 
-import io.micrometer.core.lang.Nullable;
-
 import java.time.Duration;
 
 /**
- * Base configuration for a metrics registry that pushes aggregated
+ * Base class for properties that configure a metrics registry that pushes aggregated
  * metrics on a regular interval.
  *
  * @author Jon Schneider
@@ -29,43 +27,38 @@ import java.time.Duration;
 public abstract class StepRegistryProperties {
 
     /**
-     * The step size (reporting frequency) to use.
+     * Step size (i.e. reporting frequency) to use.
      */
     private Duration step = Duration.ofMinutes(1);
 
     /**
-     * Enable publishing to the backend.
+     * Whether exporting of metrics to this backend is enabled.
      */
-    private Boolean enabled = true;
+    private Boolean enabled;
 
     /**
-     * The connection timeout for requests to the backend.
+     * Connection timeout for requests to this backend.
      */
-    @Nullable
     private Duration connectTimeout;
 
     /**
-     * The read timeout for requests to the backend.
+     * Read timeout for requests to this backend.
      */
-    @Nullable
     private Duration readTimeout;
 
     /**
-     * The number of threads to use with the metrics publishing scheduler.
+     * Number of threads to use with the metrics publishing scheduler.
      */
-    @Nullable
     private Integer numThreads;
 
     /**
-     * The number of measurements per request to use for the backend. If more
-     * measurements are found, then multiple requests will be made.
+     * Number of measurements per request to use for this backend. If more measurements
+     * are found, then multiple requests will be made.
      */
-    @Nullable
     private Integer batchSize;
 
-    @Nullable
     public Duration getStep() {
-        return step;
+        return this.step;
     }
 
     public void setStep(Duration step) {
@@ -73,46 +66,43 @@ public abstract class StepRegistryProperties {
     }
 
     public Boolean getEnabled() {
-        return enabled;
+        return this.enabled;
     }
 
     public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
     }
 
-    @Nullable
     public Duration getConnectTimeout() {
-        return connectTimeout;
+        return this.connectTimeout;
     }
 
     public void setConnectTimeout(Duration connectTimeout) {
         this.connectTimeout = connectTimeout;
     }
 
-    @Nullable
     public Duration getReadTimeout() {
-        return readTimeout;
+        return this.readTimeout;
     }
 
     public void setReadTimeout(Duration readTimeout) {
         this.readTimeout = readTimeout;
     }
 
-    @Nullable
     public Integer getNumThreads() {
-        return numThreads;
+        return this.numThreads;
     }
 
     public void setNumThreads(Integer numThreads) {
         this.numThreads = numThreads;
     }
 
-    @Nullable
     public Integer getBatchSize() {
-        return batchSize;
+        return this.batchSize;
     }
 
     public void setBatchSize(Integer batchSize) {
         this.batchSize = batchSize;
     }
+
 }

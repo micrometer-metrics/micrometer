@@ -24,18 +24,31 @@ import java.time.Duration;
  *
  * @author Jon Schneider
  */
-@ConfigurationProperties(prefix = "spring.metrics.export.jmx")
+@ConfigurationProperties(prefix = "management.metrics.export.jmx")
 public class JmxProperties {
     /**
-     * The step size (reporting frequency) to use.
+     * Whether exporting of metrics to JMX is enabled.
      */
-    private Duration step = Duration.ofMinutes(1);
+    private Boolean enabled;
+
+    /**
+     * Step size (i.e. reporting frequency) to use.
+     */
+    private Duration step;
+
+    public Duration getStep() {
+        return this.step;
+    }
 
     public void setStep(Duration step) {
         this.step = step;
     }
 
-    public Duration getStep() {
-        return step;
+    public Boolean getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
     }
 }

@@ -77,6 +77,12 @@ public class MetricsFilter extends OncePerRequestFilter {
         this.mappingIntrospector = mappingIntrospector;
     }
 
+    public static void tagWithException(Throwable exception) {
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+        attributes.setAttribute(EXCEPTION_ATTRIBUTE, exception,
+            RequestAttributes.SCOPE_REQUEST);
+    }
+
     @Override
     protected boolean shouldNotFilterAsyncDispatch() {
         return false;
@@ -88,7 +94,7 @@ public class MetricsFilter extends OncePerRequestFilter {
         HandlerExecutionChain handler = null;
         try {
             MatchableHandlerMapping matchableHandlerMapping = mappingIntrospector.getMatchableHandlerMapping(request);
-            if(matchableHandlerMapping != null) {
+            if (matchableHandlerMapping != null) {
                 handler = matchableHandlerMapping.getHandler(request);
             }
         } catch (Exception e) {
@@ -103,21 +109,21 @@ public class MetricsFilter extends OncePerRequestFilter {
         // want to start sampling again (effectively bumping the active count on any long task timers).
         // Rather, we'll just use the sampling context we started on the first invocation.
         TimingSampleContext timingContext = asyncTimingContext.remove(request);
-        if(timingContext == null) {
+        if (timingContext == null) {
             timingContext = new TimingSampleContext(request, handlerObject);
         }
 
         try {
             filterChain.doFilter(request, response);
 
-            if(request.isAsyncSupported()) {
+            if (request.isAsyncSupported()) {
                 // this won't be "started" until after the first call to doFilter
                 if (request.isAsyncStarted()) {
                     asyncTimingContext.put(request, timingContext);
                 }
             }
 
-            if(!request.isAsyncStarted()) {
+            if (!request.isAsyncStarted()) {
                 record(timingContext, response, request,
                     handlerObject, (Throwable) request.getAttribute(EXCEPTION_ATTRIBUTE));
             }
@@ -136,7 +142,7 @@ public class MetricsFilter extends OncePerRequestFilter {
                 .register(registry));
         }
 
-        if(timingContext.timedAnnotations.isEmpty() && autoTimeRequests) {
+        if (timingContext.timedAnnotations.isEmpty() && autoTimeRequests) {
             timingContext.timerSample.stop(Timer.builder(metricName)
                 .tags(tagsProvider.httpRequestTags(request, response, handlerObject, e))
                 .register(registry));
@@ -145,12 +151,6 @@ public class MetricsFilter extends OncePerRequestFilter {
         for (LongTaskTimer.Sample sample : timingContext.longTaskTimerSamples) {
             sample.stop();
         }
-    }
-
-    public static void tagWithException(Throwable exception) {
-        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
-        attributes.setAttribute(EXCEPTION_ATTRIBUTE, exception,
-            RequestAttributes.SCOPE_REQUEST);
     }
 
     private class TimingSampleContext {

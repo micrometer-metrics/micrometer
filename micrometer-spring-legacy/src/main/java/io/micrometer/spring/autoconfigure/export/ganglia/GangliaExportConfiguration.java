@@ -15,15 +15,10 @@
  */
 package io.micrometer.spring.autoconfigure.export.ganglia;
 
-import info.ganglia.gmetric4j.gmetric.GMetric;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-import io.micrometer.core.lang.Nullable;
 import io.micrometer.ganglia.GangliaConfig;
 import io.micrometer.ganglia.GangliaMeterRegistry;
-import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -32,9 +27,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Configuration for exporting metrics to Ganglia.
@@ -47,78 +39,18 @@ import java.util.concurrent.TimeUnit;
 @EnableConfigurationProperties(GangliaProperties.class)
 public class GangliaExportConfiguration {
 
-    @NonNullApi
-    @NonNullFields
-    private class DefaultGangliaConfig implements GangliaConfig {
-        private final GangliaProperties props;
-
-        private DefaultGangliaConfig(GangliaProperties props) {
-            this.props = props;
-        }
-
-        @Override
-        @Nullable
-        public String get(String k) {
-            return null;
-        }
-
-        @Override
-        public boolean enabled() {
-            return props.getEnabled();
-        }
-
-        @Override
-        public Duration step() {
-            return props.getStep();
-        }
-
-        @Override
-        public TimeUnit rateUnits() {
-            return props.getRateUnits() == null ? DEFAULT.rateUnits() : props.getRateUnits();
-        }
-
-        @Override
-        public TimeUnit durationUnits() {
-            return props.getDurationUnits() == null ? DEFAULT.durationUnits() : props.getDurationUnits();
-        }
-
-        @Override
-        public String protocolVersion() {
-            return props.getProtocolVersion() == null ? DEFAULT.protocolVersion() : props.getProtocolVersion();
-        }
-
-        @Override
-        public GMetric.UDPAddressingMode addressingMode() {
-            return props.getAddressingMode() == null ? DEFAULT.addressingMode() : props.getAddressingMode();
-        }
-
-        @Override
-        public int ttl() {
-            return props.getTimeToLive() == null ? DEFAULT.ttl() : props.getTimeToLive();
-        }
-
-        @Override
-        public String host() {
-            return props.getHost() == null ? DEFAULT.host() : props.getHost();
-        }
-
-        @Override
-        public int port() {
-            return props.getPort() == null ? DEFAULT.port() : props.getPort();
-        }
-    }
-
     @Bean
     @ConditionalOnMissingBean
     public GangliaConfig gangliaConfig(GangliaProperties props) {
-        return new DefaultGangliaConfig(props);
+        return new GangliaPropertiesConfigAdapter(props);
     }
 
     @Bean
     @ConditionalOnProperty(value = "management.metrics.export.ganglia.enabled", matchIfMissing = true)
-    public MetricsExporter gangliaExporter(GangliaConfig config,
-                                           HierarchicalNameMapper nameMapper, Clock clock) {
-        return () -> new GangliaMeterRegistry(config, clock, nameMapper);
+    @ConditionalOnMissingBean
+    public GangliaMeterRegistry gangliaExporter(GangliaConfig config,
+                                                HierarchicalNameMapper nameMapper, Clock clock) {
+        return new GangliaMeterRegistry(config, clock, nameMapper);
     }
 
     @Bean

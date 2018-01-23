@@ -40,9 +40,9 @@ public class MetricsRestTemplateCustomizer implements RestTemplateCustomizer {
      * the given {@code meterRegistry} with tags provided by the given
      * {@code tagProvider}.
      *
-     * @param meterRegistry     the meter registry
-     * @param tagProvider       the tag provider
-     * @param metricName        the name of the recorded metric
+     * @param meterRegistry the meter registry
+     * @param tagProvider   the tag provider
+     * @param metricName    the name of the recorded metric
      */
     public MetricsRestTemplateCustomizer(MeterRegistry meterRegistry,
                                          RestTemplateExchangeTagsProvider tagProvider, String metricName) {

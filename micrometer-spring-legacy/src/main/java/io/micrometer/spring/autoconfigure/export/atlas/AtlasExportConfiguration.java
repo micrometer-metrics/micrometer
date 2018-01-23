@@ -18,8 +18,6 @@ package io.micrometer.spring.autoconfigure.export.atlas;
 import com.netflix.spectator.atlas.AtlasConfig;
 import io.micrometer.atlas.AtlasMeterRegistry;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.spring.autoconfigure.export.DefaultStepRegistryConfig;
-import io.micrometer.spring.autoconfigure.export.MetricsExporter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -28,8 +26,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-
-import java.time.Duration;
 
 /**
  * Configuration for exporting metrics to Atlas.
@@ -43,61 +39,17 @@ import java.time.Duration;
 @EnableConfigurationProperties(AtlasProperties.class)
 public class AtlasExportConfiguration {
 
-    private class DefaultAtlasConfig extends DefaultStepRegistryConfig implements AtlasConfig {
-        private final AtlasProperties props;
-        private final AtlasConfig defaults = k -> null;
-
-        public DefaultAtlasConfig(AtlasProperties props) {
-            super(props);
-            this.props = props;
-        }
-
-        @Override
-        public String uri() {
-            return props.getUri() == null ? defaults.uri() : props.getUri();
-        }
-
-        @Override
-        public Duration meterTTL() {
-            return props.getMeterTimeToLive() == null ? defaults.meterTTL() : props.getMeterTimeToLive();
-        }
-
-        @Override
-        public boolean lwcEnabled() {
-            return props.getLwcEnabled() == null ? defaults.lwcEnabled() : props.getLwcEnabled();
-        }
-
-        @Override
-        public Duration configRefreshFrequency() {
-            return props.getConfigRefreshFrequency() == null ? defaults.configRefreshFrequency() : props.getConfigRefreshFrequency();
-        }
-
-        @Override
-        public Duration configTTL() {
-            return props.getConfigTimeToLive() == null ? defaults.configTTL() : props.getConfigTimeToLive();
-        }
-
-        @Override
-        public String configUri() {
-            return props.getConfigUri() == null ? defaults.configUri() : props.getConfigUri();
-        }
-
-        @Override
-        public String evalUri() {
-            return props.getEvalUri() == null ? defaults.evalUri() : props.getEvalUri();
-        }
-    }
-
     @Bean
     @ConditionalOnMissingBean(AtlasConfig.class)
-    public AtlasConfig atlasConfig(AtlasProperties props) {
-        return new DefaultAtlasConfig(props);
+    public AtlasConfig atlasConfig(AtlasProperties atlasProperties) {
+        return new AtlasPropertiesConfigAdapter(atlasProperties);
     }
 
     @Bean
     @ConditionalOnProperty(value = "management.metrics.export.atlas.enabled", matchIfMissing = true)
-    public MetricsExporter atlasExporter(AtlasConfig config, Clock clock) {
-        return () -> new AtlasMeterRegistry(config, clock);
+    @ConditionalOnMissingBean
+    public AtlasMeterRegistry atlasMeterRegistry(AtlasConfig config, Clock clock) {
+        return new AtlasMeterRegistry(config, clock);
     }
 
     @Bean

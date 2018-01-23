@@ -23,7 +23,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 /**
@@ -31,21 +30,7 @@ import org.springframework.test.context.junit4.SpringRunner;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@TestPropertySource(properties = {
-    "management.metrics.useGlobalRegistry=false",
-    "management.metrics.export.atlas.enabled=false",
-    "management.metrics.export.prometheus.enabled=false",
-    "management.metrics.export.datadog.enabled=false",
-    "management.metrics.export.ganglia.enabled=false",
-    "management.metrics.export.graphite.enabled=false",
-    "management.metrics.export.influx.enabled=false",
-    "management.metrics.export.jmx.enabled=false",
-    "management.metrics.export.statsd.enabled=false",
-    "management.metrics.export.newrelic.enabled=false",
-    "management.metrics.export.signalfx.enabled=false"
-})
-public class MeterRegistryConfigurerTest {
-
+public class MeterRegistryCustomizerTest {
     @Autowired
     MeterRegistry registry;
 
@@ -61,7 +46,7 @@ public class MeterRegistryConfigurerTest {
         }
 
         @Bean
-        public MeterRegistryConfigurer registryConfigurer() {
+        public MeterRegistryCustomizer registryConfigurer() {
             return registry -> registry.config().commonTags("region", "us-east-1");
         }
     }

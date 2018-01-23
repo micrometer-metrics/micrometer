@@ -17,12 +17,9 @@ package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.hystrix.HystrixMetricsBinder;
-import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.spring.SpringEnvironmentMeterFilter;
-import io.micrometer.spring.autoconfigure.export.MetricsExporter;
+import io.micrometer.spring.autoconfigure.export.CompositeMeterRegistryConfiguration;
 import io.micrometer.spring.autoconfigure.export.atlas.AtlasExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.datadog.DatadogExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.ganglia.GangliaExportConfiguration;
@@ -40,7 +37,6 @@ import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguratio
 import io.micrometer.spring.autoconfigure.web.tomcat.TomcatMetricsConfiguration;
 import io.micrometer.spring.integration.SpringIntegrationMetrics;
 import io.micrometer.spring.scheduling.ScheduledMethodMetrics;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -55,9 +51,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.integration.config.EnableIntegrationManagement;
 import org.springframework.integration.support.management.IntegrationManagementConfigurer;
 
-import java.util.Collection;
-import java.util.List;
-
 /**
  * {@link EnableAutoConfiguration Auto-configuration} for Micrometer-based metrics.
  *
@@ -66,47 +59,47 @@ import java.util.List;
 @Configuration
 @ConditionalOnClass(Timed.class)
 @EnableConfigurationProperties(MetricsProperties.class)
-@Import({MeterBindersConfiguration.class, ServletMetricsConfiguration.class,
-    RestTemplateMetricsConfiguration.class, AtlasExportConfiguration.class,
-    DatadogExportConfiguration.class, GangliaExportConfiguration.class,
-    GraphiteExportConfiguration.class, InfluxExportConfiguration.class,
-    NewRelicExportConfiguration.class, JmxExportConfiguration.class,
-    StatsdExportConfiguration.class, PrometheusExportConfiguration.class,
-    TomcatMetricsConfiguration.class, SimpleExportConfiguration.class,
-    SignalFxExportConfiguration.class, JerseyServerMetricsConfiguration.class})
+@Import({
+    // default binders, apply customizers and binders to newly-created registries
+    MeterBindersConfiguration.class, MeterRegistryPostProcessor.class,
+
+    // default instrumentation
+    ServletMetricsConfiguration.class, RestTemplateMetricsConfiguration.class,
+    TomcatMetricsConfiguration.class, JerseyServerMetricsConfiguration.class,
+
+    // registry implementations
+    AtlasExportConfiguration.class, DatadogExportConfiguration.class,
+    GangliaExportConfiguration.class, GraphiteExportConfiguration.class,
+    InfluxExportConfiguration.class, NewRelicExportConfiguration.class,
+    JmxExportConfiguration.class, StatsdExportConfiguration.class,
+    PrometheusExportConfiguration.class, SimpleExportConfiguration.class,
+    SignalFxExportConfiguration.class,
+
+    // conditionally build a composite registry out of more than one registry present
+    CompositeMeterRegistryConfiguration.class
+})
 public class MetricsAutoConfiguration {
     @Bean
     @Order(0)
-    MeterRegistryConfigurer springEnvironmentMeterFilter(Environment environment) {
+    MeterRegistryCustomizer springEnvironmentMeterFilter(Environment environment) {
         return r -> r.config().meterFilter(new SpringEnvironmentMeterFilter(environment));
     }
 
-    @SuppressWarnings("ConstantConditions")
+    /**
+     * If AOP is not enabled, scheduled interception will not work.
+     */
     @Bean
-    @ConditionalOnMissingBean(MeterRegistry.class)
-    public CompositeMeterRegistry compositeMeterRegistry(
-            MetricsProperties config,
-            ObjectProvider<List<MeterRegistryConfigurer>> configurers,
-            ObjectProvider<Collection<MetricsExporter>> exportersProvider) {
+    @ConditionalOnClass(name = "org.aspectj.lang.ProceedingJoinPoint")
+    @ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)
+    public ScheduledMethodMetrics metricsSchedulingAspect(MeterRegistry registry) {
+        return new ScheduledMethodMetrics(registry);
+    }
 
-        CompositeMeterRegistry composite =
-                config.isUseGlobalRegistry() ? Metrics.globalRegistry : new CompositeMeterRegistry();
-
-        if (exportersProvider.getIfAvailable() != null) {
-            exportersProvider.getIfAvailable().forEach(exporter -> {
-                final MeterRegistry childRegistry = exporter.registry();
-                if (composite == childRegistry) {
-                    throw new IllegalStateException("cannot add a CompositeMeterRegistry to itself");
-                }
-                composite.add(childRegistry);
-            });
-        }
-
-        if (configurers.getIfAvailable() != null) {
-            configurers.getIfAvailable().forEach(conf -> conf.configureRegistry(composite));
-        }
-
-        return composite;
+    @Bean
+    @ConditionalOnClass(name = "com.netflix.hystrix.strategy.HystrixPlugins")
+    @ConditionalOnProperty(value = "management.metrics.export.hystrix.enabled", matchIfMissing = true)
+    public HystrixMetricsBinder hystrixMetricsBinder() {
+        return new HystrixMetricsBinder();
     }
 
     @Configuration
@@ -128,45 +121,4 @@ public class MetricsAutoConfiguration {
             return new SpringIntegrationMetrics(configurer);
         }
     }
-
-    /**
-     * If AOP is not enabled, scheduled interception will not work.
-     */
-    @Bean
-    @ConditionalOnClass(name = "org.aspectj.lang.ProceedingJoinPoint")
-    @ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)
-    public ScheduledMethodMetrics metricsSchedulingAspect(MeterRegistry registry) {
-        return new ScheduledMethodMetrics(registry);
-    }
-
-    @Configuration
-    static class MeterRegistryConfigurationSupport {
-
-        @SuppressWarnings("ConstantConditions")
-        MeterRegistryConfigurationSupport(MeterRegistry registry,
-                                          MetricsProperties config,
-                                          ObjectProvider<Collection<MeterBinder>> binders) {
-            if (binders.getIfAvailable() != null) {
-                binders.getIfAvailable().forEach(binder -> binder.bindTo(registry));
-            }
-
-            if (config.isUseGlobalRegistry() && registry != Metrics.globalRegistry) {
-                Metrics.addRegistry(registry);
-            }
-        }
-    }
-
-
-    @Bean
-    @ConditionalOnClass(name = "com.netflix.hystrix.strategy.HystrixPlugins")
-    @ConditionalOnProperty(value = "management.metrics.export.hystrix.enabled", matchIfMissing = true)
-    public HystrixMetricsBinder hystrixMetricsBinder() {
-        return new HystrixMetricsBinder();
-    }
-
-
-
-
-
-
 }

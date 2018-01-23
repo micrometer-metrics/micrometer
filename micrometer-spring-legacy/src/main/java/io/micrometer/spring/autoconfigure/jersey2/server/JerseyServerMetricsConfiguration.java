@@ -51,7 +51,7 @@ public class JerseyServerMetricsConfiguration {
 
     @Bean
     public ResourceConfigCustomizer jerseyResourceConfigCustomizer(MeterRegistry meterRegistry,
-            JerseyServerMetricsProperties properties, JerseyTagsProvider tagsProvider) {
+                                                                   JerseyServerMetricsProperties properties, JerseyTagsProvider tagsProvider) {
         return (config) -> config.register(new MetricsApplicationEventListener(meterRegistry, tagsProvider,
             properties.getRequestsMetricName(), properties.isAutoTimeRequests(),
             new AnnotationFinder() {

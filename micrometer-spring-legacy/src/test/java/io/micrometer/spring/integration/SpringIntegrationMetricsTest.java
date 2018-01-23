@@ -76,12 +76,6 @@ public class SpringIntegrationMetricsTest {
             return new MockClock();
         }
 
-        @MessagingGateway
-        public interface TempConverter {
-            @Gateway(requestChannel = "convert.input")
-            float fahrenheitToCelcius(float fahren);
-        }
-
         @Bean
         public IntegrationFlow convert() {
             return f -> f
@@ -96,6 +90,12 @@ public class SpringIntegrationMetricsTest {
                     "https://www.w3schools.com/xml/tempconvert.asmx"), e -> e.id("w3schools"))
                 .transform(Transformers.xpath("/*[local-name()=\"FahrenheitToCelsiusResponse\"]"
                     + "/*[local-name()=\"FahrenheitToCelsiusResult\"]"), e -> e.id("toResponse"));
+        }
+
+        @MessagingGateway
+        public interface TempConverter {
+            @Gateway(requestChannel = "convert.input")
+            float fahrenheitToCelcius(float fahren);
         }
     }
 }
