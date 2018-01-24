@@ -38,7 +38,6 @@ public interface WavefrontConfig extends StepRegistryConfig {
      */
     default String uri() {
         String v = get(prefix() + ".uri");
-        // FIXME what is the value of <wavefront_instance>?
-        return v == null ? "https://wavefront_instance/api/v2/" : v;
+        return v == null ? "https://longboard.wavefront.com/api/v2/" : v;
     }
 }
