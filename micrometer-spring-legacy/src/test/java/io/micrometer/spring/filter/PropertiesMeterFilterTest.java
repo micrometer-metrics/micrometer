@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.config;
+package io.micrometer.spring.filter;
 
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Meter;
@@ -22,65 +22,66 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.Nullable;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import io.micrometer.spring.PropertiesMeterFilter;
+import io.micrometer.spring.autoconfigure.MetricsProperties;
+import org.junit.Before;
+import org.junit.Test;
 
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class PropertyMeterFilterTest {
-    // In a real application, the `get` method would be bound to some property source and
-    // mapped to the appropriate type with some sort of type conversion service.
-    private PropertyMeterFilter filter = new PropertyMeterFilter() {
-        @SuppressWarnings("unchecked")
-        @Override
-        public <V> V get(String k, Class<V> vClass) {
-            if (k.equals("enabled"))
-                return (V) (Boolean) false;
-            if (k.equals("my.counter.enabled"))
-                return (V) (Boolean) false;
-            if (k.equals("my.timer.enabled"))
-                return (V) (Boolean) true;
-            if (k.equals("my.summary.enabled"))
-                return (V) (Boolean) true;
-            if (k.equals("my.summary.maximumExpectedValue"))
-                return (V) (Long) 100L;
-            return null;
-        }
-    };
+public class PropertiesMeterFilterTest {
+    private MetricsProperties props = new MetricsProperties();
 
     @Nullable
     private HistogramConfig histogramConfig;
 
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock()) {
         @Override
-        protected DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig conf) {
+        @NonNull
+        protected DistributionSummary newDistributionSummary(@NonNull Meter.Id id, @NonNull HistogramConfig conf) {
             histogramConfig = conf;
             return super.newDistributionSummary(id, conf);
         }
     };
 
-    @BeforeEach
-    void configureRegistry() {
-        registry.config().meterFilter(filter);
+    @Before
+    public void before() {
+        registry.config().meterFilter(new PropertiesMeterFilter(props));
     }
 
     @Test
-    void disable() {
+    public void disable() {
+        props.getEnabled().put("my.counter", false);
         registry.counter("my.counter");
+
         assertThat(registry.find("my.counter").counter()).isNull();
     }
 
     @Test
-    void enable() {
+    public void disableAll() {
+        props.getEnabled().put("all", false);
         registry.timer("my.timer");
+
+        assertThat(registry.find("my.timer").timer()).isNull();
+    }
+
+    @Test
+    public void enable() {
+        props.getEnabled().put("all", false);
+        props.getEnabled().put("my.timer", true);
+        registry.timer("my.timer");
+
         registry.mustFind("my.timer").timer();
     }
 
     @Test
-    void summaryHistogramConfig() {
+    public void summaryHistogramConfig() {
+        props.getSummaries().getMaximumExpectedValue().put("my.summary", 100L);
         registry.summary("my.summary");
+
         assertThat(requireNonNull(histogramConfig).getMaximumExpectedValue()).isEqualTo(100);
     }
 }

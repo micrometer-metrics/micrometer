@@ -21,7 +21,7 @@ import io.micrometer.core.lang.NonNull;
 /**
  * Binders register one or more metrics to provide information about the state
  * of some aspect of the application or its container.
- *
+ * <p>
  * Binders are enabled by default if they source data for an alert
  * that is recommended for a production ready app.
  */

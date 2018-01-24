@@ -25,6 +25,10 @@ import java.util.List;
  * Used to measure the rate of change based on calls to increment.
  */
 public interface Counter extends Meter {
+    static Builder builder(String name) {
+        return new Builder(name);
+    }
+
     /**
      * Update the counter by one.
      */
@@ -54,15 +58,13 @@ public interface Counter extends Meter {
         return Type.Counter;
     }
 
-    static Builder builder(String name) {
-        return new Builder(name);
-    }
-
     class Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
-        @Nullable private String description;
-        @Nullable private String baseUnit;
+        @Nullable
+        private String description;
+        @Nullable
+        private String baseUnit;
 
         private Builder(String name) {
             this.name = name;

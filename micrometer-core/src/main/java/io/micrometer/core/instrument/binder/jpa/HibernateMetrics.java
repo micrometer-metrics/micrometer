@@ -39,6 +39,15 @@ import java.util.function.ToDoubleFunction;
 @NonNullFields
 public class HibernateMetrics implements MeterBinder {
 
+    private final Iterable<Tag> tags;
+    @Nullable
+    private final Statistics stats;
+
+    private HibernateMetrics(EntityManagerFactory emf, String name, Iterable<Tag> tags) {
+        this.tags = Tags.concat(tags, "entityManagerFactory", name);
+        this.stats = hasStatisticsEnabled(emf) ? getStatistics(emf) : null;
+    }
+
     public static void monitor(MeterRegistry meterRegistry, EntityManagerFactory emf, String name, String... tags) {
         monitor(meterRegistry, emf, name, Tags.zip(tags));
     }
@@ -47,16 +56,8 @@ public class HibernateMetrics implements MeterBinder {
         new HibernateMetrics(emf, name, tags).bindTo(meterRegistry);
     }
 
-    private final Iterable<Tag> tags;
-    @Nullable private final Statistics stats;
-
-    private HibernateMetrics(EntityManagerFactory emf, String name, Iterable<Tag> tags) {
-        this.tags = Tags.concat(tags, "entityManagerFactory", name);
-        this.stats = hasStatisticsEnabled(emf) ? getStatistics(emf) : null;
-    }
-
     private void counter(MeterRegistry registry, String name, String description, ToDoubleFunction<Statistics> f, String... extraTags) {
-        if(this.stats == null) {
+        if (this.stats == null) {
             return;
         }
 
@@ -172,7 +173,8 @@ public class HibernateMetrics implements MeterBinder {
      * @param emf an {@code EntityManagerFactory}
      * @return the {@code Statistics} from the underlying {@code SessionFactory} or {@code null}.
      */
-    @Nullable private Statistics getStatistics(EntityManagerFactory emf) {
+    @Nullable
+    private Statistics getStatistics(EntityManagerFactory emf) {
         try {
             SessionFactory sf = emf.unwrap(SessionFactory.class);
             return sf.getStatistics();

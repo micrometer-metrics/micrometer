@@ -23,11 +23,9 @@ import java.util.concurrent.atomic.LongAdder;
 public class StepLong {
     private final Clock clock;
     private final long stepMillis;
-
-    private volatile double previous = 0.0;
     private final LongAdder current = new LongAdder();
-
     private final AtomicLong lastInitPos;
+    private volatile double previous = 0.0;
 
     public StepLong(Clock clock, long stepMillis) {
         this.clock = clock;

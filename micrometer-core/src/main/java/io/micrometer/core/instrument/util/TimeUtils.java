@@ -27,10 +27,19 @@ import java.util.concurrent.TimeUnit;
  * @author Jon Schneider
  */
 public final class TimeUtils {
-    private TimeUtils() {}
+    private static final long C0 = 1L;
+    private static final long C1 = C0 * 1000L;
+    private static final long C2 = C1 * 1000L;
+    private static final long C3 = C2 * 1000L;
+    private static final long C4 = C3 * 60L;
+    private static final long C5 = C4 * 60L;
+    private static final long C6 = C5 * 24L;
+
+    private TimeUtils() {
+    }
 
     public static double convert(double t, TimeUnit sourceUnit, TimeUnit destinationUnit) {
-        switch(sourceUnit) {
+        switch (sourceUnit) {
             case NANOSECONDS:
                 return nanosToUnit(t, destinationUnit);
             case MICROSECONDS:
@@ -189,29 +198,21 @@ public final class TimeUtils {
         }
     }
 
-    private static final long C0 = 1L;
-    private static final long C1 = C0 * 1000L;
-    private static final long C2 = C1 * 1000L;
-    private static final long C3 = C2 * 1000L;
-    private static final long C4 = C3 * 60L;
-    private static final long C5 = C4 * 60L;
-    private static final long C6 = C5 * 24L;
-
-    public static Duration simpleParse(String time){
-        String timeLower = time.toLowerCase().replaceAll("[,_ ]","");
-        if(timeLower.endsWith("ns")) {
-            return Duration.ofNanos(Long.parseLong(timeLower.substring(0,timeLower.length()-2)));
-        } else if(timeLower.endsWith("ms")) {
-            return Duration.ofMillis(Long.parseLong(timeLower.substring(0,timeLower.length()-2)));
-        } else if(timeLower.endsWith("s")) {
-            return Duration.ofSeconds(Long.parseLong(timeLower.substring(0,timeLower.length()-1)));
-        } else if(timeLower.endsWith("m")) {
-            return Duration.ofMinutes(Long.parseLong(timeLower.substring(0,timeLower.length()-1)));
-        } else if(timeLower.endsWith("h")) {
-            return Duration.ofHours(Long.parseLong(timeLower.substring(0,timeLower.length()-1)));
-        } else if(timeLower.endsWith("d")) {
-            return Duration.of(Long.parseLong(timeLower.substring(0,timeLower.length()-1)), ChronoUnit.DAYS);
+    public static Duration simpleParse(String time) {
+        String timeLower = time.toLowerCase().replaceAll("[,_ ]", "");
+        if (timeLower.endsWith("ns")) {
+            return Duration.ofNanos(Long.parseLong(timeLower.substring(0, timeLower.length() - 2)));
+        } else if (timeLower.endsWith("ms")) {
+            return Duration.ofMillis(Long.parseLong(timeLower.substring(0, timeLower.length() - 2)));
+        } else if (timeLower.endsWith("s")) {
+            return Duration.ofSeconds(Long.parseLong(timeLower.substring(0, timeLower.length() - 1)));
+        } else if (timeLower.endsWith("m")) {
+            return Duration.ofMinutes(Long.parseLong(timeLower.substring(0, timeLower.length() - 1)));
+        } else if (timeLower.endsWith("h")) {
+            return Duration.ofHours(Long.parseLong(timeLower.substring(0, timeLower.length() - 1)));
+        } else if (timeLower.endsWith("d")) {
+            return Duration.of(Long.parseLong(timeLower.substring(0, timeLower.length() - 1)), ChronoUnit.DAYS);
         }
-        throw new DateTimeParseException("Unable to parse "+time+" into duration", timeLower, 0);
+        throw new DateTimeParseException("Unable to parse " + time + " into duration", timeLower, 0);
     }
 }

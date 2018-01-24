@@ -37,6 +37,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jon Schneider
  */
 class JCacheMetricsTest {
+    private static Stream<CachingProvider> cachingProviders() {
+        return Stream.of(
+            new RICachingProvider(),
+            new EhcacheCachingProvider()
+        );
+    }
+
     @ParameterizedTest
     @MethodSource("cachingProviders")
     void cacheExposesMetrics(CachingProvider provider) {
@@ -54,12 +61,5 @@ class JCacheMetricsTest {
         JCacheMetrics.monitor(registry, cache, "jcache", emptyList());
 
         assertThat(registry.mustFind("jcache.puts").tags("name", "a").gauge().value()).isEqualTo(1.0);
-    }
-
-    private static Stream<CachingProvider> cachingProviders() {
-        return Stream.of(
-            new RICachingProvider(),
-            new EhcacheCachingProvider()
-        );
     }
 }

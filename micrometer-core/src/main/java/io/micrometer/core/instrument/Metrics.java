@@ -29,6 +29,7 @@ import java.util.function.ToLongFunction;
  */
 public class Metrics {
     public static final CompositeMeterRegistry globalRegistry = new CompositeMeterRegistry();
+    private static final More more = new More();
 
     public static void addRegistry(MeterRegistry registry) {
         globalRegistry.add(registry);
@@ -88,56 +89,6 @@ public class Metrics {
     public static Timer timer(String name, String... tags) {
         return globalRegistry.timer(name, tags);
     }
-
-    static class More {
-        /**
-         * Measures the time taken for long tasks.
-         */
-        public LongTaskTimer longTaskTimer(String name, String... tags) {
-            return globalRegistry.more().longTaskTimer(name, tags);
-        }
-
-        /**
-         * Measures the time taken for long tasks.
-         */
-        public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
-            return globalRegistry.more().longTaskTimer(name, tags);
-        }
-
-        /**
-         * Tracks a monotonically increasing value, automatically incrementing the counter whenever
-         * the value is observed.
-         */
-        public <T> FunctionCounter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-            return globalRegistry.more().counter(name, tags, obj, f);
-        }
-
-        /**
-         * Tracks a number, maintaining a weak reference on it.
-         */
-        public <T extends Number> FunctionCounter counter(String name, Iterable<Tag> tags, T number) {
-            return globalRegistry.more().counter(name, tags, number);
-        }
-
-        /**
-         * A gauge that tracks a time value, to be scaled to the monitoring system's base time unit.
-         */
-        public <T> TimeGauge timeGauge(String name, Iterable<Tag> tags, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
-            return globalRegistry.more().timeGauge(name, tags, obj, fUnit, f);
-        }
-
-        /**
-         * A timer that tracks monotonically increasing functions for count and totalTime.
-         */
-        public <T> FunctionTimer timer(String name, Iterable<Tag> tags, T obj,
-                                       ToLongFunction<T> countFunction,
-                                       ToDoubleFunction<T> totalTimeFunction,
-                                       TimeUnit totalTimeFunctionUnits) {
-            return globalRegistry.more().timer(name, tags, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
-        }
-    }
-
-    private static final More more = new More();
 
     /**
      * Access to less frequently used meter types and patterns.
@@ -244,5 +195,53 @@ public class Metrics {
     @Nullable
     public static <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
         return globalRegistry.gaugeMapSize(name, tags, map);
+    }
+
+    static class More {
+        /**
+         * Measures the time taken for long tasks.
+         */
+        public LongTaskTimer longTaskTimer(String name, String... tags) {
+            return globalRegistry.more().longTaskTimer(name, tags);
+        }
+
+        /**
+         * Measures the time taken for long tasks.
+         */
+        public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
+            return globalRegistry.more().longTaskTimer(name, tags);
+        }
+
+        /**
+         * Tracks a monotonically increasing value, automatically incrementing the counter whenever
+         * the value is observed.
+         */
+        public <T> FunctionCounter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+            return globalRegistry.more().counter(name, tags, obj, f);
+        }
+
+        /**
+         * Tracks a number, maintaining a weak reference on it.
+         */
+        public <T extends Number> FunctionCounter counter(String name, Iterable<Tag> tags, T number) {
+            return globalRegistry.more().counter(name, tags, number);
+        }
+
+        /**
+         * A gauge that tracks a time value, to be scaled to the monitoring system's base time unit.
+         */
+        public <T> TimeGauge timeGauge(String name, Iterable<Tag> tags, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
+            return globalRegistry.more().timeGauge(name, tags, obj, fUnit, f);
+        }
+
+        /**
+         * A timer that tracks monotonically increasing functions for count and totalTime.
+         */
+        public <T> FunctionTimer timer(String name, Iterable<Tag> tags, T obj,
+                                       ToLongFunction<T> countFunction,
+                                       ToDoubleFunction<T> totalTimeFunction,
+                                       TimeUnit totalTimeFunctionUnits) {
+            return globalRegistry.more().timer(name, tags, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
+        }
     }
 }

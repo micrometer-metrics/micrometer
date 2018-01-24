@@ -31,6 +31,12 @@ public class HazelcastCacheMetrics implements MeterBinder {
     private final String name;
     private final Iterable<Tag> tags;
 
+    public HazelcastCacheMetrics(IMap<?, ?> cache, String name, Iterable<Tag> tags) {
+        this.cache = cache;
+        this.name = name;
+        this.tags = tags;
+    }
+
     /**
      * Record metrics on a Hazelcast cache.
      *
@@ -58,12 +64,6 @@ public class HazelcastCacheMetrics implements MeterBinder {
     public static <K, V, C extends IMap<K, V>> C monitor(MeterRegistry registry, C cache, String name, Iterable<Tag> tags) {
         new HazelcastCacheMetrics(cache, name, tags).bindTo(registry);
         return cache;
-    }
-
-    public HazelcastCacheMetrics(IMap<?, ?> cache, String name, Iterable<Tag> tags) {
-        this.cache = cache;
-        this.name = name;
-        this.tags = tags;
     }
 
     @Override
@@ -134,28 +134,28 @@ public class HazelcastCacheMetrics implements MeterBinder {
 
     private void timings(MeterRegistry registry) {
         FunctionTimer.builder(name + ".gets",
-                cache,
-                cache -> cache.getLocalMapStats().getGetOperationCount(),
-                cache -> cache.getLocalMapStats().getTotalGetLatency(), TimeUnit.NANOSECONDS
-            )
+            cache,
+            cache -> cache.getLocalMapStats().getGetOperationCount(),
+            cache -> cache.getLocalMapStats().getTotalGetLatency(), TimeUnit.NANOSECONDS
+        )
             .tags(tags)
             .description("Cache gets")
             .register(registry);
 
         FunctionTimer.builder(name + ".puts",
-                cache,
-                cache -> cache.getLocalMapStats().getPutOperationCount(),
-                cache -> cache.getLocalMapStats().getTotalPutLatency(), TimeUnit.NANOSECONDS
-            )
+            cache,
+            cache -> cache.getLocalMapStats().getPutOperationCount(),
+            cache -> cache.getLocalMapStats().getTotalPutLatency(), TimeUnit.NANOSECONDS
+        )
             .tags(tags)
             .description("Cache puts")
             .register(registry);
 
         FunctionTimer.builder(name + ".removals",
-                cache,
-                cache -> cache.getLocalMapStats().getRemoveOperationCount(),
-                cache -> cache.getLocalMapStats().getTotalRemoveLatency(), TimeUnit.NANOSECONDS
-            )
+            cache,
+            cache -> cache.getLocalMapStats().getRemoveOperationCount(),
+            cache -> cache.getLocalMapStats().getTotalRemoveLatency(), TimeUnit.NANOSECONDS
+        )
             .tags(tags)
             .description("Cache removals")
             .register(registry);

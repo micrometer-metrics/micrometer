@@ -50,22 +50,15 @@ public class OkHttpMetricsEventListener extends EventListener {
     private final MeterRegistry registry;
     private final ConcurrentMap<Call, CallState> callState = new ConcurrentHashMap<>();
 
-    private static class CallState {
-        final long startTime;
-        @Nullable Request request;
-        @Nullable Response response;
-        @Nullable IOException exception;
-
-        CallState(long startTime) {
-            this.startTime = startTime;
-        }
-    }
-
     OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper, Iterable<Tag> extraTags) {
         this.registry = registry;
         this.requestsMetricName = requestsMetricName;
         this.urlMapper = urlMapper;
         this.extraTags = extraTags;
+    }
+
+    public static Builder builder(MeterRegistry registry, String name) {
+        return new Builder(registry, name);
     }
 
     @Override
@@ -84,7 +77,7 @@ public class OkHttpMetricsEventListener extends EventListener {
     @Override
     public void callFailed(Call call, IOException e) {
         CallState state = callState.remove(call);
-        if(state != null) {
+        if (state != null) {
             state.exception = e;
             time(state);
         }
@@ -93,7 +86,7 @@ public class OkHttpMetricsEventListener extends EventListener {
     @Override
     public void responseHeadersEnd(Call call, Response response) {
         CallState state = callState.remove(call);
-        if(state != null) {
+        if (state != null) {
             state.response = response;
             time(state);
         }
@@ -129,8 +122,18 @@ public class OkHttpMetricsEventListener extends EventListener {
         return Integer.toString(response.code());
     }
 
-    public static Builder builder(MeterRegistry registry, String name) {
-        return new Builder(registry, name);
+    private static class CallState {
+        final long startTime;
+        @Nullable
+        Request request;
+        @Nullable
+        Response response;
+        @Nullable
+        IOException exception;
+
+        CallState(long startTime) {
+            this.startTime = startTime;
+        }
     }
 
     public static class Builder {

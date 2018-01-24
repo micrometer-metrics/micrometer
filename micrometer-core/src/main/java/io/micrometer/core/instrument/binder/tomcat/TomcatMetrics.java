@@ -38,9 +38,20 @@ import java.util.function.BiConsumer;
 @NonNullApi
 @NonNullFields
 public class TomcatMetrics implements MeterBinder {
-    @Nullable private final Manager manager;
+    @Nullable
+    private final Manager manager;
     private final MBeanServer mBeanServer;
     private final Iterable<Tag> tags;
+
+    public TomcatMetrics(@Nullable Manager manager, Iterable<Tag> tags) {
+        this(manager, tags, getMBeanServer());
+    }
+
+    public TomcatMetrics(@Nullable Manager manager, Iterable<Tag> tags, MBeanServer mBeanServer) {
+        this.tags = tags;
+        this.manager = manager;
+        this.mBeanServer = mBeanServer;
+    }
 
     public static void monitor(MeterRegistry meterRegistry, @Nullable Manager manager, String... tags) {
         monitor(meterRegistry, manager, Tags.zip(tags));
@@ -56,16 +67,6 @@ public class TomcatMetrics implements MeterBinder {
             return mBeanServers.get(0);
         }
         return ManagementFactory.getPlatformMBeanServer();
-    }
-
-    public TomcatMetrics(@Nullable Manager manager, Iterable<Tag> tags) {
-        this(manager, tags, getMBeanServer());
-    }
-
-    public TomcatMetrics(@Nullable Manager manager, Iterable<Tag> tags, MBeanServer mBeanServer) {
-        this.tags = tags;
-        this.manager = manager;
-        this.mBeanServer = mBeanServer;
     }
 
     @Override
@@ -197,7 +198,7 @@ public class TomcatMetrics implements MeterBinder {
     private void registerMetricsEventually(String key, String value, BiConsumer<ObjectName, Iterable<Tag>> perObject) {
         try {
             Set<ObjectName> objs = mBeanServer.queryNames(new ObjectName("Tomcat:" + key + "=" + value + ",*"), null);
-            if(!objs.isEmpty()) {
+            if (!objs.isEmpty()) {
                 // MBean is present, so we can register metrics now.
                 objs.forEach(o -> perObject.accept(o, Tags.concat(tags, nameTag(o))));
                 return;

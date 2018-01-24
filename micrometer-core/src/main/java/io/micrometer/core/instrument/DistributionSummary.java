@@ -29,6 +29,10 @@ import java.util.List;
  */
 public interface DistributionSummary extends Meter {
 
+    static Builder builder(String name) {
+        return new Builder(name);
+    }
+
     /**
      * Updates the statistics kept by the summary with the specified amount.
      *
@@ -65,15 +69,21 @@ public interface DistributionSummary extends Meter {
 
     HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles);
 
-    static Builder builder(String name) {
-        return new Builder(name);
+    @Override
+    default Iterable<Measurement> measure() {
+        return Arrays.asList(
+            new Measurement(() -> (double) count(), Statistic.Count),
+            new Measurement(this::totalAmount, Statistic.Total)
+        );
     }
 
     class Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
-        @Nullable private String description;
-        @Nullable private String baseUnit;
+        @Nullable
+        private String description;
+        @Nullable
+        private String baseUnit;
         private HistogramConfig.Builder histogramConfigBuilder = HistogramConfig.builder();
 
         private Builder(String name) {
@@ -174,14 +184,6 @@ public interface DistributionSummary extends Meter {
         public DistributionSummary register(MeterRegistry registry) {
             return registry.summary(new Meter.Id(name, tags, baseUnit, description, Type.DistributionSummary), histogramConfigBuilder.build());
         }
-    }
-
-    @Override
-    default Iterable<Measurement> measure() {
-        return Arrays.asList(
-            new Measurement(() -> (double) count(), Statistic.Count),
-            new Measurement(this::totalAmount, Statistic.Total)
-        );
     }
 
 }

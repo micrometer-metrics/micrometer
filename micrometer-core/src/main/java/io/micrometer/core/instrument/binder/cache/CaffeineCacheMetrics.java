@@ -42,6 +42,24 @@ import java.util.concurrent.TimeUnit;
 @NonNullApi
 @NonNullFields
 public class CaffeineCacheMetrics implements MeterBinder {
+    private final String name;
+    private final Iterable<Tag> tags;
+    private final Cache<?, ?> cache;
+
+    /**
+     * Creates a new {@link CaffeineCacheMetrics} instance.
+     *
+     * @param cache The cache to be instrumented. You must call {@link Caffeine#recordStats()} prior to building the cache
+     *              for metrics to be recorded.
+     * @param name  The metric name prefix
+     * @param tags  tags to apply to all recorded metrics
+     */
+    public CaffeineCacheMetrics(Cache<?, ?> cache, String name, Iterable<Tag> tags) {
+        this.name = name;
+        this.tags = tags;
+        this.cache = cache;
+    }
+
     /**
      * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()} prior to building the cache
      * for metrics to be recorded.
@@ -100,23 +118,6 @@ public class CaffeineCacheMetrics implements MeterBinder {
     public static <C extends AsyncLoadingCache> C monitor(MeterRegistry registry, C cache, String name, Iterable<Tag> tags) {
         monitor(registry, cache.synchronous(), name, tags);
         return cache;
-    }
-
-    private final String name;
-    private final Iterable<Tag> tags;
-    private final Cache<?, ?> cache;
-
-    /**
-     * Creates a new {@link CaffeineCacheMetrics} instance.
-     * @param cache The cache to be instrumented. You must call {@link Caffeine#recordStats()} prior to building the cache
-     *              for metrics to be recorded.
-     * @param name  The metric name prefix
-     * @param tags tags to apply to all recorded metrics
-     */
-    public CaffeineCacheMetrics(Cache<?, ?> cache, String name, Iterable<Tag> tags) {
-        this.name = name;
-        this.tags = tags;
-        this.cache = cache;
     }
 
     @Override

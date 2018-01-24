@@ -20,5 +20,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 
 interface CompositeMeter extends Meter {
     void add(MeterRegistry registry);
+
     void remove(MeterRegistry registry);
 }

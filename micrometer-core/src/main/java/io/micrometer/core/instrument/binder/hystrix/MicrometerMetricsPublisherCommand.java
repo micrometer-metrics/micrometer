@@ -134,7 +134,7 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
                     int count = hystrixCommandCompletion.getEventCounts().getCount(hystrixEventType);
                     if (count > 0) {
                         switch (hystrixEventType) {
-                                /* this list is derived from {@link HystrixCommandMetrics.HealthCounts.plus} */
+                            /* this list is derived from {@link HystrixCommandMetrics.HealthCounts.plus} */
                             case FAILURE:
                             case TIMEOUT:
                             case THREAD_POOL_REJECTED:
@@ -152,9 +152,9 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
                                 break;
                         }
 
-                        if(executionEvents.contains(hystrixEventType)) {
+                        if (executionEvents.contains(hystrixEventType)) {
                             getExecutionCounter(hystrixEventType).increment(count);
-                        } else if(fallbackEvents.contains(hystrixEventType)){
+                        } else if (fallbackEvents.contains(hystrixEventType)) {
                             getFallbackCounter(hystrixEventType).increment(count);
                         } else {
                             getOtherExecutionCounter(hystrixEventType).increment(count);

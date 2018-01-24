@@ -27,7 +27,9 @@ import io.micrometer.core.instrument.Counter;
 public class StepCounter extends AbstractMeter implements Counter {
     private final StepDouble value;
 
-    /** Create a new instance. */
+    /**
+     * Create a new instance.
+     */
     public StepCounter(Id id, Clock clock, long stepMillis) {
         super(id);
         this.value = new StepDouble(clock, stepMillis);

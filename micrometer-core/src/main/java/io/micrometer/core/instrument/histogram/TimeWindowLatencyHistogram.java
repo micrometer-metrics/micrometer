@@ -41,12 +41,6 @@ public class TimeWindowLatencyHistogram extends TimeWindowHistogramBase<LatencyS
 
     private final PauseDetector pauseDetector;
 
-    private static class NoopPauseDetector extends PauseDetector {
-        NoopPauseDetector() {
-            shutdown();
-        }
-    }
-
     /*VisibleForTesting*/
     public TimeWindowLatencyHistogram(Clock clock, HistogramConfig histogramConfig) {
         this(clock, histogramConfig, new ClockDriftPauseDetector(Duration.ofMillis(100), Duration.ofMillis(100)));
@@ -122,5 +116,11 @@ public class TimeWindowLatencyHistogram extends TimeWindowHistogramBase<LatencyS
     @Override
     double countAtValue(Histogram accumulatedHistogram, long value) {
         return accumulatedHistogram.getCountBetweenValues(0, value);
+    }
+
+    private static class NoopPauseDetector extends PauseDetector {
+        NoopPauseDetector() {
+            shutdown();
+        }
     }
 }

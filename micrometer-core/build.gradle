@@ -40,7 +40,7 @@ dependencies {
     // reactor
     compile 'io.projectreactor:reactor-core:3.1.2.RELEASE', optional
 
-    compile 'com.squareup.okhttp3:okhttp:3.9.0',optional
+    compile 'com.squareup.okhttp3:okhttp:3.9.0', optional
 
     testCompile 'io.projectreactor:reactor-test:3.1.2.RELEASE'
     testCompile 'io.projectreactor.ipc:reactor-netty:0.7.1.RELEASE'
@@ -53,7 +53,7 @@ dependencies {
     // Eclipse still needs this (as of 4.7.1a)
     testRuntime 'org.junit.platform:junit-platform-launcher:1.0.0'
 
-	testCompile "org.mockito:mockito-core:2.10.0"
+    testCompile "org.mockito:mockito-core:2.10.0"
 
     testCompile 'org.hsqldb:hsqldb:2.3.5'
 

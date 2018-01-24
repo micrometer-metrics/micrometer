@@ -15,11 +15,10 @@
  */
 package io.micrometer.boot2.samples;
 
+import io.micrometer.boot2.samples.components.PersonController;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.scheduling.annotation.EnableScheduling;
-
-import io.micrometer.boot2.samples.components.PersonController;
 
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling

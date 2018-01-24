@@ -69,7 +69,7 @@ class TimeWindowLatencyHistogramTest {
     void percentiles() {
         TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), HistogramConfig.DEFAULT, noPause);
 
-        for(int i = 1; i <= 10; i++) {
+        for (int i = 1; i <= 10; i++) {
             histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
         }
 
@@ -88,14 +88,14 @@ class TimeWindowLatencyHistogramTest {
     void percentilesChangeWithMoreRecentSamples() {
         TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), HistogramConfig.DEFAULT, noPause);
 
-        for(int i = 1; i <= 10; i++) {
+        for (int i = 1; i <= 10; i++) {
             histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
         }
 
         // baseline median
         assertThat(nanosToUnit(histogram.percentile(0.50), TimeUnit.MILLISECONDS)).isEqualTo(5, Offset.offset(0.1));
 
-        for(int i = 11; i <= 20; i++) {
+        for (int i = 11; i <= 20; i++) {
             histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
         }
 

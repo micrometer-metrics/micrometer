@@ -25,6 +25,12 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
 public interface FunctionTimer extends Meter {
+    static <T> Builder<T> builder(String name, T obj, ToLongFunction<T> countFunction,
+                                  ToDoubleFunction<T> totalTimeFunction,
+                                  TimeUnit totalTimeFunctionUnits) {
+        return new Builder<>(name, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
+    }
+
     /**
      * The total number of occurrences of the timed event.
      */
@@ -49,12 +55,6 @@ public interface FunctionTimer extends Meter {
         );
     }
 
-    static <T> Builder<T> builder(String name, T obj, ToLongFunction<T> countFunction,
-                                  ToDoubleFunction<T> totalTimeFunction,
-                                  TimeUnit totalTimeFunctionUnits) {
-        return new Builder<>(name, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
-    }
-
     class Builder<T> {
         private final String name;
         private final T obj;
@@ -62,8 +62,10 @@ public interface FunctionTimer extends Meter {
         private final ToDoubleFunction<T> totalTimeFunction;
         private final TimeUnit totalTimeFunctionUnits;
         private final List<Tag> tags = new ArrayList<>();
-        @Nullable private String description;
-        @Nullable private String baseUnit;
+        @Nullable
+        private String description;
+        @Nullable
+        private String baseUnit;
 
         private Builder(String name, T obj,
                         ToLongFunction<T> countFunction,

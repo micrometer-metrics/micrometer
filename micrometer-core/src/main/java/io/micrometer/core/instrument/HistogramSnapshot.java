@@ -26,6 +26,20 @@ public final class HistogramSnapshot {
     private static final ValueAtPercentile[] EMPTY_VALUES = new ValueAtPercentile[0];
     private static final CountAtValue[] EMPTY_COUNTS = new CountAtValue[0];
     private static final HistogramSnapshot EMPTY = new HistogramSnapshot(0, 0, 0, null, null);
+    private final long count;
+    private final double total;
+    private final double max;
+    private final ValueAtPercentile[] percentileValues;
+    private final CountAtValue[] histogramCounts;
+    private HistogramSnapshot(long count, double total, double max,
+                              @Nullable ValueAtPercentile[] percentileValues,
+                              @Nullable CountAtValue[] histogramCounts) {
+        this.count = count;
+        this.total = total;
+        this.max = max;
+        this.percentileValues = percentileValues != null ? percentileValues : EMPTY_VALUES;
+        this.histogramCounts = histogramCounts != null ? histogramCounts : EMPTY_COUNTS;
+    }
 
     public static HistogramSnapshot of(long count, double total, double max,
                                        @Nullable ValueAtPercentile[] percentileValues,
@@ -35,22 +49,6 @@ public final class HistogramSnapshot {
 
     public static HistogramSnapshot empty() {
         return EMPTY;
-    }
-
-    private final long count;
-    private final double total;
-    private final double max;
-    private final ValueAtPercentile[] percentileValues;
-    private final CountAtValue[] histogramCounts;
-
-    private HistogramSnapshot(long count, double total, double max,
-                              @Nullable ValueAtPercentile[] percentileValues,
-                              @Nullable CountAtValue[] histogramCounts) {
-        this.count = count;
-        this.total = total;
-        this.max = max;
-        this.percentileValues = percentileValues != null ? percentileValues : EMPTY_VALUES;
-        this.histogramCounts = histogramCounts != null ? histogramCounts : EMPTY_COUNTS;
     }
 
     public long count() {

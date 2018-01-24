@@ -32,6 +32,17 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jon Schneider
  */
 class MeterFilterTest {
+    private static Condition<Meter.Id> tag(String tagKey) {
+        return tag(tagKey, null);
+    }
+
+    private static Condition<Meter.Id> tag(String tagKey, @Nullable String tagValue) {
+        return new Condition<>(
+            id -> stream(id.getTags().spliterator(), false)
+                .anyMatch(t -> t.getKey().equals(tagKey) && (tagValue == null || t.getValue().equals(tagValue))),
+            "Must have a tag with key '" + tagKey + "'");
+    }
+
     @Test
     void commonTags() {
         MeterFilter filter = MeterFilter.commonTags(Tags.zip("k2", "v2"));
@@ -112,16 +123,5 @@ class MeterFilterTest {
         filter.accept(id3);
 
         assertThat(n.get()).isEqualTo(1);
-    }
-
-    private static Condition<Meter.Id> tag(String tagKey) {
-        return tag(tagKey, null);
-    }
-
-    private static Condition<Meter.Id> tag(String tagKey, @Nullable String tagValue) {
-        return new Condition<>(
-            id -> stream(id.getTags().spliterator(), false)
-                .anyMatch(t -> t.getKey().equals(tagKey) && (tagValue == null || t.getValue().equals(tagValue))),
-            "Must have a tag with key '" + tagKey + "'");
     }
 }

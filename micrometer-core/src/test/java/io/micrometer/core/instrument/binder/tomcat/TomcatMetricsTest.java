@@ -30,7 +30,6 @@ import org.apache.catalina.session.TooManyActiveSessionsException;
 import org.apache.catalina.startup.Tomcat;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -50,11 +49,11 @@ class TomcatMetricsTest {
 
         ManagerBase manager = new ManagerBase() {
             @Override
-            public void load() throws ClassNotFoundException, IOException {
+            public void load() {
             }
 
             @Override
-            public void unload() throws IOException {
+            public void unload() {
             }
 
             @Override
@@ -98,7 +97,7 @@ class TomcatMetricsTest {
 
         CountDownLatch latch = new CountDownLatch(1);
         registry.config().onMeterAdded(m -> {
-            if(m.getId().getName().equals("tomcat.global.received"))
+            if (m.getId().getName().equals("tomcat.global.received"))
                 latch.countDown();
         });
 

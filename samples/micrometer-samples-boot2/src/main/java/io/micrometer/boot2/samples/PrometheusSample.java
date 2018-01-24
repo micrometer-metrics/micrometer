@@ -16,12 +16,11 @@
 package io.micrometer.boot2.samples;
 
 import com.netflix.hystrix.contrib.javanica.aop.aspectj.HystrixCommandAspect;
+import io.micrometer.boot2.samples.components.PersonController;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
-
-import io.micrometer.boot2.samples.components.PersonController;
 
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling

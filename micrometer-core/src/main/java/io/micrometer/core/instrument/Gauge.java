@@ -23,6 +23,10 @@ import java.util.List;
 import java.util.function.ToDoubleFunction;
 
 public interface Gauge extends Meter {
+    static <T> Builder<T> builder(String name, @Nullable T obj, ToDoubleFunction<T> f) {
+        return new Builder<>(name, obj, f);
+    }
+
     /**
      * Returns the current value. The act of observing the value by calling this method triggers sampling
      * of the underlying number or user-defined function that defines the value for the gauge.
@@ -39,17 +43,16 @@ public interface Gauge extends Meter {
         return Type.Gauge;
     }
 
-    static <T> Builder<T> builder(String name, @Nullable T obj, ToDoubleFunction<T> f) {
-        return new Builder<>(name, obj, f);
-    }
-
     class Builder<T> {
         private final String name;
-        @Nullable private final T obj;
+        @Nullable
+        private final T obj;
         private final ToDoubleFunction<T> f;
         private final List<Tag> tags = new ArrayList<>();
-        @Nullable private String description;
-        @Nullable private String baseUnit;
+        @Nullable
+        private String description;
+        @Nullable
+        private String baseUnit;
 
         private Builder(String name, @Nullable T obj, ToDoubleFunction<T> f) {
             this.name = name;
@@ -64,7 +67,7 @@ public interface Gauge extends Meter {
         public Builder tags(String... tags) {
             return tags(Tags.zip(tags));
         }
-        
+
         public Builder tags(Iterable<Tag> tags) {
             tags.forEach(this.tags::add);
             return this;

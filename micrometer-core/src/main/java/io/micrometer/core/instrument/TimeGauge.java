@@ -27,14 +27,14 @@ import java.util.function.ToDoubleFunction;
  * @author Jon Schneider
  */
 public interface TimeGauge extends Gauge {
+    static <T> Builder<T> builder(String name, T obj, TimeUnit fUnits, ToDoubleFunction<T> f) {
+        return new Builder<>(name, obj, fUnits, f);
+    }
+
     TimeUnit baseTimeUnit();
 
     default double value(TimeUnit unit) {
         return TimeUtils.convert(value(), baseTimeUnit(), unit);
-    }
-
-    static <T> Builder<T> builder(String name, T obj, TimeUnit fUnits, ToDoubleFunction<T> f) {
-        return new Builder<>(name, obj, fUnits, f);
     }
 
     class Builder<T> {
@@ -43,7 +43,8 @@ public interface TimeGauge extends Gauge {
         private final TimeUnit fUnits;
         private final ToDoubleFunction<T> f;
         private final List<Tag> tags = new ArrayList<>();
-        @Nullable private String description;
+        @Nullable
+        private String description;
 
         private Builder(String name, T obj, TimeUnit fUnits, ToDoubleFunction<T> f) {
             this.name = name;

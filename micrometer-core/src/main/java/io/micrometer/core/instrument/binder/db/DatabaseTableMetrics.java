@@ -34,6 +34,40 @@ import java.sql.SQLException;
 @NonNullApi
 @NonNullFields
 public class DatabaseTableMetrics implements MeterBinder {
+    private final String query;
+    private final String tableName;
+    private final String name;
+    private final Iterable<Tag> tags;
+    private final DataSource dataSource;
+    /**
+     * Record the row count for an individual database table.
+     *
+     * @param dataSource The data source to use to run the row count query.
+     * @param tableName  The name of the table to report table size for.
+     * @param name       The name prefix of the metrics.
+     * @param tags       Tags to apply to all recorded metrics.
+     */
+    public DatabaseTableMetrics(DataSource dataSource, String tableName, String name, Iterable<Tag> tags) {
+        this(dataSource, "SELECT COUNT(1) FROM " + tableName, tableName, name, tags);
+    }
+    /**
+     * Record the result based on a query.
+     *
+     * @param dataSource The data source to use to run the row count query.
+     * @param query      The query to be run against the table. The first column of the result will be the metric and
+     *                   it should return a single row.
+     * @param tableName  The name of the table to report table size for.
+     * @param name       The name prefix of the metrics.
+     * @param tags       Tags to apply to all recorded metrics.
+     */
+    public DatabaseTableMetrics(DataSource dataSource, String query, String tableName, String name, Iterable<Tag> tags) {
+        this.dataSource = dataSource;
+        this.query = query;
+        this.tableName = tableName;
+        this.name = name;
+        this.tags = tags;
+    }
+
     /**
      * Record the row count for an individual database table.
      *
@@ -60,51 +94,15 @@ public class DatabaseTableMetrics implements MeterBinder {
         new DatabaseTableMetrics(ds, tableName, name, tags).bindTo(registry);
     }
 
-    private final String query;
-    private final String tableName;
-    private final String name;
-    private final Iterable<Tag> tags;
-    private final DataSource dataSource;
-
-    /**
-     * Record the row count for an individual database table.
-     *
-     * @param dataSource The data source to use to run the row count query.
-     * @param tableName  The name of the table to report table size for.
-     * @param name       The name prefix of the metrics.
-     * @param tags       Tags to apply to all recorded metrics.
-     */
-    public DatabaseTableMetrics(DataSource dataSource, String tableName, String name, Iterable<Tag> tags) {
-        this(dataSource, "SELECT COUNT(1) FROM " + tableName, tableName, name, tags);
-    }
-
-    /**
-     * Record the result based on a query.
-     *
-     * @param dataSource The data source to use to run the row count query.
-     * @param query      The query to be run against the table. The first column of the result will be the metric and
-     *                   it should return a single row.
-     * @param tableName  The name of the table to report table size for.
-     * @param name       The name prefix of the metrics.
-     * @param tags       Tags to apply to all recorded metrics.
-     */
-    public DatabaseTableMetrics(DataSource dataSource, String query, String tableName, String name, Iterable<Tag> tags) {
-        this.dataSource = dataSource;
-        this.query = query;
-        this.tableName = tableName;
-        this.name = name;
-        this.tags = tags;
-    }
-
     @Override
     public void bindTo(MeterRegistry registry) {
-        registry.gauge(name, Tags.concat(tags,"table", tableName), dataSource, ds -> {
+        registry.gauge(name, Tags.concat(tags, "table", tableName), dataSource, ds -> {
             try (Connection conn = ds.getConnection();
                  PreparedStatement ps = conn.prepareStatement(query);
                  ResultSet rs = ps.executeQuery()) {
                 rs.next();
                 return rs.getInt(1);
-            } catch(SQLException ignored) {
+            } catch (SQLException ignored) {
                 return 0;
             }
         });

@@ -160,7 +160,7 @@ public class MetricsFilterTest {
     }
 
     @Test
-    public void unhandledError() throws Exception {
+    public void unhandledError() {
         assertThatCode(() -> mvc.perform(get("/api/c1/unhandledError/10"))
             .andExpect(status().isOk()))
             .hasRootCauseInstanceOf(RuntimeException.class);
@@ -409,7 +409,7 @@ public class MetricsFilterTest {
         @Timed
         @Timed(value = "my.long.request.exception", longTask = true)
         @GetMapping("/completableFutureException")
-        CompletableFuture<String> asyncCompletableFutureException() throws Exception {
+        CompletableFuture<String> asyncCompletableFutureException() {
             return CompletableFuture.supplyAsync(() -> {
                 throw new RuntimeException("boom");
             });

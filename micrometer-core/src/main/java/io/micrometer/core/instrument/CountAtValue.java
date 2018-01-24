@@ -15,22 +15,21 @@
  */
 package io.micrometer.core.instrument;
 
-import java.util.concurrent.TimeUnit;
-
 import io.micrometer.core.instrument.util.TimeUtils;
+
+import java.util.concurrent.TimeUnit;
 
 public final class CountAtValue {
 
-    public static CountAtValue of(long value, double count) {
-        return new CountAtValue(value, count);
-    }
-
     private final long value;
     private final double count;
-
     private CountAtValue(long value, double count) {
         this.value = value;
         this.count = count;
+    }
+
+    public static CountAtValue of(long value, double count) {
+        return new CountAtValue(value, count);
     }
 
     public long value() {

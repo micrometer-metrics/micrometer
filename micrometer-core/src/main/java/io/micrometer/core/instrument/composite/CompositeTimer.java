@@ -129,7 +129,7 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
         final long[] slaNanos = histogramConfig.getSlaBoundaries();
 
         Duration[] sla = null;
-        if(slaNanos != null) {
+        if (slaNanos != null) {
             sla = new Duration[slaNanos.length];
             for (int i = 0; i < slaNanos.length; i++) {
                 sla[i] = Duration.ofNanos(slaNanos[i]);
@@ -137,16 +137,16 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
         }
 
         return Timer.builder(getId().getName())
-                    .tags(getId().getTags())
-                    .description(getId().getDescription())
-                    .maximumExpectedValue(Duration.ofNanos(histogramConfig.getMaximumExpectedValue()))
-                    .minimumExpectedValue(Duration.ofNanos(histogramConfig.getMinimumExpectedValue()))
-                    .publishPercentiles(histogramConfig.getPercentiles())
-                    .publishPercentileHistogram(histogramConfig.isPercentileHistogram())
-                    .histogramBufferLength(histogramConfig.getHistogramBufferLength())
-                    .histogramExpiry(histogramConfig.getHistogramExpiry())
-                    .sla(sla)
-                    .pauseDetector(pauseDetector)
-                    .register(registry);
+            .tags(getId().getTags())
+            .description(getId().getDescription())
+            .maximumExpectedValue(Duration.ofNanos(histogramConfig.getMaximumExpectedValue()))
+            .minimumExpectedValue(Duration.ofNanos(histogramConfig.getMinimumExpectedValue()))
+            .publishPercentiles(histogramConfig.getPercentiles())
+            .publishPercentileHistogram(histogramConfig.isPercentileHistogram())
+            .histogramBufferLength(histogramConfig.getHistogramBufferLength())
+            .histogramExpiry(histogramConfig.getHistogramExpiry())
+            .sla(sla)
+            .pauseDetector(pauseDetector)
+            .register(registry);
     }
 }

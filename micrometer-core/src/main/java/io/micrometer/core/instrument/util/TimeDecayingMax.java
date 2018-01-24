@@ -25,17 +25,15 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Incubating(since = "1.0.0-rc.6")
 public class TimeDecayingMax {
-    private final Clock clock;
-    private AtomicLong[] ringBuffer;
-
     @SuppressWarnings("rawtypes")
     private static final AtomicIntegerFieldUpdater<TimeDecayingMax> rotatingUpdater =
         AtomicIntegerFieldUpdater.newUpdater(TimeDecayingMax.class, "rotating");
-
+    private final Clock clock;
     private final long durationBetweenRotatesMillis;
+    private AtomicLong[] ringBuffer;
     private int currentBucket;
     private volatile long lastRotateTimestampMillis;
-    @SuppressWarnings({ "unused", "FieldCanBeLocal" })
+    @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private volatile int rotating = 0; // 0 - not rotating, 1 - rotating
 
     @SuppressWarnings("ConstantConditions")
@@ -50,7 +48,7 @@ public class TimeDecayingMax {
         this.currentBucket = 0;
 
         this.ringBuffer = new AtomicLong[bufferLength];
-        for(int i = 0; i < bufferLength; i++) {
+        for (int i = 0; i < bufferLength; i++) {
             this.ringBuffer[i] = new AtomicLong();
         }
     }
@@ -86,13 +84,13 @@ public class TimeDecayingMax {
     public void record(double sample) {
         rotate();
         long sampleLong = Double.doubleToLongBits(sample);
-        for(AtomicLong max: ringBuffer) {
+        for (AtomicLong max : ringBuffer) {
             updateMax(max, sampleLong);
         }
     }
 
     private void updateMax(AtomicLong max, long sample) {
-        for(;;) {
+        for (; ; ) {
             long curMax = max.get();
             if (curMax >= sample || max.compareAndSet(curMax, sample))
                 break;

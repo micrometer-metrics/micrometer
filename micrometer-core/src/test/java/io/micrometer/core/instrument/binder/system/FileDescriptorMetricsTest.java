@@ -37,11 +37,6 @@ import static org.mockito.Mockito.when;
 class FileDescriptorMetricsTest {
     private MeterRegistry registry = new SimpleMeterRegistry();
 
-    private interface HotSpotLikeOperatingSystemMXBean extends OperatingSystemMXBean {
-        long getOpenFileDescriptorCount();
-        long getMaxFileDescriptorCount();
-    }
-
     @Test
     @SuppressWarnings("restriction")
     void fileDescriptorMetricsRuntime() {
@@ -90,5 +85,11 @@ class FileDescriptorMetricsTest {
             .gauge().value()).isEqualTo(Double.NaN);
         assertThat(registry.mustFind("process.max.fds").tags("some", "tag")
             .gauge().value()).isEqualTo(Double.NaN);
+    }
+
+    private interface HotSpotLikeOperatingSystemMXBean extends OperatingSystemMXBean {
+        long getOpenFileDescriptorCount();
+
+        long getMaxFileDescriptorCount();
     }
 }

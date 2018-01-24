@@ -31,7 +31,6 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 /**
  * @param <T> the type of the buckets in a ring buffer
  * @param <U> the type of accumulated histogram
- *
  * @author Jon Schneider
  * @author Trustin Heuiseung Lee
  */
@@ -48,13 +47,13 @@ abstract class TimeWindowHistogramBase<T, U> {
     private final HistogramConfig histogramConfig;
 
     private final T[] ringBuffer;
-    @Nullable private U accumulatedHistogram;
-    private volatile boolean accumulatedHistogramStale;
-
     private final long durationBetweenRotatesMillis;
+    @Nullable
+    private U accumulatedHistogram;
+    private volatile boolean accumulatedHistogramStale;
     private int currentBucket;
     private volatile long lastRotateTimestampMillis;
-    @SuppressWarnings({ "unused", "FieldCanBeLocal" })
+    @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private volatile int rotating; // 0 - not rotating, 1 - rotating
 
     TimeWindowHistogramBase(Clock clock, HistogramConfig histogramConfig, Class<T> bucketType) {
@@ -72,7 +71,7 @@ abstract class TimeWindowHistogramBase<T, U> {
         durationBetweenRotatesMillis = histogramConfig.getHistogramExpiry().toMillis() / ageBuckets;
         if (durationBetweenRotatesMillis <= 0) {
             rejectHistogramConfig("histogramExpiry (" + histogramConfig.getHistogramExpiry().toMillis() +
-                                  "ms) / histogramBufferLength (" + ageBuckets + ") must be greater than 0.");
+                "ms) / histogramBufferLength (" + ageBuckets + ") must be greater than 0.");
         }
 
         currentBucket = 0;
@@ -84,7 +83,7 @@ abstract class TimeWindowHistogramBase<T, U> {
         for (double p : histogramConfig.getPercentiles()) {
             if (p < 0 || p > 1) {
                 rejectHistogramConfig("percentiles must contain only the values between 0.0 and 1.0. " +
-                                      "Found " + p);
+                    "Found " + p);
             }
         }
 
@@ -95,17 +94,21 @@ abstract class TimeWindowHistogramBase<T, U> {
         }
         if (maximumExpectedValue < minimumExpectedValue) {
             rejectHistogramConfig("maximumExpectedValue (" + maximumExpectedValue +
-                                  ") must be equal to or greater than minimumExpectedValue (" +
-                                  minimumExpectedValue + ").");
+                ") must be equal to or greater than minimumExpectedValue (" +
+                minimumExpectedValue + ").");
         }
         for (long sla : histogramConfig.getSlaBoundaries()) {
             if (sla <= 0) {
                 rejectHistogramConfig("slaBoundaries must contain only the values greater than 0. " +
-                                      "Found " + sla);
+                    "Found " + sla);
             }
         }
 
         return histogramConfig;
+    }
+
+    private static void rejectHistogramConfig(String msg) {
+        throw new IllegalStateException("Invalid HistogramConfig: " + msg);
     }
 
     void initRingBuffer() {
@@ -115,20 +118,22 @@ abstract class TimeWindowHistogramBase<T, U> {
         accumulatedHistogram = newAccumulatedHistogram(ringBuffer);
     }
 
-    private static void rejectHistogramConfig(String msg) {
-        throw new IllegalStateException("Invalid HistogramConfig: " + msg);
-    }
-
     abstract T newBucket(HistogramConfig histogramConfig);
+
     abstract void recordLong(T bucket, long value);
+
     abstract void recordDouble(T bucket, double value);
+
     abstract void resetBucket(T bucket);
 
     abstract U newAccumulatedHistogram(T[] ringBuffer);
+
     abstract void accumulate(T sourceBucket, U accumulatedHistogram);
+
     abstract void resetAccumulatedHistogram(U accumulatedHistogram);
 
     abstract double valueAtPercentile(U accumulatedHistogram, double percentile);
+
     abstract double countAtValue(U accumulatedHistogram, long value);
 
     public final double percentile(double percentile) {

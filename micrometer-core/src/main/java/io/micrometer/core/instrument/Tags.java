@@ -16,7 +16,9 @@
 package io.micrometer.core.instrument;
 
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -28,7 +30,8 @@ import static java.util.stream.StreamSupport.stream;
  * @author Maciej Walkowiak
  */
 public final class Tags {
-    private Tags() {}
+    private Tags() {
+    }
 
     public static Iterable<Tag> zip(String... keyValues) {
         if (keyValues.length % 2 == 1) {
@@ -44,7 +47,7 @@ public final class Tags {
     }
 
     public static Iterable<Tag> concat(Iterable<Tag> tags, Iterable<Tag> otherTags) {
-        if(!otherTags.iterator().hasNext())
+        if (!otherTags.iterator().hasNext())
             return tags;
 
         return Stream.concat(stream(tags.spliterator(), false), stream(otherTags.spliterator(), false))

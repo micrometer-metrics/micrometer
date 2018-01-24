@@ -33,7 +33,7 @@ public interface HierarchicalNameMapper {
     HierarchicalNameMapper DEFAULT = (id, convention) -> {
         String tags = "";
 
-        if(id.getTags().iterator().hasNext()) {
+        if (id.getTags().iterator().hasNext()) {
             tags = "." + id.getConventionTags(convention).stream()
                 .map(t -> t.getKey() + "." + t.getValue())
                 .map(nameSegment -> nameSegment.replace(" ", "_"))

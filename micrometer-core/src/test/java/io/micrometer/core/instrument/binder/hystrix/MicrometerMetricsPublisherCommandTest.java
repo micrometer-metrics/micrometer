@@ -82,7 +82,7 @@ class MicrometerMetricsPublisherCommandTest {
                     .functionCounter()
                     .count() == count)
                 .blockLast(Duration.ofSeconds(30));
-        } catch(RuntimeException e) {
+        } catch (RuntimeException e) {
             assertThat(registry.mustFind("hystrix.execution").tags("event", eventType)
                 .functionCounter()
                 .count()).isEqualTo(count);
@@ -91,7 +91,7 @@ class MicrometerMetricsPublisherCommandTest {
 
     @Disabled
     @Test
-    void testOpenCircuit() throws Exception {
+    void testOpenCircuit() {
         HystrixCommandKey key = HystrixCommandKey.Factory.asKey("MicrometerCOMMAND-B");
         HystrixCommandProperties properties = new HystrixPropertiesCommandDefault(key, propertiesSetter.withCircuitBreakerForceOpen(true));
         HystrixCommandMetrics metrics = HystrixCommandMetrics.getInstance(key, groupKey, properties);

@@ -68,14 +68,14 @@ public class SimpleMeterRegistry extends MeterRegistry {
                 break;
         }
 
-        if(histogramConfig.getPercentiles() != null) {
+        if (histogramConfig.getPercentiles() != null) {
             for (double percentile : histogramConfig.getPercentiles()) {
                 gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
                     summary, s -> summary.percentile(percentile));
             }
         }
 
-        if(histogramConfig.isPublishingHistogram()) {
+        if (histogramConfig.isPublishingHistogram()) {
             for (Long bucket : histogramConfig.getHistogramBuckets(false)) {
                 more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket", Long.toString(bucket)),
                     summary, s -> s.histogramCountAtValue(bucket));
@@ -107,14 +107,14 @@ public class SimpleMeterRegistry extends MeterRegistry {
                 break;
         }
 
-        if(histogramConfig.getPercentiles() != null) {
+        if (histogramConfig.getPercentiles() != null) {
             for (double percentile : histogramConfig.getPercentiles()) {
                 gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
                     timer, t -> t.percentile(percentile, getBaseTimeUnit()));
             }
         }
 
-        if(histogramConfig.isPublishingHistogram()) {
+        if (histogramConfig.isPublishingHistogram()) {
             for (Long bucket : histogramConfig.getHistogramBuckets(false)) {
                 more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket",
                     percentileFormat.format(TimeUtils.nanosToUnit(bucket, getBaseTimeUnit()))),

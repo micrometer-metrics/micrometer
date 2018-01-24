@@ -27,27 +27,27 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public interface LongTaskTimer extends Meter {
-    class Sample {
-        private final LongTaskTimer timer;
-        private final long task;
+    static Builder builder(String name) {
+        return new Builder(name);
+    }
 
-        public Sample(LongTaskTimer timer, long task) {
-            this.timer = timer;
-            this.task = task;
+    /**
+     * Create a timer builder from a {@link Timed} annotation.
+     *
+     * @param timed The annotation instance to base a new timer on.
+     */
+    static Builder builder(Timed timed) {
+        if (!timed.longTask()) {
+            throw new IllegalArgumentException("Cannot build a long task timer from a @Timed annotation that is not marked as a long task");
         }
 
-        /**
-         * Records the duration of the operation
-         *
-         * @return The duration that was stop in nanoseconds
-         */
-        public long stop() {
-            return timer.stop(task);
+        if (timed.value().isEmpty()) {
+            throw new IllegalArgumentException("Long tasks instrumented with @Timed require the value attribute to be non-empty");
         }
 
-        public double duration(TimeUnit unit) {
-            return timer.duration(task, unit);
-        }
+        return new Builder(timed.value())
+            .tags(timed.extraTags())
+            .description(timed.description().isEmpty() ? null : timed.description());
     }
 
     /**
@@ -156,33 +156,34 @@ public interface LongTaskTimer extends Meter {
         return Type.LongTaskTimer;
     }
 
-    static Builder builder(String name) {
-        return new Builder(name);
-    }
+    class Sample {
+        private final LongTaskTimer timer;
+        private final long task;
 
-    /**
-     * Create a timer builder from a {@link Timed} annotation.
-     *
-     * @param timed The annotation instance to base a new timer on.
-     */
-    static Builder builder(Timed timed) {
-        if (!timed.longTask()) {
-            throw new IllegalArgumentException("Cannot build a long task timer from a @Timed annotation that is not marked as a long task");
+        public Sample(LongTaskTimer timer, long task) {
+            this.timer = timer;
+            this.task = task;
         }
 
-        if (timed.value().isEmpty()) {
-            throw new IllegalArgumentException("Long tasks instrumented with @Timed require the value attribute to be non-empty");
+        /**
+         * Records the duration of the operation
+         *
+         * @return The duration that was stop in nanoseconds
+         */
+        public long stop() {
+            return timer.stop(task);
         }
 
-        return new Builder(timed.value())
-            .tags(timed.extraTags())
-            .description(timed.description().isEmpty() ? null : timed.description());
+        public double duration(TimeUnit unit) {
+            return timer.duration(task, unit);
+        }
     }
 
     class Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
-        @Nullable private String description;
+        @Nullable
+        private String description;
 
         private Builder(String name) {
             this.name = name;

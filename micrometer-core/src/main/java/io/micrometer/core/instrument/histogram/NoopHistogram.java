@@ -20,9 +20,8 @@ import org.HdrHistogram.Histogram;
 
 final class NoopHistogram extends Histogram {
 
-    private static final long serialVersionUID = 82886959971723882L;
-
     static final NoopHistogram INSTANCE = new NoopHistogram();
+    private static final long serialVersionUID = 82886959971723882L;
 
     private NoopHistogram() {
         super(1, 2, 0);
@@ -49,61 +48,78 @@ final class NoopHistogram extends Histogram {
     }
 
     @Override
+    public void setAutoResize(boolean autoResize) {
+    }
+
+    @Override
     public boolean supportsAutoResize() {
         return true;
     }
 
     @Override
-    public void setAutoResize(boolean autoResize) {}
+    public void recordValue(long value) {
+    }
 
     @Override
-    public void recordValue(long value) {}
+    public void recordValueWithCount(long value, long count) {
+    }
 
     @Override
-    public void recordValueWithCount(long value, long count) {}
+    public void recordValueWithExpectedInterval(long value, long expectedIntervalBetweenValueSamples) {
+    }
 
     @Override
-    public void recordValueWithExpectedInterval(long value, long expectedIntervalBetweenValueSamples) {}
-
-    @Override
-    public void recordConvertedDoubleValueWithCount(double value, long count) {}
+    public void recordConvertedDoubleValueWithCount(double value, long count) {
+    }
 
     @SuppressWarnings("deprecation")
     @Override
-    public void recordValue(long value, long expectedIntervalBetweenValueSamples) {}
+    public void recordValue(long value, long expectedIntervalBetweenValueSamples) {
+    }
 
     @Override
-    public void reset() {}
+    public void reset() {
+    }
 
     @Override
-    public void copyInto(AbstractHistogram targetHistogram) {}
+    public void copyInto(AbstractHistogram targetHistogram) {
+    }
 
     @Override
     public void copyIntoCorrectedForCoordinatedOmission(AbstractHistogram targetHistogram,
-                                                        long expectedIntervalBetweenValueSamples) {}
+                                                        long expectedIntervalBetweenValueSamples) {
+    }
 
     @Override
-    public void add(AbstractHistogram otherHistogram) {}
+    public void add(AbstractHistogram otherHistogram) {
+    }
 
     @Override
-    public void subtract(AbstractHistogram otherHistogram) {}
+    public void subtract(AbstractHistogram otherHistogram) {
+    }
 
     @Override
     public void addWhileCorrectingForCoordinatedOmission(AbstractHistogram otherHistogram,
-                                                         long expectedIntervalBetweenValueSamples) {}
+                                                         long expectedIntervalBetweenValueSamples) {
+    }
 
     @Override
-    public void shiftValuesLeft(int numberOfBinaryOrdersOfMagnitude) {}
+    public void shiftValuesLeft(int numberOfBinaryOrdersOfMagnitude) {
+    }
 
     @Override
-    public void shiftValuesRight(int numberOfBinaryOrdersOfMagnitude) {}
+    public void shiftValuesRight(int numberOfBinaryOrdersOfMagnitude) {
+    }
 
     @Override
-    public void setStartTimeStamp(long timeStampMsec) {}
+    public void setStartTimeStamp(long timeStampMsec) {
+    }
 
     @Override
-    public void setEndTimeStamp(long timeStampMsec) {}
+    public void setEndTimeStamp(long timeStampMsec) {
+    }
 
     @Override
-    public void setTag(String tag) {}
+    public void setTag(String tag) {
+    }
 }

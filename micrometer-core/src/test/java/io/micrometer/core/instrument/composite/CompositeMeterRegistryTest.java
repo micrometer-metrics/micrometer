@@ -204,7 +204,7 @@ class CompositeMeterRegistryTest {
     }
 
     @Test
-    void compositePauseDetectorConfigOverridesChild() throws InterruptedException {
+    void compositePauseDetectorConfigOverridesChild() {
         composite.add(simple);
 
         CountDownLatch count = new CountDownLatch(1);

@@ -22,9 +22,10 @@ import io.micrometer.core.lang.Nullable;
  * @author Jon Schneider
  */
 public final class MeterEquivalence {
-    private MeterEquivalence() {}
+    private MeterEquivalence() {
+    }
 
-    public static boolean equals(@Nullable Meter m1,@Nullable Object o) {
+    public static boolean equals(@Nullable Meter m1, @Nullable Object o) {
         if (m1 == null && o != null) return false;
         if (o == null && m1 != null) return false;
         if (!(o instanceof Meter)) return false;

@@ -28,6 +28,10 @@ import static java.util.stream.StreamSupport.stream;
  * A counter, gauge, timer, or distribution summary that results collects one or more metrics.
  */
 public interface Meter {
+    static Builder builder(String name, Type type, Iterable<Measurement> measurements) {
+        return new Builder(name, type, measurements);
+    }
+
     /**
      * A unique combination of name and tags
      */
@@ -62,8 +66,10 @@ public interface Meter {
     class Id {
         private final String name;
         private final List<Tag> tags;
-        @Nullable private String baseUnit;
-        @Nullable private final String description;
+        @Nullable
+        private final String description;
+        @Nullable
+        private String baseUnit;
         private Type type;
 
         public Id(String name, Iterable<Tag> tags, @Nullable String baseUnit, @Nullable String description, Type type) {
@@ -103,7 +109,7 @@ public interface Meter {
         @Nullable
         public String getTag(String name) {
             for (Tag tag : tags) {
-                if(tag.getKey().equals(name))
+                if (tag.getKey().equals(name))
                     return tag.getValue();
             }
             return null;
@@ -158,10 +164,6 @@ public interface Meter {
         }
     }
 
-    static Builder builder(String name, Type type, Iterable<Measurement> measurements) {
-        return new Builder(name, type, measurements);
-    }
-
     /**
      * Builder for custom meter types
      */
@@ -170,8 +172,10 @@ public interface Meter {
         private final Type type;
         private final Iterable<Measurement> measurements;
         private final List<Tag> tags = new ArrayList<>();
-        @Nullable private String description;
-        @Nullable private String baseUnit;
+        @Nullable
+        private String description;
+        @Nullable
+        private String baseUnit;
 
         private Builder(String name, Type type, Iterable<Measurement> measurements) {
             this.name = name;

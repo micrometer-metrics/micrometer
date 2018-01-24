@@ -27,8 +27,8 @@ import java.util.function.Supplier;
 
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
     protected final Clock clock;
-    private final HistogramConfig histogramConfig;
     protected final TimeWindowLatencyHistogram histogram;
+    private final HistogramConfig histogramConfig;
     private final TimeUnit baseTimeUnit;
 
     protected AbstractTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {

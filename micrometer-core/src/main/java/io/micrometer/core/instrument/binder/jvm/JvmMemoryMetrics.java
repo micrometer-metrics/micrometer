@@ -33,10 +33,9 @@ import static java.util.Collections.emptyList;
 /**
  * Record metrics that report utilization of various memory and buffer pools.
  *
+ * @author Jon Schneider
  * @see MemoryPoolMXBean
  * @see BufferPoolMXBean
- *
- * @author Jon Schneider
  */
 @NonNullApi
 @NonNullFields
@@ -76,7 +75,7 @@ public class JvmMemoryMetrics implements MeterBinder {
 
         for (MemoryPoolMXBean memoryPoolBean : ManagementFactory.getPlatformMXBeans(MemoryPoolMXBean.class)) {
             String area = MemoryType.HEAP.equals(memoryPoolBean.getType()) ? "heap" : "nonheap";
-            Iterable<Tag> tagsWithId = Tags.concat(tags,"id", memoryPoolBean.getName(), "area", area);
+            Iterable<Tag> tagsWithId = Tags.concat(tags, "id", memoryPoolBean.getName(), "area", area);
 
             Gauge.builder("jvm.memory.used", memoryPoolBean, (mem) -> mem.getUsage().getUsed())
                 .tags(tagsWithId)

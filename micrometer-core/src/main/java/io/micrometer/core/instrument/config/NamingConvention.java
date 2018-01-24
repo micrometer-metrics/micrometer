@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 /**
  * Monitoring systems make different recommendations regarding naming convention.
- *
+ * <p>
  * Also, many systems have constraints on valid characters that may appear
  * in a tag key/value or metric name. While it is recommended to choose tag
  * keys/values that are absent special characters that are invalid on any
@@ -112,8 +112,14 @@ public interface NamingConvention {
     default String name(String name, Meter.Type type) {
         return name(name, type, null);
     }
+
     String name(String name, Meter.Type type, @Nullable String baseUnit);
 
-    default String tagKey(String key) { return key; }
-    default String tagValue(String value) { return value; }
+    default String tagKey(String key) {
+        return key;
+    }
+
+    default String tagValue(String value) {
+        return value;
+    }
 }

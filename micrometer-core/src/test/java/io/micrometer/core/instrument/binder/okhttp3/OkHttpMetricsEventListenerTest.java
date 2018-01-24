@@ -60,7 +60,7 @@ class OkHttpMetricsEventListenerTest {
 
         try {
             client.newCall(request).execute().close();
-        } catch(IOException ignore) {
+        } catch (IOException ignore) {
             // expected
         }
 
@@ -85,7 +85,7 @@ class OkHttpMetricsEventListenerTest {
 
         try {
             client.newCall(request).execute().close();
-        } catch(IOException ignored) {
+        } catch (IOException ignored) {
             // expected
         }
 

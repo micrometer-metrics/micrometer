@@ -29,7 +29,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
-import java.sql.SQLException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -40,7 +39,7 @@ class JettyStatisticsMetricsTest {
     private StatisticsHandler handler;
 
     @BeforeEach
-    void setup() throws SQLException {
+    void setup() {
         this.registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
         this.handler = new StatisticsHandler();
         JettyStatisticsMetrics.monitor(registry, handler);
@@ -49,7 +48,8 @@ class JettyStatisticsMetricsTest {
     @Test
     void stats() throws IOException, ServletException {
         Request baseReq = mock(Request.class);
-        HttpChannelState s = new HttpChannelState(null){};
+        HttpChannelState s = new HttpChannelState(null) {
+        };
         when(baseReq.getHttpChannelState()).thenReturn(s);
         Response resp = mock(Response.class);
         when(baseReq.getResponse()).thenReturn(resp);

@@ -15,14 +15,13 @@
  */
 package io.micrometer.boot2.samples;
 
+import io.micrometer.boot2.samples.components.PersonController;
+import io.micrometer.core.instrument.histogram.pause.NoPauseDetector;
 import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryConfigurer;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
-
-import io.micrometer.boot2.samples.components.PersonController;
-import io.micrometer.core.instrument.histogram.pause.NoPauseDetector;
 
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling

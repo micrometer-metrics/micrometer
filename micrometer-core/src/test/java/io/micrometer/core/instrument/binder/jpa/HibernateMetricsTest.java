@@ -26,7 +26,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import javax.persistence.EntityManagerFactory;
-import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,8 +38,22 @@ class HibernateMetricsTest {
 
     private MeterRegistry registry;
 
+    private static EntityManagerFactory createEntityManagerFactoryMock(final boolean statsEnabled) {
+        EntityManagerFactory emf = Mockito.mock(EntityManagerFactory.class);
+        SessionFactory sf = Mockito.mock(SessionFactory.class);
+        Statistics stats = Mockito.mock(Statistics.class, invocation -> {
+            if (invocation.getMethod().getName().equals("isStatisticsEnabled")) {
+                return statsEnabled;
+            }
+            return 42L;
+        });
+        when(emf.unwrap(SessionFactory.class)).thenReturn(sf);
+        when(sf.getStatistics()).thenReturn(stats);
+        return emf;
+    }
+
     @BeforeEach
-    void setup() throws SQLException {
+    void setup() {
         registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     }
 
@@ -98,20 +111,6 @@ class HibernateMetricsTest {
     void shouldNotExposeMetricsWhenStatsNotEnabled() {
         HibernateMetrics.monitor(registry, createEntityManagerFactoryMock(false), "entityManagerFactory");
         assertThat(registry.find("hibernate.sessions.open").gauge()).isNull();
-    }
-
-    private static EntityManagerFactory createEntityManagerFactoryMock(final boolean statsEnabled) {
-        EntityManagerFactory emf = Mockito.mock(EntityManagerFactory.class);
-        SessionFactory sf = Mockito.mock(SessionFactory.class);
-        Statistics stats = Mockito.mock(Statistics.class, invocation -> {
-            if (invocation.getMethod().getName().equals("isStatisticsEnabled")) {
-                return statsEnabled;
-            }
-            return 42L;
-        });
-        when(emf.unwrap(SessionFactory.class)).thenReturn(sf);
-        when(sf.getStatistics()).thenReturn(stats);
-        return emf;
     }
 
 }

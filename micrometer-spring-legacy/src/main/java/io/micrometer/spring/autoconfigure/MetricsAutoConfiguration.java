@@ -18,7 +18,8 @@ package io.micrometer.spring.autoconfigure;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.hystrix.HystrixMetricsBinder;
-import io.micrometer.spring.SpringEnvironmentMeterFilter;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.spring.PropertiesMeterFilter;
 import io.micrometer.spring.autoconfigure.export.CompositeMeterRegistryConfiguration;
 import io.micrometer.spring.autoconfigure.export.atlas.AtlasExportConfiguration;
 import io.micrometer.spring.autoconfigure.export.datadog.DatadogExportConfiguration;
@@ -47,7 +48,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.env.Environment;
 import org.springframework.integration.config.EnableIntegrationManagement;
 import org.springframework.integration.support.management.IntegrationManagementConfigurer;
 
@@ -81,8 +81,8 @@ import org.springframework.integration.support.management.IntegrationManagementC
 public class MetricsAutoConfiguration {
     @Bean
     @Order(0)
-    MeterRegistryCustomizer springEnvironmentMeterFilter(Environment environment) {
-        return r -> r.config().meterFilter(new SpringEnvironmentMeterFilter(environment));
+    public MeterFilter propertyBasedFilter(MetricsProperties props) {
+        return new PropertiesMeterFilter(props);
     }
 
     /**

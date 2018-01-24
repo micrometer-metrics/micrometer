@@ -118,6 +118,10 @@ class MyComponent {
     @Nullable
     Counter counter;
 
+    @Inject
+    MyComponent() {
+    }
+
     @PostConstruct
     void after() {
         counter = requireNonNull(registry).counter("feature.counter");
@@ -131,9 +135,5 @@ class MyComponent {
         // in code blocks that are not performance-critical, it is acceptable to inline
         // the retrieval of the counter
         Metrics.counter("infrequent.counter").increment();
-    }
-
-    @Inject
-    MyComponent() {
     }
 }

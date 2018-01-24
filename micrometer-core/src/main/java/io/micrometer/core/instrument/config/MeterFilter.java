@@ -44,34 +44,6 @@ import static java.util.stream.StreamSupport.stream;
  */
 @Incubating(since = "1.0.0-rc.3")
 public interface MeterFilter {
-    /**
-     * @param id Id with {@link MeterFilter#map} transformations applied.
-     * @return After all transformations, should a real meter be registered for this id, or should it be no-op'd.
-     */
-    default MeterFilterReply accept(Meter.Id id) {
-        return MeterFilterReply.NEUTRAL;
-    }
-
-    /**
-     * @return Transformations to any part of the id.
-     */
-    default Meter.Id map(Meter.Id id) {
-        return id;
-    }
-
-    /**
-     * This is only called when filtering new timers and distribution summaries (i.e. those meter types
-     * that use {@link HistogramConfig}).
-     *
-     * @param id     Id with {@link MeterFilter#map} transformations applied.
-     * @param config A histogram configuration guaranteed to be non-null.
-     * @return Overrides to any part of the histogram config, when applicable.
-     */
-    @Nullable
-    default HistogramConfig configure(Meter.Id id, HistogramConfig config) {
-        return config;
-    }
-
     static MeterFilter commonTags(Iterable<Tag> tags) {
         return new MeterFilter() {
             @Override
@@ -215,13 +187,13 @@ public interface MeterFilter {
 
             @Override
             public MeterFilterReply accept(Meter.Id id) {
-                if(id.getName().equals(meterName)) {
+                if (id.getName().equals(meterName)) {
                     String value = id.getTag(tagKey);
-                    if(value != null)
+                    if (value != null)
                         observedTagValues.add(value);
                 }
 
-                if(observedTagValues.size() > maximumTagValues) {
+                if (observedTagValues.size() > maximumTagValues) {
                     return onMaxReached.accept(id);
                 }
                 return MeterFilterReply.NEUTRAL;
@@ -229,7 +201,7 @@ public interface MeterFilter {
 
             @Override
             public HistogramConfig configure(Meter.Id id, HistogramConfig config) {
-                if(observedTagValues.size() > maximumTagValues) {
+                if (observedTagValues.size() > maximumTagValues) {
                     return onMaxReached.configure(id, config);
                 }
                 return config;
@@ -239,5 +211,33 @@ public interface MeterFilter {
 
     static MeterFilter denyNameStartsWith(String prefix) {
         return deny(id -> id.getName().startsWith(prefix));
+    }
+
+    /**
+     * @param id Id with {@link MeterFilter#map} transformations applied.
+     * @return After all transformations, should a real meter be registered for this id, or should it be no-op'd.
+     */
+    default MeterFilterReply accept(Meter.Id id) {
+        return MeterFilterReply.NEUTRAL;
+    }
+
+    /**
+     * @return Transformations to any part of the id.
+     */
+    default Meter.Id map(Meter.Id id) {
+        return id;
+    }
+
+    /**
+     * This is only called when filtering new timers and distribution summaries (i.e. those meter types
+     * that use {@link HistogramConfig}).
+     *
+     * @param id     Id with {@link MeterFilter#map} transformations applied.
+     * @param config A histogram configuration guaranteed to be non-null.
+     * @return Overrides to any part of the histogram config, when applicable.
+     */
+    @Nullable
+    default HistogramConfig configure(Meter.Id id, HistogramConfig config) {
+        return config;
     }
 }

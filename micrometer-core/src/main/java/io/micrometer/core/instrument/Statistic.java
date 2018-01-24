@@ -16,26 +16,40 @@
 package io.micrometer.core.instrument;
 
 public enum Statistic {
-    /** The sum of the amounts recorded. */
+    /**
+     * The sum of the amounts recorded.
+     */
     Total,
 
-    /** The sum of the times recorded. Always reported in nanoseconds. */
+    /**
+     * The sum of the times recorded. Always reported in nanoseconds.
+     */
     TotalTime,
 
-    /** Rate per second for calls. */
+    /**
+     * Rate per second for calls.
+     */
     Count,
 
-    /** The maximum amount recorded. When this represents a time, it is always reported in nanoseconds. */
+    /**
+     * The maximum amount recorded. When this represents a time, it is always reported in nanoseconds.
+     */
     Max,
 
-    /** Instantaneous value, such as those reported by gauges **/
+    /**
+     * Instantaneous value, such as those reported by gauges
+     **/
     Value,
 
     Unknown,
 
-    /** Number of currently active tasks for a long task timer. */
+    /**
+     * Number of currently active tasks for a long task timer.
+     */
     ActiveTasks,
 
-    /** Duration of a running task in a long task timer. Always reported in nanoseconds. */
+    /**
+     * Duration of a running task in a long task timer. Always reported in nanoseconds.
+     */
     Duration,
 }

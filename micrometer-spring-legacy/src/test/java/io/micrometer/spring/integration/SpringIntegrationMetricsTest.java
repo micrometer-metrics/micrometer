@@ -30,24 +30,12 @@ import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.support.Transformers;
 import org.springframework.integration.ws.SimpleWebServiceOutboundGateway;
 import org.springframework.integration.ws.WebServiceHeaders;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@TestPropertySource(properties = {
-    "management.metrics.useGlobalRegistry=false",
-    "management.metrics.export.atlas.enabled=false",
-    "management.metrics.export.datadog.enabled=false",
-    "management.metrics.export.ganglia.enabled=false",
-    "management.metrics.export.influx.enabled=false",
-    "management.metrics.export.jmx.enabled=false",
-    "management.metrics.export.statsd.enabled=false",
-    "management.metrics.export.newrelic.enabled=false",
-    "management.metrics.export.signalfx.enabled=false"
-})
 public class SpringIntegrationMetricsTest {
     @Autowired
     TestSpringIntegrationApplication.TempConverter converter;

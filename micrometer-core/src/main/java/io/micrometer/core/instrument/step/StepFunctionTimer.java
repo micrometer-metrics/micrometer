@@ -60,7 +60,7 @@ public class StepFunctionTimer<T> implements FunctionTimer {
      */
     public double count() {
         T obj2 = ref.get();
-        if(obj2 != null) {
+        if (obj2 != null) {
             long prevLast = lastCount;
             lastCount = countFunction.applyAsLong(obj2);
             count.getCurrent().add(lastCount - prevLast);
@@ -73,7 +73,7 @@ public class StepFunctionTimer<T> implements FunctionTimer {
      */
     public double totalTime(TimeUnit unit) {
         T obj2 = ref.get();
-        if(obj2 != null) {
+        if (obj2 != null) {
             double prevLast = lastTime;
             lastTime = TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnits, unit);
             total.getCurrent().add(lastTime - prevLast);

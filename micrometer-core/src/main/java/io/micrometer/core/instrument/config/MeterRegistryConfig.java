@@ -23,10 +23,8 @@ public interface MeterRegistryConfig {
     /**
      * Get the value associated with a key.
      *
-     * @param k
-     *     Key to lookup in the config.
-     * @return
-     *     Value for the key or null if no key is present.
+     * @param k Key to lookup in the config.
+     * @return Value for the key or null if no key is present.
      */
     @Nullable
     String get(String k);

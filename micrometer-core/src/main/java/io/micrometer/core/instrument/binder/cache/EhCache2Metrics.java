@@ -32,6 +32,12 @@ public class EhCache2Metrics implements MeterBinder {
     private final Iterable<Tag> tags;
     private final StatisticsGateway stats;
 
+    public EhCache2Metrics(Ehcache cache, String name, Iterable<Tag> tags) {
+        this.stats = cache.getStatistics();
+        this.name = name;
+        this.tags = Tags.concat(tags, "name", cache.getName());
+    }
+
     /**
      * Record metrics on a JCache cache.
      *
@@ -60,12 +66,6 @@ public class EhCache2Metrics implements MeterBinder {
         new EhCache2Metrics(cache, name, tags).bindTo(registry);
         return cache;
     }
-    
-    public EhCache2Metrics(Ehcache cache, String name, Iterable<Tag> tags) {
-        this.stats = cache.getStatistics();
-        this.name = name;
-        this.tags = Tags.concat(tags, "name", cache.getName());
-    }
 
     @Override
     public void bindTo(MeterRegistry registry) {
@@ -93,7 +93,7 @@ public class EhCache2Metrics implements MeterBinder {
             .tags(tags).tags("result", "added")
             .description("Cache puts resulting in a new key/value pair")
             .register(registry);
-        
+
         FunctionCounter.builder(name + ".puts", stats, StatisticsGateway::cachePutAddedCount)
             .tags(tags).tags("result", "updated")
             .description("Cache puts resulting in an updated value")

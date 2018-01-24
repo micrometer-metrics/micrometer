@@ -43,7 +43,6 @@ import static java.util.Collections.emptyList;
 @TestPropertySource(properties = {
     "spring.datasource.generate-unique-name=true",
     "management.security.enabled=false",
-    "management.metrics.useGlobalRegistry=false",
     "spring.datasource.type=org.apache.tomcat.jdbc.pool.DataSource"
 })
 public class DataSourceMetricsTest {
@@ -54,7 +53,7 @@ public class DataSourceMetricsTest {
     MeterRegistry registry;
 
     @Test
-    public void dataSourceIsInstrumented() throws SQLException, InterruptedException {
+    public void dataSourceIsInstrumented() throws SQLException {
         dataSource.getConnection().getMetaData();
         registry.find("data.source.max.connections").meter();
     }

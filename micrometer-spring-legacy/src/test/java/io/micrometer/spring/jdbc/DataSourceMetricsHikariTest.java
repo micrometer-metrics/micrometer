@@ -30,7 +30,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.sql.DataSource;
-import java.sql.SQLException;
 import java.util.Collection;
 
 import static java.util.Collections.emptyList;
@@ -43,7 +42,6 @@ import static java.util.Collections.emptyList;
 @TestPropertySource(properties = {
     "spring.datasource.generate-unique-name=true",
     "management.security.enabled=false",
-    "management.metrics.useGlobalRegistry=false",
     "spring.datasource.type=com.zaxxer.hikari.HikariDataSource"
 })
 public class DataSourceMetricsHikariTest {
@@ -54,7 +52,7 @@ public class DataSourceMetricsHikariTest {
     MeterRegistry registry;
 
     @Test
-    public void dataSourceIsInstrumented() throws SQLException, InterruptedException {
+    public void dataSourceIsInstrumented() {
         registry.mustFind("data.source.active.connections").meter();
     }
 

@@ -41,7 +41,7 @@ class DatabaseTableMetricsTest {
         ds = new JDBCDataSource();
         ds.setURL("jdbc:hsqldb:mem:test");
 
-        try(Connection conn = ds.getConnection()) {
+        try (Connection conn = ds.getConnection()) {
             conn.prepareStatement("CREATE TABLE foo (id int)").execute();
             conn.prepareStatement("INSERT INTO foo VALUES (1)").executeUpdate();
         }
@@ -49,7 +49,7 @@ class DatabaseTableMetricsTest {
 
     @AfterEach
     void shutdown() throws SQLException {
-        try(Connection conn = ds.getConnection()) {
+        try (Connection conn = ds.getConnection()) {
             conn.prepareStatement("SHUTDOWN").execute();
         }
     }

@@ -35,38 +35,23 @@ import java.util.List;
 @NonNullApi
 @NonNullFields
 public class JCacheMetrics implements MeterBinder {
-    /**
-     * Defining cache statistics parameters as constants.
-     */
-    private enum CacheStatistics {
-        CacheHits, CacheHitPercentage,
-        CacheMisses, CacheMissPercentage,
-        CacheGets, CachePuts, CacheRemovals, CacheEvictions,
-        AverageGetTime, AveragePutTime, AverageRemoveTime;
-
-        public long get(ObjectName objectName) {
-            try {
-                List<MBeanServer> mBeanServers = MBeanServerFactory.findMBeanServer(null);
-                for (MBeanServer mBeanServer : mBeanServers) {
-                    try {
-                        Object attribute = mBeanServer.getAttribute(objectName, this.toString());
-                        return (Long) attribute;
-                    } catch (AttributeNotFoundException | InstanceNotFoundException ex) {
-                        // did not find MBean, try the next server
-                    }
-                }
-            } catch (MBeanException | ReflectionException ex) {
-                throw new IllegalStateException(ex);
-            }
-
-            // didn't find the MBean in any servers
-            return 0;
-        }
-    }
-
-    private ObjectName objectName;
     private final String name;
     private final Iterable<Tag> tags;
+    private ObjectName objectName;
+    public JCacheMetrics(Cache<?, ?> cache, String name, Iterable<Tag> tags) {
+        try {
+            String cacheManagerUri = cache.getCacheManager().getURI().toString()
+                .replace(':', '.'); // ehcache's uri is prefixed with 'urn:'
+
+            this.objectName = new ObjectName("javax.cache:type=CacheStatistics"
+                + ",CacheManager=" + cacheManagerUri
+                + ",Cache=" + cache.getName());
+        } catch (MalformedObjectNameException ignored) {
+            throw new IllegalStateException("Cache name '" + cache.getName() + "' results in an invalid JMX name");
+        }
+        this.name = name;
+        this.tags = Tags.concat(tags, "name", cache.getName());
+    }
 
     /**
      * Record metrics on a JCache cache.
@@ -97,21 +82,6 @@ public class JCacheMetrics implements MeterBinder {
         return cache;
     }
 
-    public JCacheMetrics(Cache<?, ?> cache, String name, Iterable<Tag> tags) {
-        try {
-            String cacheManagerUri = cache.getCacheManager().getURI().toString()
-                .replace(':', '.'); // ehcache's uri is prefixed with 'urn:'
-
-            this.objectName = new ObjectName("javax.cache:type=CacheStatistics"
-                + ",CacheManager=" + cacheManagerUri
-                + ",Cache=" + cache.getName());
-        } catch (MalformedObjectNameException ignored) {
-            throw new IllegalStateException("Cache name '" + cache.getName() + "' results in an invalid JMX name");
-        }
-        this.name = name;
-        this.tags = Tags.concat(tags, "name", cache.getName());
-    }
-
     @Override
     public void bindTo(MeterRegistry registry) {
         Gauge.builder(name + ".requests", objectName, CacheStatistics.CacheHits::get)
@@ -138,5 +108,34 @@ public class JCacheMetrics implements MeterBinder {
             .tags(tags)
             .description("Cache evictions")
             .register(registry);
+    }
+
+    /**
+     * Defining cache statistics parameters as constants.
+     */
+    private enum CacheStatistics {
+        CacheHits, CacheHitPercentage,
+        CacheMisses, CacheMissPercentage,
+        CacheGets, CachePuts, CacheRemovals, CacheEvictions,
+        AverageGetTime, AveragePutTime, AverageRemoveTime;
+
+        public long get(ObjectName objectName) {
+            try {
+                List<MBeanServer> mBeanServers = MBeanServerFactory.findMBeanServer(null);
+                for (MBeanServer mBeanServer : mBeanServers) {
+                    try {
+                        Object attribute = mBeanServer.getAttribute(objectName, this.toString());
+                        return (Long) attribute;
+                    } catch (AttributeNotFoundException | InstanceNotFoundException ex) {
+                        // did not find MBean, try the next server
+                    }
+                }
+            } catch (MBeanException | ReflectionException ex) {
+                throw new IllegalStateException(ex);
+            }
+
+            // didn't find the MBean in any servers
+            return 0;
+        }
     }
 }

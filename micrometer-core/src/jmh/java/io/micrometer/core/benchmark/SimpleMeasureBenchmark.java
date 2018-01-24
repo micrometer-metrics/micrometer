@@ -47,12 +47,12 @@ public class SimpleMeasureBenchmark {
 
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
-                .include(SimpleMeasureBenchmark.class.getSimpleName())
-                .warmupIterations(20)
-                .measurementIterations(30)
-                .mode(Mode.Throughput)
-                .forks(1)
-                .build();
+            .include(SimpleMeasureBenchmark.class.getSimpleName())
+            .warmupIterations(20)
+            .measurementIterations(30)
+            .mode(Mode.Throughput)
+            .forks(1)
+            .build();
 
         new Runner(opt).run();
     }

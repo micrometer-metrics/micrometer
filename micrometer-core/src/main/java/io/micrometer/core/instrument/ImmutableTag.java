@@ -48,7 +48,7 @@ public class ImmutableTag implements Tag {
         if (o == null || getClass() != o.getClass()) return false;
         Tag that = (Tag) o;
         return Objects.equals(key, that.getKey()) &&
-                Objects.equals(value, that.getValue());
+            Objects.equals(value, that.getValue());
     }
 
     @Override
@@ -59,8 +59,8 @@ public class ImmutableTag implements Tag {
     @Override
     public String toString() {
         return "ImmutableTag{" +
-                "key='" + key + '\'' +
-                ", value='" + value + '\'' +
-                '}';
+            "key='" + key + '\'' +
+            ", value='" + value + '\'' +
+            '}';
     }
 }

@@ -32,13 +32,13 @@ class HazelcastCacheMetricsTest {
     private HazelcastInstance h;
 
     @BeforeEach
-    void setup(){
+    void setup() {
         Config config = new Config();
         h = Hazelcast.newHazelcastInstance(config);
     }
 
     @AfterEach
-    void cleanup(){
+    void cleanup() {
         h.shutdown();
     }
 
@@ -47,7 +47,7 @@ class HazelcastCacheMetricsTest {
         IMap<String, String> map = h.getMap("my-distributed-map");
 
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
-        HazelcastCacheMetrics.monitor(registry, map, "cache",emptyList());
+        HazelcastCacheMetrics.monitor(registry, map, "cache", emptyList());
 
         map.put("key", "value");
         map.get("key");

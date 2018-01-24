@@ -25,15 +25,6 @@ import java.util.TreeSet;
 
 @Incubating(since = "1.0.0-rc.3")
 public class HistogramConfig implements Mergeable<HistogramConfig> {
-    @Nullable private Boolean percentileHistogram;
-    @Nullable private double[] percentiles;
-    @Nullable private long[] sla;
-    @Nullable private Long minimumExpectedValue;
-    @Nullable private Long maximumExpectedValue;
-
-    @Nullable private Duration histogramExpiry;
-    @Nullable private Integer histogramBufferLength;
-
     public static final HistogramConfig DEFAULT = builder()
         .percentilesHistogram(false)
         .percentiles()
@@ -43,8 +34,25 @@ public class HistogramConfig implements Mergeable<HistogramConfig> {
         .histogramExpiry(Duration.ofMinutes(2))
         .histogramBufferLength(5)
         .build();
-
     public static final HistogramConfig NONE = builder().build();
+    @Nullable
+    private Boolean percentileHistogram;
+    @Nullable
+    private double[] percentiles;
+    @Nullable
+    private long[] sla;
+    @Nullable
+    private Long minimumExpectedValue;
+    @Nullable
+    private Long maximumExpectedValue;
+    @Nullable
+    private Duration histogramExpiry;
+    @Nullable
+    private Integer histogramBufferLength;
+
+    public static Builder builder() {
+        return new Builder();
+    }
 
     @Override
     public HistogramConfig merge(HistogramConfig parent) {
@@ -66,13 +74,13 @@ public class HistogramConfig implements Mergeable<HistogramConfig> {
     public NavigableSet<Long> getHistogramBuckets(boolean supportsAggregablePercentiles) {
         NavigableSet<Long> buckets = new TreeSet<>();
 
-        if(percentileHistogram != null && percentileHistogram && supportsAggregablePercentiles) {
+        if (percentileHistogram != null && percentileHistogram && supportsAggregablePercentiles) {
             buckets.addAll(PercentileHistogramBuckets.buckets(this));
             buckets.add(minimumExpectedValue);
             buckets.add(maximumExpectedValue);
         }
 
-        if(sla != null) {
+        if (sla != null) {
             for (long slaBoundary : sla) {
                 buckets.add(slaBoundary);
             }
@@ -81,36 +89,39 @@ public class HistogramConfig implements Mergeable<HistogramConfig> {
         return buckets;
     }
 
-    public @Nullable Boolean isPercentileHistogram() {
+    public @Nullable
+    Boolean isPercentileHistogram() {
         return percentileHistogram;
     }
 
-    public @Nullable double[] getPercentiles() {
+    public @Nullable
+    double[] getPercentiles() {
         return percentiles;
     }
 
-    public @Nullable Long getMinimumExpectedValue() {
+    public @Nullable
+    Long getMinimumExpectedValue() {
         return minimumExpectedValue;
     }
 
-    public @Nullable Long getMaximumExpectedValue() {
+    public @Nullable
+    Long getMaximumExpectedValue() {
         return maximumExpectedValue;
     }
 
-    public @Nullable Duration getHistogramExpiry() {
+    public @Nullable
+    Duration getHistogramExpiry() {
         return histogramExpiry;
     }
 
-    public @Nullable Integer getHistogramBufferLength() {
+    public @Nullable
+    Integer getHistogramBufferLength() {
         return histogramBufferLength;
     }
 
-    public @Nullable long[] getSlaBoundaries() {
+    public @Nullable
+    long[] getSlaBoundaries() {
         return sla;
-    }
-
-    public static Builder builder() {
-        return new Builder();
     }
 
     public static class Builder {

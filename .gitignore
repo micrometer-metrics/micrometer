@@ -13,3 +13,4 @@ out/
 .settings/
 .sts4-cache/
 bin/
+.factorypath

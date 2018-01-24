@@ -15,22 +15,21 @@
  */
 package io.micrometer.core.instrument;
 
-import java.util.concurrent.TimeUnit;
-
 import io.micrometer.core.instrument.util.TimeUtils;
+
+import java.util.concurrent.TimeUnit;
 
 public final class ValueAtPercentile {
 
-    public static ValueAtPercentile of(double percentile, double value) {
-        return new ValueAtPercentile(percentile, value);
-    }
-
     private final double percentile;
     private final double value;
-
     private ValueAtPercentile(double percentile, double value) {
         this.percentile = percentile;
         this.value = value;
+    }
+
+    public static ValueAtPercentile of(double percentile, double value) {
+        return new ValueAtPercentile(percentile, value);
     }
 
     public double percentile() {

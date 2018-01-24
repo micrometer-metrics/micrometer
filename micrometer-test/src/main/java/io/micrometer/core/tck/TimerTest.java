@@ -87,7 +87,7 @@ interface TimerTest {
 
     @Test
     @DisplayName("record a runnable task")
-    default void recordWithRunnable(MeterRegistry registry) throws Exception {
+    default void recordWithRunnable(MeterRegistry registry) {
         Timer t = registry.timer("myTimer");
 
         try {
@@ -101,7 +101,7 @@ interface TimerTest {
 
     @Test
     @DisplayName("record with stateful Sample instance")
-    default void recordWithSample(MeterRegistry registry) throws Exception {
+    default void recordWithSample(MeterRegistry registry) {
         Timer timer = registry.timer("myTimer");
         Timer.Sample sample = Timer.start(registry);
 

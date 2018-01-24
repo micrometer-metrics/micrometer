@@ -105,7 +105,7 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     public CompositeMeterRegistry add(MeterRegistry registry) {
-        if(registries.add(registry)) {
+        if (registries.add(registry)) {
             // in the event of a race, the new meter will be added to this registry via the onMeterAdded listener
             forEachMeter(m -> ((CompositeMeter) m).add(registry));
         }
@@ -113,7 +113,7 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     public CompositeMeterRegistry remove(MeterRegistry registry) {
-        if(registries.remove(registry)) {
+        if (registries.remove(registry)) {
             forEachMeter(m -> ((CompositeMeter) m).remove(registry));
         }
         return this;

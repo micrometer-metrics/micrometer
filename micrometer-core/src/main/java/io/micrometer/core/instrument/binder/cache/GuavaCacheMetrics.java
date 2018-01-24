@@ -31,6 +31,15 @@ import java.util.concurrent.TimeUnit;
 @NonNullApi
 @NonNullFields
 public class GuavaCacheMetrics implements MeterBinder {
+    private final String name;
+    private final Iterable<Tag> tags;
+    private final Cache<?, ?> cache;
+    public GuavaCacheMetrics(Cache<?, ?> cache, String name, Iterable<Tag> tags) {
+        this.name = name;
+        this.tags = tags;
+        this.cache = cache;
+    }
+
     /**
      * Record metrics on a Guava cache. You must call {@link CacheBuilder#recordStats()} prior to building the cache
      * for metrics to be recorded.
@@ -62,16 +71,6 @@ public class GuavaCacheMetrics implements MeterBinder {
         return cache;
     }
 
-    private final String name;
-    private final Iterable<Tag> tags;
-    private final Cache<?, ?> cache;
-
-    public GuavaCacheMetrics(Cache<?, ?> cache, String name, Iterable<Tag> tags) {
-        this.name = name;
-        this.tags = tags;
-        this.cache = cache;
-    }
-
     @Override
     public void bindTo(MeterRegistry registry) {
         Gauge.builder(name + ".estimated.size", cache, Cache::size)
@@ -101,7 +100,7 @@ public class GuavaCacheMetrics implements MeterBinder {
                 .description("The time the cache has spent loading new values")
                 .register(registry);
 
-            FunctionCounter.builder(name + ".load",cache, c -> c.stats().loadSuccessCount())
+            FunctionCounter.builder(name + ".load", cache, c -> c.stats().loadSuccessCount())
                 .tags(tags).tags("result", "success")
                 .description("The number of times cache lookup methods have successfully loaded a new value")
                 .register(registry);

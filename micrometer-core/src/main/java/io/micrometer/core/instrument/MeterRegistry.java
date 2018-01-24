@@ -49,20 +49,16 @@ import static java.util.Collections.emptyList;
  */
 public abstract class MeterRegistry {
     protected final Clock clock;
-
-    protected MeterRegistry(Clock clock) {
-        this.clock = clock;
-    }
-
     private final Object meterMapLock = new Object();
-    private volatile Map<Id, Meter> meterMap = Collections.emptyMap();
     private final List<MeterFilter> filters = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterAddedListeners = new CopyOnWriteArrayList<>();
+    private final Config config = new Config();
+    private final More more = new More();
+    private volatile Map<Id, Meter> meterMap = Collections.emptyMap();
     private PauseDetector pauseDetector = new ClockDriftPauseDetector(
         Duration.ofMillis(100),
         Duration.ofMillis(100)
     );
-
     /**
      * We'll use snake case as a general-purpose default for registries because it is the most
      * likely to result in a portable name. Camel casing is also perfectly acceptable. '-' and '.'
@@ -71,6 +67,10 @@ public abstract class MeterRegistry {
      * names when shipping metrics to hierarchical backends such as Graphite.
      */
     private NamingConvention namingConvention = NamingConvention.snakeCase;
+
+    protected MeterRegistry(Clock clock) {
+        this.clock = clock;
+    }
 
     protected abstract <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f);
 
@@ -182,75 +182,6 @@ public abstract class MeterRegistry {
         meterMap.values().forEach(consumer);
     }
 
-    /**
-     * Access to configuration options for this registry.
-     */
-    public class Config {
-        /**
-         * Append a list of common tags to apply to all metrics reported to the monitoring system.
-         */
-        public Config commonTags(Iterable<Tag> tags) {
-            meterFilter(MeterFilter.commonTags(tags));
-            return this;
-        }
-
-        /**
-         * Append a list of common tags to apply to all metrics reported to the monitoring system.
-         * Must be an even number of arguments representing key/value pairs of tags.
-         */
-        public Config commonTags(String... tags) {
-            return commonTags(zip(tags));
-        }
-
-        @Incubating(since = "1.0.0-rc.3")
-        public Config meterFilter(MeterFilter filter) {
-            filters.add(filter);
-            return this;
-        }
-
-        @Incubating(since = "1.0.0-rc.6")
-        public Config onMeterAdded(Consumer<Meter> meter) {
-            meterAddedListeners.add(meter);
-            return this;
-        }
-
-        /**
-         * Use the provided naming convention, overriding the default for your monitoring system.
-         */
-        public Config namingConvention(NamingConvention convention) {
-            namingConvention = convention;
-            return this;
-        }
-
-        /**
-         * @return The naming convention currently in use on this registry.
-         */
-        public NamingConvention namingConvention() {
-            return namingConvention;
-        }
-
-        /**
-         * @return The clock used to measure durations of timers and long task timers (and sometimes
-         * influences publishing behavior).
-         */
-        public Clock clock() {
-            return clock;
-        }
-
-        @Incubating(since = "1.0.0-rc.6")
-        public Config pauseDetector(PauseDetector detector) {
-            pauseDetector = detector;
-            return this;
-        }
-
-        @Incubating(since = "1.0.0-rc.6")
-        public PauseDetector pauseDetector() {
-            return pauseDetector;
-        }
-    }
-
-    private final Config config = new Config();
-
     public Config config() {
         return config;
     }
@@ -314,87 +245,6 @@ public abstract class MeterRegistry {
         return timer(name, zip(tags));
     }
 
-    public class More {
-        /**
-         * Measures the time taken for long tasks.
-         */
-        public LongTaskTimer longTaskTimer(String name, String... tags) {
-            return longTaskTimer(name, zip(tags));
-        }
-
-        /**
-         * Measures the time taken for long tasks.
-         */
-        public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
-            return LongTaskTimer.builder(name).tags(tags).register(MeterRegistry.this);
-        }
-
-        /**
-         * Only used by {@link LongTaskTimer#builder(String)}
-         */
-        LongTaskTimer longTaskTimer(Meter.Id id) {
-            return registerMeterIfNecessary(LongTaskTimer.class, id, id2 -> {
-                Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
-                return newLongTaskTimer(withUnit);
-            }, NoopLongTaskTimer::new);
-        }
-
-        /**
-         * Tracks a monotonically increasing value, automatically incrementing the counter whenever
-         * the value is observed.
-         */
-        public <T> FunctionCounter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-            return FunctionCounter.builder(name, obj, f).tags(tags).register(MeterRegistry.this);
-        }
-
-        /**
-         * Tracks a number, maintaining a weak reference on it.
-         */
-        public <T extends Number> FunctionCounter counter(String name, Iterable<Tag> tags, T number) {
-            return FunctionCounter.builder(name, number, Number::doubleValue).tags(tags).register(MeterRegistry.this);
-        }
-
-        <T> FunctionCounter counter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
-            return registerMeterIfNecessary(FunctionCounter.class, id, id2 -> newFunctionCounter(id2, obj, f),
-                NoopFunctionCounter::new);
-        }
-
-        /**
-         * A timer that tracks monotonically increasing functions for count and totalTime.
-         */
-        public <T> FunctionTimer timer(String name, Iterable<Tag> tags, T obj,
-                                       ToLongFunction<T> countFunction,
-                                       ToDoubleFunction<T> totalTimeFunction,
-                                       TimeUnit totalTimeFunctionUnits) {
-            return FunctionTimer.builder(name, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits)
-                .tags(tags).register(MeterRegistry.this);
-        }
-
-        <T> FunctionTimer timer(Meter.Id id, T obj,
-                                ToLongFunction<T> countFunction,
-                                ToDoubleFunction<T> totalTimeFunction,
-                                TimeUnit totalTimeFunctionUnits) {
-            return registerMeterIfNecessary(FunctionTimer.class, id, id2 -> {
-                Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
-                return newFunctionTimer(withUnit, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
-            }, NoopFunctionTimer::new);
-        }
-
-        /**
-         * A gauge that tracks a time value, to be scaled to the monitoring system's base time unit.
-         */
-        public <T> TimeGauge timeGauge(String name, Iterable<Tag> tags, T obj,
-                                       TimeUnit fUnit, ToDoubleFunction<T> f) {
-            return TimeGauge.builder(name, obj, fUnit, f).tags(tags).register(MeterRegistry.this);
-        }
-
-        <T> TimeGauge timeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
-            return registerMeterIfNecessary(TimeGauge.class, id, id2 -> newTimeGauge(id2, obj, fUnit, f), NoopTimeGauge::new);
-        }
-    }
-
-    private final More more = new More();
-
     /**
      * Access to less frequently used meter types and patterns.
      */
@@ -420,7 +270,8 @@ public abstract class MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    @Nullable public <T> T gauge(String name, Iterable<Tag> tags, @Nullable T obj, ToDoubleFunction<T> f) {
+    @Nullable
+    public <T> T gauge(String name, Iterable<Tag> tags, @Nullable T obj, ToDoubleFunction<T> f) {
         Gauge.builder(name, obj, f).tags(tags).register(this);
         return obj;
     }
@@ -434,7 +285,8 @@ public abstract class MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    @Nullable public <T extends Number> T gauge(String name, Iterable<Tag> tags, T number) {
+    @Nullable
+    public <T extends Number> T gauge(String name, Iterable<Tag> tags, T number) {
         return gauge(name, tags, number, Number::doubleValue);
     }
 
@@ -446,7 +298,8 @@ public abstract class MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    @Nullable public <T extends Number> T gauge(String name, T number) {
+    @Nullable
+    public <T extends Number> T gauge(String name, T number) {
         return gauge(name, emptyList(), number);
     }
 
@@ -459,7 +312,8 @@ public abstract class MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    @Nullable public <T> T gauge(String name, T obj, ToDoubleFunction<T> f) {
+    @Nullable
+    public <T> T gauge(String name, T obj, ToDoubleFunction<T> f) {
         return gauge(name, emptyList(), obj, f);
     }
 
@@ -476,7 +330,8 @@ public abstract class MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    @Nullable public <T extends Collection<?>> T gaugeCollectionSize(String name, Iterable<Tag> tags, T collection) {
+    @Nullable
+    public <T extends Collection<?>> T gaugeCollectionSize(String name, Iterable<Tag> tags, T collection) {
         return gauge(name, tags, collection, Collection::size);
     }
 
@@ -493,7 +348,8 @@ public abstract class MeterRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    @Nullable public <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
+    @Nullable
+    public <T extends Map<?, ?>> T gaugeMapSize(String name, Iterable<Tag> tags, T map) {
         return gauge(name, tags, map, Map::size);
     }
 
@@ -575,5 +431,151 @@ public abstract class MeterRegistry {
         }
 
         return true;
+    }
+
+    /**
+     * Access to configuration options for this registry.
+     */
+    public class Config {
+        /**
+         * Append a list of common tags to apply to all metrics reported to the monitoring system.
+         */
+        public Config commonTags(Iterable<Tag> tags) {
+            meterFilter(MeterFilter.commonTags(tags));
+            return this;
+        }
+
+        /**
+         * Append a list of common tags to apply to all metrics reported to the monitoring system.
+         * Must be an even number of arguments representing key/value pairs of tags.
+         */
+        public Config commonTags(String... tags) {
+            return commonTags(zip(tags));
+        }
+
+        @Incubating(since = "1.0.0-rc.3")
+        public Config meterFilter(MeterFilter filter) {
+            filters.add(filter);
+            return this;
+        }
+
+        @Incubating(since = "1.0.0-rc.6")
+        public Config onMeterAdded(Consumer<Meter> meter) {
+            meterAddedListeners.add(meter);
+            return this;
+        }
+
+        /**
+         * Use the provided naming convention, overriding the default for your monitoring system.
+         */
+        public Config namingConvention(NamingConvention convention) {
+            namingConvention = convention;
+            return this;
+        }
+
+        /**
+         * @return The naming convention currently in use on this registry.
+         */
+        public NamingConvention namingConvention() {
+            return namingConvention;
+        }
+
+        /**
+         * @return The clock used to measure durations of timers and long task timers (and sometimes
+         * influences publishing behavior).
+         */
+        public Clock clock() {
+            return clock;
+        }
+
+        @Incubating(since = "1.0.0-rc.6")
+        public Config pauseDetector(PauseDetector detector) {
+            pauseDetector = detector;
+            return this;
+        }
+
+        @Incubating(since = "1.0.0-rc.6")
+        public PauseDetector pauseDetector() {
+            return pauseDetector;
+        }
+    }
+
+    public class More {
+        /**
+         * Measures the time taken for long tasks.
+         */
+        public LongTaskTimer longTaskTimer(String name, String... tags) {
+            return longTaskTimer(name, zip(tags));
+        }
+
+        /**
+         * Measures the time taken for long tasks.
+         */
+        public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
+            return LongTaskTimer.builder(name).tags(tags).register(MeterRegistry.this);
+        }
+
+        /**
+         * Only used by {@link LongTaskTimer#builder(String)}
+         */
+        LongTaskTimer longTaskTimer(Meter.Id id) {
+            return registerMeterIfNecessary(LongTaskTimer.class, id, id2 -> {
+                Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
+                return newLongTaskTimer(withUnit);
+            }, NoopLongTaskTimer::new);
+        }
+
+        /**
+         * Tracks a monotonically increasing value, automatically incrementing the counter whenever
+         * the value is observed.
+         */
+        public <T> FunctionCounter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
+            return FunctionCounter.builder(name, obj, f).tags(tags).register(MeterRegistry.this);
+        }
+
+        /**
+         * Tracks a number, maintaining a weak reference on it.
+         */
+        public <T extends Number> FunctionCounter counter(String name, Iterable<Tag> tags, T number) {
+            return FunctionCounter.builder(name, number, Number::doubleValue).tags(tags).register(MeterRegistry.this);
+        }
+
+        <T> FunctionCounter counter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+            return registerMeterIfNecessary(FunctionCounter.class, id, id2 -> newFunctionCounter(id2, obj, f),
+                NoopFunctionCounter::new);
+        }
+
+        /**
+         * A timer that tracks monotonically increasing functions for count and totalTime.
+         */
+        public <T> FunctionTimer timer(String name, Iterable<Tag> tags, T obj,
+                                       ToLongFunction<T> countFunction,
+                                       ToDoubleFunction<T> totalTimeFunction,
+                                       TimeUnit totalTimeFunctionUnits) {
+            return FunctionTimer.builder(name, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits)
+                .tags(tags).register(MeterRegistry.this);
+        }
+
+        <T> FunctionTimer timer(Meter.Id id, T obj,
+                                ToLongFunction<T> countFunction,
+                                ToDoubleFunction<T> totalTimeFunction,
+                                TimeUnit totalTimeFunctionUnits) {
+            return registerMeterIfNecessary(FunctionTimer.class, id, id2 -> {
+                Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
+                return newFunctionTimer(withUnit, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
+            }, NoopFunctionTimer::new);
+        }
+
+        /**
+         * A gauge that tracks a time value, to be scaled to the monitoring system's base time unit.
+         */
+        public <T> TimeGauge timeGauge(String name, Iterable<Tag> tags, T obj,
+                                       TimeUnit fUnit, ToDoubleFunction<T> f) {
+            return TimeGauge.builder(name, obj, fUnit, f).tags(tags).register(MeterRegistry.this);
+        }
+
+        <T> TimeGauge timeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
+            return registerMeterIfNecessary(TimeGauge.class, id, id2 -> newTimeGauge(id2, obj, fUnit, f), NoopTimeGauge::new);
+        }
     }
 }

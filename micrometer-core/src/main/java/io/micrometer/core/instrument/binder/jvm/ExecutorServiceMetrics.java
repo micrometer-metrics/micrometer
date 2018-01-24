@@ -42,6 +42,17 @@ import static java.util.Arrays.asList;
 @NonNullApi
 @NonNullFields
 public class ExecutorServiceMetrics implements MeterBinder {
+    @Nullable
+    private final ExecutorService executorService;
+    private final String name;
+    private final Iterable<Tag> tags;
+
+    public ExecutorServiceMetrics(@Nullable ExecutorService executorService, String name, Iterable<Tag> tags) {
+        this.name = name;
+        this.tags = tags;
+        this.executorService = executorService;
+    }
+
     /**
      * Record metrics on the use of an {@link Executor}.
      *
@@ -98,16 +109,6 @@ public class ExecutorServiceMetrics implements MeterBinder {
         return monitor(registry, executor, name, asList(tags));
     }
 
-    @Nullable private final ExecutorService executorService;
-    private final String name;
-    private final Iterable<Tag> tags;
-
-    public ExecutorServiceMetrics(@Nullable ExecutorService executorService, String name, Iterable<Tag> tags) {
-        this.name = name;
-        this.tags = tags;
-        this.executorService = executorService;
-    }
-
     @Override
     public void bindTo(MeterRegistry registry) {
         if (executorService == null) {
@@ -131,7 +132,8 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * Every ScheduledThreadPoolExecutor created by {@link Executors} is wrapped. Also,
      * {@link Executors#newSingleThreadExecutor()} wrap a regular {@link ThreadPoolExecutor}.
      */
-    @Nullable private ThreadPoolExecutor unwrapThreadPoolExecutor(ExecutorService executor, Class<?> wrapper) {
+    @Nullable
+    private ThreadPoolExecutor unwrapThreadPoolExecutor(ExecutorService executor, Class<?> wrapper) {
         try {
             Field e = wrapper.getDeclaredField("e");
             e.setAccessible(true);

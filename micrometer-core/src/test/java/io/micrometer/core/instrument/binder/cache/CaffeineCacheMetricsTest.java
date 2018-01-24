@@ -35,7 +35,7 @@ class CaffeineCacheMetricsTest {
     private Iterable<Tag> userTags = Tags.zip("userTagKey", "userTagValue");
 
     @Test
-    void cacheExposesMetricsForHitMissAndEviction() throws Exception {
+    void cacheExposesMetricsForHitMissAndEviction() {
         // Run cleanup in same thread, to remove async behavior with evictions
         Cache<String, String> cache = Caffeine.newBuilder().maximumSize(2).recordStats().executor(Runnable::run).build();
         CaffeineCacheMetrics.monitor(registry, cache, "c", userTags);
@@ -57,7 +57,7 @@ class CaffeineCacheMetricsTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void loadingCacheExposesMetricsForLoadsAndExceptions() throws Exception {
+    void loadingCacheExposesMetricsForLoadsAndExceptions() {
         LoadingCache<Integer, String> cache = CaffeineCacheMetrics.monitor(registry, Caffeine.newBuilder()
             .recordStats()
             .build(key -> {

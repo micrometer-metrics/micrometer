@@ -29,11 +29,9 @@ import java.util.concurrent.atomic.DoubleAdder;
 public class StepDouble {
     private final Clock clock;
     private final long stepMillis;
-
-    private volatile double previous = 0.0;
     private final DoubleAdder current = new DoubleAdder();
-
     private final AtomicLong lastInitPos;
+    private volatile double previous = 0.0;
 
     public StepDouble(Clock clock, long stepMillis) {
         this.clock = clock;

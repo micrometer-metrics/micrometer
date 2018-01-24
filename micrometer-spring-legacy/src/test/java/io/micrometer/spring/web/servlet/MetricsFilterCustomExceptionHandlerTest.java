@@ -73,7 +73,7 @@ public class MetricsFilterCustomExceptionHandlerTest {
     }
 
     @Test
-    public void rethrownExceptionIsRecordedInMetricTag() throws Exception {
+    public void rethrownExceptionIsRecordedInMetricTag() {
         assertThatCode(() -> mvc.perform(get("/api/rethrownError"))
             .andExpect(status().is5xxServerError()));
 
@@ -126,14 +126,14 @@ public class MetricsFilterCustomExceptionHandlerTest {
     static class CustomExceptionHandler {
 
         @ExceptionHandler
-        ResponseEntity<String> handleError(Exception1 ex) throws Throwable {
+        ResponseEntity<String> handleError(Exception1 ex) {
             MetricsFilter.tagWithException(ex);
             return new ResponseEntity<>("this is a custom exception body",
                 HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         @ExceptionHandler
-        ResponseEntity<String> rethrowError(Exception2 ex) throws Throwable {
+        ResponseEntity<String> rethrowError(Exception2 ex) {
             throw ex;
         }
     }

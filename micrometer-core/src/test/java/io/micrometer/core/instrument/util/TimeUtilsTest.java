@@ -21,7 +21,6 @@ import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
 
 class TimeUtilsTest {
     @Test
@@ -41,7 +40,7 @@ class TimeUtilsTest {
     }
 
     @Test
-    void cantParseDecimal(){
+    void cantParseDecimal() {
         assertThatThrownBy(() -> TimeUtils.simpleParse("1.1s"))
             .isInstanceOf(NumberFormatException.class);
     }

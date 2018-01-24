@@ -72,7 +72,7 @@ class MeterRegistryTest {
                     .merge(config);
             }
         });
-        
+
         registry.timer("my.timer");
     }
 }

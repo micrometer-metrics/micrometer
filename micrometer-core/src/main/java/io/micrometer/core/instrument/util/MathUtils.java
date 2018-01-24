@@ -22,6 +22,9 @@ package io.micrometer.core.instrument.util;
  */
 public final class MathUtils {
 
+    private MathUtils() {
+    }
+
     /**
      * Simplified {@link com.google.common.math.IntMath#divide(int, int, java.math.RoundingMode)}.
      */
@@ -46,9 +49,6 @@ public final class MathUtils {
         int signum = 1 | ((p ^ q) >> (Integer.SIZE - 1));
         boolean increment = signum > 0;
         return increment ? div + signum : div;
-    }
-
-    private MathUtils() {
     }
 
 }

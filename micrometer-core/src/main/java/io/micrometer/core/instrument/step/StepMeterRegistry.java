@@ -37,7 +37,8 @@ import java.util.function.ToLongFunction;
  */
 public abstract class StepMeterRegistry extends MeterRegistry {
     private final StepRegistryConfig config;
-    @Nullable private ScheduledFuture<?> publisher;
+    @Nullable
+    private ScheduledFuture<?> publisher;
 
     public StepMeterRegistry(StepRegistryConfig config, Clock clock) {
         super(clock);
@@ -49,7 +50,7 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     }
 
     public void start(ThreadFactory threadFactory) {
-        if(publisher != null)
+        if (publisher != null)
             stop();
 
         publisher = Executors.newSingleThreadScheduledExecutor(threadFactory)
@@ -57,7 +58,7 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     }
 
     public void stop() {
-        if(publisher != null) {
+        if (publisher != null) {
             publisher.cancel(false);
             publisher = null;
         }

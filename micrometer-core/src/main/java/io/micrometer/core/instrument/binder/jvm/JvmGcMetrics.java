@@ -37,6 +37,32 @@ import java.util.concurrent.atomic.AtomicLong;
 import static java.util.Collections.emptyList;
 
 /**
+ * Generalization of which parts of the heap are considered "young" or "old" for multiple GC implementations
+ */
+@NonNullApi
+enum GcGenerationAge {
+    OLD,
+    YOUNG,
+    UNKNOWN;
+
+    private static Map<String, GcGenerationAge> knownCollectors = new HashMap<String, GcGenerationAge>() {{
+        put("ConcurrentMarkSweep", OLD);
+        put("Copy", YOUNG);
+        put("G1 Old Generation", OLD);
+        put("G1 Young Generation", YOUNG);
+        put("MarkSweepCompact", OLD);
+        put("PS MarkSweep", OLD);
+        put("PS Scavenge", YOUNG);
+        put("ParNew", YOUNG);
+    }};
+
+    static GcGenerationAge fromName(String name) {
+        GcGenerationAge t = knownCollectors.get(name);
+        return (t == null) ? UNKNOWN : t;
+    }
+}
+
+/**
  * Record metrics that report a number of statistics related to garbage
  * collection emanating from the MXBean and also adds information about GC causes.
  *
@@ -45,8 +71,10 @@ import static java.util.Collections.emptyList;
 @NonNullApi
 @NonNullFields
 public class JvmGcMetrics implements MeterBinder {
-    @Nullable private String youngGenPoolName;
-    @Nullable private String oldGenPoolName;
+    @Nullable
+    private String youngGenPoolName;
+    @Nullable
+    private String oldGenPoolName;
     private Iterable<Tag> tags;
 
     public JvmGcMetrics() {
@@ -101,7 +129,7 @@ public class JvmGcMetrics implements MeterBinder {
                         CompositeData cd = (CompositeData) notification.getUserData();
                         GarbageCollectionNotificationInfo notificationInfo = GarbageCollectionNotificationInfo.from(cd);
 
-                        if(isConcurrentPhase(notificationInfo)) {
+                        if (isConcurrentPhase(notificationInfo)) {
                             Timer.builder("jvm.gc.concurrent.phase.time")
                                 .tags(tags)
                                 .tags("action", notificationInfo.getGcAction(), "cause", notificationInfo.getGcCause())
@@ -167,31 +195,5 @@ public class JvmGcMetrics implements MeterBinder {
 
     private boolean isYoungGenPool(String name) {
         return name.endsWith("Eden Space");
-    }
-}
-
-/**
- * Generalization of which parts of the heap are considered "young" or "old" for multiple GC implementations
- */
-@NonNullApi
-enum GcGenerationAge {
-    OLD,
-    YOUNG,
-    UNKNOWN;
-
-    private static Map<String, GcGenerationAge> knownCollectors = new HashMap<String, GcGenerationAge>() {{
-        put("ConcurrentMarkSweep", OLD);
-        put("Copy", YOUNG);
-        put("G1 Old Generation", OLD);
-        put("G1 Young Generation", YOUNG);
-        put("MarkSweepCompact", OLD);
-        put("PS MarkSweep", OLD);
-        put("PS Scavenge", YOUNG);
-        put("ParNew", YOUNG);
-    }};
-
-    static GcGenerationAge fromName(String name) {
-        GcGenerationAge t = knownCollectors.get(name);
-        return (t == null) ? UNKNOWN : t;
     }
 }

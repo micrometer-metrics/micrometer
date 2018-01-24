@@ -37,10 +37,10 @@ public class DropwizardFunctionTimer<T> extends AbstractMeter implements Functio
     private final TimeUnit totalTimeFunctionUnits;
 
     private final AtomicLong lastCount = new AtomicLong(0);
-    private volatile double lastTime = 0.0;
     private final DropwizardRate rate;
     private final Timer dropwizardMeter;
     private final TimeUnit registryBaseTimeUnit;
+    private volatile double lastTime = 0.0;
 
     DropwizardFunctionTimer(Meter.Id id, Clock clock,
                             T obj, ToLongFunction<T> countFunction,
