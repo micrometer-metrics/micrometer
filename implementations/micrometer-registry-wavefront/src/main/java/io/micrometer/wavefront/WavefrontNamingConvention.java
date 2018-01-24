@@ -31,18 +31,30 @@ public class WavefrontNamingConvention implements NamingConvention {
         this.delegate = delegate;
     }
 
+    /**
+     * Valid characters are: a-z, A-Z, 0-9, hyphen ("-"), underscore ("_"), dot ("."). Forward slash ("/") and comma
+     * (",") are allowed if metricName is enclosed in double quotes.
+     */
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
         // TODO sanitize names of unacceptable characters
         return delegate.name(name, type, baseUnit);
     }
 
+    /**
+     * Valid characters are: alphanumeric, hyphen ("-"), underscore ("_"), dot (".")
+     */
     @Override
     public String tagKey(String key) {
         // TODO sanitize tag keys of unacceptable characters
         return delegate.tagKey(key);
     }
 
+    /**
+     * We recommend enclosing tag values with double quotes (" "). If you surround the value with quotes any character is allowed,
+     * including spaces. To include a double quote, escape it with a backslash. The backslash cannot
+     * be the last character in the tag value.
+     */
     @Override
     public String tagValue(String value) {
         // TODO sanitize tag values of unacceptable characters

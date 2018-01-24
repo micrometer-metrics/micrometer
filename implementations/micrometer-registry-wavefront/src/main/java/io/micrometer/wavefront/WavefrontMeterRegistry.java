@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
@@ -78,10 +79,10 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                     con.setReadTimeout((int) config.readTimeout().toMillis());
                     con.setRequestMethod("POST");
                     con.setRequestProperty("Authorization", "Bearer " + config.apiToken());
-                    con.setRequestProperty("Content-Type", "application/json");
+                    con.setRequestProperty("Content-Type", "text/plain");
                     con.setDoOutput(true);
 
-                    String body = "{\"series\":[" +
+                    String body =
                         batch.stream().flatMap(m -> {
                             if (m instanceof Timer) {
                                 return writeTimer((Timer) m);
@@ -93,8 +94,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                                 return writeTimer((FunctionTimer) m);
                             }
                             return writeMeter(m);
-                        }).collect(joining(",")) +
-                        "]}";
+                        }).collect(joining("\n"));
 
                     try (OutputStream os = con.getOutputStream()) {
                         os.write(body.getBytes());
@@ -104,7 +104,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                     int status = con.getResponseCode();
 
                     if (status >= 200 && status < 300) {
-                        logger.info("successfully sent " + batch.size() + " metrics to datadog");
+                        logger.info("successfully sent " + batch.size() + " metrics to Wavefront");
                     } else if (status >= 400) {
                         try (InputStream in = con.getErrorStream()) {
                             logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
@@ -200,24 +200,22 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
             });
     }
 
+    /**
+     * https://docs.wavefront.com/wavefront_data_format.html#wavefront-data-format-syntax
+     */
     //VisibleForTesting
     String writeMetric(Meter.Id id, @Nullable String suffix, long wallTime, double value) {
-        // FIXME whatever your format is
-
         Meter.Id fullId = id;
         if (suffix != null)
             fullId = idWithSuffix(id, suffix);
 
-        Iterable<Tag> tags = fullId.getTags();
+        // FIXME should we derive HOST from a common tag?
+        return getConventionName(id) + " " + DoubleFormat.toString(value) + " " + wallTime + " HOST " +
+            getConventionTags(fullId)
+                .stream()
+                .map(t -> t.getKey() + "=\"" + t.getValue() + "\"")
+                .collect(Collectors.joining(" "));
 
-        String tagsArray = tags.iterator().hasNext() ?
-            ",\"tags\":[" +
-                stream(tags.spliterator(), false)
-                    .map(t -> "\"" + t.getKey() + ":" + t.getValue() + "\"")
-                    .collect(joining(",")) + "]" : "";
-
-        return "{\"metric\":\"" + getConventionName(fullId) + "\"," +
-            "\"points\":[[" + (wallTime / 1000) + ", " + value + "]]" + tagsArray + "}";
     }
 
     /**
