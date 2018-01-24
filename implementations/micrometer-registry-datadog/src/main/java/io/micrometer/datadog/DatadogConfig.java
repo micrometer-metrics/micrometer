@@ -61,7 +61,7 @@ public interface DatadogConfig extends StepRegistryConfig {
      * datadoghq, you can define the location of the proxy with this.
      */
     default String uri() {
-        String v = get(prefix() + ".apiHost");
+        String v = get(prefix() + ".uri");
         return v == null ? "https://app.datadoghq.com" : v;
     }
 

@@ -32,5 +32,6 @@ management.metrics.export:
   statsd.enabled: false
   newrelic.enabled: false
   signalfx.enabled: false
+  wavefront.enabled: false
 
 security.ignored: /**
