@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -165,6 +166,14 @@ public interface MeterFilter {
         };
     }
 
+    static MeterFilter accept() {
+        return MeterFilter.accept(id -> true);
+    }
+
+    static MeterFilter deny() {
+        return MeterFilter.deny(id -> true);
+    }
+
     /**
      * Useful for cost-control in monitoring systems which charge directly or indirectly by the
      * total number of time series you generate.
@@ -186,6 +195,44 @@ public interface MeterFilter {
 
                 ids.add(id);
                 return ids.size() > maximumTimeSeries ? MeterFilterReply.DENY : MeterFilterReply.NEUTRAL;
+            }
+        };
+    }
+
+    /**
+     * Places an upper bound on
+     *
+     * @param meterName
+     * @param tagKey
+     * @param maximumTagValues
+     * @param onMaxReached
+     * @return
+     */
+    static MeterFilter maximumAllowableTags(String meterName, String tagKey, int maximumTagValues,
+                                            MeterFilter onMaxReached) {
+        return new MeterFilter() {
+            private final Set<String> observedTagValues = new ConcurrentSkipListSet<>();
+
+            @Override
+            public MeterFilterReply accept(Meter.Id id) {
+                if(id.getName().equals(meterName)) {
+                    String value = id.getTag(tagKey);
+                    if(value != null)
+                        observedTagValues.add(value);
+                }
+
+                if(observedTagValues.size() > maximumTagValues) {
+                    return onMaxReached.accept(id);
+                }
+                return MeterFilterReply.NEUTRAL;
+            }
+
+            @Override
+            public HistogramConfig configure(Meter.Id id, HistogramConfig config) {
+                if(observedTagValues.size() > maximumTagValues) {
+                    return onMaxReached.configure(id, config);
+                }
+                return config;
             }
         };
     }

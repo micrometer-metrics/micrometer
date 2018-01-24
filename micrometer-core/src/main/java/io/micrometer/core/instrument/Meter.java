@@ -101,6 +101,15 @@ public interface Meter {
         }
 
         @Nullable
+        public String getTag(String name) {
+            for (Tag tag : tags) {
+                if(tag.getKey().equals(name))
+                    return tag.getValue();
+            }
+            return null;
+        }
+
+        @Nullable
         public String getBaseUnit() {
             return baseUnit;
         }

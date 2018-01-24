@@ -29,7 +29,6 @@ import okhttp3.Response;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -138,14 +137,14 @@ public class OkHttpMetricsEventListener extends EventListener {
         private MeterRegistry registry;
         private String name;
         private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(URI_PATTERN)).orElse("none");
-        private List<Tag> tags = Collections.emptyList();
+        private Iterable<Tag> tags = Collections.emptyList();
 
         Builder(MeterRegistry registry, String name) {
             this.registry = registry;
             this.name = name;
         }
 
-        public Builder tags(List<Tag> tags) {
+        public Builder tags(Iterable<Tag> tags) {
             this.tags = tags;
             return this;
         }

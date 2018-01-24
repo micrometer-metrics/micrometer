@@ -27,7 +27,18 @@ class TagsTest {
     @Test
     void createsListWithSingleTag() {
         Iterable<Tag> tags = Tags.of("k1", "v1");
-
         assertThat(tags).containsExactly(Tag.of("k1", "v1"));
+    }
+
+    @Test
+    void concatOnTwoTagsWithSameKeyAreMergedIntoOneTag() {
+        Iterable<Tag> tags = Tags.concat(Tags.of("k", "v1"), "k", "v2");
+        assertThat(tags).containsExactly(Tag.of("k", "v2"));
+    }
+
+    @Test
+    void zipOnTwoTagsWithSameKeyAreMergedIntoOneTag() {
+        Iterable<Tag> tags = Tags.zip("k", "v1", "k", "v2");
+        assertThat(tags).containsExactly(Tag.of("k", "v2"));
     }
 }

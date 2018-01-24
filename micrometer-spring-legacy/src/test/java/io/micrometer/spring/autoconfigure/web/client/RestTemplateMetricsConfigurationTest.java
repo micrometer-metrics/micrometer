@@ -17,45 +17,86 @@ package io.micrometer.spring.autoconfigure.web.client;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.spring.autoconfigure.MetricsProperties;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = ClientApp.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
-public class RestTemplateMetricsConfigurationTest {
-    @Autowired
-    private RestTemplate client;
+import static org.assertj.core.api.Assertions.assertThat;
 
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = RestTemplateMetricsConfigurationTest.ClientApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestPropertySource(properties = "security.ignored=/**")
+public class RestTemplateMetricsConfigurationTest {
     @Autowired
     private MeterRegistry registry;
 
+    @Autowired
+    private MetricsProperties metricsProperties;
+
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private RestTemplateBuilder restTemplateBuilder;
+
+    private RestTemplate client;
+
+    @Before
+    public void before() {
+        client = restTemplateBuilder
+            .rootUri("http://localhost:" + port)
+            .build();
+    }
+
     @Test
     public void restTemplatesCreatedWithBuilderAreInstrumented() {
-        try {
-            client.getForObject("http://google.com", String.class);
-        } catch (Throwable ignored) {
-            // doesn't matter whether the request succeeded or not
-        }
+        client.getForObject("/it/1", String.class);
         registry.mustFind("http.client.requests").meter();
     }
-}
 
-@SpringBootApplication
-class ClientApp {
-    @Bean
-    public MeterRegistry registry() {
-        return new SimpleMeterRegistry();
+    @Test
+    public void afterMaxUrisReachedFurtherUrisAreDenied() {
+        int maxUriTags = metricsProperties.getWeb().getClient().getMaxUriTags();
+        for(int i = 0; i < maxUriTags + 10; i++) {
+            client.getForObject("/it/" + i, String.class);
+        }
+
+        assertThat(registry.mustFind("http.client.requests").meters()).hasSize(maxUriTags);
     }
 
-    @Bean
-    public RestTemplate restTemplate(RestTemplateBuilder builder) {
-        return builder.build();
+    @SpringBootApplication(scanBasePackages = "ignore")
+    @Import(SampleController.class)
+    static class ClientApp {
+        @Bean
+        public MeterRegistry registry() {
+            return new SimpleMeterRegistry();
+        }
+
+        @Bean
+        public RestTemplate restTemplate(RestTemplateBuilder builder) {
+            return builder.build();
+        }
+    }
+
+    @RestController
+    static class SampleController {
+        @GetMapping("/it/{id}")
+        public String it(@PathVariable String id) {
+            return id;
+        }
     }
 }

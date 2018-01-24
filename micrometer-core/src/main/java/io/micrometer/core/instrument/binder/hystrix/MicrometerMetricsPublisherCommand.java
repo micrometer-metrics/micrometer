@@ -69,7 +69,7 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
     private final MeterRegistry meterRegistry;
     private final HystrixCommandMetrics metrics;
     private final HystrixCircuitBreaker circuitBreaker;
-    private final List<Tag> tags;
+    private final Iterable<Tag> tags;
     private final HystrixCommandKey commandKey;
 
     public MicrometerMetricsPublisherCommand(MeterRegistry meterRegistry, HystrixCommandKey commandKey, HystrixCommandGroupKey commandGroupKey, HystrixCommandMetrics metrics, HystrixCircuitBreaker circuitBreaker, HystrixCommandProperties properties) {

@@ -16,12 +16,11 @@
 package io.micrometer.core.instrument;
 
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
 
 /**
@@ -31,21 +30,26 @@ import static java.util.stream.StreamSupport.stream;
 public final class Tags {
     private Tags() {}
 
-    public static List<Tag> zip(String... keyValues) {
+    public static Iterable<Tag> zip(String... keyValues) {
         if (keyValues.length % 2 == 1) {
             throw new IllegalArgumentException("size must be even, it is a set of key=value pairs");
         }
-        List<Tag> ts = new ArrayList<>(keyValues.length / 2);
+
+        Map<String, Tag> ts = new HashMap<>(keyValues.length / 2);
         for (int i = 0; i < keyValues.length; i += 2) {
-            ts.add(Tag.of(keyValues[i], keyValues[i + 1]));
+            ts.put(keyValues[i], Tag.of(keyValues[i], keyValues[i + 1]));
         }
-        return ts;
+
+        return ts.values();
     }
 
     public static Iterable<Tag> concat(Iterable<Tag> tags, Iterable<Tag> otherTags) {
         if(!otherTags.iterator().hasNext())
             return tags;
-        return Stream.concat(stream(tags.spliterator(), false), stream(otherTags.spliterator(), false)).collect(toList());
+
+        return Stream.concat(stream(tags.spliterator(), false), stream(otherTags.spliterator(), false))
+            .collect(toMap(Tag::getKey, Function.identity(), (tag, otherTag) -> otherTag))
+            .values();
     }
 
     public static Iterable<Tag> concat(Iterable<Tag> tags, String... keyValues) {

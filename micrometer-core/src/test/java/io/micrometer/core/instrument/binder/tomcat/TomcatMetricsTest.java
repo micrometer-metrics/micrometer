@@ -31,7 +31,6 @@ import org.apache.catalina.startup.Tomcat;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -82,7 +81,7 @@ class TomcatMetricsTest {
         expiredSession.setCreationTime(System.currentTimeMillis() - 10_000);
         manager.remove(expiredSession, true);
 
-        List<Tag> tags = Tags.zip("metricTag", "val1");
+        Iterable<Tag> tags = Tags.zip("metricTag", "val1");
         TomcatMetrics.monitor(registry, manager, tags);
 
         assertThat(registry.mustFind("tomcat.sessions.active.max").tags(tags).gauge().value()).isEqualTo(3.0);

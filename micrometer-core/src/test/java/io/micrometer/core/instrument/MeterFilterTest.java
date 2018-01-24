@@ -22,6 +22,8 @@ import io.micrometer.core.lang.Nullable;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static java.util.Collections.emptyList;
 import static java.util.stream.StreamSupport.stream;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -85,6 +87,31 @@ class MeterFilterTest {
         assertThat(filter.accept(id)).isEqualTo(MeterFilterReply.NEUTRAL);
         assertThat(filter.accept(id)).isEqualTo(MeterFilterReply.NEUTRAL);
         assertThat(filter.accept(id2)).isEqualTo(MeterFilterReply.DENY);
+    }
+
+    @Test
+    void maximumAllowableTags() {
+        AtomicInteger n = new AtomicInteger(0);
+
+        MeterFilter filter = MeterFilter.maximumAllowableTags("name", "k", 2, new MeterFilter() {
+            @Override
+            public MeterFilterReply accept(Meter.Id id) {
+                n.incrementAndGet();
+                return MeterFilterReply.NEUTRAL;
+            }
+        });
+
+        Meter.Id id = new Meter.Id("name", Tags.of("k", "1"), null, null, Meter.Type.Counter);
+        Meter.Id id2 = new Meter.Id("name", Tags.of("k", "2"), null, null, Meter.Type.Counter);
+        Meter.Id id3 = new Meter.Id("name", Tags.of("k", "3"), null, null, Meter.Type.Counter);
+
+        filter.accept(id);
+        filter.accept(id);
+        filter.accept(id2);
+        filter.accept(id);
+        filter.accept(id3);
+
+        assertThat(n.get()).isEqualTo(1);
     }
 
     private static Condition<Meter.Id> tag(String tagKey) {
