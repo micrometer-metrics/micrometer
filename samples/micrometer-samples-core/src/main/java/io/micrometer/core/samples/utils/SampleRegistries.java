@@ -40,6 +40,8 @@ import io.micrometer.signalfx.SignalFxMeterRegistry;
 import io.micrometer.statsd.StatsdConfig;
 import io.micrometer.statsd.StatsdFlavor;
 import io.micrometer.statsd.StatsdMeterRegistry;
+import io.micrometer.wavefront.WavefrontConfig;
+import io.micrometer.wavefront.WavefrontMeterRegistry;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -279,5 +281,27 @@ public class SampleRegistries {
                 return null;
             }
         }, Clock.SYSTEM);
+    }
+
+    public static WavefrontMeterRegistry wavefront(String apiToken) {
+        WavefrontConfig config = new WavefrontConfig() {
+            @Override
+            public String apiToken() {
+                return apiToken;
+            }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+
+            @Override
+            @Nullable
+            public String get(String k) {
+                return null;
+            }
+        };
+
+        return new WavefrontMeterRegistry(config, Clock.SYSTEM);
     }
 }
