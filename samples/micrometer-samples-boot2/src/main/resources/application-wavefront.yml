@@ -16,4 +16,12 @@
 
 management.metrics.export.wavefront:
   enabled: true
-  apiToken: fake
+  host: localhost
+  port: 2878
+  step: PT10S
+  test: false
+
+logging.level.io.micrometer.wavefront:
+  WavefrontConfig: DEBUG
+  WavefrontMeterRegistry: DEBUG
+  WavefrontNamingConvention: DEBUG
