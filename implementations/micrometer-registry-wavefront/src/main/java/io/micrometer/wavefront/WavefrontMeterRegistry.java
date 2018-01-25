@@ -23,19 +23,12 @@ import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
+import java.io.OutputStreamWriter;
+import java.net.*;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
@@ -44,7 +37,9 @@ import static java.util.stream.StreamSupport.stream;
 public class WavefrontMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(WavefrontMeterRegistry.class);
     private final WavefrontConfig config;
-    private final URL postMetricsEndpoint;
+    private final String wavefrontProxyHost;
+    private final String wavefrontProxyPort;
+    private int publishCounter;
 
     public WavefrontMeterRegistry(WavefrontConfig config, Clock clock) {
         this(config, clock, Executors.defaultThreadFactory());
@@ -53,37 +48,53 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     public WavefrontMeterRegistry(WavefrontConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
         this.config = config;
+        this.publishCounter = 0;
 
         try {
-            this.postMetricsEndpoint = URI.create(config.uri()).toURL();
-        } catch (MalformedURLException e) {
+            this.wavefrontProxyHost = config.getHost();
+            this.wavefrontProxyPort = config.getPort();
+        } catch (Exception e) {
             // not possible
             throw new RuntimeException(e);
         }
 
         config().namingConvention(new WavefrontNamingConvention());
 
-        if(config.enabled())
+        if(config.enabled()) {
             start(threadFactory);
+        }
     }
 
     @Override
-    protected void publish() {
+    protected void publish()
+    {
+        publishCounter++;
+        logger.debug("[publish][" + publishCounter + "]start");
         try {
-            HttpURLConnection con = null;
-
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-                try {
-                    con = (HttpURLConnection) postMetricsEndpoint.openConnection();
-                    con.setConnectTimeout((int) config.connectTimeout().toMillis());
-                    con.setReadTimeout((int) config.readTimeout().toMillis());
-                    con.setRequestMethod("POST");
-                    con.setRequestProperty("Authorization", "Bearer " + config.apiToken());
-                    con.setRequestProperty("Content-Type", "text/plain");
-                    con.setDoOutput(true);
 
+                logger.debug("[publish]batch.size() = " + batch.size());
+
+                Socket socket = null;
+                OutputStreamWriter writer = null;
+
+                try {
+                    if(config.test() == false) {
+                        socket = new Socket(wavefrontProxyHost, Integer.parseInt(wavefrontProxyPort));
+                        writer = new OutputStreamWriter(socket.getOutputStream());
+                        logger.debug("[publish]connectionEstablished to " + wavefrontProxyHost + ":" + wavefrontProxyPort);
+                    }
+                    else
+                    {
+                        logger.debug("[publish]testing mode on - output will be redirected to info log");
+                    }
+
+                    // now the writer is ready to send the metrics.
                     String body =
                         batch.stream().flatMap(m -> {
+                            if (m instanceof Counter) {
+                                return writeCounter((Counter) m);
+                            }
                             if (m instanceof Timer) {
                                 return writeTimer((Timer) m);
                             }
@@ -96,39 +107,46 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                             return writeMeter(m);
                         }).collect(joining("\n"));
 
-                    try (OutputStream os = con.getOutputStream()) {
-                        os.write(body.getBytes());
-                        os.flush();
+                    // write the collected metric data to output stream
+                    if(config.test() == false) {
+                        logger.debug(body);
+                        writer.write(body);
+                        writer.write("\n");
                     }
-
-                    int status = con.getResponseCode();
-
-                    if (status >= 200 && status < 300) {
-                        logger.info("successfully sent " + batch.size() + " metrics to Wavefront");
-                    } else if (status >= 400) {
-                        try (InputStream in = con.getErrorStream()) {
-                            logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                                .lines().collect(joining("\n")));
-                        }
-                    } else {
-                        logger.error("failed to send metrics: http " + status);
+                    else
+                    {
+                        logger.info(body);
                     }
-                } finally {
-                    quietlyCloseUrlConnection(con);
+                }
+                finally {
+                    if(config.test() == false) {
+                        logger.debug("[publish]closing connection.");
+                        writer.flush();
+                        quietlyCloseSocketConnection(socket);
+                    }
                 }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.warn("failed to send metrics", e);
+        }
+        logger.debug("[publish][" + publishCounter + "]end");
+    }
+
+    private void quietlyCloseSocketConnection(@Nullable Socket con) {
+        try {
+            if (con != null) {
+                con.close();
+            }
+        } catch (Exception ignore) {
+            logger.debug(ignore.getMessage(), ignore);
         }
     }
 
-    private void quietlyCloseUrlConnection(@Nullable HttpURLConnection con) {
-        try {
-            if (con != null) {
-                con.disconnect();
-            }
-        } catch (Exception ignore) {
-        }
+    private Stream<String> writeCounter(Counter counter) {
+        long wallTime = clock.wallTime();
+        Meter.Id id = counter.getId();
+        return Stream.of(writeMetric(id,null,null, wallTime, counter.count()));
     }
 
     private Stream<String> writeTimer(FunctionTimer timer) {
@@ -200,22 +218,51 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
             });
     }
 
+    String writeMetric(Meter.Id id, @Nullable String suffix, long wallTime, double value) {
+        return writeMetric(id, suffix,null, wallTime, value);
+    }
+
     /**
      * https://docs.wavefront.com/wavefront_data_format.html#wavefront-data-format-syntax
      */
-    //VisibleForTesting
-    String writeMetric(Meter.Id id, @Nullable String suffix, long wallTime, double value) {
+    String writeMetric(Meter.Id id, @Nullable String suffix, @Nullable String source, long wallTime, double value) {
         Meter.Id fullId = id;
         if (suffix != null)
             fullId = idWithSuffix(id, suffix);
 
-        // FIXME should we derive HOST from a common tag?
-        return getConventionName(id) + " " + DoubleFormat.toString(value) + " " + wallTime + " HOST " +
-            getConventionTags(fullId)
-                .stream()
-                .map(t -> t.getKey() + "=\"" + t.getValue() + "\"")
-                .collect(Collectors.joining(" "));
+        wallTime = wallTime / 1000;
 
+        if(source == null)
+        {
+            // get current system's ip address
+            try {
+                source = InetAddress.getLocalHost().getHostName();
+            }
+            catch(UnknownHostException uhe)
+            {
+                source = "unknown";
+                logger.warn("[writeMetric]could not determine hostname to use as source..", uhe);
+            }
+        }
+
+        if(source != null) {
+            // FIXME should we derive HOST from a common tag?
+
+            /*
+            return getConventionName(id) + " " + DoubleFormat.toString(value) + " " + wallTime + " source=" + source + " " +
+                getConventionTags(fullId)
+                    .stream()
+                    .map(t -> t.getKey() + "=\"" + t.getValue() + "\"")
+                    .collect(joining(" "));
+             */
+            return getConventionName(id) + " " + DoubleFormat.toString(value) + " source=" + source + " " +
+                getConventionTags(fullId)
+                    .stream()
+                    .map(t -> t.getKey() + "=\"" + t.getValue() + "\"")
+                    .collect(joining(" "));
+        }
+        else
+            return null;
     }
 
     /**

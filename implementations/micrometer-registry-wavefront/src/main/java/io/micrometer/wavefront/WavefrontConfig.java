@@ -16,28 +16,26 @@
 package io.micrometer.wavefront;
 
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import java.time.Duration;
 
 public interface WavefrontConfig extends StepRegistryConfig {
     WavefrontConfig DEFAULT = k -> null;
+
+    String proxyHost = ".proxyHost";
+    String proxyPort = ".proxyPort";
+
+    @Override
+    default Duration step() {
+        String v = get(prefix() + ".step");
+        return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
+    }
 
     @Override
     default String prefix() {
         return "wavefront";
     }
 
-    default String apiToken() {
-        String v = get(prefix() + ".apiToken");
-        if(v == null)
-            throw new IllegalStateException(prefix() + ".apiToken must be set to report metrics to Wavefront");
-        return v;
-    }
-
-    /**
-     * The URI to ship metrics to. If you need to publish metrics to an internal proxy en route to
-     * Wavefront, you can define the location of the proxy with this.
-     */
-    default String uri() {
-        String v = get(prefix() + ".uri");
-        return v == null ? "https://longboard.wavefront.com/api/v2/" : v;
-    }
+    default boolean test() { return false; }
+    default String getHost() { return get(prefix() + proxyHost); }
+    default String getPort() { return get(prefix() + proxyPort); }
 }
