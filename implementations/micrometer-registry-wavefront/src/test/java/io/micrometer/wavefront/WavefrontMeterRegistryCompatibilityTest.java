@@ -32,11 +32,6 @@ class WavefrontMeterRegistryCompatibilityTest extends MeterRegistryCompatibility
             }
 
             @Override
-            public String apiToken() {
-                return "DOESNOTMATTER";
-            }
-
-            @Override
             @Nullable
             public String get(String k) {
                 return null;
