@@ -92,9 +92,6 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                     // now the writer is ready to send the metrics.
                     String body =
                         batch.stream().flatMap(m -> {
-                            if (m instanceof Counter) {
-                                return writeCounter((Counter) m);
-                            }
                             if (m instanceof Timer) {
                                 return writeTimer((Timer) m);
                             }
@@ -141,12 +138,6 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         } catch (Exception ignore) {
             logger.debug(ignore.getMessage(), ignore);
         }
-    }
-
-    private Stream<String> writeCounter(Counter counter) {
-        long wallTime = clock.wallTime();
-        Meter.Id id = counter.getId();
-        return Stream.of(writeMetric(id,null,null, wallTime, counter.count()));
     }
 
     private Stream<String> writeTimer(FunctionTimer timer) {
@@ -229,12 +220,10 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         Meter.Id fullId = id;
         if (suffix != null)
             fullId = idWithSuffix(id, suffix);
-
-        wallTime = wallTime / 1000;
-
+        wallTime = wallTime / 1000;         // we need to convert ms to s
         if(source == null)
         {
-            // get current system's ip address
+            // get current system's hostname
             try {
                 source = InetAddress.getLocalHost().getHostName();
             }
@@ -244,18 +233,9 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                 logger.warn("[writeMetric]could not determine hostname to use as source..", uhe);
             }
         }
-
-        if(source != null) {
-            // FIXME should we derive HOST from a common tag?
-
-            /*
+        if(source != null)
+        {
             return getConventionName(id) + " " + DoubleFormat.toString(value) + " " + wallTime + " source=" + source + " " +
-                getConventionTags(fullId)
-                    .stream()
-                    .map(t -> t.getKey() + "=\"" + t.getValue() + "\"")
-                    .collect(joining(" "));
-             */
-            return getConventionName(id) + " " + DoubleFormat.toString(value) + " source=" + source + " " +
                 getConventionTags(fullId)
                     .stream()
                     .map(t -> t.getKey() + "=\"" + t.getValue() + "\"")
