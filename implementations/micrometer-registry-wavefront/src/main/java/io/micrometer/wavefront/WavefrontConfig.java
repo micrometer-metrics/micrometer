@@ -16,13 +16,16 @@
 package io.micrometer.wavefront;
 
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.lang.Nullable;
+
 import java.time.Duration;
 
 public interface WavefrontConfig extends StepRegistryConfig {
     WavefrontConfig DEFAULT = k -> null;
 
-    String proxyHost = ".proxyHost";
-    String proxyPort = ".proxyPort";
+    String _proxyHost_ = ".proxyHost";
+    String _proxyPort_ = ".proxyPort";
+    String _namePrefix_ = ".namePrefix";
 
     @Override
     default Duration step() {
@@ -34,8 +37,21 @@ public interface WavefrontConfig extends StepRegistryConfig {
     default String prefix() {
         return "wavefront";
     }
-
     default boolean test() { return false; }
-    default String getHost() { return get(prefix() + proxyHost); }
-    default String getPort() { return get(prefix() + proxyPort); }
+
+    @Nullable
+    default String getHost() {
+        String v = get(prefix() + _proxyHost_);
+        return v == null ? "localhost" : v;
+    }
+    @Nullable
+    default String getPort() {
+        String v = get(prefix() + _proxyPort_);
+        return v == null ? "2878" : v;
+    }
+    @Nullable
+    default String getNamePrefix() {
+        String v = get(prefix() + _namePrefix_);
+        return v;
+    }
 }

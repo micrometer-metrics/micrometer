@@ -58,7 +58,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
             throw new RuntimeException(e);
         }
 
-        config().namingConvention(new WavefrontNamingConvention());
+        config().namingConvention(new WavefrontNamingConvention(config));
 
         if(config.enabled()) {
             logger.debug("[registry]publish interval set to: " + config.step().getSeconds() + " seconds.");
@@ -83,7 +83,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                 try {
                     if(config.test() == false) {
                         socket = new Socket(wavefrontProxyHost, Integer.parseInt(wavefrontProxyPort));
-                        writer = new OutputStreamWriter(socket.getOutputStream());
+                        writer = new OutputStreamWriter(socket.getOutputStream(), "UTF-8");
                         logger.debug("[publish]connectionEstablished to " + wavefrontProxyHost + ":" + wavefrontProxyPort);
                     }
                     else
