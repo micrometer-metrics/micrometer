@@ -20,8 +20,9 @@ management.metrics.export.wavefront:
   port: 2878
   step: PT10S
   test: false
+  nameprefix: micrometer
 
 logging.level.io.micrometer.wavefront:
-  WavefrontConfig: DEBUG
-  WavefrontMeterRegistry: DEBUG
-  WavefrontNamingConvention: DEBUG
+  WavefrontConfig: INFO
+  WavefrontMeterRegistry: INFO
+  WavefrontNamingConvention: INFO

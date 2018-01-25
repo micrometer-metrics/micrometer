@@ -18,7 +18,10 @@ package io.micrometer.boot2.samples;
 import io.micrometer.boot2.samples.components.PersonController;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.jvm.*;
+import io.micrometer.core.instrument.binder.system.*;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.wavefront.WavefrontConfig;
 import io.micrometer.wavefront.WavefrontMeterRegistry;
@@ -44,14 +47,16 @@ public class WavefrontSample {
     // retrieve configuration parameters from application properties file
     @Value("${management.metrics.export.wavefront.enabled}")
     boolean enabled;
-    @Value("${management.metrics.export.wavefront.host}")
+    @Value("${management.metrics.export.wavefront.host:@null}")
     String host;
-    @Value("${management.metrics.export.wavefront.port}")
+    @Value("${management.metrics.export.wavefront.port:2878}")
     int port;
     @Value("${management.metrics.export.wavefront.step}")
     String step;
-    @Value("${management.metrics.export.wavefront.test}")
+    @Value("${management.metrics.export.wavefront.test:false}")
     boolean test;
+    @Value("${management.metrics.export.wavefront.nameprefix:}")
+    String nameprefix;
 
     Counter callCounter;
 
@@ -68,8 +73,29 @@ public class WavefrontSample {
          * adding some sample metrics
          * 1. counter type with name and point tags
          */
-        callCounter = wavefrontRegistry.counter("micrometer.test.counter.http", "type", "test", "region", "US");
+        callCounter = wavefrontRegistry.counter("test.counter.http", "type", "test", "region", "US");
 
+        /**
+         * 2. bind jvm metrics to registry
+         */
+        ClassLoaderMetrics classLoaderMetrics = new ClassLoaderMetrics();
+        JvmGcMetrics jvmGcMetrics = new JvmGcMetrics();
+        JvmMemoryMetrics jvmMemmoryMetrics = new JvmMemoryMetrics();
+        JvmThreadMetrics jvmThreadMetrics = new JvmThreadMetrics();
+        classLoaderMetrics.bindTo(wavefrontRegistry);
+        jvmGcMetrics.bindTo(wavefrontRegistry);
+        jvmMemmoryMetrics.bindTo(wavefrontRegistry);
+        jvmThreadMetrics.bindTo(wavefrontRegistry);
+
+        /**
+         * 3. bind system metrics to registry
+         */
+        FileDescriptorMetrics fileDescriptorMetrics = new FileDescriptorMetrics();
+        ProcessorMetrics processorMetrics = new ProcessorMetrics();
+        UptimeMetrics updateMetrics = new UptimeMetrics();
+        fileDescriptorMetrics.bindTo(wavefrontRegistry);
+        processorMetrics.bindTo(wavefrontRegistry);
+        updateMetrics.bindTo(wavefrontRegistry);
     }
 
     /**
@@ -86,16 +112,23 @@ public class WavefrontSample {
         buffer.append("<html>");
         buffer.append("<head><title>Wavefront Sample for Micrometer</title></head>");
         buffer.append("<body>");
-        buffer.append("<pre>");
+        buffer.append("<h2>");
         buffer.append("Wavefront Sample for Micrometer");
-        buffer.append("</pre>");
+        buffer.append("</h2>");
         buffer.append("<p>");
         buffer.append("timestamp: " + Instant.now().getEpochSecond());
         buffer.append("<br/>");
+        buffer.append("Sample counter values (increments per every request to this page):");
         if(callCounter != null)
         {
             callCounter.increment();
-            buffer.append("call counter: " + callCounter.count());
+
+            Iterable<Measurement> measures = callCounter.measure();
+            for(Measurement measure : measures)
+            {
+                buffer.append(measure.getValue());
+                buffer.append(" ");
+            }
         }
         buffer.append("</p>");
         buffer.append("</body>");
@@ -133,6 +166,8 @@ public class WavefrontSample {
                         return Integer.toString(port);
                     case "wavefront.step":
                         return step;
+                    case "wavefront.namePrefix":
+                        return nameprefix;
                 }
                 return null;
             }
