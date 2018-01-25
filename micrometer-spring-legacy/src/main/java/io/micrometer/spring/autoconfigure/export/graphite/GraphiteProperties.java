@@ -60,6 +60,12 @@ public class GraphiteProperties {
     private Integer port;
 
     /**
+     * For the default naming convention, turn the specified tag keys into
+     * part of the metric prefix.
+     */
+    private String[] tagsAsPrefix;
+
+    /**
      * Protocol to use while shipping data to Graphite.
      */
     private GraphiteProtocol protocol;
@@ -120,4 +126,11 @@ public class GraphiteProperties {
         this.protocol = protocol;
     }
 
+    public String[] getTagsAsPrefix() {
+        return tagsAsPrefix;
+    }
+
+    public void setTagsAsPrefix(String[] tagsAsPrefix) {
+        this.tagsAsPrefix = tagsAsPrefix;
+    }
 }
