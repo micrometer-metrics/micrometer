@@ -18,13 +18,28 @@ package io.micrometer.wavefront;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class WavefrontNamingConvention implements NamingConvention {
+    private final Logger logger = LoggerFactory.getLogger(WavefrontNamingConvention.class);
     private final NamingConvention delegate;
+    String namePrefix;
 
     public WavefrontNamingConvention() {
         // TODO which is the most common format?
         this(NamingConvention.dot);
+    }
+
+    public WavefrontNamingConvention(WavefrontConfig config)
+    {
+        this();
+        // search for the prefix and set it if found any
+        if(config.getNamePrefix() != null && config.getNamePrefix().trim().length() > 0)
+        {
+            namePrefix = config.getNamePrefix();
+            logger.debug("[convention]namePrefix is " + namePrefix);
+        }
     }
 
     public WavefrontNamingConvention(NamingConvention delegate) {
@@ -38,6 +53,9 @@ public class WavefrontNamingConvention implements NamingConvention {
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
         // TODO sanitize names of unacceptable characters
+
+        // add name prefix if prefix exists
+        if(namePrefix != null) return namePrefix + "." + delegate.name(name, type, baseUnit);
         return delegate.name(name, type, baseUnit);
     }
 

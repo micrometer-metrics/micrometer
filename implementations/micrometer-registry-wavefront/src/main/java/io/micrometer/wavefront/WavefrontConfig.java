@@ -16,28 +16,42 @@
 package io.micrometer.wavefront;
 
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.lang.Nullable;
+
+import java.time.Duration;
 
 public interface WavefrontConfig extends StepRegistryConfig {
     WavefrontConfig DEFAULT = k -> null;
+
+    String _proxyHost_ = ".proxyHost";
+    String _proxyPort_ = ".proxyPort";
+    String _namePrefix_ = ".namePrefix";
+
+    @Override
+    default Duration step() {
+        String v = get(prefix() + ".step");
+        return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
+    }
 
     @Override
     default String prefix() {
         return "wavefront";
     }
+    default boolean test() { return false; }
 
-    default String apiToken() {
-        String v = get(prefix() + ".apiToken");
-        if(v == null)
-            throw new IllegalStateException(prefix() + ".apiToken must be set to report metrics to Wavefront");
-        return v;
+    @Nullable
+    default String getHost() {
+        String v = get(prefix() + _proxyHost_);
+        return v == null ? "localhost" : v;
     }
-
-    /**
-     * The URI to ship metrics to. If you need to publish metrics to an internal proxy en route to
-     * Wavefront, you can define the location of the proxy with this.
-     */
-    default String uri() {
-        String v = get(prefix() + ".uri");
-        return v == null ? "https://longboard.wavefront.com/api/v2/" : v;
+    @Nullable
+    default String getPort() {
+        String v = get(prefix() + _proxyPort_);
+        return v == null ? "2878" : v;
+    }
+    @Nullable
+    default String getNamePrefix() {
+        String v = get(prefix() + _namePrefix_);
+        return v;
     }
 }
