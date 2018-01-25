@@ -61,7 +61,9 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         config().namingConvention(new WavefrontNamingConvention());
 
         if(config.enabled()) {
+            logger.debug("[registry]publish interval set to: " + config.step().getSeconds() + " seconds.");
             start(threadFactory);
+            logger.debug("[registry]step thread started.");
         }
     }
 
