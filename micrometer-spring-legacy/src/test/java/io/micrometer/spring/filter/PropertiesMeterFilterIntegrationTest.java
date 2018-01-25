@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.autoconfigure;
+package io.micrometer.spring.filter;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.jmx.JmxMeterRegistry;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,30 +23,33 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = CompositeMeterRegistryConfigurationTest.MetricsApp.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, classes = PropertiesMeterFilterIntegrationTest.MetricsApp.class)
 @TestPropertySource(properties = {
-    "management.metrics.export.jmx.enabled=true",
-    "management.metrics.export.prometheus.enabled=true",
+    "management.metrics.enabled.my.timer=true", /* overriden by programmatic filter */
+    "management.metrics.enabled.my.counter=false"
 })
-public class CompositeMeterRegistryConfigurationTest {
+public class PropertiesMeterFilterIntegrationTest {
+
     @Autowired
-    MeterRegistry registry;
+    private MeterRegistry registry;
 
     @Test
-    public void compositeRegistryIsCreated() {
-        assertThat(registry).isInstanceOf(CompositeMeterRegistry.class);
-
-        assertThat(((CompositeMeterRegistry) registry).getRegistries())
-            .hasAtLeastOneElementOfType(JmxMeterRegistry.class)
-            .hasAtLeastOneElementOfType(PrometheusMeterRegistry.class);
+    public void propertyBasedMeterFilters() {
+        registry.counter("my.counter");
+        assertThat(registry.find("my.counter").counter()).isNull();
     }
 
-    @SpringBootApplication(scanBasePackages = "ignored")
+    @Test
+    public void propertyBasedMeterFiltersCanTakeLowerPrecedenceThanProgrammaticallyBoundFilters() {
+        registry.timer("my.timer");
+        assertThat(registry.find("my.timer").meter()).isNull();
+    }
+
+    @SpringBootApplication(scanBasePackages = "ignore")
     static class MetricsApp {
     }
 }

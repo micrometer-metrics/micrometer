@@ -64,7 +64,7 @@ public class CompositeMeterRegistryConfiguration {
     static class CompositeMeterRegistryPostProcessor implements BeanFactoryPostProcessor {
         @Override
         public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-            int registries = beanFactory.getBeanNamesForType(MeterRegistry.class, true, false).length;
+            String[] registryBeans = beanFactory.getBeanNamesForType(MeterRegistry.class, true, false);
 
             // 1. If there are no meter registries configured, we wire an empty composite that effectively no-ops metrics
             // instrumentation throughout the app. Note that in the absence of specific registry implementations, a
@@ -73,15 +73,23 @@ public class CompositeMeterRegistryConfiguration {
             //
             // 2. If there are more than one registries configured, we add them as children of a composite meter registry
             // and mark it primary, so that the composite is injected wherever a MeterRegistry is required.
-            if (registries == 0 || registries > 1) {
+            //
+            // 3. If there are more than one registries configured, but one is already marked as primary, we let the
+            // primary registry be.
+            //
+            // 4. If there is only one registry configured, adding the indirection of a composite is not useful, so
+            // we just leave it alone.
+            if (registryBeans.length == 0 || registryBeans.length > 1) {
+                for (String registryBean : registryBeans) {
+                    if (beanFactory.getBeanDefinition(registryBean).isPrimary())
+                        return;
+                }
+
                 GenericBeanDefinition bd = new GenericBeanDefinition();
                 bd.setBeanClass(CompositeMeterRegistry.class);
                 bd.setPrimary(true);
 
                 ((DefaultListableBeanFactory) beanFactory).registerBeanDefinition(COMPOSITE_BEAN_NAME, bd);
-            } else {
-                // 3. If there is only one registry configured, adding the indirection of a composite is not useful, so
-                // we just leave it alone.
             }
         }
     }

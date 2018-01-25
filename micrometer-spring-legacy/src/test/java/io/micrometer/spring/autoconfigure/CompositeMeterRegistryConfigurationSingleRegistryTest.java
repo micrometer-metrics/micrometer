@@ -33,10 +33,6 @@ public class CompositeMeterRegistryConfigurationSingleRegistryTest {
     @Autowired
     MeterRegistry registry;
 
-    /**
-     * The simple registry is off by default UNLESS there is no other registry implementation on
-     * the classpath, in which case it is on.
-     */
     @Test
     public void noCompositeCreated() {
         assertThat(registry).isInstanceOf(GraphiteMeterRegistry.class);

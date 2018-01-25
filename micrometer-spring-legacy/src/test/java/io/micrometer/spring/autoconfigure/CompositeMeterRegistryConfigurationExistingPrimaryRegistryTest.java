@@ -16,40 +16,38 @@
 package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.jmx.JmxMeterRegistry;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.simple.SimpleConfig;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = CompositeMeterRegistryConfigurationTest.MetricsApp.class)
-@TestPropertySource(properties = {
-    "management.metrics.export.jmx.enabled=true",
-    "management.metrics.export.prometheus.enabled=true",
-})
-public class CompositeMeterRegistryConfigurationTest {
+@SpringBootTest(classes = CompositeMeterRegistryConfigurationExistingPrimaryRegistryTest.MetricsApp.class)
+public class CompositeMeterRegistryConfigurationExistingPrimaryRegistryTest {
     @Autowired
     MeterRegistry registry;
 
     @Test
-    public void compositeRegistryIsCreated() {
-        assertThat(registry).isInstanceOf(CompositeMeterRegistry.class);
-
-        assertThat(((CompositeMeterRegistry) registry).getRegistries())
-            .hasAtLeastOneElementOfType(JmxMeterRegistry.class)
-            .hasAtLeastOneElementOfType(PrometheusMeterRegistry.class);
+    public void compositeNotCreatedWhenPrimaryRegistryExists() {
+        assertThat(registry).isInstanceOf(SimpleMeterRegistry.class);
     }
 
     @SpringBootApplication(scanBasePackages = "ignored")
     static class MetricsApp {
+        @Primary
+        @Bean
+        MeterRegistry simpleMeterRegistry() {
+            return new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+        }
     }
 }

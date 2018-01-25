@@ -36,7 +36,6 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -56,7 +55,6 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = MetricsAutoConfigurationTest.MetricsApp.class)
-@TestPropertySource(properties = "management.metrics.filter.my.timer.enabled=true" /* overriden by programmatic filter */)
 public class MetricsAutoConfigurationTest {
 
     @Autowired
@@ -101,12 +99,6 @@ public class MetricsAutoConfigurationTest {
     @Test
     public void registryCustomizersAreAppliedBeforeRegistryIsInjectableElsewhere() {
         registry.mustFind("my.thing").tags("common", "tag").gauge();
-    }
-
-    @Test
-    public void propertyBasedMeterFiltersCanTakeLowerPrecedenceThanProgrammaticallyBoundFilters() {
-        registry.timer("my.timer");
-        assertThat(registry.find("my.timer").meter()).isNull();
     }
 
     @SpringBootApplication(scanBasePackages = "ignored")

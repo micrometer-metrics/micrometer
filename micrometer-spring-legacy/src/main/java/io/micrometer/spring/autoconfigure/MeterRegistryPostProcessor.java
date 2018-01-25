@@ -22,12 +22,13 @@ import io.micrometer.core.lang.NonNullApi;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 
 import static java.util.Collections.emptyList;
 
-@Configuration
+@Component
 @NonNullApi
 public class MeterRegistryPostProcessor implements BeanPostProcessor {
     private final MetricsProperties config;
