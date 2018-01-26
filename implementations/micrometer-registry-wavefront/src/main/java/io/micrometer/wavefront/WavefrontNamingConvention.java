@@ -40,13 +40,13 @@ public class WavefrontNamingConvention implements NamingConvention {
      */
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        // FIXME sanitize names of unacceptable characters
+        String sanitizedName = delegate.name(name, type, baseUnit).replaceAll("[^a-zA-Z0-9\\-_\\./,]", "_");
 
         // add name prefix if prefix exists
         if (namePrefix != null) {
-            return namePrefix + "." + delegate.name(name, type, baseUnit);
+            return namePrefix + "." + sanitizedName;
         }
-        return delegate.name(name, type, baseUnit);
+        return sanitizedName;
     }
 
     /**
@@ -54,8 +54,7 @@ public class WavefrontNamingConvention implements NamingConvention {
      */
     @Override
     public String tagKey(String key) {
-        // FIXME sanitize tag keys of unacceptable characters
-        return delegate.tagKey(key);
+        return delegate.tagKey(key).replaceAll("[^a-zA-Z0-9\\-_\\.]", "_");
     }
 
     /**
@@ -65,7 +64,9 @@ public class WavefrontNamingConvention implements NamingConvention {
      */
     @Override
     public String tagValue(String value) {
-        // FIXME sanitize tag values of unacceptable characters
-        return delegate.tagValue(value);
+        String partiallySanitized = delegate.tagValue(value).replace("\"", "\\\"");
+        if (partiallySanitized.endsWith("\\"))
+            return partiallySanitized.substring(0, partiallySanitized.length() - 1) + "_";
+        return partiallySanitized;
     }
 }

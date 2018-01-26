@@ -125,9 +125,11 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
             metrics.add(writeMetric(id, suffix, wallTime, v.value(getBaseTimeUnit())));
         }
 
-        // FIXME write histogram format here
-        for (CountAtValue countAtValue : snapshot.histogramCounts()) {
-            // countAtValue represents a single histogram bucket
+        if(config.enableHistograms()) {
+            // FIXME write histogram format here
+            for (CountAtValue countAtValue : snapshot.histogramCounts()) {
+                // countAtValue represents a single histogram bucket
+            }
         }
 
         return metrics.build();
@@ -149,9 +151,11 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
             metrics.add(writeMetric(id, suffix, wallTime, v.value()));
         }
 
-        // FIXME write histogram format here
-        for (CountAtValue countAtValue : snapshot.histogramCounts()) {
-            // countAtValue represents a single histogram bucket
+        if (config.enableHistograms()) {
+            // FIXME write histogram format here
+            for (CountAtValue countAtValue : snapshot.histogramCounts()) {
+                // countAtValue represents a single histogram bucket
+            }
         }
 
         return metrics.build();
@@ -174,7 +178,8 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         if (suffix != null)
             fullId = idWithSuffix(id, suffix);
 
-        return getConventionName(id) + " " + DoubleFormat.toString(value) + " " + (wallTime / 1000) +
+        // surrounding the name with double quotes allows for / and , in names
+        return "\"" + getConventionName(id) + "\" " + DoubleFormat.toString(value) + " " + (wallTime / 1000) +
             " source=" + config.source() + " " +
             getConventionTags(fullId)
                 .stream()

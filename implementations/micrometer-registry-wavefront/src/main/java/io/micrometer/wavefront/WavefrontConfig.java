@@ -58,6 +58,11 @@ public interface WavefrontConfig extends StepRegistryConfig {
         }
     }
 
+    default boolean enableHistograms() {
+        String v = get(prefix() + ".enableHistograms");
+        return v == null || Boolean.valueOf(v);
+    }
+
     /**
      * A prefix to add to every metric name to separate Micrometer-sourced metrics
      * from others in the Wavefront UI.
