@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 /**
- * Configuration for exporting metrics to Datadog.
+ * Configuration for exporting metrics to New Relic.
  *
  * @author Jon Schneider
  */
