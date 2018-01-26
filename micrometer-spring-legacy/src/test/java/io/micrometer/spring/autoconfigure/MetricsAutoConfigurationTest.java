@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
-import io.micrometer.core.instrument.config.MeterFilter;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +31,6 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -112,12 +109,6 @@ public class MetricsAutoConfigurationTest {
         @Bean
         public MeterRegistryCustomizer commonTags() {
             return r -> r.config().commonTags("common", "tag");
-        }
-
-        @Bean
-        @Order(Ordered.HIGHEST_PRECEDENCE)
-        public MeterRegistryCustomizer meterFilter() {
-            return r -> r.config().meterFilter(MeterFilter.deny(id -> id.getName().contains("my.timer")));
         }
 
         @Bean

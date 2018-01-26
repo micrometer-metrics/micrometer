@@ -16,11 +16,16 @@
 package io.micrometer.spring.filter;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.spring.autoconfigure.MeterRegistryCustomizer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -51,5 +56,10 @@ public class PropertiesMeterFilterIntegrationTest {
 
     @SpringBootApplication(scanBasePackages = "ignore")
     static class MetricsApp {
+        @Bean
+        @Order(Ordered.HIGHEST_PRECEDENCE)
+        public MeterRegistryCustomizer meterFilter() {
+            return r -> r.config().meterFilter(MeterFilter.deny(id -> id.getName().contains("my.timer")));
+        }
     }
 }
