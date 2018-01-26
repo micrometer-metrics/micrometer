@@ -52,6 +52,7 @@ import java.util.stream.Collectors;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class MetricsFilter extends OncePerRequestFilter {
     private static final String EXCEPTION_ATTRIBUTE = "micrometer.requestException";
+    private static final String TIMING_SAMPLE = "micrometer.timingSample";
 
     private final MeterRegistry registry;
     private final ServletTagsProvider tagsProvider;
@@ -59,13 +60,6 @@ public class MetricsFilter extends OncePerRequestFilter {
     private final boolean autoTimeRequests;
     private final HandlerMappingIntrospector mappingIntrospector;
     private final Logger logger = LoggerFactory.getLogger(MetricsFilter.class);
-
-    /**
-     * Since the filter gets called twice for async requests, we need to hold the initial timing context until
-     * the second call.
-     */
-    private final Map<HttpServletRequest, TimingSampleContext> asyncTimingContext = Collections.synchronizedMap(
-        new IdentityHashMap<>());
 
     public MetricsFilter(MeterRegistry registry, ServletTagsProvider tagsProvider,
                          String metricName, boolean autoTimeRequests,
@@ -108,7 +102,7 @@ public class MetricsFilter extends OncePerRequestFilter {
         // If this is the second invocation of the filter in an async request, we don't
         // want to start sampling again (effectively bumping the active count on any long task timers).
         // Rather, we'll just use the sampling context we started on the first invocation.
-        TimingSampleContext timingContext = asyncTimingContext.remove(request);
+        TimingSampleContext timingContext = (TimingSampleContext) request.getAttribute(TIMING_SAMPLE);
         if (timingContext == null) {
             timingContext = new TimingSampleContext(request, handlerObject);
         }
@@ -119,7 +113,7 @@ public class MetricsFilter extends OncePerRequestFilter {
             if (request.isAsyncSupported()) {
                 // this won't be "started" until after the first call to doFilter
                 if (request.isAsyncStarted()) {
-                    asyncTimingContext.put(request, timingContext);
+                    request.setAttribute(TIMING_SAMPLE, timingContext);
                 }
             }
 
