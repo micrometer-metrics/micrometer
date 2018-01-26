@@ -34,12 +34,15 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
 
+/**
+ * @author Jon Schneider
+ * @author Howard Yoo
+ */
 public class WavefrontMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(WavefrontMeterRegistry.class);
     private final WavefrontConfig config;
     private final String wavefrontProxyHost;
     private final String wavefrontProxyPort;
-    private int publishCounter;
 
     public WavefrontMeterRegistry(WavefrontConfig config, Clock clock) {
         this(config, clock, Executors.defaultThreadFactory());
@@ -48,50 +51,29 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     public WavefrontMeterRegistry(WavefrontConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
         this.config = config;
-        this.publishCounter = 0;
 
         try {
-            this.wavefrontProxyHost = config.getHost();
-            this.wavefrontProxyPort = config.getPort();
+            this.wavefrontProxyHost = config.host();
+            this.wavefrontProxyPort = config.port();
         } catch (Exception e) {
             // not possible
             throw new RuntimeException(e);
         }
 
-        config().namingConvention(new WavefrontNamingConvention(config));
+        config().namingConvention(new WavefrontNamingConvention(config.globalPrefix()));
 
-        if(config.enabled()) {
-            logger.debug("[registry]publish interval set to: " + config.step().getSeconds() + " seconds.");
+        if (config.enabled()) {
             start(threadFactory);
-            logger.debug("[registry]step thread started.");
         }
     }
 
     @Override
-    protected void publish()
-    {
-        publishCounter++;
-        logger.debug("[publish][" + publishCounter + "]start");
+    protected void publish() {
         try {
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
+                try (Socket socket = new Socket(wavefrontProxyHost, Integer.parseInt(wavefrontProxyPort));
+                     OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream(), "UTF-8")) {
 
-                logger.debug("[publish]batch.size() = " + batch.size());
-
-                Socket socket = null;
-                OutputStreamWriter writer = null;
-
-                try {
-                    if(config.test() == false) {
-                        socket = new Socket(wavefrontProxyHost, Integer.parseInt(wavefrontProxyPort));
-                        writer = new OutputStreamWriter(socket.getOutputStream(), "UTF-8");
-                        logger.debug("[publish]connectionEstablished to " + wavefrontProxyHost + ":" + wavefrontProxyPort);
-                    }
-                    else
-                    {
-                        logger.debug("[publish]testing mode on - output will be redirected to info log");
-                    }
-
-                    // now the writer is ready to send the metrics.
                     String body =
                         batch.stream().flatMap(m -> {
                             if (m instanceof Timer) {
@@ -104,41 +86,14 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                                 return writeTimer((FunctionTimer) m);
                             }
                             return writeMeter(m);
-                        }).collect(joining("\n"));
+                        }).collect(joining("\n")) + "\n";
 
-                    // write the collected metric data to output stream
-                    if(config.test() == false) {
-                        logger.debug(body);
-                        writer.write(body);
-                        writer.write("\n");
-                    }
-                    else
-                    {
-                        logger.info(body);
-                    }
-                }
-                finally {
-                    if(config.test() == false) {
-                        logger.debug("[publish]closing connection.");
-                        writer.flush();
-                        quietlyCloseSocketConnection(socket);
-                    }
+                    writer.write(body);
+                    writer.flush();
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.warn("failed to send metrics", e);
-        }
-        logger.debug("[publish][" + publishCounter + "]end");
-    }
-
-    private void quietlyCloseSocketConnection(@Nullable Socket con) {
-        try {
-            if (con != null) {
-                con.close();
-            }
-        } catch (Exception ignore) {
-            logger.debug(ignore.getMessage(), ignore);
         }
     }
 
@@ -211,40 +166,20 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
             });
     }
 
-    String writeMetric(Meter.Id id, @Nullable String suffix, long wallTime, double value) {
-        return writeMetric(id, suffix,null, wallTime, value);
-    }
-
     /**
      * https://docs.wavefront.com/wavefront_data_format.html#wavefront-data-format-syntax
      */
-    String writeMetric(Meter.Id id, @Nullable String suffix, @Nullable String source, long wallTime, double value) {
+    private String writeMetric(Meter.Id id, @Nullable String suffix, long wallTime, double value) {
         Meter.Id fullId = id;
         if (suffix != null)
             fullId = idWithSuffix(id, suffix);
-        wallTime = wallTime / 1000;         // we need to convert ms to s
-        if(source == null)
-        {
-            // get current system's hostname
-            try {
-                source = InetAddress.getLocalHost().getHostName();
-            }
-            catch(UnknownHostException uhe)
-            {
-                source = "unknown";
-                logger.warn("[writeMetric]could not determine hostname to use as source..", uhe);
-            }
-        }
-        if(source != null)
-        {
-            return getConventionName(id) + " " + DoubleFormat.toString(value) + " " + wallTime + " source=" + source + " " +
-                getConventionTags(fullId)
-                    .stream()
-                    .map(t -> t.getKey() + "=\"" + t.getValue() + "\"")
-                    .collect(joining(" "));
-        }
-        else
-            return null;
+
+        return getConventionName(id) + " " + DoubleFormat.toString(value) + " " + (wallTime / 1000) +
+            " source=" + config.source() + " " +
+            getConventionTags(fullId)
+                .stream()
+                .map(t -> t.getKey() + "=\"" + t.getValue() + "\"")
+                .collect(joining(" "));
     }
 
     /**
@@ -256,7 +191,6 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected TimeUnit getBaseTimeUnit() {
-        // TODO what is the typical base unit of time?
         return TimeUnit.SECONDS;
     }
 }

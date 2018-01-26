@@ -18,32 +18,20 @@ package io.micrometer.wavefront;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class WavefrontNamingConvention implements NamingConvention {
-    private final Logger logger = LoggerFactory.getLogger(WavefrontNamingConvention.class);
     private final NamingConvention delegate;
-    String namePrefix;
 
-    public WavefrontNamingConvention() {
-        // TODO which is the most common format?
-        this(NamingConvention.dot);
+    @Nullable
+    private String namePrefix;
+
+    public WavefrontNamingConvention(@Nullable String namePrefix) {
+        this(namePrefix, NamingConvention.dot);
     }
 
-    public WavefrontNamingConvention(WavefrontConfig config)
-    {
-        this();
-        // search for the prefix and set it if found any
-        if(config.getNamePrefix() != null && config.getNamePrefix().trim().length() > 0)
-        {
-            namePrefix = config.getNamePrefix();
-            logger.debug("[convention]namePrefix is " + namePrefix);
-        }
-    }
-
-    public WavefrontNamingConvention(NamingConvention delegate) {
+    public WavefrontNamingConvention(@Nullable String namePrefix, NamingConvention delegate) {
         this.delegate = delegate;
+        this.namePrefix = (namePrefix != null && namePrefix.isEmpty()) ? null : namePrefix;
     }
 
     /**
@@ -52,10 +40,12 @@ public class WavefrontNamingConvention implements NamingConvention {
      */
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        // TODO sanitize names of unacceptable characters
+        // FIXME sanitize names of unacceptable characters
 
         // add name prefix if prefix exists
-        if(namePrefix != null) return namePrefix + "." + delegate.name(name, type, baseUnit);
+        if (namePrefix != null) {
+            return namePrefix + "." + delegate.name(name, type, baseUnit);
+        }
         return delegate.name(name, type, baseUnit);
     }
 
@@ -64,7 +54,7 @@ public class WavefrontNamingConvention implements NamingConvention {
      */
     @Override
     public String tagKey(String key) {
-        // TODO sanitize tag keys of unacceptable characters
+        // FIXME sanitize tag keys of unacceptable characters
         return delegate.tagKey(key);
     }
 
@@ -75,7 +65,7 @@ public class WavefrontNamingConvention implements NamingConvention {
      */
     @Override
     public String tagValue(String value) {
-        // TODO sanitize tag values of unacceptable characters
+        // FIXME sanitize tag values of unacceptable characters
         return delegate.tagValue(value);
     }
 }

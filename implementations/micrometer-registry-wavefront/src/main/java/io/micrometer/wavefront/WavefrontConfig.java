@@ -18,14 +18,12 @@ package io.micrometer.wavefront;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.Duration;
 
 public interface WavefrontConfig extends StepRegistryConfig {
     WavefrontConfig DEFAULT = k -> null;
-
-    String _proxyHost_ = ".proxyHost";
-    String _proxyPort_ = ".proxyPort";
-    String _namePrefix_ = ".namePrefix";
 
     @Override
     default Duration step() {
@@ -37,21 +35,35 @@ public interface WavefrontConfig extends StepRegistryConfig {
     default String prefix() {
         return "wavefront";
     }
-    default boolean test() { return false; }
 
-    @Nullable
-    default String getHost() {
-        String v = get(prefix() + _proxyHost_);
+    default String host() {
+        String v = get(prefix() + ".host");
         return v == null ? "localhost" : v;
     }
-    @Nullable
-    default String getPort() {
-        String v = get(prefix() + _proxyPort_);
+
+    default String port() {
+        String v = get(prefix() + ".port");
         return v == null ? "2878" : v;
     }
+
+    default String source() {
+        String v = get(prefix() + ".source");
+        if (v != null)
+            return v;
+
+        try {
+            return InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException uhe) {
+            return "unknown";
+        }
+    }
+
+    /**
+     * A prefix to add to every metric name to separate Micrometer-sourced metrics
+     * from others in the Wavefront UI.
+     */
     @Nullable
-    default String getNamePrefix() {
-        String v = get(prefix() + _namePrefix_);
-        return v;
+    default String globalPrefix() {
+        return get(prefix() + ".globalPrefix");
     }
 }
