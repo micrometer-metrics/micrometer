@@ -283,44 +283,7 @@ public class SampleRegistries {
         }, Clock.SYSTEM);
     }
 
-    public static WavefrontMeterRegistry wavefront(String host, int port) {
-        WavefrontConfig config = new WavefrontConfig() {
-
-            @Override
-            public Duration step() {
-                return Duration.ofSeconds(10);
-            }   // default duration: 10s
-
-            @Override
-            public boolean enabled() {
-                return true;
-            }
-
-            @Override
-            public boolean test() {
-                return true;
-            }       // results will be output to info log
-
-            @Override
-            @Nullable
-            public String get(String k)
-            {
-                switch(k)
-                {
-                    case "wavefront.proxyHost":
-                        return host;
-                    case "wavefront.proxyPort":
-                        return Integer.toString(port);
-                    case "wavefront.step":
-                        return Long.toString(step().getSeconds());
-                    case "wavefront.namePrefix":
-                        return null;
-                }
-                return null;
-            }
-
-        };
-
-        return new WavefrontMeterRegistry(config, Clock.SYSTEM);
+    public static WavefrontMeterRegistry wavefront() {
+        return new WavefrontMeterRegistry(WavefrontConfig.DEFAULT, Clock.SYSTEM);
     }
 }

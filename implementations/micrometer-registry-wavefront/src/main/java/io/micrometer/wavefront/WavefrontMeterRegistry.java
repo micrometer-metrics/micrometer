@@ -179,7 +179,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
             fullId = idWithSuffix(id, suffix);
 
         // surrounding the name with double quotes allows for / and , in names
-        return "\"" + getConventionName(id) + "\" " + DoubleFormat.toString(value) + " " + (wallTime / 1000) +
+        return "\"" + getConventionName(fullId) + "\" " + DoubleFormat.toString(value) + " " + (wallTime / 1000) +
             " source=" + config.source() + " " +
             getConventionTags(fullId)
                 .stream()
