@@ -67,8 +67,8 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     protected abstract void publish();
 
     @Override
-    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
-        return new DefaultGauge<>(id, obj, f);
+    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+        return new DefaultGauge<>(id, obj, valueFunction);
     }
 
     @Override
@@ -97,8 +97,8 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
-        return new StepFunctionCounter<>(id, clock, config.step().toMillis(), obj, f);
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
+        return new StepFunctionCounter<>(id, clock, config.step().toMillis(), obj, valueFunction);
     }
 
     @Override

@@ -80,7 +80,7 @@ class TomcatMetricsTest {
         expiredSession.setCreationTime(System.currentTimeMillis() - 10_000);
         manager.remove(expiredSession, true);
 
-        Iterable<Tag> tags = Tags.zip("metricTag", "val1");
+        Iterable<Tag> tags = Tags.of("metricTag", "val1");
         TomcatMetrics.monitor(registry, manager, tags);
 
         assertThat(registry.get("tomcat.sessions.active.max").tags(tags).gauge().value()).isEqualTo(3.0);

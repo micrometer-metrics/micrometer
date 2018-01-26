@@ -17,13 +17,7 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.lang.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -146,18 +140,6 @@ public final class Tags implements Iterable<Tag> {
      */
     public static Tags concat(Iterable<? extends Tag> tags, String... keyValues) {
         return Tags.of(tags).and(keyValues);
-    }
-
-    /**
-     * Return a new {@link Tags} instance containing tags constructed from the specified key value pairs.
-     *
-     * @param keyValues the key value pairs to add
-     * @return a new {@link Tags} instance
-     * @deprecated in favor of {@link Tags#of(String...)}.
-     */
-    @Deprecated
-    public static Tags zip(String... keyValues) {
-        return of(keyValues);
     }
 
     /**

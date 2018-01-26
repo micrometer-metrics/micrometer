@@ -58,7 +58,7 @@ public interface TimeGauge extends Gauge {
          * @return
          */
         public Builder<T> tags(String... tags) {
-            return tags(Tags.zip(tags));
+            return tags(Tags.of(tags));
         }
 
         public Builder<T> tags(Iterable<Tag> tags) {

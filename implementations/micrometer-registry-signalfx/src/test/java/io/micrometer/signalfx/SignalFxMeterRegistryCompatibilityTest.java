@@ -28,7 +28,7 @@ public class SignalFxMeterRegistryCompatibilityTest extends MeterRegistryCompati
         return new SignalFxMeterRegistry(new SignalFxConfig() {
             @Override
             @Nullable
-            public String get(String k) {
+            public String get(String key) {
                 return null;
             }
 

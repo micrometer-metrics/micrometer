@@ -43,17 +43,17 @@ public class HibernateMetrics implements MeterBinder {
     @Nullable
     private final Statistics stats;
 
-    private HibernateMetrics(EntityManagerFactory emf, String name, Iterable<Tag> tags) {
+    public HibernateMetrics(EntityManagerFactory entityManagerFactoryf, String name, Iterable<Tag> tags) {
         this.tags = Tags.concat(tags, "entityManagerFactory", name);
-        this.stats = hasStatisticsEnabled(emf) ? getStatistics(emf) : null;
+        this.stats = hasStatisticsEnabled(entityManagerFactoryf) ? getStatistics(entityManagerFactoryf) : null;
     }
 
-    public static void monitor(MeterRegistry meterRegistry, EntityManagerFactory emf, String name, String... tags) {
-        monitor(meterRegistry, emf, name, Tags.zip(tags));
+    public static void monitor(MeterRegistry registry, EntityManagerFactory entityManagerFactory, String name, String... tags) {
+        monitor(registry, entityManagerFactory, name, Tags.of(tags));
     }
 
-    public static void monitor(MeterRegistry meterRegistry, EntityManagerFactory emf, String name, Iterable<Tag> tags) {
-        new HibernateMetrics(emf, name, tags).bindTo(meterRegistry);
+    public static void monitor(MeterRegistry registry, EntityManagerFactory entityManagerFactory, String name, Iterable<Tag> tags) {
+        new HibernateMetrics(entityManagerFactory, name, tags).bindTo(registry);
     }
 
     private void counter(MeterRegistry registry, String name, String description, ToDoubleFunction<Statistics> f, String... extraTags) {

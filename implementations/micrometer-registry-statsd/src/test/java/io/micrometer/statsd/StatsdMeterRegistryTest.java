@@ -122,7 +122,7 @@ class StatsdMeterRegistryTest {
         return new StatsdMeterRegistry(new StatsdConfig() {
             @Override
             @Nullable
-            public String get(String k) {
+            public String get(String key) {
                 return null;
             }
 
@@ -178,7 +178,7 @@ class StatsdMeterRegistryTest {
         }
 
         Integer n = 2;
-        assertLines(r -> r.gauge("my.gauge", Tags.zip("my.tag", "val"), n), flavor, line);
+        assertLines(r -> r.gauge("my.gauge", Tags.of("my.tag", "val"), n), flavor, line);
     }
 
     @ParameterizedTest

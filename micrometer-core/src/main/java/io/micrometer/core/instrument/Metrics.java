@@ -111,13 +111,13 @@ public class Metrics {
      * @param name Name of the gauge being registered.
      * @param tags Sequence of dimensions for breaking down the name.
      * @param obj  Object used to compute a value.
-     * @param f    Function that is applied on the value for the number.
+     * @param valueFunction    Function that is applied on the value for the number.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
     @Nullable
-    public static <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-        return globalRegistry.gauge(name, tags, obj, f);
+    public static <T> T gauge(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> valueFunction) {
+        return globalRegistry.gauge(name, tags, obj, valueFunction);
     }
 
     /**
@@ -152,13 +152,13 @@ public class Metrics {
      *
      * @param name Name of the gauge being registered.
      * @param obj  Object used to compute a value.
-     * @param f    Function that is applied on the value for the number.
+     * @param valueFunction    Function that is applied on the value for the number.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
     @Nullable
-    public static <T> T gauge(String name, T obj, ToDoubleFunction<T> f) {
-        return globalRegistry.gauge(name, obj, f);
+    public static <T> T gauge(String name, T obj, ToDoubleFunction<T> valueFunction) {
+        return globalRegistry.gauge(name, obj, valueFunction);
     }
 
     /**
@@ -216,8 +216,8 @@ public class Metrics {
          * Tracks a monotonically increasing value, automatically incrementing the counter whenever
          * the value is observed.
          */
-        public <T> FunctionCounter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-            return globalRegistry.more().counter(name, tags, obj, f);
+        public <T> FunctionCounter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> countFunction) {
+            return globalRegistry.more().counter(name, tags, obj, countFunction);
         }
 
         /**
@@ -230,8 +230,8 @@ public class Metrics {
         /**
          * A gauge that tracks a time value, to be scaled to the monitoring system's base time unit.
          */
-        public <T> TimeGauge timeGauge(String name, Iterable<Tag> tags, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
-            return globalRegistry.more().timeGauge(name, tags, obj, fUnit, f);
+        public <T> TimeGauge timeGauge(String name, Iterable<Tag> tags, T obj, TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
+            return globalRegistry.more().timeGauge(name, tags, obj, timeFunctionUnit, timeFunction);
         }
 
         /**

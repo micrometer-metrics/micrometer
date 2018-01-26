@@ -53,7 +53,7 @@ class FileDescriptorMetricsTest {
     @Test
     void fileDescriptorMetricsUnsupportedOsBeanMock() {
         final OperatingSystemMXBean osBean = mock(OperatingSystemMXBean.class);
-        new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
+        new FileDescriptorMetrics(osBean, Tags.of("some", "tag")).bindTo(registry);
 
         assertThat(registry.find("process.open.fds").gauge()).isNull();
         assertThat(registry.find("process.max.fds").gauge()).isNull();
@@ -65,7 +65,7 @@ class FileDescriptorMetricsTest {
             HotSpotLikeOperatingSystemMXBean.class);
         when(osBean.getOpenFileDescriptorCount()).thenReturn(Long.valueOf(512));
         when(osBean.getMaxFileDescriptorCount()).thenReturn(Long.valueOf(1024));
-        new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
+        new FileDescriptorMetrics(osBean, Tags.of("some", "tag")).bindTo(registry);
 
         assertThat(registry.get("process.open.fds").tags("some", "tag")
             .gauge().value()).isEqualTo(512.0);
@@ -79,7 +79,7 @@ class FileDescriptorMetricsTest {
             HotSpotLikeOperatingSystemMXBean.class);
         when(osBean.getOpenFileDescriptorCount()).thenThrow(InvocationTargetException.class);
         when(osBean.getMaxFileDescriptorCount()).thenThrow(InvocationTargetException.class);
-        new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
+        new FileDescriptorMetrics(osBean, Tags.of("some", "tag")).bindTo(registry);
 
         assertThat(registry.get("process.open.fds").tags("some", "tag")
             .gauge().value()).isEqualTo(Double.NaN);

@@ -52,7 +52,7 @@ public class GuavaCacheMetrics implements MeterBinder {
      * @see com.google.common.cache.CacheStats
      */
     public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String name, String... tags) {
-        return monitor(registry, cache, name, Tags.zip(tags));
+        return monitor(registry, cache, name, Tags.of(tags));
     }
 
     /**

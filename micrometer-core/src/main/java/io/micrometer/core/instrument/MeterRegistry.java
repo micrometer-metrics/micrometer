@@ -34,7 +34,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.function.*;
 
-import static io.micrometer.core.instrument.Tags.zip;
 import static java.util.Collections.emptyList;
 
 /**
@@ -72,7 +71,7 @@ public abstract class MeterRegistry {
         this.clock = clock;
     }
 
-    protected abstract <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f);
+    protected abstract <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction);
 
     protected abstract Counter newCounter(Meter.Id id);
 
@@ -84,9 +83,9 @@ public abstract class MeterRegistry {
 
     protected abstract Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements);
 
-    protected <T> TimeGauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
+    protected <T> TimeGauge newTimeGauge(Meter.Id id, T obj, TimeUnit valueFunctionUnit, ToDoubleFunction<T> valueFunction) {
         Meter.Id withUnit = id.withBaseUnit(getBaseTimeUnitStr());
-        Gauge gauge = newGauge(withUnit, obj, obj2 -> TimeUtils.convert(f.applyAsDouble(obj2), fUnit, getBaseTimeUnit()));
+        Gauge gauge = newGauge(withUnit, obj, obj2 -> TimeUtils.convert(valueFunction.applyAsDouble(obj2), valueFunctionUnit, getBaseTimeUnit()));
 
         return new TimeGauge() {
             @Override
@@ -108,7 +107,7 @@ public abstract class MeterRegistry {
 
     protected abstract <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits);
 
-    protected abstract <T> FunctionCounter newFunctionCounter(Id id, T obj, ToDoubleFunction<T> f);
+    protected abstract <T> FunctionCounter newFunctionCounter(Id id, T obj, ToDoubleFunction<T> valueFunction);
 
     protected List<Tag> getConventionTags(Meter.Id id) {
         return id.getConventionTags(config().namingConvention());
@@ -143,8 +142,8 @@ public abstract class MeterRegistry {
         return registerMeterIfNecessary(Counter.class, id, this::newCounter, NoopCounter::new);
     }
 
-    <T> Gauge gauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
-        return registerMeterIfNecessary(Gauge.class, id, id2 -> newGauge(id2, obj, f), NoopGauge::new);
+    <T> Gauge gauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+        return registerMeterIfNecessary(Gauge.class, id, id2 -> newGauge(id2, obj, valueFunction), NoopGauge::new);
     }
 
     Timer timer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetectorOverride) {
@@ -208,7 +207,7 @@ public abstract class MeterRegistry {
      * @param tags MUST be an even number of arguments representing key/value pairs of tags.
      */
     public Counter counter(String name, String... tags) {
-        return counter(name, zip(tags));
+        return counter(name, Tags.of(tags));
     }
 
     /**
@@ -225,7 +224,7 @@ public abstract class MeterRegistry {
      * @param tags MUST be an even number of arguments representing key/value pairs of tags.
      */
     public DistributionSummary summary(String name, String... tags) {
-        return summary(name, zip(tags));
+        return summary(name, Tags.of(tags));
     }
 
     /**
@@ -242,7 +241,7 @@ public abstract class MeterRegistry {
      * @param tags MUST be an even number of arguments representing key/value pairs of tags.
      */
     public Timer timer(String name, String... tags) {
-        return timer(name, zip(tags));
+        return timer(name, Tags.of(tags));
     }
 
     /**
@@ -263,16 +262,16 @@ public abstract class MeterRegistry {
      * of active threads. For other behaviors, manage it on the user side and avoid multiple
      * registrations.
      *
-     * @param name Name of the gauge being registered.
-     * @param tags Sequence of dimensions for breaking down the name.
-     * @param obj  Object used to compute a value.
-     * @param f    Function that is applied on the value for the number.
+     * @param name          Name of the gauge being registered.
+     * @param tags          Sequence of dimensions for breaking down the name.
+     * @param obj           Object used to compute a value.
+     * @param valueFunction Function that is applied on the value for the number.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
     @Nullable
-    public <T> T gauge(String name, Iterable<Tag> tags, @Nullable T obj, ToDoubleFunction<T> f) {
-        Gauge.builder(name, obj, f).tags(tags).register(this);
+    public <T> T gauge(String name, Iterable<Tag> tags, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+        Gauge.builder(name, obj, valueFunction).tags(tags).register(this);
         return obj;
     }
 
@@ -306,15 +305,15 @@ public abstract class MeterRegistry {
     /**
      * Register a gauge that reports the value of the object.
      *
-     * @param name Name of the gauge being registered.
-     * @param obj  Object used to compute a value.
-     * @param f    Function that is applied on the value for the number.
+     * @param name          Name of the gauge being registered.
+     * @param obj           Object used to compute a value.
+     * @param valueFunction Function that is applied on the value for the number.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
     @Nullable
-    public <T> T gauge(String name, T obj, ToDoubleFunction<T> f) {
-        return gauge(name, emptyList(), obj, f);
+    public <T> T gauge(String name, T obj, ToDoubleFunction<T> valueFunction) {
+        return gauge(name, emptyList(), obj, valueFunction);
     }
 
     /**
@@ -450,7 +449,7 @@ public abstract class MeterRegistry {
          * Must be an even number of arguments representing key/value pairs of tags.
          */
         public Config commonTags(String... tags) {
-            return commonTags(zip(tags));
+            return commonTags(Tags.of(tags));
         }
 
         @Incubating(since = "1.0.0-rc.3")
@@ -505,7 +504,7 @@ public abstract class MeterRegistry {
          * Measures the time taken for long tasks.
          */
         public LongTaskTimer longTaskTimer(String name, String... tags) {
-            return longTaskTimer(name, zip(tags));
+            return longTaskTimer(name, Tags.of(tags));
         }
 
         /**
@@ -529,8 +528,8 @@ public abstract class MeterRegistry {
          * Tracks a monotonically increasing value, automatically incrementing the counter whenever
          * the value is observed.
          */
-        public <T> FunctionCounter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> f) {
-            return FunctionCounter.builder(name, obj, f).tags(tags).register(MeterRegistry.this);
+        public <T> FunctionCounter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> countFunction) {
+            return FunctionCounter.builder(name, obj, countFunction).tags(tags).register(MeterRegistry.this);
         }
 
         /**
@@ -540,8 +539,8 @@ public abstract class MeterRegistry {
             return FunctionCounter.builder(name, number, Number::doubleValue).tags(tags).register(MeterRegistry.this);
         }
 
-        <T> FunctionCounter counter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
-            return registerMeterIfNecessary(FunctionCounter.class, id, id2 -> newFunctionCounter(id2, obj, f),
+        <T> FunctionCounter counter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
+            return registerMeterIfNecessary(FunctionCounter.class, id, id2 -> newFunctionCounter(id2, obj, countFunction),
                 NoopFunctionCounter::new);
         }
 
@@ -570,12 +569,12 @@ public abstract class MeterRegistry {
          * A gauge that tracks a time value, to be scaled to the monitoring system's base time unit.
          */
         public <T> TimeGauge timeGauge(String name, Iterable<Tag> tags, T obj,
-                                       TimeUnit fUnit, ToDoubleFunction<T> f) {
-            return TimeGauge.builder(name, obj, fUnit, f).tags(tags).register(MeterRegistry.this);
+                                       TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
+            return TimeGauge.builder(name, obj, timeFunctionUnit, timeFunction).tags(tags).register(MeterRegistry.this);
         }
 
-        <T> TimeGauge timeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
-            return registerMeterIfNecessary(TimeGauge.class, id, id2 -> newTimeGauge(id2, obj, fUnit, f), NoopTimeGauge::new);
+        <T> TimeGauge timeGauge(Meter.Id id, T obj, TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
+            return registerMeterIfNecessary(TimeGauge.class, id, id2 -> newTimeGauge(id2, obj, timeFunctionUnit, timeFunction), NoopTimeGauge::new);
         }
     }
 }

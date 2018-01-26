@@ -62,11 +62,11 @@ public class DropwizardMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
         final WeakReference<T> ref = new WeakReference<>(obj);
         Gauge<Double> gauge = () -> {
             T obj2 = ref.get();
-            return obj2 != null ? f.applyAsDouble(ref.get()) : Double.NaN;
+            return obj2 != null ? valueFunction.applyAsDouble(ref.get()) : Double.NaN;
         };
         registry.register(hierarchicalName(id), gauge);
         return new DropwizardGauge(id, gauge);
@@ -133,8 +133,8 @@ public class DropwizardMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
-        DropwizardFunctionCounter<T> fc = new DropwizardFunctionCounter<>(id, clock, obj, f);
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
+        DropwizardFunctionCounter<T> fc = new DropwizardFunctionCounter<>(id, clock, obj, valueFunction);
         registry.register(hierarchicalName(id), fc.getDropwizardMeter());
         return fc;
     }

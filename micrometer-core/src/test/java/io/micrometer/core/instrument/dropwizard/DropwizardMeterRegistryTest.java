@@ -40,7 +40,7 @@ class DropwizardMeterRegistryTest {
 
             @Override
             @Nullable
-            public String get(String k) {
+            public String get(String key) {
                 return null;
             }
         }, new MetricRegistry(), HierarchicalNameMapper.DEFAULT, clock);

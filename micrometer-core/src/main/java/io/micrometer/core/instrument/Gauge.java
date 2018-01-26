@@ -65,7 +65,7 @@ public interface Gauge extends Meter {
          * @return the builder
          */
         public Builder tags(String... tags) {
-            return tags(Tags.zip(tags));
+            return tags(Tags.of(tags));
         }
 
         public Builder tags(Iterable<Tag> tags) {

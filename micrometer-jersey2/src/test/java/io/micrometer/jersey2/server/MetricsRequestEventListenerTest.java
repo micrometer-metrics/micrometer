@@ -139,7 +139,7 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
     }
 
     private static Iterable<Tag> tagsFrom(String uri, int status, String exception) {
-        return Tags.zip(DefaultJerseyTagsProvider.TAG_METHOD, "GET",
+        return Tags.of(DefaultJerseyTagsProvider.TAG_METHOD, "GET",
             DefaultJerseyTagsProvider.TAG_URI, uri, DefaultJerseyTagsProvider.TAG_STATUS,
             String.valueOf(status), DefaultJerseyTagsProvider.TAG_EXCEPTION,
             exception == null ? "None" : exception);

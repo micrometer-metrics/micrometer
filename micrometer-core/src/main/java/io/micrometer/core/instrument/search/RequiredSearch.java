@@ -24,8 +24,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.micrometer.core.instrument.Tags.zip;
-
 /**
  * Search that requires the search terms are satisfiable, or an {@link MeterNotFoundException} is thrown.
  */
@@ -48,7 +46,7 @@ public class RequiredSearch {
      * @param tags Must be an even number of arguments representing key/value pairs of tags.
      */
     public RequiredSearch tags(String... tags) {
-        return tags(zip(tags));
+        return tags(Tags.of(tags));
     }
 
     public Timer timer() {

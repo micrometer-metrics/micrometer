@@ -66,7 +66,7 @@ class MicrometerMetricsPublisherCommandTest {
             new SuccessCommand(key).execute();
         }
 
-        Iterable<Tag> tags = Tags.zip("group", "MicrometerGROUP", "key", "MicrometerCOMMAND-A");
+        Iterable<Tag> tags = Tags.of("group", "MicrometerGROUP", "key", "MicrometerCOMMAND-A");
 
         assertExecutionMetric(registry, "success", 24.0);
         assertThat(registry.get("hystrix.execution").tags(tags).tags("event", "timeout").functionCounter().count()).isEqualTo(3.0);
@@ -107,7 +107,7 @@ class MicrometerMetricsPublisherCommandTest {
         new FailureCommand(key).execute();
         new SuccessCommand(key).execute();
 
-        Iterable<Tag> tags = Tags.zip("group", groupKey.name(), "key", key.name());
+        Iterable<Tag> tags = Tags.of("group", groupKey.name(), "key", key.name());
 
         assertExecutionMetric(registry, "short_circuited", 6.0);
         assertThat(registry.get("hystrix.execution").tags(tags).tags("event", "success").functionCounter().count()).isEqualTo(0.0);

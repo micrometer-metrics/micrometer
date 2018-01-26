@@ -33,7 +33,7 @@ public class SimplePropertiesConfigAdapter extends PropertiesConfigAdapter<Simpl
     }
 
     @Override
-    public String get(String k) {
+    public String get(String key) {
         return null;
     }
 

@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.micrometer.core.instrument.Tags.zip;
-
 public class Search {
     private final MeterRegistry registry;
     private final String name;
@@ -45,7 +43,7 @@ public class Search {
      * @param tags Must be an even number of arguments representing key/value pairs of tags.
      */
     public Search tags(String... tags) {
-        return tags(zip(tags));
+        return tags(Tags.of(tags));
     }
 
     @Nullable

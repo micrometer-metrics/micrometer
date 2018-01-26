@@ -46,7 +46,7 @@ public class ConcurrentMapCacheMetrics implements MeterBinder {
      * @see com.google.common.cache.CacheStats
      */
     public static ConcurrentMapCache monitor(MeterRegistry registry, ConcurrentMapCache cache, String name, String... tags) {
-        return monitor(registry, cache, name, Tags.zip(tags));
+        return monitor(registry, cache, name, Tags.of(tags));
     }
 
     /**

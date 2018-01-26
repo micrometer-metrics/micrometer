@@ -45,7 +45,7 @@ class TagsTest {
 
     @Test
     void zipOnTwoTagsWithSameKeyAreMergedIntoOneTag() {
-        Iterable<Tag> tags = Tags.zip("k", "v1", "k", "v2");
+        Iterable<Tag> tags = Tags.of("k", "v1", "k", "v2");
         assertThat(tags).containsExactly(Tag.of("k", "v2"));
     }
 
@@ -162,7 +162,7 @@ class TagsTest {
     @Test
     @Deprecated
     void zipShouldReturnNewInstanceWithTags() throws Exception {
-        Tags tags = Tags.zip("t1", "v1", "t2", "v2");
+        Tags tags = Tags.of("t1", "v1", "t2", "v2");
         assertTags(tags, "t1", "v1", "t2", "v2");
     }
 

@@ -35,7 +35,7 @@ class OkHttpMetricsEventListenerTest {
     private OkHttpClient client = new OkHttpClient.Builder()
         .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
             .uriMapper(req -> req.url().encodedPath())
-            .tags(Tags.zip("foo", "bar"))
+            .tags(Tags.of("foo", "bar"))
             .build())
         .build();
 
@@ -79,7 +79,7 @@ class OkHttpMetricsEventListenerTest {
             .connectTimeout(1, TimeUnit.MILLISECONDS)
             .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
                 .uriMapper(req -> req.url().encodedPath())
-                .tags(Tags.zip("foo", "bar"))
+                .tags(Tags.of("foo", "bar"))
                 .build())
             .build();
 

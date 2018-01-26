@@ -96,7 +96,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         String uri = state.response == null ? "UNKNOWN" :
             (state.response.code() == 404 || state.response.code() == 301 ? "NOT_FOUND" : urlMapper.apply(state.request));
 
-        Iterable<Tag> tags = Tags.concat(extraTags, Tags.zip(
+        Iterable<Tag> tags = Tags.concat(extraTags, Tags.of(
             "method", state.request != null ? state.request.method() : "UNKNOWN",
             "uri", uri,
             "status", getStatusMessage(state.response, state.exception),

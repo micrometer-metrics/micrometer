@@ -49,7 +49,7 @@ public class EhCache2Metrics implements MeterBinder {
      * @see com.google.common.cache.CacheStats
      */
     public static Ehcache monitor(MeterRegistry registry, Ehcache cache, String name, String... tags) {
-        return monitor(registry, cache, name, Tags.zip(tags));
+        return monitor(registry, cache, name, Tags.of(tags));
     }
 
     /**

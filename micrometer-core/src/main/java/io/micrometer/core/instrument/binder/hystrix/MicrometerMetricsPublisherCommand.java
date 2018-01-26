@@ -78,7 +78,7 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
         this.circuitBreaker = circuitBreaker;
         this.commandKey = commandKey;
 
-        tags = Tags.zip("group", commandGroupKey.name(), "key", commandKey.name());
+        tags = Tags.of("group", commandGroupKey.name(), "key", commandKey.name());
 
         //Initialize commands at zero
         Counter.builder(NAME_HYSTRIX_ERRORS).tags(tags).register(meterRegistry);

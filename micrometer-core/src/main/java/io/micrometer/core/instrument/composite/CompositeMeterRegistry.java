@@ -70,13 +70,13 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
-        return new CompositeGauge<>(id, obj, f);
+    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+        return new CompositeGauge<>(id, obj, valueFunction);
     }
 
     @Override
-    protected <T> TimeGauge newTimeGauge(Meter.Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
-        return new CompositeTimeGauge<>(id, obj, fUnit, f);
+    protected <T> TimeGauge newTimeGauge(Meter.Id id, T obj, TimeUnit valueFunctionUnit, ToDoubleFunction<T> valueFunction) {
+        return new CompositeTimeGauge<>(id, obj, valueFunctionUnit, valueFunction);
     }
 
     @Override
@@ -85,8 +85,8 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
-        return new CompositeFunctionCounter<>(id, obj, f);
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
+        return new CompositeFunctionCounter<>(id, obj, valueFunction);
     }
 
     @Override

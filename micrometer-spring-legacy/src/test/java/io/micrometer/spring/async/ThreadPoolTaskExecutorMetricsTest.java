@@ -32,7 +32,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class ThreadPoolTaskExecutorMetricsTest {
     private MeterRegistry registry;
-    private Iterable<Tag> userTags = Tags.zip("userTagKey", "userTagValue");
+    private Iterable<Tag> userTags = Tags.of("userTagKey", "userTagValue");
 
     @Before
     public void before() {

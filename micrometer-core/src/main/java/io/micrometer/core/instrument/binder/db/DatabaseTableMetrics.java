@@ -39,6 +39,7 @@ public class DatabaseTableMetrics implements MeterBinder {
     private final String name;
     private final Iterable<Tag> tags;
     private final DataSource dataSource;
+
     /**
      * Record the row count for an individual database table.
      *
@@ -50,6 +51,7 @@ public class DatabaseTableMetrics implements MeterBinder {
     public DatabaseTableMetrics(DataSource dataSource, String tableName, String name, Iterable<Tag> tags) {
         this(dataSource, "SELECT COUNT(1) FROM " + tableName, tableName, name, tags);
     }
+
     /**
      * Record the result based on a query.
      *
@@ -71,27 +73,27 @@ public class DatabaseTableMetrics implements MeterBinder {
     /**
      * Record the row count for an individual database table.
      *
-     * @param registry  The registry to bind metrics to.
-     * @param ds        The data source to use to run the row count query.
-     * @param tableName The name of the table to report table size for.
-     * @param name      The name prefix of the metrics.
-     * @param tags      Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
+     * @param registry   The registry to bind metrics to.
+     * @param dataSource The data source to use to run the row count query.
+     * @param tableName  The name of the table to report table size for.
+     * @param name       The name prefix of the metrics.
+     * @param tags       Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
      */
-    public static void monitor(MeterRegistry registry, DataSource ds, String tableName, String name, String... tags) {
-        monitor(registry, ds, tableName, name, Tags.zip(tags));
+    public static void monitor(MeterRegistry registry, DataSource dataSource, String tableName, String name, String... tags) {
+        monitor(registry, dataSource, tableName, name, Tags.of(tags));
     }
 
     /**
      * Record the row count for an individual database table.
      *
-     * @param registry  The registry to bind metrics to.
-     * @param ds        The data source to use to run the row count query.
-     * @param tableName The name of the table to report table size for.
-     * @param name      The name prefix of the metrics.
-     * @param tags      Tags to apply to all recorded metrics.
+     * @param registry   The registry to bind metrics to.
+     * @param dataSource The data source to use to run the row count query.
+     * @param tableName  The name of the table to report table size for.
+     * @param name       The name prefix of the metrics.
+     * @param tags       Tags to apply to all recorded metrics.
      */
-    public static void monitor(MeterRegistry registry, DataSource ds, String tableName, String name, Iterable<Tag> tags) {
-        new DatabaseTableMetrics(ds, tableName, name, tags).bindTo(registry);
+    public static void monitor(MeterRegistry registry, DataSource dataSource, String tableName, String name, Iterable<Tag> tags) {
+        new DatabaseTableMetrics(dataSource, tableName, name, tags).bindTo(registry);
     }
 
     @Override

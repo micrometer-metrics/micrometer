@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CaffeineCacheMetricsTest {
     private SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
-    private Iterable<Tag> userTags = Tags.zip("userTagKey", "userTagValue");
+    private Iterable<Tag> userTags = Tags.of("userTagKey", "userTagValue");
 
     @Test
     void cacheExposesMetricsForHitMissAndEviction() {

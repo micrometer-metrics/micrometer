@@ -26,7 +26,7 @@ class GraphiteHierarchicalNameMapperTest {
     @Test
     void tagsAsPrefix() {
         GraphiteHierarchicalNameMapper nameMapper = new GraphiteHierarchicalNameMapper("application");
-        Meter.Id id = new Meter.Id("my.name", Tags.zip("application", "MYAPP", "other", "value"), null, null, Meter.Type.Counter);
+        Meter.Id id = new Meter.Id("my.name", Tags.of("application", "MYAPP", "other", "value"), null, null, Meter.Type.Counter);
 
         assertThat(nameMapper.toHierarchicalName(id, NamingConvention.camelCase))
             .isEqualTo("MYAPP.myName.other.value");

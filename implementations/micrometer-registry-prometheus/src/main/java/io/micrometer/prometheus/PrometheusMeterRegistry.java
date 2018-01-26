@@ -219,9 +219,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
     @SuppressWarnings("unchecked")
     @Override
-    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
+    protected <T> io.micrometer.core.instrument.Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
         MicrometerCollector collector = collectorByName(id, Collector.Type.GAUGE);
-        Gauge gauge = new DefaultGauge(id, obj, f);
+        Gauge gauge = new DefaultGauge(id, obj, valueFunction);
         List<String> tagValues = tagValues(id);
 
         collector.add((conventionName, tagKeys) -> Stream.of(
@@ -260,9 +260,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
         MicrometerCollector collector = collectorByName(id, Collector.Type.COUNTER);
-        FunctionCounter fc = new CumulativeFunctionCounter<>(id, obj, f);
+        FunctionCounter fc = new CumulativeFunctionCounter<>(id, obj, valueFunction);
         List<String> tagValues = tagValues(id);
 
         collector.add((conventionName, tagKeys) -> Stream.of(

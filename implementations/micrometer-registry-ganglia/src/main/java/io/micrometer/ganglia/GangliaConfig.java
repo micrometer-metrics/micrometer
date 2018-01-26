@@ -33,13 +33,13 @@ public interface GangliaConfig extends DropwizardConfig {
     /**
      * Get the value associated with a key.
      *
-     * @param k
+     * @param key
      *     Key to lookup in the config.
      * @return
      *     Value for the key or null if no key is present.
      */
     @Nullable
-    String get(String k);
+    String get(String key);
 
     /**
      * Property prefix to prepend to configuration names.

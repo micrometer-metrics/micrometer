@@ -38,7 +38,7 @@ class DatadogMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKi
 
             @Override
             @Nullable
-            public String get(String k) {
+            public String get(String key) {
                 return null;
             }
         }, new MockClock());

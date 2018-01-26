@@ -33,7 +33,7 @@ public class StatsdPropertiesConfigAdapter extends PropertiesConfigAdapter<Stats
     }
 
     @Override
-    public String get(String s) {
+    public String get(String key) {
         return null;
     }
 

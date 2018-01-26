@@ -107,8 +107,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
-        StatsdGauge<T> gauge = new StatsdGauge<>(id, lineBuilder(id), publisher, obj, f);
+    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+        StatsdGauge<T> gauge = new StatsdGauge<>(id, lineBuilder(id), publisher, obj, valueFunction);
         pollableMeters.add(gauge);
         return gauge;
     }
@@ -194,8 +194,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
-        StatsdFunctionCounter fc = new StatsdFunctionCounter<>(id, obj, f, lineBuilder(id), publisher);
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
+        StatsdFunctionCounter fc = new StatsdFunctionCounter<>(id, obj, valueFunction, lineBuilder(id), publisher);
         pollableMeters.add(fc);
         return fc;
     }

@@ -67,7 +67,7 @@ public interface FunctionCounter extends Meter {
          * @param tags Must be an even number of arguments representing key/value pairs of tags.
          */
         public Builder<T> tags(String... tags) {
-            return tags(Tags.zip(tags));
+            return tags(Tags.of(tags));
         }
 
         public Builder<T> tags(Iterable<Tag> tags) {

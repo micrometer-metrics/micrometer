@@ -71,7 +71,7 @@ public class CaffeineCacheMetrics implements MeterBinder {
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
     public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String name, String... tags) {
-        return monitor(registry, cache, name, Tags.zip(tags));
+        return monitor(registry, cache, name, Tags.of(tags));
     }
 
     /**
@@ -101,7 +101,7 @@ public class CaffeineCacheMetrics implements MeterBinder {
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
     public static <C extends AsyncLoadingCache> C monitor(MeterRegistry registry, C cache, String name, String... tags) {
-        return monitor(registry, cache, name, Tags.zip(tags));
+        return monitor(registry, cache, name, Tags.of(tags));
     }
 
     /**

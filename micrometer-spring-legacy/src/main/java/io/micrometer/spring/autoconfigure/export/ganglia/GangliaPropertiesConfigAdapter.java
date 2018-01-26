@@ -36,7 +36,7 @@ class GangliaPropertiesConfigAdapter extends PropertiesConfigAdapter<GangliaProp
     }
 
     @Override
-    public String get(String k) {
+    public String get(String key) {
         return null;
     }
 

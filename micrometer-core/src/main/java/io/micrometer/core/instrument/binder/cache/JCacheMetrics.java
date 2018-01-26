@@ -64,7 +64,7 @@ public class JCacheMetrics implements MeterBinder {
      * @see com.google.common.cache.CacheStats
      */
     public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String name, String... tags) {
-        return monitor(registry, cache, name, Tags.zip(tags));
+        return monitor(registry, cache, name, Tags.of(tags));
     }
 
     /**

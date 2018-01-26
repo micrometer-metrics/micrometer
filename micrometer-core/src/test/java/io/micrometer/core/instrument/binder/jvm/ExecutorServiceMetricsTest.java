@@ -30,7 +30,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 class ExecutorServiceMetricsTest {
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-    private Iterable<Tag> userTags = Tags.zip("userTagKey", "userTagValue");
+    private Iterable<Tag> userTags = Tags.of("userTagKey", "userTagValue");
 
     @DisplayName("Normal executor can be instrumented after being initialized")
     @Test

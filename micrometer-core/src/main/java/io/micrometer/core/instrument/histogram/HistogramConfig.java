@@ -35,18 +35,25 @@ public class HistogramConfig implements Mergeable<HistogramConfig> {
         .histogramBufferLength(5)
         .build();
     public static final HistogramConfig NONE = builder().build();
+
     @Nullable
     private Boolean percentileHistogram;
+
     @Nullable
     private double[] percentiles;
+
     @Nullable
     private long[] sla;
+
     @Nullable
     private Long minimumExpectedValue;
+
     @Nullable
     private Long maximumExpectedValue;
+
     @Nullable
     private Duration histogramExpiry;
+
     @Nullable
     private Integer histogramBufferLength;
 

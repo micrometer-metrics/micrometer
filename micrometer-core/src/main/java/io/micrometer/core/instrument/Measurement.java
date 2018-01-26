@@ -27,8 +27,8 @@ public class Measurement {
     private final Supplier<Double> f;
     private final Statistic statistic;
 
-    public Measurement(Supplier<Double> f, Statistic statistic) {
-        this.f = f;
+    public Measurement(Supplier<Double> valueFunction, Statistic statistic) {
+        this.f = valueFunction;
         this.statistic = statistic;
     }
 

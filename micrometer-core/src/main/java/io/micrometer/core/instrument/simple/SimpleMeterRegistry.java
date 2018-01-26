@@ -126,8 +126,8 @@ public class SimpleMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> f) {
-        return new DefaultGauge<>(id, obj, f);
+    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+        return new DefaultGauge<>(id, obj, valueFunction);
     }
 
     @Override
@@ -152,8 +152,8 @@ public class SimpleMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> f) {
-        return new CumulativeFunctionCounter<>(id, obj, f);
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
+        return new CumulativeFunctionCounter<>(id, obj, valueFunction);
     }
 
     @Override

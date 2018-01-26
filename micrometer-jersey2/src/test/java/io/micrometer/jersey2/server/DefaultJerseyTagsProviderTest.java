@@ -128,7 +128,7 @@ public class DefaultJerseyTagsProviderTest {
     }
 
     private static Tag[] tagsFrom(String uri, int status, String exception) {
-        Iterable<Tag> expectedTags = Tags.zip(
+        Iterable<Tag> expectedTags = Tags.of(
             TAG_METHOD, "GET",
             TAG_URI, uri,
             TAG_STATUS, String.valueOf(status),

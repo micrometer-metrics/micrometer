@@ -32,7 +32,7 @@ class JmxPropertiesConfigAdapter extends PropertiesConfigAdapter<JmxProperties> 
     }
 
     @Override
-    public String get(String k) {
+    public String get(String key) {
         return null;
     }
 
