@@ -18,10 +18,10 @@ package io.micrometer.spring.autoconfigure;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.lang.NonNullApi;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
@@ -34,14 +34,17 @@ public class MeterRegistryPostProcessor implements BeanPostProcessor {
     private final MetricsProperties config;
     private final Collection<MeterBinder> binders;
     private final Collection<MeterRegistryCustomizer> customizers;
+    private final Collection<MeterFilter> filters;
 
     @SuppressWarnings("ConstantConditions")
     MeterRegistryPostProcessor(MetricsProperties config,
                                ObjectProvider<Collection<MeterBinder>> binders,
-                               ObjectProvider<Collection<MeterRegistryCustomizer>> customizers) {
+                               ObjectProvider<Collection<MeterRegistryCustomizer>> customizers,
+                               ObjectProvider<Collection<MeterFilter>> filters) {
         this.config = config;
         this.binders = binders.getIfAvailable() != null ? binders.getIfAvailable() : emptyList();
         this.customizers = customizers.getIfAvailable() != null ? customizers.getIfAvailable() : emptyList();
+        this.filters = filters.getIfAvailable() != null ? filters.getIfAvailable() : emptyList();
     }
 
     @Override
@@ -57,6 +60,8 @@ public class MeterRegistryPostProcessor implements BeanPostProcessor {
             // Customizers must be applied before binders, as they may add custom tags or alter
             // timer or summary configuration.
             customizers.forEach(c -> c.configureRegistry(registry));
+
+            filters.forEach(f -> registry.config().meterFilter(f));
 
             binders.forEach(b -> b.bindTo(registry));
 
