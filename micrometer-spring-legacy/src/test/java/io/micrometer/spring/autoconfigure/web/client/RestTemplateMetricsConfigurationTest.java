@@ -65,7 +65,7 @@ public class RestTemplateMetricsConfigurationTest {
     @Test
     public void restTemplatesCreatedWithBuilderAreInstrumented() {
         client.getForObject("/it/1", String.class);
-        registry.mustFind("http.client.requests").meter();
+        registry.get("http.client.requests").meter();
     }
 
     @Test
@@ -75,7 +75,7 @@ public class RestTemplateMetricsConfigurationTest {
             client.getForObject("/it/" + i, String.class);
         }
 
-        assertThat(registry.mustFind("http.client.requests").meters()).hasSize(maxUriTags);
+        assertThat(registry.get("http.client.requests").meters()).hasSize(maxUriTags);
     }
 
     @SpringBootApplication(scanBasePackages = "ignore")

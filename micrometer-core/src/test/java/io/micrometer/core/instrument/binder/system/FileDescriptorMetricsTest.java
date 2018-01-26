@@ -46,8 +46,8 @@ class FileDescriptorMetricsTest {
 
         new FileDescriptorMetrics().bindTo(registry);
 
-        registry.mustFind("process.open.fds").gauge();
-        registry.mustFind("process.max.fds").gauge();
+        registry.get("process.open.fds").gauge();
+        registry.get("process.max.fds").gauge();
     }
 
     @Test
@@ -67,9 +67,9 @@ class FileDescriptorMetricsTest {
         when(osBean.getMaxFileDescriptorCount()).thenReturn(Long.valueOf(1024));
         new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
 
-        assertThat(registry.mustFind("process.open.fds").tags("some", "tag")
+        assertThat(registry.get("process.open.fds").tags("some", "tag")
             .gauge().value()).isEqualTo(512.0);
-        assertThat(registry.mustFind("process.max.fds").tags("some", "tag")
+        assertThat(registry.get("process.max.fds").tags("some", "tag")
             .gauge().value()).isEqualTo(1024.0);
     }
 
@@ -81,9 +81,9 @@ class FileDescriptorMetricsTest {
         when(osBean.getMaxFileDescriptorCount()).thenThrow(InvocationTargetException.class);
         new FileDescriptorMetrics(osBean, Tags.zip("some", "tag")).bindTo(registry);
 
-        assertThat(registry.mustFind("process.open.fds").tags("some", "tag")
+        assertThat(registry.get("process.open.fds").tags("some", "tag")
             .gauge().value()).isEqualTo(Double.NaN);
-        assertThat(registry.mustFind("process.max.fds").tags("some", "tag")
+        assertThat(registry.get("process.max.fds").tags("some", "tag")
             .gauge().value()).isEqualTo(Double.NaN);
     }
 

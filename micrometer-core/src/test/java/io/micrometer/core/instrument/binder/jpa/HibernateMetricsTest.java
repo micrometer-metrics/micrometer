@@ -60,51 +60,51 @@ class HibernateMetricsTest {
     @Test
     void shouldExposeMetricsWhenStatsEnabled() {
         HibernateMetrics.monitor(registry, createEntityManagerFactoryMock(true), "entityManagerFactory");
-        assertThat(registry.mustFind("hibernate.sessions.open").functionCounter().count()).isEqualTo(42.0);
-        assertThat(registry.mustFind("hibernate.sessions.closed").functionCounter().count()).isEqualTo(42.0);
+        assertThat(registry.get("hibernate.sessions.open").functionCounter().count()).isEqualTo(42.0);
+        assertThat(registry.get("hibernate.sessions.closed").functionCounter().count()).isEqualTo(42.0);
 
-        assertThat(registry.mustFind("hibernate.transactions").tags("result", "success").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.transactions").tags("result", "failure").functionCounter().count()).isEqualTo(0.0d);
+        assertThat(registry.get("hibernate.transactions").tags("result", "success").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.transactions").tags("result", "failure").functionCounter().count()).isEqualTo(0.0d);
 
-        assertThat(registry.mustFind("hibernate.optimistic.failures").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.flushes").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.connections.obtained").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.optimistic.failures").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.flushes").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.connections.obtained").functionCounter().count()).isEqualTo(42.0d);
 
-        assertThat(registry.mustFind("hibernate.statements").tags("status", "prepared").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.statements").tags("status", "closed").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.statements").tags("status", "prepared").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.statements").tags("status", "closed").functionCounter().count()).isEqualTo(42.0d);
 
-        assertThat(registry.mustFind("hibernate.second.level.cache.requests").tags("result", "hit").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.second.level.cache.requests").tags("result", "miss").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.second.level.cache.puts").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.requests").tags("result", "hit").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.requests").tags("result", "miss").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.second.level.cache.puts").functionCounter().count()).isEqualTo(42.0d);
 
-        assertThat(registry.mustFind("hibernate.entities.deletes").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.entities.fetches").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.entities.inserts").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.entities.loads").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.entities.updates").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.entities.deletes").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.entities.fetches").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.entities.inserts").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.entities.loads").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.entities.updates").functionCounter().count()).isEqualTo(42.0d);
 
-        assertThat(registry.mustFind("hibernate.collections.deletes").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.collections.fetches").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.collections.loads").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.collections.recreates").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.collections.updates").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.collections.deletes").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.collections.fetches").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.collections.loads").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.collections.recreates").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.collections.updates").functionCounter().count()).isEqualTo(42.0d);
 
-        assertThat(registry.mustFind("hibernate.cache.natural.id.requests").tags("result", "hit").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.cache.natural.id.requests").tags("result", "miss").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.cache.natural.id.puts").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.query.natural.id.executions").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.query.natural.id.executions.max").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.cache.natural.id.requests").tags("result", "hit").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.cache.natural.id.requests").tags("result", "miss").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.cache.natural.id.puts").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.query.natural.id.executions").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.query.natural.id.executions.max").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(42.0d);
 
-        assertThat(registry.mustFind("hibernate.query.executions").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.query.executions.max").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.query.executions").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.query.executions.max").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(42.0d);
 
-        assertThat(registry.mustFind("hibernate.cache.update.timestamps.requests").tags("result", "hit").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.cache.update.timestamps.requests").tags("result", "miss").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.cache.update.timestamps.puts").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.cache.update.timestamps.requests").tags("result", "hit").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.cache.update.timestamps.requests").tags("result", "miss").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.cache.update.timestamps.puts").functionCounter().count()).isEqualTo(42.0d);
 
-        assertThat(registry.mustFind("hibernate.cache.query.requests").tags("result", "hit").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.cache.query.requests").tags("result", "miss").functionCounter().count()).isEqualTo(42.0d);
-        assertThat(registry.mustFind("hibernate.cache.query.puts").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.cache.query.requests").tags("result", "hit").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.cache.query.requests").tags("result", "miss").functionCounter().count()).isEqualTo(42.0d);
+        assertThat(registry.get("hibernate.cache.query.puts").functionCounter().count()).isEqualTo(42.0d);
     }
 
     @Test

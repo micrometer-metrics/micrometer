@@ -31,12 +31,12 @@ class ProcessorMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         new ProcessorMetrics().bindTo(registry);
 
-        assertThat(registry.mustFind("system.cpu.count").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("system.cpu.count").gauge().value()).isGreaterThan(0);
         if (System.getProperty("os.name").toLowerCase().contains("win")) {
             assertThat(registry.find("system.load.average.1m").gauge())
                 .describedAs("Not present on windows").isNull();
         } else {
-            assertThat(registry.mustFind("system.load.average.1m").gauge().value()).isGreaterThanOrEqualTo(0);
+            assertThat(registry.get("system.load.average.1m").gauge().value()).isGreaterThanOrEqualTo(0);
         }
     }
 
@@ -48,8 +48,8 @@ class ProcessorMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         new ProcessorMetrics().bindTo(registry);
 
-        assertThat(registry.mustFind("system.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(0);
-        assertThat(registry.mustFind("process.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(0);
+        assertThat(registry.get("system.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(0);
+        assertThat(registry.get("process.cpu.usage").gauge().value()).isGreaterThanOrEqualTo(0);
     }
 
     @Test
@@ -67,7 +67,7 @@ class ProcessorMetricsTest {
          * needs some milliseconds of sleep before it actually returns a positive value
          * on a supported system. Thread.sleep() is flaky, though.
          */
-        registry.mustFind("system.cpu.usage").gauge();
-        registry.mustFind("process.cpu.usage").gauge();
+        registry.get("system.cpu.usage").gauge();
+        registry.get("process.cpu.usage").gauge();
     }
 }

@@ -53,7 +53,7 @@ public class DataSourceMetricsHikariTest {
 
     @Test
     public void dataSourceIsInstrumented() {
-        registry.mustFind("data.source.active.connections").meter();
+        registry.get("data.source.active.connections").meter();
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")

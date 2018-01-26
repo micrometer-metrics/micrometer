@@ -48,7 +48,7 @@ class MeterRegistryTest {
         registry.config().meterFilter(MeterFilter.ignoreTags("k1"));
 
         registry.counter("my.counter", "k1", "v1");
-        registry.mustFind("my.counter").counter();
+        registry.get("my.counter").counter();
         assertThat(registry.find("my.counter").tags("k1", "v1").counter()).isNull();
     }
 

@@ -47,7 +47,7 @@ class OkHttpMetricsEventListenerTest {
 
         client.newCall(request).execute().close();
 
-        assertThat(registry.mustFind("okhttp.requests")
+        assertThat(registry.get("okhttp.requests")
             .tags("uri", "/helloworld.txt", "status", "200")
             .timer().count()).isEqualTo(1L);
     }
@@ -64,7 +64,7 @@ class OkHttpMetricsEventListenerTest {
             // expected
         }
 
-        assertThat(registry.mustFind("okhttp.requests")
+        assertThat(registry.get("okhttp.requests")
             .tags("uri", "NOT_FOUND")
             .timer().count()).isEqualTo(1L);
     }
@@ -89,7 +89,7 @@ class OkHttpMetricsEventListenerTest {
             // expected
         }
 
-        assertThat(registry.mustFind("okhttp.requests")
+        assertThat(registry.get("okhttp.requests")
             .tags("uri", "UNKNOWN", "status", "IO_ERROR")
             .timer().count()).isEqualTo(1L);
     }

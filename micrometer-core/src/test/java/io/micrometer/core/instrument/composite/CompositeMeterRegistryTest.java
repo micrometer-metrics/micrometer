@@ -56,9 +56,9 @@ class CompositeMeterRegistryTest {
         DistributionSummary.builder("summary").baseUnit("bytes").register(composite);
         Gauge.builder("gauge", new AtomicInteger(0), AtomicInteger::get).baseUnit("bytes").register(composite);
 
-        assertThat(simple.mustFind("counter").counter().getId().getBaseUnit()).isEqualTo("bytes");
-        assertThat(simple.mustFind("summary").summary().getId().getBaseUnit()).isEqualTo("bytes");
-        assertThat(simple.mustFind("gauge").gauge().getId().getBaseUnit()).isEqualTo("bytes");
+        assertThat(simple.get("counter").counter().getId().getBaseUnit()).isEqualTo("bytes");
+        assertThat(simple.get("summary").summary().getId().getBaseUnit()).isEqualTo("bytes");
+        assertThat(simple.get("gauge").gauge().getId().getBaseUnit()).isEqualTo("bytes");
     }
 
     @DisplayName("metrics stop receiving updates when their registry parent is removed from a composite")
@@ -69,7 +69,7 @@ class CompositeMeterRegistryTest {
         Counter compositeCounter = composite.counter("counter");
         compositeCounter.increment();
 
-        Counter simpleCounter = simple.mustFind("counter").counter();
+        Counter simpleCounter = simple.get("counter").counter();
         assertThat(simpleCounter.count()).isEqualTo(1);
 
         composite.remove(simple);
@@ -101,7 +101,7 @@ class CompositeMeterRegistryTest {
         assertThat(compositeCounter.count()).isEqualTo(1);
 
         // only the increment AFTER simple is added to the composite is counted to it
-        assertThat(simple.mustFind("counter").counter().count()).isEqualTo(1.0);
+        assertThat(simple.get("counter").counter().count()).isEqualTo(1.0);
     }
 
     @DisplayName("metrics that are created after a registry is added to that registry")
@@ -110,7 +110,7 @@ class CompositeMeterRegistryTest {
         composite.add(simple);
         composite.counter("counter").increment();
 
-        assertThat(simple.mustFind("counter").counter().count()).isEqualTo(1.0);
+        assertThat(simple.get("counter").counter().count()).isEqualTo(1.0);
     }
 
     @DisplayName("metrics follow the naming convention of each registry in the composite")
@@ -121,7 +121,7 @@ class CompositeMeterRegistryTest {
         composite.add(simple);
         composite.counter("my.counter").increment();
 
-        assertThat(simple.mustFind("my.counter").counter().count()).isEqualTo(1.0);
+        assertThat(simple.get("my.counter").counter().count()).isEqualTo(1.0);
     }
 
     @DisplayName("common tags added to the composite affect meters registered with registries in the composite")
@@ -136,7 +136,7 @@ class CompositeMeterRegistryTest {
 
         composite.counter("counter").increment();
 
-        simple.mustFind("counter").tags("region", "us-east-1", "stack", "test",
+        simple.get("counter").tags("region", "us-east-1", "stack", "test",
             "instance", "local").counter();
     }
 
@@ -149,7 +149,7 @@ class CompositeMeterRegistryTest {
         composite.more().timer("function.timer", emptyList(),
             o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
 
-        FunctionTimer functionTimer = simple.mustFind("function.timer").functionTimer();
+        FunctionTimer functionTimer = simple.get("function.timer").functionTimer();
         assertThat(functionTimer.count()).isEqualTo(1);
         assertThat(functionTimer.totalTime(TimeUnit.MILLISECONDS)).isEqualTo(1);
     }
@@ -180,11 +180,11 @@ class CompositeMeterRegistryTest {
         assertThat(composite.find("deny.composite").meter()).isNull();
 
         assertThat(simple.find("deny.child").meter()).isNull();
-        composite.mustFind("deny.child").meter();
+        composite.get("deny.child").meter();
 
         // if the meter is registered directly to the child, the composite config does not take effect
         simple.counter("deny.composite");
-        simple.mustFind("deny.composite").meter();
+        simple.get("deny.composite").meter();
     }
 
     @Test

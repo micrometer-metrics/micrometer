@@ -190,7 +190,7 @@ public abstract class MeterRegistry {
         return new Search(this, name);
     }
 
-    public RequiredSearch mustFind(String name) {
+    public RequiredSearch get(String name) {
         return new RequiredSearch(this, name);
     }
 

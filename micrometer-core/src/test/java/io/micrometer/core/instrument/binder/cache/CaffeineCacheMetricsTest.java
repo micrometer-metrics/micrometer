@@ -50,9 +50,9 @@ class CaffeineCacheMetricsTest {
         cache.put("user3", "Third User");
         cache.put("user4", "Fourth User");
 
-        assertThat(registry.mustFind("c.requests").tags("result", "hit").tags(userTags).functionCounter().count()).isEqualTo(1.0);
-        assertThat(registry.mustFind("c.requests").tags("result", "miss").tags(userTags).functionCounter().count()).isEqualTo(2.0);
-        assertThat(registry.mustFind("c.evictions").tags(userTags).functionCounter().count()).isEqualTo(2.0);
+        assertThat(registry.get("c.requests").tags("result", "hit").tags(userTags).functionCounter().count()).isEqualTo(1.0);
+        assertThat(registry.get("c.requests").tags("result", "miss").tags(userTags).functionCounter().count()).isEqualTo(2.0);
+        assertThat(registry.get("c.evictions").tags(userTags).functionCounter().count()).isEqualTo(2.0);
     }
 
     @SuppressWarnings("unchecked")
@@ -74,9 +74,9 @@ class CaffeineCacheMetricsTest {
         }
         cache.get(3);
 
-        assertThat(registry.mustFind("c.requests").tags("result", "hit").tags(userTags).functionCounter().count()).isEqualTo(1.0);
-        assertThat(registry.mustFind("c.requests").tags("result", "miss").tags(userTags).functionCounter().count()).isEqualTo(3.0);
-        assertThat(registry.mustFind("c.load").tags("result", "failure").functionCounter().count()).isEqualTo(1.0);
-        assertThat(registry.mustFind("c.load").tags("result", "success").functionCounter().count()).isEqualTo(2.0);
+        assertThat(registry.get("c.requests").tags("result", "hit").tags(userTags).functionCounter().count()).isEqualTo(1.0);
+        assertThat(registry.get("c.requests").tags("result", "miss").tags(userTags).functionCounter().count()).isEqualTo(3.0);
+        assertThat(registry.get("c.load").tags("result", "failure").functionCounter().count()).isEqualTo(1.0);
+        assertThat(registry.get("c.load").tags("result", "success").functionCounter().count()).isEqualTo(2.0);
     }
 }

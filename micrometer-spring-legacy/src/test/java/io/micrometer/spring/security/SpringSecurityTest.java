@@ -56,7 +56,7 @@ public class SpringSecurityTest {
     public void securityAllowsAccess() throws Exception {
         mvc.perform(get("/api/secured")).andExpect(status().isOk());
 
-        registry.mustFind("http.server.requests")
+        registry.get("http.server.requests")
             .tags("status", "200")
             .timer();
     }
@@ -65,7 +65,7 @@ public class SpringSecurityTest {
     public void securityBlocksAccess() throws Exception {
         mvc.perform(get("/api/secured")).andExpect(status().isUnauthorized());
 
-        registry.mustFind("http.server.requests")
+        registry.get("http.server.requests")
             .tags("status", "401")
             .timer();
     }

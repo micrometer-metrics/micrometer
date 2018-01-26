@@ -52,7 +52,7 @@ public abstract class MeterRegistryCompatibilityKit {
         registry.counter("foo");
         registry.counter("foo");
 
-        assertThat(registry.mustFind("foo").meters().size()).isEqualTo(1);
+        assertThat(registry.get("foo").meters().size()).isEqualTo(1);
     }
 
     @Test
@@ -61,8 +61,8 @@ public abstract class MeterRegistryCompatibilityKit {
         Counter c1 = registry.counter("foo", "k", "v");
         Counter c2 = registry.counter("bar", "k", "v", "k2", "v");
 
-        assertThat(registry.mustFind("foo").tags("k", "v").counter()).isSameAs(c1);
-        assertThat(registry.mustFind("bar").tags("k", "v").counter()).isSameAs(c2);
+        assertThat(registry.get("foo").tags("k", "v").counter()).isSameAs(c1);
+        assertThat(registry.get("bar").tags("k", "v").counter()).isSameAs(c2);
     }
 
     @Test
@@ -71,8 +71,8 @@ public abstract class MeterRegistryCompatibilityKit {
         Counter c1 = registry.counter("foo", "k", "v");
         Counter c2 = registry.counter("bar", "k", "v", "k2", "v");
 
-        assertThat(registry.mustFind("foo").tags("k", "v").counter()).isSameAs(c1);
-        assertThat(registry.mustFind("bar").tags("k", "v").counter()).isSameAs(c2);
+        assertThat(registry.get("foo").tags("k", "v").counter()).isSameAs(c1);
+        assertThat(registry.get("bar").tags("k", "v").counter()).isSameAs(c2);
     }
 
     @Test
@@ -86,9 +86,9 @@ public abstract class MeterRegistryCompatibilityKit {
 
         clock(registry).add(step());
 
-        assertThat(registry.mustFind("counter").counter().count()).isEqualTo(1.0);
-        assertThat(registry.mustFind("timer").timer().count()).isEqualTo(1L);
-        assertThat(registry.mustFind("timer").timer().totalTime(TimeUnit.NANOSECONDS)).isEqualTo(10.0);
+        assertThat(registry.get("counter").counter().count()).isEqualTo(1.0);
+        assertThat(registry.get("timer").timer().count()).isEqualTo(1L);
+        assertThat(registry.get("timer").timer().totalTime(TimeUnit.NANOSECONDS)).isEqualTo(10.0);
     }
 
     @Test
@@ -97,7 +97,7 @@ public abstract class MeterRegistryCompatibilityKit {
         registry.config().commonTags("k", "v");
         Counter c = registry.counter("foo");
 
-        assertThat(registry.mustFind("foo").tags("k", "v").counter()).isSameAs(c);
+        assertThat(registry.get("foo").tags("k", "v").counter()).isSameAs(c);
         assertThat(c.getId().getTags()).hasSize(1);
     }
 
@@ -106,7 +106,7 @@ public abstract class MeterRegistryCompatibilityKit {
     void aTaleOfTwoNames(MeterRegistry registry) {
         AtomicInteger n = new AtomicInteger(1);
         registry.more().counter("my.counter", Collections.emptyList(), n);
-        registry.mustFind("my.counter").functionCounter();
+        registry.get("my.counter").functionCounter();
     }
 
     @Test
@@ -117,7 +117,7 @@ public abstract class MeterRegistryCompatibilityKit {
         registry.more().timer("function.timer", emptyList(),
             o, o2 -> 1, o2 -> 1, TimeUnit.MILLISECONDS);
 
-        FunctionTimer ft = registry.mustFind("function.timer").functionTimer();
+        FunctionTimer ft = registry.get("function.timer").functionTimer();
         clock(registry).add(step());
         assertThat(ft.measure())
             .anySatisfy(ms -> {

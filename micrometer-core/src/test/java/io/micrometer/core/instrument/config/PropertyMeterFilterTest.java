@@ -75,7 +75,7 @@ class PropertyMeterFilterTest {
     @Test
     void enable() {
         registry.timer("my.timer");
-        registry.mustFind("my.timer").timer();
+        registry.get("my.timer").timer();
     }
 
     @Test

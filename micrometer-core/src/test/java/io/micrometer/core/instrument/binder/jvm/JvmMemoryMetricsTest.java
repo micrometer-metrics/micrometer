@@ -42,28 +42,28 @@ public class JvmMemoryMetricsTest {
     }
 
     private void assertJvmMemoryMetrics(MeterRegistry registry, String area) {
-        Gauge memUsed = registry.mustFind("jvm.memory.used").tags("area", area).gauge();
+        Gauge memUsed = registry.get("jvm.memory.used").tags("area", area).gauge();
         assertThat(memUsed.value()).isGreaterThanOrEqualTo(0);
         assertThat(memUsed.getId().getBaseUnit()).isEqualTo("bytes");
 
-        Gauge memCommitted = registry.mustFind("jvm.memory.committed").tags("area", area).gauge();
+        Gauge memCommitted = registry.get("jvm.memory.committed").tags("area", area).gauge();
         assertThat(memCommitted.value()).isNotNull();
         assertThat(memCommitted.getId().getBaseUnit()).isEqualTo("bytes");
 
-        Gauge memMax = registry.mustFind("jvm.memory.max").tags("area", area).gauge();
+        Gauge memMax = registry.get("jvm.memory.max").tags("area", area).gauge();
         assertThat(memMax.value()).isNotNull();
         assertThat(memMax.getId().getBaseUnit()).isEqualTo("bytes");
     }
 
     private void assertJvmBufferMetrics(MeterRegistry registry, String bufferId) {
-        assertThat(registry.mustFind("jvm.buffer.count").tags("id", bufferId)
+        assertThat(registry.get("jvm.buffer.count").tags("id", bufferId)
             .gauge().value()).isGreaterThanOrEqualTo(0);
 
-        Gauge memoryUsedDirect = registry.mustFind("jvm.buffer.memory.used").tags("id", bufferId).gauge();
+        Gauge memoryUsedDirect = registry.get("jvm.buffer.memory.used").tags("id", bufferId).gauge();
         assertThat(memoryUsedDirect.value()).isNotNull();
         assertThat(memoryUsedDirect.getId().getBaseUnit()).isEqualTo("bytes");
 
-        Gauge bufferTotal = registry.mustFind("jvm.buffer.total.capacity").tags("id", bufferId).gauge();
+        Gauge bufferTotal = registry.get("jvm.buffer.total.capacity").tags("id", bufferId).gauge();
         assertThat(bufferTotal.value()).isGreaterThanOrEqualTo(0);
         assertThat(bufferTotal.getId().getBaseUnit()).isEqualTo("bytes");
     }

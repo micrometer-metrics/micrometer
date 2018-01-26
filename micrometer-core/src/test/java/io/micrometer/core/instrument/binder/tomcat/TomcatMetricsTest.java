@@ -83,12 +83,12 @@ class TomcatMetricsTest {
         Iterable<Tag> tags = Tags.zip("metricTag", "val1");
         TomcatMetrics.monitor(registry, manager, tags);
 
-        assertThat(registry.mustFind("tomcat.sessions.active.max").tags(tags).gauge().value()).isEqualTo(3.0);
-        assertThat(registry.mustFind("tomcat.sessions.active.current").tags(tags).gauge().value()).isEqualTo(2.0);
-        assertThat(registry.mustFind("tomcat.sessions.expired").tags(tags).functionCounter().count()).isEqualTo(1.0);
-        assertThat(registry.mustFind("tomcat.sessions.rejected").tags(tags).functionCounter().count()).isEqualTo(1.0);
-        assertThat(registry.mustFind("tomcat.sessions.created").tags(tags).functionCounter().count()).isEqualTo(3.0);
-        assertThat(registry.mustFind("tomcat.sessions.alive.max").tags(tags).timeGauge().value()).isGreaterThan(1.0);
+        assertThat(registry.get("tomcat.sessions.active.max").tags(tags).gauge().value()).isEqualTo(3.0);
+        assertThat(registry.get("tomcat.sessions.active.current").tags(tags).gauge().value()).isEqualTo(2.0);
+        assertThat(registry.get("tomcat.sessions.expired").tags(tags).functionCounter().count()).isEqualTo(1.0);
+        assertThat(registry.get("tomcat.sessions.rejected").tags(tags).functionCounter().count()).isEqualTo(1.0);
+        assertThat(registry.get("tomcat.sessions.created").tags(tags).functionCounter().count()).isEqualTo(3.0);
+        assertThat(registry.get("tomcat.sessions.alive.max").tags(tags).timeGauge().value()).isGreaterThan(1.0);
     }
 
     @Test

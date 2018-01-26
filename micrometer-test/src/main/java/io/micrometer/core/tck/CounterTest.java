@@ -68,6 +68,6 @@ interface CounterTest {
 
         clock(registry).add(step());
         registry.forEachMeter(Meter::measure);
-        assertThat(registry.mustFind("tracking").functionCounter().count()).isEqualTo(1.0);
+        assertThat(registry.get("tracking").functionCounter().count()).isEqualTo(1.0);
     }
 }

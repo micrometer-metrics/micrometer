@@ -59,10 +59,10 @@ public class MetricsRestTemplateCustomizerTest {
 
         String result = restTemplate.getForObject("/test/{id}", String.class, 123);
 
-        assertThat(registry.mustFind("http.client.requests").meters())
+        assertThat(registry.get("http.client.requests").meters())
             .anySatisfy(m -> assertThat(stream(m.getId().getTags().spliterator(), false).map(Tag::getKey)).doesNotContain("bucket"));
 
-        assertThat(registry.mustFind("http.client.requests")
+        assertThat(registry.get("http.client.requests")
             .tags("method", "GET", "uri", "/test/{id}", "status", "200")
             .timer().count()).isEqualTo(1L);
 

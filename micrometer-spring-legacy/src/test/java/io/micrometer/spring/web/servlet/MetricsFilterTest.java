@@ -98,7 +98,7 @@ public class MetricsFilterTest {
     public void timedMethod() throws Exception {
         mvc.perform(get("/api/c1/10")).andExpect(status().isOk());
 
-        assertThat(this.registry.mustFind("http.server.requests")
+        assertThat(this.registry.get("http.server.requests")
             .tags("status", "200", "uri", "/api/c1/{id}", "public", "true")
             .timer().count()).isEqualTo(1L);
     }
@@ -107,7 +107,7 @@ public class MetricsFilterTest {
     public void subclassedTimedMethod() throws Exception {
         mvc.perform(get("/api/c1/metaTimed/10")).andExpect(status().isOk());
 
-        assertThat(this.registry.mustFind("http.server.requests")
+        assertThat(this.registry.get("http.server.requests")
             .tags("status", "200", "uri", "/api/c1/metaTimed/{id}")
             .timer().count()).isEqualTo(1L);
     }
@@ -125,7 +125,7 @@ public class MetricsFilterTest {
     public void timedControllerClass() throws Exception {
         mvc.perform(get("/api/c2/10")).andExpect(status().isOk());
 
-        assertThat(this.registry.mustFind("http.server.requests").tags("status", "200")
+        assertThat(this.registry.get("http.server.requests").tags("status", "200")
             .timer().count()).isEqualTo(1L);
     }
 
@@ -133,7 +133,7 @@ public class MetricsFilterTest {
     public void badClientRequest() throws Exception {
         mvc.perform(get("/api/c1/oops")).andExpect(status().is4xxClientError());
 
-        assertThat(this.registry.mustFind("http.server.requests").tags("status", "400")
+        assertThat(this.registry.get("http.server.requests").tags("status", "400")
             .timer().count()).isEqualTo(1L);
     }
 
@@ -142,7 +142,7 @@ public class MetricsFilterTest {
         mvc.perform(get("/api/redirect")
             .header(TEST_MISBEHAVE_HEADER, "302")).andExpect(status().is3xxRedirection());
 
-        this.registry.mustFind("http.server.requests")
+        this.registry.get("http.server.requests")
             .tags("uri", "REDIRECTION", "status", "302").timer();
     }
 
@@ -152,7 +152,7 @@ public class MetricsFilterTest {
             .header(TEST_MISBEHAVE_HEADER, "404"))
             .andExpect(status().is4xxClientError());
 
-        this.registry.mustFind("http.server.requests")
+        this.registry.get("http.server.requests")
             .tags("uri", "NOT_FOUND", "status", "404").timer();
     }
 
@@ -162,7 +162,7 @@ public class MetricsFilterTest {
             .andExpect(status().isOk()))
             .hasRootCauseInstanceOf(RuntimeException.class);
 
-        assertThat(this.registry.mustFind("http.server.requests")
+        assertThat(this.registry.get("http.server.requests")
             .tags("exception", "RuntimeException")
             .timer().count()).isEqualTo(1L);
     }
@@ -171,7 +171,7 @@ public class MetricsFilterTest {
     public void endpointThrowsError() throws Exception {
         mvc.perform(get("/api/c1/error/10")).andExpect(status().is4xxClientError());
 
-        assertThat(this.registry.mustFind("http.server.requests").tags("status", "422")
+        assertThat(this.registry.get("http.server.requests").tags("status", "422")
             .timer().count()).isEqualTo(1L);
     }
 
@@ -179,7 +179,7 @@ public class MetricsFilterTest {
     public void regexBasedRequestMapping() throws Exception {
         mvc.perform(get("/api/c1/regex/.abc")).andExpect(status().isOk());
 
-        assertThat(this.registry.mustFind("http.server.requests")
+        assertThat(this.registry.get("http.server.requests")
             .tags("uri", "/api/c1/regex/{id:\\.[a-z]+}")
             .timer().count()).isEqualTo(1L);
     }

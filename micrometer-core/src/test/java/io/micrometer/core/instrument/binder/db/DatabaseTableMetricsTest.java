@@ -57,12 +57,12 @@ class DatabaseTableMetricsTest {
     @Test
     void rowCountGauge() {
         DatabaseTableMetrics.monitor(registry, ds, "foo", "db.table.size");
-        assertThat(registry.mustFind("db.table.size").gauge().value()).isEqualTo(1.0);
+        assertThat(registry.get("db.table.size").gauge().value()).isEqualTo(1.0);
     }
 
     @Test
     void rowCountForNonExistentTable() {
         DatabaseTableMetrics.monitor(registry, ds, "dne", "db.table.size");
-        assertThat(registry.mustFind("db.table.size").gauge().value()).isEqualTo(0.0);
+        assertThat(registry.get("db.table.size").gauge().value()).isEqualTo(0.0);
     }
 }

@@ -40,8 +40,8 @@ class UptimeMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
         new UptimeMetrics().bindTo(registry);
 
-        registry.mustFind("process.uptime").timeGauge();
-        registry.mustFind("process.start.time").timeGauge();
+        registry.get("process.uptime").timeGauge();
+        registry.get("process.start.time").timeGauge();
     }
 
     @Test
@@ -52,7 +52,7 @@ class UptimeMetricsTest {
         when(runtimeMXBean.getStartTime()).thenReturn(4711L);
         new UptimeMetrics(runtimeMXBean, emptyList()).bindTo(registry);
 
-        assertThat(registry.mustFind("process.uptime").timeGauge().value()).isEqualTo(1.337);
-        assertThat(registry.mustFind("process.start.time").timeGauge().value()).isEqualTo(4.711);
+        assertThat(registry.get("process.uptime").timeGauge().value()).isEqualTo(1.337);
+        assertThat(registry.get("process.start.time").timeGauge().value()).isEqualTo(4.711);
     }
 }

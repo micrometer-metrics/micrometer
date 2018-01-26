@@ -76,14 +76,14 @@ public class MetricsAutoConfigurationTest {
 
         assertThat(external.getForObject("/api/external", String.class)).isEqualTo("hello");
 
-        assertThat(registry.mustFind("http.client.requests").timer().count()).isEqualTo(1L);
+        assertThat(registry.get("http.client.requests").timer().count()).isEqualTo(1L);
     }
 
     @Test
     public void requestMappingIsInstrumented() {
         loopback.getForObject("/api/people", String.class);
 
-        assertThat(registry.mustFind("http.server.requests").timer().count()).isEqualTo(1L);
+        assertThat(registry.get("http.server.requests").timer().count()).isEqualTo(1L);
     }
 
     @Test
@@ -95,7 +95,7 @@ public class MetricsAutoConfigurationTest {
 
     @Test
     public void registryCustomizersAreAppliedBeforeRegistryIsInjectableElsewhere() {
-        registry.mustFind("my.thing").tags("common", "tag").gauge();
+        registry.get("my.thing").tags("common", "tag").gauge();
     }
 
     @SpringBootApplication(scanBasePackages = "ignored")

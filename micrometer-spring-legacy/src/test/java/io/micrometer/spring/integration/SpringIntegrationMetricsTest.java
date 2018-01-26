@@ -50,10 +50,10 @@ public class SpringIntegrationMetricsTest {
     public void springIntegrationMetrics() {
         converter.fahrenheitToCelcius(68.0f);
 
-        assertThat(registry.mustFind("spring.integration.channel.sends")
+        assertThat(registry.get("spring.integration.channel.sends")
             .tags("channel", "convert.input").functionCounter().count()).isEqualTo(1.0);
-        registry.mustFind("spring.integration.handler.duration.min").meter();
-        registry.mustFind("spring.integration.sourceNames").meter();
+        registry.get("spring.integration.handler.duration.min").meter();
+        registry.get("spring.integration.sourceNames").meter();
     }
 
     @SpringBootApplication

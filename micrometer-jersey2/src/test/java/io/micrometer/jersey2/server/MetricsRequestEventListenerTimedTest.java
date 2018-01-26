@@ -89,15 +89,15 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
         target("timed").request().get();
         target("multi-timed").request().get();
 
-        assertThat(registry.mustFind(METRIC_NAME)
+        assertThat(registry.get(METRIC_NAME)
             .tags(tagsFrom("/timed", 200)).timer().count())
             .isEqualTo(1);
 
-        assertThat(registry.mustFind("multi1")
+        assertThat(registry.get("multi1")
             .tags(tagsFrom("/multi-timed", 200)).timer().count())
             .isEqualTo(1);
 
-        assertThat(registry.mustFind("multi2")
+        assertThat(registry.get("multi2")
             .tags(tagsFrom("/multi-timed", 200)).timer().count())
             .isEqualTo(1);
     }
@@ -119,7 +119,7 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
             .isNull();
 
         // the long running task is timed
-        assertThat(registry.mustFind("long.task.in.request")
+        assertThat(registry.get("long.task.in.request")
             .tags(Tags.zip(DefaultJerseyTagsProvider.TAG_METHOD, "GET",
                 DefaultJerseyTagsProvider.TAG_URI, "/long-timed"))
             .longTaskTimer().activeTasks())
@@ -130,7 +130,7 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
         future.get();
 
         // the request is timed after the long running request completed
-        assertThat(registry.mustFind(METRIC_NAME)
+        assertThat(registry.get(METRIC_NAME)
             .tags(tagsFrom("/long-timed", 200))
             .timer().count())
             .isEqualTo(1);
@@ -147,7 +147,7 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
     public void classLevelAnnotationIsInherited() {
         target("/class/inherited").request().get();
 
-        assertThat(registry.mustFind(METRIC_NAME)
+        assertThat(registry.get(METRIC_NAME)
             .tags(Tags.concat(tagsFrom("/class/inherited", 200),
                 Tags.zip("on", "class")))
             .timer().count())
@@ -158,7 +158,7 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
     public void methodLevelAnnotationOverridesClassLevel() {
         target("/class/on-method").request().get();
 
-        assertThat(registry.mustFind(METRIC_NAME)
+        assertThat(registry.get(METRIC_NAME)
             .tags(Tags.concat(tagsFrom("/class/on-method", 200),
                 Tags.zip("on", "method")))
             .timer().count())

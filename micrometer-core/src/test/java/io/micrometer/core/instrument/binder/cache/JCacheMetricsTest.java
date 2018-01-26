@@ -60,6 +60,6 @@ class JCacheMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         JCacheMetrics.monitor(registry, cache, "jcache", emptyList());
 
-        assertThat(registry.mustFind("jcache.puts").tags("name", "a").gauge().value()).isEqualTo(1.0);
+        assertThat(registry.get("jcache.puts").tags("name", "a").gauge().value()).isEqualTo(1.0);
     }
 }

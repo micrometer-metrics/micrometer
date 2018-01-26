@@ -57,7 +57,7 @@ class JettyStatisticsMetricsTest {
 
         handler.handle("/testUrl", baseReq, new MockHttpServletRequest(), new MockHttpServletResponse());
 
-        assertThat(registry.mustFind("jetty.requests").functionTimer().count()).isEqualTo(1L);
-        assertThat(registry.mustFind("jetty.responses.size").functionCounter().count()).isEqualTo(772.0);
+        assertThat(registry.get("jetty.requests").functionTimer().count()).isEqualTo(1L);
+        assertThat(registry.get("jetty.responses.size").functionCounter().count()).isEqualTo(772.0);
     }
 }

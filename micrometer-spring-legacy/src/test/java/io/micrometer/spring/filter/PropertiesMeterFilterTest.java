@@ -74,7 +74,7 @@ public class PropertiesMeterFilterTest {
         props.getEnabled().put("my.timer", true);
         registry.timer("my.timer");
 
-        registry.mustFind("my.timer").timer();
+        registry.get("my.timer").timer();
     }
 
     @Test

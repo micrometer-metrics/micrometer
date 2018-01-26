@@ -36,6 +36,6 @@ class EhCache2MetricsTest {
 
         c.put(new Element("k", "v", 1));
 
-        registry.mustFind("ehcache.size").tags("name", "a").gauge();
+        registry.get("ehcache.size").tags("name", "a").gauge();
     }
 }

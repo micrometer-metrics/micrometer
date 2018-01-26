@@ -33,6 +33,6 @@ class CompositeCounterTest {
 
         registry.counter("counter").increment(2.0);
 
-        assertThat(simple.mustFind("counter").counter().count()).isEqualTo(2.0);
+        assertThat(simple.get("counter").counter().count()).isEqualTo(2.0);
     }
 }

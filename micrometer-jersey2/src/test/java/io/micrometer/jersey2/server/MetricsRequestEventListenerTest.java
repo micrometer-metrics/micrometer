@@ -66,19 +66,19 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
         target("hello/peter").request().get();
         target("sub-resource/sub-hello/peter").request().get();
 
-        assertThat(registry.mustFind(METRIC_NAME)
+        assertThat(registry.get(METRIC_NAME)
             .tags(tagsFrom("/", 200, null)).timer().count())
             .isEqualTo(1);
 
-        assertThat(registry.mustFind(METRIC_NAME)
+        assertThat(registry.get(METRIC_NAME)
             .tags(tagsFrom("/hello", 200, null)).timer().count())
             .isEqualTo(2);
 
-        assertThat(registry.mustFind(METRIC_NAME)
+        assertThat(registry.get(METRIC_NAME)
             .tags(tagsFrom("/hello/{name}", 200, null)).timer().count())
             .isEqualTo(1);
 
-        assertThat(registry.mustFind(METRIC_NAME)
+        assertThat(registry.get(METRIC_NAME)
             .tags(tagsFrom("/sub-resource/sub-hello/{name}", 200, null)).timer().count())
             .isEqualTo(1);
 
@@ -97,7 +97,7 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
         } catch (NotFoundException ignored) {
         }
 
-        assertThat(registry.mustFind(METRIC_NAME)
+        assertThat(registry.get(METRIC_NAME)
             .tags(tagsFrom("NOT_FOUND", 404, null)).timer().count())
             .isEqualTo(2);
     }
@@ -107,11 +107,11 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
         target("redirect/302").request().get();
         target("redirect/307").request().get();
 
-        assertThat(registry.mustFind(METRIC_NAME)
+        assertThat(registry.get(METRIC_NAME)
             .tags(tagsFrom("REDIRECTION", 302, null)).timer().count())
             .isEqualTo(1);
 
-        assertThat(registry.mustFind(METRIC_NAME)
+        assertThat(registry.get(METRIC_NAME)
             .tags(tagsFrom("REDIRECTION", 307, null)).timer().count())
             .isEqualTo(1);
     }
@@ -127,12 +127,12 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
         } catch (Exception ignored) {
         }
 
-        assertThat(registry.mustFind(METRIC_NAME)
+        assertThat(registry.get(METRIC_NAME)
             .tags(tagsFrom("/throws-exception", 500, "IllegalArgumentException"))
             .timer().count())
             .isEqualTo(1);
 
-        assertThat(registry.mustFind(METRIC_NAME).tags(
+        assertThat(registry.get(METRIC_NAME).tags(
             tagsFrom("/throws-webapplication-exception", 401, "NotAuthorizedException"))
             .timer().count())
             .isEqualTo(1);

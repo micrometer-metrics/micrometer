@@ -44,7 +44,7 @@ class MeterRegistryInjectionTest {
         MyComponent component = ctx.getBean(MyComponent.class);
         component.performanceCriticalFeature();
         assertThat(component.registry).isInstanceOf(SimpleMeterRegistry.class);
-        component.registry.mustFind("feature.counter").counter();
+        component.registry.get("feature.counter").counter();
     }
 
 //    @Test
@@ -65,7 +65,7 @@ class MeterRegistryInjectionTest {
         component.after(); // @PostConstruct is not automatically called
         component.performanceCriticalFeature();
         assertThat(component.registry).isInstanceOf(SimpleMeterRegistry.class);
-        component.registry.mustFind("feature.counter").counter();
+        component.registry.get("feature.counter").counter();
     }
 
     @Test

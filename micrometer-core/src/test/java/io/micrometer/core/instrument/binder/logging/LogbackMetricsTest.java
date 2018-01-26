@@ -39,7 +39,7 @@ class LogbackMetricsTest {
 
     @Test
     void logbackLevelMetrics() {
-        assertThat(registry.mustFind("logback.events").counter().count()).isEqualTo(0.0);
+        assertThat(registry.get("logback.events").counter().count()).isEqualTo(0.0);
 
         logger.setLevel(Level.INFO);
 
@@ -47,8 +47,8 @@ class LogbackMetricsTest {
         logger.error("error");
         logger.debug("debug"); // shouldn't record a metric
 
-        assertThat(registry.mustFind("logback.events").tags("level", "warn").counter().count()).isEqualTo(1.0);
-        assertThat(registry.mustFind("logback.events").tags("level", "debug").counter().count()).isEqualTo(0.0);
+        assertThat(registry.get("logback.events").tags("level", "warn").counter().count()).isEqualTo(1.0);
+        assertThat(registry.get("logback.events").tags("level", "debug").counter().count()).isEqualTo(0.0);
     }
 
     @Issue("#183")
@@ -56,6 +56,6 @@ class LogbackMetricsTest {
     void isLevelEnabledDoesntContributeToCounts() {
         logger.isErrorEnabled();
 
-        assertThat(registry.mustFind("logback.events").tags("level", "error").counter().count()).isEqualTo(0.0);
+        assertThat(registry.get("logback.events").tags("level", "error").counter().count()).isEqualTo(0.0);
     }
 }
