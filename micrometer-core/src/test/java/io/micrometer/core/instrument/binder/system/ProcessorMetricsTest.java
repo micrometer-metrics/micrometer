@@ -42,7 +42,15 @@ class ProcessorMetricsTest {
 
     @Test
     void hotspotCpuMetrics() {
+        boolean jdk9 = false;
+        try {
+            Class.forName("java.lang.reflect.InaccessibleObjectException");
+            jdk9 = true;
+        } catch (ClassNotFoundException ignored) {
+        }
+
         OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+        assumeTrue(!jdk9);
         assumeTrue(osBean.getClass().getName().equals("sun.management.OperatingSystemImpl"));
 
         MeterRegistry registry = new SimpleMeterRegistry();

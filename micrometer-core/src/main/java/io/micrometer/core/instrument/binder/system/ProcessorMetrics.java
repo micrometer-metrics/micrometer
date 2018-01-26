@@ -38,10 +38,13 @@ import static java.util.Objects.requireNonNull;
 @NonNullFields
 public class ProcessorMetrics implements MeterBinder {
     private final Iterable<Tag> tags;
+
     @Nullable
     private OperatingSystemMXBean operatingSystemBean;
+
     @Nullable
     private Method systemCpuUsage;
+
     @Nullable
     private Method processCpuUsage;
 
@@ -104,7 +107,10 @@ public class ProcessorMetrics implements MeterBinder {
             final Method method = osBean.getClass().getMethod(name);
             method.setAccessible(true);
             return method;
-        } catch (NoSuchMethodException | SecurityException e) {
+        } catch (Throwable ignored) {
+            // Can't get more specific about type of exception here, since JDK9 will throw a
+            // InaccessibleObjectException on OperatingSystemMXBean, and this exception type
+            // is not available in Java 8 and prior.
             return null;
         }
     }
