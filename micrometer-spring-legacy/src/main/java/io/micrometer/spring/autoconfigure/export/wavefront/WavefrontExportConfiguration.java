@@ -20,7 +20,7 @@ public class WavefrontExportConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(WavefrontConfig.class)
-    public WavefrontConfig WavefrontConfig(WavefrontProperties props) {
+    public WavefrontConfig wavefrontConfig(WavefrontProperties props) {
         return new WavefrontPropertiesConfigAdapter(props);
     }
 
