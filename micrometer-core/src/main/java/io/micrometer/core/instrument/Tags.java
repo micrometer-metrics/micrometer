@@ -15,51 +15,201 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.lang.Nullable;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toMap;
-import static java.util.stream.StreamSupport.stream;
-
 /**
+ * An immutable collection of {@link Tags}.
+ *
  * @author Jon Schneider
  * @author Maciej Walkowiak
+ * @author Phillip Webb
  */
-public final class Tags {
-    private Tags() {
+public final class Tags implements Iterable<Tag> {
+
+    private static final Tags EMPTY = new Tags(Collections.emptyMap());
+
+    private final Map<String, Tag> tags;
+
+    private Tags(Map<String, Tag> tags) {
+        this.tags = Collections.unmodifiableMap(tags);
     }
 
-    public static Iterable<Tag> zip(String... keyValues) {
+    /**
+     * Return a new {@link Tags} instance my merging this collection and the specific key/value pair.
+     *
+     * @param key   the tag key to add
+     * @param value the tag value add
+     * @return a new {@link Tags} instance
+     */
+    public Tags and(String key, String value) {
+        return and(Tag.of(key, value));
+    }
+
+    /**
+     * Return a new {@link Tags} instance my merging this collection and the specific key/value pairs.
+     *
+     * @param keyValues the key value pairs to add
+     * @return a new {@link Tags} instance
+     */
+    public Tags and(@Nullable String... keyValues) {
+        if (keyValues == null || keyValues.length == 0) {
+            return this;
+        }
         if (keyValues.length % 2 == 1) {
             throw new IllegalArgumentException("size must be even, it is a set of key=value pairs");
         }
-
-        Map<String, Tag> ts = new HashMap<>(keyValues.length / 2);
+        List<Tag> tags = new ArrayList<>(keyValues.length / 2);
         for (int i = 0; i < keyValues.length; i += 2) {
-            ts.put(keyValues[i], Tag.of(keyValues[i], keyValues[i + 1]));
+            tags.add(Tag.of(keyValues[i], keyValues[i + 1]));
         }
-
-        return ts.values();
+        return and(tags);
     }
 
-    public static Iterable<Tag> concat(Iterable<Tag> tags, Iterable<Tag> otherTags) {
-        if (!otherTags.iterator().hasNext())
-            return tags;
-
-        return Stream.concat(stream(tags.spliterator(), false), stream(otherTags.spliterator(), false))
-            .collect(toMap(Tag::getKey, Function.identity(), (tag, otherTag) -> otherTag))
-            .values();
+    /**
+     * Return a new {@link Tags} instance my merging this collection and the specific tags.
+     *
+     * @param tags the tags to add
+     * @return a new {@link Tags} instance
+     */
+    public Tags and(@Nullable Tag... tags) {
+        if (tags == null || tags.length == 0) {
+            return this;
+        }
+        return and(Arrays.asList(tags));
     }
 
-    public static Iterable<Tag> concat(Iterable<Tag> tags, String... keyValues) {
-        return concat(tags, zip(keyValues));
+    /**
+     * Return a new {@link Tags} instance my merging this collection and the specific tags.
+     *
+     * @param tags the tags to add
+     * @return a new {@link Tags} instance
+     */
+    public Tags and(@Nullable Iterable<? extends Tag> tags) {
+        if (tags == null || !tags.iterator().hasNext()) {
+            return this;
+        }
+        Map<String, Tag> merged = new LinkedHashMap<>(this.tags);
+        tags.forEach(tag -> merged.put(tag.getKey(), tag));
+        return new Tags(merged);
     }
 
-    public static Iterable<Tag> of(String tagKey, String tagValue) {
-        return Collections.singletonList(Tag.of(tagKey, tagValue));
+    @Override
+    public Iterator<Tag> iterator() {
+        return tags.values().iterator();
+    }
+
+    /**
+     * Return a stream of the contained tags.
+     *
+     * @return a tags stream
+     */
+    public Stream<Tag> stream() {
+        return tags.values().stream();
+    }
+
+    @Override
+    public int hashCode() {
+        return tags.hashCode();
+    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        return this == obj || obj != null && getClass() == obj.getClass() && tags.equals(((Tags) obj).tags);
+    }
+
+    /**
+     * Return a new {@link Tags} instance my concatenating the specified values.
+     *
+     * @param tags      the first set of tags
+     * @param otherTags the second set of tags
+     * @return the merged tags
+     */
+    public static Tags concat(Iterable<? extends Tag> tags, Iterable<Tag> otherTags) {
+        return Tags.of(tags).and(otherTags);
+    }
+
+    /**
+     * Return a new {@link Tags} instance my concatenating the specified key value pairs.
+     *
+     * @param tags      the first set of tags
+     * @param keyValues the additional key value pairs to add
+     * @return the merged tags
+     */
+    public static Tags concat(Iterable<? extends Tag> tags, String... keyValues) {
+        return Tags.of(tags).and(keyValues);
+    }
+
+    /**
+     * Return a new {@link Tags} instance containing tags constructed from the specified key value pairs.
+     *
+     * @param keyValues the key value pairs to add
+     * @return a new {@link Tags} instance
+     * @deprecated in favor of {@link Tags#of(String...)}.
+     */
+    @Deprecated
+    public static Tags zip(String... keyValues) {
+        return of(keyValues);
+    }
+
+    /**
+     * Return a new {@link Tags} instance containing tags constructed from the specified source tags.
+     *
+     * @param tags the tags to add
+     * @return a new {@link Tags} instance
+     */
+    public static Tags of(Iterable<? extends Tag> tags) {
+        if (tags instanceof Tags) {
+            return (Tags) tags;
+        }
+        return empty().and(tags);
+    }
+
+    /**
+     * Return a new {@link Tags} instance containing tags constructed from the specified name value pair.
+     *
+     * @param key   the tag key to add
+     * @param value the tag value to add
+     * @return a new {@link Tags} instance
+     */
+    public static Tags of(String key, String value) {
+        return empty().and(key, value);
+    }
+
+    /**
+     * Return a new {@link Tags} instance containing tags constructed from the specified key value pairs.
+     *
+     * @param keyValues the key value pairs to add
+     * @return a new {@link Tags} instance
+     */
+    public static Tags of(String... keyValues) {
+        return empty().and(keyValues);
+    }
+
+    /**
+     * Return a new {@link Tags} instance containing tags constructed from the specified tags.
+     *
+     * @param tags the tags to add
+     * @return a new {@link Tags} instance
+     */
+    public static Tags of(Tag... tags) {
+        return empty().and(tags);
+    }
+
+    /**
+     * Return a {@link Tags} instance that contains no elements.
+     *
+     * @return an empty {@link Tags} instance
+     */
+    public static Tags empty() {
+        return EMPTY;
     }
 }
