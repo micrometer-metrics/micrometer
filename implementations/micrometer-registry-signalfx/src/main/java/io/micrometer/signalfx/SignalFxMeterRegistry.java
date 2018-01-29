@@ -61,10 +61,10 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
 
         URI apiUri = URI.create(config.uri());
         int port = apiUri.getPort();
-        if(port == -1) {
-            if("http".equals(apiUri.getScheme())) {
+        if (port == -1) {
+            if ("http".equals(apiUri.getScheme())) {
                 port = 80;
-            } else if("https".equals(apiUri.getScheme())) {
+            } else if ("https".equals(apiUri.getScheme())) {
                 port = 443;
             }
         }

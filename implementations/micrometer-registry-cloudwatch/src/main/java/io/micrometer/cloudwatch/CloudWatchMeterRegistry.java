@@ -46,7 +46,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(CloudWatchMeterRegistry.class);
 
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
-                               AmazonCloudWatchAsync amazonCloudWatchAsync) {
+                                   AmazonCloudWatchAsync amazonCloudWatchAsync) {
         this(config, clock, amazonCloudWatchAsync, Executors.defaultThreadFactory());
     }
 
@@ -68,8 +68,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     private void sendMetricData(List<MetricDatum> metricData) {
         PutMetricDataRequest putMetricDataRequest = new PutMetricDataRequest()
-                .withNamespace(config.namespace())
-                .withMetricData(metricData);
+            .withNamespace(config.namespace())
+            .withMetricData(metricData);
         amazonCloudWatchAsync.putMetricDataAsync(putMetricDataRequest, new AsyncHandler<PutMetricDataRequest, PutMetricDataResult>() {
             @Override
             public void onError(Exception exception) {
@@ -103,8 +103,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         // we can't know anything about max and percentiles originating from a function timer
         return Stream.of(
-                metricDatum(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
-                metricDatum(idWithSuffix(timer.getId(), "avg"), wallTime, timer.mean(getBaseTimeUnit())));
+            metricDatum(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
+            metricDatum(idWithSuffix(timer.getId(), "avg"), wallTime, timer.mean(getBaseTimeUnit())));
     }
 
     private Stream<MetricDatum> metricData(Timer timer) {
@@ -119,7 +119,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         for (ValueAtPercentile v : snapshot.percentileValues()) {
             metrics.add(metricDatum(idWithSuffix(timer.getId(), percentileFormat.format(v.percentile()) + "percentile"),
-                    wallTime, v.value(getBaseTimeUnit())));
+                wallTime, v.value(getBaseTimeUnit())));
         }
 
         return metrics.build();
@@ -137,7 +137,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         for (ValueAtPercentile v : snapshot.percentileValues()) {
             metrics.add(metricDatum(idWithSuffix(summary.getId(), percentileFormat.format(v.percentile()) + "percentile"),
-                    wallTime, v.value()));
+                wallTime, v.value()));
         }
 
         return metrics.build();
@@ -146,18 +146,18 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     private Stream<MetricDatum> metricData(Meter m) {
         long wallTime = clock.wallTime();
         return stream(m.measure().spliterator(), false)
-                .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), wallTime, ms.getValue()));
+            .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), wallTime, ms.getValue()));
     }
 
     private MetricDatum metricDatum(Meter.Id id, long wallTime, double value) {
         String metricName = id.getConventionName(config().namingConvention());
         List<Tag> tags = id.getConventionTags(config().namingConvention());
         return new MetricDatum()
-                .withMetricName(metricName)
-                .withDimensions(toDimensions(tags))
-                .withTimestamp(new Date(wallTime))
-                .withValue(CloudWatchUtils.clampMetricValue(value))
-                .withUnit(toStandardUnit(id.getBaseUnit()));
+            .withMetricName(metricName)
+            .withDimensions(toDimensions(tags))
+            .withTimestamp(new Date(wallTime))
+            .withValue(CloudWatchUtils.clampMetricValue(value))
+            .withUnit(toStandardUnit(id.getBaseUnit()));
     }
 
     private StandardUnit toStandardUnit(@Nullable String unit) {
@@ -178,8 +178,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     private List<Dimension> toDimensions(List<Tag> tags) {
         return tags.stream()
-                .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
-                .collect(toList());
+            .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
+            .collect(toList());
     }
 
     @Override

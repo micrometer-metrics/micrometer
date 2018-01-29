@@ -181,19 +181,17 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
         } catch (Throwable e) {
             logger.warn("failed to send metrics", e);
-        }
-        finally {
+        } finally {
             quietlyCloseUrlConnection(con);
         }
     }
 
     private void quietlyCloseUrlConnection(@Nullable HttpURLConnection con) {
         try {
-            if(con != null) {
+            if (con != null) {
                 con.disconnect();
             }
-        }
-        catch (Exception ignore) {
+        } catch (Exception ignore) {
         }
     }
 

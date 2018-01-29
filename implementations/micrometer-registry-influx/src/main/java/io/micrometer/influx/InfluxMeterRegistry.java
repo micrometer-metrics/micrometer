@@ -81,8 +81,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             }
         } catch (IOException e) {
             logger.warn("unable to create database '{}'", config.db(), e);
-        }
-        finally {
+        } finally {
             quietlyCloseUrlConnection(con);
         }
     }
@@ -174,8 +173,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                         logger.error("failed to send metrics: http " + status);
                     }
 
-                }
-                finally {
+                } finally {
                     quietlyCloseUrlConnection(con);
                 }
             }
@@ -188,11 +186,10 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     private void quietlyCloseUrlConnection(@Nullable HttpURLConnection con) {
         try {
-            if(con != null) {
+            if (con != null) {
                 con.disconnect();
             }
-        }
-        catch (Exception ignore) {
+        } catch (Exception ignore) {
         }
     }
 
