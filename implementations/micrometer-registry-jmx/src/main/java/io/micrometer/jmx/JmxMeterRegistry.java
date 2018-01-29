@@ -38,7 +38,10 @@ public class JmxMeterRegistry extends DropwizardMeterRegistry {
     public JmxMeterRegistry(JmxConfig config, Clock clock, HierarchicalNameMapper nameMapper, MetricRegistry metricRegistry) {
         super(config, metricRegistry, nameMapper, clock);
 
-        this.reporter = JmxReporter.forRegistry(getDropwizardRegistry()).build();
+        this.reporter = JmxReporter.forRegistry(getDropwizardRegistry())
+            .inDomain(config.domain())
+            .createsObjectNamesWith(config.objectNameFactory())
+            .build();
         this.reporter.start();
     }
 

@@ -15,6 +15,8 @@
  */
 package io.micrometer.jmx;
 
+import com.codahale.metrics.DefaultObjectNameFactory;
+import com.codahale.metrics.ObjectNameFactory;
 import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
 
 public interface JmxConfig extends DropwizardConfig {
@@ -26,5 +28,13 @@ public interface JmxConfig extends DropwizardConfig {
     @Override
     default String prefix() {
         return "jmx";
+    }
+
+    default String domain() {
+        return "metrics";
+    }
+
+    default ObjectNameFactory objectNameFactory() {
+        return new DefaultObjectNameFactory();
     }
 }
