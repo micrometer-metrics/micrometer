@@ -31,7 +31,7 @@ import javax.servlet.http.HttpServletResponse;
  * @author Andy Wilkinson
  */
 @NonNullApi
-public interface ServletTagsProvider {
+public interface WebMvcTagsProvider {
 
     /**
      * Provides tags to be used by {@link LongTaskTimer long task timers}.

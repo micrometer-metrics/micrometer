@@ -50,20 +50,20 @@ import java.util.stream.Collectors;
  */
 @NonNullApi
 @Order(Ordered.HIGHEST_PRECEDENCE)
-public class MetricsFilter extends OncePerRequestFilter {
+public class WebMvcMetricsFilter extends OncePerRequestFilter {
     private static final String EXCEPTION_ATTRIBUTE = "micrometer.requestException";
     private static final String TIMING_SAMPLE = "micrometer.timingSample";
 
     private final MeterRegistry registry;
-    private final ServletTagsProvider tagsProvider;
+    private final WebMvcTagsProvider tagsProvider;
     private final String metricName;
     private final boolean autoTimeRequests;
     private final HandlerMappingIntrospector mappingIntrospector;
-    private final Logger logger = LoggerFactory.getLogger(MetricsFilter.class);
+    private final Logger logger = LoggerFactory.getLogger(WebMvcMetricsFilter.class);
 
-    public MetricsFilter(MeterRegistry registry, ServletTagsProvider tagsProvider,
-                         String metricName, boolean autoTimeRequests,
-                         HandlerMappingIntrospector mappingIntrospector) {
+    public WebMvcMetricsFilter(MeterRegistry registry, WebMvcTagsProvider tagsProvider,
+                               String metricName, boolean autoTimeRequests,
+                               HandlerMappingIntrospector mappingIntrospector) {
         this.registry = registry;
         this.tagsProvider = tagsProvider;
         this.metricName = metricName;

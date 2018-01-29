@@ -24,12 +24,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 
 /**
- * Default implementation of {@link ServletTagsProvider}.
+ * Default implementation of {@link WebMvcTagsProvider}.
  *
  * @author Jon Schneider
  */
 @NonNullApi
-public class DefaultServletTagsProvider implements ServletTagsProvider {
+public class DefaultWebMvcTagsProvider implements WebMvcTagsProvider {
 
     /**
      * Supplies default tags to long task timers.
@@ -40,7 +40,7 @@ public class DefaultServletTagsProvider implements ServletTagsProvider {
      */
     @Override
     public Iterable<Tag> httpLongRequestTags(@Nullable HttpServletRequest request, @Nullable Object handler) {
-        return Arrays.asList(ServletTags.method(request), ServletTags.uri(request, null));
+        return Arrays.asList(WebMvcTags.method(request), WebMvcTags.uri(request, null));
     }
 
     /**
@@ -56,8 +56,8 @@ public class DefaultServletTagsProvider implements ServletTagsProvider {
                                          @Nullable HttpServletResponse response,
                                          @Nullable Object handler,
                                          @Nullable Throwable ex) {
-        return Arrays.asList(ServletTags.method(request), ServletTags.uri(request, response),
-            ServletTags.exception(ex), ServletTags.status(response));
+        return Arrays.asList(WebMvcTags.method(request), WebMvcTags.uri(request, response),
+            WebMvcTags.exception(ex), WebMvcTags.status(response));
     }
 
 }

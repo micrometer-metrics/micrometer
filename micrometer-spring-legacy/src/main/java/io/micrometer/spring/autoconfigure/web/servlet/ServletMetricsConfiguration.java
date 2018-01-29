@@ -17,9 +17,9 @@ package io.micrometer.spring.autoconfigure.web.servlet;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.spring.autoconfigure.MetricsProperties;
-import io.micrometer.spring.web.servlet.DefaultServletTagsProvider;
-import io.micrometer.spring.web.servlet.MetricsFilter;
-import io.micrometer.spring.web.servlet.ServletTagsProvider;
+import io.micrometer.spring.web.servlet.DefaultWebMvcTagsProvider;
+import io.micrometer.spring.web.servlet.WebMvcMetricsFilter;
+import io.micrometer.spring.web.servlet.WebMvcTagsProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -42,16 +42,16 @@ import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 public class ServletMetricsConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean(ServletTagsProvider.class)
-    public DefaultServletTagsProvider servletTagsProvider() {
-        return new DefaultServletTagsProvider();
+    @ConditionalOnMissingBean(WebMvcTagsProvider.class)
+    public DefaultWebMvcTagsProvider servletTagsProvider() {
+        return new DefaultWebMvcTagsProvider();
     }
 
     @Bean
-    public MetricsFilter webMetricsFilter(MeterRegistry registry, MetricsProperties properties,
-                                          ServletTagsProvider tagsProvider,
-                                          WebApplicationContext ctx) {
-        return new MetricsFilter(registry, tagsProvider,
+    public WebMvcMetricsFilter webMetricsFilter(MeterRegistry registry, MetricsProperties properties,
+                                                WebMvcTagsProvider tagsProvider,
+                                                WebApplicationContext ctx) {
+        return new WebMvcMetricsFilter(registry, tagsProvider,
             properties.getWeb().getServer().getRequestsMetricName(),
             properties.getWeb().getServer().isAutoTimeRequests(),
             new HandlerMappingIntrospector(ctx));

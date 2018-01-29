@@ -27,15 +27,15 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Factory methods for {@link Tag Tags} associated with a request-response exchange that
- * is instrumented by {@link MetricsFilter}.
+ * is instrumented by {@link WebMvcMetricsFilter}.
  *
  * @author Jon Schneider
  * @author Andy Wilkinson
  */
 @NonNullApi
-public final class ServletTags {
+public final class WebMvcTags {
 
-    private ServletTags() {
+    private WebMvcTags() {
     }
 
     /**

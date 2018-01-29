@@ -45,7 +45,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 /**
- * Tests for {@link MetricsFilter} in the presence of a custom exception handler.
+ * Tests for {@link WebMvcMetricsFilter} in the presence of a custom exception handler.
  *
  * @author Jon Schneider
  */
@@ -127,7 +127,7 @@ public class MetricsFilterCustomExceptionHandlerTest {
 
         @ExceptionHandler
         ResponseEntity<String> handleError(Exception1 ex) {
-            MetricsFilter.tagWithException(ex);
+            WebMvcMetricsFilter.tagWithException(ex);
             return new ResponseEntity<>("this is a custom exception body",
                 HttpStatus.INTERNAL_SERVER_ERROR);
         }
