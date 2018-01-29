@@ -125,9 +125,9 @@ public class MetricsFilterCustomExceptionHandlerTest {
     @ControllerAdvice
     static class CustomExceptionHandler {
 
+        @SuppressWarnings("unused")
         @ExceptionHandler
         ResponseEntity<String> handleError(Exception1 ex) {
-            WebMvcMetricsFilter.tagWithException(ex);
             return new ResponseEntity<>("this is a custom exception body",
                 HttpStatus.INTERNAL_SERVER_ERROR);
         }

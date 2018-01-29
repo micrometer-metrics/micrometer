@@ -26,10 +26,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 import org.springframework.web.servlet.handler.MatchableHandlerMapping;
@@ -40,7 +39,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -51,15 +52,15 @@ import java.util.stream.Collectors;
 @NonNullApi
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class WebMvcMetricsFilter extends OncePerRequestFilter {
-    private static final String EXCEPTION_ATTRIBUTE = "micrometer.requestException";
     private static final String TIMING_SAMPLE = "micrometer.timingSample";
+
+    private final Logger logger = LoggerFactory.getLogger(WebMvcMetricsFilter.class);
 
     private final MeterRegistry registry;
     private final WebMvcTagsProvider tagsProvider;
     private final String metricName;
     private final boolean autoTimeRequests;
     private final HandlerMappingIntrospector mappingIntrospector;
-    private final Logger logger = LoggerFactory.getLogger(WebMvcMetricsFilter.class);
 
     public WebMvcMetricsFilter(MeterRegistry registry, WebMvcTagsProvider tagsProvider,
                                String metricName, boolean autoTimeRequests,
@@ -69,12 +70,6 @@ public class WebMvcMetricsFilter extends OncePerRequestFilter {
         this.metricName = metricName;
         this.autoTimeRequests = autoTimeRequests;
         this.mappingIntrospector = mappingIntrospector;
-    }
-
-    public static void tagWithException(Throwable exception) {
-        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
-        attributes.setAttribute(EXCEPTION_ATTRIBUTE, exception,
-            RequestAttributes.SCOPE_REQUEST);
     }
 
     @Override
@@ -119,7 +114,7 @@ public class WebMvcMetricsFilter extends OncePerRequestFilter {
 
             if (!request.isAsyncStarted()) {
                 record(timingContext, response, request,
-                    handlerObject, (Throwable) request.getAttribute(EXCEPTION_ATTRIBUTE));
+                    handlerObject, (Throwable) request.getAttribute(DispatcherServlet.EXCEPTION_ATTRIBUTE));
             }
         } catch (NestedServletException e) {
             response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
