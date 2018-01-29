@@ -49,6 +49,11 @@ public class CompositeMeterRegistry extends MeterRegistry {
         config().onMeterAdded(m -> registries.forEach(((CompositeMeter) m)::add));
     }
 
+    public CompositeMeterRegistry(Clock clock, Iterable<MeterRegistry> registries) {
+        this(clock);
+        registries.forEach(this.registries::add);
+    }
+
     @Override
     protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
         return new CompositeTimer(id, clock, histogramConfig, pauseDetector);
