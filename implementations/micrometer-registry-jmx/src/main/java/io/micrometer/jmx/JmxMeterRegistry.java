@@ -36,10 +36,20 @@ public class JmxMeterRegistry extends DropwizardMeterRegistry {
     }
 
     public JmxMeterRegistry(JmxConfig config, Clock clock, HierarchicalNameMapper nameMapper, MetricRegistry metricRegistry) {
-        super(config, metricRegistry, nameMapper, clock);
+        this(config, clock, nameMapper, metricRegistry, defaultJmxReporter(config, metricRegistry));
+    }
 
-        this.reporter = JmxReporter.forRegistry(getDropwizardRegistry()).build();
+    public JmxMeterRegistry(JmxConfig config, Clock clock, HierarchicalNameMapper nameMapper, MetricRegistry metricRegistry,
+                            JmxReporter jmxReporter) {
+        super(config, metricRegistry, nameMapper, clock);
+        this.reporter = jmxReporter;
         this.reporter.start();
+    }
+
+    private static JmxReporter defaultJmxReporter(JmxConfig config, MetricRegistry metricRegistry) {
+        return JmxReporter.forRegistry(metricRegistry)
+            .inDomain(config.domain())
+            .build();
     }
 
     public void stop() {

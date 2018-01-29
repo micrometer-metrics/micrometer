@@ -27,4 +27,11 @@ public interface JmxConfig extends DropwizardConfig {
     default String prefix() {
         return "jmx";
     }
+
+    /**
+     * @return JMX domain under which to publish metrics.
+     */
+    default String domain() {
+        return "metrics";
+    }
 }
