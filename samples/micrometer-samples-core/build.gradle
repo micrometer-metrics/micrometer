@@ -13,5 +13,5 @@ dependencies {
 
     compile 'io.prometheus:simpleclient_pushgateway:latest.release'
 
-    compile 'io.projectreactor.ipc:reactor-netty:latest.release'
+    compile 'io.projectreactor.ipc:reactor-netty:0.7.3.RELEASE'
 }
