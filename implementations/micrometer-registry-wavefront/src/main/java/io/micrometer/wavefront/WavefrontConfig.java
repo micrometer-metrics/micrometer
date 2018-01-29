@@ -25,6 +25,9 @@ import java.time.Duration;
 public interface WavefrontConfig extends StepRegistryConfig {
     WavefrontConfig DEFAULT = k -> null;
 
+    // mode to specify whether to use wavefront proxy or submit directly
+    public enum mode {proxy, direct};
+
     @Override
     default Duration step() {
         String v = get(prefix() + ".step");
@@ -61,6 +64,23 @@ public interface WavefrontConfig extends StepRegistryConfig {
     default boolean enableHistograms() {
         String v = get(prefix() + ".enableHistograms");
         return v == null || Boolean.valueOf(v);
+    }
+
+    default mode mode() {
+        String v = get(prefix() + ".mode");
+        return v == null ? mode.proxy : mode.valueOf(v);
+    }
+
+    @Nullable
+    default String apitoken() {
+        String v = get(prefix() + ".apitoken");
+        return v == null ? null : v.trim().length() > 0 ? v : null;
+    }
+
+    @Nullable
+    default String apihost() {
+        String v = get(prefix() + ".apihost");
+        return v == null ? null : v.trim().length() > 0 ? v : null;
     }
 
     /**

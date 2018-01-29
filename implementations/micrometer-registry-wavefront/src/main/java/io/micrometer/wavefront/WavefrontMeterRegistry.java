@@ -23,6 +23,8 @@ import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.HttpsURLConnection;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.*;
 import java.util.List;
@@ -71,25 +73,69 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         try {
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-                try (Socket socket = new Socket(wavefrontProxyHost, Integer.parseInt(wavefrontProxyPort));
-                     OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream(), "UTF-8")) {
 
-                    String body =
-                        batch.stream().flatMap(m -> {
-                            if (m instanceof Timer) {
-                                return writeTimer((Timer) m);
-                            }
-                            if (m instanceof DistributionSummary) {
-                                return writeSummary((DistributionSummary) m);
-                            }
-                            if (m instanceof FunctionTimer) {
-                                return writeTimer((FunctionTimer) m);
-                            }
-                            return writeMeter(m);
-                        }).collect(joining("\n")) + "\n";
+                StringBuffer buffer = new StringBuffer();
+                Stream<String> stream =
+                    batch.stream().flatMap(m -> {
+                        if (m instanceof Timer) {
+                            return writeTimer((Timer) m);
+                        }
+                        if (m instanceof DistributionSummary) {
+                            return writeSummary((DistributionSummary) m);
+                        }
+                        if (m instanceof FunctionTimer) {
+                            return writeTimer((FunctionTimer) m);
+                        }
+                        return writeMeter(m);
+                    });
 
-                    writer.write(body);
-                    writer.flush();
+                if(config.mode() == WavefrontConfig.mode.proxy)
+                {
+                    buffer.append(stream.collect(joining("\n"))).append("\n");
+                    try (Socket socket = new Socket(wavefrontProxyHost, Integer.parseInt(wavefrontProxyPort));
+                         OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream(), "UTF-8")) {
+                        writer.write(buffer.toString());
+                        writer.flush();
+                    }
+                }
+                else if(config.mode() == WavefrontConfig.mode.direct)
+                {
+                    buffer.append("{").append(stream.collect(joining(","))).append("}");
+                    String apitoken = config.apitoken();
+                    String apihost = config.apihost();
+                    if(apitoken != null && apihost != null) {
+                        HttpsURLConnection conn = null;
+                        OutputStreamWriter writer = null;
+                        try {
+                            URL url = new URL("https", apihost, 443, String.format("/report/metrics?t=%s&h=%s", apitoken, config.source()));
+                            conn = (HttpsURLConnection)url.openConnection();
+                            conn.setDoOutput(true);
+                            conn.addRequestProperty("Content-Type", "application/json");
+                            conn.addRequestProperty("Accept", "application/json");
+                            writer = new OutputStreamWriter(conn.getOutputStream(), "UTF-8");
+                            writer.write(buffer.toString());
+                            writer.flush();
+
+                            int responseCode = conn.getResponseCode();
+                            if(responseCode == 204) {
+                                // success
+                            }
+                            else {
+                                // log error
+                                logger.error("publish failed when reporting directly to wavefront. Error code:" + responseCode);
+                            }
+                        }
+                        catch(Exception e) {
+                            logger.error(e.getMessage(), e);
+                        }
+                        finally {
+                            try {
+                                if(writer != null) writer.close();
+                                if(conn != null) conn.disconnect();
+                            }
+                            catch(Exception e) {}
+                        }
+                    }
                 }
             }
         } catch (Exception e) {
@@ -174,6 +220,20 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
      * https://docs.wavefront.com/wavefront_data_format.html#wavefront-data-format-syntax
      */
     private String writeMetric(Meter.Id id, @Nullable String suffix, long wallTime, double value) {
+        String result = null;
+        if(config.mode() == WavefrontConfig.mode.proxy) {
+            result = writeMetricProxy(id, suffix, wallTime, value);
+        }
+        else if(config.mode() == WavefrontConfig.mode.direct) {
+            result = writeMetricDirect(id, suffix, wallTime, value);
+        }
+        else {
+            result = "";
+        }
+        return result;
+    }
+
+    private String writeMetricProxy(Meter.Id id, @Nullable String suffix, long wallTime, double value) {
         Meter.Id fullId = id;
         if (suffix != null)
             fullId = idWithSuffix(id, suffix);
@@ -185,6 +245,32 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                 .stream()
                 .map(t -> t.getKey() + "=\"" + t.getValue() + "\"")
                 .collect(joining(" "));
+    }
+
+    private String writeMetricDirect(Meter.Id id, @Nullable String suffix, long wallTime, double value) {
+        Meter.Id fullId = id;
+        if (suffix != null)
+            fullId = idWithSuffix(id, suffix);
+
+        StringBuffer buffer = new StringBuffer();
+
+        // metric name
+        buffer.append("\"").append(getConventionName(fullId)).append("\"");
+        buffer.append(": {");
+
+        // value
+        buffer.append("\"value\": ").append(DoubleFormat.toString(value));
+
+        // metric tags
+        buffer.append(",\"tags\": {");
+        buffer.append(getConventionTags(fullId)
+            .stream()
+            .map(t -> "\"" + t.getKey() + "\": \"" + t.getValue() + "\"")
+            .collect(joining(",")));
+        buffer.append("}");
+
+        buffer.append("}");
+        return buffer.toString();
     }
 
     /**
