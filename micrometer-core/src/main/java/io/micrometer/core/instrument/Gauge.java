@@ -43,14 +43,22 @@ public interface Gauge extends Meter {
         return Type.Gauge;
     }
 
+    /**
+     * Fluent builder for gauges.
+     *
+     * @param <T> The type of the state object from which the gauge value is extracted.
+     */
     class Builder<T> {
         private final String name;
-        @Nullable
-        private final T obj;
         private final ToDoubleFunction<T> f;
         private final List<Tag> tags = new ArrayList<>();
+
+        @Nullable
+        private final T obj;
+
         @Nullable
         private String description;
+
         @Nullable
         private String baseUnit;
 
@@ -62,32 +70,57 @@ public interface Gauge extends Meter {
 
         /**
          * @param tags Must be an even number of arguments representing key/value pairs of tags.
-         * @return the builder
+         * @return The gauge builder with added tags.
          */
-        public Builder tags(String... tags) {
+        public Builder<T> tags(String... tags) {
             return tags(Tags.of(tags));
         }
 
-        public Builder tags(Iterable<Tag> tags) {
+        /**
+         * @param tags Tags to add to the eventual meter.
+         * @return The gauge builder with added tags.
+         */
+        public Builder<T> tags(Iterable<Tag> tags) {
             tags.forEach(this.tags::add);
             return this;
         }
 
+        /**
+         * @param key   The tag key.
+         * @param value The tag value.
+         * @return The gauge builder with a single added tag.
+         */
         public Builder tag(String key, String value) {
             tags.add(Tag.of(key, value));
             return this;
         }
 
+        /**
+         * @param description Description text of the eventual gauge.
+         * @return The gauge builder with added description.
+         */
         public Builder description(@Nullable String description) {
             this.description = description;
             return this;
         }
 
+        /**
+         * @param unit Base unit of the eventual gauge.
+         * @return The gauge builder with added base unit.
+         */
         public Builder baseUnit(@Nullable String unit) {
             this.baseUnit = unit;
             return this;
         }
 
+        /**
+         * Add the gauge to a single registry, or return an existing gauge in that registry. The returned
+         * gauge will be unique for each registry, but each registry is guaranteed to only create one gauge
+         * for the same combination of name and tags.
+         *
+         * @param registry A registry to add the gauge to, if it doesn't already exist.
+         * @return A new or existing gauge.
+         */
         public Gauge register(MeterRegistry registry) {
             return registry.gauge(new Meter.Id(name, tags, baseUnit, description, Type.Gauge), obj, f);
         }

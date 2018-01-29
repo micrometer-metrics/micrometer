@@ -19,6 +19,11 @@ import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * A precomputed percentile of a distribution.
+ *
+ * @author Trustin Heuiseung Lee
+ */
 public final class ValueAtPercentile {
 
     private final double percentile;

@@ -33,17 +33,21 @@ public interface Meter {
     }
 
     /**
-     * A unique combination of name and tags
+     * @return A unique combination of name and tags
      */
     Id getId();
 
     /**
-     * Get a set of measurements. Should always return
-     * the same number of measurements and in the same order, regardless of the
-     * level of activity or the lack thereof.
+     * Get a set of measurements. Should always return the same number of measurements and in
+     * the same order, regardless of the level of activity or the lack thereof.
+     *
+     * @return The set of measurements that represents the instantaneous value of this meter.
      */
     Iterable<Measurement> measure();
 
+    /**
+     * @return The type of this meter.
+     */
     default Type type() {
         return Type.Other;
     }
@@ -63,14 +67,19 @@ public interface Meter {
         Other
     }
 
+    /**
+     * A meter is uniquely identified by its combination of name and tags.
+     */
     class Id {
         private final String name;
         private final List<Tag> tags;
+        private Type type;
+
         @Nullable
         private final String description;
+
         @Nullable
         private String baseUnit;
-        private Type type;
 
         public Id(String name, Iterable<Tag> tags, @Nullable String baseUnit, @Nullable String description, Type type) {
             this.name = name;
@@ -86,56 +95,100 @@ public interface Meter {
             this.type = type;
         }
 
+        /**
+         * Generate a new id with an additional tag. If the key of the provided tag already exists, this overwrites
+         * the tag value.
+         *
+         * @param tag The tag to add.
+         * @return A new id with the provided tag. The source id remains unchanged.
+         */
         public Id withTag(Tag tag) {
             return new Id(name, Tags.concat(tags, Collections.singletonList(tag)), baseUnit, description, type);
         }
 
+        /**
+         * Generate a new id with an additional tag with a tag key of "statistic". If the "statistic" tag already exists,
+         * this overwrites the tag value.
+         *
+         * @param statistic The statistic tag to add.
+         * @return A new id with the provided tag. The source id remains unchanged.
+         */
         public Id withTag(Statistic statistic) {
             return withTag(Tag.of("statistic", Introspector.decapitalize(statistic.toString())));
         }
 
+        /**
+         * Generate a new id with a different base unit.
+         *
+         * @param newBaseUnit The base unit of the new id.
+         * @return A new id with the provided base unit.
+         */
         public Id withBaseUnit(@Nullable String newBaseUnit) {
             return new Id(name, tags, newBaseUnit, description, type);
         }
 
+        /**
+         * @return The name of this meter.
+         */
         public String getName() {
             return name;
         }
 
+        /**
+         * @return A set of dimensions that allows you to break down the name.
+         */
         public Iterable<Tag> getTags() {
             return tags;
         }
 
+        /**
+         * @param key The tag key to attempt to match.
+         * @return A matching tag, or {@code null} if no tag with the provided key exists on this id.
+         */
         @Nullable
-        public String getTag(String name) {
+        public String getTag(String key) {
             for (Tag tag : tags) {
-                if (tag.getKey().equals(name))
+                if (tag.getKey().equals(key))
                     return tag.getValue();
             }
             return null;
         }
 
+        /**
+         * @return The base unit of measurement for this meter.
+         */
         @Nullable
         public String getBaseUnit() {
             return baseUnit;
         }
 
+        /**
+         * @param namingConvention The naming convention used to normalize the id's name.
+         * @return A name that has been stylized to a particular monitoring system's expectations.
+         */
         public String getConventionName(NamingConvention namingConvention) {
             return namingConvention.name(name, type, baseUnit);
         }
 
-        @Nullable
-        public String getDescription() {
-            return description;
-        }
-
         /**
          * Tags that are sorted by key and formatted
+         *
+         * @param namingConvention The naming convention used to normalize the id's name.
+         * @return A list of tags that have been stylized to a particular monitoring system's expectations.
          */
         public List<Tag> getConventionTags(NamingConvention namingConvention) {
             return tags.stream()
                 .map(t -> Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())))
                 .collect(Collectors.toList());
+        }
+
+        /**
+         * @return A description of the meter's purpose. This description text is published to monitoring systems
+         * that support description text.
+         */
+        @Nullable
+        public String getDescription() {
+            return description;
         }
 
         @Override
@@ -159,21 +212,29 @@ public interface Meter {
             return Objects.hash(name, tags);
         }
 
+        /**
+         * The type is used by different registry implementations to structure the exposition
+         * of metrics to different backends.
+         *
+         * @return The meter's type.
+         */
         public Type getType() {
             return type;
         }
     }
 
     /**
-     * Builder for custom meter types
+     * Fluent builder for custom meters.
      */
     class Builder {
         private final String name;
         private final Type type;
         private final Iterable<Measurement> measurements;
         private final List<Tag> tags = new ArrayList<>();
+
         @Nullable
         private String description;
+
         @Nullable
         private String baseUnit;
 
@@ -185,26 +246,57 @@ public interface Meter {
 
         /**
          * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         * @return The custom meter builder with added tags.
          */
         public Builder tags(String... tags) {
             return tags(Tags.of(tags));
         }
 
+        /**
+         * @param tags Tags to add to the eventual meter.
+         * @return The custom meter builder with added tags.
+         */
         public Builder tags(Iterable<Tag> tags) {
             tags.forEach(this.tags::add);
             return this;
         }
 
+        /**
+         * @param key The tag key.
+         * @param value The tag value.
+         * @return The custom meter builder with a single added tag.
+         */
+        public Builder tag(String key, String value) {
+            tags.add(Tag.of(key, value));
+            return this;
+        }
+
+        /**
+         * @param description Description text of the eventual meter.
+         * @return The custom meter builder with added description.
+         */
         public Builder description(@Nullable String description) {
             this.description = description;
             return this;
         }
 
+        /**
+         * @param unit Base unit of the eventual meter.
+         * @return The custom meter builder with added base unit.
+         */
         public Builder baseUnit(@Nullable String unit) {
             this.baseUnit = unit;
             return this;
         }
 
+        /**
+         * Add the meter to a single registry, or return an existing meter in that registry. The returned
+         * meter will be unique for each registry, but each registry is guaranteed to only create one meter
+         * for the same combination of name and tags.
+         *
+         * @param registry A registry to add the custom meter to, if it doesn't already exist.
+         * @return A new or existing custom meter.
+         */
         public Meter register(MeterRegistry registry) {
             return registry.register(new Meter.Id(name, tags, baseUnit, description, type), type, measurements);
         }

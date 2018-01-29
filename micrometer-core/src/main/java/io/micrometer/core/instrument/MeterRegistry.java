@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.pause.ClockDriftPauseDetector;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.noop.*;
+import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.TimeUtils;
@@ -71,18 +72,63 @@ public abstract class MeterRegistry {
         this.clock = clock;
     }
 
+    /**
+     * Build a new gauge to be added to the registry. This is guaranteed to only be called if the gauge doesn't already exist.
+     *
+     * @param id            The id that uniquely identifies the gauge.
+     * @param obj           State object used to compute a value.
+     * @param valueFunction Function that is applied on the value for the number.
+     * @param <T>           The type of the state object from which the gauge value is extracted.
+     * @return A new gauge.
+     */
     protected abstract <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction);
 
+    /**
+     * Build a new counter to be added to the registry. This is guaranteed to only be called if the counter doesn't already exist.
+     *
+     * @param id The id that uniquely identifies the counter.
+     * @return A new counter.
+     */
     protected abstract Counter newCounter(Meter.Id id);
 
+    /**
+     * Build a new long task timer to be added to the registry. This is guaranteed to only be called if the long task timer doesn't already exist.
+     *
+     * @param id The id that uniquely identifies the long task timer.
+     * @return A new long task timer.
+     */
     protected abstract LongTaskTimer newLongTaskTimer(Meter.Id id);
 
+    /**
+     * Build a new timer to be added to the registry. This is guaranteed to only be called if the timer doesn't already exist.
+     *
+     * @param id The id that uniquely identifies the timer.
+     * @return A new timer.
+     */
     protected abstract Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector);
 
+    /**
+     * Build a new distribution summary to be added to the registry. This is guaranteed to only be called if the distribution summary doesn't already exist.
+     *
+     * @param id The id that uniquely identifies the distribution summary.
+     * @return A new distribution summary.
+     */
     protected abstract DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig);
 
+    /**
+     * Build a new custom meter to be added to the registry. This is guaranteed to only be called if the custom meter doesn't already exist.
+     *
+     * @param id The id that uniquely identifies the custom meter.
+     * @return A new custom meter.
+     */
     protected abstract Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements);
 
+    /**
+     * Build a new time gauge to be added to the registry. This is guaranteed to only be called if the time gauge doesn't already exist.
+     *
+     * @param id The id that uniquely identifies the time gauge.
+     * @return A new time gauge.
+     */
     protected <T> TimeGauge newTimeGauge(Meter.Id id, T obj, TimeUnit valueFunctionUnit, ToDoubleFunction<T> valueFunction) {
         Meter.Id withUnit = id.withBaseUnit(getBaseTimeUnitStr());
         Gauge gauge = newGauge(withUnit, obj, obj2 -> TimeUtils.convert(valueFunction.applyAsDouble(obj2), valueFunctionUnit, getBaseTimeUnit()));
@@ -105,8 +151,20 @@ public abstract class MeterRegistry {
         };
     }
 
+    /**
+     * Build a new function timer to be added to the registry. This is guaranteed to only be called if the function timer doesn't already exist.
+     *
+     * @param id The id that uniquely identifies the function timer.
+     * @return A new function timer.
+     */
     protected abstract <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits);
 
+    /**
+     * Build a new function counter to be added to the registry. This is guaranteed to only be called if the function counter doesn't already exist.
+     *
+     * @param id The id that uniquely identifies the function counter.
+     * @return A new function counter.
+     */
     protected abstract <T> FunctionCounter newFunctionCounter(Id id, T obj, ToDoubleFunction<T> valueFunction);
 
     protected List<Tag> getConventionTags(Meter.Id id) {
@@ -138,14 +196,36 @@ public abstract class MeterRegistry {
         return getBaseTimeUnit().toString().toLowerCase();
     }
 
+    /**
+     * Only used by {@link Counter#builder(String)}.
+     *
+     * @param id The identifier for this counter.
+     * @return A new or existing counter.
+     */
     Counter counter(Meter.Id id) {
         return registerMeterIfNecessary(Counter.class, id, this::newCounter, NoopCounter::new);
     }
 
+    /**
+     * Only used by {@link Gauge#builder(String, Object, ToDoubleFunction)}.
+     *
+     * @param id            The identifier for this gauge.
+     * @param obj           State object used to compute a value.
+     * @param valueFunction Function that is applied on the value for the number.
+     * @param <T>           The type of the state object from which the gauge value is extracted.
+     * @return A new or existing long task timer.
+     */
     <T> Gauge gauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
         return registerMeterIfNecessary(Gauge.class, id, id2 -> newGauge(id2, obj, valueFunction), NoopGauge::new);
     }
 
+    /**
+     * Only used by {@link Timer#builder(String)}.
+     *
+     * @param id              The identifier for this timer.
+     * @param histogramConfig Configuration that governs how distribution statistics are computed.
+     * @return A new or existing timer.
+     */
     Timer timer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetectorOverride) {
         return registerMeterIfNecessary(Timer.class, id, histogramConfig, (id2, filteredConfig) -> {
             Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
@@ -153,6 +233,13 @@ public abstract class MeterRegistry {
         }, NoopTimer::new);
     }
 
+    /**
+     * Only used by {@link DistributionSummary#builder(String)}.
+     *
+     * @param id              The identifier for this distribution summary.
+     * @param histogramConfig Configuration that governs how distribution statistics are computed.
+     * @return A new or existing distribution summary.
+     */
     DistributionSummary summary(Meter.Id id, HistogramConfig histogramConfig) {
         return registerMeterIfNecessary(DistributionSummary.class, id, histogramConfig, (id2, filteredConfig) ->
             newDistributionSummary(id2, filteredConfig.merge(defaultHistogramConfig())), NoopDistributionSummary::new);
@@ -177,24 +264,50 @@ public abstract class MeterRegistry {
         return Collections.unmodifiableList(new ArrayList<>(meterMap.values()));
     }
 
+    /**
+     * Iterate over each meter in the registry.
+     *
+     * @param consumer Consumer of each meter during iteration.
+     */
     public void forEachMeter(Consumer<? super Meter> consumer) {
         meterMap.values().forEach(consumer);
     }
 
+    /**
+     * @return A configuration object used to change the behavior of this registry.
+     */
     public Config config() {
         return config;
     }
 
+    /**
+     * Initiate a search beginning with a metric name. If constraints added in the search are not satisfied, the search
+     * will return {@code null}.
+     *
+     * @param name The meter name to locate.
+     * @return A new search.
+     */
     public Search find(String name) {
         return new Search(this, name);
     }
 
+    /**
+     * Initiate a search beginning with a metric name. All constraints added in the search must be satisfied or
+     * an {@link MeterNotFoundException} is thrown.
+     *
+     * @param name The meter name to locate.
+     * @return A new search.
+     */
     public RequiredSearch get(String name) {
         return new RequiredSearch(this, name);
     }
 
     /**
      * Tracks a monotonically increasing value.
+     *
+     * @param name The base metric name
+     * @param tags Sequence of dimensions for breaking down the name.
+     * @return A new or existing counter.
      */
     public Counter counter(String name, Iterable<Tag> tags) {
         return Counter.builder(name).tags(tags).register(this);
@@ -205,23 +318,29 @@ public abstract class MeterRegistry {
      *
      * @param name The base metric name
      * @param tags MUST be an even number of arguments representing key/value pairs of tags.
+     * @return A new or existing counter.
      */
     public Counter counter(String name, String... tags) {
         return counter(name, Tags.of(tags));
     }
 
     /**
-     * Measures the sample distribution of events.
+     * Measures the distribution of samples.
+     *
+     * @param name The base metric name
+     * @param tags Sequence of dimensions for breaking down the name.
+     * @return A new or existing distribution summary.
      */
     public DistributionSummary summary(String name, Iterable<Tag> tags) {
         return DistributionSummary.builder(name).tags(tags).register(this);
     }
 
     /**
-     * Measures the sample distribution of events.
+     * Measures the distribution of samples.
      *
      * @param name The base metric name
      * @param tags MUST be an even number of arguments representing key/value pairs of tags.
+     * @return A new or existing distribution summary.
      */
     public DistributionSummary summary(String name, String... tags) {
         return summary(name, Tags.of(tags));
@@ -229,6 +348,10 @@ public abstract class MeterRegistry {
 
     /**
      * Measures the time taken for short tasks and the count of these tasks.
+     *
+     * @param name The base metric name
+     * @param tags Sequence of dimensions for breaking down the name.
+     * @return A new or existing timer.
      */
     public Timer timer(String name, Iterable<Tag> tags) {
         return Timer.builder(name).tags(tags).register(this);
@@ -239,6 +362,7 @@ public abstract class MeterRegistry {
      *
      * @param name The base metric name
      * @param tags MUST be an even number of arguments representing key/value pairs of tags.
+     * @return A new or existing timer.
      */
     public Timer timer(String name, String... tags) {
         return timer(name, Tags.of(tags));
@@ -246,6 +370,8 @@ public abstract class MeterRegistry {
 
     /**
      * Access to less frequently used meter types and patterns.
+     *
+     * @return Access to additional meter types and patterns.
      */
     public More more() {
         return more;
@@ -264,8 +390,9 @@ public abstract class MeterRegistry {
      *
      * @param name          Name of the gauge being registered.
      * @param tags          Sequence of dimensions for breaking down the name.
-     * @param obj           Object used to compute a value.
-     * @param valueFunction Function that is applied on the value for the number.
+     * @param obj           State object used to compute a value.
+     * @param valueFunction Function that produces an instantaneous gauge value from the state object.
+     * @param <T>           The type of the state object from which the gauge value is extracted.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
@@ -281,6 +408,7 @@ public abstract class MeterRegistry {
      * @param name   Name of the gauge being registered.
      * @param tags   Sequence of dimensions for breaking down the name.
      * @param number Thread-safe implementation of {@link Number} used to access the value.
+     * @param <T>    The type of the number from which the gauge value is extracted.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
@@ -294,6 +422,7 @@ public abstract class MeterRegistry {
      *
      * @param name   Name of the gauge being registered.
      * @param number Thread-safe implementation of {@link Number} used to access the value.
+     * @param <T>    The type of the state object from which the gauge value is extracted.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
@@ -306,8 +435,9 @@ public abstract class MeterRegistry {
      * Register a gauge that reports the value of the object.
      *
      * @param name          Name of the gauge being registered.
-     * @param obj           Object used to compute a value.
-     * @param valueFunction Function that is applied on the value for the number.
+     * @param obj           State object used to compute a value.
+     * @param valueFunction Function that produces an instantaneous gauge value from the state object.
+     * @param <T>           The type of the state object from which the gauge value is extracted.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
@@ -326,6 +456,7 @@ public abstract class MeterRegistry {
      * @param name       Name of the gauge being registered.
      * @param tags       Sequence of dimensions for breaking down the name.
      * @param collection Thread-safe implementation of {@link Collection} used to access the value.
+     * @param <T>        The type of the state object from which the gauge value is extracted.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
@@ -344,6 +475,7 @@ public abstract class MeterRegistry {
      * @param name Name of the gauge being registered.
      * @param tags Sequence of dimensions for breaking down the name.
      * @param map  Thread-safe implementation of {@link Map} used to access the value.
+     * @param <T>  The type of the state object from which the gauge value is extracted.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
@@ -438,6 +570,9 @@ public abstract class MeterRegistry {
     public class Config {
         /**
          * Append a list of common tags to apply to all metrics reported to the monitoring system.
+         *
+         * @param tags Tags to add to every metric.
+         * @return This configuration instance.
          */
         public Config commonTags(Iterable<Tag> tags) {
             meterFilter(MeterFilter.commonTags(tags));
@@ -447,17 +582,32 @@ public abstract class MeterRegistry {
         /**
          * Append a list of common tags to apply to all metrics reported to the monitoring system.
          * Must be an even number of arguments representing key/value pairs of tags.
+         *
+         * @param tags MUST be an even number of arguments representing key/value pairs of tags.
+         * @return This configuration instance.
          */
         public Config commonTags(String... tags) {
             return commonTags(Tags.of(tags));
         }
 
+        /**
+         * Add a meter filter to the registry. Filters are applied in the order in which they are added.
+         *
+         * @param filter The filter to add to the registry.
+         * @return This configuration instance.
+         */
         @Incubating(since = "1.0.0-rc.3")
         public Config meterFilter(MeterFilter filter) {
             filters.add(filter);
             return this;
         }
 
+        /**
+         * Register an event listener for each meter added to the registry.
+         *
+         * @param meter The meter that has just been added
+         * @return This configuration instance.
+         */
         @Incubating(since = "1.0.0-rc.6")
         public Config onMeterAdded(Consumer<Meter> meter) {
             meterAddedListeners.add(meter);
@@ -466,6 +616,9 @@ public abstract class MeterRegistry {
 
         /**
          * Use the provided naming convention, overriding the default for your monitoring system.
+         *
+         * @param convention The naming convention to use.
+         * @return This configuration instance.
          */
         public Config namingConvention(NamingConvention convention) {
             namingConvention = convention;
@@ -487,21 +640,39 @@ public abstract class MeterRegistry {
             return clock;
         }
 
+        /**
+         * Sets the default pause detector to use for all timers in this registry.
+         *
+         * @param detector The pause detector to use.
+         * @return This configuration instance.
+         * @see io.micrometer.core.instrument.histogram.pause.NoPauseDetector
+         * @see io.micrometer.core.instrument.histogram.pause.ClockDriftPauseDetector
+         */
         @Incubating(since = "1.0.0-rc.6")
         public Config pauseDetector(PauseDetector detector) {
             pauseDetector = detector;
             return this;
         }
 
+        /**
+         * @return The pause detector that is currently in effect.
+         */
         @Incubating(since = "1.0.0-rc.6")
         public PauseDetector pauseDetector() {
             return pauseDetector;
         }
     }
 
+    /**
+     * Additional, less commonly used meter types.
+     */
     public class More {
         /**
          * Measures the time taken for long tasks.
+         *
+         * @param name Name of the gauge being registered.
+         * @param tags MUST be an even number of arguments representing key/value pairs of tags.
+         * @return A new or existing long task timer.
          */
         public LongTaskTimer longTaskTimer(String name, String... tags) {
             return longTaskTimer(name, Tags.of(tags));
@@ -509,13 +680,20 @@ public abstract class MeterRegistry {
 
         /**
          * Measures the time taken for long tasks.
+         *
+         * @param name Name of the gauge being registered.
+         * @param tags Sequence of dimensions for breaking down the name.
+         * @return A new or existing long task timer.
          */
         public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
             return LongTaskTimer.builder(name).tags(tags).register(MeterRegistry.this);
         }
 
         /**
-         * Only used by {@link LongTaskTimer#builder(String)}
+         * Only used by {@link LongTaskTimer#builder(String)}.
+         *
+         * @param id The identifier for this long task timer.
+         * @return A new or existing long task timer.
          */
         LongTaskTimer longTaskTimer(Meter.Id id) {
             return registerMeterIfNecessary(LongTaskTimer.class, id, id2 -> {
@@ -527,6 +705,13 @@ public abstract class MeterRegistry {
         /**
          * Tracks a monotonically increasing value, automatically incrementing the counter whenever
          * the value is observed.
+         *
+         * @param name          Name of the gauge being registered.
+         * @param tags          Sequence of dimensions for breaking down the name.
+         * @param obj           State object used to compute a value.
+         * @param countFunction Function that produces a monotonically increasing counter value from the state object.
+         * @param <T>           The type of the state object from which the counter value is extracted.
+         * @return A new or existing function counter.
          */
         public <T> FunctionCounter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> countFunction) {
             return FunctionCounter.builder(name, obj, countFunction).tags(tags).register(MeterRegistry.this);
@@ -534,11 +719,24 @@ public abstract class MeterRegistry {
 
         /**
          * Tracks a number, maintaining a weak reference on it.
+         *
+         * @param name Name of the gauge being registered.
+         * @param tags Sequence of dimensions for breaking down the name.
+         * @return A new or existing function counter.
          */
         public <T extends Number> FunctionCounter counter(String name, Iterable<Tag> tags, T number) {
             return FunctionCounter.builder(name, number, Number::doubleValue).tags(tags).register(MeterRegistry.this);
         }
 
+        /**
+         * Tracks a number, maintaining a weak reference on it.
+         *
+         * @param id            The identifier for this function counter.
+         * @param obj           State object used to compute a value.
+         * @param countFunction Function that produces a monotonically increasing counter value from the state object.
+         * @param <T>           The type of the state object from which the counter value is extracted.
+         * @return A new or existing function counter.
+         */
         <T> FunctionCounter counter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
             return registerMeterIfNecessary(FunctionCounter.class, id, id2 -> newFunctionCounter(id2, obj, countFunction),
                 NoopFunctionCounter::new);
@@ -546,33 +744,67 @@ public abstract class MeterRegistry {
 
         /**
          * A timer that tracks monotonically increasing functions for count and totalTime.
+         *
+         * @param name                  Name of the gauge being registered.
+         * @param tags                  Sequence of dimensions for breaking down the name.
+         * @param obj                   State object used to compute a value.
+         * @param countFunction         Function that produces a monotonically increasing counter value from the state object.
+         * @param totalTimeFunction     Function that produces a monotonically increasing total time value from the state object.
+         * @param totalTimeFunctionUnit The base unit of time produced by the total time function.
+         * @return A new or existing function timer.
          */
         public <T> FunctionTimer timer(String name, Iterable<Tag> tags, T obj,
                                        ToLongFunction<T> countFunction,
                                        ToDoubleFunction<T> totalTimeFunction,
-                                       TimeUnit totalTimeFunctionUnits) {
-            return FunctionTimer.builder(name, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits)
+                                       TimeUnit totalTimeFunctionUnit) {
+            return FunctionTimer.builder(name, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit)
                 .tags(tags).register(MeterRegistry.this);
         }
 
+        /**
+         * A timer that tracks monotonically increasing functions for count and totalTime.
+         *
+         * @param id                    The identifier for this function timer.
+         * @param obj                   State object used to compute a value.
+         * @param countFunction         Function that produces a monotonically increasing counter value from the state object.
+         * @param totalTimeFunction     Function that produces a monotonically increasing total time value from the state object.
+         * @param totalTimeFunctionUnit The base unit of time produced by the total time function.
+         * @return A new or existing function timer.
+         */
         <T> FunctionTimer timer(Meter.Id id, T obj,
                                 ToLongFunction<T> countFunction,
                                 ToDoubleFunction<T> totalTimeFunction,
-                                TimeUnit totalTimeFunctionUnits) {
+                                TimeUnit totalTimeFunctionUnit) {
             return registerMeterIfNecessary(FunctionTimer.class, id, id2 -> {
                 Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
-                return newFunctionTimer(withUnit, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
+                return newFunctionTimer(withUnit, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit);
             }, NoopFunctionTimer::new);
         }
 
         /**
          * A gauge that tracks a time value, to be scaled to the monitoring system's base time unit.
+         *
+         * @param name             Name of the gauge being registered.
+         * @param tags             Sequence of dimensions for breaking down the name.
+         * @param obj              State object used to compute a value.
+         * @param timeFunctionUnit The base unit of time produced by the total time function.
+         * @param timeFunction     Function that produces a time value from the state object. This value may increase and decrease over time.
+         * @return A new or existing time gauge.
          */
         public <T> TimeGauge timeGauge(String name, Iterable<Tag> tags, T obj,
                                        TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
             return TimeGauge.builder(name, obj, timeFunctionUnit, timeFunction).tags(tags).register(MeterRegistry.this);
         }
 
+        /**
+         * A gauge that tracks a time value, to be scaled to the monitoring system's base time unit.
+         *
+         * @param id               The identifier for this time gauge.
+         * @param obj              State object used to compute a value.
+         * @param timeFunctionUnit The base unit of time produced by the total time function.
+         * @param timeFunction     Function that produces a time value from the state object. This value may increase and decrease over time.
+         * @return A new or existing time gauge.
+         */
         <T> TimeGauge timeGauge(Meter.Id id, T obj, TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
             return registerMeterIfNecessary(TimeGauge.class, id, id2 -> newTimeGauge(id2, obj, timeFunctionUnit, timeFunction), NoopTimeGauge::new);
         }

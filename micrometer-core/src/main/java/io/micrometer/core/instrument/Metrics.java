@@ -25,22 +25,41 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
 /**
+ * Generator of meters bound to a static global composite registry. For use especially
+ * in places where dependency injection of {@link MeterRegistry} is not possible for an instrumented
+ * type.
+ *
  * @author Jon Schneider
  */
 public class Metrics {
     public static final CompositeMeterRegistry globalRegistry = new CompositeMeterRegistry();
     private static final More more = new More();
 
+    /**
+     * Add a registry to the global composite registry.
+     *
+     * @param registry Registry to add.
+     */
     public static void addRegistry(MeterRegistry registry) {
         globalRegistry.add(registry);
     }
 
+    /**
+     * Remove a registry from the global composite registry. Removing a registry does not remove any meters
+     * that were added to it by previous participation in the global composite.
+     *
+     * @param registry Registry to remove.
+     */
     public static void removeRegistry(MeterRegistry registry) {
         globalRegistry.remove(registry);
     }
 
     /**
      * Tracks a monotonically increasing value.
+     *
+     * @param name The base metric name
+     * @param tags Sequence of dimensions for breaking down the name.
+     * @return A new or existing counter.
      */
     public static Counter counter(String name, Iterable<Tag> tags) {
         return globalRegistry.counter(name, tags);
@@ -51,40 +70,51 @@ public class Metrics {
      *
      * @param name The base metric name
      * @param tags MUST be an even number of arguments representing key/value pairs of tags.
+     * @return A new or existing counter.
      */
     public static Counter counter(String name, String... tags) {
         return globalRegistry.counter(name, tags);
     }
 
     /**
-     * Measures the sample distribution of events.
+     * Measures the distribution of samples.
+     *
+     * @param name The base metric name
+     * @param tags Sequence of dimensions for breaking down the name.
+     * @return A new or existing distribution summary.
      */
     public static DistributionSummary summary(String name, Iterable<Tag> tags) {
         return globalRegistry.summary(name, tags);
     }
 
     /**
-     * Measures the sample distribution of events.
+     * Measures the distribution of samples.
      *
      * @param name The base metric name
      * @param tags MUST be an even number of arguments representing key/value pairs of tags.
+     * @return A new or existing distribution summary.
      */
     public static DistributionSummary summary(String name, String... tags) {
         return globalRegistry.summary(name, tags);
     }
 
     /**
-     * Measures the time taken for short tasks.
+     * Measures the time taken for short tasks and the count of these tasks.
+     *
+     * @param name The base metric name
+     * @param tags Sequence of dimensions for breaking down the name.
+     * @return A new or existing timer.
      */
     public static Timer timer(String name, Iterable<Tag> tags) {
         return globalRegistry.timer(name, tags);
     }
 
     /**
-     * Measures the time taken for short tasks.
+     * Measures the time taken for short tasks and the count of these tasks.
      *
      * @param name The base metric name
      * @param tags MUST be an even number of arguments representing key/value pairs of tags.
+     * @return A new or existing timer.
      */
     public static Timer timer(String name, String... tags) {
         return globalRegistry.timer(name, tags);
@@ -92,6 +122,8 @@ public class Metrics {
 
     /**
      * Access to less frequently used meter types and patterns.
+     *
+     * @return Access to additional meter types and patterns.
      */
     public static More more() {
         return more;
@@ -108,10 +140,10 @@ public class Metrics {
      * of active threads. For other behaviors, manage it on the user side and avoid multiple
      * registrations.
      *
-     * @param name Name of the gauge being registered.
-     * @param tags Sequence of dimensions for breaking down the name.
-     * @param obj  Object used to compute a value.
-     * @param valueFunction    Function that is applied on the value for the number.
+     * @param name          Name of the gauge being registered.
+     * @param tags          Sequence of dimensions for breaking down the name.
+     * @param obj           Object used to compute a value.
+     * @param valueFunction Function that is applied on the value for the number.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
@@ -150,9 +182,9 @@ public class Metrics {
     /**
      * Register a gauge that reports the value of the object.
      *
-     * @param name Name of the gauge being registered.
-     * @param obj  Object used to compute a value.
-     * @param valueFunction    Function that is applied on the value for the number.
+     * @param name          Name of the gauge being registered.
+     * @param obj           Object used to compute a value.
+     * @param valueFunction Function that is applied on the value for the number.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
@@ -197,9 +229,16 @@ public class Metrics {
         return globalRegistry.gaugeMapSize(name, tags, map);
     }
 
+    /**
+     * Additional, less commonly used meter types.
+     */
     static class More {
         /**
          * Measures the time taken for long tasks.
+         *
+         * @param name Name of the gauge being registered.
+         * @param tags MUST be an even number of arguments representing key/value pairs of tags.
+         * @return A new or existing long task timer.
          */
         public LongTaskTimer longTaskTimer(String name, String... tags) {
             return globalRegistry.more().longTaskTimer(name, tags);
@@ -207,6 +246,10 @@ public class Metrics {
 
         /**
          * Measures the time taken for long tasks.
+         *
+         * @param name Name of the gauge being registered.
+         * @param tags Sequence of dimensions for breaking down the name.
+         * @return A new or existing long task timer.
          */
         public LongTaskTimer longTaskTimer(String name, Iterable<Tag> tags) {
             return globalRegistry.more().longTaskTimer(name, tags);
@@ -215,6 +258,13 @@ public class Metrics {
         /**
          * Tracks a monotonically increasing value, automatically incrementing the counter whenever
          * the value is observed.
+         *
+         * @param name          Name of the gauge being registered.
+         * @param tags          Sequence of dimensions for breaking down the name.
+         * @param obj           State object used to compute a value.
+         * @param countFunction Function that produces a monotonically increasing counter value from the state object.
+         * @param <T>           The type of the state object from which the counter value is extracted.
+         * @return A new or existing function counter.
          */
         public <T> FunctionCounter counter(String name, Iterable<Tag> tags, T obj, ToDoubleFunction<T> countFunction) {
             return globalRegistry.more().counter(name, tags, obj, countFunction);
@@ -222,6 +272,10 @@ public class Metrics {
 
         /**
          * Tracks a number, maintaining a weak reference on it.
+         *
+         * @param name Name of the gauge being registered.
+         * @param tags Sequence of dimensions for breaking down the name.
+         * @return A new or existing function counter.
          */
         public <T extends Number> FunctionCounter counter(String name, Iterable<Tag> tags, T number) {
             return globalRegistry.more().counter(name, tags, number);
@@ -229,6 +283,13 @@ public class Metrics {
 
         /**
          * A gauge that tracks a time value, to be scaled to the monitoring system's base time unit.
+         *
+         * @param name             Name of the gauge being registered.
+         * @param tags             Sequence of dimensions for breaking down the name.
+         * @param obj              State object used to compute a value.
+         * @param timeFunctionUnit The base unit of time produced by the total time function.
+         * @param timeFunction     Function that produces a time value from the state object. This value may increase and decrease over time.
+         * @return A new or existing time gauge.
          */
         public <T> TimeGauge timeGauge(String name, Iterable<Tag> tags, T obj, TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
             return globalRegistry.more().timeGauge(name, tags, obj, timeFunctionUnit, timeFunction);
@@ -236,12 +297,20 @@ public class Metrics {
 
         /**
          * A timer that tracks monotonically increasing functions for count and totalTime.
+         *
+         * @param name                  Name of the gauge being registered.
+         * @param tags                  Sequence of dimensions for breaking down the name.
+         * @param obj                   State object used to compute a value.
+         * @param countFunction         Function that produces a monotonically increasing counter value from the state object.
+         * @param totalTimeFunction     Function that produces a monotonically increasing total time value from the state object.
+         * @param totalTimeFunctionUnit The base unit of time produced by the total time function.
+         * @return A new or existing function timer.
          */
         public <T> FunctionTimer timer(String name, Iterable<Tag> tags, T obj,
                                        ToLongFunction<T> countFunction,
                                        ToDoubleFunction<T> totalTimeFunction,
-                                       TimeUnit totalTimeFunctionUnits) {
-            return globalRegistry.more().timer(name, tags, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
+                                       TimeUnit totalTimeFunctionUnit) {
+            return globalRegistry.more().timer(name, tags, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit);
         }
     }
 }

@@ -17,6 +17,12 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.step.StepLong;
 
+/**
+ * Used to measure absolute and relative time.
+ *
+ * @see MockClock for a clock that can be manually advanced for use in tests.
+ * @author Jon Schneider
+ */
 public interface Clock {
     Clock SYSTEM = new Clock() {
         @Override

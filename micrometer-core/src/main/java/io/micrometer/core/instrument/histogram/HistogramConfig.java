@@ -96,38 +96,38 @@ public class HistogramConfig implements Mergeable<HistogramConfig> {
         return buckets;
     }
 
-    public @Nullable
-    Boolean isPercentileHistogram() {
+    @Nullable
+    public Boolean isPercentileHistogram() {
         return percentileHistogram;
     }
 
-    public @Nullable
-    double[] getPercentiles() {
+    @Nullable
+    public double[] getPercentiles() {
         return percentiles;
     }
 
-    public @Nullable
-    Long getMinimumExpectedValue() {
+    @Nullable
+    public Long getMinimumExpectedValue() {
         return minimumExpectedValue;
     }
 
-    public @Nullable
-    Long getMaximumExpectedValue() {
+    @Nullable
+    public Long getMaximumExpectedValue() {
         return maximumExpectedValue;
     }
 
-    public @Nullable
-    Duration getHistogramExpiry() {
+    @Nullable
+    public Duration getHistogramExpiry() {
         return histogramExpiry;
     }
 
-    public @Nullable
-    Integer getHistogramBufferLength() {
+    @Nullable
+    public Integer getHistogramBufferLength() {
         return histogramBufferLength;
     }
 
-    public @Nullable
-    long[] getSlaBoundaries() {
+    @Nullable
+    public long[] getSlaBoundaries() {
         return sla;
     }
 

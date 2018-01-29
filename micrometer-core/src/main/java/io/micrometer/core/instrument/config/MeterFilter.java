@@ -44,6 +44,12 @@ import static java.util.stream.StreamSupport.stream;
  */
 @Incubating(since = "1.0.0-rc.3")
 public interface MeterFilter {
+    /**
+     * Add common tags that are applied to every meter created afterward.
+     *
+     * @param tags Common tags.
+     * @return A common tag filter.
+     */
     static MeterFilter commonTags(Iterable<Tag> tags) {
         return new MeterFilter() {
             @Override
@@ -56,11 +62,19 @@ public interface MeterFilter {
         };
     }
 
-    static MeterFilter renameTag(String metricPrefix, String fromTagKey, String toTagKey) {
+    /**
+     * Rename a tag key for every metric beginning with a given prefix.
+     *
+     * @param meterNamePrefix Apply filter to metrics that begin with this name.
+     * @param fromTagKey      Rename tags matching this key.
+     * @param toTagKey        Rename to this key.
+     * @return A tag-renaming filter.
+     */
+    static MeterFilter renameTag(String meterNamePrefix, String fromTagKey, String toTagKey) {
         return new MeterFilter() {
             @Override
             public Meter.Id map(Meter.Id id) {
-                if (!id.getName().startsWith(metricPrefix))
+                if (!id.getName().startsWith(meterNamePrefix))
                     return id;
 
                 List<Tag> tags = new ArrayList<>();
@@ -75,6 +89,12 @@ public interface MeterFilter {
         };
     }
 
+    /**
+     * Suppress tags with a given tag key.
+     *
+     * @param tagKeys Keys of tags that should be suppressed.
+     * @return A tag-suppressing filter.
+     */
     static MeterFilter ignoreTags(String... tagKeys) {
         return new MeterFilter() {
             @Override
@@ -94,6 +114,9 @@ public interface MeterFilter {
     }
 
     /**
+     * Replace tag values according to the provided mapping for all matching tag keys. This can be used
+     * to reduce the total cardinality of a tag by mapping some portion of tag values to something else.
+     *
      * @param tagKey      The tag key for which replacements should be made
      * @param replacement The value to replace with
      * @param exceptions  All a matching tag with this value to retain its original value
@@ -120,6 +143,12 @@ public interface MeterFilter {
         };
     }
 
+    /**
+     * When the given predicate is {@code true}, the meter should be present in published metrics.
+     *
+     * @param iff When a meter id matches, guarantee its inclusion in published metrics.
+     * @return A filter that guarantees the inclusion of matching meters.
+     */
     static MeterFilter accept(Predicate<Meter.Id> iff) {
         return new MeterFilter() {
             @Override
@@ -129,6 +158,12 @@ public interface MeterFilter {
         };
     }
 
+    /**
+     * When the given predicate is {@code true}, the meter should NOT be present in published metrics.
+     *
+     * @param iff When a meter id matches, guarantee its exclusion in published metrics.
+     * @return A filter that guarantees the exclusion of matching meters.
+     */
     static MeterFilter deny(Predicate<Meter.Id> iff) {
         return new MeterFilter() {
             @Override
@@ -138,10 +173,22 @@ public interface MeterFilter {
         };
     }
 
+    /**
+     * Include a meter in published metrics. Can be used as a subordinate action on another filter like
+     * {@link #maximumAllowableTags}.
+     *
+     * @return A filter that guarantees the inclusion of all meters.
+     */
     static MeterFilter accept() {
         return MeterFilter.accept(id -> true);
     }
 
+    /**
+     * Reject a meter in published metrics. Can be used as a subordinate action on another filter like
+     * {@link #maximumAllowableTags}.
+     *
+     * @return A filter that guarantees the exclusion of all meters.
+     */
     static MeterFilter deny() {
         return MeterFilter.deny(id -> true);
     }
@@ -172,22 +219,22 @@ public interface MeterFilter {
     }
 
     /**
-     * Places an upper bound on
+     * Places an upper bound on the number of tags produced by matching metrics.
      *
-     * @param meterName
-     * @param tagKey
-     * @param maximumTagValues
-     * @param onMaxReached
-     * @return
+     * @param meterNamePrefix  Apply filter to metrics that begin with this name.
+     * @param tagKey           The tag to place an upper bound on.
+     * @param maximumTagValues The total number of tag values that are allowable.
+     * @param onMaxReached     After the maximum number of tag values have been seen, apply this filter.
+     * @return A meter filter that limits the number of tags produced by matching metrics.
      */
-    static MeterFilter maximumAllowableTags(String meterName, String tagKey, int maximumTagValues,
+    static MeterFilter maximumAllowableTags(String meterNamePrefix, String tagKey, int maximumTagValues,
                                             MeterFilter onMaxReached) {
         return new MeterFilter() {
             private final Set<String> observedTagValues = new ConcurrentSkipListSet<>();
 
             @Override
             public MeterFilterReply accept(Meter.Id id) {
-                if (id.getName().equals(meterName)) {
+                if (id.getName().equals(meterNamePrefix)) {
                     String value = id.getTag(tagKey);
                     if (value != null)
                         observedTagValues.add(value);
@@ -209,6 +256,12 @@ public interface MeterFilter {
         };
     }
 
+    /**
+     * Meters that start with the provided name should NOT be present in published metrics.
+     *
+     * @param prefix When a meter name starts with the prefix, guarantee its exclusion in published metrics.
+     * @return A filter that guarantees the exclusion of matching meters.
+     */
     static MeterFilter denyNameStartsWith(String prefix) {
         return deny(id -> id.getName().startsWith(prefix));
     }

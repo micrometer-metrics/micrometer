@@ -23,16 +23,23 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * An implementation of a decaying maximum for a distribution based on a configurable ring buffer.
+ *
+ * @author Jon Schneider
+ */
 @Incubating(since = "1.0.0-rc.6")
 public class TimeDecayingMax {
     @SuppressWarnings("rawtypes")
     private static final AtomicIntegerFieldUpdater<TimeDecayingMax> rotatingUpdater =
         AtomicIntegerFieldUpdater.newUpdater(TimeDecayingMax.class, "rotating");
+
     private final Clock clock;
     private final long durationBetweenRotatesMillis;
     private AtomicLong[] ringBuffer;
     private int currentBucket;
     private volatile long lastRotateTimestampMillis;
+
     @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private volatile int rotating = 0; // 0 - not rotating, 1 - rotating
 

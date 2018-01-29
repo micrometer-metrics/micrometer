@@ -58,11 +58,16 @@ public interface Counter extends Meter {
         return Type.Counter;
     }
 
+    /**
+     * Fluent builder for counters.
+     */
     class Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
+
         @Nullable
         private String description;
+
         @Nullable
         private String baseUnit;
 
@@ -77,26 +82,51 @@ public interface Counter extends Meter {
             return tags(Tags.of(tags));
         }
 
+        /**
+         * @param tags Tags to add to the eventual counter.
+         * @return The counter builder with added tags.
+         */
         public Builder tags(Iterable<Tag> tags) {
             tags.forEach(this.tags::add);
             return this;
         }
 
+        /**
+         * @param key   The tag key.
+         * @param value The tag value.
+         * @return The counter builder with a single added tag.
+         */
         public Builder tag(String key, String value) {
             tags.add(Tag.of(key, value));
             return this;
         }
 
+        /**
+         * @param description Description text of the eventual counter.
+         * @return The counter builder with added description.
+         */
         public Builder description(@Nullable String description) {
             this.description = description;
             return this;
         }
 
+        /**
+         * @param unit Base unit of the eventual counter.
+         * @return The counter builder with added base unit.
+         */
         public Builder baseUnit(@Nullable String unit) {
             this.baseUnit = unit;
             return this;
         }
 
+        /**
+         * Add the counter to a single registry, or return an existing counter in that registry. The returned
+         * counter will be unique for each registry, but each registry is guaranteed to only create one counter
+         * for the same combination of name and tags.
+         *
+         * @param registry A registry to add the counter to, if it doesn't already exist.
+         * @return A new or existing counter.
+         */
         public Counter register(MeterRegistry registry) {
             return registry.counter(new Meter.Id(name, tags, baseUnit, description, Type.Counter));
         }

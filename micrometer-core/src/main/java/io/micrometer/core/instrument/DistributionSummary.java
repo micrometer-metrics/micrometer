@@ -26,6 +26,8 @@ import java.util.List;
 /**
  * Track the sample distribution of events. An example would be the response sizes for requests
  * hitting and http server.
+ *
+ * @author Jon Schneider
  */
 public interface DistributionSummary extends Meter {
 
@@ -77,14 +79,19 @@ public interface DistributionSummary extends Meter {
         );
     }
 
+    /**
+     * Fluent builder for distribution summaries.
+     */
     class Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
+        private HistogramConfig.Builder histogramConfigBuilder = HistogramConfig.builder();
+
         @Nullable
         private String description;
+
         @Nullable
         private String baseUnit;
-        private HistogramConfig.Builder histogramConfigBuilder = HistogramConfig.builder();
 
         private Builder(String name) {
             this.name = name;
@@ -97,21 +104,38 @@ public interface DistributionSummary extends Meter {
             return tags(Tags.of(tags));
         }
 
+        /**
+         * @param tags Tags to add to the eventual distribution summary.
+         * @return The distribution summary builder with added tags.
+         */
         public Builder tags(Iterable<Tag> tags) {
             tags.forEach(this.tags::add);
             return this;
         }
 
+        /**
+         * @param key   The tag key.
+         * @param value The tag value.
+         * @return The distribution summary builder with a single added tag.
+         */
         public Builder tag(String key, String value) {
             tags.add(Tag.of(key, value));
             return this;
         }
 
+        /**
+         * @param description Description text of the eventual distribution summary.
+         * @return The distribution summary builder with added description.
+         */
         public Builder description(@Nullable String description) {
             this.description = description;
             return this;
         }
 
+        /**
+         * @param unit Base unit of the eventual distribution summary.
+         * @return The distribution summary builder with added base unit.
+         */
         public Builder baseUnit(@Nullable String unit) {
             this.baseUnit = unit;
             return this;
@@ -134,6 +158,8 @@ public interface DistributionSummary extends Meter {
          * Adds histogram buckets usable for generating aggregable percentile approximations in monitoring
          * systems that have query facilities to do so (e.g. Prometheus' {@code histogram_quantile},
          * Atlas' {@code :percentiles}).
+         *
+         * @return This builder.
          */
         public Builder publishPercentileHistogram() {
             return publishPercentileHistogram(true);
@@ -143,6 +169,9 @@ public interface DistributionSummary extends Meter {
          * Adds histogram buckets usable for generating aggregable percentile approximations in monitoring
          * systems that have query facilities to do so (e.g. Prometheus' {@code histogram_quantile},
          * Atlas' {@code :percentiles}).
+         *
+         * @param enabled Value determining whether histgoram
+         * @return This builder.
          */
         public Builder publishPercentileHistogram(@Nullable Boolean enabled) {
             this.histogramConfigBuilder.percentilesHistogram(enabled);
@@ -155,32 +184,73 @@ public interface DistributionSummary extends Meter {
          * other buckets used to generate aggregable percentile approximations.
          *
          * @param sla Publish SLA boundaries in the set of histogram buckets shipped to the monitoring system.
+         * @return This builder.
          */
         public Builder sla(@Nullable long... sla) {
             this.histogramConfigBuilder.sla(sla);
             return this;
         }
 
+        /**
+         * Sets the minimum value that this distribution summary is expected to observe. Sets a lower bound
+         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+         *
+         * @param min The minimum value that this distribution summary is expected to observe.
+         * @return This builder.
+         */
         public Builder minimumExpectedValue(@Nullable Long min) {
             this.histogramConfigBuilder.minimumExpectedValue(min);
             return this;
         }
 
+        /**
+         * Sets the maximum value that this distribution summary is expected to observe. Sets an upper bound
+         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+         *
+         * @param max The maximum value that this distribution summary is expected to observe.
+         * @return This builder.
+         */
         public Builder maximumExpectedValue(@Nullable Long max) {
             this.histogramConfigBuilder.maximumExpectedValue(max);
             return this;
         }
 
+        /**
+         * Statistics emanating from a distribution summary like max, percentiles, and histogram counts decay over time to
+         * give greater weight to recent samples (exception: histogram counts are cumulative for those systems that expect cumulative
+         * histogram buckets). Samples are accumulated to such statistics in ring buffers which rotate after
+         * this expiry, with a buffer length of {@link #histogramBufferLength(Integer)}.
+         *
+         * @param expiry The amount of time samples are accumulated to a histogram before it is reset and rotated.
+         * @return This builder.
+         */
         public Builder histogramExpiry(@Nullable Duration expiry) {
             this.histogramConfigBuilder.histogramExpiry(expiry);
             return this;
         }
 
+        /**
+         * Statistics emanating from a distribution summary like max, percentiles, and histogram counts decay over time to
+         * give greater weight to recent samples (exception: histogram counts are cumulative for those systems that expect cumulative
+         * histogram buckets). Samples are accumulated to such statistics in ring buffers which rotate after
+         * {@link #histogramExpiry(Duration)}, with this buffer length.
+         *
+         * @param bufferLength The number of histograms to keep in the ring buffer.
+         * @return This builder.
+         */
         public Builder histogramBufferLength(@Nullable Integer bufferLength) {
             this.histogramConfigBuilder.histogramBufferLength(bufferLength);
             return this;
         }
 
+        /**
+         * Add the distribution summary to a single registry, or return an existing distribution summary in that registry. The returned
+         * distribution summary will be unique for each registry, but each registry is guaranteed to only create one distribution summary
+         * for the same combination of name and tags.
+         *
+         * @param registry A registry to add the distribution summary to, if it doesn't already exist.
+         * @return A new or existing distribution summary.
+         */
         public DistributionSummary register(MeterRegistry registry) {
             return registry.summary(new Meter.Id(name, tags, baseUnit, description, Type.DistributionSummary), histogramConfigBuilder.build());
         }

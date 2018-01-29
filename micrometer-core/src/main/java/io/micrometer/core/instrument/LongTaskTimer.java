@@ -179,6 +179,9 @@ public interface LongTaskTimer extends Meter {
         }
     }
 
+    /**
+     * Fluent builder for long task timers.
+     */
     class Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
@@ -196,21 +199,42 @@ public interface LongTaskTimer extends Meter {
             return tags(Tags.of(tags));
         }
 
+        /**
+         * @param tags Tags to add to the eventual long task timer.
+         * @return The long task timer builder with added tags.
+         */
         public Builder tags(Iterable<Tag> tags) {
             tags.forEach(this.tags::add);
             return this;
         }
 
+        /**
+         * @param key The tag key.
+         * @param value The tag value.
+         * @return The long task timer builder with a single added tag.
+         */
         public Builder tag(String key, String value) {
             tags.add(Tag.of(key, value));
             return this;
         }
 
+        /**
+         * @param description Description text of the eventual long task timer.
+         * @return The long task timer builder with added description.
+         */
         public Builder description(@Nullable String description) {
             this.description = description;
             return this;
         }
 
+        /**
+         * Add the long task timer to a single registry, or return an existing long task timer in that registry. The returned
+         * long task timer will be unique for each registry, but each registry is guaranteed to only create one long task timer
+         * for the same combination of name and tags.
+         *
+         * @param registry A registry to add the long task timer to, if it doesn't already exist.
+         * @return A new or existing long task timer.
+         */
         public LongTaskTimer register(MeterRegistry registry) {
             return registry.more().longTaskTimer(new Meter.Id(name, tags, null, description, Type.LongTaskTimer));
         }

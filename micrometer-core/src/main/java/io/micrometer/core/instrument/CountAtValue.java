@@ -19,6 +19,11 @@ import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * The count accumulated to a histogram bucket.
+ *
+ * @author Trustin Heuiseung Lee
+ */
 public final class CountAtValue {
 
     private final long value;

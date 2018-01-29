@@ -192,6 +192,9 @@ public interface Timer extends Meter {
         }
     }
 
+    /**
+     * Fluent builder for timers.
+     */
     class Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
@@ -208,11 +211,27 @@ public interface Timer extends Meter {
             maximumExpectedValue(Duration.ofSeconds(30));
         }
 
+        /**
+         * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         */
+        public Builder tags(String... tags) {
+            return tags(Tags.of(tags));
+        }
+
+        /**
+         * @param tags Tags to add to the eventual meter.
+         * @return The timer builder with added tags.
+         */
         public Builder tags(Iterable<Tag> tags) {
             tags.forEach(this.tags::add);
             return this;
         }
 
+        /**
+         * @param key   The tag key.
+         * @param value The tag value.
+         * @return The timer builder with a single added tag.
+         */
         public Builder tag(String key, String value) {
             tags.add(Tag.of(key, value));
             return this;
@@ -268,45 +287,91 @@ public interface Timer extends Meter {
             return this;
         }
 
+        /**
+         * Sets the minimum value that this timer is expected to observe. Sets a lower bound
+         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+         *
+         * @param min The minimum value that this timer is expected to observe.
+         * @return This builder.
+         */
         public Builder minimumExpectedValue(@Nullable Duration min) {
             if (min != null)
                 this.histogramConfigBuilder.minimumExpectedValue(min.toNanos());
             return this;
         }
 
+        /**
+         * Sets the maximum value that this timer is expected to observe. Sets an upper bound
+         * on histogram buckets that are shipped to monitoring systems that support aggregable percentile approximations.
+         *
+         * @param max The maximum value that this timer is expected to observe.
+         * @return This builder.
+         */
         public Builder maximumExpectedValue(@Nullable Duration max) {
             if (max != null)
                 this.histogramConfigBuilder.maximumExpectedValue(max.toNanos());
             return this;
         }
 
+        /**
+         * Statistics emanating from a timer like max, percentiles, and histogram counts decay over time to
+         * give greater weight to recent samples (exception: histogram counts are cumulative for those systems that expect cumulative
+         * histogram buckets). Samples are accumulated to such statistics in ring buffers which rotate after
+         * this expiry, with a buffer length of {@link #histogramBufferLength(Integer)}.
+         *
+         * @param expiry The amount of time samples are accumulated to a histogram before it is reset and rotated.
+         * @return This builder.
+         */
         public Builder histogramExpiry(@Nullable Duration expiry) {
             this.histogramConfigBuilder.histogramExpiry(expiry);
             return this;
         }
 
+        /**
+         * Statistics emanating from a timer like max, percentiles, and histogram counts decay over time to
+         * give greater weight to recent samples (exception: histogram counts are cumulative for those systems that expect cumulative
+         * histogram buckets). Samples are accumulated to such statistics in ring buffers which rotate after
+         * {@link #histogramExpiry(Duration)}, with this buffer length.
+         *
+         * @param bufferLength The number of histograms to keep in the ring buffer.
+         * @return This builder.
+         */
         public Builder histogramBufferLength(@Nullable Integer bufferLength) {
             this.histogramConfigBuilder.histogramBufferLength(bufferLength);
             return this;
         }
 
+        /**
+         * Sets the pause detector implementation to use for this timer. Can also be configured on a registry-level with
+         * {@link MeterRegistry.Config#pauseDetector(PauseDetector)}.
+         *
+         * @param pauseDetector The pause detector implementation to use.
+         * @return This builder.
+         * @see io.micrometer.core.instrument.histogram.pause.NoPauseDetector
+         * @see io.micrometer.core.instrument.histogram.pause.ClockDriftPauseDetector
+         */
         public Builder pauseDetector(@Nullable PauseDetector pauseDetector) {
             this.pauseDetector = pauseDetector;
             return this;
         }
 
         /**
-         * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         * @param description Description text of the eventual timer.
+         * @return The timer builder with added description.
          */
-        public Builder tags(String... tags) {
-            return tags(Tags.of(tags));
-        }
-
         public Builder description(@Nullable String description) {
             this.description = description;
             return this;
         }
 
+        /**
+         * Add the timer to a single registry, or return an existing timer in that registry. The returned
+         * timer will be unique for each registry, but each registry is guaranteed to only create one timer
+         * for the same combination of name and tags.
+         *
+         * @param registry A registry to add the timer to, if it doesn't already exist.
+         * @return A new or existing timer.
+         */
         public Timer register(MeterRegistry registry) {
             // the base unit for a timer will be determined by the monitoring system implementation
             return registry.timer(new Meter.Id(name, tags, null, description, Type.Timer), histogramConfigBuilder.build(),

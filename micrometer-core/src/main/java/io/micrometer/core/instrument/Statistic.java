@@ -15,6 +15,11 @@
  */
 package io.micrometer.core.instrument;
 
+/**
+ * A description of the value contained in a measurement.
+ *
+ * @author Jon Schneider
+ */
 public enum Statistic {
     /**
      * The sum of the amounts recorded.
@@ -37,10 +42,13 @@ public enum Statistic {
     Max,
 
     /**
-     * Instantaneous value, such as those reported by gauges
+     * Instantaneous value, such as those reported by gauges.
      **/
     Value,
 
+    /**
+     * Undetermined.
+     */
     Unknown,
 
     /**

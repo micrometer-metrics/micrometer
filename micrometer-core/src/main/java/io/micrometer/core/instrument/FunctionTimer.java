@@ -55,6 +55,11 @@ public interface FunctionTimer extends Meter {
         );
     }
 
+    /**
+     * Fluent builder for function timer.
+     *
+     * @param <T> The type of the state object from which the timer values are extracted.
+     */
     class Builder<T> {
         private final String name;
         private final T obj;
@@ -62,10 +67,9 @@ public interface FunctionTimer extends Meter {
         private final ToDoubleFunction<T> totalTimeFunction;
         private final TimeUnit totalTimeFunctionUnits;
         private final List<Tag> tags = new ArrayList<>();
+
         @Nullable
         private String description;
-        @Nullable
-        private String baseUnit;
 
         private Builder(String name, T obj,
                         ToLongFunction<T> countFunction,
@@ -85,28 +89,44 @@ public interface FunctionTimer extends Meter {
             return tags(Tags.of(tags));
         }
 
+        /**
+         * @param tags Tags to add to the eventual meter.
+         * @return The function timer builder with added tags.
+         */
         public Builder<T> tags(Iterable<Tag> tags) {
             tags.forEach(this.tags::add);
             return this;
         }
 
+        /**
+         * @param key   The tag key.
+         * @param value The tag value.
+         * @return The function timer builder with a single added tag.
+         */
         public Builder<T> tag(String key, String value) {
             tags.add(Tag.of(key, value));
             return this;
         }
 
+        /**
+         * @param description Description text of the eventual function timer.
+         * @return The function timer builder with added description.
+         */
         public Builder<T> description(@Nullable String description) {
             this.description = description;
             return this;
         }
 
-        public Builder<T> baseUnit(@Nullable String unit) {
-            this.baseUnit = unit;
-            return this;
-        }
-
+        /**
+         * Add the function timer to a single registry, or return an existing function timer in that registry. The returned
+         * function timer will be unique for each registry, but each registry is guaranteed to only create one function timer
+         * for the same combination of name and tags.
+         *
+         * @param registry A registry to add the function timer to, if it doesn't already exist.
+         * @return A new or existing function timer.
+         */
         public FunctionTimer register(MeterRegistry registry) {
-            return registry.more().timer(new Meter.Id(name, tags, baseUnit, description, Type.Timer), obj, countFunction, totalTimeFunction,
+            return registry.more().timer(new Meter.Id(name, tags, null, description, Type.Timer), obj, countFunction, totalTimeFunction,
                 totalTimeFunctionUnits);
         }
     }

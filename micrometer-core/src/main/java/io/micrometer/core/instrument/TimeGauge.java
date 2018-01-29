@@ -37,6 +37,9 @@ public interface TimeGauge extends Gauge {
         return TimeUtils.convert(value(), baseTimeUnit(), unit);
     }
 
+    /**
+     * Fluent builder for time gauges.
+     */
     class Builder<T> {
         private final String name;
         private final T obj;
@@ -61,21 +64,42 @@ public interface TimeGauge extends Gauge {
             return tags(Tags.of(tags));
         }
 
+        /**
+         * @param tags Tags to add to the eventual meter.
+         * @return The time gauge builder with added tags.
+         */
         public Builder<T> tags(Iterable<Tag> tags) {
             tags.forEach(this.tags::add);
             return this;
         }
 
+        /**
+         * @param key The tag key.
+         * @param value The tag value.
+         * @return The time gauge builder with a single added tag.
+         */
         public Builder<T> tag(String key, String value) {
             tags.add(Tag.of(key, value));
             return this;
         }
 
+        /**
+         * @param description Description text of the eventual time gauge.
+         * @return The time gauge builder with added description.
+         */
         public Builder<T> description(@Nullable String description) {
             this.description = description;
             return this;
         }
 
+        /**
+         * Add the time gauge to a single registry, or return an existing time gauge in that registry. The returned
+         * time gauge will be unique for each registry, but each registry is guaranteed to only create one time gauge
+         * for the same combination of name and tags.
+         *
+         * @param registry A registry to add the time gauge to, if it doesn't already exist.
+         * @return A new or existing time gauge.
+         */
         public TimeGauge register(MeterRegistry registry) {
             return registry.more().timeGauge(new Meter.Id(name, tags, null, description, Type.Gauge),
                 obj, fUnits, f);
