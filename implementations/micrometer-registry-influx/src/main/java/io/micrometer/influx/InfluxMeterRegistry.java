@@ -179,7 +179,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             }
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Malformed InfluxDB publishing endpoint, see '" + config.prefix() + ".uri'", e);
-        } catch (IOException e) {
+        } catch (Throwable e) {
             logger.warn("failed to send metrics", e);
         }
     }

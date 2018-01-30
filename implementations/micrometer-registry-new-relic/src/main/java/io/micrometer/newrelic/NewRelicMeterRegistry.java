@@ -125,6 +125,8 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             }
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Malformed New Relic insights endpoint, see '" + config.prefix() + ".uri'", e);
+        } catch (Throwable t) {
+            logger.warn("failed to send metrics", t);
         }
     }
 

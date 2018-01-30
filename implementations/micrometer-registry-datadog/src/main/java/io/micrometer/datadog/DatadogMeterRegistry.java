@@ -140,7 +140,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                     quietlyCloseUrlConnection(con);
                 }
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             logger.warn("failed to send metrics", e);
         }
 
