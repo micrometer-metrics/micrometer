@@ -107,6 +107,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                         HttpsURLConnection conn = null;
                         OutputStreamWriter writer = null;
                         try {
+
                             URL url = new URL("https", apihost, 443, String.format("/report/metrics?t=%s&h=%s", apitoken, config.source()));
                             conn = (HttpsURLConnection)url.openConnection();
                             conn.setDoOutput(true);
@@ -115,15 +116,16 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                             writer = new OutputStreamWriter(conn.getOutputStream(), "UTF-8");
                             writer.write(buffer.toString());
                             writer.flush();
-
                             int responseCode = conn.getResponseCode();
-                            if(responseCode == 204) {
+                            if(responseCode == 204 || responseCode == 202) {
                                 // success
+                                logger.debug("successfully reported " + batch.size() + " points.");
                             }
                             else {
                                 // log error
                                 logger.error("publish failed when reporting directly to wavefront. Error code:" + responseCode);
                             }
+                            logger.debug(buffer.toString());
                         }
                         catch(Exception e) {
                             logger.error(e.getMessage(), e);
@@ -254,8 +256,8 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
 
         StringBuffer buffer = new StringBuffer();
 
-        // metric name
-        buffer.append("\"").append(getConventionName(fullId)).append("\"");
+        // metric name ($ suffix with hashcode to ensure uniqueness in name - $ suffix part will be removed by server
+        buffer.append("\"").append(getConventionName(fullId) + "$" + fullId.hashCode()).append("\"");
         buffer.append(": {");
 
         // value
