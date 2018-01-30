@@ -29,12 +29,12 @@ import io.micrometer.core.lang.NonNullApi;
  */
 @FunctionalInterface
 @NonNullApi
-public interface MeterRegistryCustomizer {
+public interface MeterRegistryCustomizer<M extends MeterRegistry> {
 
     /**
-     * Configure the given {@code registry}.
+     * Configure the given registry.
      *
      * @param registry the registry to configure
      */
-    void configureRegistry(MeterRegistry registry);
+    void customize(M registry);
 }

@@ -16,33 +16,28 @@
 package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.hystrix.HystrixMetricsBinder;
-import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.spring.PropertiesMeterFilter;
 import io.micrometer.spring.autoconfigure.export.CompositeMeterRegistryConfiguration;
-import io.micrometer.spring.autoconfigure.export.atlas.AtlasExportConfiguration;
-import io.micrometer.spring.autoconfigure.export.datadog.DatadogExportConfiguration;
-import io.micrometer.spring.autoconfigure.export.ganglia.GangliaExportConfiguration;
-import io.micrometer.spring.autoconfigure.export.graphite.GraphiteExportConfiguration;
-import io.micrometer.spring.autoconfigure.export.influx.InfluxExportConfiguration;
-import io.micrometer.spring.autoconfigure.export.jmx.JmxExportConfiguration;
-import io.micrometer.spring.autoconfigure.export.newrelic.NewRelicExportConfiguration;
-import io.micrometer.spring.autoconfigure.export.prometheus.PrometheusExportConfiguration;
-import io.micrometer.spring.autoconfigure.export.signalfx.SignalFxExportConfiguration;
-import io.micrometer.spring.autoconfigure.export.simple.SimpleExportConfiguration;
-import io.micrometer.spring.autoconfigure.export.statsd.StatsdExportConfiguration;
 import io.micrometer.spring.autoconfigure.jersey2.server.JerseyServerMetricsConfiguration;
 import io.micrometer.spring.autoconfigure.web.client.RestTemplateMetricsConfiguration;
 import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguration;
 import io.micrometer.spring.autoconfigure.web.tomcat.TomcatMetricsConfiguration;
 import io.micrometer.spring.integration.SpringIntegrationMetrics;
 import io.micrometer.spring.scheduling.ScheduledMethodMetrics;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration;
+import org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.SearchStrategy;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -51,8 +46,10 @@ import org.springframework.core.annotation.Order;
 import org.springframework.integration.config.EnableIntegrationManagement;
 import org.springframework.integration.support.management.IntegrationManagementConfigurer;
 
+import java.util.Collection;
+
 /**
- * {@link EnableAutoConfiguration Auto-configuration} for Micrometer-based metrics.
+ * {@link EnableAutoConfiguration} for Micrometer-based metrics.
  *
  * @author Jon Schneider
  */
@@ -60,29 +57,42 @@ import org.springframework.integration.support.management.IntegrationManagementC
 @ConditionalOnClass(Timed.class)
 @EnableConfigurationProperties(MetricsProperties.class)
 @Import({
-    // default binders, apply customizers and binders to newly-created registries
-    MeterBindersConfiguration.class, MeterRegistryPostProcessor.class,
+    // default binders
+    MeterBindersConfiguration.class,
 
     // default instrumentation
     ServletMetricsConfiguration.class, RestTemplateMetricsConfiguration.class,
     TomcatMetricsConfiguration.class, JerseyServerMetricsConfiguration.class,
 
     // registry implementations
-    AtlasExportConfiguration.class, DatadogExportConfiguration.class,
-    GangliaExportConfiguration.class, GraphiteExportConfiguration.class,
-    InfluxExportConfiguration.class, NewRelicExportConfiguration.class,
-    JmxExportConfiguration.class, StatsdExportConfiguration.class,
-    PrometheusExportConfiguration.class, SimpleExportConfiguration.class,
-    SignalFxExportConfiguration.class,
+    MeterRegistriesConfiguration.class,
 
     // conditionally build a composite registry out of more than one registry present
     CompositeMeterRegistryConfiguration.class
 })
+@AutoConfigureAfter({
+    DataSourceAutoConfiguration.class,
+    RabbitAutoConfiguration.class,
+    CacheAutoConfiguration.class
+})
 public class MetricsAutoConfiguration {
     @Bean
+    @ConditionalOnMissingBean
+    public Clock micrometerClock() {
+        return Clock.SYSTEM;
+    }
+
+    @Bean
+    public static MeterRegistryPostProcessor meterRegistryPostProcessor(ObjectProvider<Collection<MeterBinder>> binders,
+                                                                        ObjectProvider<Collection<MeterRegistryCustomizer<?>>> customizers,
+                                                                        MetricsProperties properties) {
+        return new MeterRegistryPostProcessor(binders, customizers, properties.isUseGlobalRegistry());
+    }
+
+    @Bean
     @Order(0)
-    public MeterFilter propertyBasedFilter(MetricsProperties props) {
-        return new PropertiesMeterFilter(props);
+    public MeterRegistryCustomizer<MeterRegistry> propertyBasedFilter(MetricsProperties props) {
+        return r -> r.config().meterFilter(new PropertiesMeterFilter(props));
     }
 
     /**

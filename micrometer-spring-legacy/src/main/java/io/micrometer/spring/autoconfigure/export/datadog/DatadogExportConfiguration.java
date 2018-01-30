@@ -50,11 +50,4 @@ public class DatadogExportConfiguration {
     public DatadogMeterRegistry datadogMeterRegistry(DatadogConfig config, Clock clock) {
         return new DatadogMeterRegistry(config, clock);
     }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public Clock micrometerClock() {
-        return Clock.SYSTEM;
-    }
-
 }

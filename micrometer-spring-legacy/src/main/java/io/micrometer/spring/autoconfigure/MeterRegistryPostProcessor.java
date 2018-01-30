@@ -18,33 +18,28 @@ package io.micrometer.spring.autoconfigure;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.lang.NonNullApi;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.stereotype.Component;
+import org.springframework.core.ResolvableType;
 
 import java.util.Collection;
 
 import static java.util.Collections.emptyList;
 
-@Component
 @NonNullApi
 public class MeterRegistryPostProcessor implements BeanPostProcessor {
-    private final MetricsProperties config;
+    private final Collection<MeterRegistryCustomizer<?>> customizers;
     private final Collection<MeterBinder> binders;
-    private final Collection<MeterRegistryCustomizer> customizers;
-    private final Collection<MeterFilter> filters;
+    private final boolean addToGlobalRegistry;
 
-    @SuppressWarnings("ConstantConditions")
-    MeterRegistryPostProcessor(MetricsProperties config,
-                               ObjectProvider<Collection<MeterBinder>> binders,
-                               ObjectProvider<Collection<MeterRegistryCustomizer>> customizers,
-                               ObjectProvider<Collection<MeterFilter>> filters) {
-        this.config = config;
+    MeterRegistryPostProcessor(ObjectProvider<Collection<MeterBinder>> binders,
+                               ObjectProvider<Collection<MeterRegistryCustomizer<?>>> customizers,
+                               boolean addToGlobalRegistry) {
         this.binders = binders.getIfAvailable() != null ? binders.getIfAvailable() : emptyList();
         this.customizers = customizers.getIfAvailable() != null ? customizers.getIfAvailable() : emptyList();
-        this.filters = filters.getIfAvailable() != null ? filters.getIfAvailable() : emptyList();
+        this.addToGlobalRegistry = addToGlobalRegistry;
     }
 
     @Override
@@ -54,18 +49,24 @@ public class MeterRegistryPostProcessor implements BeanPostProcessor {
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) {
-        if (bean instanceof MeterRegistry) {
+        if (bean instanceof MeterRegistry && !(bean instanceof CompositeMeterRegistry)) {
             MeterRegistry registry = (MeterRegistry) bean;
 
             // Customizers must be applied before binders, as they may add custom tags or alter
             // timer or summary configuration.
-            customizers.forEach(c -> c.configureRegistry(registry));
-
-            filters.forEach(f -> registry.config().meterFilter(f));
+            for (MeterRegistryCustomizer customizer : this.customizers) {
+                Class<?> generic = ResolvableType
+                    .forClass(MeterRegistryCustomizer.class, customizer.getClass())
+                    .resolveGeneric();
+                if (generic.isAssignableFrom(bean.getClass())) {
+                    //noinspection unchecked
+                    customizer.customize(registry);
+                }
+            }
 
             binders.forEach(b -> b.bindTo(registry));
 
-            if (config.isUseGlobalRegistry() && registry != Metrics.globalRegistry) {
+            if (addToGlobalRegistry && registry != Metrics.globalRegistry) {
                 Metrics.addRegistry(registry);
             }
         }

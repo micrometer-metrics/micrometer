@@ -55,12 +55,6 @@ public class StatsdExportConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public Clock micrometerClock() {
-        return Clock.SYSTEM;
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
     public HierarchicalNameMapper hierarchicalNameMapper() {
         return HierarchicalNameMapper.DEFAULT;
     }

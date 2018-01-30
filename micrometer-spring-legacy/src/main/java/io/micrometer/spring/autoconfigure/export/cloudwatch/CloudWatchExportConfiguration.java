@@ -62,10 +62,4 @@ public class CloudWatchExportConfiguration {
             .withCredentials(credentialsProvider)
             .build();
     }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public Clock micrometerClock() {
-        return Clock.SYSTEM;
-    }
 }

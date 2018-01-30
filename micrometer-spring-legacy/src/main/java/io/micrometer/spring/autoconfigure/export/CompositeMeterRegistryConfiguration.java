@@ -15,82 +15,17 @@
  */
 package io.micrometer.spring.autoconfigure.export;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.beans.factory.support.GenericBeanDefinition;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationListener;
+import io.micrometer.spring.autoconfigure.CompositeMeterRegistryPostProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.event.ContextRefreshedEvent;
-
-import java.util.Map;
 
 /**
  * @author Jon Schneider
  */
 @Configuration
 public class CompositeMeterRegistryConfiguration {
-    private static final String COMPOSITE_BEAN_NAME = "compositeMeterRegistry";
-
     @Bean
-    public static BeanFactoryPostProcessor createCompositeMeterRegistryIfNecessary() {
+    public static CompositeMeterRegistryPostProcessor compositeMeterRegistryPostProcessor() {
         return new CompositeMeterRegistryPostProcessor();
-    }
-
-    @Bean
-    public ApplicationListener<ContextRefreshedEvent> addRegistriesToComposite() {
-        return event -> {
-            ApplicationContext context = event.getApplicationContext();
-
-            if (context.containsBean(COMPOSITE_BEAN_NAME)) {
-                CompositeMeterRegistry composite = context
-                    .getBean(COMPOSITE_BEAN_NAME, CompositeMeterRegistry.class);
-
-                context.getBeansOfType(MeterRegistry.class)
-                    .entrySet()
-                    .stream()
-                    .filter(beanByName -> !beanByName.getKey().equals(COMPOSITE_BEAN_NAME))
-                    .map(Map.Entry::getValue)
-                    .forEach(composite::add);
-            }
-        };
-    }
-
-    static class CompositeMeterRegistryPostProcessor implements BeanFactoryPostProcessor {
-        @Override
-        public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-            String[] registryBeans = beanFactory.getBeanNamesForType(MeterRegistry.class, true, false);
-
-            // 1. If there are no meter registries configured, we wire an empty composite that effectively no-ops metrics
-            // instrumentation throughout the app. Note that in the absence of specific registry implementations, a
-            // SimpleMeterRegistry is autoconfigured. This condition will then only occur if the end user has specifically
-            // disabled SimpleMeterRegistry and there are no other implementations available.
-            //
-            // 2. If there are more than one registries configured, we add them as children of a composite meter registry
-            // and mark it primary, so that the composite is injected wherever a MeterRegistry is required.
-            //
-            // 3. If there are more than one registries configured, but one is already marked as primary, we let the
-            // primary registry be.
-            //
-            // 4. If there is only one registry configured, adding the indirection of a composite is not useful, so
-            // we just leave it alone.
-            if (registryBeans.length == 0 || registryBeans.length > 1) {
-                for (String registryBean : registryBeans) {
-                    if (beanFactory.getBeanDefinition(registryBean).isPrimary())
-                        return;
-                }
-
-                GenericBeanDefinition bd = new GenericBeanDefinition();
-                bd.setBeanClass(CompositeMeterRegistry.class);
-                bd.setPrimary(true);
-
-                ((DefaultListableBeanFactory) beanFactory).registerBeanDefinition(COMPOSITE_BEAN_NAME, bd);
-            }
-        }
     }
 }

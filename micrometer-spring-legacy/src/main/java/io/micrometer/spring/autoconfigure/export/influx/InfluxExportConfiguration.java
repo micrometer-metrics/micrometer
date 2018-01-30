@@ -50,11 +50,4 @@ public class InfluxExportConfiguration {
     public InfluxMeterRegistry influxMeterRegistry(InfluxConfig config, Clock clock) {
         return new InfluxMeterRegistry(config, clock);
     }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public Clock micrometerClock() {
-        return Clock.SYSTEM;
-    }
-
 }

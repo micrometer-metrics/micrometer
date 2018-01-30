@@ -61,12 +61,6 @@ public class PrometheusExportConfiguration {
         return new CollectorRegistry(true);
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    public Clock micrometerClock() {
-        return Clock.SYSTEM;
-    }
-
     @ManagementContextConfiguration
     @ConditionalOnClass(AbstractEndpoint.class)
     public static class PrometheusScrapeEndpointConfiguration {

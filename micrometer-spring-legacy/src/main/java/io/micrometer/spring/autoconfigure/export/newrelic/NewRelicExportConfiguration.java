@@ -50,11 +50,4 @@ public class NewRelicExportConfiguration {
     public NewRelicMeterRegistry newRelicMeterRegistry(NewRelicConfig config, Clock clock) {
         return new NewRelicMeterRegistry(config, clock);
     }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public Clock micrometerClock() {
-        return Clock.SYSTEM;
-    }
-
 }

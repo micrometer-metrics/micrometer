@@ -50,10 +50,4 @@ public class SignalFxExportConfiguration {
     public SignalFxMeterRegistry signalFxMeterRegistry(SignalFxConfig config, Clock clock) {
         return new SignalFxMeterRegistry(config, clock);
     }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public Clock micrometerClock() {
-        return Clock.SYSTEM;
-    }
 }

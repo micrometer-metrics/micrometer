@@ -51,10 +51,4 @@ public class SimpleExportConfiguration {
     public SimpleMeterRegistry simpleMeterRegistry(SimpleConfig config, Clock clock) {
         return new SimpleMeterRegistry(config, clock);
     }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public Clock micrometerClock() {
-        return Clock.SYSTEM;
-    }
 }

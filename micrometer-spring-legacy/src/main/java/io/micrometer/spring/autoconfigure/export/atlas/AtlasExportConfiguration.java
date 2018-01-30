@@ -51,10 +51,4 @@ public class AtlasExportConfiguration {
     public AtlasMeterRegistry atlasMeterRegistry(AtlasConfig config, Clock clock) {
         return new AtlasMeterRegistry(config, clock);
     }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public Clock micrometerClock() {
-        return Clock.SYSTEM;
-    }
 }
