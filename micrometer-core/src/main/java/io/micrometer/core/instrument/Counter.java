@@ -55,7 +55,7 @@ public interface Counter extends Meter {
 
     @Override
     default Type type() {
-        return Type.Counter;
+        return Type.COUNTER;
     }
 
     /**
@@ -128,7 +128,7 @@ public interface Counter extends Meter {
          * @return A new or existing counter.
          */
         public Counter register(MeterRegistry registry) {
-            return registry.counter(new Meter.Id(name, tags, baseUnit, description, Type.Counter));
+            return registry.counter(new Meter.Id(name, tags, baseUnit, description, Type.COUNTER));
         }
     }
 }

@@ -168,7 +168,7 @@ public interface Timer extends Meter {
 
     @Override
     default Type type() {
-        return Type.Timer;
+        return Type.TIMER;
     }
 
     class Sample {
@@ -374,7 +374,7 @@ public interface Timer extends Meter {
          */
         public Timer register(MeterRegistry registry) {
             // the base unit for a timer will be determined by the monitoring system implementation
-            return registry.timer(new Meter.Id(name, tags, null, description, Type.Timer), histogramConfigBuilder.build(),
+            return registry.timer(new Meter.Id(name, tags, null, description, Type.TIMER), histogramConfigBuilder.build(),
                 pauseDetector == null ? registry.config().pauseDetector() : pauseDetector);
         }
     }

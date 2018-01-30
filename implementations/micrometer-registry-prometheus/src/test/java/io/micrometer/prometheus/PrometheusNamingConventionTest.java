@@ -28,7 +28,7 @@ class PrometheusNamingConventionTest {
 
     @Test
     void formatName() {
-        assertThat(convention.name("123abc/{:id}水", Meter.Type.Gauge)).startsWith("m_123abc__:id__");
+        assertThat(convention.name("123abc/{:id}水", Meter.Type.GAUGE)).startsWith("m_123abc__:id__");
     }
 
     @Test
@@ -38,31 +38,31 @@ class PrometheusNamingConventionTest {
 
     @Test
     void unitsAreAppendedToTimers() {
-        assertThat(convention.name("timer", Meter.Type.Timer)).isEqualTo("timer_seconds");
-        assertThat(convention.name("timer", Meter.Type.LongTaskTimer)).isEqualTo("timer_seconds");
-        assertThat(convention.name("timer.duration", Meter.Type.LongTaskTimer)).isEqualTo("timer_duration_seconds");
+        assertThat(convention.name("timer", Meter.Type.TIMER)).isEqualTo("timer_seconds");
+        assertThat(convention.name("timer", Meter.Type.LONG_TASK_TIMER)).isEqualTo("timer_seconds");
+        assertThat(convention.name("timer.duration", Meter.Type.LONG_TASK_TIMER)).isEqualTo("timer_duration_seconds");
     }
 
     @Test
     void unitsAreAppendedToDistributionSummaries() {
-        assertThat(convention.name("response.size", Meter.Type.DistributionSummary, "bytes")).isEqualTo("response_size_bytes");
-        assertThat(convention.name("summary", Meter.Type.DistributionSummary)).isEqualTo("summary");
+        assertThat(convention.name("response.size", Meter.Type.DISTRIBUTION_SUMMARY, "bytes")).isEqualTo("response_size_bytes");
+        assertThat(convention.name("summary", Meter.Type.DISTRIBUTION_SUMMARY)).isEqualTo("summary");
     }
 
     @Test
     void unitsAreAppendedToCounters() {
-        assertThat(convention.name("response.size", Meter.Type.Counter, "bytes")).isEqualTo("response_size_bytes_total");
-        assertThat(convention.name("counter", Meter.Type.Counter)).isEqualTo("counter_total");
+        assertThat(convention.name("response.size", Meter.Type.COUNTER, "bytes")).isEqualTo("response_size_bytes_total");
+        assertThat(convention.name("counter", Meter.Type.COUNTER)).isEqualTo("counter_total");
     }
 
     @Test
     void unitsAreAppendedToGauges() {
-        assertThat(convention.name("response.size", Meter.Type.Gauge, "bytes")).isEqualTo("response_size_bytes");
-        assertThat(convention.name("gauge", Meter.Type.Gauge)).isEqualTo("gauge");
+        assertThat(convention.name("response.size", Meter.Type.GAUGE, "bytes")).isEqualTo("response_size_bytes");
+        assertThat(convention.name("gauge", Meter.Type.GAUGE)).isEqualTo("gauge");
     }
 
     @Test
     void dotNotationIsConvertedToSnakeCase() {
-        assertThat(convention.name("gauge.size", Meter.Type.Gauge)).isEqualTo("gauge_size");
+        assertThat(convention.name("gauge.size", Meter.Type.GAUGE)).isEqualTo("gauge_size");
     }
 }

@@ -48,7 +48,7 @@ public interface Meter {
      * @return The type of this meter.
      */
     default Type type() {
-        return Type.Other;
+        return Type.OTHER;
     }
 
     /**
@@ -58,12 +58,12 @@ public interface Meter {
      * increment-driven API.
      */
     enum Type {
-        Counter,
-        Gauge,
-        LongTaskTimer,
-        Timer,
-        DistributionSummary,
-        Other
+        COUNTER,
+        GAUGE,
+        LONG_TASK_TIMER,
+        TIMER,
+        DISTRIBUTION_SUMMARY,
+        OTHER
     }
 
     /**

@@ -27,7 +27,7 @@ class InfluxNamingConventionTest {
 
     @Test
     void name() {
-        assertThat(convention.name("foo=, bar", Meter.Type.Gauge)).isEqualTo("foo_\\,\\ bar");
+        assertThat(convention.name("foo=, bar", Meter.Type.GAUGE)).isEqualTo("foo_\\,\\ bar");
     }
 
     @Test

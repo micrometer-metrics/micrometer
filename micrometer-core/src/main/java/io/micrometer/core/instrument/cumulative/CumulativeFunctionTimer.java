@@ -81,6 +81,6 @@ public class CumulativeFunctionTimer<T> implements FunctionTimer {
     }
 
     public Type type() {
-        return Type.Timer;
+        return Type.TIMER;
     }
 }

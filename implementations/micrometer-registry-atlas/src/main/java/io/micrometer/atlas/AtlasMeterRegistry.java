@@ -159,14 +159,14 @@ public class AtlasMeterRegistry extends MeterRegistry {
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
         FunctionCounter fc = new StepFunctionCounter<>(id, clock, atlasConfig.step().toMillis(), obj, valueFunction);
-        newMeter(id, Meter.Type.Counter, fc.measure());
+        newMeter(id, Meter.Type.COUNTER, fc.measure());
         return fc;
     }
 
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
         FunctionTimer ft = new StepFunctionTimer<>(id, clock, atlasConfig.step().toMillis(), obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
-        newMeter(id, Meter.Type.Timer, ft.measure());
+        newMeter(id, Meter.Type.TIMER, ft.measure());
         return ft;
     }
 

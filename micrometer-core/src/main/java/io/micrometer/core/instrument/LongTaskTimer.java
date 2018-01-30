@@ -153,7 +153,7 @@ public interface LongTaskTimer extends Meter {
 
     @Override
     default Type type() {
-        return Type.LongTaskTimer;
+        return Type.LONG_TASK_TIMER;
     }
 
     class Sample {
@@ -236,7 +236,7 @@ public interface LongTaskTimer extends Meter {
          * @return A new or existing long task timer.
          */
         public LongTaskTimer register(MeterRegistry registry) {
-            return registry.more().longTaskTimer(new Meter.Id(name, tags, null, description, Type.LongTaskTimer));
+            return registry.more().longTaskTimer(new Meter.Id(name, tags, null, description, Type.LONG_TASK_TIMER));
         }
     }
 }

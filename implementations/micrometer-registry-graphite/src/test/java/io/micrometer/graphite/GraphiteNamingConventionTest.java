@@ -25,11 +25,11 @@ class GraphiteNamingConventionTest {
 
     @Test
     void name() {
-        assertThat(convention.name("name([{id}])/1", Meter.Type.Timer)).isEqualTo("name___id____1");
+        assertThat(convention.name("name([{id}])/1", Meter.Type.TIMER)).isEqualTo("name___id____1");
     }
 
     @Test
     void dotNotationIsConvertedToCamelCase() {
-        assertThat(convention.name("gauge.size", Meter.Type.Gauge)).isEqualTo("gaugeSize");
+        assertThat(convention.name("gauge.size", Meter.Type.GAUGE)).isEqualTo("gaugeSize");
     }
 }

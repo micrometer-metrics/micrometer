@@ -46,7 +46,7 @@ class MeterFilterTest {
     @Test
     void commonTags() {
         MeterFilter filter = MeterFilter.commonTags(Tags.of("k2", "v2"));
-        Meter.Id id = new Meter.Id("name", Tags.of("k1", "v1"), null, null, Meter.Type.Counter);
+        Meter.Id id = new Meter.Id("name", Tags.of("k1", "v1"), null, null, Meter.Type.COUNTER);
 
         Meter.Id filteredId = filter.map(id);
         assertThat(filteredId).has(tag("k1", "v1"));
@@ -56,7 +56,7 @@ class MeterFilterTest {
     @Test
     void ignoreTags() {
         MeterFilter filter = MeterFilter.ignoreTags("k1", "k2");
-        Meter.Id id = new Meter.Id("name", Tags.of("k1", "v1", "k2", "v2", "k3", "v3"), null, null, Meter.Type.Counter);
+        Meter.Id id = new Meter.Id("name", Tags.of("k1", "v1", "k2", "v2", "k3", "v3"), null, null, Meter.Type.COUNTER);
 
         Meter.Id filteredId = filter.map(id);
         assertThat(filteredId).has(tag("k3"));
@@ -68,11 +68,11 @@ class MeterFilterTest {
     void replaceTagValues() {
         MeterFilter filter = MeterFilter.replaceTagValues("status", s -> s.charAt(0) + "xx", "200");
 
-        Meter.Id id = new Meter.Id("name", Tags.of("status", "400"), null, null, Meter.Type.Counter);
+        Meter.Id id = new Meter.Id("name", Tags.of("status", "400"), null, null, Meter.Type.COUNTER);
         Meter.Id filteredId = filter.map(id);
         assertThat(filteredId).has(tag("status", "4xx"));
 
-        id = new Meter.Id("name", Tags.of("status", "200"), null, null, Meter.Type.Counter);
+        id = new Meter.Id("name", Tags.of("status", "200"), null, null, Meter.Type.COUNTER);
         filteredId = filter.map(id);
         assertThat(filteredId).has(tag("status", "200"));
     }
@@ -81,10 +81,10 @@ class MeterFilterTest {
     @Issue("#329")
     void renameTags() {
         MeterFilter filter = MeterFilter.renameTag("hystrix", "group", "hystrixgroup");
-        Meter.Id id = new Meter.Id("hystrix.something", Tags.of("k", "v", "group", "mygroup"), null, null, Meter.Type.Gauge);
+        Meter.Id id = new Meter.Id("hystrix.something", Tags.of("k", "v", "group", "mygroup"), null, null, Meter.Type.GAUGE);
         assertThat(filter.map(id)).has(tag("hystrixgroup", "mygroup"));
 
-        Meter.Id id2 = new Meter.Id("something.else", Tags.of("group", "mygroup"), null, null, Meter.Type.Gauge);
+        Meter.Id id2 = new Meter.Id("something.else", Tags.of("group", "mygroup"), null, null, Meter.Type.GAUGE);
         assertThat(filter.map(id2)).has(tag("group", "mygroup"));
     }
 
@@ -92,8 +92,8 @@ class MeterFilterTest {
     void maximumAllowableMetrics() {
         MeterFilter filter = MeterFilter.maximumAllowableMetrics(1);
 
-        Meter.Id id = new Meter.Id("name", emptyList(), null, null, Meter.Type.Counter);
-        Meter.Id id2 = new Meter.Id("name2", emptyList(), null, null, Meter.Type.Counter);
+        Meter.Id id = new Meter.Id("name", emptyList(), null, null, Meter.Type.COUNTER);
+        Meter.Id id2 = new Meter.Id("name2", emptyList(), null, null, Meter.Type.COUNTER);
 
         assertThat(filter.accept(id)).isEqualTo(MeterFilterReply.NEUTRAL);
         assertThat(filter.accept(id)).isEqualTo(MeterFilterReply.NEUTRAL);
@@ -112,9 +112,9 @@ class MeterFilterTest {
             }
         });
 
-        Meter.Id id = new Meter.Id("name", Tags.of("k", "1"), null, null, Meter.Type.Counter);
-        Meter.Id id2 = new Meter.Id("name", Tags.of("k", "2"), null, null, Meter.Type.Counter);
-        Meter.Id id3 = new Meter.Id("name", Tags.of("k", "3"), null, null, Meter.Type.Counter);
+        Meter.Id id = new Meter.Id("name", Tags.of("k", "1"), null, null, Meter.Type.COUNTER);
+        Meter.Id id2 = new Meter.Id("name", Tags.of("k", "2"), null, null, Meter.Type.COUNTER);
+        Meter.Id id3 = new Meter.Id("name", Tags.of("k", "3"), null, null, Meter.Type.COUNTER);
 
         filter.accept(id);
         filter.accept(id);

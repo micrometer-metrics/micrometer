@@ -52,21 +52,21 @@ public class PrometheusNamingConvention implements NamingConvention {
         String conventionName = NamingConvention.snakeCase.name(name, type, baseUnit);
 
         switch (type) {
-            case Counter:
-            case DistributionSummary:
-            case Gauge:
+            case COUNTER:
+            case DISTRIBUTION_SUMMARY:
+            case GAUGE:
                 if (baseUnit != null && !conventionName.endsWith("_" + baseUnit))
                     conventionName += "_" + baseUnit;
                 break;
         }
 
         switch (type) {
-            case Counter:
+            case COUNTER:
                 if (!conventionName.endsWith("_total"))
                     conventionName += "_total";
                 break;
-            case Timer:
-            case LongTaskTimer:
+            case TIMER:
+            case LONG_TASK_TIMER:
                 if (conventionName.endsWith(timerSuffix)) {
                     conventionName += "_seconds";
                 } else if (!conventionName.endsWith("_seconds"))

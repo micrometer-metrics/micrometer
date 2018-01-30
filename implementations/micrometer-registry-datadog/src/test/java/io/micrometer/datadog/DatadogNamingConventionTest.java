@@ -25,7 +25,7 @@ class DatadogNamingConventionTest {
 
     @Test
     void nameStartsWithLetter() {
-        assertThat(convention.name("123", Meter.Type.Gauge, null)).isEqualTo("m.123");
+        assertThat(convention.name("123", Meter.Type.GAUGE, null)).isEqualTo("m.123");
     }
 
     @Test
@@ -35,6 +35,6 @@ class DatadogNamingConventionTest {
 
     @Test
     void dotNotationIsConvertedToCamelCase() {
-        assertThat(convention.name("gauge.size", Meter.Type.Gauge, null)).isEqualTo("gauge.size");
+        assertThat(convention.name("gauge.size", Meter.Type.GAUGE, null)).isEqualTo("gauge.size");
     }
 }

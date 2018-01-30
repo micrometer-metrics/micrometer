@@ -44,7 +44,7 @@ public interface FunctionCounter extends Meter {
 
     @Override
     default Meter.Type type() {
-        return Meter.Type.Counter;
+        return Meter.Type.COUNTER;
     }
 
     /**
@@ -121,7 +121,7 @@ public interface FunctionCounter extends Meter {
          * @return A new or existing function counter.
          */
         public FunctionCounter register(MeterRegistry registry) {
-            return registry.more().counter(new Meter.Id(name, tags, baseUnit, description, Type.Counter), obj, f);
+            return registry.more().counter(new Meter.Id(name, tags, baseUnit, description, Type.COUNTER), obj, f);
         }
     }
 }

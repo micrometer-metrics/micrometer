@@ -92,6 +92,6 @@ public class StepFunctionTimer<T> implements FunctionTimer {
     }
 
     public Type type() {
-        return Type.Timer;
+        return Type.TIMER;
     }
 }

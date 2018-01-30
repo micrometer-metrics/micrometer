@@ -40,7 +40,7 @@ public interface Gauge extends Meter {
 
     @Override
     default Type type() {
-        return Type.Gauge;
+        return Type.GAUGE;
     }
 
     /**
@@ -122,7 +122,7 @@ public interface Gauge extends Meter {
          * @return A new or existing gauge.
          */
         public Gauge register(MeterRegistry registry) {
-            return registry.gauge(new Meter.Id(name, tags, baseUnit, description, Type.Gauge), obj, f);
+            return registry.gauge(new Meter.Id(name, tags, baseUnit, description, Type.GAUGE), obj, f);
         }
     }
 }

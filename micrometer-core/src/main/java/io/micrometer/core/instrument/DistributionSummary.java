@@ -252,7 +252,7 @@ public interface DistributionSummary extends Meter {
          * @return A new or existing distribution summary.
          */
         public DistributionSummary register(MeterRegistry registry) {
-            return registry.summary(new Meter.Id(name, tags, baseUnit, description, Type.DistributionSummary), histogramConfigBuilder.build());
+            return registry.summary(new Meter.Id(name, tags, baseUnit, description, Type.DISTRIBUTION_SUMMARY), histogramConfigBuilder.build());
         }
     }
 

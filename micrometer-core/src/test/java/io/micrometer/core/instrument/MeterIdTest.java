@@ -23,14 +23,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MeterIdTest {
     @Test
     void withStatistic() {
-        Meter.Id id = new Meter.Id("my.id", emptyList(), null, null, Meter.Type.Timer);
+        Meter.Id id = new Meter.Id("my.id", emptyList(), null, null, Meter.Type.TIMER);
         assertThat(id.withTag(Statistic.TOTAL_TIME).getTags()).contains(Tag.of("statistic", "totalTime"));
     }
 
     @Test
     void equalsAndHashCode() {
-        Meter.Id id = new Meter.Id("my.id", emptyList(), null, null, Meter.Type.Counter);
-        Meter.Id id2 = new Meter.Id("my.id", emptyList(), null, null, Meter.Type.Counter);
+        Meter.Id id = new Meter.Id("my.id", emptyList(), null, null, Meter.Type.COUNTER);
+        Meter.Id id2 = new Meter.Id("my.id", emptyList(), null, null, Meter.Type.COUNTER);
 
         assertThat(id).isEqualTo(id2);
         assertThat(id.hashCode()).isEqualTo(id2.hashCode());

@@ -276,14 +276,14 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         Collector.Type promType = Collector.Type.UNTYPED;
         switch (type) {
-            case Counter:
+            case COUNTER:
                 promType = Collector.Type.COUNTER;
                 break;
-            case Gauge:
+            case GAUGE:
                 promType = Collector.Type.GAUGE;
                 break;
-            case DistributionSummary:
-            case Timer:
+            case DISTRIBUTION_SUMMARY:
+            case TIMER:
                 promType = Collector.Type.SUMMARY;
                 break;
         }

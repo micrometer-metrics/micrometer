@@ -23,19 +23,19 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 class NamingConventionTest {
     @Test
     void camelCase() {
-        String name = NamingConvention.camelCase.name("a.Name.with.Words", Meter.Type.Counter);
+        String name = NamingConvention.camelCase.name("a.Name.with.Words", Meter.Type.COUNTER);
         assertThat(name).isEqualTo("aNameWithWords");
     }
 
     @Test
     void snakeCase() {
-        String name = NamingConvention.snakeCase.name("a.Name.with.Words", Meter.Type.Counter);
+        String name = NamingConvention.snakeCase.name("a.Name.with.Words", Meter.Type.COUNTER);
         assertThat(name).isEqualTo("a_Name_with_Words");
     }
 
     @Test
     void upperCamelCase() {
-        String name = NamingConvention.upperCamelCase.name("a.name.with.words", Meter.Type.Counter);
+        String name = NamingConvention.upperCamelCase.name("a.name.with.words", Meter.Type.COUNTER);
         assertThat(name).isEqualTo("ANameWithWords");
     }
 }

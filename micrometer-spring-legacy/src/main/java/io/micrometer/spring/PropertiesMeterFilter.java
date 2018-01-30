@@ -60,7 +60,7 @@ public class PropertiesMeterFilter implements MeterFilter {
 
     @Override
     public HistogramConfig configure(Meter.Id id, HistogramConfig config) {
-        if (!id.getType().equals(Meter.Type.Timer) && !id.getType().equals(Meter.Type.DistributionSummary))
+        if (!id.getType().equals(Meter.Type.TIMER) && !id.getType().equals(Meter.Type.DISTRIBUTION_SUMMARY))
             return config;
 
         HistogramConfig.Builder builder = HistogramConfig.builder();
@@ -93,7 +93,7 @@ public class PropertiesMeterFilter implements MeterFilter {
             builder.histogramExpiry(histogramExpiry);
         }
 
-        if (id.getType().equals(Meter.Type.Timer)) {
+        if (id.getType().equals(Meter.Type.TIMER)) {
             Duration max = getMostSpecific(name -> props.getTimers().getMaximumExpectedValue().get(name), id.getName());
             if (max != null) {
                 builder.maximumExpectedValue(max.toNanos());
@@ -112,7 +112,7 @@ public class PropertiesMeterFilter implements MeterFilter {
                 }
                 builder.sla(slaNanos);
             }
-        } else if (id.getType().equals(Meter.Type.DistributionSummary)) {
+        } else if (id.getType().equals(Meter.Type.DISTRIBUTION_SUMMARY)) {
             Long max = getMostSpecific(name -> props.getSummaries().getMaximumExpectedValue().get(name), id.getName());
             if (max != null) {
                 builder.maximumExpectedValue(max);
