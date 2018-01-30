@@ -71,9 +71,9 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
     @Override
     public Iterable<Measurement> measure() {
         return Arrays.asList(
-            new Measurement(() -> (double) count(), Statistic.Count),
-            new Measurement(this::totalAmount, Statistic.Total),
-            new Measurement(this::max, Statistic.Max)
+            new Measurement(() -> (double) count(), Statistic.COUNT),
+            new Measurement(this::totalAmount, Statistic.TOTAL),
+            new Measurement(this::max, Statistic.MAX)
         );
     }
 }

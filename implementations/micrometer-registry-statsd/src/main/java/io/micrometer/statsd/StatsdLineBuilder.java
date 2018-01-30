@@ -88,7 +88,7 @@ class StatsdLineBuilder {
     }
 
     String count(long amount) {
-        return count(amount, Statistic.Count);
+        return count(amount, Statistic.COUNT);
     }
 
     String count(long amount, Statistic stat) {
@@ -96,7 +96,7 @@ class StatsdLineBuilder {
     }
 
     String gauge(double amount) {
-        return gauge(amount, Statistic.Value);
+        return gauge(amount, Statistic.VALUE);
     }
 
     String gauge(double amount, Statistic stat) {
@@ -113,11 +113,11 @@ class StatsdLineBuilder {
 
     private String line(String amount, @Nullable Statistic stat, String type) {
         switch (flavor) {
-            case Etsy:
+            case ETSY:
                 return metricName(stat) + ":" + amount + "|" + type;
-            case Datadog:
+            case DATADOG:
                 return metricName(stat) + ":" + amount + "|" + type + tags(stat, datadogTagString.apply(config.namingConvention()),":", "|#");
-            case Telegraf:
+            case TELEGRAF:
             default:
                 return metricName(stat) + tags(stat, telegrafTagString.apply(config.namingConvention()),"=", ",") + ":" + amount + "|" + type;
         }
@@ -135,10 +135,10 @@ class StatsdLineBuilder {
 
     private String metricName(@Nullable Statistic stat) {
         switch (flavor) {
-            case Etsy:
+            case ETSY:
                 return nameMapper.toHierarchicalName(stat != null ? id.withTag(stat) : id, config.namingConvention());
-            case Datadog:
-            case Telegraf:
+            case DATADOG:
+            case TELEGRAF:
             default:
                 return config.namingConvention().name(id.getName(), id.getType(), id.getBaseUnit());
         }

@@ -90,7 +90,7 @@ public interface GraphiteConfig extends DropwizardConfig {
         String v = get(prefix() + ".protocol");
 
         if(v == null)
-            return GraphiteProtocol.Pickled;
+            return GraphiteProtocol.PICKLED;
 
         for (GraphiteProtocol flavor : GraphiteProtocol.values()) {
             if(flavor.toString().equalsIgnoreCase(v))

@@ -50,8 +50,8 @@ public interface FunctionTimer extends Meter {
     @Override
     default Iterable<Measurement> measure() {
         return Arrays.asList(
-            new Measurement(this::count, Statistic.Count),
-            new Measurement(() -> totalTime(baseTimeUnit()), Statistic.TotalTime)
+            new Measurement(this::count, Statistic.COUNT),
+            new Measurement(() -> totalTime(baseTimeUnit()), Statistic.TOTAL_TIME)
         );
     }
 

@@ -59,10 +59,10 @@ public class SimpleMeterRegistry extends MeterRegistry {
 
         DistributionSummary summary;
         switch (config.mode()) {
-            case Cumulative:
+            case CUMULATIVE:
                 summary = new CumulativeDistributionSummary(id, clock, merged);
                 break;
-            case Step:
+            case STEP:
             default:
                 summary = new StepDistributionSummary(id, clock, merged);
                 break;
@@ -98,10 +98,10 @@ public class SimpleMeterRegistry extends MeterRegistry {
 
         Timer timer;
         switch (config.mode()) {
-            case Cumulative:
+            case CUMULATIVE:
                 timer = new CumulativeTimer(id, clock, merged, pauseDetector, getBaseTimeUnit());
                 break;
-            case Step:
+            case STEP:
             default:
                 timer = new StepTimer(id, clock, merged, pauseDetector, getBaseTimeUnit());
                 break;
@@ -133,9 +133,9 @@ public class SimpleMeterRegistry extends MeterRegistry {
     @Override
     protected Counter newCounter(Meter.Id id) {
         switch (config.mode()) {
-            case Cumulative:
+            case CUMULATIVE:
                 return new CumulativeCounter(id);
-            case Step:
+            case STEP:
             default:
                 return new StepCounter(id, clock, config.step().toMillis());
         }

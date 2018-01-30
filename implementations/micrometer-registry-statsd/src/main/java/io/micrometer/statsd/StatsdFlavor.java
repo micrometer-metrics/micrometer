@@ -19,12 +19,12 @@ public enum StatsdFlavor {
     /**
      * https://github.com/etsy/statsd/blob/master/docs/metric_types.md
      */
-    Etsy,
+    ETSY,
 
     /**
      * https://docs.datadoghq.com/guides/dogstatsd/#datagram-format
      */
-    Datadog,
+    DATADOG,
 
     /**
      * https://www.influxdata.com/blog/getting-started-with-sending-statsd-metrics-to-telegraf-influxdb/
@@ -32,5 +32,5 @@ public enum StatsdFlavor {
      * For gauges to work as expected, you should set `delete_gauges = false` in your input options as documented here:
      * https://github.com/influxdata/telegraf/tree/master/plugins/inputs/statsd
      */
-    Telegraf
+    TELEGRAF
 }

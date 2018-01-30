@@ -57,13 +57,13 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
     private static GraphiteReporter defaultGraphiteReporter(GraphiteConfig config, MetricRegistry metricRegistry) {
         GraphiteSender sender;
         switch (config.protocol()) {
-            case Plaintext:
+            case PLAINTEXT:
                 sender = new Graphite(new InetSocketAddress(config.host(), config.port()));
                 break;
-            case Udp:
+            case UDP:
                 sender = new GraphiteUDP(new InetSocketAddress(config.host(), config.port()));
                 break;
-            case Pickled:
+            case PICKLED:
             default:
                 sender = new PickledGraphite(new InetSocketAddress(config.host(), config.port()));
         }

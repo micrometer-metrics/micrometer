@@ -19,10 +19,10 @@ public enum CountingMode {
     /**
      * Counts and totals are monotonically increasing.
      */
-    Cumulative,
+    CUMULATIVE,
 
     /**
      * Rate normalize counts and totals.
      */
-    Step
+    STEP
 }

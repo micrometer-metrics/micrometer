@@ -148,13 +148,13 @@ class StatsdMeterRegistryTest {
     void counterLineProtocol(StatsdFlavor flavor) {
         String line = null;
         switch (flavor) {
-            case Etsy:
+            case ETSY:
                 line = "myCounter.myTag.val.statistic.count:2|c";
                 break;
-            case Datadog:
+            case DATADOG:
                 line = "my.counter:2|c|#statistic:count,my.tag:val";
                 break;
-            case Telegraf:
+            case TELEGRAF:
                 line = "my_counter,statistic=count,my_tag=val:2|c";
         }
 
@@ -166,13 +166,13 @@ class StatsdMeterRegistryTest {
     void gaugeLineProtocol(StatsdFlavor flavor) {
         String line = null;
         switch (flavor) {
-            case Etsy:
+            case ETSY:
                 line = "myGauge.myTag.val.statistic.value:2|g";
                 break;
-            case Datadog:
+            case DATADOG:
                 line = "my.gauge:2|g|#statistic:value,my.tag:val";
                 break;
-            case Telegraf:
+            case TELEGRAF:
                 line = "my_gauge,statistic=value,my_tag=val:2|g";
                 break;
         }
@@ -186,13 +186,13 @@ class StatsdMeterRegistryTest {
     void timerLineProtocol(StatsdFlavor flavor) {
         String line = null;
         switch (flavor) {
-            case Etsy:
+            case ETSY:
                 line = "myTimer.myTag.val:1|ms";
                 break;
-            case Datadog:
+            case DATADOG:
                 line = "my.timer:1|ms|#my.tag:val";
                 break;
-            case Telegraf:
+            case TELEGRAF:
                 line = "my_timer,my_tag=val:1|ms";
         }
 
@@ -205,13 +205,13 @@ class StatsdMeterRegistryTest {
     void summaryLineProtocol(StatsdFlavor flavor) {
         String line = null;
         switch (flavor) {
-            case Etsy:
+            case ETSY:
                 line = "mySummary.myTag.val:1|h";
                 break;
-            case Datadog:
+            case DATADOG:
                 line = "my.summary:1|h|#my.tag:val";
                 break;
-            case Telegraf:
+            case TELEGRAF:
                 line = "my_summary,my_tag=val:1|h";
         }
 
@@ -227,19 +227,19 @@ class StatsdMeterRegistryTest {
             .withVirtualTime(() -> {
                 String[] lines = null;
                 switch (flavor) {
-                    case Etsy:
+                    case ETSY:
                         lines = new String[]{
                             "myLongTask.myTag.val.statistic.activetasks:1|c",
                             "myLongTaskDuration.myTag.val.statistic.value:1|c",
                         };
                         break;
-                    case Datadog:
+                    case DATADOG:
                         lines = new String[]{
                             "my.long.task:1|c|#statistic:activetasks,myTag:val",
                             "my.long.task:1|c|#statistic:duration,myTag:val",
                         };
                         break;
-                    case Telegraf:
+                    case TELEGRAF:
                         lines = new String[]{
                             "myLongTask,statistic=activetasks,myTag=val:1|c",
                             "myLongTask,statistic=duration,myTag=val:1|c",
@@ -261,6 +261,6 @@ class StatsdMeterRegistryTest {
             r.gauge("my.gauge", n);
             r.config().namingConvention((name, type, baseUnit) -> name.toUpperCase());
             n.addAndGet(1);
-        }, StatsdFlavor.Etsy, "MY.GAUGE.statistic.value:2|g");
+        }, StatsdFlavor.ETSY, "MY.GAUGE.statistic.value:2|g");
     }
 }

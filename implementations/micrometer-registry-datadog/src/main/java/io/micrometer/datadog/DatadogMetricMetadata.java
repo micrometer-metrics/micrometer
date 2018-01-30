@@ -65,9 +65,9 @@ class DatadogMetricMetadata {
         this.overrideBaseUnit = overrideBaseUnit;
 
         switch (statistic) {
-            case Count:
-            case Total:
-            case TotalTime:
+            case COUNT:
+            case TOTAL:
+            case TOTAL_TIME:
                 this.type = "count";
                 break;
             default:

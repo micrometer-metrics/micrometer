@@ -114,6 +114,7 @@ public class JCacheMetrics implements MeterBinder {
      * Defining cache statistics parameters as constants.
      */
     private enum CacheStatistics {
+        // these constants are capitalized to match the object names found in JMX
         CacheHits, CacheHitPercentage,
         CacheMisses, CacheMissPercentage,
         CacheGets, CachePuts, CacheRemovals, CacheEvictions,

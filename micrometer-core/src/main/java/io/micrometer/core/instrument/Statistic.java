@@ -24,40 +24,50 @@ public enum Statistic {
     /**
      * The sum of the amounts recorded.
      */
-    Total,
+    TOTAL("total"),
 
     /**
      * The sum of the times recorded. Always reported in nanoseconds.
      */
-    TotalTime,
+    TOTAL_TIME("totalTime"),
 
     /**
      * Rate per second for calls.
      */
-    Count,
+    COUNT("count"),
 
     /**
      * The maximum amount recorded. When this represents a time, it is always reported in nanoseconds.
      */
-    Max,
+    MAX("max"),
 
     /**
      * Instantaneous value, such as those reported by gauges.
      **/
-    Value,
+    VALUE("value"),
 
     /**
      * Undetermined.
      */
-    Unknown,
+    UNKNOWN("unknown"),
 
     /**
      * Number of currently active tasks for a long task timer.
      */
-    ActiveTasks,
+    ACTIVE_TASKS("activeTasks"),
 
     /**
      * Duration of a running task in a long task timer. Always reported in nanoseconds.
      */
-    Duration,
+    DURATION("duration");
+
+    private final String tagValueRepresentation;
+
+    Statistic(String tagValueRepresentation) {
+        this.tagValueRepresentation = tagValueRepresentation;
+    }
+
+    public String getTagValueRepresentation() {
+        return tagValueRepresentation;
+    }
 }

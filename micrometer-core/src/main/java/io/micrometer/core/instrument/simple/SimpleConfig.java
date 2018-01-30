@@ -38,7 +38,7 @@ public interface SimpleConfig extends StepRegistryConfig {
     default CountingMode mode() {
         String v = get(prefix() + ".mode");
         if (v == null)
-            return CountingMode.Cumulative;
+            return CountingMode.CUMULATIVE;
         for (CountingMode countingMode : CountingMode.values()) {
             if (v.equalsIgnoreCase(countingMode.name()))
                 return countingMode;

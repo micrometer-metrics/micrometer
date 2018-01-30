@@ -146,7 +146,7 @@ public class SampleRegistries {
 
             @Override
             public StatsdFlavor flavor() {
-                return StatsdFlavor.Datadog;
+                return StatsdFlavor.DATADOG;
             }
         }, Clock.SYSTEM);
     }
@@ -166,7 +166,7 @@ public class SampleRegistries {
 
             @Override
             public StatsdFlavor flavor() {
-                return StatsdFlavor.Telegraf;
+                return StatsdFlavor.TELEGRAF;
             }
         }, Clock.SYSTEM);
     }

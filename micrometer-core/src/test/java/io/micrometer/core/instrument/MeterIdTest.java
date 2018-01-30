@@ -24,7 +24,7 @@ class MeterIdTest {
     @Test
     void withStatistic() {
         Meter.Id id = new Meter.Id("my.id", emptyList(), null, null, Meter.Type.Timer);
-        assertThat(id.withTag(Statistic.TotalTime).getTags()).contains(Tag.of("statistic", "totalTime"));
+        assertThat(id.withTag(Statistic.TOTAL_TIME).getTags()).contains(Tag.of("statistic", "totalTime"));
     }
 
     @Test

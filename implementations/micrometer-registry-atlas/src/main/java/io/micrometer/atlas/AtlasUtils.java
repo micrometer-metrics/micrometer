@@ -24,19 +24,19 @@ public class AtlasUtils {
     @Nullable
     static com.netflix.spectator.api.Statistic toSpectatorStatistic(Statistic stat) {
         switch (stat) {
-            case Count:
+            case COUNT:
                 return count;
-            case TotalTime:
+            case TOTAL_TIME:
                 return totalTime;
-            case Total:
+            case TOTAL:
                 return totalAmount;
-            case Value:
+            case VALUE:
                 return gauge;
-            case ActiveTasks:
+            case ACTIVE_TASKS:
                 return activeTasks;
-            case Duration:
+            case DURATION:
                 return duration;
-            case Max:
+            case MAX:
                 return max;
         }
         return null;

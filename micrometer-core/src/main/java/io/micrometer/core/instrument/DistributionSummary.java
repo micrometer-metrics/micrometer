@@ -74,8 +74,8 @@ public interface DistributionSummary extends Meter {
     @Override
     default Iterable<Measurement> measure() {
         return Arrays.asList(
-            new Measurement(() -> (double) count(), Statistic.Count),
-            new Measurement(this::totalAmount, Statistic.Total)
+            new Measurement(() -> (double) count(), Statistic.COUNT),
+            new Measurement(this::totalAmount, Statistic.TOTAL)
         );
     }
 

@@ -161,9 +161,9 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         Meter.Id id = timer.getId();
 
-        addToMetadataList(metadata, id, "count", Statistic.Count, "occurrence");
-        addToMetadataList(metadata, id, "avg", Statistic.Value, null);
-        addToMetadataList(metadata, id, "sum", Statistic.TotalTime, null);
+        addToMetadataList(metadata, id, "count", Statistic.COUNT, "occurrence");
+        addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
+        addToMetadataList(metadata, id, "sum", Statistic.TOTAL_TIME, null);
 
         // we can't know anything about max and percentiles originating from a function timer
         return Stream.of(
@@ -183,16 +183,16 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         metrics.add(writeMetric(id, "avg", wallTime, snapshot.mean(getBaseTimeUnit())));
         metrics.add(writeMetric(id, "max", wallTime, snapshot.max(getBaseTimeUnit())));
 
-        addToMetadataList(metadata, id, "sum", Statistic.TotalTime, null);
-        addToMetadataList(metadata, id, "count", Statistic.Count, "occurrence");
-        addToMetadataList(metadata, id, "avg", Statistic.Value, null);
-        addToMetadataList(metadata, id, "max", Statistic.Max, null);
+        addToMetadataList(metadata, id, "sum", Statistic.TOTAL_TIME, null);
+        addToMetadataList(metadata, id, "count", Statistic.COUNT, "occurrence");
+        addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
+        addToMetadataList(metadata, id, "max", Statistic.MAX, null);
 
         for (ValueAtPercentile v : snapshot.percentileValues()) {
             String suffix = DoubleFormat.toString(v.percentile() * 100) + "percentile";
             metrics.add(writeMetric(id, suffix, wallTime, v.value(getBaseTimeUnit())));
 
-            addToMetadataList(metadata, id, suffix, Statistic.Value, null);
+            addToMetadataList(metadata, id, suffix, Statistic.VALUE, null);
         }
 
         return metrics.build();
@@ -209,16 +209,16 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         metrics.add(writeMetric(id, "avg", wallTime, snapshot.mean()));
         metrics.add(writeMetric(id, "max", wallTime, snapshot.max()));
 
-        addToMetadataList(metadata, id, "sum", Statistic.Total, null);
-        addToMetadataList(metadata, id, "count", Statistic.Count, "occurrence");
-        addToMetadataList(metadata, id, "avg", Statistic.Value, null);
-        addToMetadataList(metadata, id, "max", Statistic.Max, null);
+        addToMetadataList(metadata, id, "sum", Statistic.TOTAL, null);
+        addToMetadataList(metadata, id, "count", Statistic.COUNT, "occurrence");
+        addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
+        addToMetadataList(metadata, id, "max", Statistic.MAX, null);
 
         for (ValueAtPercentile v : snapshot.percentileValues()) {
             String suffix = DoubleFormat.toString(v.percentile() * 100) + "percentile";
             metrics.add(writeMetric(id, suffix, wallTime, v.value()));
 
-            addToMetadataList(metadata, id, suffix, Statistic.Value, null);
+            addToMetadataList(metadata, id, suffix, Statistic.VALUE, null);
         }
 
         return metrics.build();

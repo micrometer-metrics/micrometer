@@ -35,7 +35,7 @@ public interface Gauge extends Meter {
 
     @Override
     default Iterable<Measurement> measure() {
-        return Collections.singletonList(new Measurement(this::value, Statistic.Value));
+        return Collections.singletonList(new Measurement(this::value, Statistic.VALUE));
     }
 
     @Override

@@ -43,7 +43,7 @@ public interface StatsdConfig extends MeterRegistryConfig {
         // vanilla StatsD (Etsy), and Telegraf supports Datadog's format with a configuration
         // option.
         if(v == null)
-            return StatsdFlavor.Datadog;
+            return StatsdFlavor.DATADOG;
 
         for (StatsdFlavor flavor : StatsdFlavor.values()) {
             if(flavor.toString().equalsIgnoreCase(v))

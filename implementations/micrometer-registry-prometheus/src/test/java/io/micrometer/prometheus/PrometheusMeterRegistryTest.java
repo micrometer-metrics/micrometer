@@ -86,7 +86,7 @@ class PrometheusMeterRegistryTest {
     @DisplayName("custom meters can be typed")
     @Test
     void typedCustomMeters() {
-        Meter.builder("name", Meter.Type.Counter, Collections.singletonList(new Measurement(() -> 1.0, Statistic.Count)))
+        Meter.builder("name", Meter.Type.Counter, Collections.singletonList(new Measurement(() -> 1.0, Statistic.COUNT)))
             .register(registry);
 
         assertThat(registry.getPrometheusRegistry().metricFamilySamples().nextElement().type)

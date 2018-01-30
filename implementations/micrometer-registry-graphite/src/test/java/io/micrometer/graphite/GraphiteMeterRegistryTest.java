@@ -63,7 +63,7 @@ class GraphiteMeterRegistryTest {
 
             @Override
             public GraphiteProtocol protocol() {
-                return GraphiteProtocol.Udp;
+                return GraphiteProtocol.UDP;
             }
 
             @Override

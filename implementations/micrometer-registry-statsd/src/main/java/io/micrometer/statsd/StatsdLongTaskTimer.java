@@ -40,12 +40,12 @@ public class StatsdLongTaskTimer extends DefaultLongTaskTimer implements StatsdP
     public void poll() {
         long active = activeTasks();
         if(lastActive.getAndSet(active) != active) {
-            publisher.onNext(lineBuilder.gauge(active, Statistic.ActiveTasks));
+            publisher.onNext(lineBuilder.gauge(active, Statistic.ACTIVE_TASKS));
         }
 
         double duration = duration(TimeUnit.MILLISECONDS);
         if(lastDuration.getAndSet(duration) != duration) {
-            publisher.onNext(lineBuilder.gauge(duration, Statistic.Duration));
+            publisher.onNext(lineBuilder.gauge(duration, Statistic.DURATION));
         }
     }
 }

@@ -54,8 +54,8 @@ class DropwizardMeterRegistryTest {
     @Test
     void customMeasurementsThatDifferOnlyInTagValue() {
         Meter.builder("my.custom", Meter.Type.Gauge, Arrays.asList(
-            new Measurement(() -> 1.0, Statistic.Count),
-            new Measurement(() -> 2.0, Statistic.Total)
+            new Measurement(() -> 1.0, Statistic.COUNT),
+            new Measurement(() -> 2.0, Statistic.TOTAL)
         )).register(registry);
     }
 }

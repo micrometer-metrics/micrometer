@@ -122,7 +122,7 @@ public abstract class MeterRegistryCompatibilityKit {
         assertThat(ft.measure())
             .anySatisfy(ms -> {
                 TimeUnit baseUnit = TimeUnit.valueOf(requireNonNull(ft.getId().getBaseUnit()).toUpperCase());
-                assertThat(ms.getStatistic()).isEqualTo(Statistic.TotalTime);
+                assertThat(ms.getStatistic()).isEqualTo(Statistic.TOTAL_TIME);
                 assertThat(TimeUtils.convert(ms.getValue(), baseUnit, TimeUnit.MILLISECONDS)).isEqualTo(1);
             });
     }

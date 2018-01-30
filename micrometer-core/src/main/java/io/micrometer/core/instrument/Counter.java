@@ -50,7 +50,7 @@ public interface Counter extends Meter {
 
     @Override
     default Iterable<Measurement> measure() {
-        return Collections.singletonList(new Measurement(this::count, Statistic.Count));
+        return Collections.singletonList(new Measurement(this::count, Statistic.COUNT));
     }
 
     @Override

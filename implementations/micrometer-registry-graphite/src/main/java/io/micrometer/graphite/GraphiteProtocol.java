@@ -16,7 +16,7 @@
 package io.micrometer.graphite;
 
 public enum GraphiteProtocol {
-    Plaintext,
-    Udp,
-    Pickled
+    PLAINTEXT,
+    UDP,
+    PICKLED
 }

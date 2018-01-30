@@ -158,9 +158,9 @@ public interface Timer extends Meter {
     @Override
     default Iterable<Measurement> measure() {
         return Arrays.asList(
-            new Measurement(() -> (double) count(), Statistic.Count),
-            new Measurement(() -> totalTime(baseTimeUnit()), Statistic.TotalTime),
-            new Measurement(() -> max(baseTimeUnit()), Statistic.Max)
+            new Measurement(() -> (double) count(), Statistic.COUNT),
+            new Measurement(() -> totalTime(baseTimeUnit()), Statistic.TOTAL_TIME),
+            new Measurement(() -> max(baseTimeUnit()), Statistic.MAX)
         );
     }
 

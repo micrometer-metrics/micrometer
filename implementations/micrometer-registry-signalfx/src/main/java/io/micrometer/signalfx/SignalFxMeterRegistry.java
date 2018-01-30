@@ -122,16 +122,16 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
             String statSuffix = NamingConvention.camelCase.tagKey(measurement.getStatistic().toString());
 
             switch (measurement.getStatistic()) {
-                case Total:
-                case TotalTime:
-                case Count:
-                case Duration:
+                case TOTAL:
+                case TOTAL_TIME:
+                case COUNT:
+                case DURATION:
                     addDatapoint(meter, COUNTER, statSuffix, session, measurement.getValue(), timestamp);
                     break;
-                case Max:
-                case Value:
-                case Unknown:
-                case ActiveTasks:
+                case MAX:
+                case VALUE:
+                case UNKNOWN:
+                case ACTIVE_TASKS:
                     addDatapoint(meter, GAUGE, statSuffix, session, measurement.getValue(), timestamp);
                     break;
             }

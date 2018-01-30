@@ -62,10 +62,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
         this.nameMapper = nameMapper;
 
         switch (statsdConfig.flavor()) {
-            case Datadog:
+            case DATADOG:
                 config().namingConvention(NamingConvention.dot);
                 break;
-            case Telegraf:
+            case TELEGRAF:
                 config().namingConvention(NamingConvention.snakeCase);
                 break;
             default:
@@ -135,15 +135,15 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
         for (double percentile : histogramConfig.getPercentiles()) {
             switch (statsdConfig.flavor()) {
-                case Datadog:
+                case DATADOG:
                     gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + "percentile", timer,
                         t -> t.percentile(percentile, getBaseTimeUnit()));
                     break;
-                case Telegraf:
+                case TELEGRAF:
                     gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + ".percentile", timer,
                         t -> t.percentile(percentile, getBaseTimeUnit()));
                     break;
-                case Etsy:
+                case ETSY:
                     gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile * 100)),
                         timer, t -> t.percentile(percentile, getBaseTimeUnit()));
                     break;
@@ -168,15 +168,15 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
         for (double percentile : histogramConfig.getPercentiles()) {
             switch (statsdConfig.flavor()) {
-                case Datadog:
+                case DATADOG:
                     gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + "percentile", summary,
                         s -> s.percentile(percentile));
                     break;
-                case Telegraf:
+                case TELEGRAF:
                     gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + ".percentile", summary,
                         s -> s.percentile(percentile));
                     break;
-                case Etsy:
+                case ETSY:
                     gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile * 100)),
                         summary, s -> s.percentile(percentile));
                     break;
@@ -213,15 +213,15 @@ public class StatsdMeterRegistry extends MeterRegistry {
         measurements.forEach(ms -> {
             StatsdLineBuilder line = lineBuilder(id);
             switch (ms.getStatistic()) {
-                case Count:
-                case Total:
-                case TotalTime:
+                case COUNT:
+                case TOTAL:
+                case TOTAL_TIME:
                     pollableMeters.add(() -> publisher.onNext(line.count((long) ms.getValue(), ms.getStatistic())));
                     break;
-                case Value:
-                case ActiveTasks:
-                case Duration:
-                case Unknown:
+                case VALUE:
+                case ACTIVE_TASKS:
+                case DURATION:
+                case UNKNOWN:
                     pollableMeters.add(() -> publisher.onNext(line.gauge(ms.getValue(), ms.getStatistic())));
                     break;
             }

@@ -302,17 +302,17 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
                     String name = conventionName;
                     switch (m.getStatistic()) {
-                        case Total:
-                        case TotalTime:
+                        case TOTAL:
+                        case TOTAL_TIME:
                             name += "_sum";
                             break;
-                        case Max:
+                        case MAX:
                             name += "_max";
                             break;
-                        case ActiveTasks:
+                        case ACTIVE_TASKS:
                             name += "_active_count";
                             break;
-                        case Duration:
+                        case DURATION:
                             name += "_duration_sum";
                             break;
                     }

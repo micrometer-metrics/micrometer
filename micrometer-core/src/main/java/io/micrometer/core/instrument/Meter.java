@@ -18,7 +18,6 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
 
-import java.beans.Introspector;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -114,7 +113,7 @@ public interface Meter {
          * @return A new id with the provided tag. The source id remains unchanged.
          */
         public Id withTag(Statistic statistic) {
-            return withTag(Tag.of("statistic", Introspector.decapitalize(statistic.toString())));
+            return withTag(Tag.of("statistic", statistic.getTagValueRepresentation()));
         }
 
         /**
