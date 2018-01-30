@@ -4,7 +4,7 @@ include 'micrometer-core'
 include 'micrometer-spring-legacy'
 include 'micrometer-jersey2'
 
-['core', 'boot1', 'boot2'].each { sample ->
+['core', 'boot1'].each { sample ->
     include "micrometer-samples-$sample"
     project(":micrometer-samples-$sample").projectDir = new File(rootProject.projectDir, "samples/micrometer-samples-$sample")
 }
