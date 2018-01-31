@@ -97,7 +97,7 @@ public class CompositeMeterRegistryPostProcessor implements BeanDefinitionRegist
 
         ConstructorArgumentValues arguments = new ConstructorArgumentValues();
         arguments.addIndexedArgumentValue(0,
-            new ConstructorArgumentValues.ValueHolder(null, Clock.class.getName()));
+            new ConstructorArgumentValues.ValueHolder(Clock.SYSTEM, Clock.class.getName()));
         arguments.addIndexedArgumentValue(1, getBeanReferences(registryBeans));
         definition.setConstructorArgumentValues(arguments);
 

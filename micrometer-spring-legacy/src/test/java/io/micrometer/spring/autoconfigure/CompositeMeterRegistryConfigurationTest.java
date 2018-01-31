@@ -48,6 +48,11 @@ public class CompositeMeterRegistryConfigurationTest {
             .hasAtLeastOneElementOfType(PrometheusMeterRegistry.class);
     }
 
+    @Test
+    public void compositeRegistryIsCreatedWithClock() {
+        assertThat(registry.config().clock()).isNotNull();
+    }
+
     @SpringBootApplication(scanBasePackages = "ignored")
     static class MetricsApp {
     }
