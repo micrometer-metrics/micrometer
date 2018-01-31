@@ -27,17 +27,22 @@ import io.micrometer.spring.web.client.MetricsRestTemplateCustomizer;
 import io.micrometer.spring.web.client.RestTemplateExchangeTagsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.client.AsyncRestTemplate;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Configuration for {@link RestTemplate}-related metrics.
+ * Configuration for {@link RestTemplate}- and {@link AsyncRestTemplate}-related metrics.
  *
  * @author Jon Schneider
  * @author Phillip Webb
@@ -45,6 +50,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Configuration
 @ConditionalOnClass(name = {
     "org.springframework.web.client.RestTemplate",
+    "org.springframework.web.client.AsyncRestTemplate",
     "org.springframework.boot.web.client.RestTemplateCustomizer" // didn't exist until Boot 1.4
 })
 public class RestTemplateMetricsConfiguration {
@@ -62,6 +68,17 @@ public class RestTemplateMetricsConfiguration {
                                                                        MetricsProperties properties) {
         return new MetricsRestTemplateCustomizer(meterRegistry, restTemplateTagConfigurer,
             properties.getWeb().getClient().getRequestsMetricName());
+    }
+
+    @Bean
+    public SmartInitializingSingleton metricsAsyncRestTemplateInitializer(final ObjectProvider<List<AsyncRestTemplate>> asyncRestTemplatesProvider,
+                                                                          final MetricsRestTemplateCustomizer customizer) {
+        return () -> {
+            final List<AsyncRestTemplate> asyncRestTemplates = asyncRestTemplatesProvider.getIfAvailable();
+            if (!CollectionUtils.isEmpty(asyncRestTemplates)) {
+                asyncRestTemplates.forEach(customizer::customize);
+            }
+        };
     }
 
     @Bean
