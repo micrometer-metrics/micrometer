@@ -151,11 +151,6 @@ public interface LongTaskTimer extends Meter {
         );
     }
 
-    @Override
-    default Type type() {
-        return Type.LONG_TASK_TIMER;
-    }
-
     class Sample {
         private final LongTaskTimer timer;
         private final long task;

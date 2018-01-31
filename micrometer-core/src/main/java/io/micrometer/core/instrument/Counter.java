@@ -53,11 +53,6 @@ public interface Counter extends Meter {
         return Collections.singletonList(new Measurement(this::count, Statistic.COUNT));
     }
 
-    @Override
-    default Type type() {
-        return Type.COUNTER;
-    }
-
     /**
      * Fluent builder for counters.
      */

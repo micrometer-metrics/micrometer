@@ -38,11 +38,6 @@ public interface Gauge extends Meter {
         return Collections.singletonList(new Measurement(this::value, Statistic.VALUE));
     }
 
-    @Override
-    default Type type() {
-        return Type.GAUGE;
-    }
-
     /**
      * Fluent builder for gauges.
      *

@@ -166,11 +166,6 @@ public interface Timer extends Meter {
 
     TimeUnit baseTimeUnit();
 
-    @Override
-    default Type type() {
-        return Type.TIMER;
-    }
-
     class Sample {
         private final long startTime;
         private final Clock clock;

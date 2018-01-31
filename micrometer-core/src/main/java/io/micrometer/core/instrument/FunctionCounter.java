@@ -42,11 +42,6 @@ public interface FunctionCounter extends Meter {
         return Collections.singletonList(new Measurement(this::count, Statistic.COUNT));
     }
 
-    @Override
-    default Meter.Type type() {
-        return Meter.Type.COUNTER;
-    }
-
     /**
      * Fluent builder for function counters.
      *
