@@ -15,17 +15,13 @@
  */
 package io.micrometer.spring.autoconfigure;
 
-import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.config.*;
-import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
-import org.springframework.beans.factory.support.GenericBeanDefinition;
-import org.springframework.beans.factory.support.ManagedList;
+import org.springframework.beans.factory.support.*;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
@@ -94,9 +90,8 @@ public class CompositeMeterRegistryPostProcessor implements BeanDefinitionRegist
         GenericBeanDefinition definition = new GenericBeanDefinition();
         definition.setBeanClass(CompositeMeterRegistry.class);
         definition.setPrimary(true);
-
+        definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);
         ConstructorArgumentValues arguments = new ConstructorArgumentValues();
-        arguments.addIndexedArgumentValue(0, this.beanFactory.getBean(Clock.class));
         arguments.addIndexedArgumentValue(1, getBeanReferences(registryBeans));
         definition.setConstructorArgumentValues(arguments);
 
