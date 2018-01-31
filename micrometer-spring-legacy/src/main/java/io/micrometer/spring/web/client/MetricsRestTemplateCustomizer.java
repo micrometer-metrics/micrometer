@@ -17,7 +17,9 @@ package io.micrometer.spring.web.client;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.boot.web.client.RestTemplateCustomizer;
+import org.springframework.http.client.AsyncClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.web.client.AsyncRestTemplate;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriTemplateHandler;
 
@@ -55,6 +57,16 @@ public class MetricsRestTemplateCustomizer implements RestTemplateCustomizer {
         templateHandler = this.interceptor.createUriTemplateHandler(templateHandler);
         restTemplate.setUriTemplateHandler(templateHandler);
         List<ClientHttpRequestInterceptor> interceptors = new ArrayList<>();
+        interceptors.add(this.interceptor);
+        interceptors.addAll(restTemplate.getInterceptors());
+        restTemplate.setInterceptors(interceptors);
+    }
+
+    public void customize(final AsyncRestTemplate restTemplate) {
+        UriTemplateHandler templateHandler = restTemplate.getUriTemplateHandler();
+        templateHandler = this.interceptor.createUriTemplateHandler(templateHandler);
+        restTemplate.setUriTemplateHandler(templateHandler);
+        List<AsyncClientHttpRequestInterceptor> interceptors = new ArrayList<>();
         interceptors.add(this.interceptor);
         interceptors.addAll(restTemplate.getInterceptors());
         restTemplate.setInterceptors(interceptors);

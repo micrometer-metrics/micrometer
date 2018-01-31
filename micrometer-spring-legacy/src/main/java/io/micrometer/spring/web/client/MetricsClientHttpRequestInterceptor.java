@@ -15,14 +15,19 @@
  */
 package io.micrometer.spring.web.client;
 
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.Nullable;
 import org.springframework.core.NamedThreadLocal;
 import org.springframework.http.HttpRequest;
+import org.springframework.http.client.AsyncClientHttpRequestExecution;
+import org.springframework.http.client.AsyncClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.util.concurrent.ListenableFuture;
+import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.web.util.UriTemplateHandler;
 
 import java.io.IOException;
@@ -37,9 +42,9 @@ import java.util.concurrent.TimeUnit;
  * @author Jon Schneider
  * @author Phillip Webb
  */
-class MetricsClientHttpRequestInterceptor implements ClientHttpRequestInterceptor {
+class MetricsClientHttpRequestInterceptor implements ClientHttpRequestInterceptor, AsyncClientHttpRequestInterceptor {
 
-    private static final ThreadLocal<String> urlTemplate = new NamedThreadLocal<>(
+    private static final ThreadLocal<String> urlTemplateHolder = new NamedThreadLocal<>(
         "Rest Template URL Template");
 
     private final MeterRegistry meterRegistry;
@@ -55,16 +60,49 @@ class MetricsClientHttpRequestInterceptor implements ClientHttpRequestIntercepto
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] body,
                                         ClientHttpRequestExecution execution) throws IOException {
-        long startTime = System.nanoTime();
+        final String urlTemplate = ensureLeadingSlash(urlTemplateHolder.get());
+        urlTemplateHolder.remove();
+        final Clock clock = meterRegistry.config().clock();
+        final long startTime = clock.monotonicTime();
         ClientHttpResponse response = null;
         try {
             response = execution.execute(request, body);
             return response;
         } finally {
-            getTimeBuilder(request, response).register(this.meterRegistry)
-                .record(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
-            urlTemplate.remove();
+            getTimeBuilder(urlTemplate, request, response).register(this.meterRegistry)
+                .record(clock.monotonicTime() - startTime, TimeUnit.NANOSECONDS);
         }
+    }
+
+    @Override
+    public ListenableFuture<ClientHttpResponse> intercept(HttpRequest request, byte[] body,
+                                                          AsyncClientHttpRequestExecution execution) throws IOException {
+        final String urlTemplate = ensureLeadingSlash(urlTemplateHolder.get());
+        urlTemplateHolder.remove();
+        final Clock clock = meterRegistry.config().clock();
+        final long startTime = clock.monotonicTime();
+        ListenableFuture<ClientHttpResponse> future;
+        try {
+            future = execution.executeAsync(request, body);
+        } catch (IOException e) {
+            getTimeBuilder(urlTemplate, request, null).register(meterRegistry)
+                .record(clock.monotonicTime() - startTime, TimeUnit.NANOSECONDS);
+            throw e;
+        }
+        future.addCallback(new ListenableFutureCallback<ClientHttpResponse>() {
+            @Override
+            public void onSuccess(final ClientHttpResponse response) {
+                getTimeBuilder(urlTemplate, request, response).register(meterRegistry)
+                    .record(clock.monotonicTime() - startTime, TimeUnit.NANOSECONDS);
+            }
+
+            @Override
+            public void onFailure(final Throwable ex) {
+                getTimeBuilder(urlTemplate, request, null).register(meterRegistry)
+                    .record(clock.monotonicTime() - startTime, TimeUnit.NANOSECONDS);
+            }
+        });
+        return future;
     }
 
     UriTemplateHandler createUriTemplateHandler(UriTemplateHandler delegate) {
@@ -72,28 +110,28 @@ class MetricsClientHttpRequestInterceptor implements ClientHttpRequestIntercepto
 
             @Override
             public URI expand(String url, Map<String, ?> arguments) {
-                urlTemplate.set(url);
+                urlTemplateHolder.set(url);
                 return delegate.expand(url, arguments);
             }
 
             @Override
             public URI expand(String url, Object... arguments) {
-                urlTemplate.set(url);
+                urlTemplateHolder.set(url);
                 return delegate.expand(url, arguments);
             }
         };
     }
 
-    private Timer.Builder getTimeBuilder(HttpRequest request,
+    private Timer.Builder getTimeBuilder(String urlTemplate, HttpRequest request,
                                          @Nullable ClientHttpResponse response) {
         return Timer.builder(this.metricName)
-            .tags(this.tagProvider.getTags(ensureLeadingSlash(urlTemplate.get()), request, response))
+            .tags(this.tagProvider.getTags(urlTemplate, request, response))
             .description("Timer of RestTemplate operation");
     }
 
     // This normalization improves tag value matching when one code path requests test/{id} and another
     // requests /test/{id}
-    private String ensureLeadingSlash(@Nullable String url) {
+    private static String ensureLeadingSlash(@Nullable String url) {
         if (url == null)
             return "/";
         return url.startsWith("/") ? url : "/" + url;
