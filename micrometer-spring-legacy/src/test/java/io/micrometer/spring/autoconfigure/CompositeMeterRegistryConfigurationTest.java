@@ -46,6 +46,8 @@ public class CompositeMeterRegistryConfigurationTest {
         assertThat(((CompositeMeterRegistry) registry).getRegistries())
             .hasAtLeastOneElementOfType(JmxMeterRegistry.class)
             .hasAtLeastOneElementOfType(PrometheusMeterRegistry.class);
+
+        assertThat(registry.config().clock()).isNotNull();
     }
 
     @SpringBootApplication(scanBasePackages = "ignored")

@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.*;
 
 import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Creates and manages your application's set of meters. Exporters use the meter registry to iterate
@@ -69,6 +70,7 @@ public abstract class MeterRegistry {
     private NamingConvention namingConvention = NamingConvention.snakeCase;
 
     protected MeterRegistry(Clock clock) {
+        requireNonNull(clock);
         this.clock = clock;
     }
 
