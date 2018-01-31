@@ -69,5 +69,10 @@ public class PrometheusExportConfiguration {
             CollectorRegistry collectorRegistry) {
             return new PrometheusScrapeEndpoint(collectorRegistry);
         }
+
+        @Bean
+        public PrometheusScrapeMvcEndpoint prometheusMvcEndpoint(PrometheusScrapeEndpoint delegate) {
+            return new PrometheusScrapeMvcEndpoint(delegate);
+        }
     }
 }
