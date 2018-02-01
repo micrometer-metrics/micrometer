@@ -16,7 +16,7 @@
 
 management.metrics.export.wavefront:
   enabled: true
-  # [proxy|direct]
+  # [proxy|direct|pcf]
   mode: proxy
   # proxy settings
   host: localhost
@@ -24,6 +24,8 @@ management.metrics.export.wavefront:
   # direct settings
   apihost: try.wavefront.com
   apitoken: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+  # pcf setting
+  servicename: wavefront-proxy
   step: PT10S
   test: false
   nameprefix: micrometer

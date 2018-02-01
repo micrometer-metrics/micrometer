@@ -26,7 +26,7 @@ public interface WavefrontConfig extends StepRegistryConfig {
     WavefrontConfig DEFAULT = k -> null;
 
     // mode to specify whether to use wavefront proxy or submit directly
-    public enum mode {proxy, direct};
+    public enum mode {proxy, direct, pcf};
 
     @Override
     default Duration step() {
@@ -81,6 +81,12 @@ public interface WavefrontConfig extends StepRegistryConfig {
     default String apihost() {
         String v = get(prefix() + ".apihost");
         return v == null ? null : v.trim().length() > 0 ? v : null;
+    }
+
+    @Nullable
+    default String servicename() {
+        String v = get(prefix() + ".servicename");
+        return v == null ? "wavefront-proxy" : v.trim().length() > 0 ? v : "wavefront-proxy";
     }
 
     /**

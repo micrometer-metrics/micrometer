@@ -32,6 +32,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+import com.fasterxml.jackson.databind.*;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
@@ -53,10 +54,39 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     public WavefrontMeterRegistry(WavefrontConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
         this.config = config;
-
         try {
-            this.wavefrontProxyHost = config.host();
-            this.wavefrontProxyPort = config.port();
+            if(config.mode() == WavefrontConfig.mode.proxy) {
+                this.wavefrontProxyHost = config.host();
+                this.wavefrontProxyPort = config.port();
+            }
+            else if(config.mode() == WavefrontConfig.mode.pcf) {
+                /**
+                 * pcf mode - reads proxy host and port setting from
+                 * VCAP_SERVICES system environment.
+                 */
+                String services = System.getenv("VCAP_SERVICES");
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode rootnode = mapper.readTree(services);
+                JsonNode servicename = rootnode.get(config.servicename());
+                if(servicename != null && servicename.isArray() && servicename.size() > 0) {
+                    JsonNode _one = servicename.get(0);
+                    JsonNode credentials = _one.get("credentials");
+                    if(credentials != null) {
+                        this.wavefrontProxyHost = credentials.get("hostname").textValue();
+                        this.wavefrontProxyPort = Integer.toString(credentials.get("port").intValue());
+                    }
+                    else {
+                        throw new Exception("JSON object from VCAP_SERVICES is missing credentials");
+                    }
+                }
+                else {
+                    throw new Exception("JSON object from VCAP_SERVICES is missing servicename " + config.servicename());
+                }
+            }
+            else {
+                this.wavefrontProxyHost = config.host();
+                this.wavefrontProxyPort = config.port();
+            }
         } catch (Exception e) {
             // not possible
             throw new RuntimeException(e);
@@ -89,7 +119,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                         return writeMeter(m);
                     });
 
-                if(config.mode() == WavefrontConfig.mode.proxy)
+                if(config.mode() == WavefrontConfig.mode.proxy || config.mode() == WavefrontConfig.mode.pcf)
                 {
                     buffer.append(stream.collect(joining("\n"))).append("\n");
                     try (Socket socket = new Socket(wavefrontProxyHost, Integer.parseInt(wavefrontProxyPort));
@@ -223,7 +253,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
      */
     private String writeMetric(Meter.Id id, @Nullable String suffix, long wallTime, double value) {
         String result = null;
-        if(config.mode() == WavefrontConfig.mode.proxy) {
+        if(config.mode() == WavefrontConfig.mode.proxy || config.mode() == WavefrontConfig.mode.pcf) {
             result = writeMetricProxy(id, suffix, wallTime, value);
         }
         else if(config.mode() == WavefrontConfig.mode.direct) {
