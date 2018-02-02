@@ -55,8 +55,9 @@ class DatadogMetricMetadata {
 
     private final Meter.Id id;
     private final String type;
-    @Nullable private final String overrideBaseUnit;
     private final boolean descriptionsEnabled;
+
+    @Nullable private final String overrideBaseUnit;
 
     DatadogMetricMetadata(Meter.Id id, Statistic statistic, boolean descriptionsEnabled,
                           @Nullable String overrideBaseUnit) {

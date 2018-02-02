@@ -42,10 +42,11 @@ import static java.util.Arrays.asList;
 @NonNullApi
 @NonNullFields
 public class ExecutorServiceMetrics implements MeterBinder {
-    @Nullable
-    private final ExecutorService executorService;
     private final String name;
     private final Iterable<Tag> tags;
+
+    @Nullable
+    private final ExecutorService executorService;
 
     public ExecutorServiceMetrics(@Nullable ExecutorService executorService, String name, Iterable<Tag> tags) {
         this.name = name;

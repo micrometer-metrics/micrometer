@@ -38,6 +38,7 @@ public class JCacheMetrics implements MeterBinder {
     private final String name;
     private final Iterable<Tag> tags;
     private ObjectName objectName;
+
     public JCacheMetrics(Cache<?, ?> cache, String name, Iterable<Tag> tags) {
         try {
             String cacheManagerUri = cache.getCacheManager().getURI().toString()

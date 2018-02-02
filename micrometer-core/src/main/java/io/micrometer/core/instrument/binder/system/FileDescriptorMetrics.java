@@ -38,11 +38,12 @@ import static java.util.Collections.emptyList;
 @NonNullApi
 @NonNullFields
 public class FileDescriptorMetrics implements MeterBinder {
-
     private final OperatingSystemMXBean osBean;
     private final Iterable<Tag> tags;
+
     @Nullable
     private final Method openFdsMethod;
+
     @Nullable
     private final Method maxFdsMethod;
 

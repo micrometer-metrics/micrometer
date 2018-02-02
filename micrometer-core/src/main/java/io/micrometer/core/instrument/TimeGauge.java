@@ -46,6 +46,7 @@ public interface TimeGauge extends Gauge {
         private final TimeUnit fUnits;
         private final ToDoubleFunction<T> f;
         private final List<Tag> tags = new ArrayList<>();
+
         @Nullable
         private String description;
 

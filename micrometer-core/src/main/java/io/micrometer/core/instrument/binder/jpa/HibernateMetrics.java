@@ -40,6 +40,7 @@ import java.util.function.ToDoubleFunction;
 public class HibernateMetrics implements MeterBinder {
 
     private final Iterable<Tag> tags;
+
     @Nullable
     private final Statistics stats;
 
