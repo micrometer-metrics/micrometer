@@ -33,8 +33,7 @@ import reactor.util.concurrent.Queues;
 
 import java.text.DecimalFormat;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
@@ -45,7 +44,7 @@ import java.util.function.ToLongFunction;
 public class StatsdMeterRegistry extends MeterRegistry {
     private final StatsdConfig statsdConfig;
     private final HierarchicalNameMapper nameMapper;
-    private final Collection<StatsdPollable> pollableMeters = Collections.synchronizedCollection(new LinkedList<>());
+    private final Collection<StatsdPollable> pollableMeters = new CopyOnWriteArrayList<>();
 
     private volatile UnicastProcessor<String> publisher;
     private Disposable.Swap udpClient = Disposables.swap();
@@ -90,13 +89,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
             .subscribe(client -> {
                 this.udpClient.replace(client);
 
-                // now that we're connected, start polling gauges
+                // now that we're connected, start polling gauges and other pollable meter types
                 meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
-                    .doOnEach(n -> {
-                        synchronized (pollableMeters) {
-                            pollableMeters.forEach(StatsdPollable::poll);
-                        }
-                    })
+                    .doOnEach(n -> pollableMeters.forEach(StatsdPollable::poll))
                     .subscribe());
             });
     }
