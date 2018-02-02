@@ -110,7 +110,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
                     }
                 }
 
-                logger.info("successfully sent " + batch.size() + " metrics to Signalfx");
+                logger.info("successfully sent " + batch.size() + " metrics to SignalFx");
             } catch (Throwable e) {
                 logger.warn("failed to send metrics", e);
             }
