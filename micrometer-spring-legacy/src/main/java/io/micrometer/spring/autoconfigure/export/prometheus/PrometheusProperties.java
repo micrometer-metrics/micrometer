@@ -15,9 +15,12 @@
  */
 package io.micrometer.spring.autoconfigure.export.prometheus;
 
+import io.micrometer.core.annotation.Incubating;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * {@link ConfigurationProperties} for configuring metrics export to Prometheus.
@@ -41,7 +44,13 @@ public class PrometheusProperties {
     /**
      * Step size (i.e. reporting frequency) to use.
      */
-    private Duration step;
+    private Duration step = Duration.ofMinutes(1);
+
+    /**
+     * Configuration options for using Prometheus Pushgateway, allowing metrics to be pushed
+     * when they cannot be scraped.
+     */
+    private PushgatewayProperties pushgateway = new PushgatewayProperties();
 
     public Boolean getEnabled() {
         return this.enabled;
@@ -67,4 +76,82 @@ public class PrometheusProperties {
         this.step = step;
     }
 
+    public PushgatewayProperties getPushgateway() {
+        return pushgateway;
+    }
+
+    public void setPushgateway(PushgatewayProperties pushgateway) {
+        this.pushgateway = pushgateway;
+    }
+
+    /**
+     * Configuration options for push-based interaction with Prometheus.
+     */
+    @Incubating(since = "1.0.0")
+    public static class PushgatewayProperties {
+        /**
+         * Enable publishing via a Prometheus Pushgateway.
+         */
+        private Boolean enabled = false;
+
+        /**
+         * Required host:port or ip:port of the Pushgateway.
+         */
+        private String baseUrl = "localhost:9091";
+
+        /**
+         * Required identifier for this application instance.
+         */
+        private String job;
+
+        /**
+         * Frequency with which to push metrics to Pushgateway.
+         */
+        private Duration pushRate = Duration.ofMinutes(1);
+
+        /**
+         * Used to group metrics in pushgateway. A common example is setting
+         */
+        private Map<String, String> groupingKeys = new HashMap<>();
+
+        public Boolean getEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(Boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getBaseUrl() {
+            return baseUrl;
+        }
+
+        public void setBaseUrl(String baseUrl) {
+            this.baseUrl = baseUrl;
+        }
+
+        public String getJob() {
+            return job;
+        }
+
+        public void setJob(String job) {
+            this.job = job;
+        }
+
+        public Duration getPushRate() {
+            return pushRate;
+        }
+
+        public void setPushRate(Duration pushRate) {
+            this.pushRate = pushRate;
+        }
+
+        public void setGroupingKeys(Map<String, String> groupingKeys) {
+            this.groupingKeys = groupingKeys;
+        }
+
+        public Map<String, String> getGroupingKeys() {
+            return groupingKeys;
+        }
+    }
 }

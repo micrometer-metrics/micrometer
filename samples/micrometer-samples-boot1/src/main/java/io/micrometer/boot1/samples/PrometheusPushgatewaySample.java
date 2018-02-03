@@ -22,8 +22,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
-public class PrometheusSample {
+public class PrometheusPushgatewaySample {
     public static void main(String[] args) {
-        new SpringApplicationBuilder(PrometheusSample.class).profiles("prometheus").run(args);
+        new SpringApplicationBuilder(PrometheusSample.class).profiles("prometheus-pushgateway").run(args);
     }
 }

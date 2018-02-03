@@ -14,6 +14,18 @@
 # limitations under the License.
 #
 
+
 management.security.enabled: false
 
-management.metrics.export.prometheus.enabled: true
+management.metrics.export:
+  prometheus:
+    enabled: true
+    pushgateway:
+      enabled: true
+      push-rate: 10s
+      grouping-keys:
+        instance: local
+
+endpoints.prometheus.enabled: false
+
+spring.application.name: pushgateway-sample
