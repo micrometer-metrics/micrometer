@@ -10,6 +10,7 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,6 +30,7 @@ import java.io.IOException;
 @ConditionalOnClass(PushGateway.class)
 @ConditionalOnMissingBean(PushGateway.class)
 @ConditionalOnBean(PrometheusMeterRegistry.class)
+@ConditionalOnProperty(value = "management.metrics.export.prometheus.pushgateway.enabled", havingValue = "true", matchIfMissing = true)
 @ConfigurationProperties(PrometheusPushGatewayAutoConfiguration.CONFIGURATION_PREFIX)
 @EnableScheduling
 @AutoConfigureAfter({MetricsAutoConfiguration.class, PrometheusExportConfiguration.class})

@@ -34,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @TestPropertySource(properties = {
     "management.metrics.export.jmx.enabled=true",
     "management.metrics.export.prometheus.enabled=true",
+    "management.metrics.export.prometheus.pushgateway.enabled=false",
 })
 public class CompositeMeterRegistryConfigurationTest {
     @Autowired
