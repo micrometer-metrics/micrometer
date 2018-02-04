@@ -9,12 +9,9 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.springframework.jmx.export.annotation.ManagedAttribute;
-import org.springframework.jmx.export.annotation.ManagedResource;
 
 import javax.annotation.Nonnull;
 
-import static org.springframework.util.StringUtils.isEmpty;
 
 /**
  * AspectJ aspect for intercepting types or method annotated with @Timed.
@@ -22,7 +19,6 @@ import static org.springframework.util.StringUtils.isEmpty;
  * @author <a href="mailto:david@davidkarlsen.com">David J. M. Karlsen</a>
  */
 @Aspect
-@ManagedResource
 public class MicrometerAspect {
     private static final String DEFAULT_ID = "method_monitor";
 
@@ -35,12 +31,10 @@ public class MicrometerAspect {
         this.meterRegistry = meterRegistry;
     }
 
-    @ManagedAttribute
     public void setActive(boolean active) {
         isActive = active;
     }
 
-    @ManagedAttribute
     public boolean isActive() {
         return isActive;
     }
@@ -97,6 +91,10 @@ public class MicrometerAspect {
         return Tags.of(
             Tag.of("class", proceedingJoinPoint.getStaticPart().getSignature().getDeclaringTypeName()),
             Tag.of("method", proceedingJoinPoint.getStaticPart().getSignature().getName()));
+    }
+
+    private boolean isEmpty(String s ) {
+        return null == s || s.isEmpty();
     }
 
     private Timer.Builder getTimer(Timed timed) {
