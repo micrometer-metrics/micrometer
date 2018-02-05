@@ -21,7 +21,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 
@@ -41,22 +40,19 @@ import java.util.concurrent.TimeUnit;
  */
 @NonNullApi
 @NonNullFields
-public class CaffeineCacheMetrics implements MeterBinder {
-    private final String name;
-    private final Iterable<Tag> tags;
+public class CaffeineCacheMetrics extends CacheMeterBinder {
     private final Cache<?, ?> cache;
 
     /**
      * Creates a new {@link CaffeineCacheMetrics} instance.
      *
-     * @param cache The cache to be instrumented. You must call {@link Caffeine#recordStats()} prior to building the cache
-     *              for metrics to be recorded.
-     * @param name  The metric name prefix
-     * @param tags  tags to apply to all recorded metrics
+     * @param cache     The cache to be instrumented. You must call {@link Caffeine#recordStats()} prior to building the cache
+     *                  for metrics to be recorded.
+     * @param cacheName The metric name prefix
+     * @param tags      tags to apply to all recorded metrics
      */
-    public CaffeineCacheMetrics(Cache<?, ?> cache, String name, Iterable<Tag> tags) {
-        this.name = name;
-        this.tags = tags;
+    public CaffeineCacheMetrics(Cache<?, ?> cache, String cacheName, Iterable<Tag> tags) {
+        super(cache, cacheName, tags);
         this.cache = cache;
     }
 
@@ -64,29 +60,29 @@ public class CaffeineCacheMetrics implements MeterBinder {
      * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()} prior to building the cache
      * for metrics to be recorded.
      *
-     * @param registry The registry to bind metrics to.
-     * @param cache    The cache to instrument.
-     * @param name     The name prefix of the metrics.
-     * @param tags     Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
+     * @param registry  The registry to bind metrics to.
+     * @param cache     The cache to instrument.
+     * @param cacheName The name prefix of the metrics.
+     * @param tags      Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
-    public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String name, String... tags) {
-        return monitor(registry, cache, name, Tags.of(tags));
+    public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
+        return monitor(registry, cache, cacheName, Tags.of(tags));
     }
 
     /**
      * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()} prior to building the cache
      * for metrics to be recorded.
      *
-     * @param registry The registry to bind metrics to.
-     * @param cache    The cache to instrument.
-     * @param name     The name prefix of the metrics.
-     * @param tags     Tags to apply to all recorded metrics.
+     * @param registry  The registry to bind metrics to.
+     * @param cache     The cache to instrument.
+     * @param cacheName The name prefix of the metrics.
+     * @param tags      Tags to apply to all recorded metrics.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see CacheStats
      */
-    public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String name, Iterable<Tag> tags) {
-        new CaffeineCacheMetrics(cache, name, tags).bindTo(registry);
+    public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
+        new CaffeineCacheMetrics(cache, cacheName, tags).bindTo(registry);
         return cache;
     }
 
@@ -94,77 +90,84 @@ public class CaffeineCacheMetrics implements MeterBinder {
      * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()} prior to building the cache
      * for metrics to be recorded.
      *
-     * @param registry The registry to bind metrics to.
-     * @param cache    The cache to instrument.
-     * @param name     The name prefix of the metrics.
-     * @param tags     Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
+     * @param registry  The registry to bind metrics to.
+     * @param cache     The cache to instrument.
+     * @param cacheName The name prefix of the metrics.
+     * @param tags      Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
-    public static <C extends AsyncLoadingCache> C monitor(MeterRegistry registry, C cache, String name, String... tags) {
-        return monitor(registry, cache, name, Tags.of(tags));
+    public static <C extends AsyncLoadingCache> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
+        return monitor(registry, cache, cacheName, Tags.of(tags));
     }
 
     /**
      * Record metrics on a Caffeine cache. You must call {@link Caffeine#recordStats()} prior to building the cache
      * for metrics to be recorded.
      *
-     * @param registry The registry to bind metrics to.
-     * @param cache    The cache to instrument.
-     * @param name     The name prefix of the metrics.
-     * @param tags     Tags to apply to all recorded metrics.
+     * @param registry  The registry to bind metrics to.
+     * @param cache     The cache to instrument.
+     * @param cacheName The name prefix of the metrics.
+     * @param tags      Tags to apply to all recorded metrics.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see CacheStats
      */
-    public static <C extends AsyncLoadingCache> C monitor(MeterRegistry registry, C cache, String name, Iterable<Tag> tags) {
-        monitor(registry, cache.synchronous(), name, tags);
+    public static <C extends AsyncLoadingCache> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
+        monitor(registry, cache.synchronous(), cacheName, tags);
         return cache;
     }
 
     @Override
-    public void bindTo(MeterRegistry registry) {
-        Gauge.builder(name + ".estimated.size", cache, Cache::estimatedSize)
-            .tags(tags)
-            .description("The approximate number of entries in this cache")
-            .register(registry);
+    protected Long size() {
+        return cache.estimatedSize();
+    }
 
-        FunctionCounter.builder(name + ".requests", cache, c -> c.stats().missCount())
-            .tags(tags).tags("result", "miss")
-            .description("the number of times cache lookup methods have returned an uncached (newly loaded) value, or null")
-            .register(registry);
+    @Override
+    protected long hitCount() {
+        return cache.stats().hitCount();
+    }
 
-        FunctionCounter.builder(name + ".requests", cache, c -> c.stats().hitCount())
-            .tags(tags).tags("result", "hit")
-            .description("The number of times cache lookup methods have returned a cached value.")
-            .register(registry);
+    @Override
+    protected long missCount() {
+        return cache.stats().missCount();
+    }
 
-        FunctionCounter.builder(name + ".evictions", cache, c -> c.stats().evictionCount())
-            .tags(tags)
-            .description("cache evictions")
-            .register(registry);
+    @Override
+    protected Long evictionCount() {
+        return cache.stats().evictionCount();
+    }
 
-        Gauge.builder(name + ".eviction.weight", cache, c -> c.stats().evictionWeight())
-            .tags(tags)
-            .description("The sum of weights of evicted entries. This total does not include manual invalidations.")
-            .register(registry);
+    @Override
+    protected long putCount() {
+        cache.stats().requestCount();
+        return cache.stats().loadCount();
+    }
+
+    @Override
+    protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
+        Gauge.builder("cache.eviction.weight", cache, c -> c.stats().evictionWeight())
+                .tags(getTagsWithCacheName())
+                .description("The sum of weights of evicted entries. This total does not include manual invalidations.")
+                .register(registry);
 
         if (cache instanceof LoadingCache) {
             // dividing these gives you a measure of load latency
-            TimeGauge.builder(name + ".load.duration", cache, TimeUnit.NANOSECONDS, c -> c.stats().totalLoadTime())
-                .tags(tags)
-                .description("The time the cache has spent loading new values")
-                .register(registry);
+            TimeGauge.builder("cache.load.duration", cache, TimeUnit.NANOSECONDS, c -> c.stats().totalLoadTime())
+                    .tags(getTagsWithCacheName())
+                    .description("The time the cache has spent loading new values")
+                    .register(registry);
 
-            FunctionCounter.builder(name + ".load", cache, c -> c.stats().loadSuccessCount())
-                .tags(tags)
-                .tags("result", "success")
-                .description("The number of times cache lookup methods have successfully loaded a new value")
-                .register(registry);
+            FunctionCounter.builder("cache.load", cache, c -> c.stats().loadSuccessCount())
+                    .tags(getTagsWithCacheName())
+                    .tags("result", "success")
+                    .description("The number of times cache lookup methods have successfully loaded a new value")
+                    .register(registry);
 
-            FunctionCounter.builder(name + ".load", cache, c -> c.stats().loadFailureCount())
-                .tags(tags).tags("result", "failure")
-                .description("The number of times {@link Cache} lookup methods failed to load a new value, either " +
-                    "because no value was found or an exception was thrown while loading")
-                .register(registry);
+            FunctionCounter.builder("cache.load", cache, c -> c.stats().loadFailureCount())
+                    .tags(getTagsWithCacheName())
+                    .tags("result", "failure")
+                    .description("The number of times {@link Cache} lookup methods failed to load a new value, either " +
+                            "because no value was found or an exception was thrown while loading")
+                    .register(registry);
         }
     }
 }

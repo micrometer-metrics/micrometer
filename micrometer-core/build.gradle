@@ -69,7 +69,6 @@ dependencies {
 
     testCompile 'org.assertj:assertj-core:3.+'
 
-    testCompile 'org.jsr107.ri:cache-ri-impl:1.0.0'
     testCompile 'org.ehcache:ehcache:3.+'
 
     jmh 'org.openjdk.jmh:jmh-core:latest.release'

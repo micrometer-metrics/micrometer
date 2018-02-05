@@ -46,6 +46,8 @@ dependencies {
     compileOnly 'org.springframework.boot:spring-boot-configuration-processor'
     apt 'org.springframework.boot:spring-boot-configuration-processor'
 
+    testCompile project(':micrometer-test')
+
     testCompile 'org.springframework.boot:spring-boot-starter-web'
     testCompile 'org.springframework.boot:spring-boot-actuator'
     testCompile 'org.springframework.boot:spring-boot-starter-test'

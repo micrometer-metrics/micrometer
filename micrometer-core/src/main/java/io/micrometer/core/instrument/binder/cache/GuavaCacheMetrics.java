@@ -19,7 +19,6 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 
@@ -30,85 +29,88 @@ import java.util.concurrent.TimeUnit;
  */
 @NonNullApi
 @NonNullFields
-public class GuavaCacheMetrics implements MeterBinder {
-    private final String name;
-    private final Iterable<Tag> tags;
+public class GuavaCacheMetrics extends CacheMeterBinder {
     private final Cache<?, ?> cache;
-    public GuavaCacheMetrics(Cache<?, ?> cache, String name, Iterable<Tag> tags) {
-        this.name = name;
-        this.tags = tags;
-        this.cache = cache;
+
+    /**
+     * Record metrics on a Guava cache. You must call {@link CacheBuilder#recordStats()} prior to building the cache
+     * for metrics to be recorded.
+     *
+     * @param registry  The registry to bind metrics to.
+     * @param cache     The cache to instrument.
+     * @param cacheName The name prefix of the metrics.
+     * @param tags      Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
+     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
+     * @see com.google.common.cache.CacheStats
+     */
+    public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
+        return monitor(registry, cache, cacheName, Tags.of(tags));
     }
 
     /**
      * Record metrics on a Guava cache. You must call {@link CacheBuilder#recordStats()} prior to building the cache
      * for metrics to be recorded.
      *
-     * @param registry The registry to bind metrics to.
-     * @param cache    The cache to instrument.
-     * @param name     The name prefix of the metrics.
-     * @param tags     Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
+     * @param registry  The registry to bind metrics to.
+     * @param cache     The cache to instrument.
+     * @param cacheName The name prefix of the metrics.
+     * @param tags      Tags to apply to all recorded metrics.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see com.google.common.cache.CacheStats
      */
-    public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String name, String... tags) {
-        return monitor(registry, cache, name, Tags.of(tags));
-    }
-
-    /**
-     * Record metrics on a Guava cache. You must call {@link CacheBuilder#recordStats()} prior to building the cache
-     * for metrics to be recorded.
-     *
-     * @param registry The registry to bind metrics to.
-     * @param cache    The cache to instrument.
-     * @param name     The name prefix of the metrics.
-     * @param tags     Tags to apply to all recorded metrics.
-     * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
-     * @see com.google.common.cache.CacheStats
-     */
-    public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String name, Iterable<Tag> tags) {
-        new GuavaCacheMetrics(cache, name, tags).bindTo(registry);
+    public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
+        new GuavaCacheMetrics(cache, cacheName, tags).bindTo(registry);
         return cache;
     }
 
+    public GuavaCacheMetrics(Cache<?, ?> cache, String cacheName, Iterable<Tag> tags) {
+        super(cache, cacheName, tags);
+        this.cache = cache;
+    }
+
     @Override
-    public void bindTo(MeterRegistry registry) {
-        Gauge.builder(name + ".estimated.size", cache, Cache::size)
-            .tags(tags)
-            .description("The approximate number of entries in this cache")
-            .register(registry);
+    protected Long size() {
+        return cache.size();
+    }
 
-        FunctionCounter.builder(name + ".requests", cache, c -> c.stats().missCount())
-            .tags(tags).tags("result", "miss")
-            .description("The number of times cache lookup methods have returned an uncached (newly loaded) value, or null")
-            .register(registry);
+    @Override
+    protected long hitCount() {
+        return cache.stats().hitCount();
+    }
 
-        FunctionCounter.builder(name + ".requests", cache, c -> c.stats().hitCount())
-            .tags(tags).tags("result", "hit")
-            .description("The number of times cache lookup methods have returned a cached value")
-            .register(registry);
+    @Override
+    protected long missCount() {
+        return cache.stats().missCount();
+    }
 
-        FunctionCounter.builder(name + ".evictions", cache, c -> c.stats().evictionCount())
-            .tags(tags)
-            .description("Cache evictions")
-            .register(registry);
+    @Override
+    protected Long evictionCount() {
+        return cache.stats().evictionCount();
+    }
 
+    @Override
+    protected long putCount() {
+        return cache.stats().loadCount();
+    }
+
+    @Override
+    protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
         if (cache instanceof LoadingCache) {
             // dividing these gives you a measure of load latency
-            TimeGauge.builder(name + ".load.duration", cache, TimeUnit.NANOSECONDS, c -> c.stats().totalLoadTime())
-                .tags(tags)
-                .description("The time the cache has spent loading new values")
-                .register(registry);
+            TimeGauge.builder("cache.load.duration", cache, TimeUnit.NANOSECONDS, c -> c.stats().totalLoadTime())
+                    .tags(getTagsWithCacheName())
+                    .description("The time the cache has spent loading new values")
+                    .register(registry);
 
-            FunctionCounter.builder(name + ".load", cache, c -> c.stats().loadSuccessCount())
-                .tags(tags).tags("result", "success")
-                .description("The number of times cache lookup methods have successfully loaded a new value")
-                .register(registry);
+            FunctionCounter.builder("cache.load", cache, c -> c.stats().loadSuccessCount())
+                    .tags(getTagsWithCacheName()).tags("result", "success")
+                    .description("The number of times cache lookup methods have successfully loaded a new value")
+                    .register(registry);
 
-            FunctionCounter.builder(name + ".load", cache, c -> c.stats().loadExceptionCount())
-                .tags(tags).tags("result", "failure")
-                .description("The number of times cache lookup methods threw an exception while loading a new value")
-                .register(registry);
+            FunctionCounter.builder("cache.load", cache, c -> c.stats().loadExceptionCount())
+                    .tags(getTagsWithCacheName()).tags("result", "failure")
+                    .description("The number of times cache lookup methods threw an exception while loading a new value")
+                    .register(registry);
         }
     }
 }

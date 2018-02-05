@@ -7,4 +7,6 @@ dependencies {
     // JUnit 5
     compile 'org.junit.jupiter:junit-jupiter-api:5.0.0'
     runtime 'org.junit.jupiter:junit-jupiter-engine:5.0.0'
+
+    testCompile 'org.jsr107.ri:cache-ri-impl:1.0.0'
 }
