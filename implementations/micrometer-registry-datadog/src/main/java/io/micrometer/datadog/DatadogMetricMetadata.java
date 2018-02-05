@@ -98,6 +98,6 @@ class DatadogMetricMetadata {
     }
 
     private String escapeQuotes(String str) {
-        return str.replaceAll("\"","\\\"");
+        return str.replace("\"","\\\"");
     }
 }
