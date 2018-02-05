@@ -18,6 +18,7 @@ package io.micrometer.datadog;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.lang.Nullable;
+import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.*;
 
@@ -90,7 +91,7 @@ class DatadogMetricMetadata {
         }
 
         if (descriptionsEnabled && id.getDescription() != null) {
-            body += ",\"description\":\"" + id.getDescription() + "\"";
+            body += ",\"description\":\"" + StringEscapeUtils.escapeJson(id.getDescription()) + "\"";
         }
 
         body += "}";
