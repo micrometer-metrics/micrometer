@@ -89,11 +89,15 @@ class DatadogMetricMetadata {
         }
 
         if (descriptionsEnabled && id.getDescription() != null) {
-            body += ",\"description\":\"" + id.getDescription() + "\"";
+            body += ",\"description\":\"" + escapeQuotes(id.getDescription()) + "\"";
         }
 
         body += "}";
 
         return body;
+    }
+
+    private String escapeQuotes(String str) {
+        return str.replaceAll("\"","\\\"");
     }
 }
