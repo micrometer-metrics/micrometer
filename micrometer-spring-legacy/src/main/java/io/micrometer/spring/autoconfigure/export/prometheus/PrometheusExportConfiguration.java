@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.autoconfigure.ManagementContextConfiguration;
 import org.springframework.boot.actuate.endpoint.AbstractEndpoint;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -93,10 +94,8 @@ public class PrometheusExportConfiguration {
      */
     @Configuration
     @ConditionalOnClass(PushGateway.class)
-    @ConditionalOnProperty(value = {
-            "management.metrics.export.prometheus.enabled",
-            "management.metrics.export.prometheus.pushgateway.enabled"
-    })
+    @ConditionalOnBean(PrometheusMeterRegistry.class)
+    @ConditionalOnProperty("management.metrics.export.prometheus.pushgateway.enabled")
     @Incubating(since = "1.0.0")
     public class PrometheusPushGatewayConfiguration {
         private final Logger logger = LoggerFactory.getLogger(PrometheusPushGatewayConfiguration.class);
