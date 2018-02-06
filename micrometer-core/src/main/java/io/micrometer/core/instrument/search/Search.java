@@ -46,6 +46,10 @@ public class Search {
         return tags(Tags.of(tags));
     }
 
+    public Search tag(String tagKey, String tagValue) {
+        return tags(Tags.of(tagKey, tagValue));
+    }
+
     @Nullable
     public Timer timer() {
         return findOne(Timer.class);

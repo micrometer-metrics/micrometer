@@ -180,6 +180,7 @@ public interface LongTaskTimer extends Meter {
     class Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
+
         @Nullable
         private String description;
 

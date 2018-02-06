@@ -40,20 +40,21 @@ import java.util.function.ToDoubleFunction;
 public class HibernateMetrics implements MeterBinder {
 
     private final Iterable<Tag> tags;
+
     @Nullable
     private final Statistics stats;
 
-    public HibernateMetrics(EntityManagerFactory entityManagerFactoryf, String name, Iterable<Tag> tags) {
-        this.tags = Tags.concat(tags, "entityManagerFactory", name);
-        this.stats = hasStatisticsEnabled(entityManagerFactoryf) ? getStatistics(entityManagerFactoryf) : null;
+    public static void monitor(MeterRegistry registry, EntityManagerFactory entityManagerFactory, String entityManagerFactoryName, String... tags) {
+        monitor(registry, entityManagerFactory, entityManagerFactoryName, Tags.of(tags));
     }
 
-    public static void monitor(MeterRegistry registry, EntityManagerFactory entityManagerFactory, String name, String... tags) {
-        monitor(registry, entityManagerFactory, name, Tags.of(tags));
+    public static void monitor(MeterRegistry registry, EntityManagerFactory entityManagerFactory, String entityManagerFactoryName, Iterable<Tag> tags) {
+        new HibernateMetrics(entityManagerFactory, entityManagerFactoryName, tags).bindTo(registry);
     }
 
-    public static void monitor(MeterRegistry registry, EntityManagerFactory entityManagerFactory, String name, Iterable<Tag> tags) {
-        new HibernateMetrics(entityManagerFactory, name, tags).bindTo(registry);
+    public HibernateMetrics(EntityManagerFactory entityManagerFactory, String entityManagerFactoryName, Iterable<Tag> tags) {
+        this.tags = Tags.concat(tags, "entityManagerFactory", entityManagerFactoryName);
+        this.stats = hasStatisticsEnabled(entityManagerFactory) ? getStatistics(entityManagerFactory) : null;
     }
 
     private void counter(MeterRegistry registry, String name, String description, ToDoubleFunction<Statistics> f, String... extraTags) {

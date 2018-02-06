@@ -49,6 +49,10 @@ public class RequiredSearch {
         return tags(Tags.of(tags));
     }
 
+    public RequiredSearch tag(String tagKey, String tagValue) {
+        return tags(Tags.of(tagKey, tagValue));
+    }
+
     public Timer timer() {
         return findOne(Timer.class);
     }

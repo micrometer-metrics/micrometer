@@ -38,10 +38,11 @@ import java.util.function.BiConsumer;
 @NonNullApi
 @NonNullFields
 public class TomcatMetrics implements MeterBinder {
-    @Nullable
-    private final Manager manager;
     private final MBeanServer mBeanServer;
     private final Iterable<Tag> tags;
+
+    @Nullable
+    private final Manager manager;
 
     public TomcatMetrics(@Nullable Manager manager, Iterable<Tag> tags) {
         this(manager, tags, getMBeanServer());

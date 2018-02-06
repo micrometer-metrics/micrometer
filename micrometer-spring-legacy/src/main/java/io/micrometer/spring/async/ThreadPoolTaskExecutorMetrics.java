@@ -41,10 +41,12 @@ import static java.util.Arrays.asList;
 @NonNullApi
 @NonNullFields
 public class ThreadPoolTaskExecutorMetrics implements MeterBinder {
-    @Nullable
-    private final ThreadPoolTaskExecutor executor;
     private final String name;
     private final Iterable<Tag> tags;
+
+    @Nullable
+    private final ThreadPoolTaskExecutor executor;
+
     public ThreadPoolTaskExecutorMetrics(ThreadPoolTaskExecutor executor, String name, Iterable<Tag> tags) {
         this.name = name;
         this.tags = tags;
@@ -85,23 +87,23 @@ public class ThreadPoolTaskExecutorMetrics implements MeterBinder {
 
     private void monitor(MeterRegistry registry, ThreadPoolExecutor tp) {
         FunctionCounter.builder(name + ".completed", tp, ThreadPoolExecutor::getCompletedTaskCount)
-            .tags(tags)
-            .description("The approximate total number of tasks that have completed execution")
-            .register(registry);
+                .tags(tags)
+                .description("The approximate total number of tasks that have completed execution")
+                .register(registry);
 
         Gauge.builder(name + ".active", tp, ThreadPoolExecutor::getActiveCount)
-            .tags(tags)
-            .description("The approximate number of threads that are actively executing tasks")
-            .register(registry);
+                .tags(tags)
+                .description("The approximate number of threads that are actively executing tasks")
+                .register(registry);
 
         Gauge.builder(name + ".queued", tp, tpRef -> tpRef.getQueue().size())
-            .tags(tags)
-            .description("The approximate number of threads that are queued for execution")
-            .register(registry);
+                .tags(tags)
+                .description("The approximate number of threads that are queued for execution")
+                .register(registry);
 
         Gauge.builder(name + ".pool", tp, ThreadPoolExecutor::getPoolSize)
-            .tags(tags)
-            .description("The current number of threads in the pool")
-            .register(registry);
+                .tags(tags)
+                .description("The current number of threads in the pool")
+                .register(registry);
     }
 }

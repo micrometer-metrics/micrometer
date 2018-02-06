@@ -19,40 +19,37 @@ import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import static java.util.Collections.emptyList;
-import static org.assertj.core.api.Assertions.assertThat;
 
-class HazelcastCacheMetricsTest {
+public class HazelcastCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
+    private HazelcastInstance hazelcast;
+    private IMap<String, String> cache;
 
-    private HazelcastInstance h;
-
-    @BeforeEach
-    void setup() {
+    HazelcastCacheMetricsCompatibilityTest() {
         Config config = new Config();
-        h = Hazelcast.newHazelcastInstance(config);
+        this.hazelcast = Hazelcast.newHazelcastInstance(config);
+        this.cache = hazelcast.getMap("mycache");
     }
 
     @AfterEach
     void cleanup() {
-        h.shutdown();
+        hazelcast.shutdown();
     }
 
-    @Test
-    void cacheMetrics() {
-        IMap<String, String> map = h.getMap("my-distributed-map");
+    @Override
+    public CacheMeterBinder binder() {
+        return new HazelcastCacheMetrics(cache, emptyList());
+    }
 
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
-        HazelcastCacheMetrics.monitor(registry, map, "cache", emptyList());
+    @Override
+    public void put(String key, String value) {
+        cache.put(key, value);
+    }
 
-        map.put("key", "value");
-        map.get("key");
-
-        assertThat(registry.get("cache.gets").functionTimer().count()).isEqualTo(1L);
-        assertThat(registry.get("cache.puts").functionTimer().count()).isEqualTo(1L);
+    @Override
+    public String get(String key) {
+        return cache.get(key);
     }
 }

@@ -48,13 +48,14 @@ abstract class TimeWindowHistogramBase<T, U> {
 
     private final T[] ringBuffer;
     private final long durationBetweenRotatesMillis;
-    @Nullable
-    private U accumulatedHistogram;
     private volatile boolean accumulatedHistogramStale;
     private int currentBucket;
     private volatile long lastRotateTimestampMillis;
     @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private volatile int rotating; // 0 - not rotating, 1 - rotating
+
+    @Nullable
+    private U accumulatedHistogram;
 
     TimeWindowHistogramBase(Clock clock, HistogramConfig histogramConfig, Class<T> bucketType) {
         this.clock = clock;

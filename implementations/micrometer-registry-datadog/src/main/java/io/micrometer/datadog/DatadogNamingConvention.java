@@ -24,7 +24,7 @@ import io.micrometer.core.lang.Nullable;
  */
 public class DatadogNamingConvention implements NamingConvention {
     /**
-     * {@see https://help.datadoghq.com/hc/en-us/articles/203764705-What-are-valid-metric-names-}
+     * See: https://help.datadoghq.com/hc/en-us/articles/203764705-What-are-valid-metric-names-
      *
      * Datadog's publish API will automatically strip Unicode without replacement. It will also replace
      * all non-alphanumeric characters with '_'.

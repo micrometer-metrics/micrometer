@@ -194,8 +194,10 @@ public interface Timer extends Meter {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
         private final HistogramConfig.Builder histogramConfigBuilder;
+
         @Nullable
         private String description;
+
         @Nullable
         private PauseDetector pauseDetector;
 

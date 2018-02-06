@@ -62,16 +62,18 @@ public interface FunctionTimer extends Meter {
      */
     class Builder<T> {
         private final String name;
-        private final T obj;
         private final ToLongFunction<T> countFunction;
         private final ToDoubleFunction<T> totalTimeFunction;
         private final TimeUnit totalTimeFunctionUnits;
         private final List<Tag> tags = new ArrayList<>();
 
         @Nullable
+        private final T obj;
+
+        @Nullable
         private String description;
 
-        private Builder(String name, T obj,
+        private Builder(String name, @Nullable T obj,
                         ToLongFunction<T> countFunction,
                         ToDoubleFunction<T> totalTimeFunction,
                         TimeUnit totalTimeFunctionUnits) {

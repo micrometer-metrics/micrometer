@@ -18,6 +18,7 @@ package io.micrometer.datadog;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.lang.Nullable;
+import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.*;
 
@@ -28,7 +29,7 @@ class DatadogMetricMetadata {
 
     // Datadog rejects anything not on this list: https://docs.datadoghq.com/units/
     private static final Set<String> UNIT_WHITELIST = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-        "bit", "byte", "kilobyte", "megabyte", "gigabyte", "terabyte", "petabyte", "exobyte",
+        "bit", "byte", "kibibyte", "mebibyte", "gibibyte", "tebibyte", "pebibyte", "exbibyte",
         "microsecond", "millisecond", "second", "minute", "hour", "day", "week", "nanosecond",
         "fraction", "percent", "percent_nano", "apdex",
         "connection", "request", "packet", "segment", "response", "message", "payload", "timeout", "datagram", "route", "session",
@@ -55,8 +56,9 @@ class DatadogMetricMetadata {
 
     private final Meter.Id id;
     private final String type;
-    @Nullable private final String overrideBaseUnit;
     private final boolean descriptionsEnabled;
+
+    @Nullable private final String overrideBaseUnit;
 
     DatadogMetricMetadata(Meter.Id id, Statistic statistic, boolean descriptionsEnabled,
                           @Nullable String overrideBaseUnit) {
@@ -89,7 +91,7 @@ class DatadogMetricMetadata {
         }
 
         if (descriptionsEnabled && id.getDescription() != null) {
-            body += ",\"description\":\"" + id.getDescription() + "\"";
+            body += ",\"description\":\"" + StringEscapeUtils.escapeJson(id.getDescription()) + "\"";
         }
 
         body += "}";
