@@ -22,6 +22,8 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.management.NotificationEmitter;
 import javax.management.openmbean.CompositeData;
@@ -71,6 +73,11 @@ enum GcGenerationAge {
 @NonNullApi
 @NonNullFields
 public class JvmGcMetrics implements MeterBinder {
+
+    private static final Logger logger = LoggerFactory.getLogger(JvmGcMetrics.class);
+
+    private boolean managementExtensionsPresent = isManagementExtensionsPresent();
+
     private Iterable<Tag> tags;
 
     @Nullable
@@ -120,23 +127,19 @@ public class JvmGcMetrics implements MeterBinder {
             .description("Incremented for an increase in the size of the young generation memory pool after one GC to before the next")
             .register(registry);
 
-        // start watching for GC notifications
-        final AtomicLong youngGenSizeAfter = new AtomicLong(0L);
+        if (this.managementExtensionsPresent) {
+            // start watching for GC notifications
+            final AtomicLong youngGenSizeAfter = new AtomicLong(0L);
 
-        for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
-            if (mbean instanceof NotificationEmitter) {
-                ((NotificationEmitter) mbean).addNotificationListener((notification, ref) -> {
-                    final String type = notification.getType();
-
-                    try {
-                        Class.forName("com.sun.management.GarbageCollectionNotificationInfo", false,
-                                this.getClass().getClassLoader());
-
+            for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
+                if (mbean instanceof NotificationEmitter) {
+                    ((NotificationEmitter) mbean).addNotificationListener((notification, ref) -> {
+                        final String type = notification.getType();
                         if (type.equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
                             CompositeData cd = (CompositeData) notification.getUserData();
                             GarbageCollectionNotificationInfo notificationInfo = GarbageCollectionNotificationInfo.from(cd);
 
-                            if (isConcurrentPhase(notificationInfo)) {
+                            if (isConcurrentPhase(notificationInfo.getGcCause())) {
                                 Timer.builder("jvm.gc.concurrent.phase.time")
                                         .tags(tags)
                                         .tags("action", notificationInfo.getGcAction(), "cause", notificationInfo.getGcCause())
@@ -187,16 +190,27 @@ public class JvmGcMetrics implements MeterBinder {
                                 }
                             }
                         }
-                    } catch(ClassNotFoundException ignored) {
-                        // We are operating in a JVM without access to this level of detail
-                    }
-                }, null, null);
+                    }, null, null);
+                }
             }
         }
     }
 
-    private boolean isConcurrentPhase(GarbageCollectionNotificationInfo info) {
-        return "No GC".equals(info.getGcCause());
+    private static boolean isManagementExtensionsPresent() {
+        try {
+            Class.forName("com.sun.management.GarbageCollectionNotificationInfo", false,
+                JvmGcMetrics.class.getClassLoader());
+            return true;
+        } catch (ClassNotFoundException e) {
+            // We are operating in a JVM without access to this level of detail
+            logger.warn("GC notifications will not be available because " +
+                "com.sun.management.GarbageCollectionNotificationInfo is not present");
+            return false;
+        }
+    }
+
+    private boolean isConcurrentPhase(String cause) {
+        return "No GC".equals(cause);
     }
 
     private boolean isOldGenPool(String name) {
