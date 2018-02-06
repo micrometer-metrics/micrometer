@@ -52,57 +52,57 @@ public class ExecutorServiceMetrics implements MeterBinder {
     /**
      * Record metrics on the use of an {@link Executor}.
      *
-     * @param registry The registry to bind metrics to.
-     * @param executor The executor to instrument.
-     * @param name     The name prefix of the metrics.
-     * @param tags     Tags to apply to all recorded metrics.
+     * @param registry     The registry to bind metrics to.
+     * @param executor     The executor to instrument.
+     * @param executorName Will be used to tag metrics with "name".
+     * @param tags         Tags to apply to all recorded metrics.
      * @return The instrumented executor, proxied.
      */
-    public static Executor monitor(MeterRegistry registry, Executor executor, String name, Iterable<Tag> tags) {
+    public static Executor monitor(MeterRegistry registry, Executor executor, String executorName, Iterable<Tag> tags) {
         if (executor instanceof ExecutorService) {
-            return monitor(registry, (ExecutorService) executor, name, tags);
+            return monitor(registry, (ExecutorService) executor, executorName, tags);
         }
-        return new TimedExecutor(registry, executor, name, tags);
+        return new TimedExecutor(registry, executor, executorName, tags);
     }
 
     /**
      * Record metrics on the use of an {@link Executor}.
      *
-     * @param registry The registry to bind metrics to.
-     * @param executor The executor to instrument.
-     * @param name     The name prefix of the metrics.
-     * @param tags     Tags to apply to all recorded metrics.
+     * @param registry     The registry to bind metrics to.
+     * @param executor     The executor to instrument.
+     * @param executorName Will be used to tag metrics with "name".
+     * @param tags         Tags to apply to all recorded metrics.
      * @return The instrumented executor, proxied.
      */
-    public static Executor monitor(MeterRegistry registry, Executor executor, String name, Tag... tags) {
-        return monitor(registry, executor, name, asList(tags));
+    public static Executor monitor(MeterRegistry registry, Executor executor, String executorName, Tag... tags) {
+        return monitor(registry, executor, executorName, asList(tags));
     }
 
     /**
      * Record metrics on the use of an {@link ExecutorService}.
      *
-     * @param registry The registry to bind metrics to.
-     * @param executor The executor to instrument.
-     * @param name     The name prefix of the metrics.
-     * @param tags     Tags to apply to all recorded metrics.
+     * @param registry            The registry to bind metrics to.
+     * @param executor            The executor to instrument.
+     * @param executorServiceName Will be used to tag metrics with "name".
+     * @param tags                Tags to apply to all recorded metrics.
      * @return The instrumented executor, proxied.
      */
-    public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String name, Iterable<Tag> tags) {
-        new ExecutorServiceMetrics(executor, name, tags).bindTo(registry);
-        return new TimedExecutorService(registry, executor, name, tags);
+    public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String executorServiceName, Iterable<Tag> tags) {
+        new ExecutorServiceMetrics(executor, executorServiceName, tags).bindTo(registry);
+        return new TimedExecutorService(registry, executor, executorServiceName, tags);
     }
 
     /**
      * Record metrics on the use of an {@link ExecutorService}.
      *
-     * @param registry The registry to bind metrics to.
-     * @param executor The executor to instrument.
-     * @param name     The name prefix of the metrics.
-     * @param tags     Tags to apply to all recorded metrics.
+     * @param registry            The registry to bind metrics to.
+     * @param executor            The executor to instrument.
+     * @param executorServiceName Will be used to tag metrics with "name".
+     * @param tags                Tags to apply to all recorded metrics.
      * @return The instrumented executor, proxied.
      */
-    public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String name, Tag... tags) {
-        return monitor(registry, executor, name, asList(tags));
+    public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String executorServiceName, Tag... tags) {
+        return monitor(registry, executor, executorServiceName, asList(tags));
     }
 
     @Override

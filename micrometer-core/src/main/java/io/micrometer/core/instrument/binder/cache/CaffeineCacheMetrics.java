@@ -48,8 +48,8 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      *
      * @param cache     The cache to be instrumented. You must call {@link Caffeine#recordStats()} prior to building the cache
      *                  for metrics to be recorded.
-     * @param cacheName The metric name prefix
-     * @param tags      tags to apply to all recorded metrics
+     * @param cacheName Will be used to tag metrics with "cache".
+     * @param tags      tags to apply to all recorded metrics.
      */
     public CaffeineCacheMetrics(Cache<?, ?> cache, String cacheName, Iterable<Tag> tags) {
         super(cache, cacheName, tags);
@@ -62,7 +62,7 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      *
      * @param registry  The registry to bind metrics to.
      * @param cache     The cache to instrument.
-     * @param cacheName The name prefix of the metrics.
+     * @param cacheName Will be used to tag metrics with "cache".
      * @param tags      Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
@@ -76,7 +76,7 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      *
      * @param registry  The registry to bind metrics to.
      * @param cache     The cache to instrument.
-     * @param cacheName The name prefix of the metrics.
+     * @param cacheName Will be used to tag metrics with "cache".
      * @param tags      Tags to apply to all recorded metrics.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see CacheStats
@@ -92,7 +92,7 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      *
      * @param registry  The registry to bind metrics to.
      * @param cache     The cache to instrument.
-     * @param cacheName The name prefix of the metrics.
+     * @param cacheName Will be used to tag metrics with "cache".
      * @param tags      Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
@@ -106,7 +106,7 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      *
      * @param registry  The registry to bind metrics to.
      * @param cache     The cache to instrument.
-     * @param cacheName The name prefix of the metrics.
+     * @param cacheName Will be used to tag metrics with "cache".
      * @param tags      Tags to apply to all recorded metrics.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see CacheStats

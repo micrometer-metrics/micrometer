@@ -44,7 +44,7 @@ class ExecutorServiceMetricsTest {
         executor.execute(() -> System.out.println("hello"));
         lock.await();
 
-        assertThat(registry.get("exec").tags(userTags).timer().count()).isEqualTo(1L);
+        assertThat(registry.get("executor").tags(userTags).tag("name", "exec").timer().count()).isEqualTo(1L);
     }
 
     @DisplayName("ExecutorService is casted from Executor when necessary")
@@ -52,7 +52,7 @@ class ExecutorServiceMetricsTest {
     void executorCasting() {
         Executor exec = Executors.newFixedThreadPool(2);
         ExecutorServiceMetrics.monitor(registry, exec, "exec", userTags);
-        assertThreadPoolExecutorMetrics();
+        assertThreadPoolExecutorMetrics("exec");
     }
 
     @DisplayName("thread pool executor can be instrumented after being initialized")
@@ -60,7 +60,7 @@ class ExecutorServiceMetricsTest {
     void threadPoolExecutor() {
         ExecutorService exec = Executors.newFixedThreadPool(2);
         ExecutorServiceMetrics.monitor(registry, exec, "exec", userTags);
-        assertThreadPoolExecutorMetrics();
+        assertThreadPoolExecutorMetrics("exec");
     }
 
     @DisplayName("scheduled thread pool executor can be instrumented after being initialized")
@@ -68,7 +68,7 @@ class ExecutorServiceMetricsTest {
     void scheduledThreadPoolExecutor() {
         ExecutorService exec = Executors.newScheduledThreadPool(2);
         ExecutorServiceMetrics.monitor(registry, exec, "exec", userTags);
-        assertThreadPoolExecutorMetrics();
+        assertThreadPoolExecutorMetrics("exec");
     }
 
     @DisplayName("ExecutorService can be monitored with a default set of metrics")
@@ -87,20 +87,21 @@ class ExecutorServiceMetricsTest {
         pool.submit(() -> System.out.println("boop"));
 
         taskStart.await(1, TimeUnit.SECONDS);
-        assertThat(registry.get("beep.pool.queued").tags(userTags).gauge().value()).isEqualTo(1.0);
+        assertThat(registry.get("executor.queued").tags(userTags).tag("name", "beep.pool")
+                .gauge().value()).isEqualTo(1.0);
 
         taskComplete.countDown();
         pool.awaitTermination(1, TimeUnit.SECONDS);
 
-        assertThat(registry.get("beep.pool").tags(userTags).timer().count()).isEqualTo(2L);
-        assertThat(registry.get("beep.pool.queued").tags(userTags).gauge().value()).isEqualTo(0.0);
+        assertThat(registry.get("executor").tags(userTags).timer().count()).isEqualTo(2L);
+        assertThat(registry.get("executor.queued").tags(userTags).gauge().value()).isEqualTo(0.0);
     }
 
-    private void assertThreadPoolExecutorMetrics() {
-        registry.get("exec.completed").tags(userTags).meter();
-        registry.get("exec.queued").tags(userTags).gauge();
-        registry.get("exec.active").tags(userTags).gauge();
-        registry.get("exec.pool").tags(userTags).gauge();
-        registry.get("exec").tags(userTags).timer();
+    private void assertThreadPoolExecutorMetrics(String executorName) {
+        registry.get("executor.completed").tags(userTags).tag("name", executorName).meter();
+        registry.get("executor.queued").tags(userTags).tag("name", executorName).gauge();
+        registry.get("executor.active").tags(userTags).tag("name", executorName).gauge();
+        registry.get("executor.pool.size").tags(userTags).tag("name", executorName).gauge();
+        registry.get("executor").tags(userTags).tag("name", executorName).timer();
     }
 }

@@ -46,7 +46,7 @@ public class DatabaseTableMetrics implements MeterBinder {
      * Record the row count for an individual database table.
      *
      * @param dataSource     The data source to use to run the row count query.
-     * @param dataSourceName The name prefix of the metrics.
+     * @param dataSourceName Will be used to tag metrics with "db".
      * @param tableName      The name of the table to report table size for.
      * @param tags           Tags to apply to all recorded metrics.
      */
@@ -77,7 +77,7 @@ public class DatabaseTableMetrics implements MeterBinder {
      *
      * @param registry       The registry to bind metrics to.
      * @param tableName      The name of the table to report table size for.
-     * @param dataSourceName The name prefix of the metrics.
+     * @param dataSourceName Will be used to tag metrics with "db".
      * @param dataSource     The data source to use to run the row count query.
      * @param tags           Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
      */
