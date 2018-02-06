@@ -229,6 +229,11 @@ public class SampleRegistries {
             }
 
             @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+
+            @Override
             @Nullable
             public String get(String k) {
                 return null;

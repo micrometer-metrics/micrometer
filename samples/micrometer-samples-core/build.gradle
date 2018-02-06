@@ -1,7 +1,9 @@
 dependencies {
     compile project(':micrometer-core')
     compile 'colt:colt:1.2.0'
-    compile 'ch.qos.logback:logback-classic:1.0.13'
+    compile('ch.qos.logback:logback-classic:1.0.13') {
+        force = true
+    }
     compile('org.slf4j:slf4j-api:1.7+') {
         // logback doesn't yet work with slf4j 1.8
         force = true

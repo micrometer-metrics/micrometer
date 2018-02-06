@@ -60,6 +60,9 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     private void createDatabaseIfNecessary() {
+        if(!config.autoCreateDb())
+            return;
+
         HttpURLConnection con = null;
         try {
             URL queryEndpoint = URI.create(config.uri() + "/query?q=" + URLEncoder.encode("CREATE DATABASE \"" + config.db() + "\"", "UTF-8")).toURL();
@@ -68,6 +71,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             con.setConnectTimeout((int) config.connectTimeout().toMillis());
             con.setReadTimeout((int) config.readTimeout().toMillis());
             con.setRequestMethod("POST");
+            authenticateRequest(con);
 
             int status = con.getResponseCode();
 
@@ -107,11 +111,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     con.setRequestProperty("Content-Type", "plain/text");
                     con.setDoOutput(true);
 
-                    if (config.userName() != null && config.password() != null) {
-                        String encoded = Base64.getEncoder().encodeToString((config.userName() + ":" +
-                            config.password()).getBytes(StandardCharsets.UTF_8));
-                        con.setRequestProperty("Authorization", "Basic " + encoded);
-                    }
+                    authenticateRequest(con);
 
                     List<String> bodyLines = batch.stream()
                         .map(m -> {
@@ -181,6 +181,14 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             throw new IllegalArgumentException("Malformed InfluxDB publishing endpoint, see '" + config.prefix() + ".uri'", e);
         } catch (Throwable e) {
             logger.warn("failed to send metrics", e);
+        }
+    }
+
+    private void authenticateRequest(HttpURLConnection con) {
+        if (config.userName() != null && config.password() != null) {
+            String encoded = Base64.getEncoder().encodeToString((config.userName() + ":" +
+                    config.password()).getBytes(StandardCharsets.UTF_8));
+            con.setRequestProperty("Authorization", "Basic " + encoded);
         }
     }
 

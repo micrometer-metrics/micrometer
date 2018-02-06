@@ -95,4 +95,13 @@ public interface InfluxConfig extends StepRegistryConfig {
         String v = get(prefix() + ".compressed");
         return v == null || Boolean.valueOf(v);
     }
+
+    /**
+     * @return {@code true} if Micrometer should check if {@link #db()} exists before attempting to publish
+     * metrics to it, creating it if it does not exist.
+     */
+    default boolean autoCreateDb() {
+        String v = get(prefix() + ".autoCreateDb");
+        return v == null || Boolean.valueOf(v);
+    }
 }
