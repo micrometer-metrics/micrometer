@@ -19,6 +19,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Auto-configuration for <a href="https://github.com/prometheus/pushgateway">Prometheus Pushgateway</
@@ -38,6 +40,7 @@ public class PrometheusPushGatewayAutoConfiguration implements DisposableBean {
     public static final String CONFIGURATION_PREFIX = "management.metrics.export.prometheus.pushgateway";
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final PrometheusMeterRegistry prometheusMeterRegistry;
+    private final Map<String,String> groupingKey = new HashMap<>();
 
     @NotNull
     private String baseUrl;
@@ -53,6 +56,10 @@ public class PrometheusPushGatewayAutoConfiguration implements DisposableBean {
 
     public void setJob(String job) {
         this.job = job;
+    }
+
+    public Map<String,String> getGroupingKey() {
+        return this.groupingKey;
     }
 
     PrometheusPushGatewayAutoConfiguration(PrometheusMeterRegistry prometheusMeterRegistry) {
@@ -73,7 +80,7 @@ public class PrometheusPushGatewayAutoConfiguration implements DisposableBean {
     @Scheduled(fixedRateString = "${management.metrics.export.prometheus.pushgateway.fixedRateInMs:60000}")
     public void pushMetrics() throws IOException {
         this.logger.trace("Pushing metrics");
-        this.pushGateway.pushAdd(prometheusMeterRegistry.getPrometheusRegistry(), job);
+        this.pushGateway.pushAdd(prometheusMeterRegistry.getPrometheusRegistry(), job, groupingKey);
     }
 
     /**
@@ -84,7 +91,7 @@ public class PrometheusPushGatewayAutoConfiguration implements DisposableBean {
     public void destroy() throws IOException {
         if (null != this.pushGateway) {
             this.logger.info("Shutting down pushgateway");
-            pushGateway.delete(job);
+            pushGateway.delete(job, groupingKey);
         }
     }
 

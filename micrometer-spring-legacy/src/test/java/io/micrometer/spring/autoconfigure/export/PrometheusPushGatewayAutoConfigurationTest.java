@@ -21,7 +21,9 @@ import javax.inject.Inject;
     "debug=true",
     "management.metrics.export.prometheus.enabled=true",
     "management.metrics.export.prometheus.pushgateway.baseUrl=localhost:9091",
-    "management.metrics.export.prometheus.pushgateway.job=myjob"
+    "management.metrics.export.prometheus.pushgateway.job=myjob",
+    "management.metrics.export.prometheus.pushgateway.groupingKey.key1=value1",
+    "management.metrics.export.prometheus.pushgateway.groupingKey.key2=value2",
 })
 public class PrometheusPushGatewayAutoConfigurationTest {
 
