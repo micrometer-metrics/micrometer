@@ -29,7 +29,7 @@ class DatadogMetricMetadata {
 
     // Datadog rejects anything not on this list: https://docs.datadoghq.com/units/
     private static final Set<String> UNIT_WHITELIST = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-        "bit", "byte", "kilobyte", "megabyte", "gigabyte", "terabyte", "petabyte", "exobyte",
+        "bit", "byte", "kibibyte", "mebibyte", "gibibyte", "tebibyte", "pebibyte", "exbibyte",
         "microsecond", "millisecond", "second", "minute", "hour", "day", "week", "nanosecond",
         "fraction", "percent", "percent_nano", "apdex",
         "connection", "request", "packet", "segment", "response", "message", "payload", "timeout", "datagram", "route", "session",
