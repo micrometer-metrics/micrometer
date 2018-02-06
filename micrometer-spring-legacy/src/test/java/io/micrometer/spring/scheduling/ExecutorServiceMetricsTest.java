@@ -48,8 +48,8 @@ public class ExecutorServiceMetricsTest {
     }
 
     private void assertThreadPoolExecutorMetrics(String name) {
-        registry.get(name + ".completed").meter();
-        registry.get(name + ".queued").gauge();
-        registry.get(name + ".pool").gauge();
+        registry.get("executor.completed").tag("name", name).meter();
+        registry.get("executor.queued").tag("name", name).gauge();
+        registry.get("executor.pool.size").tag("name", name).gauge();
     }
 }

@@ -15,10 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.internal.TimedExecutor;
 import io.micrometer.core.instrument.internal.TimedExecutorService;
@@ -42,16 +39,14 @@ import static java.util.Arrays.asList;
 @NonNullApi
 @NonNullFields
 public class ExecutorServiceMetrics implements MeterBinder {
-    private final String name;
-    private final Iterable<Tag> tags;
-
     @Nullable
     private final ExecutorService executorService;
 
-    public ExecutorServiceMetrics(@Nullable ExecutorService executorService, String name, Iterable<Tag> tags) {
-        this.name = name;
-        this.tags = tags;
+    private final Iterable<Tag> tags;
+
+    public ExecutorServiceMetrics(@Nullable ExecutorService executorService, String executorServiceName, Iterable<Tag> tags) {
         this.executorService = executorService;
+        this.tags = Tags.concat(tags, "name", executorServiceName);
     }
 
     /**
@@ -150,49 +145,53 @@ public class ExecutorServiceMetrics implements MeterBinder {
             return;
         }
 
-        FunctionCounter.builder(name + ".completed", tp, ThreadPoolExecutor::getCompletedTaskCount)
-            .tags(tags)
-            .description("The approximate total number of tasks that have completed execution")
-            .register(registry);
+        FunctionCounter.builder("executor.completed", tp, ThreadPoolExecutor::getCompletedTaskCount)
+                .tags(tags)
+                .description("The approximate total number of tasks that have completed execution")
+                .baseUnit("tasks")
+                .register(registry);
 
-        Gauge.builder(name + ".active", tp, ThreadPoolExecutor::getActiveCount)
-            .tags(tags)
-            .description("The approximate number of threads that are actively executing tasks")
-            .register(registry);
+        Gauge.builder("executor.active", tp, ThreadPoolExecutor::getActiveCount)
+                .tags(tags)
+                .description("The approximate number of threads that are actively executing tasks")
+                .baseUnit("threads")
+                .register(registry);
 
-        Gauge.builder(name + ".queued", tp, tpRef -> tpRef.getQueue().size())
-            .tags(tags)
-            .description("The approximate number of threads that are queued for execution")
-            .register(registry);
+        Gauge.builder("executor.queued", tp, tpRef -> tpRef.getQueue().size())
+                .tags(tags)
+                .description("The approximate number of threads that are queued for execution")
+                .baseUnit("threads")
+                .register(registry);
 
-        Gauge.builder(name + ".pool", tp, ThreadPoolExecutor::getPoolSize)
-            .tags(tags)
-            .description("The current number of threads in the pool")
-            .register(registry);
+        Gauge.builder("executor.pool.size", tp, ThreadPoolExecutor::getPoolSize)
+                .tags(tags)
+                .description("The current number of threads in the pool")
+                .baseUnit("threads")
+                .register(registry);
     }
 
     private void monitor(MeterRegistry registry, ForkJoinPool fj) {
-        FunctionCounter.builder(name + ".steals", fj, ForkJoinPool::getStealCount)
-            .tags(tags)
-            .description("Estimate of the total number of tasks stolen from " +
-                "one thread's work queue by another. The reported value " +
-                "underestimates the actual total number of steals when the pool " +
-                "is not quiescent")
-            .register(registry);
+        FunctionCounter.builder("exeuctor.steals", fj, ForkJoinPool::getStealCount)
+                .tags(tags)
+                .description("Estimate of the total number of tasks stolen from " +
+                        "one thread's work queue by another. The reported value " +
+                        "underestimates the actual total number of steals when the pool " +
+                        "is not quiescent")
+                .register(registry);
 
-        Gauge.builder(name + ".queued", fj, ForkJoinPool::getQueuedTaskCount)
-            .tags(tags)
-            .description("An estimate of the total number of tasks currently held in queues by worker threads")
-            .register(registry);
+        Gauge.builder("executor.queued", fj, ForkJoinPool::getQueuedTaskCount)
+                .tags(tags)
+                .description("An estimate of the total number of tasks currently held in queues by worker threads")
+                .register(registry);
 
-        Gauge.builder(name + ".active", fj, ForkJoinPool::getActiveThreadCount)
-            .tags(tags)
-            .description("An estimate of the number of threads that are currently stealing or executing tasks")
-            .register(registry);
+        Gauge.builder("executor.active", fj, ForkJoinPool::getActiveThreadCount)
+                .tags(tags)
+                .description("An estimate of the number of threads that are currently stealing or executing tasks")
+                .register(registry);
 
-        Gauge.builder(name + ".running", fj, ForkJoinPool::getRunningThreadCount)
-            .tags(tags)
-            .description("An estimate of the number of worker threads that are not blocked waiting to join tasks or for other managed synchronization threads")
-            .register(registry);
+        Gauge.builder("executor.running", fj, ForkJoinPool::getRunningThreadCount)
+                .tags(tags)
+                .description("An estimate of the number of worker threads that are not blocked waiting to join tasks or for other managed synchronization threads")
+                .register(registry);
     }
 }
