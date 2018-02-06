@@ -33,6 +33,7 @@ dependencies {
     compile 'org.springframework:spring-web', optional
     compile 'javax.servlet:javax.servlet-api:3.1.0', optional
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
+    compile 'io.prometheus:simpleclient_pushgateway:0.2.0', optional
 
     ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx'].each { sys ->
         compile project(":micrometer-registry-$sys"), optional
