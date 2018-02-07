@@ -137,8 +137,8 @@ public class PrometheusExportConfiguration {
                         }
                     );
             this.pushFuture = executorService
-                    .scheduleAtFixedRate(this::push, pushgatewayProperties.getPushRate().toMillis(),
-                            pushgatewayProperties.getPushRate().toMillis(), TimeUnit.MILLISECONDS);
+                    .scheduleAtFixedRate(this::push, 0, pushgatewayProperties.getPushRate().toMillis(),
+                            TimeUnit.MILLISECONDS);
         }
 
         void push() {
