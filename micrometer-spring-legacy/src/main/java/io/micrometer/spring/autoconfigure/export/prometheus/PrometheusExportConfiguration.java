@@ -39,6 +39,7 @@ import org.springframework.core.env.Environment;
 
 import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -127,7 +128,15 @@ public class PrometheusExportConfiguration {
             this.pushgatewayProperties = prometheusProperties.getPushgateway();
             this.pushGateway = new PushGateway(pushgatewayProperties.getBaseUrl());
             this.environment = environment;
-            this.pushFuture = Executors.newSingleThreadScheduledExecutor()
+            final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(
+                        (r) -> {
+                            final Thread thread = new Thread(r);
+                            thread.setDaemon(true);
+                            thread.setName("micrometer-pushgateway");
+                            return thread;
+                        }
+                    );
+            this.pushFuture = executorService
                     .scheduleAtFixedRate(this::push, pushgatewayProperties.getPushRate().toMillis(),
                             pushgatewayProperties.getPushRate().toMillis(), TimeUnit.MILLISECONDS);
         }
