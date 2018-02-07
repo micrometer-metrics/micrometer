@@ -67,8 +67,6 @@ public class TimeWindowLatencyHistogram extends TimeWindowHistogramBase<LatencyS
     @SuppressWarnings("ConstantConditions")
     @Override
     LatencyStats newBucket(HistogramConfig histogramConfig) {
-        requireNonNull(pauseDetector);
-
         return new LatencyStats.Builder()
             .pauseDetector(pauseDetector)
             .lowestTrackableLatency(histogramConfig.getMinimumExpectedValue())
