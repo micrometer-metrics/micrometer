@@ -26,12 +26,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.autoconfigure.ManagementContextConfiguration;
 import org.springframework.boot.actuate.endpoint.AbstractEndpoint;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.AllNestedConditions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
@@ -87,6 +88,22 @@ public class PrometheusExportConfiguration {
         }
     }
 
+    static class PrometheusPushGatewayEnabledCondition extends AllNestedConditions  {
+        public PrometheusPushGatewayEnabledCondition() {
+            super(ConfigurationPhase.PARSE_CONFIGURATION);
+        }
+
+        @ConditionalOnProperty(value = "management.metrics.export.prometheus.enabled", matchIfMissing = true)
+        static class PrometheusMeterRegistryEnabled {
+            //
+        }
+
+        @ConditionalOnProperty("management.metrics.export.prometheus.pushgateway.enabled")
+        static class PushGatewayEnabled {
+            //
+        }
+    }
+
     /**
      * Configuration for <a href="https://github.com/prometheus/pushgateway">Prometheus Pushgateway</a>.
      *
@@ -94,8 +111,7 @@ public class PrometheusExportConfiguration {
      */
     @Configuration
     @ConditionalOnClass(PushGateway.class)
-    @ConditionalOnBean(PrometheusMeterRegistry.class)
-    @ConditionalOnProperty("management.metrics.export.prometheus.pushgateway.enabled")
+    @Conditional(PrometheusPushGatewayEnabledCondition.class)
     @Incubating(since = "1.0.0")
     public class PrometheusPushGatewayConfiguration {
         private final Logger logger = LoggerFactory.getLogger(PrometheusPushGatewayConfiguration.class);
