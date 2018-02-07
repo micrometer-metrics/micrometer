@@ -110,6 +110,16 @@ public class PrometheusProperties {
         private Duration pushRate = Duration.ofMinutes(1);
 
         /**
+         * Delete metrics from Pushgateway when application is shut-down
+         */
+        private boolean deleteOnShutdown = true;
+
+        /**
+         * Push metrics right before shut-down. Mostly useful for batch jobs.
+         */
+        private boolean pushOnShutdown = false;
+
+        /**
          * Used to group metrics in pushgateway. A common example is setting
          */
         private Map<String, String> groupingKeys = new HashMap<>();
@@ -146,12 +156,28 @@ public class PrometheusProperties {
             this.pushRate = pushRate;
         }
 
-        public void setGroupingKeys(Map<String, String> groupingKeys) {
-            this.groupingKeys = groupingKeys;
+        public boolean isDeleteOnShutdown() {
+            return deleteOnShutdown;
+        }
+
+        public void setDeleteOnShutdown(boolean deleteOnShutdown) {
+            this.deleteOnShutdown = deleteOnShutdown;
+        }
+
+        public boolean isPushOnShutdown() {
+            return pushOnShutdown;
+        }
+
+        public void setPushOnShutdown(boolean pushOnShutdown) {
+            this.pushOnShutdown = pushOnShutdown;
         }
 
         public Map<String, String> getGroupingKeys() {
             return groupingKeys;
+        }
+
+        public void setGroupingKeys(Map<String, String> groupingKeys) {
+            this.groupingKeys = groupingKeys;
         }
     }
 }
