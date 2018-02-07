@@ -43,6 +43,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.PreDestroy;
+
 /**
  * Configuration for exporting metrics to Prometheus.
  *
@@ -149,6 +151,21 @@ public class PrometheusExportConfiguration {
                 pushFuture.cancel(false);
             } catch (Throwable t) {
                 logger.error("Unable to push metrics to Prometheus Pushgateway", t);
+            }
+        }
+
+        @PreDestroy
+        void shutdown() {
+            pushFuture.cancel(false);
+            if (pushgatewayProperties.isPushOnShutdown()) {
+                push();
+            }
+            if (pushgatewayProperties.isDeleteOnShutdown()) {
+                try {
+                    pushGateway.delete(job(), pushgatewayProperties.getGroupingKeys());
+                } catch(Throwable t) {
+                    logger.error("Unable to delete metrics from Prometheus Pushgateway", t);
+                }
             }
         }
 
