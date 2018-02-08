@@ -201,7 +201,7 @@ public class JvmGcMetrics implements MeterBinder {
             Class.forName("com.sun.management.GarbageCollectionNotificationInfo", false,
                 JvmGcMetrics.class.getClassLoader());
             return true;
-        } catch (ClassNotFoundException e) {
+        } catch (Throwable e) {
             // We are operating in a JVM without access to this level of detail
             logger.warn("GC notifications will not be available because " +
                 "com.sun.management.GarbageCollectionNotificationInfo is not present");
