@@ -85,7 +85,7 @@ public interface Gauge extends Meter {
          * @param value The tag value.
          * @return The gauge builder with a single added tag.
          */
-        public Builder tag(String key, String value) {
+        public Builder<T> tag(String key, String value) {
             tags.add(Tag.of(key, value));
             return this;
         }
@@ -94,7 +94,7 @@ public interface Gauge extends Meter {
          * @param description Description text of the eventual gauge.
          * @return The gauge builder with added description.
          */
-        public Builder description(@Nullable String description) {
+        public Builder<T> description(@Nullable String description) {
             this.description = description;
             return this;
         }
@@ -103,7 +103,7 @@ public interface Gauge extends Meter {
          * @param unit Base unit of the eventual gauge.
          * @return The gauge builder with added base unit.
          */
-        public Builder baseUnit(@Nullable String unit) {
+        public Builder<T> baseUnit(@Nullable String unit) {
             this.baseUnit = unit;
             return this;
         }
