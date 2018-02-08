@@ -40,7 +40,6 @@ import org.springframework.core.env.Environment;
 import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PreDestroy;
@@ -122,7 +121,7 @@ public class PrometheusExportConfiguration {
         private final PrometheusProperties.PushgatewayProperties pushgatewayProperties;
         private final PushGateway pushGateway;
         private final Environment environment;
-        private final ScheduledFuture<?> pushFuture;
+        private final ScheduledExecutorService executorService;
 
         PrometheusPushGatewayConfiguration(CollectorRegistry collectorRegistry, PrometheusProperties prometheusProperties,
                                            Environment environment) {
@@ -130,7 +129,7 @@ public class PrometheusExportConfiguration {
             this.pushgatewayProperties = prometheusProperties.getPushgateway();
             this.pushGateway = new PushGateway(pushgatewayProperties.getBaseUrl());
             this.environment = environment;
-            final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(
+            this.executorService = Executors.newSingleThreadScheduledExecutor(
                         (r) -> {
                             final Thread thread = new Thread(r);
                             thread.setDaemon(true);
@@ -138,9 +137,8 @@ public class PrometheusExportConfiguration {
                             return thread;
                         }
                     );
-            this.pushFuture = executorService
-                    .scheduleAtFixedRate(this::push, 0, pushgatewayProperties.getPushRate().toMillis(),
-                            TimeUnit.MILLISECONDS);
+            executorService.scheduleAtFixedRate(this::push, 0, pushgatewayProperties.getPushRate().toMillis(),
+                    TimeUnit.MILLISECONDS);
         }
 
         void push() {
@@ -148,7 +146,7 @@ public class PrometheusExportConfiguration {
                 pushGateway.pushAdd(collectorRegistry, job(), pushgatewayProperties.getGroupingKeys());
             } catch (UnknownHostException e) {
                 logger.error("Unable to locate host '" + pushgatewayProperties.getBaseUrl() + "'. No longer attempting metrics publication to this host");
-                pushFuture.cancel(false);
+                executorService.shutdown();
             } catch (Throwable t) {
                 logger.error("Unable to push metrics to Prometheus Pushgateway", t);
             }
@@ -156,7 +154,7 @@ public class PrometheusExportConfiguration {
 
         @PreDestroy
         void shutdown() {
-            pushFuture.cancel(false);
+            executorService.shutdown();
             if (pushgatewayProperties.isPushOnShutdown()) {
                 push();
             }
