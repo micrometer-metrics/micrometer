@@ -17,7 +17,6 @@ package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
 import org.reactivestreams.Subscriber;
@@ -33,13 +32,15 @@ public class StatsdGauge<T> extends AbstractMeter implements Gauge, StatsdPollab
     private final WeakReference<T> ref;
     private final ToDoubleFunction<T> value;
     private final AtomicReference<Double> lastValue = new AtomicReference<>(Double.NaN);
+    private final boolean alwaysPublish;
 
-    StatsdGauge(Meter.Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher, @Nullable T obj, ToDoubleFunction<T> value) {
+    StatsdGauge(Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher, @Nullable T obj, ToDoubleFunction<T> value, boolean alwaysPublish) {
         super(id);
         this.lineBuilder = lineBuilder;
         this.publisher = publisher;
         this.ref = new WeakReference<>(obj);
         this.value = value;
+        this.alwaysPublish = alwaysPublish;
     }
 
     @Override
@@ -51,7 +52,7 @@ public class StatsdGauge<T> extends AbstractMeter implements Gauge, StatsdPollab
     @Override
     public void poll() {
         double val = value();
-        if(lastValue.getAndSet(val) != val) {
+        if (alwaysPublish || lastValue.getAndSet(val) != val) {
             publisher.onNext(lineBuilder.gauge(val));
         }
     }

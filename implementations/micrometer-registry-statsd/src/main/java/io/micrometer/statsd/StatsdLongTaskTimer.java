@@ -30,21 +30,24 @@ public class StatsdLongTaskTimer extends DefaultLongTaskTimer implements StatsdP
     private final AtomicReference<Long> lastActive = new AtomicReference<>(Long.MIN_VALUE);
     private final AtomicReference<Double> lastDuration = new AtomicReference<>(Double.NEGATIVE_INFINITY);
 
-    StatsdLongTaskTimer(Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher, Clock clock) {
+    private final boolean alwaysPublish;
+
+    StatsdLongTaskTimer(Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher, Clock clock, boolean alwaysPublish) {
         super(id, clock);
         this.lineBuilder = lineBuilder;
         this.publisher = publisher;
+        this.alwaysPublish = alwaysPublish;
     }
 
     @Override
     public void poll() {
         long active = activeTasks();
-        if(lastActive.getAndSet(active) != active) {
+        if (alwaysPublish || lastActive.getAndSet(active) != active) {
             publisher.onNext(lineBuilder.gauge(active, Statistic.ACTIVE_TASKS));
         }
 
         double duration = duration(TimeUnit.MILLISECONDS);
-        if(lastDuration.getAndSet(duration) != duration) {
+        if (alwaysPublish || lastDuration.getAndSet(duration) != duration) {
             publisher.onNext(lineBuilder.gauge(duration, Statistic.DURATION));
         }
     }

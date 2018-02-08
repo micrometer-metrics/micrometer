@@ -118,4 +118,13 @@ public interface StatsdConfig extends MeterRegistryConfig {
         String v = get(prefix() + ".step");
         return v == null ? Duration.ofMinutes(1) : Duration.parse(v);
     }
+
+    /**
+     * Returns true if unchanged meters should be published to the StatsD server. Default is {@code true}.
+     */
+    default boolean publishUnchangedMeters() {
+        String v = get(prefix() + ".publishUnchangedMeters");
+        return v == null || Boolean.valueOf(v);
+    }
+
 }
