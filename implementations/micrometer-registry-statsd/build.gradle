@@ -8,4 +8,5 @@ dependencies {
     testCompile project(':micrometer-test')
     testCompile 'io.projectreactor:reactor-test:3.1.2.RELEASE'
     testCompile 'org.junit.jupiter:junit-jupiter-params:5.0.0'
+    testCompile 'org.mockito:mockito-core:2.11.0'
 }
