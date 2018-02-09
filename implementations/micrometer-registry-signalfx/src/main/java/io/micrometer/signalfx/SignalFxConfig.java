@@ -30,7 +30,7 @@ public interface SignalFxConfig extends StepRegistryConfig {
     default String accessToken() {
         String v = get(prefix() + ".accessToken");
         if(v == null)
-            throw new IllegalStateException(prefix() + ".accessToken must be set to report metrics to SignalFX");
+            throw new IllegalStateException("accessToken must be set to report metrics to SignalFX");
         return v;
     }
 

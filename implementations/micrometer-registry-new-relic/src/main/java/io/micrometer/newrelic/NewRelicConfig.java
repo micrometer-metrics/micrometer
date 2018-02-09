@@ -31,14 +31,14 @@ public interface NewRelicConfig extends StepRegistryConfig {
     default String apiKey() {
         String v = get(prefix() + ".apiKey");
         if (v == null)
-            throw new IllegalStateException(prefix() + ".apiKey must be set to report metrics to New Relic");
+            throw new IllegalStateException("apiKey must be set to report metrics to New Relic");
         return v;
     }
 
     default String accountId() {
         String v = get(prefix() + ".accountId");
         if (v == null)
-            throw new IllegalStateException(prefix() + ".accountId must be set to report metrics to New Relic");
+            throw new IllegalStateException("accountId must be set to report metrics to New Relic");
         return v;
     }
 

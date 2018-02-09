@@ -62,6 +62,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
     public DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
+        requireNonNull(config.apiKey());
 
         this.config().namingConvention(new DatadogNamingConvention());
 

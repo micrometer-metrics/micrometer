@@ -40,6 +40,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -58,6 +59,10 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     public NewRelicMeterRegistry(NewRelicConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
         this.config = config;
+
+        requireNonNull(config.accountId());
+        requireNonNull(config.apiKey());
+
         config().namingConvention(NamingConvention.camelCase);
         start(threadFactory);
     }

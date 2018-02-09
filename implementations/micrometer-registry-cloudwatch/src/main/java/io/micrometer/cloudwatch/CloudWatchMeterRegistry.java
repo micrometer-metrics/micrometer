@@ -33,6 +33,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
@@ -53,6 +54,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
                                    AmazonCloudWatchAsync amazonCloudWatchAsync, ThreadFactory threadFactory) {
         super(config, clock);
+        requireNonNull(config.namespace());
+
         this.amazonCloudWatchAsync = amazonCloudWatchAsync;
         this.config = config;
         this.config().namingConvention(NamingConvention.identity);
