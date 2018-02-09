@@ -36,11 +36,16 @@ class WavefrontMeterRegistryCompatibilityTest extends MeterRegistryCompatibility
             public String get(String k) {
                 return null;
             }
+
+            @Override
+            public String uri() {
+                return WavefrontConfig.DEFAULT_PROXY.uri();
+            }
         }, new MockClock());
     }
 
     @Override
     public Duration step() {
-        return WavefrontConfig.DEFAULT_DIRECT.step();
+        return WavefrontConfig.DEFAULT_PROXY.step();
     }
 }
