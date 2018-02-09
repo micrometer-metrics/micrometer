@@ -32,3 +32,4 @@ management.metrics:
     cloudwatch.enabled: false
     newrelic.enabled: false
     signalfx.enabled: false
+    wavefront.enabled: false

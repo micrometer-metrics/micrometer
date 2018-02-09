@@ -74,7 +74,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         this.config = config;
 
-        start(threadFactory);
+        if(config.enabled())
+            start(threadFactory);
     }
 
     @Override

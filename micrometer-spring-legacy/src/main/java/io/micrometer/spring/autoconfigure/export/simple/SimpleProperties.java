@@ -42,7 +42,7 @@ public class SimpleProperties {
     private Duration step = Duration.ofSeconds(10);
 
     /**
-     * Counting mode.
+     * Counting PublishTarget.
      */
     private CountingMode mode = CountingMode.CUMULATIVE;
 
