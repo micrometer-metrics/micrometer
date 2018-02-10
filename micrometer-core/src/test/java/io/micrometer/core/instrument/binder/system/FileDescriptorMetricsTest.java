@@ -40,8 +40,8 @@ class FileDescriptorMetricsTest {
         final OperatingSystemMXBean osBean = mock(UnsupportedOperatingSystemMXBean.class);
         new FileDescriptorMetrics(osBean, Tags.of("some", "tag")).bindTo(registry);
 
-        assertThat(registry.find("process.open.fds").gauge()).isNull();
-        assertThat(registry.find("process.max.fds").gauge()).isNull();
+        assertThat(registry.find("process.fds.open").gauge()).isNull();
+        assertThat(registry.find("process.fds.max").gauge()).isNull();
     }
 
     @Test
@@ -50,9 +50,9 @@ class FileDescriptorMetricsTest {
 
         new FileDescriptorMetrics(Tags.of("some", "tag")).bindTo(registry);
 
-        assertThat(registry.get("process.open.fds").tags("some", "tag")
+        assertThat(registry.get("process.fds.open").tags("some", "tag")
             .gauge().value()).isGreaterThan(0);
-        assertThat(registry.get("process.max.fds").tags("some", "tag")
+        assertThat(registry.get("process.fds.max").tags("some", "tag")
             .gauge().value()).isGreaterThan(0);
     }
 
@@ -62,8 +62,8 @@ class FileDescriptorMetricsTest {
 
         new FileDescriptorMetrics(Tags.of("some", "tag")).bindTo(registry);
 
-        assertThat(registry.find("process.open.fds").gauge()).isNull();
-        assertThat(registry.find("process.max.fds").gauge()).isNull();
+        assertThat(registry.find("process.fds.open").gauge()).isNull();
+        assertThat(registry.find("process.fds.max").gauge()).isNull();
     }
 
     /** Represents a JVM implementation we do not currently support. */

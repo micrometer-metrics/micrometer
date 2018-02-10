@@ -87,14 +87,14 @@ public class FileDescriptorMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         if (openFdsMethod != null) {
-            Gauge.builder("process.open.fds", osBean, x -> invoke(openFdsMethod))
+            Gauge.builder("process.fds.open", osBean, x -> invoke(openFdsMethod))
                 .tags(tags)
                 .description("The open file descriptor count")
                 .register(registry);
         }
 
         if (maxFdsMethod != null) {
-            Gauge.builder("process.max.fds", osBean, x -> invoke(maxFdsMethod))
+            Gauge.builder("process.fds.max", osBean, x -> invoke(maxFdsMethod))
                 .tags(tags)
                 .description("The maximum file descriptor count")
                 .register(registry);
