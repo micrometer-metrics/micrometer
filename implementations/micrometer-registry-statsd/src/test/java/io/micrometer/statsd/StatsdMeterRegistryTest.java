@@ -17,10 +17,12 @@ package io.micrometer.statsd;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.lang.Nullable;
 import io.netty.channel.ChannelOption;
 import org.junit.jupiter.api.BeforeAll;
@@ -32,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.Disposable;
 import reactor.core.Disposables;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Operators;
 import reactor.ipc.netty.options.ClientOptions;
 import reactor.ipc.netty.udp.UdpServer;
 import reactor.test.StepVerifier;
@@ -262,5 +265,18 @@ class StatsdMeterRegistryTest {
             r.config().namingConvention((name, type, baseUnit) -> name.toUpperCase());
             n.addAndGet(1);
         }, StatsdFlavor.ETSY, "MY.GAUGE.statistic.value:2|g");
+    }
+
+    @Issue("#411")
+    @Test
+    void counterIncrementDoesNotCauseStackOverflow() {
+        StatsdMeterRegistry registry = registry(StatsdFlavor.ETSY);
+        new LogbackMetrics().bindTo(registry);
+
+        // Cause the publisher to get into a state that would make it perform logging at DEBUG level.
+        ((Logger) LoggerFactory.getLogger(Operators.class)).setLevel(Level.DEBUG);
+        registry.publisher.onComplete();
+
+        registry.counter("my.counter").increment();
     }
 }

@@ -16,6 +16,7 @@
 package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
@@ -23,6 +24,9 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
+import org.reactivestreams.Processor;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
 import reactor.core.Disposables;
 import reactor.core.publisher.Flux;
@@ -46,7 +50,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private final HierarchicalNameMapper nameMapper;
     private final Collection<StatsdPollable> pollableMeters = new CopyOnWriteArrayList<>();
 
-    private volatile UnicastProcessor<String> publisher;
+    volatile LogbackMetricsSuppressingUnicastProcessor publisher;
+
     private Disposable.Swap udpClient = Disposables.swap();
     private Disposable.Swap meterPoller = Disposables.swap();
 
@@ -71,9 +76,11 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 config().namingConvention(NamingConvention.camelCase);
         }
 
-        this.publisher = UnicastProcessor.create(Queues.<String>get(statsdConfig.queueSize()).get());
-        gauge("statsd.queue.size", this.publisher, UnicastProcessor::size);
-        gauge("statsd.queue.capacity", this.publisher, UnicastProcessor::getBufferSize);
+        UnicastProcessor<String> processor = UnicastProcessor.create(Queues.<String>get(statsdConfig.queueSize()).get());
+        this.publisher = new LogbackMetricsSuppressingUnicastProcessor(processor);
+
+        gauge("statsd.queue.size", this.publisher, LogbackMetricsSuppressingUnicastProcessor::size);
+        gauge("statsd.queue.capacity", this.publisher, LogbackMetricsSuppressingUnicastProcessor::getBufferSize);
 
         if (config.enabled())
             start();
@@ -81,19 +88,19 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     public void start() {
         UdpClient.create(statsdConfig.host(), statsdConfig.port())
-            .newHandler((in, out) -> out
-                .options(NettyPipeline.SendOptions::flushOnEach)
-                .sendString(publisher)
-                .neverComplete()
-            )
-            .subscribe(client -> {
-                this.udpClient.replace(client);
+                .newHandler((in, out) -> out
+                        .options(NettyPipeline.SendOptions::flushOnEach)
+                        .sendString(publisher)
+                        .neverComplete()
+                )
+                .subscribe(client -> {
+                    this.udpClient.replace(client);
 
-                // now that we're connected, start polling gauges and other pollable meter types
-                meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
-                    .doOnEach(n -> pollableMeters.forEach(StatsdPollable::poll))
-                    .subscribe());
-            });
+                    // now that we're connected, start polling gauges and other pollable meter types
+                    meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
+                            .doOnEach(n -> pollableMeters.forEach(StatsdPollable::poll))
+                            .subscribe());
+                });
     }
 
     public void stop() {
@@ -126,21 +133,21 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
         Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, histogramConfig, pauseDetector, getBaseTimeUnit(),
-            statsdConfig.step().toMillis());
+                statsdConfig.step().toMillis());
 
         for (double percentile : histogramConfig.getPercentiles()) {
             switch (statsdConfig.flavor()) {
                 case DATADOG:
                     gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + "percentile", timer,
-                        t -> t.percentile(percentile, getBaseTimeUnit()));
+                            t -> t.percentile(percentile, getBaseTimeUnit()));
                     break;
                 case TELEGRAF:
                     gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + ".percentile", timer,
-                        t -> t.percentile(percentile, getBaseTimeUnit()));
+                            t -> t.percentile(percentile, getBaseTimeUnit()));
                     break;
                 case ETSY:
                     gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile * 100)),
-                        timer, t -> t.percentile(percentile, getBaseTimeUnit()));
+                            timer, t -> t.percentile(percentile, getBaseTimeUnit()));
                     break;
             }
         }
@@ -148,8 +155,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
         if (histogramConfig.isPublishingHistogram()) {
             for (Long bucket : histogramConfig.getHistogramBuckets(false)) {
                 more().counter(id.getName() + ".histogram", Tags.concat(getConventionTags(id), "bucket",
-                    percentileFormat.format(TimeUtils.nanosToUnit(bucket, TimeUnit.MILLISECONDS))),
-                    timer, s -> s.histogramCountAtValue(bucket));
+                        percentileFormat.format(TimeUtils.nanosToUnit(bucket, TimeUnit.MILLISECONDS))),
+                        timer, s -> s.histogramCountAtValue(bucket));
             }
         }
 
@@ -159,21 +166,21 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @SuppressWarnings("ConstantConditions")
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
-        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), publisher, clock, histogramConfig, statsdConfig.step().toMillis());
+        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), publisher, clock, histogramConfig);
 
         for (double percentile : histogramConfig.getPercentiles()) {
             switch (statsdConfig.flavor()) {
                 case DATADOG:
                     gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + "percentile", summary,
-                        s -> s.percentile(percentile));
+                            s -> s.percentile(percentile));
                     break;
                 case TELEGRAF:
                     gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + ".percentile", summary,
-                        s -> s.percentile(percentile));
+                            s -> s.percentile(percentile));
                     break;
                 case ETSY:
                     gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile * 100)),
-                        summary, s -> s.percentile(percentile));
+                            summary, s -> s.percentile(percentile));
                     break;
             }
         }
@@ -181,7 +188,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
         if (histogramConfig.isPublishingHistogram()) {
             for (Long bucket : histogramConfig.getHistogramBuckets(false)) {
                 more().counter(id.getName() + ".histogram", Tags.concat(getConventionTags(id), "bucket",
-                    Long.toString(bucket)), summary, s -> s.histogramCountAtValue(bucket));
+                        Long.toString(bucket)), summary, s -> s.histogramCountAtValue(bucket));
             }
         }
 
@@ -198,7 +205,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
         StatsdFunctionTimer ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits,
-            getBaseTimeUnit(), lineBuilder(id), publisher);
+                getBaseTimeUnit(), lineBuilder(id), publisher);
         pollableMeters.add(ft);
         return ft;
     }
@@ -236,8 +243,49 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected HistogramConfig defaultHistogramConfig() {
         return HistogramConfig.builder()
-            .histogramExpiry(statsdConfig.step())
-            .build()
-            .merge(HistogramConfig.DEFAULT);
+                .histogramExpiry(statsdConfig.step())
+                .build()
+                .merge(HistogramConfig.DEFAULT);
+    }
+
+    static class LogbackMetricsSuppressingUnicastProcessor implements Processor<String, String> {
+        private final UnicastProcessor<String> processor;
+
+        private LogbackMetricsSuppressingUnicastProcessor(UnicastProcessor<String> processor) {
+            this.processor = processor;
+        }
+
+        @Override
+        public void subscribe(Subscriber<? super String> s) {
+            processor.subscribe(s);
+        }
+
+        @Override
+        public void onSubscribe(Subscription s) {
+            processor.onSubscribe(s);
+        }
+
+        @Override
+        public void onNext(String s) {
+            LogbackMetrics.ignoreMetrics(() -> processor.onNext(s));
+        }
+
+        @Override
+        public void onError(Throwable t) {
+            LogbackMetrics.ignoreMetrics(() -> processor.onError(t));
+        }
+
+        @Override
+        public void onComplete() {
+            LogbackMetrics.ignoreMetrics(processor::onComplete);
+        }
+
+        int size() {
+            return processor.size();
+        }
+
+        int getBufferSize() {
+            return processor.getBufferSize();
+        }
     }
 }

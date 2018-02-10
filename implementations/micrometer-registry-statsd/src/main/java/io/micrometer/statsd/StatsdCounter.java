@@ -38,7 +38,7 @@ public class StatsdCounter extends AbstractMeter implements Counter {
 
     @Override
     public void increment(double amount) {
-        if(amount > 0) {
+        if (amount > 0) {
             count.add(amount);
             publisher.onNext(lineBuilder.count((long) amount));
         }

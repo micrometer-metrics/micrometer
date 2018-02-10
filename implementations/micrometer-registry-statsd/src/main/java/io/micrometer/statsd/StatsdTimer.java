@@ -22,7 +22,7 @@ import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.TimeUtils;
-import org.reactivestreams.Processor;
+import org.reactivestreams.Subscriber;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.DoubleAdder;
@@ -34,9 +34,9 @@ public class StatsdTimer extends AbstractTimer implements Timer {
     private StepDouble max;
 
     private final StatsdLineBuilder lineBuilder;
-    private final Processor<String, String> publisher;
+    private final Subscriber<String> publisher;
 
-    StatsdTimer(Id id, StatsdLineBuilder lineBuilder, Processor<String, String> publisher, Clock clock,
+    StatsdTimer(Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher, Clock clock,
                 HistogramConfig histogramConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis) {
         super(id, clock, histogramConfig, pauseDetector, baseTimeUnit);
         this.max = new StepDouble(clock, stepMillis);

@@ -36,7 +36,7 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
     private final Subscriber<String> publisher;
 
     StatsdDistributionSummary(Meter.Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher, Clock clock,
-                              HistogramConfig histogramConfig, long stepMillis) {
+                              HistogramConfig histogramConfig) {
         super(id, clock, histogramConfig);
         this.max = new TimeDecayingMax(clock, histogramConfig);
         this.lineBuilder = lineBuilder;

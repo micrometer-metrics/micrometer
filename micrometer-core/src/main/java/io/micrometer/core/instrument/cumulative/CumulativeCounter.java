@@ -23,9 +23,6 @@ import java.util.concurrent.atomic.DoubleAdder;
 public class CumulativeCounter extends AbstractMeter implements Counter {
     private final DoubleAdder value;
 
-    /**
-     * Create a new instance.
-     */
     public CumulativeCounter(Id id) {
         super(id);
         this.value = new DoubleAdder();

@@ -18,10 +18,14 @@ package io.micrometer.core.instrument.binder.logging;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.cumulative.CumulativeCounter;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.lang.NonNullApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
@@ -57,5 +61,37 @@ class LogbackMetricsTest {
         logger.isErrorEnabled();
 
         assertThat(registry.get("logback.events").tags("level", "error").counter().count()).isEqualTo(0.0);
+    }
+
+    @Issue("#411")
+    @Test
+    void ignoringMetricsInsideCounters() {
+        registry = new LoggingCounterMeterRegistry();
+        new LogbackMetrics().bindTo(registry);
+        registry.counter("my.counter").increment();
+    }
+
+    @NonNullApi
+    private static class LoggingCounterMeterRegistry extends SimpleMeterRegistry {
+        @Override
+        protected Counter newCounter(Meter.Id id) {
+            return new LoggingCounter(id);
+        }
+    }
+
+    private static class LoggingCounter extends CumulativeCounter {
+        org.slf4j.Logger logger = LoggerFactory.getLogger(LoggingCounter.class);
+
+        LoggingCounter(Id id) {
+            super(id);
+        }
+
+        @Override
+        public void increment() {
+            LogbackMetrics.ignoreMetrics(() -> {
+                logger.info("beep");
+                super.increment();
+            });
+        }
     }
 }
