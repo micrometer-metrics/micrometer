@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
+import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics;
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 import io.micrometer.core.instrument.binder.system.UptimeMetrics;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -77,6 +78,13 @@ class MeterBindersConfiguration {
     @ConditionalOnMissingBean
     public ProcessorMetrics processorMetrics() {
         return new ProcessorMetrics();
+    }
+
+    @Bean
+    @ConditionalOnProperty(value = "management.metrics.binders.fds.enabled", matchIfMissing = true)
+    @ConditionalOnMissingBean
+    public FileDescriptorMetrics fileDescriptorMetrics() {
+        return new FileDescriptorMetrics();
     }
 
 }
