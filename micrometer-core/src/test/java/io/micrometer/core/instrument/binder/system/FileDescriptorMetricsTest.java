@@ -20,17 +20,15 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
-import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
-import java.lang.reflect.InvocationTargetException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
- * File descriptor metrics.
+ * Tests for {@link FileDescriptorMetrics}
  *
  * @author Michael Weirauch
  */
@@ -38,21 +36,8 @@ class FileDescriptorMetricsTest {
     private MeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
-    @SuppressWarnings("restriction")
-    void fileDescriptorMetricsRuntime() {
-        // currently only supporting HotSpot JVM
-        final OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-        assumeTrue(osBean instanceof com.sun.management.UnixOperatingSystemMXBean);
-
-        new FileDescriptorMetrics().bindTo(registry);
-
-        registry.get("process.open.fds").gauge();
-        registry.get("process.max.fds").gauge();
-    }
-
-    @Test
     void fileDescriptorMetricsUnsupportedOsBeanMock() {
-        final OperatingSystemMXBean osBean = mock(OperatingSystemMXBean.class);
+        final OperatingSystemMXBean osBean = mock(UnsupportedOperatingSystemMXBean.class);
         new FileDescriptorMetrics(osBean, Tags.of("some", "tag")).bindTo(registry);
 
         assertThat(registry.find("process.open.fds").gauge()).isNull();
@@ -60,36 +45,30 @@ class FileDescriptorMetricsTest {
     }
 
     @Test
-    void fileDescriptorMetricsSupportedOsBeanMock() {
-        final HotSpotLikeOperatingSystemMXBean osBean = mock(
-            HotSpotLikeOperatingSystemMXBean.class);
-        when(osBean.getOpenFileDescriptorCount()).thenReturn(Long.valueOf(512));
-        when(osBean.getMaxFileDescriptorCount()).thenReturn(Long.valueOf(1024));
-        new FileDescriptorMetrics(osBean, Tags.of("some", "tag")).bindTo(registry);
+    void unixFileDescriptorMetrics() {
+        assumeFalse(System.getProperty("os.name").toLowerCase().contains("win"));
+
+        new FileDescriptorMetrics(Tags.of("some", "tag")).bindTo(registry);
 
         assertThat(registry.get("process.open.fds").tags("some", "tag")
-            .gauge().value()).isEqualTo(512.0);
+            .gauge().value()).isGreaterThan(0);
         assertThat(registry.get("process.max.fds").tags("some", "tag")
-            .gauge().value()).isEqualTo(1024.0);
+            .gauge().value()).isGreaterThan(0);
     }
 
     @Test
-    void fileDescriptorMetricsInvocationException() {
-        final HotSpotLikeOperatingSystemMXBean osBean = mock(
-            HotSpotLikeOperatingSystemMXBean.class);
-        when(osBean.getOpenFileDescriptorCount()).thenThrow(InvocationTargetException.class);
-        when(osBean.getMaxFileDescriptorCount()).thenThrow(InvocationTargetException.class);
-        new FileDescriptorMetrics(osBean, Tags.of("some", "tag")).bindTo(registry);
+    void windowsFileDescriptorMetrics() {
+        assumeTrue(System.getProperty("os.name").toLowerCase().contains("win"));
 
-        assertThat(registry.get("process.open.fds").tags("some", "tag")
-            .gauge().value()).isEqualTo(Double.NaN);
-        assertThat(registry.get("process.max.fds").tags("some", "tag")
-            .gauge().value()).isEqualTo(Double.NaN);
+        new FileDescriptorMetrics(Tags.of("some", "tag")).bindTo(registry);
+
+        assertThat(registry.find("process.open.fds").gauge()).isNull();
+        assertThat(registry.find("process.max.fds").gauge()).isNull();
     }
 
-    private interface HotSpotLikeOperatingSystemMXBean extends OperatingSystemMXBean {
+    /** Represents a JVM implementation we do not currently support. */
+    private interface UnsupportedOperatingSystemMXBean extends OperatingSystemMXBean {
         long getOpenFileDescriptorCount();
-
         long getMaxFileDescriptorCount();
     }
 }
