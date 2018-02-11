@@ -19,9 +19,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -42,16 +39,7 @@ class ProcessorMetricsTest {
 
     @Test
     void hotspotCpuMetrics() {
-        boolean jdk9 = false;
-        try {
-            Class.forName("java.lang.reflect.InaccessibleObjectException");
-            jdk9 = true;
-        } catch (ClassNotFoundException ignored) {
-        }
-
-        OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-        assumeTrue(!jdk9);
-        assumeTrue(osBean.getClass().getName().equals("sun.management.OperatingSystemImpl"));
+        assumeTrue(classExists("com.sun.management.OperatingSystemMXBean"));
 
         MeterRegistry registry = new SimpleMeterRegistry();
         new ProcessorMetrics().bindTo(registry);
@@ -62,8 +50,7 @@ class ProcessorMetricsTest {
 
     @Test
     void openJ9CpuMetrics() {
-        OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-        assumeTrue(osBean.getClass().getName().equals("com.ibm.lang.management.internal.UnixExtendedOperatingSystem"));
+        assumeTrue(classExists("com.ibm.lang.management.OperatingSystemMXBean"));
 
         MeterRegistry registry = new SimpleMeterRegistry();
         new ProcessorMetrics().bindTo(registry);
@@ -77,5 +64,14 @@ class ProcessorMetricsTest {
          */
         registry.get("system.cpu.usage").gauge();
         registry.get("process.cpu.usage").gauge();
+    }
+
+    private boolean classExists(String className) {
+        try {
+            Class.forName(className);
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
     }
 }

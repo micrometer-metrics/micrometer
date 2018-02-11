@@ -27,20 +27,37 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Record metrics related to CPU utilization
+ * Record metrics related to the CPU, gathered by the JVM.
+ * <p>
+ * Supported JVM implementations:
+ * <ul>
+ *     <li>HotSpot</li>
+ *     <li>J9</li>
+ * </ul>
  */
 @NonNullApi
 @NonNullFields
 public class ProcessorMetrics implements MeterBinder {
+
+    /** List of public, exported interface class names from supported JVM implementations. */
+    private static final List<String> OPERATING_SYSTEM_BEAN_CLASS_NAMES = Arrays.asList(
+        "com.sun.management.OperatingSystemMXBean", // HotSpot
+        "com.ibm.lang.management.OperatingSystemMXBean" // J9
+    );
+
     private final Iterable<Tag> tags;
 
+    private final OperatingSystemMXBean operatingSystemBean;
+
     @Nullable
-    private OperatingSystemMXBean operatingSystemBean;
+    private Class<?> operatingSystemBeanClass;
 
     @Nullable
     private Method systemCpuUsage;
@@ -55,6 +72,7 @@ public class ProcessorMetrics implements MeterBinder {
     public ProcessorMetrics(Iterable<Tag> tags) {
         this.tags = tags;
         this.operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
+        this.operatingSystemBeanClass = getFirstClassFound(OPERATING_SYSTEM_BEAN_CLASS_NAMES);
         this.systemCpuUsage = detectMethod(operatingSystemBean, "getSystemCpuLoad");
         this.processCpuUsage = detectMethod(operatingSystemBean, "getProcessCpuLoad");
     }
@@ -67,7 +85,7 @@ public class ProcessorMetrics implements MeterBinder {
             .description("The number of processors available to the Java virtual machine")
             .register(registry);
 
-        if (operatingSystemBean != null && operatingSystemBean.getSystemLoadAverage() >= 0) {
+        if (operatingSystemBean.getSystemLoadAverage() >= 0) {
             Gauge.builder("system.load.average.1m", operatingSystemBean, OperatingSystemMXBean::getSystemLoadAverage)
                 .tags(tags)
                 .description("The sum of the number of runnable entities queued to available processors and the number " +
@@ -99,19 +117,28 @@ public class ProcessorMetrics implements MeterBinder {
     }
 
     @Nullable
-    private Method detectMethod(@Nullable OperatingSystemMXBean osBean, String name) {
+    private Method detectMethod(OperatingSystemMXBean osBean, String name) {
         requireNonNull(name);
-        if (osBean == null)
-            return null;
-        try {
-            final Method method = osBean.getClass().getMethod(name);
-            method.setAccessible(true);
-            return method;
-        } catch (Throwable ignored) {
-            // Can't get more specific about type of exception here, since JDK9 will throw a
-            // InaccessibleObjectException on OperatingSystemMXBean, and this exception type
-            // is not available in Java 8 and prior.
+        if (operatingSystemBeanClass == null) {
             return null;
         }
+        try {
+            // ensure the Bean we have is actually an instance of the interface
+            operatingSystemBeanClass.cast(osBean);
+            return operatingSystemBeanClass.getDeclaredMethod(name);
+        } catch (ClassCastException | NoSuchMethodException | SecurityException e) {
+            return null;
+        }
+    }
+
+    @Nullable
+    private Class<?> getFirstClassFound(List<String> classNames) {
+        for (String className : classNames) {
+            try {
+                return Class.forName(className);
+            } catch (ClassNotFoundException ignore) {
+            }
+        }
+        return null;
     }
 }
