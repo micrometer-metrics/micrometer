@@ -57,13 +57,13 @@ public class ProcessorMetrics implements MeterBinder {
     private final OperatingSystemMXBean operatingSystemBean;
 
     @Nullable
-    private Class<?> operatingSystemBeanClass;
+    private final Class<?> operatingSystemBeanClass;
 
     @Nullable
-    private Method systemCpuUsage;
+    private final Method systemCpuUsage;
 
     @Nullable
-    private Method processCpuUsage;
+    private final Method processCpuUsage;
 
     public ProcessorMetrics() {
         this(emptyList());
@@ -73,8 +73,8 @@ public class ProcessorMetrics implements MeterBinder {
         this.tags = tags;
         this.operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
         this.operatingSystemBeanClass = getFirstClassFound(OPERATING_SYSTEM_BEAN_CLASS_NAMES);
-        this.systemCpuUsage = detectMethod(operatingSystemBean, "getSystemCpuLoad");
-        this.processCpuUsage = detectMethod(operatingSystemBean, "getProcessCpuLoad");
+        this.systemCpuUsage = detectMethod("getSystemCpuLoad");
+        this.processCpuUsage = detectMethod("getProcessCpuLoad");
     }
 
     @Override
@@ -94,37 +94,37 @@ public class ProcessorMetrics implements MeterBinder {
         }
 
         if (systemCpuUsage != null) {
-            Gauge.builder("system.cpu.usage", operatingSystemBean, x -> invoke(x, systemCpuUsage))
+            Gauge.builder("system.cpu.usage", operatingSystemBean, x -> invoke(systemCpuUsage))
                 .tags(tags)
                 .description("The \"recent cpu usage\" for the whole system")
                 .register(registry);
         }
 
         if (processCpuUsage != null) {
-            Gauge.builder("process.cpu.usage", operatingSystemBean, x -> invoke(x, processCpuUsage))
+            Gauge.builder("process.cpu.usage", operatingSystemBean, x -> invoke(processCpuUsage))
                 .tags(tags)
                 .description("The \"recent cpu usage\" for the Java Virtual Machine process")
                 .register(registry);
         }
     }
 
-    private double invoke(OperatingSystemMXBean osBean, @Nullable Method method) {
+    private double invoke(@Nullable Method method) {
         try {
-            return method != null ? (double) method.invoke(osBean) : Double.NaN;
+            return method != null ? (double) method.invoke(operatingSystemBean) : Double.NaN;
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             return Double.NaN;
         }
     }
 
     @Nullable
-    private Method detectMethod(OperatingSystemMXBean osBean, String name) {
+    private Method detectMethod(String name) {
         requireNonNull(name);
         if (operatingSystemBeanClass == null) {
             return null;
         }
         try {
             // ensure the Bean we have is actually an instance of the interface
-            operatingSystemBeanClass.cast(osBean);
+            operatingSystemBeanClass.cast(operatingSystemBean);
             return operatingSystemBeanClass.getDeclaredMethod(name);
         } catch (ClassCastException | NoSuchMethodException | SecurityException e) {
             return null;
