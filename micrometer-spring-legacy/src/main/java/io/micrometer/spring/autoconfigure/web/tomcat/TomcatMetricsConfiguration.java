@@ -26,9 +26,11 @@ import org.springframework.boot.context.embedded.EmbeddedWebApplicationContext;
 import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainer;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import java.util.Collections;
 
+@Configuration
 @ConditionalOnClass(name = "org.apache.catalina.startup.Tomcat")
 public class TomcatMetricsConfiguration {
 
