@@ -18,7 +18,6 @@ package io.micrometer.spring.autoconfigure;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.hystrix.HystrixMetricsBinder;
 import io.micrometer.spring.PropertiesMeterFilter;
 import io.micrometer.spring.autoconfigure.export.CompositeMeterRegistryConfiguration;
@@ -28,7 +27,6 @@ import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguratio
 import io.micrometer.spring.autoconfigure.web.tomcat.TomcatMetricsConfiguration;
 import io.micrometer.spring.integration.SpringIntegrationMetrics;
 import io.micrometer.spring.scheduling.ScheduledMethodMetrics;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration;
@@ -39,14 +37,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.SearchStrategy;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.Order;
 import org.springframework.integration.config.EnableIntegrationManagement;
 import org.springframework.integration.support.management.IntegrationManagementConfigurer;
-
-import java.util.Collection;
 
 /**
  * {@link EnableAutoConfiguration} for Micrometer-based metrics.
@@ -57,23 +54,23 @@ import java.util.Collection;
 @ConditionalOnClass(Timed.class)
 @EnableConfigurationProperties(MetricsProperties.class)
 @Import({
-    // default binders
-    MeterBindersConfiguration.class,
+        // default binders
+        MeterBindersConfiguration.class,
 
-    // default instrumentation
-    ServletMetricsConfiguration.class, RestTemplateMetricsConfiguration.class,
-    TomcatMetricsConfiguration.class, JerseyServerMetricsConfiguration.class,
+        // default instrumentation
+        ServletMetricsConfiguration.class, RestTemplateMetricsConfiguration.class,
+        TomcatMetricsConfiguration.class, JerseyServerMetricsConfiguration.class,
 
-    // registry implementations
-    MeterRegistriesConfiguration.class,
+        // registry implementations
+        MeterRegistriesConfiguration.class,
 
-    // conditionally build a composite registry out of more than one registry present
-    CompositeMeterRegistryConfiguration.class
+        // conditionally build a composite registry out of more than one registry present
+        CompositeMeterRegistryConfiguration.class
 })
 @AutoConfigureAfter({
-    DataSourceAutoConfiguration.class,
-    RabbitAutoConfiguration.class,
-    CacheAutoConfiguration.class
+        DataSourceAutoConfiguration.class,
+        RabbitAutoConfiguration.class,
+        CacheAutoConfiguration.class
 })
 public class MetricsAutoConfiguration {
     @Bean
@@ -83,10 +80,8 @@ public class MetricsAutoConfiguration {
     }
 
     @Bean
-    public static MeterRegistryPostProcessor meterRegistryPostProcessor(ObjectProvider<Collection<MeterBinder>> binders,
-                                                                        ObjectProvider<Collection<MeterRegistryCustomizer<?>>> customizers,
-                                                                        MetricsProperties properties) {
-        return new MeterRegistryPostProcessor(binders, customizers, properties.isUseGlobalRegistry());
+    public static MeterRegistryPostProcessor meterRegistryPostProcessor(ApplicationContext context) {
+        return new MeterRegistryPostProcessor(context);
     }
 
     @Bean
@@ -127,7 +122,7 @@ public class MetricsAutoConfiguration {
 
         @Bean
         public SpringIntegrationMetrics springIntegrationMetrics(
-            IntegrationManagementConfigurer configurer) {
+                IntegrationManagementConfigurer configurer) {
             return new SpringIntegrationMetrics(configurer);
         }
     }

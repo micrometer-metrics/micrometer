@@ -16,61 +16,52 @@
 package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.lang.NonNullApi;
-import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.core.ResolvableType;
+import org.springframework.context.ApplicationContext;
 
 import java.util.Collection;
 
-import static java.util.Collections.emptyList;
-
 @NonNullApi
 public class MeterRegistryPostProcessor implements BeanPostProcessor {
-    private final Collection<MeterRegistryCustomizer<?>> customizers;
-    private final Collection<MeterBinder> binders;
-    private final boolean addToGlobalRegistry;
+    private final ApplicationContext context;
 
-    MeterRegistryPostProcessor(ObjectProvider<Collection<MeterBinder>> binders,
-                               ObjectProvider<Collection<MeterRegistryCustomizer<?>>> customizers,
-                               boolean addToGlobalRegistry) {
-        this.binders = binders.getIfAvailable() != null ? binders.getIfAvailable() : emptyList();
-        this.customizers = customizers.getIfAvailable() != null ? customizers.getIfAvailable() : emptyList();
-        this.addToGlobalRegistry = addToGlobalRegistry;
+    private volatile MeterRegistryConfigurer configurer;
+
+    MeterRegistryPostProcessor(ApplicationContext context) {
+        this.context = context;
     }
 
     @Override
-    public Object postProcessBeforeInitialization(Object bean, String beanName) {
+    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
         return bean;
     }
 
     @Override
-    public Object postProcessAfterInitialization(Object bean, String beanName) {
-        if (bean instanceof MeterRegistry && !(bean instanceof CompositeMeterRegistry)) {
-            MeterRegistry registry = (MeterRegistry) bean;
-
-            // Customizers must be applied before binders, as they may add custom tags or alter
-            // timer or summary configuration.
-            for (MeterRegistryCustomizer customizer : this.customizers) {
-                Class<?> generic = ResolvableType
-                    .forClass(MeterRegistryCustomizer.class, customizer.getClass())
-                    .resolveGeneric();
-                if (generic.isAssignableFrom(bean.getClass())) {
-                    //noinspection unchecked
-                    customizer.customize(registry);
-                }
-            }
-
-            binders.forEach(b -> b.bindTo(registry));
-
-            if (addToGlobalRegistry && registry != Metrics.globalRegistry) {
-                Metrics.addRegistry(registry);
-            }
+    public Object postProcessAfterInitialization(Object bean, String beanName)
+            throws BeansException {
+        if (bean instanceof MeterRegistry) {
+            getConfigurer().configure((MeterRegistry) bean);
         }
-
         return bean;
+    }
+
+    @SuppressWarnings("unchecked")
+    private MeterRegistryConfigurer getConfigurer() {
+        if (this.configurer == null) {
+            this.configurer = new MeterRegistryConfigurer(beansOfType(MeterBinder.class),
+                    beansOfType(MeterFilter.class),
+                    (Collection<MeterRegistryCustomizer<?>>) (Object) beansOfType(
+                            MeterRegistryCustomizer.class),
+                    this.context.getBean(MetricsProperties.class).isUseGlobalRegistry());
+        }
+        return this.configurer;
+    }
+
+    private <T> Collection<T> beansOfType(Class<T> type) {
+        return this.context.getBeansOfType(type).values();
     }
 }
