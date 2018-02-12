@@ -15,6 +15,7 @@
  */
 package io.micrometer.datadog;
 
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
@@ -37,7 +38,7 @@ public interface DatadogConfig extends StepRegistryConfig {
     default String apiKey() {
         String v = get(prefix() + ".apiKey");
         if(v == null)
-            throw new IllegalStateException("apiKey must be set to report metrics to Datadog");
+            throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to Datadog");
         return v;
     }
 

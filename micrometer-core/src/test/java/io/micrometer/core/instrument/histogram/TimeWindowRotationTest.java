@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.histogram;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -45,7 +46,7 @@ class TimeWindowRotationTest {
     private static void expectValidationFailure(Class<? extends TimeWindowHistogramBase<?, ?>> histogramType,
                                                 HistogramConfig badConfig) {
         assertThatThrownBy(() -> newHistogram(histogramType, new MockClock(), badConfig.merge(HistogramConfig.DEFAULT)))
-            .hasRootCauseExactlyInstanceOf(IllegalStateException.class)
+            .hasRootCauseExactlyInstanceOf(InvalidConfigurationException.class)
             .satisfies(cause -> assertThat(cause.getCause()).hasMessageStartingWith("Invalid HistogramConfig:"));
     }
 

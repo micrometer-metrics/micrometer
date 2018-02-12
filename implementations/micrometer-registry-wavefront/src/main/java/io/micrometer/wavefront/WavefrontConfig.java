@@ -15,6 +15,7 @@
  */
 package io.micrometer.wavefront;
 
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
@@ -77,7 +78,7 @@ public interface WavefrontConfig extends StepRegistryConfig {
     default String uri() {
         String v = get(prefix() + ".uri");
         if(v == null)
-            throw new IllegalStateException("A uri is required to publish metrics to Wavefront");
+            throw new MissingRequiredConfigurationException("A uri is required to publish metrics to Wavefront");
         return v;
     }
 

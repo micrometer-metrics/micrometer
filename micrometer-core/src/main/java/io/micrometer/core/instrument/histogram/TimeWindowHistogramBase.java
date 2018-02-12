@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.CountAtValue;
 import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.ValueAtPercentile;
+import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
@@ -109,7 +110,7 @@ abstract class TimeWindowHistogramBase<T, U> {
     }
 
     private static void rejectHistogramConfig(String msg) {
-        throw new IllegalStateException("Invalid HistogramConfig: " + msg);
+        throw new InvalidConfigurationException("Invalid HistogramConfig: " + msg);
     }
 
     void initRingBuffer() {

@@ -16,6 +16,7 @@
 package io.micrometer.wavefront;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
@@ -59,7 +60,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         this.directToApi = !"proxy".equals(uri.getScheme());
 
         if (directToApi && config.apiToken() == null) {
-            throw new IllegalStateException("apiToken must be set whenever publishing directly to the Wavefront API");
+            throw new MissingRequiredConfigurationException("apiToken must be set whenever publishing directly to the Wavefront API");
         }
 
         config().namingConvention(new WavefrontNamingConvention(config.globalPrefix()));
