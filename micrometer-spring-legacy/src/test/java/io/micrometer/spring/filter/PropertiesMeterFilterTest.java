@@ -15,73 +15,269 @@
  */
 package io.micrometer.spring.filter;
 
-import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.core.lang.NonNull;
-import io.micrometer.core.lang.Nullable;
 import io.micrometer.spring.PropertiesMeterFilter;
 import io.micrometer.spring.autoconfigure.MetricsProperties;
-import org.junit.Before;
+import io.micrometer.spring.autoconfigure.ServiceLevelAgreementBoundary;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
-import static java.util.Objects.requireNonNull;
+import java.util.Arrays;
+import java.util.Collections;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("ConstantConditions")
 public class PropertiesMeterFilterTest {
-    private MetricsProperties props = new MetricsProperties();
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
-    @Nullable
-    private HistogramConfig histogramConfig;
+    private MetricsProperties properties = new MetricsProperties();
 
-    private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock()) {
-        @Override
-        @NonNull
-        protected DistributionSummary newDistributionSummary(@NonNull Meter.Id id, @NonNull HistogramConfig conf) {
-            histogramConfig = conf;
-            return super.newDistributionSummary(id, conf);
-        }
-    };
+    private PropertiesMeterFilter filter = new PropertiesMeterFilter(properties);
 
-    @Before
-    public void before() {
-        registry.config().meterFilter(new PropertiesMeterFilter(props));
+    @Test
+    public void createWhenPropertiesIsNullShouldThrowException() {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("Properties must not be null");
+        new PropertiesMeterFilter(null);
     }
 
     @Test
-    public void disable() {
-        props.getEnabled().put("my.counter", false);
-        registry.counter("my.counter");
-
-        assertThat(registry.find("my.counter").counter()).isNull();
+    public void acceptWhenHasNoEnabledPropertiesShouldReturnNeutral() {
+        assertThat(filter.accept(createSpringBootMeter()))
+                .isEqualTo(MeterFilterReply.NEUTRAL);
     }
 
     @Test
-    public void disableAll() {
-        props.getEnabled().put("all", false);
-        registry.timer("my.timer");
-
-        assertThat(registry.find("my.timer").timer()).isNull();
+    public void acceptWhenHasEnableFalseShouldReturnDeny() {
+        enable("spring.boot", false);
+        assertThat(filter.accept(createSpringBootMeter()))
+                .isEqualTo(MeterFilterReply.DENY);
     }
 
     @Test
-    public void enable() {
-        props.getEnabled().put("all", false);
-        props.getEnabled().put("my.timer", true);
-        registry.timer("my.timer");
-
-        registry.get("my.timer").timer();
+    public void acceptWhenHasEnableTrueShouldReturnNeutral() {
+        enable("spring.boot", true);
+        assertThat(filter.accept(createSpringBootMeter()))
+                .isEqualTo(MeterFilterReply.NEUTRAL);
     }
 
     @Test
-    public void summaryHistogramConfig() {
-        props.getSummaries().getMaximumExpectedValue().put("my.summary", 100L);
-        registry.summary("my.summary");
+    public void acceptWhenHasHigherEnableFalseShouldReturnDeny() {
+        enable("spring", false);
+        assertThat(filter.accept(createSpringBootMeter()))
+                .isEqualTo(MeterFilterReply.DENY);
+    }
 
-        assertThat(requireNonNull(histogramConfig).getMaximumExpectedValue()).isEqualTo(100);
+    @Test
+    public void acceptWhenHasHigherEnableTrueShouldReturnNeutral() {
+        enable("spring", true);
+        assertThat(filter.accept(createSpringBootMeter()))
+                .isEqualTo(MeterFilterReply.NEUTRAL);
+    }
+
+    @Test
+    public void acceptWhenHasHigherEnableFalseExactEnableTrueShouldReturnNeutral() {
+        enable("spring", false);
+        enable("spring.boot", true);
+        assertThat(filter.accept(createSpringBootMeter()))
+                .isEqualTo(MeterFilterReply.NEUTRAL);
+    }
+
+    @Test
+    public void acceptWhenHasHigherEnableTrueExactEnableFalseShouldReturnDeny() {
+        enable("spring", true);
+        enable("spring.boot", false);
+        assertThat(filter.accept(createSpringBootMeter()))
+                .isEqualTo(MeterFilterReply.DENY);
+    }
+
+    @Test
+    public void acceptWhenHasAllEnableFalseShouldReturnDeny() {
+        enable("all", false);
+        assertThat(filter.accept(createSpringBootMeter()))
+                .isEqualTo(MeterFilterReply.DENY);
+    }
+
+    @Test
+    public void acceptWhenHasAllEnableFalseButHigherEnableTrueShouldReturnNeutral() {
+        enable("all", false);
+        enable("spring", true);
+        assertThat(filter.accept(createSpringBootMeter()))
+                .isEqualTo(MeterFilterReply.NEUTRAL);
+    }
+
+    @Test
+    public void configureWhenHasHistogramTrueShouldSetPercentilesHistogramToTrue() {
+        percentilesHistogram("spring.boot", true);
+        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+                .isPercentileHistogram()).isTrue();
+    }
+
+    @Test
+    public void configureWhenHasHistogramFalseShouldSetPercentilesHistogramToFalse() {
+        percentilesHistogram("spring.boot", false);
+        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+                .isPercentileHistogram()).isFalse();
+    }
+
+    @Test
+    public void configureWhenHasHigherHistogramTrueShouldSetPercentilesHistogramToTrue() {
+        percentilesHistogram("spring", true);
+        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+                .isPercentileHistogram()).isTrue();
+    }
+
+    @Test
+    public void configureWhenHasHigherHistogramFalseShouldSetPercentilesHistogramToFalse() {
+        percentilesHistogram("spring", false);
+        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+                .isPercentileHistogram()).isFalse();
+    }
+
+    @Test
+    public void configureWhenHasHigherHistogramTrueAndLowerFalseShouldSetPercentilesHistogramToFalse() {
+        percentilesHistogram("spring", true);
+        percentilesHistogram("spring.boot", false);
+        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+                .isPercentileHistogram()).isFalse();
+    }
+
+    @Test
+    public void configureWhenHasHigherHistogramFalseAndLowerTrueShouldSetPercentilesHistogramToFalse() {
+        percentilesHistogram("spring", false);
+        percentilesHistogram("spring.boot", true);
+        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+                .isPercentileHistogram()).isTrue();
+    }
+
+    @Test
+    public void configureWhenAllHistogramTrueSetPercentilesHistogramToTrue() {
+        percentilesHistogram("all", true);
+        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+                .isPercentileHistogram()).isTrue();
+    }
+
+    @Test
+    public void configureWhenHasPercentilesShouldSetPercentilesToValue() {
+        percentiles("spring.boot", 0.5, 0.9);
+        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+                .getPercentiles()).containsExactly(0.5, 0.9);
+    }
+
+    @Test
+    public void configureWhenHasHigherPercentilesShouldSetPercentilesToValue() {
+        percentiles("spring", 0.5, 0.9);
+        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+                .getPercentiles()).containsExactly(0.5, 0.9);
+    }
+
+    @Test
+    public void configureWhenHasHigherPercentilesAndLowerShouldSetPercentilesToHigher() {
+        percentiles("spring", 0.5);
+        percentiles("spring.boot", 0.9);
+        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+                .getPercentiles()).containsExactly(0.9);
+    }
+
+    @Test
+    public void configureWhenAllPercentilesSetShouldSetPercentilesToValue() {
+        percentiles("all", 0.5);
+        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+                .getPercentiles()).containsExactly(0.5);
+    }
+
+    @Test
+    public void configureWhenHasSlaShouldSetSlaToValue() {
+        slas("spring.boot", "1", "2", "3");
+        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+                .getSlaBoundaries()).containsExactly(1000000, 2000000, 3000000);
+    }
+
+    @Test
+    public void configureWhenHasHigherSlaShouldSetPercentilesToValue() {
+        slas("spring", "1", "2", "3");
+        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+                .getSlaBoundaries()).containsExactly(1000000, 2000000, 3000000);
+    }
+
+    @Test
+    public void configureWhenHasHigherSlaAndLowerShouldSetSlaToHigher() {
+        slas("spring", "1", "2", "3");
+        slas("spring.boot", "4", "5", "6");
+        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+                .getSlaBoundaries()).containsExactly(4000000, 5000000, 6000000);
+    }
+
+    @Test
+    public void configureWhenAllSlaSetShouldSetSlaToValue() {
+        slas("all", "1", "2", "3");
+        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+                .getSlaBoundaries()).containsExactly(1000000, 2000000, 3000000);
+    }
+
+    @Test
+    public void configureWhenSlaDurationShouldOnlyApplyToTimer() {
+        slas("all", "1ms", "2ms", "3ms");
+        Meter.Id timer = createSpringBootMeter(Meter.Type.TIMER);
+        Meter.Id summary = createSpringBootMeter(Meter.Type.DISTRIBUTION_SUMMARY);
+        Meter.Id counter = createSpringBootMeter(Meter.Type.COUNTER);
+        assertThat(filter.configure(timer, HistogramConfig.DEFAULT).getSlaBoundaries())
+                .containsExactly(1000000, 2000000, 3000000);
+        assertThat(filter.configure(summary, HistogramConfig.DEFAULT).getSlaBoundaries())
+                .isEmpty();
+        assertThat(filter.configure(counter, HistogramConfig.DEFAULT).getSlaBoundaries())
+                .isEmpty();
+    }
+
+    @Test
+    public void configureWhenSlaLongShouldOnlyApplyToTimerAndDistributionSummary() {
+        slas("all", "1", "2", "3");
+        Meter.Id timer = createSpringBootMeter(Meter.Type.TIMER);
+        Meter.Id summary = createSpringBootMeter(Meter.Type.DISTRIBUTION_SUMMARY);
+        Meter.Id counter = createSpringBootMeter(Meter.Type.COUNTER);
+        assertThat(filter.configure(timer, HistogramConfig.DEFAULT).getSlaBoundaries())
+                .containsExactly(1000000, 2000000, 3000000);
+        assertThat(filter.configure(summary, HistogramConfig.DEFAULT).getSlaBoundaries())
+                .containsExactly(1, 2, 3);
+        assertThat(filter.configure(counter, HistogramConfig.DEFAULT).getSlaBoundaries())
+                .isEmpty();
+    }
+
+    private Meter.Id createSpringBootMeter() {
+        Meter.Type meterType = Meter.Type.TIMER;
+        return createSpringBootMeter(meterType);
+    }
+
+    private Meter.Id createSpringBootMeter(Meter.Type meterType) {
+        MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, Clock.SYSTEM);
+        return Meter.builder("spring.boot", meterType, Collections.emptyList()).register(registry)
+                .getId();
+    }
+
+    private void enable(String metricPrefix, boolean enabled) {
+        properties.getEnable().put(metricPrefix, enabled);
+    }
+
+    private void percentilesHistogram(String metricPrefix, boolean enabled) {
+        properties.getDistribution().getPercentilesHistogram().put(metricPrefix, enabled);
+    }
+
+    private void percentiles(String metricPrefix, double... percentiles) {
+        properties.getDistribution().getPercentiles().put(metricPrefix, percentiles);
+    }
+
+    private void slas(String metricPrefix, String... slas) {
+        properties.getDistribution().getSla().put(metricPrefix,
+                Arrays.stream(slas).map(ServiceLevelAgreementBoundary::valueOf)
+                        .toArray(ServiceLevelAgreementBoundary[]::new));
     }
 }

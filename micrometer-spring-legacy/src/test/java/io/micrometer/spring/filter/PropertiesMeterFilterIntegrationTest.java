@@ -34,8 +34,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, classes = PropertiesMeterFilterIntegrationTest.MetricsApp.class)
 @TestPropertySource(properties = {
-    "management.metrics.enabled[my.timer]=true", /* overriden by programmatic filter */
-    "management.metrics.enabled[my.counter]=false"
+    "management.metrics.enable[my.timer]=true", /* overriden by programmatic filter */
+    "management.metrics.enable[my.counter]=false"
 })
 public class PropertiesMeterFilterIntegrationTest {
 

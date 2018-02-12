@@ -22,112 +22,60 @@ import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.spring.autoconfigure.MetricsProperties;
+import io.micrometer.spring.autoconfigure.ServiceLevelAgreementBoundary;
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
-import java.time.Duration;
-import java.util.function.Function;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Objects;
 
 @NonNullApi
 public class PropertiesMeterFilter implements MeterFilter {
-    private final MetricsProperties props;
+    private static final ServiceLevelAgreementBoundary[] EMPTY_SLA = {};
 
-    public PropertiesMeterFilter(MetricsProperties props) {
-        this.props = props;
+    private MetricsProperties properties;
+
+    public PropertiesMeterFilter(MetricsProperties properties) {
+        Assert.notNull(properties, "Properties must not be null");
+        this.properties = properties;
     }
 
     @Override
     public MeterFilterReply accept(Meter.Id id) {
-        Boolean enabled = getMostSpecific(name -> props.getEnabled().get(name), id.getName());
-        if (enabled != null && !enabled)
-            return MeterFilterReply.DENY;
-        return MeterFilterReply.NEUTRAL;
-    }
-
-    @Nullable
-    private <V> V getMostSpecific(Function<String, V> lookup, String k) {
-        V v = lookup.apply(k.isEmpty() ? "" : k);
-        if (v != null)
-            return v;
-        else if (k.isEmpty() || k.equals("all")) {
-            return null;
-        }
-
-        int lastSep = k.lastIndexOf('.');
-        if (lastSep == -1)
-            return getMostSpecific(lookup, "all");
-
-        return getMostSpecific(lookup, k.substring(0, lastSep));
+        boolean enabled = lookup(this.properties.getEnable(), id, true);
+        return (enabled ? MeterFilterReply.NEUTRAL : MeterFilterReply.DENY);
     }
 
     @Override
     public HistogramConfig configure(Meter.Id id, HistogramConfig config) {
-        if (!id.getType().equals(Meter.Type.TIMER) && !id.getType().equals(Meter.Type.DISTRIBUTION_SUMMARY))
-            return config;
+        MetricsProperties.Distribution distribution = this.properties.getDistribution();
+        return HistogramConfig.builder()
+                .percentilesHistogram(lookup(distribution.getPercentilesHistogram(), id, null))
+                .percentiles(lookup(distribution.getPercentiles(), id, null))
+                .sla(convertSla(id.getType(), lookup(distribution.getSla(), id, null)))
+                .build()
+                .merge(config);
+    }
 
-        HistogramConfig.Builder builder = HistogramConfig.builder();
+    @Nullable
+    private long[] convertSla(Meter.Type meterType, @Nullable ServiceLevelAgreementBoundary[] sla) {
+        long[] converted = Arrays.stream(sla == null ? EMPTY_SLA : sla)
+                .map((candidate) -> candidate.getValue(meterType))
+                .filter(Objects::nonNull).mapToLong(Long::longValue).toArray();
+        return converted.length == 0 ? null : converted;
+    }
 
-        Boolean percentileHistogram = getMostSpecific(
-            name -> props.getSummaries().getPercentileHistogram().getOrDefault(name, props.getTimers().getPercentileHistogram().get(name)),
-            id.getName());
-        if (percentileHistogram != null)
-            builder.percentilesHistogram(percentileHistogram);
-
-        double[] percentiles = getMostSpecific(
-            name -> props.getSummaries().getPercentiles().getOrDefault(name, props.getTimers().getPercentiles().get(name)),
-            id.getName());
-
-        if (percentiles != null) {
-            builder.percentiles(percentiles);
+    private <T> T lookup(Map<String, T> values, Meter.Id id, @Nullable T defaultValue) {
+        String name = id.getName();
+        while (StringUtils.hasLength(name)) {
+            T result = values.get(name);
+            if (result != null) {
+                return result;
+            }
+            int lastDot = name.lastIndexOf('.');
+            name = lastDot == -1 ? "" : name.substring(0, lastDot);
         }
-
-        Integer histogramBufferLength = getMostSpecific(
-            name -> props.getSummaries().getHistogramBufferLength().getOrDefault(name, props.getTimers().getHistogramBufferLength().get(name)),
-            id.getName());
-        if (histogramBufferLength != null) {
-            builder.histogramBufferLength(histogramBufferLength);
-        }
-
-        Duration histogramExpiry = getMostSpecific(
-            name -> props.getSummaries().getHistogramExpiry().getOrDefault(name, props.getTimers().getHistogramExpiry().get(name)),
-            id.getName());
-        if (histogramExpiry != null) {
-            builder.histogramExpiry(histogramExpiry);
-        }
-
-        if (id.getType().equals(Meter.Type.TIMER)) {
-            Duration max = getMostSpecific(name -> props.getTimers().getMaximumExpectedValue().get(name), id.getName());
-            if (max != null) {
-                builder.maximumExpectedValue(max.toNanos());
-            }
-
-            Duration min = getMostSpecific(name -> props.getTimers().getMinimumExpectedValue().get(name), id.getName());
-            if (min != null) {
-                builder.minimumExpectedValue(min.toNanos());
-            }
-
-            Duration[] sla = getMostSpecific(name -> props.getTimers().getSla().get(name), id.getName());
-            if (sla != null) {
-                long[] slaNanos = new long[sla.length];
-                for (int i = 0; i < sla.length; i++) {
-                    slaNanos[i] = sla[i].toNanos();
-                }
-                builder.sla(slaNanos);
-            }
-        } else if (id.getType().equals(Meter.Type.DISTRIBUTION_SUMMARY)) {
-            Long max = getMostSpecific(name -> props.getSummaries().getMaximumExpectedValue().get(name), id.getName());
-            if (max != null) {
-                builder.maximumExpectedValue(max);
-            }
-
-            Long min = getMostSpecific(name -> props.getSummaries().getMinimumExpectedValue().get(name), id.getName());
-            if (min != null) {
-                builder.minimumExpectedValue(min);
-            }
-
-            long[] sla = getMostSpecific(name -> props.getSummaries().getSla().get(name), id.getName());
-            if (sla != null)
-                builder.sla(sla);
-        }
-
-        return builder.build().merge(config);
+        return values.getOrDefault("all", defaultValue);
     }
 }
