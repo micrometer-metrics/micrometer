@@ -29,6 +29,9 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'checkstyle'
 
+    compileJava.options.encoding = 'UTF-8'
+    compileTestJava.options.encoding = 'UTF-8'
+
     if(!project.name.contains('samples')) {
         apply plugin: 'io.spring.publishing'
 

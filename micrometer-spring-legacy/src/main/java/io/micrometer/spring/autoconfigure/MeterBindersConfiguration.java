@@ -16,6 +16,7 @@
 package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
@@ -55,6 +56,13 @@ class MeterBindersConfiguration {
     @ConditionalOnMissingBean
     public JvmThreadMetrics jvmThreadMetrics() {
         return new JvmThreadMetrics();
+    }
+
+    @Bean
+    @ConditionalOnProperty(value = "management.metrics.binders.jvm.enabled", matchIfMissing = true)
+    @ConditionalOnMissingBean
+    public ClassLoaderMetrics classLoaderMetrics() {
+        return new ClassLoaderMetrics();
     }
 
     @Bean
