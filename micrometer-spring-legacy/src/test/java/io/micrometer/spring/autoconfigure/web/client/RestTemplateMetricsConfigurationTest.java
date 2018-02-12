@@ -30,24 +30,29 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.AsyncRestTemplate;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.concurrent.CyclicBarrier;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.fail;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = RestTemplateMetricsConfigurationTest.ClientApp.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = {
-    "management.port=-1", // Disable the entire Spring Boot actuator, so that it does not get needlessly instrumented
-    "security.ignored=/**",
+        "management.port=-1", // Disable the entire Spring Boot actuator, so that it does not get needlessly instrumented
+        "security.ignored=/**",
 })
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 public class RestTemplateMetricsConfigurationTest {
@@ -74,8 +79,8 @@ public class RestTemplateMetricsConfigurationTest {
     public void before() {
         rootUri = "http://localhost:" + port;
         client = restTemplateBuilder
-            .rootUri(rootUri)
-            .build();
+                .rootUri(rootUri)
+                .build();
     }
 
     @Test
@@ -86,10 +91,23 @@ public class RestTemplateMetricsConfigurationTest {
 
     @Test
     public void asyncRestTemplatesInContextAreInstrumented() throws Exception {
-        // There's no way to inject local server port retrospectively into the autowired async template bean,
         // therefore a full absolute URI is used
-        asyncClient.getForEntity(rootUri + "/it/2", String.class).get();
-        assertThat(registry.get("http.client.requests").meters()).hasSize(1);
+        ListenableFuture<ResponseEntity<String>> future = asyncClient.getForEntity(rootUri + "/it/2", String.class);
+
+        final CyclicBarrier barrier = new CyclicBarrier(2);
+        future.addCallback(result -> {
+                    try {
+                        barrier.await();
+                    } catch (Throwable e) {
+                        fail("barrier broken", e);
+                    }
+                },
+                result -> fail("should not have failed"));
+
+        future.get();
+
+        barrier.await();
+        assertThat(registry.get("http.client.requests").timer().count()).isEqualTo(1);
     }
 
     @Test
