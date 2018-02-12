@@ -18,8 +18,12 @@ package io.micrometer.spring.autoconfigure;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
+import io.micrometer.core.instrument.binder.system.UptimeMetrics;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,7 +94,12 @@ public class MetricsAutoConfigurationTest {
     public void automaticallyRegisteredBinders() {
         assertThat(context.getBeansOfType(MeterBinder.class).values())
             .hasAtLeastOneElementOfType(LogbackMetrics.class)
-            .hasAtLeastOneElementOfType(JvmMemoryMetrics.class);
+            .hasAtLeastOneElementOfType(JvmGcMetrics.class)
+            .hasAtLeastOneElementOfType(JvmGcMetrics.class)
+            .hasAtLeastOneElementOfType(JvmThreadMetrics.class)
+            .hasAtLeastOneElementOfType(ClassLoaderMetrics.class)
+            .hasAtLeastOneElementOfType(UptimeMetrics.class)
+            .hasAtLeastOneElementOfType(ProcessorMetrics.class);
     }
 
     @Test
