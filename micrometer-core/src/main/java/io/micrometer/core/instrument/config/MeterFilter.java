@@ -100,13 +100,13 @@ public interface MeterFilter {
             @Override
             public Meter.Id map(Meter.Id id) {
                 List<Tag> tags = stream(id.getTags().spliterator(), false)
-                    .filter(t -> {
-                        for (String tagKey : tagKeys) {
-                            if (t.getKey().equals(tagKey))
-                                return false;
-                        }
-                        return true;
-                    }).collect(Collectors.toList());
+                        .filter(t -> {
+                            for (String tagKey : tagKeys) {
+                                if (t.getKey().equals(tagKey))
+                                    return false;
+                            }
+                            return true;
+                        }).collect(Collectors.toList());
 
                 return new Meter.Id(id.getName(), tags, id.getBaseUnit(), id.getDescription(), id.getType());
             }
@@ -127,16 +127,16 @@ public interface MeterFilter {
             @Override
             public Meter.Id map(Meter.Id id) {
                 List<Tag> tags = stream(id.getTags().spliterator(), false)
-                    .map(t -> {
-                        if (!t.getKey().equals(tagKey))
-                            return t;
-                        for (String exception : exceptions) {
-                            if (t.getValue().equals(exception))
+                        .map(t -> {
+                            if (!t.getKey().equals(tagKey))
                                 return t;
-                        }
-                        return Tag.of(tagKey, replacement.apply(t.getValue()));
-                    })
-                    .collect(Collectors.toList());
+                            for (String exception : exceptions) {
+                                if (t.getValue().equals(exception))
+                                    return t;
+                            }
+                            return Tag.of(tagKey, replacement.apply(t.getValue()));
+                        })
+                        .collect(Collectors.toList());
 
                 return new Meter.Id(id.getName(), tags, id.getBaseUnit(), id.getDescription(), id.getType());
             }
@@ -264,6 +264,36 @@ public interface MeterFilter {
      */
     static MeterFilter denyNameStartsWith(String prefix) {
         return deny(id -> id.getName().startsWith(prefix));
+    }
+
+    static MeterFilter maxExpected(String prefix, long max) {
+        return new MeterFilter() {
+            @Override
+            public HistogramConfig configure(Meter.Id id, HistogramConfig config) {
+                if (id.getName().startsWith(prefix)) {
+                    return HistogramConfig.builder()
+                            .maximumExpectedValue(max)
+                            .build()
+                            .merge(config);
+                }
+                return config;
+            }
+        };
+    }
+
+    static MeterFilter minExpected(String prefix, long min) {
+        return new MeterFilter() {
+            @Override
+            public HistogramConfig configure(Meter.Id id, HistogramConfig config) {
+                if (id.getName().startsWith(prefix)) {
+                    return HistogramConfig.builder()
+                            .minimumExpectedValue(min)
+                            .build()
+                            .merge(config);
+                }
+                return config;
+            }
+        };
     }
 
     /**

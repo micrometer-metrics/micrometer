@@ -18,6 +18,7 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
+import io.micrometer.core.instrument.histogram.HistogramConfig;
 import io.micrometer.core.lang.Nullable;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.Test;
@@ -123,5 +124,23 @@ class MeterFilterTest {
         filter.accept(id3);
 
         assertThat(n.get()).isEqualTo(1);
+    }
+
+    @Test
+    void minExpected() {
+        MeterFilter filter = MeterFilter.minExpected("name", 100);
+        Meter.Id timer = new Meter.Id("name", emptyList(), null, null, Meter.Type.TIMER);
+
+        assertThat(filter.configure(timer, HistogramConfig.DEFAULT))
+                .satisfies(conf -> assertThat(conf.getMinimumExpectedValue()).isEqualTo(100));
+    }
+
+    @Test
+    void maxExpected() {
+        MeterFilter filter = MeterFilter.maxExpected("name", 100);
+        Meter.Id timer = new Meter.Id("name", emptyList(), null, null, Meter.Type.TIMER);
+
+        assertThat(filter.configure(timer, HistogramConfig.DEFAULT))
+                .satisfies(conf -> assertThat(conf.getMaximumExpectedValue()).isEqualTo(100));
     }
 }
