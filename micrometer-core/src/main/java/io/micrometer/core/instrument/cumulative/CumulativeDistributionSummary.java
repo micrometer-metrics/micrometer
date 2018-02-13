@@ -19,7 +19,7 @@ import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.util.TimeDecayingMax;
 
 import java.util.Arrays;

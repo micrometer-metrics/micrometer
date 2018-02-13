@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.histogram;
+package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.CountAtValue;

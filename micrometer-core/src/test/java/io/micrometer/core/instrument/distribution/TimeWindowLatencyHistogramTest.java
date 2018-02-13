@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.histogram;
+package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.histogram.pause.NoPauseDetector;
-import io.micrometer.core.instrument.histogram.pause.PauseDetector;
+import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 

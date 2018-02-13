@@ -19,9 +19,9 @@ import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
-import io.micrometer.core.instrument.histogram.pause.ClockDriftPauseDetector;
-import io.micrometer.core.instrument.histogram.pause.PauseDetector;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.noop.*;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.search.RequiredSearch;
@@ -647,8 +647,8 @@ public abstract class MeterRegistry {
          *
          * @param detector The pause detector to use.
          * @return This configuration instance.
-         * @see io.micrometer.core.instrument.histogram.pause.NoPauseDetector
-         * @see io.micrometer.core.instrument.histogram.pause.ClockDriftPauseDetector
+         * @see io.micrometer.core.instrument.distribution.pause.NoPauseDetector
+         * @see io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector
          */
         @Incubating(since = "1.0.0-rc.6")
         public Config pauseDetector(PauseDetector detector) {

@@ -19,7 +19,7 @@ import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.noop.NoopDistributionSummary;
 
 class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSummary> implements DistributionSummary {

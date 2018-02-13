@@ -18,7 +18,7 @@ package io.micrometer.prometheus;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import org.assertj.core.api.Condition;

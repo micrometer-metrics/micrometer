@@ -17,7 +17,7 @@ package io.micrometer.core.instrument.util;
 
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;

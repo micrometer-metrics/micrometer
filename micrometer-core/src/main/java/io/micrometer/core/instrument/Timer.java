@@ -16,8 +16,8 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
-import io.micrometer.core.instrument.histogram.pause.PauseDetector;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
@@ -344,8 +344,8 @@ public interface Timer extends Meter {
          *
          * @param pauseDetector The pause detector implementation to use.
          * @return This builder.
-         * @see io.micrometer.core.instrument.histogram.pause.NoPauseDetector
-         * @see io.micrometer.core.instrument.histogram.pause.ClockDriftPauseDetector
+         * @see io.micrometer.core.instrument.distribution.pause.NoPauseDetector
+         * @see io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector
          */
         public Builder pauseDetector(@Nullable PauseDetector pauseDetector) {
             this.pauseDetector = pauseDetector;

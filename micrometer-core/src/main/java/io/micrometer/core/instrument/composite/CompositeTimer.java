@@ -19,8 +19,8 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
-import io.micrometer.core.instrument.histogram.pause.PauseDetector;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.noop.NoopTimer;
 
 import java.time.Duration;

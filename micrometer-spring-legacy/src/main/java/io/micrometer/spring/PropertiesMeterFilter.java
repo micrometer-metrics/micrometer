@@ -18,7 +18,7 @@ package io.micrometer.spring;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
-import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.spring.autoconfigure.MetricsProperties;
