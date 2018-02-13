@@ -19,6 +19,7 @@ import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.micrometer.prometheus.PrometheusMetricRenameFilter;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.PushGateway;
@@ -67,6 +68,12 @@ public class PrometheusExportConfiguration {
     public PrometheusMeterRegistry prometheusMeterRegistry(PrometheusConfig config, CollectorRegistry collectorRegistry,
                                                            Clock clock) {
         return new PrometheusMeterRegistry(config, collectorRegistry, clock);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public PrometheusMetricRenameFilter prometheusMetricRenameFilter() {
+        return new PrometheusMetricRenameFilter();
     }
 
     @Bean
