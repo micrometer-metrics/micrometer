@@ -17,7 +17,7 @@ package io.micrometer.core.instrument.dropwizard;
 
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.util.TimeDecayingMax;
 import io.micrometer.core.lang.Nullable;
@@ -32,10 +32,10 @@ public class DropwizardDistributionSummary extends AbstractDistributionSummary {
     private final DoubleAdder totalAmount = new DoubleAdder();
     private final TimeDecayingMax max;
 
-    DropwizardDistributionSummary(Id id, Clock clock, com.codahale.metrics.Histogram impl, HistogramConfig histogramConfig) {
-        super(id, clock, histogramConfig);
+    DropwizardDistributionSummary(Id id, Clock clock, com.codahale.metrics.Histogram impl, DistributionStatisticConfig distributionStatisticConfig) {
+        super(id, clock, distributionStatisticConfig);
         this.impl = impl;
-        this.max = new TimeDecayingMax(clock, histogramConfig);
+        this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
     }
 
     @Override

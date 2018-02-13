@@ -29,14 +29,14 @@ public class TimeWindowHistogram extends TimeWindowHistogramBase<DoubleRecorder,
 
     private final DoubleHistogram intervalHistogram;
 
-    public TimeWindowHistogram(Clock clock, HistogramConfig histogramConfig) {
-        super(clock, histogramConfig, DoubleRecorder.class);
+    public TimeWindowHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig) {
+        super(clock, distributionStatisticConfig, DoubleRecorder.class);
         intervalHistogram = new DoubleHistogram(NUM_SIGNIFICANT_VALUE_DIGITS);
         initRingBuffer();
     }
 
     @Override
-    DoubleRecorder newBucket(HistogramConfig histogramConfig) {
+    DoubleRecorder newBucket(DistributionStatisticConfig distributionStatisticConfig) {
         return new DoubleRecorder(NUM_SIGNIFICANT_VALUE_DIGITS);
     }
 

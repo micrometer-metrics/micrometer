@@ -24,7 +24,7 @@ import com.netflix.spectator.atlas.AtlasConfig;
 import com.netflix.spectator.atlas.AtlasRegistry;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.step.StepFunctionCounter;
@@ -96,21 +96,21 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
+    protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         com.netflix.spectator.api.DistributionSummary internalSummary = registry.distributionSummary(spectatorId(id));
 
-        if (histogramConfig.isPercentileHistogram()) {
+        if (distributionStatisticConfig.isPercentileHistogram()) {
             // This doesn't report the normal count/totalTime/max stats, so we treat it as additive
             PercentileDistributionSummary.get(registry, spectatorId(id));
         }
 
-        SpectatorDistributionSummary summary = new SpectatorDistributionSummary(id, internalSummary, clock, histogramConfig);
+        SpectatorDistributionSummary summary = new SpectatorDistributionSummary(id, internalSummary, clock, distributionStatisticConfig);
 
-        for (long sla : histogramConfig.getSlaBoundaries()) {
+        for (long sla : distributionStatisticConfig.getSlaBoundaries()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "sla", Long.toString(sla)), sla, summary::histogramCountAtValue);
         }
 
-        for (double percentile : histogramConfig.getPercentiles()) {
+        for (double percentile : distributionStatisticConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
                 summary, s -> s.percentile(percentile));
         }
@@ -120,21 +120,21 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
         com.netflix.spectator.api.Timer internalTimer = registry.timer(spectatorId(id));
 
-        if (histogramConfig.isPercentileHistogram()) {
+        if (distributionStatisticConfig.isPercentileHistogram()) {
             // This doesn't report the normal count/totalTime/max stats, so we treat it as additive
             PercentileTimer.get(registry, spectatorId(id));
         }
 
-        SpectatorTimer timer = new SpectatorTimer(id, internalTimer, clock, histogramConfig, pauseDetector, getBaseTimeUnit());
+        SpectatorTimer timer = new SpectatorTimer(id, internalTimer, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit());
 
-        for (long sla : histogramConfig.getSlaBoundaries()) {
+        for (long sla : distributionStatisticConfig.getSlaBoundaries()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "sla", Duration.ofNanos(sla).toString()), sla, timer::histogramCountAtValue);
         }
 
-        for (double percentile : histogramConfig.getPercentiles()) {
+        for (double percentile : distributionStatisticConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
                 timer, t -> t.percentile(percentile, TimeUnit.SECONDS));
         }
@@ -207,10 +207,10 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected HistogramConfig defaultHistogramConfig() {
-        return HistogramConfig.builder()
-            .histogramExpiry(atlasConfig.step())
+    protected DistributionStatisticConfig defaultHistogramConfig() {
+        return DistributionStatisticConfig.builder()
+            .expiry(atlasConfig.step())
             .build()
-            .merge(HistogramConfig.DEFAULT);
+            .merge(DistributionStatisticConfig.DEFAULT);
     }
 }

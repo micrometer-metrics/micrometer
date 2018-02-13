@@ -20,7 +20,7 @@ import com.netflix.spectator.api.Statistic;
 import com.netflix.spectator.api.Timer;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeUtils;
 
@@ -31,7 +31,7 @@ import static java.util.stream.StreamSupport.stream;
 public class SpectatorTimer extends AbstractTimer {
     private final com.netflix.spectator.api.Timer timer;
 
-    public SpectatorTimer(Id id, Timer timer, Clock clock, HistogramConfig statsConf, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+    public SpectatorTimer(Id id, Timer timer, Clock clock, DistributionStatisticConfig statsConf, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
         super(id, clock, statsConf, pauseDetector, baseTimeUnit);
         this.timer = timer;
     }

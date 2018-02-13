@@ -42,13 +42,13 @@ public class TimeWindowLatencyHistogram extends TimeWindowHistogramBase<LatencyS
     private final PauseDetector pauseDetector;
 
     /*VisibleForTesting*/
-    public TimeWindowLatencyHistogram(Clock clock, HistogramConfig histogramConfig) {
-        this(clock, histogramConfig, new ClockDriftPauseDetector(Duration.ofMillis(100), Duration.ofMillis(100)));
+    public TimeWindowLatencyHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig) {
+        this(clock, distributionStatisticConfig, new ClockDriftPauseDetector(Duration.ofMillis(100), Duration.ofMillis(100)));
     }
 
-    public TimeWindowLatencyHistogram(Clock clock, HistogramConfig histogramConfig,
+    public TimeWindowLatencyHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
                                       io.micrometer.core.instrument.histogram.pause.PauseDetector pauseDetector) {
-        super(clock, histogramConfig, LatencyStats.class);
+        super(clock, distributionStatisticConfig, LatencyStats.class);
 
         this.pauseDetector = requireNonNull(pauseDetectorCache.computeIfAbsent(pauseDetector, detector -> {
             if (detector instanceof ClockDriftPauseDetector) {
@@ -66,11 +66,11 @@ public class TimeWindowLatencyHistogram extends TimeWindowHistogramBase<LatencyS
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    LatencyStats newBucket(HistogramConfig histogramConfig) {
+    LatencyStats newBucket(DistributionStatisticConfig distributionStatisticConfig) {
         return new LatencyStats.Builder()
             .pauseDetector(pauseDetector)
-            .lowestTrackableLatency(histogramConfig.getMinimumExpectedValue())
-            .highestTrackableLatency(histogramConfig.getMaximumExpectedValue())
+            .lowestTrackableLatency(distributionStatisticConfig.getMinimumExpectedValue())
+            .highestTrackableLatency(distributionStatisticConfig.getMaximumExpectedValue())
             .numberOfSignificantValueDigits(NUM_SIGNIFICANT_VALUE_DIGITS)
             .build();
     }

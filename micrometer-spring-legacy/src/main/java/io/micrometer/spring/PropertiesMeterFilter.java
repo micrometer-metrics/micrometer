@@ -18,7 +18,7 @@ package io.micrometer.spring;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.spring.autoconfigure.MetricsProperties;
@@ -48,9 +48,9 @@ public class PropertiesMeterFilter implements MeterFilter {
     }
 
     @Override
-    public HistogramConfig configure(Meter.Id id, HistogramConfig config) {
+    public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
         MetricsProperties.Distribution distribution = this.properties.getDistribution();
-        return HistogramConfig.builder()
+        return DistributionStatisticConfig.builder()
                 .percentilesHistogram(lookup(distribution.getPercentilesHistogram(), id, null))
                 .percentiles(lookup(distribution.getPercentiles(), id, null))
                 .sla(convertSla(id.getType(), lookup(distribution.getSla(), id, null)))

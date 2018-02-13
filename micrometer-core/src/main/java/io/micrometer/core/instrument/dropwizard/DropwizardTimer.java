@@ -18,7 +18,7 @@ package io.micrometer.core.instrument.dropwizard;
 import com.codahale.metrics.Timer;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeDecayingMax;
 import io.micrometer.core.instrument.util.TimeUtils;
@@ -31,10 +31,10 @@ public class DropwizardTimer extends AbstractTimer {
     private final AtomicLong totalTime = new AtomicLong(0);
     private final TimeDecayingMax max;
 
-    DropwizardTimer(Id id, Timer impl, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
-        super(id, clock, histogramConfig, pauseDetector, TimeUnit.MILLISECONDS);
+    DropwizardTimer(Id id, Timer impl, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+        super(id, clock, distributionStatisticConfig, pauseDetector, TimeUnit.MILLISECONDS);
         this.impl = impl;
-        this.max = new TimeDecayingMax(clock, histogramConfig);
+        this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
     }
 
     @Override

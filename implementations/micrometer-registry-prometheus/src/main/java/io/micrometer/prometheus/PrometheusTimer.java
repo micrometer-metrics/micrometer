@@ -19,7 +19,7 @@ import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.CountAtValue;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
 import io.micrometer.core.instrument.histogram.TimeWindowLatencyHistogram;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeDecayingMax;
@@ -35,16 +35,16 @@ public class PrometheusTimer extends AbstractTimer implements Timer {
     private final TimeDecayingMax max;
     private final TimeWindowLatencyHistogram percentilesHistogram;
 
-    PrometheusTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
-        super(id, clock, histogramConfig, pauseDetector, TimeUnit.SECONDS);
-        this.max = new TimeDecayingMax(clock, histogramConfig);
+    PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+        super(id, clock, distributionStatisticConfig, pauseDetector, TimeUnit.SECONDS);
+        this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
 
         this.percentilesHistogram = new TimeWindowLatencyHistogram(clock,
-            HistogramConfig.builder()
-                .histogramExpiry(Duration.ofDays(1825)) // effectively never roll over
-                .histogramBufferLength(1)
+            DistributionStatisticConfig.builder()
+                .expiry(Duration.ofDays(1825)) // effectively never roll over
+                .bufferLength(1)
                 .build()
-                .merge(histogramConfig), pauseDetector);
+                .merge(distributionStatisticConfig), pauseDetector);
     }
 
     @Override

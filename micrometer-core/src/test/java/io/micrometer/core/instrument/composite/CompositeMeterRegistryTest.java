@@ -191,9 +191,9 @@ class CompositeMeterRegistryTest {
     void histogramConfigDefaultIsNotAffectedByComposite() {
         composite.add(simple);
 
-        // the histogramExpiry on this timer is determined by the simple registry's default histogram config
+        // the expiry on this timer is determined by the simple registry's default histogram config
         Timer t = Timer.builder("my.timer")
-            .histogramBufferLength(1)
+            .distributionStatisticBufferLength(1)
             .register(composite);
 
         t.record(1, TimeUnit.SECONDS);

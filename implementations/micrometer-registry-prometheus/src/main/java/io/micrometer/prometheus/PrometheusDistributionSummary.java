@@ -18,7 +18,7 @@ package io.micrometer.prometheus;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.CountAtValue;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
 import io.micrometer.core.instrument.histogram.TimeWindowHistogram;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.util.TimeDecayingMax;
@@ -34,15 +34,15 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     private TimeDecayingMax max;
     private final TimeWindowHistogram percentilesHistogram;
 
-    PrometheusDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig) {
-        super(id, clock, histogramConfig);
-        this.max = new TimeDecayingMax(clock, histogramConfig);
+    PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig) {
+        super(id, clock, distributionStatisticConfig);
+        this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
         this.percentilesHistogram = new TimeWindowHistogram(clock,
-            HistogramConfig.builder()
-                .histogramExpiry(Duration.ofDays(1825)) // effectively never roll over
-                .histogramBufferLength(1)
+            DistributionStatisticConfig.builder()
+                .expiry(Duration.ofDays(1825)) // effectively never roll over
+                .bufferLength(1)
                 .build()
-                .merge(histogramConfig));
+                .merge(distributionStatisticConfig));
     }
 
     @Override

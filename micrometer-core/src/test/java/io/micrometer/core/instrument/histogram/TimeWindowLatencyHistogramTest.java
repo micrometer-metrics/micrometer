@@ -33,7 +33,7 @@ class TimeWindowLatencyHistogramTest {
 
     @Test
     void histogramsAreCumulative() {
-        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(Clock.SYSTEM, HistogramConfig.DEFAULT, noPause);
+        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(Clock.SYSTEM, DistributionStatisticConfig.DEFAULT, noPause);
         histogram.recordLong(1);
         histogram.recordLong(2);
 
@@ -44,10 +44,10 @@ class TimeWindowLatencyHistogramTest {
 
     @Test
     void sampleValueAboveMaximumExpectedValue() {
-        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(Clock.SYSTEM, HistogramConfig.builder()
+        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(Clock.SYSTEM, DistributionStatisticConfig.builder()
             .maximumExpectedValue(2L)
             .build()
-            .merge(HistogramConfig.DEFAULT), noPause);
+            .merge(DistributionStatisticConfig.DEFAULT), noPause);
         histogram.recordLong(3);
         assertThat(histogram.histogramCountAtValue(3)).isEqualTo(1);
         assertThat(histogram.histogramCountAtValue(Long.MAX_VALUE)).isEqualTo(1);
@@ -55,11 +55,11 @@ class TimeWindowLatencyHistogramTest {
 
     @Test
     void recordValuesThatExceedTheDynamicRange() {
-        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), HistogramConfig.builder()
+        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), DistributionStatisticConfig.builder()
             .minimumExpectedValue(1L)
             .maximumExpectedValue(100L)
             .build()
-            .merge(HistogramConfig.DEFAULT), noPause);
+            .merge(DistributionStatisticConfig.DEFAULT), noPause);
 
         // Always too large, regardless of bounds.
         histogram.recordLong(Long.MAX_VALUE);
@@ -67,7 +67,7 @@ class TimeWindowLatencyHistogramTest {
 
     @Test
     void percentiles() {
-        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), HistogramConfig.DEFAULT, noPause);
+        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), DistributionStatisticConfig.DEFAULT, noPause);
 
         for (int i = 1; i <= 10; i++) {
             histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
@@ -80,13 +80,13 @@ class TimeWindowLatencyHistogramTest {
 
     @Test
     void percentilesWithNoSamples() {
-        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), HistogramConfig.DEFAULT, noPause);
+        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), DistributionStatisticConfig.DEFAULT, noPause);
         assertThat(nanosToUnit(histogram.percentile(0.5), TimeUnit.MILLISECONDS)).isEqualTo(0);
     }
 
     @Test
     void percentilesChangeWithMoreRecentSamples() {
-        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), HistogramConfig.DEFAULT, noPause);
+        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), DistributionStatisticConfig.DEFAULT, noPause);
 
         for (int i = 1; i <= 10; i++) {
             histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));

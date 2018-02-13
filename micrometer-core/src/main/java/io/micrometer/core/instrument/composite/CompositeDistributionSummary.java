@@ -19,16 +19,16 @@ import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
 import io.micrometer.core.instrument.noop.NoopDistributionSummary;
 
 class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSummary> implements DistributionSummary {
 
-    private final HistogramConfig histogramConfig;
+    private final DistributionStatisticConfig distributionStatisticConfig;
 
-    CompositeDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
+    CompositeDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         super(id);
-        this.histogramConfig = histogramConfig;
+        this.distributionStatisticConfig = distributionStatisticConfig;
     }
 
     @Override
@@ -78,13 +78,13 @@ class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSu
             .tags(getId().getTags())
             .description(getId().getDescription())
             .baseUnit(getId().getBaseUnit())
-            .publishPercentiles(histogramConfig.getPercentiles())
-            .publishPercentileHistogram(histogramConfig.isPercentileHistogram())
-            .maximumExpectedValue(histogramConfig.getMaximumExpectedValue())
-            .minimumExpectedValue(histogramConfig.getMinimumExpectedValue())
-            .histogramBufferLength(histogramConfig.getHistogramBufferLength())
-            .histogramExpiry(histogramConfig.getHistogramExpiry())
-            .sla(histogramConfig.getSlaBoundaries())
+            .publishPercentiles(distributionStatisticConfig.getPercentiles())
+            .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
+            .maximumExpectedValue(distributionStatisticConfig.getMaximumExpectedValue())
+            .minimumExpectedValue(distributionStatisticConfig.getMinimumExpectedValue())
+            .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
+            .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
+            .sla(distributionStatisticConfig.getSlaBoundaries())
             .register(registry);
     }
 }

@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
 import io.micrometer.core.instrument.histogram.pause.PauseDetector;
 import io.micrometer.core.lang.Nullable;
 
@@ -193,7 +193,7 @@ public interface Timer extends Meter {
     class Builder {
         private final String name;
         private final List<Tag> tags = new ArrayList<>();
-        private final HistogramConfig.Builder histogramConfigBuilder;
+        private final DistributionStatisticConfig.Builder distributionConfigBuilder;
 
         @Nullable
         private String description;
@@ -203,7 +203,7 @@ public interface Timer extends Meter {
 
         private Builder(String name) {
             this.name = name;
-            this.histogramConfigBuilder = new HistogramConfig.Builder();
+            this.distributionConfigBuilder = new DistributionStatisticConfig.Builder();
             minimumExpectedValue(Duration.ofMillis(1));
             maximumExpectedValue(Duration.ofSeconds(30));
         }
@@ -240,15 +240,15 @@ public interface Timer extends Meter {
          * dimensions (e.g. in a different instance). Use {@link #publishPercentileHistogram()}
          * to publish a histogram that can be used to generate aggregable percentile approximations.
          *
-         * @param percentiles Percentiles to compute and publish. The 95th percentile should be expressed as {@code 95.0}
+         * @param percentiles Percentiles to compute and publish. The 95th percentile should be expressed as {@code 0.95}.
          */
         public Builder publishPercentiles(@Nullable double... percentiles) {
-            this.histogramConfigBuilder.percentiles(percentiles);
+            this.distributionConfigBuilder.percentiles(percentiles);
             return this;
         }
 
         /**
-         * Adds histogram buckets usable for generating aggregable percentile approximations in monitoring
+         * Adds histogram buckets used to generate aggregable percentile approximations in monitoring
          * systems that have query facilities to do so (e.g. Prometheus' {@code histogram_quantile},
          * Atlas' {@code :percentiles}).
          */
@@ -257,12 +257,12 @@ public interface Timer extends Meter {
         }
 
         /**
-         * Adds histogram buckets usable for generating aggregable percentile approximations in monitoring
+         * Adds histogram buckets used to generate aggregable percentile approximations in monitoring
          * systems that have query facilities to do so (e.g. Prometheus' {@code histogram_quantile},
          * Atlas' {@code :percentiles}).
          */
         public Builder publishPercentileHistogram(@Nullable Boolean enabled) {
-            this.histogramConfigBuilder.percentilesHistogram(enabled);
+            this.distributionConfigBuilder.percentilesHistogram(enabled);
             return this;
         }
 
@@ -279,7 +279,7 @@ public interface Timer extends Meter {
                 for (int i = 0; i < slaNano.length; i++) {
                     slaNano[i] = sla[i].toNanos();
                 }
-                this.histogramConfigBuilder.sla(slaNano);
+                this.distributionConfigBuilder.sla(slaNano);
             }
             return this;
         }
@@ -293,7 +293,7 @@ public interface Timer extends Meter {
          */
         public Builder minimumExpectedValue(@Nullable Duration min) {
             if (min != null)
-                this.histogramConfigBuilder.minimumExpectedValue(min.toNanos());
+                this.distributionConfigBuilder.minimumExpectedValue(min.toNanos());
             return this;
         }
 
@@ -306,7 +306,7 @@ public interface Timer extends Meter {
          */
         public Builder maximumExpectedValue(@Nullable Duration max) {
             if (max != null)
-                this.histogramConfigBuilder.maximumExpectedValue(max.toNanos());
+                this.distributionConfigBuilder.maximumExpectedValue(max.toNanos());
             return this;
         }
 
@@ -314,13 +314,13 @@ public interface Timer extends Meter {
          * Statistics emanating from a timer like max, percentiles, and histogram counts decay over time to
          * give greater weight to recent samples (exception: histogram counts are cumulative for those systems that expect cumulative
          * histogram buckets). Samples are accumulated to such statistics in ring buffers which rotate after
-         * this expiry, with a buffer length of {@link #histogramBufferLength(Integer)}.
+         * this expiry, with a buffer length of {@link #distributionStatisticBufferLength(Integer)}.
          *
          * @param expiry The amount of time samples are accumulated to a histogram before it is reset and rotated.
          * @return This builder.
          */
-        public Builder histogramExpiry(@Nullable Duration expiry) {
-            this.histogramConfigBuilder.histogramExpiry(expiry);
+        public Builder distributionStatisticExpiry(@Nullable Duration expiry) {
+            this.distributionConfigBuilder.expiry(expiry);
             return this;
         }
 
@@ -328,13 +328,13 @@ public interface Timer extends Meter {
          * Statistics emanating from a timer like max, percentiles, and histogram counts decay over time to
          * give greater weight to recent samples (exception: histogram counts are cumulative for those systems that expect cumulative
          * histogram buckets). Samples are accumulated to such statistics in ring buffers which rotate after
-         * {@link #histogramExpiry(Duration)}, with this buffer length.
+         * {@link #distributionStatisticExpiry(Duration)}, with this buffer length.
          *
          * @param bufferLength The number of histograms to keep in the ring buffer.
          * @return This builder.
          */
-        public Builder histogramBufferLength(@Nullable Integer bufferLength) {
-            this.histogramConfigBuilder.histogramBufferLength(bufferLength);
+        public Builder distributionStatisticBufferLength(@Nullable Integer bufferLength) {
+            this.distributionConfigBuilder.bufferLength(bufferLength);
             return this;
         }
 
@@ -371,7 +371,7 @@ public interface Timer extends Meter {
          */
         public Timer register(MeterRegistry registry) {
             // the base unit for a timer will be determined by the monitoring system implementation
-            return registry.timer(new Meter.Id(name, tags, null, description, Type.TIMER), histogramConfigBuilder.build(),
+            return registry.timer(new Meter.Id(name, tags, null, description, Type.TIMER), distributionConfigBuilder.build(),
                 pauseDetector == null ? registry.config().pauseDetector() : pauseDetector);
         }
     }

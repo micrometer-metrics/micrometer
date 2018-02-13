@@ -17,7 +17,7 @@ package io.micrometer.core.tck;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -124,7 +124,7 @@ interface TimerTest {
         assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(1000);
 
         //noinspection ConstantConditions
-        clock(registry).add(Duration.ofMillis(step().toMillis() * HistogramConfig.DEFAULT.getHistogramBufferLength()));
+        clock(registry).add(Duration.ofMillis(step().toMillis() * DistributionStatisticConfig.DEFAULT.getBufferLength()));
         assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0);
     }
 

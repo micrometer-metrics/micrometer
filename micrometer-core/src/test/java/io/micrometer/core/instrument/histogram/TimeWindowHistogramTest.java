@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TimeWindowHistogramTest {
     @Test
     void histogramsAreCumulative() {
-        TimeWindowHistogram histogram = new TimeWindowHistogram(new MockClock(), HistogramConfig.DEFAULT);
+        TimeWindowHistogram histogram = new TimeWindowHistogram(new MockClock(), DistributionStatisticConfig.DEFAULT);
         histogram.recordDouble(3);
 
         assertThat(histogram.histogramCountAtValue(3)).isEqualTo(1);
@@ -40,17 +40,17 @@ class TimeWindowHistogramTest {
 
     @Test
     void sampleValueAboveMaximumExpectedValue() {
-        TimeWindowHistogram histogram = new TimeWindowHistogram(new MockClock(), HistogramConfig.builder()
+        TimeWindowHistogram histogram = new TimeWindowHistogram(new MockClock(), DistributionStatisticConfig.builder()
             .maximumExpectedValue(2L)
             .build()
-            .merge(HistogramConfig.DEFAULT));
+            .merge(DistributionStatisticConfig.DEFAULT));
         histogram.recordDouble(3);
         assertThat(histogram.histogramCountAtValue(3)).isEqualTo(1);
     }
 
     @Test
     void recordValuesThatExceedTheDynamicRange() {
-        TimeWindowHistogram histogram = new TimeWindowHistogram(new MockClock(), HistogramConfig.DEFAULT);
+        TimeWindowHistogram histogram = new TimeWindowHistogram(new MockClock(), DistributionStatisticConfig.DEFAULT);
 
         // If the dynamic range of the underlying recorder isn't pushed very far to the right, a small value will be handled normally.
         // Doing this primes the 1e-8 sample for failure

@@ -17,7 +17,7 @@ package io.micrometer.core.instrument.util;
 
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.histogram.DistributionStatisticConfig;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
@@ -44,8 +44,8 @@ public class TimeDecayingMax {
     private volatile int rotating = 0; // 0 - not rotating, 1 - rotating
 
     @SuppressWarnings("ConstantConditions")
-    public TimeDecayingMax(Clock clock, HistogramConfig config) {
-        this(clock, config.getHistogramExpiry().toMillis(), config.getHistogramBufferLength());
+    public TimeDecayingMax(Clock clock, DistributionStatisticConfig config) {
+        this(clock, config.getExpiry().toMillis(), config.getBufferLength());
     }
 
     public TimeDecayingMax(Clock clock, long rotateFrequencyMillis, int bufferLength) {
