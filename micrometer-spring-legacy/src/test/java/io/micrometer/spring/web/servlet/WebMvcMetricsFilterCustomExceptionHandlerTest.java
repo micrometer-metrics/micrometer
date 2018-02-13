@@ -53,7 +53,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebAppConfiguration
 @AutoConfigureMockMvc
 @TestPropertySource(properties = "security.ignored=/**")
-public class MetricsFilterCustomExceptionHandlerTest {
+public class WebMvcMetricsFilterCustomExceptionHandlerTest {
 
     @Autowired
     private SimpleMeterRegistry registry;

@@ -49,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @WebAppConfiguration
 @TestPropertySource(properties = "security.ignored=/**")
-public class MetricsFilterAutoTimedTest {
+public class WebMvcMetricsFilterAutoTimedTest {
 
     @Autowired
     private MeterRegistry registry;

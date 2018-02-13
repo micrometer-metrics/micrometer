@@ -62,7 +62,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CyclicBarrier;
 
-import static io.micrometer.spring.web.servlet.MetricsFilterTest.RedirectAndNotFoundFilter.TEST_MISBEHAVE_HEADER;
+import static io.micrometer.spring.web.servlet.WebMvcMetricsFilterTest.RedirectAndNotFoundFilter.TEST_MISBEHAVE_HEADER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -76,7 +76,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebAppConfiguration
 @AutoConfigureMockMvc
 @TestPropertySource(properties = "security.ignored=/**")
-public class MetricsFilterTest {
+public class WebMvcMetricsFilterTest {
     @Autowired
     private SimpleMeterRegistry registry;
 
