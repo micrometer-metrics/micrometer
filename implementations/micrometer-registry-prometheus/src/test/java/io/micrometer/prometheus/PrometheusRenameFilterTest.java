@@ -22,13 +22,13 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link PrometheusMetricRenameFilter}.
+ * Tests for {@link PrometheusRenameFilter}.
  *
  * @author Tommy Ludwig
  */
-class PrometheusMetricRenameFilterTest {
+class PrometheusRenameFilterTest {
 
-    private final PrometheusMetricRenameFilter filter = new PrometheusMetricRenameFilter();
+    private final PrometheusRenameFilter filter = new PrometheusRenameFilter();
 
     @Test
     void doesNotChangeUnrelatedMeter() {

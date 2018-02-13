@@ -17,27 +17,28 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.MeterFilter;
+
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Converts known metric names from Micrometer's preferred name to Prometheus' preferred name.
+ * Converts known meter names from Micrometer's preferred name to Prometheus' preferred name.
  *
  * @author Tommy Ludwig
  */
-public class PrometheusMetricRenameFilter implements MeterFilter {
+public class PrometheusRenameFilter implements MeterFilter {
 
-    private static final Map<String, String> MICROMETER_TO_PROMETHEUS_METRIC_NAMES = new HashMap<>();
+    private static final Map<String, String> MICROMETER_TO_PROMETHEUS_NAMES = new HashMap<>();
 
     static {
-        MICROMETER_TO_PROMETHEUS_METRIC_NAMES.put("process.files.open", "process.open.fds");
-        MICROMETER_TO_PROMETHEUS_METRIC_NAMES.put("process.files.max", "process.max.fds");
+        MICROMETER_TO_PROMETHEUS_NAMES.put("process.files.open", "process.open.fds");
+        MICROMETER_TO_PROMETHEUS_NAMES.put("process.files.max", "process.max.fds");
     }
 
     @Override
     public Meter.Id map(Meter.Id id) {
-        String convertedMetricName = MICROMETER_TO_PROMETHEUS_METRIC_NAMES.get(id.getName());
-        return convertedMetricName == null ? id :
-            new Meter.Id(convertedMetricName, id.getTags(), id.getBaseUnit(), id.getDescription(), id.getType());
+        String convertedName = MICROMETER_TO_PROMETHEUS_NAMES.get(id.getName());
+        return convertedName == null ? id :
+            new Meter.Id(convertedName, id.getTags(), id.getBaseUnit(), id.getDescription(), id.getType());
     }
 }
