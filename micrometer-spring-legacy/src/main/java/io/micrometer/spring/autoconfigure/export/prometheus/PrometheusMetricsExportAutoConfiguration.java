@@ -19,17 +19,18 @@ import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
+import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.PushGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.autoconfigure.ManagementContextConfiguration;
 import org.springframework.boot.actuate.endpoint.AbstractEndpoint;
-import org.springframework.boot.autoconfigure.condition.AllNestedConditions;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
@@ -37,12 +38,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 
+import javax.annotation.PreDestroy;
 import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import javax.annotation.PreDestroy;
 
 /**
  * Configuration for exporting metrics to Prometheus.
@@ -50,10 +50,14 @@ import javax.annotation.PreDestroy;
  * @author Jon Schneider
  */
 @Configuration
+@AutoConfigureBefore(SimpleMetricsExportAutoConfiguration.class)
+@AutoConfigureAfter(MetricsAutoConfiguration.class)
+@ConditionalOnBean(Clock.class)
 @ConditionalOnClass(PrometheusMeterRegistry.class)
+@ConditionalOnProperty(prefix = "management.metrics.export.prometheus", name = "enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(PrometheusProperties.class)
 @Import(StringToDurationConverter.class)
-public class PrometheusExportConfiguration {
+public class PrometheusMetricsExportAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
@@ -62,7 +66,6 @@ public class PrometheusExportConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(value = "management.metrics.export.prometheus.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
     public PrometheusMeterRegistry prometheusMeterRegistry(PrometheusConfig config, CollectorRegistry collectorRegistry,
                                                            Clock clock) {
@@ -79,8 +82,7 @@ public class PrometheusExportConfiguration {
     @ConditionalOnClass(AbstractEndpoint.class)
     public static class PrometheusScrapeEndpointConfiguration {
         @Bean
-        public PrometheusScrapeEndpoint prometheusEndpoint(
-                CollectorRegistry collectorRegistry) {
+        public PrometheusScrapeEndpoint prometheusEndpoint(CollectorRegistry collectorRegistry) {
             return new PrometheusScrapeEndpoint(collectorRegistry);
         }
 
@@ -90,7 +92,7 @@ public class PrometheusExportConfiguration {
         }
     }
 
-    static class PrometheusPushGatewayEnabledCondition extends AllNestedConditions  {
+    static class PrometheusPushGatewayEnabledCondition extends AllNestedConditions {
         public PrometheusPushGatewayEnabledCondition() {
             super(ConfigurationPhase.PARSE_CONFIGURATION);
         }
@@ -130,13 +132,13 @@ public class PrometheusExportConfiguration {
             this.pushGateway = new PushGateway(pushgatewayProperties.getBaseUrl());
             this.environment = environment;
             this.executorService = Executors.newSingleThreadScheduledExecutor(
-                        (r) -> {
-                            final Thread thread = new Thread(r);
-                            thread.setDaemon(true);
-                            thread.setName("micrometer-pushgateway");
-                            return thread;
-                        }
-                    );
+                    (r) -> {
+                        final Thread thread = new Thread(r);
+                        thread.setDaemon(true);
+                        thread.setName("micrometer-pushgateway");
+                        return thread;
+                    }
+            );
             executorService.scheduleAtFixedRate(this::push, 0, pushgatewayProperties.getPushRate().toMillis(),
                     TimeUnit.MILLISECONDS);
         }
@@ -161,7 +163,7 @@ public class PrometheusExportConfiguration {
             if (pushgatewayProperties.isDeleteOnShutdown()) {
                 try {
                     pushGateway.delete(job(), pushgatewayProperties.getGroupingKeys());
-                } catch(Throwable t) {
+                } catch (Throwable t) {
                     logger.error("Unable to delete metrics from Prometheus Pushgateway", t);
                 }
             }

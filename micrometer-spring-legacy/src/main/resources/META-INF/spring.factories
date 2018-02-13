@@ -1,4 +1,16 @@
 org.springframework.boot.env.EnvironmentPostProcessor=\
 io.micrometer.spring.MetricsEnvironmentPostProcessor
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-io.micrometer.spring.autoconfigure.MetricsAutoConfiguration
+io.micrometer.spring.autoconfigure.MetricsAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.atlas.AtlasMetricsExportAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.datadog.DatadogMetricsExportAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.ganglia.GangliaMetricsExportAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.graphite.GraphiteMetricsExportAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.influx.InfluxMetricsExportAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.jmx.JmxMetricsExportAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.newrelic.NewRelicMetricsExportAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.prometheus.PrometheusMetricsExportAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.signalfx.SignalFxMetricsExportAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.statsd.StatsdMetricsExportAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.wavefront.WavefrontMetricsExportAutoConfiguration

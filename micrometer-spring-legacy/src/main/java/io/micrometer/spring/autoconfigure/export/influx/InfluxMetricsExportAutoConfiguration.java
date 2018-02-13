@@ -13,12 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.autoconfigure.export.datadog;
+package io.micrometer.spring.autoconfigure.export.influx;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.datadog.DatadogConfig;
-import io.micrometer.datadog.DatadogMeterRegistry;
+import io.micrometer.influx.InfluxConfig;
+import io.micrometer.influx.InfluxMeterRegistry;
+import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
+import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -28,26 +33,29 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 /**
- * Configuration for exporting metrics to Datadog.
+ * Configuration for exporting metrics to Influx.
  *
  * @author Jon Schneider
  */
 @Configuration
-@ConditionalOnClass(DatadogMeterRegistry.class)
+@AutoConfigureBefore(SimpleMetricsExportAutoConfiguration.class)
+@AutoConfigureAfter(MetricsAutoConfiguration.class)
+@ConditionalOnBean(Clock.class)
+@ConditionalOnClass(InfluxMeterRegistry.class)
+@ConditionalOnProperty(prefix = "management.metrics.export.influx", name = "enabled", havingValue = "true", matchIfMissing = true)
+@EnableConfigurationProperties(InfluxProperties.class)
 @Import(StringToDurationConverter.class)
-@EnableConfigurationProperties(DatadogProperties.class)
-public class DatadogExportConfiguration {
+public class InfluxMetricsExportAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean
-    public DatadogConfig datadogConfig(DatadogProperties props) {
-        return new DatadogPropertiesConfigAdapter(props);
+    @ConditionalOnMissingBean(InfluxConfig.class)
+    public InfluxConfig influxConfig(InfluxProperties props) {
+        return new InfluxPropertiesConfigAdapter(props);
     }
 
     @Bean
-    @ConditionalOnProperty(value = "management.metrics.export.datadog.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
-    public DatadogMeterRegistry datadogMeterRegistry(DatadogConfig config, Clock clock) {
-        return new DatadogMeterRegistry(config, clock);
+    public InfluxMeterRegistry influxMeterRegistry(InfluxConfig config, Clock clock) {
+        return new InfluxMeterRegistry(config, clock);
     }
 }

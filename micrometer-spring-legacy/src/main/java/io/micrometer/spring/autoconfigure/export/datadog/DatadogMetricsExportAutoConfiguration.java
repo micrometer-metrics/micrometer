@@ -13,12 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.autoconfigure.export.newrelic;
+package io.micrometer.spring.autoconfigure.export.datadog;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.newrelic.NewRelicConfig;
-import io.micrometer.newrelic.NewRelicMeterRegistry;
+import io.micrometer.datadog.DatadogConfig;
+import io.micrometer.datadog.DatadogMeterRegistry;
+import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
+import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -28,26 +33,29 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 /**
- * Configuration for exporting metrics to New Relic.
+ * Configuration for exporting metrics to Datadog.
  *
  * @author Jon Schneider
  */
 @Configuration
-@ConditionalOnClass(NewRelicMeterRegistry.class)
+@AutoConfigureBefore(SimpleMetricsExportAutoConfiguration.class)
+@AutoConfigureAfter(MetricsAutoConfiguration.class)
+@ConditionalOnBean(Clock.class)
+@ConditionalOnClass(DatadogMeterRegistry.class)
+@ConditionalOnProperty(prefix = "management.metrics.export.datadog", name = "enabled", havingValue = "true", matchIfMissing = true)
+@EnableConfigurationProperties(DatadogProperties.class)
 @Import(StringToDurationConverter.class)
-@EnableConfigurationProperties(NewRelicProperties.class)
-public class NewRelicExportConfiguration {
+public class DatadogMetricsExportAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public NewRelicConfig newRelicConfig(NewRelicProperties props) {
-        return new NewRelicPropertiesConfigAdapter(props);
+    public DatadogConfig datadogConfig(DatadogProperties props) {
+        return new DatadogPropertiesConfigAdapter(props);
     }
 
     @Bean
-    @ConditionalOnProperty(value = "management.metrics.export.newrelic.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
-    public NewRelicMeterRegistry newRelicMeterRegistry(NewRelicConfig config, Clock clock) {
-        return new NewRelicMeterRegistry(config, clock);
+    public DatadogMeterRegistry datadogMeterRegistry(DatadogConfig config, Clock clock) {
+        return new DatadogMeterRegistry(config, clock);
     }
 }

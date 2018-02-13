@@ -17,9 +17,14 @@ package io.micrometer.spring.autoconfigure.export.statsd;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
+import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
 import io.micrometer.statsd.StatsdConfig;
 import io.micrometer.statsd.StatsdMeterRegistry;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -34,10 +39,14 @@ import org.springframework.context.annotation.Import;
  * @author Jon Schneider
  */
 @Configuration
+@AutoConfigureBefore(SimpleMetricsExportAutoConfiguration.class)
+@AutoConfigureAfter(MetricsAutoConfiguration.class)
+@ConditionalOnBean(Clock.class)
 @ConditionalOnClass(StatsdMeterRegistry.class)
-@Import(StringToDurationConverter.class)
+@ConditionalOnProperty(prefix = "management.metrics.export.statsd", name = "enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(StatsdProperties.class)
-public class StatsdExportConfiguration {
+@Import(StringToDurationConverter.class)
+public class StatsdMetricsExportAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(StatsdConfig.class)
@@ -46,7 +55,6 @@ public class StatsdExportConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(value = "management.metrics.export.statsd.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
     public StatsdMeterRegistry statsdMeterRegistry(StatsdConfig config, HierarchicalNameMapper hierarchicalNameMapper,
                                                    Clock clock) {

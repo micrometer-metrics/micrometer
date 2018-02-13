@@ -16,9 +16,14 @@
 package io.micrometer.spring.autoconfigure.export.wavefront;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
+import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
 import io.micrometer.wavefront.WavefrontConfig;
 import io.micrometer.wavefront.WavefrontMeterRegistry;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -28,10 +33,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Configuration
+@AutoConfigureBefore(SimpleMetricsExportAutoConfiguration.class)
+@AutoConfigureAfter(MetricsAutoConfiguration.class)
+@ConditionalOnBean(Clock.class)
 @ConditionalOnClass(WavefrontMeterRegistry.class)
-@Import(StringToDurationConverter.class)
+@ConditionalOnProperty(prefix = "management.metrics.export.wavefront", name = "enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(WavefrontProperties.class)
-public class WavefrontExportConfiguration {
+@Import(StringToDurationConverter.class)
+public class WavefrontMetricsExportAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(WavefrontConfig.class)
@@ -40,7 +49,6 @@ public class WavefrontExportConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(value = "management.metrics.export.wavefront.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
     public WavefrontMeterRegistry wavefrontMeterRegistry(WavefrontConfig config, Clock clock) {
         return new WavefrontMeterRegistry(config, clock);

@@ -19,7 +19,12 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.ganglia.GangliaConfig;
 import io.micrometer.ganglia.GangliaMeterRegistry;
+import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
+import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -34,10 +39,14 @@ import org.springframework.context.annotation.Import;
  * @author Jon Schneider
  */
 @Configuration
+@AutoConfigureBefore(SimpleMetricsExportAutoConfiguration.class)
+@AutoConfigureAfter(MetricsAutoConfiguration.class)
+@ConditionalOnBean(Clock.class)
 @ConditionalOnClass(GangliaMeterRegistry.class)
-@Import(StringToDurationConverter.class)
+@ConditionalOnProperty(prefix = "management.metrics.export.ganglia", name = "enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(GangliaProperties.class)
-public class GangliaExportConfiguration {
+@Import(StringToDurationConverter.class)
+public class GangliaMetricsExportAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
@@ -46,7 +55,6 @@ public class GangliaExportConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(value = "management.metrics.export.ganglia.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
     public GangliaMeterRegistry gangliaMeterRegistry(GangliaConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
         return new GangliaMeterRegistry(config, clock, nameMapper);
@@ -57,5 +65,4 @@ public class GangliaExportConfiguration {
     public HierarchicalNameMapper hierarchicalNameMapper() {
         return HierarchicalNameMapper.DEFAULT;
     }
-
 }

@@ -39,28 +39,28 @@ import org.springframework.context.annotation.Configuration;
 class MeterBindersConfiguration {
 
     @Bean
-    @ConditionalOnProperty(value = "management.metrics.binders.jvm.gc.enabled", matchIfMissing = true)
+    @ConditionalOnProperty(value = "management.metrics.binders.jvm.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
     public JvmGcMetrics jvmGcMetrics() {
         return new JvmGcMetrics();
     }
 
     @Bean
-    @ConditionalOnProperty(value = "management.metrics.binders.jvm.memory.enabled", matchIfMissing = true)
+    @ConditionalOnProperty(value = "management.metrics.binders.jvm.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
     public JvmMemoryMetrics jvmMemoryMetrics() {
         return new JvmMemoryMetrics();
     }
 
     @Bean
-    @ConditionalOnProperty(value = "management.metrics.binders.jvm.thread.enabled", matchIfMissing = true)
+    @ConditionalOnProperty(value = "management.metrics.binders.jvm.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
     public JvmThreadMetrics jvmThreadMetrics() {
         return new JvmThreadMetrics();
     }
 
     @Bean
-    @ConditionalOnProperty(value = "management.metrics.binders.jvm.classes.enabled", matchIfMissing = true)
+    @ConditionalOnProperty(value = "management.metrics.binders.jvm.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
     public ClassLoaderMetrics classLoaderMetrics() {
         return new ClassLoaderMetrics();

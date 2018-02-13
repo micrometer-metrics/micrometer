@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.hystrix.HystrixMetricsBinder;
 import io.micrometer.spring.PropertiesMeterFilter;
-import io.micrometer.spring.autoconfigure.export.CompositeMeterRegistryConfiguration;
 import io.micrometer.spring.autoconfigure.jersey2.server.JerseyServerMetricsConfiguration;
 import io.micrometer.spring.autoconfigure.web.client.RestTemplateMetricsConfiguration;
 import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguration;
@@ -60,12 +59,6 @@ import org.springframework.integration.support.management.IntegrationManagementC
         // default instrumentation
         ServletMetricsConfiguration.class, RestTemplateMetricsConfiguration.class,
         TomcatMetricsConfiguration.class, JerseyServerMetricsConfiguration.class,
-
-        // registry implementations
-        MeterRegistriesConfiguration.class,
-
-        // conditionally build a composite registry out of more than one registry present
-        CompositeMeterRegistryConfiguration.class
 })
 @AutoConfigureAfter({
         DataSourceAutoConfiguration.class,
@@ -77,6 +70,11 @@ public class MetricsAutoConfiguration {
     @ConditionalOnMissingBean
     public Clock micrometerClock() {
         return Clock.SYSTEM;
+    }
+
+    @Bean
+    public static CompositeMeterRegistryPostProcessor compositeMeterRegistryPostProcessor() {
+        return new CompositeMeterRegistryPostProcessor();
     }
 
     @Bean
@@ -107,6 +105,9 @@ public class MetricsAutoConfiguration {
         return new HystrixMetricsBinder();
     }
 
+    /**
+     * Replaced by built-in Micrometer integration starting in Spring Integration 5.0.2.
+     */
     @Configuration
     @ConditionalOnClass(EnableIntegrationManagement.class)
     static class MetricsIntegrationConfiguration {

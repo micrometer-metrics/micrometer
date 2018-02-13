@@ -19,11 +19,16 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
+import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 /**
  * Configuration for exporting metrics to a {@link SimpleMeterRegistry}.
@@ -31,8 +36,13 @@ import org.springframework.context.annotation.Configuration;
  * @author Jon Schneider
  */
 @Configuration
+@AutoConfigureAfter(MetricsAutoConfiguration.class)
+@ConditionalOnBean(Clock.class)
 @EnableConfigurationProperties(SimpleProperties.class)
-public class SimpleExportConfiguration {
+@ConditionalOnMissingBean(MeterRegistry.class)
+@ConditionalOnProperty(prefix = "management.metrics.export.simple", name = "enabled", havingValue = "true", matchIfMissing = true)
+@Import(StringToDurationConverter.class)
+public class SimpleMetricsExportAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
@@ -46,7 +56,6 @@ public class SimpleExportConfiguration {
      * it backs the metrics displayed in the metrics actuator endpoint.
      */
     @Bean
-    @ConditionalOnProperty(value = "management.metrics.export.simple.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean(MeterRegistry.class)
     public SimpleMeterRegistry simpleMeterRegistry(SimpleConfig config, Clock clock) {
         return new SimpleMeterRegistry(config, clock);

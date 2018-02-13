@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.autoconfigure.export.cloudwatch;
+package io.micrometer.spring.autoconfigure.export.signalfx;
 
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
-import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsyncClient;
-import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsyncClientBuilder;
-import io.micrometer.cloudwatch.CloudWatchConfig;
-import io.micrometer.cloudwatch.CloudWatchMeterRegistry;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.signalfx.SignalFxConfig;
+import io.micrometer.signalfx.SignalFxMeterRegistry;
+import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
+import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -32,34 +33,29 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 /**
- * Configuration for exporting metrics to CloudWatch.
+ * Configuration for exporting metrics to Signalfx.
  *
  * @author Jon Schneider
  */
 @Configuration
-@ConditionalOnClass(CloudWatchMeterRegistry.class)
+@AutoConfigureBefore(SimpleMetricsExportAutoConfiguration.class)
+@AutoConfigureAfter(MetricsAutoConfiguration.class)
+@ConditionalOnBean(Clock.class)
+@ConditionalOnClass(SignalFxMeterRegistry.class)
+@ConditionalOnProperty(prefix = "management.metrics.export.signalfx", name = "enabled", havingValue = "true", matchIfMissing = true)
+@EnableConfigurationProperties(SignalFxProperties.class)
 @Import(StringToDurationConverter.class)
-@EnableConfigurationProperties(CloudWatchProperties.class)
-public class CloudWatchExportConfiguration {
+public class SignalFxMetricsExportAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public CloudWatchConfig cloudwatchConfig(CloudWatchProperties props) {
-        return new CloudWatchPropertiesConfigAdapter(props);
+    public SignalFxConfig signalfxConfig(SignalFxProperties props) {
+        return new SignalFxPropertiesConfigAdapter(props);
     }
 
     @Bean
-    @ConditionalOnProperty(value = "management.metrics.export.cloudwatch.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
-    public CloudWatchMeterRegistry cloudWatchMeterRegistry(CloudWatchConfig config, Clock clock, AmazonCloudWatchAsync client) {
-        return new CloudWatchMeterRegistry(config, clock, client);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(AmazonCloudWatchAsyncClient.class)
-    public AmazonCloudWatchAsync amazonCloudWatchAsync(AWSCredentialsProvider credentialsProvider) {
-        return AmazonCloudWatchAsyncClientBuilder.standard()
-            .withCredentials(credentialsProvider)
-            .build();
+    public SignalFxMeterRegistry signalFxMeterRegistry(SignalFxConfig config, Clock clock) {
+        return new SignalFxMeterRegistry(config, clock);
     }
 }

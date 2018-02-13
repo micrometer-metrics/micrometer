@@ -13,12 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.autoconfigure.export.influx;
+package io.micrometer.spring.autoconfigure.export.atlas;
 
+import com.netflix.spectator.atlas.AtlasConfig;
+import io.micrometer.atlas.AtlasMeterRegistry;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.influx.InfluxConfig;
-import io.micrometer.influx.InfluxMeterRegistry;
+import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
+import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -28,26 +33,30 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 /**
- * Configuration for exporting metrics to Influx.
+ * Configuration for exporting metrics to Atlas.
  *
  * @author Jon Schneider
+ * @author Andy Wilkinson
  */
 @Configuration
-@ConditionalOnClass(InfluxMeterRegistry.class)
+@AutoConfigureBefore(SimpleMetricsExportAutoConfiguration.class)
+@AutoConfigureAfter(MetricsAutoConfiguration.class)
+@ConditionalOnBean(Clock.class)
+@ConditionalOnClass(AtlasMeterRegistry.class)
+@ConditionalOnProperty(prefix = "management.metrics.export.atlas", name = "enabled", havingValue = "true", matchIfMissing = true)
+@EnableConfigurationProperties(AtlasProperties.class)
 @Import(StringToDurationConverter.class)
-@EnableConfigurationProperties(InfluxProperties.class)
-public class InfluxExportConfiguration {
+public class AtlasMetricsExportAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean(InfluxConfig.class)
-    public InfluxConfig influxConfig(InfluxProperties props) {
-        return new InfluxPropertiesConfigAdapter(props);
+    @ConditionalOnMissingBean(AtlasConfig.class)
+    public AtlasConfig atlasConfig(AtlasProperties atlasProperties) {
+        return new AtlasPropertiesConfigAdapter(atlasProperties);
     }
 
     @Bean
-    @ConditionalOnProperty(value = "management.metrics.export.influx.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
-    public InfluxMeterRegistry influxMeterRegistry(InfluxConfig config, Clock clock) {
-        return new InfluxMeterRegistry(config, clock);
+    public AtlasMeterRegistry atlasMeterRegistry(AtlasConfig config, Clock clock) {
+        return new AtlasMeterRegistry(config, clock);
     }
 }

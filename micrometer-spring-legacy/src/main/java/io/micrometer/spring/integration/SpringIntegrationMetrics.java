@@ -83,8 +83,6 @@ public class SpringIntegrationMetrics implements MeterBinder, SmartInitializingS
         for (String handler : configurer.getHandlerNames()) {
             MessageHandlerMetrics handlerMetrics = configurer.getHandlerMetrics(handler);
 
-            // TODO could use improvement to dynamically commute the handler name with its ID, which can change after
-            // creation as shown in the SpringIntegrationApplication sample.
             Iterable<Tag> tagsWithHandler = Tags.concat(tags, "handler", handler);
 
             TimeGauge.builder("spring.integration.handler.duration.max", handlerMetrics, TimeUnit.MILLISECONDS, MessageHandlerMetrics::getMaxDuration)
@@ -135,7 +133,6 @@ public class SpringIntegrationMetrics implements MeterBinder, SmartInitializingS
 
     @Override
     public void afterSingletonsInstantiated() {
-        // TODO better would be to use a BeanPostProcessor
         configurer.afterSingletonsInstantiated();
         registries.forEach(registry -> {
             addChannelMetrics(registry);
