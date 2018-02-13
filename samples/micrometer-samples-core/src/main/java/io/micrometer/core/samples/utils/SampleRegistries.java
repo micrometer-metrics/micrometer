@@ -23,6 +23,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.datadog.DatadogConfig;
 import io.micrometer.datadog.DatadogMeterRegistry;
+import io.micrometer.elastic.ElasticConfig;
+import io.micrometer.elastic.ElasticMeterRegistry;
 import io.micrometer.ganglia.GangliaConfig;
 import io.micrometer.ganglia.GangliaMeterRegistry;
 import io.micrometer.graphite.GraphiteConfig;
@@ -43,6 +45,7 @@ import io.micrometer.statsd.StatsdMeterRegistry;
 import io.micrometer.wavefront.WavefrontConfig;
 import io.micrometer.wavefront.WavefrontMeterRegistry;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -132,6 +135,21 @@ public class SampleRegistries {
         };
 
         return new DatadogMeterRegistry(config, Clock.SYSTEM);
+    }
+
+    public static ElasticMeterRegistry elastic() {
+        return new ElasticMeterRegistry(new ElasticConfig() {
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+
+            @Override
+            @Nullable
+            public String get(String k) {
+                return null;
+            }
+        }, Clock.SYSTEM);
     }
 
     public static StatsdMeterRegistry datadogStatsd() {

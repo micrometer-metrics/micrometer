@@ -23,6 +23,7 @@ management.metrics:
   export:
     atlas.enabled: false
     datadog.enabled: false
+    elastic.enabled: false
     ganglia.enabled: false
     graphite.enabled: false
     influx.enabled: false
