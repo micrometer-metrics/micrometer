@@ -13,4 +13,5 @@ io.micrometer.spring.autoconfigure.export.prometheus.PrometheusMetricsExportAuto
 io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.signalfx.SignalFxMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.statsd.StatsdMetricsExportAutoConfiguration,\
-io.micrometer.spring.autoconfigure.export.wavefront.WavefrontMetricsExportAutoConfiguration
+io.micrometer.spring.autoconfigure.export.wavefront.WavefrontMetricsExportAutoConfiguration,\
+io.micrometer.spring.jdbc.DataSourcePoolMetricsAutoConfiguration

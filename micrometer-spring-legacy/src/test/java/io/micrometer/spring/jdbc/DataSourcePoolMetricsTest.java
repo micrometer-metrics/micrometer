@@ -30,21 +30,22 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.sql.DataSource;
+import java.sql.SQLException;
 import java.util.Collection;
 
 import static java.util.Collections.emptyList;
 
 /**
- * @author Arthur Gavlyukovskiy
+ * @author Jon Schneider
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @TestPropertySource(properties = {
     "spring.datasource.generate-unique-name=true",
     "management.security.enabled=false",
-    "spring.datasource.type=com.zaxxer.hikari.HikariDataSource"
+    "spring.datasource.type=org.apache.tomcat.jdbc.pool.DataSource"
 })
-public class DataSourceMetricsHikariTest {
+public class DataSourcePoolMetricsTest {
     @Autowired
     DataSource dataSource;
 
@@ -52,8 +53,9 @@ public class DataSourceMetricsHikariTest {
     MeterRegistry registry;
 
     @Test
-    public void dataSourceIsInstrumented() {
-        registry.get("data.source.active.connections").meter();
+    public void dataSourceIsInstrumented() throws SQLException {
+        dataSource.getConnection().getMetaData();
+        registry.find("data.source.max.connections").meter();
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")
@@ -70,7 +72,7 @@ public class DataSourceMetricsHikariTest {
         public DataSourceConfig(DataSource dataSource,
                                 Collection<DataSourcePoolMetadataProvider> metadataProviders,
                                 MeterRegistry registry) {
-            new DataSourceMetrics(
+            new DataSourcePoolMetrics(
                 dataSource,
                 metadataProviders,
                 "data.source",

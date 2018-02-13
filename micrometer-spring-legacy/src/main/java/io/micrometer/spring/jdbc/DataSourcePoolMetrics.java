@@ -33,7 +33,7 @@ import java.util.Collection;
  */
 @NonNullApi
 @NonNullFields
-public class DataSourceMetrics implements MeterBinder {
+public class DataSourcePoolMetrics implements MeterBinder {
     private final DataSource dataSource;
     private final String name;
     private final Iterable<Tag> tags;
@@ -41,7 +41,7 @@ public class DataSourceMetrics implements MeterBinder {
     @Nullable
     private final DataSourcePoolMetadata poolMetadata;
 
-    public DataSourceMetrics(DataSource dataSource, @Nullable Collection<DataSourcePoolMetadataProvider> metadataProviders, String name, Iterable<Tag> tags) {
+    public DataSourcePoolMetrics(DataSource dataSource, @Nullable Collection<DataSourcePoolMetadataProvider> metadataProviders, String name, Iterable<Tag> tags) {
         this.name = name;
         this.tags = tags;
         this.dataSource = dataSource;
