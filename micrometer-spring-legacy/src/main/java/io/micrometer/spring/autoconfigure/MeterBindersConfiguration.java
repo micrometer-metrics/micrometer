@@ -89,7 +89,7 @@ class MeterBindersConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(value = "management.metrics.binders.fds.enabled", matchIfMissing = true)
+    @ConditionalOnProperty(value = "management.metrics.binders.files.enabled", matchIfMissing = true)
     @ConditionalOnMissingBean
     public FileDescriptorMetrics fileDescriptorMetrics() {
         return new FileDescriptorMetrics();
