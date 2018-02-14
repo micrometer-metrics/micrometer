@@ -17,6 +17,7 @@ package io.micrometer.wavefront;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;

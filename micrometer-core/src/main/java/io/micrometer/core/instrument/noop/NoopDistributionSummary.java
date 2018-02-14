@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument.noop;
 
 import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 
 public class NoopDistributionSummary extends NoopMeter implements DistributionSummary {
     public NoopDistributionSummary(Id id) {

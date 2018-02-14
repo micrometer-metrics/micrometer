@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument;
+package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
@@ -31,6 +31,7 @@ public final class HistogramSnapshot {
     private final double max;
     private final ValueAtPercentile[] percentileValues;
     private final CountAtBucket[] histogramCounts;
+
     private HistogramSnapshot(long count, double total, double max,
                               @Nullable ValueAtPercentile[] percentileValues,
                               @Nullable CountAtBucket[] histogramCounts) {

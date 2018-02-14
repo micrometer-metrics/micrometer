@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.instrument.noop;
 
-import io.micrometer.core.instrument.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.Timer;
 
 import java.util.concurrent.Callable;

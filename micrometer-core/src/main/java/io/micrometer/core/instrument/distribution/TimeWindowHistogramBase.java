@@ -16,9 +16,6 @@
 package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.CountAtBucket;
-import io.micrometer.core.instrument.HistogramSnapshot;
-import io.micrometer.core.instrument.ValueAtPercentile;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;

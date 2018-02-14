@@ -17,7 +17,7 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.CountAtBucket;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowHistogram;
 import io.micrometer.core.instrument.util.MeterEquivalence;

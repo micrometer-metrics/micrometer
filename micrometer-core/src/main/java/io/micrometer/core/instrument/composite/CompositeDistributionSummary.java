@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;

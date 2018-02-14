@@ -16,6 +16,7 @@
 package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.lang.Nullable;
