@@ -4,6 +4,7 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 io.micrometer.spring.autoconfigure.MetricsAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.atlas.AtlasMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.datadog.DatadogMetricsExportAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.elastic.ElasticMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.ganglia.GangliaMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.graphite.GraphiteMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.influx.InfluxMetricsExportAutoConfiguration,\

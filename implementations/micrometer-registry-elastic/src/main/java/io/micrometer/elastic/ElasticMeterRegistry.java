@@ -80,6 +80,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         objectWriter = objectMapper.writer();
 
         start(threadFactory);
+
+        logger.info("ElasticMeterRegistry started");
     }
 
     public ElasticMeterRegistry(ElasticConfig config, Clock clock) {
