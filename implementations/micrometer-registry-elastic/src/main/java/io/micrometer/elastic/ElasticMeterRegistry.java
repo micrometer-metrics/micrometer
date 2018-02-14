@@ -99,6 +99,11 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             connection.disconnect();
 
             boolean isTemplateMissing = connection.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND;
+            if (!isTemplateMissing) {
+                checkedForIndexTemplate = true;
+                logger.debug("Metrics template already setup");
+                return;
+            }
 
             logger.debug("No metrics template found in elasticsearch. Adding...");
             HttpURLConnection putTemplateConnection = openConnection( "/_template/metrics_template", "PUT");
@@ -196,6 +201,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
             writeAndCloseConnection(body, connection);
         }
+
+        logger.debug("Reported meters to elasticsearch");
     }
 
     @Override
@@ -207,7 +214,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     private HttpURLConnection openConnection(String uri, String method) {
         for (String host : config.hosts()) {
             try {
-                URL templateUrl = new URL("http://" + host  + uri);
+                URL templateUrl = new URL(host  + uri);
                 HttpURLConnection connection = ( HttpURLConnection ) templateUrl.openConnection();
                 connection.setRequestMethod(method);
                 connection.setConnectTimeout(config.timeout());
