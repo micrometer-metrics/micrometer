@@ -47,7 +47,7 @@ public interface SignalFxConfig extends StepRegistryConfig {
     }
 
     /**
-     * Uniquely identifies the app instance that is publishing metrics to Wavefront. Defaults to the local host name.
+     * Uniquely identifies the app instance that is publishing metrics to SignalFx. Defaults to the local host name.
      */
     default String source() {
         String v = get(prefix() + ".source");

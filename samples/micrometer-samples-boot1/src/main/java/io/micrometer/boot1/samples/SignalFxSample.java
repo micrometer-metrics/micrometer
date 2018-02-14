@@ -22,8 +22,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
-public class SignalfxSample {
+public class SignalFxSample {
     public static void main(String[] args) {
-        new SpringApplicationBuilder(SignalfxSample.class).profiles("signalfx").run(args);
+        new SpringApplicationBuilder(SignalFxSample.class).profiles("signalfx").run(args);
     }
 }
