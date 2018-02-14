@@ -19,19 +19,15 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
 
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.text.NumberFormat;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static io.micrometer.statsd.internal.MemoizingFunction.memoize;
-import static java.beans.Introspector.decapitalize;
 import static java.util.stream.Stream.of;
 
 class StatsdLineBuilder {
@@ -42,25 +38,6 @@ class StatsdLineBuilder {
 
     private final Function<NamingConvention, String> datadogTagString;
     private final Function<NamingConvention, String> telegrafTagString;
-
-    /**
-     * Because NumberFormat is not thread-safe we cannot share instances across threads.
-     */
-    private static final ThreadLocal<NumberFormat> NUMBER_FORMATTERS = ThreadLocal.withInitial(() -> {
-        // Always create the formatter for the US locale in order to avoid this bug:
-        // https://github.com/indeedeng/java-dogstatsd-client/issues/3
-        final NumberFormat numberFormatter = NumberFormat.getInstance(Locale.US);
-        numberFormatter.setGroupingUsed(false);
-        numberFormatter.setMaximumFractionDigits(6);
-
-        // We need to specify a value for Double.NaN that is recognizable
-        final DecimalFormat decimalFormat = (DecimalFormat) numberFormatter;
-        final DecimalFormatSymbols symbols = decimalFormat.getDecimalFormatSymbols();
-        symbols.setNaN("NaN");
-        decimalFormat.setDecimalFormatSymbols(symbols);
-
-        return numberFormatter;
-    });
 
     StatsdLineBuilder(Meter.Id id, StatsdFlavor flavor, HierarchicalNameMapper nameMapper, MeterRegistry.Config config) {
         this.id = id;
@@ -100,15 +77,15 @@ class StatsdLineBuilder {
     }
 
     String gauge(double amount, Statistic stat) {
-        return line(NUMBER_FORMATTERS.get().format(amount), stat, "g");
+        return line(DoubleFormat.decimalOrNan(amount), stat, "g");
     }
 
     String histogram(double amount) {
-        return line(NUMBER_FORMATTERS.get().format(amount), null, "h");
+        return line(DoubleFormat.decimalOrNan(amount), null, "h");
     }
 
     String timing(double timeMs) {
-        return line(NUMBER_FORMATTERS.get().format(timeMs), null, "ms");
+        return line(DoubleFormat.decimalOrNan(timeMs), null, "ms");
     }
 
     private String line(String amount, @Nullable Statistic stat, String type) {
@@ -124,7 +101,7 @@ class StatsdLineBuilder {
     }
 
     private String tags(@Nullable Statistic stat, String otherTags, String keyValueSeparator, String preamble) {
-        String tags = of(stat == null ? null : "statistic" + keyValueSeparator + decapitalize(stat.toString()), otherTags)
+        String tags = of(stat == null ? null : "statistic" + keyValueSeparator + stat.toString().toLowerCase(), otherTags)
             .filter(Objects::nonNull)
             .collect(Collectors.joining(","));
 

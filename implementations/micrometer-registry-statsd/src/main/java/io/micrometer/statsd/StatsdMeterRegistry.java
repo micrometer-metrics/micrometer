@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
@@ -35,7 +36,6 @@ import reactor.ipc.netty.NettyPipeline;
 import reactor.ipc.netty.udp.UdpClient;
 import reactor.util.concurrent.Queues;
 
-import java.text.DecimalFormat;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -127,37 +127,23 @@ public class StatsdMeterRegistry extends MeterRegistry {
         return ltt;
     }
 
-    private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
-
     @SuppressWarnings("ConstantConditions")
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
         Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
                 statsdConfig.step().toMillis());
 
-        for (double percentile : distributionStatisticConfig.getPercentiles()) {
-            switch (statsdConfig.flavor()) {
-                case DATADOG:
-                    gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + "percentile", timer,
-                            t -> t.percentile(percentile, getBaseTimeUnit()));
-                    break;
-                case TELEGRAF:
-                    gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + ".percentile", timer,
-                            t -> t.percentile(percentile, getBaseTimeUnit()));
-                    break;
-                case ETSY:
-                    gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile * 100)),
-                            timer, t -> t.percentile(percentile, getBaseTimeUnit()));
-                    break;
+        if (distributionStatisticConfig.getPercentiles() != null) {
+            for (double percentile : distributionStatisticConfig.getPercentiles()) {
+                gauge(id.getName() + ".percentile", Tags.concat(getConventionTags(id), "phi", DoubleFormat.decimalOrNan(percentile)),
+                        timer, t -> t.percentile(percentile, getBaseTimeUnit()));
             }
         }
 
-        if (distributionStatisticConfig.isPublishingHistogram()) {
-            for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
-                more().counter(id.getName() + ".histogram", Tags.concat(getConventionTags(id), "bucket",
-                        percentileFormat.format(TimeUtils.nanosToUnit(bucket, TimeUnit.MILLISECONDS))),
-                        timer, s -> s.histogramCountAtValue(bucket));
-            }
+        for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
+            Tags bucketTags = Tags.concat(getConventionTags(id), "le",
+                    DoubleFormat.decimalOrWhole(TimeUtils.nanosToUnit(bucket, getBaseTimeUnit())));
+            gauge(id.getName() + ".histogram", bucketTags, timer, t -> t.histogramCountAtValue(bucket));
         }
 
         return timer;
@@ -168,28 +154,17 @@ public class StatsdMeterRegistry extends MeterRegistry {
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), publisher, clock, distributionStatisticConfig);
 
-        for (double percentile : distributionStatisticConfig.getPercentiles()) {
-            switch (statsdConfig.flavor()) {
-                case DATADOG:
-                    gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + "percentile", summary,
-                            s -> s.percentile(percentile));
-                    break;
-                case TELEGRAF:
-                    gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + ".percentile", summary,
-                            s -> s.percentile(percentile));
-                    break;
-                case ETSY:
-                    gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile * 100)),
-                            summary, s -> s.percentile(percentile));
-                    break;
+        if (distributionStatisticConfig.getPercentiles() != null) {
+            for (double percentile : distributionStatisticConfig.getPercentiles()) {
+                gauge(id.getName() + ".percentile", Tags.concat(getConventionTags(id), "phi", DoubleFormat.decimalOrNan(percentile)),
+                        summary, s -> s.percentile(percentile));
             }
         }
 
-        if (distributionStatisticConfig.isPublishingHistogram()) {
-            for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
-                more().counter(id.getName() + ".histogram", Tags.concat(getConventionTags(id), "bucket",
-                        Long.toString(bucket)), summary, s -> s.histogramCountAtValue(bucket));
-            }
+        for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
+            Tags bucketTags = Tags.concat(getConventionTags(id), "le",
+                    DoubleFormat.decimalOrWhole(bucket));
+            gauge(id.getName() + ".histogram", bucketTags, summary, s -> s.histogramCountAtValue(bucket));
         }
 
         return summary;

@@ -102,7 +102,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
             final HistogramSnapshot snapshot = summary.takeSnapshot(false);
             final ValueAtPercentile[] percentileValues = snapshot.percentileValues();
-            final CountAtValue[] histogramCounts = summary.percentileBuckets();
+            final CountAtBucket[] histogramCounts = summary.histogramCounts();
 
             if (percentileValues.length > 0) {
                 List<String> quantileKeys = new LinkedList<>(tagKeys);
@@ -125,9 +125,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 histogramKeys.add("le");
 
                 // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
-                for (CountAtValue c : histogramCounts) {
+                for (CountAtBucket c : histogramCounts) {
                     List<String> histogramValues = new LinkedList<>(tagValues);
-                    final long bucket = c.value();
+                    final long bucket = c.bucket();
                     if (bucket == Long.MAX_VALUE) {
                         histogramValues.add("+Inf");
                     } else {
@@ -165,7 +165,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
             final HistogramSnapshot snapshot = timer.takeSnapshot(false);
             final ValueAtPercentile[] percentileValues = snapshot.percentileValues();
-            final CountAtValue[] histogramCounts = timer.percentileBuckets();
+            final CountAtBucket[] histogramCounts = timer.histogramCounts();
 
             if (percentileValues.length > 0) {
                 List<String> quantileKeys = new LinkedList<>(tagKeys);
@@ -188,9 +188,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 histogramKeys.add("le");
 
                 // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
-                for (CountAtValue c : histogramCounts) {
+                for (CountAtBucket c : histogramCounts) {
                     final List<String> histogramValues = new LinkedList<>(tagValues);
-                    histogramValues.add(Collector.doubleToGoString(c.value(TimeUnit.SECONDS)));
+                    histogramValues.add(Collector.doubleToGoString(c.bucket(TimeUnit.SECONDS)));
                     samples.add(new Collector.MetricFamilySamples.Sample(
                         conventionName + "_bucket", histogramKeys, histogramValues, c.count()));
                 }

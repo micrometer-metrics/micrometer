@@ -20,7 +20,6 @@ import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,40 +77,15 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             List<Event> events = new ArrayList<>();
 
             for (Meter meter : getMeters()) {
-                Meter.Id id = meter.getId();
-
                 if (meter instanceof Timer) {
-                    HistogramSnapshot t = ((Timer) meter).takeSnapshot(false);
-
-                    events.add(event(id, "count", t.count()));
-                    events.add(event(id, "sum", t.total(getBaseTimeUnit())));
-                    events.add(event(id, "avg", t.mean(getBaseTimeUnit())));
-                    events.add(event(id, "max", t.max(getBaseTimeUnit())));
-
-                    for (ValueAtPercentile valueAtPercentile : t.percentileValues()) {
-                        events.add(event(id, "percentile", valueAtPercentile.value(getBaseTimeUnit()), "phi",
-                            DoubleFormat.toString(valueAtPercentile.percentile())));
-                    }
+                    writeTimer(events, (Timer) meter);
                 } else if (meter instanceof FunctionTimer) {
-                    FunctionTimer t = (FunctionTimer) meter;
-                    events.add(event(id, "count", t.count()));
-                    events.add(event(id, "sum", t.count()));
-                    events.add(event(id, "mean", t.mean(getBaseTimeUnit())));
+                    writeTimer(events, (FunctionTimer) meter);
                 } else if (meter instanceof DistributionSummary) {
-                    HistogramSnapshot t = ((DistributionSummary) meter).takeSnapshot(false);
-
-                    events.add(event(id, "count", t.count()));
-                    events.add(event(id, "sum", t.total()));
-                    events.add(event(id, "avg", t.mean()));
-                    events.add(event(id, "max", t.max()));
-
-                    for (ValueAtPercentile valueAtPercentile : t.percentileValues()) {
-                        events.add(event(id, "percentile", valueAtPercentile.value(), "phi",
-                            DoubleFormat.toString(valueAtPercentile.percentile())));
-                    }
+                    writeSummary(events, (DistributionSummary) meter);
                 } else {
                     for (Measurement measurement : meter.measure()) {
-                        events.add(event(id, measurement.getStatistic().toString(), measurement.getValue()));
+                        events.add(event(meter.getId(), measurement.getStatistic().toString(), measurement.getValue()));
                     }
                 }
 
@@ -133,6 +107,33 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         } catch (Throwable t) {
             logger.warn("failed to send metrics", t);
         }
+    }
+
+    private void writeSummary(List<Event> events, DistributionSummary summary) {
+        Meter.Id id = summary.getId();
+        HistogramSnapshot t = summary.takeSnapshot(false);
+
+        events.add(event(id, "count", t.count()));
+        events.add(event(id, "sum", t.total()));
+        events.add(event(id, "avg", t.mean()));
+        events.add(event(id, "max", t.max()));
+    }
+
+    private void writeTimer(List<Event> events, Timer timer) {
+        Meter.Id id = timer.getId();
+        HistogramSnapshot t = timer.takeSnapshot(false);
+
+        events.add(event(id, "count", t.count()));
+        events.add(event(id, "sum", t.total(getBaseTimeUnit())));
+        events.add(event(id, "avg", t.mean(getBaseTimeUnit())));
+        events.add(event(id, "max", t.max(getBaseTimeUnit())));
+    }
+
+    private void writeTimer(List<Event> events, FunctionTimer timer) {
+        Meter.Id id = timer.getId();
+        events.add(event(id, "count", timer.count()));
+        events.add(event(id, "sum", timer.count()));
+        events.add(event(id, "mean", timer.mean(getBaseTimeUnit())));
     }
 
     private Event event(Meter.Id id, String statistic, Number value, String... additionalTags) {
@@ -180,7 +181,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             } else if (status >= 400) {
                 try (InputStream in = con.getErrorStream()) {
                     logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                        .lines().collect(joining("\n")));
+                            .lines().collect(joining("\n")));
                 }
             } else {
                 logger.error("failed to send metrics: http " + status);
@@ -207,6 +208,6 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         return TimeUnit.SECONDS;
     }
 
-    private class Event extends HashMap<String, Object> {
+    class Event extends HashMap<String, Object> {
     }
 }

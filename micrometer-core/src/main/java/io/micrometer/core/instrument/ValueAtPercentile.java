@@ -28,6 +28,7 @@ public final class ValueAtPercentile {
 
     private final double percentile;
     private final double value;
+
     private ValueAtPercentile(double percentile, double value) {
         this.percentile = percentile;
         this.value = value;

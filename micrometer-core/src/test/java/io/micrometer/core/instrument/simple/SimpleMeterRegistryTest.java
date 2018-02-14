@@ -13,54 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.dropwizard;
+package io.micrometer.core.instrument.simple;
 
-import com.codahale.metrics.MetricRegistry;
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.util.HierarchicalNameMapper;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Timer;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class DropwizardMeterRegistryTest {
-    private final MockClock clock = new MockClock();
-
-    private final DropwizardConfig config = new DropwizardConfig() {
-        @Override
-        public String prefix() {
-            return "dropwizard";
-        }
-
-        @Override
-        @Nullable
-        public String get(String key) {
-            return null;
-        }
-    };
-
-    private final DropwizardMeterRegistry registry = new DropwizardMeterRegistry(
-            config, new MetricRegistry(), HierarchicalNameMapper.DEFAULT, clock);
-
-    @Test
-    void gaugeOnNullValue() {
-        registry.gauge("gauge", emptyList(), null, obj -> 1.0);
-        assertThat(registry.get("gauge").gauge().value()).isEqualTo(Double.NaN);
-    }
-
-    @Test
-    void customMeasurementsThatDifferOnlyInTagValue() {
-        Meter.builder("my.custom", Meter.Type.GAUGE, Arrays.asList(
-                new Measurement(() -> 1.0, Statistic.COUNT),
-                new Measurement(() -> 2.0, Statistic.TOTAL)
-        )).register(registry);
-    }
+class SimpleMeterRegistryTest {
+    private MockClock clock = new MockClock();
+    private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
 
     @Issue("#370")
     @Test
@@ -73,13 +42,13 @@ class DropwizardMeterRegistryTest {
 
         Gauge summaryHist1 = registry.get("my.summary.histogram").tags("le", "1").gauge();
         Gauge summaryHist2 = registry.get("my.summary.histogram").tags("le", "2").gauge();
-        Gauge timerHist = registry.get("my.timer.histogram").tags("le", "1").gauge();
+        Gauge timerHist = registry.get("my.timer.histogram").tags("le", "0.001").gauge();
 
         assertThat(summaryHist1.value()).isEqualTo(1);
         assertThat(summaryHist2.value()).isEqualTo(1);
         assertThat(timerHist.value()).isEqualTo(1);
 
-        clock.add(config.step());
+        clock.add(SimpleConfig.DEFAULT.step());
 
         assertThat(summaryHist1.value()).isEqualTo(0);
         assertThat(summaryHist2.value()).isEqualTo(0);

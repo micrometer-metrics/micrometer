@@ -18,10 +18,7 @@ package io.micrometer.statsd;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.lang.Nullable;
 import io.netty.channel.ChannelOption;
@@ -47,6 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -60,7 +58,8 @@ class StatsdMeterRegistryTest {
      * do not fail if one of those agents happens to be running on the same box.
      */
     private static final int PORT = 8126;
-    private MockClock mockClock = new MockClock();
+    private MockClock clock = new MockClock();
+    private Duration step = Duration.ofMillis(5);
 
     @BeforeAll
     static void before() {
@@ -84,6 +83,7 @@ class StatsdMeterRegistryTest {
                 in.receive()
                     .asString()
                     .filter(line -> !line.toLowerCase().startsWith("statsd")) // ignore gauges monitoring the registry itself
+                    .log()
                     .subscribe(line -> {
                         for (String s : line.split("\n")) {
                             for (String s1 : expected) {
@@ -140,10 +140,15 @@ class StatsdMeterRegistryTest {
             }
 
             @Override
-            public Duration pollingFrequency() {
-                return Duration.ofMillis(1);
+            public Duration step() {
+                return step;
             }
-        }, mockClock);
+
+            @Override
+            public Duration pollingFrequency() {
+                return step;
+            }
+        }, clock);
     }
 
     @ParameterizedTest
@@ -252,7 +257,7 @@ class StatsdMeterRegistryTest {
                 assertLines(r -> ltt.apply(r).start(), flavor, lines);
                 return null;
             })
-            .then(() -> mockClock.add(10, TimeUnit.MILLISECONDS))
+            .then(() -> clock.add(10, TimeUnit.MILLISECONDS))
             .thenAwait(Duration.ofMillis(10));
     }
 
@@ -278,5 +283,31 @@ class StatsdMeterRegistryTest {
         registry.publisher.onComplete();
 
         registry.counter("my.counter").increment();
+    }
+
+    @ParameterizedTest
+    @EnumSource(StatsdFlavor.class)
+    @Issue("#370")
+    void slasOnlyNoPercentileHistogram(StatsdFlavor flavor) {
+        MeterRegistry registry = registry(flavor);
+        DistributionSummary summary = DistributionSummary.builder("my.summary").sla(1, 2).register(registry);
+        summary.record(1);
+
+        Timer timer = Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry);
+        timer.record(1, TimeUnit.MILLISECONDS);
+
+        Gauge summaryHist1 = registry.get("my.summary.histogram").tags("le", "1").gauge();
+        Gauge summaryHist2 = registry.get("my.summary.histogram").tags("le", "2").gauge();
+        Gauge timerHist = registry.get("my.timer.histogram").tags("le", "1").gauge();
+
+        assertThat(summaryHist1.value()).isEqualTo(1);
+        assertThat(summaryHist2.value()).isEqualTo(1);
+        assertThat(timerHist.value()).isEqualTo(1);
+
+        clock.add(step);
+
+        assertThat(summaryHist1.value()).isEqualTo(0);
+        assertThat(summaryHist2.value()).isEqualTo(0);
+        assertThat(timerHist.value()).isEqualTo(0);
     }
 }

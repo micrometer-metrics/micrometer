@@ -32,14 +32,15 @@ public class TimerSample {
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
         Timer timer = Timer.builder("timer")
-            .publishPercentileHistogram()
-            .publishPercentiles(0.5, 0.95, 0.99)
-            .distributionStatisticExpiry(Duration.ofSeconds(10))
-            .distributionStatisticBufferLength(3)
-            .register(registry);
+                .publishPercentileHistogram()
+                .publishPercentiles(0.5, 0.95, 0.99)
+                .sla(Duration.ofMillis(275), Duration.ofMillis(300), Duration.ofMillis(500))
+                .distributionStatisticExpiry(Duration.ofSeconds(10))
+                .distributionStatisticBufferLength(3)
+                .register(registry);
 
         FunctionTimer.builder("ftimer", timer, Timer::count, t -> t.totalTime(TimeUnit.SECONDS), TimeUnit.SECONDS)
-            .register(registry);
+                .register(registry);
 
         RandomEngine r = new MersenneTwister64(0);
         Normal incomingRequests = new Normal(0, 1, r);
@@ -47,8 +48,8 @@ public class TimerSample {
 
         AtomicInteger latencyForThisSecond = new AtomicInteger(duration.nextInt());
         Flux.interval(Duration.ofSeconds(1))
-            .doOnEach(d -> latencyForThisSecond.set(duration.nextInt()))
-            .subscribe();
+                .doOnEach(d -> latencyForThisSecond.set(duration.nextInt()))
+                .subscribe();
 
         // the potential for an "incoming request" every 10 ms
         Flux.interval(Duration.ofMillis(10))

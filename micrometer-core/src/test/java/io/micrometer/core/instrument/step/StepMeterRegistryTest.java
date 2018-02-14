@@ -13,54 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.dropwizard;
+package io.micrometer.core.instrument.step;
 
-import com.codahale.metrics.MetricRegistry;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.util.HierarchicalNameMapper;
-import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class DropwizardMeterRegistryTest {
-    private final MockClock clock = new MockClock();
+class StepMeterRegistryTest {
+    private MockClock clock = new MockClock();
 
-    private final DropwizardConfig config = new DropwizardConfig() {
+    private StepRegistryConfig config = new StepRegistryConfig() {
         @Override
         public String prefix() {
-            return "dropwizard";
+            return "test";
         }
 
         @Override
-        @Nullable
         public String get(String key) {
             return null;
         }
     };
 
-    private final DropwizardMeterRegistry registry = new DropwizardMeterRegistry(
-            config, new MetricRegistry(), HierarchicalNameMapper.DEFAULT, clock);
+    private MeterRegistry registry = new StepMeterRegistry(config, clock) {
+        @Override
+        protected void publish() {
+        }
 
-    @Test
-    void gaugeOnNullValue() {
-        registry.gauge("gauge", emptyList(), null, obj -> 1.0);
-        assertThat(registry.get("gauge").gauge().value()).isEqualTo(Double.NaN);
-    }
-
-    @Test
-    void customMeasurementsThatDifferOnlyInTagValue() {
-        Meter.builder("my.custom", Meter.Type.GAUGE, Arrays.asList(
-                new Measurement(() -> 1.0, Statistic.COUNT),
-                new Measurement(() -> 2.0, Statistic.TOTAL)
-        )).register(registry);
-    }
+        @Override
+        protected TimeUnit getBaseTimeUnit() {
+            return TimeUnit.SECONDS;
+        }
+    };
 
     @Issue("#370")
     @Test
@@ -73,7 +61,7 @@ class DropwizardMeterRegistryTest {
 
         Gauge summaryHist1 = registry.get("my.summary.histogram").tags("le", "1").gauge();
         Gauge summaryHist2 = registry.get("my.summary.histogram").tags("le", "2").gauge();
-        Gauge timerHist = registry.get("my.timer.histogram").tags("le", "1").gauge();
+        Gauge timerHist = registry.get("my.timer.histogram").tags("le", "0.001").gauge();
 
         assertThat(summaryHist1.value()).isEqualTo(1);
         assertThat(summaryHist2.value()).isEqualTo(1);

@@ -25,7 +25,6 @@ import com.signalfx.metrics.protobuf.SignalFxProtocolBuffers;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
@@ -42,8 +41,6 @@ import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.C
 import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.GAUGE;
 
 /**
- * q
- *
  * @author Jon Schneider
  */
 public class SignalFxMeterRegistry extends StepMeterRegistry {
@@ -72,10 +69,10 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         SignalFxReceiverEndpoint signalFxEndpoint = new SignalFxEndpoint(apiUri.getScheme(), apiUri.getHost(), port);
 
         metricSender = new AggregateMetricSender("test.SendMetrics",
-            new HttpDataPointProtobufReceiverFactory(signalFxEndpoint).setVersion(2),
-            new HttpEventProtobufReceiverFactory(signalFxEndpoint),
-            new StaticAuthToken(config.accessToken()),
-            Collections.singleton(metricError -> logger.warn("failed to send metrics: " + metricError.getMessage())));
+                new HttpDataPointProtobufReceiverFactory(signalFxEndpoint).setVersion(2),
+                new HttpEventProtobufReceiverFactory(signalFxEndpoint),
+                new StaticAuthToken(config.accessToken()),
+                Collections.singleton(metricError -> logger.warn("failed to send metrics: " + metricError.getMessage())));
 
         config().namingConvention(new SignalFxNamingConvention());
 
@@ -141,24 +138,24 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     private void addDatapoint(Meter meter, SignalFxProtocolBuffers.MetricType metricType, @Nullable String statSuffix, AggregateMetricSender.Session session, Number value, long timestamp) {
         SignalFxProtocolBuffers.Datum.Builder datumBuilder = SignalFxProtocolBuffers.Datum.newBuilder();
         SignalFxProtocolBuffers.Datum datum = (value instanceof Double ?
-            datumBuilder.setDoubleValue((Double) value) :
-            datumBuilder.setIntValue((Long) value)
+                datumBuilder.setDoubleValue((Double) value) :
+                datumBuilder.setIntValue((Long) value)
         ).build();
 
         String metricName = config().namingConvention().name(statSuffix == null ? meter.getId().getName() : meter.getId().getName() + "." + statSuffix,
-            meter.getId().getType(), meter.getId().getBaseUnit());
+                meter.getId().getType(), meter.getId().getBaseUnit());
 
         SignalFxProtocolBuffers.DataPoint.Builder dataPointBuilder = SignalFxProtocolBuffers.DataPoint.newBuilder()
-            .setMetric(metricName)
-            .setMetricType(metricType)
-            .setValue(datum)
-            .setTimestamp(timestamp);
+                .setMetric(metricName)
+                .setMetricType(metricType)
+                .setValue(datum)
+                .setTimestamp(timestamp);
 
         for (Tag tag : getConventionTags(meter.getId())) {
             dataPointBuilder.addDimensions(SignalFxProtocolBuffers.Dimension.newBuilder()
-                .setKey(tag.getKey())
-                .setValue(tag.getValue())
-                .build());
+                    .setKey(tag.getKey())
+                    .setValue(tag.getValue())
+                    .build());
         }
 
         session.setDatapoint(dataPointBuilder.build());
@@ -192,11 +189,6 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         addDatapoint(timer, COUNTER, "totalTime", session, snapshot.total(getBaseTimeUnit()), timestamp);
         addDatapoint(timer, GAUGE, "avg", session, snapshot.mean(getBaseTimeUnit()), timestamp);
         addDatapoint(timer, GAUGE, "max", session, snapshot.max(getBaseTimeUnit()), timestamp);
-
-        for (ValueAtPercentile v : snapshot.percentileValues()) {
-            String suffix = DoubleFormat.toString(v.percentile() * 100) + "percentile";
-            addDatapoint(timer, GAUGE, suffix, session, v.value(getBaseTimeUnit()), timestamp);
-        }
     }
 
     private void addFunctionTimer(FunctionTimer timer, AggregateMetricSender.Session session, long timestamp) {
@@ -212,11 +204,6 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         addDatapoint(summary, COUNTER, "totalTime", session, snapshot.total(), timestamp);
         addDatapoint(summary, GAUGE, "avg", session, snapshot.mean(), timestamp);
         addDatapoint(summary, GAUGE, "max", session, snapshot.max(), timestamp);
-
-        for (ValueAtPercentile v : snapshot.percentileValues()) {
-            String suffix = DoubleFormat.toString(v.percentile() * 100) + "percentile";
-            addDatapoint(summary, GAUGE, suffix, session, v.value(), timestamp);
-        }
     }
 
     @Override

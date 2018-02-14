@@ -24,25 +24,26 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Trustin Heuiseung Lee
  */
-public final class CountAtValue {
+public final class CountAtBucket {
 
-    private final long value;
+    private final long bucket;
     private final double count;
-    private CountAtValue(long value, double count) {
-        this.value = value;
+
+    private CountAtBucket(long bucket, double count) {
+        this.bucket = bucket;
         this.count = count;
     }
 
-    public static CountAtValue of(long value, double count) {
-        return new CountAtValue(value, count);
+    public static CountAtBucket of(long bucket, double count) {
+        return new CountAtBucket(bucket, count);
     }
 
-    public long value() {
-        return value;
+    public long bucket() {
+        return bucket;
     }
 
-    public double value(TimeUnit unit) {
-        return TimeUtils.nanosToUnit(value, unit);
+    public double bucket(TimeUnit unit) {
+        return TimeUtils.nanosToUnit(bucket, unit);
     }
 
     public double count() {
@@ -51,6 +52,6 @@ public final class CountAtValue {
 
     @Override
     public String toString() {
-        return "(" + count + " at " + value + ')';
+        return "(" + count + " at " + bucket + ')';
     }
 }

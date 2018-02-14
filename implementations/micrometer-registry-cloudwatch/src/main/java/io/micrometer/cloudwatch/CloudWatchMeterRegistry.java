@@ -21,11 +21,11 @@ import com.amazonaws.services.cloudwatch.model.*;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -43,7 +43,6 @@ import static java.util.stream.StreamSupport.stream;
 public class CloudWatchMeterRegistry extends StepMeterRegistry {
     private final CloudWatchConfig config;
     private final AmazonCloudWatchAsync amazonCloudWatchAsync;
-    private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
     private final Logger logger = LoggerFactory.getLogger(CloudWatchMeterRegistry.class);
 
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
@@ -121,7 +120,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         metrics.add(metricDatum(idWithSuffixAndUnit(timer.getId(), "max", getBaseTimeUnit().name()), wallTime, snapshot.max(getBaseTimeUnit())));
 
         for (ValueAtPercentile v : snapshot.percentileValues()) {
-            metrics.add(metricDatum(idWithSuffix(timer.getId(), percentileFormat.format(v.percentile()) + "percentile"),
+            metrics.add(metricDatum(idWithSuffix(timer.getId(), DoubleFormat.decimalOrNan(v.percentile()) + "percentile"),
                 wallTime, v.value(getBaseTimeUnit())));
         }
 
@@ -139,7 +138,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         metrics.add(metricDatum(idWithSuffix(summary.getId(), "max"), wallTime, snapshot.max()));
 
         for (ValueAtPercentile v : snapshot.percentileValues()) {
-            metrics.add(metricDatum(idWithSuffix(summary.getId(), percentileFormat.format(v.percentile()) + "percentile"),
+            metrics.add(metricDatum(idWithSuffix(summary.getId(), DoubleFormat.decimalOrNan(v.percentile()) + "percentile"),
                 wallTime, v.value()));
         }
 

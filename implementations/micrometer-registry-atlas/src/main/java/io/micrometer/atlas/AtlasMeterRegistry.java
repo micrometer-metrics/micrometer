@@ -29,9 +29,9 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.step.StepFunctionCounter;
 import io.micrometer.core.instrument.step.StepFunctionTimer;
+import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.lang.Nullable;
 
-import java.text.DecimalFormat;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -46,7 +46,6 @@ import static java.util.stream.StreamSupport.stream;
  */
 public class AtlasMeterRegistry extends MeterRegistry {
     private final AtlasRegistry registry;
-    private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
     private final AtlasConfig atlasConfig;
 
     public AtlasMeterRegistry(AtlasConfig config, Clock clock) {
@@ -111,7 +110,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
         }
 
         for (double percentile : distributionStatisticConfig.getPercentiles()) {
-            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
+            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", DoubleFormat.decimalOrNan(percentile)),
                 summary, s -> s.percentile(percentile));
         }
 
@@ -135,7 +134,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
         }
 
         for (double percentile : distributionStatisticConfig.getPercentiles()) {
-            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
+            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", DoubleFormat.decimalOrNan(percentile)),
                 timer, t -> t.percentile(percentile, TimeUnit.SECONDS));
         }
 

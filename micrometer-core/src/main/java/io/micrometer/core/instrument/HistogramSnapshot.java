@@ -24,16 +24,16 @@ import java.util.concurrent.TimeUnit;
 public final class HistogramSnapshot {
 
     private static final ValueAtPercentile[] EMPTY_VALUES = new ValueAtPercentile[0];
-    private static final CountAtValue[] EMPTY_COUNTS = new CountAtValue[0];
+    private static final CountAtBucket[] EMPTY_COUNTS = new CountAtBucket[0];
     private static final HistogramSnapshot EMPTY = new HistogramSnapshot(0, 0, 0, null, null);
     private final long count;
     private final double total;
     private final double max;
     private final ValueAtPercentile[] percentileValues;
-    private final CountAtValue[] histogramCounts;
+    private final CountAtBucket[] histogramCounts;
     private HistogramSnapshot(long count, double total, double max,
                               @Nullable ValueAtPercentile[] percentileValues,
-                              @Nullable CountAtValue[] histogramCounts) {
+                              @Nullable CountAtBucket[] histogramCounts) {
         this.count = count;
         this.total = total;
         this.max = max;
@@ -43,7 +43,7 @@ public final class HistogramSnapshot {
 
     public static HistogramSnapshot of(long count, double total, double max,
                                        @Nullable ValueAtPercentile[] percentileValues,
-                                       @Nullable CountAtValue[] histogramCounts) {
+                                       @Nullable CountAtBucket[] histogramCounts) {
         return new HistogramSnapshot(count, total, max, percentileValues, histogramCounts);
     }
 
@@ -83,7 +83,7 @@ public final class HistogramSnapshot {
         return percentileValues;
     }
 
-    public CountAtValue[] histogramCounts() {
+    public CountAtBucket[] histogramCounts() {
         return histogramCounts;
     }
 

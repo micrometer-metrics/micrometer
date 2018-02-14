@@ -21,6 +21,8 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.Executors;
@@ -86,12 +88,42 @@ public abstract class StepMeterRegistry extends MeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        return new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit());
+        Timer timer = new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit());
+
+        if (distributionStatisticConfig.getPercentiles() != null) {
+            for (double percentile : distributionStatisticConfig.getPercentiles()) {
+                gauge(id.getName() + ".percentile", Tags.concat(getConventionTags(id), "phi", DoubleFormat.decimalOrNan(percentile)),
+                        timer, t -> t.percentile(percentile, getBaseTimeUnit()));
+            }
+        }
+
+        for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
+            Tags bucketTags = Tags.concat(getConventionTags(id), "le",
+                    DoubleFormat.decimalOrWhole(TimeUtils.nanosToUnit(bucket, getBaseTimeUnit())));
+            gauge(id.getName() + ".histogram", bucketTags, timer, t -> t.histogramCountAtValue(bucket));
+        }
+
+        return timer;
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        return new StepDistributionSummary(id, clock, distributionStatisticConfig);
+        DistributionSummary summary = new StepDistributionSummary(id, clock, distributionStatisticConfig);
+
+        if (distributionStatisticConfig.getPercentiles() != null) {
+            for (double percentile : distributionStatisticConfig.getPercentiles()) {
+                gauge(id.getName() + ".percentile", Tags.concat(getConventionTags(id), "phi", DoubleFormat.decimalOrNan(percentile)),
+                        summary, s -> s.percentile(percentile));
+            }
+        }
+
+        for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
+            Tags bucketTags = Tags.concat(getConventionTags(id), "le",
+                    DoubleFormat.decimalOrWhole(bucket));
+            gauge(id.getName() + ".histogram", bucketTags, summary, s -> s.histogramCountAtValue(bucket));
+        }
+
+        return summary;
     }
 
     @Override

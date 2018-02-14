@@ -232,8 +232,17 @@ class PrometheusMeterRegistryTest {
 
         speedIndexRatings.record(0);
 
-        assertThat(registry.scrape())
-            .contains("speed_index_bucket{page=\"home\",le=\"+Inf\",} 1.0");
+        assertThat(registry.scrape()).contains("speed_index_bucket{page=\"home\",le=\"+Inf\",} 1.0");
+    }
+
+    @Issue("#370")
+    @Test
+    void slasOnlyNoPercentileHistogram() {
+        DistributionSummary.builder("my.summary").sla(1).register(registry).record(1);
+        assertThat(registry.scrape()).contains("my_summary_bucket{le=\"1.0\",} 1.0");
+
+        Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry).record(1, TimeUnit.MILLISECONDS);
+        assertThat(registry.scrape()).contains("my_timer_duration_seconds_bucket{le=\"0.001\",} 1.0");
     }
 
     @Issue("#61")

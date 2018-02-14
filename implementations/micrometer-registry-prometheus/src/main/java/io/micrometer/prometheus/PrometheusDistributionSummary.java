@@ -17,7 +17,7 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.CountAtValue;
+import io.micrometer.core.instrument.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowHistogram;
 import io.micrometer.core.instrument.util.MeterEquivalence;
@@ -38,11 +38,11 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         super(id, clock, distributionStatisticConfig);
         this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
         this.percentilesHistogram = new TimeWindowHistogram(clock,
-            DistributionStatisticConfig.builder()
-                .expiry(Duration.ofDays(1825)) // effectively never roll over
-                .bufferLength(1)
-                .build()
-                .merge(distributionStatisticConfig));
+                DistributionStatisticConfig.builder()
+                        .expiry(Duration.ofDays(1825)) // effectively never roll over
+                        .bufferLength(1)
+                        .build()
+                        .merge(distributionStatisticConfig));
     }
 
     @Override
@@ -83,7 +83,7 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
      * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is based on a
      * rolling histogram. Prometheus requires a histogram that accumulates values over the lifetime of the app.
      */
-    public CountAtValue[] percentileBuckets() {
+    public CountAtBucket[] histogramCounts() {
         return percentilesHistogram.takeSnapshot(0, 0, 0, true).histogramCounts();
     }
 }

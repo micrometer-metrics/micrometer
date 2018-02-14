@@ -17,7 +17,6 @@ package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
@@ -190,13 +189,6 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
         addToMetadataList(metadata, id, "max", Statistic.MAX, null);
 
-        for (ValueAtPercentile v : snapshot.percentileValues()) {
-            String suffix = DoubleFormat.toString(v.percentile() * 100) + "percentile";
-            metrics.add(writeMetric(id, suffix, wallTime, v.value(getBaseTimeUnit())));
-
-            addToMetadataList(metadata, id, suffix, Statistic.VALUE, null);
-        }
-
         return metrics.build();
     }
 
@@ -215,13 +207,6 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         addToMetadataList(metadata, id, "count", Statistic.COUNT, "occurrence");
         addToMetadataList(metadata, id, "avg", Statistic.VALUE, null);
         addToMetadataList(metadata, id, "max", Statistic.MAX, null);
-
-        for (ValueAtPercentile v : snapshot.percentileValues()) {
-            String suffix = DoubleFormat.toString(v.percentile() * 100) + "percentile";
-            metrics.add(writeMetric(id, suffix, wallTime, v.value()));
-
-            addToMetadataList(metadata, id, suffix, Statistic.VALUE, null);
-        }
 
         return metrics.build();
     }

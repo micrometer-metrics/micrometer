@@ -30,7 +30,7 @@ class TimeWindowHistogramTest {
 
         histogram.recordDouble(6);
 
-        // Proves that the accumulated histogram is truly accumulative, and not just a representation
+        // Proves that the accumulated histogram is truly cumulative, and not just a representation
         // of the last snapshot
         assertThat(histogram.histogramCountAtValue(3)).isEqualTo(1);
 

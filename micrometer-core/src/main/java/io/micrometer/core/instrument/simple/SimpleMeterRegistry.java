@@ -25,10 +25,10 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.step.StepCounter;
 import io.micrometer.core.instrument.step.StepDistributionSummary;
 import io.micrometer.core.instrument.step.StepTimer;
+import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
-import java.text.DecimalFormat;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
@@ -39,7 +39,6 @@ import java.util.function.ToLongFunction;
  * @author Jon Schneider
  */
 public class SimpleMeterRegistry extends MeterRegistry {
-    private final DecimalFormat percentileFormat = new DecimalFormat("#.####");
     private final SimpleConfig config;
 
     public SimpleMeterRegistry() {
@@ -70,16 +69,15 @@ public class SimpleMeterRegistry extends MeterRegistry {
 
         if (distributionStatisticConfig.getPercentiles() != null) {
             for (double percentile : distributionStatisticConfig.getPercentiles()) {
-                gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
-                    summary, s -> summary.percentile(percentile));
+                gauge(id.getName() + ".percentile", Tags.concat(getConventionTags(id), "phi", DoubleFormat.decimalOrNan(percentile)),
+                        summary, s -> s.percentile(percentile));
             }
         }
 
-        if (distributionStatisticConfig.isPublishingHistogram()) {
-            for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
-                more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket", Long.toString(bucket)),
-                    summary, s -> s.histogramCountAtValue(bucket));
-            }
+        for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
+            Tags bucketTags = Tags.concat(getConventionTags(id), "le",
+                    DoubleFormat.decimalOrWhole(bucket));
+            gauge(id.getName() + ".histogram", bucketTags, summary, s -> s.histogramCountAtValue(bucket));
         }
 
         return summary;
@@ -109,17 +107,15 @@ public class SimpleMeterRegistry extends MeterRegistry {
 
         if (distributionStatisticConfig.getPercentiles() != null) {
             for (double percentile : distributionStatisticConfig.getPercentiles()) {
-                gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", percentileFormat.format(percentile)),
-                    timer, t -> t.percentile(percentile, getBaseTimeUnit()));
+                gauge(id.getName() + ".percentile", Tags.concat(getConventionTags(id), "phi", DoubleFormat.decimalOrNan(percentile)),
+                        timer, t -> t.percentile(percentile, getBaseTimeUnit()));
             }
         }
 
-        if (distributionStatisticConfig.isPublishingHistogram()) {
-            for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
-                more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket",
-                    percentileFormat.format(TimeUtils.nanosToUnit(bucket, getBaseTimeUnit()))),
-                    timer, t -> t.histogramCountAtValue(bucket));
-            }
+        for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
+            Tags bucketTags = Tags.concat(getConventionTags(id), "le",
+                    DoubleFormat.decimalOrWhole(TimeUtils.nanosToUnit(bucket, getBaseTimeUnit())));
+            gauge(id.getName() + ".histogram", bucketTags, timer, t -> t.histogramCountAtValue(bucket));
         }
 
         return timer;

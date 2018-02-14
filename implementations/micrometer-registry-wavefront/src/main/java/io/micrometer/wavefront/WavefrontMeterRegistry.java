@@ -160,11 +160,6 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         metrics.add(writeMetric(id, "avg", wallTime, snapshot.mean(getBaseTimeUnit())));
         metrics.add(writeMetric(id, "max", wallTime, snapshot.max(getBaseTimeUnit())));
 
-        for (ValueAtPercentile v : snapshot.percentileValues()) {
-            String suffix = DoubleFormat.toString(v.percentile() * 100) + "percentile";
-            metrics.add(writeMetric(id, suffix, wallTime, v.value(getBaseTimeUnit())));
-        }
-
         return metrics.build();
     }
 
@@ -178,11 +173,6 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         metrics.add(writeMetric(id, "count", wallTime, snapshot.count()));
         metrics.add(writeMetric(id, "avg", wallTime, snapshot.mean()));
         metrics.add(writeMetric(id, "max", wallTime, snapshot.max()));
-
-        for (ValueAtPercentile v : snapshot.percentileValues()) {
-            String suffix = DoubleFormat.toString(v.percentile() * 100) + "percentile";
-            metrics.add(writeMetric(id, suffix, wallTime, v.value()));
-        }
 
         return metrics.build();
     }
@@ -214,7 +204,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
             fullId = idWithSuffix(id, suffix);
 
         // surrounding the name with double quotes allows for / and , in names
-        return "\"" + getConventionName(fullId) + "\" " + DoubleFormat.toString(value) + " " + (wallTime / 1000) +
+        return "\"" + getConventionName(fullId) + "\" " + DoubleFormat.decimalOrNan(value) + " " + (wallTime / 1000) +
                 " source=" + config.source() + " " +
                 getConventionTags(fullId)
                         .stream()
@@ -242,7 +232,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         // it as part of the name. Wavefront strips a $<NUMERIC> suffix from the name at parsing time.
         return "\"" + getConventionName(fullId) + "$" + uniqueNameSuffix + "\"" +
                 ": {" +
-                "\"value\": " + DoubleFormat.toString(value) + "," +
+                "\"value\": " + DoubleFormat.decimalOrNan(value) + "," +
                 "\"tags\": {" + tags + "}" +
                 "}";
     }

@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
 import java.lang.ref.WeakReference;
@@ -78,17 +79,15 @@ public class DropwizardMeterRegistry extends MeterRegistry {
 
         if (distributionStatisticConfig.getPercentiles() != null) {
             for (double percentile : distributionStatisticConfig.getPercentiles()) {
-                String formattedPercentile = DoubleFormat.toString(percentile * 100) + "percentile";
-                gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", formattedPercentile),
-                    timer, t -> t.percentile(percentile, getBaseTimeUnit()));
+                gauge(id.getName() + ".percentile", Tags.concat(getConventionTags(id), "phi", DoubleFormat.decimalOrNan(percentile)),
+                        timer, t -> t.percentile(percentile, getBaseTimeUnit()));
             }
         }
 
-        if (distributionStatisticConfig.isPublishingHistogram()) {
-            for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
-                more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket", Long.toString(bucket)),
-                    timer, t -> t.histogramCountAtValue(bucket));
-            }
+        for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
+            Tags bucketTags = Tags.concat(getConventionTags(id), "le",
+                    DoubleFormat.decimalOrWhole(TimeUtils.nanosToUnit(bucket, getBaseTimeUnit())));
+            gauge(id.getName() + ".histogram", bucketTags, timer, t -> t.histogramCountAtValue(bucket));
         }
 
         return timer;
@@ -100,17 +99,15 @@ public class DropwizardMeterRegistry extends MeterRegistry {
 
         if (distributionStatisticConfig.getPercentiles() != null) {
             for (double percentile : distributionStatisticConfig.getPercentiles()) {
-                String formattedPercentile = DoubleFormat.toString(percentile * 100) + "percentile";
-                gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", formattedPercentile),
-                    summary, s -> summary.percentile(percentile));
+                gauge(id.getName() + ".percentile", Tags.concat(getConventionTags(id), "phi", DoubleFormat.decimalOrNan(percentile)),
+                        summary, s -> s.percentile(percentile));
             }
         }
 
-        if (distributionStatisticConfig.isPublishingHistogram()) {
-            for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
-                more().counter(getConventionName(id), Tags.concat(getConventionTags(id), "bucket", Long.toString(bucket)),
-                    summary, s -> s.histogramCountAtValue(bucket));
-            }
+        for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
+            Tags bucketTags = Tags.concat(getConventionTags(id), "le",
+                    DoubleFormat.decimalOrWhole(bucket));
+            gauge(id.getName() + ".histogram", bucketTags, summary, s -> s.histogramCountAtValue(bucket));
         }
 
         return summary;
@@ -127,7 +124,7 @@ public class DropwizardMeterRegistry extends MeterRegistry {
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
         DropwizardFunctionTimer ft = new DropwizardFunctionTimer<>(id, clock, obj, countFunction, totalTimeFunction,
-            totalTimeFunctionUnits, getBaseTimeUnit());
+                totalTimeFunctionUnits, getBaseTimeUnit());
         registry.register(hierarchicalName(id), ft.getDropwizardMeter());
         return ft;
     }
@@ -157,8 +154,8 @@ public class DropwizardMeterRegistry extends MeterRegistry {
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
         return DistributionStatisticConfig.builder()
-            .expiry(dropwizardConfig.step())
-            .build()
-            .merge(DistributionStatisticConfig.DEFAULT);
+                .expiry(dropwizardConfig.step())
+                .build()
+                .merge(DistributionStatisticConfig.DEFAULT);
     }
 }

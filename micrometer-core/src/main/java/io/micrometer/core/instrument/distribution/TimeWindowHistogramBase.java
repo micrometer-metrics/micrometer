@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.CountAtValue;
+import io.micrometer.core.instrument.CountAtBucket;
 import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.ValueAtPercentile;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
@@ -163,7 +163,7 @@ abstract class TimeWindowHistogramBase<T, U> {
         rotate();
 
         final ValueAtPercentile[] values;
-        final CountAtValue[] counts;
+        final CountAtBucket[] counts;
         synchronized (this) {
             accumulateIfStale();
             values = takeValueSnapshot();
@@ -194,7 +194,7 @@ abstract class TimeWindowHistogramBase<T, U> {
         return values;
     }
 
-    private CountAtValue[] takeCountSnapshot(boolean supportsAggregablePercentiles) {
+    private CountAtBucket[] takeCountSnapshot(boolean supportsAggregablePercentiles) {
         if (!distributionStatisticConfig.isPublishingHistogram()) {
             return null;
         }
@@ -204,11 +204,11 @@ abstract class TimeWindowHistogramBase<T, U> {
             return null;
         }
 
-        final CountAtValue[] counts = new CountAtValue[monitoredValues.size()];
+        final CountAtBucket[] counts = new CountAtBucket[monitoredValues.size()];
         final Iterator<Long> iterator = monitoredValues.iterator();
         for (int i = 0; i < counts.length; i++) {
             final long v = iterator.next();
-            counts[i] = CountAtValue.of(v, countAtValue(accumulatedHistogram, v));
+            counts[i] = CountAtBucket.of(v, countAtValue(accumulatedHistogram, v));
         }
         return counts;
     }

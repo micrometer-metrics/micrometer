@@ -47,9 +47,9 @@ class InfluxMeterRegistryFieldToStringTest {
 		Locale.setDefault(Locale.ENGLISH);
 		InfluxMeterRegistry instance = new InfluxMeterRegistry(k -> null, new MockClock());
 
-		InfluxMeterRegistry.Field field = instance.new Field("value", 0.00009);
+		InfluxMeterRegistry.Field field = instance.new Field("value", 0.0000009);
 
-		assertThat(field.toString()).isEqualTo("value=0.0001");
+		assertThat(field.toString()).isEqualTo("value=0.000001");
 	}
 
 	@Test
