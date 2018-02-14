@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.histogram;
+package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Clock;
@@ -29,14 +29,14 @@ public class TimeWindowHistogram extends TimeWindowHistogramBase<DoubleRecorder,
 
     private final DoubleHistogram intervalHistogram;
 
-    public TimeWindowHistogram(Clock clock, HistogramConfig histogramConfig) {
-        super(clock, histogramConfig, DoubleRecorder.class);
+    public TimeWindowHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig) {
+        super(clock, distributionStatisticConfig, DoubleRecorder.class);
         intervalHistogram = new DoubleHistogram(NUM_SIGNIFICANT_VALUE_DIGITS);
         initRingBuffer();
     }
 
     @Override
-    DoubleRecorder newBucket(HistogramConfig histogramConfig) {
+    DoubleRecorder newBucket(DistributionStatisticConfig distributionStatisticConfig) {
         return new DoubleRecorder(NUM_SIGNIFICANT_VALUE_DIGITS);
     }
 

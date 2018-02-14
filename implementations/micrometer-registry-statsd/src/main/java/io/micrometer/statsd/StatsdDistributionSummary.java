@@ -18,7 +18,7 @@ package io.micrometer.statsd;
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.instrument.util.TimeDecayingMax;
 import io.micrometer.core.lang.Nullable;
@@ -36,9 +36,9 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
     private final Subscriber<String> publisher;
 
     StatsdDistributionSummary(Meter.Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher, Clock clock,
-                              HistogramConfig histogramConfig) {
-        super(id, clock, histogramConfig);
-        this.max = new TimeDecayingMax(clock, histogramConfig);
+                              DistributionStatisticConfig distributionStatisticConfig) {
+        super(id, clock, distributionStatisticConfig);
+        this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
         this.lineBuilder = lineBuilder;
         this.publisher = publisher;
     }

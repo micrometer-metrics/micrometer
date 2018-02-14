@@ -17,8 +17,8 @@ package io.micrometer.core.instrument.step;
 
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.histogram.pause.PauseDetector;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeDecayingMax;
 import io.micrometer.core.instrument.util.TimeUtils;
 
@@ -36,11 +36,11 @@ public class StepTimer extends AbstractTimer {
      * Create a new instance.
      */
     @SuppressWarnings("ConstantConditions")
-    public StepTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
-        super(id, clock, histogramConfig, pauseDetector, baseTimeUnit);
-        this.count = new StepLong(clock, histogramConfig.getHistogramExpiry().toMillis());
-        this.total = new StepLong(clock, histogramConfig.getHistogramExpiry().toMillis());
-        this.max = new TimeDecayingMax(clock, histogramConfig);
+    public StepTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit);
+        this.count = new StepLong(clock, distributionStatisticConfig.getExpiry().toMillis());
+        this.total = new StepLong(clock, distributionStatisticConfig.getExpiry().toMillis());
+        this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
     }
 
     @Override

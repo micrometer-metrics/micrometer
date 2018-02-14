@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@NonNullApi
-@NonNullFields
-package io.micrometer.core.instrument.histogram.pause;
+package io.micrometer.core.instrument.distribution.pause;
 
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
+public class NoPauseDetector implements PauseDetector {
+}

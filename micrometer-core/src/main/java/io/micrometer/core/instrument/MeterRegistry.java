@@ -19,9 +19,9 @@ import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.histogram.pause.ClockDriftPauseDetector;
-import io.micrometer.core.instrument.histogram.pause.PauseDetector;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.noop.*;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.search.RequiredSearch;
@@ -107,7 +107,7 @@ public abstract class MeterRegistry {
      * @param id The id that uniquely identifies the timer.
      * @return A new timer.
      */
-    protected abstract Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector);
+    protected abstract Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector);
 
     /**
      * Build a new distribution summary to be added to the registry. This is guaranteed to only be called if the distribution summary doesn't already exist.
@@ -115,7 +115,7 @@ public abstract class MeterRegistry {
      * @param id The id that uniquely identifies the distribution summary.
      * @return A new distribution summary.
      */
-    protected abstract DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig);
+    protected abstract DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig);
 
     /**
      * Build a new custom meter to be added to the registry. This is guaranteed to only be called if the custom meter doesn't already exist.
@@ -187,12 +187,12 @@ public abstract class MeterRegistry {
      * <p>
      * <pre>
      * histogramConfig.builder()
-     *    .histogramExpiry(defaultStep)
+     *    .expiry(defaultStep)
      *    .build()
-     *    .merge(HistogramConfig.DEFAULT);
+     *    .merge(DistributionStatisticConfig.DEFAULT);
      * </pre>
      */
-    protected abstract HistogramConfig defaultHistogramConfig();
+    protected abstract DistributionStatisticConfig defaultHistogramConfig();
 
     private String getBaseTimeUnitStr() {
         return getBaseTimeUnit().toString().toLowerCase();
@@ -225,11 +225,11 @@ public abstract class MeterRegistry {
      * Only used by {@link Timer#builder(String)}.
      *
      * @param id              The identifier for this timer.
-     * @param histogramConfig Configuration that governs how distribution statistics are computed.
+     * @param distributionStatisticConfig Configuration that governs how distribution statistics are computed.
      * @return A new or existing timer.
      */
-    Timer timer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetectorOverride) {
-        return registerMeterIfNecessary(Timer.class, id, histogramConfig, (id2, filteredConfig) -> {
+    Timer timer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetectorOverride) {
+        return registerMeterIfNecessary(Timer.class, id, distributionStatisticConfig, (id2, filteredConfig) -> {
             Meter.Id withUnit = id2.withBaseUnit(getBaseTimeUnitStr());
             return newTimer(withUnit, filteredConfig.merge(defaultHistogramConfig()), pauseDetectorOverride);
         }, NoopTimer::new);
@@ -239,11 +239,11 @@ public abstract class MeterRegistry {
      * Only used by {@link DistributionSummary#builder(String)}.
      *
      * @param id              The identifier for this distribution summary.
-     * @param histogramConfig Configuration that governs how distribution statistics are computed.
+     * @param distributionStatisticConfig Configuration that governs how distribution statistics are computed.
      * @return A new or existing distribution summary.
      */
-    DistributionSummary summary(Meter.Id id, HistogramConfig histogramConfig) {
-        return registerMeterIfNecessary(DistributionSummary.class, id, histogramConfig, (id2, filteredConfig) ->
+    DistributionSummary summary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        return registerMeterIfNecessary(DistributionSummary.class, id, distributionStatisticConfig, (id2, filteredConfig) ->
             newDistributionSummary(id2, filteredConfig.merge(defaultHistogramConfig())), NoopDistributionSummary::new);
     }
 
@@ -492,7 +492,7 @@ public abstract class MeterRegistry {
     }
 
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id,
-                                                         @Nullable HistogramConfig config, BiFunction<Meter.Id, HistogramConfig, Meter> builder,
+                                                         @Nullable DistributionStatisticConfig config, BiFunction<Meter.Id, DistributionStatisticConfig, Meter> builder,
                                                          Function<Meter.Id, M> noopBuilder) {
         Meter.Id mappedId = id;
         for (MeterFilter filter : filters) {
@@ -506,7 +506,7 @@ public abstract class MeterRegistry {
 
         if (config != null) {
             for (MeterFilter filter : filters) {
-                HistogramConfig filteredConfig = filter.configure(mappedId, config);
+                DistributionStatisticConfig filteredConfig = filter.configure(mappedId, config);
                 if (filteredConfig != null) {
                     config = filteredConfig;
                 }
@@ -523,8 +523,8 @@ public abstract class MeterRegistry {
         return (M) m;
     }
 
-    private Meter getOrCreateMeter(@Nullable HistogramConfig config,
-                                   BiFunction<Id, /*Nullable Generic*/ HistogramConfig, Meter> builder,
+    private Meter getOrCreateMeter(@Nullable DistributionStatisticConfig config,
+                                   BiFunction<Id, /*Nullable Generic*/ DistributionStatisticConfig, Meter> builder,
                                    Id mappedId) {
         Meter m = meterMap.get(mappedId);
 
@@ -647,8 +647,8 @@ public abstract class MeterRegistry {
          *
          * @param detector The pause detector to use.
          * @return This configuration instance.
-         * @see io.micrometer.core.instrument.histogram.pause.NoPauseDetector
-         * @see io.micrometer.core.instrument.histogram.pause.ClockDriftPauseDetector
+         * @see io.micrometer.core.instrument.distribution.pause.NoPauseDetector
+         * @see io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector
          */
         @Incubating(since = "1.0.0-rc.6")
         public Config pauseDetector(PauseDetector detector) {

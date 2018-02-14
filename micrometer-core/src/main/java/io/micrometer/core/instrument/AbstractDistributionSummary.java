@@ -15,19 +15,19 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.histogram.TimeWindowHistogram;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.TimeWindowHistogram;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
 
 public abstract class AbstractDistributionSummary extends AbstractMeter implements DistributionSummary {
     private final TimeWindowHistogram histogram;
-    private final HistogramConfig histogramConfig;
+    private final DistributionStatisticConfig distributionStatisticConfig;
 
-    protected AbstractDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig) {
+    protected AbstractDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig) {
         super(id);
-        this.histogram = new TimeWindowHistogram(clock, histogramConfig);
-        this.histogramConfig = histogramConfig;
+        this.histogram = new TimeWindowHistogram(clock, distributionStatisticConfig);
+        this.distributionStatisticConfig = distributionStatisticConfig;
     }
 
     @Override
@@ -66,7 +66,7 @@ public abstract class AbstractDistributionSummary extends AbstractMeter implemen
         return MeterEquivalence.hashCode(this);
     }
 
-    public HistogramConfig statsConfig() {
-        return histogramConfig;
+    public DistributionStatisticConfig statsConfig() {
+        return distributionStatisticConfig;
     }
 }

@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.histogram;
+package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.histogram.pause.ClockDriftPauseDetector;
-import io.micrometer.core.instrument.histogram.pause.NoPauseDetector;
+import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
+import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
 import org.HdrHistogram.Histogram;
 import org.LatencyUtils.LatencyStats;
 import org.LatencyUtils.PauseDetector;
@@ -36,19 +36,19 @@ import static java.util.Objects.requireNonNull;
  */
 @Incubating(since = "1.0.0-rc.3")
 public class TimeWindowLatencyHistogram extends TimeWindowHistogramBase<LatencyStats, Histogram> {
-    private static Map<io.micrometer.core.instrument.histogram.pause.PauseDetector, PauseDetector> pauseDetectorCache =
+    private static Map<io.micrometer.core.instrument.distribution.pause.PauseDetector, PauseDetector> pauseDetectorCache =
         new ConcurrentHashMap<>();
 
     private final PauseDetector pauseDetector;
 
     /*VisibleForTesting*/
-    public TimeWindowLatencyHistogram(Clock clock, HistogramConfig histogramConfig) {
-        this(clock, histogramConfig, new ClockDriftPauseDetector(Duration.ofMillis(100), Duration.ofMillis(100)));
+    public TimeWindowLatencyHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig) {
+        this(clock, distributionStatisticConfig, new ClockDriftPauseDetector(Duration.ofMillis(100), Duration.ofMillis(100)));
     }
 
-    public TimeWindowLatencyHistogram(Clock clock, HistogramConfig histogramConfig,
-                                      io.micrometer.core.instrument.histogram.pause.PauseDetector pauseDetector) {
-        super(clock, histogramConfig, LatencyStats.class);
+    public TimeWindowLatencyHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+                                      io.micrometer.core.instrument.distribution.pause.PauseDetector pauseDetector) {
+        super(clock, distributionStatisticConfig, LatencyStats.class);
 
         this.pauseDetector = requireNonNull(pauseDetectorCache.computeIfAbsent(pauseDetector, detector -> {
             if (detector instanceof ClockDriftPauseDetector) {
@@ -66,11 +66,11 @@ public class TimeWindowLatencyHistogram extends TimeWindowHistogramBase<LatencyS
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    LatencyStats newBucket(HistogramConfig histogramConfig) {
+    LatencyStats newBucket(DistributionStatisticConfig distributionStatisticConfig) {
         return new LatencyStats.Builder()
             .pauseDetector(pauseDetector)
-            .lowestTrackableLatency(histogramConfig.getMinimumExpectedValue())
-            .highestTrackableLatency(histogramConfig.getMaximumExpectedValue())
+            .lowestTrackableLatency(distributionStatisticConfig.getMinimumExpectedValue())
+            .highestTrackableLatency(distributionStatisticConfig.getMaximumExpectedValue())
             .numberOfSignificantValueDigits(NUM_SIGNIFICANT_VALUE_DIGITS)
             .build();
     }

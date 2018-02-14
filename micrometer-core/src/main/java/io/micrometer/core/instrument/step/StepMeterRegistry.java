@@ -16,8 +16,8 @@
 package io.micrometer.core.instrument.step;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.histogram.pause.PauseDetector;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
@@ -85,13 +85,13 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
-        return new StepTimer(id, clock, histogramConfig, pauseDetector, getBaseTimeUnit());
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+        return new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit());
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
-        return new StepDistributionSummary(id, clock, histogramConfig);
+    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        return new StepDistributionSummary(id, clock, distributionStatisticConfig);
     }
 
     @Override
@@ -110,10 +110,10 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected HistogramConfig defaultHistogramConfig() {
-        return HistogramConfig.builder()
-            .histogramExpiry(config.step())
+    protected DistributionStatisticConfig defaultHistogramConfig() {
+        return DistributionStatisticConfig.builder()
+            .expiry(config.step())
             .build()
-            .merge(HistogramConfig.DEFAULT);
+            .merge(DistributionStatisticConfig.DEFAULT);
     }
 }

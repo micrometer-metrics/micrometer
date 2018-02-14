@@ -19,8 +19,8 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.HistogramSnapshot;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.histogram.pause.PauseDetector;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.noop.NoopTimer;
 
 import java.time.Duration;
@@ -30,13 +30,13 @@ import java.util.function.Supplier;
 
 class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
     private final Clock clock;
-    private final HistogramConfig histogramConfig;
+    private final DistributionStatisticConfig distributionStatisticConfig;
     private final PauseDetector pauseDetector;
 
-    CompositeTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
+    CompositeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
         super(id);
         this.clock = clock;
-        this.histogramConfig = histogramConfig;
+        this.distributionStatisticConfig = distributionStatisticConfig;
         this.pauseDetector = pauseDetector;
     }
 
@@ -126,7 +126,7 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
     @SuppressWarnings("ConstantConditions")
     @Override
     Timer registerNewMeter(MeterRegistry registry) {
-        final long[] slaNanos = histogramConfig.getSlaBoundaries();
+        final long[] slaNanos = distributionStatisticConfig.getSlaBoundaries();
 
         Duration[] sla = null;
         if (slaNanos != null) {
@@ -139,12 +139,12 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
         return Timer.builder(getId().getName())
             .tags(getId().getTags())
             .description(getId().getDescription())
-            .maximumExpectedValue(Duration.ofNanos(histogramConfig.getMaximumExpectedValue()))
-            .minimumExpectedValue(Duration.ofNanos(histogramConfig.getMinimumExpectedValue()))
-            .publishPercentiles(histogramConfig.getPercentiles())
-            .publishPercentileHistogram(histogramConfig.isPercentileHistogram())
-            .histogramBufferLength(histogramConfig.getHistogramBufferLength())
-            .histogramExpiry(histogramConfig.getHistogramExpiry())
+            .maximumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValue()))
+            .minimumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValue()))
+            .publishPercentiles(distributionStatisticConfig.getPercentiles())
+            .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
+            .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
+            .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
             .sla(sla)
             .pauseDetector(pauseDetector)
             .register(registry);

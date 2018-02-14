@@ -17,8 +17,8 @@ package io.micrometer.core.instrument.cumulative;
 
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.histogram.pause.PauseDetector;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.TimeDecayingMax;
 import io.micrometer.core.instrument.util.TimeUtils;
 
@@ -36,11 +36,11 @@ public class CumulativeTimer extends AbstractTimer {
     /**
      * Create a new instance.
      */
-    public CumulativeTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
-        super(id, clock, histogramConfig, pauseDetector, baseTimeUnit);
+    public CumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit);
         this.count = new AtomicLong();
         this.total = new AtomicLong();
-        this.max = new TimeDecayingMax(clock, histogramConfig);
+        this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
     }
 
     @Override

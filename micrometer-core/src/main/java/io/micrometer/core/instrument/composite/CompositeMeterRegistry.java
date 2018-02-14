@@ -17,8 +17,8 @@ package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.histogram.pause.PauseDetector;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.Collections;
@@ -55,13 +55,13 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
-        return new CompositeTimer(id, clock, histogramConfig, pauseDetector);
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+        return new CompositeTimer(id, clock, distributionStatisticConfig, pauseDetector);
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
-        return new CompositeDistributionSummary(id, histogramConfig);
+    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        return new CompositeDistributionSummary(id, distributionStatisticConfig);
     }
 
     @Override
@@ -100,8 +100,8 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected HistogramConfig defaultHistogramConfig() {
-        return HistogramConfig.NONE;
+    protected DistributionStatisticConfig defaultHistogramConfig() {
+        return DistributionStatisticConfig.NONE;
     }
 
     @Override

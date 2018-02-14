@@ -18,7 +18,7 @@ package io.micrometer.prometheus;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import org.assertj.core.api.Condition;
@@ -176,7 +176,7 @@ class PrometheusMeterRegistryTest {
     void percentileHistogramsNeverResetForTimers() {
         Timer t = Timer.builder("t1")
             .publishPercentileHistogram()
-            .histogramExpiry(Duration.ofSeconds(60))
+            .distributionStatisticExpiry(Duration.ofSeconds(60))
             .sla(Duration.ofMillis(100))
             .register(registry);
 
@@ -192,7 +192,7 @@ class PrometheusMeterRegistryTest {
     void percentileHistogramsNeverResetForSummaries() {
         DistributionSummary s = DistributionSummary.builder("s1")
             .publishPercentileHistogram()
-            .histogramExpiry(Duration.ofSeconds(60))
+            .distributionStatisticExpiry(Duration.ofSeconds(60))
             .sla(100)
             .register(registry);
 
@@ -254,7 +254,7 @@ class PrometheusMeterRegistryTest {
 
     private int bufferLength() {
         //noinspection ConstantConditions
-        return HistogramConfig.DEFAULT.getHistogramBufferLength();
+        return DistributionStatisticConfig.DEFAULT.getBufferLength();
     }
 
     @Issue("#61")

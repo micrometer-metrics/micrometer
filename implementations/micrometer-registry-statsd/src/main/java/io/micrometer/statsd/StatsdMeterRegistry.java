@@ -18,8 +18,8 @@ package io.micrometer.statsd;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.histogram.pause.PauseDetector;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.instrument.util.TimeUtils;
@@ -131,11 +131,11 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    protected Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
-        Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, histogramConfig, pauseDetector, getBaseTimeUnit(),
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+        Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
                 statsdConfig.step().toMillis());
 
-        for (double percentile : histogramConfig.getPercentiles()) {
+        for (double percentile : distributionStatisticConfig.getPercentiles()) {
             switch (statsdConfig.flavor()) {
                 case DATADOG:
                     gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + "percentile", timer,
@@ -152,8 +152,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
             }
         }
 
-        if (histogramConfig.isPublishingHistogram()) {
-            for (Long bucket : histogramConfig.getHistogramBuckets(false)) {
+        if (distributionStatisticConfig.isPublishingHistogram()) {
+            for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
                 more().counter(id.getName() + ".histogram", Tags.concat(getConventionTags(id), "bucket",
                         percentileFormat.format(TimeUtils.nanosToUnit(bucket, TimeUnit.MILLISECONDS))),
                         timer, s -> s.histogramCountAtValue(bucket));
@@ -165,10 +165,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
-        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), publisher, clock, histogramConfig);
+    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), publisher, clock, distributionStatisticConfig);
 
-        for (double percentile : histogramConfig.getPercentiles()) {
+        for (double percentile : distributionStatisticConfig.getPercentiles()) {
             switch (statsdConfig.flavor()) {
                 case DATADOG:
                     gauge(id.getName() + "." + percentileFormat.format(percentile * 100) + "percentile", summary,
@@ -185,8 +185,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
             }
         }
 
-        if (histogramConfig.isPublishingHistogram()) {
-            for (Long bucket : histogramConfig.getHistogramBuckets(false)) {
+        if (distributionStatisticConfig.isPublishingHistogram()) {
+            for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
                 more().counter(id.getName() + ".histogram", Tags.concat(getConventionTags(id), "bucket",
                         Long.toString(bucket)), summary, s -> s.histogramCountAtValue(bucket));
             }
@@ -241,11 +241,11 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected HistogramConfig defaultHistogramConfig() {
-        return HistogramConfig.builder()
-                .histogramExpiry(statsdConfig.step())
+    protected DistributionStatisticConfig defaultHistogramConfig() {
+        return DistributionStatisticConfig.builder()
+                .expiry(statsdConfig.step())
                 .build()
-                .merge(HistogramConfig.DEFAULT);
+                .merge(DistributionStatisticConfig.DEFAULT);
     }
 
     static class LogbackMetricsSuppressingUnicastProcessor implements Processor<String, String> {

@@ -34,8 +34,8 @@ public class TimerSample {
         Timer timer = Timer.builder("timer")
             .publishPercentileHistogram()
             .publishPercentiles(0.5, 0.95, 0.99)
-            .histogramExpiry(Duration.ofSeconds(10))
-            .histogramBufferLength(3)
+            .distributionStatisticExpiry(Duration.ofSeconds(10))
+            .distributionStatisticBufferLength(3)
             .register(registry);
 
         FunctionTimer.builder("ftimer", timer, Timer::count, t -> t.totalTime(TimeUnit.SECONDS), TimeUnit.SECONDS)

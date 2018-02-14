@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.histogram.pause;
+package io.micrometer.core.instrument.distribution.pause;
 
 import java.time.Duration;
 

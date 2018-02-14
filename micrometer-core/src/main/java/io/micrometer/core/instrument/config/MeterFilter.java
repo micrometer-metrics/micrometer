@@ -19,7 +19,7 @@ import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.ArrayList;
@@ -247,7 +247,7 @@ public interface MeterFilter {
             }
 
             @Override
-            public HistogramConfig configure(Meter.Id id, HistogramConfig config) {
+            public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
                 if (observedTagValues.size() > maximumTagValues) {
                     return onMaxReached.configure(id, config);
                 }
@@ -269,9 +269,9 @@ public interface MeterFilter {
     static MeterFilter maxExpected(String prefix, long max) {
         return new MeterFilter() {
             @Override
-            public HistogramConfig configure(Meter.Id id, HistogramConfig config) {
+            public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
                 if (id.getName().startsWith(prefix)) {
-                    return HistogramConfig.builder()
+                    return DistributionStatisticConfig.builder()
                             .maximumExpectedValue(max)
                             .build()
                             .merge(config);
@@ -284,9 +284,9 @@ public interface MeterFilter {
     static MeterFilter minExpected(String prefix, long min) {
         return new MeterFilter() {
             @Override
-            public HistogramConfig configure(Meter.Id id, HistogramConfig config) {
+            public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
                 if (id.getName().startsWith(prefix)) {
-                    return HistogramConfig.builder()
+                    return DistributionStatisticConfig.builder()
                             .minimumExpectedValue(min)
                             .build()
                             .merge(config);
@@ -313,14 +313,14 @@ public interface MeterFilter {
 
     /**
      * This is only called when filtering new timers and distribution summaries (i.e. those meter types
-     * that use {@link HistogramConfig}).
+     * that use {@link DistributionStatisticConfig}).
      *
      * @param id     Id with {@link MeterFilter#map} transformations applied.
      * @param config A histogram configuration guaranteed to be non-null.
      * @return Overrides to any part of the histogram config, when applicable.
      */
     @Nullable
-    default HistogramConfig configure(Meter.Id id, HistogramConfig config) {
+    default DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
         return config;
     }
 }

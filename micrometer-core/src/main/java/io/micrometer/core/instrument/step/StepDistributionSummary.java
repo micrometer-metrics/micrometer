@@ -19,7 +19,7 @@ import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.util.TimeDecayingMax;
 
 import java.util.Arrays;
@@ -30,11 +30,11 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
     private final TimeDecayingMax max;
 
     @SuppressWarnings("ConstantConditions")
-    public StepDistributionSummary(Id id, Clock clock, HistogramConfig histogramConfig) {
-        super(id, clock, histogramConfig);
-        this.count = new StepLong(clock, histogramConfig.getHistogramExpiry().toMillis());
-        this.total = new StepDouble(clock, histogramConfig.getHistogramExpiry().toMillis());
-        this.max = new TimeDecayingMax(clock, histogramConfig);
+    public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig) {
+        super(id, clock, distributionStatisticConfig);
+        this.count = new StepLong(clock, distributionStatisticConfig.getExpiry().toMillis());
+        this.total = new StepDouble(clock, distributionStatisticConfig.getExpiry().toMillis());
+        this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
     }
 
     @Override

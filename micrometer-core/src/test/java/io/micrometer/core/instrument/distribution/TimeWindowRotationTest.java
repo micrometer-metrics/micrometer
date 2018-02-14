@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.histogram;
+package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MockClock;
@@ -31,38 +31,38 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TimeWindowRotationTest {
 
-    private static final HistogramConfig histogramConfig =
-        HistogramConfig.builder()
+    private static final DistributionStatisticConfig DISTRIBUTION_CONFIG =
+        DistributionStatisticConfig.builder()
             .percentiles(0.0, 0.5, 0.75, 0.9, 0.99, 0.999, 1.0)
-            .histogramExpiry(Duration.ofSeconds(4))
-            .histogramBufferLength(4)
+            .expiry(Duration.ofSeconds(4))
+            .bufferLength(4)
             .build()
-            .merge(HistogramConfig.DEFAULT);
+            .merge(DistributionStatisticConfig.DEFAULT);
 
     static Collection<Class<? extends TimeWindowHistogramBase<?, ?>>> histogramTypes() {
         return Arrays.asList(TimeWindowHistogram.class, TimeWindowLatencyHistogram.class);
     }
 
     private static void expectValidationFailure(Class<? extends TimeWindowHistogramBase<?, ?>> histogramType,
-                                                HistogramConfig badConfig) {
-        assertThatThrownBy(() -> newHistogram(histogramType, new MockClock(), badConfig.merge(HistogramConfig.DEFAULT)))
+                                                DistributionStatisticConfig badConfig) {
+        assertThatThrownBy(() -> newHistogram(histogramType, new MockClock(), badConfig.merge(DistributionStatisticConfig.DEFAULT)))
             .hasRootCauseExactlyInstanceOf(InvalidConfigurationException.class)
-            .satisfies(cause -> assertThat(cause.getCause()).hasMessageStartingWith("Invalid HistogramConfig:"));
+            .satisfies(cause -> assertThat(cause.getCause()).hasMessageStartingWith("Invalid distribution configuration:"));
     }
 
     private static TimeWindowHistogramBase<?, ?> newHistogram(
         Class<? extends TimeWindowHistogramBase<?, ?>> histogramType,
-        MockClock clock, HistogramConfig config) throws Exception {
-        return histogramType.getDeclaredConstructor(Clock.class, HistogramConfig.class).newInstance(clock, config);
+        MockClock clock, DistributionStatisticConfig config) throws Exception {
+        return histogramType.getDeclaredConstructor(Clock.class, DistributionStatisticConfig.class).newInstance(clock, config);
     }
 
     @ParameterizedTest
     @MethodSource("histogramTypes")
     void percentilesValidation(Class<? extends TimeWindowHistogramBase<?, ?>> histogramType) {
-        expectValidationFailure(histogramType, HistogramConfig.builder()
+        expectValidationFailure(histogramType, DistributionStatisticConfig.builder()
             .percentiles(-0.01)
             .build());
-        expectValidationFailure(histogramType, HistogramConfig.builder()
+        expectValidationFailure(histogramType, DistributionStatisticConfig.builder()
             .percentiles(1.01)
             .build());
     }
@@ -70,10 +70,10 @@ class TimeWindowRotationTest {
     @ParameterizedTest
     @MethodSource("histogramTypes")
     void expectedValueRangeValidation(Class<? extends TimeWindowHistogramBase<?, ?>> histogramType) {
-        expectValidationFailure(histogramType, HistogramConfig.builder()
+        expectValidationFailure(histogramType, DistributionStatisticConfig.builder()
             .minimumExpectedValue(0L)
             .build());
-        expectValidationFailure(histogramType, HistogramConfig.builder()
+        expectValidationFailure(histogramType, DistributionStatisticConfig.builder()
             .minimumExpectedValue(10L)
             .maximumExpectedValue(9L)
             .build());
@@ -82,7 +82,7 @@ class TimeWindowRotationTest {
     @ParameterizedTest
     @MethodSource("histogramTypes")
     void slaBoundariesValidation(Class<? extends TimeWindowHistogramBase<?, ?>> histogramType) {
-        expectValidationFailure(histogramType, HistogramConfig.builder()
+        expectValidationFailure(histogramType, DistributionStatisticConfig.builder()
             .sla(0L)
             .build());
     }
@@ -90,17 +90,17 @@ class TimeWindowRotationTest {
     @ParameterizedTest
     @MethodSource("histogramTypes")
     void bufferLengthValidation(Class<? extends TimeWindowHistogramBase<?, ?>> histogramType) {
-        expectValidationFailure(histogramType, HistogramConfig.builder()
-            .histogramBufferLength(-1)
+        expectValidationFailure(histogramType, DistributionStatisticConfig.builder()
+            .bufferLength(-1)
             .build());
     }
 
     @ParameterizedTest
     @MethodSource("histogramTypes")
     void rotationIntervalValidation(Class<? extends TimeWindowHistogramBase<?, ?>> histogramType) {
-        expectValidationFailure(histogramType, HistogramConfig.builder()
-            .histogramExpiry(Duration.ofMillis(9))
-            .histogramBufferLength(10)
+        expectValidationFailure(histogramType, DistributionStatisticConfig.builder()
+            .expiry(Duration.ofMillis(9))
+            .bufferLength(10)
             .build());
     }
 
@@ -113,7 +113,7 @@ class TimeWindowRotationTest {
         clock.add(-1, TimeUnit.NANOSECONDS);
         assertThat(clock.wallTime()).isZero();
 
-        final TimeWindowHistogramBase<?, ?> q = newHistogram(histogramType, clock, histogramConfig);
+        final TimeWindowHistogramBase<?, ?> q = newHistogram(histogramType, clock, DISTRIBUTION_CONFIG);
 
         q.recordLong(10);
         q.recordLong(20);

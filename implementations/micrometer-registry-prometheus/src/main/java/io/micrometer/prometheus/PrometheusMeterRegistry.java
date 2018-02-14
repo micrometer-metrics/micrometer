@@ -18,8 +18,8 @@ package io.micrometer.prometheus;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.histogram.pause.PauseDetector;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
@@ -92,9 +92,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    public DistributionSummary newDistributionSummary(Meter.Id id, HistogramConfig histogramConfig) {
+    public DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
         MicrometerCollector collector = collectorByName(id, Collector.Type.SUMMARY);
-        PrometheusDistributionSummary summary = new PrometheusDistributionSummary(id, clock, histogramConfig);
+        PrometheusDistributionSummary summary = new PrometheusDistributionSummary(id, clock, distributionStatisticConfig);
         List<String> tagValues = tagValues(id);
 
         collector.add((conventionName, tagKeys) -> {
@@ -155,9 +155,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, HistogramConfig histogramConfig, PauseDetector pauseDetector) {
-        MicrometerCollector collector = collectorByName(id, histogramConfig.isPublishingHistogram() ? Collector.Type.HISTOGRAM : Collector.Type.SUMMARY);
-        PrometheusTimer timer = new PrometheusTimer(id, clock, histogramConfig, pauseDetector);
+    protected io.micrometer.core.instrument.Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+        MicrometerCollector collector = collectorByName(id, distributionStatisticConfig.isPublishingHistogram() ? Collector.Type.HISTOGRAM : Collector.Type.SUMMARY);
+        PrometheusTimer timer = new PrometheusTimer(id, clock, distributionStatisticConfig, pauseDetector);
         List<String> tagValues = tagValues(id);
 
         collector.add((conventionName, tagKeys) -> {
@@ -359,10 +359,10 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected HistogramConfig defaultHistogramConfig() {
-        return HistogramConfig.builder()
-            .histogramExpiry(prometheusConfig.step())
+    protected DistributionStatisticConfig defaultHistogramConfig() {
+        return DistributionStatisticConfig.builder()
+            .expiry(prometheusConfig.step())
             .build()
-            .merge(HistogramConfig.DEFAULT);
+            .merge(DistributionStatisticConfig.DEFAULT);
     }
 }

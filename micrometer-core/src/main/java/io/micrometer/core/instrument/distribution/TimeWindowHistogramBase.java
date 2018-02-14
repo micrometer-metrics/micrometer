@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.histogram;
+package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.CountAtValue;
@@ -45,7 +45,7 @@ abstract class TimeWindowHistogramBase<T, U> {
         AtomicIntegerFieldUpdater.newUpdater(TimeWindowHistogramBase.class, "rotating");
 
     private final Clock clock;
-    private final HistogramConfig histogramConfig;
+    private final DistributionStatisticConfig distributionStatisticConfig;
 
     private final T[] ringBuffer;
     private final long durationBetweenRotatesMillis;
@@ -58,39 +58,39 @@ abstract class TimeWindowHistogramBase<T, U> {
     @Nullable
     private U accumulatedHistogram;
 
-    TimeWindowHistogramBase(Clock clock, HistogramConfig histogramConfig, Class<T> bucketType) {
+    TimeWindowHistogramBase(Clock clock, DistributionStatisticConfig distributionStatisticConfig, Class<T> bucketType) {
         this.clock = clock;
-        this.histogramConfig = validateHistogramConfig(histogramConfig);
+        this.distributionStatisticConfig = validateDistributionConfig(distributionStatisticConfig);
 
-        final int ageBuckets = histogramConfig.getHistogramBufferLength();
+        final int ageBuckets = distributionStatisticConfig.getBufferLength();
         if (ageBuckets <= 0) {
-            rejectHistogramConfig("histogramBufferLength (" + ageBuckets + ") must be greater than 0.");
+            rejectHistogramConfig("bufferLength (" + ageBuckets + ") must be greater than 0.");
         }
 
         //noinspection unchecked
         ringBuffer = (T[]) Array.newInstance(bucketType, ageBuckets);
 
-        durationBetweenRotatesMillis = histogramConfig.getHistogramExpiry().toMillis() / ageBuckets;
+        durationBetweenRotatesMillis = distributionStatisticConfig.getExpiry().toMillis() / ageBuckets;
         if (durationBetweenRotatesMillis <= 0) {
-            rejectHistogramConfig("histogramExpiry (" + histogramConfig.getHistogramExpiry().toMillis() +
-                "ms) / histogramBufferLength (" + ageBuckets + ") must be greater than 0.");
+            rejectHistogramConfig("expiry (" + distributionStatisticConfig.getExpiry().toMillis() +
+                "ms) / bufferLength (" + ageBuckets + ") must be greater than 0.");
         }
 
         currentBucket = 0;
         lastRotateTimestampMillis = clock.wallTime();
     }
 
-    private static HistogramConfig validateHistogramConfig(HistogramConfig histogramConfig) {
-        // Validate other HistogramConfig properties we will use later in this class.
-        for (double p : histogramConfig.getPercentiles()) {
+    private static DistributionStatisticConfig validateDistributionConfig(DistributionStatisticConfig distributionStatisticConfig) {
+        // Validate other DistributionStatisticConfig properties we will use later in this class.
+        for (double p : distributionStatisticConfig.getPercentiles()) {
             if (p < 0 || p > 1) {
                 rejectHistogramConfig("percentiles must contain only the values between 0.0 and 1.0. " +
                     "Found " + p);
             }
         }
 
-        final long minimumExpectedValue = histogramConfig.getMinimumExpectedValue();
-        final long maximumExpectedValue = histogramConfig.getMaximumExpectedValue();
+        final long minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValue();
+        final long maximumExpectedValue = distributionStatisticConfig.getMaximumExpectedValue();
         if (minimumExpectedValue <= 0) {
             rejectHistogramConfig("minimumExpectedValue (" + minimumExpectedValue + ") must be greater than 0.");
         }
@@ -99,28 +99,28 @@ abstract class TimeWindowHistogramBase<T, U> {
                 ") must be equal to or greater than minimumExpectedValue (" +
                 minimumExpectedValue + ").");
         }
-        for (long sla : histogramConfig.getSlaBoundaries()) {
+        for (long sla : distributionStatisticConfig.getSlaBoundaries()) {
             if (sla <= 0) {
                 rejectHistogramConfig("slaBoundaries must contain only the values greater than 0. " +
                     "Found " + sla);
             }
         }
 
-        return histogramConfig;
+        return distributionStatisticConfig;
     }
 
     private static void rejectHistogramConfig(String msg) {
-        throw new InvalidConfigurationException("Invalid HistogramConfig: " + msg);
+        throw new InvalidConfigurationException("Invalid distribution configuration: " + msg);
     }
 
     void initRingBuffer() {
         for (int i = 0; i < ringBuffer.length; i++) {
-            ringBuffer[i] = newBucket(histogramConfig);
+            ringBuffer[i] = newBucket(distributionStatisticConfig);
         }
         accumulatedHistogram = newAccumulatedHistogram(ringBuffer);
     }
 
-    abstract T newBucket(HistogramConfig histogramConfig);
+    abstract T newBucket(DistributionStatisticConfig distributionStatisticConfig);
 
     abstract void recordLong(T bucket, long value);
 
@@ -181,7 +181,7 @@ abstract class TimeWindowHistogramBase<T, U> {
     }
 
     private ValueAtPercentile[] takeValueSnapshot() {
-        final double[] monitoredPercentiles = histogramConfig.getPercentiles();
+        final double[] monitoredPercentiles = distributionStatisticConfig.getPercentiles();
         if (monitoredPercentiles.length == 0) {
             return null;
         }
@@ -195,11 +195,11 @@ abstract class TimeWindowHistogramBase<T, U> {
     }
 
     private CountAtValue[] takeCountSnapshot(boolean supportsAggregablePercentiles) {
-        if (!histogramConfig.isPublishingHistogram()) {
+        if (!distributionStatisticConfig.isPublishingHistogram()) {
             return null;
         }
 
-        final Set<Long> monitoredValues = histogramConfig.getHistogramBuckets(supportsAggregablePercentiles);
+        final Set<Long> monitoredValues = distributionStatisticConfig.getHistogramBuckets(supportsAggregablePercentiles);
         if (monitoredValues.isEmpty()) {
             return null;
         }

@@ -19,7 +19,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.config.MeterFilterReply;
-import io.micrometer.core.instrument.histogram.HistogramConfig;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.spring.PropertiesMeterFilter;
@@ -118,28 +118,28 @@ public class PropertiesMeterFilterTest {
     @Test
     public void configureWhenHasHistogramTrueShouldSetPercentilesHistogramToTrue() {
         percentilesHistogram("spring.boot", true);
-        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+        assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
                 .isPercentileHistogram()).isTrue();
     }
 
     @Test
     public void configureWhenHasHistogramFalseShouldSetPercentilesHistogramToFalse() {
         percentilesHistogram("spring.boot", false);
-        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+        assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
                 .isPercentileHistogram()).isFalse();
     }
 
     @Test
     public void configureWhenHasHigherHistogramTrueShouldSetPercentilesHistogramToTrue() {
         percentilesHistogram("spring", true);
-        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+        assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
                 .isPercentileHistogram()).isTrue();
     }
 
     @Test
     public void configureWhenHasHigherHistogramFalseShouldSetPercentilesHistogramToFalse() {
         percentilesHistogram("spring", false);
-        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+        assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
                 .isPercentileHistogram()).isFalse();
     }
 
@@ -147,7 +147,7 @@ public class PropertiesMeterFilterTest {
     public void configureWhenHasHigherHistogramTrueAndLowerFalseShouldSetPercentilesHistogramToFalse() {
         percentilesHistogram("spring", true);
         percentilesHistogram("spring.boot", false);
-        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+        assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
                 .isPercentileHistogram()).isFalse();
     }
 
@@ -155,28 +155,28 @@ public class PropertiesMeterFilterTest {
     public void configureWhenHasHigherHistogramFalseAndLowerTrueShouldSetPercentilesHistogramToFalse() {
         percentilesHistogram("spring", false);
         percentilesHistogram("spring.boot", true);
-        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+        assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
                 .isPercentileHistogram()).isTrue();
     }
 
     @Test
     public void configureWhenAllHistogramTrueSetPercentilesHistogramToTrue() {
         percentilesHistogram("all", true);
-        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+        assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
                 .isPercentileHistogram()).isTrue();
     }
 
     @Test
     public void configureWhenHasPercentilesShouldSetPercentilesToValue() {
         percentiles("spring.boot", 0.5, 0.9);
-        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+        assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
                 .getPercentiles()).containsExactly(0.5, 0.9);
     }
 
     @Test
     public void configureWhenHasHigherPercentilesShouldSetPercentilesToValue() {
         percentiles("spring", 0.5, 0.9);
-        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+        assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
                 .getPercentiles()).containsExactly(0.5, 0.9);
     }
 
@@ -184,28 +184,28 @@ public class PropertiesMeterFilterTest {
     public void configureWhenHasHigherPercentilesAndLowerShouldSetPercentilesToHigher() {
         percentiles("spring", 0.5);
         percentiles("spring.boot", 0.9);
-        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+        assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
                 .getPercentiles()).containsExactly(0.9);
     }
 
     @Test
     public void configureWhenAllPercentilesSetShouldSetPercentilesToValue() {
         percentiles("all", 0.5);
-        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+        assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
                 .getPercentiles()).containsExactly(0.5);
     }
 
     @Test
     public void configureWhenHasSlaShouldSetSlaToValue() {
         slas("spring.boot", "1", "2", "3");
-        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+        assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
                 .getSlaBoundaries()).containsExactly(1000000, 2000000, 3000000);
     }
 
     @Test
     public void configureWhenHasHigherSlaShouldSetPercentilesToValue() {
         slas("spring", "1", "2", "3");
-        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+        assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
                 .getSlaBoundaries()).containsExactly(1000000, 2000000, 3000000);
     }
 
@@ -213,14 +213,14 @@ public class PropertiesMeterFilterTest {
     public void configureWhenHasHigherSlaAndLowerShouldSetSlaToHigher() {
         slas("spring", "1", "2", "3");
         slas("spring.boot", "4", "5", "6");
-        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+        assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
                 .getSlaBoundaries()).containsExactly(4000000, 5000000, 6000000);
     }
 
     @Test
     public void configureWhenAllSlaSetShouldSetSlaToValue() {
         slas("all", "1", "2", "3");
-        assertThat(filter.configure(createSpringBootMeter(), HistogramConfig.DEFAULT)
+        assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
                 .getSlaBoundaries()).containsExactly(1000000, 2000000, 3000000);
     }
 
@@ -230,11 +230,11 @@ public class PropertiesMeterFilterTest {
         Meter.Id timer = createSpringBootMeter(Meter.Type.TIMER);
         Meter.Id summary = createSpringBootMeter(Meter.Type.DISTRIBUTION_SUMMARY);
         Meter.Id counter = createSpringBootMeter(Meter.Type.COUNTER);
-        assertThat(filter.configure(timer, HistogramConfig.DEFAULT).getSlaBoundaries())
+        assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT).getSlaBoundaries())
                 .containsExactly(1000000, 2000000, 3000000);
-        assertThat(filter.configure(summary, HistogramConfig.DEFAULT).getSlaBoundaries())
+        assertThat(filter.configure(summary, DistributionStatisticConfig.DEFAULT).getSlaBoundaries())
                 .isEmpty();
-        assertThat(filter.configure(counter, HistogramConfig.DEFAULT).getSlaBoundaries())
+        assertThat(filter.configure(counter, DistributionStatisticConfig.DEFAULT).getSlaBoundaries())
                 .isEmpty();
     }
 
@@ -244,11 +244,11 @@ public class PropertiesMeterFilterTest {
         Meter.Id timer = createSpringBootMeter(Meter.Type.TIMER);
         Meter.Id summary = createSpringBootMeter(Meter.Type.DISTRIBUTION_SUMMARY);
         Meter.Id counter = createSpringBootMeter(Meter.Type.COUNTER);
-        assertThat(filter.configure(timer, HistogramConfig.DEFAULT).getSlaBoundaries())
+        assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT).getSlaBoundaries())
                 .containsExactly(1000000, 2000000, 3000000);
-        assertThat(filter.configure(summary, HistogramConfig.DEFAULT).getSlaBoundaries())
+        assertThat(filter.configure(summary, DistributionStatisticConfig.DEFAULT).getSlaBoundaries())
                 .containsExactly(1, 2, 3);
-        assertThat(filter.configure(counter, HistogramConfig.DEFAULT).getSlaBoundaries())
+        assertThat(filter.configure(counter, DistributionStatisticConfig.DEFAULT).getSlaBoundaries())
                 .isEmpty();
     }
 

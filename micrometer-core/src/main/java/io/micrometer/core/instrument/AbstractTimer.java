@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.histogram.HistogramConfig;
-import io.micrometer.core.instrument.histogram.TimeWindowLatencyHistogram;
-import io.micrometer.core.instrument.histogram.pause.PauseDetector;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.TimeWindowLatencyHistogram;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
 
@@ -28,14 +28,14 @@ import java.util.function.Supplier;
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
     protected final Clock clock;
     protected final TimeWindowLatencyHistogram histogram;
-    private final HistogramConfig histogramConfig;
+    private final DistributionStatisticConfig distributionStatisticConfig;
     private final TimeUnit baseTimeUnit;
 
-    protected AbstractTimer(Id id, Clock clock, HistogramConfig histogramConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+    protected AbstractTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
         super(id);
         this.clock = clock;
-        this.histogramConfig = histogramConfig;
-        this.histogram = new TimeWindowLatencyHistogram(clock, histogramConfig, pauseDetector);
+        this.distributionStatisticConfig = distributionStatisticConfig;
+        this.histogram = new TimeWindowLatencyHistogram(clock, distributionStatisticConfig, pauseDetector);
         this.baseTimeUnit = baseTimeUnit;
     }
 
@@ -114,7 +114,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
         return MeterEquivalence.hashCode(this);
     }
 
-    public HistogramConfig statsConfig() {
-        return histogramConfig;
+    public DistributionStatisticConfig statsConfig() {
+        return distributionStatisticConfig;
     }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.histogram;
+package io.micrometer.core.instrument.distribution;
 
 import org.junit.jupiter.api.Test;
 
@@ -24,15 +24,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Jon Schneider
  */
-class HistogramConfigTest {
+class DistributionStatisticConfigTest {
     @Test
     void merge() {
-        HistogramConfig c1 = HistogramConfig.builder().percentiles(0.95).build();
-        HistogramConfig c2 = HistogramConfig.builder().percentiles(0.90).build();
+        DistributionStatisticConfig c1 = DistributionStatisticConfig.builder().percentiles(0.95).build();
+        DistributionStatisticConfig c2 = DistributionStatisticConfig.builder().percentiles(0.90).build();
 
-        HistogramConfig merged = c2.merge(c1).merge(HistogramConfig.DEFAULT);
+        DistributionStatisticConfig merged = c2.merge(c1).merge(DistributionStatisticConfig.DEFAULT);
 
         assertThat(merged.getPercentiles()).containsExactly(0.90);
-        assertThat(merged.getHistogramExpiry()).isEqualTo(Duration.ofMinutes(2));
+        assertThat(merged.getExpiry()).isEqualTo(Duration.ofMinutes(2));
     }
 }
