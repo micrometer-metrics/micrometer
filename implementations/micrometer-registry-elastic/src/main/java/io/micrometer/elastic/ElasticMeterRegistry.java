@@ -221,6 +221,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 connection.setRequestMethod(method);
                 connection.setConnectTimeout(config.timeout());
                 connection.setUseCaches(false);
+                connection.setRequestProperty("Content-Type", "application/json");
                 if (method.equalsIgnoreCase("POST") || method.equalsIgnoreCase("PUT")) {
                     connection.setDoOutput(true);
                 }
