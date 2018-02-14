@@ -23,7 +23,6 @@ import com.netflix.spectator.api.histogram.PercentileTimer;
 import com.netflix.spectator.atlas.AtlasConfig;
 import com.netflix.spectator.atlas.AtlasRegistry;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
@@ -67,7 +66,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
         // invalid character replacement happens in the spectator-reg-atlas module, so doesn't need
         // to be duplicated here.
-        this.config().namingConvention(NamingConvention.camelCase);
+        this.config().namingConvention(new AtlasNamingConvention());
 
         start();
     }
