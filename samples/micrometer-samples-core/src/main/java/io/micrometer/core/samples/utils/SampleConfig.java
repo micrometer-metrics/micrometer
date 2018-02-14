@@ -22,7 +22,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 public class SampleConfig {
     public static MeterRegistry myMonitoringSystem() {
         // Pick a monitoring system here to use in your samples.
-        return SampleRegistries.wavefrontDirect("a6f74e29-7577-4b72-bef8-578f6053e908");
+        return SampleRegistries.elastic();
+//        return SampleRegistries.wavefrontDirect("a6f74e29-7577-4b72-bef8-578f6053e908");
 //        return SampleRegistries.graphite();
 //        return SampleRegistries.signalFx("XNWd8jM0YiDPrroW3Ph0dw");
 //        return SampleRegistries.jmx();
