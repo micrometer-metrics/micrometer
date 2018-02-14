@@ -24,7 +24,7 @@ import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAda
  * @author Jon Schneider
  */
 public class SignalFxPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<SignalFxProperties>
-    implements SignalFxConfig {
+        implements SignalFxConfig {
 
     public SignalFxPropertiesConfigAdapter(SignalFxProperties properties) {
         super(properties);
@@ -38,5 +38,10 @@ public class SignalFxPropertiesConfigAdapter extends StepRegistryPropertiesConfi
     @Override
     public String uri() {
         return get(SignalFxProperties::getUri, SignalFxConfig.super::uri);
+    }
+
+    @Override
+    public String source() {
+        return get(SignalFxProperties::getSource, SignalFxConfig.super::source);
     }
 }

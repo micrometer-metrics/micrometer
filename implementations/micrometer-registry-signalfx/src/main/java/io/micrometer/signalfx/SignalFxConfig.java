@@ -18,6 +18,8 @@ package io.micrometer.signalfx;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.Duration;
 
 public interface SignalFxConfig extends StepRegistryConfig {
@@ -42,6 +44,21 @@ public interface SignalFxConfig extends StepRegistryConfig {
     default String uri() {
         String v = get(prefix() + ".apiHost");
         return v == null ? "https://ingest.signalfx.com" : v;
+    }
+
+    /**
+     * Uniquely identifies the app instance that is publishing metrics to Wavefront. Defaults to the local host name.
+     */
+    default String source() {
+        String v = get(prefix() + ".source");
+        if (v != null)
+            return v;
+
+        try {
+            return InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException uhe) {
+            return "unknown";
+        }
     }
 
     @Override

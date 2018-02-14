@@ -69,7 +69,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
 
         SignalFxReceiverEndpoint signalFxEndpoint = new SignalFxEndpoint(apiUri.getScheme(), apiUri.getHost(), port);
 
-        metricSender = new AggregateMetricSender("test.SendMetrics",
+        metricSender = new AggregateMetricSender(config.source(),
                 new HttpDataPointProtobufReceiverFactory(signalFxEndpoint).setVersion(2),
                 new HttpEventProtobufReceiverFactory(signalFxEndpoint),
                 new StaticAuthToken(config.accessToken()),
