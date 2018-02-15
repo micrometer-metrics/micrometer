@@ -73,6 +73,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         objectMapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
         objectMapper.registerModule(new AfterburnerModule());
         objectMapper.registerModule(new ElasticMetricsModule(
+            namingConvention,
             config.rateUnits(),
             config.durationUnits(),
             config.timeStampFieldName(),
@@ -126,8 +127,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             json.writeEndObject();
             json.writeObjectFieldStart("properties");
             json.writeObjectFieldStart("name");
-            json.writeObjectField("type", "string");
-            json.writeObjectField("index", "not_analyzed");
+            json.writeObjectField("type", "keyword");
             json.writeEndObject();
             json.writeEndObject();
             json.writeEndObject();

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleSerializers;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.elastic.ElasticSerializableMeters.*;
 
 import java.io.IOException;
@@ -38,13 +39,15 @@ class ElasticMetricsModule extends Module {
 
     private static abstract class AbstractElasticMeterSerializer<T extends ElasticSerializableMeter<M>, M extends Meter> extends StdSerializer<T>  {
         private final DecimalFormat df = new DecimalFormat("#.####", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+        private final NamingConvention namingConvention;
         final TimeUnit rateUnit;
         final TimeUnit durationUnit;
         private final String timeStampFieldName;
         private final String metricPrefix;
 
-        AbstractElasticMeterSerializer(Class<T> t, TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
+        AbstractElasticMeterSerializer(Class<T> t, NamingConvention namingConvention, TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
             super(t);
+            this.namingConvention = namingConvention;
             this.rateUnit = rateUnit;
             this.durationUnit = durationUnit;
             this.timeStampFieldName = timeStampFieldName;
@@ -58,9 +61,9 @@ class ElasticMetricsModule extends Module {
             json.writeObjectField(timeStampFieldName, new Date(meter.getTimestamp()));
             json.writeStringField("type", meter.getType());
 
-            json.writeStringField("name", metricPrefix + meter.getMeter().getId().getName());
+            json.writeStringField("name", metricPrefix + meter.getMeter().getId().getConventionName(namingConvention));
             for (Tag t : meter.getMeter().getId().getTags()) {
-                json.writeStringField(t.getKey(), t.getValue());
+                json.writeStringField(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue()));
             }
 
             serialize(json, meter.getMeter());
@@ -93,8 +96,8 @@ class ElasticMetricsModule extends Module {
 
     private static class TimerSerializer extends AbstractElasticMeterSerializer<ElasticTimer, Timer> {
 
-        TimerSerializer(TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
-            super(ElasticTimer.class, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
+        TimerSerializer(NamingConvention namingConvention, TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
+            super(ElasticTimer.class, namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
         }
 
         @Override
@@ -113,8 +116,8 @@ class ElasticMetricsModule extends Module {
 
     private static class FunctionTimerSerializer extends AbstractElasticMeterSerializer<ElasticFunctionTimer, FunctionTimer> {
 
-        FunctionTimerSerializer(TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
-            super(ElasticFunctionTimer.class, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
+        FunctionTimerSerializer(NamingConvention namingConvention, TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
+            super(ElasticFunctionTimer.class, namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
         }
 
         @Override
@@ -127,8 +130,8 @@ class ElasticMetricsModule extends Module {
 
     private static class DistributionSummarySerializer extends AbstractElasticMeterSerializer<ElasticDistributionSummary, DistributionSummary> {
 
-        DistributionSummarySerializer(TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
-            super(ElasticDistributionSummary.class, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
+        DistributionSummarySerializer(NamingConvention namingConvention, TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
+            super(ElasticDistributionSummary.class, namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
         }
 
         @Override
@@ -147,8 +150,8 @@ class ElasticMetricsModule extends Module {
 
     private static class LongTaskTimerSerializer extends AbstractElasticMeterSerializer<ElasticLongTaskTimer, LongTaskTimer> {
 
-        LongTaskTimerSerializer(TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
-            super(ElasticLongTaskTimer.class, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
+        LongTaskTimerSerializer(NamingConvention namingConvention, TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
+            super(ElasticLongTaskTimer.class, namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
         }
 
         @Override
@@ -160,8 +163,8 @@ class ElasticMetricsModule extends Module {
 
     private static class CounterSerializer extends AbstractElasticMeterSerializer<ElasticCounter, Counter> {
 
-        CounterSerializer(TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
-            super(ElasticCounter.class, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
+        CounterSerializer(NamingConvention namingConvention, TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
+            super(ElasticCounter.class, namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
         }
 
         @Override
@@ -172,8 +175,8 @@ class ElasticMetricsModule extends Module {
 
     private static class FunctionCounterSerializer extends AbstractElasticMeterSerializer<ElasticFunctionCounter, FunctionCounter> {
 
-        FunctionCounterSerializer(TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
-            super(ElasticFunctionCounter.class, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
+        FunctionCounterSerializer(NamingConvention namingConvention, TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
+            super(ElasticFunctionCounter.class, namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
         }
 
         @Override
@@ -184,8 +187,8 @@ class ElasticMetricsModule extends Module {
 
     private static class GaugeSerializer extends AbstractElasticMeterSerializer<ElasticGauge, Gauge> {
 
-        GaugeSerializer(TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
-            super(ElasticGauge.class, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
+        GaugeSerializer(NamingConvention namingConvention, TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
+            super(ElasticGauge.class, namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
         }
 
         @Override
@@ -196,8 +199,8 @@ class ElasticMetricsModule extends Module {
 
     private static class TimeGaugeSerializer extends AbstractElasticMeterSerializer<ElasticTimeGauge, TimeGauge> {
 
-        TimeGaugeSerializer(TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
-            super(ElasticTimeGauge.class, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
+        TimeGaugeSerializer(NamingConvention namingConvention, TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
+            super(ElasticTimeGauge.class, namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
         }
 
 
@@ -209,8 +212,8 @@ class ElasticMetricsModule extends Module {
 
     private static class MeterSerializer extends AbstractElasticMeterSerializer<ElasticMeter, Meter> {
 
-        MeterSerializer(TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
-            super(ElasticMeter.class, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
+        MeterSerializer(NamingConvention namingConvention, TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
+            super(ElasticMeter.class, namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix);
         }
 
         @Override
@@ -257,12 +260,14 @@ class ElasticMetricsModule extends Module {
     }
 
 
+    private final NamingConvention namingConvention;
     private final TimeUnit rateUnit;
     private final TimeUnit durationUnit;
     private final String timeStampFieldName;
     private final String metricPrefix;
 
-    ElasticMetricsModule(TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
+    ElasticMetricsModule(NamingConvention namingConvention, TimeUnit rateUnit, TimeUnit durationUnit, String timeStampFieldName, String metricPrefix) {
+        this.namingConvention = namingConvention;
         this.rateUnit = rateUnit;
         this.durationUnit = durationUnit;
         this.timeStampFieldName = timeStampFieldName;
@@ -282,15 +287,15 @@ class ElasticMetricsModule extends Module {
     @Override
     public void setupModule(SetupContext context) {
         context.addSerializers(new SimpleSerializers(Arrays.asList(
-            new TimerSerializer(rateUnit, durationUnit, timeStampFieldName, metricPrefix),
-            new FunctionTimerSerializer(rateUnit, durationUnit, timeStampFieldName, metricPrefix),
-            new DistributionSummarySerializer(rateUnit, durationUnit, timeStampFieldName, metricPrefix),
-            new LongTaskTimerSerializer(rateUnit, durationUnit, timeStampFieldName, metricPrefix),
-            new CounterSerializer(rateUnit, durationUnit, timeStampFieldName, metricPrefix),
-            new FunctionCounterSerializer(rateUnit, durationUnit, timeStampFieldName, metricPrefix),
-            new GaugeSerializer(rateUnit, durationUnit, timeStampFieldName, metricPrefix),
-            new TimeGaugeSerializer(rateUnit, durationUnit, timeStampFieldName, metricPrefix),
-            new MeterSerializer(rateUnit, durationUnit, timeStampFieldName, metricPrefix),
+            new TimerSerializer(namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix),
+            new FunctionTimerSerializer(namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix),
+            new DistributionSummarySerializer(namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix),
+            new LongTaskTimerSerializer(namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix),
+            new CounterSerializer(namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix),
+            new FunctionCounterSerializer(namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix),
+            new GaugeSerializer(namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix),
+            new TimeGaugeSerializer(namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix),
+            new MeterSerializer(namingConvention, rateUnit, durationUnit, timeStampFieldName, metricPrefix),
             new BulkIndexOperationHeaderSerializer()
         )));
     }
