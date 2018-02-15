@@ -47,6 +47,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
+
 /**
  * @author Nicolas Portmann
  */
@@ -54,7 +56,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(ElasticMeterRegistry.class);
 
     private final ElasticConfig config;
-    private String currentIndexName;
     private final SimpleDateFormat indexDateFormat;
     private boolean checkedForIndexTemplate = false;
     private final ObjectWriter objectWriter;
@@ -154,16 +155,10 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
         final long timestamp = clock.wallTime();
 
-        currentIndexName = config.index() + "-" + indexDateFormat.format(new Date(timestamp));
+        String currentIndexName = config.index() + "-" + indexDateFormat.format(new Date(timestamp));
 
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-            HttpURLConnection connection = openConnection("/_bulk", "POST");
-            if (connection == null) {
-                logger.error("Could not connect to any configured elasticsearch instances: {}", Arrays.asList(config.hosts()));
-                return;
-            }
-
-            String body = batch.stream().map(m -> {
+            List<ElasticSerializableMeter<? extends Meter>> serializableMeters = batch.stream().map(m -> {
                 if (m instanceof Timer) {
                     return new ElasticTimer((Timer) m, clock.wallTime());
                 }
@@ -186,22 +181,43 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                     return new ElasticCounter((Counter) m, clock.wallTime());
                 }
                 if (m instanceof LongTaskTimer) {
-                    return new ElasticSerializableMeters.ElasticLongTaskTimer((LongTaskTimer) m, clock.wallTime());
+                    return new ElasticLongTaskTimer((LongTaskTimer) m, clock.wallTime());
                 }
-                return new ElasticSerializableMeters.ElasticMeter(m, clock.wallTime());
-            }).map(m -> {
-                BulkIndexOperationHeader header = new BulkIndexOperationHeader(currentIndexName, m.getType());
+                return new ElasticMeter(m, clock.wallTime());
+            }).collect(toList());
 
-                try {
-                    return objectWriter.writeValueAsString(header) + "\n" + objectWriter.writeValueAsString(m) + "\n";
-                } catch (JsonProcessingException e) {
-                    logger.error("Could not serialize meter", e);
-                    return "";
+            HttpURLConnection connection = openConnection("/_bulk", "POST");
+            if (connection == null) {
+                logger.error("Could not connect to any configured elasticsearch instances: {}", Arrays.asList(config.hosts()));
+                return;
+            }
+
+            try {
+                OutputStream outputStream = connection.getOutputStream();
+
+                for (ElasticSerializableMeter<? extends Meter> serializableMeter : serializableMeters) {
+                    BulkIndexOperationHeader header = new BulkIndexOperationHeader(currentIndexName, serializableMeter.getType());
+
+                        objectWriter.writeValue(outputStream, header);
+                        outputStream.write("\n".getBytes());
+                        objectWriter.writeValue(outputStream, serializableMeter);
+                        outputStream.write("\n".getBytes());
+
+                        outputStream.flush();
                 }
 
-            }).collect(Collectors.joining("\n", "", "\n"));
+                outputStream.close();
 
-            writeAndCloseConnection(body, connection);
+                connection.disconnect();
+
+                if (connection.getResponseCode() != 200) {
+                    logger.error("Reporting returned code {} {}: {}", connection.getResponseCode(), connection.getResponseMessage());
+                    return;
+                }
+            } catch (IOException e) {
+                logger.error("Could not serialize meter", e);
+                return;
+            }
         }
 
         logger.debug("Reported meters to elasticsearch");
@@ -241,22 +257,5 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }
 
         return null;
-    }
-
-    private void writeAndCloseConnection(String body, HttpURLConnection connection) {
-        try {
-            OutputStream outputStream = connection.getOutputStream();
-            outputStream.write(body.getBytes());
-            outputStream.flush();
-            outputStream.close();
-
-            connection.disconnect();
-
-            if (connection.getResponseCode() != 200) {
-                logger.error("Reporting returned code {} {}: {}", connection.getResponseCode(), connection.getResponseMessage());
-            }
-        } catch (IOException e) {
-            logger.error("Couldn't write to elasticsearch server", e);
-        }
     }
 }
