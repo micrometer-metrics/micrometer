@@ -124,7 +124,7 @@ class ElasticMetricsModule extends Module {
         protected void serialize(JsonGenerator json, FunctionTimer meter) throws IOException {
             json.writeNumberField("sum", meter.totalTime(durationUnit));
             json.writeNumberField("count", meter.count());
-            json.writeNumberField("mean", meter.count());
+            json.writeNumberField("mean", meter.mean(durationUnit));
         }
     }
 
