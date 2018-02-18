@@ -11,7 +11,10 @@ buildscript {
         classpath 'me.champeau.gradle:jmh-gradle-plugin:0.4.4'
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
+        classpath 'io.spring.gradle:dependency-lock:0.1.0'
     }
+
+    configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
 }
 
 apply plugin: 'io.spring.release'
@@ -28,6 +31,12 @@ allprojects {
 subprojects {
     apply plugin: 'java'
     apply plugin: 'checkstyle'
+    apply plugin: 'spring.lock'
+
+    configurations {
+        optional
+        compile.extendsFrom(optional)
+    }
 
     compileJava.options.encoding = 'UTF-8'
     compileTestJava.options.encoding = 'UTF-8'

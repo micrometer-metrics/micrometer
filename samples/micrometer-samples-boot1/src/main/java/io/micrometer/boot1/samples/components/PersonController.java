@@ -15,7 +15,6 @@
  */
 package io.micrometer.boot1.samples.components;
 
-import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -37,7 +36,6 @@ public class PersonController {
 
     @GetMapping("/api/people")
     @Timed(percentiles = {0.5, 0.95, 0.999}, histogram = true)
-    @HystrixCommand(fallbackMethod = "fallbackPeople")
     public List<String> allPeople() {
         try {
             Thread.sleep(200);

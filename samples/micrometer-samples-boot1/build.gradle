@@ -15,10 +15,9 @@ dependencies {
         compile project(":micrometer-registry-$sys")
     }
 
-    compile 'org.springframework.boot:spring-boot-starter-web'
-    compile 'org.springframework.boot:spring-boot-actuator'
-    compile 'org.springframework.integration:spring-integration-java-dsl'
-    compile 'org.springframework.integration:spring-integration-ws'
-    compile 'org.springframework.integration:spring-integration-xml'
-    compile 'com.netflix.hystrix:hystrix-javanica:1.5.8'
+    compile 'org.springframework.boot:spring-boot-starter-web' lock '1.5.4.RELEASE'
+    compile 'org.springframework.boot:spring-boot-actuator' lock '1.5.4.RELEASE'
+    compile 'org.springframework.integration:spring-integration-java-dsl' lock '1.2.2.RELEASE'
+    compile 'org.springframework.integration:spring-integration-ws' lock '4.3.10.RELEASE'
+    compile 'org.springframework.integration:spring-integration-xml' lock '4.3.10.RELEASE'
 }

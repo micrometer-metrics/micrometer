@@ -2,7 +2,7 @@ apply plugin: 'org.junit.platform.gradle.plugin'
 
 dependencies {
     compile project(':micrometer-core')
-    compile 'com.signalfx.public:signalfx-java:latest.release'
+    compile 'com.signalfx.public:signalfx-java:latest.release' lock '0.0.41'
 
     testCompile project(':micrometer-test')
 }

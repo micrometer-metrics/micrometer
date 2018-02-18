@@ -9,53 +9,53 @@ apply plugin: 'nebula.optional-base'
 
 dependencies {
     // JSR-305 only used for non-required meta-annotations
-    compile "com.google.code.findbugs:jsr305:3.0.2", optional
+    compile "com.google.code.findbugs:jsr305:latest.release", optional lock '3.0.2'
 
-    compile 'org.hdrhistogram:HdrHistogram:2.1.10'
-    compile('org.latencyutils:LatencyUtils:2.0.3') {
+    compile 'org.hdrhistogram:HdrHistogram:latest.release' lock '2.1.10'
+    compile('org.latencyutils:LatencyUtils:latest.release') {
         exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
-    }
+    }   lock '2.0.3'
 
     // instrumentation options
-    compile 'io.dropwizard.metrics:metrics-core:3.+', optional
+    compile 'io.dropwizard.metrics:metrics-core:3.+', optional lock '3.2.6'
 
     // cache monitoring
-    compile 'com.google.guava:guava:21.0', optional
-    compile 'com.github.ben-manes.caffeine:caffeine:2.3.0', optional
-    compile 'net.sf.ehcache:ehcache:2.10.3', optional
+    compile 'com.google.guava:guava:latest.release', optional lock '23.0'
+    compile 'com.github.ben-manes.caffeine:caffeine:latest.release', optional lock '2.6.1'
+    compile 'net.sf.ehcache:ehcache:latest.release', optional lock '2.10.4'
     compile 'javax.cache:cache-api:1.0.0', optional
-    compile 'com.hazelcast:hazelcast:3.8.+', optional
-    compile 'org.hibernate:hibernate-entitymanager:5.2.12.Final', optional
+    compile 'com.hazelcast:hazelcast:3.8.+', optional lock '3.8.9'
+    compile 'org.hibernate:hibernate-entitymanager:latest.release', optional lock '5.2.13.Final'
 
     // server runtime monitoring
-    compile 'org.eclipse.jetty:jetty-server:9.4.7.v20170914', optional
-    compile 'org.apache.tomcat.embed:tomcat-embed-core:8.5.23', optional
+    compile 'org.eclipse.jetty:jetty-server:latest.release', optional lock '9.4.8.v20171121'
+    compile 'org.apache.tomcat.embed:tomcat-embed-core:8.+', optional lock '8.5.28'
 
     // hystrix monitoring
-    compile 'com.netflix.hystrix:hystrix-core:1.5.12', optional
+    compile 'com.netflix.hystrix:hystrix-core:latest.release', optional lock '1.5.12'
 
     // log monitoring
-    compile 'ch.qos.logback:logback-classic:latest.release', optional
+    compile 'ch.qos.logback:logback-classic:1.2.+', optional lock '1.2.3'
 
     // reactor
-    compile 'io.projectreactor:reactor-core:3.1.2.RELEASE', optional
+    compile 'io.projectreactor:reactor-core:latest.release', optional lock '3.1.4.RELEASE'
 
-    compile 'com.squareup.okhttp3:okhttp:3.9.0', optional
+    compile 'com.squareup.okhttp3:okhttp:latest.release', optional lock '3.9.1'
 
-    testCompile 'io.projectreactor:reactor-test:3.1.2.RELEASE'
-    testCompile 'io.projectreactor.ipc:reactor-netty:0.7.3.RELEASE'
+    testCompile 'io.projectreactor:reactor-test:latest.release' lock '3.1.4.RELEASE'
+    testCompile 'io.projectreactor.ipc:reactor-netty:latest.release' lock '0.7.4.RELEASE'
 
     // JUnit 5
-    testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0'
-    testCompile 'org.junit.jupiter:junit-jupiter-params:5.0.0'
-    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.0'
+    testCompile 'org.junit.jupiter:junit-jupiter-api:5.+' lock '5.1.0-RC1'
+    testCompile 'org.junit.jupiter:junit-jupiter-params:5.+' lock '5.1.0-RC1'
+    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.+' lock '5.1.0-RC1'
 
     // Eclipse still needs this (as of 4.7.1a)
-    testRuntime 'org.junit.platform:junit-platform-launcher:1.0.0'
+    testRuntime 'org.junit.platform:junit-platform-launcher:1.+' lock '1.1.0-RC1'
 
-    testCompile "org.mockito:mockito-core:2.10.0"
+    testCompile 'org.mockito:mockito-core:latest.release' lock '2.15.0'
 
-    testCompile 'org.hsqldb:hsqldb:2.3.5'
+    testCompile 'org.hsqldb:hsqldb:latest.release' lock '2.4.0'
 
     // dependency injection tests
     testCompile 'javax.inject:javax.inject:1'
@@ -67,12 +67,12 @@ dependencies {
 //    testCompile 'com.google.dagger:dagger:2.11'
 //    testCompile 'com.google.dagger:dagger-compiler:2.11'
 
-    testCompile 'org.assertj:assertj-core:3.+'
+    testCompile 'org.assertj:assertj-core:latest.release' lock '3.9.0'
 
-    testCompile 'org.ehcache:ehcache:3.+'
+    testCompile 'org.ehcache:ehcache:3.+' lock '3.4.0'
 
-    jmh 'org.openjdk.jmh:jmh-core:latest.release'
-    jmh 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
+    jmh 'org.openjdk.jmh:jmh-core:latest.release' lock '1.20'
+    jmh 'org.openjdk.jmh:jmh-generator-annprocess:latest.release' lock '1.20'
     jmh 'colt:colt:1.2.0'
 }
 
