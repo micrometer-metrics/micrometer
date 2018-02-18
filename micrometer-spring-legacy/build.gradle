@@ -71,4 +71,9 @@ dependencies {
     testCompile 'org.springframework.integration:spring-integration-xml' lock '4.3.10.RELEASE'
 
     testCompile 'org.springframework.security:spring-security-test' lock '4.2.3.RELEASE'
+
+    // JDK 9+ compatibility
+    testCompile 'javax.xml.ws:jaxws-api:2.3.0'
+    testCompile 'com.sun.xml.messaging.saaj:saaj-impl:1.4.0'
+    testCompile 'javax.activation:activation:1.1.1'
 }
