@@ -40,6 +40,9 @@ dependencies {
     // reactor
     compile 'io.projectreactor:reactor-core:latest.release', optional lock '3.1.4.RELEASE'
 
+    // @Timed AOP
+    compile 'org.aspectj:aspectjweaver:1.8.+', optional lock '1.8.13'
+
     compile 'com.squareup.okhttp3:okhttp:latest.release', optional lock '3.9.1'
 
     testCompile 'io.projectreactor:reactor-test:latest.release' lock '3.1.4.RELEASE'
@@ -59,8 +62,8 @@ dependencies {
 
     // dependency injection tests
     testCompile 'javax.inject:javax.inject:1'
-    testCompile 'org.springframework:spring-context:4.3.9.RELEASE'
-    testCompile 'org.springframework:spring-test:4.3.9.RELEASE'
+    testCompile 'org.springframework:spring-context:4.+'
+    testCompile 'org.springframework:spring-test:4.+'
     testCompile 'com.google.inject:guice:4.1.0'
 
     // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
