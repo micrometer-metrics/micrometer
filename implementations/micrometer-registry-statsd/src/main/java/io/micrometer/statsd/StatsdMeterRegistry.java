@@ -109,6 +109,12 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     @Override
+    public void close() {
+        stop();
+        super.close();
+    }
+
+    @Override
     protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
         StatsdGauge<T> gauge = new StatsdGauge<>(id, lineBuilder(id), publisher, obj, valueFunction, statsdConfig.publishUnchangedMeters());
         pollableMeters.add(gauge);

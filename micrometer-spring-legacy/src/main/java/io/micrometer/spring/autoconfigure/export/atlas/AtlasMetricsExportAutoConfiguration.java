@@ -54,7 +54,7 @@ public class AtlasMetricsExportAutoConfiguration {
         return new AtlasPropertiesConfigAdapter(atlasProperties);
     }
 
-    @Bean(destroyMethod = "stop")
+    @Bean
     @ConditionalOnMissingBean
     public AtlasMeterRegistry atlasMeterRegistry(AtlasConfig config, Clock clock) {
         return new AtlasMeterRegistry(config, clock);

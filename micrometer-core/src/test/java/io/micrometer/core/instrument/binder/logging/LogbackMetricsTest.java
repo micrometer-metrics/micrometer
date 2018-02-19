@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.logging;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LogbackMetricsTest {
@@ -69,6 +71,19 @@ class LogbackMetricsTest {
         registry = new LoggingCounterMeterRegistry();
         new LogbackMetrics().bindTo(registry);
         registry.counter("my.counter").increment();
+    }
+
+    @Issue("#421")
+    @Test
+    void removeFilterFromLoggerContextOnClose() {
+        LoggerContext loggerContext = new LoggerContext();
+
+        LogbackMetrics logbackMetrics = new LogbackMetrics(emptyList(), loggerContext);
+        logbackMetrics.bindTo(registry);
+
+        assertThat(loggerContext.getTurboFilterList()).hasSize(1);
+        logbackMetrics.close();
+        assertThat(loggerContext.getTurboFilterList()).isEmpty();
     }
 
     @NonNullApi

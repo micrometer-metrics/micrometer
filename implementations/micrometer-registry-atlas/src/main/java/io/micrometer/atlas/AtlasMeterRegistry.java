@@ -83,6 +83,12 @@ public class AtlasMeterRegistry extends MeterRegistry {
         getAtlasRegistry().stop();
     }
 
+    @Override
+    public void close() {
+        stop();
+        super.close();
+    }
+
     private AtlasRegistry getAtlasRegistry() {
         return (AtlasRegistry) this.getSpectatorRegistry();
     }

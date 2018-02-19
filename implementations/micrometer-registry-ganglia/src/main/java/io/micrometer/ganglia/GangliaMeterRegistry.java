@@ -64,4 +64,10 @@ public class GangliaMeterRegistry extends DropwizardMeterRegistry {
     public void start() {
         this.reporter.start(config.step().getSeconds(), TimeUnit.SECONDS);
     }
+
+    @Override
+    public void close() {
+        stop();
+        super.close();
+    }
 }

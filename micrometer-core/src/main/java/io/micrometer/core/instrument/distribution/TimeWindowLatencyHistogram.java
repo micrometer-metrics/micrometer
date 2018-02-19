@@ -35,7 +35,7 @@ import static java.util.Objects.requireNonNull;
  * @author Trustin Heuiseung Lee
  */
 @Incubating(since = "1.0.0-rc.3")
-public class TimeWindowLatencyHistogram extends TimeWindowHistogramBase<LatencyStats, Histogram> {
+public class TimeWindowLatencyHistogram extends TimeWindowHistogramBase<LatencyStats, Histogram> implements AutoCloseable {
     private static Map<io.micrometer.core.instrument.distribution.pause.PauseDetector, PauseDetector> pauseDetectorCache =
         new ConcurrentHashMap<>();
 
@@ -116,9 +116,19 @@ public class TimeWindowLatencyHistogram extends TimeWindowHistogramBase<LatencyS
         return accumulatedHistogram.getCountBetweenValues(0, value);
     }
 
+    @Override
+    public void close() {
+        pauseDetector.shutdown();
+    }
+
     private static class NoopPauseDetector extends PauseDetector {
         NoopPauseDetector() {
             shutdown();
         }
+    }
+
+    // VisibleForTesting
+    PauseDetector getPauseDetector() {
+        return pauseDetector;
     }
 }

@@ -26,7 +26,7 @@ import static java.util.stream.StreamSupport.stream;
 /**
  * A counter, gauge, timer, or distribution summary that results collects one or more metrics.
  */
-public interface Meter {
+public interface Meter extends AutoCloseable {
     static Builder builder(String name, Type type, Iterable<Measurement> measurements) {
         return new Builder(name, type, measurements);
     }
@@ -293,4 +293,7 @@ public interface Meter {
             return registry.register(new Meter.Id(name, tags, baseUnit, description, type), type, measurements);
         }
     }
+
+    @Override
+    default void close() {}
 }

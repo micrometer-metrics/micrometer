@@ -33,6 +33,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.*;
 
 import static java.util.Collections.emptyList;
@@ -48,7 +49,7 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Jon Schneider
  */
-public abstract class MeterRegistry {
+public abstract class MeterRegistry implements AutoCloseable {
     protected final Clock clock;
     private final Object meterMapLock = new Object();
     private final List<MeterFilter> filters = new CopyOnWriteArrayList<>();
@@ -56,10 +57,12 @@ public abstract class MeterRegistry {
     private final Config config = new Config();
     private final More more = new More();
     private volatile Map<Id, Meter> meterMap = Collections.emptyMap();
+    private final AtomicBoolean closed = new AtomicBoolean(false);
     private PauseDetector pauseDetector = new ClockDriftPauseDetector(
         Duration.ofMillis(100),
         Duration.ofMillis(100)
     );
+
     /**
      * We'll use snake case as a general-purpose default for registries because it is the most
      * likely to result in a portable name. Camel casing is also perfectly acceptable. '-' and '.'
@@ -513,7 +516,7 @@ public abstract class MeterRegistry {
             }
         }
 
-        Meter m = getOrCreateMeter(config, builder, mappedId);
+        Meter m = getOrCreateMeter(config, builder, mappedId, noopBuilder);
 
         if (!meterClass.isInstance(m)) {
             throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
@@ -525,10 +528,14 @@ public abstract class MeterRegistry {
 
     private Meter getOrCreateMeter(@Nullable DistributionStatisticConfig config,
                                    BiFunction<Id, /*Nullable Generic*/ DistributionStatisticConfig, Meter> builder,
-                                   Id mappedId) {
+                                   Id mappedId, Function<Meter.Id, ? extends Meter> noopBuilder) {
         Meter m = meterMap.get(mappedId);
 
         if (m == null) {
+            if(isClosed()) {
+                return noopBuilder.apply(mappedId);
+            }
+
             synchronized (meterMapLock) {
                 m = meterMap.get(mappedId);
 
@@ -541,13 +548,12 @@ public abstract class MeterRegistry {
                 }
             }
         }
+
         return m;
     }
 
     private void register(Id id, Meter meter) {
-        HashMap<Id, Meter> newMeterMap = new HashMap<>();
-
-        newMeterMap.putAll(meterMap);
+        HashMap<Id, Meter> newMeterMap = new HashMap<>(meterMap);
         newMeterMap.put(id, meter);
 
         meterMap = Collections.unmodifiableMap(newMeterMap);
@@ -810,5 +816,29 @@ public abstract class MeterRegistry {
         <T> TimeGauge timeGauge(Meter.Id id, T obj, TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
             return registerMeterIfNecessary(TimeGauge.class, id, id2 -> newTimeGauge(id2, obj, timeFunctionUnit, timeFunction), NoopTimeGauge::new);
         }
+    }
+
+    /**
+     * Closes this registry, releasing any resources in the process. Once closed, this registry will no longer
+     * accept new meters and any publishing activity will cease.
+     */
+    @Override
+    public void close() {
+        if(closed.compareAndSet(false, true)) {
+            synchronized (meterMapLock) {
+                for (Meter meter : meterMap.values()) {
+                    meter.close();
+                }
+            }
+        }
+    }
+
+    /**
+     * If the registry is closed, it will no longer accept new meters and any publishing activity will cease.
+     *
+     * @return {@code true} if this registry is closed.
+     */
+    public boolean isClosed() {
+        return closed.get();
     }
 }

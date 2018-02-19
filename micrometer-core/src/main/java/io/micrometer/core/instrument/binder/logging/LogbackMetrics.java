@@ -29,8 +29,8 @@ import io.micrometer.core.lang.NonNullFields;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.Collections.emptyList;
 
@@ -39,26 +39,31 @@ import static java.util.Collections.emptyList;
  */
 @NonNullApi
 @NonNullFields
-public class LogbackMetrics implements MeterBinder {
+public class LogbackMetrics implements MeterBinder, AutoCloseable {
     static ThreadLocal<Boolean> ignoreMetrics = new ThreadLocal<>();
 
     private final Iterable<Tag> tags;
-    private final Map<MeterRegistry, MetricsTurboFilter> metricsTurboFilters = new HashMap<>();
+    private final LoggerContext loggerContext;
+    private final Map<MeterRegistry, MetricsTurboFilter> metricsTurboFilters = new ConcurrentHashMap<>();
 
     public LogbackMetrics() {
         this(emptyList());
     }
 
     public LogbackMetrics(Iterable<Tag> tags) {
+        this(tags, (LoggerContext) LoggerFactory.getILoggerFactory());
+    }
+
+    public LogbackMetrics(Iterable<Tag> tags, LoggerContext context) {
         this.tags = tags;
+        this.loggerContext = context;
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
         MetricsTurboFilter filter = new MetricsTurboFilter(registry, tags);
         metricsTurboFilters.put(registry, filter);
-        context.addTurboFilter(filter);
+        loggerContext.addTurboFilter(filter);
     }
 
     /**
@@ -73,8 +78,11 @@ public class LogbackMetrics implements MeterBinder {
         ignoreMetrics.remove();
     }
 
-    public Map<MeterRegistry, MetricsTurboFilter> getMetricsTurboFilters() {
-        return metricsTurboFilters;
+    @Override
+    public void close() {
+        for (MetricsTurboFilter metricsTurboFilter : metricsTurboFilters.values()) {
+            loggerContext.getTurboFilterList().remove(metricsTurboFilter);
+        }
     }
 }
 

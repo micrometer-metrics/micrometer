@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.noop.NoopCounter;
+import io.micrometer.core.instrument.noop.NoopTimer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -74,5 +75,16 @@ class MeterRegistryTest {
         });
 
         registry.timer("my.timer");
+    }
+
+    @Test
+    void noopMetersAfterRegistryClosed() {
+        assertThat(registry.timer("my.timer.before")).isNotInstanceOf(NoopTimer.class);
+        registry.close();
+
+        assertThat(registry.isClosed()).isTrue();
+
+        assertThat(registry.timer("my.timer.before")).isNotInstanceOf(NoopTimer.class);
+        assertThat(registry.timer("my.timer.after")).isInstanceOf(NoopTimer.class);
     }
 }

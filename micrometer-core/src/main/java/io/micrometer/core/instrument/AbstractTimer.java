@@ -118,4 +118,9 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     public DistributionStatisticConfig statsConfig() {
         return distributionStatisticConfig;
     }
+
+    @Override
+    public void close() {
+        histogram.close();
+    }
 }

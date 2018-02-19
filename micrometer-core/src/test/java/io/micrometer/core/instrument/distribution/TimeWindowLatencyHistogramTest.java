@@ -17,11 +17,13 @@ package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
 import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import static io.micrometer.core.instrument.util.TimeUtils.millisToUnit;
@@ -101,5 +103,16 @@ class TimeWindowLatencyHistogramTest {
 
         // median should have moved after seeing 10 more samples
         assertThat(nanosToUnit(histogram.percentile(0.50), TimeUnit.MILLISECONDS)).isEqualTo(10, Offset.offset(0.1));
+    }
+
+    @Test
+    void pauseDetectorShutdownOnClose() {
+        ClockDriftPauseDetector pauseDetector = new ClockDriftPauseDetector(Duration.ofMillis(10), Duration.ofMillis(10));
+        TimeWindowLatencyHistogram histogram = new TimeWindowLatencyHistogram(new MockClock(), DistributionStatisticConfig.DEFAULT, pauseDetector);
+        TimeWindowLatencyHistogram histogram2 = new TimeWindowLatencyHistogram(new MockClock(), DistributionStatisticConfig.DEFAULT, pauseDetector);
+
+        // no problems are caused by shutting down the same detector more than once
+        histogram.close();
+        histogram2.close();
     }
 }

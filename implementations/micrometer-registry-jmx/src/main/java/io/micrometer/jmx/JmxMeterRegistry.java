@@ -59,4 +59,10 @@ public class JmxMeterRegistry extends DropwizardMeterRegistry {
     public void start() {
         this.reporter.start();
     }
+
+    @Override
+    public void close() {
+        stop();
+        super.close();
+    }
 }

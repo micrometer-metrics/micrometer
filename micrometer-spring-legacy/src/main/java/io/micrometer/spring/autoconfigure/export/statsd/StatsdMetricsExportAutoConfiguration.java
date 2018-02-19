@@ -54,7 +54,7 @@ public class StatsdMetricsExportAutoConfiguration {
         return new StatsdPropertiesConfigAdapter(props);
     }
 
-    @Bean(destroyMethod = "stop")
+    @Bean
     @ConditionalOnMissingBean
     public StatsdMeterRegistry statsdMeterRegistry(StatsdConfig config, HierarchicalNameMapper hierarchicalNameMapper,
                                                    Clock clock) {
