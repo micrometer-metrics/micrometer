@@ -1,3 +1,7 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '2.0.2'
+}
+
 apply plugin: 'org.junit.platform.gradle.plugin'
 
 dependencies {
@@ -9,4 +13,37 @@ dependencies {
     testCompile 'io.projectreactor:reactor-test:latest.release' lock '3.1.4.RELEASE'
     testCompile 'org.junit.jupiter:junit-jupiter-params:5.+' lock '5.1.0-RC1'
     testCompile 'org.mockito:mockito-core:latest.release' lock '2.15.0'
+}
+
+shadowJar {
+    configurations = [project.configurations.compile]
+    classifier = null
+    dependencies {
+        include(dependency('io.projectreactor:'))
+        include(dependency('io.projectreactor.ipc:'))
+        include(dependency('org.reactivestreams:reactive-streams'))
+        include(dependency('io.netty:'))
+    }
+    relocate 'reactor', 'io.micrometer.shaded.reactor'
+    relocate 'org.reactivestreams', 'io.micrometer.shaded.org.reactorstreams'
+    relocate 'io.netty', 'io.micrometer.shaded.io.netty'
+}
+
+jar.deleteAllActions()
+jar.dependsOn shadowJar
+
+publishing {
+    publications {
+        withType(MavenPublication) {
+            pom.withXml {
+                asNode()
+                        .dependencies
+                        .dependency
+                        .findAll {
+                            ['reactor-core', 'reactor-netty'].contains(it.artifactId.text())
+                        }
+                        .each { it.parent().remove(it) }
+            }
+        }
+    }
 }

@@ -16,7 +16,6 @@
 package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
@@ -25,9 +24,8 @@ import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.statsd.internal.LogbackMetricsSuppressingUnicastProcessor;
 import org.reactivestreams.Processor;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
 import reactor.core.Disposables;
 import reactor.core.publisher.Flux;
@@ -36,6 +34,7 @@ import reactor.ipc.netty.NettyPipeline;
 import reactor.ipc.netty.udp.UdpClient;
 import reactor.util.concurrent.Queues;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -50,7 +49,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private final HierarchicalNameMapper nameMapper;
     private final Collection<StatsdPollable> pollableMeters = new CopyOnWriteArrayList<>();
 
-    volatile LogbackMetricsSuppressingUnicastProcessor publisher;
+    volatile Processor<String, String> publisher;
 
     private Disposable.Swap udpClient = Disposables.swap();
     private Disposable.Swap meterPoller = Disposables.swap();
@@ -77,10 +76,31 @@ public class StatsdMeterRegistry extends MeterRegistry {
         }
 
         UnicastProcessor<String> processor = UnicastProcessor.create(Queues.<String>get(statsdConfig.queueSize()).get());
-        this.publisher = new LogbackMetricsSuppressingUnicastProcessor(processor);
 
-        gauge("statsd.queue.size", this.publisher, LogbackMetricsSuppressingUnicastProcessor::size);
-        gauge("statsd.queue.capacity", this.publisher, LogbackMetricsSuppressingUnicastProcessor::getBufferSize);
+        try {
+            Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, getClass().getClassLoader());
+            this.publisher = new LogbackMetricsSuppressingUnicastProcessor(processor);
+        } catch (ClassNotFoundException e) {
+            this.publisher = processor;
+        }
+
+        gauge("statsd.queue.size", publisher, pub -> {
+            try {
+                return (Integer) pub.getClass().getMethod("size").invoke(pub);
+            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                // should never happen
+                return 0;
+            }
+        });
+
+        gauge("statsd.queue.capacity", publisher, pub -> {
+            try {
+                return (Integer) pub.getClass().getMethod("getBufferSize").invoke(pub);
+            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                // should never happen
+                return 0;
+            }
+        });
 
         if (config.enabled())
             start();
@@ -135,7 +155,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector
+            pauseDetector) {
         Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
                 statsdConfig.step().toMillis());
 
@@ -157,7 +178,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig
+            distributionStatisticConfig) {
         DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), publisher, clock, distributionStatisticConfig);
 
         if (distributionStatisticConfig.getPercentiles() != null) {
@@ -184,7 +206,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T
+            obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit
+                                                         totalTimeFunctionUnits) {
         StatsdFunctionTimer ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits,
                 getBaseTimeUnit(), lineBuilder(id), publisher);
         pollableMeters.add(ft);
@@ -227,46 +251,5 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 .expiry(statsdConfig.step())
                 .build()
                 .merge(DistributionStatisticConfig.DEFAULT);
-    }
-
-    static class LogbackMetricsSuppressingUnicastProcessor implements Processor<String, String> {
-        private final UnicastProcessor<String> processor;
-
-        private LogbackMetricsSuppressingUnicastProcessor(UnicastProcessor<String> processor) {
-            this.processor = processor;
-        }
-
-        @Override
-        public void subscribe(Subscriber<? super String> s) {
-            processor.subscribe(s);
-        }
-
-        @Override
-        public void onSubscribe(Subscription s) {
-            processor.onSubscribe(s);
-        }
-
-        @Override
-        public void onNext(String s) {
-            LogbackMetrics.ignoreMetrics(() -> processor.onNext(s));
-        }
-
-        @Override
-        public void onError(Throwable t) {
-            LogbackMetrics.ignoreMetrics(() -> processor.onError(t));
-        }
-
-        @Override
-        public void onComplete() {
-            LogbackMetrics.ignoreMetrics(processor::onComplete);
-        }
-
-        int size() {
-            return processor.size();
-        }
-
-        int getBufferSize() {
-            return processor.getBufferSize();
-        }
     }
 }
