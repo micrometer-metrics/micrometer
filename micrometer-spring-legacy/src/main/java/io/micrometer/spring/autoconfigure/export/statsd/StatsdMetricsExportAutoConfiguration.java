@@ -22,6 +22,7 @@ import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
 import io.micrometer.statsd.StatsdConfig;
 import io.micrometer.statsd.StatsdMeterRegistry;
+import io.micrometer.statsd.StatsdMetrics;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -65,5 +66,10 @@ public class StatsdMetricsExportAutoConfiguration {
     @ConditionalOnMissingBean
     public HierarchicalNameMapper hierarchicalNameMapper() {
         return HierarchicalNameMapper.DEFAULT;
+    }
+
+    @Bean
+    public StatsdMetrics statsdMetrics() {
+        return new StatsdMetrics();
     }
 }

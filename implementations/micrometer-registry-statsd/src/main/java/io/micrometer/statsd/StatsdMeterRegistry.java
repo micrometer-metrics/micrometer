@@ -84,24 +84,6 @@ public class StatsdMeterRegistry extends MeterRegistry {
             this.publisher = processor;
         }
 
-        gauge("statsd.queue.size", publisher, pub -> {
-            try {
-                return (Integer) pub.getClass().getMethod("size").invoke(pub);
-            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                // should never happen
-                return 0;
-            }
-        });
-
-        gauge("statsd.queue.capacity", publisher, pub -> {
-            try {
-                return (Integer) pub.getClass().getMethod("getBufferSize").invoke(pub);
-            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                // should never happen
-                return 0;
-            }
-        });
-
         if (config.enabled())
             start();
     }
@@ -251,5 +233,23 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 .expiry(statsdConfig.step())
                 .build()
                 .merge(DistributionStatisticConfig.DEFAULT);
+    }
+
+    public int queueSize() {
+        try {
+            return (Integer) publisher.getClass().getMethod("size").invoke(publisher);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            // should never happen
+            return 0;
+        }
+    }
+
+    public int queueCapacity() {
+        try {
+            return (Integer) publisher.getClass().getMethod("getBufferSize").invoke(publisher);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            // should never happen
+            return 0;
+        }
     }
 }
