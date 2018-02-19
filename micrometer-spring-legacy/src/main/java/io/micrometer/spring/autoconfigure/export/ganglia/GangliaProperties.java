@@ -55,7 +55,7 @@ public class GangliaProperties {
     private String protocolVersion;
 
     /**
-     * UDP addressing PublishTarget, either unicast or multicast.
+     * UDP addressing mode, either unicast or multicast.
      */
     private GMetric.UDPAddressingMode addressingMode;
 

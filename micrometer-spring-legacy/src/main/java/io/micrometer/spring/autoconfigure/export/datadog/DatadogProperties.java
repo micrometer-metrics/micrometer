@@ -50,8 +50,8 @@ public class DatadogProperties extends StepRegistryProperties {
     private String hostTag;
 
     /**
-     * URI to ship metrics to. If you need to publish metrics to an internal PROXY
-     * en-route to Datadog, you can define the location of the PROXY with this.
+     * URI to ship metrics to. If you need to publish metrics to an internal proxy
+     * en-route to Datadog, you can define the location of the proxy with this.
      */
     private String uri;
 

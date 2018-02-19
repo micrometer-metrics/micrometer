@@ -36,8 +36,8 @@ public class SignalFxProperties extends StepRegistryProperties {
     private String source;
 
     /**
-     * The URI to ship metrics to. If you need to publish metrics to an internal PROXY en route to
-     * SignalFx, you can define the location of the PROXY with this.
+     * The URI to ship metrics to. If you need to publish metrics to an internal proxy en route to
+     * SignalFx, you can define the location of the proxy with this.
      */
     private String uri;
 
