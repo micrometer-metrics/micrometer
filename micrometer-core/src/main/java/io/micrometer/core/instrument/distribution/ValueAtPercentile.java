@@ -34,10 +34,6 @@ public final class ValueAtPercentile {
         this.value = value;
     }
 
-    public static ValueAtPercentile of(double percentile, double value) {
-        return new ValueAtPercentile(percentile, value);
-    }
-
     public double percentile() {
         return percentile;
     }
@@ -53,5 +49,9 @@ public final class ValueAtPercentile {
     @Override
     public String toString() {
         return "(" + value + " at " + percentile * 100 + "%)";
+    }
+
+    public static ValueAtPercentile of(double percentile, double value) {
+        return new ValueAtPercentile(percentile, value);
     }
 }

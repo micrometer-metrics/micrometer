@@ -34,10 +34,6 @@ public final class CountAtBucket {
         this.count = count;
     }
 
-    public static CountAtBucket of(long bucket, double count) {
-        return new CountAtBucket(bucket, count);
-    }
-
     public long bucket() {
         return bucket;
     }
@@ -53,5 +49,9 @@ public final class CountAtBucket {
     @Override
     public String toString() {
         return "(" + count + " at " + bucket + ')';
+    }
+
+    public static CountAtBucket of(long bucket, double count) {
+        return new CountAtBucket(bucket, count);
     }
 }

@@ -42,16 +42,6 @@ public final class HistogramSnapshot {
         this.histogramCounts = histogramCounts != null ? histogramCounts : EMPTY_COUNTS;
     }
 
-    public static HistogramSnapshot of(long count, double total, double max,
-                                       @Nullable ValueAtPercentile[] percentileValues,
-                                       @Nullable CountAtBucket[] histogramCounts) {
-        return new HistogramSnapshot(count, total, max, percentileValues, histogramCounts);
-    }
-
-    public static HistogramSnapshot empty() {
-        return EMPTY;
-    }
-
     public long count() {
         return count;
     }
@@ -109,5 +99,15 @@ public final class HistogramSnapshot {
         }
         buf.append('}');
         return buf.toString();
+    }
+
+    public static HistogramSnapshot of(long count, double total, double max,
+                                       @Nullable ValueAtPercentile[] percentileValues,
+                                       @Nullable CountAtBucket[] histogramCounts) {
+        return new HistogramSnapshot(count, total, max, percentileValues, histogramCounts);
+    }
+
+    public static HistogramSnapshot empty() {
+        return EMPTY;
     }
 }
