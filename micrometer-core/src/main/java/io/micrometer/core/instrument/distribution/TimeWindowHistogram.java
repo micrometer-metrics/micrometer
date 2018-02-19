@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.distribution;
 
-import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Clock;
 import org.HdrHistogram.DoubleHistogram;
 import org.HdrHistogram.DoubleRecorder;
@@ -24,7 +23,6 @@ import org.HdrHistogram.DoubleRecorder;
  * @author Jon Schneider
  * @author Trustin Heuiseung Lee
  */
-@Incubating(since = "1.0.0-rc.3")
 public class TimeWindowHistogram extends TimeWindowHistogramBase<DoubleRecorder, DoubleHistogram> {
 
     private final DoubleHistogram intervalHistogram;

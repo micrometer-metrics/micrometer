@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.util;
 
-import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 
@@ -28,7 +27,6 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Jon Schneider
  */
-@Incubating(since = "1.0.0-rc.6")
 public class TimeDecayingMax {
     @SuppressWarnings("rawtypes")
     private static final AtomicIntegerFieldUpdater<TimeDecayingMax> rotatingUpdater =

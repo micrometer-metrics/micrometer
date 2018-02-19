@@ -31,4 +31,4 @@ public class SampleConfig {
 //        return SampleRegistries.datadog("26ec541df8f1181b0bdc1bf51fde7cb2", "3288f53fc89a5cac3fb83e725f051f09fd6aba2e");
 //        return SampleRegistries.newRelic("1799539", "1jyWDmrk5kswb-RBuLrhYkKQbBrn9_1Q");
     }
-}q
+}

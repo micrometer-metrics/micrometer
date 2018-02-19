@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.NamingConvention;
@@ -604,7 +603,6 @@ public abstract class MeterRegistry implements AutoCloseable {
          * @param filter The filter to add to the registry.
          * @return This configuration instance.
          */
-        @Incubating(since = "1.0.0-rc.3")
         public Config meterFilter(MeterFilter filter) {
             filters.add(filter);
             return this;
@@ -616,7 +614,6 @@ public abstract class MeterRegistry implements AutoCloseable {
          * @param meter The meter that has just been added
          * @return This configuration instance.
          */
-        @Incubating(since = "1.0.0-rc.6")
         public Config onMeterAdded(Consumer<Meter> meter) {
             meterAddedListeners.add(meter);
             return this;
@@ -656,7 +653,6 @@ public abstract class MeterRegistry implements AutoCloseable {
          * @see io.micrometer.core.instrument.distribution.pause.NoPauseDetector
          * @see io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector
          */
-        @Incubating(since = "1.0.0-rc.6")
         public Config pauseDetector(PauseDetector detector) {
             pauseDetector = detector;
             return this;
@@ -665,7 +661,6 @@ public abstract class MeterRegistry implements AutoCloseable {
         /**
          * @return The pause detector that is currently in effect.
          */
-        @Incubating(since = "1.0.0-rc.6")
         public PauseDetector pauseDetector() {
             return pauseDetector;
         }

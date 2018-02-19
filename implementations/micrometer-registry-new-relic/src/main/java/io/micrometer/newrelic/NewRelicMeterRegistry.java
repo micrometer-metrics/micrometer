@@ -15,7 +15,6 @@
  */
 package io.micrometer.newrelic;
 
-import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -45,9 +44,10 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 /**
+ * Publishes metrics to New Relic Insights.
+ *
  * @author Jon Schneider
  */
-@Incubating(since = "1.0.0-rc.5")
 public class NewRelicMeterRegistry extends StepMeterRegistry {
     private final NewRelicConfig config;
     private final Logger logger = LoggerFactory.getLogger(NewRelicMeterRegistry.class);

@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.distribution;
 
-import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
 import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
@@ -34,7 +33,6 @@ import static java.util.Objects.requireNonNull;
  * @author Jon Schneider
  * @author Trustin Heuiseung Lee
  */
-@Incubating(since = "1.0.0-rc.3")
 public class TimeWindowLatencyHistogram extends TimeWindowHistogramBase<LatencyStats, Histogram> implements AutoCloseable {
     private static Map<io.micrometer.core.instrument.distribution.pause.PauseDetector, PauseDetector> pauseDetectorCache =
         new ConcurrentHashMap<>();

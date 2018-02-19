@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.config;
 
-import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -42,7 +41,6 @@ import static java.util.stream.StreamSupport.stream;
  *
  * @author Jon Schneider
  */
-@Incubating(since = "1.0.0-rc.3")
 public interface MeterFilter {
     /**
      * Add common tags that are applied to every meter created afterward.
