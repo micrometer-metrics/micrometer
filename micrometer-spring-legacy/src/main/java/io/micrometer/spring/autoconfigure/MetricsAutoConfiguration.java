@@ -27,6 +27,7 @@ import io.micrometer.spring.autoconfigure.web.tomcat.TomcatMetricsConfiguration;
 import io.micrometer.spring.integration.SpringIntegrationMetrics;
 import io.micrometer.spring.scheduling.ScheduledMethodMetrics;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration;
 import org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration;
@@ -65,16 +66,12 @@ import org.springframework.integration.support.management.IntegrationManagementC
         RabbitAutoConfiguration.class,
         CacheAutoConfiguration.class
 })
+@AutoConfigureBefore(CompositeMeterRegistryAutoConfiguration.class)
 public class MetricsAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public Clock micrometerClock() {
         return Clock.SYSTEM;
-    }
-
-    @Bean
-    public static CompositeMeterRegistryPostProcessor compositeMeterRegistryPostProcessor() {
-        return new CompositeMeterRegistryPostProcessor();
     }
 
     @Bean

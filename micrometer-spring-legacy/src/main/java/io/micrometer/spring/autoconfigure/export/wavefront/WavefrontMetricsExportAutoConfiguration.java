@@ -16,6 +16,7 @@
 package io.micrometer.spring.autoconfigure.export.wavefront;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.spring.autoconfigure.CompositeMeterRegistryAutoConfiguration;
 import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
@@ -33,7 +34,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Configuration
-@AutoConfigureBefore(SimpleMetricsExportAutoConfiguration.class)
+@AutoConfigureBefore({CompositeMeterRegistryAutoConfiguration.class,
+        SimpleMetricsExportAutoConfiguration.class})
 @AutoConfigureAfter(MetricsAutoConfiguration.class)
 @ConditionalOnBean(Clock.class)
 @ConditionalOnClass(WavefrontMeterRegistry.class)
