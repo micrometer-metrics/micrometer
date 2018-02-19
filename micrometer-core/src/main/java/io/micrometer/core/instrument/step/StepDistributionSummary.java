@@ -30,8 +30,8 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
     private final TimeDecayingMax max;
 
     @SuppressWarnings("ConstantConditions")
-    public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig) {
-        super(id, clock, distributionStatisticConfig);
+    public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        super(id, clock, distributionStatisticConfig, scale);
         this.count = new StepLong(clock, distributionStatisticConfig.getExpiry().toMillis());
         this.total = new StepDouble(clock, distributionStatisticConfig.getExpiry().toMillis());
         this.max = new TimeDecayingMax(clock, distributionStatisticConfig);

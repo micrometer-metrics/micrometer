@@ -117,7 +117,7 @@ public abstract class MeterRegistry implements AutoCloseable {
      * @param id The id that uniquely identifies the distribution summary.
      * @return A new distribution summary.
      */
-    protected abstract DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig);
+    protected abstract DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale);
 
     /**
      * Build a new custom meter to be added to the registry. This is guaranteed to only be called if the custom meter doesn't already exist.
@@ -244,9 +244,9 @@ public abstract class MeterRegistry implements AutoCloseable {
      * @param distributionStatisticConfig Configuration that governs how distribution statistics are computed.
      * @return A new or existing distribution summary.
      */
-    DistributionSummary summary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+    DistributionSummary summary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
         return registerMeterIfNecessary(DistributionSummary.class, id, distributionStatisticConfig, (id2, filteredConfig) ->
-            newDistributionSummary(id2, filteredConfig.merge(defaultHistogramConfig())), NoopDistributionSummary::new);
+            newDistributionSummary(id2, filteredConfig.merge(defaultHistogramConfig()), scale), NoopDistributionSummary::new);
     }
 
     /**

@@ -94,6 +94,8 @@ public interface DistributionSummary extends Meter {
         @Nullable
         private String baseUnit;
 
+        private double scale = 1.0;
+
         private Builder(String name) {
             this.name = name;
         }
@@ -245,6 +247,17 @@ public interface DistributionSummary extends Meter {
         }
 
         /**
+         * Multiply values recorded to the distribution summary by a scaling factor.
+         *
+         * @param scale Factor to scale each recorded value by.
+         * @return This builder.
+         */
+        public Builder scale(double scale) {
+            this.scale = scale;
+            return this;
+        }
+
+        /**
          * Add the distribution summary to a single registry, or return an existing distribution summary in that registry. The returned
          * distribution summary will be unique for each registry, but each registry is guaranteed to only create one distribution summary
          * for the same combination of name and tags.
@@ -253,7 +266,7 @@ public interface DistributionSummary extends Meter {
          * @return A new or existing distribution summary.
          */
         public DistributionSummary register(MeterRegistry registry) {
-            return registry.summary(new Meter.Id(name, tags, baseUnit, description, Type.DISTRIBUTION_SUMMARY), distributionConfigBuilder.build());
+            return registry.summary(new Meter.Id(name, tags, baseUnit, description, Type.DISTRIBUTION_SUMMARY), distributionConfigBuilder.build(), scale);
         }
     }
 

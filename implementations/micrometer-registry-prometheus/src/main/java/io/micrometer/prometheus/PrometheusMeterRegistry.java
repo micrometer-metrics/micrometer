@@ -95,9 +95,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    public DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+    public DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
         MicrometerCollector collector = collectorByName(id, Collector.Type.SUMMARY);
-        PrometheusDistributionSummary summary = new PrometheusDistributionSummary(id, clock, distributionStatisticConfig);
+        PrometheusDistributionSummary summary = new PrometheusDistributionSummary(id, clock, distributionStatisticConfig, scale);
         List<String> tagValues = tagValues(id);
 
         collector.add((conventionName, tagKeys) -> {

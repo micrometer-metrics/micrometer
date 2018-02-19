@@ -100,7 +100,8 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+    protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+                                                                                       double scale) {
         com.netflix.spectator.api.DistributionSummary internalSummary = registry.distributionSummary(spectatorId(id));
 
         if (distributionStatisticConfig.isPercentileHistogram()) {
@@ -108,7 +109,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
             PercentileDistributionSummary.get(registry, spectatorId(id));
         }
 
-        SpectatorDistributionSummary summary = new SpectatorDistributionSummary(id, internalSummary, clock, distributionStatisticConfig);
+        SpectatorDistributionSummary summary = new SpectatorDistributionSummary(id, internalSummary, clock, distributionStatisticConfig, scale);
 
         for (long sla : distributionStatisticConfig.getSlaBoundaries()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "sla", Long.toString(sla)), sla, summary::histogramCountAtValue);

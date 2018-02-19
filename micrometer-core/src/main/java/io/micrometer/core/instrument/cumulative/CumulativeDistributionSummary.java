@@ -39,8 +39,8 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
     private final DoubleAdder total;
     private final TimeDecayingMax max;
 
-    public CumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig) {
-        super(id, clock, distributionStatisticConfig);
+    public CumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        super(id, clock, distributionStatisticConfig, scale);
         this.count = new AtomicLong();
         this.total = new DoubleAdder();
         this.max = new TimeDecayingMax(clock, distributionStatisticConfig);

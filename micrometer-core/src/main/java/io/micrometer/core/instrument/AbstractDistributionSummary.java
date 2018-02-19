@@ -24,18 +24,20 @@ import io.micrometer.core.lang.Nullable;
 public abstract class AbstractDistributionSummary extends AbstractMeter implements DistributionSummary {
     private final TimeWindowHistogram histogram;
     private final DistributionStatisticConfig distributionStatisticConfig;
+    private final double scale;
 
-    protected AbstractDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig) {
+    protected AbstractDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
         super(id);
         this.histogram = new TimeWindowHistogram(clock, distributionStatisticConfig);
         this.distributionStatisticConfig = distributionStatisticConfig;
+        this.scale = scale;
     }
 
     @Override
     public final void record(double amount) {
         if (amount >= 0) {
-            histogram.recordDouble(amount);
-            recordNonNegative(amount);
+            histogram.recordDouble(scale * amount);
+            recordNonNegative(scale * amount);
         }
     }
 

@@ -25,10 +25,12 @@ import io.micrometer.core.instrument.noop.NoopDistributionSummary;
 class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSummary> implements DistributionSummary {
 
     private final DistributionStatisticConfig distributionStatisticConfig;
+    private final double scale;
 
-    CompositeDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+    CompositeDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
         super(id);
         this.distributionStatisticConfig = distributionStatisticConfig;
+        this.scale = scale;
     }
 
     @Override
@@ -85,6 +87,7 @@ class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSu
             .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
             .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
             .sla(distributionStatisticConfig.getSlaBoundaries())
+            .scale(scale)
             .register(registry);
     }
 }

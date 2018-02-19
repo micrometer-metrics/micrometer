@@ -31,8 +31,9 @@ public class SpectatorDistributionSummary extends AbstractDistributionSummary {
     SpectatorDistributionSummary(Id id,
                                  com.netflix.spectator.api.DistributionSummary distributionSummary,
                                  Clock clock,
-                                 DistributionStatisticConfig distributionStatisticConfig) {
-        super(id, clock, distributionStatisticConfig);
+                                 DistributionStatisticConfig distributionStatisticConfig,
+                                 double scale) {
+        super(id, clock, distributionStatisticConfig, scale);
         this.summary = distributionSummary;
     }
 

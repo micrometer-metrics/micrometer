@@ -32,8 +32,9 @@ public class DropwizardDistributionSummary extends AbstractDistributionSummary {
     private final DoubleAdder totalAmount = new DoubleAdder();
     private final TimeDecayingMax max;
 
-    DropwizardDistributionSummary(Id id, Clock clock, com.codahale.metrics.Histogram impl, DistributionStatisticConfig distributionStatisticConfig) {
-        super(id, clock, distributionStatisticConfig);
+    DropwizardDistributionSummary(Id id, Clock clock, com.codahale.metrics.Histogram impl, DistributionStatisticConfig distributionStatisticConfig,
+                                  double scale) {
+        super(id, clock, distributionStatisticConfig, scale);
         this.impl = impl;
         this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
     }

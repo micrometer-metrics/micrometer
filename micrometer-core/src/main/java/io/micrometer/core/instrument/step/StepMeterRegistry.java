@@ -113,8 +113,8 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        DistributionSummary summary = new StepDistributionSummary(id, clock, distributionStatisticConfig);
+    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        DistributionSummary summary = new StepDistributionSummary(id, clock, distributionStatisticConfig, scale);
 
         if (distributionStatisticConfig.getPercentiles() != null) {
             for (double percentile : distributionStatisticConfig.getPercentiles()) {

@@ -94,8 +94,8 @@ public class DropwizardMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        DropwizardDistributionSummary summary = new DropwizardDistributionSummary(id, clock, registry.histogram(hierarchicalName(id)), distributionStatisticConfig);
+    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        DropwizardDistributionSummary summary = new DropwizardDistributionSummary(id, clock, registry.histogram(hierarchicalName(id)), distributionStatisticConfig, scale);
 
         if (distributionStatisticConfig.getPercentiles() != null) {
             for (double percentile : distributionStatisticConfig.getPercentiles()) {

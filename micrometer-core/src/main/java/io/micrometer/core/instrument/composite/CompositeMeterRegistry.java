@@ -60,8 +60,8 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
-        return new CompositeDistributionSummary(id, distributionStatisticConfig);
+    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        return new CompositeDistributionSummary(id, distributionStatisticConfig, scale);
     }
 
     @Override

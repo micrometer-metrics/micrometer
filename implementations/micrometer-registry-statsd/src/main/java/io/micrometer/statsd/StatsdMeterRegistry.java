@@ -161,8 +161,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @SuppressWarnings("ConstantConditions")
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig
-            distributionStatisticConfig) {
-        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), publisher, clock, distributionStatisticConfig);
+            distributionStatisticConfig, double scale) {
+        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), publisher, clock, distributionStatisticConfig, scale);
 
         if (distributionStatisticConfig.getPercentiles() != null) {
             for (double percentile : distributionStatisticConfig.getPercentiles()) {

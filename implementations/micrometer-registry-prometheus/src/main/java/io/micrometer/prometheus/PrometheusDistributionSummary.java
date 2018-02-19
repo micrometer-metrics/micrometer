@@ -34,8 +34,8 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     private TimeDecayingMax max;
     private final TimeWindowHistogram percentilesHistogram;
 
-    PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig) {
-        super(id, clock, distributionStatisticConfig);
+    PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        super(id, clock, distributionStatisticConfig, scale);
         this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
         this.percentilesHistogram = new TimeWindowHistogram(clock,
                 DistributionStatisticConfig.builder()

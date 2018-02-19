@@ -51,7 +51,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig) {
+    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
         DistributionStatisticConfig merged = distributionStatisticConfig.merge(DistributionStatisticConfig.builder()
             .expiry(config.step())
             .build());
@@ -59,11 +59,11 @@ public class SimpleMeterRegistry extends MeterRegistry {
         DistributionSummary summary;
         switch (config.mode()) {
             case CUMULATIVE:
-                summary = new CumulativeDistributionSummary(id, clock, merged);
+                summary = new CumulativeDistributionSummary(id, clock, merged, scale);
                 break;
             case STEP:
             default:
-                summary = new StepDistributionSummary(id, clock, merged);
+                summary = new StepDistributionSummary(id, clock, merged, scale);
                 break;
         }
 
