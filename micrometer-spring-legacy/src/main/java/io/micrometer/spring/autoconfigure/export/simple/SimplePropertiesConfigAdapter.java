@@ -38,11 +38,6 @@ public class SimplePropertiesConfigAdapter extends PropertiesConfigAdapter<Simpl
     }
 
     @Override
-    public boolean enabled() {
-        return get(SimpleProperties::getEnabled, SimpleConfig.super::enabled);
-    }
-
-    @Override
     public Duration step() {
         return get(SimpleProperties::getStep, SimpleConfig.super::step);
     }

@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument.simple;
 
-import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.instrument.config.MeterRegistryConfig;
 
 import java.time.Duration;
 
-public interface SimpleConfig extends StepRegistryConfig {
+public interface SimpleConfig extends MeterRegistryConfig {
     SimpleConfig DEFAULT = k -> null;
 
     @Override
