@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class Search {
+public final class Search {
     private final MeterRegistry registry;
     private final String name;
     private final List<Tag> tags = new ArrayList<>();

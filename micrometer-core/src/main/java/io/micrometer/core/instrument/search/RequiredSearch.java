@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 /**
  * Search that requires the search terms are satisfiable, or an {@link MeterNotFoundException} is thrown.
  */
-public class RequiredSearch {
+public final class RequiredSearch {
     private final MeterRegistry registry;
     private final String name;
     private final List<Tag> tags = new ArrayList<>();
