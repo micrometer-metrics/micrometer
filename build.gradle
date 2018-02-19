@@ -33,11 +33,6 @@ subprojects {
     apply plugin: 'checkstyle'
     apply plugin: 'spring.lock'
 
-    configurations {
-        optional
-        compile.extendsFrom(optional)
-    }
-
     compileJava.options.encoding = 'UTF-8'
     compileTestJava.options.encoding = 'UTF-8'
 
