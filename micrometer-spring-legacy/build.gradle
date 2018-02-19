@@ -8,7 +8,7 @@ apply plugin: 'nebula.facet'
 
 dependencyManagement {
     imports {
-        mavenBom 'org.springframework.boot:spring-boot-dependencies:1.5.4.RELEASE'
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:1.5.10.RELEASE'
     }
     dependencies {
         dependency 'org.assertj:assertj-core:3.8.0'
@@ -24,13 +24,13 @@ repositories {
 dependencies {
     compile project(':micrometer-core')
 
-    compile 'org.springframework:spring-beans', optional lock '4.3.9.RELEASE'
-    compile 'org.springframework.boot:spring-boot', optional lock '1.5.4.RELEASE'
-    compile 'org.springframework.boot:spring-boot-actuator', optional lock '1.5.4.RELEASE'
-    compile 'org.springframework.boot:spring-boot-starter-aop', optional lock '1.5.4.RELEASE'
-    compile 'org.springframework.boot:spring-boot-starter-security', optional lock '1.5.4.RELEASE'
-    compile 'org.springframework:spring-webmvc', optional lock '4.3.9.RELEASE'
-    compile 'org.springframework:spring-web', optional lock '4.3.9.RELEASE'
+    compile 'org.springframework:spring-beans', optional lock '4.3.14.RELEASE'
+    compile 'org.springframework.boot:spring-boot', optional lock '1.5.10.RELEASE'
+    compile 'org.springframework.boot:spring-boot-actuator', optional lock '1.5.10.RELEASE'
+    compile 'org.springframework.boot:spring-boot-starter-aop', optional lock '1.5.10.RELEASE'
+    compile 'org.springframework.boot:spring-boot-starter-security', optional lock '1.5.10.RELEASE'
+    compile 'org.springframework:spring-webmvc', optional lock '4.3.14.RELEASE'
+    compile 'org.springframework:spring-web', optional lock '4.3.14.RELEASE'
     compile 'javax.servlet:javax.servlet-api:3.1.0', optional
     compile 'org.aspectj:aspectjweaver:1.8.+', optional lock '1.8.13'
     compile 'io.prometheus:simpleclient_pushgateway:0.2.0', optional
@@ -41,21 +41,21 @@ dependencies {
 
     compile project(":micrometer-jersey2"), optional
 
-    compile 'org.springframework.integration:spring-integration-core', optional lock '4.3.10.RELEASE'
+    compile 'org.springframework.integration:spring-integration-core', optional lock '4.3.14.RELEASE'
 
     // to validate auto-completion on configuration properties
-    compileOnly 'org.springframework.boot:spring-boot-configuration-processor' lock '1.5.4.RELEASE'
-    apt 'org.springframework.boot:spring-boot-configuration-processor' lock '1.5.4.RELEASE'
+    compileOnly 'org.springframework.boot:spring-boot-configuration-processor' lock '1.5.10.RELEASE'
+    apt 'org.springframework.boot:spring-boot-configuration-processor' lock '1.5.10.RELEASE'
 
     testCompile project(':micrometer-test')
 
-    testCompile 'org.springframework.boot:spring-boot-starter-web' lock '1.5.4.RELEASE'
-    testCompile 'org.springframework.boot:spring-boot-actuator' lock '1.5.4.RELEASE'
-    testCompile 'org.springframework.boot:spring-boot-starter-test' lock '1.5.4.RELEASE'
+    testCompile 'org.springframework.boot:spring-boot-starter-web' lock '1.5.10.RELEASE'
+    testCompile 'org.springframework.boot:spring-boot-actuator' lock '1.5.10.RELEASE'
+    testCompile 'org.springframework.boot:spring-boot-starter-test' lock '1.5.10.RELEASE'
 
     // for testing DataSource metrics
     testCompile 'org.hsqldb:hsqldb' lock '2.3.5'
-    testCompile 'org.springframework.boot:spring-boot-starter-jdbc' lock '1.5.4.RELEASE'
+    testCompile 'org.springframework.boot:spring-boot-starter-jdbc' lock '1.5.10.RELEASE'
     testCompile 'com.zaxxer:HikariCP' lock '2.5.1'
 
     // for use in mock servers
@@ -66,9 +66,9 @@ dependencies {
 
     testRuntime 'org.apache.httpcomponents:httpclient:4.5.+' lock '4.5.5'
 
-    testCompile 'org.springframework.integration:spring-integration-java-dsl' lock '1.2.2.RELEASE'
-    testCompile 'org.springframework.integration:spring-integration-ws' lock '4.3.10.RELEASE'
-    testCompile 'org.springframework.integration:spring-integration-xml' lock '4.3.10.RELEASE'
+    testCompile 'org.springframework.integration:spring-integration-java-dsl' lock '1.2.3.RELEASE'
+    testCompile 'org.springframework.integration:spring-integration-ws' lock '4.3.14.RELEASE'
+    testCompile 'org.springframework.integration:spring-integration-xml' lock '4.3.14.RELEASE'
 
-    testCompile 'org.springframework.security:spring-security-test' lock '4.2.3.RELEASE'
+    testCompile 'org.springframework.security:spring-security-test' lock '4.2.4.RELEASE'
 }
