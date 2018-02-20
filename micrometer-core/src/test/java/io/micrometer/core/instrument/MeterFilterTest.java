@@ -23,6 +23,7 @@ import io.micrometer.core.lang.Nullable;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Collections.emptyList;
@@ -127,8 +128,26 @@ class MeterFilterTest {
     }
 
     @Test
-    void minExpected() {
+    void minExpectedOnSummary() {
         MeterFilter filter = MeterFilter.minExpected("name", 100);
+        Meter.Id timer = new Meter.Id("name", emptyList(), null, null, Meter.Type.DISTRIBUTION_SUMMARY);
+
+        assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
+                .satisfies(conf -> assertThat(conf.getMinimumExpectedValue()).isEqualTo(100));
+    }
+
+    @Test
+    void maxExpectedOnSummary() {
+        MeterFilter filter = MeterFilter.maxExpected("name", 100);
+        Meter.Id timer = new Meter.Id("name", emptyList(), null, null, Meter.Type.DISTRIBUTION_SUMMARY);
+
+        assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
+                .satisfies(conf -> assertThat(conf.getMaximumExpectedValue()).isEqualTo(100));
+    }
+
+    @Test
+    void minExpectedOnTimer() {
+        MeterFilter filter = MeterFilter.minExpected("name", Duration.ofNanos(100));
         Meter.Id timer = new Meter.Id("name", emptyList(), null, null, Meter.Type.TIMER);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
@@ -136,8 +155,8 @@ class MeterFilterTest {
     }
 
     @Test
-    void maxExpected() {
-        MeterFilter filter = MeterFilter.maxExpected("name", 100);
+    void maxExpectedOnTimer() {
+        MeterFilter filter = MeterFilter.maxExpected("name", Duration.ofNanos(100));
         Meter.Id timer = new Meter.Id("name", emptyList(), null, null, Meter.Type.TIMER);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))

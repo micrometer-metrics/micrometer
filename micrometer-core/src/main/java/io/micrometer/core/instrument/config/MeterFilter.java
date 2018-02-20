@@ -15,12 +15,11 @@
  */
 package io.micrometer.core.instrument.config;
 
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.lang.Nullable;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -264,11 +263,40 @@ public interface MeterFilter {
         return deny(id -> id.getName().startsWith(prefix));
     }
 
+    /**
+     * Set a maximum expected value on any {@link Timer} whose name begins with the given prefix.
+     *
+     * @param prefix Apply the maximum only to timers whose name begins with this prefix.
+     * @param max    The maximum expected value of the timer.
+     * @return A filter that applies a maximum expected value to a timer.
+     */
+    static MeterFilter maxExpected(String prefix, Duration max) {
+        return new MeterFilter() {
+            @Override
+            public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
+                if (Meter.Type.TIMER.equals(id.getType()) && id.getName().startsWith(prefix)) {
+                    return DistributionStatisticConfig.builder()
+                            .maximumExpectedValue(max.toNanos())
+                            .build()
+                            .merge(config);
+                }
+                return config;
+            }
+        };
+    }
+
+    /**
+     * Set a maximum expected value on any {@link DistributionSummary} whose name begins with the given prefix.
+     *
+     * @param prefix Apply the maximum only to distribution summaries whose name begins with this prefix.
+     * @param max    The maximum expected value of the distribution summmary.
+     * @return A filter that applies a maximum expected value to a distribution summary.
+     */
     static MeterFilter maxExpected(String prefix, long max) {
         return new MeterFilter() {
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
-                if (id.getName().startsWith(prefix)) {
+                if (Meter.Type.DISTRIBUTION_SUMMARY.equals(id.getType()) && id.getName().startsWith(prefix)) {
                     return DistributionStatisticConfig.builder()
                             .maximumExpectedValue(max)
                             .build()
@@ -279,11 +307,40 @@ public interface MeterFilter {
         };
     }
 
+    /**
+     * Set a minimum expected value on any {@link Timer} whose name begins with the given prefix.
+     *
+     * @param prefix Apply the minimum only to timers whose name begins with this prefix.
+     * @param min    The minimum expected value of the timer.
+     * @return A filter that applies a minimum expected value to a timer.
+     */
+    static MeterFilter minExpected(String prefix, Duration min) {
+        return new MeterFilter() {
+            @Override
+            public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
+                if (Meter.Type.TIMER.equals(id.getType()) && id.getName().startsWith(prefix)) {
+                    return DistributionStatisticConfig.builder()
+                            .minimumExpectedValue(min.toNanos())
+                            .build()
+                            .merge(config);
+                }
+                return config;
+            }
+        };
+    }
+
+    /**
+     * Set a minimum expected value on any {@link DistributionSummary} whose name begins with the given prefix.
+     *
+     * @param prefix Apply the minimum only to distribution summaries whose name begins with this prefix.
+     * @param min    The minimum expected value of the distribution summmary.
+     * @return A filter that applies a minimum expected value to a distribution summary.
+     */
     static MeterFilter minExpected(String prefix, long min) {
         return new MeterFilter() {
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
-                if (id.getName().startsWith(prefix)) {
+                if (Meter.Type.DISTRIBUTION_SUMMARY.equals(id.getType()) && id.getName().startsWith(prefix)) {
                     return DistributionStatisticConfig.builder()
                             .minimumExpectedValue(min)
                             .build()
