@@ -55,7 +55,7 @@ public final class RestTemplateExchangeTags {
      * @return the uri tag
      */
     public static Tag uri(HttpRequest request) {
-        return Tag.of("uri", stripUri(request.getURI().toString()));
+        return Tag.of("uri", ensureLeadingSlash(stripUri(request.getURI().toString())));
     }
 
     /**
@@ -66,11 +66,19 @@ public final class RestTemplateExchangeTags {
      */
     public static Tag uri(String uriTemplate) {
         String uri = StringUtils.hasText(uriTemplate) ? uriTemplate : "none";
-        return Tag.of("uri", stripUri(uri));
+        return Tag.of("uri", ensureLeadingSlash(stripUri(uri)));
     }
 
     private static String stripUri(String uri) {
         return uri.replaceAll("^https?://[^/]+/", "");
+    }
+
+    // This normalization improves tag value matching when one code path requests test/{id} and another
+    // requests /test/{id}
+    private static String ensureLeadingSlash(@Nullable String uri) {
+        if (uri == null)
+            return "/";
+        return uri.startsWith("/") ? uri : "/" + uri;
     }
 
     /**

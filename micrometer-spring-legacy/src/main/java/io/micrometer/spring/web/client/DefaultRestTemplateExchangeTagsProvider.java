@@ -41,5 +41,4 @@ public class DefaultRestTemplateExchangeTagsProvider
             RestTemplateExchangeTags.status(response),
             RestTemplateExchangeTags.clientName(request));
     }
-
 }

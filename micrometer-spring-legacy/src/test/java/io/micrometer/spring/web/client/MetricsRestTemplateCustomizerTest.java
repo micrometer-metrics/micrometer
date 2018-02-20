@@ -31,8 +31,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.List;
 
 import static java.util.stream.StreamSupport.stream;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,25 +49,25 @@ public class MetricsRestTemplateCustomizerTest {
     @Before
     public void before() {
         MetricsRestTemplateCustomizer customizer = new MetricsRestTemplateCustomizer(
-            registry, new DefaultRestTemplateExchangeTagsProvider(), "http.client.requests");
+                registry, new DefaultRestTemplateExchangeTagsProvider(), "http.client.requests");
         customizer.customize(restTemplate);
     }
 
     @Test
     public void interceptRestTemplate() {
         mockServer.expect(MockRestRequestMatchers.requestTo("/test/123"))
-            .andExpect(MockRestRequestMatchers.method(HttpMethod.GET))
-            .andRespond(MockRestResponseCreators.withSuccess("OK",
-                MediaType.APPLICATION_JSON));
+                .andExpect(MockRestRequestMatchers.method(HttpMethod.GET))
+                .andRespond(MockRestResponseCreators.withSuccess("OK",
+                        MediaType.APPLICATION_JSON));
 
         String result = restTemplate.getForObject("/test/{id}", String.class, 123);
 
         assertThat(registry.get("http.client.requests").meters())
-            .anySatisfy(m -> assertThat(stream(m.getId().getTags().spliterator(), false).map(Tag::getKey)).doesNotContain("bucket"));
+                .anySatisfy(m -> assertThat(stream(m.getId().getTags().spliterator(), false).map(Tag::getKey)).doesNotContain("bucket"));
 
         assertThat(registry.get("http.client.requests")
-            .tags("method", "GET", "uri", "/test/{id}", "status", "200")
-            .timer().count()).isEqualTo(1L);
+                .tags("method", "GET", "uri", "/test/{id}", "status", "200")
+                .timer().count()).isEqualTo(1L);
 
         assertThat(result).isEqualTo("OK");
 
@@ -82,14 +80,13 @@ public class MetricsRestTemplateCustomizerTest {
     @Test
     public void normalizeUriToContainLeadingSlash() {
         mockServer.expect(MockRestRequestMatchers.requestTo("test/123"))
-            .andExpect(MockRestRequestMatchers.method(HttpMethod.GET))
-            .andRespond(MockRestResponseCreators.withSuccess("OK",
-                MediaType.APPLICATION_JSON));
+                .andExpect(MockRestRequestMatchers.method(HttpMethod.GET))
+                .andRespond(MockRestResponseCreators.withSuccess("OK",
+                        MediaType.APPLICATION_JSON));
 
         String result = restTemplate.getForObject("test/{id}", String.class, 123);
 
-        assertThat(registry.find("http.client.requests").tags("uri", "/test/{id}").timer())
-            .isNotNull();
+        registry.get("http.client.requests").tags("uri", "/test/{id}").timer();
         assertThat(result).isEqualTo("OK");
 
         mockServer.verify();
@@ -98,18 +95,15 @@ public class MetricsRestTemplateCustomizerTest {
     @Test
     public void interceptRestTemplateWithUri() throws URISyntaxException {
         mockServer.expect(MockRestRequestMatchers.requestTo("http://localhost/test/123"))
-            .andExpect(MockRestRequestMatchers.method(HttpMethod.GET))
-            .andRespond(MockRestResponseCreators.withSuccess("OK",
-                MediaType.APPLICATION_JSON));
+                .andExpect(MockRestRequestMatchers.method(HttpMethod.GET))
+                .andRespond(MockRestResponseCreators.withSuccess("OK",
+                        MediaType.APPLICATION_JSON));
 
         String result = restTemplate.getForObject(new URI("http://localhost/test/123"), String.class);
 
-        List<Tag> tags = Collections.emptyList();
-        registry.find("http.client.requests").tags(tags);
-        
-        assertThat(registry.find("http.client.requests").tags("uri", "/test/123").timer())
-            .isNotNull();
         assertThat(result).isEqualTo("OK");
+
+        registry.get("http.client.requests").tags("uri", "/test/123").timer();
 
         mockServer.verify();
     }

@@ -21,11 +21,7 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.Nullable;
 import org.springframework.core.NamedThreadLocal;
 import org.springframework.http.HttpRequest;
-import org.springframework.http.client.AsyncClientHttpRequestExecution;
-import org.springframework.http.client.AsyncClientHttpRequestInterceptor;
-import org.springframework.http.client.ClientHttpRequestExecution;
-import org.springframework.http.client.ClientHttpRequestInterceptor;
-import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.client.*;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.web.util.UriTemplateHandler;
@@ -45,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 class MetricsClientHttpRequestInterceptor implements ClientHttpRequestInterceptor, AsyncClientHttpRequestInterceptor {
 
     private static final ThreadLocal<String> urlTemplateHolder = new NamedThreadLocal<>(
-        "Rest Template URL Template");
+            "Rest Template URL Template");
 
     private final MeterRegistry meterRegistry;
     private final RestTemplateExchangeTagsProvider tagProvider;
@@ -60,7 +56,7 @@ class MetricsClientHttpRequestInterceptor implements ClientHttpRequestIntercepto
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] body,
                                         ClientHttpRequestExecution execution) throws IOException {
-        final String urlTemplate = ensureLeadingSlash(urlTemplateHolder.get());
+        final String urlTemplate = urlTemplateHolder.get();
         urlTemplateHolder.remove();
         final Clock clock = meterRegistry.config().clock();
         final long startTime = clock.monotonicTime();
@@ -70,14 +66,14 @@ class MetricsClientHttpRequestInterceptor implements ClientHttpRequestIntercepto
             return response;
         } finally {
             getTimeBuilder(urlTemplate, request, response).register(this.meterRegistry)
-                .record(clock.monotonicTime() - startTime, TimeUnit.NANOSECONDS);
+                    .record(clock.monotonicTime() - startTime, TimeUnit.NANOSECONDS);
         }
     }
 
     @Override
     public ListenableFuture<ClientHttpResponse> intercept(HttpRequest request, byte[] body,
                                                           AsyncClientHttpRequestExecution execution) throws IOException {
-        final String urlTemplate = ensureLeadingSlash(urlTemplateHolder.get());
+        final String urlTemplate = urlTemplateHolder.get();
         urlTemplateHolder.remove();
         final Clock clock = meterRegistry.config().clock();
         final long startTime = clock.monotonicTime();
@@ -86,20 +82,20 @@ class MetricsClientHttpRequestInterceptor implements ClientHttpRequestIntercepto
             future = execution.executeAsync(request, body);
         } catch (IOException e) {
             getTimeBuilder(urlTemplate, request, null).register(meterRegistry)
-                .record(clock.monotonicTime() - startTime, TimeUnit.NANOSECONDS);
+                    .record(clock.monotonicTime() - startTime, TimeUnit.NANOSECONDS);
             throw e;
         }
         future.addCallback(new ListenableFutureCallback<ClientHttpResponse>() {
             @Override
             public void onSuccess(final ClientHttpResponse response) {
                 getTimeBuilder(urlTemplate, request, response).register(meterRegistry)
-                    .record(clock.monotonicTime() - startTime, TimeUnit.NANOSECONDS);
+                        .record(clock.monotonicTime() - startTime, TimeUnit.NANOSECONDS);
             }
 
             @Override
             public void onFailure(final Throwable ex) {
                 getTimeBuilder(urlTemplate, request, null).register(meterRegistry)
-                    .record(clock.monotonicTime() - startTime, TimeUnit.NANOSECONDS);
+                        .record(clock.monotonicTime() - startTime, TimeUnit.NANOSECONDS);
             }
         });
         return future;
@@ -125,15 +121,7 @@ class MetricsClientHttpRequestInterceptor implements ClientHttpRequestIntercepto
     private Timer.Builder getTimeBuilder(String urlTemplate, HttpRequest request,
                                          @Nullable ClientHttpResponse response) {
         return Timer.builder(this.metricName)
-            .tags(this.tagProvider.getTags(urlTemplate, request, response))
-            .description("Timer of RestTemplate operation");
-    }
-
-    // This normalization improves tag value matching when one code path requests test/{id} and another
-    // requests /test/{id}
-    private static String ensureLeadingSlash(@Nullable String url) {
-        if (url == null)
-            return "/";
-        return url.startsWith("/") ? url : "/" + url;
+                .tags(this.tagProvider.getTags(urlTemplate, request, response))
+                .description("Timer of RestTemplate operation");
     }
 }
