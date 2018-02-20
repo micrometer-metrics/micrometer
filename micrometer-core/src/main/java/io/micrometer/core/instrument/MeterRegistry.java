@@ -574,7 +574,7 @@ public abstract class MeterRegistry implements AutoCloseable {
     /**
      * Access to configuration options for this registry.
      */
-    public final class Config {
+    public class Config {
         /**
          * Append a list of common tags to apply to all metrics reported to the monitoring system.
          *
