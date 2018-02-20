@@ -29,6 +29,11 @@ import org.springframework.test.web.client.match.MockRestRequestMatchers;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.List;
+
 import static java.util.stream.StreamSupport.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -84,6 +89,25 @@ public class MetricsRestTemplateCustomizerTest {
         String result = restTemplate.getForObject("test/{id}", String.class, 123);
 
         assertThat(registry.find("http.client.requests").tags("uri", "/test/{id}").timer())
+            .isNotNull();
+        assertThat(result).isEqualTo("OK");
+
+        mockServer.verify();
+    }
+
+    @Test
+    public void interceptRestTemplateWithUri() throws URISyntaxException {
+        mockServer.expect(MockRestRequestMatchers.requestTo("http://localhost/test/123"))
+            .andExpect(MockRestRequestMatchers.method(HttpMethod.GET))
+            .andRespond(MockRestResponseCreators.withSuccess("OK",
+                MediaType.APPLICATION_JSON));
+
+        String result = restTemplate.getForObject(new URI("http://localhost/test/123"), String.class);
+
+        List<Tag> tags = Collections.emptyList();
+        registry.find("http.client.requests").tags(tags);
+        
+        assertThat(registry.find("http.client.requests").tags("uri", "/test/123").timer())
             .isNotNull();
         assertThat(result).isEqualTo("OK");
 
