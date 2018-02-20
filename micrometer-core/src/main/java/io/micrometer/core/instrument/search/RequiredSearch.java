@@ -16,11 +16,13 @@
 package io.micrometer.core.instrument.search;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -29,12 +31,25 @@ import java.util.stream.Stream;
  */
 public final class RequiredSearch {
     private final MeterRegistry registry;
-    private final String name;
     private final List<Tag> tags = new ArrayList<>();
+    private Predicate<String> nameMatches = n -> true;
 
-    public RequiredSearch(MeterRegistry registry, String name) {
+    @Nullable
+    private String exactNameMatch;
+
+    private RequiredSearch(MeterRegistry registry) {
         this.registry = registry;
-        this.name = name;
+    }
+
+    public RequiredSearch name(String exactName) {
+        this.nameMatches = n -> n.equals(exactName);
+        this.exactNameMatch = exactName;
+        return this;
+    }
+
+    public RequiredSearch name(Predicate<String> nameMatches) {
+        this.nameMatches = nameMatches;
+        return this;
     }
 
     public RequiredSearch tags(Iterable<Tag> tags) {
@@ -100,21 +115,20 @@ public final class RequiredSearch {
             return meter.get();
         }
 
-        throw new MeterNotFoundException(name, tags, clazz);
+        throw new MeterNotFoundException(exactNameMatch, tags, clazz);
     }
 
     public Collection<Meter> meters() {
-        Stream<Meter> meterStream =
-            registry.getMeters().stream().filter(m -> m.getId().getName().equals(name));
+        Stream<Meter> meterStream = registry.getMeters().stream().filter(m -> nameMatches.test(m.getId().getName()));
 
         if (!tags.isEmpty()) {
-            meterStream = meterStream.filter(m -> {
-                final List<Tag> idTags = new ArrayList<>();
-                m.getId().getTags().forEach(idTags::add);
-                return idTags.containsAll(tags);
-            });
+            meterStream = meterStream.filter(m -> m.getId().getTags().containsAll(tags));
         }
 
         return meterStream.collect(Collectors.toList());
+    }
+
+    public static RequiredSearch search(MeterRegistry registry) {
+        return new RequiredSearch(registry);
     }
 }

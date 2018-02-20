@@ -51,8 +51,7 @@ public interface MeterFilter {
         return new MeterFilter() {
             @Override
             public Meter.Id map(Meter.Id id) {
-                List<Tag> allTags = new ArrayList<>();
-                id.getTags().forEach(allTags::add);
+                List<Tag> allTags = new ArrayList<>(id.getTags());
                 tags.forEach(allTags::add);
                 return new Meter.Id(id.getName(), allTags, id.getBaseUnit(), id.getDescription(), id.getType());
             }
@@ -141,6 +140,20 @@ public interface MeterFilter {
     }
 
     /**
+     * Can be used to build a whitelist of metrics matching certain criteria. Opposite of {@link #deny(Predicate)}.
+     *
+     * @param iff When a meter id matches, allow its inclusion, otherwise deny.
+     */
+    static MeterFilter denyUnless(Predicate<Meter.Id> iff) {
+        return new MeterFilter() {
+            @Override
+            public MeterFilterReply accept(Meter.Id id) {
+                return iff.test(id) ? MeterFilterReply.NEUTRAL : MeterFilterReply.DENY;
+            }
+        };
+    }
+
+    /**
      * When the given predicate is {@code true}, the meter should be present in published metrics.
      *
      * @param iff When a meter id matches, guarantee its inclusion in published metrics.
@@ -157,6 +170,7 @@ public interface MeterFilter {
 
     /**
      * When the given predicate is {@code true}, the meter should NOT be present in published metrics.
+     * Opposite of {@link #denyUnless(Predicate)}.
      *
      * @param iff When a meter id matches, guarantee its exclusion in published metrics.
      * @return A filter that guarantees the exclusion of matching meters.

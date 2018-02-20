@@ -54,4 +54,26 @@ public final class ValueAtPercentile {
     public static ValueAtPercentile of(double percentile, double value) {
         return new ValueAtPercentile(percentile, value);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ValueAtPercentile that = (ValueAtPercentile) o;
+
+        if (Double.compare(that.percentile, percentile) != 0) return false;
+        return Double.compare(that.value, value) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        int result;
+        long temp;
+        temp = Double.doubleToLongBits(percentile);
+        result = (int) (temp ^ (temp >>> 32));
+        temp = Double.doubleToLongBits(value);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        return result;
+    }
 }

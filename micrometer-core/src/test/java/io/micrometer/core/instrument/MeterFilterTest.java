@@ -162,4 +162,14 @@ class MeterFilterTest {
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
                 .satisfies(conf -> assertThat(conf.getMaximumExpectedValue()).isEqualTo(100));
     }
+
+    @Test
+    void denyUnless() {
+        Meter.Id id1 = new Meter.Id("my.counter", emptyList(), null, null, Meter.Type.COUNTER);
+        Meter.Id id2 = new Meter.Id("other.counter", emptyList(), null, null, Meter.Type.COUNTER);
+
+        MeterFilter filter = MeterFilter.denyUnless(id -> id.getName().startsWith("my"));
+        assertThat(filter.accept(id1)).isEqualTo(MeterFilterReply.NEUTRAL);
+        assertThat(filter.accept(id2)).isEqualTo(MeterFilterReply.DENY);
+    }
 }

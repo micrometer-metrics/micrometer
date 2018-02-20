@@ -18,21 +18,29 @@ package io.micrometer.cloudwatch;
 import com.amazonaws.handlers.AsyncHandler;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
 import com.amazonaws.services.cloudwatch.model.*;
+import io.micrometer.cloudwatch.aggregate.CloudWatchAggregateBuilder;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
+import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -41,11 +49,13 @@ import static java.util.stream.StreamSupport.stream;
 
 /**
  * @author Dawid Kublik
+ * @author Jon Schneider
  */
 public class CloudWatchMeterRegistry extends StepMeterRegistry {
     private final CloudWatchConfig config;
     private final AmazonCloudWatchAsync amazonCloudWatchAsync;
     private final Logger logger = LoggerFactory.getLogger(CloudWatchMeterRegistry.class);
+    private final Collection<CloudWatchAggregateBuilder> aggregateBuilders = new CopyOnWriteArrayList<>();
 
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
                                    AmazonCloudWatchAsync amazonCloudWatchAsync) {
@@ -63,6 +73,25 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         start(threadFactory);
     }
 
+    /**
+     * Register a new metric aggregator.
+     * <p>
+     * 1. If a meter is not part of an aggregate, it will be published in full detail.
+     * 2. If a meter is part of any aggregate such that {@code alsoPublishDetail = true}, then it will be published in full detail.
+     * 3. Aggregates publish under a meter id that is equal to those set of tags that are common to all meters matching the search term. If you wish to drop
+     * some of these tags JUST on the aggregate, use {@code additionalTagsToDrop}.
+     * 4. If you wish to ignore tags even in detail representations, use {@link MeterFilter#ignoreTags(String...)}.
+     * 5. If you wish to whitelist certain metrics for inclusion, use {@link MeterFilter#denyUnless(Predicate)}.
+     *
+     * @param search               The query used to build the aggregate.
+     * @param alsoPublishDetail    Whether the detailed metrics rolled up by the aggregate should also be published.
+     * @param additionalTagsToDrop Drop tags with these keys even if the tag value is the same across all matching meters.
+     */
+    public CloudWatchMeterRegistry aggregator(Search search, boolean alsoPublishDetail, String... additionalTagsToDrop) {
+        aggregateBuilders.add(new CloudWatchAggregateBuilder(search, alsoPublishDetail, additionalTagsToDrop));
+        return this;
+    }
+
     @Override
     protected void publish() {
         for (List<MetricDatum> batch : MetricDatumPartition.partition(metricData(), config.batchSize())) {
@@ -72,8 +101,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     private void sendMetricData(List<MetricDatum> metricData) {
         PutMetricDataRequest putMetricDataRequest = new PutMetricDataRequest()
-            .withNamespace(config.namespace())
-            .withMetricData(metricData);
+                .withNamespace(config.namespace())
+                .withMetricData(metricData);
         amazonCloudWatchAsync.putMetricDataAsync(putMetricDataRequest, new AsyncHandler<PutMetricDataRequest, PutMetricDataResult>() {
             @Override
             public void onError(Exception exception) {
@@ -88,7 +117,15 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     }
 
     private List<MetricDatum> metricData() {
-        return getMeters().stream().flatMap(m -> {
+        Collection<Meter> detailMetrics = aggregateBuilders.stream().filter(CloudWatchAggregateBuilder::isAlsoPublishDetail)
+                .flatMap(agg -> agg.getSearch().meters().stream())
+                .collect(Collectors.toMap(Meter::getId, Function.identity()))
+                .values();
+
+        return Stream.concat(
+                aggregateBuilders.stream().flatMap(CloudWatchAggregateBuilder::aggregates),
+                detailMetrics.stream()
+        ).flatMap(m -> {
             if (m instanceof Timer) {
                 return metricData((Timer) m);
             }
@@ -107,8 +144,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         // we can't know anything about max and percentiles originating from a function timer
         return Stream.of(
-            metricDatum(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
-            metricDatum(idWithSuffix(timer.getId(), "avg"), wallTime, timer.mean(getBaseTimeUnit())));
+                metricDatum(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
+                metricDatum(idWithSuffix(timer.getId(), "avg"), wallTime, timer.mean(getBaseTimeUnit())));
     }
 
     private Stream<MetricDatum> metricData(Timer timer) {
@@ -123,7 +160,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         for (ValueAtPercentile v : snapshot.percentileValues()) {
             metrics.add(metricDatum(idWithSuffix(timer.getId(), DoubleFormat.decimalOrNan(v.percentile()) + "percentile"),
-                wallTime, v.value(getBaseTimeUnit())));
+                    wallTime, v.value(getBaseTimeUnit())));
         }
 
         return metrics.build();
@@ -141,7 +178,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         for (ValueAtPercentile v : snapshot.percentileValues()) {
             metrics.add(metricDatum(idWithSuffix(summary.getId(), DoubleFormat.decimalOrNan(v.percentile()) + "percentile"),
-                wallTime, v.value()));
+                    wallTime, v.value()));
         }
 
         return metrics.build();
@@ -150,18 +187,18 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     private Stream<MetricDatum> metricData(Meter m) {
         long wallTime = clock.wallTime();
         return stream(m.measure().spliterator(), false)
-            .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), wallTime, ms.getValue()));
+                .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), wallTime, ms.getValue()));
     }
 
     private MetricDatum metricDatum(Meter.Id id, long wallTime, double value) {
         String metricName = id.getConventionName(config().namingConvention());
         List<Tag> tags = id.getConventionTags(config().namingConvention());
         return new MetricDatum()
-            .withMetricName(metricName)
-            .withDimensions(toDimensions(tags))
-            .withTimestamp(new Date(wallTime))
-            .withValue(CloudWatchUtils.clampMetricValue(value))
-            .withUnit(toStandardUnit(id.getBaseUnit()));
+                .withMetricName(metricName)
+                .withDimensions(toDimensions(tags))
+                .withTimestamp(new Date(wallTime))
+                .withValue(CloudWatchUtils.clampMetricValue(value))
+                .withUnit(toStandardUnit(id.getBaseUnit()));
     }
 
     private StandardUnit toStandardUnit(@Nullable String unit) {
@@ -179,11 +216,10 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         return StandardUnit.None;
     }
 
-
     private List<Dimension> toDimensions(List<Tag> tags) {
         return tags.stream()
-            .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
-            .collect(toList());
+                .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
+                .collect(toList());
     }
 
     @Override

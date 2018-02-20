@@ -292,7 +292,7 @@ public abstract class MeterRegistry implements AutoCloseable {
      * @return A new search.
      */
     public Search find(String name) {
-        return new Search(this, name);
+        return Search.search(this).name(name);
     }
 
     /**
@@ -303,7 +303,7 @@ public abstract class MeterRegistry implements AutoCloseable {
      * @return A new search.
      */
     public RequiredSearch get(String name) {
-        return new RequiredSearch(this, name);
+        return RequiredSearch.search(this).name(name);
     }
 
     /**

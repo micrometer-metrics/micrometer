@@ -129,7 +129,7 @@ public interface Meter extends AutoCloseable {
         /**
          * @return A set of dimensions that allows you to break down the name.
          */
-        public Iterable<Tag> getTags() {
+        public List<Tag> getTags() {
             return tags;
         }
 
