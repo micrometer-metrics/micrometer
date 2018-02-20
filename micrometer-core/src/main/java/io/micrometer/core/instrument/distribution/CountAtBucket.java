@@ -51,7 +51,28 @@ public final class CountAtBucket {
         return "(" + count + " at " + bucket + ')';
     }
 
-    public static CountAtBucket of(long bucket, double count) {
-        return new CountAtBucket(bucket, count);
+    public static CountAtBucket of(long bucketNanos, double count) {
+        return new CountAtBucket(bucketNanos, count);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CountAtBucket that = (CountAtBucket) o;
+
+        if (bucket != that.bucket) return false;
+        return Double.compare(that.count, count) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        int result;
+        long temp;
+        result = (int) (bucket ^ (bucket >>> 32));
+        temp = Double.doubleToLongBits(count);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        return result;
     }
 }

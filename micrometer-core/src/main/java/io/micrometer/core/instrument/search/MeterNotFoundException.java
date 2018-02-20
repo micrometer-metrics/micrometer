@@ -17,20 +17,27 @@ package io.micrometer.core.instrument.search;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.lang.Nullable;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 public class MeterNotFoundException extends RuntimeException {
-    public MeterNotFoundException(String meterName, List<Tag> tags, Class<? extends Meter> meterType) {
-        super("Unable to locate a meter named '" + meterName + "'" + tagDetail(tags) + " of type " + meterType.getCanonicalName());
+    public MeterNotFoundException(@Nullable String exactNameMatch, Collection<Tag> tags, Class<? extends Meter> meterType) {
+        super("Unable to locate a matching meter" + nameDetail(exactNameMatch) + tagDetail(tags) + " of type " + meterType.getCanonicalName());
     }
 
-    private static String tagDetail(List<Tag> tags) {
-        String tagDetail = "";
-        if (!tags.isEmpty()) {
-            tagDetail = " with Tags:[" + tags.stream().map(t -> t.getKey() + ":" + t.getValue()).collect(Collectors.joining(",")) + "]";
+    private static String nameDetail(@Nullable String exactNameMatch) {
+        if (exactNameMatch != null) {
+            return " with name '" + exactNameMatch + "'";
         }
-        return tagDetail;
+        return "";
+    }
+
+    private static String tagDetail(Collection<Tag> tags) {
+        if (!tags.isEmpty()) {
+            return " with tags:[" + tags.stream().map(t -> t.getKey() + ":" + t.getValue()).collect(Collectors.joining(",")) + "]";
+        }
+        return "";
     }
 }
