@@ -15,6 +15,7 @@
  */
 package io.micrometer.statsd;
 
+import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
@@ -24,6 +25,7 @@ import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.statsd.internal.FlavorStatsdLineBuilder;
 import io.micrometer.statsd.internal.LogbackMetricsSuppressingUnicastProcessor;
 import org.reactivestreams.Processor;
 import reactor.core.Disposable;
@@ -38,6 +40,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
@@ -54,12 +57,34 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private Disposable.Swap udpClient = Disposables.swap();
     private Disposable.Swap meterPoller = Disposables.swap();
 
+    @Nullable
+    private Function<Meter.Id, StatsdLineBuilder> lineBuilderGenerator;
+
     public StatsdMeterRegistry(StatsdConfig config, Clock clock) {
         this(config, HierarchicalNameMapper.DEFAULT, clock);
     }
 
     public StatsdMeterRegistry(StatsdConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
+        this(config, nameMapper, clock, null);
+    }
+
+    /**
+     * Construct a new StatsD registry.
+     *
+     * @param config               Configuration options.
+     * @param nameMapper           A strategy to flatten names to a hierarchical form. Only used by the Etsy flavor which
+     *                             does not support tags.
+     * @param clock                The clock.
+     * @param lineBuilderGenerator A function that builds a StatsD serializer for a given meter id. Used for completely
+     *                             customizing the serialized form when you are dealing with a non-standard (and potentially
+     *                             non-public) StatsD flavor.
+     */
+    @Incubating(since = "1.0.0")
+    public StatsdMeterRegistry(StatsdConfig config, HierarchicalNameMapper nameMapper, Clock clock,
+                               Function<Meter.Id, StatsdLineBuilder> lineBuilderGenerator) {
         super(clock);
+
+        this.lineBuilderGenerator = lineBuilderGenerator;
 
         this.statsdConfig = config;
         this.nameMapper = nameMapper;
@@ -121,6 +146,13 @@ public class StatsdMeterRegistry extends MeterRegistry {
         StatsdGauge<T> gauge = new StatsdGauge<>(id, lineBuilder(id), publisher, obj, valueFunction, statsdConfig.publishUnchangedMeters());
         pollableMeters.add(gauge);
         return gauge;
+    }
+
+    private StatsdLineBuilder lineBuilder(Meter.Id id) {
+        if (lineBuilderGenerator == null) {
+            lineBuilderGenerator = id2 -> new FlavorStatsdLineBuilder(id2, statsdConfig.flavor(), nameMapper, config());
+        }
+        return lineBuilderGenerator.apply(id);
     }
 
     @Override
@@ -221,10 +253,6 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
-    }
-
-    private StatsdLineBuilder lineBuilder(Meter.Id id) {
-        return new StatsdLineBuilder(id, statsdConfig.flavor(), nameMapper, config());
     }
 
     @Override
