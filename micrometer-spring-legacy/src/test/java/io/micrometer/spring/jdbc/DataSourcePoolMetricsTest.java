@@ -55,7 +55,7 @@ public class DataSourcePoolMetricsTest {
     @Test
     public void dataSourceIsInstrumented() throws SQLException {
         dataSource.getConnection().getMetaData();
-        registry.find("data.source.max.connections").meter();
+        registry.find("data.source.connections.max").meter();
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")
