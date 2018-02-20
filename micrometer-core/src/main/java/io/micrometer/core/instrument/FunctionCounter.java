@@ -33,7 +33,7 @@ public interface FunctionCounter extends Meter {
     }
 
     /**
-     * The cumulative count since this counter was created.
+     * @return The cumulative count since this counter was created.
      */
     double count();
 
@@ -69,6 +69,7 @@ public interface FunctionCounter extends Meter {
 
         /**
          * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         * @return The function counter builder with added tags.
          */
         public Builder<T> tags(String... tags) {
             return tags(Tags.of(tags));

@@ -33,7 +33,7 @@ public class Measurement {
     }
 
     /**
-     * Value for the measurement.
+     * @return Value for the measurement.
      */
     public double getValue() {
         return f.get();
@@ -46,8 +46,8 @@ public class Measurement {
     @Override
     public String toString() {
         return "Measurement{" +
-            "statistic='" + statistic + '\'' +
-            ", value=" + getValue() +
-            '}';
+                "statistic='" + statistic + '\'' +
+                ", value=" + getValue() +
+                '}';
     }
 }

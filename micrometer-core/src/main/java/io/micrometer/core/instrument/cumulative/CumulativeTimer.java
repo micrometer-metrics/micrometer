@@ -33,9 +33,6 @@ public class CumulativeTimer extends AbstractTimer {
     private final AtomicLong total;
     private final TimeDecayingMax max;
 
-    /**
-     * Create a new instance.
-     */
     public CumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit);
         this.count = new AtomicLong();

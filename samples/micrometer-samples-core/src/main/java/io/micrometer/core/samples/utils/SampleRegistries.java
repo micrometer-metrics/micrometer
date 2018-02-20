@@ -56,7 +56,8 @@ public class SampleRegistries {
     /**
      * To use pushgateway instead:
      * new PushGateway("localhost:9091").pushAdd(registry.getPrometheusRegistry(), "samples");
-     * @return
+     *
+     * @return A prometheus registry.
      */
     public static PrometheusMeterRegistry prometheus() {
         PrometheusMeterRegistry prometheusRegistry = new PrometheusMeterRegistry(new PrometheusConfig() {

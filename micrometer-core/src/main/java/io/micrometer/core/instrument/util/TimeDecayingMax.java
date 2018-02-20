@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TimeDecayingMax {
     @SuppressWarnings("rawtypes")
     private static final AtomicIntegerFieldUpdater<TimeDecayingMax> rotatingUpdater =
-        AtomicIntegerFieldUpdater.newUpdater(TimeDecayingMax.class, "rotating");
+            AtomicIntegerFieldUpdater.newUpdater(TimeDecayingMax.class, "rotating");
 
     private final Clock clock;
     private final long durationBetweenRotatesMillis;
@@ -58,6 +58,12 @@ public class TimeDecayingMax {
         }
     }
 
+    /**
+     * For use by timer implementations.
+     *
+     * @param sample   The value to record.
+     * @param timeUnit The unit of time of the incoming sample.
+     */
     public void record(double sample, TimeUnit timeUnit) {
         rotate();
         final long sampleNanos = (long) TimeUtils.convert(sample, timeUnit, TimeUnit.NANOSECONDS);
@@ -66,6 +72,10 @@ public class TimeDecayingMax {
         }
     }
 
+    /**
+     * @param timeUnit The base unit of time to scale the max to.
+     * @return A max scaled to the base unit of time. For use by timer implementations.
+     */
     public double poll(TimeUnit timeUnit) {
         rotate();
         synchronized (this) {
@@ -74,7 +84,7 @@ public class TimeDecayingMax {
     }
 
     /**
-     * Return an unscaled max. For use by distribution summary implementations.
+     * @return An unscaled max. For use by distribution summary implementations.
      */
     public double poll() {
         rotate();
@@ -85,6 +95,8 @@ public class TimeDecayingMax {
 
     /**
      * For use by distribution summary implementations.
+     *
+     * @param sample The value to record.
      */
     public void record(double sample) {
         rotate();

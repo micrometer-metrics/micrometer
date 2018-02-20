@@ -18,6 +18,11 @@ package io.micrometer.newrelic;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
+/**
+ * Configuration for {@link NewRelicMeterRegistry}.
+ *
+ * @author Jon Schneider
+ */
 public interface NewRelicConfig extends StepRegistryConfig {
     /**
      * Accept configuration defaults
@@ -44,7 +49,7 @@ public interface NewRelicConfig extends StepRegistryConfig {
     }
 
     /**
-     * Returns the URI for the New Relic insights API. The default is
+     * @return The URI for the New Relic insights API. The default is
      * {@code https://insights-collector.newrelic.com}. If you need to pass through
      * a proxy, you can change this value.
      */

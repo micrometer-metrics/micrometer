@@ -32,9 +32,6 @@ public class StepTimer extends AbstractTimer {
     private final StepLong total;
     private final TimeDecayingMax max;
 
-    /**
-     * Create a new instance.
-     */
     @SuppressWarnings("ConstantConditions")
     public StepTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit);

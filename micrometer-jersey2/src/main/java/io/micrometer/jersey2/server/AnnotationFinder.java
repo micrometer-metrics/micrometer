@@ -19,16 +19,17 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 
 public interface AnnotationFinder {
-    AnnotationFinder DEFAULT = new AnnotationFinder() {};
+    AnnotationFinder DEFAULT = new AnnotationFinder() {
+    };
 
     /**
      * The default implementation performs a simple search for a declared annotation matching the search type.
      * Spring provides a more sophisticated annotation search utility that matches on meta-annotations as well.
      *
      * @param annotatedElement The element to search.
-     * @param annotationType The annotation type class.
-     * @param <A> Annotation type to search for.
-     * @return
+     * @param annotationType   The annotation type class.
+     * @param <A>              Annotation type to search for.
+     * @return A matching annotation.
      */
     @SuppressWarnings("unchecked")
     default <A extends Annotation> A findAnnotation(AnnotatedElement annotatedElement, Class<A> annotationType) {

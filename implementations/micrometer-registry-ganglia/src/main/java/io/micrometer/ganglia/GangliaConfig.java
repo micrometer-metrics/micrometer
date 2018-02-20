@@ -22,6 +22,8 @@ import io.micrometer.core.lang.Nullable;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Configuration for {@link GangliaMeterRegistry}.
+ *
  * @author Jon Schneider
  */
 public interface GangliaConfig extends DropwizardConfig {
@@ -33,16 +35,14 @@ public interface GangliaConfig extends DropwizardConfig {
     /**
      * Get the value associated with a key.
      *
-     * @param key
-     *     Key to lookup in the config.
-     * @return
-     *     Value for the key or null if no key is present.
+     * @param key Key to lookup in the config.
+     * @return Value for the key or null if no key is present.
      */
     @Nullable
     String get(String key);
 
     /**
-     * Property prefix to prepend to configuration names.
+     * @return Property prefix to prepend to configuration names.
      */
     default String prefix() {
         return "ganglia";
@@ -60,9 +60,9 @@ public interface GangliaConfig extends DropwizardConfig {
 
     default String protocolVersion() {
         String v = get(prefix() + ".protocolVersion");
-        if(v == null)
+        if (v == null)
             return "3.1";
-        if(!v.equals("3.1") && !v.equals("3.0")) {
+        if (!v.equals("3.1") && !v.equals("3.0")) {
             throw new IllegalArgumentException("Ganglia version must be one of 3.1 or 3.0 (check property " + prefix() + ".protocolVersion)");
         }
         return v;
@@ -70,9 +70,9 @@ public interface GangliaConfig extends DropwizardConfig {
 
     default GMetric.UDPAddressingMode addressingMode() {
         String v = get(prefix() + ".addressingMode");
-        if(v == null)
+        if (v == null)
             return GMetric.UDPAddressingMode.MULTICAST;
-        if(!v.equalsIgnoreCase("unicast") && !v.equalsIgnoreCase("multicast")) {
+        if (!v.equalsIgnoreCase("unicast") && !v.equalsIgnoreCase("multicast")) {
             throw new IllegalArgumentException("Ganglia UDP addressing mode must be one of 'unicast' or 'multicast' (check property " + prefix() + ".addressingMode)");
         }
         return GMetric.UDPAddressingMode.valueOf(v.toUpperCase());
@@ -94,7 +94,7 @@ public interface GangliaConfig extends DropwizardConfig {
     }
 
     /**
-     * Returns true if publishing is enabled. Default is {@code true}.
+     * @return {@code true} if publishing is enabled. Default is {@code true}.
      */
     default boolean enabled() {
         String v = get(prefix() + ".enabled");

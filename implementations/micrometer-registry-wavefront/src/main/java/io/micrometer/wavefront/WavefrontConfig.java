@@ -23,6 +23,12 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
 
+/**
+ * Configuration for {@link WavefrontMeterRegistry}.
+ *
+ * @author Howard Yoo
+ * @author Jon Schneider
+ */
 public interface WavefrontConfig extends StepRegistryConfig {
     /**
      * Publishes to a wavefront sidecar running out of process.
@@ -68,22 +74,21 @@ public interface WavefrontConfig extends StepRegistryConfig {
     }
 
     /**
-     * The URI to publish metrics to. The URI could represent a Wavefront sidecar or the
+     * @return The URI to publish metrics to. The URI could represent a Wavefront sidecar or the
      * Wavefront API host. This host could also represent an internal proxy set up in your environment
      * that forwards metrics data to the Wavefront API host.
-     *
-     * If publishing metrics to a Wavefront proxy (as described in https://docs.wavefront.com/proxies_installing.html),
+     * <p>If publishing metrics to a Wavefront proxy (as described in https://docs.wavefront.com/proxies_installing.html),
      * the host must be in the proxy://HOST:PORT format.
      */
     default String uri() {
         String v = get(prefix() + ".uri");
-        if(v == null)
+        if (v == null)
             throw new MissingRequiredConfigurationException("A uri is required to publish metrics to Wavefront");
         return v;
     }
 
     /**
-     * Uniquely identifies the app instance that is publishing metrics to Wavefront. Defaults to the local host name.
+     * @return Unique identifier for the app instance that is publishing metrics to Wavefront. Defaults to the local host name.
      */
     default String source() {
         String v = get(prefix() + ".source");
@@ -99,6 +104,8 @@ public interface WavefrontConfig extends StepRegistryConfig {
 
     /**
      * Required when publishing directly to the Wavefront API host, otherwise does nothing.
+     *
+     * @return The Wavefront API token.
      */
     @Nullable
     default String apiToken() {
@@ -110,6 +117,8 @@ public interface WavefrontConfig extends StepRegistryConfig {
      * Wavefront metrics are grouped hierarchically by name in the UI. Setting a global prefix separates
      * metrics originating from this app's whitebox instrumentation from those originating from other Wavefront
      * integrations.
+     *
+     * @return A prefix to add to every metric.
      */
     @Nullable
     default String globalPrefix() {

@@ -213,8 +213,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
-        StatsdFunctionCounter fc = new StatsdFunctionCounter<>(id, obj, valueFunction, lineBuilder(id), publisher);
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
+        StatsdFunctionCounter fc = new StatsdFunctionCounter<>(id, obj, countFunction, lineBuilder(id), publisher);
         pollableMeters.add(fc);
         return fc;
     }

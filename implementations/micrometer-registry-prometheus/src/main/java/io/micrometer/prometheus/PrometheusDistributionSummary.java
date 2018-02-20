@@ -82,6 +82,8 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     /**
      * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is based on a
      * rolling histogram. Prometheus requires a histogram that accumulates values over the lifetime of the app.
+     *
+     * @return Cumulative histogram buckets.
      */
     public CountAtBucket[] histogramCounts() {
         return percentilesHistogram.takeSnapshot(0, 0, 0, true).histogramCounts();

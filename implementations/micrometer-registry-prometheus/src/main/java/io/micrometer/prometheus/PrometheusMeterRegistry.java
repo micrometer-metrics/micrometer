@@ -67,7 +67,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     /**
-     * Content that should be included in the response body for an endpoint designate for
+     * @return Content that should be included in the response body for an endpoint designate for
      * Prometheus to scrape from.
      */
     public String scrape() {
@@ -263,9 +263,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
         MicrometerCollector collector = collectorByName(id, Collector.Type.COUNTER);
-        FunctionCounter fc = new CumulativeFunctionCounter<>(id, obj, valueFunction);
+        FunctionCounter fc = new CumulativeFunctionCounter<>(id, obj, countFunction);
         List<String> tagValues = tagValues(id);
 
         collector.add((conventionName, tagKeys) -> Stream.of(

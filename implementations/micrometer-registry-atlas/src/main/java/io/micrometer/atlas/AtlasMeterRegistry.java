@@ -162,8 +162,8 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
-        FunctionCounter fc = new StepFunctionCounter<>(id, clock, atlasConfig.step().toMillis(), obj, valueFunction);
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
+        FunctionCounter fc = new StepFunctionCounter<>(id, clock, atlasConfig.step().toMillis(), obj, countFunction);
         newMeter(id, Meter.Type.COUNTER, fc.measure());
         return fc;
     }

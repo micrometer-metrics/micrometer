@@ -47,13 +47,14 @@ public class ServletMetricsConfiguration {
         return new DefaultWebMvcTagsProvider();
     }
 
+    @SuppressWarnings("deprecation")
     @Bean
     public WebMvcMetricsFilter webMetricsFilter(MeterRegistry registry, MetricsProperties properties,
                                                 WebMvcTagsProvider tagsProvider,
                                                 WebApplicationContext ctx) {
         return new WebMvcMetricsFilter(registry, tagsProvider,
-            properties.getWeb().getServer().getRequestsMetricName(),
-            properties.getWeb().getServer().isAutoTimeRequests(),
-            new HandlerMappingIntrospector(ctx));
+                properties.getWeb().getServer().getRequestsMetricName(),
+                properties.getWeb().getServer().isAutoTimeRequests(),
+                new HandlerMappingIntrospector(ctx));
     }
 }

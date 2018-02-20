@@ -21,6 +21,8 @@ import io.micrometer.core.lang.Nullable;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Configuration for {@link GraphiteMeterRegistry}.
+ *
  * @author Jon Schneider
  */
 public interface GraphiteConfig extends DropwizardConfig {
@@ -32,23 +34,21 @@ public interface GraphiteConfig extends DropwizardConfig {
     /**
      * Get the value associated with a key.
      *
-     * @param key
-     *     Key to lookup in the config.
-     * @return
-     *     Value for the key or null if no key is present.
+     * @param key Key to lookup in the config.
+     * @return Value for the key or null if no key is present.
      */
     @Nullable
     String get(String key);
 
     /**
-     * Property prefix to prepend to configuration names.
+     * @return Property prefix to prepend to configuration names.
      */
     default String prefix() {
         return "graphite";
     }
 
     /**
-     * For the default naming convention, turn the specified tag keys into
+     * @return For the default naming convention, turn the specified tag keys into
      * part of the metric prefix.
      */
     default String[] tagsAsPrefix() {
@@ -76,7 +76,7 @@ public interface GraphiteConfig extends DropwizardConfig {
     }
 
     /**
-     * Returns true if publishing is enabled. Default is {@code true}.
+     * @return {@code true} if publishing is enabled. Default is {@code true}.
      */
     default boolean enabled() {
         String v = get(prefix() + ".enabled");
@@ -84,16 +84,16 @@ public interface GraphiteConfig extends DropwizardConfig {
     }
 
     /**
-     * Protocol to use while shipping data to Graphite.
+     * @return Protocol to use while shipping data to Graphite.
      */
     default GraphiteProtocol protocol() {
         String v = get(prefix() + ".protocol");
 
-        if(v == null)
+        if (v == null)
             return GraphiteProtocol.PICKLED;
 
         for (GraphiteProtocol flavor : GraphiteProtocol.values()) {
-            if(flavor.toString().equalsIgnoreCase(v))
+            if (flavor.toString().equalsIgnoreCase(v))
                 return flavor;
         }
 

@@ -27,7 +27,7 @@ import java.time.Duration;
  */
 public interface StepRegistryConfig extends MeterRegistryConfig {
     /**
-     * Returns the step size (reporting frequency) to use. The default is 10 seconds.
+     * @return The step size (reporting frequency) to use. The default is 10 seconds.
      */
     default Duration step() {
         String v = get(prefix() + ".step");
@@ -35,7 +35,7 @@ public interface StepRegistryConfig extends MeterRegistryConfig {
     }
 
     /**
-     * Returns true if publishing is enabled. Default is {@code true}.
+     * @return {@code true} if publishing is enabled. Default is {@code true}.
      */
     default boolean enabled() {
         String v = get(prefix() + ".enabled");
@@ -43,7 +43,7 @@ public interface StepRegistryConfig extends MeterRegistryConfig {
     }
 
     /**
-     * Returns the number of threads to use with the scheduler. The default is
+     * @return The number of threads to use with the scheduler. The default is
      * 2 threads.
      */
     default int numThreads() {
@@ -52,7 +52,7 @@ public interface StepRegistryConfig extends MeterRegistryConfig {
     }
 
     /**
-     * Returns the connection timeout for requests to the backend. The default is
+     * @return The connection timeout for requests to the backend. The default is
      * 1 second.
      */
     default Duration connectTimeout() {
@@ -61,7 +61,7 @@ public interface StepRegistryConfig extends MeterRegistryConfig {
     }
 
     /**
-     * Returns the read timeout for requests to the backend. The default is
+     * @return The read timeout for requests to the backend. The default is
      * 10 seconds.
      */
     default Duration readTimeout() {
@@ -70,7 +70,7 @@ public interface StepRegistryConfig extends MeterRegistryConfig {
     }
 
     /**
-     * Returns the number of measurements per request to use for the backend. If more
+     * @return The number of measurements per request to use for the backend. If more
      * measurements are found, then multiple requests will be made. The default is
      * 10,000.
      */

@@ -22,13 +22,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 public class SampleConfig {
     public static MeterRegistry myMonitoringSystem() {
         // Pick a monitoring system here to use in your samples.
-        return SampleRegistries.wavefrontDirect("a6f74e29-7577-4b72-bef8-578f6053e908");
-//        return SampleRegistries.graphite();
-//        return SampleRegistries.signalFx("XNWd8jM0YiDPrroW3Ph0dw");
-//        return SampleRegistries.jmx();
-//        return SampleRegistries.jmx();
-//        return SampleRegistries.prometheus();
-//        return SampleRegistries.datadog("26ec541df8f1181b0bdc1bf51fde7cb2", "3288f53fc89a5cac3fb83e725f051f09fd6aba2e");
-//        return SampleRegistries.newRelic("1799539", "1jyWDmrk5kswb-RBuLrhYkKQbBrn9_1Q");
+        return SampleRegistries.prometheus();
     }
 }

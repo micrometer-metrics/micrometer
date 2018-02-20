@@ -31,9 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class FunctionTimerSample {
-    /**
-     * For Atlas: http://localhost:7101/api/v1/graph?q=name,ftimer,:eq,:dist-avg,name,timer,:eq,:dist-avg,1,:axis&s=e-5m&l=0
-     */
+    // For Atlas: http://localhost:7101/api/v1/graph?q=name,ftimer,:eq,:dist-avg,name,timer,:eq,:dist-avg,1,:axis&s=e-5m&l=0
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
 

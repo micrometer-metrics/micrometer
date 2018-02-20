@@ -21,6 +21,7 @@ import io.micrometer.core.lang.Nullable;
 
 /**
  * See https://developers.signalfx.com/reference#section-criteria-for-metric-and-dimension-names-and-values for criteria.
+ *
  * @author Jon Schneider
  */
 public class SignalFxNamingConvention implements NamingConvention {
@@ -34,32 +35,35 @@ public class SignalFxNamingConvention implements NamingConvention {
         this.rootConvention = rootConvention;
     }
 
-    /**
-     * Metric (the metric name) can be any non-empty UTF-8 string, with a maximum length <= 256 characters
-     */
+    // Metric (the metric name) can be any non-empty UTF-8 string, with a maximum length <= 256 characters
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
         String formattedName = rootConvention.name(name, type, baseUnit);
         return formattedName.length() > 256 ? formattedName.substring(0, 256) : formattedName;
     }
 
-    /**
-     * 1. Has a maximum length of 128 characters
-     * 2. May not start with _ or sf_
-     * 3. Must start with a letter (upper or lower case). The rest of the name can contain letters, numbers, underscores _ and hyphens - . This requirement is expressed in the following regular expression:
-     *     ^[a-zA-Z][a-zA-Z0-9_-]*$
-     * FIXME
-     */
+    // 1. Has a maximum length of 128 characters
+    // 2. May not start with _ or sf_
+    // 3. Must start with a letter (upper or lower case). The rest of the name can contain letters, numbers, underscores _ and hyphens - . This requirement is expressed in the following regular expression:
+    //     ^[a-zA-Z][a-zA-Z0-9_-]*$
     @Override
     public String tagKey(String key) {
-        return rootConvention.tagKey(key);
+        String conventionKey = rootConvention.tagKey(key);
+
+        conventionKey = conventionKey.replaceAll("^_", "").replaceAll("^sf_", ""); // 2
+
+        if (!conventionKey.matches("^[a-zA-Z].*")) { // 3
+            conventionKey = "a" + conventionKey;
+        }
+
+        if (conventionKey.length() > 128) {
+            conventionKey = conventionKey.substring(0, 128); // 1
+        }
+
+        return conventionKey;
     }
 
-    /**
-     * Dimension value can be any non-empty UTF-8 string, with a maximum length <= 256 characters.
-     * @param value
-     * @return
-     */
+    // Dimension value can be any non-empty UTF-8 string, with a maximum length <= 256 characters.
     @Override
     public String tagValue(String value) {
         String formattedValue = rootConvention.tagValue(value);

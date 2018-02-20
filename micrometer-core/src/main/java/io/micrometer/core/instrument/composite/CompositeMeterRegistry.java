@@ -90,8 +90,8 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
-        return new CompositeFunctionCounter<>(id, obj, valueFunction);
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
+        return new CompositeFunctionCounter<>(id, obj, countFunction);
     }
 
     @Override

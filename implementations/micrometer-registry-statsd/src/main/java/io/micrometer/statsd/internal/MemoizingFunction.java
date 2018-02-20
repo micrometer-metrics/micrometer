@@ -19,7 +19,9 @@ import java.util.function.Function;
 
 /**
  * Modified from Guava's MemoizingFunction
- * @param <R>
+ *
+ * @param <T> The domain type.
+ * @param <R> The range type.
  */
 public class MemoizingFunction<T, R> implements Function<T, R> {
 

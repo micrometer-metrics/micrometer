@@ -19,6 +19,8 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
 /**
+ * Configuration for {@link InfluxMeterRegistry}.
+ *
  * @author Jon Schneider
  */
 public interface InfluxConfig extends StepRegistryConfig {
@@ -33,7 +35,7 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
-     * The db to send metrics to. Defaults to "mydb".
+     * @return The db to send metrics to. Defaults to "mydb".
      */
     default String db() {
         String v = get(prefix() + ".db");
@@ -41,20 +43,18 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
-     * Sets the write consistency for each point. The Influx default is 'one'. Must
-     * be one of 'any', 'one', 'quorum', or 'all'.
-     *
-     * Only available for InfluxEnterprise clusters.
+     * @return Sets the write consistency for each point. The Influx default is 'one'. Must
+     * be one of 'any', 'one', 'quorum', or 'all'. Only available for InfluxEnterprise clusters.
      */
     default InfluxConsistency consistency() {
         String v = get(prefix() + ".consistency");
-        if(v == null)
+        if (v == null)
             return InfluxConsistency.ONE;
         return InfluxConsistency.valueOf(v.toUpperCase());
     }
 
     /**
-     * Authenticate requests with this user. By default is {@code null}, and the registry will not
+     * @return Authenticate requests with this user. By default is {@code null}, and the registry will not
      * attempt to present credentials to Influx.
      */
     @Nullable
@@ -63,7 +63,7 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
-     * Authenticate requests with this password. By default is {@code null}, and the registry will not
+     * @return Authenticate requests with this password. By default is {@code null}, and the registry will not
      * attempt to present credentials to Influx.
      */
     @Nullable
@@ -72,7 +72,7 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
-     * Influx writes to the DEFAULT retention policy if one is not specified.
+     * @return Influx writes to the DEFAULT retention policy if one is not specified.
      */
     @Nullable
     default String retentionPolicy() {
@@ -80,8 +80,7 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
     /**
-     * Returns the URI for the Influx backend. The default is
-     * {@code http://localhost:8086/write}.
+     * @return The URI for the Influx backend. The default is {@code http://localhost:8086}.
      */
     default String uri() {
         String v = get(prefix() + ".uri");

@@ -50,7 +50,7 @@ public class StepLong {
     }
 
     /**
-     * Get the value for the last completed interval.
+     * @return The value for the last completed interval.
      */
     public double poll() {
         rollCount(clock.wallTime());

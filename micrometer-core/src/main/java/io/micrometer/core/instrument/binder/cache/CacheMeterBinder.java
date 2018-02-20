@@ -73,7 +73,7 @@ public abstract class CacheMeterBinder implements MeterBinder {
                 .description("The number of entries added to the cache")
                 .register(registry);
 
-        if(evictionCount() != null) {
+        if (evictionCount() != null) {
             FunctionCounter.builder("cache.evictions", cache.get(),
                     c -> {
                         Long evictions = evictionCount();
@@ -126,6 +126,8 @@ public abstract class CacheMeterBinder implements MeterBinder {
      * Bind detailed metrics that are particular to the cache implementation, e.g. load duration for
      * Caffeine caches, heap and disk size for EhCache caches. These metrics are above and beyond the
      * basic set of metrics that is common to all caches.
+     *
+     * @param registry The registry to bind metrics to.
      */
     protected abstract void bindImplementationSpecificMetrics(MeterRegistry registry);
 

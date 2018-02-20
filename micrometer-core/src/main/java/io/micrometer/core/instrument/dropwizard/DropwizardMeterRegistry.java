@@ -130,8 +130,8 @@ public class DropwizardMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
-        DropwizardFunctionCounter<T> fc = new DropwizardFunctionCounter<>(id, clock, obj, valueFunction);
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
+        DropwizardFunctionCounter<T> fc = new DropwizardFunctionCounter<>(id, clock, obj, countFunction);
         registry.register(hierarchicalName(id), fc.getDropwizardMeter());
         return fc;
     }

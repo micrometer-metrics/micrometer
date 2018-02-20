@@ -22,14 +22,22 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.ToDoubleFunction;
 
+/**
+ * A gauge tracks a value that may go up or down. The value that is published for gauges is
+ * an instantaneous sample of the gauge at publishing time.
+ *
+ * @author Jon Schneider
+ */
 public interface Gauge extends Meter {
     static <T> Builder<T> builder(String name, @Nullable T obj, ToDoubleFunction<T> f) {
         return new Builder<>(name, obj, f);
     }
 
     /**
-     * Returns the current value. The act of observing the value by calling this method triggers sampling
+     * The act of observing the value by calling this method triggers sampling
      * of the underlying number or user-defined function that defines the value for the gauge.
+     *
+     * @return The current value.
      */
     double value();
 

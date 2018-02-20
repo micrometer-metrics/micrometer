@@ -56,9 +56,6 @@ public class TimedAspect {
         this.tagsBasedOnJoinpoint = tagsBasedOnJoinpoint;
     }
 
-    /**
-     * To be used when pointcut marker is @Timed, either at type or method-level.
-     */
     @Around("execution (@io.micrometer.core.annotation.Timed * *.*(..))")
     public Object timedMethod(ProceedingJoinPoint pjp) throws Throwable {
         Method method = ((MethodSignature) pjp.getSignature()).getMethod();

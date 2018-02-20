@@ -24,7 +24,9 @@ import java.util.stream.Collectors;
 import static java.util.stream.StreamSupport.stream;
 
 /**
- * A counter, gauge, timer, or distribution summary that results collects one or more metrics.
+ * A named and dimensioned producer of one or more measurements.
+ *
+ * @author Jon Schneider
  */
 public interface Meter extends AutoCloseable {
     static Builder builder(String name, Type type, Iterable<Measurement> measurements) {
@@ -85,6 +87,16 @@ public interface Meter extends AutoCloseable {
             this.description = description;
 
             this.type = type;
+        }
+
+        /**
+         * Generate a new id with a different name.
+         *
+         * @param newName The new name.
+         * @return A new id with the provided name. The source id remains unchanged.
+         */
+        public Id withName(String newName) {
+            return new Id(newName, tags, baseUnit, description, type);
         }
 
         /**

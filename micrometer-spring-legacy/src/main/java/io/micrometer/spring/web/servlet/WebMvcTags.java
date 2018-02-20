@@ -47,8 +47,8 @@ public final class WebMvcTags {
      */
     public static Tag method(@Nullable HttpServletRequest request) {
         return request == null ?
-            Tag.of("method", "UNKNOWN") :
-            Tag.of("method", request.getMethod());
+                Tag.of("method", "UNKNOWN") :
+                Tag.of("method", request.getMethod());
     }
 
     /**
@@ -67,7 +67,8 @@ public final class WebMvcTags {
      * available, falling back to the request's {@link HttpServletRequest#getPathInfo()
      * path info} if necessary.
      *
-     * @param request the request
+     * @param request  the request
+     * @param response the response
      * @return the uri tag derived from the request
      */
     public static Tag uri(@Nullable HttpServletRequest request, @Nullable HttpServletResponse response) {
@@ -88,7 +89,7 @@ public final class WebMvcTags {
         }
 
         String uri = (String) request
-            .getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+                .getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
         if (uri == null) {
             uri = request.getPathInfo();
         }
@@ -109,7 +110,7 @@ public final class WebMvcTags {
      */
     public static Tag exception(@Nullable Throwable exception) {
         return exception == null ?
-            Tag.of("exception", "None") :
-            Tag.of("exception", exception.getClass().getSimpleName());
+                Tag.of("exception", "None") :
+                Tag.of("exception", exception.getClass().getSimpleName());
     }
 }
