@@ -118,7 +118,7 @@ class MetricsClientHttpRequestInterceptor implements ClientHttpRequestIntercepto
         };
     }
 
-    private Timer.Builder getTimeBuilder(String urlTemplate, HttpRequest request,
+    private Timer.Builder getTimeBuilder(@Nullable String urlTemplate, HttpRequest request,
                                          @Nullable ClientHttpResponse response) {
         return Timer.builder(this.metricName)
                 .tags(this.tagProvider.getTags(urlTemplate, request, response))

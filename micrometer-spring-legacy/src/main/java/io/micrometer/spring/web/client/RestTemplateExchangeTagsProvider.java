@@ -39,7 +39,7 @@ public interface RestTemplateExchangeTagsProvider {
      * @param response    the response (may be {@code null} if the exchange failed)
      * @return the tags
      */
-    Iterable<Tag> getTags(String urlTemplate, HttpRequest request,
+    Iterable<Tag> getTags(@Nullable String urlTemplate, HttpRequest request,
                           @Nullable ClientHttpResponse response);
 
 }
