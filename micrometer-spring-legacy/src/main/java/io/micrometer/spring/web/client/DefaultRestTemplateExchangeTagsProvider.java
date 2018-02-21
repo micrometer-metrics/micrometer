@@ -32,9 +32,9 @@ public class DefaultRestTemplateExchangeTagsProvider
     implements RestTemplateExchangeTagsProvider {
 
     @Override
-    public Iterable<Tag> getTags(String urlTemplate, HttpRequest request,
+    public Iterable<Tag> getTags(@Nullable String urlTemplate, HttpRequest request,
                                  @Nullable ClientHttpResponse response) {
-        Tag uriTag = StringUtils.hasText(urlTemplate)
+        Tag uriTag = urlTemplate != null && StringUtils.hasText(urlTemplate)
             ? RestTemplateExchangeTags.uri(urlTemplate)
             : RestTemplateExchangeTags.uri(request);
         return Arrays.asList(RestTemplateExchangeTags.method(request), uriTag,
