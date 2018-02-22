@@ -81,7 +81,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                             .lines().collect(joining("\n")));
                 }
             }
-        } catch (IOException e) {
+        } catch (Throwable e) {
             logger.warn("unable to create database '{}'", config.db(), e);
         } finally {
             quietlyCloseUrlConnection(con);
