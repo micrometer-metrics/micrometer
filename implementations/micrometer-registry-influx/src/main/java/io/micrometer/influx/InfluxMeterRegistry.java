@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
@@ -45,6 +46,7 @@ import static java.util.stream.Collectors.toList;
 public class InfluxMeterRegistry extends StepMeterRegistry {
     private final InfluxConfig config;
     private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
+    private boolean databaseExists = false;
 
     public InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
@@ -58,7 +60,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     private void createDatabaseIfNecessary() {
-        if (!config.autoCreateDb())
+        if (!config.autoCreateDb() || databaseExists)
             return;
 
         HttpURLConnection con = null;
@@ -75,6 +77,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
             if (status >= 200 && status < 300) {
                 logger.debug("influx database {} is ready to receive metrics", config.db());
+                databaseExists = true;
             } else if (status >= 400) {
                 try (InputStream in = con.getErrorStream()) {
                     logger.error("unable to create database '{}': {}", config.db(), new BufferedReader(new InputStreamReader(in))
@@ -162,6 +165,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
                     if (status >= 200 && status < 300) {
                         logger.info("successfully sent {} metrics to influx", batch.size());
+                        databaseExists = true;
                     } else if (status >= 400) {
                         try (InputStream in = con.getErrorStream()) {
                             logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
