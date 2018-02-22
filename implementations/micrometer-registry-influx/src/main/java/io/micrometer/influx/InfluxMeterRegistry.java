@@ -90,9 +90,9 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        createDatabaseIfNecessary();
-
         try {
+            createDatabaseIfNecessary();
+
             String write = "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
             if (config.retentionPolicy() != null) {
                 write += "&rp=" + config.retentionPolicy();
