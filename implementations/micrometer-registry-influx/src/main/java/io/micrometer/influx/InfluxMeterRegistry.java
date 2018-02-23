@@ -84,7 +84,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 }
             }
         } catch (Throwable e) {
-            logger.warn("unable to create database '{}'", config.db(), e);
+            logger.error("unable to create database '{}'", config.db(), e);
         } finally {
             quietlyCloseUrlConnection(con);
         }
@@ -181,7 +181,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Malformed InfluxDB publishing endpoint, see '" + config.prefix() + ".uri'", e);
         } catch (Throwable e) {
-            logger.warn("failed to send metrics", e);
+            logger.error("failed to send metrics", e);
         }
     }
 
