@@ -22,6 +22,8 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.lang.Nullable;
+
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,7 +98,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
         try {
             String write = "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
-            if (config.retentionPolicy() != null) {
+            if (StringUtils.isNotBlank(config.retentionPolicy())) {
                 write += "&rp=" + config.retentionPolicy();
             }
             URL influxEndpoint = URI.create(config.uri() + write).toURL();
