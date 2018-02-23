@@ -100,7 +100,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 config().namingConvention(NamingConvention.camelCase);
         }
 
-        UnicastProcessor<String> processor = UnicastProcessor.create(Queues.<String>get(statsdConfig.queueSize()).get());
+        UnicastProcessor<String> processor = UnicastProcessor.create(Queues.<String>unboundedMultiproducer().get());
 
         try {
             Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, getClass().getClassLoader());
