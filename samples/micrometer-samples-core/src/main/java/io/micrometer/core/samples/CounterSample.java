@@ -27,8 +27,6 @@ import reactor.core.publisher.Flux;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.util.Collections.emptyList;
-
 public class CounterSample {
     public static void main(String[] args) {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
