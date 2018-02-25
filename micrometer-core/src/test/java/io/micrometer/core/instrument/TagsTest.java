@@ -50,7 +50,7 @@ class TagsTest {
     }
 
     @Test
-    void andKeyValueShouldReturnNewInstanceWithAddedTags() throws Exception {
+    void andKeyValueShouldReturnNewInstanceWithAddedTags() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = source.and("t2", "v2");
         assertThat(source).isNotSameAs(merged);
@@ -59,7 +59,7 @@ class TagsTest {
     }
 
     @Test
-    void andKeyValuesShouldReturnNewInstanceWithAddedTags() throws Exception {
+    void andKeyValuesShouldReturnNewInstanceWithAddedTags() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = source.and("t2", "v2", "t3", "v3");
         assertThat(source).isNotSameAs(merged);
@@ -68,26 +68,26 @@ class TagsTest {
     }
 
     @Test
-    void andKeyValuesWhenKeyValuesAreOddShouldThrowException() throws Exception {
+    void andKeyValuesWhenKeyValuesAreOddShouldThrowException() {
         assertThatThrownBy(() -> Tags.empty().and("t1", "v1", "t2")).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    void andKeyValuesWhenKeyValuesAreEmptyShouldReturnCurrentInstance() throws Exception {
+    void andKeyValuesWhenKeyValuesAreEmptyShouldReturnCurrentInstance() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = source.and(new String[0]);
         assertThat(source).isSameAs(merged);
     }
 
     @Test
-    void andKeyValuesWhenKeyValuesAreNullShouldReturnCurrentInstance() throws Exception {
+    void andKeyValuesWhenKeyValuesAreNullShouldReturnCurrentInstance() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = source.and((String[]) null);
         assertThat(source).isSameAs(merged);
     }
 
     @Test
-    void andTagsShouldReturnANewInstanceWithTags() throws Exception {
+    void andTagsShouldReturnANewInstanceWithTags() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = source.and(Tag.of("t2", "v2"));
         assertThat(source).isNotSameAs(merged);
@@ -96,14 +96,21 @@ class TagsTest {
     }
 
     @Test
-    void andTagsWhenTagsAreEmptyShouldReturnCurrentInstance() throws Exception {
+    void andTagsWhenTagsAreEmptyShouldReturnCurrentInstance() {
+        Tags source = Tags.of("t1", "v1");
+        Tags merged = source.and(new Tag[0]);
+        assertThat(source).isSameAs(merged);
+    }
+
+    @Test
+    void andTagsWhenTagsAreNullShouldReturnCurrentInstance() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = source.and((Tag[]) null);
         assertThat(source).isSameAs(merged);
     }
 
     @Test
-    void andIterableShouldReturnNewInstanceWithTags() throws Exception {
+    void andIterableShouldReturnNewInstanceWithTags() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = source.and(Collections.singleton(Tag.of("t2", "v2")));
         assertThat(source).isNotSameAs(merged);
@@ -112,14 +119,14 @@ class TagsTest {
     }
 
     @Test
-    void andIterableWhenIterableIsNullShouldReturnCurrentInstance() throws Exception {
+    void andIterableWhenIterableIsNullShouldReturnCurrentInstance() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = source.and((Iterable<Tag>) null);
         assertThat(source).isSameAs(merged);
     }
 
     @Test
-    void andWhenAlreadyContainsKeyShouldReplaceValue() throws Exception {
+    void andWhenAlreadyContainsKeyShouldReplaceValue() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = source.and("t2", "v2", "t1", "v3");
         assertThat(source).isNotSameAs(merged);
@@ -128,21 +135,21 @@ class TagsTest {
     }
 
     @Test
-    void iteratorShouldIterateTags() throws Exception {
+    void iteratorShouldIterateTags() {
         Tags tags = Tags.of("t1", "v1");
         Iterator<Tag> iterator = tags.iterator();
         assertThat(iterator).containsExactly(Tag.of("t1", "v1"));
     }
 
     @Test
-    void streamShouldStreamTags() throws Exception {
+    void streamShouldStreamTags() {
         Tags tags = Tags.of("t1", "v1");
         Stream<Tag> iterator = tags.stream();
         assertThat(iterator).containsExactly(Tag.of("t1", "v1"));
     }
 
     @Test
-    void concatIterableShouldReturnNewInstanceWithAddedTags() throws Exception {
+    void concatIterableShouldReturnNewInstanceWithAddedTags() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = Tags.concat(source, Collections.singleton(Tag.of("t2", "v2")));
         assertThat(source).isNotSameAs(merged);
@@ -151,7 +158,7 @@ class TagsTest {
     }
 
     @Test
-    void concatStringsShouldReturnNewInstanceWithAddedTags() throws Exception {
+    void concatStringsShouldReturnNewInstanceWithAddedTags() {
         Tags source = Tags.of("t1", "v1");
         Tags merged = Tags.concat(source, "t2", "v2");
         assertThat(source).isNotSameAs(merged);
@@ -161,38 +168,38 @@ class TagsTest {
 
     @Test
     @Deprecated
-    void zipShouldReturnNewInstanceWithTags() throws Exception {
+    void zipShouldReturnNewInstanceWithTags() {
         Tags tags = Tags.of("t1", "v1", "t2", "v2");
         assertTags(tags, "t1", "v1", "t2", "v2");
     }
 
     @Test
-    void ofIterableShouldReturnNewInstanceWithTags() throws Exception {
+    void ofIterableShouldReturnNewInstanceWithTags() {
         Tags tags = Tags.of(Collections.singleton(Tag.of("t1", "v1")));
         assertTags(tags, "t1", "v1");
     }
 
     @Test
-    void ofIterableWhenIterableIsTagsShouldReturnSameInstance() throws Exception {
+    void ofIterableWhenIterableIsTagsShouldReturnSameInstance() {
         Tags source = Tags.of("t1", "v1");
         Tags tags = Tags.of(source);
         assertThat(tags).isSameAs(source);
     }
 
     @Test
-    void ofKeyValueShouldReturnNewInstance() throws Exception {
+    void ofKeyValueShouldReturnNewInstance() {
         Tags tags = Tags.of("t1", "v1");
         assertTags(tags, "t1", "v1");
     }
 
     @Test
-    void ofKeyValuesShouldReturnNewInstance() throws Exception {
+    void ofKeyValuesShouldReturnNewInstance() {
         Tags tags = Tags.of("t1", "v1", "t2", "v2");
         assertTags(tags, "t1", "v1", "t2", "v2");
     }
 
     @Test
-    void emptyShouldNotContainTags() throws Exception {
+    void emptyShouldNotContainTags() {
         assertThat(Tags.empty().iterator()).isEmpty();
     }
 
