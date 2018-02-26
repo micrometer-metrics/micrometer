@@ -87,4 +87,9 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
         stop();
         super.close();
     }
+
+    @Override
+    protected Double nullGaugeValue() {
+        return null;
+    }
 }

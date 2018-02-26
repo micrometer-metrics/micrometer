@@ -70,4 +70,9 @@ public class GangliaMeterRegistry extends DropwizardMeterRegistry {
         stop();
         super.close();
     }
+
+    @Override
+    protected Double nullGaugeValue() {
+        return Double.NaN;
+    }
 }
