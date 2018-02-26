@@ -42,7 +42,7 @@ public interface WavefrontConfig extends StepRegistryConfig {
         @Override
         public String uri() {
             String v = get(prefix() + ".uri");
-            return v == null ? "proxy://localhost:7828" : v;
+            return v == null ? "proxy://localhost:2878" : v;
         }
     };
 
