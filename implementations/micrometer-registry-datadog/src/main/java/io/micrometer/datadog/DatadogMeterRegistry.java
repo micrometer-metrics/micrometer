@@ -24,10 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
+import java.net.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -271,7 +268,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         HttpURLConnection con = null;
         try {
-            con = (HttpURLConnection) URI.create(config.uri() + "/api/v1/metrics/" + metricName
+            con = (HttpURLConnection) URI.create(config.uri() + "/api/v1/metrics/" + URLEncoder.encode(metricName, "UTF-8")
                     + "?api_key=" + config.apiKey() + "&application_key=" + config.applicationKey()).toURL().openConnection();
             con.setConnectTimeout((int) config.connectTimeout().toMillis());
             con.setReadTimeout((int) config.readTimeout().toMillis());
