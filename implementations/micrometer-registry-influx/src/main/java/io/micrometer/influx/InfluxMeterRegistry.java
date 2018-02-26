@@ -22,6 +22,8 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.lang.Nullable;
+
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +86,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 }
             }
         } catch (Throwable e) {
-            logger.warn("unable to create database '{}'", config.db(), e);
+            logger.error("unable to create database '{}'", config.db(), e);
         } finally {
             quietlyCloseUrlConnection(con);
         }
@@ -96,7 +98,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
         try {
             String write = "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
-            if (config.retentionPolicy() != null) {
+            if (StringUtils.isNotBlank(config.retentionPolicy())) {
                 write += "&rp=" + config.retentionPolicy();
             }
             URL influxEndpoint = URI.create(config.uri() + write).toURL();
@@ -181,7 +183,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Malformed InfluxDB publishing endpoint, see '" + config.prefix() + ".uri'", e);
         } catch (Throwable e) {
-            logger.warn("failed to send metrics", e);
+            logger.error("failed to send metrics", e);
         }
     }
 
