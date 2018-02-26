@@ -22,12 +22,13 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.lang.Nullable;
-
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -98,7 +99,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
         try {
             String write = "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
-            if (StringUtils.isNotBlank(config.retentionPolicy())) {
+            if (!isBlank(config.retentionPolicy())) {
                 write += "&rp=" + config.retentionPolicy();
             }
             URL influxEndpoint = URI.create(config.uri() + write).toURL();
@@ -296,5 +297,24 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     @Override
     protected final TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
+    }
+
+    /**
+     * Modified from {@link org.apache.commons.lang.StringUtils#isBlank(String)}.
+     *
+     * @param str The string to check
+     * @return {@code true} if the String is null or blank.
+     */
+    private static boolean isBlank(@Nullable String str) {
+        int strLen;
+        if (str == null || (strLen = str.length()) == 0) {
+            return true;
+        }
+        for (int i = 0; i < strLen; i++) {
+            if (!Character.isWhitespace(str.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 }
