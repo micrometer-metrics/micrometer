@@ -67,7 +67,11 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
         final WeakReference<T> ref = new WeakReference<>(obj);
         Gauge<Double> gauge = () -> {
             T obj2 = ref.get();
-            return obj2 != null ? valueFunction.applyAsDouble(ref.get()) : nullGaugeValue();
+            if (obj2 != null) {
+                return valueFunction.applyAsDouble(obj2);
+            } else {
+                return nullGaugeValue();
+            }
         };
         registry.register(hierarchicalName(id), gauge);
         return new DropwizardGauge(id, gauge);
