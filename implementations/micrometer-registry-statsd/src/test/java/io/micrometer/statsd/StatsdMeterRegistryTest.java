@@ -21,134 +21,35 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.lang.Nullable;
-import io.netty.channel.ChannelOption;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.reactivestreams.Processor;
 import org.slf4j.LoggerFactory;
-import reactor.core.Disposable;
-import reactor.core.Disposables;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Operators;
-import reactor.ipc.netty.options.ClientOptions;
-import reactor.ipc.netty.udp.UdpServer;
+import reactor.core.publisher.UnicastProcessor;
 import reactor.test.StepVerifier;
+import reactor.util.concurrent.Queues;
 
-import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Jon Schneider
  */
-@Disabled("Flakiness on CI -- perhaps because UdpServer is not being shut down as deterministically as we think?")
 class StatsdMeterRegistryTest {
-    /**
-     * A port that is NOT the default for DogStatsD or Telegraf, so these unit tests
-     * do not fail if one of those agents happens to be running on the same box.
-     */
-    private static final int PORT = 8126;
     private MockClock clock = new MockClock();
-    private Duration step = Duration.ofMillis(5);
 
     @BeforeAll
     static void before() {
         ((Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).setLevel(Level.INFO);
-    }
-
-    private void assertLines(Consumer<StatsdMeterRegistry> registryAction, StatsdFlavor flavor, String... expected) {
-        final CountDownLatch bindLatch = new CountDownLatch(1);
-        final CountDownLatch receiveLatch = new CountDownLatch(expected.length);
-        final CountDownLatch terminateLatch = new CountDownLatch(1);
-
-        final Disposable.Swap server = Disposables.swap();
-
-        final StatsdMeterRegistry registry = registry(flavor);
-
-        Consumer<ClientOptions.Builder<?>> opts = builder -> builder.option(ChannelOption.SO_REUSEADDR, true)
-            .connectAddress(() -> new InetSocketAddress(PORT));
-
-        UdpServer.create(opts)
-            .newHandler((in, out) -> {
-                in.receive()
-                    .asString()
-                    .filter(line -> !line.toLowerCase().startsWith("statsd")) // ignore gauges monitoring the registry itself
-                    .log()
-                    .subscribe(line -> {
-                        for (String s : line.split("\n")) {
-                            for (String s1 : expected) {
-                                if(s.equals(s1))
-                                    receiveLatch.countDown();
-                            }
-                        }
-                    });
-                return Flux.never();
-            })
-            .doOnSuccess(v -> bindLatch.countDown())
-            .doOnTerminate(terminateLatch::countDown)
-            .subscribe(server::replace);
-
-        try {
-            assertTrue(bindLatch.await(1, TimeUnit.SECONDS));
-
-            try {
-                registryAction.accept(registry);
-            } catch (Throwable t) {
-                fail("Failed to perform registry action", t);
-            }
-
-            assertTrue(receiveLatch.await(3, TimeUnit.SECONDS));
-        } catch (InterruptedException e) {
-            fail("Failed to wait for line", e);
-        } finally {
-            server.dispose();
-            registry.stop();
-            try {
-                terminateLatch.await(3, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                fail("Failed to terminate UDP server listening for StatsD messages", e);
-            }
-        }
-    }
-
-    private StatsdMeterRegistry registry(StatsdFlavor flavor) {
-        return new StatsdMeterRegistry(new StatsdConfig() {
-            @Override
-            @Nullable
-            public String get(String key) {
-                return null;
-            }
-
-            @Override
-            public int port() {
-                return PORT;
-            }
-
-            @Override
-            public StatsdFlavor flavor() {
-                return flavor;
-            }
-
-            @Override
-            public Duration step() {
-                return step;
-            }
-
-            @Override
-            public Duration pollingFrequency() {
-                return step;
-            }
-        }, clock);
     }
 
     @ParameterizedTest
@@ -166,12 +67,24 @@ class StatsdMeterRegistryTest {
                 line = "my_counter,statistic=count,my_tag=val:2|c";
         }
 
-        assertLines(r -> r.counter("my.counter", "my.tag", "val").increment(2.1), flavor, line);
+        final Processor<String, String> lines = lineProcessor();
+        MeterRegistry registry = StatsdMeterRegistry.builder(configWithFlavor(flavor))
+                .clock(clock)
+                .lineSink(toSink(lines))
+                .build();
+
+        StepVerifier.create(lines)
+                .then(() -> registry.counter("my.counter", "my.tag", "val").increment(2.1))
+                .expectNext(line)
+                .verifyComplete();
     }
 
     @ParameterizedTest
     @EnumSource(StatsdFlavor.class)
     void gaugeLineProtocol(StatsdFlavor flavor) {
+        final AtomicInteger n = new AtomicInteger(2);
+        final StatsdConfig config = configWithFlavor(flavor);
+
         String line = null;
         switch (flavor) {
             case ETSY:
@@ -183,10 +96,25 @@ class StatsdMeterRegistryTest {
             case TELEGRAF:
                 line = "my_gauge,statistic=value,my_tag=val:2|g";
                 break;
+            default:
+                fail("Unexpected flavor");
         }
 
-        Integer n = 2;
-        assertLines(r -> r.gauge("my.gauge", Tags.of("my.tag", "val"), n), flavor, line);
+        StepVerifier
+                .withVirtualTime(() -> {
+                    final Processor<String, String> lines = lineProcessor();
+                    MeterRegistry registry = StatsdMeterRegistry.builder(config)
+                            .clock(clock)
+                            .lineSink(toSink(lines))
+                            .build();
+
+                    registry.gauge("my.gauge", Tags.of("my.tag", "val"), n);
+                    return lines;
+                })
+                .then(() -> clock.add(config.step()))
+                .thenAwait(config.step())
+                .expectNext(line)
+                .verifyComplete();
     }
 
     @ParameterizedTest
@@ -202,10 +130,21 @@ class StatsdMeterRegistryTest {
                 break;
             case TELEGRAF:
                 line = "my_timer,my_tag=val:1|ms";
+                break;
+            default:
+                fail("Unexpected flavor");
         }
 
-        assertLines(r -> r.timer("my.timer", "my.tag", "val").record(1, TimeUnit.MILLISECONDS),
-            flavor, line);
+        final Processor<String, String> lines = lineProcessor();
+        MeterRegistry registry = StatsdMeterRegistry.builder(configWithFlavor(flavor))
+                .clock(clock)
+                .lineSink(toSink(lines))
+                .build();
+
+        StepVerifier.create(lines)
+                .then(() -> registry.timer("my.timer", "my.tag", "val").record(1, TimeUnit.MILLISECONDS))
+                .expectNext(line)
+                .verifyComplete();
     }
 
     @ParameterizedTest
@@ -221,61 +160,94 @@ class StatsdMeterRegistryTest {
                 break;
             case TELEGRAF:
                 line = "my_summary,my_tag=val:1|h";
+                break;
+            default:
+                fail("Unexpected flavor");
         }
 
-        assertLines(r -> r.summary("my.summary", "my.tag", "val").record(1), flavor, line);
+        final Processor<String, String> lines = lineProcessor();
+        MeterRegistry registry = StatsdMeterRegistry.builder(configWithFlavor(flavor))
+                .clock(clock)
+                .lineSink(toSink(lines))
+                .build();
+
+        StepVerifier.create(lines)
+                .then(() -> registry.summary("my.summary", "my.tag", "val").record(1))
+                .expectNext(line)
+                .verifyComplete();
     }
 
     @ParameterizedTest
     @EnumSource(StatsdFlavor.class)
     void longTaskTimerLineProtocol(StatsdFlavor flavor) {
-        final Function<MeterRegistry, LongTaskTimer> ltt = r -> r.more().longTaskTimer("my.long.task", "my.tag", "val");
+        final StatsdConfig config = configWithFlavor(flavor);
+        long stepMillis = config.step().toMillis();
+
+        String[] expectLines = null;
+        switch (flavor) {
+            case ETSY:
+                expectLines = new String[]{
+                        "myLongTask.myTag.val.statistic.activeTasks:1|g",
+                        "myLongTask.myTag.val.statistic.duration:" + stepMillis + "|g",
+                };
+                break;
+            case DATADOG:
+                expectLines = new String[]{
+                        "my.long.task:1|g|#statistic:activeTasks,my.tag:val",
+                        "my.long.task:" + stepMillis + "|g|#statistic:duration,my.tag:val",
+                };
+                break;
+            case TELEGRAF:
+                expectLines = new String[]{
+                        "my_long_task,statistic=activeTasks,my_tag=val:1|g",
+                        "my_long_task,statistic=duration,my_tag=val:" + stepMillis + "|g",
+                };
+                break;
+            default:
+                fail("Unexpected flavor");
+        }
+
+        AtomicReference<LongTaskTimer> ltt = new AtomicReference<>();
+        AtomicReference<LongTaskTimer.Sample> sample = new AtomicReference<>();
 
         StepVerifier
-            .withVirtualTime(() -> {
-                String[] lines = null;
-                switch (flavor) {
-                    case ETSY:
-                        lines = new String[]{
-                            "myLongTask.myTag.val.statistic.activetasks:1|c",
-                            "myLongTaskDuration.myTag.val.statistic.value:1|c",
-                        };
-                        break;
-                    case DATADOG:
-                        lines = new String[]{
-                            "my.long.task:1|c|#statistic:activetasks,myTag:val",
-                            "my.long.task:1|c|#statistic:duration,myTag:val",
-                        };
-                        break;
-                    case TELEGRAF:
-                        lines = new String[]{
-                            "myLongTask,statistic=activetasks,myTag=val:1|c",
-                            "myLongTask,statistic=duration,myTag=val:1|c",
-                        };
-                }
+                .withVirtualTime(() -> {
+                    final Processor<String, String> lines = lineProcessor();
+                    MeterRegistry registry = StatsdMeterRegistry.builder(config)
+                            .clock(clock)
+                            .lineSink(toSink(lines, 2))
+                            .build();
 
-                assertLines(r -> ltt.apply(r).start(), flavor, lines);
-                return null;
-            })
-            .then(() -> clock.add(10, TimeUnit.MILLISECONDS))
-            .thenAwait(Duration.ofMillis(10));
+                    ltt.set(registry.more().longTaskTimer("my.long.task", "my.tag", "val"));
+                    return lines;
+                })
+                .then(() -> sample.set(ltt.get().start()))
+                .then(() -> clock.add(config.step()))
+                .thenAwait(config.step())
+                .expectNext(expectLines[0])
+                .expectNext(expectLines[1])
+                .verifyComplete();
     }
 
     @Test
     void customNamingConvention() {
-        AtomicInteger n = new AtomicInteger(1);
+        final Processor<String, String> lines = lineProcessor();
+        MeterRegistry registry = StatsdMeterRegistry.builder(configWithFlavor(StatsdFlavor.ETSY))
+                .nameMapper((id, convention) -> id.getName().toUpperCase())
+                .clock(clock)
+                .lineSink(toSink(lines))
+                .build();
 
-        assertLines(r -> {
-            r.gauge("my.gauge", n);
-            r.config().namingConvention((name, type, baseUnit) -> name.toUpperCase());
-            n.addAndGet(1);
-        }, StatsdFlavor.ETSY, "MY.GAUGE.statistic.value:2|g");
+        StepVerifier.create(lines)
+                .then(() -> registry.counter("my.counter", "my.tag", "val").increment(2.1))
+                .expectNext("MY.COUNTER:2|c")
+                .verifyComplete();
     }
 
     @Issue("#411")
     @Test
     void counterIncrementDoesNotCauseStackOverflow() {
-        StatsdMeterRegistry registry = registry(StatsdFlavor.ETSY);
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
         new LogbackMetrics().bindTo(registry);
 
         // Cause the publisher to get into a state that would make it perform logging at DEBUG level.
@@ -289,7 +261,8 @@ class StatsdMeterRegistryTest {
     @EnumSource(StatsdFlavor.class)
     @Issue("#370")
     void slasOnlyNoPercentileHistogram(StatsdFlavor flavor) {
-        MeterRegistry registry = registry(flavor);
+        StatsdConfig config = configWithFlavor(flavor);
+        MeterRegistry registry = new StatsdMeterRegistry(config, clock);
         DistributionSummary summary = DistributionSummary.builder("my.summary").sla(1, 2).register(registry);
         summary.record(1);
 
@@ -304,10 +277,51 @@ class StatsdMeterRegistryTest {
         assertThat(summaryHist2.value()).isEqualTo(1);
         assertThat(timerHist.value()).isEqualTo(1);
 
-        clock.add(step);
+        clock.add(config.step());
 
         assertThat(summaryHist1.value()).isEqualTo(0);
         assertThat(summaryHist2.value()).isEqualTo(0);
         assertThat(timerHist.value()).isEqualTo(0);
+    }
+
+    @Test
+    void interactWithStoppedRegistry() {
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
+        registry.stop();
+        registry.counter("my.counter").increment();
+    }
+
+    private static StatsdConfig configWithFlavor(StatsdFlavor flavor) {
+        return new StatsdConfig() {
+            @Override
+            @Nullable
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public StatsdFlavor flavor() {
+                return flavor;
+            }
+        };
+    }
+
+    private UnicastProcessor<String> lineProcessor() {
+        return UnicastProcessor.create(Queues.<String>unboundedMultiproducer().get());
+    }
+
+    private Consumer<String> toSink(Processor<String, String> lines) {
+        return toSink(lines, 1);
+    }
+
+    private Consumer<String> toSink(Processor<String, String> lines, int numLines) {
+        AtomicInteger latch = new AtomicInteger(numLines);
+        return l -> {
+            System.out.println(l);
+            lines.onNext(l);
+            if (latch.decrementAndGet() == 0) {
+                lines.onComplete();
+            }
+        };
     }
 }

@@ -105,7 +105,7 @@ public class FlavorStatsdLineBuilder implements StatsdLineBuilder {
     }
 
     private String tags(@Nullable Statistic stat, String otherTags, String keyValueSeparator, String preamble) {
-        String tags = of(stat == null ? null : "statistic" + keyValueSeparator + stat.toString().toLowerCase(), otherTags)
+        String tags = of(stat == null ? null : "statistic" + keyValueSeparator + stat.getTagValueRepresentation(), otherTags)
                 .filter(Objects::nonNull)
                 .collect(Collectors.joining(","));
 
