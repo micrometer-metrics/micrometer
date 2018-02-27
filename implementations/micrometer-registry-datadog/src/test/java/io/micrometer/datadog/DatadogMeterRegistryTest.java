@@ -17,6 +17,7 @@ package io.micrometer.datadog;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import reactor.core.Disposable;
 import reactor.ipc.netty.http.server.HttpServer;
@@ -37,7 +38,7 @@ class DatadogMeterRegistryTest {
         DatadogMeterRegistry registry = new DatadogMeterRegistry(new DatadogConfig() {
             @Override
             public String uri() {
-                return "http://localhost:29000";
+                return "http://localhost:3036";
             }
 
             @Override
@@ -66,7 +67,7 @@ class DatadogMeterRegistryTest {
 
         Pattern p = Pattern.compile("/api/v1/metrics/([^\\?]+)\\?.*");
 
-        Disposable server = HttpServer.create(29000)
+        Disposable server = HttpServer.create(3036)
                 .newHandler((req, resp) -> {
                     Matcher matcher = p.matcher(req.uri());
                     if (matcher.matches()) {
