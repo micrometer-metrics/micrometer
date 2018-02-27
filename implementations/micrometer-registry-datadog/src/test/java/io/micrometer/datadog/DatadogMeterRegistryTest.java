@@ -17,7 +17,6 @@ package io.micrometer.datadog;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import reactor.core.Disposable;
 import reactor.ipc.netty.http.server.HttpServer;
