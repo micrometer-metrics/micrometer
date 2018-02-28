@@ -51,7 +51,7 @@ public class AggregateCustomMeter extends AggregateMeter {
 
                 for (Map.Entry<Statistic, Double> statAndValue : combinedStats.entrySet()) {
                     Statistic stat = statAndValue.getKey();
-                    combinedStats.put(stat, statAndValue.getValue() + statAndValue.getValue() + stats.get(stat));
+                    combinedStats.put(stat, statAndValue.getValue() + stats.get(stat));
                 }
             }
         }
