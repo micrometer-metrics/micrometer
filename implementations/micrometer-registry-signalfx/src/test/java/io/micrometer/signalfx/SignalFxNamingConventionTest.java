@@ -13,9 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@NonNullApi
-@NonNullFields
-package io.micrometer.core.instrument.binder.reactor;
+package io.micrometer.signalfx;
 
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class SignalFxNamingConventionTest {
+    private SignalFxNamingConvention convention = new SignalFxNamingConvention();
+
+    @Test
+    void tagKey() {
+        assertThat(convention.tagKey("_boo")).isEqualTo("boo");
+        assertThat(convention.tagKey("sf_boo")).isEqualTo("boo");
+
+        assertThat(convention.tagKey("123")).isEqualTo("a123");
+    }
+
+}

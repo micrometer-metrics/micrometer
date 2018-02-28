@@ -26,6 +26,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/**
+ * A long task timer is used to track the total duration of all in-flight long-running tasks and the number of
+ * such tasks.
+ *
+ * @author Jon Schneider
+ */
 public interface LongTaskTimer extends Meter {
     static Builder builder(String name) {
         return new Builder(name);
@@ -35,6 +41,7 @@ public interface LongTaskTimer extends Meter {
      * Create a timer builder from a {@link Timed} annotation.
      *
      * @param timed The annotation instance to base a new timer on.
+     * @return This builder.
      */
     static Builder builder(Timed timed) {
         if (!timed.longTask()) {
@@ -46,15 +53,17 @@ public interface LongTaskTimer extends Meter {
         }
 
         return new Builder(timed.value())
-            .tags(timed.extraTags())
-            .description(timed.description().isEmpty() ? null : timed.description());
+                .tags(timed.extraTags())
+                .description(timed.description().isEmpty() ? null : timed.description());
     }
 
     /**
      * Executes the callable `f` and records the time taken.
      *
-     * @param f Function to execute and measure the execution time.
+     * @param f   Function to execute and measure the execution time.
+     * @param <T> The return type of the {@link Callable}.
      * @return The return value of `f`.
+     * @throws Exception Any exception bubbling up from the callable.
      */
     default <T> T recordCallable(Callable<T> f) throws Exception {
         Sample sample = start();
@@ -68,7 +77,8 @@ public interface LongTaskTimer extends Meter {
     /**
      * Executes the callable `f` and records the time taken.
      *
-     * @param f Function to execute and measure the execution time.
+     * @param f   Function to execute and measure the execution time.
+     * @param <T> The return type of the {@link Supplier}.
      * @return The return value of `f`.
      */
     default <T> T record(Supplier<T> f) {
@@ -125,29 +135,30 @@ public interface LongTaskTimer extends Meter {
     long stop(long task);
 
     /**
-     * Returns the current duration for an active task.
+     * The current duration for an active task.
      *
      * @param task Id for the task to stop. This should be the value returned from {@link #start()}.
-     * @param unit The time unit to scale the returned value to.
+     * @param unit The time unit to scale the duration to.
      * @return Duration for the task in nanoseconds. A -1 value will be returned for an unknown task.
      */
     double duration(long task, TimeUnit unit);
 
     /**
-     * Returns the cumulative duration of all current tasks in nanoseconds.
+     * @param unit The time unit to scale the duration to.
+     * @return The cumulative duration of all current tasks in nanoseconds.
      */
     double duration(TimeUnit unit);
 
     /**
-     * Returns the current number of tasks being executed.
+     * @return The current number of tasks being executed.
      */
     int activeTasks();
 
     @Override
     default Iterable<Measurement> measure() {
         return Arrays.asList(
-            new Measurement(() -> (double) activeTasks(), Statistic.ACTIVE_TASKS),
-            new Measurement(() -> duration(TimeUnit.NANOSECONDS), Statistic.DURATION)
+                new Measurement(() -> (double) activeTasks(), Statistic.ACTIVE_TASKS),
+                new Measurement(() -> duration(TimeUnit.NANOSECONDS), Statistic.DURATION)
         );
     }
 
@@ -190,6 +201,7 @@ public interface LongTaskTimer extends Meter {
 
         /**
          * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         * @return The long task timer builder with added tags.
          */
         public Builder tags(String... tags) {
             return tags(Tags.of(tags));
@@ -205,7 +217,7 @@ public interface LongTaskTimer extends Meter {
         }
 
         /**
-         * @param key The tag key.
+         * @param key   The tag key.
          * @param value The tag value.
          * @return The long task timer builder with a single added tag.
          */

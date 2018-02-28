@@ -25,7 +25,10 @@ import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -45,6 +48,7 @@ import static java.util.stream.Collectors.toList;
 public class InfluxMeterRegistry extends StepMeterRegistry {
     private final InfluxConfig config;
     private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
+    private boolean databaseExists = false;
 
     public InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
@@ -58,7 +62,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     private void createDatabaseIfNecessary() {
-        if (!config.autoCreateDb())
+        if (!config.autoCreateDb() || databaseExists)
             return;
 
         HttpURLConnection con = null;
@@ -75,14 +79,15 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
             if (status >= 200 && status < 300) {
                 logger.debug("influx database {} is ready to receive metrics", config.db());
+                databaseExists = true;
             } else if (status >= 400) {
                 try (InputStream in = con.getErrorStream()) {
                     logger.error("unable to create database '{}': {}", config.db(), new BufferedReader(new InputStreamReader(in))
                             .lines().collect(joining("\n")));
                 }
             }
-        } catch (IOException e) {
-            logger.warn("unable to create database '{}'", config.db(), e);
+        } catch (Throwable e) {
+            logger.error("unable to create database '{}'", config.db(), e);
         } finally {
             quietlyCloseUrlConnection(con);
         }
@@ -94,7 +99,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
         try {
             String write = "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
-            if (config.retentionPolicy() != null) {
+            if (!isBlank(config.retentionPolicy())) {
                 write += "&rp=" + config.retentionPolicy();
             }
             URL influxEndpoint = URI.create(config.uri() + write).toURL();
@@ -162,6 +167,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
                     if (status >= 200 && status < 300) {
                         logger.info("successfully sent {} metrics to influx", batch.size());
+                        databaseExists = true;
                     } else if (status >= 400) {
                         try (InputStream in = con.getErrorStream()) {
                             logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
@@ -178,7 +184,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Malformed InfluxDB publishing endpoint, see '" + config.prefix() + ".uri'", e);
         } catch (Throwable e) {
-            logger.warn("failed to send metrics", e);
+            logger.error("failed to send metrics", e);
         }
     }
 
@@ -291,5 +297,24 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     @Override
     protected final TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
+    }
+
+    /**
+     * Modified from {@link org.apache.commons.lang.StringUtils#isBlank(String)}.
+     *
+     * @param str The string to check
+     * @return {@code true} if the String is null or blank.
+     */
+    private static boolean isBlank(@Nullable String str) {
+        int strLen;
+        if (str == null || (strLen = str.length()) == 0) {
+            return true;
+        }
+        for (int i = 0; i < strLen; i++) {
+            if (!Character.isWhitespace(str.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 }

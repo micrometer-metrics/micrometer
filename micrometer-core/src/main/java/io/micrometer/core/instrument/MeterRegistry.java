@@ -58,8 +58,8 @@ public abstract class MeterRegistry implements AutoCloseable {
     private volatile Map<Id, Meter> meterMap = Collections.emptyMap();
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private PauseDetector pauseDetector = new ClockDriftPauseDetector(
-        Duration.ofMillis(100),
-        Duration.ofMillis(100)
+            Duration.ofMillis(100),
+            Duration.ofMillis(100)
     );
 
     /**
@@ -106,7 +106,9 @@ public abstract class MeterRegistry implements AutoCloseable {
     /**
      * Build a new timer to be added to the registry. This is guaranteed to only be called if the timer doesn't already exist.
      *
-     * @param id The id that uniquely identifies the timer.
+     * @param id                          The id that uniquely identifies the timer.
+     * @param distributionStatisticConfig Configuration for published distribution statistics.
+     * @param pauseDetector               The pause detector to use for coordinated omission compensation.
      * @return A new timer.
      */
     protected abstract Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector);
@@ -114,7 +116,9 @@ public abstract class MeterRegistry implements AutoCloseable {
     /**
      * Build a new distribution summary to be added to the registry. This is guaranteed to only be called if the distribution summary doesn't already exist.
      *
-     * @param id The id that uniquely identifies the distribution summary.
+     * @param id                          The id that uniquely identifies the distribution summary.
+     * @param distributionStatisticConfig Configuration for published distribution statistics.
+     * @param scale                       Multiply every recorded sample by this factor.
      * @return A new distribution summary.
      */
     protected abstract DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale);
@@ -122,7 +126,9 @@ public abstract class MeterRegistry implements AutoCloseable {
     /**
      * Build a new custom meter to be added to the registry. This is guaranteed to only be called if the custom meter doesn't already exist.
      *
-     * @param id The id that uniquely identifies the custom meter.
+     * @param id           The id that uniquely identifies the custom meter.
+     * @param type         What kind of meter this is.
+     * @param measurements A set of measurements describing how to sample this meter.
      * @return A new custom meter.
      */
     protected abstract Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements);
@@ -130,7 +136,11 @@ public abstract class MeterRegistry implements AutoCloseable {
     /**
      * Build a new time gauge to be added to the registry. This is guaranteed to only be called if the time gauge doesn't already exist.
      *
-     * @param id The id that uniquely identifies the time gauge.
+     * @param id                The id that uniquely identifies the time gauge.
+     * @param obj               The state object from which the value function derives a measurement.
+     * @param valueFunctionUnit The base unit of time returned by the value function.
+     * @param valueFunction     A function returning a time value that can go up or down.
+     * @param <T>               The type of the object upon which the value function derives a measurement.
      * @return A new time gauge.
      */
     protected <T> TimeGauge newTimeGauge(Meter.Id id, T obj, TimeUnit valueFunctionUnit, ToDoubleFunction<T> valueFunction) {
@@ -158,7 +168,12 @@ public abstract class MeterRegistry implements AutoCloseable {
     /**
      * Build a new function timer to be added to the registry. This is guaranteed to only be called if the function timer doesn't already exist.
      *
-     * @param id The id that uniquely identifies the function timer.
+     * @param id                     The id that uniquely identifies the function timer.
+     * @param obj                    The state object from which the count and total functions derive measurements.
+     * @param countFunction          A monotonically increasing count function.
+     * @param totalTimeFunction      A monotonically increasing total time function.
+     * @param totalTimeFunctionUnits The base unit of time of the totals returned by the total time function.
+     * @param <T>                    The type of the object upon which the value functions derives their measurements.
      * @return A new function timer.
      */
     protected abstract <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits);
@@ -166,10 +181,13 @@ public abstract class MeterRegistry implements AutoCloseable {
     /**
      * Build a new function counter to be added to the registry. This is guaranteed to only be called if the function counter doesn't already exist.
      *
-     * @param id The id that uniquely identifies the function counter.
+     * @param id            The id that uniquely identifies the function counter.
+     * @param obj           The state object from which the count function derives a measurement.
+     * @param countFunction A monotonically increasing count function.
+     * @param <T>           The type of the object upon which the value function derives a measurement.
      * @return A new function counter.
      */
-    protected abstract <T> FunctionCounter newFunctionCounter(Id id, T obj, ToDoubleFunction<T> valueFunction);
+    protected abstract <T> FunctionCounter newFunctionCounter(Id id, T obj, ToDoubleFunction<T> countFunction);
 
     protected List<Tag> getConventionTags(Meter.Id id) {
         return id.getConventionTags(config().namingConvention());
@@ -185,14 +203,15 @@ public abstract class MeterRegistry implements AutoCloseable {
     protected abstract TimeUnit getBaseTimeUnit();
 
     /**
-     * Every custom registry implementation should define a default histogram expiry:
-     * <p>
+     * Every custom registry implementation should define a default histogram expiry at a minimum:
      * <pre>
-     * histogramConfig.builder()
+     * DistributionStatisticConfig.builder()
      *    .expiry(defaultStep)
      *    .build()
      *    .merge(DistributionStatisticConfig.DEFAULT);
      * </pre>
+     *
+     * @return The default distribution statistics config.
      */
     protected abstract DistributionStatisticConfig defaultHistogramConfig();
 
@@ -226,7 +245,7 @@ public abstract class MeterRegistry implements AutoCloseable {
     /**
      * Only used by {@link Timer#builder(String)}.
      *
-     * @param id              The identifier for this timer.
+     * @param id                          The identifier for this timer.
      * @param distributionStatisticConfig Configuration that governs how distribution statistics are computed.
      * @return A new or existing timer.
      */
@@ -240,13 +259,13 @@ public abstract class MeterRegistry implements AutoCloseable {
     /**
      * Only used by {@link DistributionSummary#builder(String)}.
      *
-     * @param id              The identifier for this distribution summary.
+     * @param id                          The identifier for this distribution summary.
      * @param distributionStatisticConfig Configuration that governs how distribution statistics are computed.
      * @return A new or existing distribution summary.
      */
     DistributionSummary summary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
         return registerMeterIfNecessary(DistributionSummary.class, id, distributionStatisticConfig, (id2, filteredConfig) ->
-            newDistributionSummary(id2, filteredConfig.merge(defaultHistogramConfig()), scale), NoopDistributionSummary::new);
+                newDistributionSummary(id2, filteredConfig.merge(defaultHistogramConfig()), scale), NoopDistributionSummary::new);
     }
 
     /**
@@ -292,7 +311,7 @@ public abstract class MeterRegistry implements AutoCloseable {
      * @return A new search.
      */
     public Search find(String name) {
-        return Search.search(this).name(name);
+        return Search.in(this).name(name);
     }
 
     /**
@@ -303,7 +322,7 @@ public abstract class MeterRegistry implements AutoCloseable {
      * @return A new search.
      */
     public RequiredSearch get(String name) {
-        return RequiredSearch.search(this).name(name);
+        return RequiredSearch.in(this).name(name);
     }
 
     /**
@@ -531,7 +550,7 @@ public abstract class MeterRegistry implements AutoCloseable {
         Meter m = meterMap.get(mappedId);
 
         if (m == null) {
-            if(isClosed()) {
+            if (isClosed()) {
                 return noopBuilder.apply(mappedId);
             }
 
@@ -723,8 +742,10 @@ public abstract class MeterRegistry implements AutoCloseable {
         /**
          * Tracks a number, maintaining a weak reference on it.
          *
-         * @param name Name of the gauge being registered.
-         * @param tags Sequence of dimensions for breaking down the name.
+         * @param name   Name of the gauge being registered.
+         * @param tags   Sequence of dimensions for breaking down the name.
+         * @param number A monotonically increasing number to track.
+         * @param <T>    The type of the state object from which the counter value is extracted.
          * @return A new or existing function counter.
          */
         public <T extends Number> FunctionCounter counter(String name, Iterable<Tag> tags, T number) {
@@ -742,7 +763,7 @@ public abstract class MeterRegistry implements AutoCloseable {
          */
         <T> FunctionCounter counter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
             return registerMeterIfNecessary(FunctionCounter.class, id, id2 -> newFunctionCounter(id2, obj, countFunction),
-                NoopFunctionCounter::new);
+                    NoopFunctionCounter::new);
         }
 
         /**
@@ -754,6 +775,7 @@ public abstract class MeterRegistry implements AutoCloseable {
          * @param countFunction         Function that produces a monotonically increasing counter value from the state object.
          * @param totalTimeFunction     Function that produces a monotonically increasing total time value from the state object.
          * @param totalTimeFunctionUnit The base unit of time produced by the total time function.
+         * @param <T>                   The type of the state object from which the function values are extracted.
          * @return A new or existing function timer.
          */
         public <T> FunctionTimer timer(String name, Iterable<Tag> tags, T obj,
@@ -761,7 +783,7 @@ public abstract class MeterRegistry implements AutoCloseable {
                                        ToDoubleFunction<T> totalTimeFunction,
                                        TimeUnit totalTimeFunctionUnit) {
             return FunctionTimer.builder(name, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit)
-                .tags(tags).register(MeterRegistry.this);
+                    .tags(tags).register(MeterRegistry.this);
         }
 
         /**
@@ -772,6 +794,7 @@ public abstract class MeterRegistry implements AutoCloseable {
          * @param countFunction         Function that produces a monotonically increasing counter value from the state object.
          * @param totalTimeFunction     Function that produces a monotonically increasing total time value from the state object.
          * @param totalTimeFunctionUnit The base unit of time produced by the total time function.
+         * @param <T>                   The type of the state object from which the function values are extracted.F
          * @return A new or existing function timer.
          */
         <T> FunctionTimer timer(Meter.Id id, T obj,
@@ -792,6 +815,7 @@ public abstract class MeterRegistry implements AutoCloseable {
          * @param obj              State object used to compute a value.
          * @param timeFunctionUnit The base unit of time produced by the total time function.
          * @param timeFunction     Function that produces a time value from the state object. This value may increase and decrease over time.
+         * @param <T>              The type of the state object from which the gauge value is extracted.
          * @return A new or existing time gauge.
          */
         public <T> TimeGauge timeGauge(String name, Iterable<Tag> tags, T obj,
@@ -806,6 +830,7 @@ public abstract class MeterRegistry implements AutoCloseable {
          * @param obj              State object used to compute a value.
          * @param timeFunctionUnit The base unit of time produced by the total time function.
          * @param timeFunction     Function that produces a time value from the state object. This value may increase and decrease over time.
+         * @param <T>              The type of the state object from which the gauge value is extracted.
          * @return A new or existing time gauge.
          */
         <T> TimeGauge timeGauge(Meter.Id id, T obj, TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
@@ -819,7 +844,7 @@ public abstract class MeterRegistry implements AutoCloseable {
      */
     @Override
     public void close() {
-        if(closed.compareAndSet(false, true)) {
+        if (closed.compareAndSet(false, true)) {
             synchronized (meterMapLock) {
                 for (Meter meter : meterMap.values()) {
                     meter.close();

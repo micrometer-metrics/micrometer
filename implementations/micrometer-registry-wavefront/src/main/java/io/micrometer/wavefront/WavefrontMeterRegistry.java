@@ -119,7 +119,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                 } else {
                     try (Socket socket = new Socket(uri.getHost(), uri.getPort());
                          OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream(), "UTF-8")) {
-                        writer.write(stream.collect(joining("\n")));
+                        writer.write(stream.collect(joining("\n")) + "\n");
                         writer.flush();
                     }
                 }

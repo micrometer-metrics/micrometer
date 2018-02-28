@@ -85,9 +85,7 @@ public class MetricsAutoConfiguration {
         return r -> r.config().meterFilter(new PropertiesMeterFilter(props));
     }
 
-    /**
-     * If AOP is not enabled, scheduled interception will not work.
-     */
+    // If AOP is not enabled, scheduled interception will not work.
     @Bean
     @ConditionalOnClass(name = "org.aspectj.lang.ProceedingJoinPoint")
     @ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)

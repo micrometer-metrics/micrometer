@@ -116,6 +116,7 @@ public interface MeterFilter {
      * @param tagKey      The tag key for which replacements should be made
      * @param replacement The value to replace with
      * @param exceptions  All a matching tag with this value to retain its original value
+     * @return A filter that replaces tag values.
      * @author Clint Checketts
      */
     static MeterFilter replaceTagValues(String tagKey, Function<String, String> replacement, String... exceptions) {
@@ -143,6 +144,7 @@ public interface MeterFilter {
      * Can be used to build a whitelist of metrics matching certain criteria. Opposite of {@link #deny(Predicate)}.
      *
      * @param iff When a meter id matches, allow its inclusion, otherwise deny.
+     * @return A meter filter that whitelists metrics matching a predicate.
      */
     static MeterFilter denyUnless(Predicate<Meter.Id> iff) {
         return new MeterFilter() {
@@ -213,6 +215,7 @@ public interface MeterFilter {
      * it can effectively cap your risk of an accidentally high-cardiality metric costing too much.
      *
      * @param maximumTimeSeries The total number of unique name/tag permutations allowed before filtering kicks in.
+     * @return A filter that globally limits the number of unique name and tag combinations.
      */
     static MeterFilter maximumAllowableMetrics(int maximumTimeSeries) {
         return new MeterFilter() {
@@ -374,6 +377,7 @@ public interface MeterFilter {
     }
 
     /**
+     * @param id Id to transform.
      * @return Transformations to any part of the id.
      */
     default Meter.Id map(Meter.Id id) {

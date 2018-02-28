@@ -21,7 +21,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 /**
- * An immutable collection of {@link Tags}.
+ * An immutable collection of {@link Tag Tags}.
  *
  * @author Jon Schneider
  * @author Maciej Walkowiak
@@ -38,10 +38,10 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@link Tags} instance my merging this collection and the specific key/value pair.
+     * Return a new {@link Tags} instance by merging this collection and the specific key/value pair.
      *
      * @param key   the tag key to add
-     * @param value the tag value add
+     * @param value the tag value to add
      * @return a new {@link Tags} instance
      */
     public Tags and(String key, String value) {
@@ -49,7 +49,7 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@link Tags} instance my merging this collection and the specific key/value pairs.
+     * Return a new {@link Tags} instance by merging this collection and the specific key/value pairs.
      *
      * @param keyValues the key value pairs to add
      * @return a new {@link Tags} instance
@@ -69,7 +69,7 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@link Tags} instance my merging this collection and the specific tags.
+     * Return a new {@link Tags} instance by merging this collection and the specific tags.
      *
      * @param tags the tags to add
      * @return a new {@link Tags} instance
@@ -82,7 +82,7 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@link Tags} instance my merging this collection and the specific tags.
+     * Return a new {@link Tags} instance by merging this collection and the specific tags.
      *
      * @param tags the tags to add
      * @return a new {@link Tags} instance
@@ -156,7 +156,7 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@link Tags} instance containing tags constructed from the specified name value pair.
+     * Return a new {@link Tags} instance containing tags constructed from the specified key value pair.
      *
      * @param key   the tag key to add
      * @param value the tag value to add

@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * Collect metrics on JSR-107 JCache caches, including detailed metrics on manual puts and removals.
  * See https://github.com/jsr107/demo/blob/master/src/test/java/javax/cache/core/StatisticsExample.java
- *
+ * <p>
  * Note that JSR-107 does not provide any insight into the size or estimated size of the cache, so
  * the size metric of a JCache cache will always report 0.
  *
@@ -44,9 +44,12 @@ public class JCacheMetrics extends CacheMeterBinder {
     /**
      * Record metrics on a JCache cache.
      *
-     * @param registry  The registry to bind metrics to.
-     * @param cache     The cache to instrument.
-     * @param tags      Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
+     * @param registry The registry to bind metrics to.
+     * @param cache    The cache to instrument.
+     * @param tags     Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
+     * @param <C>      The cache type.
+     * @param <K>      The cache key type.
+     * @param <V>      The cache value type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see com.google.common.cache.CacheStats
      */
@@ -57,9 +60,12 @@ public class JCacheMetrics extends CacheMeterBinder {
     /**
      * Record metrics on a JCache cache.
      *
-     * @param registry  The registry to bind metrics to.
-     * @param cache     The cache to instrument.
-     * @param tags      Tags to apply to all recorded metrics.
+     * @param registry The registry to bind metrics to.
+     * @param cache    The cache to instrument.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @param <C>      The cache type.
+     * @param <K>      The cache key type.
+     * @param <V>      The cache value type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see com.google.common.cache.CacheStats
      */

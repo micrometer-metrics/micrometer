@@ -64,6 +64,7 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      * @param cache     The cache to instrument.
      * @param cacheName Will be used to tag metrics with "cache".
      * @param tags      Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
+     * @param <C>       The cache type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
     public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
@@ -78,6 +79,7 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      * @param cache     The cache to instrument.
      * @param cacheName Will be used to tag metrics with "cache".
      * @param tags      Tags to apply to all recorded metrics.
+     * @param <C>       The cache type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see CacheStats
      */
@@ -94,6 +96,7 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      * @param cache     The cache to instrument.
      * @param cacheName Will be used to tag metrics with "cache".
      * @param tags      Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
+     * @param <C>       The cache type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
     public static <C extends AsyncLoadingCache> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
@@ -108,6 +111,7 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      * @param cache     The cache to instrument.
      * @param cacheName Will be used to tag metrics with "cache".
      * @param tags      Tags to apply to all recorded metrics.
+     * @param <C>       The cache type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see CacheStats
      */

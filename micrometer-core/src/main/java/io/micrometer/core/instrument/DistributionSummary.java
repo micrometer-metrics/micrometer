@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.lang.Nullable;
@@ -45,38 +46,56 @@ public interface DistributionSummary extends Meter {
     void record(double amount);
 
     /**
-     * The number of times that record has been called since this timer was created.
+     * @return The number of times that record has been called since this timer was created.
      */
     long count();
 
     /**
-     * The total amount of all recorded events since this summary was created.
+     * @return The total amount of all recorded events.
      */
     double totalAmount();
 
+    /**
+     * @return The distribution average for all recorded events.
+     */
     default double mean() {
         return count() == 0 ? 0 : totalAmount() / count();
     }
 
     /**
-     * The maximum time of a single event.
+     * @return The maximum time of a single event.
      */
     double max();
 
     /**
-     * The value at a specific percentile. This value is non-aggregable across dimensions.
+     * @param percentile A percentile in the domain [0, 1]. For example, 0.5 represents the 50th percentile of the
+     *                   distribution.
+     * @return The value at a specific percentile. This value is non-aggregable across dimensions.
      */
     double percentile(double percentile);
 
+    /**
+     * Provides cumulative histogram counts.
+     *
+     * @param value The histogram bucket to retrieve a count for.
+     * @return The count of all events less than or equal to the bucket.
+     */
     double histogramCountAtValue(long value);
 
+    /**
+     * Summary statistics should be published off of a single snapshot instance so that, for example, there isn't
+     * disagreement between the distribution's count and total because more events continue to stream in.
+     *
+     * @param supportsAggregablePercentiles Whether percentile histogram buckets should be included in the list of {@link CountAtBucket}.
+     * @return A snapshot of all distribution statistics at a point in time.
+     */
     HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles);
 
     @Override
     default Iterable<Measurement> measure() {
         return Arrays.asList(
-            new Measurement(() -> (double) count(), Statistic.COUNT),
-            new Measurement(this::totalAmount, Statistic.TOTAL)
+                new Measurement(() -> (double) count(), Statistic.COUNT),
+                new Measurement(this::totalAmount, Statistic.TOTAL)
         );
     }
 
@@ -102,6 +121,7 @@ public interface DistributionSummary extends Meter {
 
         /**
          * @param tags Must be an even number of arguments representing key/value pairs of tags.
+         * @return The distribution summmary builder with added tags.
          */
         public Builder tags(String... tags) {
             return tags(Tags.of(tags));
@@ -151,6 +171,7 @@ public interface DistributionSummary extends Meter {
          * to publish a histogram that can be used to generate aggregable percentile approximations.
          *
          * @param percentiles Percentiles to compute and publish. The 95th percentile should be expressed as {@code 0.95}.
+         * @return This builder.
          */
         public Builder publishPercentiles(@Nullable double... percentiles) {
             this.distributionConfigBuilder.percentiles(percentiles);
@@ -173,7 +194,7 @@ public interface DistributionSummary extends Meter {
          * systems that have query facilities to do so (e.g. Prometheus' {@code histogram_quantile},
          * Atlas' {@code :percentiles}).
          *
-         * @param enabled Value determining whether histgoram
+         * @param enabled Determines whether percentile histograms should be published.
          * @return This builder.
          */
         public Builder publishPercentileHistogram(@Nullable Boolean enabled) {

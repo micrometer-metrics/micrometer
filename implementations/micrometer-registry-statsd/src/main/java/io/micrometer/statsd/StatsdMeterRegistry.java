@@ -28,6 +28,8 @@ import io.micrometer.core.lang.Nullable;
 import io.micrometer.statsd.internal.FlavorStatsdLineBuilder;
 import io.micrometer.statsd.internal.LogbackMetricsSuppressingUnicastProcessor;
 import org.reactivestreams.Processor;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
 import reactor.core.Disposables;
 import reactor.core.publisher.Flux;
@@ -40,6 +42,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
@@ -51,56 +55,109 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private final StatsdConfig statsdConfig;
     private final HierarchicalNameMapper nameMapper;
     private final Collection<StatsdPollable> pollableMeters = new CopyOnWriteArrayList<>();
+    Processor<String, String> publisher;
 
-    volatile Processor<String, String> publisher;
+    private final AtomicBoolean started = new AtomicBoolean(false);
 
     private Disposable.Swap udpClient = Disposables.swap();
     private Disposable.Swap meterPoller = Disposables.swap();
 
     @Nullable
-    private Function<Meter.Id, StatsdLineBuilder> lineBuilderGenerator;
+    private Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction;
+
+    @Nullable
+    private Consumer<String> lineSink;
 
     public StatsdMeterRegistry(StatsdConfig config, Clock clock) {
         this(config, HierarchicalNameMapper.DEFAULT, clock);
     }
 
+    /**
+     * Use this constructor for Etsy-flavored StatsD when you need to influence the way Micrometer's dimensional {@link Meter.Id}
+     * is written to a flat hierarchical name.
+     *
+     * @param config     The StatsD configuration.
+     * @param nameMapper A strategy for flattening dimensional IDs.
+     * @param clock      The clock to use for timing and polling certain types of meters.
+     */
     public StatsdMeterRegistry(StatsdConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
-        this(config, nameMapper, clock, null);
+        this(config, nameMapper, namingConventionFromFlavor(config.flavor()), clock, null, null);
+    }
+
+    public static StatsdMeterRegistry.Builder builder(StatsdConfig config) {
+        return new Builder(config);
     }
 
     /**
-     * Construct a new StatsD registry.
-     *
-     * @param config               Configuration options.
-     * @param nameMapper           A strategy to flatten names to a hierarchical form. Only used by the Etsy flavor which
-     *                             does not support tags.
-     * @param clock                The clock.
-     * @param lineBuilderGenerator A function that builds a StatsD serializer for a given meter id. Used for completely
-     *                             customizing the serialized form when you are dealing with a non-standard (and potentially
-     *                             non-public) StatsD flavor.
+     * A builder for configuration of less common knobs on {@link StatsdMeterRegistry}.
      */
-    @Incubating(since = "1.0.0")
-    public StatsdMeterRegistry(StatsdConfig config, HierarchicalNameMapper nameMapper, Clock clock,
-                               Function<Meter.Id, StatsdLineBuilder> lineBuilderGenerator) {
-        super(clock);
+    @Incubating(since = "1.0.1")
+    public static class Builder {
+        private final StatsdConfig config;
 
-        this.lineBuilderGenerator = lineBuilderGenerator;
+        private Clock clock = Clock.SYSTEM;
+        private NamingConvention namingConvention;
+        private HierarchicalNameMapper nameMapper = HierarchicalNameMapper.DEFAULT;
+
+        @Nullable
+        private Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction = null;
+
+        @Nullable
+        private Consumer<String> lineSink;
+
+        public Builder(StatsdConfig config) {
+            this.config = config;
+            this.namingConvention = namingConventionFromFlavor(config.flavor());
+        }
+
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+
+        /**
+         * Used for completely customizing the StatsD line format. Intended for use by custom, proprietary
+         * StatsD flavors.
+         *
+         * @param lineBuilderFunction A mapping from a meter ID to a StatsD line generator that knows how to write counts, gauges
+         *                            timers, and histograms in the proprietary format.
+         * @return This builder.
+         */
+        public Builder lineBuilder(Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction) {
+            this.lineBuilderFunction = lineBuilderFunction;
+            return this;
+        }
+
+        public Builder nameMapper(HierarchicalNameMapper nameMapper) {
+            this.nameMapper = nameMapper;
+            return this;
+        }
+
+        public Builder lineSink(Consumer<String> lineSink) {
+            this.lineSink = lineSink;
+            return this;
+        }
+
+        public StatsdMeterRegistry build() {
+            return new StatsdMeterRegistry(config, nameMapper, namingConvention, clock, lineBuilderFunction, lineSink);
+        }
+    }
+
+    private StatsdMeterRegistry(StatsdConfig config,
+                                HierarchicalNameMapper nameMapper,
+                                NamingConvention namingConvention,
+                                Clock clock,
+                                @Nullable Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction,
+                                @Nullable Consumer<String> lineSink) {
+        super(clock);
 
         this.statsdConfig = config;
         this.nameMapper = nameMapper;
+        this.lineBuilderFunction = lineBuilderFunction;
+        this.lineSink = lineSink;
+        config().namingConvention(namingConvention);
 
-        switch (statsdConfig.flavor()) {
-            case DATADOG:
-                config().namingConvention(NamingConvention.dot);
-                break;
-            case TELEGRAF:
-                config().namingConvention(NamingConvention.snakeCase);
-                break;
-            default:
-                config().namingConvention(NamingConvention.camelCase);
-        }
-
-        UnicastProcessor<String> processor = UnicastProcessor.create(Queues.<String>get(statsdConfig.queueSize()).get());
+        UnicastProcessor<String> processor = UnicastProcessor.create(Queues.<String>unboundedMultiproducer().get());
 
         try {
             Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, getClass().getClassLoader());
@@ -109,30 +166,64 @@ public class StatsdMeterRegistry extends MeterRegistry {
             this.publisher = processor;
         }
 
+        if (lineSink != null) {
+            publisher.subscribe(new Subscriber<String>() {
+                @Override
+                public void onSubscribe(Subscription s) {
+                    s.request(Long.MAX_VALUE);
+                }
+
+                @Override
+                public void onNext(String line) {
+                    if (started.get()) {
+                        lineSink.accept(line);
+                    }
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                }
+
+                @Override
+                public void onComplete() {
+                    meterPoller.dispose();
+                }
+            });
+
+            // now that we're connected, start polling gauges and other pollable meter types
+            meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
+                    .doOnEach(n -> pollableMeters.forEach(StatsdPollable::poll))
+                    .subscribe());
+        }
+
         if (config.enabled())
             start();
     }
 
     public void start() {
-        UdpClient.create(statsdConfig.host(), statsdConfig.port())
-                .newHandler((in, out) -> out
-                        .options(NettyPipeline.SendOptions::flushOnEach)
-                        .sendString(publisher)
-                        .neverComplete()
-                )
-                .subscribe(client -> {
-                    this.udpClient.replace(client);
+        if (started.compareAndSet(false, true) && lineSink == null) {
+            UdpClient.create(statsdConfig.host(), statsdConfig.port())
+                    .newHandler((in, out) -> out
+                            .options(NettyPipeline.SendOptions::flushOnEach)
+                            .sendString(publisher)
+                            .neverComplete()
+                    )
+                    .subscribe(client -> {
+                        this.udpClient.replace(client);
 
-                    // now that we're connected, start polling gauges and other pollable meter types
-                    meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
-                            .doOnEach(n -> pollableMeters.forEach(StatsdPollable::poll))
-                            .subscribe());
-                });
+                        // now that we're connected, start polling gauges and other pollable meter types
+                        meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
+                                .doOnEach(n -> pollableMeters.forEach(StatsdPollable::poll))
+                                .subscribe());
+                    });
+        }
     }
 
     public void stop() {
-        udpClient.dispose();
-        meterPoller.dispose();
+        if (started.compareAndSet(true, false)) {
+            udpClient.dispose();
+            meterPoller.dispose();
+        }
     }
 
     @Override
@@ -149,10 +240,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private StatsdLineBuilder lineBuilder(Meter.Id id) {
-        if (lineBuilderGenerator == null) {
-            lineBuilderGenerator = id2 -> new FlavorStatsdLineBuilder(id2, statsdConfig.flavor(), nameMapper, config());
+        if (lineBuilderFunction == null) {
+            lineBuilderFunction = id2 -> new FlavorStatsdLineBuilder(id2, statsdConfig.flavor(), nameMapper, config());
         }
-        return lineBuilderGenerator.apply(id);
+        return lineBuilderFunction.apply(id);
     }
 
     @Override
@@ -213,8 +304,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
-        StatsdFunctionCounter fc = new StatsdFunctionCounter<>(id, obj, valueFunction, lineBuilder(id), publisher);
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
+        StatsdFunctionCounter fc = new StatsdFunctionCounter<>(id, obj, countFunction, lineBuilder(id), publisher);
         pollableMeters.add(fc);
         return fc;
     }
@@ -278,6 +369,17 @@ public class StatsdMeterRegistry extends MeterRegistry {
         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             // should never happen
             return 0;
+        }
+    }
+
+    private static NamingConvention namingConventionFromFlavor(StatsdFlavor flavor) {
+        switch (flavor) {
+            case DATADOG:
+                return NamingConvention.dot;
+            case TELEGRAF:
+                return NamingConvention.snakeCase;
+            default:
+                return NamingConvention.camelCase;
         }
     }
 }

@@ -53,11 +53,6 @@ public class SimpleMetricsExportAutoConfiguration {
         return new SimplePropertiesConfigAdapter(props);
     }
 
-    /**
-     * Since {@link SimpleMeterRegistry} is an in-memory metrics store that doesn't publish anywhere,
-     * it is only configured when a real monitoring system implementation is not present. In this case,
-     * it backs the metrics displayed in the metrics actuator endpoint.
-     */
     @Bean
     @ConditionalOnMissingBean(MeterRegistry.class)
     public SimpleMeterRegistry simpleMeterRegistry(SimpleConfig config, Clock clock) {

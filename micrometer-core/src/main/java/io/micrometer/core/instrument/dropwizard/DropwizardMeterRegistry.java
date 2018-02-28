@@ -36,7 +36,7 @@ import java.util.function.ToLongFunction;
 /**
  * @author Jon Schneider
  */
-public class DropwizardMeterRegistry extends MeterRegistry {
+public abstract class DropwizardMeterRegistry extends MeterRegistry {
     private final MetricRegistry registry;
     private final HierarchicalNameMapper nameMapper;
     private final DropwizardClock dropwizardClock;
@@ -67,7 +67,11 @@ public class DropwizardMeterRegistry extends MeterRegistry {
         final WeakReference<T> ref = new WeakReference<>(obj);
         Gauge<Double> gauge = () -> {
             T obj2 = ref.get();
-            return obj2 != null ? valueFunction.applyAsDouble(ref.get()) : Double.NaN;
+            if (obj2 != null) {
+                return valueFunction.applyAsDouble(obj2);
+            } else {
+                return nullGaugeValue();
+            }
         };
         registry.register(hierarchicalName(id), gauge);
         return new DropwizardGauge(id, gauge);
@@ -130,8 +134,8 @@ public class DropwizardMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
-        DropwizardFunctionCounter<T> fc = new DropwizardFunctionCounter<>(id, clock, obj, valueFunction);
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
+        DropwizardFunctionCounter<T> fc = new DropwizardFunctionCounter<>(id, clock, obj, countFunction);
         registry.register(hierarchicalName(id), fc.getDropwizardMeter());
         return fc;
     }
@@ -158,4 +162,9 @@ public class DropwizardMeterRegistry extends MeterRegistry {
                 .build()
                 .merge(DistributionStatisticConfig.DEFAULT);
     }
+
+    /**
+     * @return Value to report when {@link io.micrometer.core.instrument.Gauge#value()} returns {@code null}.
+     */
+    protected abstract Double nullGaugeValue();
 }

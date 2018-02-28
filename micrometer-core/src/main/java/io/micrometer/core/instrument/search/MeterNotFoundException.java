@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class MeterNotFoundException extends RuntimeException {

@@ -65,4 +65,9 @@ public class JmxMeterRegistry extends DropwizardMeterRegistry {
         stop();
         super.close();
     }
+
+    @Override
+    protected Double nullGaugeValue() {
+        return Double.NaN;
+    }
 }

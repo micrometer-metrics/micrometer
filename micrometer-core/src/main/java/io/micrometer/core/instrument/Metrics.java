@@ -144,6 +144,7 @@ public class Metrics {
      * @param tags          Sequence of dimensions for breaking down the name.
      * @param obj           Object used to compute a value.
      * @param valueFunction Function that is applied on the value for the number.
+     * @param <T>           The type of the state object from which the gauge value is extracted.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
@@ -158,6 +159,7 @@ public class Metrics {
      * @param name   Name of the gauge being registered.
      * @param tags   Sequence of dimensions for breaking down the name.
      * @param number Thread-safe implementation of {@link Number} used to access the value.
+     * @param <T>    The type of the state object from which the gauge value is extracted.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
@@ -171,6 +173,7 @@ public class Metrics {
      *
      * @param name   Name of the gauge being registered.
      * @param number Thread-safe implementation of {@link Number} used to access the value.
+     * @param <T>    The type of the state object from which the gauge value is extracted.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
@@ -185,6 +188,7 @@ public class Metrics {
      * @param name          Name of the gauge being registered.
      * @param obj           Object used to compute a value.
      * @param valueFunction Function that is applied on the value for the number.
+     * @param <T>           The type of the state object from which the gauge value is extracted.F
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
@@ -203,6 +207,7 @@ public class Metrics {
      * @param name       Name of the gauge being registered.
      * @param tags       Sequence of dimensions for breaking down the name.
      * @param collection Thread-safe implementation of {@link Collection} used to access the value.
+     * @param <T>        The type of the state object from which the gauge value is extracted.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
@@ -221,6 +226,7 @@ public class Metrics {
      * @param name Name of the gauge being registered.
      * @param tags Sequence of dimensions for breaking down the name.
      * @param map  Thread-safe implementation of {@link Map} used to access the value.
+     * @param <T>  The type of the state object from which the gauge value is extracted.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
@@ -273,8 +279,10 @@ public class Metrics {
         /**
          * Tracks a number, maintaining a weak reference on it.
          *
-         * @param name Name of the gauge being registered.
-         * @param tags Sequence of dimensions for breaking down the name.
+         * @param name   Name of the gauge being registered.
+         * @param tags   Sequence of dimensions for breaking down the name.
+         * @param number A monotonically increasing number to track.
+         * @param <T>    The type of the state object from which the counter value is extracted.
          * @return A new or existing function counter.
          */
         public <T extends Number> FunctionCounter counter(String name, Iterable<Tag> tags, T number) {
@@ -289,6 +297,7 @@ public class Metrics {
          * @param obj              State object used to compute a value.
          * @param timeFunctionUnit The base unit of time produced by the total time function.
          * @param timeFunction     Function that produces a time value from the state object. This value may increase and decrease over time.
+         * @param <T>              The type of the state object from which the gauge value is extracted.
          * @return A new or existing time gauge.
          */
         public <T> TimeGauge timeGauge(String name, Iterable<Tag> tags, T obj, TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
@@ -304,6 +313,7 @@ public class Metrics {
          * @param countFunction         Function that produces a monotonically increasing counter value from the state object.
          * @param totalTimeFunction     Function that produces a monotonically increasing total time value from the state object.
          * @param totalTimeFunctionUnit The base unit of time produced by the total time function.
+         * @param <T>                   The type of the state object from which the function values are extracted.
          * @return A new or existing function timer.
          */
         public <T> FunctionTimer timer(String name, Iterable<Tag> tags, T obj,

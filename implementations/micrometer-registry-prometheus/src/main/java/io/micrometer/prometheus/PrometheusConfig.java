@@ -19,6 +19,11 @@ import io.micrometer.core.instrument.config.MeterRegistryConfig;
 
 import java.time.Duration;
 
+/**
+ * Configuration for {@link PrometheusMeterRegistry}.
+ *
+ * @author Jon Schneider
+ */
 public interface PrometheusConfig extends MeterRegistryConfig {
     /**
      * Accept configuration defaults
@@ -31,7 +36,7 @@ public interface PrometheusConfig extends MeterRegistryConfig {
     }
 
     /**
-     * {@code true} if meter descriptions should be sent to Prometheus.
+     * @return {@code true} if meter descriptions should be sent to Prometheus.
      * Turn this off to minimize the amount of data sent on each scrape.
      */
     default boolean descriptions() {
@@ -40,7 +45,7 @@ public interface PrometheusConfig extends MeterRegistryConfig {
     }
 
     /**
-     * Returns the step size to use in computing windowed statistics like max. The default is 1 minute.
+     * @return The step size to use in computing windowed statistics like max. The default is 1 minute.
      * To get the most out of these statistics, align the step interval to be close to your scrape interval.
      */
     default Duration step() {

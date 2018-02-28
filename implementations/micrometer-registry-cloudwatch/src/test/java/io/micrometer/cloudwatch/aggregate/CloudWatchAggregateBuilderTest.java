@@ -52,7 +52,7 @@ class CloudWatchAggregateBuilderTest {
 
     @Test
     void groupsAggregatesByName() {
-        CloudWatchAggregateBuilder aggregate = new CloudWatchAggregateBuilder(Search.search(registry), true);
+        CloudWatchAggregateBuilder aggregate = new CloudWatchAggregateBuilder(Search.in(registry), true);
 
         assertThat(aggregate.aggregates().map(m -> m.getId().getName()))
                 .containsExactly("http.requests", "my.counter", "my.gauge");

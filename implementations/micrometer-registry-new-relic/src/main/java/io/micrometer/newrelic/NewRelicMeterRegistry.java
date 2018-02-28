@@ -32,6 +32,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -42,6 +43,7 @@ import java.util.stream.Stream;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
 
 /**
  * Publishes metrics to New Relic Insights.
@@ -82,6 +84,16 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                     return writeTimer((FunctionTimer) meter);
                 } else if (meter instanceof DistributionSummary) {
                     return writeSummary((DistributionSummary) meter);
+                } else if (meter instanceof TimeGauge) {
+                    return writeGauge((TimeGauge) meter);
+                } else if (meter instanceof Gauge) {
+                    return writeGauge((Gauge) meter);
+                } else if (meter instanceof Counter) {
+                    return writeCounter((Counter) meter);
+                } else if (meter instanceof FunctionCounter) {
+                    return writeCounter((FunctionCounter) meter);
+                } else if (meter instanceof LongTaskTimer) {
+                    return writeLongTaskTimer((LongTaskTimer) meter);
                 } else {
                     return writeMeter(meter);
                 }
@@ -106,67 +118,93 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         }
     }
 
+    private Stream<String> writeLongTaskTimer(LongTaskTimer ltt) {
+        return Stream.of(
+                event(ltt.getId(),
+                        new Attribute("activeTasks", ltt.activeTasks()),
+                        new Attribute("duration", ltt.duration(getBaseTimeUnit())))
+        );
+    }
+
+    private Stream<String> writeCounter(FunctionCounter counter) {
+        return Stream.of(event(counter.getId(), new Attribute("throughput", counter.count())));
+    }
+
+    private Stream<String> writeCounter(Counter counter) {
+        return Stream.of(event(counter.getId(), new Attribute("throughput", counter.count())));
+    }
+
+    private Stream<String> writeGauge(Gauge gauge) {
+        return Stream.of(event(gauge.getId(), new Attribute("value", gauge.value())));
+    }
+
+    private Stream<String> writeGauge(TimeGauge gauge) {
+        return Stream.of(event(gauge.getId(), new Attribute("value", gauge.value(getBaseTimeUnit()))));
+    }
+
     private Stream<String> writeSummary(DistributionSummary summary) {
-        final Stream.Builder<String> events = Stream.builder();
-        Meter.Id id = summary.getId();
         HistogramSnapshot t = summary.takeSnapshot(false);
-
-        events.add(event(id, "count", t.count()));
-        events.add(event(id, "sum", t.total()));
-        events.add(event(id, "avg", t.mean()));
-        events.add(event(id, "max", t.max()));
-
-        return events.build();
+        return Stream.of(
+                event(summary.getId(),
+                        new Attribute("count", t.count()),
+                        new Attribute("avg", t.mean()),
+                        new Attribute("total", t.total()),
+                        new Attribute("max", t.max())
+                )
+        );
     }
 
     private Stream<String> writeTimer(Timer timer) {
-        final Stream.Builder<String> events = Stream.builder();
-        Meter.Id id = timer.getId();
         HistogramSnapshot t = timer.takeSnapshot(false);
-
-        events.add(event(id, "count", t.count()));
-        events.add(event(id, "sum", t.total(getBaseTimeUnit())));
-        events.add(event(id, "avg", t.mean(getBaseTimeUnit())));
-        events.add(event(id, "max", t.max(getBaseTimeUnit())));
-
-        return events.build();
+        return Stream.of(event(timer.getId(),
+                new Attribute("count", t.count()),
+                new Attribute("avg", t.mean(getBaseTimeUnit())),
+                new Attribute("totalTime", t.total(getBaseTimeUnit())),
+                new Attribute("max", t.max(getBaseTimeUnit()))
+        ));
     }
 
     private Stream<String> writeTimer(FunctionTimer timer) {
-        final Stream.Builder<String> events = Stream.builder();
-        Meter.Id id = timer.getId();
-
-        events.add(event(id, "count", timer.count()));
-        events.add(event(id, "sum", timer.count()));
-        events.add(event(id, "mean", timer.mean(getBaseTimeUnit())));
-
-        return events.build();
+        return Stream.of(
+                event(timer.getId(),
+                        new Attribute("count", timer.count()),
+                        new Attribute("avg", timer.mean(getBaseTimeUnit())),
+                        new Attribute("totalTime", timer.totalTime(getBaseTimeUnit()))
+                )
+        );
     }
 
     private Stream<String> writeMeter(Meter meter) {
-        final Stream.Builder<String> events = Stream.builder();
-        for (Measurement measurement : meter.measure()) {
-            events.add(event(meter.getId(), measurement.getStatistic().toString().toLowerCase(), measurement.getValue()));
-        }
-        return events.build();
+        return Stream.of(
+                event(meter.getId(),
+                        stream(meter.measure().spliterator(), false)
+                                .map(measure -> new Attribute(measure.getStatistic().getTagValueRepresentation(), measure.getValue()))
+                                .toArray(Attribute[]::new)
+                )
+        );
     }
 
-    private String event(Meter.Id id, String statistic, Number value, String... additionalTags) {
+    private String event(Meter.Id id, Attribute... attributes) {
+        return event(id, Tags.empty(), attributes);
+    }
 
-        StringBuilder additionalTagsJson = new StringBuilder();
-        for (int i = 0; i < additionalTags.length; i += 2) {
-            additionalTagsJson.append(",\"").append(additionalTags[i]).append("\":\"").append(additionalTags[i + 1]).append("\"");
-        }
+    private String event(Meter.Id id, Iterable<Tag> extraTags, Attribute... attributes) {
+        StringBuilder tagsJson = new StringBuilder();
 
         for (Tag tag : getConventionTags(id)) {
-            additionalTagsJson.append(",\"").append(tag.getKey()).append("\":\"").append(tag.getValue()).append("\"");
+            tagsJson.append(",\"").append(tag.getKey()).append("\":\"").append(tag.getValue()).append("\"");
         }
 
-        return "{\"eventType\":\"" + getConventionName(id) + "\",\"statistic\":\"" + statistic + "\"," +
-                "\"value\":" + Double.toString(value.doubleValue()) + additionalTagsJson.toString() + "}";
+        NamingConvention convention = config().namingConvention();
+        for (Tag tag : extraTags) {
+            tagsJson.append(",\"").append(convention.tagKey(tag.getKey())).append("\":\"").append(convention.tagValue(tag.getValue())).append("\"");
+        }
+
+        return "{\"eventType\":\"" + getConventionName(id) + "\"" +
+                Arrays.stream(attributes).map(attr -> ",\"" + attr.getName() + "\":" + Double.toString(attr.getValue().doubleValue()))
+                        .collect(Collectors.joining("")) + tagsJson.toString() + "}";
     }
 
-    // TODO HTTP/1.1 Persistent connections are supported
     private void sendEvents(URL insightsEndpoint, List<String> events) {
 
         HttpURLConnection con = null;
@@ -220,5 +258,23 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.SECONDS;
+    }
+
+    private class Attribute {
+        private final String name;
+        private final Number value;
+
+        private Attribute(String name, Number value) {
+            this.name = name;
+            this.value = value;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Number getValue() {
+            return value;
+        }
     }
 }

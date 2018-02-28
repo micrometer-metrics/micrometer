@@ -17,8 +17,8 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowLatencyHistogram;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
@@ -74,6 +74,8 @@ public class PrometheusTimer extends AbstractTimer implements Timer {
     /**
      * For Prometheus we cannot use the histogram counts from HistogramSnapshot, as it is based on a
      * rolling histogram. Prometheus requires a histogram that accumulates values over the lifetime of the app.
+     *
+     * @return Cumulative histogram buckets.
      */
     public CountAtBucket[] histogramCounts() {
         return percentilesHistogram.takeSnapshot(0, 0, 0, true).histogramCounts();

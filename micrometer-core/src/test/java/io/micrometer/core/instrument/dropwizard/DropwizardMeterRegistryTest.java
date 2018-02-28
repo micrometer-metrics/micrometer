@@ -46,7 +46,12 @@ class DropwizardMeterRegistryTest {
     };
 
     private final DropwizardMeterRegistry registry = new DropwizardMeterRegistry(
-            config, new MetricRegistry(), HierarchicalNameMapper.DEFAULT, clock);
+            config, new MetricRegistry(), HierarchicalNameMapper.DEFAULT, clock) {
+        @Override
+        protected Double nullGaugeValue() {
+            return Double.NaN;
+        }
+    };
 
     @Test
     void gaugeOnNullValue() {

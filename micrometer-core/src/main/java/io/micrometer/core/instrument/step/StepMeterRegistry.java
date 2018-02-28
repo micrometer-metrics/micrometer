@@ -138,8 +138,8 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> valueFunction) {
-        return new StepFunctionCounter<>(id, clock, config.step().toMillis(), obj, valueFunction);
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
+        return new StepFunctionCounter<>(id, clock, config.step().toMillis(), obj, countFunction);
     }
 
     @Override

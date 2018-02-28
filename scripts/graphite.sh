@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 docker run -d\
- -p 80:80\
+ --restart=always\
+ -p 8081:80\
  -p 2003-2004:2003-2004\
  -p 2023-2024:2023-2024\
  -p 8125:8125/udp\

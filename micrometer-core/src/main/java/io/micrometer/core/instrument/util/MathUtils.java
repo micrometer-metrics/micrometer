@@ -25,9 +25,7 @@ public final class MathUtils {
     private MathUtils() {
     }
 
-    /**
-     * Simplified {@link com.google.common.math.IntMath#divide(int, int, java.math.RoundingMode)}.
-     */
+    // Simplified {@link com.google.common.math.IntMath#divide(int, int, java.math.RoundingMode)}.
     public static int divideWithCeilingRoundingMode(int p, int q) {
         if (q == 0) {
             throw new ArithmeticException("/ by zero"); // for GWT

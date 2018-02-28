@@ -13,15 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.samples.utils;
+package io.micrometer.core.samples;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.samples.utils.SampleConfig;
 
-// Run: git update-index --assume-unchanged **/SampleConfig.java
-// If you legitimately need to change this file, you can undo this with: git update-index --no-assume-unchanged **/SampleConfig.java
-public class SampleConfig {
-    public static MeterRegistry myMonitoringSystem() {
-        // Pick a monitoring system here to use in your samples.
-        return SampleRegistries.jmx();
+import java.util.concurrent.atomic.AtomicInteger;
+
+/**
+ * Demonstrates how monitoring systems deal with NaN values coming out of gauges.
+ */
+public class NullGaugeSample {
+    public static void main(String[] args) throws InterruptedException {
+        MeterRegistry registry = SampleConfig.myMonitoringSystem();
+        AtomicInteger n = new AtomicInteger(100);
+
+        registry.gauge("my.null.gauge", (Object) null, o -> 1.0);
+        registry.gauge("my.nonnull.gauge", n);
+
+        for(;;) {
+            Thread.sleep(100);
+        }
     }
 }

@@ -37,9 +37,12 @@ public class HazelcastCacheMetrics extends CacheMeterBinder {
     /**
      * Record metrics on a Hazelcast cache.
      *
-     * @param registry  The registry to bind metrics to.
-     * @param cache     The cache to instrument.
-     * @param tags      Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
+     * @param registry The registry to bind metrics to.
+     * @param cache    The cache to instrument.
+     * @param tags     Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
+     * @param <C>      The cache type.
+     * @param <K>      The cache key type.
+     * @param <V>      The cache value type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see com.google.common.cache.CacheStats
      */
@@ -50,9 +53,12 @@ public class HazelcastCacheMetrics extends CacheMeterBinder {
     /**
      * Record metrics on a Hazelcast cache.
      *
-     * @param registry  The registry to bind metrics to.
-     * @param cache     The cache to instrument.
-     * @param tags      Tags to apply to all recorded metrics.
+     * @param registry The registry to bind metrics to.
+     * @param cache    The cache to instrument.
+     * @param tags     Tags to apply to all recorded metrics.
+     * @param <C>      The cache type.
+     * @param <K>      The cache key type.
+     * @param <V>      The cache value type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see com.google.common.cache.CacheStats
      */

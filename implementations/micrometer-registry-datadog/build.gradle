@@ -7,4 +7,5 @@ dependencies {
     compile 'org.apache.commons:commons-text:latest.release' lock '1.2'
 
     testCompile project(':micrometer-test')
+    testCompile 'io.projectreactor.ipc:reactor-netty:latest.release' lock '0.7.4.RELEASE'
 }

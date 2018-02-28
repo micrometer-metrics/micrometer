@@ -19,9 +19,14 @@ import io.micrometer.core.instrument.config.MeterRegistryConfig;
 
 import java.time.Duration;
 
+/**
+ * Base configuration for {@link DropwizardMeterRegistry}.
+ *
+ * @author Jon Schneider
+ */
 public interface DropwizardConfig extends MeterRegistryConfig {
     /**
-     * Returns the step size (reporting frequency, max decaying) to use. The default is 1 minute.
+     * @return The step size (reporting frequency, max decaying) to use. The default is 1 minute.
      */
     default Duration step() {
         String v = get(prefix() + ".step");

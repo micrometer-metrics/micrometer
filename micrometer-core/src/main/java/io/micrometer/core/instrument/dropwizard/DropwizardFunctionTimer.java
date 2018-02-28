@@ -103,7 +103,8 @@ public class DropwizardFunctionTimer<T> extends AbstractMeter implements Functio
 
                     @Override
                     public double getMean() {
-                        return totalTime(TimeUnit.NANOSECONDS) / count();
+                        double count = count();
+                        return count == 0 ? 0 : totalTime(baseTimeUnit()) / count;
                     }
 
                     @Override

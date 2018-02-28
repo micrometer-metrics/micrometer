@@ -40,6 +40,7 @@ public class GuavaCacheMetrics extends CacheMeterBinder {
      * @param cache     The cache to instrument.
      * @param cacheName Will be used to tag metrics with "cache".
      * @param tags      Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
+     * @param <C>       The cache type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see com.google.common.cache.CacheStats
      */
@@ -55,6 +56,7 @@ public class GuavaCacheMetrics extends CacheMeterBinder {
      * @param cache     The cache to instrument.
      * @param cacheName The name prefix of the metrics.
      * @param tags      Tags to apply to all recorded metrics.
+     * @param <C>       The cache type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see com.google.common.cache.CacheStats
      */
