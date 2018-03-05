@@ -5,6 +5,7 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 io.micrometer.spring.autoconfigure.MetricsAutoConfiguration,\
 io.micrometer.spring.autoconfigure.CompositeMeterRegistryAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.atlas.AtlasMetricsExportAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.azuremonitor.AzureMonitorMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.datadog.DatadogMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.dynatrace.DynatraceMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.elastic.ElasticMetricsExportAutoConfiguration,\
