@@ -4,15 +4,16 @@ dependencies {
     compile('ch.qos.logback:logback-classic:1.2.+') {
         force = true
     }
-    compile('org.slf4j:slf4j-api:1.7.25') {
+    compile('org.slf4j:slf4j-api:1.7.+') {
         // logback doesn't yet work with slf4j 1.8
         force = true
     }
 
-    ['atlas', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront', 'dynatrace'].each { sys ->
+    ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront', 'dynatrace', 'azure'].each { sys ->
         compile project(":micrometer-registry-$sys")
     }
 
     compile 'io.prometheus:simpleclient_pushgateway:latest.release'
+
     compile 'io.projectreactor.ipc:reactor-netty:0.7.3.RELEASE'
 }
