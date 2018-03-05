@@ -9,7 +9,7 @@ dependencies {
         force = true
     }      lock '1.7.25'
 
-    ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront'].each { sys ->
+    ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront', 'azure'].each { sys ->
         compile project(":micrometer-registry-$sys")
     }
 

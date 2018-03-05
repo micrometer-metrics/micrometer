@@ -18,6 +18,8 @@ package io.micrometer.core.samples.utils;
 import com.netflix.spectator.atlas.AtlasConfig;
 import com.sun.net.httpserver.HttpServer;
 import io.micrometer.atlas.AtlasMeterRegistry;
+import io.micrometer.azure.AzureConfig;
+import io.micrometer.azure.AzureMeterRegistry;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.lang.Nullable;
@@ -308,6 +310,25 @@ public class SampleRegistries {
             @Override
             public String uri() {
                 return "https://longboard.wavefront.com";
+            }
+        }, Clock.SYSTEM);
+    }
+
+    public static AzureMeterRegistry azure(String apiKey) {
+        return new AzureMeterRegistry(new AzureConfig() {
+            @Override
+            public String apiKey() {
+                return apiKey;
+            }
+
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
             }
         }, Clock.SYSTEM);
     }
