@@ -51,8 +51,11 @@ public class DoubleFormat {
         return numberFormatter;
     });
 
-    private static final ThreadLocal<DecimalFormat> WHOLE_OR_DECIMAL = ThreadLocal.withInitial(() ->
-            new DecimalFormat("##0.######"));
+    private static final ThreadLocal<DecimalFormat> WHOLE_OR_DECIMAL = ThreadLocal.withInitial(() -> {
+        // the following will ensure a dot ('.') as decimal separator
+        DecimalFormatSymbols otherSymbols = new DecimalFormatSymbols(Locale.US);
+        return new DecimalFormat("##0.######",otherSymbols);
+    });
 
     /**
      * @param d Number to format.
