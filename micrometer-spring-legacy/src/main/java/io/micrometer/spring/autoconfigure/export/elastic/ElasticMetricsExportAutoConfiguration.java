@@ -18,8 +18,7 @@ package io.micrometer.spring.autoconfigure.export.elastic;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.elastic.ElasticConfig;
 import io.micrometer.elastic.ElasticMeterRegistry;
-import io.micrometer.influx.InfluxConfig;
-import io.micrometer.influx.InfluxMeterRegistry;
+import io.micrometer.spring.autoconfigure.CompositeMeterRegistryAutoConfiguration;
 import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
@@ -40,7 +39,8 @@ import org.springframework.context.annotation.Import;
  * @author Nicolas Portmann
  */
 @Configuration
-@AutoConfigureBefore(SimpleMetricsExportAutoConfiguration.class)
+@AutoConfigureBefore({CompositeMeterRegistryAutoConfiguration.class,
+        SimpleMetricsExportAutoConfiguration.class})
 @AutoConfigureAfter(MetricsAutoConfiguration.class)
 @ConditionalOnBean(Clock.class)
 @ConditionalOnClass(ElasticMeterRegistry.class)

@@ -55,7 +55,7 @@ public class CumulativeFunctionTimer<T> implements FunctionTimer {
      */
     public double count() {
         T obj2 = ref.get();
-        return obj2 != null ? (lastCount = countFunction.applyAsLong(obj2)) : lastCount;
+        return obj2 != null ? (lastCount = Math.max(countFunction.applyAsLong(obj2), 0)) : lastCount;
     }
 
     /**
@@ -65,9 +65,9 @@ public class CumulativeFunctionTimer<T> implements FunctionTimer {
         T obj2 = ref.get();
         if (obj2 == null)
             return lastTime;
-        return (lastTime = TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2),
+        return (lastTime = Math.max(TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2),
             totalTimeFunctionUnits,
-            unit));
+            unit), 0));
     }
 
     @Override

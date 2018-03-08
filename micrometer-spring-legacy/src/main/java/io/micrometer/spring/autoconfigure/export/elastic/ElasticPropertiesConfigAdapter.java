@@ -16,11 +16,7 @@
 package io.micrometer.spring.autoconfigure.export.elastic;
 
 import io.micrometer.elastic.ElasticConfig;
-import io.micrometer.influx.InfluxConfig;
 import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
-import io.micrometer.spring.autoconfigure.export.influx.InfluxProperties;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Adapter to convert {@link ElasticProperties} to an {@link ElasticConfig}.
@@ -39,26 +35,6 @@ public class ElasticPropertiesConfigAdapter extends StepRegistryPropertiesConfig
     }
 
     @Override
-    public String metricPrefix() {
-        return get(ElasticProperties::getMetricPrefix, ElasticConfig.super::metricPrefix);
-    }
-
-    @Override
-    public TimeUnit rateUnits() {
-        return get(ElasticProperties::getRateUnits, ElasticConfig.super::rateUnits);
-    }
-
-    @Override
-    public TimeUnit durationUnits() {
-        return get(ElasticProperties::getDurationUnits, ElasticConfig.super::durationUnits);
-    }
-
-    @Override
-    public int timeout() {
-        return get(ElasticProperties::getTimeout, ElasticConfig.super::timeout);
-    }
-
-    @Override
     public String index() {
         return get(ElasticProperties::getIndex, ElasticConfig.super::index);
     }
@@ -66,12 +42,6 @@ public class ElasticPropertiesConfigAdapter extends StepRegistryPropertiesConfig
     @Override
     public String indexDateFormat() {
         return get(ElasticProperties::getIndexDateFormat, ElasticConfig.super::indexDateFormat);
-
-    }
-
-    @Override
-    public int bulkSize() {
-        return get(ElasticProperties::getBulkSize, ElasticConfig.super::bulkSize);
     }
 
     @Override

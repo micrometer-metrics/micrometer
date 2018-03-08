@@ -62,7 +62,7 @@ public class StepFunctionTimer<T> implements FunctionTimer {
         T obj2 = ref.get();
         if (obj2 != null) {
             long prevLast = lastCount;
-            lastCount = countFunction.applyAsLong(obj2);
+            lastCount = Math.max(countFunction.applyAsLong(obj2), 0);
             count.getCurrent().add(lastCount - prevLast);
         }
         return count.poll();
@@ -75,7 +75,8 @@ public class StepFunctionTimer<T> implements FunctionTimer {
         T obj2 = ref.get();
         if (obj2 != null) {
             double prevLast = lastTime;
-            lastTime = TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnits, unit);
+            lastTime = Math.max(TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnits, unit), 0);
+            System.out.println("prevLast: " + prevLast + " last: " + lastTime + "accum: " + (lastTime - prevLast));
             total.getCurrent().add(lastTime - prevLast);
         }
         return total.poll();

@@ -17,8 +17,6 @@ package io.micrometer.elastic;
 
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * @author Nicolas Portmann
  */
@@ -32,10 +30,8 @@ public interface ElasticConfig extends StepRegistryConfig {
     /**
      * Get the value associated with a key.
      *
-     * @param key
-     *     Key to lookup in the config.
-     * @return
-     *     Value for the key or null if no key is present.
+     * @param key Key to lookup in the config.
+     * @return Value for the key or null if no key is present.
      */
     String get(String key);
 
@@ -56,42 +52,6 @@ public interface ElasticConfig extends StepRegistryConfig {
     }
 
     /**
-     * Prefix all metrics with a given {@link String}.
-     * Default is ""
-     */
-    default String metricPrefix() {
-        String v = get(prefix() + ".metricPrefix");
-        return v == null ? "" : v;
-    }
-
-    /**
-     * Convert all durations to a certain {@link TimeUnit}
-     * Default is {@link TimeUnit#SECONDS}
-     */
-    default TimeUnit rateUnits() {
-        String v = get(prefix() + ".rateUnits");
-        return v == null ? TimeUnit.SECONDS : TimeUnit.valueOf(v.toUpperCase());
-    }
-
-    /**
-     * Convert all durations to a certain {@link TimeUnit}
-     * Default is {@link TimeUnit#MILLISECONDS}
-     */
-    default TimeUnit durationUnits() {
-        String v = get(prefix() + ".durationUnits");
-        return v == null ? TimeUnit.MILLISECONDS : TimeUnit.valueOf(v.toUpperCase());
-    }
-
-    /**
-     * The timeout to wait for until a connection attempt is and the next host is tried.
-     * Default is: 1000
-     */
-    default int timeout() {
-        String v = get(prefix() + ".timeout");
-        return v == null ? 1000 : Integer.parseInt(v);
-    }
-
-    /**
      * The index name to write metrics to.
      * Default is: "metrics"
      */
@@ -108,15 +68,6 @@ public interface ElasticConfig extends StepRegistryConfig {
     default String indexDateFormat() {
         String v = get(prefix() + ".indexDateFormat");
         return v == null ? "yyyy-MM" : v;
-    }
-
-    /**
-     * The bulk size per request.
-     * Default is: 2500
-     */
-    default int bulkSize() {
-        String v = get(prefix() + ".bulkSize");
-        return v == null ? 2500 : Integer.parseInt(v);
     }
 
     /**
