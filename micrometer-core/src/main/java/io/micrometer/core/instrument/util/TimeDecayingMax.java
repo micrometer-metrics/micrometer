@@ -127,6 +127,7 @@ public class TimeDecayingMax {
         }
 
         try {
+            int iterations = 0;
             synchronized (this) {
                 do {
                     ringBuffer[currentBucket].set(0);
@@ -135,7 +136,7 @@ public class TimeDecayingMax {
                     }
                     timeSinceLastRotateMillis -= durationBetweenRotatesMillis;
                     lastRotateTimestampMillis += durationBetweenRotatesMillis;
-                } while (timeSinceLastRotateMillis >= durationBetweenRotatesMillis);
+                } while (timeSinceLastRotateMillis >= durationBetweenRotatesMillis && ++iterations < ringBuffer.length);
             }
         } finally {
             rotating = 0;

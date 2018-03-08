@@ -249,6 +249,7 @@ abstract class TimeWindowHistogramBase<T, U> {
         }
 
         try {
+            int iterations = 0;
             synchronized (this) {
                 do {
                     resetBucket(ringBuffer[currentBucket]);
@@ -257,7 +258,7 @@ abstract class TimeWindowHistogramBase<T, U> {
                     }
                     timeSinceLastRotateMillis -= durationBetweenRotatesMillis;
                     lastRotateTimestampMillis += durationBetweenRotatesMillis;
-                } while (timeSinceLastRotateMillis >= durationBetweenRotatesMillis);
+                } while (timeSinceLastRotateMillis >= durationBetweenRotatesMillis && ++iterations < ringBuffer.length);
 
                 resetAccumulatedHistogram(accumulatedHistogram);
                 accumulatedHistogramStale = true;
