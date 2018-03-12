@@ -21,10 +21,12 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class StepMeterRegistryTest {
+    private AtomicInteger publishes = new AtomicInteger(0);
     private MockClock clock = new MockClock();
 
     private StepRegistryConfig config = new StepRegistryConfig() {
@@ -42,6 +44,7 @@ class StepMeterRegistryTest {
     private MeterRegistry registry = new StepMeterRegistry(config, clock) {
         @Override
         protected void publish() {
+            publishes.incrementAndGet();
         }
 
         @Override
@@ -72,5 +75,13 @@ class StepMeterRegistryTest {
         assertThat(summaryHist1.value()).isEqualTo(0);
         assertThat(summaryHist2.value()).isEqualTo(0);
         assertThat(timerHist.value()).isEqualTo(0);
+    }
+
+    @Issue("#484")
+    @Test
+    void publishOneLastTimeOnClose() {
+        assertThat(publishes.get()).isEqualTo(0);
+        registry.close();
+        assertThat(publishes.get()).isEqualTo(1);
     }
 }

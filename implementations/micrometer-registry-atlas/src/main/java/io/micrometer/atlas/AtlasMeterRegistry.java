@@ -31,6 +31,8 @@ import io.micrometer.core.instrument.step.StepFunctionTimer;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.lang.Nullable;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -76,21 +78,27 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     public void start() {
-        getAtlasRegistry().start();
+        registry.start();
     }
 
     public void stop() {
-        getAtlasRegistry().stop();
+        registry.stop();
     }
 
     @Override
     public void close() {
+        try {
+            @SuppressWarnings("JavaReflectionMemberAccess")
+            Method collectData = registry.getClass().getDeclaredMethod("collectData");
+            collectData.setAccessible(true);
+            collectData.invoke(registry);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            // oh well, we tried
+            e.printStackTrace();
+        }
+
         stop();
         super.close();
-    }
-
-    private AtlasRegistry getAtlasRegistry() {
-        return (AtlasRegistry) this.getSpectatorRegistry();
     }
 
     @Override
@@ -117,7 +125,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
         for (double percentile : distributionStatisticConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", DoubleFormat.decimalOrNan(percentile)),
-                summary, s -> s.percentile(percentile));
+                    summary, s -> s.percentile(percentile));
         }
 
         return summary;
@@ -141,7 +149,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
         for (double percentile : distributionStatisticConfig.getPercentiles()) {
             gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", DoubleFormat.decimalOrNan(percentile)),
-                timer, t -> t.percentile(percentile, TimeUnit.SECONDS));
+                    timer, t -> t.percentile(percentile, TimeUnit.SECONDS));
         }
 
         return timer;
@@ -149,8 +157,8 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
     private Id spectatorId(Meter.Id id) {
         List<com.netflix.spectator.api.Tag> tags = getConventionTags(id).stream()
-            .map(t -> new BasicTag(t.getKey(), t.getValue()))
-            .collect(toList());
+                .map(t -> new BasicTag(t.getKey(), t.getValue()))
+                .collect(toList());
         return registry.createId(getConventionName(id), tags);
     }
 
@@ -187,12 +195,12 @@ public class AtlasMeterRegistry extends MeterRegistry {
             @Override
             public Iterable<com.netflix.spectator.api.Measurement> measure() {
                 return stream(measurements.spliterator(), false)
-                    .map(m -> {
-                        com.netflix.spectator.api.Statistic stat = AtlasUtils.toSpectatorStatistic(m.getStatistic());
-                        Id idWithStat = stat == null ? id : id.withTag("statistic", stat.toString());
-                        return new com.netflix.spectator.api.Measurement(idWithStat, clock.wallTime(), m.getValue());
-                    })
-                    .collect(toList());
+                        .map(m -> {
+                            com.netflix.spectator.api.Statistic stat = AtlasUtils.toSpectatorStatistic(m.getStatistic());
+                            Id idWithStat = stat == null ? id : id.withTag("statistic", stat.toString());
+                            return new com.netflix.spectator.api.Measurement(idWithStat, clock.wallTime(), m.getValue());
+                        })
+                        .collect(toList());
             }
         };
         registry.register(spectatorMeter);
@@ -214,8 +222,8 @@ public class AtlasMeterRegistry extends MeterRegistry {
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
         return DistributionStatisticConfig.builder()
-            .expiry(atlasConfig.step())
-            .build()
-            .merge(DistributionStatisticConfig.DEFAULT);
+                .expiry(atlasConfig.step())
+                .build()
+                .merge(DistributionStatisticConfig.DEFAULT);
     }
 }

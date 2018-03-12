@@ -228,6 +228,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Override
     public void close() {
+        pollableMeters.forEach(StatsdPollable::poll);
         stop();
         super.close();
     }

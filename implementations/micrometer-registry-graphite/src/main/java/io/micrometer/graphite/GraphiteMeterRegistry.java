@@ -84,6 +84,7 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
 
     @Override
     public void close() {
+        reporter.report();
         stop();
         super.close();
     }
