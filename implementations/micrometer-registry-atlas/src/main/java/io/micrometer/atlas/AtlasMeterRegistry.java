@@ -94,7 +94,6 @@ public class AtlasMeterRegistry extends MeterRegistry {
             collectData.invoke(registry);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             // oh well, we tried
-            e.printStackTrace();
         }
 
         stop();
