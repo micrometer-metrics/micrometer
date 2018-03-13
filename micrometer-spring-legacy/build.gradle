@@ -52,6 +52,7 @@ dependencies {
     testCompile 'org.springframework.boot:spring-boot-starter-web' lock '1.5.10.RELEASE'
     testCompile 'org.springframework.boot:spring-boot-actuator' lock '1.5.10.RELEASE'
     testCompile 'org.springframework.boot:spring-boot-starter-test' lock '1.5.10.RELEASE'
+    testCompile 'org.springframework.boot:spring-boot-starter-jersey' lock '1.5.10.RELEASE'
 
     // for testing DataSource metrics
     testCompile 'org.hsqldb:hsqldb' lock '2.3.5'
