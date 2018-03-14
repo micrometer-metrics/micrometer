@@ -76,7 +76,6 @@ public class StepFunctionTimer<T> implements FunctionTimer {
         if (obj2 != null) {
             double prevLast = lastTime;
             lastTime = Math.max(TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnits, unit), 0);
-            System.out.println("prevLast: " + prevLast + " last: " + lastTime + "accum: " + (lastTime - prevLast));
             total.getCurrent().add(lastTime - prevLast);
         }
         return total.poll();
