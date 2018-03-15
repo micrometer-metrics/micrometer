@@ -47,6 +47,12 @@ public class TimedAspectTest {
         assertThat(registry.get("something").timer().count()).isEqualTo(1);
     }
 
+    @Test
+    public void serviceIsTimedWhenNoValue() {
+        service.timeWithoutValue();
+        assertThat(registry.get(TimedAspect.DEFAULT_METRIC_NAME).timer().count()).isEqualTo(1);
+    }
+
     @Configuration
     @EnableAspectJAutoProxy
     @Import(TimedService.class)
@@ -67,6 +73,11 @@ public class TimedAspectTest {
         @Timed("something")
         public String timeMe() {
             return "hello world";
+        }
+
+        @Timed
+        public String timeWithoutValue() {
+            return "hello universe";
         }
     }
 }
