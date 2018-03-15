@@ -41,6 +41,7 @@ import java.util.function.Function;
 @NonNullApi
 @Incubating(since = "1.0.0")
 public class TimedAspect {
+    public static final String DEFAULT_METRIC_NAME = "method_timed";
     private final MeterRegistry registry;
     private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinpoint;
 
@@ -60,16 +61,13 @@ public class TimedAspect {
     public Object timedMethod(ProceedingJoinPoint pjp) throws Throwable {
         Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         Timed timed = method.getAnnotation(Timed.class);
-
-        if (timed.value().isEmpty()) {
-            return pjp.proceed();
-        }
+        final String metricName = timed.value().isEmpty() ? DEFAULT_METRIC_NAME : timed.value();
 
         Timer.Sample sample = Timer.start(registry);
         try {
             return pjp.proceed();
         } finally {
-            sample.stop(Timer.builder(timed.value())
+            sample.stop(Timer.builder(metricName)
                     .description(timed.description().isEmpty() ? null : timed.description())
                     .tags(timed.extraTags())
                     .tags(tagsBasedOnJoinpoint.apply(pjp))
