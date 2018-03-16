@@ -40,6 +40,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -291,22 +292,26 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private IndexBuilder index(Meter meter, long wallTime) {
-        return new IndexBuilder(config, getConventionName(meter.getId()), meter.getId().getType().toString().toLowerCase(), wallTime);
+        return new IndexBuilder(config, getConventionName(meter.getId()), meter.getId().getType().toString().toLowerCase(), meter.getId().getTags(), wallTime);
     }
 
     // VisibleForTesting
     IndexBuilder index(String name, String type, long wallTime) {
-        return new IndexBuilder(config, name, type, wallTime);
+        return new IndexBuilder(config, name, type, Collections.emptyList(), wallTime);
     }
 
     static class IndexBuilder {
         private StringBuilder indexLine = new StringBuilder();
 
-        private IndexBuilder(ElasticConfig config, String name, String type, long wallTime) {
+        private IndexBuilder(ElasticConfig config, String name, String type, List<Tag> tags, long wallTime) {
             indexLine.append(indexLine(config, wallTime))
                     .append("{\"").append(config.timeStampFieldName()).append("\":\"").append(timestamp(wallTime)).append("\"")
                     .append(",\"name\":\"").append(name).append("\"")
                     .append(",\"type\":\"").append(type).append("\"");
+
+            for (Tag tag : tags) {
+                field(tag.getKey(), tag.getValue());
+            }
         }
 
         IndexBuilder field(String name, double value) {
