@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.composite;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.noop.NoopTimeGauge;
+import io.micrometer.core.lang.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
@@ -29,7 +30,7 @@ class CompositeTimeGauge<T> extends AbstractCompositeMeter<TimeGauge> implements
     private final ToDoubleFunction<T> f;
     private final TimeUnit fUnit;
 
-    CompositeTimeGauge(Id id, T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
+    CompositeTimeGauge(Id id, @Nullable T obj, TimeUnit fUnit, ToDoubleFunction<T> f) {
         super(id);
         ref = new WeakReference<>(obj);
         this.f = f;

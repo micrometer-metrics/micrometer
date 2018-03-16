@@ -15,8 +15,13 @@
  */
 package io.micrometer.elastic;
 
+import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.TimeGauge;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,5 +52,15 @@ class ElasticMeterRegistryTest {
                 .field("phi", "0.99").field("value", 1).build())
                 .isEqualTo("{\"index\":{\"_index\":\"metrics-1970-01\",\"_type\":\"doc\"}}\n" +
                         "{\"@timestamp\":\"1970-01-01T00:00:00Z\",\"name\":\"myTimer\",\"type\":\"timer\",\"phi\":\"0.99\",\"value\":1}");
+    }
+
+    @Issue("#497")
+    @Test
+    void nullGauge() {
+        Gauge g = Gauge.builder("gauge", null, o -> 1).register(registry);
+        assertThat(registry.writeGauge(g, 0)).isEmpty();
+
+        TimeGauge tg = TimeGauge.builder("time.gauge", null, TimeUnit.MILLISECONDS, o -> 1).register(registry);
+        assertThat(registry.writeGauge(tg, 0)).isEmpty();
     }
 }

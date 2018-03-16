@@ -80,7 +80,7 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> TimeGauge newTimeGauge(Meter.Id id, T obj, TimeUnit valueFunctionUnit, ToDoubleFunction<T> valueFunction) {
+    protected <T> TimeGauge newTimeGauge(Meter.Id id, @Nullable T obj, TimeUnit valueFunctionUnit, ToDoubleFunction<T> valueFunction) {
         return new CompositeTimeGauge<>(id, obj, valueFunctionUnit, valueFunction);
     }
 

@@ -166,8 +166,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                         if (response.contains("\"errors\":true")) {
                             logger.error("failed to send metrics to elasticsearch (HTTP {}). Cause: {}", connection.getResponseCode(), response);
                             return;
-                        }
-                        else {
+                        } else {
                             logger.info("successfully sent {} metrics to elasticsearch", batch.size());
                         }
                     } catch (IOException ignored) {
@@ -190,12 +189,16 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         return Stream.of(index(counter, wallTime).field("count", counter.count()).build());
     }
 
-    private Stream<String> writeGauge(Gauge gauge, long wallTime) {
-        return Stream.of(index(gauge, wallTime).field("count", gauge.value()).build());
+    // VisibleForTesting
+    Stream<String> writeGauge(Gauge gauge, long wallTime) {
+        Double value = gauge.value();
+        return value.isNaN() ? Stream.empty() : Stream.of(index(gauge, wallTime).field("value", value).build());
     }
 
-    private Stream<String> writeGauge(TimeGauge gauge, long wallTime) {
-        return Stream.of(index(gauge, wallTime).field("count", gauge.value(getBaseTimeUnit())).build());
+    // VisibleForTesting
+    Stream<String> writeGauge(TimeGauge gauge, long wallTime) {
+        Double value = gauge.value();
+        return value.isNaN() ? Stream.empty() : Stream.of(index(gauge, wallTime).field("value", gauge.value(getBaseTimeUnit())).build());
     }
 
     private Stream<String> writeTimer(FunctionTimer timer, long wallTime) {

@@ -143,7 +143,7 @@ public abstract class MeterRegistry implements AutoCloseable {
      * @param <T>               The type of the object upon which the value function derives a measurement.
      * @return A new time gauge.
      */
-    protected <T> TimeGauge newTimeGauge(Meter.Id id, T obj, TimeUnit valueFunctionUnit, ToDoubleFunction<T> valueFunction) {
+    protected <T> TimeGauge newTimeGauge(Meter.Id id, @Nullable T obj, TimeUnit valueFunctionUnit, ToDoubleFunction<T> valueFunction) {
         Meter.Id withUnit = id.withBaseUnit(getBaseTimeUnitStr());
         Gauge gauge = newGauge(withUnit, obj, obj2 -> TimeUtils.convert(valueFunction.applyAsDouble(obj2), valueFunctionUnit, getBaseTimeUnit()));
 
@@ -833,7 +833,7 @@ public abstract class MeterRegistry implements AutoCloseable {
          * @param <T>              The type of the state object from which the gauge value is extracted.
          * @return A new or existing time gauge.
          */
-        <T> TimeGauge timeGauge(Meter.Id id, T obj, TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
+        <T> TimeGauge timeGauge(Meter.Id id, @Nullable T obj, TimeUnit timeFunctionUnit, ToDoubleFunction<T> timeFunction) {
             return registerMeterIfNecessary(TimeGauge.class, id, id2 -> newTimeGauge(id2, obj, timeFunctionUnit, timeFunction), NoopTimeGauge::new);
         }
     }
