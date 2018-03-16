@@ -41,7 +41,7 @@ import java.util.function.Function;
 @NonNullApi
 @Incubating(since = "1.0.0")
 public class TimedAspect {
-    public static final String DEFAULT_METRIC_NAME = "method_timed";
+    public static final String DEFAULT_METRIC_NAME = "method.timed";
     private final MeterRegistry registry;
     private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinpoint;
 
