@@ -165,7 +165,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                         // {"took":16,"errors":true,"items":[{"index":{"_index":"metrics-2018-03","_type":"timer","_id":"i8kdBmIBmtn9wpUGezjX","status":400,"error":{"type":"illegal_argument_exception","reason":"Rejecting mapping update to [metrics-2018-03] as the final mapping would have more than 1 type: [metric, doc]"}}}]}
                         String response = IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
                         if (response.contains("\"errors\":true")) {
-                            logger.error("failed to send metrics to elasticsearch (HTTP {}). Cause: {}", connection.getResponseCode(), response);
+                            logger.warn("failed to send metrics to elasticsearch (HTTP {}). Cause: {}", connection.getResponseCode(), response);
                             return;
                         } else {
                             logger.info("successfully sent {} metrics to elasticsearch", batch.size());
