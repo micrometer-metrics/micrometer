@@ -25,11 +25,20 @@ class DoubleFormatTest {
     void decimalOrNan() {
         assertThat(DoubleFormat.decimalOrNan(Double.NaN)).isEqualTo("NaN");
         assertThat(DoubleFormat.decimalOrNan(123456.1234567)).isEqualTo("123456.123457");
+        assertThat(DoubleFormat.decimalOrNan(123456)).isEqualTo("123456");
+        assertThat(DoubleFormat.decimalOrNan(0.123)).isEqualTo("0.123");
     }
 
     @Test
     void decimalOrWhole() {
         assertThat(DoubleFormat.decimalOrWhole(123456.1234567)).isEqualTo("123456.123457");
         assertThat(DoubleFormat.decimalOrWhole(1)).isEqualTo("1");
+    }
+
+    @Test
+    void decimal() {
+        assertThat(DoubleFormat.decimal(123456.1234567)).isEqualTo("123456.123457");
+        assertThat(DoubleFormat.decimal(123456)).isEqualTo("123456.0");
+        assertThat(DoubleFormat.decimal(0.123)).isEqualTo("0.123");
     }
 }

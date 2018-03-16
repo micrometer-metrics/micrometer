@@ -16,6 +16,7 @@
 package io.micrometer.elastic;
 
 import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.TimeGauge;
@@ -51,7 +52,7 @@ class ElasticMeterRegistryTest {
         assertThat(registry.index("myTimer", "timer", 0)
                 .field("phi", "0.99").field("value", 1).build())
                 .isEqualTo("{\"index\":{\"_index\":\"metrics-1970-01\",\"_type\":\"doc\"}}\n" +
-                        "{\"@timestamp\":\"1970-01-01T00:00:00Z\",\"name\":\"myTimer\",\"type\":\"timer\",\"phi\":\"0.99\",\"value\":1}");
+                        "{\"@timestamp\":\"1970-01-01T00:00:00Z\",\"name\":\"myTimer\",\"type\":\"timer\",\"phi\":\"0.99\",\"value\":1.0}");
     }
 
     @Issue("#497")
@@ -62,5 +63,14 @@ class ElasticMeterRegistryTest {
 
         TimeGauge tg = TimeGauge.builder("time.gauge", null, TimeUnit.MILLISECONDS, o -> 1).register(registry);
         assertThat(registry.writeGauge(tg, 0)).isEmpty();
+    }
+
+    @Issue("#498")
+    @Test
+    void wholeCountIsReportedWithDecimal() {
+        Counter c = Counter.builder("counter").register(registry);
+        c.increment(10);
+        assertThat(registry.writeCounter(c, 0)).containsExactly("{\"index\":{\"_index\":\"metrics-1970-01\",\"_type\":\"doc\"}}\n" +
+                "{\"@timestamp\":\"1970-01-01T00:00:00Z\",\"name\":\"counter\",\"type\":\"counter\",\"count\":0.0}");
     }
 }

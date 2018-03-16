@@ -57,6 +57,12 @@ public class DoubleFormat {
         return new DecimalFormat("##0.######",otherSymbols);
     });
 
+    private static final ThreadLocal<DecimalFormat> DECIMAL = ThreadLocal.withInitial(() -> {
+        // the following will ensure a dot ('.') as decimal separator
+        DecimalFormatSymbols otherSymbols = new DecimalFormatSymbols(Locale.US);
+        return new DecimalFormat("##0.0#####",otherSymbols);
+    });
+
     /**
      * @param d Number to format.
      * @return A stringified version of the number that uses a decimal representation or the word "NaN".
@@ -72,5 +78,14 @@ public class DoubleFormat {
      */
     public static String decimalOrWhole(double d) {
         return WHOLE_OR_DECIMAL.get().format(d);
+    }
+
+    /**
+     * @param d Number to format.
+     * @return A stringified version of the number that only uses a decimal representation if the number is not
+     * whole.
+     */
+    public static String decimal(double d) {
+        return DECIMAL.get().format(d);
     }
 }

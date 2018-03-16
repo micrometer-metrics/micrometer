@@ -182,7 +182,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private Stream<String> writeCounter(Counter counter, long wallTime) {
+    // VisibleForTesting
+    Stream<String> writeCounter(Counter counter, long wallTime) {
         return Stream.of(index(counter, wallTime).field("count", counter.count()).build());
     }
 
@@ -315,7 +316,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }
 
         IndexBuilder field(String name, double value) {
-            indexLine.append(",\"").append(name).append("\":").append(DoubleFormat.decimalOrNan(value));
+            indexLine.append(",\"").append(name).append("\":").append(DoubleFormat.decimal(value));
             return this;
         }
 
