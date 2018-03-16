@@ -34,7 +34,7 @@ class TimedMethodInterceptorTest {
 
         service.timeWithExplicitValue();
         assertThat(registry.get("something")
-            .tag("class", "TimedService")
+            .tag("class", "TimedServiceImpl")
             .tag("method", "timeWithExplicitValue")
             .tag("extra", "tag")
             .timer().count()).isEqualTo(1);
@@ -50,7 +50,7 @@ class TimedMethodInterceptorTest {
 
         service.timeWithoutValue();
         assertThat(registry.get(TimedMethodInterceptor.DEFAULT_METRIC_NAME)
-            .tag("class", "TimedService")
+            .tag("class", "TimedServiceImpl")
             .tag("method", "timeWithoutValue")
             .tag("extra", "tag")
             .timer().count()).isEqualTo(1);
@@ -61,12 +61,12 @@ class TimedMethodInterceptorTest {
         context.register(DefaultTimedMethodInterceptorConfig.class);
         context.refresh();
 
-        TimedInterface service = context.getBean(TimedInterface.class);
+        TimedService service = context.getBean(TimedService.class);
         MeterRegistry registry = context.getBean(MeterRegistry.class);
 
         service.timeOnInterface();
         assertThat(registry.get(TimedMethodInterceptor.DEFAULT_METRIC_NAME)
-            .tag("class", "TimedService")
+            .tag("class", "TimedServiceImpl")
             .tag("method", "timeOnInterface")
             .tag("extra", "tag")
             .timer().count()).isEqualTo(1);
@@ -97,7 +97,7 @@ class TimedMethodInterceptorTest {
 
         service.timeWithoutValue();
         assertThat(registry.get("class.invoke")
-            .tag("class", "AnnotatedTimedService")
+            .tag("class", "AnnotatedTimedServiceImpl")
             .tag("method", "timeWithoutValue")
             .tag("extra", "tag")
             .timer().count()).isEqualTo(1);
@@ -113,7 +113,7 @@ class TimedMethodInterceptorTest {
 
         service.timeWithMethodLevelName();
         assertThat(registry.get("my.method")
-            .tag("class", "AnnotatedTimedService")
+            .tag("class", "AnnotatedTimedServiceImpl")
             .tag("method", "timeWithMethodLevelName")
             .tag("extra", "tag")
             .timer().count()).isEqualTo(1);
@@ -129,7 +129,7 @@ class TimedMethodInterceptorTest {
 
         service.timeWithMergedTags();
         assertThat(registry.get("class.invoke")
-            .tag("class", "AnnotatedTimedService")
+            .tag("class", "AnnotatedTimedServiceImpl")
             .tag("method", "timeWithMergedTags")
             .tag("extra", "tag")
             .tag("extra2", "tag")
@@ -138,7 +138,7 @@ class TimedMethodInterceptorTest {
 
     @Configuration
     @EnableAspectJAutoProxy(proxyTargetClass = true)
-    @Import({ TimedService.class, AnnotatedTimedService.class })
+    @Import({ TimedServiceImpl.class, AnnotatedTimedServiceImpl.class })
     static class DefaultTimedMethodInterceptorConfig {
         @Bean
         public SimpleMeterRegistry simpleMeterRegistry() {
@@ -158,7 +158,7 @@ class TimedMethodInterceptorTest {
 
     @Configuration
     @EnableAspectJAutoProxy(proxyTargetClass = true)
-    @Import({ TimedService.class, AnnotatedTimedService.class })
+    @Import({ TimedServiceImpl.class, AnnotatedTimedServiceImpl.class })
     static class CustomizedTimedMethodInterceptorConfig {
         @Bean
         public SimpleMeterRegistry simpleMeterRegistry() {
@@ -176,7 +176,7 @@ class TimedMethodInterceptorTest {
         }
     }
 
-    interface TimedInterface {
+    interface TimedService {
         String timeWithExplicitValue();
 
         String timeWithoutValue();
@@ -186,7 +186,7 @@ class TimedMethodInterceptorTest {
     }
 
     @Service
-    static class TimedService implements TimedInterface {
+    static class TimedServiceImpl implements TimedService {
         @Timed(value = "something", extraTags = { "extra", "tag" })
         @Override
         public String timeWithExplicitValue() {
@@ -206,18 +206,30 @@ class TimedMethodInterceptorTest {
     }
 
     @Timed(value = "class.invoke", description = "class description", extraTags = { "extra", "tag" })
-    @Service
-    static class AnnotatedTimedService {
+    interface AnnotatedTimedService {
 
+        String timeWithoutValue();
+
+        String timeWithMethodLevelName();
+
+        String timeWithMergedTags();
+    }
+
+    @Service
+    static class AnnotatedTimedServiceImpl implements AnnotatedTimedService {
+
+        @Override
         public String timeWithoutValue() {
             return "I can't";
         }
 
+        @Override
         @Timed("my.method")
         public String timeWithMethodLevelName() {
             return "do";
         }
 
+        @Override
         @Timed(extraTags = { "extra2", "tag" })
         public String timeWithMergedTags() {
             return "that";
