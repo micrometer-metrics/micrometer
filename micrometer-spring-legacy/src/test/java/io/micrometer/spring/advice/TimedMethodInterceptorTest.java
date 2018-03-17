@@ -1,6 +1,7 @@
 package io.micrometer.spring.advice;
 
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -49,7 +50,7 @@ class TimedMethodInterceptorTest {
         MeterRegistry registry = context.getBean(MeterRegistry.class);
 
         service.timeWithoutValue();
-        assertThat(registry.get(TimedMethodInterceptor.DEFAULT_METRIC_NAME)
+        assertThat(registry.get(TimedAspect.DEFAULT_METRIC_NAME)
             .tag("class", "TimedServiceImpl")
             .tag("method", "timeWithoutValue")
             .tag("extra", "tag")
@@ -65,7 +66,7 @@ class TimedMethodInterceptorTest {
         MeterRegistry registry = context.getBean(MeterRegistry.class);
 
         service.timeOnInterface();
-        assertThat(registry.get(TimedMethodInterceptor.DEFAULT_METRIC_NAME)
+        assertThat(registry.get(TimedAspect.DEFAULT_METRIC_NAME)
             .tag("class", "TimedServiceImpl")
             .tag("method", "timeOnInterface")
             .tag("extra", "tag")

@@ -1,6 +1,7 @@
 package io.micrometer.spring.advice;
 
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.aop.TimedAspect;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
@@ -13,7 +14,6 @@ import org.springframework.util.ReflectionUtils;
 import java.lang.reflect.Method;
 
 public class TimedMethodInterceptor implements MethodInterceptor {
-    public static final String DEFAULT_METRIC_NAME = "method_timed";
     private final MeterRegistry registry;
     private final TimedMetricNameResolver timedMetricNameResolver;
     private final TimedTagsResolver timedTagsResolver;
@@ -57,7 +57,7 @@ public class TimedMethodInterceptor implements MethodInterceptor {
             metricName = classLevelTimed.value();
         }
         else {
-            metricName = DEFAULT_METRIC_NAME;
+            metricName = TimedAspect.DEFAULT_METRIC_NAME;
         }
         Builder builder = Timer.builder(timedMetricNameResolver.apply(metricName, invocation));
         if (methodLevelTimed != null) {
@@ -72,13 +72,12 @@ public class TimedMethodInterceptor implements MethodInterceptor {
         }
 
         if (classLevelTimed != null) {
-            builder.tags(classLevelTimed.extraTags())
-                .tags(timedTagsResolver.apply(invocation));
+            builder.tags(classLevelTimed.extraTags());
         }
         if (methodLevelTimed != null) {
-            builder.tags(methodLevelTimed.extraTags())
-                .tags(timedTagsResolver.apply(invocation));
+            builder.tags(methodLevelTimed.extraTags());
         }
+        builder.tags(timedTagsResolver.apply(invocation));
         try {
             return invocation.proceed();
         } finally {
