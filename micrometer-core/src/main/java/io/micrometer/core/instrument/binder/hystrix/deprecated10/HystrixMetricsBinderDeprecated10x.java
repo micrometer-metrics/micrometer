@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.hystrix;
+package io.micrometer.core.instrument.binder.hystrix.deprecated10;
 
 import com.netflix.hystrix.strategy.HystrixPlugins;
 import com.netflix.hystrix.strategy.concurrency.HystrixConcurrencyStrategy;
@@ -28,7 +28,7 @@ import io.micrometer.core.lang.NonNullFields;
 
 @NonNullApi
 @NonNullFields
-public class HystrixMetricsBinder implements MeterBinder {
+public class HystrixMetricsBinderDeprecated10x implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
@@ -42,7 +42,7 @@ public class HystrixMetricsBinder implements MeterBinder {
         HystrixPlugins.reset();
 
         // Registers existing plugins except the new MicroMeter Strategy plugin.
-        HystrixPlugins.getInstance().registerMetricsPublisher(new MicrometerMetricsPublisher(registry, metricsPublisher));
+        HystrixPlugins.getInstance().registerMetricsPublisher(new MicrometerMetricsPublisherDeprecated10x(registry, metricsPublisher));
         HystrixPlugins.getInstance().registerConcurrencyStrategy(concurrencyStrategy);
         HystrixPlugins.getInstance().registerEventNotifier(eventNotifier);
         HystrixPlugins.getInstance().registerPropertiesStrategy(propertiesStrategy);

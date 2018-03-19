@@ -19,6 +19,7 @@ import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.hystrix.HystrixMetricsBinder;
+import io.micrometer.core.instrument.binder.hystrix.deprecated10.HystrixMetricsBinderDeprecated10x;
 import io.micrometer.spring.PropertiesMeterFilter;
 import io.micrometer.spring.autoconfigure.jersey2.server.JerseyServerMetricsConfiguration;
 import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguration;
@@ -97,6 +98,13 @@ public class MetricsAutoConfiguration {
     @ConditionalOnProperty(value = "management.metrics.binders.hystrix.enabled", matchIfMissing = true)
     public HystrixMetricsBinder hystrixMetricsBinder() {
         return new HystrixMetricsBinder();
+    }
+
+    @Bean
+    @ConditionalOnClass(name = "com.netflix.hystrix.strategy.HystrixPlugins")
+    @ConditionalOnProperty(value = "management.metrics.binders.hystrixDeprecatedMetrics10x.enabled", matchIfMissing = true)
+    public HystrixMetricsBinderDeprecated10x hystrixMetricsBinderDeprecatedMetrics10x() {
+        return new HystrixMetricsBinderDeprecated10x();
     }
 
     /**
