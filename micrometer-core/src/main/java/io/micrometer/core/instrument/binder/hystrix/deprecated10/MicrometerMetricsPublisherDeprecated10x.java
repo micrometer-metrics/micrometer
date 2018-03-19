@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.hystrix;
+package io.micrometer.core.instrument.binder.hystrix.deprecated10;
 
 import com.netflix.hystrix.*;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisher;
@@ -29,11 +29,11 @@ import io.micrometer.core.lang.NonNullFields;
  */
 @NonNullApi
 @NonNullFields
-public class MicrometerMetricsPublisher extends HystrixMetricsPublisher {
+public class MicrometerMetricsPublisherDeprecated10x extends HystrixMetricsPublisher {
     private final MeterRegistry registry;
-    private HystrixMetricsPublisher metricsPublisher;
+    private final HystrixMetricsPublisher metricsPublisher;
 
-    public MicrometerMetricsPublisher(MeterRegistry registry, HystrixMetricsPublisher metricsPublisher) {
+    public MicrometerMetricsPublisherDeprecated10x(MeterRegistry registry, HystrixMetricsPublisher metricsPublisher) {
         this.registry = registry;
         this.metricsPublisher = metricsPublisher;
     }
@@ -56,6 +56,6 @@ public class MicrometerMetricsPublisher extends HystrixMetricsPublisher {
                                                                         HystrixCommandProperties properties) {
         HystrixMetricsPublisherCommand metricsPublisherForCommand =
             metricsPublisher.getMetricsPublisherForCommand(commandKey, commandGroupKey, metrics, circuitBreaker, properties);
-        return new MicrometerMetricsPublisherCommand(registry, commandKey, commandGroupKey, metrics, circuitBreaker, metricsPublisherForCommand);
+        return new MicrometerMetricsPublisherCommandDeprecated10x(registry, commandKey, commandGroupKey, metrics, circuitBreaker, properties, metricsPublisherForCommand);
     }
 }

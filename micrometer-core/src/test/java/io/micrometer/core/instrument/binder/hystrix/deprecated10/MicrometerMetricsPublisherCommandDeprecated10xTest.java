@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.binder.hystrix;
+package io.micrometer.core.instrument.binder.hystrix.deprecated10;
 
 import com.netflix.hystrix.*;
 import com.netflix.hystrix.strategy.HystrixPlugins;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisher;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.hystrix.deprecated10.MicrometerMetricsPublisherDeprecated10x;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,14 +27,14 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class MicrometerMetricsPublisherCommandTest {
+class MicrometerMetricsPublisherCommandDeprecated10xTest {
     private static HystrixCommandGroupKey groupKey = HystrixCommandGroupKey.Factory.asKey("MicrometerGROUP");
     private HystrixCommandProperties.Setter propertiesSetter;
 
     @BeforeEach
     void init() {
         Hystrix.reset();
-        propertiesSetter = HystrixCommandProperties.Setter()
+        propertiesSetter =  HystrixCommandProperties.Setter()
             .withCircuitBreakerEnabled(true)
             .withCircuitBreakerRequestVolumeThreshold(20)
             .withCircuitBreakerSleepWindowInMilliseconds(10_000)
@@ -50,11 +49,12 @@ class MicrometerMetricsPublisherCommandTest {
 
     @Test
     void testCumulativeCounters() throws Exception {
+        HystrixCommandKey key = HystrixCommandKey.Factory.asKey("MicrometerCOMMAND-A");
+
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         HystrixMetricsPublisher metricsPublisher = HystrixPlugins.getInstance().getMetricsPublisher();
         HystrixPlugins.reset();
-        HystrixPlugins.getInstance().registerMetricsPublisher(new MicrometerMetricsPublisher(registry, metricsPublisher));
-        HystrixCommandKey key = HystrixCommandKey.Factory.asKey("MicrometerCOMMAND-A");
+        HystrixPlugins.getInstance().registerMetricsPublisher(new MicrometerMetricsPublisherDeprecated10x(registry, metricsPublisher));
 
         for (int i = 0; i < 3; i++) {
             new SuccessCommand(key).execute();
@@ -74,28 +74,27 @@ class MicrometerMetricsPublisherCommandTest {
 
         Iterable<Tag> tags = Tags.of("group", "MicrometerGROUP", "key", "MicrometerCOMMAND-A");
 
-        assertExecutionMetric(registry, tags, HystrixEventType.SUCCESS, 24.0);
-        assertExecutionMetric(registry, tags, HystrixEventType.TIMEOUT, 3.0);
-        assertExecutionMetric(registry, tags, HystrixEventType.FAILURE, 6.0);
-        assertExecutionMetric(registry, tags, HystrixEventType.SHORT_CIRCUITED, 0.0);
-        assertThat(registry.get("hystrix.circuit.breaker.open").tags(tags).gauge().value()).isEqualTo(0.0);
+        /*
+        assertExecutionMetric(registry, "success", 24.0);
+        assertThat(registry.get("hystrix.execution").tags(tags).tags("event", "timeout").counter().count()).isEqualTo(3.0);
+        assertThat(registry.get("hystrix.execution").tags(tags).tags("event", "failure").counter().count()).isEqualTo(6.0);
+        assertThat(registry.get("hystrix.execution").tags(tags).tags("event", "short_circuited").counter().count()).isEqualTo(0.0);
+        */
     }
 
-    private void assertExecutionMetric(SimpleMeterRegistry registry, Iterable<Tag> tags, HystrixEventType eventType, double count) {
-        Iterable<Tag> myTags = Tags.concat(tags, "event", eventType.name().toLowerCase(),
-            "terminal", Boolean.toString(eventType.isTerminal()));
-        assertThat(registry.get("hystrix.execution").tags(myTags)
+    private void assertExecutionMetric(SimpleMeterRegistry registry, String eventType, double count) {
+        assertThat(registry.get("hystrix.execution").tags("event", eventType)
             .counter()
             .count()).isEqualTo(count);
     }
 
     @Test
     void testOpenCircuit() {
+        HystrixCommandKey key = HystrixCommandKey.Factory.asKey("MicrometerCOMMAND-B");
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         HystrixMetricsPublisher metricsPublisher = HystrixPlugins.getInstance().getMetricsPublisher();
         HystrixPlugins.reset();
-        HystrixPlugins.getInstance().registerMetricsPublisher(new MicrometerMetricsPublisher(registry, metricsPublisher));
-        HystrixCommandKey key = HystrixCommandKey.Factory.asKey("MicrometerCOMMAND-B");
+        HystrixPlugins.getInstance().registerMetricsPublisher(new MicrometerMetricsPublisherDeprecated10x(registry, metricsPublisher));
 
         propertiesSetter.withCircuitBreakerForceOpen(true);
 
@@ -108,28 +107,13 @@ class MicrometerMetricsPublisherCommandTest {
 
         Iterable<Tag> tags = Tags.of("group", groupKey.name(), "key", key.name());
 
-        assertExecutionMetric(registry, tags, HystrixEventType.SHORT_CIRCUITED, 6.0);
-        assertExecutionMetric(registry, tags, HystrixEventType.SUCCESS, 0.0);
-        assertExecutionMetric(registry, tags, HystrixEventType.TIMEOUT, 0.0);
-        assertExecutionMetric(registry, tags, HystrixEventType.FAILURE, 0.0);
-        assertThat(registry.get("hystrix.circuit.breaker.open").tags(tags).gauge().value()).isEqualTo(1.0);
-    }
-
-    @Test
-    void testRunCombinedWithDeprecatedMetrics() {
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
-        HystrixMetricsPublisher metricsPublisher = HystrixPlugins.getInstance().getMetricsPublisher();
-        HystrixPlugins.reset();
-        HystrixPlugins.getInstance().registerMetricsPublisher(
-            new MicrometerMetricsPublisher(registry,
-                new MicrometerMetricsPublisherDeprecated10x(registry, metricsPublisher)));
-        HystrixCommandKey key = HystrixCommandKey.Factory.asKey("MicrometerCOMMAND-C");
-
-        new SuccessCommand(key).execute();
-
-        Iterable<Tag> tags = Tags.of("group", groupKey.name(), "key", key.name());
-        assertExecutionMetric(registry, tags, HystrixEventType.SUCCESS, 1.0);
-        assertThat(registry.get("hystrix.execution").tags(tags).tags("event", "success").counter().count()).isEqualTo(1.0);
+        /*
+        assertExecutionMetric(registry, "short_circuited", 6.0);
+        assertThat(registry.get("hystrix.execution").tags(tags).tags("event", "success").counter().count()).isEqualTo(0.0);
+        assertThat(registry.get("hystrix.execution").tags(tags).tags("event", "timeout").counter().count()).isEqualTo(0.0);
+        assertThat(registry.get("hystrix.execution").tags(tags).tags("event", "failure").counter().count()).isEqualTo(0.0);
+        */
+        assertThat(registry.get("hystrix.fallback").tags(tags).tags("event", "fallback_success").counter().count()).isEqualTo(6.0);
     }
 
     class SampleCommand extends HystrixCommand<Integer> {
