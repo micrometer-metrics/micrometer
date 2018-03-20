@@ -5,6 +5,7 @@ plugins {
 
 apply plugin: 'org.junit.platform.gradle.plugin'
 apply plugin: 'nebula.optional-base'
+apply plugin: 'eclipse'
 
 dependencies {
     // JSR-305 only used for non-required meta-annotations
