@@ -8,7 +8,6 @@ buildscript {
         classpath 'org.ow2.asm:asm:5.0.3'
         classpath 'io.spring.gradle:spring-release-plugin:0.15.0'
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.2.0'
-        classpath 'me.champeau.gradle:jmh-gradle-plugin:0.4.4'
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
         classpath 'io.spring.gradle:dependency-lock:0.1.1'
@@ -36,7 +35,7 @@ subprojects {
     compileJava.options.encoding = 'UTF-8'
     compileTestJava.options.encoding = 'UTF-8'
 
-    if(!project.name.contains('samples')) {
+    if(!project.name.contains('samples') && !project.name.contains('benchmarks')) {
         apply plugin: 'io.spring.publishing'
 
         contacts {
