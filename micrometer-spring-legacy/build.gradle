@@ -72,4 +72,9 @@ dependencies {
     testCompile 'org.springframework.integration:spring-integration-xml' lock '4.3.14.RELEASE'
 
     testCompile 'org.springframework.security:spring-security-test' lock '4.2.4.RELEASE'
+
+    // required for jdk 9 testing
+    testRuntime 'javax.xml.bind:jaxb-api:2.3.0'
+    testRuntime 'javax.activation:activation:1.1.1'    
+    testRuntime 'com.sun.xml.messaging.saaj:saaj-impl:1.4.0'
 }
