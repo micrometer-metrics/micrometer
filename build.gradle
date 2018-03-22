@@ -25,6 +25,10 @@ allprojects {
         println "I'm building $project.name with version $project.version"
     }
     group = 'io.micrometer'
+
+    ext {
+        prometheusVersion = '0.3.0'
+    }
 }
 
 subprojects {
