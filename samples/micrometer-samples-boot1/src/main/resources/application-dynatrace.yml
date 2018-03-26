@@ -16,6 +16,6 @@
 
 management.metrics.export.dynatrace:
   enabled: true
-  apiKey: my-api-token
+  apiToken: my-api-token
   tenant: my-tenant
   deviceId: my-custom-device

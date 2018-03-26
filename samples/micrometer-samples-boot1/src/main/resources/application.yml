@@ -24,13 +24,15 @@ logging.level.org.springframework.boot: INFO
 management.metrics.export:
   atlas.enabled: false
   datadog.enabled: false
+  dynatrace.enabled: false
+  elastic.enabled: false
   ganglia.enabled: false
   graphite.enabled: false
   influx.enabled: false
   jmx.enabled: false
+  newrelic.enabled: false
   prometheus.enabled: false
   statsd.enabled: false
-  newrelic.enabled: false
   signalfx.enabled: false
   wavefront.enabled: false
 

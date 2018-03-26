@@ -23,10 +23,10 @@ public interface DynatraceConfig extends StepRegistryConfig {
         return get(prefix() + ".tenant");
     }
 
-    default String apiKey() {
-        String v = get(prefix() + ".apiKey");
+    default String apiToken() {
+        String v = get(prefix() + ".apiToken");
         if (v == null)
-            throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to Dynatrace");
+            throw new MissingRequiredConfigurationException("apiToken must be set to report metrics to Dynatrace");
         return v;
     }
 

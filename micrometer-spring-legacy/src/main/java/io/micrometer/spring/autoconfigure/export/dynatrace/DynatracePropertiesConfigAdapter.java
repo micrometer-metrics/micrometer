@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.boot1.samples;
+package io.micrometer.spring.autoconfigure.export.dynatrace;
 
-import io.micrometer.boot1.samples.components.PersonController;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.scheduling.annotation.EnableScheduling;
+import io.micrometer.dynatrace.DynatraceConfig;
+import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
 
-@SpringBootApplication(scanBasePackageClasses = PersonController.class)
-@EnableScheduling
-public class DynatraceSample {
-    public static void main(String[] args) {
-        new SpringApplicationBuilder(DynatraceSample.class).profiles("dynatrace").run(args);
+/**
+ * Adapter to convert {@link DynatraceProperties} to a {@link io.micrometer.dynatrace.DynatraceConfig}.
+ *
+ * @author Oriol Barcelona
+ */
+class DynatracePropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<DynatraceProperties> implements DynatraceConfig {
+
+    DynatracePropertiesConfigAdapter(DynatraceProperties properties) {
+        super(properties);
     }
+
 }

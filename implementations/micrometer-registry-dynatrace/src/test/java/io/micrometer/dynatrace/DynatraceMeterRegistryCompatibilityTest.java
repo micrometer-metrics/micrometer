@@ -16,7 +16,7 @@ public class DynatraceMeterRegistryCompatibilityTest extends MeterRegistryCompat
             }
 
             @Override
-            public String apiKey() {
+            public String apiToken() {
                 return "DOESNOTMATTER";
             }
 
