@@ -29,4 +29,24 @@ class DynatracePropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapt
         super(properties);
     }
 
+    @Override
+    public String tenant() {
+        return get(DynatraceProperties::getTenant, DynatraceConfig.super::tenant);
+    }
+
+    @Override
+    public String apiToken() {
+
+        return get(DynatraceProperties::getApiToken, DynatraceConfig.super::apiToken);
+    }
+
+    @Override
+    public String uri() {
+        return get(DynatraceProperties::getUri, DynatraceConfig.super::uri);
+    }
+
+    @Override
+    public String deviceId() {
+        return get(DynatraceProperties::getDeviceId, DynatraceConfig.super::deviceId);
+    }
 }
