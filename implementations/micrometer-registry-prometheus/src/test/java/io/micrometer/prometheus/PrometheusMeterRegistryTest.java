@@ -316,31 +316,31 @@ class PrometheusMeterRegistryTest {
     void timersMultipleMetrics() {
         Timer timer = registry.timer("my.timer");
         timer.record(10, TimeUnit.MILLISECONDS);
-        timer.record(1, TimeUnit.SECONDS);
+        timer.record(20, TimeUnit.SECONDS);
 
         String scraped = registry.scrape();
         assertThat(scraped).contains("# TYPE my_timer_duration_seconds_max gauge");
-        assertThat(scraped).contains("my_timer_duration_seconds_max 1.0");
+        assertThat(scraped).contains("my_timer_duration_seconds_max 20.0");
 
         assertThat(scraped).contains("# TYPE my_timer_duration_seconds summary");
-        assertThat(scraped).contains("my_timer_duration_seconds_count 2");
-        assertThat(scraped).contains("my_timer_duration_seconds_sum 1");
+        assertThat(scraped).contains("my_timer_duration_seconds_count 2.0");
+        assertThat(scraped).contains("my_timer_duration_seconds_sum 20.01");
     }
 
     @Issue("#519")
     @Test
     void distributionSummariesMultipleMetrics() {
         DistributionSummary summary = registry.summary("my.summary");
-        summary.record(10);
+        summary.record(20);
         summary.record(1);
 
         String scraped = registry.scrape();
         assertThat(scraped).contains("# TYPE my_summary_max gauge");
-        assertThat(scraped).contains("my_summary_max 1");
+        assertThat(scraped).contains("my_summary_max 20.0");
 
         assertThat(scraped).contains("# TYPE my_summary summary");
-        assertThat(scraped).contains("my_summary_count 2");
-        assertThat(scraped).contains("my_summary_sum 11");
+        assertThat(scraped).contains("my_summary_count 2.0");
+        assertThat(scraped).contains("my_summary_sum 21.0");
     }
 
     @Issue("#519")
