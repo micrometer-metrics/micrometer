@@ -23,6 +23,7 @@ import io.prometheus.client.Collector;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -40,10 +41,14 @@ class MicrometerCollector extends Collector {
         final String conventionName;
         final Stream<MetricFamilySamples.Sample> samples;
 
-        public Family(Type type, String conventionName, Stream<MetricFamilySamples.Sample> samples) {
+        Family(Type type, String conventionName, Stream<MetricFamilySamples.Sample> samples) {
             this.type = type;
             this.conventionName = conventionName;
             this.samples = samples;
+        }
+
+        String getConventionName() {
+            return conventionName;
         }
     }
 
@@ -73,8 +78,13 @@ class MicrometerCollector extends Collector {
         final String help = config.descriptions() ? Optional.ofNullable(id.getDescription()).orElse(" ") : " ";
 
         return children.stream()
-                .flatMap(child -> child.samples(conventionName, tagKeys))
-                .map(family -> new MetricFamilySamples(family.conventionName, family.type, help, family.samples.collect(toList())))
-                .collect(toList());
+            .flatMap(child -> child.samples(conventionName, tagKeys))
+            .collect(Collectors.groupingBy(
+                Family::getConventionName,
+                Collectors.reducing((a, b) -> new Family(a.type, a.conventionName, Stream.concat(a.samples, b.samples)))))
+            .values().stream()
+            .map(Optional::get)
+            .map(family -> new MetricFamilySamples(family.conventionName, family.type, help, family.samples.collect(toList())))
+            .collect(toList());
     }
 }

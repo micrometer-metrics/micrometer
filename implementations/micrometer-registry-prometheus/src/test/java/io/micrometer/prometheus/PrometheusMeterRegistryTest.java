@@ -342,4 +342,19 @@ class PrometheusMeterRegistryTest {
         assertThat(scraped).contains("my_summary_count 2");
         assertThat(scraped).contains("my_summary_sum 11");
     }
+
+    @Issue("#519")
+    @Test
+    void containsJustOneTypeHelpComment() {
+        Timer timer1 = registry.timer("my.timer", "tag", "value1");
+        Timer timer2 = registry.timer("my.timer", "tag", "value2");
+        timer1.record(10, TimeUnit.MILLISECONDS);
+        timer2.record(1, TimeUnit.SECONDS);
+
+        String scraped = registry.scrape();
+        assertThat(scraped).containsOnlyOnce("# TYPE my_timer_duration_seconds_max gauge");
+        assertThat(scraped).containsOnlyOnce("# HELP my_timer_duration_seconds_max");
+        assertThat(scraped).containsOnlyOnce("# TYPE my_timer_duration_seconds summary");
+        assertThat(scraped).containsOnlyOnce("# HELP my_timer_duration_seconds ");
+    }
 }
