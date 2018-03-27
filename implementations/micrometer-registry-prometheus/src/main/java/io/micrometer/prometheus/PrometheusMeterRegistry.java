@@ -213,7 +213,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
             return Stream.of(new MicrometerCollector.Family(type, conventionName, samples.build()),
                     new MicrometerCollector.Family(Collector.Type.GAUGE, conventionName + "_max", Stream.of(
-                            new Collector.MetricFamilySamples.Sample(conventionName + "_max", tagKeys, tagValues, snapshot.max()))));
+                            new Collector.MetricFamilySamples.Sample(conventionName + "_max", tagKeys, tagValues, snapshot.max(TimeUnit.SECONDS)))));
         });
 
         return timer;
