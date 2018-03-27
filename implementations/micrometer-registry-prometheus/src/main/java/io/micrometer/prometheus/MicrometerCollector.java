@@ -20,9 +20,10 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.prometheus.client.Collector;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -32,19 +33,33 @@ import static java.util.stream.Collectors.toList;
  */
 class MicrometerCollector extends Collector {
     interface Child {
-        Stream<MetricFamilySamples.Sample> samples(String conventionName, List<String> tagKeys);
+        Stream<Family> samples(String conventionName, List<String> tagKeys);
+    }
+
+    static class Family {
+        final Type type;
+        final String conventionName;
+        final Stream<MetricFamilySamples.Sample> samples;
+
+        Family(Type type, String conventionName, Stream<MetricFamilySamples.Sample> samples) {
+            this.type = type;
+            this.conventionName = conventionName;
+            this.samples = samples;
+        }
+
+        String getConventionName() {
+            return conventionName;
+        }
     }
 
     private final Meter.Id id;
     private final List<Child> children = new CopyOnWriteArrayList<>();
-    private Type type;
     private final String conventionName;
     private final List<String> tagKeys;
     private final PrometheusConfig config;
 
-    public MicrometerCollector(Meter.Id id, Type type, NamingConvention convention, PrometheusConfig config) {
+    public MicrometerCollector(Meter.Id id, NamingConvention convention, PrometheusConfig config) {
         this.id = id;
-        this.type = type;
         this.conventionName = id.getConventionName(convention);
         this.tagKeys = id.getConventionTags(convention).stream().map(Tag::getKey).collect(toList());
         this.config = config;
@@ -54,21 +69,22 @@ class MicrometerCollector extends Collector {
         children.add(child);
     }
 
-    public void setType(Type type) {
-        this.type = type;
-    }
-
     public List<String> getTagKeys() {
         return tagKeys;
     }
 
     @Override
     public List<MetricFamilySamples> collect() {
-        String help = config.descriptions() ? id.getDescription() : " ";
-        if(help == null)
-            help = " ";
+        final String help = config.descriptions() ? Optional.ofNullable(id.getDescription()).orElse(" ") : " ";
 
-        return Collections.singletonList(new MetricFamilySamples(conventionName, type, help,
-            children.stream().flatMap(child -> child.samples(conventionName, tagKeys)).collect(toList())));
+        return children.stream()
+            .flatMap(child -> child.samples(conventionName, tagKeys))
+            .collect(Collectors.groupingBy(
+                Family::getConventionName,
+                Collectors.reducing((a, b) -> new Family(a.type, a.conventionName, Stream.concat(a.samples, b.samples)))))
+            .values().stream()
+            .map(Optional::get)
+            .map(family -> new MetricFamilySamples(family.conventionName, family.type, help, family.samples.collect(toList())))
+            .collect(toList());
     }
 }
