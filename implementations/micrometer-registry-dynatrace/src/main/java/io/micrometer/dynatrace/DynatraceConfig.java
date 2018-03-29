@@ -18,11 +18,6 @@ public interface DynatraceConfig extends StepRegistryConfig {
         return "dynatrace";
     }
 
-    @Nullable
-    default String tenant() {
-        return get(prefix() + ".tenant");
-    }
-
     default String apiToken() {
         String v = get(prefix() + ".apiToken");
         if (v == null)
@@ -31,15 +26,10 @@ public interface DynatraceConfig extends StepRegistryConfig {
     }
 
     default String uri() {
-        String uri = get(prefix() + ".uri");
-        if (uri != null)
-            return uri;
-
-        String tenant = tenant();
-        if (tenant != null)
-            return String.format("https://%s.live.dynatrace.com", tenant);
-
-        throw new MissingRequiredConfigurationException("either the tenant or the uri must be set to report metrics to Dynatrace");
+        String v = get(prefix() + ".uri");
+        if (v == null)
+            throw new MissingRequiredConfigurationException("uri must be set to report metrics to Dynatrace");
+        return v;
     }
 
     default String deviceId() {

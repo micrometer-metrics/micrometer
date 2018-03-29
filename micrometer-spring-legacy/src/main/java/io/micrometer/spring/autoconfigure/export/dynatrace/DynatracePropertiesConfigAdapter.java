@@ -30,11 +30,6 @@ class DynatracePropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapt
     }
 
     @Override
-    public String tenant() {
-        return get(DynatraceProperties::getTenant, DynatraceConfig.super::tenant);
-    }
-
-    @Override
     public String apiToken() {
 
         return get(DynatraceProperties::getApiToken, DynatraceConfig.super::apiToken);

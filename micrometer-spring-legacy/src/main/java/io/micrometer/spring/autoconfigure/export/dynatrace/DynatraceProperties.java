@@ -18,15 +18,10 @@ public class DynatraceProperties  extends StepRegistryProperties {
     private String apiToken;
 
     /**
-     * URI to ship metrics to. If you need to publish metrics to self hosted instance or
-     * an internal proxy en-route to SaaS, you can define the location with this.
+     * URI to ship metrics to. Should be used for SaaS, self managed
+     * instances or to en-route through an internal proxy
      */
     private String uri;
-
-    /**
-     * When using Dynatrace as SaaS, specify the tenant to report metrics to
-     */
-    private String tenant;
 
     /**
      * The custom device used to identify the sender into Dynatrace
@@ -47,14 +42,6 @@ public class DynatraceProperties  extends StepRegistryProperties {
 
     public void setUri(String uri) {
         this.uri = uri;
-    }
-
-    public String getTenant() {
-        return tenant;
-    }
-
-    public void setTenant(String tenant) {
-        this.tenant = tenant;
     }
 
     public String getDeviceId() {
