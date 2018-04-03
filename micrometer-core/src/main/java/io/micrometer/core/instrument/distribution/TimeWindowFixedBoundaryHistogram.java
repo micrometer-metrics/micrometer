@@ -32,8 +32,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Jon Schneider
  * @since 1.0.3
  */
-public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogram<TimeWindowFixedBoundaryHistogram.FixedBoundaryHistogram,
-        TimeWindowFixedBoundaryHistogram.FixedBoundaryHistogram> {
+public class TimeWindowFixedBoundaryHistogram
+        extends AbstractTimeWindowHistogram<TimeWindowFixedBoundaryHistogram.FixedBoundaryHistogram, Void> {
     private final long[] buckets;
 
     public TimeWindowFixedBoundaryHistogram(Clock clock, DistributionStatisticConfig config, boolean supportsAggregablePercentiles) {
@@ -71,32 +71,31 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
     }
 
     @Override
-    FixedBoundaryHistogram newAccumulatedHistogram(FixedBoundaryHistogram[] ringBuffer) {
-        return new FixedBoundaryHistogram();
+    Void newAccumulatedHistogram(FixedBoundaryHistogram[] ringBuffer) {
+        return null;
     }
 
     @Override
-    void accumulate(FixedBoundaryHistogram sourceBucket, FixedBoundaryHistogram accumulatedHistogram) {
-        accumulatedHistogram.accumulate(sourceBucket);
+    void accumulate() {
+        // do nothing -- we aren't using swaps for source and accumulated
     }
 
     @Override
-    void resetAccumulatedHistogram(FixedBoundaryHistogram accumulatedHistogram) {
-        accumulatedHistogram.reset();
+    void resetAccumulatedHistogram() {
     }
 
     @Override
-    double valueAtPercentile(FixedBoundaryHistogram accumulatedHistogram, double percentile) {
+    double valueAtPercentile(double percentile) {
         return 0;
     }
 
     @Override
-    double countAtValue(FixedBoundaryHistogram accumulatedHistogram, long value) {
-        return accumulatedHistogram.countAtValue(value);
+    double countAtValue(long value) {
+        return currentHistogram().countAtValue(value);
     }
 
     @Override
-    void outputSummary(PrintStream printStream, double bucketScaling, FixedBoundaryHistogram accumulatedHistogram) {
+    void outputSummary(PrintStream printStream, double bucketScaling) {
         printStream.format("%14s %10s\n\n", "Bucket", "TotalCount");
 
         String bucketFormatString = "%14.1f %10d\n";
@@ -104,13 +103,17 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
         for (int i = 0; i < buckets.length; i++) {
             printStream.format(Locale.US, bucketFormatString,
                     buckets[i] / bucketScaling,
-                    accumulatedHistogram.values[i].get());
+                    currentHistogram().values[i].get());
         }
 
         printStream.write('\n');
     }
 
     class FixedBoundaryHistogram {
+        /**
+         * For recording efficiency, this is a normal histogram. We turn these values into
+         * cumulative counts only on calls to {@link #countAtValue(long)}.
+         */
         final AtomicLong[] values;
 
         FixedBoundaryHistogram() {
@@ -121,7 +124,12 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
 
         long countAtValue(long value) {
             int index = Arrays.binarySearch(buckets, value);
-            return index < 0 ? 0 : values[index].get();
+            if (index < 0)
+                return 0;
+            long count = 0;
+            for (int i = 0; i <= index; i++)
+                count += values[i].get();
+            return count;
         }
 
         void reset() {
@@ -129,17 +137,15 @@ public class TimeWindowFixedBoundaryHistogram extends AbstractTimeWindowHistogra
         }
 
         void record(long value) {
-            for (int i = binarySearchTail(value); i < values.length; i++)
-                values[i].incrementAndGet();
+            int index = leastLessThanOrEqualTo(value);
+            if (index > -1)
+                values[index].incrementAndGet();
         }
 
-        void accumulate(FixedBoundaryHistogram sourceBucket) {
-            for (int i = 0; i < sourceBucket.values.length; i++) {
-                values[i].addAndGet(sourceBucket.values[i].get());
-            }
-        }
-
-        int binarySearchTail(long key) {
+        /**
+         * The least bucket that is less than or equal to a sample.
+         */
+        int leastLessThanOrEqualTo(long key) {
             int low = 0;
             int high = buckets.length - 1;
 
