@@ -18,8 +18,8 @@ package io.micrometer.core.instrument.cumulative;
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.TimeWindowMax;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.util.TimeDecayingMax;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -31,13 +31,19 @@ import java.util.concurrent.atomic.AtomicLong;
 public class CumulativeTimer extends AbstractTimer {
     private final AtomicLong count;
     private final AtomicLong total;
-    private final TimeDecayingMax max;
+    private final TimeWindowMax max;
 
-    public CumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
-        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit);
+    public CumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+                           PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+        this(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, false);
+    }
+
+    public CumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+                           PauseDetector pauseDetector, TimeUnit baseTimeUnit, boolean suppportsAggregablePercentiles) {
+        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, suppportsAggregablePercentiles);
         this.count = new AtomicLong();
         this.total = new AtomicLong();
-        this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
+        this.max = new TimeWindowMax(clock, distributionStatisticConfig);
     }
 
     @Override

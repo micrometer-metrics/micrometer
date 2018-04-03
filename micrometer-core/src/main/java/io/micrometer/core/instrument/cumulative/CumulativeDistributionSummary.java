@@ -20,7 +20,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.util.TimeDecayingMax;
+import io.micrometer.core.instrument.distribution.TimeWindowMax;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
@@ -37,13 +37,20 @@ public class CumulativeDistributionSummary extends AbstractDistributionSummary {
 
     private final AtomicLong count;
     private final DoubleAdder total;
-    private final TimeDecayingMax max;
+    private final TimeWindowMax max;
 
-    public CumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        super(id, clock, distributionStatisticConfig, scale);
+    @Deprecated
+    public CumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+                                         double scale) {
+        this(id, clock, distributionStatisticConfig, scale, false);
+    }
+
+    public CumulativeDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+                                         double scale, boolean supportsAggregablePercentiles) {
+        super(id, clock, distributionStatisticConfig, scale, supportsAggregablePercentiles);
         this.count = new AtomicLong();
         this.total = new DoubleAdder();
-        this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
+        this.max = new TimeWindowMax(clock, distributionStatisticConfig);
     }
 
     @Override

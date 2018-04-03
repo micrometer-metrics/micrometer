@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.simple.CountingMode;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -34,9 +35,9 @@ class DistributionSummaryTest {
         summary.record(1);
 
         // Histogram bucket counts DO roll over at the step interval, so decay.
-        assertThat(summary.histogramCountAtValue(1)).isEqualTo(1);
+        assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1, 1));
         clock.add(SimpleConfig.DEFAULT.step());
-        assertThat(summary.histogramCountAtValue(1)).isEqualTo(0);
+        assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1, 0));
     }
 
     @Test
@@ -60,8 +61,8 @@ class DistributionSummaryTest {
 
         summary.record(1);
 
-        assertThat(summary.histogramCountAtValue(1)).isEqualTo(1);
+        assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1, 1));
         clock.add(SimpleConfig.DEFAULT.step());
-        assertThat(summary.histogramCountAtValue(1)).isEqualTo(0);
+        assertThat(summary.takeSnapshot().histogramCounts()).containsExactly(new CountAtBucket(1, 0));
     }
 }

@@ -17,7 +17,6 @@ package io.micrometer.newrelic;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
@@ -143,24 +142,22 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<String> writeSummary(DistributionSummary summary) {
-        HistogramSnapshot t = summary.takeSnapshot(false);
         return Stream.of(
                 event(summary.getId(),
-                        new Attribute("count", t.count()),
-                        new Attribute("avg", t.mean()),
-                        new Attribute("total", t.total()),
-                        new Attribute("max", t.max())
+                        new Attribute("count", summary.count()),
+                        new Attribute("avg", summary.mean()),
+                        new Attribute("total", summary.totalAmount()),
+                        new Attribute("max", summary.max())
                 )
         );
     }
 
     private Stream<String> writeTimer(Timer timer) {
-        HistogramSnapshot t = timer.takeSnapshot(false);
         return Stream.of(event(timer.getId(),
-                new Attribute("count", t.count()),
-                new Attribute("avg", t.mean(getBaseTimeUnit())),
-                new Attribute("totalTime", t.total(getBaseTimeUnit())),
-                new Attribute("max", t.max(getBaseTimeUnit()))
+                new Attribute("count", timer.count()),
+                new Attribute("avg", timer.mean(getBaseTimeUnit())),
+                new Attribute("totalTime", timer.totalTime(getBaseTimeUnit())),
+                new Attribute("max", timer.max(getBaseTimeUnit()))
         ));
     }
 

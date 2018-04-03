@@ -233,9 +233,9 @@ public class PropertiesMeterFilterTest {
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT).getSlaBoundaries())
                 .containsExactly(1000000, 2000000, 3000000);
         assertThat(filter.configure(summary, DistributionStatisticConfig.DEFAULT).getSlaBoundaries())
-                .isEmpty();
+                .isNull();
         assertThat(filter.configure(counter, DistributionStatisticConfig.DEFAULT).getSlaBoundaries())
-                .isEmpty();
+                .isNull();
     }
 
     @Test
@@ -249,7 +249,7 @@ public class PropertiesMeterFilterTest {
         assertThat(filter.configure(summary, DistributionStatisticConfig.DEFAULT).getSlaBoundaries())
                 .containsExactly(1, 2, 3);
         assertThat(filter.configure(counter, DistributionStatisticConfig.DEFAULT).getSlaBoundaries())
-                .isEmpty();
+                .isNull();
     }
 
     private Meter.Id createSpringBootMeter() {

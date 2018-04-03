@@ -62,22 +62,12 @@ public class NoopTimer extends NoopMeter implements Timer {
     }
 
     @Override
-    public double percentile(double percentile, TimeUnit unit) {
-        return 0;
-    }
-
-    @Override
-    public double histogramCountAtValue(long valueNanos) {
-        return 0;
-    }
-
-    @Override
     public TimeUnit baseTimeUnit() {
         return TimeUnit.SECONDS;
     }
 
     @Override
-    public HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
+    public HistogramSnapshot takeSnapshot() {
         return HistogramSnapshot.empty();
     }
 }

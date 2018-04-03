@@ -20,21 +20,27 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.util.TimeDecayingMax;
+import io.micrometer.core.instrument.distribution.TimeWindowMax;
 
 import java.util.Arrays;
 
 public class StepDistributionSummary extends AbstractDistributionSummary {
     private final StepLong count;
     private final StepDouble total;
-    private final TimeDecayingMax max;
+    private final TimeWindowMax max;
+
+    @Deprecated
+    public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        this(id, clock, distributionStatisticConfig, scale, false);
+    }
 
     @SuppressWarnings("ConstantConditions")
-    public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        super(id, clock, distributionStatisticConfig, scale);
+    public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale,
+                                   boolean supportsAggregablePercentiles) {
+        super(id, clock, distributionStatisticConfig, scale, supportsAggregablePercentiles);
         this.count = new StepLong(clock, distributionStatisticConfig.getExpiry().toMillis());
         this.total = new StepDouble(clock, distributionStatisticConfig.getExpiry().toMillis());
-        this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
+        this.max = new TimeWindowMax(clock, distributionStatisticConfig);
     }
 
     @Override
@@ -62,9 +68,9 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
     @Override
     public Iterable<Measurement> measure() {
         return Arrays.asList(
-            new Measurement(() -> (double) count(), Statistic.COUNT),
-            new Measurement(this::totalAmount, Statistic.TOTAL),
-            new Measurement(this::max, Statistic.MAX)
+                new Measurement(() -> (double) count(), Statistic.COUNT),
+                new Measurement(this::totalAmount, Statistic.TOTAL),
+                new Measurement(this::max, Statistic.MAX)
         );
     }
 }

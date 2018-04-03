@@ -15,9 +15,8 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.HistogramSupport;
 import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
@@ -31,7 +30,7 @@ import java.util.List;
  *
  * @author Jon Schneider
  */
-public interface DistributionSummary extends Meter {
+public interface DistributionSummary extends Meter, HistogramSupport {
 
     static Builder builder(String name) {
         return new Builder(name);
@@ -66,30 +65,6 @@ public interface DistributionSummary extends Meter {
      * @return The maximum time of a single event.
      */
     double max();
-
-    /**
-     * @param percentile A percentile in the domain [0, 1]. For example, 0.5 represents the 50th percentile of the
-     *                   distribution.
-     * @return The value at a specific percentile. This value is non-aggregable across dimensions.
-     */
-    double percentile(double percentile);
-
-    /**
-     * Provides cumulative histogram counts.
-     *
-     * @param value The histogram bucket to retrieve a count for.
-     * @return The count of all events less than or equal to the bucket.
-     */
-    double histogramCountAtValue(long value);
-
-    /**
-     * Summary statistics should be published off of a single snapshot instance so that, for example, there isn't
-     * disagreement between the distribution's count and total because more events continue to stream in.
-     *
-     * @param supportsAggregablePercentiles Whether percentile histogram buckets should be included in the list of {@link CountAtBucket}.
-     * @return A snapshot of all distribution statistics at a point in time.
-     */
-    HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles);
 
     @Override
     default Iterable<Measurement> measure() {
@@ -175,6 +150,19 @@ public interface DistributionSummary extends Meter {
          */
         public Builder publishPercentiles(@Nullable double... percentiles) {
             this.distributionConfigBuilder.percentiles(percentiles);
+            return this;
+        }
+
+        /**
+         * Determines the number of digits of precision to maintain on the dynamic range histogram used to compute
+         * percentile approximations. The higher the degrees of precision, the more accurate the approximation is at the
+         * cost of more memory.
+         *
+         * @param digitsOfPrecision The digits of precision to maintain for percentile approximations.
+         * @return This builder.
+         */
+        public Builder percentilePrecision(int digitsOfPrecision) {
+            this.distributionConfigBuilder.percentilePrecision(digitsOfPrecision);
             return this;
         }
 

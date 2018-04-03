@@ -16,10 +16,10 @@
 package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.noop.NoopDistributionSummary;
 
 class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSummary> implements DistributionSummary {
@@ -54,18 +54,8 @@ class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSu
     }
 
     @Override
-    public double histogramCountAtValue(long value) {
-        return firstChild().histogramCountAtValue(value);
-    }
-
-    @Override
-    public double percentile(double percentile) {
-        return firstChild().percentile(percentile);
-    }
-
-    @Override
-    public HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
-        return firstChild().takeSnapshot(supportsAggregablePercentiles);
+    public HistogramSnapshot takeSnapshot() {
+        return firstChild().takeSnapshot();
     }
 
     @Override
@@ -77,17 +67,17 @@ class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSu
     @Override
     DistributionSummary registerNewMeter(MeterRegistry registry) {
         return DistributionSummary.builder(getId().getName())
-            .tags(getId().getTags())
-            .description(getId().getDescription())
-            .baseUnit(getId().getBaseUnit())
-            .publishPercentiles(distributionStatisticConfig.getPercentiles())
-            .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
-            .maximumExpectedValue(distributionStatisticConfig.getMaximumExpectedValue())
-            .minimumExpectedValue(distributionStatisticConfig.getMinimumExpectedValue())
-            .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
-            .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
-            .sla(distributionStatisticConfig.getSlaBoundaries())
-            .scale(scale)
-            .register(registry);
+                .tags(getId().getTags())
+                .description(getId().getDescription())
+                .baseUnit(getId().getBaseUnit())
+                .publishPercentiles(distributionStatisticConfig.getPercentiles())
+                .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
+                .maximumExpectedValue(distributionStatisticConfig.getMaximumExpectedValue())
+                .minimumExpectedValue(distributionStatisticConfig.getMinimumExpectedValue())
+                .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
+                .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
+                .sla(distributionStatisticConfig.getSlaBoundaries())
+                .scale(scale)
+                .register(registry);
     }
 }

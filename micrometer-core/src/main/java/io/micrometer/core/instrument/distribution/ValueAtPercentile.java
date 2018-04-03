@@ -29,7 +29,7 @@ public final class ValueAtPercentile {
     private final double percentile;
     private final double value;
 
-    private ValueAtPercentile(double percentile, double value) {
+    public ValueAtPercentile(double percentile, double value) {
         this.percentile = percentile;
         this.value = value;
     }
@@ -51,10 +51,6 @@ public final class ValueAtPercentile {
         return "(" + value + " at " + percentile * 100 + "%)";
     }
 
-    public static ValueAtPercentile of(double percentile, double value) {
-        return new ValueAtPercentile(percentile, value);
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -62,8 +58,7 @@ public final class ValueAtPercentile {
 
         ValueAtPercentile that = (ValueAtPercentile) o;
 
-        if (Double.compare(that.percentile, percentile) != 0) return false;
-        return Double.compare(that.value, value) == 0;
+        return Double.compare(that.percentile, percentile) == 0 && Double.compare(that.value, value) == 0;
     }
 
     @Override

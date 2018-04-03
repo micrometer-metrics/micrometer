@@ -15,22 +15,24 @@
  */
 package io.micrometer.core.instrument.distribution;
 
-public class NoopHistogram implements Histogram {
-    public static final NoopHistogram INSTANCE = new NoopHistogram();
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Timer;
 
-    private NoopHistogram() {
-    }
+/**
+ * The contract for histograms used to generate distribution statistics for {@link Timer}
+ * and {@link DistributionSummary}.
+ *
+ * @author Jon Schneider
+ * @since 1.0.3
+ */
+public interface Histogram extends AutoCloseable {
+    void recordLong(long value);
+
+    void recordDouble(double value);
+
+    HistogramSnapshot takeSnapshot();
 
     @Override
-    public void recordLong(long value) {
-    }
-
-    @Override
-    public void recordDouble(double value) {
-    }
-
-    @Override
-    public HistogramSnapshot takeSnapshot() {
-        return HistogramSnapshot.empty();
+    default void close() {
     }
 }

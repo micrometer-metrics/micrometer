@@ -23,24 +23,31 @@ import org.springframework.web.servlet.HandlerMapping;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class WebMvcTagsTest {
+    private final MockHttpServletRequest request = new MockHttpServletRequest();
+    private final MockHttpServletResponse response = new MockHttpServletResponse();
+
     @Test
     public void uriTrailingSlashesAreSuppressed() {
-        MockHttpServletRequest request = new MockHttpServletRequest();
         request.setAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE, "//foo/");
         assertThat(WebMvcTags.uri(request, null).getValue()).isEqualTo("/foo");
     }
 
     @Test
+    public void uriTagValueIsBestMatchingPatternWhenAvailable() {
+        request.setAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE, "/spring");
+        response.setStatus(301);
+        assertThat(WebMvcTags.uri(request, response).getValue()).isEqualTo("/spring");
+    }
+
+    @Test
     public void redirectsAreShunted() {
-        MockHttpServletResponse response = new MockHttpServletResponse();
         response.setStatus(302);
-        assertThat(WebMvcTags.uri(null, response).getValue()).isEqualTo("REDIRECTION");
+        assertThat(WebMvcTags.uri(request, response).getValue()).isEqualTo("REDIRECTION");
     }
 
     @Test
     public void notFoundsAreShunted() {
-        MockHttpServletResponse response = new MockHttpServletResponse();
         response.setStatus(404);
-        assertThat(WebMvcTags.uri(null, response).getValue()).isEqualTo("NOT_FOUND");
+        assertThat(WebMvcTags.uri(request, response).getValue()).isEqualTo("NOT_FOUND");
     }
 }

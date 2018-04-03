@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.util;
+package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
@@ -27,10 +27,10 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Jon Schneider
  */
-public class TimeDecayingMax {
+public class TimeWindowMax {
     @SuppressWarnings("rawtypes")
-    private static final AtomicIntegerFieldUpdater<TimeDecayingMax> rotatingUpdater =
-            AtomicIntegerFieldUpdater.newUpdater(TimeDecayingMax.class, "rotating");
+    private static final AtomicIntegerFieldUpdater<TimeWindowMax> rotatingUpdater =
+            AtomicIntegerFieldUpdater.newUpdater(TimeWindowMax.class, "rotating");
 
     private final Clock clock;
     private final long durationBetweenRotatesMillis;
@@ -42,11 +42,11 @@ public class TimeDecayingMax {
     private volatile int rotating = 0; // 0 - not rotating, 1 - rotating
 
     @SuppressWarnings("ConstantConditions")
-    public TimeDecayingMax(Clock clock, DistributionStatisticConfig config) {
+    public TimeWindowMax(Clock clock, DistributionStatisticConfig config) {
         this(clock, config.getExpiry().toMillis(), config.getBufferLength());
     }
 
-    public TimeDecayingMax(Clock clock, long rotateFrequencyMillis, int bufferLength) {
+    public TimeWindowMax(Clock clock, long rotateFrequencyMillis, int bufferLength) {
         this.clock = clock;
         this.durationBetweenRotatesMillis = rotateFrequencyMillis;
         this.lastRotateTimestampMillis = clock.wallTime();

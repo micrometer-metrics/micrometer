@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
 import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
@@ -102,9 +101,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         collector.add((conventionName, tagKeys) -> {
             Stream.Builder<Collector.MetricFamilySamples.Sample> samples = Stream.builder();
 
-            final HistogramSnapshot snapshot = summary.takeSnapshot(false);
-            final ValueAtPercentile[] percentileValues = snapshot.percentileValues();
+            final ValueAtPercentile[] percentileValues = summary.takeSnapshot().percentileValues();
             final CountAtBucket[] histogramCounts = summary.histogramCounts();
+            double count = summary.count();
 
             if (percentileValues.length > 0) {
                 List<String> quantileKeys = new LinkedList<>(tagKeys);
@@ -129,28 +128,28 @@ public class PrometheusMeterRegistry extends MeterRegistry {
 
                 // satisfies https://prometheus.io/docs/concepts/metric_types/#histogram
                 for (CountAtBucket c : histogramCounts) {
-                    List<String> histogramValues = new LinkedList<>(tagValues);
-                    final long bucket = c.bucket();
-                    if (bucket == Long.MAX_VALUE) {
-                        histogramValues.add("+Inf");
-                    } else {
-                        histogramValues.add(Collector.doubleToGoString(bucket));
-                    }
-
+                    final List<String> histogramValues = new LinkedList<>(tagValues);
+                    histogramValues.add(Collector.doubleToGoString(c.bucket()));
                     samples.add(new Collector.MetricFamilySamples.Sample(
                             conventionName + "_bucket", histogramKeys, histogramValues, c.count()));
                 }
+
+                // the +Inf bucket should always equal `count`
+                final List<String> histogramValues = new LinkedList<>(tagValues);
+                histogramValues.add("+Inf");
+                samples.add(new Collector.MetricFamilySamples.Sample(
+                        conventionName + "_bucket", histogramKeys, histogramValues, count));
             }
 
             samples.add(new Collector.MetricFamilySamples.Sample(
-                    conventionName + "_count", tagKeys, tagValues, snapshot.count()));
+                    conventionName + "_count", tagKeys, tagValues, count));
 
             samples.add(new Collector.MetricFamilySamples.Sample(
-                    conventionName + "_sum", tagKeys, tagValues, snapshot.total()));
+                    conventionName + "_sum", tagKeys, tagValues, summary.totalAmount()));
 
             return Stream.of(new MicrometerCollector.Family(type, conventionName, samples.build()),
                     new MicrometerCollector.Family(Collector.Type.GAUGE, conventionName + "_max", Stream.of(
-                            new Collector.MetricFamilySamples.Sample(conventionName + "_max", tagKeys, tagValues, snapshot.max()))));
+                            new Collector.MetricFamilySamples.Sample(conventionName + "_max", tagKeys, tagValues, summary.max()))));
         });
 
         return summary;
@@ -165,9 +164,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         collector.add((conventionName, tagKeys) -> {
             Stream.Builder<Collector.MetricFamilySamples.Sample> samples = Stream.builder();
 
-            final HistogramSnapshot snapshot = timer.takeSnapshot(false);
-            final ValueAtPercentile[] percentileValues = snapshot.percentileValues();
+            final ValueAtPercentile[] percentileValues = timer.takeSnapshot().percentileValues();
             final CountAtBucket[] histogramCounts = timer.histogramCounts();
+            double count = timer.count();
 
             if (percentileValues.length > 0) {
                 List<String> quantileKeys = new LinkedList<>(tagKeys);
@@ -202,19 +201,19 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                 final List<String> histogramValues = new LinkedList<>(tagValues);
                 histogramValues.add("+Inf");
                 samples.add(new Collector.MetricFamilySamples.Sample(
-                        conventionName + "_bucket", histogramKeys, histogramValues, snapshot.count()));
+                        conventionName + "_bucket", histogramKeys, histogramValues, count));
             }
 
             samples.add(new Collector.MetricFamilySamples.Sample(
-                    conventionName + "_count", tagKeys, tagValues, snapshot.count()));
+                    conventionName + "_count", tagKeys, tagValues, count));
 
             samples.add(new Collector.MetricFamilySamples.Sample(
-                    conventionName + "_sum", tagKeys, tagValues, snapshot.total(TimeUnit.SECONDS)));
+                    conventionName + "_sum", tagKeys, tagValues, timer.totalTime(TimeUnit.SECONDS)));
 
             return Stream.of(new MicrometerCollector.Family(type, conventionName, samples.build()),
                     new MicrometerCollector.Family(Collector.Type.GAUGE, conventionName + "_max", Stream.of(
                             new Collector.MetricFamilySamples.Sample(conventionName + "_max", tagKeys, tagValues,
-                                    snapshot.max(getBaseTimeUnit())))));
+                                    timer.max(getBaseTimeUnit())))));
         });
 
         return timer;
@@ -342,7 +341,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private static List<String> tagValues(Meter.Id id) {
-        return stream(id.getTags().spliterator(), false).map(Tag::getValue).collect(toList());
+        return id.getTags().stream().map(Tag::getValue).collect(toList());
     }
 
     private MicrometerCollector collectorByName(Meter.Id id) {
