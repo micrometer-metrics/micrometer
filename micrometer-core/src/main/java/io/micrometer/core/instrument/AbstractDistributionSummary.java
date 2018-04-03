@@ -53,7 +53,7 @@ public abstract class AbstractDistributionSummary extends AbstractMeter implemen
 
     @Override
     public HistogramSnapshot takeSnapshot() {
-        return histogram.takeSnapshot();
+        return histogram.takeSnapshot(count(), totalAmount(), max());
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

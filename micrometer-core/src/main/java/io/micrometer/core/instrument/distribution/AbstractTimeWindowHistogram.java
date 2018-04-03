@@ -41,9 +41,10 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
     private static final AtomicIntegerFieldUpdater<AbstractTimeWindowHistogram> rotatingUpdater =
             AtomicIntegerFieldUpdater.newUpdater(AbstractTimeWindowHistogram.class, "rotating");
 
-    final Clock clock;
     final DistributionStatisticConfig distributionStatisticConfig;
-    final boolean supportsAggregablePercentiles;
+
+    private final Clock clock;
+    private final boolean supportsAggregablePercentiles;
 
     private final T[] ringBuffer;
     private final long durationBetweenRotatesMillis;
@@ -151,7 +152,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
     }
 
     @Override
-    public final HistogramSnapshot takeSnapshot() {
+    public final HistogramSnapshot takeSnapshot(long count, double total, double max) {
         rotate();
 
         final ValueAtPercentile[] values;
@@ -162,7 +163,8 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
             counts = takeCountSnapshot();
         }
 
-        return new HistogramSnapshot(values, counts, (out, scale) -> outputSummary(out, scale, accumulatedHistogram));
+        return new HistogramSnapshot(count, total, max, values, counts,
+                (out, scale) -> outputSummary(out, scale, accumulatedHistogram));
     }
 
     private void accumulateIfStale() {

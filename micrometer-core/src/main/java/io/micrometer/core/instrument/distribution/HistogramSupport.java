@@ -23,4 +23,14 @@ public interface HistogramSupport {
      * @return A snapshot of all distribution statistics at a point in time.
      */
     HistogramSnapshot takeSnapshot();
+
+    /**
+     *
+     * @param supportsAggregablePercentiles Ignored. The determination of aggregable percentile support is now made up front.
+     * @return
+     */
+    @Deprecated
+    default HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
+        return takeSnapshot();
+    }
 }
