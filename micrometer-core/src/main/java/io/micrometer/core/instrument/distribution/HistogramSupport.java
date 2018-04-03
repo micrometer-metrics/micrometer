@@ -25,9 +25,12 @@ public interface HistogramSupport {
     HistogramSnapshot takeSnapshot();
 
     /**
+     * Summary statistics should be published off of a single snapshot instance so that, for example, there isn't
+     * disagreement between the distribution's bucket counts because more events continue to stream in.
      *
      * @param supportsAggregablePercentiles Ignored. The determination of aggregable percentile support is now made up front.
-     * @return
+     * @return A snapshot of all distribution statistics at a point in time.
+     * @deprecated Use {@link #takeSnapshot()}.
      */
     @Deprecated
     default HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {

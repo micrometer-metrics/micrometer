@@ -25,6 +25,7 @@ import com.netflix.spectator.atlas.AtlasRegistry;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.step.StepFunctionCounter;
@@ -121,7 +122,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
         HistogramGauges.register(summary, this,
                 percentile -> id.getName(),
                 percentile -> Tags.concat(id.getTags(), "percentile", DoubleFormat.decimalOrNan(percentile.percentile())),
-                percentile -> percentile.value(),
+                ValueAtPercentile::value,
                 bucket -> id.getName(),
                 bucket -> Tags.concat(id.getTags(), "sla", DoubleFormat.decimalOrWhole(bucket.bucket())));
 
