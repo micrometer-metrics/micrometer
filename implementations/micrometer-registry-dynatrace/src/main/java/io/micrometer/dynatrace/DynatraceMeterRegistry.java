@@ -11,6 +11,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.MeterPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,34 +58,36 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        final List<DynatraceSerie> series = getMeters().stream()
-            .flatMap(meter -> {
-                if (meter instanceof Timer) {
-                    return createSeries((Timer) meter);
-                } else if (meter instanceof FunctionTimer) {
-                    return createSeries((FunctionTimer) meter);
-                } else if (meter instanceof DistributionSummary) {
-                    return createSeries((DistributionSummary) meter);
-                } else if (meter instanceof LongTaskTimer) {
-                    return createSeries((LongTaskTimer) meter);
-                } else {
-                    return createSeries(meter);
-                }
-            })
-            .collect(Collectors.toList());
+        for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
+            final List<DynatraceSerie> series = batch.stream()
+                .flatMap(meter -> {
+                    if (meter instanceof Timer) {
+                        return createSeries((Timer) meter);
+                    } else if (meter instanceof FunctionTimer) {
+                        return createSeries((FunctionTimer) meter);
+                    } else if (meter instanceof DistributionSummary) {
+                        return createSeries((DistributionSummary) meter);
+                    } else if (meter instanceof LongTaskTimer) {
+                        return createSeries((LongTaskTimer) meter);
+                    } else {
+                        return createSeries(meter);
+                    }
+                })
+                .collect(Collectors.toList());
 
-        series.stream()
-            .filter(isCustomMetricCreated().negate())
-            .map(DynatraceSerie::getMetric)
-            .forEach(this::putCustomMetric);
+            series.stream()
+                .filter(isCustomMetricCreated().negate())
+                .map(DynatraceSerie::getMetric)
+                .forEach(this::putCustomMetric);
 
-        if (!createdCustomMetrics.isEmpty() && !series.isEmpty()) {
-            postCustomMetricValues("{\"series\":[" +
-                series.stream()
-                    .filter(isCustomMetricCreated())
-                    .map(DynatraceSerie::asJson)
-                    .collect(joining(",")) +
-                "]}");
+            if (!createdCustomMetrics.isEmpty() && !series.isEmpty()) {
+                postCustomMetricValues("{\"series\":[" +
+                    series.stream()
+                        .filter(isCustomMetricCreated())
+                        .map(DynatraceSerie::asJson)
+                        .collect(joining(",")) +
+                    "]}");
+            }
         }
     }
 
