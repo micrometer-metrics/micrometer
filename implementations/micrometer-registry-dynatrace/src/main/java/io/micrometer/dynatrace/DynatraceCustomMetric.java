@@ -1,53 +1,62 @@
 package io.micrometer.dynatrace;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import io.micrometer.core.instrument.Meter;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class DynatraceCustomMetric {
+class DynatraceCustomMetric {
 
-    private static Set<String> UNIT_WHITELIST = ImmutableSet.<String>builder()
+    /**
+     * Subset of mappable units of the custom metric API.
+     * @see <a href="https://www.dynatrace.com/support/help/shortlink/api-custom-metrics#put-custom-metric">available units</a>
+     */
+    enum DynatraceUnit {
         // Time
-        .add("NanoSecond", "MicroSecond", "MilliSecond", "Second")
+        NanoSecond, MicroSecond, MilliSecond, Second,
         // Information
-        .add("Bit", "Byte", "KiloByte", "KibiByte", "MegaByte", "MebiByte", "GigaByte", "GibiByte")
-        // Information per time
-        //.add("BytePerSecond", "BytePerMinute", "BitPerSecond", "BitPerMinute", "KiloBytePerSecond", "KiloBytePerMinute", "KibiBytePerSecond", "KibiBytePerMinute", "MegaBytePerSecond", "MegaBytePerMinute", "MebiBytePerSecond", "MebiBytePerMinute")
-        // Ratio
-        //.add("Ratio", "Percent", "Promille")
+        Bit, Byte, KiloByte, KibiByte, MegaByte, MebiByte, GigaByte, GibiByte,
         // Count
-        //.add("Count", "PerSecond", "PerMinute")
-        .build();
+        Count;
 
-    private static Map<String, String> UNITS_MAPPING = ImmutableMap.<String, String>builder()
-        .putAll(UNIT_WHITELIST.stream().collect(Collectors.toMap(k -> k.toLowerCase() + "s", Function.identity())))
-        .build();
+        private static Map<String, DynatraceUnit> UNITS_MAPPING = ImmutableMap.<String, DynatraceUnit>builder()
+            .putAll(Stream.of(DynatraceUnit.values()).collect(Collectors.toMap(k -> k.toString().toLowerCase() + "s", Function.identity())))
+            .build();
 
-    private final Meter.Id id;
-
-    public DynatraceCustomMetric(Meter.Id id) {
-        this.id = id;
+        static DynatraceUnit fromPlural(final String plural) {
+            return UNITS_MAPPING.getOrDefault(plural, null);
+        }
     }
 
-    String editMetadataBody() {
-        String body = "{\"displayName\":\"" + (id.getDescription() != null ? id.getDescription() : id.getName()) + "\"";
+    private final String metricId;
+    private final String description;
+    private final DynatraceUnit unit;
+    private final Set<String> dimensions;
 
-        if (id.getBaseUnit() != null) {
-            final String mappedUnit = UNIT_WHITELIST.contains(id.getBaseUnit())
-                ? id.getBaseUnit()
-                : UNITS_MAPPING.get(id.getBaseUnit());
-            if (mappedUnit != null)
-                body += ",\"unit\":\"" + mappedUnit + "\"";
-        }
 
-        if (!id.getTags().isEmpty())
-            body += ",\"dimensions\":[" + id.getTags().stream()
-                .map(t -> "\"" + t.getKey() + "\"")
+    DynatraceCustomMetric(final String metricId, final String description, final DynatraceUnit unit, final Set<String> dimensions) {
+        this.metricId = metricId;
+        this.description = description;
+        this.unit = unit;
+        this.dimensions = dimensions;
+    }
+
+    String getMetricId() {
+        return metricId;
+    }
+
+    String asJson() {
+        String body = "{\"displayName\":\"" + (description != null ? description : metricId) + "\"";
+
+        if (unit != null)
+            body += ",\"unit\":\"" + unit + "\"";
+
+        if (dimensions != null && !dimensions.isEmpty())
+            body += ",\"dimensions\":[" + dimensions.stream()
+                .map(d -> "\"" + d + "\"")
                 .collect(Collectors.joining(",")) + "]";
 
         body += "}";
