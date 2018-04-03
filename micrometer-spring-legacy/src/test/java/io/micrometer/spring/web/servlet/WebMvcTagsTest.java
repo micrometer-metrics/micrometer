@@ -23,12 +23,12 @@ import org.springframework.web.servlet.HandlerMapping;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class WebMvcTagsTest {
-    private final MockHttpServletRequest request = new MockHttpServletRequest();
-    private final MockHttpServletResponse response = new MockHttpServletResponse();
+    private MockHttpServletRequest request = new MockHttpServletRequest();
+    private MockHttpServletResponse response = new MockHttpServletResponse();
 
     @Test
     public void uriTrailingSlashesAreSuppressed() {
-        request.setAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE, "//foo/");
+        request.setPathInfo("//foo/");
         assertThat(WebMvcTags.uri(request, null).getValue()).isEqualTo("/foo");
     }
 
