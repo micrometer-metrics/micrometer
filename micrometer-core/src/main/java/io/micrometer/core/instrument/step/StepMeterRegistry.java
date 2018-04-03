@@ -17,12 +17,11 @@ package io.micrometer.core.instrument.step;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramGauges;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.Executors;
@@ -58,7 +57,7 @@ public abstract class StepMeterRegistry extends MeterRegistry {
 
         if (config.enabled()) {
             publisher = Executors.newSingleThreadScheduledExecutor(threadFactory)
-                .scheduleAtFixedRate(this::publish, config.step().toMillis(), config.step().toMillis(), TimeUnit.MILLISECONDS);
+                    .scheduleAtFixedRate(this::publish, config.step().toMillis(), config.step().toMillis(), TimeUnit.MILLISECONDS);
         }
     }
 
@@ -95,41 +94,15 @@ public abstract class StepMeterRegistry extends MeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        Timer timer = new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit());
-
-        if (distributionStatisticConfig.getPercentiles() != null) {
-            for (double percentile : distributionStatisticConfig.getPercentiles()) {
-                gauge(id.getName() + ".percentile", Tags.concat(getConventionTags(id), "phi", DoubleFormat.decimalOrNan(percentile)),
-                        timer, t -> t.percentile(percentile, getBaseTimeUnit()));
-            }
-        }
-
-        for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
-            Tags bucketTags = Tags.concat(getConventionTags(id), "le",
-                    DoubleFormat.decimalOrWhole(TimeUtils.nanosToUnit(bucket, getBaseTimeUnit())));
-            gauge(id.getName() + ".histogram", bucketTags, timer, t -> t.histogramCountAtValue(bucket));
-        }
-
+        Timer timer = new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(), false);
+        HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        DistributionSummary summary = new StepDistributionSummary(id, clock, distributionStatisticConfig, scale);
-
-        if (distributionStatisticConfig.getPercentiles() != null) {
-            for (double percentile : distributionStatisticConfig.getPercentiles()) {
-                gauge(id.getName() + ".percentile", Tags.concat(getConventionTags(id), "phi", DoubleFormat.decimalOrNan(percentile)),
-                        summary, s -> s.percentile(percentile));
-            }
-        }
-
-        for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
-            Tags bucketTags = Tags.concat(getConventionTags(id), "le",
-                    DoubleFormat.decimalOrWhole(bucket));
-            gauge(id.getName() + ".histogram", bucketTags, summary, s -> s.histogramCountAtValue(bucket));
-        }
-
+        DistributionSummary summary = new StepDistributionSummary(id, clock, distributionStatisticConfig, scale, false);
+        HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
 
@@ -151,8 +124,8 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
         return DistributionStatisticConfig.builder()
-            .expiry(config.step())
-            .build()
-            .merge(DistributionStatisticConfig.DEFAULT);
+                .expiry(config.step())
+                .build()
+                .merge(DistributionStatisticConfig.DEFAULT);
     }
 }

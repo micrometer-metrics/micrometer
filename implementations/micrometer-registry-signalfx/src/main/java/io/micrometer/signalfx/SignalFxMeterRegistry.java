@@ -24,7 +24,6 @@ import com.signalfx.metrics.flush.AggregateMetricSender;
 import com.signalfx.metrics.protobuf.SignalFxProtocolBuffers;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.lang.Nullable;
@@ -184,12 +183,10 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     }
 
     private void addTimer(Timer timer, AggregateMetricSender.Session session, long timestamp) {
-        HistogramSnapshot snapshot = timer.takeSnapshot(false);
-
-        addDatapoint(timer, COUNTER, "count", session, snapshot.count(), timestamp);
-        addDatapoint(timer, COUNTER, "totalTime", session, snapshot.total(getBaseTimeUnit()), timestamp);
-        addDatapoint(timer, GAUGE, "avg", session, snapshot.mean(getBaseTimeUnit()), timestamp);
-        addDatapoint(timer, GAUGE, "max", session, snapshot.max(getBaseTimeUnit()), timestamp);
+        addDatapoint(timer, COUNTER, "count", session, timer.count(), timestamp);
+        addDatapoint(timer, COUNTER, "totalTime", session, timer.totalTime(getBaseTimeUnit()), timestamp);
+        addDatapoint(timer, GAUGE, "avg", session, timer.mean(getBaseTimeUnit()), timestamp);
+        addDatapoint(timer, GAUGE, "max", session, timer.max(getBaseTimeUnit()), timestamp);
     }
 
     private void addFunctionTimer(FunctionTimer timer, AggregateMetricSender.Session session, long timestamp) {
@@ -199,12 +196,10 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     }
 
     private void addDistributionSummary(DistributionSummary summary, AggregateMetricSender.Session session, long timestamp) {
-        HistogramSnapshot snapshot = summary.takeSnapshot(false);
-
-        addDatapoint(summary, COUNTER, "count", session, snapshot.count(), timestamp);
-        addDatapoint(summary, COUNTER, "totalTime", session, snapshot.total(), timestamp);
-        addDatapoint(summary, GAUGE, "avg", session, snapshot.mean(), timestamp);
-        addDatapoint(summary, GAUGE, "max", session, snapshot.max(), timestamp);
+        addDatapoint(summary, COUNTER, "count", session, summary.count(), timestamp);
+        addDatapoint(summary, COUNTER, "totalTime", session, summary.totalAmount(), timestamp);
+        addDatapoint(summary, GAUGE, "avg", session, summary.mean(), timestamp);
+        addDatapoint(summary, GAUGE, "max", session, summary.max(), timestamp);
     }
 
     @Override

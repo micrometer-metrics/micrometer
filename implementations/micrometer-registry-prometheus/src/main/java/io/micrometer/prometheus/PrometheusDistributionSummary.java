@@ -19,9 +19,8 @@ import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.TimeWindowHistogram;
+import io.micrometer.core.instrument.distribution.TimeWindowMax;
 import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.instrument.util.TimeDecayingMax;
 import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
@@ -31,18 +30,15 @@ import java.util.concurrent.atomic.LongAdder;
 public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     private LongAdder count = new LongAdder();
     private DoubleAdder amount = new DoubleAdder();
-    private TimeDecayingMax max;
-    private final TimeWindowHistogram percentilesHistogram;
+    private TimeWindowMax max;
 
     PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        super(id, clock, distributionStatisticConfig, scale);
-        this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
-        this.percentilesHistogram = new TimeWindowHistogram(clock,
-                DistributionStatisticConfig.builder()
-                        .expiry(Duration.ofDays(1825)) // effectively never roll over
-                        .bufferLength(1)
-                        .build()
-                        .merge(distributionStatisticConfig));
+        super(id, clock, DistributionStatisticConfig.builder()
+                .expiry(Duration.ofDays(1825)) // effectively never roll over
+                .bufferLength(1)
+                .build()
+                .merge(distributionStatisticConfig), scale, true);
+        this.max = new TimeWindowMax(clock, distributionStatisticConfig);
     }
 
     @Override
@@ -50,7 +46,6 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         count.increment();
         this.amount.add(amount);
         max.record(amount);
-        percentilesHistogram.recordDouble(amount);
     }
 
     @Override
@@ -86,6 +81,6 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
      * @return Cumulative histogram buckets.
      */
     public CountAtBucket[] histogramCounts() {
-        return percentilesHistogram.takeSnapshot(0, 0, 0, true).histogramCounts();
+        return histogram.takeSnapshot().histogramCounts();
     }
 }

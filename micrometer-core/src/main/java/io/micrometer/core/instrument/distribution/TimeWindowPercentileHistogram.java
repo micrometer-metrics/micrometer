@@ -19,23 +19,29 @@ import io.micrometer.core.instrument.Clock;
 import org.HdrHistogram.DoubleHistogram;
 import org.HdrHistogram.DoubleRecorder;
 
+import java.io.PrintStream;
+
 /**
+ * A histogram implementation that supports the computation of percentiles by Micrometer for
+ * publishing to a monitoring system.
+ *
  * @author Jon Schneider
  * @author Trustin Heuiseung Lee
  */
-public class TimeWindowHistogram extends TimeWindowHistogramBase<DoubleRecorder, DoubleHistogram> {
+public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<DoubleRecorder, DoubleHistogram> {
 
     private final DoubleHistogram intervalHistogram;
 
-    public TimeWindowHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig) {
-        super(clock, distributionStatisticConfig, DoubleRecorder.class);
-        intervalHistogram = new DoubleHistogram(NUM_SIGNIFICANT_VALUE_DIGITS);
+    public TimeWindowPercentileHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+                                         boolean supportsAggregablePercentiles) {
+        super(clock, distributionStatisticConfig, DoubleRecorder.class, supportsAggregablePercentiles);
+        intervalHistogram = new DoubleHistogram(percentilePrecision(distributionStatisticConfig));
         initRingBuffer();
     }
 
     @Override
-    DoubleRecorder newBucket(DistributionStatisticConfig distributionStatisticConfig) {
-        return new DoubleRecorder(NUM_SIGNIFICANT_VALUE_DIGITS);
+    DoubleRecorder newBucket() {
+        return new DoubleRecorder(percentilePrecision(distributionStatisticConfig));
     }
 
     @Override
@@ -55,7 +61,7 @@ public class TimeWindowHistogram extends TimeWindowHistogramBase<DoubleRecorder,
 
     @Override
     DoubleHistogram newAccumulatedHistogram(DoubleRecorder[] ringBuffer) {
-        return new DoubleHistogram(NUM_SIGNIFICANT_VALUE_DIGITS);
+        return new DoubleHistogram(percentilePrecision(distributionStatisticConfig));
     }
 
     @Override
@@ -77,5 +83,14 @@ public class TimeWindowHistogram extends TimeWindowHistogramBase<DoubleRecorder,
     @Override
     double countAtValue(DoubleHistogram accumulatedHistogram, long value) {
         return accumulatedHistogram.getCountBetweenValues(0, value);
+    }
+
+    private int percentilePrecision(DistributionStatisticConfig config) {
+        return config.getPercentilePrecision() == null ? 1 : config.getPercentilePrecision();
+    }
+
+    @Override
+    void outputSummary(PrintStream out, double bucketScaling, DoubleHistogram accumulatedHistogram) {
+        accumulatedHistogram.outputPercentileDistribution(out, bucketScaling);
     }
 }

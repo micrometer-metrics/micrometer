@@ -17,7 +17,6 @@ package io.micrometer.influx;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
@@ -260,25 +259,23 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     private String writeTimer(Timer timer) {
-        final HistogramSnapshot snapshot = timer.takeSnapshot(false);
         final Stream.Builder<Field> fields = Stream.builder();
 
-        fields.add(new Field("sum", snapshot.total(getBaseTimeUnit())));
-        fields.add(new Field("count", snapshot.count()));
-        fields.add(new Field("mean", snapshot.mean(getBaseTimeUnit())));
-        fields.add(new Field("upper", snapshot.max(getBaseTimeUnit())));
+        fields.add(new Field("sum", timer.totalTime(getBaseTimeUnit())));
+        fields.add(new Field("count", timer.count()));
+        fields.add(new Field("mean", timer.mean(getBaseTimeUnit())));
+        fields.add(new Field("upper", timer.max(getBaseTimeUnit())));
 
         return influxLineProtocol(timer.getId(), "histogram", fields.build(), clock.wallTime());
     }
 
     private String writeSummary(DistributionSummary summary) {
-        final HistogramSnapshot snapshot = summary.takeSnapshot(false);
         final Stream.Builder<Field> fields = Stream.builder();
 
-        fields.add(new Field("sum", snapshot.total()));
-        fields.add(new Field("count", snapshot.count()));
-        fields.add(new Field("mean", snapshot.mean()));
-        fields.add(new Field("upper", snapshot.max()));
+        fields.add(new Field("sum", summary.totalAmount()));
+        fields.add(new Field("count", summary.count()));
+        fields.add(new Field("mean", summary.mean()));
+        fields.add(new Field("upper", summary.max()));
 
         return influxLineProtocol(summary.getId(), "histogram", fields.build(), clock.wallTime());
     }

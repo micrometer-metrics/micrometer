@@ -25,9 +25,9 @@ import java.util.TreeSet;
 /**
  * Configures the distribution statistics that emanate from meters like {@link io.micrometer.core.instrument.Timer}
  * and {@link io.micrometer.core.instrument.DistributionSummary}.
- *
+ * <p>
  * These statistics include max, percentiles, percentile histograms, and SLA violations.
- *
+ * <p>
  * Many distribution statistics are decayed to give greater weight to recent samples.
  *
  * @author Jon Schneider
@@ -35,12 +35,11 @@ import java.util.TreeSet;
 public class DistributionStatisticConfig implements Mergeable<DistributionStatisticConfig> {
     public static final DistributionStatisticConfig DEFAULT = builder()
             .percentilesHistogram(false)
-            .percentiles()
-            .sla()
+            .percentilePrecision(1)
             .minimumExpectedValue(1L)
             .maximumExpectedValue(Long.MAX_VALUE)
             .expiry(Duration.ofMinutes(2))
-            .bufferLength(5)
+            .bufferLength(3)
             .build();
 
     public static final DistributionStatisticConfig NONE = builder().build();
@@ -50,6 +49,9 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
 
     @Nullable
     private double[] percentiles;
+
+    @Nullable
+    private Integer percentilePrecision;
 
     @Nullable
     private long[] sla;
@@ -83,15 +85,12 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
                 .percentilesHistogram(this.percentileHistogram == null ? parent.percentileHistogram : this.percentileHistogram)
                 .percentiles(this.percentiles == null ? parent.percentiles : this.percentiles)
                 .sla(this.sla == null ? parent.sla : this.sla)
+                .percentilePrecision(this.percentilePrecision == null ? parent.percentilePrecision : this.percentilePrecision)
                 .minimumExpectedValue(this.minimumExpectedValue == null ? parent.minimumExpectedValue : this.minimumExpectedValue)
                 .maximumExpectedValue(this.maximumExpectedValue == null ? parent.maximumExpectedValue : this.maximumExpectedValue)
                 .expiry(this.expiry == null ? parent.expiry : this.expiry)
                 .bufferLength(this.bufferLength == null ? parent.bufferLength : this.bufferLength)
                 .build();
-    }
-
-    public boolean isPublishingHistogram() {
-        return (percentileHistogram != null && percentileHistogram) || (sla != null && sla.length > 0);
     }
 
     public NavigableSet<Long> getHistogramBuckets(boolean supportsAggregablePercentiles) {
@@ -135,6 +134,18 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
     @Nullable
     public double[] getPercentiles() {
         return percentiles;
+    }
+
+    /**
+     * Determines the number of digits of precision to maintain on the dynamic range histogram used to compute
+     * percentile approximations. The higher the degrees of precision, the more accurate the approximation is at the
+     * cost of more memory.
+     *
+     * @return The digits of precision to maintain for percentile approximations.
+     */
+    @Nullable
+    public Integer getPercentilePrecision() {
+        return percentilePrecision;
     }
 
     /**
@@ -220,6 +231,19 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
         }
 
         /**
+         * Determines the number of digits of precision to maintain on the dynamic range histogram used to compute
+         * percentile approximations. The higher the degrees of precision, the more accurate the approximation is at the
+         * cost of more memory.
+         *
+         * @param digitsOfPrecision The digits of precision to maintain for percentile approximations.
+         * @return This builder.
+         */
+        public Builder percentilePrecision(@Nullable Integer digitsOfPrecision) {
+            config.percentilePrecision = digitsOfPrecision;
+            return this;
+        }
+
+        /**
          * Publish at a minimum a histogram containing your defined SLA boundaries. When used in conjunction with
          * {@link #percentileHistogram}, the boundaries defined here are included alongside other buckets used to
          * generate aggregable percentile approximations.
@@ -291,5 +315,13 @@ public class DistributionStatisticConfig implements Mergeable<DistributionStatis
         public DistributionStatisticConfig build() {
             return config;
         }
+    }
+
+    public boolean isPublishingPercentiles() {
+        return percentiles != null && percentiles.length > 0;
+    }
+
+    public boolean isPublishingHistogram() {
+        return (percentileHistogram != null && percentileHistogram) || (sla != null && sla.length > 0);
     }
 }

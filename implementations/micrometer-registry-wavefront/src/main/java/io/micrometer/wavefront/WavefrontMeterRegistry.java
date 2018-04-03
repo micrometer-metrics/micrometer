@@ -17,7 +17,6 @@ package io.micrometer.wavefront;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
@@ -152,28 +151,26 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
 
     private Stream<String> writeTimer(Timer timer) {
         final long wallTime = clock.wallTime();
-        final HistogramSnapshot snapshot = timer.takeSnapshot(false);
         final Stream.Builder<String> metrics = Stream.builder();
 
         Meter.Id id = timer.getId();
-        metrics.add(writeMetric(id, "sum", wallTime, snapshot.total(getBaseTimeUnit())));
-        metrics.add(writeMetric(id, "count", wallTime, snapshot.count()));
-        metrics.add(writeMetric(id, "avg", wallTime, snapshot.mean(getBaseTimeUnit())));
-        metrics.add(writeMetric(id, "max", wallTime, snapshot.max(getBaseTimeUnit())));
+        metrics.add(writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit())));
+        metrics.add(writeMetric(id, "count", wallTime, timer.count()));
+        metrics.add(writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit())));
+        metrics.add(writeMetric(id, "max", wallTime, timer.max(getBaseTimeUnit())));
 
         return metrics.build();
     }
 
     private Stream<String> writeSummary(DistributionSummary summary) {
         final long wallTime = clock.wallTime();
-        final HistogramSnapshot snapshot = summary.takeSnapshot(false);
         final Stream.Builder<String> metrics = Stream.builder();
 
         Meter.Id id = summary.getId();
-        metrics.add(writeMetric(id, "sum", wallTime, snapshot.total()));
-        metrics.add(writeMetric(id, "count", wallTime, snapshot.count()));
-        metrics.add(writeMetric(id, "avg", wallTime, snapshot.mean()));
-        metrics.add(writeMetric(id, "max", wallTime, snapshot.max()));
+        metrics.add(writeMetric(id, "sum", wallTime, summary.totalAmount()));
+        metrics.add(writeMetric(id, "count", wallTime, summary.count()));
+        metrics.add(writeMetric(id, "avg", wallTime, summary.mean()));
+        metrics.add(writeMetric(id, "max", wallTime, summary.max()));
 
         return metrics.build();
     }

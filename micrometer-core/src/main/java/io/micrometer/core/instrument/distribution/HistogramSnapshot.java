@@ -15,59 +15,29 @@
  */
 package io.micrometer.core.instrument.distribution;
 
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
+import java.io.PrintStream;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
 public final class HistogramSnapshot {
-
     private static final ValueAtPercentile[] EMPTY_VALUES = new ValueAtPercentile[0];
     private static final CountAtBucket[] EMPTY_COUNTS = new CountAtBucket[0];
-    private static final HistogramSnapshot EMPTY = new HistogramSnapshot(0, 0, 0, null, null);
-    private final long count;
-    private final double total;
-    private final double max;
+
+    private static final HistogramSnapshot EMPTY = new HistogramSnapshot(null, null, null);
     private final ValueAtPercentile[] percentileValues;
     private final CountAtBucket[] histogramCounts;
 
-    private HistogramSnapshot(long count, double total, double max,
-                              @Nullable ValueAtPercentile[] percentileValues,
-                              @Nullable CountAtBucket[] histogramCounts) {
-        this.count = count;
-        this.total = total;
-        this.max = max;
+    @Nullable
+    private final BiConsumer<PrintStream, Double> summaryOutput;
+
+    public HistogramSnapshot(@Nullable ValueAtPercentile[] percentileValues,
+                             @Nullable CountAtBucket[] histogramCounts,
+                             @Nullable BiConsumer<PrintStream, Double> summaryOutput) {
         this.percentileValues = percentileValues != null ? percentileValues : EMPTY_VALUES;
         this.histogramCounts = histogramCounts != null ? histogramCounts : EMPTY_COUNTS;
-    }
-
-    public long count() {
-        return count;
-    }
-
-    public double total() {
-        return total;
-    }
-
-    public double total(TimeUnit unit) {
-        return TimeUtils.nanosToUnit(total, unit);
-    }
-
-    public double max() {
-        return max;
-    }
-
-    public double max(TimeUnit unit) {
-        return TimeUtils.nanosToUnit(max, unit);
-    }
-
-    public double mean() {
-        return count == 0 ? 0 : total / count;
-    }
-
-    public double mean(TimeUnit unit) {
-        return TimeUtils.nanosToUnit(mean(), unit);
+        this.summaryOutput = summaryOutput;
     }
 
     public ValueAtPercentile[] percentileValues() {
@@ -82,32 +52,28 @@ public final class HistogramSnapshot {
     public String toString() {
         final StringBuilder buf = new StringBuilder();
         buf.append("HistogramSnapshot{count=");
-        buf.append(count);
-        buf.append(", total=");
-        buf.append(total);
-        buf.append(", mean=");
-        buf.append(mean());
-        buf.append(", max=");
-        buf.append(max);
+
         if (percentileValues.length > 0) {
             buf.append(", percentileValues=");
             buf.append(Arrays.toString(percentileValues));
         }
+
         if (histogramCounts.length > 0) {
             buf.append(", histogramCounts=");
             buf.append(Arrays.toString(histogramCounts));
         }
+
         buf.append('}');
         return buf.toString();
     }
 
-    public static HistogramSnapshot of(long count, double total, double max,
-                                       @Nullable ValueAtPercentile[] percentileValues,
-                                       @Nullable CountAtBucket[] histogramCounts) {
-        return new HistogramSnapshot(count, total, max, percentileValues, histogramCounts);
-    }
-
     public static HistogramSnapshot empty() {
         return EMPTY;
+    }
+
+    public void outputSummary(PrintStream out, double scale) {
+        if(summaryOutput != null) {
+            this.summaryOutput.accept(out, scale);
+        }
     }
 }

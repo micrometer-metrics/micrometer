@@ -20,7 +20,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import java.util.concurrent.TimeUnit;
 
 /**
- * The count accumulated to a histogram bucket.
+ * The count of events less than or equal to a histogram bucket.
  *
  * @author Trustin Heuiseung Lee
  */
@@ -29,7 +29,7 @@ public final class CountAtBucket {
     private final long bucket;
     private final double count;
 
-    private CountAtBucket(long bucket, double count) {
+    public CountAtBucket(long bucket, double count) {
         this.bucket = bucket;
         this.count = count;
     }
@@ -51,10 +51,6 @@ public final class CountAtBucket {
         return "(" + count + " at " + bucket + ')';
     }
 
-    public static CountAtBucket of(long bucketNanos, double count) {
-        return new CountAtBucket(bucketNanos, count);
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -62,8 +58,7 @@ public final class CountAtBucket {
 
         CountAtBucket that = (CountAtBucket) o;
 
-        if (bucket != that.bucket) return false;
-        return Double.compare(that.count, count) == 0;
+        return bucket == that.bucket && Double.compare(that.count, count) == 0;
     }
 
     @Override

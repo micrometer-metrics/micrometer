@@ -15,29 +15,93 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
-import io.micrometer.core.instrument.distribution.TimeWindowLatencyHistogram;
+import io.micrometer.core.instrument.distribution.*;
+import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
+import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
+import org.LatencyUtils.IntervalEstimator;
+import org.LatencyUtils.SimplePauseDetector;
+import org.LatencyUtils.TimeCappedMovingAverageIntervalEstimator;
 
+import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import static java.util.Objects.requireNonNull;
+
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
+    private static Map<PauseDetector, org.LatencyUtils.PauseDetector> pauseDetectorCache =
+            new ConcurrentHashMap<>();
+
     protected final Clock clock;
-    protected final TimeWindowLatencyHistogram histogram;
-    private final DistributionStatisticConfig distributionStatisticConfig;
+    protected final Histogram histogram;
     private final TimeUnit baseTimeUnit;
 
-    protected AbstractTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+    // Only used when pause detection is enabled
+    @Nullable
+    private IntervalEstimator intervalEstimator = null;
+
+    protected AbstractTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+                            PauseDetector pauseDetector, TimeUnit baseTimeUnit, boolean supportsAggregablePercentiles) {
         super(id);
         this.clock = clock;
-        this.distributionStatisticConfig = distributionStatisticConfig;
-        this.histogram = new TimeWindowLatencyHistogram(clock, distributionStatisticConfig, pauseDetector);
         this.baseTimeUnit = baseTimeUnit;
+
+        initPauseDetector(pauseDetector);
+
+        if (distributionStatisticConfig.isPublishingPercentiles()) {
+            // hdr-based histogram
+            this.histogram = new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles);
+        } else if (distributionStatisticConfig.isPublishingHistogram()) {
+            // fixed boundary histograms, which have a slightly better memory footprint
+            // when we don't need Micrometer-computed percentiles
+            this.histogram = new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles);
+        } else {
+            // noop histogram
+            this.histogram = NoopHistogram.INSTANCE;
+        }
+    }
+
+    private void initPauseDetector(PauseDetector pauseDetectorType) {
+        org.LatencyUtils.PauseDetector pauseDetector = requireNonNull(pauseDetectorCache.computeIfAbsent(pauseDetectorType, detector -> {
+            if (detector instanceof ClockDriftPauseDetector) {
+                ClockDriftPauseDetector clockDriftPauseDetector = (ClockDriftPauseDetector) detector;
+                return new SimplePauseDetector(clockDriftPauseDetector.getSleepInterval().toNanos(),
+                        clockDriftPauseDetector.getPauseThreshold().toNanos(), 1, false);
+            } else if (detector instanceof NoPauseDetector) {
+                return new NoopPauseDetector();
+            }
+            return new NoopPauseDetector();
+        }));
+
+        this.intervalEstimator = new TimeCappedMovingAverageIntervalEstimator(128,
+                10000000000L, pauseDetector);
+
+        pauseDetector.addListener((pauseLength, pauseEndTime) -> {
+//            System.out.println("Pause of length " + (pauseLength / 1e6) + "ms, end time " + pauseEndTime);
+            if (intervalEstimator != null) {
+                long estimatedInterval = intervalEstimator.getEstimatedInterval(pauseEndTime);
+                long observedLatencyMinbar = pauseLength - estimatedInterval;
+                if (observedLatencyMinbar >= estimatedInterval) {
+                    recordValueWithExpectedInterval(observedLatencyMinbar, estimatedInterval);
+                }
+            }
+        });
+    }
+
+    private void recordValueWithExpectedInterval(long nanoValue, long expectedIntervalBetweenValueSamples) {
+        record(nanoValue, TimeUnit.NANOSECONDS);
+        if (expectedIntervalBetweenValueSamples <= 0)
+            return;
+        for (long missingValue = nanoValue - expectedIntervalBetweenValueSamples;
+             missingValue >= expectedIntervalBetweenValueSamples;
+             missingValue -= expectedIntervalBetweenValueSamples) {
+            record(missingValue, TimeUnit.NANOSECONDS);
+        }
     }
 
     @Override
@@ -78,25 +142,18 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
         if (amount >= 0) {
             histogram.recordLong(TimeUnit.NANOSECONDS.convert(amount, unit));
             recordNonNegative(amount, unit);
+
+            if (intervalEstimator != null) {
+                intervalEstimator.recordInterval(clock.monotonicTime());
+            }
         }
     }
 
     protected abstract void recordNonNegative(long amount, TimeUnit unit);
 
     @Override
-    public double percentile(double percentile, TimeUnit unit) {
-        return histogram.percentile(percentile, unit);
-    }
-
-    @Override
-    public double histogramCountAtValue(long valueNanos) {
-        return histogram.histogramCountAtValue(valueNanos);
-    }
-
-    @Override
-    public HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
-        return histogram.takeSnapshot(count(), totalTime(TimeUnit.NANOSECONDS), max(TimeUnit.NANOSECONDS),
-            supportsAggregablePercentiles);
+    public HistogramSnapshot takeSnapshot() {
+        return histogram.takeSnapshot();
     }
 
     @Override
@@ -115,12 +172,14 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
         return MeterEquivalence.hashCode(this);
     }
 
-    public DistributionStatisticConfig statsConfig() {
-        return distributionStatisticConfig;
-    }
-
     @Override
     public void close() {
         histogram.close();
+    }
+
+    private static class NoopPauseDetector extends org.LatencyUtils.PauseDetector {
+        NoopPauseDetector() {
+            shutdown();
+        }
     }
 }

@@ -33,7 +33,7 @@ public class SpectatorDistributionSummary extends AbstractDistributionSummary {
                                  Clock clock,
                                  DistributionStatisticConfig distributionStatisticConfig,
                                  double scale) {
-        super(id, clock, distributionStatisticConfig, scale);
+        super(id, clock, distributionStatisticConfig, scale, false);
         this.summary = distributionSummary;
     }
 
@@ -60,8 +60,8 @@ public class SpectatorDistributionSummary extends AbstractDistributionSummary {
     @Override
     public double max() {
         for (Measurement measurement : summary.measure()) {
-            if(stream(measurement.id().tags().spliterator(), false)
-                .anyMatch(tag -> tag.key().equals("statistic") && tag.value().equals(Statistic.max.toString()))) {
+            if (stream(measurement.id().tags().spliterator(), false)
+                    .anyMatch(tag -> tag.key().equals("statistic") && tag.value().equals(Statistic.max.toString()))) {
                 return measurement.value();
             }
         }

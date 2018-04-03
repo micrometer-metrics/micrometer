@@ -17,47 +17,51 @@ package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
+import java.io.PrintStream;
 import java.lang.reflect.Array;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 /**
+ * An abstract base class for histogram implementations who maintain samples in a ring buffer
+ * to decay older samples and give greater weight to recent samples.
+ *
  * @param <T> the type of the buckets in a ring buffer
  * @param <U> the type of accumulated histogram
  * @author Jon Schneider
  * @author Trustin Heuiseung Lee
  */
 @SuppressWarnings("ConstantConditions")
-abstract class TimeWindowHistogramBase<T, U> {
-
-    static final int NUM_SIGNIFICANT_VALUE_DIGITS = 2;
+abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
     @SuppressWarnings("rawtypes")
-    private static final AtomicIntegerFieldUpdater<TimeWindowHistogramBase> rotatingUpdater =
-        AtomicIntegerFieldUpdater.newUpdater(TimeWindowHistogramBase.class, "rotating");
+    private static final AtomicIntegerFieldUpdater<AbstractTimeWindowHistogram> rotatingUpdater =
+            AtomicIntegerFieldUpdater.newUpdater(AbstractTimeWindowHistogram.class, "rotating");
 
-    private final Clock clock;
-    private final DistributionStatisticConfig distributionStatisticConfig;
+    final Clock clock;
+    final DistributionStatisticConfig distributionStatisticConfig;
+    final boolean supportsAggregablePercentiles;
 
     private final T[] ringBuffer;
     private final long durationBetweenRotatesMillis;
     private volatile boolean accumulatedHistogramStale;
     private int currentBucket;
     private volatile long lastRotateTimestampMillis;
+
     @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private volatile int rotating; // 0 - not rotating, 1 - rotating
 
     @Nullable
     private U accumulatedHistogram;
 
-    TimeWindowHistogramBase(Clock clock, DistributionStatisticConfig distributionStatisticConfig, Class<T> bucketType) {
+    AbstractTimeWindowHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig, Class<T> bucketType,
+                                boolean supportsAggregablePercentiles) {
         this.clock = clock;
         this.distributionStatisticConfig = validateDistributionConfig(distributionStatisticConfig);
+        this.supportsAggregablePercentiles = supportsAggregablePercentiles;
 
         final int ageBuckets = distributionStatisticConfig.getBufferLength();
         if (ageBuckets <= 0) {
@@ -70,7 +74,7 @@ abstract class TimeWindowHistogramBase<T, U> {
         durationBetweenRotatesMillis = distributionStatisticConfig.getExpiry().toMillis() / ageBuckets;
         if (durationBetweenRotatesMillis <= 0) {
             rejectHistogramConfig("expiry (" + distributionStatisticConfig.getExpiry().toMillis() +
-                "ms) / bufferLength (" + ageBuckets + ") must be greater than 0.");
+                    "ms) / bufferLength (" + ageBuckets + ") must be greater than 0.");
         }
 
         currentBucket = 0;
@@ -78,28 +82,36 @@ abstract class TimeWindowHistogramBase<T, U> {
     }
 
     private static DistributionStatisticConfig validateDistributionConfig(DistributionStatisticConfig distributionStatisticConfig) {
-        // Validate other DistributionStatisticConfig properties we will use later in this class.
-        for (double p : distributionStatisticConfig.getPercentiles()) {
-            if (p < 0 || p > 1) {
-                rejectHistogramConfig("percentiles must contain only the values between 0.0 and 1.0. " +
-                    "Found " + p);
+        if (distributionStatisticConfig.getPercentiles() != null) {
+            for (double p : distributionStatisticConfig.getPercentiles()) {
+                if (p < 0 || p > 1) {
+                    rejectHistogramConfig("percentiles must contain only the values between 0.0 and 1.0. " +
+                            "Found " + p);
+                }
+            }
+
+            if (distributionStatisticConfig.getPercentilePrecision() == null) {
+                rejectHistogramConfig("when publishing percentiles a precision must be specified.");
             }
         }
 
-        final long minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValue();
-        final long maximumExpectedValue = distributionStatisticConfig.getMaximumExpectedValue();
-        if (minimumExpectedValue <= 0) {
+        final Long minimumExpectedValue = distributionStatisticConfig.getMinimumExpectedValue();
+        final Long maximumExpectedValue = distributionStatisticConfig.getMaximumExpectedValue();
+        if (minimumExpectedValue == null || minimumExpectedValue <= 0) {
             rejectHistogramConfig("minimumExpectedValue (" + minimumExpectedValue + ") must be greater than 0.");
         }
-        if (maximumExpectedValue < minimumExpectedValue) {
+        if (maximumExpectedValue == null || maximumExpectedValue < minimumExpectedValue) {
             rejectHistogramConfig("maximumExpectedValue (" + maximumExpectedValue +
-                ") must be equal to or greater than minimumExpectedValue (" +
-                minimumExpectedValue + ").");
+                    ") must be equal to or greater than minimumExpectedValue (" +
+                    minimumExpectedValue + ").");
         }
-        for (long sla : distributionStatisticConfig.getSlaBoundaries()) {
-            if (sla <= 0) {
-                rejectHistogramConfig("slaBoundaries must contain only the values greater than 0. " +
-                    "Found " + sla);
+
+        if (distributionStatisticConfig.getSlaBoundaries() != null) {
+            for (long sla : distributionStatisticConfig.getSlaBoundaries()) {
+                if (sla <= 0) {
+                    rejectHistogramConfig("slaBoundaries must contain only the values greater than 0. " +
+                            "Found " + sla);
+                }
             }
         }
 
@@ -112,12 +124,12 @@ abstract class TimeWindowHistogramBase<T, U> {
 
     void initRingBuffer() {
         for (int i = 0; i < ringBuffer.length; i++) {
-            ringBuffer[i] = newBucket(distributionStatisticConfig);
+            ringBuffer[i] = newBucket();
         }
         accumulatedHistogram = newAccumulatedHistogram(ringBuffer);
     }
 
-    abstract T newBucket(DistributionStatisticConfig distributionStatisticConfig);
+    abstract T newBucket();
 
     abstract void recordLong(T bucket, long value);
 
@@ -135,28 +147,11 @@ abstract class TimeWindowHistogramBase<T, U> {
 
     abstract double countAtValue(U accumulatedHistogram, long value);
 
-    public final double percentile(double percentile) {
-        rotate();
-        synchronized (this) {
-            accumulateIfStale();
-            return valueAtPercentile(accumulatedHistogram, percentile * 100);
-        }
+    void outputSummary(PrintStream out, double bucketScaling, U accumulatedHistogram) {
     }
 
-    public final double percentile(double percentile, TimeUnit unit) {
-        return TimeUtils.nanosToUnit(percentile(percentile), unit);
-    }
-
-    public final double histogramCountAtValue(long value) {
-        rotate();
-        synchronized (this) {
-            accumulateIfStale();
-            return countAtValue(accumulatedHistogram, value);
-        }
-    }
-
-    public final HistogramSnapshot takeSnapshot(long count, double total, double max,
-                                                boolean supportsAggregablePercentiles) {
+    @Override
+    public final HistogramSnapshot takeSnapshot() {
         rotate();
 
         final ValueAtPercentile[] values;
@@ -164,10 +159,10 @@ abstract class TimeWindowHistogramBase<T, U> {
         synchronized (this) {
             accumulateIfStale();
             values = takeValueSnapshot();
-            counts = takeCountSnapshot(supportsAggregablePercentiles);
+            counts = takeCountSnapshot();
         }
 
-        return HistogramSnapshot.of(count, total, max, values, counts);
+        return new HistogramSnapshot(values, counts, (out, scale) -> outputSummary(out, scale, accumulatedHistogram));
     }
 
     private void accumulateIfStale() {
@@ -178,6 +173,9 @@ abstract class TimeWindowHistogramBase<T, U> {
     }
 
     private ValueAtPercentile[] takeValueSnapshot() {
+        if (distributionStatisticConfig.getPercentiles() == null)
+            return new ValueAtPercentile[0];
+
         final double[] monitoredPercentiles = distributionStatisticConfig.getPercentiles();
         if (monitoredPercentiles.length == 0) {
             return null;
@@ -186,12 +184,12 @@ abstract class TimeWindowHistogramBase<T, U> {
         final ValueAtPercentile[] values = new ValueAtPercentile[monitoredPercentiles.length];
         for (int i = 0; i < monitoredPercentiles.length; i++) {
             final double p = monitoredPercentiles[i];
-            values[i] = ValueAtPercentile.of(p, valueAtPercentile(accumulatedHistogram, p * 100));
+            values[i] = new ValueAtPercentile(p, valueAtPercentile(accumulatedHistogram, p * 100));
         }
         return values;
     }
 
-    private CountAtBucket[] takeCountSnapshot(boolean supportsAggregablePercentiles) {
+    private CountAtBucket[] takeCountSnapshot() {
         if (!distributionStatisticConfig.isPublishingHistogram()) {
             return null;
         }
@@ -205,12 +203,12 @@ abstract class TimeWindowHistogramBase<T, U> {
         final Iterator<Long> iterator = monitoredValues.iterator();
         for (int i = 0; i < counts.length; i++) {
             final long v = iterator.next();
-            counts[i] = CountAtBucket.of(v, countAtValue(accumulatedHistogram, v));
+            counts[i] = new CountAtBucket(v, countAtValue(accumulatedHistogram, v));
         }
         return counts;
     }
 
-    public final void recordLong(long value) {
+    public void recordLong(long value) {
         rotate();
         try {
             for (T bucket : ringBuffer) {
@@ -223,7 +221,7 @@ abstract class TimeWindowHistogramBase<T, U> {
         }
     }
 
-    public final void recordDouble(double value) {
+    public void recordDouble(double value) {
         rotate();
         try {
             for (T bucket : ringBuffer) {

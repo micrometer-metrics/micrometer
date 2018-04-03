@@ -17,34 +17,28 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.TimeWindowLatencyHistogram;
+import io.micrometer.core.instrument.distribution.TimeWindowMax;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.util.TimeDecayingMax;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
-public class PrometheusTimer extends AbstractTimer implements Timer {
+public class PrometheusTimer extends AbstractTimer {
     private final LongAdder count = new LongAdder();
     private final LongAdder totalTime = new LongAdder();
-    private final TimeDecayingMax max;
-    private final TimeWindowLatencyHistogram percentilesHistogram;
+    private final TimeWindowMax max;
 
     PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        super(id, clock, distributionStatisticConfig, pauseDetector, TimeUnit.SECONDS);
-        this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
-
-        this.percentilesHistogram = new TimeWindowLatencyHistogram(clock,
-                DistributionStatisticConfig.builder()
-                        .expiry(Duration.ofDays(1825)) // effectively never roll over
-                        .bufferLength(1)
-                        .build()
-                        .merge(distributionStatisticConfig), pauseDetector);
+        super(id, clock, DistributionStatisticConfig.builder()
+                .expiry(Duration.ofDays(1825)) // effectively never roll over
+                .bufferLength(1)
+                .build()
+                .merge(distributionStatisticConfig), pauseDetector, TimeUnit.SECONDS, true);
+        this.max = new TimeWindowMax(clock, distributionStatisticConfig);
     }
 
     @Override
@@ -52,7 +46,6 @@ public class PrometheusTimer extends AbstractTimer implements Timer {
         count.increment();
         long nanoAmount = TimeUnit.NANOSECONDS.convert(amount, unit);
         totalTime.add(nanoAmount);
-        percentilesHistogram.recordLong(nanoAmount);
         max.record(nanoAmount, TimeUnit.NANOSECONDS);
     }
 
@@ -78,6 +71,6 @@ public class PrometheusTimer extends AbstractTimer implements Timer {
      * @return Cumulative histogram buckets.
      */
     public CountAtBucket[] histogramCounts() {
-        return percentilesHistogram.takeSnapshot(0, 0, 0, true).histogramCounts();
+        return histogram.takeSnapshot().histogramCounts();
     }
 }

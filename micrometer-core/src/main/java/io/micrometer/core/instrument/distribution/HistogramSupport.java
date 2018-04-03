@@ -15,22 +15,12 @@
  */
 package io.micrometer.core.instrument.distribution;
 
-public class NoopHistogram implements Histogram {
-    public static final NoopHistogram INSTANCE = new NoopHistogram();
-
-    private NoopHistogram() {
-    }
-
-    @Override
-    public void recordLong(long value) {
-    }
-
-    @Override
-    public void recordDouble(double value) {
-    }
-
-    @Override
-    public HistogramSnapshot takeSnapshot() {
-        return HistogramSnapshot.empty();
-    }
+public interface HistogramSupport {
+    /**
+     * Summary statistics should be published off of a single snapshot instance so that, for example, there isn't
+     * disagreement between the distribution's bucket counts because more events continue to stream in.
+     *
+     * @return A snapshot of all distribution statistics at a point in time.
+     */
+    HistogramSnapshot takeSnapshot();
 }
