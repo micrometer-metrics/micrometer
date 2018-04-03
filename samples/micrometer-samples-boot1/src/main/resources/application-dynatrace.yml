@@ -17,5 +17,5 @@
 management.metrics.export.dynatrace:
   enabled: true
   apiToken: my-api-token
-  uri: https://myenvironmentid.live.dynatrace.com
+  uri: https://my-environment-id.live.dynatrace.com
   deviceId: my-custom-device

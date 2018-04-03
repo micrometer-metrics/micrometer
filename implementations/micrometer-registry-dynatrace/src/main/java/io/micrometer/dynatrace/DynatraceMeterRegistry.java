@@ -15,6 +15,9 @@ import io.micrometer.core.instrument.util.MeterPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +44,8 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
      * Metric names for which we have created the custom metric in the API
      */
     private final Set<String> createdCustomMetrics = ConcurrentHashMap.newKeySet();
+    private final URL customMetricEndpointTemplate;
+    private final URL customDeviceCustomMetricValuesEndpoint;
 
     public DynatraceMeterRegistry(DynatraceConfig config, Clock clock) {
         this(config, clock, Executors.defaultThreadFactory());
@@ -51,6 +56,22 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         this.config = config;
 
         this.config().namingConvention(new DynatraceNamingConvention());
+
+        try {
+            this.customMetricEndpointTemplate = URI.create(config.uri() + "/api/v1/timeseries/").toURL();
+        } catch (MalformedURLException e) {
+            // not possible
+            throw new RuntimeException(e);
+        }
+
+        try {
+            this.customDeviceCustomMetricValuesEndpoint = URI.create(config.uri() +
+                "/api/v1/entity/infrastructure/custom/" + config.deviceId() + "?api-token=" + config.apiToken())
+                .toURL();
+        } catch (MalformedURLException e) {
+            // not possible
+            throw new RuntimeException(e);
+        }
 
         if (config.enabled())
             start(threadFactory);
@@ -165,15 +186,18 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     }
 
     private void putCustomMetric(final DynatraceCustomMetric customMetric) {
-        logger.info("[PUT] {}/api/v1/timeseries/{}?api-token={} body: {}",
-            config.uri(), customMetric.getMetricId(), config.apiToken(),
-            customMetric.asJson());
-        createdCustomMetrics.add(customMetric.getMetricId());
+        try {
+            final URL customMetricEndpoint = new URL(customMetricEndpointTemplate +
+                customMetric.getMetricId() + "?api-token=" + config.apiToken());
+            logger.info("[PUT] {} body: {}", customMetricEndpoint, customMetric.asJson());
+            createdCustomMetrics.add(customMetric.getMetricId());
+        } catch (final MalformedURLException e) {
+            logger.warn("Failed to compose URL for custom metric '{}'", customMetric.getMetricId());
+        }
     }
 
     private void postCustomMetricValues(final String body) {
-        logger.info("[POST] {}/api/v1/entity/infrastructure/custom/{}?api-token={} body: {}",
-            config.uri(), config.deviceId(), config.apiToken(), body);
+        logger.info("[POST] {} body: {}", customDeviceCustomMetricValuesEndpoint, body);
     }
 
     private Meter.Id idWithSuffix(final Meter.Id id, final String suffix) {
