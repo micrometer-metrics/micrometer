@@ -68,6 +68,6 @@ public class NoopTimer extends NoopMeter implements Timer {
 
     @Override
     public HistogramSnapshot takeSnapshot() {
-        return HistogramSnapshot.empty();
+        return HistogramSnapshot.empty(0, 0, 0);
     }
 }

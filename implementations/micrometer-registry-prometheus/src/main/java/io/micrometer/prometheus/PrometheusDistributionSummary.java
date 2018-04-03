@@ -81,6 +81,6 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
      * @return Cumulative histogram buckets.
      */
     public CountAtBucket[] histogramCounts() {
-        return histogram.takeSnapshot().histogramCounts();
+        return histogram.takeSnapshot(0, 0, 0).histogramCounts();
     }
 }

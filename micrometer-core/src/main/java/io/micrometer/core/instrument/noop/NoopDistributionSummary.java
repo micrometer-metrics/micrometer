@@ -44,6 +44,6 @@ public class NoopDistributionSummary extends NoopMeter implements DistributionSu
 
     @Override
     public HistogramSnapshot takeSnapshot() {
-        return HistogramSnapshot.empty();
+        return HistogramSnapshot.empty(0, 0, 0);
     }
 }
