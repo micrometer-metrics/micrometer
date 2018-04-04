@@ -40,7 +40,7 @@ import java.util.function.Supplier;
  */
 public interface Timer extends Meter, HistogramSupport {
     static Sample start(MeterRegistry registry) {
-        return new Sample(registry.config().clock());
+        return start(registry.config().clock());
     }
 
     static Sample start(Clock clock) {
