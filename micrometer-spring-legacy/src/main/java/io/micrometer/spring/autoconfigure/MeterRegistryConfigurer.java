@@ -18,9 +18,7 @@ package io.micrometer.spring.autoconfigure;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.config.MeterFilter;
-import org.springframework.core.ResolvableType;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -54,9 +52,6 @@ class MeterRegistryConfigurer {
     }
 
     void configure(MeterRegistry registry) {
-        if (registry instanceof CompositeMeterRegistry) {
-            return;
-        }
         // Customizers must be applied before binders, as they may add custom
         // tags or alter timer or summary configuration.
         customize(registry);
@@ -72,12 +67,12 @@ class MeterRegistryConfigurer {
         // Customizers must be applied before binders, as they may add custom tags or alter
         // timer or summary configuration.
         for (MeterRegistryCustomizer customizer : this.customizers) {
-            Class<?> generic = ResolvableType
-                    .forClass(MeterRegistryCustomizer.class, customizer.getClass())
-                    .resolveGeneric();
-            if (generic.isAssignableFrom(registry.getClass())) {
-                //noinspection unchecked
+            try {
                 customizer.customize(registry);
+            } catch (ClassCastException ignored) {
+                // This is essentially what LambdaSafe.callbacks(..).invoke(..) is doing
+                // in Spring Boot 2, just trapping ClassCastExceptions since the generic type
+                // has been erased by this point.
             }
         }
     }
