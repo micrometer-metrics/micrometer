@@ -16,7 +16,6 @@
 package io.micrometer.spring.autoconfigure.export.statsd;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.spring.autoconfigure.CompositeMeterRegistryAutoConfiguration;
 import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
@@ -59,15 +58,8 @@ public class StatsdMetricsExportAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public StatsdMeterRegistry statsdMeterRegistry(StatsdConfig config, HierarchicalNameMapper hierarchicalNameMapper,
-                                                   Clock clock) {
-        return new StatsdMeterRegistry(config, hierarchicalNameMapper, clock);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public HierarchicalNameMapper hierarchicalNameMapper() {
-        return HierarchicalNameMapper.DEFAULT;
+    public StatsdMeterRegistry statsdMeterRegistry(StatsdConfig config, Clock clock) {
+        return new StatsdMeterRegistry(config, clock);
     }
 
     @Bean
