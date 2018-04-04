@@ -15,39 +15,55 @@
  */
 package io.micrometer.spring.autoconfigure;
 
+import io.micrometer.atlas.AtlasMeterRegistry;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Jon Schneider
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
+@TestPropertySource(properties = {
+        "management.metrics.export.prometheus.enabled=true",
+        "management.metrics.export.atlas.enabled=true"
+})
 public class MeterRegistryCustomizerTest {
     @Autowired
-    MeterRegistry registry;
+    AtlasMeterRegistry atlasRegistry;
+
+    @Autowired
+    PrometheusMeterRegistry prometheusRegistry;
 
     @Test
     public void commonTagsAreAppliedToAutoConfiguredBinders() {
-        registry.get("jvm.memory.used").tags("region", "us-east-1").gauge();
+        atlasRegistry.get("jvm.memory.used").tags("region", "us-east-1").gauge();
+        prometheusRegistry.get("jvm.memory.used").tags("region", "us-east-1").gauge();
+
+        assertThat(atlasRegistry.find("jvm.memory.used").tags("job", "myjob").gauge()).isNull();
+        prometheusRegistry.get("jvm.memory.used").tags("job", "myjob").gauge();
     }
 
     @SpringBootApplication(scanBasePackages = "isolated")
     static class MetricsApp {
-        public static void main(String[] args) {
-            SpringApplication.run(MetricsApp.class);
+        @Bean
+        public MeterRegistryCustomizer<MeterRegistry> commonTags() {
+            return registry -> registry.config().commonTags("region", "us-east-1");
         }
 
         @Bean
-        public MeterRegistryCustomizer registryConfigurer() {
-            return registry -> registry.config().commonTags("region", "us-east-1");
+        public MeterRegistryCustomizer<PrometheusMeterRegistry> prometheusOnlyCommonTags() {
+            return registry -> registry.config().commonTags("job", "myjob");
         }
     }
 }
