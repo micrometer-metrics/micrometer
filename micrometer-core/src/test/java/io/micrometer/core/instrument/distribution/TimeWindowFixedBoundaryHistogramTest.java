@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.MockClock;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,6 +35,30 @@ class TimeWindowFixedBoundaryHistogramTest {
         TimeWindowFixedBoundaryHistogram.FixedBoundaryHistogram hist = new TimeWindowFixedBoundaryHistogram(Clock.SYSTEM,
                 DistributionStatisticConfig.builder().sla(buckets).build()
                     .merge(DistributionStatisticConfig.DEFAULT), false).newBucket();
-        assertThat(hist.binarySearchTail(search)).isEqualTo(expectedIndex);
+        assertThat(hist.leastLessThanOrEqualTo(search)).isEqualTo(expectedIndex);
+    }
+
+    @Test
+    void histogramsAreCumulative() {
+        TimeWindowFixedBoundaryHistogram histogram = new TimeWindowFixedBoundaryHistogram(new MockClock(),
+                DistributionStatisticConfig.builder()
+                        .sla(3, 6, 7)
+                        .bufferLength(1)
+                        .build()
+                        .merge(DistributionStatisticConfig.DEFAULT), false);
+
+        histogram.recordDouble(3);
+
+        assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).contains(new CountAtBucket(3, 1));
+
+        histogram.recordDouble(6);
+
+        // Proves that the accumulated histogram is truly cumulative, and not just a representation
+        // of the last snapshot
+        assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
+                new CountAtBucket(3, 1),
+                new CountAtBucket(6, 2),
+                new CountAtBucket(7, 2)
+        );
     }
 }

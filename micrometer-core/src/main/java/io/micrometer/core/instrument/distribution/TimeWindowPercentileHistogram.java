@@ -65,24 +65,24 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
     }
 
     @Override
-    void accumulate(DoubleRecorder sourceBucket, DoubleHistogram accumulatedHistogram) {
-        sourceBucket.getIntervalHistogramInto(intervalHistogram);
-        accumulatedHistogram.add(intervalHistogram);
+    void accumulate() {
+        currentHistogram().getIntervalHistogramInto(intervalHistogram);
+        accumulatedHistogram().add(intervalHistogram);
     }
 
     @Override
-    void resetAccumulatedHistogram(DoubleHistogram accumulatedHistogram) {
-        accumulatedHistogram.reset();
+    void resetAccumulatedHistogram() {
+        accumulatedHistogram().reset();
     }
 
     @Override
-    double valueAtPercentile(DoubleHistogram accumulatedHistogram, double percentile) {
-        return accumulatedHistogram.getValueAtPercentile(percentile);
+    double valueAtPercentile(double percentile) {
+        return accumulatedHistogram().getValueAtPercentile(percentile);
     }
 
     @Override
-    double countAtValue(DoubleHistogram accumulatedHistogram, long value) {
-        return accumulatedHistogram.getCountBetweenValues(0, value);
+    double countAtValue(long value) {
+        return accumulatedHistogram().getCountBetweenValues(0, value);
     }
 
     private int percentilePrecision(DistributionStatisticConfig config) {
@@ -90,7 +90,7 @@ public class TimeWindowPercentileHistogram extends AbstractTimeWindowHistogram<D
     }
 
     @Override
-    void outputSummary(PrintStream out, double bucketScaling, DoubleHistogram accumulatedHistogram) {
-        accumulatedHistogram.outputPercentileDistribution(out, bucketScaling);
+    void outputSummary(PrintStream out, double bucketScaling) {
+        accumulatedHistogram().outputPercentileDistribution(out, bucketScaling);
     }
 }

@@ -47,9 +47,10 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
     private final boolean supportsAggregablePercentiles;
 
     private final T[] ringBuffer;
+    private short currentBucket;
     private final long durationBetweenRotatesMillis;
     private volatile boolean accumulatedHistogramStale;
-    private int currentBucket;
+
     private volatile long lastRotateTimestampMillis;
 
     @SuppressWarnings({"unused", "FieldCanBeLocal"})
@@ -140,15 +141,15 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
 
     abstract U newAccumulatedHistogram(T[] ringBuffer);
 
-    abstract void accumulate(T sourceBucket, U accumulatedHistogram);
+    abstract void accumulate();
 
-    abstract void resetAccumulatedHistogram(U accumulatedHistogram);
+    abstract void resetAccumulatedHistogram();
 
-    abstract double valueAtPercentile(U accumulatedHistogram, double percentile);
+    abstract double valueAtPercentile(double percentile);
 
-    abstract double countAtValue(U accumulatedHistogram, long value);
+    abstract double countAtValue(long value);
 
-    void outputSummary(PrintStream out, double bucketScaling, U accumulatedHistogram) {
+    void outputSummary(PrintStream out, double bucketScaling) {
     }
 
     @Override
@@ -163,13 +164,12 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
             counts = takeCountSnapshot();
         }
 
-        return new HistogramSnapshot(count, total, max, values, counts,
-                (out, scale) -> outputSummary(out, scale, accumulatedHistogram));
+        return new HistogramSnapshot(count, total, max, values, counts, this::outputSummary);
     }
 
     private void accumulateIfStale() {
         if (accumulatedHistogramStale) {
-            accumulate(ringBuffer[currentBucket], accumulatedHistogram);
+            accumulate();
             accumulatedHistogramStale = false;
         }
     }
@@ -186,7 +186,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
         final ValueAtPercentile[] values = new ValueAtPercentile[monitoredPercentiles.length];
         for (int i = 0; i < monitoredPercentiles.length; i++) {
             final double p = monitoredPercentiles[i];
-            values[i] = new ValueAtPercentile(p, valueAtPercentile(accumulatedHistogram, p * 100));
+            values[i] = new ValueAtPercentile(p, valueAtPercentile(p * 100));
         }
         return values;
     }
@@ -205,7 +205,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
         final Iterator<Long> iterator = monitoredValues.iterator();
         for (int i = 0; i < counts.length; i++) {
             final long v = iterator.next();
-            counts[i] = new CountAtBucket(v, countAtValue(accumulatedHistogram, v));
+            counts[i] = new CountAtBucket(v, countAtValue(v));
         }
         return counts;
     }
@@ -260,11 +260,19 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
                     lastRotateTimestampMillis += durationBetweenRotatesMillis;
                 } while (timeSinceLastRotateMillis >= durationBetweenRotatesMillis && ++iterations < ringBuffer.length);
 
-                resetAccumulatedHistogram(accumulatedHistogram);
+                resetAccumulatedHistogram();
                 accumulatedHistogramStale = true;
             }
         } finally {
             rotating = 0;
         }
+    }
+
+    protected U accumulatedHistogram() {
+        return accumulatedHistogram;
+    }
+
+    protected T currentHistogram() {
+        return ringBuffer[currentBucket];
     }
 }
