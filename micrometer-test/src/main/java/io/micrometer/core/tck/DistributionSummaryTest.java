@@ -17,6 +17,7 @@ package io.micrometer.core.tck;
 
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -83,5 +84,29 @@ interface DistributionSummaryTest {
 
         clock(registry).add(step());
         assertThat(ds.totalAmount()).isEqualTo(2.0);
+    }
+
+    @Deprecated
+    @Test
+    default void percentiles(MeterRegistry registry) {
+        DistributionSummary s = DistributionSummary.builder("my.summary")
+                .publishPercentiles(1)
+                .register(registry);
+
+        s.record(1);
+        assertThat(s.percentile(1)).isEqualTo(1, Offset.offset(0.3));
+        assertThat(s.percentile(0.5)).isEqualTo(Double.NaN);
+    }
+
+    @Deprecated
+    @Test
+    default void histogramCounts(MeterRegistry registry) {
+        DistributionSummary s = DistributionSummary.builder("my.summmary")
+                .sla(1)
+                .register(registry);
+
+        s.record(1);
+        assertThat(s.histogramCountAtValue(1)).isEqualTo(1);
+        assertThat(s.histogramCountAtValue(2)).isEqualTo(Double.NaN);
     }
 }

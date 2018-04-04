@@ -15,14 +15,17 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Track the sample distribution of events. An example would be the response sizes for requests
@@ -65,6 +68,41 @@ public interface DistributionSummary extends Meter, HistogramSupport {
      * @return The maximum time of a single event.
      */
     double max();
+
+    /**
+     * Provides cumulative histogram counts.
+     *
+     * @param value The histogram bucket to retrieve a count for.
+     * @return The count of all events less than or equal to the bucket. If value does not
+     * match a preconfigured bucket boundary, returns NaN.
+     * @deprecated Use {@link #takeSnapshot()} to retrieve bucket counts.
+     */
+    @Deprecated
+    default double histogramCountAtValue(long value) {
+        for (CountAtBucket countAtBucket : takeSnapshot().histogramCounts()) {
+            if ((long) countAtBucket.bucket(TimeUnit.NANOSECONDS) == value) {
+                return countAtBucket.count();
+            }
+        }
+        return Double.NaN;
+    }
+
+    /**
+     * @param percentile A percentile in the domain [0, 1]. For example, 0.5 represents the 50th percentile of the
+     *                   distribution.
+     * @return The latency at a specific percentile. This value is non-aggregable across dimensions. Returns NaN if
+     * percentile is not a preconfigured percentile that Micrometer is tracking.
+     * @deprecated Use {@link #takeSnapshot()} to retrieve percentiles.
+     */
+    @Deprecated
+    default double percentile(double percentile) {
+        for (ValueAtPercentile valueAtPercentile : takeSnapshot().percentileValues()) {
+            if (valueAtPercentile.percentile() == percentile) {
+                return valueAtPercentile.value();
+            }
+        }
+        return Double.NaN;
+    }
 
     @Override
     default Iterable<Measurement> measure() {

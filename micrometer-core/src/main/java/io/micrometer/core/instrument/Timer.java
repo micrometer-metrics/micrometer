@@ -16,8 +16,10 @@
 package io.micrometer.core.instrument;
 
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.lang.Nullable;
 
@@ -167,6 +169,42 @@ public interface Timer extends Meter, HistogramSupport {
                 new Measurement(() -> totalTime(baseTimeUnit()), Statistic.TOTAL_TIME),
                 new Measurement(() -> max(baseTimeUnit()), Statistic.MAX)
         );
+    }
+
+    /**
+     * Provides cumulative histogram counts.
+     *
+     * @param valueNanos The histogram bucket to retrieve a count for.
+     * @return The count of all events less than or equal to the bucket. If valueNanos does not
+     * match a preconfigured bucket boundary, returns NaN.
+     * @deprecated Use {@link #takeSnapshot()} to retrieve bucket counts.
+     */
+    @Deprecated
+    default double histogramCountAtValue(long valueNanos) {
+        for (CountAtBucket countAtBucket : takeSnapshot().histogramCounts()) {
+            if ((long) countAtBucket.bucket(TimeUnit.NANOSECONDS) == valueNanos) {
+                return countAtBucket.count();
+            }
+        }
+        return Double.NaN;
+    }
+
+    /**
+     * @param percentile A percentile in the domain [0, 1]. For example, 0.5 represents the 50th percentile of the
+     *                   distribution.
+     * @param unit       The base unit of time to scale the percentile value to.
+     * @return The latency at a specific percentile. This value is non-aggregable across dimensions. Returns NaN if
+     * percentile is not a preconfigured percentile that Micrometer is tracking.
+     * @deprecated Use {@link #takeSnapshot()} to retrieve bucket counts.
+     */
+    @Deprecated
+    default double percentile(double percentile, TimeUnit unit) {
+        for (ValueAtPercentile valueAtPercentile : takeSnapshot().percentileValues()) {
+            if (valueAtPercentile.percentile() == percentile) {
+                return valueAtPercentile.value(unit);
+            }
+        }
+        return Double.NaN;
     }
 
     /**
