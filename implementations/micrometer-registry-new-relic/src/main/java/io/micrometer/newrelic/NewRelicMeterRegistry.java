@@ -18,6 +18,7 @@ package io.micrometer.newrelic;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -134,11 +135,13 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<String> writeGauge(Gauge gauge) {
-        return Stream.of(event(gauge.getId(), new Attribute("value", gauge.value())));
+        Double value = gauge.value();
+        return value.isNaN() ? Stream.empty() : Stream.of(event(gauge.getId(), new Attribute("value", value)));
     }
 
     private Stream<String> writeGauge(TimeGauge gauge) {
-        return Stream.of(event(gauge.getId(), new Attribute("value", gauge.value(getBaseTimeUnit()))));
+        Double value = gauge.value(getBaseTimeUnit());
+        return value.isNaN() ? Stream.empty() : Stream.of(event(gauge.getId(), new Attribute("value", value)));
     }
 
     private Stream<String> writeSummary(DistributionSummary summary) {
@@ -198,7 +201,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         }
 
         return "{\"eventType\":\"" + getConventionName(id) + "\"" +
-                Arrays.stream(attributes).map(attr -> ",\"" + attr.getName() + "\":" + Double.toString(attr.getValue().doubleValue()))
+                Arrays.stream(attributes).map(attr -> ",\"" + attr.getName() + "\":" + DoubleFormat.decimalOrWhole(attr.getValue().doubleValue()))
                         .collect(Collectors.joining("")) + tagsJson.toString() + "}";
     }
 
@@ -217,6 +220,9 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             con.setDoOutput(true);
 
             String body = "[" + events.stream().collect(Collectors.joining(",")) + "]";
+
+            logger.trace("Sending payload to New Relic:");
+            logger.trace(body);
 
             try (OutputStream os = con.getOutputStream()) {
                 os.write(body.getBytes());
