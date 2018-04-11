@@ -520,21 +520,7 @@ public abstract class MeterRegistry implements AutoCloseable {
             mappedId = filter.map(mappedId);
         }
 
-        if (!accept(id)) {
-            //noinspection unchecked
-            return noopBuilder.apply(id);
-        }
-
-        if (config != null) {
-            for (MeterFilter filter : filters) {
-                DistributionStatisticConfig filteredConfig = filter.configure(mappedId, config);
-                if (filteredConfig != null) {
-                    config = filteredConfig;
-                }
-            }
-        }
-
-        Meter m = getOrCreateMeter(config, builder, mappedId, noopBuilder);
+        Meter m = getOrCreateMeter(config, builder, id, mappedId, noopBuilder);
 
         if (!meterClass.isInstance(m)) {
             throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
@@ -546,7 +532,7 @@ public abstract class MeterRegistry implements AutoCloseable {
 
     private Meter getOrCreateMeter(@Nullable DistributionStatisticConfig config,
                                    BiFunction<Id, /*Nullable Generic*/ DistributionStatisticConfig, Meter> builder,
-                                   Id mappedId, Function<Meter.Id, ? extends Meter> noopBuilder) {
+                                   Id originalId, Id mappedId, Function<Meter.Id, ? extends Meter> noopBuilder) {
         Meter m = meterMap.get(mappedId);
 
         if (m == null) {
@@ -558,6 +544,20 @@ public abstract class MeterRegistry implements AutoCloseable {
                 m = meterMap.get(mappedId);
 
                 if (m == null) {
+                    if (!accept(originalId)) {
+                        //noinspection unchecked
+                        return noopBuilder.apply(mappedId);
+                    }
+
+                    if (config != null) {
+                        for (MeterFilter filter : filters) {
+                            DistributionStatisticConfig filteredConfig = filter.configure(mappedId, config);
+                            if (filteredConfig != null) {
+                                config = filteredConfig;
+                            }
+                        }
+                    }
+
                     m = builder.apply(mappedId, config);
                     register(mappedId, m);
                     for (Consumer<Meter> onAdd : meterAddedListeners) {
