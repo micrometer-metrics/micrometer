@@ -31,6 +31,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -53,6 +54,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
     "org.springframework.web.client.AsyncRestTemplate",
     "org.springframework.boot.web.client.RestTemplateCustomizer" // didn't exist until Boot 1.4
 })
+@ConditionalOnProperty(value = "management.metrics.binders.client.enabled", havingValue = "true", matchIfMissing = true)
 public class RestTemplateMetricsConfiguration {
     private final Logger logger = LoggerFactory.getLogger(RestTemplateMetricsConfiguration.class);
 
