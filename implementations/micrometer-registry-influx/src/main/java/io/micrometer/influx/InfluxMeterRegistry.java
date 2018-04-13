@@ -116,7 +116,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     authenticateRequest(con);
 
                     List<String> bodyLines = batch.stream()
-                            .map(m -> {
+                            .flatMap(m -> {
                                 if (m instanceof Timer) {
                                     return writeTimer((Timer) m);
                                 }
@@ -219,7 +219,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private String writeMeter(Meter m) {
+    private Stream<String> writeMeter(Meter m) {
         Stream.Builder<Field> fields = Stream.builder();
 
         for (Measurement measurement : m.measure()) {
@@ -228,37 +228,37 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             fields.add(new Field(fieldKey, measurement.getValue()));
         }
 
-        return influxLineProtocol(m.getId(), "unknown", fields.build(), clock.wallTime());
+        return Stream.of(influxLineProtocol(m.getId(), "unknown", fields.build(), clock.wallTime()));
     }
 
-    private String writeLongTaskTimer(LongTaskTimer timer) {
+    private Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
         Stream<Field> fields = Stream.of(
                 new Field("active_tasks", timer.activeTasks()),
                 new Field("duration", timer.duration(getBaseTimeUnit()))
         );
-
-        return influxLineProtocol(timer.getId(), "long_task_timer", fields, clock.wallTime());
+        return Stream.of(influxLineProtocol(timer.getId(), "long_task_timer", fields, clock.wallTime()));
     }
 
-    private String writeCounter(Meter.Id id, double count) {
-        return influxLineProtocol(id, "counter", Stream.of(new Field("value", count)), clock.wallTime());
+    private Stream<String> writeCounter(Meter.Id id, double count) {
+        return Stream.of(influxLineProtocol(id, "counter", Stream.of(new Field("value", count)), clock.wallTime()));
     }
 
-    private String writeGauge(Meter.Id id, double value) {
-        return influxLineProtocol(id, "gauge", Stream.of(new Field("value", value)), clock.wallTime());
+    private Stream<String> writeGauge(Meter.Id id, Double value) {
+        return value.isNaN() ? Stream.empty() :
+            Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value)), clock.wallTime()));
     }
 
-    private String writeTimer(FunctionTimer timer) {
+    private Stream<String> writeTimer(FunctionTimer timer) {
         Stream<Field> fields = Stream.of(
                 new Field("sum", timer.totalTime(getBaseTimeUnit())),
                 new Field("count", timer.count()),
                 new Field("mean", timer.mean(getBaseTimeUnit()))
         );
 
-        return influxLineProtocol(timer.getId(), "histogram", fields, clock.wallTime());
+        return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields, clock.wallTime()));
     }
 
-    private String writeTimer(Timer timer) {
+    private Stream<String> writeTimer(Timer timer) {
         final Stream.Builder<Field> fields = Stream.builder();
 
         fields.add(new Field("sum", timer.totalTime(getBaseTimeUnit())));
@@ -266,10 +266,10 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         fields.add(new Field("mean", timer.mean(getBaseTimeUnit())));
         fields.add(new Field("upper", timer.max(getBaseTimeUnit())));
 
-        return influxLineProtocol(timer.getId(), "histogram", fields.build(), clock.wallTime());
+        return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields.build(), clock.wallTime()));
     }
 
-    private String writeSummary(DistributionSummary summary) {
+    private Stream<String> writeSummary(DistributionSummary summary) {
         final Stream.Builder<Field> fields = Stream.builder();
 
         fields.add(new Field("sum", summary.totalAmount()));
@@ -277,7 +277,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         fields.add(new Field("mean", summary.mean()));
         fields.add(new Field("upper", summary.max()));
 
-        return influxLineProtocol(summary.getId(), "histogram", fields.build(), clock.wallTime());
+        return Stream.of(influxLineProtocol(summary.getId(), "histogram", fields.build(), clock.wallTime()));
     }
 
     private String influxLineProtocol(Meter.Id id, String metricType, Stream<Field> fields, long time) {
