@@ -12,9 +12,15 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -45,7 +51,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
      */
     private final Set<String> createdCustomMetrics = ConcurrentHashMap.newKeySet();
     private final URL customMetricEndpointTemplate;
-    private final URL customDeviceCustomMetricValuesEndpoint;
+    private final URL customDeviceMetricEndpoint;
 
     public DynatraceMeterRegistry(DynatraceConfig config, Clock clock) {
         this(config, clock, Executors.defaultThreadFactory());
@@ -65,7 +71,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         }
 
         try {
-            this.customDeviceCustomMetricValuesEndpoint = URI.create(config.uri() +
+            this.customDeviceMetricEndpoint = URI.create(config.uri() +
                 "/api/v1/entity/infrastructure/custom/" + config.deviceId() + "?api-token=" + config.apiToken())
                 .toURL();
         } catch (MalformedURLException e) {
@@ -102,12 +108,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                 .forEach(this::putCustomMetric);
 
             if (!createdCustomMetrics.isEmpty() && !series.isEmpty()) {
-                postCustomMetricValues("{\"series\":[" +
-                    series.stream()
-                        .filter(isCustomMetricCreated())
-                        .map(DynatraceSerie::asJson)
-                        .collect(joining(",")) +
-                    "]}");
+                postCustomMetricValues(series);
             }
         }
     }
@@ -186,18 +187,101 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     }
 
     private void putCustomMetric(final DynatraceCustomMetric customMetric) {
+        HttpURLConnection con = null;
+
         try {
             final URL customMetricEndpoint = new URL(customMetricEndpointTemplate +
                 customMetric.getMetricId() + "?api-token=" + config.apiToken());
-            logger.info("[PUT] {} body: {}", customMetricEndpoint, customMetric.asJson());
-            createdCustomMetrics.add(customMetric.getMetricId());
+
+            con = (HttpURLConnection) customMetricEndpoint.openConnection();
+            con.setConnectTimeout((int) config.connectTimeout().toMillis());
+            con.setReadTimeout((int) config.readTimeout().toMillis());
+            con.setRequestMethod("PUT");
+            con.setRequestProperty("Content-Type", "application/json");
+
+            con.setDoOutput(true);
+
+            final String body = customMetric.asJson();
+
+            try (OutputStream os = con.getOutputStream()) {
+                os.write(body.getBytes());
+                os.flush();
+            }
+
+            final int status = con.getResponseCode();
+
+            if (status >= 200 && status < 300) {
+                logger.info("created '{}' as custom metric", customMetric.getMetricId());
+
+                createdCustomMetrics.add(customMetric.getMetricId());
+            } else if (status >= 400) {
+                try (final InputStream in = con.getErrorStream()) {
+                    logger.error("failed to create custom metric '{}': " + new BufferedReader(new InputStreamReader(in))
+                        .lines().collect(joining("\n")), customMetric.getMetricId());
+                }
+            } else {
+                logger.error("failed to create custom metric '{}': http " + status, customMetric.getMetricId());
+            }
         } catch (final MalformedURLException e) {
             logger.warn("Failed to compose URL for custom metric '{}'", customMetric.getMetricId());
+
+        } catch (final Throwable e) {
+            logger.warn("failed to send metrics", e);
+        } finally {
+            quietlyCloseUrlConnection(con);
         }
     }
 
-    private void postCustomMetricValues(final String body) {
-        logger.info("[POST] {} body: {}", customDeviceCustomMetricValuesEndpoint, body);
+    private void postCustomMetricValues(final List<DynatraceSerie> series) {
+        HttpURLConnection con = null;
+
+        try {
+            con = (HttpURLConnection) customDeviceMetricEndpoint.openConnection();
+            con.setConnectTimeout((int) config.connectTimeout().toMillis());
+            con.setReadTimeout((int) config.readTimeout().toMillis());
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Content-Type", "application/json");
+
+            con.setDoOutput(true);
+
+            final String body = "{\"series\":[" +
+                series.stream()
+                    .filter(isCustomMetricCreated())
+                    .map(DynatraceSerie::asJson)
+                    .collect(joining(",")) +
+                "]}";
+
+            try (final OutputStream os = con.getOutputStream()) {
+                os.write(body.getBytes());
+                os.flush();
+            }
+
+            final int status = con.getResponseCode();
+
+            if (status >= 200 && status < 300) {
+                logger.info("successfully sent {} series to Dynatrace", series.size());
+            } else if (status >= 400) {
+                try (InputStream in = con.getErrorStream()) {
+                    logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
+                        .lines().collect(joining("\n")));
+                }
+            } else {
+                logger.error("failed to send metrics: http " + status);
+            }
+        } catch (final Throwable e) {
+            logger.warn("failed to send metrics", e);
+        } finally {
+            quietlyCloseUrlConnection(con);
+        }
+    }
+
+    private void quietlyCloseUrlConnection(@Nullable HttpURLConnection con) {
+        try {
+            if (con != null) {
+                con.disconnect();
+            }
+        } catch (Exception ignore) {
+        }
     }
 
     private Meter.Id idWithSuffix(final Meter.Id id, final String suffix) {
