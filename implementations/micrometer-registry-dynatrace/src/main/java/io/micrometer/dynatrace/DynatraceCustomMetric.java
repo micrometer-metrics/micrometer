@@ -1,6 +1,8 @@
 package io.micrometer.dynatrace;
 
 import com.google.common.collect.ImmutableMap;
+import io.micrometer.core.lang.Nullable;
+import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.Map;
 import java.util.Set;
@@ -37,7 +39,7 @@ class DynatraceCustomMetric {
     private final Set<String> dimensions;
 
 
-    DynatraceCustomMetric(final String metricId, final String description, final DynatraceUnit unit, final Set<String> dimensions) {
+    DynatraceCustomMetric(final String metricId, @Nullable final String description, @Nullable final DynatraceUnit unit, @Nullable final Set<String> dimensions) {
         this.metricId = metricId;
         this.description = description;
         this.unit = unit;
@@ -49,7 +51,7 @@ class DynatraceCustomMetric {
     }
 
     String asJson() {
-        String body = "{\"displayName\":\"" + (description != null ? description : metricId) + "\"";
+        String body = "{\"displayName\":\"" + (description != null ? StringEscapeUtils.escapeJson(description) : metricId) + "\"";
 
         if (unit != null)
             body += ",\"unit\":\"" + unit + "\"";

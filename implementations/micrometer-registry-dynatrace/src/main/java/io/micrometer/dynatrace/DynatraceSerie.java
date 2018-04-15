@@ -1,5 +1,7 @@
 package io.micrometer.dynatrace;
 
+import io.micrometer.core.lang.Nullable;
+
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -9,7 +11,7 @@ class DynatraceSerie {
     private final long time;
     private final double value;
 
-    DynatraceSerie(DynatraceCustomMetric metric, Map<String, String> dimensions, long time, double value) {
+    DynatraceSerie(final DynatraceCustomMetric metric, final long time, final double value, @Nullable final Map<String, String> dimensions) {
         this.metric = metric;
         this.dimensions = dimensions;
         this.time = time;
@@ -25,7 +27,7 @@ class DynatraceSerie {
             ",\"dataPoints\":[[" + time + "," + value + "]]";
 
         if (dimensions != null && !dimensions.isEmpty()) {
-            body += ",\"dimensions\": {" +
+            body += ",\"dimensions\":{" +
                 dimensions.entrySet().stream()
                     .map(t -> "\"" + t.getKey() + "\":\"" + t.getValue() + "\"")
                     .collect(Collectors.joining(",")) +

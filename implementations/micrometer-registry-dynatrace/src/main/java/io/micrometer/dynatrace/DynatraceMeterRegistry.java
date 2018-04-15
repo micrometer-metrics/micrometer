@@ -173,7 +173,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                 id.getDescription(),
                 unit,
                 extractDimensions(getConventionTags(id))),
-            extractDimensionValues(getConventionTags(id)), time, value.doubleValue());
+            time, value.doubleValue(), extractDimensionValues(getConventionTags(id)));
     }
 
     private Set<String> extractDimensions(List<Tag> tags) {
