@@ -12,7 +12,6 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
-import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -182,74 +183,54 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     private Map<String, String> extractDimensionValues(List<Tag> tags) {
         return tags.stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue));
     }
+
     private Predicate<DynatraceSerie> isCustomMetricCreated() {
         return serie -> createdCustomMetrics.contains(serie.getMetric().getMetricId());
     }
 
     private void putCustomMetric(final DynatraceCustomMetric customMetric) {
-        HttpURLConnection con = null;
-
         try {
             final URL customMetricEndpoint = new URL(customMetricEndpointTemplate +
                 customMetric.getMetricId() + "?api-token=" + config.apiToken());
 
-            con = (HttpURLConnection) customMetricEndpoint.openConnection();
-            con.setConnectTimeout((int) config.connectTimeout().toMillis());
-            con.setReadTimeout((int) config.readTimeout().toMillis());
-            con.setRequestMethod("PUT");
-            con.setRequestProperty("Content-Type", "application/json");
-
-            con.setDoOutput(true);
-
-            final String body = customMetric.asJson();
-
-            try (OutputStream os = con.getOutputStream()) {
-                os.write(body.getBytes());
-                os.flush();
-            }
-
-            final int status = con.getResponseCode();
-
-            if (status >= 200 && status < 300) {
-                logger.info("created '{}' as custom metric", customMetric.getMetricId());
-
-                createdCustomMetrics.add(customMetric.getMetricId());
-            } else if (status >= 400) {
-                try (final InputStream in = con.getErrorStream()) {
-                    logger.error("failed to create custom metric '{}': " + new BufferedReader(new InputStreamReader(in))
-                        .lines().collect(joining("\n")), customMetric.getMetricId());
-                }
-            } else {
-                logger.error("failed to create custom metric '{}': http " + status, customMetric.getMetricId());
-            }
+            executeHttpCall(customMetricEndpoint, "PUT", customMetric.asJson(),
+                status -> {
+                    logger.info("created '{}' as custom metric", customMetric.getMetricId());
+                    createdCustomMetrics.add(customMetric.getMetricId());
+                },
+                (status, errorMsg) -> logger.error("failed to create custom metric '{}', status: {} message: {}",
+                    customMetric.getMetricId(), status, errorMsg));
         } catch (final MalformedURLException e) {
             logger.warn("Failed to compose URL for custom metric '{}'", customMetric.getMetricId());
-
-        } catch (final Throwable e) {
-            logger.warn("failed to send metrics", e);
-        } finally {
-            quietlyCloseUrlConnection(con);
         }
     }
 
     private void postCustomMetricValues(final List<DynatraceSerie> series) {
+        executeHttpCall(customDeviceMetricEndpoint, "POST",
+            series.stream()
+                .filter(isCustomMetricCreated())
+                .map(DynatraceSerie::asJson)
+                .collect(joining(",")) +
+                "]}",
+            status -> logger.info("successfully sent {} series to Dynatrace", series.size()),
+            (status, errorBody) -> logger.error("failed to send metrics, status: {} body: {}", status, errorBody));
+    }
+
+    private void executeHttpCall(final URL url,
+                                 final String method,
+                                 final String body,
+                                 final Consumer<Integer> successHandler,
+                                 final BiConsumer<Integer, String> errorHandler) {
         HttpURLConnection con = null;
 
         try {
-            con = (HttpURLConnection) customDeviceMetricEndpoint.openConnection();
+            con = (HttpURLConnection) url.openConnection();
             con.setConnectTimeout((int) config.connectTimeout().toMillis());
             con.setReadTimeout((int) config.readTimeout().toMillis());
-            con.setRequestMethod("POST");
+            con.setRequestMethod(method);
             con.setRequestProperty("Content-Type", "application/json");
 
             con.setDoOutput(true);
-
-            final String body = "{\"series\":[" +
-                series.stream()
-                    .filter(isCustomMetricCreated())
-                    .map(DynatraceSerie::asJson)
-                    .collect(joining(",")) +
-                "]}";
 
             try (final OutputStream os = con.getOutputStream()) {
                 os.write(body.getBytes());
@@ -259,28 +240,24 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             final int status = con.getResponseCode();
 
             if (status >= 200 && status < 300) {
-                logger.info("successfully sent {} series to Dynatrace", series.size());
-            } else if (status >= 400) {
+                successHandler.accept(status);
+            } else  {
+                String errorBody;
                 try (InputStream in = con.getErrorStream()) {
-                    logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                        .lines().collect(joining("\n")));
+                    errorBody = new BufferedReader(new InputStreamReader(in))
+                        .lines().collect(joining("\n"));
                 }
-            } else {
-                logger.error("failed to send metrics: http " + status);
+                errorHandler.accept(status, errorBody);
             }
         } catch (final Throwable e) {
-            logger.warn("failed to send metrics", e);
+            logger.warn("failed to execute http call to '{}' using method '{}'", url, method, e);
         } finally {
-            quietlyCloseUrlConnection(con);
-        }
-    }
-
-    private void quietlyCloseUrlConnection(@Nullable HttpURLConnection con) {
-        try {
-            if (con != null) {
-                con.disconnect();
+            try {
+                if (con != null) {
+                    con.disconnect();
+                }
+            } catch (Exception ignore) {
             }
-        } catch (Exception ignore) {
         }
     }
 

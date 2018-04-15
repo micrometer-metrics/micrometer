@@ -21,6 +21,16 @@ public class DynatraceMeterRegistryCompatibilityTest extends MeterRegistryCompat
             }
 
             @Override
+            public String uri() {
+                return "http://doesnotmatter.com";
+            }
+
+            @Override
+            public String deviceId() {
+                return "DOESNOTMATTER";
+            }
+
+            @Override
             public String get(String key) {
                 return null;
             }
