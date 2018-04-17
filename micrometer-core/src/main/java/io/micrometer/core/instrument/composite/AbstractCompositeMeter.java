@@ -20,25 +20,16 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.lang.Nullable;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter implements CompositeMeter {
-
-    @SuppressWarnings("rawtypes")
-    private static final AtomicReferenceFieldUpdater<AbstractCompositeMeter, Meter> firstMeterUpdater =
-        AtomicReferenceFieldUpdater.newUpdater(AbstractCompositeMeter.class, Meter.class, "firstMeter");
-
-    private final List<Entry> children = new CopyOnWriteArrayList<>();
-
-    @SuppressWarnings("unused")
-    @Nullable
-    private volatile T firstMeter;
+    private AtomicBoolean childrenGuard = new AtomicBoolean();
+    private Map<MeterRegistry, T> children = Collections.emptyMap();
 
     @Nullable
     private volatile T noopMeter;
@@ -53,29 +44,13 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
     abstract T registerNewMeter(MeterRegistry registry);
 
     final void forEachChild(Consumer<T> task) {
-        children.forEach(e -> task.accept(e.meter()));
+        children.values().forEach(task);
     }
 
-    final Stream<T> childStream() {
-        return children.stream().map(Entry::meter);
-    }
-
-    final T firstChild() {
-        for (; ; ) {
-            T firstMeter = this.firstMeter;
-            if (firstMeter != null) {
-                return firstMeter;
-            }
-
-            firstMeter = findFirstChild();
-            if (firstMeter == null) {
-                break;
-            }
-
-            if (firstMeterUpdater.compareAndSet(this, null, firstMeter)) {
-                return firstMeter;
-            }
-        }
+    T firstChild() {
+        final Iterator<T> i = children.values().iterator();
+        if (i.hasNext())
+            return i.next();
 
         // There are no child meters at the moment. Return a lazily instantiated no-op meter.
         final T noopMeter = this.noopMeter;
@@ -87,60 +62,45 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
         }
     }
 
-    @Nullable
-    private T findFirstChild() {
-        if (children.isEmpty()) {
-            return null;
-        }
-
-        final Iterator<Entry> i = children.iterator();
-        return i.hasNext() ? i.next().meter() : null;
-    }
-
     public final void add(MeterRegistry registry) {
         final T newMeter = registerNewMeter(registry);
         if (newMeter == null) {
             return;
         }
 
-        children.add(new Entry(registry, newMeter));
-        firstMeterUpdater.compareAndSet(this, null, newMeter);
-    }
-
-    public final void remove(MeterRegistry registry) {
-        // Not very efficient, but this operation is expected to be used rarely.
-        final AtomicReference<T> firstMeterHolder = new AtomicReference<>();
-        children.removeIf(e -> {
-            if (e.registry() == registry) {
-                firstMeterHolder.compareAndSet(null, e.meter());
-                return true;
-            } else {
-                return false;
+        for (; ; ) {
+            if (childrenGuard.compareAndSet(false, true)) {
+                try {
+                    Map<MeterRegistry, T> newChildren = new IdentityHashMap<>(children);
+                    newChildren.put(registry, newMeter);
+                    this.children = newChildren;
+                    break;
+                } finally {
+                    childrenGuard.set(false);
+                }
             }
-        });
-
-        final T removedMeter = firstMeterHolder.get();
-        if (removedMeter != null) {
-            firstMeterUpdater.compareAndSet(this, removedMeter, null);
         }
     }
 
-    private static final class Entry {
-        private final MeterRegistry registry;
-        private final Meter meter;
-
-        Entry(MeterRegistry registry, Meter meter) {
-            this.registry = registry;
-            this.meter = meter;
-        }
-
-        MeterRegistry registry() {
-            return registry;
-        }
-
-        @SuppressWarnings("unchecked")
-        <U> U meter() {
-            return (U) meter;
+    /**
+     * Does nothing. New registries added to the composite are automatically reflected in each meter
+     * belonging to the composite.
+     *
+     * @param registry The registry to remove.
+     */
+    @Deprecated
+    public final void remove(MeterRegistry registry) {
+        for (; ; ) {
+            if (childrenGuard.compareAndSet(false, true)) {
+                try {
+                    Map<MeterRegistry, T> newChildren = new IdentityHashMap<>(children);
+                    newChildren.remove(registry);
+                    this.children = newChildren;
+                    break;
+                } finally {
+                    childrenGuard.set(false);
+                }
+            }
         }
     }
 }

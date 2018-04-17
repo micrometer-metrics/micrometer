@@ -20,12 +20,12 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.noop.NoopLongTaskTimer;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> implements LongTaskTimer {
     private final AtomicLong nextTask = new AtomicLong(0L);
@@ -38,7 +38,11 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
     @Override
     public Sample start() {
         long task = nextTask.getAndIncrement();
-        timings.put(task, childStream().map(LongTaskTimer::start).collect(Collectors.toList()));
+
+        Collection<Sample> samples = new ArrayList<>();
+        forEachChild(ltt -> samples.add(ltt.start()));
+        timings.put(task, samples);
+
         return new Sample(this, task);
     }
 
@@ -81,8 +85,8 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
     @Override
     LongTaskTimer registerNewMeter(MeterRegistry registry) {
         return LongTaskTimer.builder(getId().getName())
-            .tags(getId().getTags())
-            .description(getId().getDescription())
-            .register(registry);
+                .tags(getId().getTags())
+                .description(getId().getDescription())
+                .register(registry);
     }
 }
