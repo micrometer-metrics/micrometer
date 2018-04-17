@@ -125,6 +125,7 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
                 .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
                 .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
                 .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
+                .percentilePrecision(distributionStatisticConfig.getPercentilePrecision())
                 .pauseDetector(pauseDetector);
 
         final long[] slaNanos = distributionStatisticConfig.getSlaBoundaries();
