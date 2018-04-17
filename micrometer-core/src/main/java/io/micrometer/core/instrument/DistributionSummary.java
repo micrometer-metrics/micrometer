@@ -199,7 +199,7 @@ public interface DistributionSummary extends Meter, HistogramSupport {
          * @param digitsOfPrecision The digits of precision to maintain for percentile approximations.
          * @return This builder.
          */
-        public Builder percentilePrecision(Integer digitsOfPrecision) {
+        public Builder percentilePrecision(@Nullable Integer digitsOfPrecision) {
             this.distributionConfigBuilder.percentilePrecision(digitsOfPrecision);
             return this;
         }
