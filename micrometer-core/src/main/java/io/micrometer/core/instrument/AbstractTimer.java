@@ -45,6 +45,33 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     @Nullable
     private IntervalEstimator intervalEstimator = null;
 
+    /**
+     * Creates a new timer.
+     *
+     * @param id                          The timer's name and tags.
+     * @param clock                       The clock used to measure latency.
+     * @param distributionStatisticConfig Configuration determining which distribution statistics are sent.
+     * @param pauseDetector               Compensation for coordinated omission.
+     * @param baseTimeUnit                The time scale of this timer.
+     * @deprecated Timer implementations should now declare at construction time whether they support aggregable percentiles or not.
+     * By declaring it up front, Micrometer can memory optimize the histogram structure used to store distribution statistics.
+     */
+    @Deprecated
+    protected AbstractTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector,
+                            TimeUnit baseTimeUnit) {
+        this(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, false);
+    }
+
+    /**
+     * Creates a new timer.
+     *
+     * @param id                            The timer's name and tags.
+     * @param clock                         The clock used to measure latency.
+     * @param distributionStatisticConfig   Configuration determining which distribution statistics are sent.
+     * @param pauseDetector                 Compensation for coordinated omission.
+     * @param baseTimeUnit                  The time scale of this timer.
+     * @param supportsAggregablePercentiles Indicates whether the registry supports percentile approximations from histograms.
+     */
     protected AbstractTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
                             PauseDetector pauseDetector, TimeUnit baseTimeUnit, boolean supportsAggregablePercentiles) {
         super(id);
