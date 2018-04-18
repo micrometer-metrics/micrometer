@@ -10,7 +10,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class DynatraceCustomMetric {
+class DynatraceMetricDefinition {
 
     /**
      * Subset of mappable units of the custom metric API.
@@ -39,7 +39,7 @@ class DynatraceCustomMetric {
     private final Set<String> dimensions;
 
 
-    DynatraceCustomMetric(final String metricId, @Nullable final String description, @Nullable final DynatraceUnit unit, @Nullable final Set<String> dimensions) {
+    DynatraceMetricDefinition(final String metricId, @Nullable final String description, @Nullable final DynatraceUnit unit, @Nullable final Set<String> dimensions) {
         this.metricId = metricId;
         this.description = description;
         this.unit = unit;
