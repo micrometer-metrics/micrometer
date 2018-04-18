@@ -12,6 +12,7 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +33,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -87,7 +87,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     @Override
     protected void publish() {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-            final List<DynatraceSerie> series = batch.stream()
+            final List<Pair<DynatraceCustomMetric,DynatraceTimeSeries>> series = batch.stream()
                 .flatMap(meter -> {
                     if (meter instanceof Timer) {
                         return createSeries((Timer) meter);
@@ -104,23 +104,23 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                 .collect(Collectors.toList());
 
             series.stream()
-                .filter(isCustomMetricCreated().negate())
-                .map(DynatraceSerie::getMetric)
+                .map(Pair::getLeft)
+                .filter(this::isCustomMetricNotCreated)
                 .forEach(this::putCustomMetric);
 
             if (!createdCustomMetrics.isEmpty() && !series.isEmpty()) {
-                postCustomMetricValues(series);
+                postCustomMetricValues(series.stream().map(Pair::getRight).collect(Collectors.toList()));
             }
         }
     }
 
-    private Stream<DynatraceSerie> createSeries(Meter meter) {
+    private Stream<Pair<DynatraceCustomMetric,DynatraceTimeSeries>> createSeries(Meter meter) {
         final long wallTime = clock.wallTime();
         return StreamSupport.stream(meter.measure().spliterator(), false)
             .map(ms -> buildSerie(meter.getId(), wallTime, ms.getValue()));
     }
 
-    private Stream<DynatraceSerie> createSeries(LongTaskTimer longTaskTimer) {
+    private Stream<Pair<DynatraceCustomMetric,DynatraceTimeSeries>> createSeries(LongTaskTimer longTaskTimer) {
         final long wallTime = clock.wallTime();
         final Meter.Id id = longTaskTimer.getId();
         return Stream.of(
@@ -128,7 +128,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             buildSerie(idWithSuffix(id, "count"), wallTime, longTaskTimer.duration(getBaseTimeUnit())));
     }
 
-    private Stream<DynatraceSerie> createSeries(DistributionSummary summary) {
+    private Stream<Pair<DynatraceCustomMetric,DynatraceTimeSeries>> createSeries(DistributionSummary summary) {
         final long wallTime = clock.wallTime();
         final Meter.Id id = summary.getId();
         final HistogramSnapshot snapshot = summary.takeSnapshot(false);
@@ -140,7 +140,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             buildSerie(idWithSuffix(id, "max"), wallTime, snapshot.max(getBaseTimeUnit())));
     }
 
-    private Stream<DynatraceSerie> createSeries(FunctionTimer timer) {
+    private Stream<Pair<DynatraceCustomMetric,DynatraceTimeSeries>> createSeries(FunctionTimer timer) {
         final long wallTime = clock.wallTime();
         final Meter.Id id = timer.getId();
 
@@ -150,7 +150,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             buildSerie(idWithSuffix(id, "sum"), wallTime, timer.totalTime(getBaseTimeUnit())));
     }
 
-    private Stream<DynatraceSerie> createSeries(Timer timer) {
+    private Stream<Pair<DynatraceCustomMetric,DynatraceTimeSeries>> createSeries(Timer timer) {
         final long wallTime = clock.wallTime();
         final Meter.Id id = timer.getId();
         final HistogramSnapshot snapshot = timer.takeSnapshot(false);
@@ -162,18 +162,15 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             buildSerie(idWithSuffix(id, "max"), wallTime, snapshot.max(getBaseTimeUnit())));
     }
 
-    private DynatraceSerie buildSerie(Meter.Id id, long time, Number value) {
+    private Pair<DynatraceCustomMetric,DynatraceTimeSeries> buildSerie(Meter.Id id, long time, Number value) {
         return buildSerie(id, time, value, DynatraceUnit.fromPlural(id.getBaseUnit()));
     }
 
-    private DynatraceSerie buildSerie(Meter.Id id, long time, Number value, DynatraceUnit unit) {
-        return new DynatraceSerie(
-            new DynatraceCustomMetric(
-                getConventionName(id),
-                id.getDescription(),
-                unit,
-                extractDimensions(getConventionTags(id))),
-            time, value.doubleValue(), extractDimensionValues(getConventionTags(id)));
+    private Pair<DynatraceCustomMetric,DynatraceTimeSeries> buildSerie(Meter.Id id, long time, Number value, DynatraceUnit unit) {
+        final String metricId = getConventionName(id);
+        return Pair.of(
+            new DynatraceCustomMetric(metricId, id.getDescription(), unit, extractDimensions(getConventionTags(id))),
+            new DynatraceTimeSeries(metricId, time, value.doubleValue(), extractDimensionValues(getConventionTags(id))));
     }
 
     private Set<String> extractDimensions(List<Tag> tags) {
@@ -184,8 +181,12 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         return tags.stream().collect(Collectors.toMap(Tag::getKey, Tag::getValue));
     }
 
-    private Predicate<DynatraceSerie> isCustomMetricCreated() {
-        return serie -> createdCustomMetrics.contains(serie.getMetric().getMetricId());
+    private boolean isCustomMetricNotCreated(final DynatraceCustomMetric metric) {
+        return !createdCustomMetrics.contains(metric.getMetricId());
+    }
+
+    private boolean isCustomMetricCreated(final DynatraceTimeSeries serie) {
+        return createdCustomMetrics.contains(serie.getMetricId());
     }
 
     private void putCustomMetric(final DynatraceCustomMetric customMetric) {
@@ -205,11 +206,11 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private void postCustomMetricValues(final List<DynatraceSerie> series) {
+    private void postCustomMetricValues(final List<DynatraceTimeSeries> series) {
         executeHttpCall(customDeviceMetricEndpoint, "POST",
             series.stream()
-                .filter(isCustomMetricCreated())
-                .map(DynatraceSerie::asJson)
+                .filter(this::isCustomMetricCreated)
+                .map(DynatraceTimeSeries::asJson)
                 .collect(joining(",")) +
                 "]}",
             status -> logger.info("successfully sent {} series to Dynatrace", series.size()),
