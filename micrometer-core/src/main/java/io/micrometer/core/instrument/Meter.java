@@ -147,7 +147,7 @@ public interface Meter extends AutoCloseable {
 
         /**
          * @param key The tag key to attempt to match.
-         * @return A matching tag, or {@code null} if no tag with the provided key exists on this id.
+         * @return A matching tag value, or {@code null} if no tag with the provided key exists on this id.
          */
         @Nullable
         public String getTag(String key) {
