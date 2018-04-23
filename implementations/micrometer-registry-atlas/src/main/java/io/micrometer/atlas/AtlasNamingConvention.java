@@ -33,6 +33,12 @@ public class AtlasNamingConvention implements NamingConvention {
 
     @Override
     public String tagKey(String key) {
+        if (key.equals("name")) {
+            key = "name.tag";
+        } else if (key.equals("statistic")) {
+            key = "statistic.tag";
+        }
+
         return NamingConvention.camelCase.tagKey(key);
     }
 }
