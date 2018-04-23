@@ -32,7 +32,6 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import static java.util.stream.StreamSupport.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -63,7 +62,7 @@ public class MetricsRestTemplateCustomizerTest {
         String result = restTemplate.getForObject("/test/{id}", String.class, 123);
 
         assertThat(registry.get("http.client.requests").meters())
-                .anySatisfy(m -> assertThat(stream(m.getId().getTags().spliterator(), false).map(Tag::getKey)).doesNotContain("bucket"));
+                .anySatisfy(m -> assertThat(m.getId().getTags().stream().map(Tag::getKey)).doesNotContain("bucket"));
 
         assertThat(registry.get("http.client.requests")
                 .tags("method", "GET", "uri", "/test/{id}", "status", "200")
