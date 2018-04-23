@@ -22,7 +22,7 @@ dependencies {
     // cache monitoring
     compile 'com.google.guava:guava:latest.release', optional lock '23.0'
     compile 'com.github.ben-manes.caffeine:caffeine:latest.release', optional lock '2.6.1'
-    compile 'net.sf.ehcache:ehcache:latest.release', optional lock '2.10.4'
+    compile 'net.sf.ehcache:ehcache:2.10.4', optional
     compile 'javax.cache:cache-api:1.0.0', optional
     compile 'com.hazelcast:hazelcast:3.8.+', optional lock '3.8.9'
     compile 'org.hibernate:hibernate-entitymanager:latest.release', optional lock '5.2.13.Final'
