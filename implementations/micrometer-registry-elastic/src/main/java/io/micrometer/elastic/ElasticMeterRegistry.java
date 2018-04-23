@@ -65,7 +65,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     public ElasticMeterRegistry(ElasticConfig config, Clock clock) {
-        this(config, clock, NamingConvention.snakeCase, Executors.defaultThreadFactory());
+        this(config, clock, new ElasticNamingConvention(), Executors.defaultThreadFactory());
     }
 
     private void createIndexIfNeeded() {
@@ -250,7 +250,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private IndexBuilder index(Meter meter, long wallTime) {
-        return new IndexBuilder(config, getConventionName(meter.getId()), meter.getId().getType().toString().toLowerCase(), meter.getId().getTags(), wallTime);
+        return new IndexBuilder(config, getConventionName(meter.getId()), meter.getId().getType().toString().toLowerCase(), getConventionTags(meter.getId()), wallTime);
     }
 
     // VisibleForTesting
