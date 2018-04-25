@@ -17,11 +17,27 @@ package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.lang.Nullable;
 
 public class DynatraceNamingConvention implements NamingConvention {
 
+    private final NamingConvention delegate;
+
+    public DynatraceNamingConvention(NamingConvention delegate) {
+        this.delegate = delegate;
+    }
+
+    public DynatraceNamingConvention() {
+        this(NamingConvention.dot);
+    }
+
     @Override
-    public String name(String name, Meter.Type type, String baseUnit) {
-        return "custom:" + name;
+    public String name(String name, Meter.Type type, @Nullable String baseUnit) {
+        return "custom:" + delegate.name(name, type, baseUnit);
+    }
+
+    @Override
+    public String tagKey(String key) {
+        return delegate.tagKey(key).replaceAll("[^\\w.-]", "_");
     }
 }

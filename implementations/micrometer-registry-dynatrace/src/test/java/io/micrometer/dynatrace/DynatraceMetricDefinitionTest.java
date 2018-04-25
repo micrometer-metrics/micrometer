@@ -23,29 +23,30 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DynatraceMetricDefinitionTest {
+    private final String[] technologyTypes = {"java"};
 
     @Test
     void usesMetricIdAsDescriptionWhenDescriptionIsNotAvailable() {
-        final DynatraceMetricDefinition metric = new DynatraceMetricDefinition("custom:test.metric", null, null, null);
+        final DynatraceMetricDefinition metric = new DynatraceMetricDefinition("custom:test.metric", null, null, null, technologyTypes);
 
-        assertThat(metric.asJson()).isEqualTo("{\"displayName\":\"custom:test.metric\"}");
+        assertThat(metric.asJson()).isEqualTo("{\"displayName\":\"custom:test.metric\",\"types\":[\"java\"]}");
     }
 
     @Test
     void escapesStringsInDescription() {
         final DynatraceMetricDefinition metric = new DynatraceMetricDefinition(
-            "custom:test.metric",
-            "The /\"recent cpu usage\" for the Java Virtual Machine process",
-            null, null);
+                "custom:test.metric",
+                "The /\"recent cpu usage\" for the Java Virtual Machine process",
+                null, null, technologyTypes);
 
-        assertThat(metric.asJson()).isEqualTo("{\"displayName\":\"The \\/\\\"recent cpu usage\\\" for the Java Virtual Machine process\"}");
+        assertThat(metric.asJson()).isEqualTo("{\"displayName\":\"The \\/\\\"recent cpu usage\\\" for the Java Virtual Machine process\",\"types\":[\"java\"]}");
     }
 
     @Test
     void addsUnitWhenAvailable() {
-        final DynatraceMetricDefinition metric = new DynatraceMetricDefinition("custom:test.metric", "my test metric", DynatraceMetricDefinition.DynatraceUnit.Count, null);
+        final DynatraceMetricDefinition metric = new DynatraceMetricDefinition("custom:test.metric", "my test metric", DynatraceMetricDefinition.DynatraceUnit.Count, null, technologyTypes);
 
-        assertThat(metric.asJson()).isEqualTo("{\"displayName\":\"my test metric\",\"unit\":\"Count\"}");
+        assertThat(metric.asJson()).isEqualTo("{\"displayName\":\"my test metric\",\"unit\":\"Count\",\"types\":[\"java\"]}");
     }
 
     @Test
@@ -54,8 +55,8 @@ class DynatraceMetricDefinitionTest {
         dimensions.add("first");
         dimensions.add("second");
         dimensions.add("unknown");
-        final DynatraceMetricDefinition metric = new DynatraceMetricDefinition("custom:test.metric", "my test metric", null, dimensions);
+        final DynatraceMetricDefinition metric = new DynatraceMetricDefinition("custom:test.metric", "my test metric", null, dimensions, technologyTypes);
 
-        assertThat(metric.asJson()).isEqualTo("{\"displayName\":\"my test metric\",\"dimensions\":[\"first\",\"second\",\"unknown\"]}");
+        assertThat(metric.asJson()).isEqualTo("{\"displayName\":\"my test metric\",\"dimensions\":[\"first\",\"second\",\"unknown\"],\"types\":[\"java\"]}");
     }
 }

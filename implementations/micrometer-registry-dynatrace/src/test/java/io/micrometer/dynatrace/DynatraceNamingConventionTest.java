@@ -30,4 +30,8 @@ class DynatraceNamingConventionTest {
         assertThat(convention.name("mymetric", Meter.Type.COUNTER, null)).isEqualTo("custom:mymetric");
     }
 
+    @Test
+    void tagKeysAreSanitized() {
+        assertThat(convention.tagKey("{tagTag0}.-")).isEqualTo("_tagTag0_.-");
+    }
 }

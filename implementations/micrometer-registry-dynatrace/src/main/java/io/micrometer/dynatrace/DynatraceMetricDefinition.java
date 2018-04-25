@@ -83,7 +83,11 @@ class DynatraceMetricDefinition {
     }
 
     String asJson() {
-        String body = "{\"displayName\":\"" + (description != null ? StringEscapeUtils.escapeJson(description) : metricId) + "\"";
+        String displayName = description == null ? metricId : StringEscapeUtils.escapeJson(description);
+        if(displayName.length() > 256)
+            displayName = displayName.substring(0, 256);
+
+        String body = "{\"displayName\":\"" + displayName + "\"";
 
         if (unit != null)
             body += ",\"unit\":\"" + unit + "\"";
