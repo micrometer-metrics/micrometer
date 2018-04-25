@@ -1,8 +1,22 @@
+/**
+ * Copyright 2017 Pivotal Software, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
-import io.micrometer.core.lang.Nullable;
 
 /**
  * Configuration for {@link DynatraceMeterRegistry}
@@ -37,5 +51,17 @@ public interface DynatraceConfig extends StepRegistryConfig {
         if (v == null)
             throw new MissingRequiredConfigurationException("deviceId must be set to report metrics to Dynatrace");
         return v;
+    }
+
+    default String[] technologyTypes() {
+        String v = get(prefix() + ".technologyTypes");
+        if (v == null || v.isEmpty())
+            return new String[]{"java"};
+
+        String[] types = v.split(",");
+        if (types.length == 0) {
+            throw new MissingRequiredConfigurationException("Dynatrace requires one or more technology types to be associated with every metric");
+        }
+        return types;
     }
 }

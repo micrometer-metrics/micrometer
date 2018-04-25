@@ -14,4 +14,9 @@
  * limitations under the License.
  */
 
+@NonNullApi
+@NonNullFields
 package io.micrometer.dynatrace;
+
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;

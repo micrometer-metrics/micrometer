@@ -1,3 +1,18 @@
+/**
+ * Copyright 2017 Pivotal Software, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micrometer.dynatrace;
 
 import static io.micrometer.dynatrace.DynatraceMetricDefinition.DynatraceUnit;
@@ -133,7 +148,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     private Stream<DynatraceCustomMetric> createCustomMetric(final DistributionSummary summary) {
         final long wallTime = clock.wallTime();
         final Meter.Id id = summary.getId();
-        final HistogramSnapshot snapshot = summary.takeSnapshot(false);
+        final HistogramSnapshot snapshot = summary.takeSnapshot();
 
         return Stream.of(
             createCustomMetric(idWithSuffix(id, "sum"), wallTime, snapshot.total(getBaseTimeUnit())),
@@ -155,7 +170,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     private Stream<DynatraceCustomMetric> createCustomMetric(final Timer timer) {
         final long wallTime = clock.wallTime();
         final Meter.Id id = timer.getId();
-        final HistogramSnapshot snapshot = timer.takeSnapshot(false);
+        final HistogramSnapshot snapshot = timer.takeSnapshot();
 
         return Stream.of(
             createCustomMetric(idWithSuffix(id, "sum"), wallTime, snapshot.total(getBaseTimeUnit())),
@@ -172,7 +187,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         final String metricId = getConventionName(id);
         final List<Tag> tags = getConventionTags(id);
         return new DynatraceCustomMetric(
-            new DynatraceMetricDefinition(metricId, id.getDescription(), unit, extractDimensions(tags)),
+            new DynatraceMetricDefinition(metricId, id.getDescription(), unit, extractDimensions(tags), config.technologyTypes()),
             new DynatraceTimeSeries(metricId, time, value.doubleValue(), extractDimensionValues(tags)));
     }
 
@@ -199,7 +214,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
             executeHttpCall(customMetricEndpoint, "PUT", customMetric.asJson(),
                 status -> {
-                    logger.info("created '{}' as custom metric", customMetric.getMetricId());
+                    logger.debug("created '{}' as custom metric", customMetric.getMetricId());
                     createdCustomMetrics.add(customMetric.getMetricId());
                 },
                 (status, errorMsg) -> logger.error("failed to create custom metric '{}', status: {} message: {}",
@@ -291,3 +306,4 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         }
     }
 }
+
