@@ -22,6 +22,7 @@ management.metrics:
   use-global-registry: false
   export:
     atlas.enabled: false
+    dynatrace.enabled: false
     datadog.enabled: false
     elastic.enabled: false
     ganglia.enabled: false
