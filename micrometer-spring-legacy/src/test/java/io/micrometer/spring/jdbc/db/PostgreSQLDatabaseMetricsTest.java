@@ -25,7 +25,7 @@ import javax.sql.DataSource;
 /**
  * @author Kristof Depypere
  */
-public class PostgresSQLDatabaseMetricsTest {
+public class PostgreSQLDatabaseMetricsTest {
 
     public static final String DATABASE_NAME = "test";
     private DataSource dataSource = new HikariDataSource();
@@ -33,7 +33,7 @@ public class PostgresSQLDatabaseMetricsTest {
 
 
     @Test
-    public void shouldRegisterGauges() {
+    public void shouldRegisterPostesMetrics() {
         PostgreSQLDatabaseMetrics postgreSQLDatabaseMetrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
         postgreSQLDatabaseMetrics.bindTo(registry);
 
@@ -44,16 +44,16 @@ public class PostgresSQLDatabaseMetricsTest {
     private void assertPostgreSQLDatabaseMetrics(String name) {
         registry.get("postgres.size").tag("database", DATABASE_NAME).gauge();
         registry.get("postgres.connections").tag("database", DATABASE_NAME).gauge();
-        registry.get("postgres.rows.fetched").tag("database", DATABASE_NAME).gauge();
-        registry.get("postgres.rows.inserted").tag("database", DATABASE_NAME).gauge();
-        registry.get("postgres.rows.updated").tag("database", DATABASE_NAME).gauge();
-        registry.get("postgres.rows.deleted").tag("database", DATABASE_NAME).gauge();
+        registry.get("postgres.rows.fetched").tag("database", DATABASE_NAME).functionCounter();
+        registry.get("postgres.rows.inserted").tag("database", DATABASE_NAME).functionCounter();
+        registry.get("postgres.rows.updated").tag("database", DATABASE_NAME).functionCounter();
+        registry.get("postgres.rows.deleted").tag("database", DATABASE_NAME).functionCounter();
         registry.get("postgres.rows.dead").tag("database", DATABASE_NAME).gauge();
         registry.get("postgres.hitratio").tag("database", DATABASE_NAME).gauge();
 
-        registry.get("postgres.transactions").tag("database", DATABASE_NAME).gauge();
-        registry.get("postgres.checkpoints.timed").tag("database", DATABASE_NAME).gauge();
-        registry.get("postgres.checkpoints.req").tag("database", DATABASE_NAME).gauge();
+        registry.get("postgres.transactions").tag("database", DATABASE_NAME).functionCounter();
+        registry.get("postgres.checkpoints.timed").tag("database", DATABASE_NAME).functionCounter();
+        registry.get("postgres.checkpoints.req").tag("database", DATABASE_NAME).functionCounter();
         registry.get("postgres.checkpoints.bufferratio").tag("database", DATABASE_NAME).gauge();
 
     }
