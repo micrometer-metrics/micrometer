@@ -79,6 +79,14 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
             .tags(tags)
             .description("Total number of transactions executed (commits + rollbacks)")
             .register(registry);
+        Gauge.builder("postgres.locks.count", postgresDataSource, dataSource -> getLockCount())
+            .tags(tags)
+            .description("Number of locks on the given db")
+            .register(registry);
+        FunctionCounter.builder("postgres.tempbytes", postgresDataSource, dataSource -> getTempBytes())
+            .tags(tags)
+            .description("The total amount of temporary bytes written to disk to execute queries")
+            .register(registry);
 
         registerRowCountMetrics(registry);
         registerCheckpointMetrics(registry);
@@ -126,6 +134,10 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         return runQuery("SELECT pg_database_size('" + database + "')", Long.class);
     }
 
+    protected Long getLockCount() {
+        return runQuery("SELECT count(*) FROM pg_locks l JOIN pg_database d ON l.DATABASE=d.oid WHERE d.datname='"+database+"'", Long.class);
+    }
+
     protected Long getConnectionCount() {
         String query = getDBStatQuery("SUM(numbackends)");
         return runQuery(query, Long.class);
@@ -138,6 +150,11 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     protected Long getInsertCount() {
         String query = getDBStatQuery("tup_inserted");
+        return runQuery(query, Long.class);
+    }
+
+    protected Long getTempBytes() {
+        String query = getDBStatQuery("tmp_bytes");
         return runQuery(query, Long.class);
     }
 
@@ -182,9 +199,11 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private <T> T runQuery(String query, Class<T> returnClass) {
         try (Connection connection = postgresDataSource.getConnection()) {
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(query);
-            return resultSet.getObject(1, returnClass);
+            try (Statement statement = connection.createStatement()) {
+                try (ResultSet resultSet = statement.executeQuery(query)) {
+                    return resultSet.getObject(1, returnClass);
+                }
+            }
         } catch (SQLException e) {
             logger.error("Error getting statistic from postgreSQL database");
             return null;

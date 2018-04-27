@@ -51,6 +51,9 @@ public class PostgreSQLDatabaseMetricsTest {
         registry.get("postgres.rows.dead").tag("database", DATABASE_NAME).gauge();
         registry.get("postgres.hitratio").tag("database", DATABASE_NAME).gauge();
 
+        registry.get("postgres.tempbytes").tag("database", DATABASE_NAME).functionCounter();
+        registry.get("postgres.locks.count").tag("database", DATABASE_NAME).gauge();
+
         registry.get("postgres.transactions").tag("database", DATABASE_NAME).functionCounter();
         registry.get("postgres.checkpoints.timed").tag("database", DATABASE_NAME).functionCounter();
         registry.get("postgres.checkpoints.req").tag("database", DATABASE_NAME).functionCounter();
