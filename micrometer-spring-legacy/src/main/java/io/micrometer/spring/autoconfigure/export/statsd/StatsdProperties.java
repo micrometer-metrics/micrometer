@@ -63,6 +63,7 @@ public class StatsdProperties {
     /**
      * Maximum size of the queue of items waiting to be sent to the StatsD server.
      */
+    @Deprecated
     private Integer queueSize = Integer.MAX_VALUE;
 
     /**
@@ -118,10 +119,12 @@ public class StatsdProperties {
         this.pollingFrequency = pollingFrequency;
     }
 
+    @Deprecated
     public Integer getQueueSize() {
         return this.queueSize;
     }
 
+    @Deprecated
     public void setQueueSize(Integer queueSize) {
         this.queueSize = queueSize;
     }

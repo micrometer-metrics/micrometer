@@ -110,7 +110,9 @@ public interface StatsdConfig extends MeterRegistryConfig {
      * Governs the maximum size of the queue of items waiting to be sent to a StatsD agent over UDP.
      *
      * @return Maximum queue size.
+     * @deprecated No longer configurable and unbounded queue will be always used instead.
      */
+    @Deprecated
     default int queueSize() {
         String v = get(prefix() + ".queueSize");
         return v == null ? Integer.MAX_VALUE : Integer.parseInt(v);
