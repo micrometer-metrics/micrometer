@@ -45,6 +45,9 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     @Nullable
     private IntervalEstimator intervalEstimator = null;
 
+    @SuppressWarnings("NullableProblems")
+    private org.LatencyUtils.PauseDetector pauseDetector;
+
     /**
      * Creates a new timer.
      *
@@ -94,7 +97,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     }
 
     private void initPauseDetector(PauseDetector pauseDetectorType) {
-        org.LatencyUtils.PauseDetector pauseDetector = requireNonNull(pauseDetectorCache.computeIfAbsent(pauseDetectorType, detector -> {
+        pauseDetector = requireNonNull(pauseDetectorCache.computeIfAbsent(pauseDetectorType, detector -> {
             if (detector instanceof ClockDriftPauseDetector) {
                 ClockDriftPauseDetector clockDriftPauseDetector = (ClockDriftPauseDetector) detector;
                 return new SimplePauseDetector(clockDriftPauseDetector.getSleepInterval().toNanos(),
@@ -105,19 +108,21 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
             return new NoopPauseDetector();
         }));
 
-        this.intervalEstimator = new TimeCappedMovingAverageIntervalEstimator(128,
-                10000000000L, pauseDetector);
+        if(pauseDetector instanceof SimplePauseDetector) {
+            this.intervalEstimator = new TimeCappedMovingAverageIntervalEstimator(128,
+                    10000000000L, pauseDetector);
 
-        pauseDetector.addListener((pauseLength, pauseEndTime) -> {
+            pauseDetector.addListener((pauseLength, pauseEndTime) -> {
 //            System.out.println("Pause of length " + (pauseLength / 1e6) + "ms, end time " + pauseEndTime);
-            if (intervalEstimator != null) {
-                long estimatedInterval = intervalEstimator.getEstimatedInterval(pauseEndTime);
-                long observedLatencyMinbar = pauseLength - estimatedInterval;
-                if (observedLatencyMinbar >= estimatedInterval) {
-                    recordValueWithExpectedInterval(observedLatencyMinbar, estimatedInterval);
+                if (intervalEstimator != null) {
+                    long estimatedInterval = intervalEstimator.getEstimatedInterval(pauseEndTime);
+                    long observedLatencyMinbar = pauseLength - estimatedInterval;
+                    if (observedLatencyMinbar >= estimatedInterval) {
+                        recordValueWithExpectedInterval(observedLatencyMinbar, estimatedInterval);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     private void recordValueWithExpectedInterval(long nanoValue, long expectedIntervalBetweenValueSamples) {
@@ -202,6 +207,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     @Override
     public void close() {
         histogram.close();
+        pauseDetector.shutdown();
     }
 
     private static class NoopPauseDetector extends org.LatencyUtils.PauseDetector {
