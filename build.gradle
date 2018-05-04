@@ -6,7 +6,7 @@ buildscript {
     }
     dependencies {
         classpath 'org.ow2.asm:asm:5.0.3'
-        classpath 'io.spring.gradle:spring-release-plugin:0.15.0'
+        classpath 'io.spring.gradle:spring-release-plugin:0.17.2'
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.2.0'
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'

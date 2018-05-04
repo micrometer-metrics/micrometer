@@ -37,3 +37,5 @@ management.metrics.export:
   wavefront.enabled: false
 
 security.ignored: /**
+
+endpoints.shutdown.enabled: true
