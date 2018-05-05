@@ -117,6 +117,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                             }).collect(joining(",")) +
                             "]}";
 
+                    logger.debug(body);
+
                     try (OutputStream os = con.getOutputStream()) {
                         os.write(body.getBytes());
                         os.flush();
@@ -237,7 +239,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         if (suffix != null)
             fullId = idWithSuffix(id, suffix);
 
-        Iterable<Tag> tags = fullId.getTags();
+        Iterable<Tag> tags = getConventionTags(fullId);
 
         String host = config.hostTag() == null ? "" : stream(tags.spliterator(), false)
                 .filter(t -> requireNonNull(config.hostTag()).equals(t.getKey()))
