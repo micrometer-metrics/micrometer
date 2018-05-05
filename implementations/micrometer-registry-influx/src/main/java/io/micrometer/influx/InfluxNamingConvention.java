@@ -23,15 +23,18 @@ import io.micrometer.core.lang.Nullable;
  * @author Jon Schneider
  */
 public class InfluxNamingConvention implements NamingConvention {
-    private final NamingConvention basic;
+    private final NamingConvention delegate;
 
     /**
-     * @param basic Creates basic structure of a name. By default,
-     *              telegraf's configuration option for {@code metric_separator}
-     *              is an underscore, which corresponds to {@link NamingConvention#snakeCase}.
+     * By default, telegraf's configuration option for {@code metric_separator}
+     * is an underscore, which corresponds to {@link NamingConvention#snakeCase}.
      */
-    public InfluxNamingConvention(NamingConvention basic) {
-        this.basic = basic;
+    public InfluxNamingConvention() {
+        this(NamingConvention.snakeCase);
+    }
+
+    public InfluxNamingConvention(NamingConvention delegate) {
+        this.delegate = delegate;
     }
 
     @Override
@@ -57,10 +60,10 @@ public class InfluxNamingConvention implements NamingConvention {
 
     private String format(String name) {
         // https://docs.influxdata.com/influxdb/v1.3/write_protocols/line_protocol_reference/#special-characters
-        return basic.tagKey(name)
-            .replace(",", "\\,")
-            .replace(" ", "\\ ")
-            .replace("=", "\\=")
-            .replace("\"", "\\\"");
+        return delegate.tagKey(name)
+                .replace(",", "\\,")
+                .replace(" ", "\\ ")
+                .replace("=", "\\=")
+                .replace("\"", "\\\"");
     }
 }

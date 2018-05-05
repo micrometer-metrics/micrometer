@@ -23,11 +23,21 @@ import java.text.Normalizer;
 import java.util.regex.Pattern;
 
 public class GraphiteNamingConvention implements NamingConvention {
+    private final NamingConvention delegate;
+
     /**
      * A list that probably is blacklisted: https://github.com/graphite-project/graphite-web/blob/master/webapp/graphite/render/grammar.py#L48-L55.
      * Empirically, we have found others.
      */
     private static final Pattern blacklistedChars = Pattern.compile("[{}(),=\\[\\]/]");
+
+    public GraphiteNamingConvention() {
+        this(NamingConvention.camelCase);
+    }
+
+    public GraphiteNamingConvention(NamingConvention delegate) {
+        this.delegate = delegate;
+    }
 
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
@@ -51,7 +61,7 @@ public class GraphiteNamingConvention implements NamingConvention {
      */
     private String format(String name) {
         String sanitized = Normalizer.normalize(name, Normalizer.Form.NFKD);
-        sanitized = NamingConvention.camelCase.tagKey(sanitized);
+        sanitized = delegate.tagKey(sanitized);
         return blacklistedChars.matcher(sanitized).replaceAll("_");
     }
 }

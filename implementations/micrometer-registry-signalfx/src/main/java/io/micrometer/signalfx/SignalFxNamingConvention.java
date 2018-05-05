@@ -25,20 +25,20 @@ import io.micrometer.core.lang.Nullable;
  * @author Jon Schneider
  */
 public class SignalFxNamingConvention implements NamingConvention {
-    private final NamingConvention rootConvention;
+    private final NamingConvention delegate;
 
     public SignalFxNamingConvention() {
         this(NamingConvention.dot);
     }
 
-    public SignalFxNamingConvention(NamingConvention rootConvention) {
-        this.rootConvention = rootConvention;
+    public SignalFxNamingConvention(NamingConvention delegate) {
+        this.delegate = delegate;
     }
 
     // Metric (the metric name) can be any non-empty UTF-8 string, with a maximum length <= 256 characters
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        String formattedName = rootConvention.name(name, type, baseUnit);
+        String formattedName = delegate.name(name, type, baseUnit);
         return formattedName.length() > 256 ? formattedName.substring(0, 256) : formattedName;
     }
 
@@ -48,7 +48,7 @@ public class SignalFxNamingConvention implements NamingConvention {
     //     ^[a-zA-Z][a-zA-Z0-9_-]*$
     @Override
     public String tagKey(String key) {
-        String conventionKey = rootConvention.tagKey(key);
+        String conventionKey = delegate.tagKey(key);
 
         conventionKey = conventionKey.replaceAll("^_", "").replaceAll("^sf_", ""); // 2
 
@@ -66,7 +66,7 @@ public class SignalFxNamingConvention implements NamingConvention {
     // Dimension value can be any non-empty UTF-8 string, with a maximum length <= 256 characters.
     @Override
     public String tagValue(String value) {
-        String formattedValue = rootConvention.tagValue(value);
+        String formattedValue = delegate.tagValue(value);
         return formattedValue.length() > 256 ? formattedValue.substring(0, 256) : formattedValue;
     }
 }
