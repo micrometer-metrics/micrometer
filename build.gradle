@@ -74,7 +74,7 @@ subprojects {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.3.1'
+    gradleVersion = '4.7'
 }
 
 defaultTasks 'build'

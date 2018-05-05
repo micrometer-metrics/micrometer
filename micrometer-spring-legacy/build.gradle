@@ -1,6 +1,5 @@
 plugins {
     id "io.spring.dependency-management" version "1.0.3.RELEASE"
-    id "net.ltgt.apt-eclipse" version "0.13"
 }
 
 apply plugin: 'nebula.optional-base'
@@ -44,8 +43,7 @@ dependencies {
     compile 'org.springframework.integration:spring-integration-core', optional lock '4.3.14.RELEASE'
 
     // to validate auto-completion on configuration properties
-    compileOnly 'org.springframework.boot:spring-boot-configuration-processor' lock '1.5.10.RELEASE'
-    apt 'org.springframework.boot:spring-boot-configuration-processor' lock '1.5.10.RELEASE'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor' lock '1.5.10.RELEASE'
 
     testCompile project(':micrometer-test')
 
