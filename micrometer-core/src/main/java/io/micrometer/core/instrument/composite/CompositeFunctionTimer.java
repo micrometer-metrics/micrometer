@@ -29,15 +29,15 @@ class CompositeFunctionTimer<T> extends AbstractCompositeMeter<FunctionTimer> im
     private final WeakReference<T> ref;
     private final ToLongFunction<T> countFunction;
     private final ToDoubleFunction<T> totalTimeFunction;
-    private final TimeUnit totalTimeFunctionUnits;
+    private final TimeUnit totalTimeFunctionUnit;
 
     CompositeFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction,
-                           ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+                           ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
         super(id);
         this.ref = new WeakReference<>(obj);
         this.countFunction = countFunction;
         this.totalTimeFunction = totalTimeFunction;
-        this.totalTimeFunctionUnits = totalTimeFunctionUnits;
+        this.totalTimeFunctionUnit = totalTimeFunctionUnit;
     }
 
     @Override
@@ -68,7 +68,7 @@ class CompositeFunctionTimer<T> extends AbstractCompositeMeter<FunctionTimer> im
         }
 
         return FunctionTimer.builder(getId().getName(), obj, countFunction,
-            totalTimeFunction, totalTimeFunctionUnits)
+            totalTimeFunction, totalTimeFunctionUnit)
             .tags(getId().getTags())
             .description(getId().getDescription())
             .register(registry);

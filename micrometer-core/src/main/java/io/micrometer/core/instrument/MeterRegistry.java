@@ -174,11 +174,11 @@ public abstract class MeterRegistry implements AutoCloseable {
      * @param obj                    The state object from which the count and total functions derive measurements.
      * @param countFunction          A monotonically increasing count function.
      * @param totalTimeFunction      A monotonically increasing total time function.
-     * @param totalTimeFunctionUnits The base unit of time of the totals returned by the total time function.
+     * @param totalTimeFunctionUnit The base unit of time of the totals returned by the total time function.
      * @param <T>                    The type of the object upon which the value functions derives their measurements.
      * @return A new function timer.
      */
-    protected abstract <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits);
+    protected abstract <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit);
 
     /**
      * Build a new function counter to be added to the registry. This is guaranteed to only be called if the function counter doesn't already exist.

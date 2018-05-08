@@ -287,8 +287,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T
             obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit
-                                                         totalTimeFunctionUnits) {
-        StatsdFunctionTimer ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits,
+                                                         totalTimeFunctionUnit) {
+        StatsdFunctionTimer ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
                 getBaseTimeUnit(), lineBuilder(id), publisher);
         pollableMeters.add(ft);
         return ft;
