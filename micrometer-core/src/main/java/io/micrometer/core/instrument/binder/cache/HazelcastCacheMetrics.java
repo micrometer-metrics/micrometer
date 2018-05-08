@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.binder.cache;
 
 import com.hazelcast.core.IMap;
-import com.hazelcast.monitor.LocalMapStats;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -25,7 +24,7 @@ import io.micrometer.core.lang.Nullable;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Collect metrics on EhCache caches, including detailed metrics on storage space, near cache usage, and timings.
+ * Collect metrics on Hazelcast caches, including detailed metrics on storage space, near cache usage, and timings.
  *
  * @author Jon Schneider
  */
@@ -77,15 +76,23 @@ public class HazelcastCacheMetrics extends CacheMeterBinder {
         return cache.getLocalMapStats().getOwnedEntryCount();
     }
 
+    /**
+     * @return The number of hits against cache entries hold in this local partition. Not all gets had to result from
+     * a get operation against {@link #cache}. If a get operation elsewhere in the cluster caused a lookup against an entry
+     * held in this partition, the hit will be recorded against map stats in this partition and not in the map stats of the
+     * calling {@link IMap}.
+     */
     @Override
     protected long hitCount() {
         return cache.getLocalMapStats().getHits();
     }
 
+    /**
+     * @return There is no way to calculate miss count in Hazelcast. See issue #586.
+     */
     @Override
-    protected long missCount() {
-        LocalMapStats stats = cache.getLocalMapStats();
-        return stats.getGetOperationCount() - stats.getHits();
+    protected Long missCount() {
+        return null;
     }
 
     @Nullable
@@ -121,6 +128,11 @@ public class HazelcastCacheMetrics extends CacheMeterBinder {
                 .tags(getTagsWithCacheName()).tag("ownership", "owned")
                 .description("Memory cost of owned entries held by this member")
                 .baseUnit("bytes")
+                .register(registry);
+
+        FunctionCounter.builder("cache.partition.gets", cache, cache -> cache.getLocalMapStats().getGetOperationCount())
+                .tags(getTagsWithCacheName())
+                .description("The total number of get operations executed against this partition")
                 .register(registry);
 
         timings(registry);

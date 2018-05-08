@@ -81,7 +81,7 @@ public class ConcurrentMapCacheMetrics extends CacheMeterBinder {
     }
 
     @Override
-    protected long missCount() {
+    protected Long missCount() {
         return cache.missCount.get();
     }
 
