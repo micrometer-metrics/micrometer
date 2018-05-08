@@ -58,7 +58,7 @@ public class JettyServerThreadPoolMetricsTest {
     void threadsMetrics() throws Exception {
         assertThat(registry.get("jetty.threads.min").gauge().value()).isEqualTo(32.0);
         assertThat(registry.get("jetty.threads.max").gauge().value()).isEqualTo(100.0);
-        assertThat(registry.get("jetty.threads.live").gauge().value()).isNotEqualTo(0.0);
+        assertThat(registry.get("jetty.threads.current").gauge().value()).isNotEqualTo(0.0);
         assertThat(registry.get("jetty.threads.idle").gauge().value()).isNotEqualTo(0.0);
         assertThat(registry.get("jetty.threads.busy").gauge().value()).isNotEqualTo(0.0);
     }

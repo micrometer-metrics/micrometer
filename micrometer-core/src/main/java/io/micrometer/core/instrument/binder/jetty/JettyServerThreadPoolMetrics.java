@@ -40,9 +40,9 @@ public class JettyServerThreadPoolMetrics implements MeterBinder {
              .tags(tags)
              .description("The number of max threads")
              .register(registry);
-        Gauge.builder("jetty.threads.live", threadPool, InstrumentedQueuedThreadPool::getThreads)
+        Gauge.builder("jetty.threads.current", threadPool, InstrumentedQueuedThreadPool::getThreads)
              .tags(tags)
-             .description("The current number of live threads")
+             .description("The current number of current threads")
              .register(registry);
         Gauge.builder("jetty.threads.idle", threadPool, InstrumentedQueuedThreadPool::getIdleThreads)
              .tags(tags)
