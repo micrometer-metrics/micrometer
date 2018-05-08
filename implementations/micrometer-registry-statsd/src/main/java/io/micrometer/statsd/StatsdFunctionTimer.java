@@ -30,9 +30,9 @@ public class StatsdFunctionTimer<T> extends CumulativeFunctionTimer<T> implement
     private final AtomicReference<Double> lastTime = new AtomicReference<>(0.0);
 
     StatsdFunctionTimer(Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction,
-                        TimeUnit totalTimeFunctionUnits, TimeUnit baseTimeUnit,
+                        TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit,
                         StatsdLineBuilder lineBuilder, Subscriber<String> publisher) {
-        super(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, baseTimeUnit);
+        super(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, baseTimeUnit);
         this.lineBuilder = lineBuilder;
         this.publisher = publisher;
     }

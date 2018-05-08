@@ -33,8 +33,8 @@ import java.util.function.ToLongFunction;
 public interface FunctionTimer extends Meter {
     static <T> Builder<T> builder(String name, T obj, ToLongFunction<T> countFunction,
                                   ToDoubleFunction<T> totalTimeFunction,
-                                  TimeUnit totalTimeFunctionUnits) {
-        return new Builder<>(name, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
+                                  TimeUnit totalTimeFunctionUnit) {
+        return new Builder<>(name, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit);
     }
 
     /**
@@ -78,7 +78,7 @@ public interface FunctionTimer extends Meter {
         private final String name;
         private final ToLongFunction<T> countFunction;
         private final ToDoubleFunction<T> totalTimeFunction;
-        private final TimeUnit totalTimeFunctionUnits;
+        private final TimeUnit totalTimeFunctionUnit;
         private final List<Tag> tags = new ArrayList<>();
 
         @Nullable
@@ -90,12 +90,12 @@ public interface FunctionTimer extends Meter {
         private Builder(String name, @Nullable T obj,
                         ToLongFunction<T> countFunction,
                         ToDoubleFunction<T> totalTimeFunction,
-                        TimeUnit totalTimeFunctionUnits) {
+                        TimeUnit totalTimeFunctionUnit) {
             this.name = name;
             this.obj = obj;
             this.countFunction = countFunction;
             this.totalTimeFunction = totalTimeFunction;
-            this.totalTimeFunctionUnits = totalTimeFunctionUnits;
+            this.totalTimeFunctionUnit = totalTimeFunctionUnit;
         }
 
         /**
@@ -144,7 +144,7 @@ public interface FunctionTimer extends Meter {
          */
         public FunctionTimer register(MeterRegistry registry) {
             return registry.more().timer(new Meter.Id(name, tags, null, description, Type.TIMER), obj, countFunction, totalTimeFunction,
-                    totalTimeFunctionUnits);
+                    totalTimeFunctionUnit);
         }
     }
 }
