@@ -65,7 +65,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         requireNonNull(config.accountId());
         requireNonNull(config.apiKey());
 
-        config().namingConvention(NamingConvention.camelCase);
+        config().namingConvention(new NewRelicNamingConvention());
         start(threadFactory);
     }
 

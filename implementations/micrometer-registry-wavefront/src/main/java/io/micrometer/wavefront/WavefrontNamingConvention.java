@@ -17,6 +17,7 @@ package io.micrometer.wavefront;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.lang.Nullable;
 
 public class WavefrontNamingConvention implements NamingConvention {
@@ -64,9 +65,9 @@ public class WavefrontNamingConvention implements NamingConvention {
      */
     @Override
     public String tagValue(String value) {
-        String partiallySanitized = delegate.tagValue(value).replace("\"", "\\\"");
-        if (partiallySanitized.endsWith("\\"))
-            return partiallySanitized.substring(0, partiallySanitized.length() - 1) + "_";
-        return partiallySanitized;
+        String sanitized = delegate.tagValue(value);
+        return StringEscapeUtils.escapeJson(sanitized.endsWith("\\") ?
+                sanitized.substring(0, sanitized.length() - 1) + "_" :
+                sanitized);
     }
 }
