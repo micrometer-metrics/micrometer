@@ -19,7 +19,7 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.config.NamingConvention;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ElasticNamingConventionTest {
     private final NamingConvention namingConvention = new ElasticNamingConvention();

@@ -37,7 +37,7 @@ public class EhCache2Metrics extends CacheMeterBinder {
     }
 
     /**
-     * Record metrics on a JCache cache.
+     * Record metrics on an EhCache cache.
      *
      * @param registry The registry to bind metrics to.
      * @param cache    The cache to instrument.
@@ -50,7 +50,7 @@ public class EhCache2Metrics extends CacheMeterBinder {
     }
 
     /**
-     * Record metrics on a JCache cache.
+     * Record metrics on an EhCache cache.
      *
      * @param registry The registry to bind metrics to.
      * @param cache    The cache to instrument.

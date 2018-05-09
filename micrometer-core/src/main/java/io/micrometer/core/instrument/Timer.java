@@ -91,26 +91,26 @@ public interface Timer extends Meter, HistogramSupport {
     }
 
     /**
-     * Executes the Supplier `f` and records the time taken.
+     * Executes the Supplier {@code f} and records the time taken.
      *
      * @param f   Function to execute and measure the execution time.
      * @param <T> The return type of the {@link Supplier}.
-     * @return The return value of `f`.
+     * @return The return value of {@code f}.
      */
     <T> T record(Supplier<T> f);
 
     /**
-     * Executes the callable `f` and records the time taken.
+     * Executes the callable {@code f} and records the time taken.
      *
      * @param f   Function to execute and measure the execution time.
      * @param <T> The return type of the {@link Callable}.
-     * @return The return value of `f`.
+     * @return The return value of {@code f}.
      * @throws Exception Any exception bubbling up from the callable.
      */
     <T> T recordCallable(Callable<T> f) throws Exception;
 
     /**
-     * Executes the runnable `f` and records the time taken.
+     * Executes the runnable {@code f} and records the time taken.
      *
      * @param f Function to execute and measure the execution time.
      */
