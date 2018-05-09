@@ -120,7 +120,7 @@ public class HistogramGauges {
     }
 
     private void snapshotIfNecessary() {
-        if (polledGaugesLatch.getCount() <= 0) {
+        if (polledGaugesLatch.getCount() == 0) {
             snapshot = meter.takeSnapshot();
             polledGaugesLatch = new CountDownLatch(totalGauges);
         }
