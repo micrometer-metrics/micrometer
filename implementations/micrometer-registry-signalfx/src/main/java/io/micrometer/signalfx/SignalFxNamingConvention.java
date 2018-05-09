@@ -17,6 +17,7 @@ package io.micrometer.signalfx;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.lang.Nullable;
 
 /**
@@ -38,7 +39,7 @@ public class SignalFxNamingConvention implements NamingConvention {
     // Metric (the metric name) can be any non-empty UTF-8 string, with a maximum length <= 256 characters
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        String formattedName = delegate.name(name, type, baseUnit);
+        String formattedName = delegate.name(StringEscapeUtils.escapeJson(name), type, baseUnit);
         return formattedName.length() > 256 ? formattedName.substring(0, 256) : formattedName;
     }
 
@@ -66,7 +67,7 @@ public class SignalFxNamingConvention implements NamingConvention {
     // Dimension value can be any non-empty UTF-8 string, with a maximum length <= 256 characters.
     @Override
     public String tagValue(String value) {
-        String formattedValue = delegate.tagValue(value);
+        String formattedValue = StringEscapeUtils.escapeJson(delegate.tagValue(value));
         return formattedValue.length() > 256 ? formattedValue.substring(0, 256) : formattedValue;
     }
 }
