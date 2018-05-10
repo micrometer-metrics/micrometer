@@ -32,21 +32,17 @@ public class JettyServerThreadPoolMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        Gauge.builder("jetty.threads.min", threadPool, InstrumentedQueuedThreadPool::getMinThreads)
+        Gauge.builder("jetty.threads.config.min", threadPool, InstrumentedQueuedThreadPool::getMinThreads)
              .tags(tags)
              .description("The number of min threads")
              .register(registry);
-        Gauge.builder("jetty.threads.max", threadPool, InstrumentedQueuedThreadPool::getMaxThreads)
+        Gauge.builder("jetty.threads.config.max", threadPool, InstrumentedQueuedThreadPool::getMaxThreads)
              .tags(tags)
              .description("The number of max threads")
              .register(registry);
         Gauge.builder("jetty.threads.current", threadPool, InstrumentedQueuedThreadPool::getThreads)
              .tags(tags)
              .description("The current number of current threads")
-             .register(registry);
-        Gauge.builder("jetty.threads.idle", threadPool, InstrumentedQueuedThreadPool::getIdleThreads)
-             .tags(tags)
-             .description("The current number of idle threads")
              .register(registry);
         Gauge.builder("jetty.threads.busy", threadPool, InstrumentedQueuedThreadPool::getBusyThreads)
              .tags(tags)
