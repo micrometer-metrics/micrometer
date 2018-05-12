@@ -171,7 +171,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
     }
 
     private void monitor(MeterRegistry registry, ForkJoinPool fj) {
-        FunctionCounter.builder("exeuctor.steals", fj, ForkJoinPool::getStealCount)
+        FunctionCounter.builder("executor.steals", fj, ForkJoinPool::getStealCount)
                 .tags(tags)
                 .description("Estimate of the total number of tasks stolen from " +
                         "one thread's work queue by another. The reported value " +
