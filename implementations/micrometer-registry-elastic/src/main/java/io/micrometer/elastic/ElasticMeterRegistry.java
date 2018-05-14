@@ -102,6 +102,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             putTemplateConnection.disconnect();
             if (putTemplateConnection.getResponseCode() != 200) {
                 logger.error("Error adding metrics template to elasticsearch: {}/{}" + putTemplateConnection.getResponseCode(), putTemplateConnection.getResponseMessage());
+                return;
             }
 
             checkedForIndexTemplate = true;
