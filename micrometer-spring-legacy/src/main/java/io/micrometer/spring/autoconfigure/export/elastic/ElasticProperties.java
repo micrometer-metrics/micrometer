@@ -18,8 +18,6 @@ package io.micrometer.spring.autoconfigure.export.elastic;
 import io.micrometer.spring.autoconfigure.export.StepRegistryProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * {@link ConfigurationProperties} for configuring Elastic metrics export.
  *
@@ -32,26 +30,6 @@ public class ElasticProperties extends StepRegistryProperties {
      * The hosts to send the metrics to
      */
     private String[] hosts;
-
-    /**
-     * Prefix all metrics with a given {@link String}.
-     */
-    private String metricPrefix;
-
-    /**
-     * Convert all durations to a certain {@link TimeUnit}
-     */
-    private TimeUnit rateUnits;
-
-    /**
-     * Convert all durations to a certain {@link TimeUnit}
-     */
-    private TimeUnit durationUnits;
-
-    /**
-     * The timeout to wait for until a connection attempt is and the next host is tried.
-     */
-    private int timeout;
 
     /**
      * The index name to write metrics to.
@@ -95,38 +73,6 @@ public class ElasticProperties extends StepRegistryProperties {
 
     public void setHosts(String[] hosts) {
         this.hosts = hosts;
-    }
-
-    public String getMetricPrefix() {
-        return metricPrefix;
-    }
-
-    public void setMetricPrefix(String metricPrefix) {
-        this.metricPrefix = metricPrefix;
-    }
-
-    public TimeUnit getRateUnits() {
-        return rateUnits;
-    }
-
-    public void setRateUnits(TimeUnit rateUnits) {
-        this.rateUnits = rateUnits;
-    }
-
-    public TimeUnit getDurationUnits() {
-        return durationUnits;
-    }
-
-    public void setDurationUnits(TimeUnit durationUnits) {
-        this.durationUnits = durationUnits;
-    }
-
-    public int getTimeout() {
-        return timeout;
-    }
-
-    public void setTimeout(int timeout) {
-        this.timeout = timeout;
     }
 
     public String getIndex() {
