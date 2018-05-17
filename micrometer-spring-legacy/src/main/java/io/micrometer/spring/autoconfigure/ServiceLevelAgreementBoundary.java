@@ -24,7 +24,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A service level agreement boundary. Can be specified as either a {@link Long}
- * (applicable to timers and distribution summaries) or a {@link Long} (applicable to only timers).
+ * (applicable to timers and distribution summaries) or a {@link Duration}
+ * (applicable to only timers).
  *
  * @author Phillip Webb
  */
