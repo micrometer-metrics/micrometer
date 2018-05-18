@@ -27,6 +27,7 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.URIUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +37,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -78,21 +78,9 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
         this.config().namingConvention(new DynatraceNamingConvention());
 
-        try {
-            this.customMetricEndpointTemplate = URI.create(config.uri() + "/api/v1/timeseries/").toURL();
-        } catch (MalformedURLException e) {
-            // not possible
-            throw new RuntimeException(e);
-        }
-
-        try {
-            this.customDeviceMetricEndpoint = URI.create(config.uri() +
-                "/api/v1/entity/infrastructure/custom/" + config.deviceId() + "?api-token=" + config.apiToken())
-                .toURL();
-        } catch (MalformedURLException e) {
-            // not possible
-            throw new RuntimeException(e);
-        }
+        this.customMetricEndpointTemplate = URIUtils.toURL(config.uri() + "/api/v1/timeseries/");
+        this.customDeviceMetricEndpoint = URIUtils.toURL(config.uri() +
+            "/api/v1/entity/infrastructure/custom/" + config.deviceId() + "?api-token=" + config.apiToken());
 
         if (config.enabled())
             start(threadFactory);
