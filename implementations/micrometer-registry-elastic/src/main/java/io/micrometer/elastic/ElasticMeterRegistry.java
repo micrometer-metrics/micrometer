@@ -21,8 +21,8 @@ import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.NonNull;
-import io.micrometer.core.lang.Nullable;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -318,7 +318,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                     connection.setDoOutput(true);
                 }
 
-                if (isNotBlank(config.userName()) && isNotBlank(config.password())) {
+                if (StringUtils.isNotBlank(config.userName()) && StringUtils.isNotBlank(config.password())) {
                     byte[] authBinary = (config.userName() + ":" + config.password()).getBytes(StandardCharsets.UTF_8);
                     String authEncoded = Base64.getEncoder().encodeToString(authBinary);
                     connection.setRequestProperty("Authorization", "Basic " + authEncoded);
@@ -335,22 +335,4 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         return null;
     }
 
-    /**
-     * Modified from {@link org.apache.commons.lang.StringUtils#isBlank(String)}.
-     *
-     * @param str The string to check
-     * @return {@code true} if the String is null or blank.
-     */
-    private static boolean isNotBlank(@Nullable String str) {
-        int strLen;
-        if (str == null || (strLen = str.length()) == 0) {
-            return false;
-        }
-        for (int i = 0; i < strLen; i++) {
-            if (!Character.isWhitespace(str.charAt(i))) {
-                return true;
-            }
-        }
-        return false;
-    }
 }
