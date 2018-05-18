@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.config;
 
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.Arrays;
@@ -74,7 +75,7 @@ public interface NamingConvention {
             StringBuilder conventionName = new StringBuilder();
             for (int i = 0; i < parts.length; i++) {
                 String str = parts[i];
-                if (str == null || str.length() == 0)
+                if (StringUtils.isEmpty(str))
                     continue;
 
                 if (i == 0) {

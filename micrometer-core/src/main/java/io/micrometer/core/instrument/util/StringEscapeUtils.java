@@ -26,7 +26,7 @@ public class StringEscapeUtils {
      * @return An escaped JSON string.
      */
     public static String escapeJson(@Nullable String string) {
-        if (string == null || string.length() == 0) {
+        if (StringUtils.isEmpty(string)) {
             return "\"\"";
         }
 

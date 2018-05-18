@@ -17,6 +17,7 @@ package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.instrument.util.StringUtils;
 
 /**
  * Configuration for {@link DynatraceMeterRegistry}
@@ -55,7 +56,7 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
     default String[] technologyTypes() {
         String v = get(prefix() + ".technologyTypes");
-        if (v == null || v.isEmpty())
+        if (StringUtils.isEmpty(v))
             return new String[]{"java"};
 
         String[] types = v.split(",");
