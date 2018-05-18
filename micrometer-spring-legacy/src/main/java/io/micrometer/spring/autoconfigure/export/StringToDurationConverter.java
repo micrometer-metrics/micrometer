@@ -15,6 +15,7 @@
  */
 package io.micrometer.spring.autoconfigure.export;
 
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.core.annotation.Order;
@@ -37,7 +38,7 @@ public class StringToDurationConverter implements Converter<String, Duration> {
 
     @Nullable
     private static Duration simpleParse(@Nullable String rawTime) {
-        if (rawTime == null || rawTime.isEmpty())
+        if (StringUtils.isEmpty(rawTime))
             return null;
         if (!Character.isDigit(rawTime.charAt(0)))
             return null;

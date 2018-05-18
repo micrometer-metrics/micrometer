@@ -33,7 +33,7 @@ public final class StringUtils {
      * @return {@code true} if the String is null or has only whitespaces
      */
     public static boolean isBlank(@Nullable String string) {
-        if (string == null || string.isEmpty()) {
+        if (isEmpty(string)) {
             return true;
         }
         for (int i = 0; i < string.length(); i++) {
@@ -52,6 +52,16 @@ public final class StringUtils {
      */
     public static boolean isNotBlank(@Nullable String string) {
         return !isBlank(string);
+    }
+
+    /**
+     * Check if the String is null or empty.
+     *
+     * @param string String to check
+     * @return {@code true} if the String is null or empty
+     */
+    public static boolean isEmpty(@Nullable String string) {
+        return string == null || string.isEmpty();
     }
 
     private StringUtils() {
