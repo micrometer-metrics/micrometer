@@ -39,7 +39,7 @@ class DynatraceMetricDefinitionTest {
                 "The /\"recent cpu usage\" for the Java Virtual Machine process",
                 null, null, technologyTypes);
 
-        assertThat(metric.asJson()).isEqualTo("{\"displayName\":\"The \\/\\\"recent cpu usage\\\" for the Java Virtual Machine process\",\"types\":[\"java\"]}");
+        assertThat(metric.asJson()).isEqualTo("{\"displayName\":\"The /\\\"recent cpu usage\\\" for the Java Virtual Machine process\",\"types\":[\"java\"]}");
     }
 
     @Test
