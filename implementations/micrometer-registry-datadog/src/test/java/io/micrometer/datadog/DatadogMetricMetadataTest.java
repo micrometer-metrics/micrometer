@@ -36,7 +36,7 @@ class DatadogMetricMetadataTest {
                 true,
                 null);
 
-        assertThat(metricMetadata.editMetadataBody()).isEqualTo("{\"type\":\"count\",\"description\":\"The \\/\\\"recent cpu usage\\\" for the Java Virtual Machine process\"}");
+        assertThat(metricMetadata.editMetadataBody()).isEqualTo("{\"type\":\"count\",\"description\":\"The /\\\"recent cpu usage\\\" for the Java Virtual Machine process\"}");
     }
 
 }

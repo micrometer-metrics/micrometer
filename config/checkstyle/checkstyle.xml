@@ -7,7 +7,7 @@
 
         <!-- Imports -->
         <module name="IllegalImportCheck" >
-            <property name="illegalPkgs" value="com.google.common.(?!cache).*"/>
+            <property name="illegalPkgs" value="com.google.common.(?!cache).*,org.apache.commons.text.*"/>
             <property name="regexp" value="true"/>
         </module>
         <module name="UnusedImports">

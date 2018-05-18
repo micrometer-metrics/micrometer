@@ -15,8 +15,8 @@
  */
 package io.micrometer.dynatrace;
 
+import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.lang.Nullable;
-import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.Collections;
 import java.util.Map;
