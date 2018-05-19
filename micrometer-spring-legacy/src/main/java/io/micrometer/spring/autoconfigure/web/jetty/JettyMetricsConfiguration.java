@@ -25,7 +25,10 @@ import org.springframework.context.annotation.Configuration;
 import java.util.Collections;
 
 @Configuration
-@ConditionalOnClass(name = "org.eclipse.jetty.server.Server")
+@ConditionalOnClass(name = {
+    "org.eclipse.jetty.server.Server",
+    "org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerFactory"
+})
 public class JettyMetricsConfiguration {
 
     @Bean
