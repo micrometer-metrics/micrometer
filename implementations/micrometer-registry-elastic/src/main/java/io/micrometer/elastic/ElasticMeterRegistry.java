@@ -263,7 +263,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
         private IndexBuilder(ElasticConfig config, String name, String type, List<Tag> tags, long wallTime) {
             indexLine.append(indexLine(config, wallTime))
-                    .append("{\"").append(config.timeStampFieldName()).append("\":\"").append(timestamp(wallTime)).append("\"")
+                    .append("{\"").append(config.timestampFieldName()).append("\":\"").append(timestamp(wallTime)).append("\"")
                     .append(",\"name\":\"").append(name).append("\"")
                     .append(",\"type\":\"").append(type).append("\"");
 
