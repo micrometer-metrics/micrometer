@@ -84,8 +84,8 @@ public interface ElasticConfig extends StepRegistryConfig {
      *
      * @return field name for timestamp
      */
-    default String timeStampFieldName() {
-        String v = get(prefix() + ".timeStampFieldName");
+    default String timestampFieldName() {
+        String v = get(prefix() + ".timestampFieldName");
         return v == null ? "@timestamp" : v;
     }
 

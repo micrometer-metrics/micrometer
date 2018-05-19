@@ -50,7 +50,7 @@ public class ElasticProperties extends StepRegistryProperties {
     /**
      * The name of the timestamp field.
      */
-    private String timeStampFieldName;
+    private String timestampFieldName;
 
     /**
      * Whether to create the index automatically if it doesn't exist.
@@ -99,12 +99,12 @@ public class ElasticProperties extends StepRegistryProperties {
         this.bulkSize = bulkSize;
     }
 
-    public String getTimeStampFieldName() {
-        return timeStampFieldName;
+    public String getTimestampFieldName() {
+        return timestampFieldName;
     }
 
-    public void setTimeStampFieldName(String timeStampFieldName) {
-        this.timeStampFieldName = timeStampFieldName;
+    public void setTimestampFieldName(String timestampFieldName) {
+        this.timestampFieldName = timestampFieldName;
     }
 
     public boolean isAutoCreateIndex() {
