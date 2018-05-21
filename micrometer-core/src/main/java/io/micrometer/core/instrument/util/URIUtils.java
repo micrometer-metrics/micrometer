@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.util;
 
+import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -36,7 +37,7 @@ public final class URIUtils {
         try {
             return URI.create(uri).toURL();
         } catch (MalformedURLException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 

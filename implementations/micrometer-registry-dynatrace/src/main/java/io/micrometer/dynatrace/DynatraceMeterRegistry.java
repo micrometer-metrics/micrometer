@@ -26,14 +26,12 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.IOUtils;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.URIUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -252,12 +250,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             if (status >= 200 && status < 300) {
                 successHandler.accept(status);
             } else  {
-                String errorBody;
-                try (InputStream in = con.getErrorStream()) {
-                    errorBody = new BufferedReader(new InputStreamReader(in))
-                        .lines().collect(joining("\n"));
-                }
-                errorHandler.accept(status, errorBody);
+                errorHandler.accept(status, IOUtils.toString(con.getErrorStream()));
             }
         } catch (final Throwable e) {
             logger.warn("failed to execute http call to '{}' using method '{}'", url, method, e);
