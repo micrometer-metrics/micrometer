@@ -17,6 +17,7 @@ package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.IOUtils;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.URIUtils;
 import io.micrometer.core.lang.Nullable;
@@ -125,10 +126,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                     if (status >= 200 && status < 300) {
                         logger.info("successfully sent " + batch.size() + " metrics to datadog");
                     } else if (status >= 400) {
-                        try (InputStream in = con.getErrorStream()) {
-                            logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                                    .lines().collect(joining("\n")));
-                        }
+                        logger.error("failed to send metrics: " + IOUtils.toString(con.getErrorStream()));
                     } else {
                         logger.error("failed to send metrics: http " + status);
                     }
@@ -281,16 +279,13 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
             if (status >= 200 && status < 300) {
                 verifiedMetadata.add(metricName);
             } else if (status >= 400) {
-                try (InputStream in = con.getErrorStream()) {
-                    String msg = new BufferedReader(new InputStreamReader(in))
-                            .lines().collect(joining("\n"));
-                    if (msg.contains("metric_name not found")) {
-                        // Do nothing. Metrics that are newly created in Datadog are not immediately available
-                        // for metadata modification. We will keep trying this request on subsequent publishes,
-                        // where it will eventually succeed.
-                    } else {
-                        logger.error("failed to send metric metadata: " + msg);
-                    }
+                String msg = IOUtils.toString(con.getErrorStream());
+                if (msg.contains("metric_name not found")) {
+                    // Do nothing. Metrics that are newly created in Datadog are not immediately available
+                    // for metadata modification. We will keep trying this request on subsequent publishes,
+                    // where it will eventually succeed.
+                } else {
+                    logger.error("failed to send metric metadata: " + msg);
                 }
             } else {
                 logger.error("failed to send metric metadata: http " + status);

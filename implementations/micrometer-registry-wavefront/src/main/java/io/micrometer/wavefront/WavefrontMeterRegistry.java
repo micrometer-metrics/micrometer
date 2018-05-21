@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.IOUtils;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
@@ -105,10 +106,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                         if (status >= 200 && status < 300) {
                             logger.info("successfully sent {} metrics to Wavefront", batch.size());
                         } else {
-                            try (InputStream in = con.getErrorStream()) {
-                                logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                                        .lines().collect(joining("\n")));
-                            }
+                            logger.error("failed to send metrics: " + IOUtils.toString(con.getErrorStream()));
                         }
                     } catch (Exception e) {
                         logger.error(e.getMessage(), e);

@@ -18,15 +18,13 @@ package io.micrometer.influx;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.IOUtils;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -80,10 +78,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 logger.debug("influx database {} is ready to receive metrics", config.db());
                 databaseExists = true;
             } else if (status >= 400) {
-                try (InputStream in = con.getErrorStream()) {
-                    logger.error("unable to create database '{}': {}", config.db(), new BufferedReader(new InputStreamReader(in))
-                            .lines().collect(joining("\n")));
-                }
+                logger.error("unable to create database '{}': {}", config.db(), IOUtils.toString(con.getErrorStream()));
             }
         } catch (Throwable e) {
             logger.error("unable to create database '{}'", config.db(), e);
@@ -168,10 +163,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                         logger.info("successfully sent {} metrics to influx", batch.size());
                         databaseExists = true;
                     } else if (status >= 400) {
-                        try (InputStream in = con.getErrorStream()) {
-                            logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                                    .lines().collect(joining("\n")));
-                        }
+                        logger.error("failed to send metrics: " + IOUtils.toString(con.getErrorStream()));
                     } else {
                         logger.error("failed to send metrics: http " + status);
                     }
