@@ -43,6 +43,11 @@ public class DynatraceProperties  extends StepRegistryProperties {
      */
     private String deviceId;
 
+    /**
+     * The type of technology used to create the custom device and its metrics
+     */
+    private String technologyType;
+
     public String getApiToken() {
         return apiToken;
     }
@@ -65,5 +70,13 @@ public class DynatraceProperties  extends StepRegistryProperties {
 
     public void setDeviceId(String deviceId) {
         this.deviceId = deviceId;
+    }
+
+    public String getTechnologyType() {
+        return technologyType;
+    }
+
+    public void setTechnologyType(String technologyType) {
+        this.technologyType = technologyType;
     }
 }

@@ -15,6 +15,7 @@
  */
 package io.micrometer.dynatrace;
 
+import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.Map;
@@ -39,7 +40,7 @@ class DynatraceTimeSeries {
 
     String asJson() {
         String body = "{\"timeSeriesId\":\"" + metricId + "\"" +
-            ",\"dataPoints\":[[" + time + "," + value + "]]";
+            ",\"dataPoints\":[[" + time + "," + DoubleFormat.decimalOrWhole(value) + "]]";
 
         if (dimensions != null && !dimensions.isEmpty()) {
             body += ",\"dimensions\":{" +

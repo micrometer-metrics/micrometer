@@ -111,10 +111,12 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                 .forEach(this::putCustomMetric);
 
             if (!createdCustomMetrics.isEmpty() && !series.isEmpty()) {
-                postCustomMetricValues(series.stream()
-                    .map(DynatraceCustomMetric::getTimeSeries)
-                    .filter(this::isCustomMetricCreated)
-                    .collect(Collectors.toList()));
+                postCustomMetricValues(
+                    config.technologyType(),
+                    series.stream()
+                        .map(DynatraceCustomMetric::getTimeSeries)
+                        .filter(this::isCustomMetricCreated)
+                        .collect(Collectors.toList()));
             }
         }
     }
@@ -175,7 +177,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         final String metricId = getConventionName(id);
         final List<Tag> tags = getConventionTags(id);
         return new DynatraceCustomMetric(
-            new DynatraceMetricDefinition(metricId, id.getDescription(), unit, extractDimensions(tags), config.technologyTypes()),
+            new DynatraceMetricDefinition(metricId, id.getDescription(), unit, extractDimensions(tags),  new String[]{config.technologyType()}),
             new DynatraceTimeSeries(metricId, time, value.doubleValue(), extractDimensionValues(tags)));
     }
 
@@ -212,11 +214,13 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private void postCustomMetricValues(final List<DynatraceTimeSeries> timeSeries) {
+    private void postCustomMetricValues(final String type, final List<DynatraceTimeSeries> timeSeries) {
         executeHttpCall(customDeviceMetricEndpoint, "POST",
-            timeSeries.stream()
-                .map(DynatraceTimeSeries::asJson)
-                .collect(joining(",")) +
+            "{\"type\":\"" + type + "\"" +
+                ",\"series\":[" +
+                timeSeries.stream()
+                    .map(DynatraceTimeSeries::asJson)
+                    .collect(joining(",")) +
                 "]}",
             status -> logger.info("successfully sent {} timeSeries to Dynatrace", timeSeries.size()),
             (status, errorBody) -> logger.error("failed to send timeSeries, status: {} body: {}", status, errorBody));
