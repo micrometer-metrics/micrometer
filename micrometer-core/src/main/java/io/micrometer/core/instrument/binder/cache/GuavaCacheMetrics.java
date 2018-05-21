@@ -81,7 +81,7 @@ public class GuavaCacheMetrics extends CacheMeterBinder {
     }
 
     @Override
-    protected long missCount() {
+    protected Long missCount() {
         return cache.stats().missCount();
     }
 

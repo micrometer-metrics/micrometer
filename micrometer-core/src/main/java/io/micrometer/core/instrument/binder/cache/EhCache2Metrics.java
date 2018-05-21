@@ -74,7 +74,7 @@ public class EhCache2Metrics extends CacheMeterBinder {
     }
 
     @Override
-    protected long missCount() {
+    protected Long missCount() {
         return stats.cacheMissCount();
     }
 

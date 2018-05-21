@@ -17,12 +17,23 @@ package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.lang.Nullable;
 
 /**
  * @author Jon Schneider
  */
 public class DatadogNamingConvention implements NamingConvention {
+    private final NamingConvention delegate;
+
+    public DatadogNamingConvention() {
+        this(NamingConvention.dot);
+    }
+
+    public DatadogNamingConvention(NamingConvention delegate) {
+        this.delegate = delegate;
+    }
+
     /**
      * See: https://help.datadoghq.com/hc/en-us/articles/203764705-What-are-valid-metric-names-
      *
@@ -31,15 +42,13 @@ public class DatadogNamingConvention implements NamingConvention {
      */
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        String sanitized = name;
+        String sanitized = StringEscapeUtils.escapeJson(delegate.name(name, type, baseUnit));
 
         // Metrics that don't start with a letter get dropped on the floor by the Datadog publish API,
         // so we will prepend them with 'm_'.
         if(!Character.isLetter(sanitized.charAt(0))) {
             sanitized = "m." + sanitized;
         }
-
-        sanitized = NamingConvention.dot.name(sanitized, type, baseUnit);
 
         if(sanitized.length() > 200)
             return sanitized.substring(0, 200);
@@ -52,11 +61,11 @@ public class DatadogNamingConvention implements NamingConvention {
      */
     @Override
     public String tagKey(String key) {
-        String sanitized = key;
+        String sanitized = StringEscapeUtils.escapeJson(delegate.tagKey(key));
         if(Character.isDigit(key.charAt(0))) {
             sanitized = "m." + key;
         }
-        return NamingConvention.dot.tagKey(sanitized);
+        return sanitized;
     }
 
     /**
@@ -65,6 +74,6 @@ public class DatadogNamingConvention implements NamingConvention {
      */
     @Override
     public String tagValue(String value) {
-        return value;
+        return StringEscapeUtils.escapeJson(delegate.tagValue(value));
     }
 }

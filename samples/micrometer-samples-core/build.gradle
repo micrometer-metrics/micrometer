@@ -9,11 +9,11 @@ dependencies {
         force = true
     }      lock '1.7.25'
 
-    ['atlas', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront'].each { sys ->
+    ['atlas', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront', 'dynatrace'].each { sys ->
         compile project(":micrometer-registry-$sys")
     }
 
-    compile 'io.prometheus:simpleclient_pushgateway:latest.release' lock '0.2.0'
+    compile 'io.prometheus:simpleclient_pushgateway:latest.release' lock '0.3.0'
 
-    compile 'io.projectreactor.ipc:reactor-netty:0.7.3.RELEASE' lock '0.7.4.RELEASE'
+    compile 'io.projectreactor.ipc:reactor-netty:latest.release' lock '0.7.4.RELEASE'
 }

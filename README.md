@@ -6,7 +6,7 @@
 An application metrics facade for the most popular monitoring tools. Instrument your code with dimensional metrics with a
 vendor neutral interface and decide on the monitoring backend at the last minute.
 
-More info and the user manual are available on [micrometer.io](http://micrometer.io).
+More info and the user manual are available on [micrometer.io](https://micrometer.io).
 
 Micrometer is the instrumentation library underpinning Spring Boot 2.0's metrics collection.
 
@@ -47,6 +47,6 @@ dependencies {
 The build automatically calculates the "next" version for you when publishing snapshots.
 
 -------------------------------------
-_Licensed under [Apache Software License 2.0](www.apache.org/licenses/LICENSE-2.0)_
+_Licensed under [Apache Software License 2.0](https://www.apache.org/licenses/LICENSE-2.0)_
 
-_Sponsored by [Pivotal](http://pivotal.io)_
+_Sponsored by [Pivotal](https://pivotal.io)_

@@ -15,22 +15,30 @@
  */
 package io.micrometer.core.instrument;
 
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
-import io.micrometer.core.instrument.distribution.TimeWindowHistogram;
+import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
 
 public abstract class AbstractDistributionSummary extends AbstractMeter implements DistributionSummary {
-    private final TimeWindowHistogram histogram;
-    private final DistributionStatisticConfig distributionStatisticConfig;
+    protected final Histogram histogram;
     private final double scale;
 
-    protected AbstractDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+    protected AbstractDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale,
+                                          boolean supportsAggregablePercentiles) {
         super(id);
-        this.histogram = new TimeWindowHistogram(clock, distributionStatisticConfig);
-        this.distributionStatisticConfig = distributionStatisticConfig;
         this.scale = scale;
+
+        if (distributionStatisticConfig.isPublishingPercentiles()) {
+            // hdr-based histogram
+            this.histogram = new TimeWindowPercentileHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles);
+        } else if (distributionStatisticConfig.isPublishingHistogram()) {
+            // fixed boundary histograms, which have a slightly better memory footprint
+            // when we don't need Micrometer-computed percentiles
+            this.histogram = new TimeWindowFixedBoundaryHistogram(clock, distributionStatisticConfig, supportsAggregablePercentiles);
+        } else {
+            // noop histogram
+            this.histogram = NoopHistogram.INSTANCE;
+        }
     }
 
     @Override
@@ -44,18 +52,8 @@ public abstract class AbstractDistributionSummary extends AbstractMeter implemen
     protected abstract void recordNonNegative(double amount);
 
     @Override
-    public double percentile(double percentile) {
-        return histogram.percentile(percentile);
-    }
-
-    @Override
-    public double histogramCountAtValue(long value) {
-        return histogram.histogramCountAtValue(value);
-    }
-
-    @Override
-    public HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
-        return histogram.takeSnapshot(count(), totalAmount(), max(), supportsAggregablePercentiles);
+    public HistogramSnapshot takeSnapshot() {
+        return histogram.takeSnapshot(count(), totalAmount(), max());
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
@@ -67,9 +65,5 @@ public abstract class AbstractDistributionSummary extends AbstractMeter implemen
     @Override
     public int hashCode() {
         return MeterEquivalence.hashCode(this);
-    }
-
-    public DistributionStatisticConfig statsConfig() {
-        return distributionStatisticConfig;
     }
 }

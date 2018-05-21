@@ -17,13 +17,15 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.HistogramSupport;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Track the sample distribution of events. An example would be the response sizes for requests
@@ -31,7 +33,7 @@ import java.util.List;
  *
  * @author Jon Schneider
  */
-public interface DistributionSummary extends Meter {
+public interface DistributionSummary extends Meter, HistogramSupport {
 
     static Builder builder(String name) {
         return new Builder(name);
@@ -68,28 +70,39 @@ public interface DistributionSummary extends Meter {
     double max();
 
     /**
-     * @param percentile A percentile in the domain [0, 1]. For example, 0.5 represents the 50th percentile of the
-     *                   distribution.
-     * @return The value at a specific percentile. This value is non-aggregable across dimensions.
-     */
-    double percentile(double percentile);
-
-    /**
      * Provides cumulative histogram counts.
      *
      * @param value The histogram bucket to retrieve a count for.
-     * @return The count of all events less than or equal to the bucket.
+     * @return The count of all events less than or equal to the bucket. If value does not
+     * match a preconfigured bucket boundary, returns NaN.
+     * @deprecated Use {@link #takeSnapshot()} to retrieve bucket counts.
      */
-    double histogramCountAtValue(long value);
+    @Deprecated
+    default double histogramCountAtValue(long value) {
+        for (CountAtBucket countAtBucket : takeSnapshot().histogramCounts()) {
+            if ((long) countAtBucket.bucket(TimeUnit.NANOSECONDS) == value) {
+                return countAtBucket.count();
+            }
+        }
+        return Double.NaN;
+    }
 
     /**
-     * Summary statistics should be published off of a single snapshot instance so that, for example, there isn't
-     * disagreement between the distribution's count and total because more events continue to stream in.
-     *
-     * @param supportsAggregablePercentiles Whether percentile histogram buckets should be included in the list of {@link CountAtBucket}.
-     * @return A snapshot of all distribution statistics at a point in time.
+     * @param percentile A percentile in the domain [0, 1]. For example, 0.5 represents the 50th percentile of the
+     *                   distribution.
+     * @return The latency at a specific percentile. This value is non-aggregable across dimensions. Returns NaN if
+     * percentile is not a preconfigured percentile that Micrometer is tracking.
+     * @deprecated Use {@link #takeSnapshot()} to retrieve percentiles.
      */
-    HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles);
+    @Deprecated
+    default double percentile(double percentile) {
+        for (ValueAtPercentile valueAtPercentile : takeSnapshot().percentileValues()) {
+            if (valueAtPercentile.percentile() == percentile) {
+                return valueAtPercentile.value();
+            }
+        }
+        return Double.NaN;
+    }
 
     @Override
     default Iterable<Measurement> measure() {
@@ -175,6 +188,19 @@ public interface DistributionSummary extends Meter {
          */
         public Builder publishPercentiles(@Nullable double... percentiles) {
             this.distributionConfigBuilder.percentiles(percentiles);
+            return this;
+        }
+
+        /**
+         * Determines the number of digits of precision to maintain on the dynamic range histogram used to compute
+         * percentile approximations. The higher the degrees of precision, the more accurate the approximation is at the
+         * cost of more memory.
+         *
+         * @param digitsOfPrecision The digits of precision to maintain for percentile approximations.
+         * @return This builder.
+         */
+        public Builder percentilePrecision(@Nullable Integer digitsOfPrecision) {
+            this.distributionConfigBuilder.percentilePrecision(digitsOfPrecision);
             return this;
         }
 

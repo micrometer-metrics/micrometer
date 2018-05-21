@@ -19,11 +19,10 @@ import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramGauges;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
-import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.statsd.internal.FlavorStatsdLineBuilder;
 import io.micrometer.statsd.internal.LogbackMetricsSuppressingUnicastProcessor;
@@ -265,20 +264,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             pauseDetector) {
         Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
                 statsdConfig.step().toMillis());
-
-        if (distributionStatisticConfig.getPercentiles() != null) {
-            for (double percentile : distributionStatisticConfig.getPercentiles()) {
-                gauge(id.getName() + ".percentile", Tags.concat(getConventionTags(id), "phi", DoubleFormat.decimalOrNan(percentile)),
-                        timer, t -> t.percentile(percentile, getBaseTimeUnit()));
-            }
-        }
-
-        for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
-            Tags bucketTags = Tags.concat(getConventionTags(id), "le",
-                    DoubleFormat.decimalOrWhole(TimeUtils.nanosToUnit(bucket, getBaseTimeUnit())));
-            gauge(id.getName() + ".histogram", bucketTags, timer, t -> t.histogramCountAtValue(bucket));
-        }
-
+        HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
     }
 
@@ -287,20 +273,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig
             distributionStatisticConfig, double scale) {
         DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), publisher, clock, distributionStatisticConfig, scale);
-
-        if (distributionStatisticConfig.getPercentiles() != null) {
-            for (double percentile : distributionStatisticConfig.getPercentiles()) {
-                gauge(id.getName() + ".percentile", Tags.concat(getConventionTags(id), "phi", DoubleFormat.decimalOrNan(percentile)),
-                        summary, s -> s.percentile(percentile));
-            }
-        }
-
-        for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
-            Tags bucketTags = Tags.concat(getConventionTags(id), "le",
-                    DoubleFormat.decimalOrWhole(bucket));
-            gauge(id.getName() + ".histogram", bucketTags, summary, s -> s.histogramCountAtValue(bucket));
-        }
-
+        HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
 
@@ -314,8 +287,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T
             obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit
-                                                         totalTimeFunctionUnits) {
-        StatsdFunctionTimer ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits,
+                                                         totalTimeFunctionUnit) {
+        StatsdFunctionTimer ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
                 getBaseTimeUnit(), lineBuilder(id), publisher);
         pollableMeters.add(ft);
         return ft;

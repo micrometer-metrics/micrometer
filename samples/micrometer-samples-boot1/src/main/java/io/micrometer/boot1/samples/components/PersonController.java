@@ -77,8 +77,6 @@ public class PersonController {
             result.put("count", t.count());
             result.put("max", t.max(TimeUnit.MILLISECONDS));
             result.put("mean", t.mean(TimeUnit.MILLISECONDS));
-            result.put("50.percentile", t.percentile(0.5, TimeUnit.MILLISECONDS));
-            result.put("95.percentile", t.percentile(0.95, TimeUnit.MILLISECONDS));
         }
         return result;
 

@@ -19,8 +19,8 @@ import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.TimeWindowMax;
 import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.instrument.util.TimeDecayingMax;
 import io.micrometer.core.lang.Nullable;
 import org.reactivestreams.Subscriber;
 
@@ -30,15 +30,15 @@ import java.util.concurrent.atomic.LongAdder;
 public class StatsdDistributionSummary extends AbstractDistributionSummary {
     private final LongAdder count = new LongAdder();
     private final DoubleAdder amount = new DoubleAdder();
-    private final TimeDecayingMax max;
+    private final TimeWindowMax max;
 
     private final StatsdLineBuilder lineBuilder;
     private final Subscriber<String> publisher;
 
     StatsdDistributionSummary(Meter.Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher, Clock clock,
                               DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        super(id, clock, distributionStatisticConfig, scale);
-        this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
+        super(id, clock, distributionStatisticConfig, scale, false);
+        this.max = new TimeWindowMax(clock, distributionStatisticConfig);
         this.lineBuilder = lineBuilder;
         this.publisher = publisher;
     }

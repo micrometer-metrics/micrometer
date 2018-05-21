@@ -16,9 +16,9 @@
 package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.URIUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,12 +63,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         this.config().namingConvention(new DatadogNamingConvention());
 
-        try {
-            this.postTimeSeriesEndpoint = URI.create(config.uri() + "/api/v1/series?api_key=" + config.apiKey()).toURL();
-        } catch (MalformedURLException e) {
-            // not possible
-            throw new RuntimeException(e);
-        }
+        this.postTimeSeriesEndpoint = URIUtils.toURL(config.uri() + "/api/v1/series?api_key=" + config.apiKey());
 
         this.config = config;
 
@@ -117,6 +112,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                                 return writeMeter(m, metadataToSend);
                             }).collect(joining(",")) +
                             "]}";
+
+                    logger.debug(body);
 
                     try (OutputStream os = con.getOutputStream()) {
                         os.write(body.getBytes());
@@ -173,14 +170,13 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
     private Stream<String> writeTimer(Timer timer, Map<String, DatadogMetricMetadata> metadata) {
         final long wallTime = clock.wallTime();
-        final HistogramSnapshot snapshot = timer.takeSnapshot(false);
         final Stream.Builder<String> metrics = Stream.builder();
 
         Meter.Id id = timer.getId();
-        metrics.add(writeMetric(id, "sum", wallTime, snapshot.total(getBaseTimeUnit())));
-        metrics.add(writeMetric(id, "count", wallTime, snapshot.count()));
-        metrics.add(writeMetric(id, "avg", wallTime, snapshot.mean(getBaseTimeUnit())));
-        metrics.add(writeMetric(id, "max", wallTime, snapshot.max(getBaseTimeUnit())));
+        metrics.add(writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit())));
+        metrics.add(writeMetric(id, "count", wallTime, timer.count()));
+        metrics.add(writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit())));
+        metrics.add(writeMetric(id, "max", wallTime, timer.max(getBaseTimeUnit())));
 
         addToMetadataList(metadata, id, "sum", Statistic.TOTAL_TIME, null);
         addToMetadataList(metadata, id, "count", Statistic.COUNT, "occurrence");
@@ -192,14 +188,13 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
     private Stream<String> writeSummary(DistributionSummary summary, Map<String, DatadogMetricMetadata> metadata) {
         final long wallTime = clock.wallTime();
-        final HistogramSnapshot snapshot = summary.takeSnapshot(false);
         final Stream.Builder<String> metrics = Stream.builder();
 
         Meter.Id id = summary.getId();
-        metrics.add(writeMetric(id, "sum", wallTime, snapshot.total()));
-        metrics.add(writeMetric(id, "count", wallTime, snapshot.count()));
-        metrics.add(writeMetric(id, "avg", wallTime, snapshot.mean()));
-        metrics.add(writeMetric(id, "max", wallTime, snapshot.max()));
+        metrics.add(writeMetric(id, "sum", wallTime, summary.totalAmount()));
+        metrics.add(writeMetric(id, "count", wallTime, summary.count()));
+        metrics.add(writeMetric(id, "avg", wallTime, summary.mean()));
+        metrics.add(writeMetric(id, "max", wallTime, summary.max()));
 
         addToMetadataList(metadata, id, "sum", Statistic.TOTAL, null);
         addToMetadataList(metadata, id, "count", Statistic.COUNT, "occurrence");
@@ -240,7 +235,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         if (suffix != null)
             fullId = idWithSuffix(id, suffix);
 
-        Iterable<Tag> tags = fullId.getTags();
+        Iterable<Tag> tags = getConventionTags(fullId);
 
         String host = config.hostTag() == null ? "" : stream(tags.spliterator(), false)
                 .filter(t -> requireNonNull(config.hostTag()).equals(t.getKey()))

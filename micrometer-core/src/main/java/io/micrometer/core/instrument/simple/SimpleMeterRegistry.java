@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.simple;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.cumulative.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramGauges;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
@@ -25,8 +26,6 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.step.StepCounter;
 import io.micrometer.core.instrument.step.StepDistributionSummary;
 import io.micrometer.core.instrument.step.StepTimer;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
@@ -53,32 +52,21 @@ public class SimpleMeterRegistry extends MeterRegistry {
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
         DistributionStatisticConfig merged = distributionStatisticConfig.merge(DistributionStatisticConfig.builder()
-            .expiry(config.step())
-            .build());
+                .expiry(config.step())
+                .build());
 
         DistributionSummary summary;
         switch (config.mode()) {
             case CUMULATIVE:
-                summary = new CumulativeDistributionSummary(id, clock, merged, scale);
+                summary = new CumulativeDistributionSummary(id, clock, merged, scale, false);
                 break;
             case STEP:
             default:
-                summary = new StepDistributionSummary(id, clock, merged, scale);
+                summary = new StepDistributionSummary(id, clock, merged, scale, false);
                 break;
         }
 
-        if (distributionStatisticConfig.getPercentiles() != null) {
-            for (double percentile : distributionStatisticConfig.getPercentiles()) {
-                gauge(id.getName() + ".percentile", Tags.concat(getConventionTags(id), "phi", DoubleFormat.decimalOrNan(percentile)),
-                        summary, s -> s.percentile(percentile));
-            }
-        }
-
-        for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
-            Tags bucketTags = Tags.concat(getConventionTags(id), "le",
-                    DoubleFormat.decimalOrWhole(bucket));
-            gauge(id.getName() + ".histogram", bucketTags, summary, s -> s.histogramCountAtValue(bucket));
-        }
+        HistogramGauges.registerWithCommonFormat(summary, this);
 
         return summary;
     }
@@ -91,32 +79,21 @@ public class SimpleMeterRegistry extends MeterRegistry {
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
         DistributionStatisticConfig merged = distributionStatisticConfig.merge(DistributionStatisticConfig.builder()
-            .expiry(config.step())
-            .build());
+                .expiry(config.step())
+                .build());
 
         Timer timer;
         switch (config.mode()) {
             case CUMULATIVE:
-                timer = new CumulativeTimer(id, clock, merged, pauseDetector, getBaseTimeUnit());
+                timer = new CumulativeTimer(id, clock, merged, pauseDetector, getBaseTimeUnit(), false);
                 break;
             case STEP:
             default:
-                timer = new StepTimer(id, clock, merged, pauseDetector, getBaseTimeUnit());
+                timer = new StepTimer(id, clock, merged, pauseDetector, getBaseTimeUnit(), false);
                 break;
         }
 
-        if (distributionStatisticConfig.getPercentiles() != null) {
-            for (double percentile : distributionStatisticConfig.getPercentiles()) {
-                gauge(id.getName() + ".percentile", Tags.concat(getConventionTags(id), "phi", DoubleFormat.decimalOrNan(percentile)),
-                        timer, t -> t.percentile(percentile, getBaseTimeUnit()));
-            }
-        }
-
-        for (Long bucket : distributionStatisticConfig.getHistogramBuckets(false)) {
-            Tags bucketTags = Tags.concat(getConventionTags(id), "le",
-                    DoubleFormat.decimalOrWhole(TimeUtils.nanosToUnit(bucket, getBaseTimeUnit())));
-            gauge(id.getName() + ".histogram", bucketTags, timer, t -> t.histogramCountAtValue(bucket));
-        }
+        HistogramGauges.registerWithCommonFormat(timer, this);
 
         return timer;
     }
@@ -143,8 +120,8 @@ public class SimpleMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
-        return new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+        return new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
     }
 
     @Override
@@ -160,8 +137,8 @@ public class SimpleMeterRegistry extends MeterRegistry {
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
         return DistributionStatisticConfig.builder()
-            .expiry(config.step())
-            .build()
-            .merge(DistributionStatisticConfig.DEFAULT);
+                .expiry(config.step())
+                .build()
+                .merge(DistributionStatisticConfig.DEFAULT);
     }
 }

@@ -37,6 +37,8 @@ public interface ElasticConfig extends StepRegistryConfig {
 
     /**
      * Property prefix to prepend to configuration names.
+     *
+     * @return property prefix
      */
     default String prefix() {
         return "elastic";
@@ -45,6 +47,8 @@ public interface ElasticConfig extends StepRegistryConfig {
     /**
      * The hosts to send the metrics to
      * Default is "http://localhost:9200"
+     *
+     * @return hosts
      */
     default String[] hosts() {
         String v = get(prefix() + ".hosts");
@@ -54,6 +58,8 @@ public interface ElasticConfig extends StepRegistryConfig {
     /**
      * The index name to write metrics to.
      * Default is: "metrics"
+     *
+     * @return index name
      */
     default String index() {
         String v = get(prefix() + ".index");
@@ -64,6 +70,8 @@ public interface ElasticConfig extends StepRegistryConfig {
      * The index date format used for rolling indices.
      * This is appended to the index name, split by a '-'.
      * Default is: "yyyy-MM"
+     *
+     * @return date format for index
      */
     default String indexDateFormat() {
         String v = get(prefix() + ".indexDateFormat");
@@ -73,15 +81,19 @@ public interface ElasticConfig extends StepRegistryConfig {
     /**
      * The name of the timestamp field.
      * Default is: "@timestamp"
+     *
+     * @return field name for timestamp
      */
-    default String timeStampFieldName() {
-        String v = get(prefix() + ".timeStampFieldName");
+    default String timestampFieldName() {
+        String v = get(prefix() + ".timestampFieldName");
         return v == null ? "@timestamp" : v;
     }
 
     /**
      * Whether to create the index automatically if it doesn't exist.
      * Default is: {@code true}
+     *
+     * @return whether to create the index automatically
      */
     default boolean autoCreateIndex() {
         String v = get(prefix() + ".autoCreateIndex");
@@ -91,6 +103,8 @@ public interface ElasticConfig extends StepRegistryConfig {
     /**
      * The Basic Authentication username.
      * Default is: "" (= do not perform Basic Authentication)
+     *
+     * @return username for Basic Authentication
      */
     default String userName() {
         String v = get(prefix() + ".userName");
@@ -100,6 +114,8 @@ public interface ElasticConfig extends StepRegistryConfig {
     /**
      * The Basic Authentication password.
      * Default is: "" (= do not perform Basic Authentication)
+     *
+     * @return password for Basic Authentication
      */
     default String password() {
         String v = get(prefix() + ".password");

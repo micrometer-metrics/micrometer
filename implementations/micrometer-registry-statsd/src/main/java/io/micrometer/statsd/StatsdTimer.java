@@ -17,7 +17,6 @@ package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepDouble;
@@ -28,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
-public class StatsdTimer extends AbstractTimer implements Timer {
+public class StatsdTimer extends AbstractTimer {
     private final LongAdder count = new LongAdder();
     private final DoubleAdder totalTime = new DoubleAdder();
     private StepDouble max;
@@ -38,7 +37,7 @@ public class StatsdTimer extends AbstractTimer implements Timer {
 
     StatsdTimer(Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher, Clock clock,
                 DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis) {
-        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit);
+        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, false);
         this.max = new StepDouble(clock, stepMillis);
         this.lineBuilder = lineBuilder;
         this.publisher = publisher;

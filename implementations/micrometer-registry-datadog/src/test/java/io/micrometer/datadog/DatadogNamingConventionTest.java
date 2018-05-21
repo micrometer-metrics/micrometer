@@ -15,6 +15,7 @@
  */
 package io.micrometer.datadog;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Meter;
 import org.junit.jupiter.api.Test;
 
@@ -36,5 +37,13 @@ class DatadogNamingConventionTest {
     @Test
     void dotNotationIsConvertedToCamelCase() {
         assertThat(convention.name("gauge.size", Meter.Type.GAUGE, null)).isEqualTo("gauge.size");
+    }
+
+    @Issue("#589")
+    @Test
+    void jsonSpecialCharactersAreEscaped() {
+        assertThat(convention.name("name\"", Meter.Type.GAUGE, null)).isEqualTo("name\\\"");
+        assertThat(convention.tagKey("key\"")).isEqualTo("key\\\"");
+        assertThat(convention.tagValue("value\"")).isEqualTo("value\\\"");
     }
 }

@@ -34,7 +34,7 @@ public class DropwizardFunctionTimer<T> extends AbstractMeter implements Functio
     private final WeakReference<T> ref;
     private final ToLongFunction<T> countFunction;
     private final ToDoubleFunction<T> totalTimeFunction;
-    private final TimeUnit totalTimeFunctionUnits;
+    private final TimeUnit totalTimeFunctionUnit;
 
     private final AtomicLong lastCount = new AtomicLong(0);
     private final DropwizardRate rate;
@@ -45,13 +45,13 @@ public class DropwizardFunctionTimer<T> extends AbstractMeter implements Functio
     DropwizardFunctionTimer(Meter.Id id, Clock clock,
                             T obj, ToLongFunction<T> countFunction,
                             ToDoubleFunction<T> totalTimeFunction,
-                            TimeUnit totalTimeFunctionUnits,
+                            TimeUnit totalTimeFunctionUnit,
                             TimeUnit registryBaseTimeUnit) {
         super(id);
         this.ref = new WeakReference<>(obj);
         this.countFunction = countFunction;
         this.totalTimeFunction = totalTimeFunction;
-        this.totalTimeFunctionUnits = totalTimeFunctionUnits;
+        this.totalTimeFunctionUnit = totalTimeFunctionUnit;
         this.rate = new DropwizardRate(clock);
         this.registryBaseTimeUnit = registryBaseTimeUnit;
         this.dropwizardMeter = new Timer(null, new DropwizardClock(clock)) {
@@ -148,7 +148,7 @@ public class DropwizardFunctionTimer<T> extends AbstractMeter implements Functio
         if (obj2 == null)
             return lastTime;
         return (lastTime = TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2),
-            totalTimeFunctionUnits,
+            totalTimeFunctionUnit,
             unit));
     }
 

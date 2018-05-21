@@ -69,6 +69,7 @@ public class StatsdPropertiesConfigAdapter extends PropertiesConfigAdapter<Stats
             StatsdConfig.super::pollingFrequency);
     }
 
+    @Deprecated
     @Override
     public int queueSize() {
         return get(StatsdProperties::getQueueSize, StatsdConfig.super::queueSize);

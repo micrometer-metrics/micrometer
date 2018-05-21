@@ -27,6 +27,8 @@ import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
+import org.pcollections.HashTreePMap;
+import org.pcollections.PMap;
 
 import java.time.Duration;
 import java.util.*;
@@ -55,7 +57,7 @@ public abstract class MeterRegistry implements AutoCloseable {
     private final List<Consumer<Meter>> meterAddedListeners = new CopyOnWriteArrayList<>();
     private final Config config = new Config();
     private final More more = new More();
-    private volatile Map<Id, Meter> meterMap = Collections.emptyMap();
+    private volatile PMap<Id, Meter> meterMap = HashTreePMap.empty();
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private PauseDetector pauseDetector = new ClockDriftPauseDetector(
             Duration.ofMillis(100),
@@ -172,11 +174,11 @@ public abstract class MeterRegistry implements AutoCloseable {
      * @param obj                    The state object from which the count and total functions derive measurements.
      * @param countFunction          A monotonically increasing count function.
      * @param totalTimeFunction      A monotonically increasing total time function.
-     * @param totalTimeFunctionUnits The base unit of time of the totals returned by the total time function.
+     * @param totalTimeFunctionUnit The base unit of time of the totals returned by the total time function.
      * @param <T>                    The type of the object upon which the value functions derives their measurements.
      * @return A new function timer.
      */
-    protected abstract <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits);
+    protected abstract <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit);
 
     /**
      * Build a new function counter to be added to the registry. This is guaranteed to only be called if the function counter doesn't already exist.
@@ -512,6 +514,7 @@ public abstract class MeterRegistry implements AutoCloseable {
         return registerMeterIfNecessary(meterClass, id, null, (id2, conf) -> builder.apply(id2), noopBuilder);
     }
 
+    @SuppressWarnings("unchecked")
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id,
                                                          @Nullable DistributionStatisticConfig config, BiFunction<Meter.Id, DistributionStatisticConfig, Meter> builder,
                                                          Function<Meter.Id, M> noopBuilder) {
@@ -520,33 +523,18 @@ public abstract class MeterRegistry implements AutoCloseable {
             mappedId = filter.map(mappedId);
         }
 
-        if (!accept(id)) {
-            //noinspection unchecked
-            return noopBuilder.apply(id);
-        }
-
-        if (config != null) {
-            for (MeterFilter filter : filters) {
-                DistributionStatisticConfig filteredConfig = filter.configure(mappedId, config);
-                if (filteredConfig != null) {
-                    config = filteredConfig;
-                }
-            }
-        }
-
-        Meter m = getOrCreateMeter(config, builder, mappedId, noopBuilder);
+        Meter m = getOrCreateMeter(config, builder, id, mappedId, noopBuilder);
 
         if (!meterClass.isInstance(m)) {
             throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
         }
 
-        //noinspection unchecked
         return (M) m;
     }
 
     private Meter getOrCreateMeter(@Nullable DistributionStatisticConfig config,
                                    BiFunction<Id, /*Nullable Generic*/ DistributionStatisticConfig, Meter> builder,
-                                   Id mappedId, Function<Meter.Id, ? extends Meter> noopBuilder) {
+                                   Id originalId, Id mappedId, Function<Meter.Id, ? extends Meter> noopBuilder) {
         Meter m = meterMap.get(mappedId);
 
         if (m == null) {
@@ -558,8 +546,22 @@ public abstract class MeterRegistry implements AutoCloseable {
                 m = meterMap.get(mappedId);
 
                 if (m == null) {
+                    if (!accept(originalId)) {
+                        //noinspection unchecked
+                        return noopBuilder.apply(mappedId);
+                    }
+
+                    if (config != null) {
+                        for (MeterFilter filter : filters) {
+                            DistributionStatisticConfig filteredConfig = filter.configure(mappedId, config);
+                            if (filteredConfig != null) {
+                                config = filteredConfig;
+                            }
+                        }
+                    }
+
                     m = builder.apply(mappedId, config);
-                    register(mappedId, m);
+                    meterMap = meterMap.plus(mappedId, m);
                     for (Consumer<Meter> onAdd : meterAddedListeners) {
                         onAdd.accept(m);
                     }
@@ -568,13 +570,6 @@ public abstract class MeterRegistry implements AutoCloseable {
         }
 
         return m;
-    }
-
-    private void register(Id id, Meter meter) {
-        HashMap<Id, Meter> newMeterMap = new HashMap<>(meterMap);
-        newMeterMap.put(id, meter);
-
-        meterMap = Collections.unmodifiableMap(newMeterMap);
     }
 
     private boolean accept(Meter.Id id) {

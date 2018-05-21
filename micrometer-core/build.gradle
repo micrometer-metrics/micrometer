@@ -1,12 +1,15 @@
 plugins {
     id "net.ltgt.apt" version "0.10" // for dagger injection testing
     id 'idea'
+    id 'com.github.johnrengelman.shadow' version '2.0.2'
 }
 
 apply plugin: 'org.junit.platform.gradle.plugin'
 apply plugin: 'nebula.optional-base'
 
 dependencies {
+    compile 'org.pcollections:pcollections:latest.release' lock '3.0.1'
+
     // JSR-305 only used for non-required meta-annotations
     compile "com.google.code.findbugs:jsr305:latest.release", optional lock '3.0.2'
 
@@ -21,7 +24,7 @@ dependencies {
     // cache monitoring
     compile 'com.google.guava:guava:latest.release', optional lock '23.0'
     compile 'com.github.ben-manes.caffeine:caffeine:latest.release', optional lock '2.6.1'
-    compile 'net.sf.ehcache:ehcache:latest.release', optional lock '2.10.4'
+    compile 'net.sf.ehcache:ehcache:2.10.4', optional
     compile 'javax.cache:cache-api:1.0.0', optional
     compile 'com.hazelcast:hazelcast:3.8.+', optional lock '3.8.9'
     compile 'org.hibernate:hibernate-entitymanager:latest.release', optional lock '5.2.13.Final'
@@ -72,4 +75,32 @@ dependencies {
     testCompile 'org.assertj:assertj-core:latest.release' lock '3.9.0'
 
     testCompile 'org.ehcache:ehcache:3.+' lock '3.4.0'
+}
+
+shadowJar {
+    configurations = [project.configurations.compile]
+    classifier = null
+    dependencies {
+        include(dependency('org.pcollections:'))
+    }
+    relocate 'org.pcollections', 'io.micrometer.shaded.org.pcollections'
+}
+
+jar.deleteAllActions()
+jar.dependsOn shadowJar
+
+publishing {
+    publications {
+        withType(MavenPublication) {
+            pom.withXml {
+                asNode()
+                        .dependencies
+                        .dependency
+                        .findAll {
+                    ['pcollections'].contains(it.artifactId.text())
+                }
+                .each { it.parent().remove(it) }
+            }
+        }
+    }
 }

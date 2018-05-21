@@ -15,6 +15,7 @@
  */
 package io.micrometer.graphite;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.config.NamingConvention;
@@ -23,12 +24,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GraphiteHierarchicalNameMapperTest {
+    private final GraphiteHierarchicalNameMapper nameMapper = new GraphiteHierarchicalNameMapper("stack", "app.name");
+    private final Meter.Id id = new Meter.Id("my.name", Tags.of("app.name", "MYAPP", "stack", "PROD", "other.tag", "value"),
+            null, null, Meter.Type.COUNTER);
+
+    @Issue("#561")
     @Test
     void tagsAsPrefix() {
-        GraphiteHierarchicalNameMapper nameMapper = new GraphiteHierarchicalNameMapper("application");
-        Meter.Id id = new Meter.Id("my.name", Tags.of("application", "MYAPP", "other", "value"), null, null, Meter.Type.COUNTER);
-
         assertThat(nameMapper.toHierarchicalName(id, NamingConvention.camelCase))
-            .isEqualTo("MYAPP.myName.other.value");
+                .isEqualTo("PROD.MYAPP.myName.otherTag.value");
     }
 }

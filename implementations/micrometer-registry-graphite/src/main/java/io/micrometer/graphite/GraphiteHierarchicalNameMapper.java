@@ -20,31 +20,35 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class GraphiteHierarchicalNameMapper implements HierarchicalNameMapper {
-    private final String[] tagsAsPrefix;
+    private final List<String> tagsAsPrefix;
 
     public GraphiteHierarchicalNameMapper(String... tagsAsPrefix) {
-        this.tagsAsPrefix = tagsAsPrefix;
+        this.tagsAsPrefix = Arrays.asList(tagsAsPrefix);
     }
 
     @Override
     public String toHierarchicalName(Meter.Id id, NamingConvention convention) {
         StringBuilder prefix = new StringBuilder();
+        for (String tagPrefix : tagsAsPrefix) {
+            String value = id.getTag(tagPrefix);
+            if (value != null) {
+                prefix.append(convention.tagValue(value)).append(".");
+            }
+        }
+
         StringBuilder tags = new StringBuilder();
-
-        if (id.getTags().iterator().hasNext()) {
-            conventionTags: for (Tag tag : id.getConventionTags(convention)) {
-                for (String tagPrefix : tagsAsPrefix) {
-                    if (tag.getKey().equals(tagPrefix)) {
-                        prefix.append(tag.getValue()).append(".");
-                        continue conventionTags;
-                    }
-                }
-
-                tags.append(("." + tag.getKey() + "." + tag.getValue()).replace(" ", "_"));
+        for (Tag tag : id.getTags()) {
+            if (!tagsAsPrefix.contains(tag.getKey())) {
+                tags.append(("." + convention.tagKey(tag.getKey()) + "." + convention.tagValue(tag.getValue()))
+                        .replace(" ", "_"));
             }
         }
 
         return prefix.toString() + id.getConventionName(convention) + tags;
     }
 }
+

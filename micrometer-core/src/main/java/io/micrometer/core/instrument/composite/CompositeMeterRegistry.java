@@ -22,9 +22,10 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
@@ -36,8 +37,14 @@ import java.util.function.ToLongFunction;
  * @author Jon Schneider
  */
 public class CompositeMeterRegistry extends MeterRegistry {
-    private final Set<MeterRegistry> registries = ConcurrentHashMap.newKeySet();
+    private final AtomicBoolean registriesLock = new AtomicBoolean(false);
+    private final Set<MeterRegistry> registries = Collections.newSetFromMap(new IdentityHashMap<>());
     private final Set<MeterRegistry> unmodifiableRegistries = Collections.unmodifiableSet(registries);
+
+    // VisibleForTesting
+    volatile Set<MeterRegistry> nonCompositeDescendants = Collections.emptySet();
+
+    private volatile Set<CompositeMeterRegistry> parents = Collections.newSetFromMap(new IdentityHashMap<>());
 
     public CompositeMeterRegistry() {
         this(Clock.SYSTEM);
@@ -46,12 +53,21 @@ public class CompositeMeterRegistry extends MeterRegistry {
     public CompositeMeterRegistry(Clock clock) {
         super(clock);
         config().namingConvention(NamingConvention.identity);
-        config().onMeterAdded(m -> registries.forEach(((CompositeMeter) m)::add));
+        config().onMeterAdded(m -> {
+            if (m instanceof CompositeMeter) { // should always be
+                for (; ; ) {
+                    if (!registriesLock.get()) {
+                        nonCompositeDescendants.forEach(((CompositeMeter) m)::add);
+                        break;
+                    }
+                }
+            }
+        });
     }
 
     public CompositeMeterRegistry(Clock clock, Iterable<MeterRegistry> registries) {
         this(clock);
-        registries.forEach(this.registries::add);
+        registries.forEach(this::add);
     }
 
     @Override
@@ -85,8 +101,8 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
-        return new CompositeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits);
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+        return new CompositeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit);
     }
 
     @Override
@@ -109,19 +125,101 @@ public class CompositeMeterRegistry extends MeterRegistry {
         return new CompositeCustomMeter(id, type, measurements);
     }
 
+
     public CompositeMeterRegistry add(MeterRegistry registry) {
-        if (registries.add(registry)) {
-            // in the event of a race, the new meter will be added to this registry via the onMeterAdded listener
-            forEachMeter(m -> ((CompositeMeter) m).add(registry));
+        forbidSelfContainingComposite(registry);
+
+        for (; ; ) {
+            if (registriesLock.compareAndSet(false, true)) {
+                try {
+                    if (registry instanceof CompositeMeterRegistry) {
+                        ((CompositeMeterRegistry) registry).parents.add(this);
+                    }
+
+                    if (registries.add(registry)) {
+                        updateDescendants(false);
+                    }
+                    break;
+                } finally {
+                    registriesLock.set(false);
+                }
+            }
         }
+
         return this;
     }
 
-    public CompositeMeterRegistry remove(MeterRegistry registry) {
-        if (registries.remove(registry)) {
-            forEachMeter(m -> ((CompositeMeter) m).remove(registry));
+    private void forbidSelfContainingComposite(MeterRegistry registry) {
+        if (registry == this) {
+            throw new IllegalArgumentException("Adding a composite meter registry to itself is not allowed!");
         }
+
+        if (registry instanceof CompositeMeterRegistry) {
+            ((CompositeMeterRegistry) registry).getRegistries().forEach(this::forbidSelfContainingComposite);
+        }
+    }
+
+    public CompositeMeterRegistry remove(MeterRegistry registry) {
+        for (; ; ) {
+            if (registriesLock.compareAndSet(false, true)) {
+                try {
+                    if (registry instanceof CompositeMeterRegistry) {
+                        ((CompositeMeterRegistry) registry).parents.remove(this);
+                    }
+
+                    if (registries.remove(registry)) {
+                        updateDescendants(false);
+                    }
+                    break;
+                } finally {
+                    registriesLock.set(false);
+                }
+            }
+        }
+
         return this;
+    }
+
+    void updateDescendants(boolean lock) {
+        Set<MeterRegistry> descendants = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (; ; ) {
+            if (registriesLock.compareAndSet(!lock, true)) {
+                try {
+                    for (MeterRegistry r : registries) {
+                        if (r instanceof CompositeMeterRegistry) {
+                            descendants.addAll(((CompositeMeterRegistry) r).nonCompositeDescendants);
+                        } else {
+                            descendants.add(r);
+                        }
+                    }
+
+                    Set<MeterRegistry> removes = Collections.newSetFromMap(new IdentityHashMap<>());
+                    removes.addAll(nonCompositeDescendants);
+                    removes.removeAll(descendants);
+
+                    Set<MeterRegistry> adds = Collections.newSetFromMap(new IdentityHashMap<>());
+                    adds.addAll(descendants);
+                    adds.removeAll(nonCompositeDescendants);
+
+                    if (!removes.isEmpty() || !adds.isEmpty()) {
+                        for (Meter meter : getMeters()) {
+                            if (meter instanceof CompositeMeter) { // should always be
+                                CompositeMeter composite = (CompositeMeter) meter;
+                                removes.forEach(composite::remove);
+                                adds.forEach(composite::add);
+                            }
+                        }
+                    }
+
+                    this.nonCompositeDescendants = descendants;
+                    break;
+                } finally {
+                    registriesLock.set(false);
+                }
+            }
+        }
+
+        this.parents.forEach(p -> p.updateDescendants(true));
     }
 
     public Set<MeterRegistry> getRegistries() {

@@ -14,7 +14,7 @@ general:
     - "build/publications"
 deployment:
   publish:
-    branch: master
+    branch: [master, 1.0.x]
     commands:
       - ./gradle/deploy.sh
 dependencies:

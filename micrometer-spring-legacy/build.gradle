@@ -1,6 +1,5 @@
 plugins {
     id "io.spring.dependency-management" version "1.0.3.RELEASE"
-    id "net.ltgt.apt-eclipse" version "0.13"
 }
 
 apply plugin: 'nebula.optional-base'
@@ -33,9 +32,9 @@ dependencies {
     compile 'org.springframework:spring-web', optional lock '4.3.14.RELEASE'
     compile 'javax.servlet:javax.servlet-api:3.1.0', optional
     compile 'org.aspectj:aspectjweaver:1.8.+', optional lock '1.8.13'
-    compile 'io.prometheus:simpleclient_pushgateway:0.2.0', optional
+    compile 'io.prometheus:simpleclient_pushgateway:latest.release', optional lock '0.3.0'
 
-    ['atlas', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront'].each { sys ->
+    ['atlas', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront', 'dynatrace'].each { sys ->
         compile project(":micrometer-registry-$sys"), optional
     }
 
@@ -44,8 +43,7 @@ dependencies {
     compile 'org.springframework.integration:spring-integration-core', optional lock '4.3.14.RELEASE'
 
     // to validate auto-completion on configuration properties
-    compileOnly 'org.springframework.boot:spring-boot-configuration-processor' lock '1.5.10.RELEASE'
-    apt 'org.springframework.boot:spring-boot-configuration-processor' lock '1.5.10.RELEASE'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor' lock '1.5.10.RELEASE'
 
     testCompile project(':micrometer-test')
 
@@ -72,4 +70,9 @@ dependencies {
     testCompile 'org.springframework.integration:spring-integration-xml' lock '4.3.14.RELEASE'
 
     testCompile 'org.springframework.security:spring-security-test' lock '4.2.4.RELEASE'
+
+    // required for jdk 9 testing
+    testRuntime 'javax.xml.bind:jaxb-api:2.3.0'
+    testRuntime 'javax.activation:activation:1.1.1'    
+    testRuntime 'com.sun.xml.messaging.saaj:saaj-impl:1.4.0'
 }

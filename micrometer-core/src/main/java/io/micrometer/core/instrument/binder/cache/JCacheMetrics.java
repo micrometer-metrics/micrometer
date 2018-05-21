@@ -100,7 +100,7 @@ public class JCacheMetrics extends CacheMeterBinder {
     }
 
     @Override
-    protected long missCount() {
+    protected Long missCount() {
         return lookupStatistic("CacheMisses");
     }
 

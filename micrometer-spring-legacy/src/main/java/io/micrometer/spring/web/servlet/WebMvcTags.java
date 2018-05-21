@@ -35,6 +35,18 @@ import javax.servlet.http.HttpServletResponse;
 @NonNullApi
 public final class WebMvcTags {
 
+    private static final Tag URI_NOT_FOUND = Tag.of("uri", "NOT_FOUND");
+
+    private static final Tag URI_REDIRECTION = Tag.of("uri", "REDIRECTION");
+
+    private static final Tag URI_UNKNOWN = Tag.of("uri", "UNKNOWN");
+
+    private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
+
+    private static final Tag STATUS_UNKNOWN = Tag.of("status", "UNKNOWN");
+
+    private static final Tag METHOD_UNKNOWN = Tag.of("method", "UNKNOWN");
+
     private WebMvcTags() {
     }
 
@@ -46,9 +58,7 @@ public final class WebMvcTags {
      * @return the method tag whose value is a capitalized method (e.g. GET).
      */
     public static Tag method(@Nullable HttpServletRequest request) {
-        return request == null ?
-                Tag.of("method", "UNKNOWN") :
-                Tag.of("method", request.getMethod());
+        return request == null ? METHOD_UNKNOWN : Tag.of("method", request.getMethod());
     }
 
     /**
@@ -58,7 +68,7 @@ public final class WebMvcTags {
      * @return the status tag derived from the status of the response
      */
     public static Tag status(@Nullable HttpServletResponse response) {
-        return response == null ? Tag.of("status", "UNKNOWN") : Tag.of("status", ((Integer) response.getStatus()).toString());
+        return response == null ? STATUS_UNKNOWN : Tag.of("status", Integer.toString(response.getStatus()));
     }
 
     /**
@@ -72,34 +82,46 @@ public final class WebMvcTags {
      * @return the uri tag derived from the request
      */
     public static Tag uri(@Nullable HttpServletRequest request, @Nullable HttpServletResponse response) {
-        if (response != null) {
-            HttpStatus status = HttpStatus.valueOf(response.getStatus());
-            if (status.is3xxRedirection()) {
-                return Tag.of("uri", "REDIRECTION");
-            } else if (status.equals(HttpStatus.NOT_FOUND)) {
-                return Tag.of("uri", "NOT_FOUND");
+        if (request != null) {
+            String pattern = getMatchingPattern(request);
+            if (pattern != null) {
+                return Tag.of("uri", pattern);
+            } else if (response != null) {
+                HttpStatus status = extractStatus(response);
+                if (status != null && status.is3xxRedirection()) {
+                    return URI_REDIRECTION;
+                }
+                if (status != null && status.equals(HttpStatus.NOT_FOUND)) {
+                    return URI_NOT_FOUND;
+                }
             }
-        } else {
-            // Long task timers won't be initiated if there is no handler found, as they aren't auto-timed.
-            // If no handler is found, 30
+            String pathInfo = getPathInfo(request);
+            return Tag.of("uri", pathInfo.isEmpty() ? "root" : pathInfo);
         }
-
-        if (request == null) {
-            return Tag.of("uri", "UNKNOWN");
-        }
-
-        String uri = (String) request
-                .getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
-        if (uri == null) {
-            uri = request.getPathInfo();
-        }
-        if (!StringUtils.hasText(uri)) {
-            uri = "/";
-        }
-        uri = uri.replaceAll("//+", "/").replaceAll("/$", "");
-
-        return Tag.of("uri", uri.isEmpty() ? "root" : uri);
+        return URI_UNKNOWN;
     }
+
+    @Nullable
+    private static HttpStatus extractStatus(HttpServletResponse response) {
+        try {
+            return HttpStatus.valueOf(response.getStatus());
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    @Nullable
+    private static String getMatchingPattern(HttpServletRequest request) {
+        return (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+    }
+
+    private static String getPathInfo(HttpServletRequest request) {
+        String uri = StringUtils.hasText(request.getPathInfo()) ?
+                request.getPathInfo() : "/";
+        return uri.replaceAll("//+", "/")
+                .replaceAll("/$", "");
+    }
+
 
     /**
      * Creates a {@code exception} tag based on the {@link Class#getSimpleName() simple
@@ -109,8 +131,6 @@ public final class WebMvcTags {
      * @return the exception tag derived from the exception
      */
     public static Tag exception(@Nullable Throwable exception) {
-        return exception == null ?
-                Tag.of("exception", "None") :
-                Tag.of("exception", exception.getClass().getSimpleName());
+        return exception == null ? EXCEPTION_NONE : Tag.of("exception", exception.getClass().getSimpleName());
     }
 }

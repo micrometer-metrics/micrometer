@@ -24,6 +24,8 @@ import com.netflix.spectator.atlas.AtlasConfig;
 import com.netflix.spectator.atlas.AtlasRegistry;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramGauges;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.step.StepFunctionCounter;
@@ -33,7 +35,6 @@ import io.micrometer.core.lang.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
@@ -118,14 +119,12 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
         SpectatorDistributionSummary summary = new SpectatorDistributionSummary(id, internalSummary, clock, distributionStatisticConfig, scale);
 
-        for (long sla : distributionStatisticConfig.getSlaBoundaries()) {
-            gauge(id.getName(), Tags.concat(getConventionTags(id), "sla", Long.toString(sla)), sla, summary::histogramCountAtValue);
-        }
-
-        for (double percentile : distributionStatisticConfig.getPercentiles()) {
-            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", DoubleFormat.decimalOrNan(percentile)),
-                    summary, s -> s.percentile(percentile));
-        }
+        HistogramGauges.register(summary, this,
+                percentile -> id.getName(),
+                percentile -> Tags.concat(id.getTags(), "percentile", DoubleFormat.decimalOrNan(percentile.percentile())),
+                ValueAtPercentile::value,
+                bucket -> id.getName(),
+                bucket -> Tags.concat(id.getTags(), "sla", DoubleFormat.decimalOrWhole(bucket.bucket())));
 
         return summary;
     }
@@ -142,14 +141,12 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
         SpectatorTimer timer = new SpectatorTimer(id, internalTimer, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit());
 
-        for (long sla : distributionStatisticConfig.getSlaBoundaries()) {
-            gauge(id.getName(), Tags.concat(getConventionTags(id), "sla", Duration.ofNanos(sla).toString()), sla, timer::histogramCountAtValue);
-        }
-
-        for (double percentile : distributionStatisticConfig.getPercentiles()) {
-            gauge(id.getName(), Tags.concat(getConventionTags(id), "percentile", DoubleFormat.decimalOrNan(percentile)),
-                    timer, t -> t.percentile(percentile, TimeUnit.SECONDS));
-        }
+        HistogramGauges.register(timer, this,
+                percentile -> id.getName(),
+                percentile -> Tags.concat(id.getTags(), "percentile", DoubleFormat.decimalOrNan(percentile.percentile())),
+                percentile -> percentile.value(timer.baseTimeUnit()),
+                bucket -> id.getName(),
+                bucket -> Tags.concat(id.getTags(), "sla", DoubleFormat.decimalOrWhole(bucket.bucket(timer.baseTimeUnit()))));
 
         return timer;
     }
@@ -176,8 +173,8 @@ public class AtlasMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
-        FunctionTimer ft = new StepFunctionTimer<>(id, clock, atlasConfig.step().toMillis(), obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+        FunctionTimer ft = new StepFunctionTimer<>(id, clock, atlasConfig.step().toMillis(), obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
         newMeter(id, Meter.Type.TIMER, ft.measure());
         return ft;
     }

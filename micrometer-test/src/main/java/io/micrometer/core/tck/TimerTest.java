@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -27,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static io.micrometer.core.instrument.MockClock.clock;
+import static io.micrometer.core.instrument.util.TimeUtils.millisToUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -61,7 +63,7 @@ interface TimerTest {
         clock(registry).add(step());
 
         assertAll(() -> assertEquals(1L, t.count()),
-            () -> assertEquals(42, t.totalTime(TimeUnit.MILLISECONDS), 1.0e-12));
+                () -> assertEquals(42, t.totalTime(TimeUnit.MILLISECONDS), 1.0e-12));
     }
 
     @Test
@@ -95,7 +97,7 @@ interface TimerTest {
             clock(registry).add(step());
         } finally {
             assertAll(() -> assertEquals(1L, t.count()),
-                    () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS) ,1.0e-12));
+                    () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
         }
     }
 
@@ -110,7 +112,7 @@ interface TimerTest {
         clock(registry).add(step());
 
         assertAll(() -> assertEquals(1L, timer.count()),
-            () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS) ,1.0e-12));
+                () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
     }
 
     @Test
@@ -144,5 +146,29 @@ interface TimerTest {
 
         assertAll(() -> assertEquals(1L, t.count()),
                 () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+    }
+
+    @Deprecated
+    @Test
+    default void percentiles(MeterRegistry registry) {
+        Timer t = Timer.builder("my.timer")
+                .publishPercentiles(1)
+                .register(registry);
+
+        t.record(1, TimeUnit.MILLISECONDS);
+        assertThat(t.percentile(1, TimeUnit.MILLISECONDS)).isEqualTo(1, Offset.offset(0.3));
+        assertThat(t.percentile(0.5, TimeUnit.MILLISECONDS)).isEqualTo(Double.NaN);
+    }
+
+    @Deprecated
+    @Test
+    default void histogramCounts(MeterRegistry registry) {
+        Timer t = Timer.builder("my.timer")
+                .sla(Duration.ofMillis(1))
+                .register(registry);
+
+        t.record(1, TimeUnit.MILLISECONDS);
+        assertThat(t.histogramCountAtValue((long) millisToUnit(1, TimeUnit.NANOSECONDS))).isEqualTo(1);
+        assertThat(t.histogramCountAtValue(1)).isEqualTo(Double.NaN);
     }
 }

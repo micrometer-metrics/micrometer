@@ -30,6 +30,8 @@ class StatsdGaugeTest {
     private AtomicInteger value = new AtomicInteger(1);
 
     private StatsdLineBuilder lineBuilder = mock(StatsdLineBuilder.class);
+
+    @SuppressWarnings("unchecked")
     private Subscriber<String> publisher = mock(Subscriber.class);
 
     @Test
@@ -43,17 +45,17 @@ class StatsdGaugeTest {
     }
 
     @Test
-    void shoulOnlyPublishValue_WhenValueChanges() {
-        StatsdGauge<?> guagePublishingOnChange = gauge(false);
+    void shouldOnlyPublishValue_WhenValueChanges() {
+        StatsdGauge<?> gaugePublishingOnChange = gauge(false);
 
-        guagePublishingOnChange.poll();
-        guagePublishingOnChange.poll();
+        gaugePublishingOnChange.poll();
+        gaugePublishingOnChange.poll();
 
         verify(publisher, times(1)).onNext(any());
 
         //update value and expect the publisher to be called again
         value.incrementAndGet();
-        guagePublishingOnChange.poll();
+        gaugePublishingOnChange.poll();
 
 
         verify(publisher, times(2)).onNext(any());

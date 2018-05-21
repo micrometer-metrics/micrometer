@@ -17,34 +17,45 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.distribution.CountAtBucket;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.TimeWindowLatencyHistogram;
+import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.util.TimeDecayingMax;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
-public class PrometheusTimer extends AbstractTimer implements Timer {
+public class PrometheusTimer extends AbstractTimer {
+    private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
+
     private final LongAdder count = new LongAdder();
     private final LongAdder totalTime = new LongAdder();
-    private final TimeDecayingMax max;
-    private final TimeWindowLatencyHistogram percentilesHistogram;
+    private final TimeWindowMax max;
+
+    @Nullable
+    private final Histogram histogram;
 
     PrometheusTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        super(id, clock, distributionStatisticConfig, pauseDetector, TimeUnit.SECONDS);
-        this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
-
-        this.percentilesHistogram = new TimeWindowLatencyHistogram(clock,
+        super(id, clock,
                 DistributionStatisticConfig.builder()
-                        .expiry(Duration.ofDays(1825)) // effectively never roll over
-                        .bufferLength(1)
+                        .percentilesHistogram(false)
+                        .sla()
                         .build()
-                        .merge(distributionStatisticConfig), pauseDetector);
+                        .merge(distributionStatisticConfig),
+                pauseDetector, TimeUnit.SECONDS, false);
+
+        this.max = new TimeWindowMax(clock, distributionStatisticConfig);
+
+        if (distributionStatisticConfig.isPublishingHistogram()) {
+            histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
+                    .expiry(Duration.ofDays(1825)) // effectively never roll over
+                    .bufferLength(1)
+                    .build()
+                    .merge(distributionStatisticConfig), true);
+        } else {
+            histogram = null;
+        }
     }
 
     @Override
@@ -52,8 +63,10 @@ public class PrometheusTimer extends AbstractTimer implements Timer {
         count.increment();
         long nanoAmount = TimeUnit.NANOSECONDS.convert(amount, unit);
         totalTime.add(nanoAmount);
-        percentilesHistogram.recordLong(nanoAmount);
         max.record(nanoAmount, TimeUnit.NANOSECONDS);
+
+        if (histogram != null)
+            histogram.recordLong(TimeUnit.NANOSECONDS.convert(amount, unit));
     }
 
     @Override
@@ -78,6 +91,22 @@ public class PrometheusTimer extends AbstractTimer implements Timer {
      * @return Cumulative histogram buckets.
      */
     public CountAtBucket[] histogramCounts() {
-        return percentilesHistogram.takeSnapshot(0, 0, 0, true).histogramCounts();
+        return histogram == null ? EMPTY_HISTOGRAM : histogram.takeSnapshot(0, 0, 0).histogramCounts();
+    }
+
+    @Override
+    public HistogramSnapshot takeSnapshot() {
+        HistogramSnapshot snapshot = super.takeSnapshot();
+
+        if (histogram == null) {
+            return snapshot;
+        }
+
+        return new HistogramSnapshot(snapshot.count(),
+                snapshot.total(TimeUnit.SECONDS),
+                snapshot.max(TimeUnit.SECONDS),
+                snapshot.percentileValues(),
+                histogramCounts(),
+                snapshot::outputSummary);
     }
 }

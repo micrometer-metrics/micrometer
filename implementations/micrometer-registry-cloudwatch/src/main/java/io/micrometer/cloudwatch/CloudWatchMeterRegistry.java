@@ -20,10 +20,7 @@ import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
 import com.amazonaws.services.cloudwatch.model.*;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
-import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,36 +110,24 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     private Stream<MetricDatum> metricData(Timer timer) {
         final long wallTime = clock.wallTime();
-        final HistogramSnapshot snapshot = timer.takeSnapshot(false);
         final Stream.Builder<MetricDatum> metrics = Stream.builder();
 
-        metrics.add(metricDatum(idWithSuffixAndUnit(timer.getId(), "sum", getBaseTimeUnit().name()), wallTime, snapshot.total(getBaseTimeUnit())));
-        metrics.add(metricDatum(idWithSuffixAndUnit(timer.getId(), "count", "count"), wallTime, snapshot.count()));
-        metrics.add(metricDatum(idWithSuffixAndUnit(timer.getId(), "avg", getBaseTimeUnit().name()), wallTime, snapshot.mean(getBaseTimeUnit())));
-        metrics.add(metricDatum(idWithSuffixAndUnit(timer.getId(), "max", getBaseTimeUnit().name()), wallTime, snapshot.max(getBaseTimeUnit())));
-
-        for (ValueAtPercentile v : snapshot.percentileValues()) {
-            metrics.add(metricDatum(idWithSuffix(timer.getId(), DoubleFormat.decimalOrNan(v.percentile()) + "percentile"),
-                wallTime, v.value(getBaseTimeUnit())));
-        }
+        metrics.add(metricDatum(idWithSuffixAndUnit(timer.getId(), "sum", getBaseTimeUnit().name()), wallTime, timer.totalTime(getBaseTimeUnit())));
+        metrics.add(metricDatum(idWithSuffixAndUnit(timer.getId(), "count", "count"), wallTime, timer.count()));
+        metrics.add(metricDatum(idWithSuffixAndUnit(timer.getId(), "avg", getBaseTimeUnit().name()), wallTime, timer.mean(getBaseTimeUnit())));
+        metrics.add(metricDatum(idWithSuffixAndUnit(timer.getId(), "max", getBaseTimeUnit().name()), wallTime, timer.max(getBaseTimeUnit())));
 
         return metrics.build();
     }
 
     private Stream<MetricDatum> metricData(DistributionSummary summary) {
         final long wallTime = clock.wallTime();
-        final HistogramSnapshot snapshot = summary.takeSnapshot(false);
         final Stream.Builder<MetricDatum> metrics = Stream.builder();
 
-        metrics.add(metricDatum(idWithSuffix(summary.getId(), "sum"), wallTime, snapshot.total()));
-        metrics.add(metricDatum(idWithSuffix(summary.getId(), "count"), wallTime, snapshot.count()));
-        metrics.add(metricDatum(idWithSuffix(summary.getId(), "avg"), wallTime, snapshot.mean()));
-        metrics.add(metricDatum(idWithSuffix(summary.getId(), "max"), wallTime, snapshot.max()));
-
-        for (ValueAtPercentile v : snapshot.percentileValues()) {
-            metrics.add(metricDatum(idWithSuffix(summary.getId(), DoubleFormat.decimalOrNan(v.percentile()) + "percentile"),
-                wallTime, v.value()));
-        }
+        metrics.add(metricDatum(idWithSuffix(summary.getId(), "sum"), wallTime, summary.totalAmount()));
+        metrics.add(metricDatum(idWithSuffix(summary.getId(), "count"), wallTime, summary.count()));
+        metrics.add(metricDatum(idWithSuffix(summary.getId(), "avg"), wallTime, summary.mean()));
+        metrics.add(metricDatum(idWithSuffix(summary.getId(), "max"), wallTime, summary.max()));
 
         return metrics.build();
     }

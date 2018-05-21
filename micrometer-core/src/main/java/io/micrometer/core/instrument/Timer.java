@@ -18,7 +18,8 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
+import io.micrometer.core.instrument.distribution.HistogramSupport;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.lang.Nullable;
 
@@ -34,10 +35,12 @@ import java.util.function.Supplier;
  * Timer intended to track of a large number of short running events. Example would be something like
  * an HTTP request. Though "short running" is a bit subjective the assumption is that it should be
  * under a minute.
+ *
+ * @author Jon Schneider
  */
-public interface Timer extends Meter {
+public interface Timer extends Meter, HistogramSupport {
     static Sample start(MeterRegistry registry) {
-        return new Sample(registry.config().clock());
+        return start(registry.config().clock());
     }
 
     static Sample start(Clock clock) {
@@ -159,31 +162,6 @@ public interface Timer extends Meter {
      */
     double max(TimeUnit unit);
 
-    /**
-     * @param percentile A percentile in the domain [0, 1]. For example, 0.5 represents the 50th percentile of the
-     *                   distribution.
-     * @param unit       The base unit of time to scale the percentile value to.
-     * @return The latency at a specific percentile. This value is non-aggregable across dimensions.
-     */
-    double percentile(double percentile, TimeUnit unit);
-
-    /**
-     * Provides cumulative histogram counts.
-     *
-     * @param valueNanos The histogram bucket to retrieve a count for.
-     * @return The count of all events less than or equal to the bucket.
-     */
-    double histogramCountAtValue(long valueNanos);
-
-    /**
-     * Summary statistics should be published off of a single snapshot instance so that, for example, there isn't
-     * disagreement between the distribution's count and total because more events continue to stream in.
-     *
-     * @param supportsAggregablePercentiles Whether percentile histogram buckets should be included in the list of {@link CountAtBucket}.
-     * @return A snapshot of all distribution statistics at a point in time.
-     */
-    HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles);
-
     @Override
     default Iterable<Measurement> measure() {
         return Arrays.asList(
@@ -191,6 +169,42 @@ public interface Timer extends Meter {
                 new Measurement(() -> totalTime(baseTimeUnit()), Statistic.TOTAL_TIME),
                 new Measurement(() -> max(baseTimeUnit()), Statistic.MAX)
         );
+    }
+
+    /**
+     * Provides cumulative histogram counts.
+     *
+     * @param valueNanos The histogram bucket to retrieve a count for.
+     * @return The count of all events less than or equal to the bucket. If valueNanos does not
+     * match a preconfigured bucket boundary, returns NaN.
+     * @deprecated Use {@link #takeSnapshot()} to retrieve bucket counts.
+     */
+    @Deprecated
+    default double histogramCountAtValue(long valueNanos) {
+        for (CountAtBucket countAtBucket : takeSnapshot().histogramCounts()) {
+            if ((long) countAtBucket.bucket(TimeUnit.NANOSECONDS) == valueNanos) {
+                return countAtBucket.count();
+            }
+        }
+        return Double.NaN;
+    }
+
+    /**
+     * @param percentile A percentile in the domain [0, 1]. For example, 0.5 represents the 50th percentile of the
+     *                   distribution.
+     * @param unit       The base unit of time to scale the percentile value to.
+     * @return The latency at a specific percentile. This value is non-aggregable across dimensions. Returns NaN if
+     * percentile is not a preconfigured percentile that Micrometer is tracking.
+     * @deprecated Use {@link #takeSnapshot()} to retrieve bucket counts.
+     */
+    @Deprecated
+    default double percentile(double percentile, TimeUnit unit) {
+        for (ValueAtPercentile valueAtPercentile : takeSnapshot().percentileValues()) {
+            if (valueAtPercentile.percentile() == percentile) {
+                return valueAtPercentile.value(unit);
+            }
+        }
+        return Double.NaN;
     }
 
     /**
@@ -284,6 +298,19 @@ public interface Timer extends Meter {
          */
         public Builder publishPercentiles(@Nullable double... percentiles) {
             this.distributionConfigBuilder.percentiles(percentiles);
+            return this;
+        }
+
+        /**
+         * Determines the number of digits of precision to maintain on the dynamic range histogram used to compute
+         * percentile approximations. The higher the degrees of precision, the more accurate the approximation is at the
+         * cost of more memory.
+         *
+         * @param digitsOfPrecision The digits of precision to maintain for percentile approximations.
+         * @return This builder.
+         */
+        public Builder percentilePrecision(@Nullable Integer digitsOfPrecision) {
+            this.distributionConfigBuilder.percentilePrecision(digitsOfPrecision);
             return this;
         }
 

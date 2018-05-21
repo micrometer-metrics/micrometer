@@ -16,10 +16,10 @@
 package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.noop.NoopTimer;
 
@@ -99,18 +99,8 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
     }
 
     @Override
-    public double percentile(double percentile, TimeUnit unit) {
-        return firstChild().percentile(percentile, unit);
-    }
-
-    @Override
-    public double histogramCountAtValue(long valueNanos) {
-        return firstChild().histogramCountAtValue(valueNanos);
-    }
-
-    @Override
-    public HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
-        return firstChild().takeSnapshot(supportsAggregablePercentiles);
+    public HistogramSnapshot takeSnapshot() {
+        return firstChild().takeSnapshot();
     }
 
     @Override
@@ -126,27 +116,27 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
     @SuppressWarnings("ConstantConditions")
     @Override
     Timer registerNewMeter(MeterRegistry registry) {
-        final long[] slaNanos = distributionStatisticConfig.getSlaBoundaries();
+        Timer.Builder builder = Timer.builder(getId().getName())
+                .tags(getId().getTags())
+                .description(getId().getDescription())
+                .maximumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValue()))
+                .minimumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValue()))
+                .publishPercentiles(distributionStatisticConfig.getPercentiles())
+                .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
+                .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
+                .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
+                .percentilePrecision(distributionStatisticConfig.getPercentilePrecision())
+                .pauseDetector(pauseDetector);
 
-        Duration[] sla = null;
+        final long[] slaNanos = distributionStatisticConfig.getSlaBoundaries();
         if (slaNanos != null) {
-            sla = new Duration[slaNanos.length];
+            Duration[] sla = new Duration[slaNanos.length];
             for (int i = 0; i < slaNanos.length; i++) {
                 sla[i] = Duration.ofNanos(slaNanos[i]);
             }
+            builder = builder.sla(sla);
         }
 
-        return Timer.builder(getId().getName())
-            .tags(getId().getTags())
-            .description(getId().getDescription())
-            .maximumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValue()))
-            .minimumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValue()))
-            .publishPercentiles(distributionStatisticConfig.getPercentiles())
-            .publishPercentileHistogram(distributionStatisticConfig.isPercentileHistogram())
-            .distributionStatisticBufferLength(distributionStatisticConfig.getBufferLength())
-            .distributionStatisticExpiry(distributionStatisticConfig.getExpiry())
-            .sla(sla)
-            .pauseDetector(pauseDetector)
-            .register(registry);
+        return builder.register(registry);
     }
 }

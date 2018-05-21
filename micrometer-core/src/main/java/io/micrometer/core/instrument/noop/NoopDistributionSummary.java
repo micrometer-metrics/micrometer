@@ -43,17 +43,7 @@ public class NoopDistributionSummary extends NoopMeter implements DistributionSu
     }
 
     @Override
-    public double percentile(double percentile) {
-        return 0;
-    }
-
-    @Override
-    public double histogramCountAtValue(long value) {
-        return 0;
-    }
-
-    @Override
-    public HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
-        return HistogramSnapshot.empty();
+    public HistogramSnapshot takeSnapshot() {
+        return HistogramSnapshot.empty(0, 0, 0);
     }
 }

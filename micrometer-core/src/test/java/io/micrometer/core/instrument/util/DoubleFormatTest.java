@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.util;
 
+import io.micrometer.core.Issue;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,5 +41,12 @@ class DoubleFormatTest {
         assertThat(DoubleFormat.decimal(123456.1234567)).isEqualTo("123456.123457");
         assertThat(DoubleFormat.decimal(123456)).isEqualTo("123456.0");
         assertThat(DoubleFormat.decimal(0.123)).isEqualTo("0.123");
+    }
+
+    @Issue("#539")
+    @Test
+    void noScientificNotation() {
+        assertThat(DoubleFormat.decimalOrWhole(4.6875392E7)).isEqualTo("46875392");
+        assertThat(DoubleFormat.decimalOrNan(4.6875392E7)).isEqualTo("46875392");
     }
 }

@@ -24,19 +24,26 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.toList;
+
 /**
  * Search that requires the search terms are satisfiable, or an {@link MeterNotFoundException} is thrown.
  *
  * @author Jon Schneider
  */
 public final class RequiredSearch {
-    private final MeterRegistry registry;
-    private final List<Tag> tags = new ArrayList<>();
-    private Predicate<String> nameMatches = n -> true;
-    private final Set<String> requiredTagKeys = new HashSet<>();
+    final MeterRegistry registry;
+
+    final List<Tag> requiredTags = new ArrayList<>();
+    final Set<String> requiredTagKeys = new HashSet<>();
 
     @Nullable
-    private String exactNameMatch;
+    String exactNameMatch;
+
+    @Nullable
+    Predicate<String> nameMatches;
+
+
 
     private RequiredSearch(MeterRegistry registry) {
         this.registry = registry;
@@ -72,7 +79,7 @@ public final class RequiredSearch {
      * @return This search.
      */
     public RequiredSearch tags(Iterable<Tag> tags) {
-        tags.forEach(this.tags::add);
+        tags.forEach(this.requiredTags::add);
         return this;
     }
 
@@ -181,8 +188,7 @@ public final class RequiredSearch {
     }
 
     private <M extends Meter> M findOne(Class<M> clazz) {
-        Optional<M> meter = meters()
-            .stream()
+        Optional<M> meter = meterStream()
             .filter(clazz::isInstance)
             .findAny()
             .map(clazz::cast);
@@ -191,7 +197,20 @@ public final class RequiredSearch {
             return meter.get();
         }
 
-        throw new MeterNotFoundException(exactNameMatch, tags, clazz);
+        throw MeterNotFoundException.forSearch(this, clazz);
+    }
+
+    private <M extends Meter> Collection<M> findAll(Class<M> clazz) {
+        List<M> meters = meterStream()
+                .filter(clazz::isInstance)
+                .map(clazz::cast)
+                .collect(toList());
+
+        if(meters.isEmpty()) {
+            throw MeterNotFoundException.forSearch(this, clazz);
+        }
+
+        return meters;
     }
 
     /**
@@ -199,9 +218,20 @@ public final class RequiredSearch {
      * @throws MeterNotFoundException if there is no match.
      */
     public Collection<Meter> meters() {
-        Stream<Meter> meterStream = registry.getMeters().stream().filter(m -> nameMatches.test(m.getId().getName()));
+        List<Meter> meters = meterStream().collect(Collectors.toList());
 
-        if (!tags.isEmpty() || !requiredTagKeys.isEmpty()) {
+        if(meters.isEmpty()) {
+            throw MeterNotFoundException.forSearch(this, Meter.class);
+        }
+
+        return meters;
+    }
+
+    private Stream<Meter> meterStream() {
+        Stream<Meter> meterStream = registry.getMeters().stream()
+                .filter(m -> nameMatches == null || nameMatches.test(m.getId().getName()));
+
+        if (!requiredTags.isEmpty() || !requiredTagKeys.isEmpty()) {
             meterStream = meterStream.filter(m -> {
                 boolean requiredKeysPresent = true;
                 if (!requiredTagKeys.isEmpty()) {
@@ -210,17 +240,67 @@ public final class RequiredSearch {
                     requiredKeysPresent = tagKeys.containsAll(requiredTagKeys);
                 }
 
-                return m.getId().getTags().containsAll(tags) && requiredKeysPresent;
+                return m.getId().getTags().containsAll(requiredTags) && requiredKeysPresent;
             });
         }
 
-        List<Meter> meters = meterStream.collect(Collectors.toList());
+        return meterStream;
+    }
 
-        if(meters.isEmpty()) {
-            throw new MeterNotFoundException(exactNameMatch, tags, Meter.class);
-        }
+    /**
+     * @return All matching {@link Counter} meters.
+     */
+    public Collection<Counter> counters() {
+        return findAll(Counter.class);
+    }
 
-        return meters;
+    /**
+     * @return All matching {@link Gauge} meters.
+     */
+    public Collection<Gauge> gauges() {
+        return findAll(Gauge.class);
+    }
+
+    /**
+     * @return All matching {@link Timer} meters.
+     */
+    public Collection<Timer> timers() {
+        return findAll(Timer.class);
+    }
+
+    /**
+     * @return All matching {@link DistributionSummary} meters.
+     */
+    public Collection<DistributionSummary> summaries() {
+        return findAll(DistributionSummary.class);
+    }
+
+    /**
+     * @return All matching {@link LongTaskTimer} meters.
+     */
+    public Collection<LongTaskTimer> longTaskTimers() {
+        return findAll(LongTaskTimer.class);
+    }
+
+    /**
+     * @return All matching {@link FunctionCounter} meters.
+     */
+    public Collection<FunctionCounter> functionCounters() {
+        return findAll(FunctionCounter.class);
+    }
+
+    /**
+     * @return All matching {@link FunctionTimer} meters.
+     */
+    public Collection<FunctionTimer> functionTimers() {
+        return findAll(FunctionTimer.class);
+    }
+
+    /**
+     * @return All matching {@link TimeGauge} meters.
+     */
+    public Collection<TimeGauge> timeGauges() {
+        return findAll(TimeGauge.class);
     }
 
     /**

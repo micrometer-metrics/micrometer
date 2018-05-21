@@ -17,14 +17,12 @@ package io.micrometer.elastic;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
-import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.NonNull;
-import io.micrometer.core.lang.Nullable;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +65,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     public ElasticMeterRegistry(ElasticConfig config, Clock clock) {
-        this(config, clock, NamingConvention.snakeCase, Executors.defaultThreadFactory());
+        this(config, clock, new ElasticNamingConvention(), Executors.defaultThreadFactory());
     }
 
     private void createIndexIfNeeded() {
@@ -219,67 +217,26 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<String> writeTimer(Timer timer, long wallTime) {
-        HistogramSnapshot snap = timer.takeSnapshot(false);
         Stream.Builder<String> stream = Stream.builder();
         stream.add(index(timer, wallTime)
-                .field("count", snap.count())
-                .field("sum", snap.total(getBaseTimeUnit()))
-                .field("mean", snap.mean(getBaseTimeUnit()))
-                .field("max", snap.max(getBaseTimeUnit()))
+                .field("count", timer.count())
+                .field("sum", timer.totalTime(getBaseTimeUnit()))
+                .field("mean", timer.mean(getBaseTimeUnit()))
+                .field("max", timer.max(getBaseTimeUnit()))
                 .build());
-
-        if (snap.percentileValues().length > 0) {
-            String percentileName = config().namingConvention().name(timer.getId().getName() + ".percentile", Meter.Type.GAUGE);
-            for (ValueAtPercentile valueAtPercentile : snap.percentileValues()) {
-                stream.add(index(percentileName, "gauge", wallTime)
-                        .field("phi", DoubleFormat.decimalOrWhole(valueAtPercentile.percentile()))
-                        .field("value", valueAtPercentile.value(getBaseTimeUnit()))
-                        .build());
-            }
-        }
-
-        if (snap.histogramCounts().length > 0) {
-            String histogramName = config().namingConvention().name(timer.getId().getName() + ".histogram", Meter.Type.GAUGE);
-            for (CountAtBucket countAtBucket : snap.histogramCounts()) {
-                stream.add(index(histogramName, "gauge", wallTime)
-                        .field("le", DoubleFormat.decimalOrWhole(countAtBucket.bucket(getBaseTimeUnit())))
-                        .field("value", countAtBucket.count())
-                        .build());
-            }
-        }
 
         return stream.build();
     }
 
     private Stream<String> writeSummary(DistributionSummary summary, long wallTime) {
-        HistogramSnapshot snap = summary.takeSnapshot(false);
+        HistogramSnapshot snap = summary.takeSnapshot();
         Stream.Builder<String> stream = Stream.builder();
         stream.add(index(summary, wallTime)
-                .field("count", snap.count())
-                .field("sum", snap.total())
-                .field("mean", snap.mean())
-                .field("max", snap.max())
+                .field("count", summary.count())
+                .field("sum", summary.totalAmount())
+                .field("mean", summary.mean())
+                .field("max", summary.max())
                 .build());
-
-        if (snap.percentileValues().length > 0) {
-            String percentileName = config().namingConvention().name(summary.getId().getName() + ".percentile", Meter.Type.GAUGE);
-            for (ValueAtPercentile valueAtPercentile : snap.percentileValues()) {
-                stream.add(index(percentileName, "gauge", wallTime)
-                        .field("phi", DoubleFormat.decimalOrWhole(valueAtPercentile.percentile()))
-                        .field("value", valueAtPercentile.value())
-                        .build());
-            }
-        }
-
-        if (snap.histogramCounts().length > 0) {
-            String histogramName = config().namingConvention().name(summary.getId().getName() + ".histogram", Meter.Type.GAUGE);
-            for (CountAtBucket countAtBucket : snap.histogramCounts()) {
-                stream.add(index(histogramName, "gauge", wallTime)
-                        .field("le", DoubleFormat.decimalOrWhole(countAtBucket.bucket()))
-                        .field("value", countAtBucket.count())
-                        .build());
-            }
-        }
 
         return stream.build();
     }
@@ -293,7 +250,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private IndexBuilder index(Meter meter, long wallTime) {
-        return new IndexBuilder(config, getConventionName(meter.getId()), meter.getId().getType().toString().toLowerCase(), meter.getId().getTags(), wallTime);
+        return new IndexBuilder(config, getConventionName(meter.getId()), meter.getId().getType().toString().toLowerCase(), getConventionTags(meter.getId()), wallTime);
     }
 
     // VisibleForTesting
@@ -306,7 +263,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
         private IndexBuilder(ElasticConfig config, String name, String type, List<Tag> tags, long wallTime) {
             indexLine.append(indexLine(config, wallTime))
-                    .append("{\"").append(config.timeStampFieldName()).append("\":\"").append(timestamp(wallTime)).append("\"")
+                    .append("{\"").append(config.timestampFieldName()).append("\":\"").append(timestamp(wallTime)).append("\"")
                     .append(",\"name\":\"").append(name).append("\"")
                     .append(",\"type\":\"").append(type).append("\"");
 
@@ -361,7 +318,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                     connection.setDoOutput(true);
                 }
 
-                if (isNotBlank(config.userName()) && isNotBlank(config.password())) {
+                if (StringUtils.isNotBlank(config.userName()) && StringUtils.isNotBlank(config.password())) {
                     byte[] authBinary = (config.userName() + ":" + config.password()).getBytes(StandardCharsets.UTF_8);
                     String authEncoded = Base64.getEncoder().encodeToString(authBinary);
                     connection.setRequestProperty("Authorization", "Basic " + authEncoded);
@@ -378,22 +335,4 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         return null;
     }
 
-    /**
-     * Modified from {@link org.apache.commons.lang.StringUtils#isBlank(String)}.
-     *
-     * @param str The string to check
-     * @return {@code true} if the String is null or blank.
-     */
-    private static boolean isNotBlank(@Nullable String str) {
-        int strLen;
-        if (str == null || (strLen = str.length()) == 0) {
-            return false;
-        }
-        for (int i = 0; i < strLen; i++) {
-            if (!Character.isWhitespace(str.charAt(i))) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

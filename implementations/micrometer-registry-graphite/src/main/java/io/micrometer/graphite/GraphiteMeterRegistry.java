@@ -20,6 +20,7 @@ import com.codahale.metrics.graphite.*;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.core.lang.Nullable;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
@@ -90,6 +91,7 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
     }
 
     @Override
+    @Nullable
     protected Double nullGaugeValue() {
         return null;
     }

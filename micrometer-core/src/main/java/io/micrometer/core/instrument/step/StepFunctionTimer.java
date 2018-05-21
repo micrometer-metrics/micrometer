@@ -34,7 +34,7 @@ public class StepFunctionTimer<T> implements FunctionTimer {
     private final WeakReference<T> ref;
     private final ToLongFunction<T> countFunction;
     private final ToDoubleFunction<T> totalTimeFunction;
-    private final TimeUnit totalTimeFunctionUnits;
+    private final TimeUnit totalTimeFunctionUnit;
     private final TimeUnit baseTimeUnit;
 
     private volatile long lastCount = 0;
@@ -44,12 +44,12 @@ public class StepFunctionTimer<T> implements FunctionTimer {
     private StepDouble total;
 
     public StepFunctionTimer(Id id, Clock clock, long stepMillis, T obj, ToLongFunction<T> countFunction,
-                             ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits, TimeUnit baseTimeUnit) {
+                             ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit) {
         this.id = id;
         this.ref = new WeakReference<>(obj);
         this.countFunction = countFunction;
         this.totalTimeFunction = totalTimeFunction;
-        this.totalTimeFunctionUnits = totalTimeFunctionUnits;
+        this.totalTimeFunctionUnit = totalTimeFunctionUnit;
         this.baseTimeUnit = baseTimeUnit;
         this.count = new StepLong(clock, stepMillis);
         this.total = new StepDouble(clock, stepMillis);
@@ -75,7 +75,7 @@ public class StepFunctionTimer<T> implements FunctionTimer {
         T obj2 = ref.get();
         if (obj2 != null) {
             double prevLast = lastTime;
-            lastTime = Math.max(TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnits, unit), 0);
+            lastTime = Math.max(TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnit, unit), 0);
             total.getCurrent().add(lastTime - prevLast);
         }
         return total.poll();

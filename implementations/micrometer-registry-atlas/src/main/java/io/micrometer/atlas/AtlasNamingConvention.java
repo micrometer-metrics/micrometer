@@ -20,7 +20,8 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
 
 /**
- * The naming convention most commonly employed at Netflix, and so most to show up in Netflix examples.
+ * The naming convention most commonly employed at Netflix, and so most likely to
+ * show up in Netflix examples.
  *
  * @author Jon Schneider
  */
@@ -32,6 +33,12 @@ public class AtlasNamingConvention implements NamingConvention {
 
     @Override
     public String tagKey(String key) {
+        if (key.equals("name")) {
+            key = "name.tag";
+        } else if (key.equals("statistic")) {
+            key = "statistic.tag";
+        }
+
         return NamingConvention.camelCase.tagKey(key);
     }
 }

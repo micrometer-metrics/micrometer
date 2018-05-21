@@ -17,11 +17,8 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.distribution.CountAtBucket;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.TimeWindowHistogram;
+import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.util.MeterEquivalence;
-import io.micrometer.core.instrument.util.TimeDecayingMax;
 import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
@@ -29,20 +26,35 @@ import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
 public class PrometheusDistributionSummary extends AbstractDistributionSummary {
+    private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
+
     private LongAdder count = new LongAdder();
     private DoubleAdder amount = new DoubleAdder();
-    private TimeDecayingMax max;
-    private final TimeWindowHistogram percentilesHistogram;
+    private TimeWindowMax max;
+
+    @Nullable
+    private final Histogram histogram;
 
     PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        super(id, clock, distributionStatisticConfig, scale);
-        this.max = new TimeDecayingMax(clock, distributionStatisticConfig);
-        this.percentilesHistogram = new TimeWindowHistogram(clock,
+        super(id, clock,
                 DistributionStatisticConfig.builder()
-                        .expiry(Duration.ofDays(1825)) // effectively never roll over
-                        .bufferLength(1)
+                        .percentilesHistogram(false)
+                        .sla()
                         .build()
-                        .merge(distributionStatisticConfig));
+                        .merge(distributionStatisticConfig),
+                scale, false);
+
+        this.max = new TimeWindowMax(clock, distributionStatisticConfig);
+
+        if (distributionStatisticConfig.isPublishingHistogram()) {
+            histogram = new TimeWindowFixedBoundaryHistogram(clock, DistributionStatisticConfig.builder()
+                    .expiry(Duration.ofDays(1825)) // effectively never roll over
+                    .bufferLength(1)
+                    .build()
+                    .merge(distributionStatisticConfig), true);
+        } else {
+            histogram = null;
+        }
     }
 
     @Override
@@ -50,7 +62,9 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
         count.increment();
         this.amount.add(amount);
         max.record(amount);
-        percentilesHistogram.recordDouble(amount);
+
+        if (histogram != null)
+            histogram.recordDouble(amount);
     }
 
     @Override
@@ -86,6 +100,22 @@ public class PrometheusDistributionSummary extends AbstractDistributionSummary {
      * @return Cumulative histogram buckets.
      */
     public CountAtBucket[] histogramCounts() {
-        return percentilesHistogram.takeSnapshot(0, 0, 0, true).histogramCounts();
+        return histogram == null ? EMPTY_HISTOGRAM : histogram.takeSnapshot(0, 0, 0).histogramCounts();
+    }
+
+    @Override
+    public HistogramSnapshot takeSnapshot() {
+        HistogramSnapshot snapshot = super.takeSnapshot();
+
+        if (histogram == null) {
+            return snapshot;
+        }
+
+        return new HistogramSnapshot(snapshot.count(),
+                snapshot.total(),
+                snapshot.max(),
+                snapshot.percentileValues(),
+                histogramCounts(),
+                snapshot::outputSummary);
     }
 }

@@ -58,10 +58,16 @@ public abstract class CacheMeterBinder implements MeterBinder {
                     .register(registry);
         }
 
-        FunctionCounter.builder("cache.gets", cache.get(), c -> missCount())
-                .tags(tags).tag("result", "miss")
-                .description("the number of times cache lookup methods have returned an uncached (newly loaded) value, or null")
-                .register(registry);
+        if (missCount() != null) {
+            FunctionCounter.builder("cache.gets", cache.get(),
+                    c -> {
+                        Long misses = missCount();
+                        return misses == null ? 0 : misses;
+                    })
+                    .tags(tags).tag("result", "miss")
+                    .description("the number of times cache lookup methods have returned an uncached (newly loaded) value, or null")
+                    .register(registry);
+        }
 
         FunctionCounter.builder("cache.gets", cache.get(), c -> hitCount())
                 .tags(tags).tag("result", "hit")
@@ -103,8 +109,11 @@ public abstract class CacheMeterBinder implements MeterBinder {
 
     /**
      * @return Get requests that resulted in a "miss", or didn't match an existing cache entry. Monotonically increasing count.
+     * Returns {@code null} if the cache implementation does not provide a way to track miss count, especially in distributed
+     * caches.
      */
-    protected abstract long missCount();
+    @Nullable
+    protected abstract Long missCount();
 
     /**
      * @return Total number of entries that have been evicted from the cache. Monotonically increasing eviction count.
