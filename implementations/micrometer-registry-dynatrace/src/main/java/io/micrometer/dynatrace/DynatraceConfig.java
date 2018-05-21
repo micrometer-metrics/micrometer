@@ -54,15 +54,11 @@ public interface DynatraceConfig extends StepRegistryConfig {
         return v;
     }
 
-    default String[] technologyTypes() {
-        String v = get(prefix() + ".technologyTypes");
+    default String technologyType() {
+        String v = get(prefix() + ".technologyType");
         if (StringUtils.isEmpty(v))
-            return new String[]{"java"};
+            return "java";
 
-        String[] types = v.split(",");
-        if (types.length == 0) {
-            throw new MissingRequiredConfigurationException("Dynatrace requires one or more technology types to be associated with every metric");
-        }
-        return types;
+        return v;
     }
 }
