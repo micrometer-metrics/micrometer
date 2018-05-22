@@ -45,7 +45,7 @@ public class FlavorStatsdLineBuilder implements StatsdLineBuilder {
     private final MeterRegistry.Config config;
 
     private final Function<NamingConvention, String> datadogTagString;
-    private final Function<NamingConvention, String> telegrafTagString;
+    private final Function<NamingConvention, String> defaultTagString;
 
     public FlavorStatsdLineBuilder(Meter.Id id, StatsdFlavor flavor, HierarchicalNameMapper nameMapper, MeterRegistry.Config config) {
         this.id = id;
@@ -63,7 +63,7 @@ public class FlavorStatsdLineBuilder implements StatsdLineBuilder {
         );
 
         // service=payroll,region=us-west
-        this.telegrafTagString = memoize(convention ->
+        this.defaultTagString = memoize(convention ->
                 id.getTags().iterator().hasNext() ?
                         id.getConventionTags(convention).stream()
                                 .map(t -> t.getKey() + "=" + t.getValue())
@@ -98,9 +98,11 @@ public class FlavorStatsdLineBuilder implements StatsdLineBuilder {
                 return metricName(stat) + ":" + amount + "|" + type;
             case DATADOG:
                 return metricName(stat) + ":" + amount + "|" + type + tags(stat, datadogTagString.apply(config.namingConvention()),":", "|#");
+            case SYSDIG:
+                return metricName(stat) + tags(stat, defaultTagString.apply(config.namingConvention()), "=", "#") + ":" + amount + "|" + type;
             case TELEGRAF:
             default:
-                return metricName(stat) + tags(stat, telegrafTagString.apply(config.namingConvention()),"=", ",") + ":" + amount + "|" + type;
+                return metricName(stat) + tags(stat, defaultTagString.apply(config.namingConvention()),"=", ",") + ":" + amount + "|" + type;
         }
     }
 
