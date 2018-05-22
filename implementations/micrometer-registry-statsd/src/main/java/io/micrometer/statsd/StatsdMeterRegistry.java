@@ -349,6 +349,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private static NamingConvention namingConventionFromFlavor(StatsdFlavor flavor) {
         switch (flavor) {
             case DATADOG:
+            case SYSDIG:
                 return NamingConvention.dot;
             case TELEGRAF:
                 return NamingConvention.snakeCase;

@@ -65,6 +65,12 @@ class StatsdMeterRegistryTest {
                 break;
             case TELEGRAF:
                 line = "my_counter,statistic=count,my_tag=val:2|c";
+                break;
+            case SYSDIG:
+                line = "my.counter#statistic=count,my.tag=val:2|c";
+                break;
+            default:
+                fail("Unexpected flavor");
         }
 
         final Processor<String, String> lines = lineProcessor();
@@ -95,6 +101,9 @@ class StatsdMeterRegistryTest {
                 break;
             case TELEGRAF:
                 line = "my_gauge,statistic=value,my_tag=val:2|g";
+                break;
+            case SYSDIG:
+                line = "my.gauge#statistic=value,my.tag=val:2|g";
                 break;
             default:
                 fail("Unexpected flavor");
@@ -131,6 +140,9 @@ class StatsdMeterRegistryTest {
             case TELEGRAF:
                 line = "my_timer,my_tag=val:1|ms";
                 break;
+            case SYSDIG:
+                line = "my.timer#my.tag=val:1|ms";
+                break;
             default:
                 fail("Unexpected flavor");
         }
@@ -160,6 +172,9 @@ class StatsdMeterRegistryTest {
                 break;
             case TELEGRAF:
                 line = "my_summary,my_tag=val:1|h";
+                break;
+            case SYSDIG:
+                line = "my.summary#my.tag=val:1|h";
                 break;
             default:
                 fail("Unexpected flavor");
@@ -201,6 +216,12 @@ class StatsdMeterRegistryTest {
                 expectLines = new String[]{
                         "my_long_task,statistic=activeTasks,my_tag=val:1|g",
                         "my_long_task,statistic=duration,my_tag=val:" + stepMillis + "|g",
+                };
+                break;
+            case SYSDIG:
+                expectLines = new String[]{
+                    "my.long.task#statistic=activeTasks,my.tag=val:1|g",
+                    "my.long.task#statistic=duration,my.tag=val:" + stepMillis + "|g",
                 };
                 break;
             default:

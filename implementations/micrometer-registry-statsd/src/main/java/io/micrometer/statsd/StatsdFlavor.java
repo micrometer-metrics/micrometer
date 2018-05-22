@@ -32,5 +32,10 @@ public enum StatsdFlavor {
      * For gauges to work as expected, you should set `delete_gauges = false` in your input options as documented here:
      * https://github.com/influxdata/telegraf/tree/master/plugins/inputs/statsd
      */
-    TELEGRAF
+    TELEGRAF,
+
+    /**
+     * https://support.sysdig.com/hc/en-us/articles/204376099-Metrics-integrations-StatsD
+     */
+    SYSDIG
 }
