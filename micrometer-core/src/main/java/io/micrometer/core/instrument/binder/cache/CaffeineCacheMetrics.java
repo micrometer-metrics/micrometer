@@ -142,7 +142,6 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
 
     @Override
     protected long putCount() {
-        cache.stats().requestCount();
         return cache.stats().loadCount();
     }
 
