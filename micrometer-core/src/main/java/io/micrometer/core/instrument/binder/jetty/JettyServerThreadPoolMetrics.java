@@ -19,7 +19,11 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNull;
 
+/**
+ * @author Manabu Matsuzaki
+ */
 public class JettyServerThreadPoolMetrics implements MeterBinder {
 
     private final InstrumentedQueuedThreadPool threadPool;
@@ -31,7 +35,7 @@ public class JettyServerThreadPoolMetrics implements MeterBinder {
     }
 
     @Override
-    public void bindTo(MeterRegistry registry) {
+    public void bindTo(@NonNull MeterRegistry registry) {
         Gauge.builder("jetty.threads.config.min", threadPool, InstrumentedQueuedThreadPool::getMinThreads)
              .tags(tags)
              .description("The number of min threads")

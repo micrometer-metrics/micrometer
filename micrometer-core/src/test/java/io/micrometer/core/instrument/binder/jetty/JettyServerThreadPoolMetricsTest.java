@@ -31,7 +31,10 @@ import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class JettyServerThreadPoolMetricsTest {
+/**
+ * @author Manabu Matsuzaki
+ */
+class JettyServerThreadPoolMetricsTest {
     private SimpleMeterRegistry registry;
     private Server server;
 
@@ -55,7 +58,7 @@ public class JettyServerThreadPoolMetricsTest {
     }
 
     @Test
-    void threadsMetrics() throws Exception {
+    void threadMetrics() {
         assertThat(registry.get("jetty.threads.config.min").gauge().value()).isEqualTo(32.0);
         assertThat(registry.get("jetty.threads.config.max").gauge().value()).isEqualTo(100.0);
         assertThat(registry.get("jetty.threads.current").gauge().value()).isNotEqualTo(0.0);
