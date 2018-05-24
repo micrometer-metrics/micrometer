@@ -78,7 +78,9 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 logger.debug("influx database {} is ready to receive metrics", config.db());
                 databaseExists = true;
             } else if (status >= 400) {
-                logger.error("unable to create database '{}': {}", config.db(), IOUtils.toString(con.getErrorStream()));
+                if (logger.isErrorEnabled()) {
+                    logger.error("unable to create database '{}': {}", config.db(), IOUtils.toString(con.getErrorStream()));
+                }
             }
         } catch (Throwable e) {
             logger.error("unable to create database '{}'", config.db(), e);
@@ -163,9 +165,11 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                         logger.info("successfully sent {} metrics to influx", batch.size());
                         databaseExists = true;
                     } else if (status >= 400) {
-                        logger.error("failed to send metrics: " + IOUtils.toString(con.getErrorStream()));
+                        if (logger.isErrorEnabled()) {
+                            logger.error("failed to send metrics: {}", IOUtils.toString(con.getErrorStream()));
+                        }
                     } else {
-                        logger.error("failed to send metrics: http " + status);
+                        logger.error("failed to send metrics: http {}", status);
                     }
 
                 } finally {

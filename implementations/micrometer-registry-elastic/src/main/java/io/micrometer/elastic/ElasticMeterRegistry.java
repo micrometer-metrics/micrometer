@@ -17,7 +17,6 @@ package io.micrometer.elastic;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.IOUtils;
@@ -75,7 +74,9 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         try {
             HttpURLConnection connection = openConnection("/_template/metrics_template", "HEAD");
             if (connection == null) {
-                logger.error("Could not connect to any configured elasticsearch instances: {}", Arrays.asList(config.hosts()));
+                if (logger.isErrorEnabled()) {
+                    logger.error("Could not connect to any configured elasticsearch instances: {}", Arrays.asList(config.hosts()));
+                }
                 return;
             }
             connection.disconnect();
@@ -144,7 +145,9 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
             HttpURLConnection connection = openConnection("/_bulk", "POST");
             if (connection == null) {
-                logger.error("Could not connect to any configured elasticsearch instances: {}", Arrays.asList(config.hosts()));
+                if (logger.isErrorEnabled()) {
+                    logger.error("Could not connect to any configured elasticsearch instances: {}", Arrays.asList(config.hosts()));
+                }
                 return;
             }
 
@@ -153,9 +156,11 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 outputStream.flush();
 
                 if (connection.getResponseCode() >= 400) {
-                    try {
-                        logger.error("failed to send metrics to elasticsearch (HTTP {}). Cause: {}", connection.getResponseCode(), IOUtils.toString(connection.getErrorStream(), StandardCharsets.UTF_8));
-                    } catch (IOException ignored) {
+                    if (logger.isErrorEnabled()) {
+                        try {
+                            logger.error("failed to send metrics to elasticsearch (HTTP {}). Cause: {}", connection.getResponseCode(), IOUtils.toString(connection.getErrorStream(), StandardCharsets.UTF_8));
+                        } catch (IOException ignored) {
+                        }
                     }
                     return; // don't try another batch
                 } else {
@@ -230,7 +235,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<String> writeSummary(DistributionSummary summary, long wallTime) {
-        HistogramSnapshot snap = summary.takeSnapshot();
+        summary.takeSnapshot();
         Stream.Builder<String> stream = Stream.builder();
         stream.add(index(summary, wallTime)
                 .field("count", summary.count())

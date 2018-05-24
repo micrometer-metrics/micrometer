@@ -106,7 +106,9 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                         if (status >= 200 && status < 300) {
                             logger.info("successfully sent {} metrics to Wavefront", batch.size());
                         } else {
-                            logger.error("failed to send metrics: " + IOUtils.toString(con.getErrorStream()));
+                            if (logger.isErrorEnabled()) {
+                                logger.error("failed to send metrics: {}", IOUtils.toString(con.getErrorStream()));
+                            }
                         }
                     } catch (Exception e) {
                         logger.error(e.getMessage(), e);

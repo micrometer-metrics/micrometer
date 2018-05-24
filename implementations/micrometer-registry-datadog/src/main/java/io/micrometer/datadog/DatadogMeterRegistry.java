@@ -124,11 +124,13 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                     int status = con.getResponseCode();
 
                     if (status >= 200 && status < 300) {
-                        logger.info("successfully sent " + batch.size() + " metrics to datadog");
+                        logger.info("successfully sent {} metrics to datadog", batch.size());
                     } else if (status >= 400) {
-                        logger.error("failed to send metrics: " + IOUtils.toString(con.getErrorStream()));
+                        if (logger.isErrorEnabled()) {
+                            logger.error("failed to send metrics: {}", IOUtils.toString(con.getErrorStream()));
+                        }
                     } else {
-                        logger.error("failed to send metrics: http " + status);
+                        logger.error("failed to send metrics: http {}", status);
                     }
                 } finally {
                     quietlyCloseUrlConnection(con);
@@ -280,15 +282,16 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                 verifiedMetadata.add(metricName);
             } else if (status >= 400) {
                 String msg = IOUtils.toString(con.getErrorStream());
-                if (msg.contains("metric_name not found")) {
-                    // Do nothing. Metrics that are newly created in Datadog are not immediately available
-                    // for metadata modification. We will keep trying this request on subsequent publishes,
-                    // where it will eventually succeed.
-                } else {
-                    logger.error("failed to send metric metadata: " + msg);
+
+                // Ignore when the response content contains "metric_name not found".
+                // Metrics that are newly created in Datadog are not immediately available
+                // for metadata modification. We will keep trying this request on subsequent publishes,
+                // where it will eventually succeed.
+                if (!msg.contains("metric_name not found")) {
+                    logger.error("failed to send metric metadata: {}", msg);
                 }
             } else {
-                logger.error("failed to send metric metadata: http " + status);
+                logger.error("failed to send metric metadata: http {}", status);
             }
         } catch (IOException e) {
             logger.warn("failed to send metric metadata", e);
