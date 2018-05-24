@@ -231,9 +231,11 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             if (status >= 200 && status < 300) {
                 logger.info("successfully sent {} events to New Relic", events.size());
             } else if (status >= 400) {
-                logger.error("failed to send metrics: " + IOUtils.toString(con.getErrorStream()));
+                if (logger.isErrorEnabled()) {
+                    logger.error("failed to send metrics: {}", IOUtils.toString(con.getErrorStream()));
+                }
             } else {
-                logger.error("failed to send metrics: http " + status);
+                logger.error("failed to send metrics: http {}", status);
             }
 
         } catch (Throwable e) {
