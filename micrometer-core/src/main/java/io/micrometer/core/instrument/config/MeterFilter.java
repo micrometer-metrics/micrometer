@@ -252,11 +252,11 @@ public interface MeterFilter {
                     String value = id.getTag(tagKey);
                     if (value != null)
                         observedTagValues.add(value);
+                    if (observedTagValues.size() > maximumTagValues) {
+                        return onMaxReached.accept(id);
+                    }
                 }
 
-                if (observedTagValues.size() > maximumTagValues) {
-                    return onMaxReached.accept(id);
-                }
                 return MeterFilterReply.NEUTRAL;
             }
 

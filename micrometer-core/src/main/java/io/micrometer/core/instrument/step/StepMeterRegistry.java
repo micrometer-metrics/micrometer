@@ -25,7 +25,7 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
@@ -40,7 +40,7 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     private final StepRegistryConfig config;
 
     @Nullable
-    private ScheduledFuture<?> publisher;
+    private ScheduledExecutorService scheduledExecutorService;
 
     public StepMeterRegistry(StepRegistryConfig config, Clock clock) {
         super(clock);
@@ -52,19 +52,20 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     }
 
     public void start(ThreadFactory threadFactory) {
-        if (publisher != null)
+        if (scheduledExecutorService != null)
             stop();
 
         if (config.enabled()) {
-            publisher = Executors.newSingleThreadScheduledExecutor(threadFactory)
-                    .scheduleAtFixedRate(this::publish, config.step().toMillis(), config.step().toMillis(), TimeUnit.MILLISECONDS);
+            scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
+            scheduledExecutorService.scheduleAtFixedRate(this::publish, config.step()
+                .toMillis(), config.step().toMillis(), TimeUnit.MILLISECONDS);
         }
     }
 
     public void stop() {
-        if (publisher != null) {
-            publisher.cancel(false);
-            publisher = null;
+        if (scheduledExecutorService != null) {
+            scheduledExecutorService.shutdown();
+            scheduledExecutorService = null;
         }
     }
 
