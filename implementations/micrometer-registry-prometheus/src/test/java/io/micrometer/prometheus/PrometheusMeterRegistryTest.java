@@ -89,9 +89,12 @@ class PrometheusMeterRegistryTest {
         Meter.builder("name", Meter.Type.COUNTER, Collections.singletonList(new Measurement(() -> 1.0, Statistic.COUNT)))
                 .register(registry);
 
-        assertThat(registry.getPrometheusRegistry().metricFamilySamples().nextElement().type)
+        Collector.MetricFamilySamples metricFamilySamples = registry.getPrometheusRegistry().metricFamilySamples().nextElement();
+        assertThat(metricFamilySamples.type)
                 .describedAs("custom counter with a type of COUNTER")
                 .isEqualTo(Collector.Type.COUNTER);
+        assertThat(metricFamilySamples.samples.get(0).labelNames).containsExactly("statistic");
+        assertThat(metricFamilySamples.samples.get(0).labelValues).containsExactly("COUNT");
     }
 
     @DisplayName("attempts to register different meter types with the same name fail somewhat gracefully")
