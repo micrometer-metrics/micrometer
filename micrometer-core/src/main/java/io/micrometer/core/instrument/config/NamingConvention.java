@@ -72,7 +72,7 @@ public interface NamingConvention {
 
         private String toCamelCase(String value) {
             String[] parts = value.split("\\.");
-            StringBuilder conventionName = new StringBuilder();
+            StringBuilder conventionName = new StringBuilder(value.length());
             for (int i = 0; i < parts.length; i++) {
                 String str = parts[i];
                 if (StringUtils.isEmpty(str))
@@ -104,7 +104,12 @@ public interface NamingConvention {
             if (name.length() == 0) {
                 return name;
             }
-            char chars[] = name.toCharArray();
+
+            if (Character.isUpperCase(name.charAt(0))) {
+                return name;
+            }
+
+            char[] chars = name.toCharArray();
             chars[0] = Character.toUpperCase(chars[0]);
             return new String(chars);
         }
