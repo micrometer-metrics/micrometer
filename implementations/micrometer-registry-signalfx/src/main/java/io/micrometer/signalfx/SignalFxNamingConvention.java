@@ -15,6 +15,8 @@
  */
 package io.micrometer.signalfx;
 
+import java.util.regex.Pattern;
+
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
@@ -26,6 +28,15 @@ import io.micrometer.core.lang.Nullable;
  * @author Jon Schneider
  */
 public class SignalFxNamingConvention implements NamingConvention {
+	
+	private static final Pattern START_UNDERSCORE_PATTERN = Pattern.compile("^_");
+	private static final Pattern SF_PATTERN = Pattern.compile("^sf_");
+	private static final Pattern START_LETTERS_PATTERN = Pattern.compile("^[a-zA-Z].*");
+	
+	private static final int NAME_MAX_LENGTH = 256;
+	private static final int TAG_VALUE_MAX_LENGTH = 256;
+	private static final int KEY_MAX_LENGTH = 128;
+	
     private final NamingConvention delegate;
 
     public SignalFxNamingConvention() {
@@ -40,7 +51,7 @@ public class SignalFxNamingConvention implements NamingConvention {
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
         String formattedName = delegate.name(StringEscapeUtils.escapeJson(name), type, baseUnit);
-        return formattedName.length() > 256 ? formattedName.substring(0, 256) : formattedName;
+        return formattedName.length() > NAME_MAX_LENGTH ? formattedName.substring(0, NAME_MAX_LENGTH) : formattedName;
     }
 
     // 1. Has a maximum length of 128 characters
@@ -51,14 +62,15 @@ public class SignalFxNamingConvention implements NamingConvention {
     public String tagKey(String key) {
         String conventionKey = delegate.tagKey(key);
 
-        conventionKey = conventionKey.replaceAll("^_", "").replaceAll("^sf_", ""); // 2
+        conventionKey = START_UNDERSCORE_PATTERN.matcher(conventionKey).replaceAll(""); // 2
+        conventionKey = SF_PATTERN.matcher(conventionKey).replaceAll(""); // 2
 
-        if (!conventionKey.matches("^[a-zA-Z].*")) { // 3
+        if (!START_LETTERS_PATTERN.matcher(conventionKey).matches()) { // 3
             conventionKey = "a" + conventionKey;
         }
 
-        if (conventionKey.length() > 128) {
-            conventionKey = conventionKey.substring(0, 128); // 1
+        if (conventionKey.length() > KEY_MAX_LENGTH) {
+            conventionKey = conventionKey.substring(0, KEY_MAX_LENGTH); // 1
         }
 
         return conventionKey;
@@ -68,6 +80,6 @@ public class SignalFxNamingConvention implements NamingConvention {
     @Override
     public String tagValue(String value) {
         String formattedValue = StringEscapeUtils.escapeJson(delegate.tagValue(value));
-        return formattedValue.length() > 256 ? formattedValue.substring(0, 256) : formattedValue;
+        return formattedValue.length() > TAG_VALUE_MAX_LENGTH ? formattedValue.substring(0, TAG_VALUE_MAX_LENGTH) : formattedValue;
     }
 }

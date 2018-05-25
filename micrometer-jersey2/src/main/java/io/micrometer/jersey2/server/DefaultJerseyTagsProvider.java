@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -37,6 +38,8 @@ import io.micrometer.core.instrument.Tag;
  */
 public final class DefaultJerseyTagsProvider implements JerseyTagsProvider {
 
+	private static final Pattern URI_CLEANUP_PATTERN = Pattern.compile("//+");
+	
     // VisibleForTesting
     static final String TAG_METHOD = "method";
 
@@ -117,7 +120,8 @@ public final class DefaultJerseyTagsProvider implements JerseyTagsProvider {
         for (UriTemplate uriTemplate : matchedTemplates) {
             sb.append(uriTemplate.getTemplate());
         }
-        return sb.toString().replaceAll("//+", "/");
+        
+        return URI_CLEANUP_PATTERN.matcher(sb.toString()).replaceAll("/");
     }
 
 }
