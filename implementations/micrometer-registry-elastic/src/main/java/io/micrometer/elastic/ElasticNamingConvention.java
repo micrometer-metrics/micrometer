@@ -15,10 +15,15 @@
  */
 package io.micrometer.elastic;
 
+import java.util.regex.Pattern;
+
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 
 public class ElasticNamingConvention implements NamingConvention {
+	
+	private static final Pattern FIRST_UNDERSCORE_PATTERN = Pattern.compile("^_+");
+	 
     private final NamingConvention delegate;
 
     public ElasticNamingConvention() {
@@ -42,7 +47,7 @@ public class ElasticNamingConvention implements NamingConvention {
             key = "type.tag";
         } else if (key.startsWith("_")) {
             // Fields that start with _ are considered reserved and ignored by Kibana. See https://github.com/elastic/kibana/issues/2551
-            key = key.replaceFirst("^_+", "");
+        	key = FIRST_UNDERSCORE_PATTERN.matcher(key).replaceFirst("");
         }
 
         return delegate.tagKey(key);
