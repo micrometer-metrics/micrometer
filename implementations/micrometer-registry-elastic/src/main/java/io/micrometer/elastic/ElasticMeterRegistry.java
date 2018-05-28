@@ -50,8 +50,12 @@ import java.util.stream.Stream;
  * @author Jon Schneider
  */
 public class ElasticMeterRegistry extends StepMeterRegistry {
-    private final Logger logger = LoggerFactory.getLogger(ElasticMeterRegistry.class);
 
+	private final Logger logger = LoggerFactory.getLogger(ElasticMeterRegistry.class);
+
+    private static final ZoneId UTC_ZONE = ZoneId.of("UTC");
+    private static final String ES_METRICS_TEMPLATE = "/_template/metrics_template";
+    
     private final ElasticConfig config;
     private boolean checkedForIndexTemplate = false;
 
@@ -72,7 +76,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             return;
         }
         try {
-            HttpURLConnection connection = openConnection("/_template/metrics_template", "HEAD");
+            HttpURLConnection connection = openConnection(ES_METRICS_TEMPLATE, "HEAD");
             if (connection == null) {
                 if (logger.isErrorEnabled()) {
                     logger.error("Could not connect to any configured elasticsearch instances: {}", Arrays.asList(config.hosts()));
@@ -89,7 +93,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             }
 
             logger.debug("No metrics template found in elasticsearch. Adding...");
-            HttpURLConnection putTemplateConnection = openConnection("/_template/metrics_template", "PUT");
+            HttpURLConnection putTemplateConnection = openConnection(ES_METRICS_TEMPLATE, "PUT");
             if (putTemplateConnection == null) {
                 logger.error("Error adding metrics template to elasticsearch");
                 return;
@@ -98,13 +102,15 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             try (OutputStream outputStream = putTemplateConnection.getOutputStream()) {
                 outputStream.write("{\"template\":\"metrics*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false},\"properties\":{\"name\":{\"type\":\"keyword\"}}}}}".getBytes());
                 outputStream.flush();
+                
+                if (putTemplateConnection.getResponseCode() != 200) {
+                	logger.error("Error adding metrics template to elasticsearch: {}/{}", putTemplateConnection.getResponseCode(), putTemplateConnection.getResponseMessage());
+                	return;
+                }
             }
-
-            putTemplateConnection.disconnect();
-            if (putTemplateConnection.getResponseCode() != 200) {
-                logger.error("Error adding metrics template to elasticsearch: {}/{}" + putTemplateConnection.getResponseCode(), putTemplateConnection.getResponseMessage());
-                return;
-            }
+            finally {
+            	putTemplateConnection.disconnect();
+			}
 
             checkedForIndexTemplate = true;
         } catch (IOException ex) {
@@ -265,13 +271,13 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     static class IndexBuilder {
-        private StringBuilder indexLine = new StringBuilder();
+        private StringBuilder indexLine = new StringBuilder(100);
 
         private IndexBuilder(ElasticConfig config, String name, String type, List<Tag> tags, long wallTime) {
             indexLine.append(indexLine(config, wallTime))
-                    .append("{\"").append(config.timestampFieldName()).append("\":\"").append(timestamp(wallTime)).append("\"")
-                    .append(",\"name\":\"").append(name).append("\"")
-                    .append(",\"type\":\"").append(type).append("\"");
+                    .append("{\"").append(config.timestampFieldName()).append("\":\"").append(timestamp(wallTime)).append('"')
+                    .append(",\"name\":\"").append(name).append('"')
+                    .append(",\"type\":\"").append(type).append('"');
 
             for (Tag tag : tags) {
                 field(tag.getKey(), tag.getValue());
@@ -284,7 +290,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }
 
         IndexBuilder field(String name, String value) {
-            indexLine.append(",\"").append(name).append("\":\"").append(value).append("\"");
+            indexLine.append(",\"").append(name).append("\":\"").append(value).append('"');
             return this;
         }
 
@@ -294,13 +300,13 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }
 
         private static String indexLine(ElasticConfig config, long wallTime) {
-            ZonedDateTime dt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(wallTime), ZoneId.of("UTC"));
+			ZonedDateTime dt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(wallTime), UTC_ZONE);
             String indexName = config.index() + "-" + DateTimeFormatter.ofPattern(config.indexDateFormat()).format(dt);
             return "{\"index\":{\"_index\":\"" + indexName + "\",\"_type\":\"doc\"}}\n";
         }
 
         String build() {
-            return indexLine.toString() + "}";
+            return indexLine.append('}').toString();
         }
     }
 
