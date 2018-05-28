@@ -26,7 +26,10 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.HttpHeader;
+import io.micrometer.core.instrument.util.HttpMethod;
 import io.micrometer.core.instrument.util.IOUtils;
+import io.micrometer.core.instrument.util.MediaType;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.URIUtils;
 import org.slf4j.Logger;
@@ -200,7 +203,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             final URL customMetricEndpoint = new URL(customMetricEndpointTemplate +
                 customMetric.getMetricId() + "?api-token=" + config.apiToken());
 
-            executeHttpCall(customMetricEndpoint, "PUT", customMetric.asJson(),
+            executeHttpCall(customMetricEndpoint, HttpMethod.PUT, customMetric.asJson(),
                 status -> {
                     logger.debug("created '{}' as custom metric", customMetric.getMetricId());
                     createdCustomMetrics.add(customMetric.getMetricId());
@@ -213,7 +216,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     }
 
     private void postCustomMetricValues(final String type, final List<DynatraceTimeSeries> timeSeries) {
-        executeHttpCall(customDeviceMetricEndpoint, "POST",
+        executeHttpCall(customDeviceMetricEndpoint, HttpMethod.POST,
             "{\"type\":\"" + type + "\"" +
                 ",\"series\":[" +
                 timeSeries.stream()
@@ -236,7 +239,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             con.setConnectTimeout((int) config.connectTimeout().toMillis());
             con.setReadTimeout((int) config.readTimeout().toMillis());
             con.setRequestMethod(method);
-            con.setRequestProperty("Content-Type", "application/json");
+            con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 
             con.setDoOutput(true);
 

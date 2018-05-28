@@ -17,7 +17,10 @@ package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.HttpHeader;
+import io.micrometer.core.instrument.util.HttpMethod;
 import io.micrometer.core.instrument.util.IOUtils;
+import io.micrometer.core.instrument.util.MediaType;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.URIUtils;
 import io.micrometer.core.lang.Nullable;
@@ -84,8 +87,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                     con = (HttpURLConnection) postTimeSeriesEndpoint.openConnection();
                     con.setConnectTimeout((int) config.connectTimeout().toMillis());
                     con.setReadTimeout((int) config.readTimeout().toMillis());
-                    con.setRequestMethod("POST");
-                    con.setRequestProperty("Content-Type", "application/json");
+                    con.setRequestMethod(HttpMethod.POST);
+                    con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
                     con.setDoOutput(true);
 
                     /*
@@ -267,8 +270,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                     + "?api_key=" + config.apiKey() + "&application_key=" + config.applicationKey()).toURL().openConnection();
             con.setConnectTimeout((int) config.connectTimeout().toMillis());
             con.setReadTimeout((int) config.readTimeout().toMillis());
-            con.setRequestMethod("PUT");
-            con.setRequestProperty("Content-Type", "application/json");
+            con.setRequestMethod(HttpMethod.PUT);
+            con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
             con.setDoOutput(true);
 
             try (OutputStream os = con.getOutputStream()) {
