@@ -19,7 +19,10 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.HttpHeader;
+import io.micrometer.core.instrument.util.HttpMethod;
 import io.micrometer.core.instrument.util.IOUtils;
+import io.micrometer.core.instrument.util.MediaType;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.NonNull;
@@ -76,7 +79,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             return;
         }
         try {
-            HttpURLConnection connection = openConnection(ES_METRICS_TEMPLATE, "HEAD");
+            HttpURLConnection connection = openConnection(ES_METRICS_TEMPLATE, HttpMethod.HEAD);
             if (connection == null) {
                 if (logger.isErrorEnabled()) {
                     logger.error("Could not connect to any configured elasticsearch instances: {}", Arrays.asList(config.hosts()));
@@ -93,7 +96,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             }
 
             logger.debug("No metrics template found in elasticsearch. Adding...");
-            HttpURLConnection putTemplateConnection = openConnection(ES_METRICS_TEMPLATE, "PUT");
+            HttpURLConnection putTemplateConnection = openConnection(ES_METRICS_TEMPLATE, HttpMethod.PUT);
             if (putTemplateConnection == null) {
                 logger.error("Error adding metrics template to elasticsearch");
                 return;
@@ -149,7 +152,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 }
             }).collect(Collectors.joining("\n")) + "\n";
 
-            HttpURLConnection connection = openConnection("/_bulk", "POST");
+            HttpURLConnection connection = openConnection("/_bulk", HttpMethod.POST);
             if (connection == null) {
                 if (logger.isErrorEnabled()) {
                     logger.error("Could not connect to any configured elasticsearch instances: {}", Arrays.asList(config.hosts()));
@@ -325,15 +328,15 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 connection.setConnectTimeout((int) config.connectTimeout().toMillis());
                 connection.setReadTimeout((int) config.readTimeout().toMillis());
                 connection.setUseCaches(false);
-                connection.setRequestProperty("Content-Type", "application/json");
-                if (method.equalsIgnoreCase("POST") || method.equalsIgnoreCase("PUT")) {
+                connection.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+                if (method.equalsIgnoreCase(HttpMethod.POST) || method.equalsIgnoreCase(HttpMethod.PUT)) {
                     connection.setDoOutput(true);
                 }
 
                 if (StringUtils.isNotBlank(config.userName()) && StringUtils.isNotBlank(config.password())) {
                     byte[] authBinary = (config.userName() + ":" + config.password()).getBytes(StandardCharsets.UTF_8);
                     String authEncoded = Base64.getEncoder().encodeToString(authBinary);
-                    connection.setRequestProperty("Authorization", "Basic " + authEncoded);
+                    connection.setRequestProperty(HttpHeader.AUTHORIZATION, "Basic " + authEncoded);
                 }
 
                 connection.connect();

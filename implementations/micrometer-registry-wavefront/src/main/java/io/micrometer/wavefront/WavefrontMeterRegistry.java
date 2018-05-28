@@ -19,7 +19,9 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.HttpHeader;
 import io.micrometer.core.instrument.util.IOUtils;
+import io.micrometer.core.instrument.util.MediaType;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
@@ -93,8 +95,8 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                         URL url = new URL(uri.getScheme(), uri.getHost(), uri.getPort(), String.format("/report/metrics?t=%s&h=%s", config.apiToken(), config.source()));
                         con = (HttpURLConnection) url.openConnection();
                         con.setDoOutput(true);
-                        con.addRequestProperty("Content-Type", "application/json");
-                        con.addRequestProperty("Accept", "application/json");
+                        con.addRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+                        con.addRequestProperty(HttpHeader.ACCEPT, MediaType.APPLICATION_JSON);
 
                         try (OutputStream os = con.getOutputStream();
                              OutputStreamWriter writer = new OutputStreamWriter(os, "UTF-8")) {

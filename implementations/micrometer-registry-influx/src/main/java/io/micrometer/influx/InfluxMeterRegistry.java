@@ -18,7 +18,11 @@ package io.micrometer.influx;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.HttpContentCoding;
+import io.micrometer.core.instrument.util.HttpHeader;
+import io.micrometer.core.instrument.util.HttpMethod;
 import io.micrometer.core.instrument.util.IOUtils;
+import io.micrometer.core.instrument.util.MediaType;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
@@ -69,7 +73,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             con = (HttpURLConnection) queryEndpoint.openConnection();
             con.setConnectTimeout((int) config.connectTimeout().toMillis());
             con.setReadTimeout((int) config.readTimeout().toMillis());
-            con.setRequestMethod("POST");
+            con.setRequestMethod(HttpMethod.POST);
             authenticateRequest(con);
 
             int status = con.getResponseCode();
@@ -106,8 +110,8 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     con = (HttpURLConnection) influxEndpoint.openConnection();
                     con.setConnectTimeout((int) config.connectTimeout().toMillis());
                     con.setReadTimeout((int) config.readTimeout().toMillis());
-                    con.setRequestMethod("POST");
-                    con.setRequestProperty("Content-Type", "plain/text");
+                    con.setRequestMethod(HttpMethod.POST);
+                    con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.PLAIN_TEXT);
                     con.setDoOutput(true);
 
                     authenticateRequest(con);
@@ -145,7 +149,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     String body = String.join("\n", bodyLines);
 
                     if (config.compressed())
-                        con.setRequestProperty("Content-Encoding", "gzip");
+                        con.setRequestProperty(HttpHeader.CONTENT_ENCODING, HttpContentCoding.GZIP);
 
                     try (OutputStream os = con.getOutputStream()) {
                         if (config.compressed()) {
@@ -187,7 +191,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         if (config.userName() != null && config.password() != null) {
             String encoded = Base64.getEncoder().encodeToString((config.userName() + ":" +
                     config.password()).getBytes(StandardCharsets.UTF_8));
-            con.setRequestProperty("Authorization", "Basic " + encoded);
+            con.setRequestProperty(HttpHeader.AUTHORIZATION, "Basic " + encoded);
         }
     }
 
