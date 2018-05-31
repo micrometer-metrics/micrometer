@@ -16,33 +16,23 @@
 package io.micrometer.spring.autoconfigure.web.jetty;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.jetty.InstrumentedQueuedThreadPool;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
-import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerFactory;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.Collections;
 
 /**
  * @author Manabu Matsuzaki
  * @author Jon Schneider
+ * @author Michael Weirauch
  */
 @Configuration
 @ConditionalOnClass(name = "org.eclipse.jetty.server.Server")
 @ConditionalOnMissingClass("org.apache.catalina.startup.Tomcat")
 public class JettyMetricsConfiguration {
-    private final MeterRegistry registry;
 
-    public JettyMetricsConfiguration(MeterRegistry registry) {
-        this.registry = registry;
-    }
-
-    @Autowired(required = false)
-    public void instrumentJettyThreadPool(JettyEmbeddedServletContainerFactory jettyContainerFactory) {
-        if (jettyContainerFactory != null) {
-            jettyContainerFactory.setThreadPool(new InstrumentedQueuedThreadPool(registry, Collections.emptyList()));
-        }
+    @Bean
+    JettyMetricsPostProcessor jettyMetricsPostProcessor(MeterRegistry registry) {
+        return new JettyMetricsPostProcessor(registry);
     }
 }
