@@ -18,6 +18,7 @@ package io.micrometer.graphite;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.*;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.dropwizard.DropwizardClock;
 import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
@@ -40,7 +41,7 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
 
     public GraphiteMeterRegistry(GraphiteConfig config, Clock clock, HierarchicalNameMapper nameMapper,
                                  MetricRegistry metricRegistry) {
-        this(config, clock, nameMapper, metricRegistry, defaultGraphiteReporter(config, metricRegistry));
+        this(config, clock, nameMapper, metricRegistry, defaultGraphiteReporter(config, clock, metricRegistry));
     }
 
     public GraphiteMeterRegistry(GraphiteConfig config, Clock clock, HierarchicalNameMapper nameMapper,
@@ -55,7 +56,7 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
             start();
     }
 
-    private static GraphiteReporter defaultGraphiteReporter(GraphiteConfig config, MetricRegistry metricRegistry) {
+    private static GraphiteReporter defaultGraphiteReporter(GraphiteConfig config, Clock clock, MetricRegistry metricRegistry) {
         GraphiteSender sender;
         switch (config.protocol()) {
             case PLAINTEXT:
@@ -70,6 +71,7 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
         }
 
         return GraphiteReporter.forRegistry(metricRegistry)
+            .withClock(new DropwizardClock(clock))
             .convertRatesTo(config.rateUnits())
             .convertDurationsTo(config.durationUnits())
             .build(sender);
