@@ -15,28 +15,6 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.HistogramGauges;
-import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.internal.DefaultMeter;
-import io.micrometer.core.instrument.util.HierarchicalNameMapper;
-import io.micrometer.core.lang.Nullable;
-import io.micrometer.statsd.internal.FlavorStatsdLineBuilder;
-import io.micrometer.statsd.internal.LogbackMetricsSuppressingUnicastProcessor;
-import org.reactivestreams.Processor;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
-import reactor.core.Disposable;
-import reactor.core.Disposables;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.UnicastProcessor;
-import reactor.ipc.netty.NettyPipeline;
-import reactor.ipc.netty.udp.UdpClient;
-import reactor.util.concurrent.Queues;
-
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -46,6 +24,39 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
+
+import org.reactivestreams.Processor;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+
+import io.micrometer.core.annotation.Incubating;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramGauges;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.core.lang.Nullable;
+import io.micrometer.statsd.internal.FlavorStatsdLineBuilder;
+import io.micrometer.statsd.internal.LogbackMetricsSuppressingUnicastProcessor;
+import reactor.core.Disposable;
+import reactor.core.Disposables;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.UnicastProcessor;
+import reactor.ipc.netty.NettyPipeline;
+import reactor.ipc.netty.udp.UdpClient;
+import reactor.util.concurrent.Queues;
 
 /**
  * @author Jon Schneider
@@ -350,6 +361,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
         switch (flavor) {
             case DATADOG:
             case SYSDIG:
+            case ETSY:
                 return NamingConvention.dot;
             case TELEGRAF:
                 return NamingConvention.snakeCase;
