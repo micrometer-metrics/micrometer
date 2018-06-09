@@ -14,5 +14,13 @@
             <property name="processJavadoc" value="true" />
         </module>
 
+        <!-- Regexp -->
+        <module name="com.puppycrawl.tools.checkstyle.checks.regexp.RegexpSinglelineJavaCheck">
+            <property name="format" value="^ *\t+ *\S" />
+            <property name="message"
+                      value="Line has leading tab characters; indentation should be performed with spaces only." />
+            <property name="ignoreComments" value="true" />
+        </module>
+
     </module>
 </module>

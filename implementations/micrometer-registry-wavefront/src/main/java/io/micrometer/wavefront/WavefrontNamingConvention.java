@@ -24,8 +24,8 @@ import io.micrometer.core.lang.Nullable;
 
 public class WavefrontNamingConvention implements NamingConvention {
 	
-	private static final Pattern NAME_CLEANUP_PATTERN = Pattern.compile("[^a-zA-Z0-9\\-_\\./,]");
-	private static final Pattern KEY_CLEANUP_PATTERN = Pattern.compile("[^a-zA-Z0-9\\-_\\.]");
+    private static final Pattern NAME_CLEANUP_PATTERN = Pattern.compile("[^a-zA-Z0-9\\-_\\./,]");
+    private static final Pattern KEY_CLEANUP_PATTERN = Pattern.compile("[^a-zA-Z0-9\\-_\\.]");
 	
     private final NamingConvention delegate;
 
@@ -47,7 +47,7 @@ public class WavefrontNamingConvention implements NamingConvention {
      */
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-    	String sanitizedName = NAME_CLEANUP_PATTERN.matcher(delegate.name(name, type, baseUnit)).replaceAll("_");
+        String sanitizedName = NAME_CLEANUP_PATTERN.matcher(delegate.name(name, type, baseUnit)).replaceAll("_");
 
         // add name prefix if prefix exists
         if (namePrefix != null) {
@@ -61,7 +61,7 @@ public class WavefrontNamingConvention implements NamingConvention {
      */
     @Override
     public String tagKey(String key) {
-    	return KEY_CLEANUP_PATTERN.matcher(delegate.tagKey(key)).replaceAll("_");
+        return KEY_CLEANUP_PATTERN.matcher(delegate.tagKey(key)).replaceAll("_");
     }
 
     /**

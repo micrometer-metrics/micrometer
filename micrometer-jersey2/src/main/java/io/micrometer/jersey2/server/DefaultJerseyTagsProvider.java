@@ -38,7 +38,7 @@ import io.micrometer.core.instrument.Tag;
  */
 public final class DefaultJerseyTagsProvider implements JerseyTagsProvider {
 
-	private static final Pattern URI_CLEANUP_PATTERN = Pattern.compile("//+");
+    private static final Pattern URI_CLEANUP_PATTERN = Pattern.compile("//+");
 	
     // VisibleForTesting
     static final String TAG_METHOD = "method";

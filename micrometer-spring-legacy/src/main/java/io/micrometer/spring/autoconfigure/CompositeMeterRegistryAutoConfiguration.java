@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Import;
  * @since 2.0.0
  */
 @Import({ NoOpMeterRegistryConfiguration.class,
-		CompositeMeterRegistryConfiguration.class })
+        CompositeMeterRegistryConfiguration.class })
 @ConditionalOnClass(CompositeMeterRegistry.class)
 public class CompositeMeterRegistryAutoConfiguration {
 
