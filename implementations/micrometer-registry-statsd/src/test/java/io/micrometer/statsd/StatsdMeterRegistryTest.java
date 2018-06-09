@@ -15,22 +15,8 @@
  */
 package io.micrometer.statsd;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import io.micrometer.core.Issue;
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
-import io.micrometer.core.lang.Nullable;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
-import org.reactivestreams.Processor;
-import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Operators;
-import reactor.core.publisher.UnicastProcessor;
-import reactor.test.StepVerifier;
-import reactor.util.concurrent.Queues;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -38,8 +24,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.reactivestreams.Processor;
+import org.slf4j.LoggerFactory;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import io.micrometer.core.Issue;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
+import io.micrometer.core.lang.Nullable;
+import reactor.core.publisher.Operators;
+import reactor.core.publisher.UnicastProcessor;
+import reactor.test.StepVerifier;
+import reactor.util.concurrent.Queues;
 
 /**
  * @author Jon Schneider
@@ -58,7 +59,7 @@ class StatsdMeterRegistryTest {
         String line = null;
         switch (flavor) {
             case ETSY:
-                line = "myCounter.myTag.val.statistic.count:2|c";
+                line = "my.counter.myTag.val.statistic.count:2|c";
                 break;
             case DATADOG:
                 line = "my.counter:2|c|#statistic:count,my.tag:val";
@@ -94,7 +95,7 @@ class StatsdMeterRegistryTest {
         String line = null;
         switch (flavor) {
             case ETSY:
-                line = "myGauge.myTag.val.statistic.value:2|g";
+                line = "my.gauge.my.tag.val.statistic.value:2|g";
                 break;
             case DATADOG:
                 line = "my.gauge:2|g|#statistic:value,my.tag:val";
@@ -132,7 +133,7 @@ class StatsdMeterRegistryTest {
         String line = null;
         switch (flavor) {
             case ETSY:
-                line = "myTimer.myTag.val:1|ms";
+                line = "my.timer.my.tag.val:1|ms";
                 break;
             case DATADOG:
                 line = "my.timer:1|ms|#my.tag:val";
@@ -165,7 +166,7 @@ class StatsdMeterRegistryTest {
         String line = null;
         switch (flavor) {
             case ETSY:
-                line = "mySummary.myTag.val:1|h";
+                line = "my.summary.my.tag.val:1|h";
                 break;
             case DATADOG:
                 line = "my.summary:1|h|#my.tag:val";
@@ -202,8 +203,8 @@ class StatsdMeterRegistryTest {
         switch (flavor) {
             case ETSY:
                 expectLines = new String[]{
-                        "myLongTask.myTag.val.statistic.activeTasks:1|g",
-                        "myLongTask.myTag.val.statistic.duration:" + stepMillis + "|g",
+                        "my.longTask.my.tag.val.statistic.activeTasks:1|g",
+                        "my.longTask.my.tag.val.statistic.duration:" + stepMillis + "|g",
                 };
                 break;
             case DATADOG:

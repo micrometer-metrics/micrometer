@@ -15,6 +15,20 @@
  */
 package io.micrometer.statsd;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
+
+import org.reactivestreams.Processor;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
@@ -26,9 +40,6 @@ import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.statsd.internal.FlavorStatsdLineBuilder;
 import io.micrometer.statsd.internal.LogbackMetricsSuppressingUnicastProcessor;
-import org.reactivestreams.Processor;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
 import reactor.core.Disposables;
 import reactor.core.publisher.Flux;
@@ -36,16 +47,6 @@ import reactor.core.publisher.UnicastProcessor;
 import reactor.ipc.netty.NettyPipeline;
 import reactor.ipc.netty.udp.UdpClient;
 import reactor.util.concurrent.Queues;
-
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
 
 /**
  * @author Jon Schneider
@@ -350,6 +351,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
         switch (flavor) {
             case DATADOG:
             case SYSDIG:
+            case ETSY:
                 return NamingConvention.dot;
             case TELEGRAF:
                 return NamingConvention.snakeCase;
