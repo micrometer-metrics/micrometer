@@ -101,7 +101,7 @@ class StatsdMeterRegistryTest {
         String line = null;
         switch (flavor) {
             case ETSY:
-                line = "my.gauge.myTag.val.statistic.value:2|g";
+                line = "my.gauge.my.tag.val.statistic.value:2|g";
                 break;
             case DATADOG:
                 line = "my.gauge:2|g|#statistic:value,my.tag:val";
@@ -139,7 +139,7 @@ class StatsdMeterRegistryTest {
         String line = null;
         switch (flavor) {
             case ETSY:
-                line = "my.timer.myTag.val:1|ms";
+                line = "my.timer.my.tag.val:1|ms";
                 break;
             case DATADOG:
                 line = "my.timer:1|ms|#my.tag:val";
@@ -172,7 +172,7 @@ class StatsdMeterRegistryTest {
         String line = null;
         switch (flavor) {
             case ETSY:
-                line = "my.summary.myTag.val:1|h";
+                line = "my.summary.my.tag.val:1|h";
                 break;
             case DATADOG:
                 line = "my.summary:1|h|#my.tag:val";
@@ -209,8 +209,8 @@ class StatsdMeterRegistryTest {
         switch (flavor) {
             case ETSY:
                 expectLines = new String[]{
-                        "my.longTask.myTag.val.statistic.activeTasks:1|g",
-                        "my.longTask.myTag.val.statistic.duration:" + stepMillis + "|g",
+                        "my.longTask.my.tag.val.statistic.activeTasks:1|g",
+                        "my.longTask.my.tag.val.statistic.duration:" + stepMillis + "|g",
                 };
                 break;
             case DATADOG:
