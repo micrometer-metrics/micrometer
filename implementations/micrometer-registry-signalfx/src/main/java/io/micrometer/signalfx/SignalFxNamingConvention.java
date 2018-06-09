@@ -28,15 +28,15 @@ import io.micrometer.core.lang.Nullable;
  * @author Jon Schneider
  */
 public class SignalFxNamingConvention implements NamingConvention {
-	
-	private static final Pattern START_UNDERSCORE_PATTERN = Pattern.compile("^_");
-	private static final Pattern SF_PATTERN = Pattern.compile("^sf_");
-	private static final Pattern START_LETTERS_PATTERN = Pattern.compile("^[a-zA-Z].*");
-	
-	private static final int NAME_MAX_LENGTH = 256;
-	private static final int TAG_VALUE_MAX_LENGTH = 256;
-	private static final int KEY_MAX_LENGTH = 128;
-	
+
+    private static final Pattern START_UNDERSCORE_PATTERN = Pattern.compile("^_");
+    private static final Pattern SF_PATTERN = Pattern.compile("^sf_");
+    private static final Pattern START_LETTERS_PATTERN = Pattern.compile("^[a-zA-Z].*");
+
+    private static final int NAME_MAX_LENGTH = 256;
+    private static final int TAG_VALUE_MAX_LENGTH = 256;
+    private static final int KEY_MAX_LENGTH = 128;
+
     private final NamingConvention delegate;
 
     public SignalFxNamingConvention() {

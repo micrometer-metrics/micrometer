@@ -23,7 +23,7 @@ import io.micrometer.core.lang.Nullable;
 
 public class DynatraceNamingConvention implements NamingConvention {
 
-	private static final Pattern KEY_CLEANUP_PATTERN = Pattern.compile("[^\\w.-]");
+    private static final Pattern KEY_CLEANUP_PATTERN = Pattern.compile("[^\\w.-]");
 	
     private final NamingConvention delegate;
 
@@ -42,6 +42,6 @@ public class DynatraceNamingConvention implements NamingConvention {
 
     @Override
     public String tagKey(String key) {
-    	return KEY_CLEANUP_PATTERN.matcher(delegate.tagKey(key)).replaceAll("_");
+        return KEY_CLEANUP_PATTERN.matcher(delegate.tagKey(key)).replaceAll("_");
     }
 }

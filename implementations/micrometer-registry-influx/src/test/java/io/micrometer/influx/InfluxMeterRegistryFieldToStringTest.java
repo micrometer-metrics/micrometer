@@ -32,33 +32,33 @@ class InfluxMeterRegistryFieldToStringTest {
         Locale.setDefault(this.originalLocale);
     }
 
-	@Test
+    @Test
     void testWithEnglishLocale() {
-		Locale.setDefault(Locale.ENGLISH);
-		InfluxMeterRegistry instance = new InfluxMeterRegistry(k -> null, new MockClock());
+        Locale.setDefault(Locale.ENGLISH);
+        InfluxMeterRegistry instance = new InfluxMeterRegistry(k -> null, new MockClock());
 
-		InfluxMeterRegistry.Field field = instance.new Field("value", 0.01);
+        InfluxMeterRegistry.Field field = instance.new Field("value", 0.01);
 
-		assertThat(field.toString()).isEqualTo("value=0.01");
-	}
+        assertThat(field.toString()).isEqualTo("value=0.01");
+    }
 
-	@Test
+    @Test
     void testWithEnglishLocaleWithLargerResolution() {
-		Locale.setDefault(Locale.ENGLISH);
-		InfluxMeterRegistry instance = new InfluxMeterRegistry(k -> null, new MockClock());
+        Locale.setDefault(Locale.ENGLISH);
+        InfluxMeterRegistry instance = new InfluxMeterRegistry(k -> null, new MockClock());
 
-		InfluxMeterRegistry.Field field = instance.new Field("value", 0.0000009);
+        InfluxMeterRegistry.Field field = instance.new Field("value", 0.0000009);
 
-		assertThat(field.toString()).isEqualTo("value=0.000001");
-	}
+        assertThat(field.toString()).isEqualTo("value=0.000001");
+    }
 
-	@Test
+    @Test
     void testWithSwedishLocale() {
-		Locale.setDefault(new Locale("sv", "SE"));
+        Locale.setDefault(new Locale("sv", "SE"));
 
-		InfluxMeterRegistry instance = new InfluxMeterRegistry(k -> null, new MockClock());
-		InfluxMeterRegistry.Field field = instance.new Field("value", 0.01);
+        InfluxMeterRegistry instance = new InfluxMeterRegistry(k -> null, new MockClock());
+        InfluxMeterRegistry.Field field = instance.new Field("value", 0.01);
 
-		assertThat(field.toString()).isEqualTo("value=0.01");
-	}
+        assertThat(field.toString()).isEqualTo("value=0.01");
+    }
 }

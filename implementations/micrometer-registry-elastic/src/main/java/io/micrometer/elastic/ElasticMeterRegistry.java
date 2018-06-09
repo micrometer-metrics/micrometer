@@ -54,7 +54,7 @@ import java.util.stream.Stream;
  */
 public class ElasticMeterRegistry extends StepMeterRegistry {
 
-	private final Logger logger = LoggerFactory.getLogger(ElasticMeterRegistry.class);
+    private final Logger logger = LoggerFactory.getLogger(ElasticMeterRegistry.class);
 
     private static final ZoneId UTC_ZONE = ZoneId.of("UTC");
     private static final String ES_METRICS_TEMPLATE = "/_template/metrics_template";
@@ -107,13 +107,13 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 outputStream.flush();
                 
                 if (putTemplateConnection.getResponseCode() != 200) {
-                	logger.error("Error adding metrics template to elasticsearch: {}/{}", putTemplateConnection.getResponseCode(), putTemplateConnection.getResponseMessage());
-                	return;
+                    logger.error("Error adding metrics template to elasticsearch: {}/{}", putTemplateConnection.getResponseCode(), putTemplateConnection.getResponseMessage());
+                    return;
                 }
             }
             finally {
-            	putTemplateConnection.disconnect();
-			}
+                putTemplateConnection.disconnect();
+            }
 
             checkedForIndexTemplate = true;
         } catch (IOException ex) {
@@ -303,7 +303,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }
 
         private static String indexLine(ElasticConfig config, long wallTime) {
-			ZonedDateTime dt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(wallTime), UTC_ZONE);
+            ZonedDateTime dt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(wallTime), UTC_ZONE);
             String indexName = config.index() + "-" + DateTimeFormatter.ofPattern(config.indexDateFormat()).format(dt);
             return "{\"index\":{\"_index\":\"" + indexName + "\",\"_type\":\"doc\"}}\n";
         }
