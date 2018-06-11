@@ -6,13 +6,13 @@ apply plugin: 'org.junit.platform.gradle.plugin'
 
 dependencies {
     compile project(':micrometer-core')
-    compile 'io.projectreactor:reactor-core:latest.release' lock '3.1.4.RELEASE'
-    compile 'io.projectreactor.ipc:reactor-netty:latest.release' lock '0.7.4.RELEASE'
+    compile 'io.projectreactor:reactor-core:latest.release'
+    compile 'io.projectreactor.ipc:reactor-netty:latest.release'
 
     testCompile project(':micrometer-test')
-    testCompile 'io.projectreactor:reactor-test:latest.release' lock '3.1.4.RELEASE'
-    testCompile 'org.junit.jupiter:junit-jupiter-params:5.+' lock '5.1.0-RC1'
-    testCompile 'org.mockito:mockito-core:latest.release' lock '2.15.0'
+    testCompile 'io.projectreactor:reactor-test:latest.release'
+    testCompile 'org.junit.jupiter:junit-jupiter-params:5.+'
+    testCompile 'org.mockito:mockito-core:latest.release'
 }
 
 shadowJar {

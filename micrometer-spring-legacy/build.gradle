@@ -23,15 +23,15 @@ repositories {
 dependencies {
     compile project(':micrometer-core')
 
-    compile 'org.springframework:spring-beans', optional lock '4.3.14.RELEASE'
-    compile 'org.springframework.boot:spring-boot', optional lock '1.5.10.RELEASE'
-    compile 'org.springframework.boot:spring-boot-actuator', optional lock '1.5.10.RELEASE'
-    compile 'org.springframework.boot:spring-boot-starter-aop', optional lock '1.5.10.RELEASE'
-    compile 'org.springframework.boot:spring-boot-starter-security', optional lock '1.5.10.RELEASE'
-    compile 'org.springframework:spring-webmvc', optional lock '4.3.14.RELEASE'
-    compile 'org.springframework:spring-web', optional lock '4.3.14.RELEASE'
+    compile 'org.springframework:spring-beans', optional
+    compile 'org.springframework.boot:spring-boot', optional
+    compile 'org.springframework.boot:spring-boot-actuator', optional
+    compile 'org.springframework.boot:spring-boot-starter-aop', optional
+    compile 'org.springframework.boot:spring-boot-starter-security', optional
+    compile 'org.springframework:spring-webmvc', optional
+    compile 'org.springframework:spring-web', optional
     compile 'javax.servlet:javax.servlet-api:3.1.0', optional
-    compile 'org.aspectj:aspectjweaver:1.8.+', optional lock '1.8.13'
+    compile 'org.aspectj:aspectjweaver:1.8.+', optional
     compile 'io.prometheus:simpleclient_pushgateway:0.2.0', optional
 
     ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront'].each { sys ->
@@ -40,34 +40,34 @@ dependencies {
 
     compile project(":micrometer-jersey2"), optional
 
-    compile 'org.springframework.integration:spring-integration-core', optional lock '4.3.14.RELEASE'
+    compile 'org.springframework.integration:spring-integration-core', optional
 
     // to validate auto-completion on configuration properties
-    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor' lock '1.5.10.RELEASE'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
     testCompile project(':micrometer-test')
 
-    testCompile 'org.springframework.boot:spring-boot-starter-web' lock '1.5.10.RELEASE'
-    testCompile 'org.springframework.boot:spring-boot-actuator' lock '1.5.10.RELEASE'
-    testCompile 'org.springframework.boot:spring-boot-starter-test' lock '1.5.10.RELEASE'
-    testCompile 'org.springframework.boot:spring-boot-starter-jersey' lock '1.5.10.RELEASE'
+    testCompile 'org.springframework.boot:spring-boot-starter-web'
+    testCompile 'org.springframework.boot:spring-boot-actuator'
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
+    testCompile 'org.springframework.boot:spring-boot-starter-jersey'
 
     // for testing DataSource metrics
-    testCompile 'org.hsqldb:hsqldb' lock '2.3.5'
-    testCompile 'org.springframework.boot:spring-boot-starter-jdbc' lock '1.5.10.RELEASE'
-    testCompile 'com.zaxxer:HikariCP' lock '2.5.1'
+    testCompile 'org.hsqldb:hsqldb'
+    testCompile 'org.springframework.boot:spring-boot-starter-jdbc'
+    testCompile 'com.zaxxer:HikariCP'
 
     // for use in mock servers
-    testCompile 'org.apache.tomcat.embed:tomcat-embed-core:8.+' lock '8.5.28'
+    testCompile 'org.apache.tomcat.embed:tomcat-embed-core'
 
     // for classpath exclusion in tests
-    testCompile 'org.springframework.cloud:spring-cloud-test-support:2.+' lock '2.0.0.M6'
+    testCompile 'org.springframework.cloud:spring-cloud-test-support:2.+'
 
-    testRuntime 'org.apache.httpcomponents:httpclient:4.5.+' lock '4.5.5'
+    testRuntime 'org.apache.httpcomponents:httpclient:4.5.+'
 
-    testCompile 'org.springframework.integration:spring-integration-java-dsl' lock '1.2.3.RELEASE'
-    testCompile 'org.springframework.integration:spring-integration-ws' lock '4.3.14.RELEASE'
-    testCompile 'org.springframework.integration:spring-integration-xml' lock '4.3.14.RELEASE'
+    testCompile 'org.springframework.integration:spring-integration-java-dsl'
+    testCompile 'org.springframework.integration:spring-integration-ws'
+    testCompile 'org.springframework.integration:spring-integration-xml'
 
-    testCompile 'org.springframework.security:spring-security-test' lock '4.2.4.RELEASE'
+    testCompile 'org.springframework.security:spring-security-test'
 }
