@@ -42,9 +42,10 @@ subprojects {
             assert gradle.startParameter.writeDependencyLocks
         }
         doLast {
+            def skip = ['annotationProcessor', 'apt', 'testAnnotationProcessor', 'checkstyle',
+                'shadow', 'testApt', 'archives', 'junitPlatform']
             configurations.each {
-                if (it.canBeResolved) {
-                    // Any any custome filtering on the to be resolved configurations
+                if (it.canBeResolved && !skip.contains(it.name)) {
                     it.resolve()
                 }
             }
