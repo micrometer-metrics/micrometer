@@ -66,10 +66,16 @@ public class FlavorStatsdLineBuilder implements StatsdLineBuilder {
         this.telegrafTagString = memoize(convention ->
                 id.getTags().iterator().hasNext() ?
                         id.getConventionTags(convention).stream()
-                                .map(t -> t.getKey() + "=" + t.getValue())
+                                .map(t -> telegrafEscape(t.getKey()) + "=" + telegrafEscape(t.getValue()))
                                 .collect(Collectors.joining(","))
                         : null
         );
+    }
+
+    private String telegrafEscape(String value) {
+        return value.replace(",", "\\,")
+                .replace("=", "\\=")
+                .replace(" ", "\\ ");
     }
 
     @Override
@@ -100,7 +106,7 @@ public class FlavorStatsdLineBuilder implements StatsdLineBuilder {
                 return metricName(stat) + ":" + amount + "|" + type + tags(stat, datadogTagString.apply(config.namingConvention()),":", "|#");
             case TELEGRAF:
             default:
-                return metricName(stat) + tags(stat, telegrafTagString.apply(config.namingConvention()),"=", ",") + ":" + amount + "|" + type;
+                return telegrafEscape(metricName(stat)) + tags(stat, telegrafTagString.apply(config.namingConvention()),"=", ",") + ":" + amount + "|" + type;
         }
     }
 
