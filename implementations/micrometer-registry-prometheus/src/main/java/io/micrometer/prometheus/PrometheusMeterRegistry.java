@@ -321,7 +321,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                                         break;
                                 }
 
-                                return new Collector.MetricFamilySamples.Sample(name, tagKeys, tagValues, m.getValue());
+                                return new Collector.MetricFamilySamples.Sample(name, statKeys, statValues, m.getValue());
                             })));
         });
 
