@@ -17,7 +17,6 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
-import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
@@ -43,7 +42,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     @Nullable
     private IntervalEstimator intervalEstimator = null;
 
-    @SuppressWarnings("NullableProblems")
+    @Nullable
     private org.LatencyUtils.PauseDetector pauseDetector;
 
     /**
@@ -100,10 +99,8 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
                 ClockDriftPauseDetector clockDriftPauseDetector = (ClockDriftPauseDetector) detector;
                 return new SimplePauseDetector(clockDriftPauseDetector.getSleepInterval().toNanos(),
                         clockDriftPauseDetector.getPauseThreshold().toNanos(), 1, false);
-            } else if (detector instanceof NoPauseDetector) {
-                return new NoopPauseDetector();
             }
-            return new NoopPauseDetector();
+            return null;
         });
 
         if(pauseDetector instanceof SimplePauseDetector) {
@@ -205,12 +202,8 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     @Override
     public void close() {
         histogram.close();
-        pauseDetector.shutdown();
-    }
-
-    private static class NoopPauseDetector extends org.LatencyUtils.PauseDetector {
-        NoopPauseDetector() {
-            shutdown();
+        if (pauseDetector != null) {
+            pauseDetector.shutdown();
         }
     }
 }
