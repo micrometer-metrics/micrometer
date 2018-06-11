@@ -31,8 +31,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static java.util.Objects.requireNonNull;
-
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
     private static Map<PauseDetector, org.LatencyUtils.PauseDetector> pauseDetectorCache =
             new ConcurrentHashMap<>();
@@ -97,7 +95,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     }
 
     private void initPauseDetector(PauseDetector pauseDetectorType) {
-        pauseDetector = requireNonNull(pauseDetectorCache.computeIfAbsent(pauseDetectorType, detector -> {
+        pauseDetector = pauseDetectorCache.computeIfAbsent(pauseDetectorType, detector -> {
             if (detector instanceof ClockDriftPauseDetector) {
                 ClockDriftPauseDetector clockDriftPauseDetector = (ClockDriftPauseDetector) detector;
                 return new SimplePauseDetector(clockDriftPauseDetector.getSleepInterval().toNanos(),
@@ -106,7 +104,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
                 return new NoopPauseDetector();
             }
             return new NoopPauseDetector();
-        }));
+        });
 
         if(pauseDetector instanceof SimplePauseDetector) {
             this.intervalEstimator = new TimeCappedMovingAverageIntervalEstimator(128,
