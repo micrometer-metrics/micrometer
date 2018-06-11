@@ -32,9 +32,22 @@ public class JmxProperties {
     private Boolean enabled;
 
     /**
+     * Metrics JMX domain name.
+     */
+    private String domain = "metrics";
+
+    /**
      * Step size (i.e. reporting frequency) to use.
      */
     private Duration step;
+
+    public String getDomain() {
+        return domain;
+    }
+
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
 
     public Duration getStep() {
         return this.step;
