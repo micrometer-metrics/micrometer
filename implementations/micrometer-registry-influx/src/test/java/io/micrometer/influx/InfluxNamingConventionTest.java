@@ -15,6 +15,7 @@
  */
 package io.micrometer.influx;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import org.junit.jupiter.api.Test;
@@ -44,5 +45,12 @@ class InfluxNamingConventionTest {
     void timeCannotBeATagKeyOrValue() {
         assertThat(catchThrowable(() -> convention.tagKey("time"))).isInstanceOf(IllegalArgumentException.class);
         assertThat(catchThrowable(() -> convention.tagValue("time"))).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Issue("#645")
+    @Test
+    void namingConventionIsNotAppliedToTagValues() {
+        // ...but escaping of special characters still applies
+        assertThat(convention.tagValue("org.example.service=")).isEqualTo("org.example.service\\=");
     }
 }

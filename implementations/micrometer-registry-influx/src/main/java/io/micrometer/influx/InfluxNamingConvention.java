@@ -47,7 +47,7 @@ public class InfluxNamingConvention implements NamingConvention {
         // `time` cannot be a field key or tag key
         if (key.equals("time"))
             throw new IllegalArgumentException("'time' is an invalid tag key in InfluxDB");
-        return format(key);
+        return format(delegate.tagKey(key));
     }
 
     @Override
@@ -60,7 +60,7 @@ public class InfluxNamingConvention implements NamingConvention {
 
     private String format(String name) {
         // https://docs.influxdata.com/influxdb/v1.3/write_protocols/line_protocol_reference/#special-characters
-        return delegate.tagKey(name)
+        return name
                 .replace(",", "\\,")
                 .replace(" ", "\\ ")
                 .replace("=", "\\=")
