@@ -323,7 +323,7 @@ class StatsdMeterRegistryTest {
 
         range(0, 100).forEach(n -> registry.counter("my.counter", "k", "v").increment());
 
-        switch(flavor) {
+        switch (flavor) {
             case DATADOG:
             case TELEGRAF:
                 assertThat(namingConventionUses.intValue()).isEqualTo(3);
@@ -361,7 +361,6 @@ class StatsdMeterRegistryTest {
     private Consumer<String> toSink(Processor<String, String> lines, int numLines) {
         AtomicInteger latch = new AtomicInteger(numLines);
         return l -> {
-            System.out.println(l);
             lines.onNext(l);
             if (latch.decrementAndGet() == 0) {
                 lines.onComplete();

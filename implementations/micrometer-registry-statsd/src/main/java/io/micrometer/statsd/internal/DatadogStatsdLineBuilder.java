@@ -23,13 +23,9 @@ import io.micrometer.core.lang.Nullable;
 import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
 
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.stream.Collectors;
 
 public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
-    private static final AtomicReferenceFieldUpdater<DatadogStatsdLineBuilder, NamingConvention> namingConventionUpdater =
-            AtomicReferenceFieldUpdater.newUpdater(DatadogStatsdLineBuilder.class, NamingConvention.class, "namingConvention");
-
     @SuppressWarnings({"NullableProblems", "unused"})
     private volatile NamingConvention namingConvention;
 
@@ -58,11 +54,7 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private void updateIfNamingConventionChanged() {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
-            for (; ; ) {
-                if (namingConventionUpdater.compareAndSet(this, this.namingConvention, next))
-                    break;
-            }
-
+            this.namingConvention = next;
             this.name = next.name(id.getName(), id.getType(), id.getBaseUnit()) + ":";
             this.tags = HashTreePMap.empty();
             this.conventionTags = id.getTags().iterator().hasNext() ?

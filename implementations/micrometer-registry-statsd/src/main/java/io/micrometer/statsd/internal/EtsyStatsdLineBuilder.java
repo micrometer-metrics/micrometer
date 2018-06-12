@@ -24,13 +24,8 @@ import io.micrometer.core.lang.Nullable;
 import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
 
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-
 public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private final HierarchicalNameMapper nameMapper;
-
-    private static final AtomicReferenceFieldUpdater<EtsyStatsdLineBuilder, NamingConvention> namingConventionUpdater =
-            AtomicReferenceFieldUpdater.newUpdater(EtsyStatsdLineBuilder.class, NamingConvention.class, "namingConvention");
 
     @SuppressWarnings({"NullableProblems", "unused"})
     private volatile NamingConvention namingConvention;
@@ -55,11 +50,7 @@ public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private void updateIfNamingConventionChanged() {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
-            for (; ; ) {
-                if (namingConventionUpdater.compareAndSet(this, this.namingConvention, next))
-                    break;
-            }
-
+            this.namingConvention = next;
             this.names = HashTreePMap.empty();
             this.nameNoStat = null;
         }
@@ -67,7 +58,7 @@ public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
 
     private String nameByStatistic(@Nullable Statistic stat) {
         if (stat == null) {
-            if(this.nameNoStat == null) {
+            if (this.nameNoStat == null) {
                 this.nameNoStat = etsyName(null);
             }
             //noinspection ConstantConditions
