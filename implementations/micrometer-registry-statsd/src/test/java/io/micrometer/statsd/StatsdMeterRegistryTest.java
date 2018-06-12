@@ -20,6 +20,7 @@ import ch.qos.logback.classic.Logger;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import static java.util.stream.IntStream.range;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -289,6 +291,48 @@ class StatsdMeterRegistryTest {
         StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
         registry.stop();
         registry.counter("my.counter").increment();
+    }
+
+    @ParameterizedTest
+    @EnumSource(StatsdFlavor.class)
+    @Issue("#600")
+    void memoryPerformanceOfNamingConventionInHotLoops(StatsdFlavor flavor) {
+        AtomicInteger namingConventionUses = new AtomicInteger(0);
+
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(flavor), clock);
+
+        registry.config().namingConvention(new NamingConvention() {
+            @Override
+            public String name(String name, Meter.Type type, @Nullable String baseUnit) {
+                namingConventionUses.incrementAndGet();
+                return NamingConvention.dot.name(name, type, baseUnit);
+            }
+
+            @Override
+            public String tagKey(String key) {
+                namingConventionUses.incrementAndGet();
+                return NamingConvention.dot.tagKey(key);
+            }
+
+            @Override
+            public String tagValue(String value) {
+                namingConventionUses.incrementAndGet();
+                return NamingConvention.dot.tagValue(value);
+            }
+        });
+
+        range(0, 100).forEach(n -> registry.counter("my.counter", "k", "v").increment());
+
+        switch(flavor) {
+            case DATADOG:
+            case TELEGRAF:
+                assertThat(namingConventionUses.intValue()).isEqualTo(3);
+                break;
+            case ETSY:
+                // because Etsy formatting involves the naming convention being called on the 'statistic' tag as well.
+                assertThat(namingConventionUses.intValue()).isEqualTo(5);
+                break;
+        }
     }
 
     private static StatsdConfig configWithFlavor(StatsdFlavor flavor) {
