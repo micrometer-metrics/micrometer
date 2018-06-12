@@ -28,6 +28,11 @@ import java.util.stream.Collectors;
 import static java.util.stream.Stream.of;
 
 public abstract class FlavorStatsdLineBuilder implements StatsdLineBuilder {
+    private static final String TYPE_COUNT = "c";
+    private static final String TYPE_GAUGE = "g";
+    private static final String TYPE_HISTOGRAM = "h";
+    private static final String TYPE_TIMING = "ms";
+
     protected final Meter.Id id;
     protected final MeterRegistry.Config config;
 
@@ -38,39 +43,25 @@ public abstract class FlavorStatsdLineBuilder implements StatsdLineBuilder {
 
     @Override
     public String count(long amount, Statistic stat) {
-        return line(Long.toString(amount), stat, StatsdMeterType.Count);
+        return line(Long.toString(amount), stat, TYPE_COUNT);
     }
 
     @Override
     public String gauge(double amount, Statistic stat) {
-        return line(DoubleFormat.decimalOrNan(amount), stat, StatsdMeterType.Gauge);
+        return line(DoubleFormat.decimalOrNan(amount), stat, TYPE_GAUGE);
     }
 
     @Override
     public String histogram(double amount) {
-        return line(DoubleFormat.decimalOrNan(amount), null, StatsdMeterType.Histogram);
+        return line(DoubleFormat.decimalOrNan(amount), null, TYPE_HISTOGRAM);
     }
 
     @Override
     public String timing(double timeMs) {
-        return line(DoubleFormat.decimalOrNan(timeMs), null, StatsdMeterType.Timing);
+        return line(DoubleFormat.decimalOrNan(timeMs), null, TYPE_TIMING);
     }
 
-    abstract String line(String amount, @Nullable Statistic stat, StatsdMeterType type);
-
-    enum StatsdMeterType {
-        Count("c"), Gauge("g"), Histogram("h"), Timing("ms");
-
-        private final String code;
-
-        StatsdMeterType(String code) {
-            this.code = code;
-        }
-
-        public String getCode() {
-            return code;
-        }
-    }
+    abstract String line(String amount, @Nullable Statistic stat, String type);
 
     protected String tags(@Nullable Statistic stat, @Nullable String otherTags, String keyValueSeparator, String preamble) {
         String tags = of(stat == null ? null : "statistic" + keyValueSeparator + stat.getTagValueRepresentation(), otherTags)

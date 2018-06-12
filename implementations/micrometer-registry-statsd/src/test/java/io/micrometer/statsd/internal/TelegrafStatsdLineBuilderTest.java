@@ -19,6 +19,7 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -34,5 +35,18 @@ class TelegrafStatsdLineBuilderTest {
         TelegrafStatsdLineBuilder lineBuilder = new TelegrafStatsdLineBuilder(c.getId(), registry.config());
 
         assertThat(lineBuilder.count(1, Statistic.COUNT)).isEqualTo("hikari_pools,statistic=count,pool=poolname\\ \\=\\ abc\\,::hikari:1|c");
+    }
+
+    @Test
+    void changingNamingConvention() {
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        Counter c = registry.counter("my.counter", "my.tag", "value");
+        TelegrafStatsdLineBuilder lb = new TelegrafStatsdLineBuilder(c.getId(), registry.config());
+
+        registry.config().namingConvention(NamingConvention.dot);
+        assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my.counter,statistic=count,my.tag=value:1|c");
+
+        registry.config().namingConvention(NamingConvention.camelCase);
+        assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("myCounter,statistic=count,myTag=value:1|c");
     }
 }

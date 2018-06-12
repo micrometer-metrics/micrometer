@@ -47,9 +47,9 @@ public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
     }
 
     @Override
-    String line(String amount, @Nullable Statistic stat, StatsdMeterType type) {
+    String line(String amount, @Nullable Statistic stat, String type) {
         updateIfNamingConventionChanged();
-        return nameByStatistic(stat) + ":" + amount + "|" + type.getCode();
+        return nameByStatistic(stat) + ":" + amount + "|" + type;
     }
 
     private void updateIfNamingConventionChanged() {
