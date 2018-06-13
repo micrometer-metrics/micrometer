@@ -1,0 +1,7 @@
+apiVersion: 1
+
+datasources:
+- name: prometheus
+  type: prometheus
+  access: direct
+  url: http://localhost:9090
