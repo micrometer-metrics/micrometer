@@ -15,6 +15,7 @@
  */
 package io.micrometer.spring.web.client;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
@@ -73,9 +74,7 @@ public class MetricsRestTemplateCustomizerTest {
         mockServer.verify();
     }
 
-    /**
-     * Issue #283
-     */
+    @Issue("#283")
     @Test
     public void normalizeUriToContainLeadingSlash() {
         mockServer.expect(MockRestRequestMatchers.requestTo("test/123"))

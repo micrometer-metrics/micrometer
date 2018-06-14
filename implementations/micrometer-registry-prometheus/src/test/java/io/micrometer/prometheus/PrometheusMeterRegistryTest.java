@@ -71,9 +71,9 @@ class PrometheusMeterRegistryTest {
         assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndQuantile("ds"));
     }
 
+    @Issue("#27")
     @DisplayName("custom distribution summaries respect varying tags")
     @Test
-    /** Issue #27 */
     void customSummaries() {
         Arrays.asList("v1", "v2").forEach(v -> {
             registry.summary("s", "k", v).record(1.0);
