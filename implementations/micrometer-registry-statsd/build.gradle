@@ -8,6 +8,7 @@ dependencies {
     compile project(':micrometer-core')
     compile 'io.projectreactor:reactor-core:latest.release'
     compile 'io.projectreactor.ipc:reactor-netty:latest.release'
+    compile 'org.pcollections:pcollections:latest.release'
 
     testCompile project(':micrometer-test')
     testCompile 'io.projectreactor:reactor-test:latest.release'
@@ -23,10 +24,12 @@ shadowJar {
         include(dependency('io.projectreactor.ipc:'))
         include(dependency('org.reactivestreams:reactive-streams'))
         include(dependency('io.netty:'))
+        include(dependency('org.pcollections:'))
     }
     relocate 'reactor', 'io.micrometer.shaded.reactor'
     relocate 'org.reactivestreams', 'io.micrometer.shaded.org.reactorstreams'
     relocate 'io.netty', 'io.micrometer.shaded.io.netty'
+    relocate 'org.pcollections', 'io.micrometer.shaded.statsd.org.pcollections'
 }
 
 jar.deleteAllActions()
@@ -40,7 +43,7 @@ publishing {
                         .dependencies
                         .dependency
                         .findAll {
-                            ['reactor-core', 'reactor-netty'].contains(it.artifactId.text())
+                            ['reactor-core', 'reactor-netty', 'pcollections'].contains(it.artifactId.text())
                         }
                         .each { it.parent().remove(it) }
             }
