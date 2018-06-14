@@ -15,5 +15,5 @@
 #
 
 management.security.enabled: false
-
 management.metrics.export.prometheus.enabled: true
+management.metrics.distribution.percentiles-histogram.http: true

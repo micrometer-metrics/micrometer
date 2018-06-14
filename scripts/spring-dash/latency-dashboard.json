@@ -1,43 +1,8 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_PROMETHEUS",
-      "label": "prometheus",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "5.1.0"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": "5.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "heatmap",
-      "name": "Heatmap",
-      "version": "5.0.0"
-    },
-    {
-      "type": "datasource",
-      "id": "prometheus",
-      "name": "Prometheus",
-      "version": "5.0.0"
-    }
-  ],
   "annotations": {
     "list": [
       {
+        "$$hashKey": "object:857",
         "builtIn": 1,
         "datasource": "-- Grafana --",
         "enable": true,
@@ -51,8 +16,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": null,
-  "iteration": 1528496572444,
+  "id": 4,
+  "iteration": 1528999680036,
   "links": [],
   "panels": [
     {
@@ -60,7 +25,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "fill": 0,
       "gridPos": {
         "h": 9,
@@ -179,7 +144,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "fill": 0,
       "gridPos": {
         "h": 9,
@@ -295,15 +260,15 @@
         "cardRound": null
       },
       "color": {
-        "cardColor": "#cffaff",
+        "cardColor": "#33ff00",
         "colorScale": "sqrt",
         "colorScheme": "interpolateSpectral",
         "exponent": 0.3,
         "min": null,
-        "mode": "spectrum"
+        "mode": "opacity"
       },
       "dataFormat": "tsbuckets",
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "gridPos": {
         "h": 9,
         "w": 12,
@@ -319,7 +284,7 @@
       "links": [],
       "targets": [
         {
-          "expr": "sum(rate(http_server_requests_seconds_bucket{le=~\"0\\\\.[0-1]\\\\d+\"}[1m])) by (le)",
+          "expr": "sum(rate(http_server_requests_seconds_bucket{le=~\"0\\\\.[0-4]\\\\d+|\\\\+Inf\"}[1m])) by (le)",
           "format": "heatmap",
           "instant": false,
           "interval": "",
@@ -357,7 +322,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "fill": 0,
       "gridPos": {
         "h": 9,
@@ -445,8 +410,11 @@
     "list": [
       {
         "allValue": null,
-        "current": {},
-        "datasource": "${DS_PROMETHEUS}",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "prometheus",
         "hide": 0,
         "includeAll": true,
         "label": "Application",
@@ -465,8 +433,11 @@
       },
       {
         "allValue": null,
-        "current": {},
-        "datasource": "${DS_PROMETHEUS}",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "prometheus",
         "hide": 0,
         "includeAll": true,
         "label": "Cluster",
@@ -485,8 +456,11 @@
       },
       {
         "allValue": null,
-        "current": {},
-        "datasource": "${DS_PROMETHEUS}",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "prometheus",
         "hide": 0,
         "includeAll": true,
         "label": "Instance",
@@ -537,5 +511,5 @@
   "timezone": "",
   "title": "Latency",
   "uid": "UfvgtJSmk",
-  "version": 19
+  "version": 2
 }

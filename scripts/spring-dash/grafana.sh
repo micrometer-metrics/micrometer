@@ -5,4 +5,5 @@ docker run -i -p 3000:3000 \
 -v $(pwd)/jvmgc-dashboard.json:/etc/grafana/dashboards/jvmgc.json \
 -v $(pwd)/latency-dashboard.json:/etc/grafana/dashboards/latency.json \
 -v $(pwd)/processor-dashboard.json:/etc/grafana/dashboards/processor.json \
-grafana/grafana:5.0.1
+grafana/grafana:5.1.0
+

@@ -1,34 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_PROMETHEUS",
-      "label": "prometheus",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "5.1.0"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": "5.0.0"
-    },
-    {
-      "type": "datasource",
-      "id": "prometheus",
-      "name": "Prometheus",
-      "version": "5.0.0"
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -45,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": null,
+  "id": 3,
   "links": [],
   "panels": [
     {
@@ -86,7 +56,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "description": "Triggers when CPU utilization for the node is over chosen threshold",
       "fill": 0,
       "gridPos": {
@@ -119,6 +89,7 @@
       "steppedLine": true,
       "targets": [
         {
+          "$$hashKey": "object:227",
           "expr": "system_cpu_usage",
           "format": "time_series",
           "intervalFactor": 1,
@@ -153,14 +124,17 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:330",
+          "decimals": null,
           "format": "percentunit",
           "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
+          "max": "1",
+          "min": "0",
           "show": true
         },
         {
+          "$$hashKey": "object:331",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -213,5 +187,5 @@
   "timezone": "",
   "title": "Processor",
   "uid": "f79lTaIik",
-  "version": 2
+  "version": 1
 }

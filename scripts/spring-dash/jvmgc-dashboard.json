@@ -1,34 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_PROMETHEUS",
-      "label": "prometheus",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "5.1.0"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": "5.0.0"
-    },
-    {
-      "type": "datasource",
-      "id": "prometheus",
-      "name": "Prometheus",
-      "version": "5.0.0"
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -46,7 +16,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": null,
+  "id": 2,
   "links": [],
   "panels": [
     {
@@ -54,7 +24,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "fill": 0,
       "gridPos": {
         "h": 9,
@@ -176,7 +146,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "description": "Triggers when heap usage after major GC is over chosen threshold. If this gets too high it can lead to excessive stop the world pauses.",
       "fill": 0,
       "gridPos": {
@@ -223,6 +193,7 @@
       "steppedLine": true,
       "targets": [
         {
+          "$$hashKey": "object:571",
           "expr": "jvm_gc_live_data_size_bytes",
           "format": "time_series",
           "intervalFactor": 1,
@@ -230,6 +201,7 @@
           "refId": "A"
         },
         {
+          "$$hashKey": "object:572",
           "expr": "jvm_gc_max_data_size_bytes",
           "format": "time_series",
           "intervalFactor": 1,
@@ -237,6 +209,7 @@
           "refId": "B"
         },
         {
+          "$$hashKey": "object:573",
           "expr": "jvm_gc_live_data_size_bytes/jvm_gc_max_data_size_bytes",
           "format": "time_series",
           "intervalFactor": 1,
@@ -298,7 +271,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "fill": 0,
       "gridPos": {
         "h": 9,
@@ -389,7 +362,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "fill": 0,
       "gridPos": {
         "h": 9,
@@ -473,7 +446,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "fill": 0,
       "gridPos": {
         "h": 9,
@@ -557,7 +530,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "fill": 0,
       "gridPos": {
         "h": 9,
@@ -643,7 +616,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "prometheus",
       "fill": 0,
       "gridPos": {
         "h": 9,
@@ -745,6 +718,7 @@
       }
     }
   ],
+  "refresh": "10s",
   "schemaVersion": 16,
   "style": "dark",
   "tags": [],
@@ -783,5 +757,5 @@
   "timezone": "",
   "title": "JVM GC",
   "uid": "kuhTd-Imz",
-  "version": 9
+  "version": 1
 }
