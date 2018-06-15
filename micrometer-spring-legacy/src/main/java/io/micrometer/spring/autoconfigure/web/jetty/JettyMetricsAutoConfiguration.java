@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConditionalOnClass(name = "org.eclipse.jetty.server.Server")
 @ConditionalOnMissingClass("org.apache.catalina.startup.Tomcat")
-public class JettyMetricsConfiguration {
+public class JettyMetricsAutoConfiguration {
 
     @Bean
     JettyMetricsPostProcessor jettyMetricsPostProcessor(MeterRegistry registry) {
