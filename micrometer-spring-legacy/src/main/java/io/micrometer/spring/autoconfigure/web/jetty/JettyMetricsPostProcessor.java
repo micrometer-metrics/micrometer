@@ -20,6 +20,7 @@ import java.util.Collections;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.Ordered;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -29,10 +30,11 @@ import io.micrometer.core.instrument.binder.jetty.InstrumentedQueuedThreadPool;
  * @author Michael Weirauch
  */
 public class JettyMetricsPostProcessor implements BeanPostProcessor, Ordered {
-    private final MeterRegistry registry;
+    private final ApplicationContext context;
+    private volatile MeterRegistry registry;
 
-    JettyMetricsPostProcessor(MeterRegistry registry) {
-        this.registry = registry;
+    JettyMetricsPostProcessor(ApplicationContext context) {
+        this.context = context;
     }
 
     @Override
@@ -45,7 +47,7 @@ public class JettyMetricsPostProcessor implements BeanPostProcessor, Ordered {
     public Object postProcessAfterInitialization(Object bean, String beanName) {
         if (bean instanceof JettyEmbeddedServletContainerFactory) {
             ((JettyEmbeddedServletContainerFactory) bean).setThreadPool(
-                    new InstrumentedQueuedThreadPool(registry, Collections.emptyList()));
+                    new InstrumentedQueuedThreadPool(getMeterRegistry(), Collections.emptyList()));
         }
         return bean;
     }
@@ -53,5 +55,12 @@ public class JettyMetricsPostProcessor implements BeanPostProcessor, Ordered {
     @Override
     public int getOrder() {
         return Ordered.HIGHEST_PRECEDENCE;
+    }
+
+    private MeterRegistry getMeterRegistry() {
+        if (this.registry == null) {
+            this.registry = this.context.getBean(MeterRegistry.class);
+        }
+        return this.registry;
     }
 }
