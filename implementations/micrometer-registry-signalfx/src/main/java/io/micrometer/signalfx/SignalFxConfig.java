@@ -68,6 +68,7 @@ public interface SignalFxConfig extends StepRegistryConfig {
 
     @Override
     default Duration step() {
-        return Duration.ofSeconds(10);
+        String v = get(prefix() + ".step");
+        return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
     }
 }
