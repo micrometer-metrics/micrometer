@@ -50,7 +50,7 @@ public class SignalFxNamingConvention implements NamingConvention {
     // Metric (the metric name) can be any non-empty UTF-8 string, with a maximum length <= 256 characters
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        String formattedName = delegate.name(StringEscapeUtils.escapeJson(name), type, baseUnit);
+        String formattedName = StringEscapeUtils.escapeJson(delegate.name(name, type, baseUnit));
         return formattedName.length() > NAME_MAX_LENGTH ? formattedName.substring(0, NAME_MAX_LENGTH) : formattedName;
     }
 
