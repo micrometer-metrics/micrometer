@@ -30,6 +30,6 @@ class DynatraceTimeSeriesTest {
         dimensions.put("first", "one");
         dimensions.put("second", "two");
         final DynatraceTimeSeries timeSeries = new DynatraceTimeSeries("custom:test.metric", 12345, 1, dimensions);
-        assertThat(timeSeries.asJson()).isEqualTo("{\"timeSeriesId\":\"custom:test.metric\",\"dataPoints\":[[12345,1]],\"dimensions\":{\"first\":\"one\",\"second\":\"two\"}}");
+        assertThat(timeSeries.asJson()).isEqualTo("{\"timeseriesId\":\"custom:test.metric\",\"dataPoints\":[[12345,1]],\"dimensions\":{\"first\":\"one\",\"second\":\"two\"}}");
     }
 }
