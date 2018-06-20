@@ -17,7 +17,13 @@ package io.micrometer.core.instrument.util;
 
 import io.micrometer.core.lang.Nullable;
 
-public class StringEscapeUtils {
+/**
+ * Utilities for escaping {@code String}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
+public final class StringEscapeUtils {
     /**
      * Modified from the quote method in:
      * https://github.com/codehaus/jettison/blob/master/src/main/java/org/codehaus/jettison/json/JSONObject.java
@@ -27,11 +33,11 @@ public class StringEscapeUtils {
      */
     public static String escapeJson(@Nullable String string) {
         if (StringUtils.isEmpty(string)) {
-            return "\"\"";
+            return "";
         }
 
         int len = string.length();
-        StringBuilder sb = new StringBuilder(len + 4);
+        StringBuilder sb = new StringBuilder(len + 2);
 
         for (int i = 0; i < len; i += 1) {
             char c = string.charAt(i);
@@ -67,4 +73,8 @@ public class StringEscapeUtils {
         }
         return sb.toString();
     }
+
+    private StringEscapeUtils() {
+    }
+
 }
