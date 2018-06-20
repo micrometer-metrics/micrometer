@@ -20,10 +20,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status.Family;
 
+import org.glassfish.jersey.server.ContainerResponse;
 import org.glassfish.jersey.server.ExtendedUriInfo;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.uri.UriTemplate;
@@ -92,14 +92,11 @@ public final class DefaultJerseyTagsProvider implements JerseyTagsProvider {
     }
 
     private static int statusCode(RequestEvent event) {
-        Throwable exception = event.getException();
-        if (exception != null) {
-            if (exception instanceof WebApplicationException) {
-                return ((WebApplicationException) exception).getResponse().getStatus();
-            }
-            return Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
+        ContainerResponse containerResponse = event.getContainerResponse();
+        if (containerResponse != null) {
+            return containerResponse.getStatus();
         }
-        return event.getContainerResponse().getStatus();
+        return Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
     }
 
     private static boolean isRedirect(int status) {
