@@ -16,8 +16,14 @@
 package io.micrometer.spring.autoconfigure.web.jetty;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
+import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
+
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
+import org.springframework.boot.autoconfigure.web.EmbeddedServletContainerAutoConfiguration;
+import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -27,12 +33,17 @@ import org.springframework.context.annotation.Configuration;
  * @author Michael Weirauch
  */
 @Configuration
-@ConditionalOnClass(name = "org.eclipse.jetty.server.Server")
-@ConditionalOnMissingClass("org.apache.catalina.startup.Tomcat")
+@AutoConfigureAfter({
+        MetricsAutoConfiguration.class, EmbeddedServletContainerAutoConfiguration.class,
+        SimpleMetricsExportAutoConfiguration.class })
+@ConditionalOnClass(name = {
+        "javax.servlet.Servlet", "org.eclipse.jetty.server.Server", "org.eclipse.jetty.util.Loader",
+        "org.eclipse.jetty.webapp.WebAppContext" })
+@ConditionalOnBean({ JettyEmbeddedServletContainerFactory.class, MeterRegistry.class })
 public class JettyMetricsAutoConfiguration {
 
     @Bean
-    JettyMetricsPostProcessor jettyMetricsPostProcessor(MeterRegistry registry) {
+    public JettyMetricsPostProcessor jettyMetricsPostProcessor(MeterRegistry registry) {
         return new JettyMetricsPostProcessor(registry);
     }
 }
