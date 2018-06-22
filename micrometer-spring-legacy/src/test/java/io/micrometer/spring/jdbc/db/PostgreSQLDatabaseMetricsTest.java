@@ -71,10 +71,10 @@ public class PostgreSQLDatabaseMetricsTest {
 
 
         //when
-        postgreSQLDatabaseMetrics.refreshableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
-        postgreSQLDatabaseMetrics.refreshableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 10);
+        postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
+        postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 10);
         //first reset
-        Double result = postgreSQLDatabaseMetrics.refreshableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
+        Double result = postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
 
 
         //then
@@ -89,12 +89,12 @@ public class PostgreSQLDatabaseMetricsTest {
 
 
         //when
-        postgreSQLDatabaseMetrics.refreshableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
-        postgreSQLDatabaseMetrics.refreshableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 10);
+        postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
+        postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 10);
         //first reset
-        postgreSQLDatabaseMetrics.refreshableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 3);
+        postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 3);
         //second reset
-        Double result = postgreSQLDatabaseMetrics.refreshableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 1);
+        Double result = postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 1);
 
 
         //then

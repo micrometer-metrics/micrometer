@@ -83,7 +83,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
             .description("Percentage of blocks in this database that were shared buffer hits vs. read from disk")
             .register(registry);
         FunctionCounter.builder("postgres.transactions", postgresDataSource,
-            dataSource -> refreshableFunctionalCounter("postgres.transactions", this::getTransactionCount))
+            dataSource -> resettableFunctionalCounter("postgres.transactions", this::getTransactionCount))
             .tags(tags)
             .description("Total number of transactions executed (commits + rollbacks)")
             .register(registry);
@@ -92,7 +92,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
             .description("Number of locks on the given db")
             .register(registry);
         FunctionCounter.builder("postgres.tempbytes", postgresDataSource,
-            dataSource -> refreshableFunctionalCounter("postgres.tempbytes", this::getTempBytes))
+            dataSource -> resettableFunctionalCounter("postgres.tempbytes", this::getTempBytes))
             .tags(tags)
             .description("The total amount of temporary bytes written to disk to execute queries")
             .register(registry);
@@ -103,22 +103,22 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private void registerRowCountMetrics(MeterRegistry registry) {
         FunctionCounter.builder("postgres.rows.fetched", postgresDataSource,
-            dataSource -> refreshableFunctionalCounter("postgres.rows.fetched", this::getReadCount))
+            dataSource -> resettableFunctionalCounter("postgres.rows.fetched", this::getReadCount))
             .tags(tags)
             .description("Number of rows fetched from the db")
             .register(registry);
         FunctionCounter.builder("postgres.rows.inserted", postgresDataSource,
-            dataSource -> refreshableFunctionalCounter("postgres.rows.inserted", this::getInsertCount))
+            dataSource -> resettableFunctionalCounter("postgres.rows.inserted", this::getInsertCount))
             .tags(tags)
             .description("Number of rows inserted from the db")
             .register(registry);
         FunctionCounter.builder("postgres.rows.updated", postgresDataSource,
-            dataSource -> refreshableFunctionalCounter("postgres.rows.updated", this::getUpdateCount))
+            dataSource -> resettableFunctionalCounter("postgres.rows.updated", this::getUpdateCount))
             .tags(tags)
             .description("Number of rows updated from the db")
             .register(registry);
         FunctionCounter.builder("postgres.rows.deleted", postgresDataSource,
-            dataSource -> refreshableFunctionalCounter("postgres.rows.deleted", this::getDeleteCount))
+            dataSource -> resettableFunctionalCounter("postgres.rows.deleted", this::getDeleteCount))
             .tags(tags)
             .description("Number of rows deleted from the db")
             .register(registry);
@@ -130,12 +130,12 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private void registerCheckpointMetrics(MeterRegistry registry) {
         FunctionCounter.builder("postgres.checkpoints.timed", postgresDataSource,
-            dataSource -> refreshableFunctionalCounter("postgres.checkpoints.timed", this::getTimedCheckpointsCount))
+            dataSource -> resettableFunctionalCounter("postgres.checkpoints.timed", this::getTimedCheckpointsCount))
             .tags(tags)
             .description("Number of checkpoints timed")
             .register(registry);
         FunctionCounter.builder("postgres.checkpoints.req", postgresDataSource,
-            dataSource -> refreshableFunctionalCounter("postgres.checkpoints.req", this::getRequestedCheckpointsCount))
+            dataSource -> resettableFunctionalCounter("postgres.checkpoints.req", this::getRequestedCheckpointsCount))
             .tags(tags)
             .description("Number of checkpoints requested")
             .register(registry);
@@ -212,7 +212,10 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         return runQuery(query, Float.class);
     }
 
-    protected Double refreshableFunctionalCounter(String functionalCounterKey, DoubleSupplier function) {
+    /**
+     * Function that makes sure functional counter values survive pg_stat_reset calls.
+     */
+    protected Double resettableFunctionalCounter(String functionalCounterKey, DoubleSupplier function) {
         Double result = function.getAsDouble();
         Double previousResult = previousValueCacheMap.getOrDefault(functionalCounterKey, 0D);
         Double beforeResetValue = beforeResetValuesCacheMap.getOrDefault(functionalCounterKey, 0D);
