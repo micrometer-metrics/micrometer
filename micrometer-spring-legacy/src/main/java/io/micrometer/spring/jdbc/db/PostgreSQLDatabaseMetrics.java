@@ -31,6 +31,9 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.DoubleSupplier;
 
 
 /**
@@ -46,6 +49,8 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     private final String database;
     private final DataSource postgresDataSource;
     private final Iterable<Tag> tags;
+    private final Map<String, Double> beforeResetValuesCacheMap;
+    private final Map<String, Double> previousValueCacheMap;
 
     public PostgreSQLDatabaseMetrics(DataSource postgresDataSource, String database) {
         this(postgresDataSource, database, Tags.of(createDbTag(database)));
@@ -59,6 +64,8 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         this.postgresDataSource = postgresDataSource;
         this.database = database;
         this.tags = Tags.of(tags).and(createDbTag(database));
+        this.beforeResetValuesCacheMap = new ConcurrentHashMap<>();
+        this.previousValueCacheMap = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -75,7 +82,8 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
             .tags(tags)
             .description("Percentage of blocks in this database that were shared buffer hits vs. read from disk")
             .register(registry);
-        FunctionCounter.builder("postgres.transactions", postgresDataSource, dataSource -> getTransactionCount())
+        FunctionCounter.builder("postgres.transactions", postgresDataSource,
+            dataSource -> refreshableFunctionalCounter("postgres.transactions", this::getTransactionCount))
             .tags(tags)
             .description("Total number of transactions executed (commits + rollbacks)")
             .register(registry);
@@ -83,7 +91,8 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
             .tags(tags)
             .description("Number of locks on the given db")
             .register(registry);
-        FunctionCounter.builder("postgres.tempbytes", postgresDataSource, dataSource -> getTempBytes())
+        FunctionCounter.builder("postgres.tempbytes", postgresDataSource,
+            dataSource -> refreshableFunctionalCounter("postgres.tempbytes", this::getTempBytes))
             .tags(tags)
             .description("The total amount of temporary bytes written to disk to execute queries")
             .register(registry);
@@ -93,19 +102,23 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     }
 
     private void registerRowCountMetrics(MeterRegistry registry) {
-        FunctionCounter.builder("postgres.rows.fetched", postgresDataSource, dataSource -> getReadCount())
+        FunctionCounter.builder("postgres.rows.fetched", postgresDataSource,
+            dataSource -> refreshableFunctionalCounter("postgres.rows.fetched", this::getReadCount))
             .tags(tags)
             .description("Number of rows fetched from the db")
             .register(registry);
-        FunctionCounter.builder("postgres.rows.inserted", postgresDataSource, dataSource -> getInsertCount())
+        FunctionCounter.builder("postgres.rows.inserted", postgresDataSource,
+            dataSource -> refreshableFunctionalCounter("postgres.rows.inserted", this::getInsertCount))
             .tags(tags)
             .description("Number of rows inserted from the db")
             .register(registry);
-        FunctionCounter.builder("postgres.rows.updated", postgresDataSource, dataSource -> getUpdateCount())
+        FunctionCounter.builder("postgres.rows.updated", postgresDataSource,
+            dataSource -> refreshableFunctionalCounter("postgres.rows.updated", this::getUpdateCount))
             .tags(tags)
             .description("Number of rows updated from the db")
             .register(registry);
-        FunctionCounter.builder("postgres.rows.deleted", postgresDataSource, dataSource -> getDeleteCount())
+        FunctionCounter.builder("postgres.rows.deleted", postgresDataSource,
+            dataSource -> refreshableFunctionalCounter("postgres.rows.deleted", this::getDeleteCount))
             .tags(tags)
             .description("Number of rows deleted from the db")
             .register(registry);
@@ -116,11 +129,13 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     }
 
     private void registerCheckpointMetrics(MeterRegistry registry) {
-        FunctionCounter.builder("postgres.checkpoints.timed", postgresDataSource, dataSource -> getTimedCheckpointsCount())
+        FunctionCounter.builder("postgres.checkpoints.timed", postgresDataSource,
+            dataSource -> refreshableFunctionalCounter("postgres.checkpoints.timed", this::getTimedCheckpointsCount))
             .tags(tags)
             .description("Number of checkpoints timed")
             .register(registry);
-        FunctionCounter.builder("postgres.checkpoints.req", postgresDataSource, dataSource -> getRequestedCheckpointsCount())
+        FunctionCounter.builder("postgres.checkpoints.req", postgresDataSource,
+            dataSource -> refreshableFunctionalCounter("postgres.checkpoints.req", this::getRequestedCheckpointsCount))
             .tags(tags)
             .description("Number of checkpoints requested")
             .register(registry);
@@ -195,6 +210,20 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     protected Float getCheckpointBufferRatio() {
         String query = getBgWriterQuery("(buffers_checkpoint*100)::NUMERIC / (buffers_backend+buffers_clean+buffers_checkpoint)");
         return runQuery(query, Float.class);
+    }
+
+    protected Double refreshableFunctionalCounter(String functionalCounterKey, DoubleSupplier function) {
+        Double result = function.getAsDouble();
+        Double previousResult = previousValueCacheMap.getOrDefault(functionalCounterKey, 0D);
+        Double beforeResetValue = beforeResetValuesCacheMap.getOrDefault(functionalCounterKey, 0D);
+        Double correctedValue = result + beforeResetValue;
+
+        if (correctedValue < previousResult) {
+            beforeResetValuesCacheMap.put(functionalCounterKey, previousResult);
+            correctedValue = previousResult + result;
+        }
+        previousValueCacheMap.put(functionalCounterKey, correctedValue);
+        return correctedValue;
     }
 
     private <T> T runQuery(String query, Class<T> returnClass) {

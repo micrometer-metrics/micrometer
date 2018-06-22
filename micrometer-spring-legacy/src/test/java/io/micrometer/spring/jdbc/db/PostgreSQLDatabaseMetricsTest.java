@@ -22,12 +22,15 @@ import org.junit.Test;
 
 import javax.sql.DataSource;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author Kristof Depypere
  */
 public class PostgreSQLDatabaseMetricsTest {
 
     public static final String DATABASE_NAME = "test";
+    public static final String FUNCTIONAL_COUNTER_KEY = "key";
     private DataSource dataSource = new HikariDataSource();
     private MeterRegistry registry = new SimpleMeterRegistry();
 
@@ -58,6 +61,43 @@ public class PostgreSQLDatabaseMetricsTest {
         registry.get("postgres.checkpoints.timed").tag("database", DATABASE_NAME).functionCounter();
         registry.get("postgres.checkpoints.req").tag("database", DATABASE_NAME).functionCounter();
         registry.get("postgres.checkpoints.bufferratio").tag("database", DATABASE_NAME).gauge();
+    }
 
+    @Test
+    public void shouldBridgePgStatReset() {
+        //given
+        PostgreSQLDatabaseMetrics postgreSQLDatabaseMetrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
+        postgreSQLDatabaseMetrics.bindTo(registry);
+
+
+        //when
+        postgreSQLDatabaseMetrics.refreshableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
+        postgreSQLDatabaseMetrics.refreshableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 10);
+        //first reset
+        Double result = postgreSQLDatabaseMetrics.refreshableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
+
+
+        //then
+        assertThat(result).isEqualTo(15);
+    }
+
+    @Test
+    public void shouldBridgeDoublePgStatReset() {
+        //given
+        PostgreSQLDatabaseMetrics postgreSQLDatabaseMetrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
+        postgreSQLDatabaseMetrics.bindTo(registry);
+
+
+        //when
+        postgreSQLDatabaseMetrics.refreshableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
+        postgreSQLDatabaseMetrics.refreshableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 10);
+        //first reset
+        postgreSQLDatabaseMetrics.refreshableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 3);
+        //second reset
+        Double result = postgreSQLDatabaseMetrics.refreshableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 1);
+
+
+        //then
+        assertThat(result).isEqualTo(14);
     }
 }
