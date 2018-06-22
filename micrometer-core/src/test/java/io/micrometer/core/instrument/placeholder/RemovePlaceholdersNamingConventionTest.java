@@ -20,7 +20,8 @@ class RemovePlaceholdersNamingConventionTest {
             "{a} | ''",
             "{a}.{b} | ''",
             "a.{spe-cial_char.s}.c | a_c",
-            "a.{numb3r5}.c | a_c"
+            "a.{numb3r5}.c | a_c",
+            "a.b | a_b"
     })
     void removesPlaceholdersFromName(String name, String expectedName) {
         // when
