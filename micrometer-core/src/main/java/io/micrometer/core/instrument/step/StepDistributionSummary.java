@@ -30,16 +30,17 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
     private final TimeWindowMax max;
 
     @Deprecated
-    public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        this(id, clock, distributionStatisticConfig, scale, false);
+    public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+                                   long stepMillis, double scale) {
+        this(id, clock, distributionStatisticConfig, scale, stepMillis, false);
     }
 
     @SuppressWarnings("ConstantConditions")
     public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale,
-                                   boolean supportsAggregablePercentiles) {
+                                   long stepMillis, boolean supportsAggregablePercentiles) {
         super(id, clock, distributionStatisticConfig, scale, supportsAggregablePercentiles);
-        this.count = new StepLong(clock, distributionStatisticConfig.getExpiry().toMillis());
-        this.total = new StepDouble(clock, distributionStatisticConfig.getExpiry().toMillis());
+        this.count = new StepLong(clock, stepMillis);
+        this.total = new StepDouble(clock, stepMillis);
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
     }
 
