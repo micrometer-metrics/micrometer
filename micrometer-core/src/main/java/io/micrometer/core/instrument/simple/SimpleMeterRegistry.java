@@ -62,7 +62,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
                 break;
             case STEP:
             default:
-                summary = new StepDistributionSummary(id, clock, merged, scale, false);
+                summary = new StepDistributionSummary(id, clock, merged, scale, config.step().toMillis(), false);
                 break;
         }
 
@@ -89,7 +89,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
                 break;
             case STEP:
             default:
-                timer = new StepTimer(id, clock, merged, pauseDetector, getBaseTimeUnit(), false);
+                timer = new StepTimer(id, clock, merged, pauseDetector, getBaseTimeUnit(), config.step().toMillis(), false);
                 break;
         }
 
