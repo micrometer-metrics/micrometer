@@ -21,7 +21,10 @@ import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.lang.Nullable;
 
 /**
+ * {@link NamingConvention} for Datadog.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public class DatadogNamingConvention implements NamingConvention {
     private final NamingConvention delegate;
@@ -45,7 +48,7 @@ public class DatadogNamingConvention implements NamingConvention {
         String sanitized = StringEscapeUtils.escapeJson(delegate.name(name, type, baseUnit));
 
         // Metrics that don't start with a letter get dropped on the floor by the Datadog publish API,
-        // so we will prepend them with 'm_'.
+        // so we will prepend them with 'm.'.
         if(!Character.isLetter(sanitized.charAt(0))) {
             sanitized = "m." + sanitized;
         }
@@ -57,13 +60,13 @@ public class DatadogNamingConvention implements NamingConvention {
 
     /**
      * Some set of non-alphanumeric characters will be replaced with '_', but not all (e.g. '/' is OK, but '{' is replaced).
-     * Tag keys that begin with a number show up as an empty string, so we prepend them with 'm_'.
+     * Tag keys that begin with a number show up as an empty string, so we prepend them with 'm.'.
      */
     @Override
     public String tagKey(String key) {
         String sanitized = StringEscapeUtils.escapeJson(delegate.tagKey(key));
-        if(Character.isDigit(key.charAt(0))) {
-            sanitized = "m." + key;
+        if(Character.isDigit(sanitized.charAt(0))) {
+            sanitized = "m." + sanitized;
         }
         return sanitized;
     }
