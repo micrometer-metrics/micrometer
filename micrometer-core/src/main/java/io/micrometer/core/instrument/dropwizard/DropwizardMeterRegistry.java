@@ -37,9 +37,11 @@ import java.util.function.ToLongFunction;
  */
 public abstract class DropwizardMeterRegistry extends MeterRegistry {
     private final MetricRegistry registry;
-    private final HierarchicalNameMapper nameMapper;
+    private final MoreConfig moreConfig = new MoreConfig();
     private final DropwizardClock dropwizardClock;
     private final DropwizardConfig dropwizardConfig;
+
+    private HierarchicalNameMapper nameMapper;
 
     public DropwizardMeterRegistry(DropwizardConfig config, MetricRegistry registry, HierarchicalNameMapper nameMapper, Clock clock) {
         super(clock);
@@ -140,4 +142,23 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
      * @return Value to report when {@link io.micrometer.core.instrument.Gauge#value()} returns {@code null}.
      */
     protected abstract Double nullGaugeValue();
+
+    public MoreConfig moreConfig() {
+        return moreConfig;
+    }
+
+    /**
+     * Access to additional configuration options.
+     */
+    public class MoreConfig {
+
+        public MoreConfig nameMapper(HierarchicalNameMapper mapper) {
+            nameMapper = mapper;
+            return this;
+        }
+
+        public HierarchicalNameMapper nameMapper() {
+            return nameMapper;
+        }
+    }
 }
