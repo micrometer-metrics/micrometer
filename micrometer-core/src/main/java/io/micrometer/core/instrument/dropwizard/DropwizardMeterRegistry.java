@@ -143,6 +143,9 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
      */
     protected abstract Double nullGaugeValue();
 
+    /**
+     * @return A configuration object used to change the additional behavior of this registry.
+     */
     public MoreConfig moreConfig() {
         return moreConfig;
     }

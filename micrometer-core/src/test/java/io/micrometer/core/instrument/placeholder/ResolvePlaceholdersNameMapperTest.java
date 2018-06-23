@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ResolvePlaceholdersNameMapperTest {
 
-    private static final NamingConvention UNUSED = NamingConvention.dot;
+    private static final NamingConvention ANY = NamingConvention.dot;
 
     private ResolvePlaceholdersNameMapper mapper = new ResolvePlaceholdersNameMapper();
 
@@ -27,7 +27,7 @@ class ResolvePlaceholdersNameMapperTest {
         Meter.Id id = createMeterId(name, tags);
 
         // when
-        String hierarchicalName = mapper.toHierarchicalName(id, UNUSED);
+        String hierarchicalName = mapper.toHierarchicalName(id, ANY);
 
         // then
         assertThat(hierarchicalName).isEqualTo(expectedName);
@@ -55,7 +55,7 @@ class ResolvePlaceholdersNameMapperTest {
         // expect
         IllegalArgumentException e = assertThrows(
                 IllegalArgumentException.class,
-                () -> mapper.toHierarchicalName(id, UNUSED)
+                () -> mapper.toHierarchicalName(id, ANY)
         );
         assertThat(e.getMessage()).contains("after resolving with tags provided: {missing}.x");
     }
@@ -67,15 +67,36 @@ class ResolvePlaceholdersNameMapperTest {
         Meter.Id id = createMeterId(name, Tags.empty());
 
         // expect
-        assertThrows(IllegalArgumentException.class, () -> mapper.toHierarchicalName(id, UNUSED));
+        assertThrows(IllegalArgumentException.class, () -> mapper.toHierarchicalName(id, ANY));
     }
 
     @Test
-    void dotInTagValue() {
+    void tagsAreMapsUsingGivenNamingConvention() {
+        // given
+        Meter.Id id = createMeterId("a.{p1}.c", Tags.of("p1", "x.y-z"));
 
+        // when
+        String hierarchicalName = mapper.toHierarchicalName(id, conventionMappingTagDotsTo("_"));
+
+        // then
+        assertThat(hierarchicalName).isEqualTo("a.x_y-z.c");
     }
 
     private Meter.Id createMeterId(String name, Tags tags) {
         return new Meter.Id(name, tags, null, "", Meter.Type.TIMER);
+    }
+
+    private NamingConvention conventionMappingTagDotsTo(String replacement) {
+        return new NamingConvention() {
+            @Override
+            public String name(String name, Meter.Type type, String baseUnit) {
+                return name;
+            }
+
+            @Override
+            public String tagValue(String value) {
+                return value.replaceAll("\\.", replacement);
+            }
+        };
     }
 }

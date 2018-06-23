@@ -5,6 +5,12 @@ import io.micrometer.core.instrument.config.MeterFilter;
 
 import java.util.Map;
 
+/**
+ * A filter that renames given metrics. Used in the placeholders mechanism in order to
+ * adjust metrics that are outside of user's control, e.g. standard memory metrics.
+ *
+ * @author Piotr Betkier
+ */
 class NameMappingFilter implements MeterFilter {
 
     private final Map<String, String> mappings;

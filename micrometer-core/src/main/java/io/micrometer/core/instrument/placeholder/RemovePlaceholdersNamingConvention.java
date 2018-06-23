@@ -9,6 +9,14 @@ import java.util.Arrays;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * A naming convention that removes all placeholders from the metric name. Configured in
+ * non-hierarchical registries when using the placeholders mechanism. Metrics
+ * registered in non-hierarchical registries don't have tags encoded in their name, because
+ * they support tags explicitly.
+ *
+ * @author Piotr Betkier
+ */
 class RemovePlaceholdersNamingConvention implements NamingConvention {
 
     private static final Pattern PLACEHOLDER = Pattern.compile("\\{.*\\}");
