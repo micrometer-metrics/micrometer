@@ -5,10 +5,11 @@ dependencies {
     compile 'org.glassfish.jersey.core:jersey-server:2.25.1', optional
 
     testCompile 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:2.25.1'
-    testCompile 'org.assertj:assertj-core:3.+' lock '3.9.0'
-    
+
     // required by jdk 9
     testRuntime 'javax.xml.bind:jaxb-api:2.3.0'
+
+    testCompile 'org.assertj:assertj-core:3.+'
 
     // JERSEY-3662
     testCompile 'junit:junit:4.12'

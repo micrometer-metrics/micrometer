@@ -15,6 +15,7 @@
  */
 package io.micrometer.spring.web.servlet;
 
+import io.micrometer.core.instrument.Tag;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -23,31 +24,60 @@ import org.springframework.web.servlet.HandlerMapping;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class WebMvcTagsTest {
-    private MockHttpServletRequest request = new MockHttpServletRequest();
-    private MockHttpServletResponse response = new MockHttpServletResponse();
+    private final MockHttpServletRequest request = new MockHttpServletRequest();
 
-    @Test
-    public void uriTrailingSlashesAreSuppressed() {
-        request.setPathInfo("//foo/");
-        assertThat(WebMvcTags.uri(request, null).getValue()).isEqualTo("/foo");
-    }
+    private final MockHttpServletResponse response = new MockHttpServletResponse();
 
     @Test
     public void uriTagValueIsBestMatchingPatternWhenAvailable() {
-        request.setAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE, "/spring");
-        response.setStatus(301);
-        assertThat(WebMvcTags.uri(request, response).getValue()).isEqualTo("/spring");
+        this.request.setAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE,
+                "/spring");
+        this.response.setStatus(301);
+        Tag tag = WebMvcTags.uri(this.request, this.response);
+        assertThat(tag.getValue()).isEqualTo("/spring");
     }
 
     @Test
-    public void redirectsAreShunted() {
-        response.setStatus(302);
-        assertThat(WebMvcTags.uri(request, response).getValue()).isEqualTo("REDIRECTION");
+    public void uriTagValueIsRootWhenRequestHasNoPatternOrPathInfo() {
+        assertThat(WebMvcTags.uri(this.request, null).getValue()).isEqualTo("root");
     }
 
     @Test
-    public void notFoundsAreShunted() {
-        response.setStatus(404);
-        assertThat(WebMvcTags.uri(request, response).getValue()).isEqualTo("NOT_FOUND");
+    public void uriTagValueIsRootWhenRequestHasNoPatternAndSlashPathInfo() {
+        this.request.setPathInfo("/");
+        assertThat(WebMvcTags.uri(this.request, null).getValue()).isEqualTo("root");
+    }
+
+    @Test
+    public void uriTagValueIsUnknownWhenRequestHasNoPatternAndNonRootPathInfo() {
+        this.request.setPathInfo("/example");
+        assertThat(WebMvcTags.uri(this.request, null).getValue()).isEqualTo("UNKNOWN");
+    }
+
+    @Test
+    public void uriTagValueIsRedirectionWhenResponseStatusIs3xx() {
+        this.response.setStatus(301);
+        Tag tag = WebMvcTags.uri(this.request, this.response);
+        assertThat(tag.getValue()).isEqualTo("REDIRECTION");
+    }
+
+    @Test
+    public void uriTagValueIsNotFoundWhenResponseStatusIs404() {
+        this.response.setStatus(404);
+        Tag tag = WebMvcTags.uri(this.request, this.response);
+        assertThat(tag.getValue()).isEqualTo("NOT_FOUND");
+    }
+
+    @Test
+    public void uriTagToleratesCustomResponseStatus() {
+        this.response.setStatus(601);
+        Tag tag = WebMvcTags.uri(this.request, this.response);
+        assertThat(tag.getValue()).isEqualTo("root");
+    }
+
+    @Test
+    public void uriTagIsUnknownWhenRequestIsNull() {
+        Tag tag = WebMvcTags.uri(null, null);
+        assertThat(tag.getValue()).isEqualTo("UNKNOWN");
     }
 }

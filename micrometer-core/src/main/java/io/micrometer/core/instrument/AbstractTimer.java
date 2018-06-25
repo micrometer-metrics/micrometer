@@ -183,7 +183,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     @Override
     public HistogramSnapshot takeSnapshot() {
-        return histogram.takeSnapshot(count(), totalTime(baseTimeUnit), max(baseTimeUnit));
+        return histogram.takeSnapshot(count(), totalTime(TimeUnit.NANOSECONDS), max(TimeUnit.NANOSECONDS));
     }
 
     @Override

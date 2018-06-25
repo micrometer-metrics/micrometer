@@ -101,7 +101,6 @@ public final class WebMvcTags {
             if (pathInfo.isEmpty()) {
                 return URI_ROOT;
             }
-            return Tag.of("uri", pathInfo);
         }
         return URI_UNKNOWN;
     }

@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.jersey2.server.mapper.ResourceGoneExceptionMapper;
 import io.micrometer.jersey2.server.resources.TestResource;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
@@ -54,6 +55,7 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
         final ResourceConfig config = new ResourceConfig();
         config.register(listener);
         config.register(TestResource.class);
+        config.register(ResourceGoneExceptionMapper.class);
 
         return config;
     }
@@ -126,6 +128,10 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
             target("throws-webapplication-exception").request().get();
         } catch (Exception ignored) {
         }
+        try {
+            target("throws-mappable-exception").request().get();
+        } catch (Exception ignored) {
+        }
 
         assertThat(registry.get(METRIC_NAME)
             .tags(tagsFrom("/throws-exception", 500, "IllegalArgumentException"))
@@ -134,6 +140,11 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
 
         assertThat(registry.get(METRIC_NAME).tags(
             tagsFrom("/throws-webapplication-exception", 401, "NotAuthorizedException"))
+            .timer().count())
+            .isEqualTo(1);
+
+        assertThat(registry.get(METRIC_NAME).tags(
+            tagsFrom("/throws-mappable-exception", 410, "ResourceGoneException"))
             .timer().count())
             .isEqualTo(1);
     }

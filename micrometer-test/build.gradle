@@ -2,11 +2,11 @@ apply plugin: 'org.junit.platform.gradle.plugin'
 
 dependencies {
     compile project(':micrometer-core')
-    compile 'org.assertj:assertj-core:latest.release' lock '3.9.0'
+    compile 'org.assertj:assertj-core:latest.release'
 
     // JUnit 5
-    compile 'org.junit.jupiter:junit-jupiter-api:5.+' lock '5.1.0-RC1'
-    runtime 'org.junit.jupiter:junit-jupiter-engine:5.+' lock '5.1.0-RC1'
+    compile 'org.junit.jupiter:junit-jupiter-api:5.+'
+    runtime 'org.junit.jupiter:junit-jupiter-engine:5.+'
 
     testCompile 'org.jsr107.ri:cache-ri-impl:1.0.0'
 }

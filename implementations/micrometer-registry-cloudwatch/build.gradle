@@ -3,8 +3,8 @@ apply plugin: 'nebula.optional-base'
 
 dependencies {
     compile project(':micrometer-core')
-    compile 'org.slf4j:slf4j-api:1.7.+' lock '1.7.25'
-    compile 'com.amazonaws:aws-java-sdk-cloudwatch:latest.release' lock '1.11.280'
+    compile 'org.slf4j:slf4j-api:1.7.+'
+    compile 'com.amazonaws:aws-java-sdk-cloudwatch:latest.release'
 
     testCompile project(':micrometer-test')
 }

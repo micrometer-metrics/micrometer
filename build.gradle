@@ -6,11 +6,10 @@ buildscript {
     }
     dependencies {
         classpath 'org.ow2.asm:asm:5.0.3'
-        classpath 'io.spring.gradle:spring-release-plugin:0.19.1'
+        classpath 'io.spring.gradle:spring-release-plugin:0.20.1'
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.2.0'
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
-        classpath 'io.spring.gradle:dependency-lock:0.2.0'
         classpath "gradle.plugin.com.dorongold.plugins:task-tree:1.3"
     }
 
@@ -32,7 +31,25 @@ allprojects {
 subprojects {
     apply plugin: 'java'
     apply plugin: 'checkstyle'
-    apply plugin: 'spring.lock'
+
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+
+    task resolveAndLockAll {
+        doFirst {
+            assert gradle.startParameter.writeDependencyLocks
+        }
+        doLast {
+            def skip = ['annotationProcessor', 'apt', 'testAnnotationProcessor', 'checkstyle',
+                'shadow', 'testApt', 'archives', 'junitPlatform']
+            configurations.each {
+                if (it.canBeResolved && !skip.contains(it.name)) {
+                    it.resolve()
+                }
+            }
+        }
+    }
 
     compileJava.options.encoding = 'UTF-8'
     compileTestJava.options.encoding = 'UTF-8'
@@ -64,7 +81,7 @@ subprojects {
     }
 
     def check = tasks.findByName('check')
-    if(check) project.rootProject.tasks.releaseCheck.dependsOn check
+    if (check) project.rootProject.tasks.releaseCheck.dependsOn check
 
     //noinspection GroovyAssignabilityCheck
     test {
