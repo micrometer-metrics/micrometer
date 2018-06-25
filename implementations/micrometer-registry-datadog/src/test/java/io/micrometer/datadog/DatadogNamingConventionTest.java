@@ -17,10 +17,20 @@ package io.micrometer.datadog;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.config.NamingConvention;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.mock;
 
+/**
+ * Tests for {@link DatadogNamingConvention}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class DatadogNamingConventionTest {
     private DatadogNamingConvention convention = new DatadogNamingConvention();
 
@@ -32,6 +42,18 @@ class DatadogNamingConventionTest {
     @Test
     void tagKeyStartsWithLetter() {
         assertThat(convention.tagKey("123")).isEqualTo("m.123");
+    }
+
+    @Test
+    void tagKeyWhenStartsWithNumberShouldRespectDelegateNamingConvention() {
+        String tagKey = "123";
+
+        NamingConvention delegate = mock(NamingConvention.class);
+        given(delegate.tagKey(eq(tagKey))).willReturn("123456");
+
+        DatadogNamingConvention convention = new DatadogNamingConvention(delegate);
+
+        assertThat(convention.tagKey(tagKey)).isEqualTo("m.123456");
     }
 
     @Test
