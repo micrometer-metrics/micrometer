@@ -34,6 +34,9 @@ import java.util.function.Supplier;
 import static java.util.Objects.requireNonNull;
 
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
+
+    private static final TimeUnit HISTOGRAM_TIME_UNIT = TimeUnit.NANOSECONDS;
+
     private static Map<PauseDetector, org.LatencyUtils.PauseDetector> pauseDetectorCache =
             new ConcurrentHashMap<>();
 
@@ -126,13 +129,13 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     }
 
     private void recordValueWithExpectedInterval(long nanoValue, long expectedIntervalBetweenValueSamples) {
-        record(nanoValue, TimeUnit.NANOSECONDS);
+        record(nanoValue, HISTOGRAM_TIME_UNIT);
         if (expectedIntervalBetweenValueSamples <= 0)
             return;
         for (long missingValue = nanoValue - expectedIntervalBetweenValueSamples;
              missingValue >= expectedIntervalBetweenValueSamples;
              missingValue -= expectedIntervalBetweenValueSamples) {
-            record(missingValue, TimeUnit.NANOSECONDS);
+            record(missingValue, HISTOGRAM_TIME_UNIT);
         }
     }
 
@@ -143,7 +146,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
             return f.call();
         } finally {
             final long e = clock.monotonicTime();
-            record(e - s, TimeUnit.NANOSECONDS);
+            record(e - s, HISTOGRAM_TIME_UNIT);
         }
     }
 
@@ -154,7 +157,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
             return f.get();
         } finally {
             final long e = clock.monotonicTime();
-            record(e - s, TimeUnit.NANOSECONDS);
+            record(e - s, HISTOGRAM_TIME_UNIT);
         }
     }
 
@@ -165,14 +168,14 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
             f.run();
         } finally {
             final long e = clock.monotonicTime();
-            record(e - s, TimeUnit.NANOSECONDS);
+            record(e - s, HISTOGRAM_TIME_UNIT);
         }
     }
 
     @Override
     public final void record(long amount, TimeUnit unit) {
         if (amount >= 0) {
-            histogram.recordLong(TimeUnit.NANOSECONDS.convert(amount, unit));
+            histogram.recordLong(HISTOGRAM_TIME_UNIT.convert(amount, unit));
             recordNonNegative(amount, unit);
 
             if (intervalEstimator != null) {
@@ -185,7 +188,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     @Override
     public HistogramSnapshot takeSnapshot() {
-        return histogram.takeSnapshot(count(), totalTime(TimeUnit.NANOSECONDS), max(TimeUnit.NANOSECONDS));
+        return histogram.takeSnapshot(count(), totalTime(HISTOGRAM_TIME_UNIT), max(HISTOGRAM_TIME_UNIT));
     }
 
     @Override
