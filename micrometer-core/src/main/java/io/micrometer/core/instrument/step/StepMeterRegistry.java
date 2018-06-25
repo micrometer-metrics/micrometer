@@ -95,14 +95,16 @@ public abstract class StepMeterRegistry extends MeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        Timer timer = new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(), false);
+        Timer timer = new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
+            this.config.step().toMillis(), false);
         HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        DistributionSummary summary = new StepDistributionSummary(id, clock, distributionStatisticConfig, scale, false);
+        DistributionSummary summary = new StepDistributionSummary(id, clock, distributionStatisticConfig, scale,
+            config.step().toMillis(),false);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
