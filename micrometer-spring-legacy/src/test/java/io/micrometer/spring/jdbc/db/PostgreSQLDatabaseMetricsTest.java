@@ -28,23 +28,16 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Kristof Depypere
  */
 public class PostgreSQLDatabaseMetricsTest {
-
-    public static final String DATABASE_NAME = "test";
-    public static final String FUNCTIONAL_COUNTER_KEY = "key";
+    private static final String DATABASE_NAME = "test";
+    private static final String FUNCTIONAL_COUNTER_KEY = "key";
     private DataSource dataSource = new HikariDataSource();
     private MeterRegistry registry = new SimpleMeterRegistry();
-
 
     @Test
     public void shouldRegisterPostesMetrics() {
         PostgreSQLDatabaseMetrics postgreSQLDatabaseMetrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
         postgreSQLDatabaseMetrics.bindTo(registry);
 
-
-        assertPostgreSQLDatabaseMetrics(DATABASE_NAME);
-    }
-
-    private void assertPostgreSQLDatabaseMetrics(String name) {
         registry.get("postgres.size").tag("database", DATABASE_NAME).gauge();
         registry.get("postgres.connections").tag("database", DATABASE_NAME).gauge();
         registry.get("postgres.rows.fetched").tag("database", DATABASE_NAME).functionCounter();
@@ -52,30 +45,32 @@ public class PostgreSQLDatabaseMetricsTest {
         registry.get("postgres.rows.updated").tag("database", DATABASE_NAME).functionCounter();
         registry.get("postgres.rows.deleted").tag("database", DATABASE_NAME).functionCounter();
         registry.get("postgres.rows.dead").tag("database", DATABASE_NAME).gauge();
-        registry.get("postgres.hitratio").tag("database", DATABASE_NAME).gauge();
 
-        registry.get("postgres.tempbytes").tag("database", DATABASE_NAME).functionCounter();
-        registry.get("postgres.locks.count").tag("database", DATABASE_NAME).gauge();
+        registry.get("postgres.blocks.hits").tag("database", DATABASE_NAME).functionCounter();
+        registry.get("postgres.blocks.reads").tag("database", DATABASE_NAME).functionCounter();
+
+        registry.get("postgres.temp.writes").tag("database", DATABASE_NAME).functionCounter();
+        registry.get("postgres.locks").tag("database", DATABASE_NAME).gauge();
 
         registry.get("postgres.transactions").tag("database", DATABASE_NAME).functionCounter();
         registry.get("postgres.checkpoints.timed").tag("database", DATABASE_NAME).functionCounter();
-        registry.get("postgres.checkpoints.req").tag("database", DATABASE_NAME).functionCounter();
-        registry.get("postgres.checkpoints.bufferratio").tag("database", DATABASE_NAME).gauge();
+        registry.get("postgres.checkpoints.requested").tag("database", DATABASE_NAME).functionCounter();
+
+        registry.get("postgres.buffers.checkpoint").tag("database", DATABASE_NAME).functionCounter();
+        registry.get("postgres.buffers.clean").tag("database", DATABASE_NAME).functionCounter();
+        registry.get("postgres.buffers.backend").tag("database", DATABASE_NAME).functionCounter();
     }
 
     @Test
     public void shouldBridgePgStatReset() {
-        //given
         PostgreSQLDatabaseMetrics postgreSQLDatabaseMetrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
         postgreSQLDatabaseMetrics.bindTo(registry);
 
-
-        //when
         postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
         postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 10);
+
         //first reset
         Double result = postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
-
 
         //then
         assertThat(result).isEqualTo(15);
@@ -83,21 +78,18 @@ public class PostgreSQLDatabaseMetricsTest {
 
     @Test
     public void shouldBridgeDoublePgStatReset() {
-        //given
         PostgreSQLDatabaseMetrics postgreSQLDatabaseMetrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
         postgreSQLDatabaseMetrics.bindTo(registry);
 
-
-        //when
         postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
         postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 10);
+
         //first reset
         postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 3);
+
         //second reset
         Double result = postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 1);
 
-
-        //then
         assertThat(result).isEqualTo(14);
     }
 }

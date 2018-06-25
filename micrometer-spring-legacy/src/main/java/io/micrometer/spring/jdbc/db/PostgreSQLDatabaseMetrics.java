@@ -15,11 +15,7 @@
  */
 package io.micrometer.spring.jdbc.db;
 
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -43,7 +39,7 @@ import java.util.function.DoubleSupplier;
 @NonNullFields
 public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
-    public static final String SELECT = "SELECT ";
+    private static final String SELECT = "SELECT ";
     private final Logger logger = LoggerFactory.getLogger(PostgreSQLDatabaseMetrics.class);
 
     private final String database;
@@ -56,10 +52,6 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         this(postgresDataSource, database, Tags.of(createDbTag(database)));
     }
 
-    private static Tag createDbTag(String database) {
-        return Tag.of("database", database);
-    }
-
     public PostgreSQLDatabaseMetrics(DataSource postgresDataSource, String database, Iterable<Tag> tags) {
         this.postgresDataSource = postgresDataSource;
         this.database = database;
@@ -68,34 +60,48 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         this.previousValueCacheMap = new ConcurrentHashMap<>();
     }
 
+    private static Tag createDbTag(String database) {
+        return Tag.of("database", database);
+    }
+
     @Override
     public void bindTo(MeterRegistry registry) {
         Gauge.builder("postgres.size", postgresDataSource, dataSource -> getDatabaseSize())
-            .tags(tags)
-            .description("The database size")
-            .register(registry);
+                .tags(tags)
+                .description("The database size")
+                .register(registry);
         Gauge.builder("postgres.connections", postgresDataSource, dataSource -> getConnectionCount())
-            .tags(tags)
-            .description("Number of active connections to the given db")
-            .register(registry);
-        Gauge.builder("postgres.hitratio", postgresDataSource, dataSource -> getHitRatio())
-            .tags(tags)
-            .description("Percentage of blocks in this database that were shared buffer hits vs. read from disk")
-            .register(registry);
+                .tags(tags)
+                .description("Number of active connections to the given db")
+                .register(registry);
+
+        // Hit ratio can be derived from dividing hits/reads
+        FunctionCounter.builder("postgres.blocks.hits", postgresDataSource,
+                dataSource -> resettableFunctionalCounter("postgres.blocks.hits", this::getBlockHits))
+                .tags(tags)
+                .description("Number of times disk blocks were found already in the buffer cache, so that a read was not necessary")
+                .register(registry);
+        FunctionCounter.builder("postgres.blocks.reads", postgresDataSource,
+                dataSource -> resettableFunctionalCounter("postgres.blocks.reads", this::getBlockReads))
+                .tags(tags)
+                .description("Number of disk blocks read in this database")
+                .register(registry);
+
         FunctionCounter.builder("postgres.transactions", postgresDataSource,
-            dataSource -> resettableFunctionalCounter("postgres.transactions", this::getTransactionCount))
-            .tags(tags)
-            .description("Total number of transactions executed (commits + rollbacks)")
-            .register(registry);
-        Gauge.builder("postgres.locks.count", postgresDataSource, dataSource -> getLockCount())
-            .tags(tags)
-            .description("Number of locks on the given db")
-            .register(registry);
-        FunctionCounter.builder("postgres.tempbytes", postgresDataSource,
-            dataSource -> resettableFunctionalCounter("postgres.tempbytes", this::getTempBytes))
-            .tags(tags)
-            .description("The total amount of temporary bytes written to disk to execute queries")
-            .register(registry);
+                dataSource -> resettableFunctionalCounter("postgres.transactions", this::getTransactionCount))
+                .tags(tags)
+                .description("Total number of transactions executed (commits + rollbacks)")
+                .register(registry);
+        Gauge.builder("postgres.locks", postgresDataSource, dataSource -> getLockCount())
+                .tags(tags)
+                .description("Number of locks on the given db")
+                .register(registry);
+        FunctionCounter.builder("postgres.temp.writes", postgresDataSource,
+                dataSource -> resettableFunctionalCounter("postgres.temp.writes", this::getTempBytes))
+                .tags(tags)
+                .description("The total amount of temporary writes to disk to execute queries")
+                .baseUnit("bytes")
+                .register(registry);
 
         registerRowCountMetrics(registry);
         registerCheckpointMetrics(registry);
@@ -103,119 +109,147 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private void registerRowCountMetrics(MeterRegistry registry) {
         FunctionCounter.builder("postgres.rows.fetched", postgresDataSource,
-            dataSource -> resettableFunctionalCounter("postgres.rows.fetched", this::getReadCount))
-            .tags(tags)
-            .description("Number of rows fetched from the db")
-            .register(registry);
+                dataSource -> resettableFunctionalCounter("postgres.rows.fetched", this::getReadCount))
+                .tags(tags)
+                .description("Number of rows fetched from the db")
+                .register(registry);
         FunctionCounter.builder("postgres.rows.inserted", postgresDataSource,
-            dataSource -> resettableFunctionalCounter("postgres.rows.inserted", this::getInsertCount))
-            .tags(tags)
-            .description("Number of rows inserted from the db")
-            .register(registry);
+                dataSource -> resettableFunctionalCounter("postgres.rows.inserted", this::getInsertCount))
+                .tags(tags)
+                .description("Number of rows inserted from the db")
+                .register(registry);
         FunctionCounter.builder("postgres.rows.updated", postgresDataSource,
-            dataSource -> resettableFunctionalCounter("postgres.rows.updated", this::getUpdateCount))
-            .tags(tags)
-            .description("Number of rows updated from the db")
-            .register(registry);
+                dataSource -> resettableFunctionalCounter("postgres.rows.updated", this::getUpdateCount))
+                .tags(tags)
+                .description("Number of rows updated from the db")
+                .register(registry);
         FunctionCounter.builder("postgres.rows.deleted", postgresDataSource,
-            dataSource -> resettableFunctionalCounter("postgres.rows.deleted", this::getDeleteCount))
-            .tags(tags)
-            .description("Number of rows deleted from the db")
-            .register(registry);
+                dataSource -> resettableFunctionalCounter("postgres.rows.deleted", this::getDeleteCount))
+                .tags(tags)
+                .description("Number of rows deleted from the db")
+                .register(registry);
         Gauge.builder("postgres.rows.dead", postgresDataSource, dataSource -> getDeadTupleCount())
-            .tags(tags)
-            .description("Total number of dead rows in the current database")
-            .register(registry);
+                .tags(tags)
+                .description("Total number of dead rows in the current database")
+                .register(registry);
     }
 
     private void registerCheckpointMetrics(MeterRegistry registry) {
         FunctionCounter.builder("postgres.checkpoints.timed", postgresDataSource,
-            dataSource -> resettableFunctionalCounter("postgres.checkpoints.timed", this::getTimedCheckpointsCount))
-            .tags(tags)
-            .description("Number of checkpoints timed")
-            .register(registry);
-        FunctionCounter.builder("postgres.checkpoints.req", postgresDataSource,
-            dataSource -> resettableFunctionalCounter("postgres.checkpoints.req", this::getRequestedCheckpointsCount))
-            .tags(tags)
-            .description("Number of checkpoints requested")
-            .register(registry);
-        Gauge.builder("postgres.checkpoints.bufferratio", postgresDataSource, dataSource -> getCheckpointBufferRatio())
-            .tags(tags)
-            .description("The percentage of total buffer written during a checkpoint vs total buffers written")
-            .register(registry);
+                dataSource -> resettableFunctionalCounter("postgres.checkpoints.timed", this::getTimedCheckpointsCount))
+                .tags(tags)
+                .description("Number of checkpoints timed")
+                .register(registry);
+        FunctionCounter.builder("postgres.checkpoints.requested", postgresDataSource,
+                dataSource -> resettableFunctionalCounter("postgres.checkpoints.requested", this::getRequestedCheckpointsCount))
+                .tags(tags)
+                .description("Number of checkpoints requested")
+                .register(registry);
+
+        FunctionCounter.builder("postgres.buffers.checkpoint", postgresDataSource,
+                dataSource -> resettableFunctionalCounter("postgres.buffers.checkpoint", this::getBuffersCheckpoint))
+                .tags(tags)
+                .description("Number of buffers written during checkpoints")
+                .register(registry);
+        FunctionCounter.builder("postgres.buffers.clean", postgresDataSource,
+                dataSource -> resettableFunctionalCounter("postgres.buffers.clean", this::getBuffersClean))
+                .tags(tags)
+                .description("Number of buffers written directly by a backend")
+                .register(registry);
+        FunctionCounter.builder("postgres.buffers.backend", postgresDataSource,
+                dataSource -> resettableFunctionalCounter("postgres.buffers.backend", this::getBuffersBackend))
+                .tags(tags)
+                .description("Number of buffers written by the background writer")
+                .register(registry);
     }
 
-    protected Long getDatabaseSize() {
-        return runQuery("SELECT pg_database_size('" + database + "')", Long.class);
+    private Long getDatabaseSize() {
+        return runQuery("SELECT pg_database_size('" + database + "')");
     }
 
-    protected Long getLockCount() {
-        return runQuery("SELECT count(*) FROM pg_locks l JOIN pg_database d ON l.DATABASE=d.oid WHERE d.datname='"+database+"'", Long.class);
+    private Long getLockCount() {
+        return runQuery("SELECT count(*) FROM pg_locks l JOIN pg_database d ON l.DATABASE=d.oid WHERE d.datname='" + database + "'");
     }
 
-    protected Long getConnectionCount() {
+    private Long getConnectionCount() {
         String query = getDBStatQuery("SUM(numbackends)");
-        return runQuery(query, Long.class);
+        return runQuery(query);
     }
 
-    protected Long getReadCount() {
+    private Long getReadCount() {
         String query = getDBStatQuery("tup_fetched");
-        return runQuery(query, Long.class);
+        return runQuery(query);
     }
 
-    protected Long getInsertCount() {
+    private Long getInsertCount() {
         String query = getDBStatQuery("tup_inserted");
-        return runQuery(query, Long.class);
+        return runQuery(query);
     }
 
-    protected Long getTempBytes() {
+    private Long getTempBytes() {
         String query = getDBStatQuery("tmp_bytes");
-        return runQuery(query, Long.class);
+        return runQuery(query);
     }
 
-    protected Long getUpdateCount() {
+    private Long getUpdateCount() {
         String query = getDBStatQuery("tup_updated");
-        return runQuery(query, Long.class);
+        return runQuery(query);
     }
 
-    protected Long getDeleteCount() {
+    private Long getDeleteCount() {
         String query = getDBStatQuery("tup_deleted");
-        return runQuery(query, Long.class);
+        return runQuery(query);
     }
 
-    protected Float getHitRatio() {
-        String query = getDBStatQuery("(blks_hit*100)::NUMERIC / (blks_hit+blks_read)");
-        return runQuery(query, Float.class);
+    private Long getBlockHits() {
+        String query = getDBStatQuery("blks_hit");
+        return runQuery(query);
     }
 
-    protected Long getTransactionCount() {
+    private Long getBlockReads() {
+        String query = getDBStatQuery("blks_read");
+        return runQuery(query);
+    }
+
+    private Long getTransactionCount() {
         String query = getDBStatQuery("xact_commit + xact_rollback");
-        return runQuery(query, Long.class);
+        return runQuery(query);
     }
 
-    protected Integer getDeadTupleCount() {
+    private Long getDeadTupleCount() {
         String query = getUserTableQuery("n_dead_tup");
-        return runQuery(query, Integer.class);
+        return runQuery(query);
     }
 
-    protected Long getTimedCheckpointsCount() {
+    private Long getTimedCheckpointsCount() {
         String query = getBgWriterQuery("checkpoints_timed");
-        return runQuery(query, Long.class);
-    }
-    protected Long getRequestedCheckpointsCount() {
-        String query = getBgWriterQuery("checkpoints_req");
-        return runQuery(query, Long.class);
+        return runQuery(query);
     }
 
-    protected Float getCheckpointBufferRatio() {
-        String query = getBgWriterQuery("(buffers_checkpoint*100)::NUMERIC / (buffers_backend+buffers_clean+buffers_checkpoint)");
-        return runQuery(query, Float.class);
+    private Long getRequestedCheckpointsCount() {
+        String query = getBgWriterQuery("checkpoints_req");
+        return runQuery(query);
+    }
+
+    private Long getBuffersClean() {
+        String query = getBgWriterQuery("buffers_clean");
+        return runQuery(query);
+    }
+
+    private Long getBuffersBackend() {
+        String query = getBgWriterQuery("buffers_backend");
+        return runQuery(query);
+    }
+
+    private Long getBuffersCheckpoint() {
+        String query = getBgWriterQuery("buffers_checkpoint");
+        return runQuery(query);
     }
 
     /**
      * Function that makes sure functional counter values survive pg_stat_reset calls.
      */
-    protected Double resettableFunctionalCounter(String functionalCounterKey, DoubleSupplier function) {
+    Double resettableFunctionalCounter(String functionalCounterKey, DoubleSupplier function) {
         Double result = function.getAsDouble();
         Double previousResult = previousValueCacheMap.getOrDefault(functionalCounterKey, 0D);
         Double beforeResetValue = beforeResetValuesCacheMap.getOrDefault(functionalCounterKey, 0D);
@@ -229,21 +263,21 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         return correctedValue;
     }
 
-    private <T> T runQuery(String query, Class<T> returnClass) {
+    private <T> Long runQuery(String query) {
         try (Connection connection = postgresDataSource.getConnection()) {
             try (Statement statement = connection.createStatement()) {
                 try (ResultSet resultSet = statement.executeQuery(query)) {
-                    return resultSet.getObject(1, returnClass);
+                    return resultSet.getObject(1, Long.class);
                 }
             }
         } catch (SQLException e) {
             logger.error("Error getting statistic from postgreSQL database");
-            return null;
+            return 0L;
         }
     }
 
     private String getDBStatQuery(String statName) {
-        return SELECT + statName + " FROM pg_stat_database WHERE datname = '"+database+"'";
+        return SELECT + statName + " FROM pg_stat_database WHERE datname = '" + database + "'";
     }
 
     private String getUserTableQuery(String statName) {
