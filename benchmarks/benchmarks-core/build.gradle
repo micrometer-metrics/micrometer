@@ -2,6 +2,6 @@ dependencies {
     compile project(':micrometer-core')
     compile project(':micrometer-samples-core')
 
-    compile 'org.openjdk.jmh:jmh-core:latest.release' lock '1.20'
-    annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:latest.release' lock '1.20'
+    compile 'org.openjdk.jmh:jmh-core:latest.release'
+    annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
 }

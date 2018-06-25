@@ -24,10 +24,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
-import io.micrometer.statsd.internal.DatadogStatsdLineBuilder;
-import io.micrometer.statsd.internal.EtsyStatsdLineBuilder;
-import io.micrometer.statsd.internal.LogbackMetricsSuppressingUnicastProcessor;
-import io.micrometer.statsd.internal.TelegrafStatsdLineBuilder;
+import io.micrometer.statsd.internal.*;
 import org.reactivestreams.Processor;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -245,14 +242,15 @@ public class StatsdMeterRegistry extends MeterRegistry {
         if (lineBuilderFunction == null) {
             lineBuilderFunction = id2 -> {
                 switch (statsdConfig.flavor()) {
-                    case ETSY:
-                        return new EtsyStatsdLineBuilder(id2, config(), nameMapper);
                     case DATADOG:
                         return new DatadogStatsdLineBuilder(id2, config());
                     case TELEGRAF:
-                    default:
                         return new TelegrafStatsdLineBuilder(id2, config());
-
+                    case SYSDIG:
+                        return new SysdigStatsdLineBuilder(id2, config());
+                    case ETSY:
+                    default:
+                        return new EtsyStatsdLineBuilder(id2, config(), nameMapper);
                 }
             };
         }
