@@ -85,7 +85,7 @@ public class JvmMemoryMetrics implements MeterBinder {
 
             Gauge.builder("jvm.memory.committed", memoryPoolBean, (mem) -> mem.getUsage().getCommitted())
                 .tags(tagsWithId)
-                .description("The amount of memory in bytes that is committed for  the Java virtual machine to use")
+                .description("The amount of memory in bytes that is committed for the Java virtual machine to use")
                 .baseUnit("bytes")
                 .register(registry);
 
