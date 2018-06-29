@@ -64,6 +64,20 @@ public final class StringUtils {
         return string == null || string.isEmpty();
     }
 
+    /**
+     * Truncate the String to the max length.
+     *
+     * @param string String to truncate
+     * @param maxLength max length
+     * @return truncated String
+     */
+    public static String truncate(String string, int maxLength) {
+        if (string.length() > maxLength) {
+            return string.substring(0, maxLength);
+        }
+        return string;
+    }
+
     private StringUtils() {
     }
 
