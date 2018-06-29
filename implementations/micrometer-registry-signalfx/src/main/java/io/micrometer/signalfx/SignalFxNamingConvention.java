@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 
 /**
@@ -51,7 +52,7 @@ public class SignalFxNamingConvention implements NamingConvention {
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
         String formattedName = StringEscapeUtils.escapeJson(delegate.name(name, type, baseUnit));
-        return formattedName.length() > NAME_MAX_LENGTH ? formattedName.substring(0, NAME_MAX_LENGTH) : formattedName;
+        return StringUtils.truncate(formattedName, NAME_MAX_LENGTH);
     }
 
     // 1. Has a maximum length of 128 characters
@@ -68,18 +69,13 @@ public class SignalFxNamingConvention implements NamingConvention {
         if (!START_LETTERS_PATTERN.matcher(conventionKey).matches()) { // 3
             conventionKey = "a" + conventionKey;
         }
-
-        if (conventionKey.length() > KEY_MAX_LENGTH) {
-            conventionKey = conventionKey.substring(0, KEY_MAX_LENGTH); // 1
-        }
-
-        return conventionKey;
+        return StringUtils.truncate(conventionKey, KEY_MAX_LENGTH); // 1
     }
 
     // Dimension value can be any non-empty UTF-8 string, with a maximum length <= 256 characters.
     @Override
     public String tagValue(String value) {
         String formattedValue = StringEscapeUtils.escapeJson(delegate.tagValue(value));
-        return formattedValue.length() > TAG_VALUE_MAX_LENGTH ? formattedValue.substring(0, TAG_VALUE_MAX_LENGTH) : formattedValue;
+        return StringUtils.truncate(formattedValue, TAG_VALUE_MAX_LENGTH);
     }
 }

@@ -16,6 +16,7 @@
 package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.util.StringEscapeUtils;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.Collections;
@@ -31,6 +32,8 @@ import static java.util.Arrays.stream;
  * @author Oriol Barcelona
  */
 class DynatraceMetricDefinition {
+
+    private static final int MAX_DISPLAY_NAME = 256;
 
     /**
      * Subset of mappable units of the custom metric API.
@@ -85,10 +88,7 @@ class DynatraceMetricDefinition {
 
     String asJson() {
         String displayName = description == null ? metricId : StringEscapeUtils.escapeJson(description);
-        if (displayName.length() > 256)
-            displayName = displayName.substring(0, 256);
-
-        String body = "{\"displayName\":\"" + displayName + "\"";
+        String body = "{\"displayName\":\"" + StringUtils.truncate(displayName, MAX_DISPLAY_NAME) + "\"";
 
         if (unit != null)
             body += ",\"unit\":\"" + unit + "\"";
