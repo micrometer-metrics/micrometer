@@ -92,7 +92,7 @@ subprojects {
 }
 
 wrapper {
-    gradleVersion = '4.8'
+    gradleVersion = '4.8.1'
 }
 
 defaultTasks 'build'
