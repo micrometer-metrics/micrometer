@@ -65,7 +65,12 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
         HttpURLConnection con = null;
         try {
-            URL queryEndpoint = URI.create(config.uri() + "/query?q=" + URLEncoder.encode("CREATE DATABASE \"" + config.db() + "\"", "UTF-8")).toURL();
+            String createDatabaseQuery = new CreateDatabaseQueryBuilder(config.db()).setRetentionDuration(config.retentionDuration())
+					.setRetentionPolicyName(config.retentionPolicy())
+					.setRetentionReplicationFactor(config.retentionReplicationFactor())
+					.setRetentionShardDuration(config.retentionShardDuration()).build();
+
+            URL queryEndpoint = URI.create(config.uri() + "/query?q=" + URLEncoder.encode(createDatabaseQuery, "UTF-8")).toURL();
 
             con = (HttpURLConnection) queryEndpoint.openConnection();
             con.setConnectTimeout((int) config.connectTimeout().toMillis());
