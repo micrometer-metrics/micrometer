@@ -22,6 +22,7 @@ logging.level.org.springframework.integration.support.MessageBuilder: WARN
 logging.level.org.springframework.boot: INFO
 
 management.metrics.export:
+  appoptics.enabled: false
   atlas.enabled: false
   datadog.enabled: false
   dynatrace.enabled: false

@@ -21,6 +21,7 @@ logging.level.org.springframework.boot: INFO
 management.metrics:
   use-global-registry: false
   export:
+    appoptics.enabled: false
     atlas.enabled: false
     dynatrace.enabled: false
     datadog.enabled: false

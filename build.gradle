@@ -65,7 +65,7 @@ subprojects {
         }
 
         if (project.extensions.findByName('bintray')) {
-            bintray.labels = ['micrometer', 'atlas', 'metrics', 'prometheus', 'spectator', 'influx', 'new-relic', 'signalfx', 'wavefront', 'elastic', 'dynatrace']
+            bintray.labels = ['micrometer', 'appoptics', 'atlas', 'metrics', 'prometheus', 'spectator', 'influx', 'new-relic', 'signalfx', 'wavefront', 'elastic', 'dynatrace']
         }
     }
 
