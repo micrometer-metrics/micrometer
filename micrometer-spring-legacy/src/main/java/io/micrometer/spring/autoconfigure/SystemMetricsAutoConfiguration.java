@@ -15,6 +15,8 @@
  */
 package io.micrometer.spring.autoconfigure;
 
+import java.io.File;
+
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -25,6 +27,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.jvm.DiskSpaceMetrics;
 import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics;
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 import io.micrometer.core.instrument.binder.system.UptimeMetrics;
@@ -34,6 +37,7 @@ import io.micrometer.core.instrument.binder.system.UptimeMetrics;
  *
  * @author Jon Schneider
  * @author Stephane Nicoll
+ * @author Johnny Lim
  * @since 1.1.0
  */
 @Configuration
@@ -61,6 +65,13 @@ public class SystemMetricsAutoConfiguration {
     @ConditionalOnMissingBean
     public FileDescriptorMetrics fileDescriptorMetrics() {
         return new FileDescriptorMetrics();
+    }
+
+    @Bean
+    @ConditionalOnProperty(value = "management.metrics.binders.disk.enabled", matchIfMissing = true)
+    @ConditionalOnMissingBean
+    public DiskSpaceMetrics diskSpaceMetrics() {
+        return new DiskSpaceMetrics(new File(System.getProperty("user.dir")));
     }
 
 }

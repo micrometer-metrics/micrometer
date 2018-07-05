@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
+import io.micrometer.core.instrument.binder.jvm.DiskSpaceMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
 import io.micrometer.core.instrument.binder.logging.Log4j2Metrics;
@@ -55,6 +56,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
  * Tests for {@link MetricsAutoConfiguration}.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = MetricsAutoConfigurationTest.MetricsApp.class)
@@ -102,7 +104,8 @@ public class MetricsAutoConfigurationTest {
             .hasAtLeastOneElementOfType(ClassLoaderMetrics.class)
             .hasAtLeastOneElementOfType(UptimeMetrics.class)
             .hasAtLeastOneElementOfType(ProcessorMetrics.class)
-            .hasAtLeastOneElementOfType(FileDescriptorMetrics.class);
+            .hasAtLeastOneElementOfType(FileDescriptorMetrics.class)
+            .hasAtLeastOneElementOfType(DiskSpaceMetrics.class);
     }
 
     @Test
