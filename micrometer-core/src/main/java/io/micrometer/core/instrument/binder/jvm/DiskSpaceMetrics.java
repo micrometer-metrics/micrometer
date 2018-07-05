@@ -31,6 +31,7 @@ import static java.util.Collections.emptyList;
  * Record metrics that report disk space usage.
  *
  * @author jmcshane
+ * @author Johnny Lim
  */
 @NonNullApi
 @NonNullFields
@@ -53,12 +54,12 @@ public class DiskSpaceMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         Iterable<Tag> tagsWithPath = Tags.concat(tags, "path", absolutePath);
         Gauge.builder("disk.free", path, File::getUsableSpace)
-                .tags()
+                .tags(tagsWithPath)
                 .description("Usable space for path")
                 .baseUnit("bytes")
                 .register(registry);
         Gauge.builder("disk.total", path, File::getTotalSpace)
-                .tags()
+                .tags(tagsWithPath)
                 .description("Total space for path")
                 .baseUnit("bytes")
                 .register(registry);
