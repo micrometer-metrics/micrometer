@@ -14,9 +14,10 @@
 # limitations under the License.
 #
 
-management.metrics.export.appoptics:
-  enabled: true
-  metricPrefix: sample
-  token: fake
-  source: sample
-  step: 10s
+management.metrics.export:
+  appoptics:
+    enabled: true
+    metricPrefix: micrometer.sample
+    token: fake
+    source: micrometer.sample
+    step: 10s

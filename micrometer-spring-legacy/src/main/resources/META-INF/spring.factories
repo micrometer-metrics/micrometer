@@ -4,6 +4,7 @@ io.micrometer.spring.MetricsEnvironmentPostProcessor
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 io.micrometer.spring.autoconfigure.MetricsAutoConfiguration,\
 io.micrometer.spring.autoconfigure.CompositeMeterRegistryAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.appoptics.AppopticsMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.atlas.AtlasMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.datadog.DatadogMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.dynatrace.DynatraceMetricsExportAutoConfiguration,\
