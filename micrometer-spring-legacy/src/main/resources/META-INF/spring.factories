@@ -8,6 +8,7 @@ io.micrometer.spring.autoconfigure.Log4J2MetricsAutoConfiguration,\
 io.micrometer.spring.autoconfigure.LogbackMetricsAutoConfiguration,\
 io.micrometer.spring.autoconfigure.MetricsAutoConfiguration,\
 io.micrometer.spring.autoconfigure.SystemMetricsAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.appoptics.AppOpticsMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.atlas.AtlasMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.azuremonitor.AzureMonitorMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.datadog.DatadogMetricsExportAutoConfiguration,\

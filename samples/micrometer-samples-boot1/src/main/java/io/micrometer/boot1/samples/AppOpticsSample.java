@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.samples.utils;
+package io.micrometer.boot1.samples;
 
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.boot1.samples.components.PersonController;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
-// Run: git update-index --assume-unchanged **/SampleConfig.java
-// If you legitimately need to change this file, you can undo this with: git update-index --no-assume-unchanged **/SampleConfig.java
-public class SampleConfig {
-    public static MeterRegistry myMonitoringSystem() {
-        // Pick a monitoring system here to use in your samples.
-<<<<<<< HEAD
-        return SampleRegistries.atlas();
-=======
-        return SampleRegistries.appOptics("Your Token Here");
->>>>>>> bc4649bd... Adding Appoptics Implementation
+@SpringBootApplication(scanBasePackageClasses = PersonController.class)
+@EnableScheduling
+public class AppOpticsSample {
+    public static void main(String[] args) {
+        new SpringApplicationBuilder(AppOpticsSample.class).profiles("appoptics").run(args);
     }
 }
