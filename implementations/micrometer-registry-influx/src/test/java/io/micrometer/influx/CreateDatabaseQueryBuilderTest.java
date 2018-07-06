@@ -52,7 +52,7 @@ public class CreateDatabaseQueryBuilderTest {
 	public void allClausesInRetentionPolicy() {
 		String query = createDatabaseQueryBuilder.setRetentionPolicyName("dummy_policy")
 				.setRetentionDuration("2d")
-				.setRetentionReplication("1")
+				.setRetentionReplicationFactor("1")
 				.setRetentionShardDuration("3")
 				.build();
 		assertEquals("CREATE DATABASE dummy_database_0 WITH DURATION 2d REPLICATION 1 SHARD DURATION 3 NAME dummy_policy", query);
