@@ -18,7 +18,6 @@ package io.micrometer.appoptics;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
-import org.apache.commons.lang.StringUtils;
 
 /**
  * Configuration for {@link AppOpticsMeterRegistry}.
@@ -40,10 +39,10 @@ public interface AppOpticsConfig extends StepRegistryConfig {
      * @return AppOptics API token
      */
     default String token() {
-        final String v = get(prefix() + ".token");
-        if (v == null)
+        final String t = get(prefix() + ".token");
+        if (null == t)
             throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to AppOptics");
-        return v;
+        return t;
     }
 
     /**
@@ -51,20 +50,17 @@ public interface AppOpticsConfig extends StepRegistryConfig {
      */
     @Nullable
     default String source() {
-        return StringUtils.defaultIfEmpty(
-            get(prefix() + ".source"),
-            "instance"
-        );
+        final String s = get(prefix() + ".source");
+        return null == s ? "instance" : s;
     }
 
     /**
      * @return the URI to ship metrics to
      */
     default String uri() {
-        return StringUtils.defaultIfEmpty(
-            get(prefix() + ".uri"),
-            "https://api.appoptics.com/v1/measurements"
-        );
+
+        final String uri = get(prefix() + ".uri");
+        return null == uri ? "https://api.appoptics.com/v1/measurements" : uri;
     }
 
     /**
@@ -72,15 +68,13 @@ public interface AppOpticsConfig extends StepRegistryConfig {
      */
     default String metricPrefix() {
 
-        return StringUtils.defaultIfEmpty(
-            get(prefix() + ".metricPrefix"),
-            ""
-        );
+        final String mp = get(prefix() + ".metricPrefix");
+        return null == mp ? "" : mp;
     }
 
     @Override
     default int batchSize() {
         final String v = get(prefix() + ".batchSize");
-        return v == null ? DEFAULT_BATCH_SIZE : Math.min(Integer.parseInt(v), MAX_BATCH_SIZE);
+        return null == v ? DEFAULT_BATCH_SIZE : Math.min(Integer.parseInt(v), MAX_BATCH_SIZE);
     }
 }
