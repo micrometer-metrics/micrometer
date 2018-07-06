@@ -42,6 +42,9 @@ import java.util.function.Function;
 @Incubating(since = "1.0.0")
 public class TimedAspect {
     public static final String DEFAULT_METRIC_NAME = "method.timed";
+
+    public static final String DEFAULT_EXCEPTION_TAG = "exception";
+
     private final MeterRegistry registry;
     private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinpoint;
 
@@ -62,14 +65,19 @@ public class TimedAspect {
         Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         Timed timed = method.getAnnotation(Timed.class);
         final String metricName = timed.value().isEmpty() ? DEFAULT_METRIC_NAME : timed.value();
-
         Timer.Sample sample = Timer.start(registry);
+        String exceptionClass = "none";
+
         try {
             return pjp.proceed();
+        } catch(Exception ex) {
+            exceptionClass = ex.getClass().getSimpleName();
+            throw ex;
         } finally {
             sample.stop(Timer.builder(metricName)
                     .description(timed.description().isEmpty() ? null : timed.description())
                     .tags(timed.extraTags())
+                    .tags(DEFAULT_EXCEPTION_TAG, exceptionClass)
                     .tags(tagsBasedOnJoinpoint.apply(pjp))
                     .publishPercentileHistogram(timed.histogram())
                     .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles())
