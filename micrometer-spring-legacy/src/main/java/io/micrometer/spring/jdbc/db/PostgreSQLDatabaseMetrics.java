@@ -267,13 +267,11 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         return correctedValue;
     }
 
-    private <T> Long runQuery(String query) {
-        try (Connection connection = postgresDataSource.getConnection()) {
-            try (Statement statement = connection.createStatement()) {
-                try (ResultSet resultSet = statement.executeQuery(query)) {
-                    return resultSet.getObject(1, Long.class);
-                }
-            }
+    private Long runQuery(String query) {
+        try (Connection connection = postgresDataSource.getConnection();
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(query)) {
+            return resultSet.getObject(1, Long.class);
         } catch (SQLException e) {
             logger.error("Error getting statistic from postgreSQL database");
             return 0L;
