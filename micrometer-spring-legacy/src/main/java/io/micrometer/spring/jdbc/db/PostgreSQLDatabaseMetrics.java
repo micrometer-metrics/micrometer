@@ -33,7 +33,11 @@ import java.util.function.DoubleSupplier;
 
 
 /**
+ * {@link MeterBinder} for a PostgreSQL database.
+ *
  * @author Kristof Depypere
+ * @author Jon Schneider
+ * @author Johnny Lim
  */
 @NonNullApi
 @NonNullFields
@@ -49,7 +53,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     private final Map<String, Double> previousValueCacheMap;
 
     public PostgreSQLDatabaseMetrics(DataSource postgresDataSource, String database) {
-        this(postgresDataSource, database, Tags.of(createDbTag(database)));
+        this(postgresDataSource, database, Tags.empty());
     }
 
     public PostgreSQLDatabaseMetrics(DataSource postgresDataSource, String database, Iterable<Tag> tags) {
