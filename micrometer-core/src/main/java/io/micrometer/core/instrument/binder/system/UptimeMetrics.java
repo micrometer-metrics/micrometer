@@ -61,9 +61,9 @@ public class UptimeMetrics implements MeterBinder {
             .description("The uptime of the Java virtual machine")
             .register(registry);
 
-        TimeGauge.builder("process.start.time", runtimeMXBean, TimeUnit.MILLISECONDS, x -> Long.valueOf(x.getStartTime()).doubleValue())
+        TimeGauge.builder("process.start.time", runtimeMXBean, TimeUnit.SECONDS, x -> Long.valueOf(x.getStartTime()).doubleValue() / 1000.0)
             .tags(tags)
-            .description("The start time of the Java virtual machine")
+            .description("Start time of the process since unix epoch in seconds.")
             .register(registry);
     }
 }
