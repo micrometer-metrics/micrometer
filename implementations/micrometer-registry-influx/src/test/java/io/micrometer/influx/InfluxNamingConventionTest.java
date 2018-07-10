@@ -26,14 +26,15 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 class InfluxNamingConventionTest {
     private InfluxNamingConvention convention = new InfluxNamingConvention(NamingConvention.snakeCase);
 
+    @Issue("#693")
     @Test
     void name() {
-        assertThat(convention.name("foo=, bar", Meter.Type.GAUGE)).isEqualTo("foo_\\,\\ bar");
+        assertThat(convention.name("foo.bar=, baz", Meter.Type.GAUGE)).isEqualTo("foo_bar_\\,\\ baz");
     }
 
     @Test
     void tagKey() {
-        assertThat(convention.tagKey("foo=, bar")).isEqualTo("foo\\=\\,\\ bar");
+        assertThat(convention.tagKey("foo.bar=, baz")).isEqualTo("foo_bar\\=\\,\\ baz");
     }
 
     @Test
