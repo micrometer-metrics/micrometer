@@ -15,8 +15,10 @@
  */
 package io.micrometer.core.instrument.distribution;
 
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -41,5 +43,25 @@ class HistogramGaugesTest {
 
         assertThat(registry.get("my.timer.histogram").gauge().value()).isEqualTo(1);
         assertThat(gauges.polledGaugesLatch.getCount()).isEqualTo(0);
+    }
+
+    @Test
+    void meterFiltersAreOnlyAppliedOnceToHistogramsAndPercentiles() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        registry.config().meterFilter(new MeterFilter() {
+            @Override
+            public Meter.Id map(Meter.Id id) {
+                return id.withName("MYPREFIX." + id.getName());
+            }
+        });
+
+        Timer timer = Timer.builder("my.timer")
+                .sla(Duration.ofMillis(1))
+                .publishPercentiles(0.95)
+                .register(registry);
+
+        registry.get("MYPREFIX.my.timer.percentile").tag("phi", "0.95").gauge();
+        registry.get("MYPREFIX.my.timer.histogram").tag("le", "0.001").gauge();
     }
 }
