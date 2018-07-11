@@ -162,6 +162,28 @@ class MeterFilterTest {
     }
 
     @Test
+    void maximumAllowableTagsWhenAlreadyInAllowableTagValuesShouldNotAffect() {
+        MeterFilter onMaxReached = mock(MeterFilter.class);
+        MeterFilter filter = MeterFilter.maximumAllowableTags("name1", "key1", 3, onMaxReached);
+
+        Meter.Id id1 = new Meter.Id("name1", Tags.of("key1", "value1"), null, null, Meter.Type.COUNTER);
+        Meter.Id id2 = new Meter.Id("name1", Tags.of("key1", "value2"), null, null, Meter.Type.COUNTER);
+        Meter.Id id3 = new Meter.Id("name1", Tags.of("key1", "value3"), null, null, Meter.Type.COUNTER);
+        Meter.Id id4 = new Meter.Id("name1", Tags.of("key1", "value4"), null, null, Meter.Type.COUNTER);
+
+        filter.accept(id1);
+        filter.accept(id2);
+        filter.accept(id3);
+        verifyZeroInteractions(onMaxReached);
+
+        filter.accept(id4);
+        verify(onMaxReached).accept(id4);
+
+        filter.accept(id1);
+        verifyNoMoreInteractions(onMaxReached);
+    }
+
+    @Test
     void minExpectedOnSummary() {
         MeterFilter filter = MeterFilter.minExpected("name", 100);
         Meter.Id timer = new Meter.Id("name", emptyList(), null, null, Meter.Type.DISTRIBUTION_SUMMARY);
