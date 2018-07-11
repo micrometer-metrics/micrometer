@@ -42,8 +42,6 @@ import static java.util.stream.StreamSupport.stream;
  * @author Jon Schneider
  */
 public class DatadogMeterRegistry extends StepMeterRegistry {
-    private final URL postTimeSeriesEndpoint;
-
     private final Logger logger = LoggerFactory.getLogger(DatadogMeterRegistry.class);
     private final DatadogConfig config;
 
@@ -62,22 +60,23 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         this.config().namingConvention(new DatadogNamingConvention());
 
-        try {
-            this.postTimeSeriesEndpoint = URI.create(config.uri() + "/api/v1/series?api_key=" + config.apiKey()).toURL();
-        } catch (MalformedURLException e) {
-            // not possible
-            throw new RuntimeException(e);
-        }
-
         this.config = config;
 
-        if(config.enabled())
+        if (config.enabled())
             start(threadFactory);
     }
 
     @Override
     protected void publish() {
         Map<String, DatadogMetricMetadata> metadataToSend = new HashMap<>();
+
+        URL postTimeSeriesEndpoint;
+        try {
+            postTimeSeriesEndpoint = URI.create(config.uri() + "/api/v1/series?api_key=" + config.apiKey()).toURL();
+        } catch (MalformedURLException e) {
+            // not possible
+            throw new RuntimeException(e);
+        }
 
         try {
             HttpURLConnection con = null;
