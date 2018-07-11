@@ -46,7 +46,7 @@ import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.G
 public class SignalFxMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(SignalFxMeterRegistry.class);
     private final SignalFxConfig config;
-    private final AggregateMetricSender metricSender;
+    private final SignalFxReceiverEndpoint signalFxEndpoint;
 
     public SignalFxMeterRegistry(SignalFxConfig config, Clock clock) {
         this(config, clock, Executors.defaultThreadFactory());
@@ -66,13 +66,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
             }
         }
 
-        SignalFxReceiverEndpoint signalFxEndpoint = new SignalFxEndpoint(apiUri.getScheme(), apiUri.getHost(), port);
-
-        metricSender = new AggregateMetricSender(config.source(),
-                new HttpDataPointProtobufReceiverFactory(signalFxEndpoint).setVersion(2),
-                new HttpEventProtobufReceiverFactory(signalFxEndpoint),
-                new StaticAuthToken(config.accessToken()),
-                Collections.singleton(metricError -> logger.warn("failed to send metrics: " + metricError.getMessage())));
+        this.signalFxEndpoint = new SignalFxEndpoint(apiUri.getScheme(), apiUri.getHost(), port);
 
         config().namingConvention(new SignalFxNamingConvention());
 
@@ -82,6 +76,12 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     @Override
     protected void publish() {
         final long timestamp = clock.wallTime();
+
+        AggregateMetricSender metricSender = new AggregateMetricSender(config.source(),
+                new HttpDataPointProtobufReceiverFactory(signalFxEndpoint).setVersion(2),
+                new HttpEventProtobufReceiverFactory(signalFxEndpoint),
+                new StaticAuthToken(config.accessToken()),
+                Collections.singleton(metricError -> logger.warn("failed to send metrics: " + metricError.getMessage())));
 
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try (AggregateMetricSender.Session session = metricSender.createSession()) {
