@@ -201,7 +201,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         }
 
         return "{\"eventType\":\"" + getConventionName(id) + "\"" +
-                Arrays.stream(attributes).map(attr -> ",\"" + attr.getName() + "\":" + DoubleFormat.decimalOrWhole(attr.getValue().doubleValue()))
+                Arrays.stream(attributes).map(attr -> ",\"" + attr.getName() + "\":" + DoubleFormat.wholeOrDecimal(attr.getValue().doubleValue()))
                         .collect(Collectors.joining("")) + tagsJson.toString() + "}";
     }
 

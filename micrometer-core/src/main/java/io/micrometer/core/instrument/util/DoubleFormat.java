@@ -69,8 +69,19 @@ public class DoubleFormat {
      * @param d Number to format.
      * @return A stringified version of the number that only uses a decimal representation if the number is not
      * whole.
+     * @deprecated since 1.0.6 in favour of {@link #wholeOrDecimal(double)}
      */
+    @Deprecated
     public static String decimalOrWhole(double d) {
+        return WHOLE_OR_DECIMAL.get().format(d);
+    }
+
+    /**
+     * @param d Number to format.
+     * @return A stringified version of the number that only uses a decimal representation if the number is not
+     * whole.
+     */
+    public static String wholeOrDecimal(double d) {
         return WHOLE_OR_DECIMAL.get().format(d);
     }
 }

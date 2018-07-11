@@ -44,7 +44,7 @@ public class HistogramGauges {
                 percentile -> Tags.concat(id.getTags(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
                 percentile -> percentile.value(timer.baseTimeUnit()),
                 bucket -> id.getName() + ".histogram",
-                bucket -> Tags.concat(id.getTags(), "le", DoubleFormat.decimalOrWhole(bucket.bucket(timer.baseTimeUnit()))));
+                bucket -> Tags.concat(id.getTags(), "le", DoubleFormat.wholeOrDecimal(bucket.bucket(timer.baseTimeUnit()))));
     }
 
     public static HistogramGauges registerWithCommonFormat(DistributionSummary summary, MeterRegistry registry) {
@@ -54,7 +54,7 @@ public class HistogramGauges {
                 percentile -> Tags.concat(id.getTags(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
                 ValueAtPercentile::value,
                 bucket -> id.getName() + ".histogram",
-                bucket -> Tags.concat(id.getTags(), "le", DoubleFormat.decimalOrWhole(bucket.bucket())));
+                bucket -> Tags.concat(id.getTags(), "le", DoubleFormat.wholeOrDecimal(bucket.bucket())));
     }
 
     public static HistogramGauges register(HistogramSupport meter, MeterRegistry registry,
