@@ -55,7 +55,7 @@ public class SpectatorTimer extends AbstractTimer {
     @Override
     public double max(TimeUnit unit) {
         for (Measurement measurement : timer.measure()) {
-            if(stream(measurement.id().tags().spliterator(), false)
+            if (stream(measurement.id().tags().spliterator(), false)
                 .anyMatch(tag -> tag.key().equals("statistic") && tag.value().equals(Statistic.max.toString()))) {
                 return TimeUtils.secondsToUnit(measurement.value(), unit);
             }

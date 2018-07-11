@@ -216,7 +216,7 @@ class TimeWindowPercentileHistogramTest {
 
     private double percentileValue(Histogram histogram, double p) {
         for (ValueAtPercentile valueAtPercentile : histogram.takeSnapshot(0, 0, 0).percentileValues()) {
-            if(valueAtPercentile.percentile() == p)
+            if (valueAtPercentile.percentile() == p)
                 return valueAtPercentile.value();
         }
         return Double.NaN;

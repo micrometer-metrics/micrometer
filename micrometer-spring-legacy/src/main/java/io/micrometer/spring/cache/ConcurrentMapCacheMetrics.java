@@ -137,7 +137,7 @@ public class ConcurrentMapCacheMetrics extends CacheMeterBinder {
         @Nullable
         private ValueWrapper countGet(Object key) {
             ValueWrapper valueWrapper = delegate.get(key);
-            if(valueWrapper != null)
+            if (valueWrapper != null)
                 hitCount.incrementAndGet();
             else
                 missCount.incrementAndGet();
@@ -152,7 +152,7 @@ public class ConcurrentMapCacheMetrics extends CacheMeterBinder {
 
         @Override
         public ValueWrapper putIfAbsent(Object key, Object value) {
-            if(!getNativeCache().containsKey(key)) {
+            if (!getNativeCache().containsKey(key)) {
                 // no need to synchronize this with the subsequent putIfAbsent, as put count is
                 // OK to be an approximation.
                 putCount.incrementAndGet();

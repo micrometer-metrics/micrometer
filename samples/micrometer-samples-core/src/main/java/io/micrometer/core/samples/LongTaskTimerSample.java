@@ -50,7 +50,7 @@ public class LongTaskTimerSample {
                 .doOnEach(d -> {
                     if (incomingRequests.nextDouble() + 0.4 > 0 && tasks.isEmpty()) {
                         int taskDur;
-                        while((taskDur = duration.nextInt()) < 0);
+                        while ((taskDur = duration.nextInt()) < 0);
                         synchronized (tasks) {
                             tasks.put(timer.start(), new CountDownLatch(taskDur));
                         }
