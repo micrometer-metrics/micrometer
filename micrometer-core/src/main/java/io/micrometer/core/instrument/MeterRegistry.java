@@ -519,8 +519,11 @@ public abstract class MeterRegistry implements AutoCloseable {
                                                          @Nullable DistributionStatisticConfig config, BiFunction<Meter.Id, DistributionStatisticConfig, Meter> builder,
                                                          Function<Meter.Id, M> noopBuilder) {
         Meter.Id mappedId = id;
-        for (MeterFilter filter : filters) {
-            mappedId = filter.map(mappedId);
+
+        if (!id.isSynthetic()) {
+            for (MeterFilter filter : filters) {
+                mappedId = filter.map(mappedId);
+            }
         }
 
         Meter m = getOrCreateMeter(config, builder, id, mappedId, noopBuilder);
