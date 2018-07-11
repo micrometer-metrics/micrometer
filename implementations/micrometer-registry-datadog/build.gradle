@@ -8,5 +8,4 @@ dependencies {
 
     testCompile project(':micrometer-test')
     testCompile 'io.projectreactor.ipc:reactor-netty:latest.release'
-    testCompile 'org.mockito:mockito-core:latest.release'
 }
