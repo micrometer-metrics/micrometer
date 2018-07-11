@@ -186,12 +186,12 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         FunctionCounter.builder("postgres.buffers.clean", postgresDataSource,
                 dataSource -> resettableFunctionalCounter("postgres.buffers.clean", this::getBuffersClean))
                 .tags(tags)
-                .description("Number of buffers written directly by a backend")
+                .description("Number of buffers written by the background writer")
                 .register(registry);
         FunctionCounter.builder("postgres.buffers.backend", postgresDataSource,
                 dataSource -> resettableFunctionalCounter("postgres.buffers.backend", this::getBuffersBackend))
                 .tags(tags)
-                .description("Number of buffers written by the background writer")
+                .description("Number of buffers written directly by a backend")
                 .register(registry);
     }
 
