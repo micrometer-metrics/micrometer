@@ -249,23 +249,31 @@ public interface MeterFilter {
 
             @Override
             public MeterFilterReply accept(Meter.Id id) {
-                if (id.getName().equals(meterNamePrefix)) {
-                    String value = id.getTag(tagKey);
-                    if (value != null) {
-                        observedTagValues.add(value);
-                        if (observedTagValues.size() > maximumTagValues) {
+                String value = getTagValue(id);
+                if (value != null) {
+                    if (!observedTagValues.contains(value)) {
+                        if (observedTagValues.size() >= maximumTagValues) {
                             return onMaxReached.accept(id);
                         }
+                        observedTagValues.add(value);
                     }
                 }
-
                 return MeterFilterReply.NEUTRAL;
+            }
+
+            private String getTagValue(Meter.Id id) {
+                return (id.getName().equals(meterNamePrefix) ? id.getTag(tagKey) : null);
             }
 
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
-                if (observedTagValues.size() > maximumTagValues) {
-                    return onMaxReached.configure(id, config);
+                String value = getTagValue(id);
+                if (value != null) {
+                    if (!observedTagValues.contains(value)) {
+                        if (observedTagValues.size() >= maximumTagValues) {
+                            return onMaxReached.configure(id, config);
+                        }
+                    }
                 }
                 return config;
             }
