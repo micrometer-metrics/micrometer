@@ -98,7 +98,7 @@ public final class WebMvcTags {
                 }
             }
             String pathInfo = getPathInfo(request);
-            if(pathInfo.isEmpty()) {
+            if (pathInfo.isEmpty()) {
                 return URI_ROOT;
             }
         }

@@ -14,5 +14,7 @@
             <property name="processJavadoc" value="true" />
         </module>
 
+        <!-- Whitespace -->
+        <module name="com.puppycrawl.tools.checkstyle.checks.whitespace.WhitespaceAroundCheck" />
     </module>
 </module>

@@ -43,7 +43,7 @@ public class StatsdFunctionTimer<T> extends CumulativeFunctionTimer<T> implement
             long count = (long) count();
             long newTimingsCount = count - prevCount;
 
-            if(newTimingsCount > 0) {
+            if (newTimingsCount > 0) {
                 lastTime.updateAndGet(prevTime -> {
                     double totalTime = totalTime(TimeUnit.MILLISECONDS);
                     double newTimingsSum = totalTime - prevTime;

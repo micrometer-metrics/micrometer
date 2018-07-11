@@ -77,7 +77,7 @@ public class SimulatedEndpointInstrumentation {
             .doOnEach(d -> {
                 // are we going to receive a request for /api/foo?
                 if (incomingRequests.nextDouble() + 0.4 > 0) {
-                    if(successOrFail.nextDouble() + 0.8 > 0) {
+                    if (successOrFail.nextDouble() + 0.8 > 0) {
                         // pretend the request took some amount of time, such that the time is
                         // distributed normally with a mean of 250ms
                         e1Success.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS);
@@ -94,7 +94,7 @@ public class SimulatedEndpointInstrumentation {
             .doOnEach(d -> {
                 // are we going to receive a request for /api/bar?
                 if (incomingRequests.nextDouble() + 0.4 > 0) {
-                    if(successOrFail.nextDouble() + 0.8 > 0) {
+                    if (successOrFail.nextDouble() + 0.8 > 0) {
                         // pretend the request took some amount of time, such that the time is
                         // distributed normally with a mean of 250ms
                         e2Success.record(latencyForThisSecond2.get(), TimeUnit.MILLISECONDS);
