@@ -22,8 +22,10 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.config.InvalidConfigurationException;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 
 import javax.cache.Cache;
+import javax.cache.CacheManager;
 import javax.management.*;
 import java.util.List;
 
@@ -39,6 +41,7 @@ import java.util.List;
 @NonNullApi
 @NonNullFields
 public class JCacheMetrics extends CacheMeterBinder {
+    @Nullable
     private ObjectName objectName;
 
     /**
@@ -77,12 +80,15 @@ public class JCacheMetrics extends CacheMeterBinder {
     public JCacheMetrics(Cache<?, ?> cache, Iterable<Tag> tags) {
         super(cache, cache.getName(), tags);
         try {
-            String cacheManagerUri = cache.getCacheManager().getURI().toString()
-                    .replace(':', '.'); // ehcache's uri is prefixed with 'urn:'
+            CacheManager cacheManager = cache.getCacheManager();
+            if (cacheManager != null) {
+                String cacheManagerUri = cacheManager.getURI().toString()
+                        .replace(':', '.'); // ehcache's uri is prefixed with 'urn:'
 
-            this.objectName = new ObjectName("javax.cache:type=CacheStatistics"
-                    + ",CacheManager=" + cacheManagerUri
-                    + ",Cache=" + cache.getName());
+                this.objectName = new ObjectName("javax.cache:type=CacheStatistics"
+                        + ",CacheManager=" + cacheManagerUri
+                        + ",Cache=" + cache.getName());
+            }
         } catch (MalformedObjectNameException ignored) {
             throw new InvalidConfigurationException("Cache name '" + cache.getName() + "' results in an invalid JMX name");
         }
@@ -116,10 +122,12 @@ public class JCacheMetrics extends CacheMeterBinder {
 
     @Override
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
-        Gauge.builder("cache.removals", objectName, objectName -> lookupStatistic("CacheRemovals"))
-                .tags(getTagsWithCacheName())
-                .description("Cache removals")
-                .register(registry);
+        if (objectName != null) {
+            Gauge.builder("cache.removals", objectName, objectName -> lookupStatistic("CacheRemovals"))
+                    .tags(getTagsWithCacheName())
+                    .description("Cache removals")
+                    .register(registry);
+        }
     }
 
     private long lookupStatistic(String name) {
