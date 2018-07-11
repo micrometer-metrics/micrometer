@@ -238,7 +238,7 @@ public class Metrics {
     /**
      * Additional, less commonly used meter types.
      */
-    static class More {
+    public static class More {
         /**
          * Measures the time taken for long tasks.
          *
