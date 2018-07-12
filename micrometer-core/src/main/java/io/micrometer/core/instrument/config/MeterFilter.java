@@ -262,7 +262,7 @@ public interface MeterFilter {
             }
 
             private String getTagValue(Meter.Id id) {
-                return (id.getName().equals(meterNamePrefix) ? id.getTag(tagKey) : null);
+                return (id.getName().startsWith(meterNamePrefix) ? id.getTag(tagKey) : null);
             }
 
             @Override
