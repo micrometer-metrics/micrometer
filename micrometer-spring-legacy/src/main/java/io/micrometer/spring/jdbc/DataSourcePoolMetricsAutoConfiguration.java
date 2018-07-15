@@ -18,11 +18,12 @@ package io.micrometer.spring.jdbc;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
-import org.springframework.beans.factory.ObjectProvider;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProvider;
 import org.springframework.context.annotation.Configuration;
@@ -40,53 +41,53 @@ import java.util.Map;
  * @author Stephane Nicoll
  */
 @Configuration
-@AutoConfigureAfter({
-        MetricsAutoConfiguration.class,
-        DataSourceAutoConfiguration.class,
-        SimpleMetricsExportAutoConfiguration.class
-})
-@ConditionalOnBean({
-        MeterRegistry.class
-})
+@AutoConfigureAfter({ MetricsAutoConfiguration.class, DataSourceAutoConfiguration.class,
+    SimpleMetricsExportAutoConfiguration.class })
+@ConditionalOnClass({ DataSource.class, MeterRegistry.class })
+@ConditionalOnBean({ DataSource.class, MeterRegistry.class })
 public class DataSourcePoolMetricsAutoConfiguration {
 
-    private static final String DATASOURCE_SUFFIX = "dataSource";
+    @Configuration
+    @ConditionalOnBean(DataSourcePoolMetadataProvider.class)
+    static class DataSourcePoolMetadataMetricsConfiguration {
 
-    private final MeterRegistry registry;
+        private static final String DATASOURCE_SUFFIX = "dataSource";
 
-    private final Collection<DataSourcePoolMetadataProvider> metadataProviders;
+        private final MeterRegistry registry;
 
-    public DataSourcePoolMetricsAutoConfiguration(MeterRegistry registry,
-                                                  ObjectProvider<Collection<DataSourcePoolMetadataProvider>> metadataProviders) {
-        this.registry = registry;
-        this.metadataProviders = metadataProviders.getIfAvailable();
-    }
+        private final Collection<DataSourcePoolMetadataProvider> metadataProviders;
 
-    @Autowired
-    public void bindDataSourcesToRegistry(ObjectProvider<Map<String, DataSource>> dataSources) {
-        if (dataSources.getIfAvailable() != null && this.metadataProviders != null) {
-            dataSources.getIfAvailable().forEach(this::bindDataSourceToRegistry);
+        DataSourcePoolMetadataMetricsConfiguration(MeterRegistry registry,
+                Collection<DataSourcePoolMetadataProvider> metadataProviders) {
+            this.registry = registry;
+            this.metadataProviders = metadataProviders;
         }
-    }
 
-    private void bindDataSourceToRegistry(String beanName, DataSource dataSource) {
-        String dataSourceName = getDataSourceName(beanName);
-        new DataSourcePoolMetrics(dataSource, this.metadataProviders,
-                dataSourceName, Collections.emptyList()).bindTo(this.registry);
-    }
+        @Autowired
+        public void bindDataSourcesToRegistry(Map<String, DataSource> dataSources) {
+            dataSources.forEach(this::bindDataSourceToRegistry);
+        }
 
-    /**
-     * Get the name of a DataSource based on its {@code beanName}.
-     *
-     * @param beanName the name of the data source bean
-     * @return a name for the given data source
-     */
-    private String getDataSourceName(String beanName) {
-        if (beanName.length() > DATASOURCE_SUFFIX.length()
+        private void bindDataSourceToRegistry(String beanName, DataSource dataSource) {
+            String dataSourceName = getDataSourceName(beanName);
+            new DataSourcePoolMetrics(dataSource, this.metadataProviders, dataSourceName,
+                Collections.emptyList()).bindTo(this.registry);
+        }
+
+        /**
+         * Get the name of a DataSource based on its {@code beanName}.
+         * @param beanName the name of the data source bean
+         * @return a name for the given data source
+         */
+        private String getDataSourceName(String beanName) {
+            if (beanName.length() > DATASOURCE_SUFFIX.length()
                 && StringUtils.endsWithIgnoreCase(beanName, DATASOURCE_SUFFIX)) {
-            return beanName.substring(0, beanName.length() - DATASOURCE_SUFFIX.length());
+                return beanName.substring(0,
+                    beanName.length() - DATASOURCE_SUFFIX.length());
+            }
+            return beanName;
         }
-        return beanName;
+
     }
 
 }
