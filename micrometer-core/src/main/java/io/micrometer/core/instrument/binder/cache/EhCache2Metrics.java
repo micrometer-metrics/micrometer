@@ -43,7 +43,6 @@ public class EhCache2Metrics extends CacheMeterBinder {
      * @param cache    The cache to instrument.
      * @param tags     Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
-     * @see com.google.common.cache.CacheStats
      */
     public static Ehcache monitor(MeterRegistry registry, Ehcache cache, String... tags) {
         return monitor(registry, cache, Tags.of(tags));
@@ -56,7 +55,6 @@ public class EhCache2Metrics extends CacheMeterBinder {
      * @param cache    The cache to instrument.
      * @param tags     Tags to apply to all recorded metrics.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
-     * @see com.google.common.cache.CacheStats
      */
     public static Ehcache monitor(MeterRegistry registry, Ehcache cache, Iterable<Tag> tags) {
         new EhCache2Metrics(cache, tags).bindTo(registry);
