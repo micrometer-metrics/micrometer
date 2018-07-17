@@ -54,7 +54,6 @@ public class JCacheMetrics extends CacheMeterBinder {
      * @param <K>      The cache key type.
      * @param <V>      The cache value type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
-     * @see com.google.common.cache.CacheStats
      */
     public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String... tags) {
         return monitor(registry, cache, Tags.of(tags));
@@ -70,7 +69,6 @@ public class JCacheMetrics extends CacheMeterBinder {
      * @param <K>      The cache key type.
      * @param <V>      The cache value type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
-     * @see com.google.common.cache.CacheStats
      */
     public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, Iterable<Tag> tags) {
         new JCacheMetrics(cache, tags).bindTo(registry);
