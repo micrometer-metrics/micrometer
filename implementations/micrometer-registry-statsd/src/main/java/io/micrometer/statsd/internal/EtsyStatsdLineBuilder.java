@@ -82,6 +82,7 @@ public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
     }
 
     private String etsyName(@Nullable Statistic stat) {
-        return nameMapper.toHierarchicalName(stat != null ? id.withTag(stat) : id, config.namingConvention());
+        return nameMapper.toHierarchicalName(stat != null ? id.withTag(stat) : id, config.namingConvention())
+                .replace(':', '_');
     }
 }

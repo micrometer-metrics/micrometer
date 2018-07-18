@@ -69,7 +69,7 @@ public class MetricsRequestEventListener implements RequestEventListener {
 
         switch (event.getType()) {
             case ON_EXCEPTION:
-                if(!(event.getException() instanceof NotFoundException)) {
+                if (!(event.getException() instanceof NotFoundException)) {
                     break;
                 }
             case REQUEST_MATCHED:
@@ -113,7 +113,7 @@ public class MetricsRequestEventListener implements RequestEventListener {
             return Collections.singleton(registry.timer(metricName, tagsProvider.httpRequestTags(event)));
         }
 
-        if(timed == null) {
+        if (timed == null) {
             return Collections.emptySet();
         }
 

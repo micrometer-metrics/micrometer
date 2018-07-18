@@ -58,7 +58,7 @@ public final class Search {
      * @return This search.
      */
     public Search name(@Nullable Predicate<String> nameMatches) {
-        if(nameMatches != null)
+        if (nameMatches != null)
             this.nameMatches = nameMatches;
         return this;
     }

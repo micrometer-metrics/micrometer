@@ -51,7 +51,7 @@ public abstract class CacheMeterBinderCompatibilityKit {
         put("k", "v");
         assertThat(binder.size()).isIn(null, 1L);
 
-        if(binder.size() != null) {
+        if (binder.size() != null) {
             assertThat(registry.get("cache.size")
                     .tag("cache", "mycache")
                     .gauge().value())
@@ -82,7 +82,7 @@ public abstract class CacheMeterBinderCompatibilityKit {
                 .functionCounter().count())
                 .isEqualTo(1);
 
-        if(binder.missCount() != null) {
+        if (binder.missCount() != null) {
             // will be 2 for Guava/Caffeine caches where LoadingCache considers a get against a non-existent key a "miss"
             assertThat(binder.missCount()).isIn(1L, 2L);
 

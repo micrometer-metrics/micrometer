@@ -36,6 +36,7 @@ public class ExecutorServiceSample {
         es.scheduleWithFixedDelay(() -> Mono.delay(Duration.ofMillis(20)).block(), 0,
                 10, TimeUnit.MILLISECONDS);
 
-        while(true) {}
+        while (true) {
+        }
     }
 }

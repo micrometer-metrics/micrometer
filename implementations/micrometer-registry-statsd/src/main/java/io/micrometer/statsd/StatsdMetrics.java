@@ -22,7 +22,7 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 public class StatsdMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
-        if(registry instanceof StatsdMeterRegistry) {
+        if (registry instanceof StatsdMeterRegistry) {
             StatsdMeterRegistry statsdRegistry = (StatsdMeterRegistry) registry;
 
             Gauge.builder("statsd.queue.size", statsdRegistry, StatsdMeterRegistry::queueSize)

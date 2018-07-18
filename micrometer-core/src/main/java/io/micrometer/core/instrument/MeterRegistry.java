@@ -152,7 +152,7 @@ public abstract class MeterRegistry implements AutoCloseable {
         return new TimeGauge() {
             @Override
             public Id getId() {
-                return id;
+                return withUnit;
             }
 
             @Override

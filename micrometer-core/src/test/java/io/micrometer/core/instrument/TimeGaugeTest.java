@@ -13,38 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.aop;
+package io.micrometer.core.instrument;
 
-import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
-import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
+
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TimedAspectTest {
+class TimeGaugeTest {
     @Test
-    void timeMethod() {
+    void hasBaseTimeUnit() {
         MeterRegistry registry = new SimpleMeterRegistry();
 
-        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
-        pf.addAspect(new TimedAspect(registry));
+        AtomicLong n = new AtomicLong(0);
+        TimeGauge g = registry.more().timeGauge("my.time.gauge", Tags.empty(), n, TimeUnit.SECONDS, AtomicLong::doubleValue);
 
-        TimedService service = pf.getProxy();
-
-        service.call();
-
-        assertThat(registry.get("call")
-                .tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedService")
-                .tag("method", "call")
-                .tag("extra", "tag")
-                .timer().count()).isEqualTo(1);
-    }
-
-    static class TimedService {
-        @Timed(value = "call", extraTags = {"extra", "tag"})
-        void call() {
-        }
+        assertThat(g.getId().getBaseUnit()).isEqualTo("seconds");
     }
 }

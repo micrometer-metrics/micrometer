@@ -98,6 +98,7 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private String telegrafEscape(String value) {
         return value.replace(",", "\\,")
                 .replace("=", "\\=")
-                .replace(" ", "\\ ");
+                .replace(" ", "\\ ")
+                .replace(":", "\\:");
     }
 }

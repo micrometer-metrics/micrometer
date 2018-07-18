@@ -331,5 +331,6 @@ public interface Meter extends AutoCloseable {
     }
 
     @Override
-    default void close() {}
+    default void close() {
+    }
 }

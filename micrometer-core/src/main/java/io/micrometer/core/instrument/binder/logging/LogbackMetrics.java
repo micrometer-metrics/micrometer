@@ -125,7 +125,7 @@ class MetricsTurboFilter extends TurboFilter {
     @Override
     public FilterReply decide(Marker marker, Logger logger, Level level, String format, Object[] params, Throwable t) {
         Boolean ignored = LogbackMetrics.ignoreMetrics.get();
-        if(ignored != null && ignored) {
+        if (ignored != null && ignored) {
             return FilterReply.NEUTRAL;
         }
 

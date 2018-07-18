@@ -54,7 +54,6 @@ public class JCacheMetrics extends CacheMeterBinder {
      * @param <K>      The cache key type.
      * @param <V>      The cache value type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
-     * @see com.google.common.cache.CacheStats
      */
     public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, String... tags) {
         return monitor(registry, cache, Tags.of(tags));
@@ -70,7 +69,6 @@ public class JCacheMetrics extends CacheMeterBinder {
      * @param <K>      The cache key type.
      * @param <V>      The cache value type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
-     * @see com.google.common.cache.CacheStats
      */
     public static <K, V, C extends Cache<K, V>> C monitor(MeterRegistry registry, C cache, Iterable<Tag> tags) {
         new JCacheMetrics(cache, tags).bindTo(registry);
@@ -130,13 +128,12 @@ public class JCacheMetrics extends CacheMeterBinder {
         }
     }
 
-    private long lookupStatistic(String name) {
+    private Long lookupStatistic(String name) {
         try {
             List<MBeanServer> mBeanServers = MBeanServerFactory.findMBeanServer(null);
             for (MBeanServer mBeanServer : mBeanServers) {
                 try {
-                    Object attribute = mBeanServer.getAttribute(objectName, name);
-                    return (Long) attribute;
+                    return (Long) mBeanServer.getAttribute(objectName, name);
                 } catch (AttributeNotFoundException | InstanceNotFoundException ex) {
                     // did not find MBean, try the next server
                 }
@@ -146,6 +143,6 @@ public class JCacheMetrics extends CacheMeterBinder {
         }
 
         // didn't find the MBean in any servers
-        return 0;
+        return 0L;
     }
 }
