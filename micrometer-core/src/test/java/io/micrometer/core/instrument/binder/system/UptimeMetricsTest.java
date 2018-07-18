@@ -53,6 +53,6 @@ class UptimeMetricsTest {
         new UptimeMetrics(runtimeMXBean, emptyList()).bindTo(registry);
 
         assertThat(registry.get("process.uptime").timeGauge().value()).isEqualTo(1.337);
-        assertThat(registry.get("process.start.time").timeGauge().value()).isEqualTo(4.711);
+        assertThat(registry.get("process.start.time").timeGauge().value()).isEqualTo(4);
     }
 }
