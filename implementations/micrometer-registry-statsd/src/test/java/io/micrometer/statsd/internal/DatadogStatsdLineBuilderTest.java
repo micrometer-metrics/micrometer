@@ -15,7 +15,9 @@
  */
 package io.micrometer.statsd.internal;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -24,9 +26,10 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DatadogStatsdLineBuilderTest {
+    private final MeterRegistry registry = new SimpleMeterRegistry();
+
     @Test
     void changingNamingConvention() {
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
         Counter c = registry.counter("my.counter", "my.tag", "value");
         DatadogStatsdLineBuilder lb = new DatadogStatsdLineBuilder(c.getId(), registry.config());
 
@@ -35,5 +38,15 @@ class DatadogStatsdLineBuilderTest {
 
         registry.config().namingConvention(NamingConvention.camelCase);
         assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("myCounter:1|c|#statistic:count,myTag:value");
+    }
+
+    @Issue("#739")
+    @Test
+    void sanitizeColons() {
+        Counter c = registry.counter("my:counter", "my:tag", "my:value");
+        DatadogStatsdLineBuilder lb = new DatadogStatsdLineBuilder(c.getId(), registry.config());
+
+        registry.config().namingConvention(NamingConvention.dot);
+        assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my_counter:1|c|#statistic:count,my_tag:my_value");
     }
 }

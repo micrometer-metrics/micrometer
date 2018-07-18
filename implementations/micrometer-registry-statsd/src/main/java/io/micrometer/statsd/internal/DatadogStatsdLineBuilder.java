@@ -55,11 +55,11 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
             this.namingConvention = next;
-            this.name = next.name(id.getName(), id.getType(), id.getBaseUnit()) + ":";
+            this.name = next.name(id.getName().replace(':', '_'), id.getType(), id.getBaseUnit()) + ":";
             this.tags = HashTreePMap.empty();
             this.conventionTags = id.getTags().iterator().hasNext() ?
                     id.getConventionTags(this.namingConvention).stream()
-                            .map(t -> t.getKey() + ":" + t.getValue())
+                            .map(t -> t.getKey().replace(':', '_') + ":" + t.getValue().replace(':', '_'))
                             .collect(Collectors.joining(","))
                     : null;
             this.tagsNoStat = tags(null, conventionTags, ":", "|#");
