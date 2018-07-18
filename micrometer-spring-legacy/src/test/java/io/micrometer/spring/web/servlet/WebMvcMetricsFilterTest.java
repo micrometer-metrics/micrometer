@@ -176,6 +176,18 @@ public class WebMvcMetricsFilterTest {
     }
 
     @Test
+    public void endpointThrowsAnonymousError() throws Exception {
+        try {
+            mvc.perform(get("/api/c1/anonymousError/10"));
+        } catch(Throwable ignore) {
+        }
+
+        assertThat(this.registry.get("http.server.requests").tag("uri", "/api/c1/anonymousError/{id}").timer().getId()
+                .getTag("exception"))
+                .endsWith("$1");
+    }
+
+    @Test
     public void regexBasedRequestMapping() throws Exception {
         mvc.perform(get("/api/c1/regex/.abc")).andExpect(status().isOk());
 
@@ -326,6 +338,12 @@ public class WebMvcMetricsFilterTest {
         @GetMapping("/error/{id}")
         public String alwaysThrowsException(@PathVariable Long id) {
             throw new IllegalStateException("Boom on " + id + "!");
+        }
+
+        @Timed
+        @GetMapping("/anonymousError/{id}")
+        public String alwaysThrowsAnonymousException(@PathVariable Long id) throws Exception {
+            throw new Exception("this exception won't have a simple class name") {};
         }
 
         @Timed
