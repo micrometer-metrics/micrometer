@@ -290,7 +290,7 @@ class CompositeMeterRegistryTest {
                 .doOnTerminate(latch::countDown)
                 .runOn(Schedulers.parallel())
                 .subscribe(n -> {
-                    if(n % 2 == 0)
+                    if (n % 2 == 0)
                         composite2.add(simple);
                     else composite2.remove(simple);
                 });
