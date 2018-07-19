@@ -71,7 +71,9 @@ public abstract class StepMeterRegistry extends MeterRegistry {
 
     @Override
     public void close() {
-        publish();
+        if (config.enabled()) {
+            publish();
+        }
         stop();
         super.close();
     }
