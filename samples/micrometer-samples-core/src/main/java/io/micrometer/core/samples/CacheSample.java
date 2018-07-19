@@ -57,7 +57,7 @@ public class CacheSample {
             .blockLast();
     }
 
-    /** skip things that aren't words, roughly **/
+    // skip things that aren't words, roughly
     private static DelimiterBasedFrameDecoder wordDecoder() {
         return new DelimiterBasedFrameDecoder(256,
             IntStream.of('\r', '\n', ' ', '\t', '.', ',', ';', ':', '-')
