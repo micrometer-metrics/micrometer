@@ -15,54 +15,52 @@
  */
 package io.micrometer.influx;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CreateDatabaseQueryBuilderTest {
 
-	private static String TEST_DB_NAME = "dummy_database_0";
+    private static String TEST_DB_NAME = "dummy_database_0";
 
-	/**
-	 * Class Parameters:
-	 *
-	 * - database name
-	 * - retention clauses
-	 *
-	 * Class Criteria
-	 * - database name is not null		->	true		false
-	 * - retention clauses			->	no		one		all
-	 */
-	private final CreateDatabaseQueryBuilder createDatabaseQueryBuilder = new CreateDatabaseQueryBuilder(TEST_DB_NAME);
+    /**
+     * Class Parameters:
+     * <p>
+     * - database name
+     * - retention clauses
+     * <p>
+     * Class Criteria
+     * - database name is not null		->	true		false
+     * - retention clauses			->	no		one		all
+     */
+    private final CreateDatabaseQueryBuilder createDatabaseQueryBuilder = new CreateDatabaseQueryBuilder(TEST_DB_NAME);
 
-	@Test
-	void noEmptyDatabaseName() {
-		assertThrows(IllegalArgumentException.class, () -> new CreateDatabaseQueryBuilder(null));
-	}
+    @Test
+    void noEmptyDatabaseName() {
+        assertThrows(IllegalArgumentException.class, () -> new CreateDatabaseQueryBuilder(null));
+    }
 
-	@Test
-	void noRetentionPolicy() {
-		String query = createDatabaseQueryBuilder.build();
-		assertEquals("CREATE DATABASE dummy_database_0", query);
-	}
+    @Test
+    void noRetentionPolicy() {
+        String query = createDatabaseQueryBuilder.build();
+        assertEquals("CREATE DATABASE dummy_database_0", query);
+    }
 
-	@Test
-	void oneClauseInRetentionPolicy() {
-		String query = createDatabaseQueryBuilder.setRetentionPolicyName("dummy_policy").build();
-		assertEquals("CREATE DATABASE dummy_database_0 WITH NAME dummy_policy", query);
-	}
+    @Test
+    void oneClauseInRetentionPolicy() {
+        String query = createDatabaseQueryBuilder.setRetentionPolicyName("dummy_policy").build();
+        assertEquals("CREATE DATABASE dummy_database_0 WITH NAME dummy_policy", query);
+    }
 
-	@Test
-	void allClausesInRetentionPolicy() {
-		String query = createDatabaseQueryBuilder.setRetentionPolicyName("dummy_policy")
-				.setRetentionDuration("2d")
-				.setRetentionReplicationFactor(1)
-				.setRetentionShardDuration("3")
-				.build();
-		assertEquals("CREATE DATABASE dummy_database_0 WITH DURATION 2d REPLICATION 1 SHARD DURATION 3 NAME dummy_policy", query);
-	}
+    @Test
+    void allClausesInRetentionPolicy() {
+        String query = createDatabaseQueryBuilder.setRetentionPolicyName("dummy_policy")
+                .setRetentionDuration("2d")
+                .setRetentionReplicationFactor(1)
+                .setRetentionShardDuration("3")
+                .build();
+        assertEquals("CREATE DATABASE dummy_database_0 WITH DURATION 2d REPLICATION 1 SHARD DURATION 3 NAME dummy_policy", query);
+    }
 
 }
