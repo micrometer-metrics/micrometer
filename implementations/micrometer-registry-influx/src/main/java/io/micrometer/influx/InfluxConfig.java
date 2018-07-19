@@ -79,6 +79,31 @@ public interface InfluxConfig extends StepRegistryConfig {
         return get(prefix() + ".retentionPolicy");
     }
 
+	/**
+	 * @return time period for which influx should retain data in the current database (e.g. 2h, 52w)
+	 */
+	@Nullable
+	default String retentionDuration(){
+		return get(prefix() + ".retentionDuration");
+	}
+
+	/**
+	 * @return how many copies of the data are stored in the cluster. Must be 1 for a single node instance
+	 */
+	@Nullable
+	default String retentionReplicationFactor(){
+		return get(prefix() + ".retentionReplicationFactor");
+	}
+
+	/**
+	 * @return the time range covered by a shard group
+	 */
+	@Nullable
+	default String retentionShardDuration(){
+		return get(prefix() + ".retentionShardDuration");
+	}
+
+
     /**
      * @return The URI for the Influx backend. The default is {@code http://localhost:8086}.
      */
