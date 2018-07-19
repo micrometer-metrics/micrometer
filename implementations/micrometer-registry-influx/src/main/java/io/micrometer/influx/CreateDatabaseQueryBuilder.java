@@ -33,7 +33,7 @@ class CreateDatabaseQueryBuilder {
     private static final String QUERY_MANDATORY_TEMPLATE = "CREATE DATABASE %s";
     private static final String RETENTION_POLICY_INTRODUCTION = " WITH";
     private static final String DURATION_CLAUSE_TEMPLATE = " DURATION %s";
-    private static final String REPLICATION_FACTOR_CLAUSE_TEMPLATE = " REPLICATION %s";
+    private static final String REPLICATION_FACTOR_CLAUSE_TEMPLATE = " REPLICATION %d";
     private static final String SHARD_DURATION_CLAUSE_TEMPLATE = " SHARD DURATION %s";
     private static final String NAME_CLAUSE_TEMPLATE = " NAME %s";
 
@@ -54,8 +54,8 @@ class CreateDatabaseQueryBuilder {
         return this;
     }
 
-    CreateDatabaseQueryBuilder setRetentionReplicationFactor(@Nullable String retentionReplicationFactor) {
-        if (!isEmpty(retentionReplicationFactor)) {
+    CreateDatabaseQueryBuilder setRetentionReplicationFactor(@Nullable Integer retentionReplicationFactor) {
+        if (retentionReplicationFactor != null) {
             retentionPolicyClauses[1] = String.format(REPLICATION_FACTOR_CLAUSE_TEMPLATE, retentionReplicationFactor);
         }
         return this;

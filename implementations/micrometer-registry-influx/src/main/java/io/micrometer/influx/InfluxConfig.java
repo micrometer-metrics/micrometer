@@ -80,7 +80,7 @@ public interface InfluxConfig extends StepRegistryConfig {
     }
 
 	/**
-	 * @return time period for which influx should retain data in the current database (e.g. 2h, 52w)
+	 * @return Time period for which influx should retain data in the current database (e.g. 2h, 52w).
 	 */
 	@Nullable
 	default String retentionDuration(){
@@ -88,15 +88,16 @@ public interface InfluxConfig extends StepRegistryConfig {
 	}
 
 	/**
-	 * @return how many copies of the data are stored in the cluster. Must be 1 for a single node instance
+	 * @return How many copies of the data are stored in the cluster. Must be 1 for a single node instance.
 	 */
 	@Nullable
-	default String retentionReplicationFactor(){
-		return get(prefix() + ".retentionReplicationFactor");
+	default Integer retentionReplicationFactor(){
+		String v = get(prefix() + ".retentionReplicationFactor");
+		return v == null ? null : Integer.parseInt(v);
 	}
 
-	/**
-	 * @return the time range covered by a shard group
+    /**
+	 * @return The time range covered by a shard group (e.g. 2h, 52w).
 	 */
 	@Nullable
 	default String retentionShardDuration(){
