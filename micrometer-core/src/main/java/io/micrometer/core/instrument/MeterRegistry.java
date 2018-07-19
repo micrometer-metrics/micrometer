@@ -17,6 +17,7 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
@@ -576,16 +577,8 @@ public abstract class MeterRegistry implements AutoCloseable {
     }
 
     private boolean accept(Meter.Id id) {
-        for (MeterFilter filter : filters) {
-            switch (filter.accept(id)) {
-                case DENY:
-                    return false;
-                case ACCEPT:
-                    return true;
-            }
-        }
-
-        return true;
+        return this.filters.stream()
+            .noneMatch((filter) -> filter.accept(id) == MeterFilterReply.DENY);
     }
 
     /**

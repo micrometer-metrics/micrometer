@@ -159,7 +159,7 @@ public class TimeWindowFixedBoundaryHistogram
                     return mid; // exact match
             }
 
-            return low >= buckets.length ? -1 : low;
+            return low < buckets.length ? low : -1;
         }
     }
 }

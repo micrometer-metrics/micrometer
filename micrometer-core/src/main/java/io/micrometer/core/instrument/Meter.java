@@ -76,7 +76,7 @@ public interface Meter extends AutoCloseable {
         private final String description;
 
         @Nullable
-        private String baseUnit;
+        private final String baseUnit;
 
         @Incubating(since = "1.0.6")
         public Id(String name, Iterable<Tag> tags, @Nullable String baseUnit, @Nullable String description, Type type,

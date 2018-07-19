@@ -75,7 +75,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder {
     }
 
     /**
-     * @return The number of hits against cache entries hold in this local partition. Not all gets had to result from
+     * @return The number of hits against cache entries held in this local partition. Not all gets had to result from
      * a get operation against {@link #cache}. If a get operation elsewhere in the cluster caused a lookup against an entry
      * held in this partition, the hit will be recorded against map stats in this partition and not in the map stats of the
      * calling {@link IMap}.
