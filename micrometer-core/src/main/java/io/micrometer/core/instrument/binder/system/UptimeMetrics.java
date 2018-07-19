@@ -63,7 +63,7 @@ public class UptimeMetrics implements MeterBinder {
 
         TimeGauge.builder("process.start.time", runtimeMXBean, TimeUnit.MILLISECONDS, RuntimeMXBean::getStartTime)
             .tags(tags)
-            .description("Start time of the process since unix epoch in seconds.")
+            .description("Start time of the process since unix epoch.")
             .register(registry);
     }
 }
