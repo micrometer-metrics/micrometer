@@ -20,7 +20,10 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
 
 /**
+ * {@link NamingConvention} for Influx.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public class InfluxNamingConvention implements NamingConvention {
     private final NamingConvention delegate;
@@ -55,7 +58,7 @@ public class InfluxNamingConvention implements NamingConvention {
         // `time` cannot be a field key or tag key
         if (value.equals("time"))
             throw new IllegalArgumentException("'time' is an invalid tag value in InfluxDB");
-        return format(value);
+        return format(this.delegate.tagValue(value));
     }
 
     private String format(String name) {
