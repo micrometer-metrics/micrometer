@@ -145,23 +145,31 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<String> writeSummary(DistributionSummary summary) {
-        return Stream.of(
-                event(summary.getId(),
-                        new Attribute("count", summary.count()),
-                        new Attribute("avg", summary.mean()),
-                        new Attribute("total", summary.totalAmount()),
-                        new Attribute("max", summary.max())
-                )
-        );
+        return Stream.of(event(summary.getId(),
+                Stream.concat(
+                        Stream.of(
+                                new Attribute("count", summary.count()),
+                                new Attribute("avg", summary.mean()),
+                                new Attribute("total", summary.totalAmount()),
+                                new Attribute("max", summary.max())),
+                        Arrays.stream(summary.takeSnapshot().percentileValues())
+                                .map(v -> new Attribute("p" + ((int) (v.percentile() * 100)), v.value())))
+                .collect(Collectors.toList())
+                .toArray(new Attribute[0])));
     }
 
     private Stream<String> writeTimer(Timer timer) {
         return Stream.of(event(timer.getId(),
-                new Attribute("count", timer.count()),
-                new Attribute("avg", timer.mean(getBaseTimeUnit())),
-                new Attribute("totalTime", timer.totalTime(getBaseTimeUnit())),
-                new Attribute("max", timer.max(getBaseTimeUnit()))
-        ));
+                Stream.concat(
+                        Stream.of(
+                                new Attribute("count", timer.count()),
+                                new Attribute("avg", timer.mean(getBaseTimeUnit())),
+                                new Attribute("totalTime", timer.totalTime(getBaseTimeUnit())),
+                                new Attribute("max", timer.max(getBaseTimeUnit()))),
+                        Arrays.stream(timer.takeSnapshot().percentileValues())
+                                .map(v -> new Attribute("p" + ((int) (v.percentile() * 100)), v.value(getBaseTimeUnit()))))
+                .collect(Collectors.toList())
+                .toArray(new Attribute[0])));
     }
 
     private Stream<String> writeTimer(FunctionTimer timer) {
