@@ -38,6 +38,7 @@ management.metrics.export:
   statsd.enabled: false
   signalfx.enabled: false
   wavefront.enabled: false
+  kairos.enabled: false
 security.ignored: /**
 
 endpoints.shutdown.enabled: true

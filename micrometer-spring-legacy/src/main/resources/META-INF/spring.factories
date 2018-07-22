@@ -21,6 +21,7 @@ io.micrometer.spring.autoconfigure.export.influx.InfluxMetricsExportAutoConfigur
 io.micrometer.spring.autoconfigure.export.jmx.JmxMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.newrelic.NewRelicMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.prometheus.PrometheusMetricsExportAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.kairos.KairosMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.signalfx.SignalFxMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.statsd.StatsdMetricsExportAutoConfiguration,\
