@@ -34,3 +34,4 @@ management.metrics:
     newrelic.enabled: false
     signalfx.enabled: false
     wavefront.enabled: false
+    kairos.enabled: false
