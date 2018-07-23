@@ -24,6 +24,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class StatsdTelegrafSample {
     public static void main(String[] args) {
-        new SpringApplicationBuilder(AtlasSample.class).profiles("statsd-telegraf").run(args);
+        new SpringApplicationBuilder(StatsdTelegrafSample.class).profiles("statsd-telegraf").run(args);
     }
 }
