@@ -24,6 +24,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class StatsdDatadogSample {
     public static void main(String[] args) {
-        new SpringApplicationBuilder(AtlasSample.class).profiles("statsd-datadog").run(args);
+        new SpringApplicationBuilder(StatsdDatadogSample.class).profiles("statsd-datadog").run(args);
     }
 }

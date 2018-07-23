@@ -24,6 +24,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class NewRelicSample {
     public static void main(String[] args) {
-        new SpringApplicationBuilder(PrometheusSample.class).profiles("newrelic").run(args);
+        new SpringApplicationBuilder(NewRelicSample.class).profiles("newrelic").run(args);
     }
 }
