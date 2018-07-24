@@ -26,12 +26,13 @@ import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguration;
+import io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsAutoConfiguration;
 import io.prometheus.client.CollectorRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -220,7 +221,8 @@ public class WebMvcMetricsFilterTest {
 
     @Configuration
     @EnableWebMvc
-    @Import({ServletMetricsConfiguration.class, Controller1.class, Controller2.class})
+    @Import({Controller1.class, Controller2.class})
+    @ImportAutoConfiguration(WebMvcMetricsAutoConfiguration.class)
     static class MetricsFilterApp {
         @Bean
         Clock micrometerClock() {
