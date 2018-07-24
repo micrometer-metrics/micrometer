@@ -16,10 +16,16 @@
 package io.micrometer.spring.autoconfigure.web.servlet;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.MetricsProperties;
+import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
 import io.micrometer.spring.web.servlet.DefaultWebMvcTagsProvider;
 import io.micrometer.spring.web.servlet.WebMvcMetricsFilter;
 import io.micrometer.spring.web.servlet.WebMvcTagsProvider;
+
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -31,15 +37,19 @@ import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 /**
- * Configures instrumentation of Spring Web MVC servlet-based request mappings.
+ * {@link EnableAutoConfiguration Auto-configuration} for instrumentation of Spring Web
+ * MVC servlet-based request mappings.
  *
  * @author Jon Schneider
  */
 @Configuration
-@ConditionalOnClass(DispatcherServlet.class)
+@AutoConfigureAfter({ MetricsAutoConfiguration.class,
+        SimpleMetricsExportAutoConfiguration.class })
 @ConditionalOnWebApplication
+@ConditionalOnClass(DispatcherServlet.class)
+@ConditionalOnBean(MeterRegistry.class)
 @EnableConfigurationProperties(MetricsProperties.class)
-public class ServletMetricsConfiguration {
+public class WebMvcMetricsAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(WebMvcTagsProvider.class)
