@@ -17,14 +17,7 @@ package io.micrometer.influx;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.HttpContentCoding;
-import io.micrometer.core.instrument.util.HttpHeader;
-import io.micrometer.core.instrument.util.HttpMethod;
-import io.micrometer.core.instrument.util.IOUtils;
-import io.micrometer.core.instrument.util.MediaType;
-import io.micrometer.core.instrument.util.MeterPartition;
-import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.instrument.util.*;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,9 +62,9 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         HttpURLConnection con = null;
         try {
             String createDatabaseQuery = new CreateDatabaseQueryBuilder(config.db()).setRetentionDuration(config.retentionDuration())
-					.setRetentionPolicyName(config.retentionPolicy())
-					.setRetentionReplicationFactor(config.retentionReplicationFactor())
-					.setRetentionShardDuration(config.retentionShardDuration()).build();
+                    .setRetentionPolicyName(config.retentionPolicy())
+                    .setRetentionReplicationFactor(config.retentionReplicationFactor())
+                    .setRetentionShardDuration(config.retentionShardDuration()).build();
 
             URL queryEndpoint = URI.create(config.uri() + "/query?q=" + URLEncoder.encode(createDatabaseQuery, "UTF-8")).toURL();
 
@@ -250,7 +243,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     private Stream<String> writeGauge(Meter.Id id, Double value) {
         return value.isNaN() ? Stream.empty() :
-            Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value)), clock.wallTime()));
+                Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value)), clock.wallTime()));
     }
 
     private Stream<String> writeTimer(FunctionTimer timer) {
