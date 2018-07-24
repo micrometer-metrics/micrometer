@@ -13,7 +13,7 @@ com.google.j2objc:j2objc-annotations:1.1
 com.hazelcast:hazelcast:3.8.9
 com.netflix.archaius:archaius-core:0.4.1
 com.netflix.hystrix:hystrix-core:1.5.12
-com.squareup.okhttp3:okhttp:3.10.0
+com.squareup.okhttp3:okhttp:3.11.0
 com.squareup.okio:okio:1.14.0
 commons-configuration:commons-configuration:1.8
 commons-lang:commons-lang:2.6
@@ -44,10 +44,10 @@ org.apache.tomcat:tomcat-annotations-api:8.5.32
 org.aspectj:aspectjweaver:1.8.13
 org.checkerframework:checker-qual:2.0.0
 org.codehaus.mojo:animal-sniffer-annotations:1.14
-org.eclipse.jetty:jetty-http:9.4.11.v20180605
-org.eclipse.jetty:jetty-io:9.4.11.v20180605
-org.eclipse.jetty:jetty-server:9.4.11.v20180605
-org.eclipse.jetty:jetty-util:9.4.11.v20180605
+org.eclipse.jetty:jetty-http:9.4.12.RC0
+org.eclipse.jetty:jetty-io:9.4.12.RC0
+org.eclipse.jetty:jetty-server:9.4.12.RC0
+org.eclipse.jetty:jetty-util:9.4.12.RC0
 org.hdrhistogram:HdrHistogram:2.1.10
 org.hibernate.common:hibernate-commons-annotations:5.0.1.Final
 org.hibernate:hibernate-core:5.3.0.Beta1
