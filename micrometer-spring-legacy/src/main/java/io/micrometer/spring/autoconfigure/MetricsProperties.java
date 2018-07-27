@@ -38,6 +38,11 @@ public class MetricsProperties {
     private final Map<String, Boolean> enable = new HashMap<>();
 
     /**
+     * Common tags that are applied to every meter.
+     */
+    private final Map<String, String> tags = new LinkedHashMap<>();
+
+    /**
      * Whether or not auto-configured MeterRegistry implementations should be bound to the
      * global static registry on Metrics. For testing, set this to 'false' to maximize
      * test independence.
@@ -58,6 +63,10 @@ public class MetricsProperties {
 
     public Map<String, Boolean> getEnable() {
         return enable;
+    }
+
+    public Map<String, String> getTags() {
+        return this.tags;
     }
 
     public Distribution getDistribution() {
