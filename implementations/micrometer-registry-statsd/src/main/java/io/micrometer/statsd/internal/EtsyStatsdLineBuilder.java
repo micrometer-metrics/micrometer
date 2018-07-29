@@ -27,7 +27,7 @@ import org.pcollections.PMap;
 public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private final HierarchicalNameMapper nameMapper;
 
-    @SuppressWarnings({"NullableProblems", "unused"})
+    @SuppressWarnings("NullableProblems")
     private volatile NamingConvention namingConvention;
 
     @Nullable
@@ -82,7 +82,7 @@ public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
     }
 
     private String etsyName(@Nullable Statistic stat) {
-        return nameMapper.toHierarchicalName(stat != null ? id.withTag(stat) : id, config.namingConvention())
+        return nameMapper.toHierarchicalName(stat != null ? id.withTag(stat) : id, this.namingConvention)
                 .replace(':', '_');
     }
 }
