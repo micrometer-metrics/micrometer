@@ -43,7 +43,7 @@ public enum Statistic {
 
     /**
      * Instantaneous value, such as those reported by gauges.
-     **/
+     */
     VALUE("value"),
 
     /**

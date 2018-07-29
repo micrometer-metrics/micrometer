@@ -36,7 +36,10 @@ class TimeWindowPercentileHistogramTest {
 
         histogram.recordDouble(3);
 
-        assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).contains(new CountAtBucket(3, 1));
+        assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
+                new CountAtBucket(3, 1),
+                new CountAtBucket(6, 1),
+                new CountAtBucket(7, 1));
 
         histogram.recordDouble(6);
 

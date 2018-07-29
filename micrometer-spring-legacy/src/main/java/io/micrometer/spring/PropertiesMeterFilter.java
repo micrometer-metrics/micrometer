@@ -32,7 +32,6 @@ import java.util.Objects;
 
 @NonNullApi
 public class PropertiesMeterFilter implements MeterFilter {
-    private static final ServiceLevelAgreementBoundary[] EMPTY_SLA = {};
 
     private MetricsProperties properties;
 
@@ -60,7 +59,10 @@ public class PropertiesMeterFilter implements MeterFilter {
 
     @Nullable
     private long[] convertSla(Meter.Type meterType, @Nullable ServiceLevelAgreementBoundary[] sla) {
-        long[] converted = Arrays.stream(sla == null ? EMPTY_SLA : sla)
+        if (sla == null) {
+            return null;
+        }
+        long[] converted = Arrays.stream(sla)
                 .map((candidate) -> candidate.getValue(meterType))
                 .filter(Objects::nonNull).mapToLong(Long::longValue).toArray();
         return converted.length == 0 ? null : converted;
