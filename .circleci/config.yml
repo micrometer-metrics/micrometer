@@ -24,7 +24,7 @@ jobs:
 
       - run:
           name: run tests
-          command: ./gradlew test
+          command: ./gradlew check test
 
       - run:
           name: collect test reports
