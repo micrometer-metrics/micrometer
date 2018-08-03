@@ -29,6 +29,12 @@ import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 
 import static java.util.Collections.emptyList;
+/**
+ * Kafka Consumer metrics collected from metrics exposed by org.apache.kafka.clients.consumer.KafkaConsumer
+ * via the MBeanServer. Metrics are exposed at each consumer thread.
+ *
+ * @author Wardha Perinkadakattu
+ */
 
 @NonNullApi
 @NonNullFields

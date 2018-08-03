@@ -19,7 +19,11 @@ import io.micrometer.core.instrument.binder.kafka.KafkaConsumerMetrics;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
+/**
+ * Configuration for KafkaConsumerMetrics {@link KafkaConsumerMetrics}.
+ *
+ * @author Wardha Perinkadakattu
+ */
 @Configuration
 @ConditionalOnProperty(value = "management.metrics.kafka.consumer.enabled", matchIfMissing = true)
 public class KafkaConsumerMetricsConfiguration {
