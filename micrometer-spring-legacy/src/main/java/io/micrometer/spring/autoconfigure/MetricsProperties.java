@@ -16,7 +16,6 @@
 package io.micrometer.spring.autoconfigure;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.util.Assert;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -30,13 +29,13 @@ import java.util.Map;
 @ConfigurationProperties("management.metrics")
 public class MetricsProperties {
 
-    private Web web = new Web();
-    private Distribution distribution = new Distribution();
+    private final Web web = new Web();
+    private final Distribution distribution = new Distribution();
 
     /**
      * If {@code false}, the matching meter(s) are no-op.
      */
-    private Map<String, Boolean> enable = new HashMap<>();
+    private final Map<String, Boolean> enable = new HashMap<>();
 
     /**
      * Whether or not auto-configured MeterRegistry implementations should be bound to the
@@ -67,9 +66,9 @@ public class MetricsProperties {
 
     public static class Web {
 
-        private Client client = new Client();
+        private final Client client = new Client();
 
-        private Server server = new Server();
+        private final Server server = new Server();
 
         public Client getClient() {
             return this.client;
@@ -149,14 +148,14 @@ public class MetricsProperties {
          * based on a histogram be set to true. For other systems, this has no effect. The
          * longest match wins, the key `all` can also be used to configure all meters.
          */
-        private Map<String, Boolean> percentilesHistogram = new LinkedHashMap<>();
+        private final Map<String, Boolean> percentilesHistogram = new LinkedHashMap<>();
 
         /**
          * Specific computed non-aggregable percentiles to ship to the backend for meter
          * IDs starting-with the specified name. The longest match wins, the key `all` can
          * also be used to configure all meters.
          */
-        private Map<String, double[]> percentiles = new LinkedHashMap<>();
+        private final Map<String, double[]> percentiles = new LinkedHashMap<>();
 
         /**
          * Specific SLA boundaries for meter IDs starting-with the specified name. The
@@ -165,33 +164,18 @@ public class MetricsProperties {
          * specified as a long or as a Duration value (for timer meters, defaulting to ms
          * if no unit specified).
          */
-        private Map<String, ServiceLevelAgreementBoundary[]> sla = new LinkedHashMap<>();
+        private final Map<String, ServiceLevelAgreementBoundary[]> sla = new LinkedHashMap<>();
 
         public Map<String, Boolean> getPercentilesHistogram() {
             return this.percentilesHistogram;
-        }
-
-        public void setPercentilesHistogram(Map<String, Boolean> percentilesHistogram) {
-            Assert.notNull(percentilesHistogram, "PercentilesHistogram must not be null");
-            this.percentilesHistogram = percentilesHistogram;
         }
 
         public Map<String, double[]> getPercentiles() {
             return this.percentiles;
         }
 
-        public void setPercentiles(Map<String, double[]> percentiles) {
-            Assert.notNull(percentiles, "Percentiles must not be null");
-            this.percentiles = percentiles;
-        }
-
         public Map<String, ServiceLevelAgreementBoundary[]> getSla() {
             return this.sla;
-        }
-
-        public void setSla(Map<String, ServiceLevelAgreementBoundary[]> sla) {
-            Assert.notNull(sla, "SLA must not be null");
-            this.sla = sla;
         }
 
     }

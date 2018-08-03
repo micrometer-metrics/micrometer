@@ -37,26 +37,24 @@ public class EhCache2Metrics extends CacheMeterBinder {
     }
 
     /**
-     * Record metrics on a JCache cache.
+     * Record metrics on an EhCache cache.
      *
      * @param registry The registry to bind metrics to.
      * @param cache    The cache to instrument.
      * @param tags     Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
-     * @see com.google.common.cache.CacheStats
      */
     public static Ehcache monitor(MeterRegistry registry, Ehcache cache, String... tags) {
         return monitor(registry, cache, Tags.of(tags));
     }
 
     /**
-     * Record metrics on a JCache cache.
+     * Record metrics on an EhCache cache.
      *
      * @param registry The registry to bind metrics to.
      * @param cache    The cache to instrument.
      * @param tags     Tags to apply to all recorded metrics.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
-     * @see com.google.common.cache.CacheStats
      */
     public static Ehcache monitor(MeterRegistry registry, Ehcache cache, Iterable<Tag> tags) {
         new EhCache2Metrics(cache, tags).bindTo(registry);
@@ -74,7 +72,7 @@ public class EhCache2Metrics extends CacheMeterBinder {
     }
 
     @Override
-    protected long missCount() {
+    protected Long missCount() {
         return stats.cacheMissCount();
     }
 

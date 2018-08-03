@@ -17,7 +17,6 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.distribution.*;
 import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
-import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
@@ -31,8 +30,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import static java.util.Objects.requireNonNull;
-
 public abstract class AbstractTimer extends AbstractMeter implements Timer {
     private static Map<PauseDetector, org.LatencyUtils.PauseDetector> pauseDetectorCache =
             new ConcurrentHashMap<>();
@@ -44,6 +41,9 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     // Only used when pause detection is enabled
     @Nullable
     private IntervalEstimator intervalEstimator = null;
+
+    @Nullable
+    private org.LatencyUtils.PauseDetector pauseDetector;
 
     /**
      * Creates a new timer.
@@ -94,30 +94,30 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     }
 
     private void initPauseDetector(PauseDetector pauseDetectorType) {
-        org.LatencyUtils.PauseDetector pauseDetector = requireNonNull(pauseDetectorCache.computeIfAbsent(pauseDetectorType, detector -> {
+        pauseDetector = pauseDetectorCache.computeIfAbsent(pauseDetectorType, detector -> {
             if (detector instanceof ClockDriftPauseDetector) {
                 ClockDriftPauseDetector clockDriftPauseDetector = (ClockDriftPauseDetector) detector;
                 return new SimplePauseDetector(clockDriftPauseDetector.getSleepInterval().toNanos(),
                         clockDriftPauseDetector.getPauseThreshold().toNanos(), 1, false);
-            } else if (detector instanceof NoPauseDetector) {
-                return new NoopPauseDetector();
             }
-            return new NoopPauseDetector();
-        }));
-
-        this.intervalEstimator = new TimeCappedMovingAverageIntervalEstimator(128,
-                10000000000L, pauseDetector);
-
-        pauseDetector.addListener((pauseLength, pauseEndTime) -> {
-//            System.out.println("Pause of length " + (pauseLength / 1e6) + "ms, end time " + pauseEndTime);
-            if (intervalEstimator != null) {
-                long estimatedInterval = intervalEstimator.getEstimatedInterval(pauseEndTime);
-                long observedLatencyMinbar = pauseLength - estimatedInterval;
-                if (observedLatencyMinbar >= estimatedInterval) {
-                    recordValueWithExpectedInterval(observedLatencyMinbar, estimatedInterval);
-                }
-            }
+            return null;
         });
+
+        if (pauseDetector instanceof SimplePauseDetector) {
+            this.intervalEstimator = new TimeCappedMovingAverageIntervalEstimator(128,
+                    10000000000L, pauseDetector);
+
+            pauseDetector.addListener((pauseLength, pauseEndTime) -> {
+//            System.out.println("Pause of length " + (pauseLength / 1e6) + "ms, end time " + pauseEndTime);
+                if (intervalEstimator != null) {
+                    long estimatedInterval = intervalEstimator.getEstimatedInterval(pauseEndTime);
+                    long observedLatencyMinbar = pauseLength - estimatedInterval;
+                    if (observedLatencyMinbar >= estimatedInterval) {
+                        recordValueWithExpectedInterval(observedLatencyMinbar, estimatedInterval);
+                    }
+                }
+            });
+        }
     }
 
     private void recordValueWithExpectedInterval(long nanoValue, long expectedIntervalBetweenValueSamples) {
@@ -180,7 +180,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
 
     @Override
     public HistogramSnapshot takeSnapshot() {
-        return histogram.takeSnapshot(count(), totalTime(baseTimeUnit), max(baseTimeUnit));
+        return histogram.takeSnapshot(count(), totalTime(TimeUnit.NANOSECONDS), max(TimeUnit.NANOSECONDS));
     }
 
     @Override
@@ -202,11 +202,8 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
     @Override
     public void close() {
         histogram.close();
-    }
-
-    private static class NoopPauseDetector extends org.LatencyUtils.PauseDetector {
-        NoopPauseDetector() {
-            shutdown();
+        if (pauseDetector != null) {
+            pauseDetector.shutdown();
         }
     }
 }

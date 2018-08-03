@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 docker run -d\
- --restart=always\
  -p 2003-2004:2003-2004\
  -p 2003:2003/udp\
  -p 7002:7002\

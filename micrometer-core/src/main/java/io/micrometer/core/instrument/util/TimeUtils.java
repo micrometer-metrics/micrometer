@@ -19,6 +19,7 @@ import java.time.Duration;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
  * Modification on {@link TimeUnit#convert(long, TimeUnit)} that accepts and preserves
@@ -27,6 +28,9 @@ import java.util.concurrent.TimeUnit;
  * @author Jon Schneider
  */
 public final class TimeUtils {
+	
+    private static final Pattern PARSE_PATTERN = Pattern.compile("[,_ ]");
+	
     private static final long C0 = 1L;
     private static final long C1 = C0 * 1000L;
     private static final long C2 = C1 * 1000L;
@@ -199,7 +203,7 @@ public final class TimeUtils {
     }
 
     public static Duration simpleParse(String time) {
-        String timeLower = time.toLowerCase().replaceAll("[,_ ]", "");
+        String timeLower = PARSE_PATTERN.matcher(time.toLowerCase()).replaceAll("");
         if (timeLower.endsWith("ns")) {
             return Duration.ofNanos(Long.parseLong(timeLower.substring(0, timeLower.length() - 2)));
         } else if (timeLower.endsWith("ms")) {

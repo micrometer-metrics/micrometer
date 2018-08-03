@@ -36,6 +36,10 @@ public class HistogramGauges {
     /**
      * Register a set of gauges for percentiles and histogram buckets that follow a common format when
      * the monitoring system doesn't have an opinion about the structure of this data.
+     *
+     * @param timer timer to register to the meter registry
+     * @param registry registry to register gauges
+     * @return histogram gauges
      */
     public static HistogramGauges registerWithCommonFormat(Timer timer, MeterRegistry registry) {
         Meter.Id id = timer.getId();
@@ -97,6 +101,7 @@ public class HistogramGauges {
 
             Gauge.builder(percentileName.apply(valueAtPercentiles[i]), meter, percentileValueFunction)
                     .tags(percentileTags.apply(valueAtPercentiles[i]))
+                    .synthetic(true)
                     .register(registry);
         }
 
@@ -111,12 +116,13 @@ public class HistogramGauges {
 
             Gauge.builder(bucketName.apply(countAtBuckets[i]), meter, bucketCountFunction)
                     .tags(bucketTags.apply(countAtBuckets[i]))
+                    .synthetic(true)
                     .register(registry);
         }
     }
 
     private void snapshotIfNecessary() {
-        if (polledGaugesLatch.getCount() <= 0) {
+        if (polledGaugesLatch.getCount() == 0) {
             snapshot = meter.takeSnapshot();
             polledGaugesLatch = new CountDownLatch(totalGauges);
         }

@@ -17,13 +17,15 @@ package io.micrometer.elastic;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.HttpHeader;
+import io.micrometer.core.instrument.util.HttpMethod;
+import io.micrometer.core.instrument.util.IOUtils;
+import io.micrometer.core.instrument.util.MediaType;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.NonNull;
-import io.micrometer.core.lang.Nullable;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,8 +53,12 @@ import java.util.stream.Stream;
  * @author Jon Schneider
  */
 public class ElasticMeterRegistry extends StepMeterRegistry {
+
     private final Logger logger = LoggerFactory.getLogger(ElasticMeterRegistry.class);
 
+    private static final ZoneId UTC_ZONE = ZoneId.of("UTC");
+    private static final String ES_METRICS_TEMPLATE = "/_template/metrics_template";
+    
     private final ElasticConfig config;
     private boolean checkedForIndexTemplate = false;
 
@@ -65,7 +71,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     public ElasticMeterRegistry(ElasticConfig config, Clock clock) {
-        this(config, clock, NamingConvention.snakeCase, Executors.defaultThreadFactory());
+        this(config, clock, new ElasticNamingConvention(), Executors.defaultThreadFactory());
     }
 
     private void createIndexIfNeeded() {
@@ -73,9 +79,11 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             return;
         }
         try {
-            HttpURLConnection connection = openConnection("/_template/metrics_template", "HEAD");
+            HttpURLConnection connection = openConnection(ES_METRICS_TEMPLATE, HttpMethod.HEAD);
             if (connection == null) {
-                logger.error("Could not connect to any configured elasticsearch instances: {}", Arrays.asList(config.hosts()));
+                if (logger.isErrorEnabled()) {
+                    logger.error("Could not connect to any configured elasticsearch instances: {}", Arrays.asList(config.hosts()));
+                }
                 return;
             }
             connection.disconnect();
@@ -88,7 +96,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             }
 
             logger.debug("No metrics template found in elasticsearch. Adding...");
-            HttpURLConnection putTemplateConnection = openConnection("/_template/metrics_template", "PUT");
+            HttpURLConnection putTemplateConnection = openConnection(ES_METRICS_TEMPLATE, HttpMethod.PUT);
             if (putTemplateConnection == null) {
                 logger.error("Error adding metrics template to elasticsearch");
                 return;
@@ -97,11 +105,14 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             try (OutputStream outputStream = putTemplateConnection.getOutputStream()) {
                 outputStream.write("{\"template\":\"metrics*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false},\"properties\":{\"name\":{\"type\":\"keyword\"}}}}}".getBytes());
                 outputStream.flush();
+                
+                if (putTemplateConnection.getResponseCode() != 200) {
+                    logger.error("Error adding metrics template to elasticsearch: {}/{}", putTemplateConnection.getResponseCode(), putTemplateConnection.getResponseMessage());
+                    return;
+                }
             }
-
-            putTemplateConnection.disconnect();
-            if (putTemplateConnection.getResponseCode() != 200) {
-                logger.error("Error adding metrics template to elasticsearch: {}/{}" + putTemplateConnection.getResponseCode(), putTemplateConnection.getResponseMessage());
+            finally {
+                putTemplateConnection.disconnect();
             }
 
             checkedForIndexTemplate = true;
@@ -141,9 +152,11 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 }
             }).collect(Collectors.joining("\n")) + "\n";
 
-            HttpURLConnection connection = openConnection("/_bulk", "POST");
+            HttpURLConnection connection = openConnection("/_bulk", HttpMethod.POST);
             if (connection == null) {
-                logger.error("Could not connect to any configured elasticsearch instances: {}", Arrays.asList(config.hosts()));
+                if (logger.isErrorEnabled()) {
+                    logger.error("Could not connect to any configured elasticsearch instances: {}", Arrays.asList(config.hosts()));
+                }
                 return;
             }
 
@@ -152,9 +165,11 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 outputStream.flush();
 
                 if (connection.getResponseCode() >= 400) {
-                    try {
-                        logger.error("failed to send metrics to elasticsearch (HTTP {}). Cause: {}", connection.getResponseCode(), IOUtils.toString(connection.getErrorStream(), StandardCharsets.UTF_8));
-                    } catch (IOException ignored) {
+                    if (logger.isErrorEnabled()) {
+                        try {
+                            logger.error("failed to send metrics to elasticsearch (HTTP {}). Cause: {}", connection.getResponseCode(), IOUtils.toString(connection.getErrorStream(), StandardCharsets.UTF_8));
+                        } catch (IOException ignored) {
+                        }
                     }
                     return; // don't try another batch
                 } else {
@@ -229,7 +244,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<String> writeSummary(DistributionSummary summary, long wallTime) {
-        HistogramSnapshot snap = summary.takeSnapshot();
+        summary.takeSnapshot();
         Stream.Builder<String> stream = Stream.builder();
         stream.add(index(summary, wallTime)
                 .field("count", summary.count())
@@ -250,7 +265,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     private IndexBuilder index(Meter meter, long wallTime) {
-        return new IndexBuilder(config, getConventionName(meter.getId()), meter.getId().getType().toString().toLowerCase(), meter.getId().getTags(), wallTime);
+        return new IndexBuilder(config, getConventionName(meter.getId()), meter.getId().getType().toString().toLowerCase(), getConventionTags(meter.getId()), wallTime);
     }
 
     // VisibleForTesting
@@ -259,13 +274,13 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     static class IndexBuilder {
-        private StringBuilder indexLine = new StringBuilder();
+        private StringBuilder indexLine = new StringBuilder(100);
 
         private IndexBuilder(ElasticConfig config, String name, String type, List<Tag> tags, long wallTime) {
             indexLine.append(indexLine(config, wallTime))
-                    .append("{\"").append(config.timeStampFieldName()).append("\":\"").append(timestamp(wallTime)).append("\"")
-                    .append(",\"name\":\"").append(name).append("\"")
-                    .append(",\"type\":\"").append(type).append("\"");
+                    .append("{\"").append(config.timestampFieldName()).append("\":\"").append(timestamp(wallTime)).append('"')
+                    .append(",\"name\":\"").append(name).append('"')
+                    .append(",\"type\":\"").append(type).append('"');
 
             for (Tag tag : tags) {
                 field(tag.getKey(), tag.getValue());
@@ -278,7 +293,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }
 
         IndexBuilder field(String name, String value) {
-            indexLine.append(",\"").append(name).append("\":\"").append(value).append("\"");
+            indexLine.append(",\"").append(name).append("\":\"").append(value).append('"');
             return this;
         }
 
@@ -288,13 +303,13 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }
 
         private static String indexLine(ElasticConfig config, long wallTime) {
-            ZonedDateTime dt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(wallTime), ZoneId.of("UTC"));
+            ZonedDateTime dt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(wallTime), UTC_ZONE);
             String indexName = config.index() + "-" + DateTimeFormatter.ofPattern(config.indexDateFormat()).format(dt);
             return "{\"index\":{\"_index\":\"" + indexName + "\",\"_type\":\"doc\"}}\n";
         }
 
         String build() {
-            return indexLine.toString() + "}";
+            return indexLine.append('}').toString();
         }
     }
 
@@ -313,15 +328,15 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 connection.setConnectTimeout((int) config.connectTimeout().toMillis());
                 connection.setReadTimeout((int) config.readTimeout().toMillis());
                 connection.setUseCaches(false);
-                connection.setRequestProperty("Content-Type", "application/json");
-                if (method.equalsIgnoreCase("POST") || method.equalsIgnoreCase("PUT")) {
+                connection.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+                if (method.equalsIgnoreCase(HttpMethod.POST) || method.equalsIgnoreCase(HttpMethod.PUT)) {
                     connection.setDoOutput(true);
                 }
 
-                if (isNotBlank(config.userName()) && isNotBlank(config.password())) {
+                if (StringUtils.isNotBlank(config.userName()) && StringUtils.isNotBlank(config.password())) {
                     byte[] authBinary = (config.userName() + ":" + config.password()).getBytes(StandardCharsets.UTF_8);
                     String authEncoded = Base64.getEncoder().encodeToString(authBinary);
-                    connection.setRequestProperty("Authorization", "Basic " + authEncoded);
+                    connection.setRequestProperty(HttpHeader.AUTHORIZATION, "Basic " + authEncoded);
                 }
 
                 connection.connect();
@@ -335,22 +350,4 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         return null;
     }
 
-    /**
-     * Modified from {@link org.apache.commons.lang.StringUtils#isBlank(String)}.
-     *
-     * @param str The string to check
-     * @return {@code true} if the String is null or blank.
-     */
-    private static boolean isNotBlank(@Nullable String str) {
-        int strLen;
-        if (str == null || (strLen = str.length()) == 0) {
-            return false;
-        }
-        for (int i = 0; i < strLen; i++) {
-            if (!Character.isWhitespace(str.charAt(i))) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

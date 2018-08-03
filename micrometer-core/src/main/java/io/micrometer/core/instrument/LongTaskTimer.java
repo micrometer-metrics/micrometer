@@ -58,11 +58,11 @@ public interface LongTaskTimer extends Meter {
     }
 
     /**
-     * Executes the callable `f` and records the time taken.
+     * Executes the callable {@code f} and records the time taken.
      *
      * @param f   Function to execute and measure the execution time.
      * @param <T> The return type of the {@link Callable}.
-     * @return The return value of `f`.
+     * @return The return value of {@code f}.
      * @throws Exception Any exception bubbling up from the callable.
      */
     default <T> T recordCallable(Callable<T> f) throws Exception {
@@ -75,11 +75,11 @@ public interface LongTaskTimer extends Meter {
     }
 
     /**
-     * Executes the callable `f` and records the time taken.
+     * Executes the callable {@code f} and records the time taken.
      *
      * @param f   Function to execute and measure the execution time.
      * @param <T> The return type of the {@link Supplier}.
-     * @return The return value of `f`.
+     * @return The return value of {@code f}.
      */
     default <T> T record(Supplier<T> f) {
         Sample sample = start();
@@ -91,7 +91,7 @@ public interface LongTaskTimer extends Meter {
     }
 
     /**
-     * Executes the runnable `f` and records the time taken.
+     * Executes the runnable {@code f} and records the time taken.
      *
      * @param f Function to execute and measure the execution time with a reference to the
      *          timer id useful for looking up current duration.
@@ -106,7 +106,7 @@ public interface LongTaskTimer extends Meter {
     }
 
     /**
-     * Executes the runnable `f` and records the time taken.
+     * Executes the runnable {@code f} and records the time taken.
      *
      * @param f Function to execute and measure the execution time.
      */

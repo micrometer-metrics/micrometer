@@ -20,6 +20,7 @@ import ch.qos.logback.classic.Logger;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import static java.util.stream.IntStream.range;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -65,6 +67,12 @@ class StatsdMeterRegistryTest {
                 break;
             case TELEGRAF:
                 line = "my_counter,statistic=count,my_tag=val:2|c";
+                break;
+            case SYSDIG:
+                line = "my.counter#statistic=count,my.tag=val:2|c";
+                break;
+            default:
+                fail("Unexpected flavor");
         }
 
         final Processor<String, String> lines = lineProcessor();
@@ -95,6 +103,9 @@ class StatsdMeterRegistryTest {
                 break;
             case TELEGRAF:
                 line = "my_gauge,statistic=value,my_tag=val:2|g";
+                break;
+            case SYSDIG:
+                line = "my.gauge#statistic=value,my.tag=val:2|g";
                 break;
             default:
                 fail("Unexpected flavor");
@@ -131,6 +142,9 @@ class StatsdMeterRegistryTest {
             case TELEGRAF:
                 line = "my_timer,my_tag=val:1|ms";
                 break;
+            case SYSDIG:
+                line = "my.timer#my.tag=val:1|ms";
+                break;
             default:
                 fail("Unexpected flavor");
         }
@@ -160,6 +174,9 @@ class StatsdMeterRegistryTest {
                 break;
             case TELEGRAF:
                 line = "my_summary,my_tag=val:1|h";
+                break;
+            case SYSDIG:
+                line = "my.summary#my.tag=val:1|h";
                 break;
             default:
                 fail("Unexpected flavor");
@@ -201,6 +218,12 @@ class StatsdMeterRegistryTest {
                 expectLines = new String[]{
                         "my_long_task,statistic=activeTasks,my_tag=val:1|g",
                         "my_long_task,statistic=duration,my_tag=val:" + stepMillis + "|g",
+                };
+                break;
+            case SYSDIG:
+                expectLines = new String[]{
+                    "my.long.task#statistic=activeTasks,my.tag=val:1|g",
+                    "my.long.task#statistic=duration,my.tag=val:" + stepMillis + "|g",
                 };
                 break;
             default:
@@ -291,6 +314,48 @@ class StatsdMeterRegistryTest {
         registry.counter("my.counter").increment();
     }
 
+    @ParameterizedTest
+    @EnumSource(StatsdFlavor.class)
+    @Issue("#600")
+    void memoryPerformanceOfNamingConventionInHotLoops(StatsdFlavor flavor) {
+        AtomicInteger namingConventionUses = new AtomicInteger(0);
+
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(flavor), clock);
+
+        registry.config().namingConvention(new NamingConvention() {
+            @Override
+            public String name(String name, Meter.Type type, @Nullable String baseUnit) {
+                namingConventionUses.incrementAndGet();
+                return NamingConvention.dot.name(name, type, baseUnit);
+            }
+
+            @Override
+            public String tagKey(String key) {
+                namingConventionUses.incrementAndGet();
+                return NamingConvention.dot.tagKey(key);
+            }
+
+            @Override
+            public String tagValue(String value) {
+                namingConventionUses.incrementAndGet();
+                return NamingConvention.dot.tagValue(value);
+            }
+        });
+
+        range(0, 100).forEach(n -> registry.counter("my.counter", "k", "v").increment());
+
+        switch (flavor) {
+            case DATADOG:
+            case TELEGRAF:
+                assertThat(namingConventionUses.intValue()).isEqualTo(3);
+                break;
+            case ETSY:
+                // because Etsy formatting involves the naming convention being called on the 'statistic' tag as well.
+                assertThat(namingConventionUses.intValue()).isEqualTo(5);
+                break;
+        }
+    }
+
     private static StatsdConfig configWithFlavor(StatsdFlavor flavor) {
         return new StatsdConfig() {
             @Override
@@ -317,7 +382,6 @@ class StatsdMeterRegistryTest {
     private Consumer<String> toSink(Processor<String, String> lines, int numLines) {
         AtomicInteger latch = new AtomicInteger(numLines);
         return l -> {
-            System.out.println(l);
             lines.onNext(l);
             if (latch.decrementAndGet() == 0) {
                 lines.onComplete();

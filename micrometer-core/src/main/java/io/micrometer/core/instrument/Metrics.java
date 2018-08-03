@@ -131,8 +131,8 @@ public class Metrics {
 
     /**
      * Register a gauge that reports the value of the object after the function
-     * {@code f} is applied. The registration will keep a weak reference to the object so it will
-     * not prevent garbage collection. Applying {@code f} on the object should be thread safe.
+     * {@code valueFunction} is applied. The registration will keep a weak reference to the object so it will
+     * not prevent garbage collection. Applying {@code valueFunction} on the object should be thread safe.
      * <p>
      * If multiple gauges are registered with the same id, then the values will be aggregated and
      * the sum will be reported. For example, registering multiple gauges for active threads in
@@ -238,7 +238,7 @@ public class Metrics {
     /**
      * Additional, less commonly used meter types.
      */
-    static class More {
+    public static class More {
         /**
          * Measures the time taken for long tasks.
          *

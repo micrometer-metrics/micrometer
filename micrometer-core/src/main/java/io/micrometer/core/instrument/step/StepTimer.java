@@ -34,16 +34,16 @@ public class StepTimer extends AbstractTimer {
 
     @Deprecated
     public StepTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-                     PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
-        this(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, false);
+                     PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis) {
+        this(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit,  stepMillis,false);
     }
 
     @SuppressWarnings("ConstantConditions")
     public StepTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-                     PauseDetector pauseDetector, TimeUnit baseTimeUnit, boolean supportsAggregablePercentiles) {
+                     PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis, boolean supportsAggregablePercentiles) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, supportsAggregablePercentiles);
-        this.count = new StepLong(clock, distributionStatisticConfig.getExpiry().toMillis());
-        this.total = new StepLong(clock, distributionStatisticConfig.getExpiry().toMillis());
+        this.count = new StepLong(clock, stepMillis);
+        this.total = new StepLong(clock, stepMillis);
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
     }
 

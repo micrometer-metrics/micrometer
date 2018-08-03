@@ -27,7 +27,7 @@ import java.time.Duration;
  */
 public interface StepRegistryConfig extends MeterRegistryConfig {
     /**
-     * @return The step size (reporting frequency) to use. The default is 10 seconds.
+     * @return The step size (reporting frequency) to use. The default is 1 minute.
      */
     default Duration step() {
         String v = get(prefix() + ".step");

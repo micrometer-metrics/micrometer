@@ -15,11 +15,20 @@
  */
 package io.micrometer.datadog;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link DatadogNamingConvention}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class DatadogNamingConventionTest {
     private DatadogNamingConvention convention = new DatadogNamingConvention();
 
@@ -34,7 +43,38 @@ class DatadogNamingConventionTest {
     }
 
     @Test
+    void tagKeyWhenStartsWithNumberShouldRespectDelegateNamingConvention() {
+        String tagKey = "123";
+
+        NamingConvention delegate = new NamingConvention() {
+            @Override
+            public String name(String name, Meter.Type type, @Nullable String baseUnit) {
+                return name;
+            }
+
+            @Override
+            public String tagKey(String key) {
+                return "123456";
+            }
+        };
+
+        assertThat(delegate.tagKey(tagKey)).isEqualTo("123456");
+
+        DatadogNamingConvention convention = new DatadogNamingConvention(delegate);
+
+        assertThat(convention.tagKey(tagKey)).isEqualTo("m.123456");
+    }
+
+    @Test
     void dotNotationIsConvertedToCamelCase() {
         assertThat(convention.name("gauge.size", Meter.Type.GAUGE, null)).isEqualTo("gauge.size");
+    }
+
+    @Issue("#589")
+    @Test
+    void jsonSpecialCharactersAreEscaped() {
+        assertThat(convention.name("name\"", Meter.Type.GAUGE, null)).isEqualTo("name\\\"");
+        assertThat(convention.tagKey("key\"")).isEqualTo("key\\\"");
+        assertThat(convention.tagValue("value\"")).isEqualTo("value\\\"");
     }
 }

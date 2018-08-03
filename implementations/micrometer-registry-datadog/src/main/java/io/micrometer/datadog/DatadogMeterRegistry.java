@@ -17,13 +17,17 @@ package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.*;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,8 +46,6 @@ import static java.util.stream.StreamSupport.stream;
  * @author Jon Schneider
  */
 public class DatadogMeterRegistry extends StepMeterRegistry {
-    private final URL postTimeSeriesEndpoint;
-
     private final Logger logger = LoggerFactory.getLogger(DatadogMeterRegistry.class);
     private final DatadogConfig config;
 
@@ -62,22 +64,17 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         this.config().namingConvention(new DatadogNamingConvention());
 
-        try {
-            this.postTimeSeriesEndpoint = URI.create(config.uri() + "/api/v1/series?api_key=" + config.apiKey()).toURL();
-        } catch (MalformedURLException e) {
-            // not possible
-            throw new RuntimeException(e);
-        }
-
         this.config = config;
 
-        if(config.enabled())
+        if (config.enabled())
             start(threadFactory);
     }
 
     @Override
     protected void publish() {
         Map<String, DatadogMetricMetadata> metadataToSend = new HashMap<>();
+
+        URL postTimeSeriesEndpoint = URIUtils.toURL(config.uri() + "/api/v1/series?api_key=" + config.apiKey());
 
         try {
             HttpURLConnection con = null;
@@ -87,8 +84,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                     con = (HttpURLConnection) postTimeSeriesEndpoint.openConnection();
                     con.setConnectTimeout((int) config.connectTimeout().toMillis());
                     con.setReadTimeout((int) config.readTimeout().toMillis());
-                    con.setRequestMethod("POST");
-                    con.setRequestProperty("Content-Type", "application/json");
+                    con.setRequestMethod(HttpMethod.POST);
+                    con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
                     con.setDoOutput(true);
 
                     /*
@@ -117,6 +114,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                             }).collect(joining(",")) +
                             "]}";
 
+                    logger.debug(body);
+
                     try (OutputStream os = con.getOutputStream()) {
                         os.write(body.getBytes());
                         os.flush();
@@ -125,14 +124,13 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                     int status = con.getResponseCode();
 
                     if (status >= 200 && status < 300) {
-                        logger.info("successfully sent " + batch.size() + " metrics to datadog");
+                        logger.info("successfully sent {} metrics to datadog", batch.size());
                     } else if (status >= 400) {
-                        try (InputStream in = con.getErrorStream()) {
-                            logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                                    .lines().collect(joining("\n")));
+                        if (logger.isErrorEnabled()) {
+                            logger.error("failed to send metrics: {}", IOUtils.toString(con.getErrorStream()));
                         }
                     } else {
-                        logger.error("failed to send metrics: http " + status);
+                        logger.error("failed to send metrics: http {}", status);
                     }
                 } finally {
                     quietlyCloseUrlConnection(con);
@@ -237,7 +235,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         if (suffix != null)
             fullId = idWithSuffix(id, suffix);
 
-        Iterable<Tag> tags = fullId.getTags();
+        Iterable<Tag> tags = getConventionTags(fullId);
 
         String host = config.hostTag() == null ? "" : stream(tags.spliterator(), false)
                 .filter(t -> requireNonNull(config.hostTag()).equals(t.getKey()))
@@ -269,8 +267,8 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                     + "?api_key=" + config.apiKey() + "&application_key=" + config.applicationKey()).toURL().openConnection();
             con.setConnectTimeout((int) config.connectTimeout().toMillis());
             con.setReadTimeout((int) config.readTimeout().toMillis());
-            con.setRequestMethod("PUT");
-            con.setRequestProperty("Content-Type", "application/json");
+            con.setRequestMethod(HttpMethod.PUT);
+            con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
             con.setDoOutput(true);
 
             try (OutputStream os = con.getOutputStream()) {
@@ -283,19 +281,17 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
             if (status >= 200 && status < 300) {
                 verifiedMetadata.add(metricName);
             } else if (status >= 400) {
-                try (InputStream in = con.getErrorStream()) {
-                    String msg = new BufferedReader(new InputStreamReader(in))
-                            .lines().collect(joining("\n"));
-                    if (msg.contains("metric_name not found")) {
-                        // Do nothing. Metrics that are newly created in Datadog are not immediately available
-                        // for metadata modification. We will keep trying this request on subsequent publishes,
-                        // where it will eventually succeed.
-                    } else {
-                        logger.error("failed to send metric metadata: " + msg);
-                    }
+                String msg = IOUtils.toString(con.getErrorStream());
+
+                // Ignore when the response content contains "metric_name not found".
+                // Metrics that are newly created in Datadog are not immediately available
+                // for metadata modification. We will keep trying this request on subsequent publishes,
+                // where it will eventually succeed.
+                if (!msg.contains("metric_name not found")) {
+                    logger.error("failed to send metric metadata: {}", msg);
                 }
             } else {
-                logger.error("failed to send metric metadata: http " + status);
+                logger.error("failed to send metric metadata: http {}", status);
             }
         } catch (IOException e) {
             logger.warn("failed to send metric metadata", e);

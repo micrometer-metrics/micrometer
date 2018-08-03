@@ -17,6 +17,7 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
@@ -27,6 +28,8 @@ import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
+import org.pcollections.HashTreePMap;
+import org.pcollections.PMap;
 
 import java.time.Duration;
 import java.util.*;
@@ -55,7 +58,7 @@ public abstract class MeterRegistry implements AutoCloseable {
     private final List<Consumer<Meter>> meterAddedListeners = new CopyOnWriteArrayList<>();
     private final Config config = new Config();
     private final More more = new More();
-    private volatile Map<Id, Meter> meterMap = Collections.emptyMap();
+    private volatile PMap<Id, Meter> meterMap = HashTreePMap.empty();
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private PauseDetector pauseDetector = new ClockDriftPauseDetector(
             Duration.ofMillis(100),
@@ -150,7 +153,7 @@ public abstract class MeterRegistry implements AutoCloseable {
         return new TimeGauge() {
             @Override
             public Id getId() {
-                return id;
+                return withUnit;
             }
 
             @Override
@@ -172,11 +175,11 @@ public abstract class MeterRegistry implements AutoCloseable {
      * @param obj                    The state object from which the count and total functions derive measurements.
      * @param countFunction          A monotonically increasing count function.
      * @param totalTimeFunction      A monotonically increasing total time function.
-     * @param totalTimeFunctionUnits The base unit of time of the totals returned by the total time function.
+     * @param totalTimeFunctionUnit The base unit of time of the totals returned by the total time function.
      * @param <T>                    The type of the object upon which the value functions derives their measurements.
      * @return A new function timer.
      */
-    protected abstract <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits);
+    protected abstract <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit);
 
     /**
      * Build a new function counter to be added to the registry. This is guaranteed to only be called if the function counter doesn't already exist.
@@ -402,8 +405,8 @@ public abstract class MeterRegistry implements AutoCloseable {
 
     /**
      * Register a gauge that reports the value of the object after the function
-     * {@code f} is applied. The registration will keep a weak reference to the object so it will
-     * not prevent garbage collection. Applying {@code f} on the object should be thread safe.
+     * {@code valueFunction} is applied. The registration will keep a weak reference to the object so it will
+     * not prevent garbage collection. Applying {@code valueFunction} on the object should be thread safe.
      * <p>
      * If multiple gauges are registered with the same id, then the values will be aggregated and
      * the sum will be reported. For example, registering multiple gauges for active threads in
@@ -512,12 +515,16 @@ public abstract class MeterRegistry implements AutoCloseable {
         return registerMeterIfNecessary(meterClass, id, null, (id2, conf) -> builder.apply(id2), noopBuilder);
     }
 
+    @SuppressWarnings("unchecked")
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id,
                                                          @Nullable DistributionStatisticConfig config, BiFunction<Meter.Id, DistributionStatisticConfig, Meter> builder,
                                                          Function<Meter.Id, M> noopBuilder) {
         Meter.Id mappedId = id;
-        for (MeterFilter filter : filters) {
-            mappedId = filter.map(mappedId);
+
+        if (!id.isSynthetic()) {
+            for (MeterFilter filter : filters) {
+                mappedId = filter.map(mappedId);
+            }
         }
 
         Meter m = getOrCreateMeter(config, builder, id, mappedId, noopBuilder);
@@ -526,7 +533,6 @@ public abstract class MeterRegistry implements AutoCloseable {
             throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
         }
 
-        //noinspection unchecked
         return (M) m;
     }
 
@@ -559,7 +565,7 @@ public abstract class MeterRegistry implements AutoCloseable {
                     }
 
                     m = builder.apply(mappedId, config);
-                    register(mappedId, m);
+                    meterMap = meterMap.plus(mappedId, m);
                     for (Consumer<Meter> onAdd : meterAddedListeners) {
                         onAdd.accept(m);
                     }
@@ -570,24 +576,9 @@ public abstract class MeterRegistry implements AutoCloseable {
         return m;
     }
 
-    private void register(Id id, Meter meter) {
-        HashMap<Id, Meter> newMeterMap = new HashMap<>(meterMap);
-        newMeterMap.put(id, meter);
-
-        meterMap = Collections.unmodifiableMap(newMeterMap);
-    }
-
     private boolean accept(Meter.Id id) {
-        for (MeterFilter filter : filters) {
-            switch (filter.accept(id)) {
-                case DENY:
-                    return false;
-                case ACCEPT:
-                    return true;
-            }
-        }
-
-        return true;
+        return this.filters.stream()
+            .noneMatch((filter) -> filter.accept(id) == MeterFilterReply.DENY);
     }
 
     /**

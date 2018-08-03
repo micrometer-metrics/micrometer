@@ -24,6 +24,8 @@ import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
@@ -274,5 +276,26 @@ class CompositeMeterRegistryTest {
         assertThatThrownBy(() -> composite.add(nested)).isInstanceOf(IllegalArgumentException.class);
 
         assertThat(composite.getRegistries()).isEmpty();
+    }
+
+    @Issue("#704")
+    @Test
+    void noDeadlockOnAddingAndRemovingRegistries() throws InterruptedException {
+        CompositeMeterRegistry composite2 = new CompositeMeterRegistry();
+        composite.add(composite2);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        Flux.range(0, 10000)
+                .parallel(8)
+                .doOnTerminate(latch::countDown)
+                .runOn(Schedulers.parallel())
+                .subscribe(n -> {
+                    if (n % 2 == 0)
+                        composite2.add(simple);
+                    else composite2.remove(simple);
+                });
+
+        latch.await(10, TimeUnit.SECONDS);
+        assertThat(latch.getCount()).isZero();
     }
 }

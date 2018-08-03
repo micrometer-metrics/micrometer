@@ -3,17 +3,16 @@ dependencies {
     compile 'colt:colt:1.2.0'
     compile('ch.qos.logback:logback-classic:1.2.+') {
         force = true
-    }  lock '1.2.3'
-    compile('org.slf4j:slf4j-api:1.7.+') {
+    }
+    compile('org.slf4j:slf4j-api:1.7.25') {
         // logback doesn't yet work with slf4j 1.8
         force = true
-    }      lock '1.7.25'
+    }
 
-    ['atlas', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront'].each { sys ->
+    ['atlas', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront', 'dynatrace'].each { sys ->
         compile project(":micrometer-registry-$sys")
     }
 
-    compile 'io.prometheus:simpleclient_pushgateway:latest.release' lock '0.3.0'
-
-    compile 'io.projectreactor.ipc:reactor-netty:latest.release' lock '0.7.4.RELEASE'
+    compile 'io.prometheus:simpleclient_pushgateway:latest.release'
+    compile 'io.projectreactor.ipc:reactor-netty:0.7.3.RELEASE'
 }

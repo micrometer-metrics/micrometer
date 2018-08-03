@@ -71,9 +71,9 @@ class PrometheusMeterRegistryTest {
         assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndQuantile("ds"));
     }
 
+    @Issue("#27")
     @DisplayName("custom distribution summaries respect varying tags")
     @Test
-    /** Issue #27 */
     void customSummaries() {
         Arrays.asList("v1", "v2").forEach(v -> {
             registry.summary("s", "k", v).record(1.0);
@@ -89,9 +89,12 @@ class PrometheusMeterRegistryTest {
         Meter.builder("name", Meter.Type.COUNTER, Collections.singletonList(new Measurement(() -> 1.0, Statistic.COUNT)))
                 .register(registry);
 
-        assertThat(registry.getPrometheusRegistry().metricFamilySamples().nextElement().type)
+        Collector.MetricFamilySamples metricFamilySamples = registry.getPrometheusRegistry().metricFamilySamples().nextElement();
+        assertThat(metricFamilySamples.type)
                 .describedAs("custom counter with a type of COUNTER")
                 .isEqualTo(Collector.Type.COUNTER);
+        assertThat(metricFamilySamples.samples.get(0).labelNames).containsExactly("statistic");
+        assertThat(metricFamilySamples.samples.get(0).labelValues).containsExactly("COUNT");
     }
 
     @DisplayName("attempts to register different meter types with the same name fail somewhat gracefully")
@@ -359,7 +362,7 @@ class PrometheusMeterRegistryTest {
     }
 
     @Test
-    void quantilesAreBasedOffOfOnlyRecentSamples() {
+    void timerQuantilesAreBasedOffOfOnlyRecentSamples() {
         Timer timer = Timer.builder("my.timer")
                 .publishPercentiles(1.0)
                 .distributionStatisticBufferLength(2)
@@ -377,5 +380,26 @@ class PrometheusMeterRegistryTest {
         timer.record(2, TimeUnit.SECONDS);
 
         assertThat(timer.takeSnapshot().percentileValues()[0].value(TimeUnit.SECONDS)).isEqualTo(2.0, offset(0.1));
+    }
+
+    @Test
+    void summaryQuantilesAreBasedOffOfOnlyRecentSamples() {
+        DistributionSummary timer = DistributionSummary.builder("my.summary")
+                .publishPercentiles(1.0)
+                .distributionStatisticBufferLength(2)
+                .distributionStatisticExpiry(Duration.ofMinutes(1))
+                .register(registry);
+
+        timer.record(1);
+        assertThat(timer.takeSnapshot().percentileValues()[0].value()).isEqualTo(1.0, offset(0.2));
+
+        timer.record(5);
+        assertThat(timer.takeSnapshot().percentileValues()[0].value()).isEqualTo(5.0, offset(0.2));
+
+        clock.addSeconds(60);
+
+        timer.record(2);
+
+        assertThat(timer.takeSnapshot().percentileValues()[0].value()).isEqualTo(2.0, offset(0.2));
     }
 }

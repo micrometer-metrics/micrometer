@@ -15,8 +15,12 @@
  */
 package io.micrometer.signalfx;
 
+import java.util.regex.Pattern;
+
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.util.StringEscapeUtils;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 
 /**
@@ -25,21 +29,30 @@ import io.micrometer.core.lang.Nullable;
  * @author Jon Schneider
  */
 public class SignalFxNamingConvention implements NamingConvention {
-    private final NamingConvention rootConvention;
+
+    private static final Pattern START_UNDERSCORE_PATTERN = Pattern.compile("^_");
+    private static final Pattern SF_PATTERN = Pattern.compile("^sf_");
+    private static final Pattern START_LETTERS_PATTERN = Pattern.compile("^[a-zA-Z].*");
+
+    private static final int NAME_MAX_LENGTH = 256;
+    private static final int TAG_VALUE_MAX_LENGTH = 256;
+    private static final int KEY_MAX_LENGTH = 128;
+
+    private final NamingConvention delegate;
 
     public SignalFxNamingConvention() {
         this(NamingConvention.dot);
     }
 
-    public SignalFxNamingConvention(NamingConvention rootConvention) {
-        this.rootConvention = rootConvention;
+    public SignalFxNamingConvention(NamingConvention delegate) {
+        this.delegate = delegate;
     }
 
     // Metric (the metric name) can be any non-empty UTF-8 string, with a maximum length <= 256 characters
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        String formattedName = rootConvention.name(name, type, baseUnit);
-        return formattedName.length() > 256 ? formattedName.substring(0, 256) : formattedName;
+        String formattedName = StringEscapeUtils.escapeJson(delegate.name(name, type, baseUnit));
+        return StringUtils.truncate(formattedName, NAME_MAX_LENGTH);
     }
 
     // 1. Has a maximum length of 128 characters
@@ -48,25 +61,21 @@ public class SignalFxNamingConvention implements NamingConvention {
     //     ^[a-zA-Z][a-zA-Z0-9_-]*$
     @Override
     public String tagKey(String key) {
-        String conventionKey = rootConvention.tagKey(key);
+        String conventionKey = delegate.tagKey(key);
 
-        conventionKey = conventionKey.replaceAll("^_", "").replaceAll("^sf_", ""); // 2
+        conventionKey = START_UNDERSCORE_PATTERN.matcher(conventionKey).replaceAll(""); // 2
+        conventionKey = SF_PATTERN.matcher(conventionKey).replaceAll(""); // 2
 
-        if (!conventionKey.matches("^[a-zA-Z].*")) { // 3
+        if (!START_LETTERS_PATTERN.matcher(conventionKey).matches()) { // 3
             conventionKey = "a" + conventionKey;
         }
-
-        if (conventionKey.length() > 128) {
-            conventionKey = conventionKey.substring(0, 128); // 1
-        }
-
-        return conventionKey;
+        return StringUtils.truncate(conventionKey, KEY_MAX_LENGTH); // 1
     }
 
     // Dimension value can be any non-empty UTF-8 string, with a maximum length <= 256 characters.
     @Override
     public String tagValue(String value) {
-        String formattedValue = rootConvention.tagValue(value);
-        return formattedValue.length() > 256 ? formattedValue.substring(0, 256) : formattedValue;
+        String formattedValue = StringEscapeUtils.escapeJson(delegate.tagValue(value));
+        return StringUtils.truncate(formattedValue, TAG_VALUE_MAX_LENGTH);
     }
 }

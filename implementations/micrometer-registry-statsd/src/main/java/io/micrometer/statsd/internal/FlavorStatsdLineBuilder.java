@@ -18,110 +18,58 @@ package io.micrometer.statsd.internal;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
-import io.micrometer.statsd.StatsdFlavor;
 import io.micrometer.statsd.StatsdLineBuilder;
 
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static io.micrometer.statsd.internal.MemoizingFunction.memoize;
 import static java.util.stream.Stream.of;
 
-/**
- * A Statsd serializer for a particular {@link Meter} that formats the line in different
- * ways depending on the prevailing {@link StatsdFlavor}.
- *
- * @author Jon Schneider
- */
-public class FlavorStatsdLineBuilder implements StatsdLineBuilder {
-    private final Meter.Id id;
-    private final StatsdFlavor flavor;
-    private final HierarchicalNameMapper nameMapper;
-    private final MeterRegistry.Config config;
+public abstract class FlavorStatsdLineBuilder implements StatsdLineBuilder {
+    private static final String TYPE_COUNT = "c";
+    private static final String TYPE_GAUGE = "g";
+    private static final String TYPE_HISTOGRAM = "h";
+    private static final String TYPE_TIMING = "ms";
 
-    private final Function<NamingConvention, String> datadogTagString;
-    private final Function<NamingConvention, String> telegrafTagString;
+    protected final Meter.Id id;
+    protected final MeterRegistry.Config config;
 
-    public FlavorStatsdLineBuilder(Meter.Id id, StatsdFlavor flavor, HierarchicalNameMapper nameMapper, MeterRegistry.Config config) {
+    protected FlavorStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
         this.id = id;
-        this.flavor = flavor;
-        this.nameMapper = nameMapper;
         this.config = config;
-
-        // service:payroll,region:us-west
-        this.datadogTagString = memoize(convention ->
-                id.getTags().iterator().hasNext() ?
-                        id.getConventionTags(convention).stream()
-                                .map(t -> t.getKey() + ":" + t.getValue())
-                                .collect(Collectors.joining(","))
-                        : null
-        );
-
-        // service=payroll,region=us-west
-        this.telegrafTagString = memoize(convention ->
-                id.getTags().iterator().hasNext() ?
-                        id.getConventionTags(convention).stream()
-                                .map(t -> t.getKey() + "=" + t.getValue())
-                                .collect(Collectors.joining(","))
-                        : null
-        );
     }
 
     @Override
     public String count(long amount, Statistic stat) {
-        return line(Long.toString(amount), stat, "c");
+        return line(Long.toString(amount), stat, TYPE_COUNT);
     }
 
     @Override
     public String gauge(double amount, Statistic stat) {
-        return line(DoubleFormat.decimalOrNan(amount), stat, "g");
+        return line(DoubleFormat.decimalOrNan(amount), stat, TYPE_GAUGE);
     }
 
     @Override
     public String histogram(double amount) {
-        return line(DoubleFormat.decimalOrNan(amount), null, "h");
+        return line(DoubleFormat.decimalOrNan(amount), null, TYPE_HISTOGRAM);
     }
 
     @Override
     public String timing(double timeMs) {
-        return line(DoubleFormat.decimalOrNan(timeMs), null, "ms");
+        return line(DoubleFormat.decimalOrNan(timeMs), null, TYPE_TIMING);
     }
 
-    private String line(String amount, @Nullable Statistic stat, String type) {
-        switch (flavor) {
-            case ETSY:
-                return metricName(stat) + ":" + amount + "|" + type;
-            case DATADOG:
-                return metricName(stat) + ":" + amount + "|" + type + tags(stat, datadogTagString.apply(config.namingConvention()),":", "|#");
-            case TELEGRAF:
-            default:
-                return metricName(stat) + tags(stat, telegrafTagString.apply(config.namingConvention()),"=", ",") + ":" + amount + "|" + type;
-        }
-    }
+    abstract String line(String amount, @Nullable Statistic stat, String type);
 
-    private String tags(@Nullable Statistic stat, String otherTags, String keyValueSeparator, String preamble) {
+    protected String tags(@Nullable Statistic stat, @Nullable String otherTags, String keyValueSeparator, String preamble) {
         String tags = of(stat == null ? null : "statistic" + keyValueSeparator + stat.getTagValueRepresentation(), otherTags)
                 .filter(Objects::nonNull)
                 .collect(Collectors.joining(","));
 
-        if(!tags.isEmpty())
+        if (!tags.isEmpty())
             tags = preamble + tags;
         return tags;
-    }
-
-    private String metricName(@Nullable Statistic stat) {
-        switch (flavor) {
-            case ETSY:
-                return nameMapper.toHierarchicalName(stat != null ? id.withTag(stat) : id, config.namingConvention());
-            case DATADOG:
-            case TELEGRAF:
-            default:
-                return config.namingConvention().name(id.getName(), id.getType(), id.getBaseUnit());
-        }
     }
 }

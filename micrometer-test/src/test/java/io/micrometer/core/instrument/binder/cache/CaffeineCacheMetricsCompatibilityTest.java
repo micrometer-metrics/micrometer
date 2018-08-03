@@ -37,7 +37,7 @@ public class CaffeineCacheMetricsCompatibilityTest extends CacheMeterBinderCompa
                 @Override
                 public String load(@Nonnull String key) throws Exception {
                     String val = loadValue.getAndSet(null);
-                    if(val == null)
+                    if (val == null)
                         throw new Exception("don't load this key");
                     return val;
                 }
@@ -60,7 +60,7 @@ public class CaffeineCacheMetricsCompatibilityTest extends CacheMeterBinderCompa
     public String get(String key) {
         try {
             return cache.get(key);
-        } catch(Exception ignored) {
+        } catch (Exception ignored) {
             return null;
         }
     }

@@ -25,7 +25,7 @@ import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
@@ -40,7 +40,7 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     private final StepRegistryConfig config;
 
     @Nullable
-    private ScheduledFuture<?> publisher;
+    private ScheduledExecutorService scheduledExecutorService;
 
     public StepMeterRegistry(StepRegistryConfig config, Clock clock) {
         super(clock);
@@ -52,25 +52,28 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     }
 
     public void start(ThreadFactory threadFactory) {
-        if (publisher != null)
+        if (scheduledExecutorService != null)
             stop();
 
         if (config.enabled()) {
-            publisher = Executors.newSingleThreadScheduledExecutor(threadFactory)
-                    .scheduleAtFixedRate(this::publish, config.step().toMillis(), config.step().toMillis(), TimeUnit.MILLISECONDS);
+            scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
+            scheduledExecutorService.scheduleAtFixedRate(this::publish, config.step()
+                .toMillis(), config.step().toMillis(), TimeUnit.MILLISECONDS);
         }
     }
 
     public void stop() {
-        if (publisher != null) {
-            publisher.cancel(false);
-            publisher = null;
+        if (scheduledExecutorService != null) {
+            scheduledExecutorService.shutdown();
+            scheduledExecutorService = null;
         }
     }
 
     @Override
     public void close() {
-        publish();
+        if (config.enabled()) {
+            publish();
+        }
         stop();
         super.close();
     }
@@ -94,21 +97,23 @@ public abstract class StepMeterRegistry extends MeterRegistry {
 
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        Timer timer = new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(), false);
+        Timer timer = new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
+            this.config.step().toMillis(), false);
         HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        DistributionSummary summary = new StepDistributionSummary(id, clock, distributionStatisticConfig, scale, false);
+        DistributionSummary summary = new StepDistributionSummary(id, clock, distributionStatisticConfig, scale,
+            config.step().toMillis(),false);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
 
     @Override
-    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
-        return new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+        return new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
     }
 
     @Override

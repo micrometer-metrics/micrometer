@@ -16,4 +16,4 @@
 
 management.metrics.export.elastic:
   enabled: true
-  step: 10ms
+  step: 10s

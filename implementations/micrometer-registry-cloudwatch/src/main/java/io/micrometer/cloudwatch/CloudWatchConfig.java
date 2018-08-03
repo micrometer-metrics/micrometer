@@ -40,7 +40,7 @@ public interface CloudWatchConfig extends StepRegistryConfig {
 
     default String namespace() {
         String v = get(prefix() + ".namespace");
-        if(v == null)
+        if (v == null)
             throw new MissingRequiredConfigurationException("namespace must be set to report metrics to CloudWatch");
         return v;
     }
@@ -52,7 +52,7 @@ public interface CloudWatchConfig extends StepRegistryConfig {
             return MAX_BATCH_SIZE;
         }
         int vInt = Integer.parseInt(v);
-        if(vInt > MAX_BATCH_SIZE)
+        if (vInt > MAX_BATCH_SIZE)
             throw new InvalidConfigurationException("batchSize must be <= " + MAX_BATCH_SIZE);
 
         return vInt;

@@ -23,6 +23,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.datadog.DatadogConfig;
 import io.micrometer.datadog.DatadogMeterRegistry;
+import io.micrometer.dynatrace.DynatraceConfig;
+import io.micrometer.dynatrace.DynatraceMeterRegistry;
 import io.micrometer.elastic.ElasticConfig;
 import io.micrometer.elastic.ElasticMeterRegistry;
 import io.micrometer.ganglia.GangliaConfig;
@@ -191,6 +193,26 @@ public class SampleRegistries {
         }, Clock.SYSTEM);
     }
 
+    public static StatsdMeterRegistry sysdigStatsd() {
+        return new StatsdMeterRegistry(new StatsdConfig() {
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+
+            @Override
+            @Nullable
+            public String get(String k) {
+                return null;
+            }
+
+            @Override
+            public StatsdFlavor flavor() {
+                return StatsdFlavor.SYSDIG;
+            }
+        }, Clock.SYSTEM);
+    }
+
     public static GangliaMeterRegistry ganglia() {
         return new GangliaMeterRegistry(new GangliaConfig() {
             @Override
@@ -325,6 +347,35 @@ public class SampleRegistries {
             @Override
             public String uri() {
                 return "https://longboard.wavefront.com";
+            }
+        }, Clock.SYSTEM);
+    }
+
+    public static DynatraceMeterRegistry dynatrace(String apiToken, String uri) {
+        return new DynatraceMeterRegistry(new DynatraceConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiToken() {
+                return apiToken;
+            }
+
+            @Override
+            public String uri() {
+                return uri;
+            }
+
+            @Override
+            public String deviceId() {
+                return "sample";
+            }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
             }
         }, Clock.SYSTEM);
     }

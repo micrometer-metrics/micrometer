@@ -16,17 +16,12 @@
 package io.micrometer.influx;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.*;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -51,7 +46,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     public InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
-        this.config().namingConvention(new InfluxNamingConvention(NamingConvention.snakeCase));
+        this.config().namingConvention(new InfluxNamingConvention());
         this.config = config;
         start(threadFactory);
     }
@@ -66,12 +61,17 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
         HttpURLConnection con = null;
         try {
-            URL queryEndpoint = URI.create(config.uri() + "/query?q=" + URLEncoder.encode("CREATE DATABASE \"" + config.db() + "\"", "UTF-8")).toURL();
+            String createDatabaseQuery = new CreateDatabaseQueryBuilder(config.db()).setRetentionDuration(config.retentionDuration())
+                    .setRetentionPolicyName(config.retentionPolicy())
+                    .setRetentionReplicationFactor(config.retentionReplicationFactor())
+                    .setRetentionShardDuration(config.retentionShardDuration()).build();
+
+            URL queryEndpoint = URI.create(config.uri() + "/query?q=" + URLEncoder.encode(createDatabaseQuery, "UTF-8")).toURL();
 
             con = (HttpURLConnection) queryEndpoint.openConnection();
             con.setConnectTimeout((int) config.connectTimeout().toMillis());
             con.setReadTimeout((int) config.readTimeout().toMillis());
-            con.setRequestMethod("POST");
+            con.setRequestMethod(HttpMethod.POST);
             authenticateRequest(con);
 
             int status = con.getResponseCode();
@@ -80,9 +80,8 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 logger.debug("influx database {} is ready to receive metrics", config.db());
                 databaseExists = true;
             } else if (status >= 400) {
-                try (InputStream in = con.getErrorStream()) {
-                    logger.error("unable to create database '{}': {}", config.db(), new BufferedReader(new InputStreamReader(in))
-                            .lines().collect(joining("\n")));
+                if (logger.isErrorEnabled()) {
+                    logger.error("unable to create database '{}': {}", config.db(), IOUtils.toString(con.getErrorStream()));
                 }
             }
         } catch (Throwable e) {
@@ -98,7 +97,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
         try {
             String write = "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
-            if (!isBlank(config.retentionPolicy())) {
+            if (StringUtils.isNotBlank(config.retentionPolicy())) {
                 write += "&rp=" + config.retentionPolicy();
             }
             URL influxEndpoint = URI.create(config.uri() + write).toURL();
@@ -109,8 +108,8 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     con = (HttpURLConnection) influxEndpoint.openConnection();
                     con.setConnectTimeout((int) config.connectTimeout().toMillis());
                     con.setReadTimeout((int) config.readTimeout().toMillis());
-                    con.setRequestMethod("POST");
-                    con.setRequestProperty("Content-Type", "plain/text");
+                    con.setRequestMethod(HttpMethod.POST);
+                    con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.PLAIN_TEXT);
                     con.setDoOutput(true);
 
                     authenticateRequest(con);
@@ -148,7 +147,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     String body = String.join("\n", bodyLines);
 
                     if (config.compressed())
-                        con.setRequestProperty("Content-Encoding", "gzip");
+                        con.setRequestProperty(HttpHeader.CONTENT_ENCODING, HttpContentCoding.GZIP);
 
                     try (OutputStream os = con.getOutputStream()) {
                         if (config.compressed()) {
@@ -168,12 +167,11 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                         logger.info("successfully sent {} metrics to influx", batch.size());
                         databaseExists = true;
                     } else if (status >= 400) {
-                        try (InputStream in = con.getErrorStream()) {
-                            logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                                    .lines().collect(joining("\n")));
+                        if (logger.isErrorEnabled()) {
+                            logger.error("failed to send metrics: {}", IOUtils.toString(con.getErrorStream()));
                         }
                     } else {
-                        logger.error("failed to send metrics: http " + status);
+                        logger.error("failed to send metrics: http {}", status);
                     }
 
                 } finally {
@@ -191,7 +189,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         if (config.userName() != null && config.password() != null) {
             String encoded = Base64.getEncoder().encodeToString((config.userName() + ":" +
                     config.password()).getBytes(StandardCharsets.UTF_8));
-            con.setRequestProperty("Authorization", "Basic " + encoded);
+            con.setRequestProperty(HttpHeader.AUTHORIZATION, "Basic " + encoded);
         }
     }
 
@@ -245,7 +243,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     private Stream<String> writeGauge(Meter.Id id, Double value) {
         return value.isNaN() ? Stream.empty() :
-            Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value)), clock.wallTime()));
+                Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value)), clock.wallTime()));
     }
 
     private Stream<String> writeTimer(FunctionTimer timer) {
@@ -296,22 +294,4 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return TimeUnit.MILLISECONDS;
     }
 
-    /**
-     * Modified from {@link org.apache.commons.lang.StringUtils#isBlank(String)}.
-     *
-     * @param str The string to check
-     * @return {@code true} if the String is null or blank.
-     */
-    private static boolean isBlank(@Nullable String str) {
-        int strLen;
-        if (str == null || (strLen = str.length()) == 0) {
-            return true;
-        }
-        for (int i = 0; i < strLen; i++) {
-            if (!Character.isWhitespace(str.charAt(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
 }

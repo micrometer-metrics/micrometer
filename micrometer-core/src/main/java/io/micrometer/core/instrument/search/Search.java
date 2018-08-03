@@ -21,8 +21,9 @@ import io.micrometer.core.lang.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * Search terms for locating a {@link Meter} or set of meters in a given registry based on any combination of their
@@ -56,8 +57,9 @@ public final class Search {
      * @param nameMatches Name matching predicate.
      * @return This search.
      */
-    public Search name(Predicate<String> nameMatches) {
-        this.nameMatches = nameMatches;
+    public Search name(@Nullable Predicate<String> nameMatches) {
+        if (nameMatches != null)
+            this.nameMatches = nameMatches;
         return this;
     }
 
@@ -177,9 +179,8 @@ public final class Search {
     }
 
     @Nullable
-    private <T> T findOne(Class<T> clazz) {
-        return meters()
-                .stream()
+    private <M extends Meter> M findOne(Class<M> clazz) {
+        return meterStream()
                 .filter(clazz::isInstance)
                 .findAny()
                 .map(clazz::cast)
@@ -190,6 +191,10 @@ public final class Search {
      * @return All matching meters, or an empty collection if none match.
      */
     public Collection<Meter> meters() {
+        return meterStream().collect(toList());
+    }
+
+    private Stream<Meter> meterStream() {
         Stream<Meter> meterStream = registry.getMeters().stream().filter(m -> nameMatches.test(m.getId().getName()));
 
         if (!tags.isEmpty() || !requiredTagKeys.isEmpty()) {
@@ -205,7 +210,70 @@ public final class Search {
             });
         }
 
-        return meterStream.collect(Collectors.toList());
+        return meterStream;
+    }
+
+    /**
+     * @return All matching {@link Counter} meters.
+     */
+    public Collection<Counter> counters() {
+        return findAll(Counter.class);
+    }
+
+    /**
+     * @return All matching {@link Gauge} meters.
+     */
+    public Collection<Gauge> gauges() {
+        return findAll(Gauge.class);
+    }
+
+    /**
+     * @return All matching {@link Timer} meters.
+     */
+    public Collection<Timer> timers() {
+        return findAll(Timer.class);
+    }
+
+    /**
+     * @return All matching {@link DistributionSummary} meters.
+     */
+    public Collection<DistributionSummary> summaries() {
+        return findAll(DistributionSummary.class);
+    }
+
+    /**
+     * @return All matching {@link LongTaskTimer} meters.
+     */
+    public Collection<LongTaskTimer> longTaskTimers() {
+        return findAll(LongTaskTimer.class);
+    }
+
+    /**
+     * @return All matching {@link FunctionCounter} meters.
+     */
+    public Collection<FunctionCounter> functionCounters() {
+        return findAll(FunctionCounter.class);
+    }
+
+    /**
+     * @return All matching {@link FunctionTimer} meters.
+     */
+    public Collection<FunctionTimer> functionTimers() {
+        return findAll(FunctionTimer.class);
+    }
+
+    /**
+     * @return All matching {@link TimeGauge} meters.
+     */
+    public Collection<TimeGauge> timeGauges() {
+        return findAll(TimeGauge.class);
+    }
+
+    private <M extends Meter> Collection<M> findAll(Class<M> clazz) {
+        return meterStream()
+                .filter(clazz::isInstance)
+                .map(clazz::cast)
+                .collect(toList());
     }
 
     /**

@@ -19,13 +19,14 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.HttpHeader;
+import io.micrometer.core.instrument.util.HttpMethod;
+import io.micrometer.core.instrument.util.IOUtils;
+import io.micrometer.core.instrument.util.MediaType;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -41,7 +42,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
@@ -65,7 +65,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         requireNonNull(config.accountId());
         requireNonNull(config.apiKey());
 
-        config().namingConvention(NamingConvention.camelCase);
+        config().namingConvention(new NewRelicNamingConvention());
         start(threadFactory);
     }
 
@@ -213,8 +213,8 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             con = (HttpURLConnection) insightsEndpoint.openConnection();
             con.setConnectTimeout((int) config.connectTimeout().toMillis());
             con.setReadTimeout((int) config.readTimeout().toMillis());
-            con.setRequestMethod("POST");
-            con.setRequestProperty("Content-Type", "application/json");
+            con.setRequestMethod(HttpMethod.POST);
+            con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
             con.setRequestProperty("X-Insert-Key", config.apiKey());
 
             con.setDoOutput(true);
@@ -234,12 +234,11 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             if (status >= 200 && status < 300) {
                 logger.info("successfully sent {} events to New Relic", events.size());
             } else if (status >= 400) {
-                try (InputStream in = con.getErrorStream()) {
-                    logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                            .lines().collect(joining("\n")));
+                if (logger.isErrorEnabled()) {
+                    logger.error("failed to send metrics: {}", IOUtils.toString(con.getErrorStream()));
                 }
             } else {
-                logger.error("failed to send metrics: http " + status);
+                logger.error("failed to send metrics: http {}", status);
             }
 
         } catch (Throwable e) {

@@ -34,19 +34,19 @@ public class CumulativeFunctionTimer<T> implements FunctionTimer {
     private final WeakReference<T> ref;
     private final ToLongFunction<T> countFunction;
     private final ToDoubleFunction<T> totalTimeFunction;
-    private final TimeUnit totalTimeFunctionUnits;
+    private final TimeUnit totalTimeFunctionUnit;
     private final TimeUnit baseTimeUnit;
 
     private volatile long lastCount = 0;
     private volatile double lastTime = 0.0;
 
     public CumulativeFunctionTimer(Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction,
-                                   TimeUnit totalTimeFunctionUnits, TimeUnit baseTimeUnit) {
+                                   TimeUnit totalTimeFunctionUnit, TimeUnit baseTimeUnit) {
         this.id = id;
         this.ref = new WeakReference<>(obj);
         this.countFunction = countFunction;
         this.totalTimeFunction = totalTimeFunction;
-        this.totalTimeFunctionUnits = totalTimeFunctionUnits;
+        this.totalTimeFunctionUnit = totalTimeFunctionUnit;
         this.baseTimeUnit = baseTimeUnit;
     }
 
@@ -66,7 +66,7 @@ public class CumulativeFunctionTimer<T> implements FunctionTimer {
         if (obj2 == null)
             return lastTime;
         return (lastTime = Math.max(TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2),
-            totalTimeFunctionUnits,
+            totalTimeFunctionUnit,
             unit), 0));
     }
 

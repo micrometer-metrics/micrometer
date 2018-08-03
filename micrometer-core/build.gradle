@@ -1,63 +1,66 @@
 plugins {
     id "net.ltgt.apt" version "0.10" // for dagger injection testing
     id 'idea'
+    id 'com.github.johnrengelman.shadow' version '2.0.4'
 }
 
 apply plugin: 'org.junit.platform.gradle.plugin'
 apply plugin: 'nebula.optional-base'
 
 dependencies {
-    // JSR-305 only used for non-required meta-annotations
-    compile "com.google.code.findbugs:jsr305:latest.release", optional lock '3.0.2'
+    compile 'org.pcollections:pcollections:latest.release'
 
-    compile 'org.hdrhistogram:HdrHistogram:latest.release' lock '2.1.10'
+    // JSR-305 only used for non-required meta-annotations
+    compile "com.google.code.findbugs:jsr305:latest.release", optional
+
+    compile 'org.hdrhistogram:HdrHistogram:latest.release'
     compile('org.latencyutils:LatencyUtils:latest.release') {
         exclude group: 'org.hdrhistogram', module: 'HdrHistogram'
-    }   lock '2.0.3'
+    }
 
     // instrumentation options
-    compile 'io.dropwizard.metrics:metrics-core:3.+', optional lock '3.2.6'
+    compile 'io.dropwizard.metrics:metrics-core:3.+', optional
 
     // cache monitoring
-    compile 'com.google.guava:guava:latest.release', optional lock '23.0'
-    compile 'com.github.ben-manes.caffeine:caffeine:latest.release', optional lock '2.6.1'
-    compile 'net.sf.ehcache:ehcache:latest.release', optional lock '2.10.4'
+    compile 'com.google.guava:guava:latest.release', optional
+    compile 'com.github.ben-manes.caffeine:caffeine:latest.release', optional
+    compile 'net.sf.ehcache:ehcache:2.10.4', optional
     compile 'javax.cache:cache-api:1.0.0', optional
-    compile 'com.hazelcast:hazelcast:3.8.+', optional lock '3.8.9'
-    compile 'org.hibernate:hibernate-entitymanager:latest.release', optional lock '5.2.13.Final'
+    compile 'com.hazelcast:hazelcast:3.8.+', optional
+    compile 'org.hibernate:hibernate-entitymanager:latest.release', optional
 
     // server runtime monitoring
-    compile 'org.eclipse.jetty:jetty-server:latest.release', optional lock '9.4.8.v20171121'
-    compile 'org.apache.tomcat.embed:tomcat-embed-core:8.+', optional lock '8.5.28'
+    compile 'org.eclipse.jetty:jetty-server:latest.release', optional
+    compile 'org.apache.tomcat.embed:tomcat-embed-core:8.+', optional
 
     // hystrix monitoring
-    compile 'com.netflix.hystrix:hystrix-core:latest.release', optional lock '1.5.12'
+    compile 'com.netflix.hystrix:hystrix-core:latest.release', optional
 
     // log monitoring
-    compile 'ch.qos.logback:logback-classic:1.2.+', optional lock '1.2.3'
+    compile 'ch.qos.logback:logback-classic:1.2.+', optional
 
     // reactor
-    compile 'io.projectreactor:reactor-core:latest.release', optional lock '3.1.4.RELEASE'
+    compile 'io.projectreactor:reactor-core:latest.release', optional
 
     // @Timed AOP
-    compile 'org.aspectj:aspectjweaver:1.8.+', optional lock '1.8.13'
+    compile 'org.aspectj:aspectjweaver:1.8.+', optional
 
-    compile 'com.squareup.okhttp3:okhttp:latest.release', optional lock '3.9.1'
+    compile 'com.squareup.okhttp3:okhttp:latest.release', optional
 
-    testCompile 'io.projectreactor:reactor-test:latest.release' lock '3.1.4.RELEASE'
-    testCompile 'io.projectreactor.ipc:reactor-netty:latest.release' lock '0.7.4.RELEASE'
+    testCompile 'io.projectreactor:reactor-test:latest.release'
+    testCompile 'io.projectreactor.ipc:reactor-netty:latest.release'
 
     // JUnit 5
-    testCompile 'org.junit.jupiter:junit-jupiter-api:5.+' lock '5.1.0-RC1'
-    testCompile 'org.junit.jupiter:junit-jupiter-params:5.+' lock '5.1.0-RC1'
-    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.+' lock '5.1.0-RC1'
+    testCompile 'org.junit.jupiter:junit-jupiter-api:5.+'
+    testCompile 'org.junit.jupiter:junit-jupiter-params:5.+'
+    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.+'
 
     // Eclipse still needs this (as of 4.7.1a)
-    testRuntime 'org.junit.platform:junit-platform-launcher:1.+' lock '1.1.0-RC1'
+    testRuntime 'org.junit.platform:junit-platform-launcher:1.+'
 
-    testCompile 'org.mockito:mockito-core:latest.release' lock '2.15.0'
+    testCompile 'org.mockito:mockito-core:latest.release'
 
-    testCompile 'org.hsqldb:hsqldb:latest.release' lock '2.4.0'
+    testCompile 'org.hsqldb:hsqldb:latest.release'
 
     // dependency injection tests
     testCompile 'javax.inject:javax.inject:1'
@@ -69,7 +72,35 @@ dependencies {
 //    testCompile 'com.google.dagger:dagger:2.11'
 //    testCompile 'com.google.dagger:dagger-compiler:2.11'
 
-    testCompile 'org.assertj:assertj-core:latest.release' lock '3.9.0'
+    testCompile 'org.assertj:assertj-core:latest.release'
 
-    testCompile 'org.ehcache:ehcache:3.+' lock '3.4.0'
+    testCompile 'org.ehcache:ehcache:3.+'
+}
+
+shadowJar {
+    configurations = [project.configurations.compile]
+    classifier = null
+    dependencies {
+        include(dependency('org.pcollections:'))
+    }
+    relocate 'org.pcollections', 'io.micrometer.shaded.org.pcollections'
+}
+
+jar.deleteAllActions()
+jar.dependsOn shadowJar
+
+publishing {
+    publications {
+        withType(MavenPublication) {
+            pom.withXml {
+                asNode()
+                        .dependencies
+                        .dependency
+                        .findAll {
+                    ['pcollections'].contains(it.artifactId.text())
+                }
+                .each { it.parent().remove(it) }
+            }
+        }
+    }
 }

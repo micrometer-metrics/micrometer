@@ -24,8 +24,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
-import io.micrometer.statsd.internal.FlavorStatsdLineBuilder;
-import io.micrometer.statsd.internal.LogbackMetricsSuppressingUnicastProcessor;
+import io.micrometer.statsd.internal.*;
 import org.reactivestreams.Processor;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -241,7 +240,19 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private StatsdLineBuilder lineBuilder(Meter.Id id) {
         if (lineBuilderFunction == null) {
-            lineBuilderFunction = id2 -> new FlavorStatsdLineBuilder(id2, statsdConfig.flavor(), nameMapper, config());
+            lineBuilderFunction = id2 -> {
+                switch (statsdConfig.flavor()) {
+                    case DATADOG:
+                        return new DatadogStatsdLineBuilder(id2, config());
+                    case TELEGRAF:
+                        return new TelegrafStatsdLineBuilder(id2, config());
+                    case SYSDIG:
+                        return new SysdigStatsdLineBuilder(id2, config());
+                    case ETSY:
+                    default:
+                        return new EtsyStatsdLineBuilder(id2, config(), nameMapper);
+                }
+            };
         }
         return lineBuilderFunction.apply(id);
     }
@@ -287,8 +298,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T
             obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit
-                                                         totalTimeFunctionUnits) {
-        StatsdFunctionTimer ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits,
+                                                         totalTimeFunctionUnit) {
+        StatsdFunctionTimer ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
                 getBaseTimeUnit(), lineBuilder(id), publisher);
         pollableMeters.add(ft);
         return ft;
@@ -349,6 +360,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private static NamingConvention namingConventionFromFlavor(StatsdFlavor flavor) {
         switch (flavor) {
             case DATADOG:
+            case SYSDIG:
                 return NamingConvention.dot;
             case TELEGRAF:
                 return NamingConvention.snakeCase;

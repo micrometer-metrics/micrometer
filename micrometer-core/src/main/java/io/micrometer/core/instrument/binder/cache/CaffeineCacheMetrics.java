@@ -131,7 +131,7 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
     }
 
     @Override
-    protected long missCount() {
+    protected Long missCount() {
         return cache.stats().missCount();
     }
 
@@ -142,7 +142,6 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
 
     @Override
     protected long putCount() {
-        cache.stats().requestCount();
         return cache.stats().loadCount();
     }
 

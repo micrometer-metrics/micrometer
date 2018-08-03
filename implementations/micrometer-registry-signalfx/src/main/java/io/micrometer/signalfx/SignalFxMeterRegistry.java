@@ -20,6 +20,7 @@ import com.signalfx.endpoint.SignalFxReceiverEndpoint;
 import com.signalfx.metrics.auth.StaticAuthToken;
 import com.signalfx.metrics.connection.HttpDataPointProtobufReceiverFactory;
 import com.signalfx.metrics.connection.HttpEventProtobufReceiverFactory;
+import com.signalfx.metrics.errorhandler.OnSendErrorHandler;
 import com.signalfx.metrics.flush.AggregateMetricSender;
 import com.signalfx.metrics.protobuf.SignalFxProtocolBuffers;
 import io.micrometer.core.instrument.*;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -46,7 +48,11 @@ import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.G
 public class SignalFxMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(SignalFxMeterRegistry.class);
     private final SignalFxConfig config;
-    private final AggregateMetricSender metricSender;
+    private final SignalFxReceiverEndpoint signalFxEndpoint;
+    private final HttpDataPointProtobufReceiverFactory dataPointReceiverFactory;
+    private final HttpEventProtobufReceiverFactory eventReceiverFactory;
+    private final Set<OnSendErrorHandler> onSendErrorHandlerCollection = Collections.singleton(
+        metricError -> this.logger.warn("failed to send metrics: {}", metricError.getMessage()));
 
     public SignalFxMeterRegistry(SignalFxConfig config, Clock clock) {
         this(config, clock, Executors.defaultThreadFactory());
@@ -66,13 +72,9 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
             }
         }
 
-        SignalFxReceiverEndpoint signalFxEndpoint = new SignalFxEndpoint(apiUri.getScheme(), apiUri.getHost(), port);
-
-        metricSender = new AggregateMetricSender(config.source(),
-                new HttpDataPointProtobufReceiverFactory(signalFxEndpoint).setVersion(2),
-                new HttpEventProtobufReceiverFactory(signalFxEndpoint),
-                new StaticAuthToken(config.accessToken()),
-                Collections.singleton(metricError -> logger.warn("failed to send metrics: " + metricError.getMessage())));
+        this.signalFxEndpoint = new SignalFxEndpoint(apiUri.getScheme(), apiUri.getHost(), port);
+        this.dataPointReceiverFactory = new HttpDataPointProtobufReceiverFactory(this.signalFxEndpoint);
+        this.eventReceiverFactory = new HttpEventProtobufReceiverFactory(this.signalFxEndpoint);
 
         config().namingConvention(new SignalFxNamingConvention());
 
@@ -82,6 +84,10 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     @Override
     protected void publish() {
         final long timestamp = clock.wallTime();
+
+        AggregateMetricSender metricSender = new AggregateMetricSender(this.config.source(),
+                this.dataPointReceiverFactory, this.eventReceiverFactory,
+                new StaticAuthToken(this.config.accessToken()), this.onSendErrorHandlerCollection);
 
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try (AggregateMetricSender.Session session = metricSender.createSession()) {

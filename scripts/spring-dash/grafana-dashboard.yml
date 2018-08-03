@@ -1,0 +1,9 @@
+apiVersion: 1
+
+providers:
+- name: 'default'
+  folder: 'Spring Boot'
+  type: file
+  options:
+    path: /etc/grafana/dashboards
+    

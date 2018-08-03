@@ -99,9 +99,9 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
     }
 
     @Override
-    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnits) {
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
         DropwizardFunctionTimer ft = new DropwizardFunctionTimer<>(id, clock, obj, countFunction, totalTimeFunction,
-                totalTimeFunctionUnits, getBaseTimeUnit());
+                totalTimeFunctionUnit, getBaseTimeUnit());
         registry.register(hierarchicalName(id), ft.getDropwizardMeter());
         return ft;
     }

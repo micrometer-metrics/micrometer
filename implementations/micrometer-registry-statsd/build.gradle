@@ -1,18 +1,19 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '2.0.2'
+    id 'com.github.johnrengelman.shadow' version '2.0.4'
 }
 
 apply plugin: 'org.junit.platform.gradle.plugin'
 
 dependencies {
     compile project(':micrometer-core')
-    compile 'io.projectreactor:reactor-core:latest.release' lock '3.1.4.RELEASE'
-    compile 'io.projectreactor.ipc:reactor-netty:latest.release' lock '0.7.4.RELEASE'
+    compile 'io.projectreactor:reactor-core:latest.release'
+    compile 'io.projectreactor.ipc:reactor-netty:latest.release'
+    compile 'org.pcollections:pcollections:latest.release'
 
     testCompile project(':micrometer-test')
-    testCompile 'io.projectreactor:reactor-test:latest.release' lock '3.1.4.RELEASE'
-    testCompile 'org.junit.jupiter:junit-jupiter-params:5.+' lock '5.1.0-RC1'
-    testCompile 'org.mockito:mockito-core:latest.release' lock '2.15.0'
+    testCompile 'io.projectreactor:reactor-test:latest.release'
+    testCompile 'org.junit.jupiter:junit-jupiter-params:5.+'
+    testCompile 'org.mockito:mockito-core:latest.release'
 }
 
 shadowJar {
@@ -23,10 +24,12 @@ shadowJar {
         include(dependency('io.projectreactor.ipc:'))
         include(dependency('org.reactivestreams:reactive-streams'))
         include(dependency('io.netty:'))
+        include(dependency('org.pcollections:'))
     }
     relocate 'reactor', 'io.micrometer.shaded.reactor'
     relocate 'org.reactivestreams', 'io.micrometer.shaded.org.reactorstreams'
     relocate 'io.netty', 'io.micrometer.shaded.io.netty'
+    relocate 'org.pcollections', 'io.micrometer.shaded.statsd.org.pcollections'
 }
 
 jar.deleteAllActions()
@@ -40,7 +43,7 @@ publishing {
                         .dependencies
                         .dependency
                         .findAll {
-                            ['reactor-core', 'reactor-netty'].contains(it.artifactId.text())
+                            ['reactor-core', 'reactor-netty', 'pcollections'].contains(it.artifactId.text())
                         }
                         .each { it.parent().remove(it) }
             }

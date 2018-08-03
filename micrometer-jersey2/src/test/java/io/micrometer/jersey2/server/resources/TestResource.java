@@ -28,6 +28,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import io.micrometer.jersey2.server.exception.ResourceGoneException;
+
 /**
  * @author Michael Weirauch
  */
@@ -79,6 +81,12 @@ public class TestResource {
     @Path("throws-webapplication-exception")
     public String throwsWebApplicationException() {
         throw new NotAuthorizedException("notauth", Response.status(Status.UNAUTHORIZED).build());
+    }
+
+    @GET
+    @Path("throws-mappable-exception")
+    public String throwsMappableException() {
+        throw new ResourceGoneException("Resource has been permanently removed.");
     }
 
     @GET

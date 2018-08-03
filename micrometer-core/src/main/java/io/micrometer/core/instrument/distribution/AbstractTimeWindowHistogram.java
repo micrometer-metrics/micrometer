@@ -59,6 +59,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
     @Nullable
     private U accumulatedHistogram;
 
+    @SuppressWarnings("unchecked")
     AbstractTimeWindowHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig, Class<T> bucketType,
                                 boolean supportsAggregablePercentiles) {
         this.clock = clock;
@@ -70,7 +71,6 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
             rejectHistogramConfig("bufferLength (" + ageBuckets + ") must be greater than 0.");
         }
 
-        //noinspection unchecked
         ringBuffer = (T[]) Array.newInstance(bucketType, ageBuckets);
 
         durationBetweenRotatesMillis = distributionStatisticConfig.getExpiry().toMillis() / ageBuckets;

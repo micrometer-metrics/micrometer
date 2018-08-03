@@ -31,7 +31,7 @@ public class PrometheusCounter extends AbstractMeter implements Counter {
 
     @Override
     public void increment(double amount) {
-        if(amount > 0)
+        if (amount > 0)
             count.add(amount);
     }
 

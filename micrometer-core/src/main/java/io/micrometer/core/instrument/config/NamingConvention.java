@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.config;
 
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.Arrays;
@@ -71,10 +72,10 @@ public interface NamingConvention {
 
         private String toCamelCase(String value) {
             String[] parts = value.split("\\.");
-            StringBuilder conventionName = new StringBuilder();
+            StringBuilder conventionName = new StringBuilder(value.length());
             for (int i = 0; i < parts.length; i++) {
                 String str = parts[i];
-                if (str == null || str.length() == 0)
+                if (StringUtils.isEmpty(str))
                     continue;
 
                 if (i == 0) {
@@ -103,7 +104,12 @@ public interface NamingConvention {
             if (name.length() == 0) {
                 return name;
             }
-            char chars[] = name.toCharArray();
+
+            if (Character.isUpperCase(name.charAt(0))) {
+                return name;
+            }
+
+            char[] chars = name.toCharArray();
             chars[0] = Character.toUpperCase(chars[0]);
             return new String(chars);
         }

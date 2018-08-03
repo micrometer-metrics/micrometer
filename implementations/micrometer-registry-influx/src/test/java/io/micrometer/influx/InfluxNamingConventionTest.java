@@ -15,6 +15,7 @@
  */
 package io.micrometer.influx;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import org.junit.jupiter.api.Test;
@@ -25,14 +26,15 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 class InfluxNamingConventionTest {
     private InfluxNamingConvention convention = new InfluxNamingConvention(NamingConvention.snakeCase);
 
+    @Issue("#693")
     @Test
     void name() {
-        assertThat(convention.name("foo=, bar", Meter.Type.GAUGE)).isEqualTo("foo_\\,\\ bar");
+        assertThat(convention.name("foo.bar=, baz", Meter.Type.GAUGE)).isEqualTo("foo_bar_\\,\\ baz");
     }
 
     @Test
     void tagKey() {
-        assertThat(convention.tagKey("foo=, bar")).isEqualTo("foo\\=\\,\\ bar");
+        assertThat(convention.tagKey("foo.bar=, baz")).isEqualTo("foo_bar\\=\\,\\ baz");
     }
 
     @Test
@@ -44,5 +46,12 @@ class InfluxNamingConventionTest {
     void timeCannotBeATagKeyOrValue() {
         assertThat(catchThrowable(() -> convention.tagKey("time"))).isInstanceOf(IllegalArgumentException.class);
         assertThat(catchThrowable(() -> convention.tagValue("time"))).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Issue("#645")
+    @Test
+    void namingConventionIsNotAppliedToTagValues() {
+        // ...but escaping of special characters still applies
+        assertThat(convention.tagValue("org.example.service=")).isEqualTo("org.example.service\\=");
     }
 }

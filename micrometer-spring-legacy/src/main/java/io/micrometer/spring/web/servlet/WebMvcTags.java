@@ -39,6 +39,8 @@ public final class WebMvcTags {
 
     private static final Tag URI_REDIRECTION = Tag.of("uri", "REDIRECTION");
 
+    private static final Tag URI_ROOT = Tag.of("uri", "root");
+
     private static final Tag URI_UNKNOWN = Tag.of("uri", "UNKNOWN");
 
     private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
@@ -74,10 +76,11 @@ public final class WebMvcTags {
     /**
      * Creates a {@code uri} tag based on the URI of the given {@code request}. Uses the
      * {@link HandlerMapping#BEST_MATCHING_PATTERN_ATTRIBUTE} best matching pattern if
-     * available, falling back to the request's {@link HttpServletRequest#getPathInfo()
-     * path info} if necessary.
+     * available. Falling back to {@code REDIRECTION} for 3xx responses, {@code NOT_FOUND}
+     * for 404 responses, {@code root} for requests with no path info, and {@code UNKNOWN}
+     * for all other requests.
      *
-     * @param request  the request
+     * @param request the request
      * @param response the response
      * @return the uri tag derived from the request
      */
@@ -96,7 +99,9 @@ public final class WebMvcTags {
                 }
             }
             String pathInfo = getPathInfo(request);
-            return Tag.of("uri", pathInfo.isEmpty() ? "root" : pathInfo);
+            if (pathInfo.isEmpty()) {
+                return URI_ROOT;
+            }
         }
         return URI_UNKNOWN;
     }
@@ -131,6 +136,10 @@ public final class WebMvcTags {
      * @return the exception tag derived from the exception
      */
     public static Tag exception(@Nullable Throwable exception) {
-        return exception == null ? EXCEPTION_NONE : Tag.of("exception", exception.getClass().getSimpleName());
+        if (exception == null) {
+            return EXCEPTION_NONE;
+        }
+        String simpleName = exception.getClass().getSimpleName();
+        return Tag.of("exception", simpleName.isEmpty() ? exception.getClass().getName() : simpleName);
     }
 }
