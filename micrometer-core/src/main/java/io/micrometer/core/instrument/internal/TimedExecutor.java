@@ -26,17 +26,45 @@ import java.util.concurrent.Executor;
  * An {@link Executor} that is timed
  */
 public class TimedExecutor implements Executor {
+    private final MeterRegistry registry;
     private final Executor delegate;
-    private final Timer timer;
+    private final Timer executionTimer;
+    private final Timer idleTimer;
 
     public TimedExecutor(MeterRegistry registry, Executor delegate, String executorName, Iterable<Tag> tags) {
+        this.registry = registry;
         this.delegate = delegate;
-        this.timer = registry.timer("executor", Tags.concat(tags, "name", executorName));
+        this.executionTimer = registry.timer("executor.execution", Tags.concat(tags, "name", executorName));
+        this.idleTimer = registry.timer("executor.idle", Tags.concat(tags, "name", executorName));
     }
 
     @Override
     public void execute(Runnable command) {
-        delegate.execute(timer.wrap(command));
+        delegate.execute(new TimedRunnable(command));
     }
+    
+    class TimedRunnable implements Runnable {
+
+        private final Runnable command;
+        private final Timer.Sample idleSample;
+
+        public TimedRunnable(Runnable command) {
+            this.command = command;
+            this.idleSample = Timer.start(registry);
+        }
+
+        @Override
+        public void run() {
+            idleSample.stop(idleTimer);
+            Timer.Sample executionSample = Timer.start(registry);
+            try {
+                command.run();
+            } finally {
+                executionSample.stop(executionTimer);
+            }
+        }
+
+    }
+
 
 }

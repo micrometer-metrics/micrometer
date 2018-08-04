@@ -44,7 +44,8 @@ class ExecutorServiceMetricsTest {
         executor.execute(() -> System.out.println("hello"));
         lock.await();
 
-        assertThat(registry.get("executor").tags(userTags).tag("name", "exec").timer().count()).isEqualTo(1L);
+        assertThat(registry.get("executor.execution").tags(userTags).tag("name", "exec").timer().count()).isEqualTo(1L);
+        assertThat(registry.get("executor.idle").tags(userTags).tag("name", "exec").timer().count()).isEqualTo(1L);
     }
 
     @DisplayName("ExecutorService is casted from Executor when necessary")
