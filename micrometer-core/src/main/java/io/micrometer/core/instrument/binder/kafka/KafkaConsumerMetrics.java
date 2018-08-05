@@ -85,7 +85,7 @@ public class KafkaConsumerMetrics implements MeterBinder {
                     .tags(allTags)
                     .register(registry);
 
-                FunctionCounter.builder("kafka.bytes.consumed.rate", mBeanServer,
+                FunctionCounter.builder("kafka.bytes.consumed.total", mBeanServer,
                     s -> safeDouble(() -> s.getAttribute(name, "bytes-consumed-rate")))
                     .tags(allTags)
                     .baseUnit("bytes")
@@ -97,7 +97,7 @@ public class KafkaConsumerMetrics implements MeterBinder {
                     .baseUnit("bytes")
                     .register(registry);
 
-                FunctionCounter.builder("kafka.records.consumed.rate", mBeanServer,
+                FunctionCounter.builder("kafka.records.consumed.total", mBeanServer,
                     s -> safeDouble(() -> s.getAttribute(name, "records-consumed-rate")))
                     .tags(allTags)
                     .register(registry);
@@ -124,7 +124,7 @@ public class KafkaConsumerMetrics implements MeterBinder {
                     .tags(allTags)
                     .register(registry);
 
-                FunctionCounter.builder("kafka.commit.rate", mBeanServer,
+                FunctionCounter.builder("kafka.commit.total", mBeanServer,
                     s -> safeDouble(() -> s.getAttribute(name, "commit-rate")))
                     .tags(allTags)
                     .register(registry);
