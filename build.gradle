@@ -89,6 +89,10 @@ subprojects {
         maxHeapSize = "1500m"
     }
 
+    license {
+        ext.year = Calendar.getInstance().get(Calendar.YEAR)
+        skipExistingHeaders = true
+    }
 }
 
 wrapper {
