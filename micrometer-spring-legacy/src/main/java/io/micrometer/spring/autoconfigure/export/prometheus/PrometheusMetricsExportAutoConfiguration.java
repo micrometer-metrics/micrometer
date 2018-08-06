@@ -17,6 +17,8 @@ package io.micrometer.spring.autoconfigure.export.prometheus;
 
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Meter.Id;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.micrometer.spring.autoconfigure.CompositeMeterRegistryAutoConfiguration;
@@ -182,6 +184,28 @@ public class PrometheusMetricsExportAutoConfiguration {
                 job = "spring";
             }
             return job;
+        }
+
+        @Bean
+        MeterFilter pushgatewayCompatMeterFilter() {
+            return new MeterFilter() {
+
+                @Override
+                public Id map(Id id) {
+                    if (!"process.start.time".equals(id.getName())) {
+                        return id;
+                    }
+                    /*
+                     * Starting with prom/pushgateway:v0.5.0 differing meter
+                     * descriptions are not accepted anymore. Pushgateway is
+                     * exposing its own "process_start_time_seconds" metric which
+                     * has a differing description than the one from Micrometer.
+                     */
+                    return new Id(id.getName(), id.getTags(), id.getBaseUnit(),
+                            "Start time of the process since unix epoch in seconds.", id.getType());
+                }
+
+            };
         }
     }
 }
