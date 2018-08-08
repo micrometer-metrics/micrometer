@@ -15,32 +15,36 @@
  */
 package io.micrometer.core.instrument.internal;
 
-import java.util.concurrent.Executor;
-
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 
 /**
- * An {@link Executor} that is timed
+ * An {@link Runnable} that is timed
  */
-public class TimedExecutor implements Executor {
-    private final MeterRegistry registry;
-    private final Executor delegate;
-    private final Timer executionTimer;
-    private final Timer idleTimer;
+public final class TimedRunnable implements Runnable {
 
-    public TimedExecutor(MeterRegistry registry, Executor delegate, String executorName, Iterable<Tag> tags) {
+    private final Runnable command;
+    private final MeterRegistry registry;
+    private final Timer.Sample idleSample;
+    private final Timer idleTimer;
+    private final Timer executionTimer;
+
+    TimedRunnable(Runnable command, MeterRegistry registry, Timer executionTimer, Timer idleTimer) {
+        this.command = command;
         this.registry = registry;
-        this.delegate = delegate;
-        this.executionTimer = registry.timer("executor.execution", Tags.concat(tags, "name", executorName));
-        this.idleTimer = registry.timer("executor.idle", Tags.concat(tags, "name", executorName));
+        this.executionTimer = executionTimer;
+        this.idleTimer = idleTimer;
+        this.idleSample = Timer.start(registry);
     }
 
     @Override
-    public void execute(Runnable command) {
-        delegate.execute(new TimedRunnable(command, registry, executionTimer, idleTimer));
+    public void run() {
+        idleSample.stop(idleTimer);
+        final Timer.Sample executionSample = Timer.start(registry);
+        try {
+            command.run();
+        } finally {
+            executionSample.stop(executionTimer);
+        }
     }
-
 }

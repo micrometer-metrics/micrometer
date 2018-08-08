@@ -15,16 +15,21 @@
  */
 package io.micrometer.core.instrument.internal;
 
+import static java.util.stream.Collectors.toList;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.*;
-
-import static java.util.stream.Collectors.toList;
 
 /**
  * An {@link java.util.concurrent.ExecutorService} that is timed
@@ -32,12 +37,17 @@ import static java.util.stream.Collectors.toList;
  * @author Jon Schneider
  */
 public class TimedExecutorService implements ExecutorService {
+    private final MeterRegistry registry;
     private final ExecutorService delegate;
-    private final Timer timer;
+    private final Timer executionTimer;
+    private final Timer idleTimer;
 
-    public TimedExecutorService(MeterRegistry registry, ExecutorService delegate, String executorServiceName, Iterable<Tag> tags) {
+    public TimedExecutorService(MeterRegistry registry, ExecutorService delegate, String executorServiceName,
+            Iterable<Tag> tags) {
+        this.registry = registry;
         this.delegate = delegate;
-        this.timer = registry.timer("executor", Tags.concat(tags ,"name", executorServiceName));
+        this.executionTimer = registry.timer("executor.execution", Tags.concat(tags, "name", executorServiceName));
+        this.idleTimer = registry.timer("executor.idle", Tags.concat(tags, "name", executorServiceName));
     }
 
     @Override
@@ -67,17 +77,17 @@ public class TimedExecutorService implements ExecutorService {
 
     @Override
     public <T> Future<T> submit(Callable<T> task) {
-        return delegate.submit(timer.wrap(task));
+        return delegate.submit(new TimedCallable<>(task, registry, idleTimer, executionTimer));
     }
 
     @Override
     public <T> Future<T> submit(Runnable task, T result) {
-        return delegate.submit(() -> timer.record(task), result);
+        return delegate.submit(new TimedRunnable(task, registry, executionTimer, idleTimer), result);
     }
 
     @Override
     public Future<?> submit(Runnable task) {
-        return delegate.submit(() -> timer.record(task));
+        return delegate.submit(new TimedRunnable(task, registry, executionTimer, idleTimer));
     }
 
     @Override
@@ -86,7 +96,8 @@ public class TimedExecutorService implements ExecutorService {
     }
 
     @Override
-    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
+    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
+            throws InterruptedException {
         return delegate.invokeAll(wrapAll(tasks), timeout, unit);
     }
 
@@ -96,16 +107,18 @@ public class TimedExecutorService implements ExecutorService {
     }
 
     @Override
-    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
+            throws InterruptedException, ExecutionException, TimeoutException {
         return delegate.invokeAny(wrapAll(tasks), timeout, unit);
     }
 
     @Override
     public void execute(Runnable command) {
-        delegate.execute(timer.wrap(command));
+        delegate.execute(new TimedRunnable(command, registry, executionTimer, idleTimer));
     }
 
     private <T> Collection<? extends Callable<T>> wrapAll(Collection<? extends Callable<T>> tasks) {
-        return tasks.stream().map(timer::wrap).collect(toList());
+        return tasks.stream().map(task -> new TimedCallable<>(task, registry, idleTimer, executionTimer))
+                .collect(toList());
     }
 }

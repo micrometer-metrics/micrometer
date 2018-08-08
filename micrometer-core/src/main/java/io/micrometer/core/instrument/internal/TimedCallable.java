@@ -15,32 +15,44 @@
  */
 package io.micrometer.core.instrument.internal;
 
-import java.util.concurrent.Executor;
+import java.util.concurrent.Callable;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 
 /**
- * An {@link Executor} that is timed
+ * An {@link Callable} that is timed
  */
-public class TimedExecutor implements Executor {
-    private final MeterRegistry registry;
-    private final Executor delegate;
-    private final Timer executionTimer;
-    private final Timer idleTimer;
+public final class TimedCallable<V> implements Callable<V> {
 
-    public TimedExecutor(MeterRegistry registry, Executor delegate, String executorName, Iterable<Tag> tags) {
+    private final Callable<V> command;
+    private final MeterRegistry registry;
+    private final Timer.Sample idleSample;
+    private final Timer idleTimer;
+    private final Timer executionTimer;
+
+    TimedCallable(Callable<V> command, MeterRegistry registry, Timer idleTimer,
+            Timer executionTimer) {
+        this.command = command;
         this.registry = registry;
-        this.delegate = delegate;
-        this.executionTimer = registry.timer("executor.execution", Tags.concat(tags, "name", executorName));
-        this.idleTimer = registry.timer("executor.idle", Tags.concat(tags, "name", executorName));
+        this.idleTimer = idleTimer;
+        this.executionTimer = executionTimer;
+        this.idleSample = Timer.start(registry);
     }
 
     @Override
-    public void execute(Runnable command) {
-        delegate.execute(new TimedRunnable(command, registry, executionTimer, idleTimer));
+    public V call() throws Exception {
+
+        idleSample.stop(idleTimer);
+        final Timer.Sample executionSample = Timer.start(registry);
+
+        V result = null;
+        try {
+            result = command.call();
+        } finally {
+            executionSample.stop(executionTimer);
+        }
+        return result;
     }
 
 }
