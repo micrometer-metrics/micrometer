@@ -44,8 +44,9 @@ public abstract class AbstractDistributionSummary extends AbstractMeter implemen
     @Override
     public final void record(double amount) {
         if (amount >= 0) {
-            histogram.recordDouble(scale * amount);
-            recordNonNegative(scale * amount);
+            double scaledAmount = this.scale * amount;
+            histogram.recordDouble(scaledAmount);
+            recordNonNegative(scaledAmount);
         }
     }
 
