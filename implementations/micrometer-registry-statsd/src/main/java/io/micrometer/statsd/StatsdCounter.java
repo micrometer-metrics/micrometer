@@ -28,19 +28,19 @@ import java.util.concurrent.atomic.DoubleAdder;
 public class StatsdCounter extends AbstractMeter implements Counter {
     private DoubleAdder count = new DoubleAdder();
     private final StatsdLineBuilder lineBuilder;
-    private final Subscriber<String> publisher;
+    private final Subscriber<String> subscriber;
 
-    StatsdCounter(Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher) {
+    StatsdCounter(Id id, StatsdLineBuilder lineBuilder, Subscriber<String> subscriber) {
         super(id);
         this.lineBuilder = lineBuilder;
-        this.publisher = publisher;
+        this.subscriber = subscriber;
     }
 
     @Override
     public void increment(double amount) {
         if (amount > 0) {
             count.add(amount);
-            publisher.onNext(lineBuilder.count((long) amount));
+            subscriber.onNext(lineBuilder.count((long) amount));
         }
     }
 

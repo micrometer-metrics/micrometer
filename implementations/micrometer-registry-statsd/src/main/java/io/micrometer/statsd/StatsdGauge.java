@@ -27,17 +27,17 @@ import java.util.function.ToDoubleFunction;
 
 public class StatsdGauge<T> extends AbstractMeter implements Gauge, StatsdPollable {
     private final StatsdLineBuilder lineBuilder;
-    private final Subscriber<String> publisher;
+    private final Subscriber<String> subscriber;
 
     private final WeakReference<T> ref;
     private final ToDoubleFunction<T> value;
     private final AtomicReference<Double> lastValue = new AtomicReference<>(Double.NaN);
     private final boolean alwaysPublish;
 
-    StatsdGauge(Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher, @Nullable T obj, ToDoubleFunction<T> value, boolean alwaysPublish) {
+    StatsdGauge(Id id, StatsdLineBuilder lineBuilder, Subscriber<String> subscriber, @Nullable T obj, ToDoubleFunction<T> value, boolean alwaysPublish) {
         super(id);
         this.lineBuilder = lineBuilder;
-        this.publisher = publisher;
+        this.subscriber = subscriber;
         this.ref = new WeakReference<>(obj);
         this.value = value;
         this.alwaysPublish = alwaysPublish;
@@ -53,7 +53,7 @@ public class StatsdGauge<T> extends AbstractMeter implements Gauge, StatsdPollab
     public void poll() {
         double val = value();
         if (alwaysPublish || lastValue.getAndSet(val) != val) {
-            publisher.onNext(lineBuilder.gauge(val));
+            subscriber.onNext(lineBuilder.gauge(val));
         }
     }
 
