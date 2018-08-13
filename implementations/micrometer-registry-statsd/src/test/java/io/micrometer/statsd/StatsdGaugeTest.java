@@ -32,7 +32,7 @@ class StatsdGaugeTest {
     private StatsdLineBuilder lineBuilder = mock(StatsdLineBuilder.class);
 
     @SuppressWarnings("unchecked")
-    private Subscriber<String> publisher = mock(Subscriber.class);
+    private Subscriber<String> subscriber = mock(Subscriber.class);
 
     @Test
     void shouldAlwaysPublishValue() {
@@ -41,7 +41,7 @@ class StatsdGaugeTest {
         alwaysPublishingGauge.poll();
         alwaysPublishingGauge.poll();
 
-        verify(publisher, times(2)).onNext(any());
+        verify(subscriber, times(2)).onNext(any());
     }
 
     @Test
@@ -51,20 +51,20 @@ class StatsdGaugeTest {
         gaugePublishingOnChange.poll();
         gaugePublishingOnChange.poll();
 
-        verify(publisher, times(1)).onNext(any());
+        verify(subscriber, times(1)).onNext(any());
 
         //update value and expect the publisher to be called again
         value.incrementAndGet();
         gaugePublishingOnChange.poll();
 
 
-        verify(publisher, times(2)).onNext(any());
+        verify(subscriber, times(2)).onNext(any());
     }
 
 
     private StatsdGauge<?> gauge(boolean alwaysPublish) {
         Meter.Id meterId = new Meter.Id("test", Collections.emptyList(), null, null, Meter.Type.GAUGE);
-        return new StatsdGauge<>(meterId, lineBuilder, publisher, value, AtomicInteger::get, alwaysPublish);
+        return new StatsdGauge<>(meterId, lineBuilder, subscriber, value, AtomicInteger::get, alwaysPublish);
     }
 
 }

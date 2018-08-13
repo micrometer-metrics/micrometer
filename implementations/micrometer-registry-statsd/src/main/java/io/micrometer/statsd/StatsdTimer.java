@@ -33,14 +33,14 @@ public class StatsdTimer extends AbstractTimer {
     private StepDouble max;
 
     private final StatsdLineBuilder lineBuilder;
-    private final Subscriber<String> publisher;
+    private final Subscriber<String> subscriber;
 
-    StatsdTimer(Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher, Clock clock,
+    StatsdTimer(Id id, StatsdLineBuilder lineBuilder, Subscriber<String> subscriber, Clock clock,
                 DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, false);
         this.max = new StepDouble(clock, stepMillis);
         this.lineBuilder = lineBuilder;
-        this.publisher = publisher;
+        this.subscriber = subscriber;
     }
 
     @Override
@@ -54,7 +54,7 @@ public class StatsdTimer extends AbstractTimer {
             // not necessary to ship max, as most StatsD agents calculate this themselves
             max.getCurrent().add(Math.max(msAmount - max.getCurrent().doubleValue(), 0));
 
-            publisher.onNext(lineBuilder.timing(msAmount));
+            subscriber.onNext(lineBuilder.timing(msAmount));
         }
     }
 

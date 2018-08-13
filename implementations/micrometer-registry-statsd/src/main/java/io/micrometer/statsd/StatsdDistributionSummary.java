@@ -33,14 +33,14 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
     private final TimeWindowMax max;
 
     private final StatsdLineBuilder lineBuilder;
-    private final Subscriber<String> publisher;
+    private final Subscriber<String> subscriber;
 
-    StatsdDistributionSummary(Meter.Id id, StatsdLineBuilder lineBuilder, Subscriber<String> publisher, Clock clock,
+    StatsdDistributionSummary(Meter.Id id, StatsdLineBuilder lineBuilder, Subscriber<String> subscriber, Clock clock,
                               DistributionStatisticConfig distributionStatisticConfig, double scale) {
         super(id, clock, distributionStatisticConfig, scale, false);
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
         this.lineBuilder = lineBuilder;
-        this.publisher = publisher;
+        this.subscriber = subscriber;
     }
 
     @Override
@@ -49,7 +49,7 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
             count.increment();
             this.amount.add(amount);
             max.record(amount);
-            publisher.onNext(lineBuilder.histogram(amount));
+            subscriber.onNext(lineBuilder.histogram(amount));
         }
     }
 
