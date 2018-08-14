@@ -23,13 +23,13 @@ public interface AzureConfig extends StepRegistryConfig {
 
     @Override
     default String prefix() {
-        return "azure";
+        return "azure.application-insights";
     }
 
-    default String apiKey() {
-        String v = get(prefix() + ".apiKey");
+    default String instrumentationKey() {
+        String v = get(prefix() + ".instrumentation-Key");
         if (v == null)
-            throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to Application Insights");
+            throw new MissingRequiredConfigurationException("instrumentationKey must be set to report metrics to Application Insights");
         return v;
     }
 }

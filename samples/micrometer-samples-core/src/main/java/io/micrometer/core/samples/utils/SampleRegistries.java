@@ -356,7 +356,7 @@ public class SampleRegistries {
     public static AzureMeterRegistry azure(String apiKey) {
         return new AzureMeterRegistry(new AzureConfig() {
             @Override
-            public String apiKey() {
+            public String instrumentationKey() {
                 return apiKey;
             }
 

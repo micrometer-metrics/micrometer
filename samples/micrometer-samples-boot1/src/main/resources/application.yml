@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-server.port: 8080
+server.port: 8083
 management.security.enabled: false
 
 # see https://stackoverflow.com/questions/44474160/spring-integration-display-warning-that-header-is-ignored-for-population-because
@@ -35,7 +35,7 @@ management.metrics.export:
   statsd.enabled: false
   signalfx.enabled: false
   wavefront.enabled: false
-
+  azure.application-insights.enabled: true
 security.ignored: /**
 
 endpoints.shutdown.enabled: true

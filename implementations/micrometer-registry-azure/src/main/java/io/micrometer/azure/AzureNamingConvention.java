@@ -17,9 +17,14 @@ package io.micrometer.azure;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.lang.Nullable;
+import java.util.regex.Pattern;
 
 public class AzureNamingConvention implements NamingConvention {
+
+    private static final Pattern NAME_AND_TAGKEY_PATTERN = Pattern.compile("[^a-zA-Z0-9\\-]");
+
     private final NamingConvention delegate;
 
     public AzureNamingConvention() {
@@ -30,13 +35,16 @@ public class AzureNamingConvention implements NamingConvention {
         this.delegate = delegate;
     }
 
-    // Length 1-150 characters.
+    // Trimming takes place in AI core SDK
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        String conventionName = delegate.name(name, type, baseUnit);
-        if (conventionName.length() > 150) {
-            conventionName = conventionName.substring(0, 128); // 1
-        }
-        return conventionName;
+        return NAME_AND_TAGKEY_PATTERN.matcher(delegate.name(name, type, baseUnit)).replaceAll("_");
     }
+
+    @Override
+    public String tagKey(String key) {
+        return NAME_AND_TAGKEY_PATTERN.matcher(delegate.tagKey(key)).replaceAll("_");
+    }
+
+    // TODO : Special sanitation for  value if needed (eg : non-ascii characters)
 }

@@ -4,12 +4,12 @@ dependencies {
     compile('ch.qos.logback:logback-classic:1.2.+') {
         force = true
     }
-    compile('org.slf4j:slf4j-api:1.7.+') {
+    compile('org.slf4j:slf4j-api:1.7.5') {
         // logback doesn't yet work with slf4j 1.8
         force = true
     }
 
-    ['atlas', 'prometheus', 'datadog', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront', 'dynatrace', 'azure'].each { sys ->
+    ['atlas', 'prometheus', 'datadog', 'ganglia', 'elastic','graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront', 'dynatrace', 'azure'].each { sys ->
         compile project(":micrometer-registry-$sys")
     }
 
