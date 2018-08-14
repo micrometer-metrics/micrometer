@@ -27,7 +27,7 @@ public interface AzureConfig extends StepRegistryConfig {
     }
 
     default String instrumentationKey() {
-        String v = get(prefix() + ".instrumentation-Key");
+        String v = get(prefix() + ".instrumentation-key");
         if (v == null)
             throw new MissingRequiredConfigurationException("instrumentationKey must be set to report metrics to Application Insights");
         return v;

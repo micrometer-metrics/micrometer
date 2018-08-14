@@ -17,4 +17,4 @@
 management.metrics.export.azure.application-insights:
   enabled: true
   step: PT10S
-  instrumentation-Key: fakekey
+  instrumentation-key: fakeKey
