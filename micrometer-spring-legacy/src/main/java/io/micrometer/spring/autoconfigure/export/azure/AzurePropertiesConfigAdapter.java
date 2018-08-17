@@ -18,10 +18,15 @@ package io.micrometer.spring.autoconfigure.export.azure;
 import io.micrometer.azure.AzureConfig;
 import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
 
+/**
+ * Adapter to convert {@link AzureProperties} to a {@link AzureConfig}.
+ *
+ * @author Dhaval Doshi
+ */
 public class AzurePropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<AzureProperties>
 implements AzureConfig {
 
-    public AzurePropertiesConfigAdapter(
+    AzurePropertiesConfigAdapter(
         AzureProperties properties) {
         super(properties);
     }

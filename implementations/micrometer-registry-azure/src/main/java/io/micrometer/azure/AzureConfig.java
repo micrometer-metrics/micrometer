@@ -18,14 +18,26 @@ package io.micrometer.azure;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
+/**
+ * Configuration for {@link AzureMeterRegistry}
+ * @author Dhaval Doshi
+ */
 public interface AzureConfig extends StepRegistryConfig {
     AzureConfig DEFAULT = k -> null;
+    /**
+     * Azure Monitor Prefix
+     */
+    String AZURE_PREFIX = "azure.application-insights";
 
     @Override
     default String prefix() {
-        return "azure.application-insights";
+        return AZURE_PREFIX;
     }
 
+    /**
+     * default implementation to get the instrumentation key from the config
+     * @return
+     */
     default String instrumentationKey() {
         String v = get(prefix() + ".instrumentation-key");
         if (v == null)

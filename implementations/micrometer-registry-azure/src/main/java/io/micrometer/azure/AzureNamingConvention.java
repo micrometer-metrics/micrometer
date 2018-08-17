@@ -20,6 +20,10 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
 import java.util.regex.Pattern;
 
+/**
+ * Naming convention to push metrics to Azure Application Insights
+ * @author Dhaval Doshi
+ */
 public class AzureNamingConvention implements NamingConvention {
 
     private static final Pattern NAME_AND_TAGKEY_PATTERN = Pattern.compile("[^a-zA-Z0-9\\-]");
@@ -45,5 +49,5 @@ public class AzureNamingConvention implements NamingConvention {
         return NAME_AND_TAGKEY_PATTERN.matcher(delegate.tagKey(key)).replaceAll("_");
     }
 
-    // TODO : Special sanitation for  value if needed (eg : non-ascii characters)
+    // TODO : Special sanitation for value if needed (eg : non-ascii characters)
 }

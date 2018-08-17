@@ -33,6 +33,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+/**
+ * Configuration for exporting metrics to Azure Application Insights
+ * @author Dhaval Doshi
+ */
 @Configuration
 @AutoConfigureBefore({CompositeMeterRegistryAutoConfiguration.class,
     SimpleMetricsExportAutoConfiguration.class})
