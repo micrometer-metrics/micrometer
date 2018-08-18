@@ -123,7 +123,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
             logger.trace(bulkPayload);
 
             try (OutputStream os = con.getOutputStream()) {
-                os.write(bulkPayload.getBytes());
+                os.write(bulkPayload.getBytes(StandardCharsets.UTF_8));
                 os.flush();
             }
 
@@ -155,14 +155,14 @@ public class KairosMeterRegistry extends StepMeterRegistry {
 
         KairosMetricBuilder field(String key, String value) {
             if (sb.length() > 1) {
-                sb.append(",");
+                sb.append(',');
             }
-            sb.append("\"").append(key).append("\":\"").append(value).append("\"");
+            sb.append('\"').append(key).append("\":\"").append(value).append('\"');
             return this;
         }
 
         KairosMetricBuilder datapoints(Long wallTime, Number value) {
-            sb.append(",\"datapoints\":[[").append(wallTime).append(",").append(value).append("]]");
+            sb.append(",\"datapoints\":[[").append(wallTime).append(',').append(value).append("]]");
             return this;
         }
 
@@ -186,7 +186,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
         }
 
         String build() {
-            return sb.append("}").toString();
+            return sb.append('}').toString();
         }
     }
 
