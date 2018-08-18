@@ -34,4 +34,13 @@ class GraphiteHierarchicalNameMapperTest {
         assertThat(nameMapper.toHierarchicalName(id, NamingConvention.camelCase))
                 .isEqualTo("PROD.MYAPP.myName.otherTag.value");
     }
+    
+    @Test
+    void noSpaceInTags() {
+    	Meter.Id idWithSpace = new Meter.Id("my.name", Tags.of("app.name", "MYAPP", "stack", "PROD", "other tag", "va lue"),
+    			null, null, Meter.Type.COUNTER);
+        assertThat(nameMapper.toHierarchicalName(idWithSpace, NamingConvention.camelCase))
+                .isEqualTo("PROD.MYAPP.myName.other_tag.va_lue");
+    }
+    
 }

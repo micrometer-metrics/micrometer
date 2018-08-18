@@ -32,23 +32,26 @@ public class GraphiteHierarchicalNameMapper implements HierarchicalNameMapper {
 
     @Override
     public String toHierarchicalName(Meter.Id id, NamingConvention convention) {
-        StringBuilder prefix = new StringBuilder();
+        StringBuilder buffer = new StringBuilder(50);
         for (String tagPrefix : tagsAsPrefix) {
             String value = id.getTag(tagPrefix);
             if (value != null) {
-                prefix.append(convention.tagValue(value)).append(".");
+                buffer.append(convention.tagValue(value)).append('.');
             }
         }
 
-        StringBuilder tags = new StringBuilder();
+        buffer.append(id.getConventionName(convention));
+        
         for (Tag tag : id.getTags()) {
             if (!tagsAsPrefix.contains(tag.getKey())) {
-                tags.append(("." + convention.tagKey(tag.getKey()) + "." + convention.tagValue(tag.getValue()))
-                        .replace(" ", "_"));
+            	buffer.append('.');
+            	buffer.append(convention.tagKey(tag.getKey()).replace(' ', '_'));
+            	buffer.append('.');
+            	buffer.append(convention.tagValue(tag.getValue()).replace(' ', '_'));
             }
         }
 
-        return prefix.toString() + id.getConventionName(convention) + tags;
+        return buffer.toString();
     }
 }
 
