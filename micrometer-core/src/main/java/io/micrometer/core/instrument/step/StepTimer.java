@@ -32,12 +32,51 @@ public class StepTimer extends AbstractTimer {
     private final StepLong total;
     private final TimeWindowMax max;
 
+    /**
+     * Create a new {@code StepTimer}.
+     *
+     * @param id ID
+     * @param clock clock
+     * @param distributionStatisticConfig distribution statistic configuration
+     * @param pauseDetector pause detector
+     * @param baseTimeUnit base time unit
+     * @deprecated Use {@link #StepTimer(Id, Clock, DistributionStatisticConfig, PauseDetector, TimeUnit, long, boolean)}
+     */
     @Deprecated
     public StepTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-                     PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis) {
-        this(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit,  stepMillis,false);
+                     PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+        this(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, false);
     }
 
+    /**
+     * Create a new {@code StepTimer}.
+     *
+     * @param id ID
+     * @param clock clock
+     * @param distributionStatisticConfig distribution statistic configuration
+     * @param pauseDetector pause detector
+     * @param baseTimeUnit base time unit
+     * @param supportsAggregablePercentiles whether it supports aggregable percentiles
+     * @deprecated Use {@link #StepTimer(Id, Clock, DistributionStatisticConfig, PauseDetector, TimeUnit, long, boolean)}
+     */
+    @Deprecated
+    @SuppressWarnings("ConstantConditions")
+    public StepTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
+                     PauseDetector pauseDetector, TimeUnit baseTimeUnit, boolean supportsAggregablePercentiles) {
+        this(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, distributionStatisticConfig.getExpiry().toMillis(), supportsAggregablePercentiles);
+    }
+
+    /**
+     * Create a new {@code StepTimer}.
+     *
+     * @param id ID
+     * @param clock clock
+     * @param distributionStatisticConfig distribution statistic configuration
+     * @param pauseDetector pause detector
+     * @param baseTimeUnit base time unit
+     * @param stepMillis step in milliseconds
+     * @param supportsAggregablePercentiles whether it supports aggregable percentiles
+     */
     @SuppressWarnings("ConstantConditions")
     public StepTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
                      PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis, boolean supportsAggregablePercentiles) {
