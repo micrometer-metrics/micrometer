@@ -19,7 +19,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 
 /**
- * An {@link Runnable} that is timed
+ * A {@link Runnable} that is timed
  */
 public final class TimedRunnable implements Runnable {
 

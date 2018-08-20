@@ -21,7 +21,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 
 /**
- * An {@link Callable} that is timed
+ * A {@link Callable} that is timed
  */
 public final class TimedCallable<V> implements Callable<V> {
 
