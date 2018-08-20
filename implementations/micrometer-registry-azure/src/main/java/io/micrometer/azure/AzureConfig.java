@@ -17,6 +17,7 @@ package io.micrometer.azure;
 
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.instrument.util.StringUtils;
 
 /**
  * Configuration for {@link AzureMeterRegistry}
@@ -29,6 +30,18 @@ public interface AzureConfig extends StepRegistryConfig {
      */
     String AZURE_PREFIX = "azure.application-insights";
 
+    /**
+     * Maximum allowed tags for Azure/
+     */
+    int ALLOWED_CUSTOM_DIMENSIONS = 10;
+
+    /**
+     * Possible externalization of properties according to Application Insights Java SDK support
+     * Rethink : Should be matched with iKey property name in Application Insights Spring Boot starter
+     */
+    String EXTERNAL_PROPERTY_IKEY_NAME = "APPLICATION_INSIGHTS_IKEY";
+    String EXTERNAL_PROPERTY_IKEY_NAME_SECONDARY = "APPINSIGHTS_INSTRUMENTATIONKEY";
+
     @Override
     default String prefix() {
         return AZURE_PREFIX;
@@ -36,12 +49,44 @@ public interface AzureConfig extends StepRegistryConfig {
 
     /**
      * default implementation to get the instrumentation key from the config
-     * @return
+     * @return Instrumentation Key
      */
     default String instrumentationKey() {
         String v = get(prefix() + ".instrumentation-key");
+
+        if (!StringUtils.isBlank(v)) {
+            return v;
+        }
+
+        v = System.getProperty(EXTERNAL_PROPERTY_IKEY_NAME);
+        if (!StringUtils.isBlank(v)) {
+            return v;
+        }
+
+        v = System.getProperty(EXTERNAL_PROPERTY_IKEY_NAME_SECONDARY);
+        if (!StringUtils.isBlank(v)) {
+            return v;
+        }
+
+        // Second, try to find the i-key as an environment variable 'APPLICATION_INSIGHTS_IKEY' or 'APPINSIGHTS_INSTRUMENTATIONKEY'
+        v = System.getenv(EXTERNAL_PROPERTY_IKEY_NAME);
+        if (!StringUtils.isBlank(v)) {
+            return v;
+        }
+        v = System.getenv(EXTERNAL_PROPERTY_IKEY_NAME_SECONDARY);
+        if (!StringUtils.isBlank(v)) {
+            return v;
+        }
         if (v == null)
             throw new MissingRequiredConfigurationException("instrumentationKey must be set to report metrics to Application Insights");
         return v;
+    }
+
+    /**
+     * Returns the maximum allowed custom Dimensions in Azure Backend (currently not used in discussion)
+     * @return Allowed Custom dimensions
+     */
+    default int getAllowedCustomDimensions() {
+        return ALLOWED_CUSTOM_DIMENSIONS;
     }
 }

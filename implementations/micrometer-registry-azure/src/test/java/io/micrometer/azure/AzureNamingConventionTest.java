@@ -15,11 +15,21 @@
  */
 package io.micrometer.azure;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import io.micrometer.core.instrument.Meter.Type;
+import org.junit.jupiter.api.Test;
+
 class AzureNamingConventionTest {
     private final AzureNamingConvention namingConvention = new AzureNamingConvention();
 
-//    @Test
-//    void name() {
-//        fail("Implement me!");
-//    }
+    @Test
+    void testNameContainsDesiredCharacters() {
+        assertThat(namingConvention.name("{custom@Metric.1}", Type.GAUGE)).isEqualTo("_custom_Metric_1_");
+    }
+
+    @Test
+    void testTagKeyContainsDesiredCharacters() {
+        assertThat(namingConvention.tagKey("Pc.N@me")).isEqualTo("Pc_N_me");
+    }
 }
