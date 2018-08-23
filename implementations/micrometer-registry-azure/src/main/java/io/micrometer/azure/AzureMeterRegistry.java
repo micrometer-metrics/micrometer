@@ -36,6 +36,7 @@ import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.lang.Nullable;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -57,17 +58,20 @@ public class AzureMeterRegistry extends StepMeterRegistry {
     private final TelemetryClient client;
     private final Logger logger = LoggerFactory.getLogger(AzureMeterRegistry.class);
 
-    public AzureMeterRegistry(AzureConfig config, Clock clock) {
-        this(config, clock, Executors.defaultThreadFactory());
+    public AzureMeterRegistry(AzureConfig config, TelemetryConfiguration configuration, Clock clock) {
+        this(config, clock, configuration, Executors.defaultThreadFactory());
     }
 
-    public AzureMeterRegistry(AzureConfig config, Clock clock, ThreadFactory threadFactory) {
+    private AzureMeterRegistry(AzureConfig config, Clock clock, @Nullable TelemetryConfiguration clientConfig, ThreadFactory threadFactory) {
         super(config, clock);
 
         config().namingConvention(new AzureNamingConvention());
 
-        // Get the current active instance of TelmetryConfiguration
-        TelemetryConfiguration clientConfig = TelemetryConfiguration.getActive();
+        if (clientConfig == null) {
+            // Get the current active instance of TelemetryConfiguration.
+            // This will only happen for Non SpringBoot scenario.
+            clientConfig = TelemetryConfiguration.getActive();
+        }
 
         if (StringUtils.isEmpty(clientConfig.getInstrumentationKey())) {
 
@@ -112,7 +116,7 @@ public class AzureMeterRegistry extends StepMeterRegistry {
                             trackMeter(name, properties, meter);
                         }
                 } catch (Exception e) {
-                    logger.trace("unable to publish to Application Insights");
+                    logger.trace(String.format("Failed to track metric with name %s", getConventionName(meter.getId())));
                     client.trackException(e);
                     client.flush();
                 }
@@ -128,7 +132,8 @@ public class AzureMeterRegistry extends StepMeterRegistry {
     private void trackMeter(String meterName, Map<String, String> properties, Meter meter) {
         stream(meter.measure().spliterator(), false).
             forEach(ms -> {
-                client.trackMetric(meterName, ms.getValue());
+                MetricTelemetry mt = createAndGetBareBoneMetricTelemetry(meterName, properties);
+                mt.setValue(ms.getValue());
             });
     }
 
@@ -144,10 +149,12 @@ public class AzureMeterRegistry extends StepMeterRegistry {
         MetricTelemetry metricTelemetry = createAndGetBareBoneMetricTelemetry(getConventionName(id, "active"), properties);
         metricTelemetry.setValue(meter.activeTasks());
         client.trackMetric(metricTelemetry);
+        logger.trace(String.format("sent metric with name %s", metricTelemetry.getName()));
 
         metricTelemetry = createAndGetBareBoneMetricTelemetry(getConventionName(id, "duration"), properties);
         metricTelemetry.setValue(meter.duration(getBaseTimeUnit()));
         client.trackMetric(metricTelemetry);
+        logger.trace(String.format("sent metric with name %s", metricTelemetry.getName()));
     }
 
     /**
@@ -168,6 +175,7 @@ public class AzureMeterRegistry extends StepMeterRegistry {
         Optional<ValueAtPercentile[]> opt = Optional.ofNullable(snapshot.percentileValues());
         opt.ifPresent(u -> { if (u.length > 0) metricTelemetry.setMin(u[0].value(TimeUnit.MILLISECONDS)); });
         client.trackMetric(metricTelemetry);
+        logger.trace(String.format("sent metric with name %s", metricTelemetry.getName()));
 
     }
 
@@ -188,7 +196,7 @@ public class AzureMeterRegistry extends StepMeterRegistry {
         opt.ifPresent(u -> { if (u.length > 0) metricTelemetry.setMin(u[0].value(TimeUnit.MILLISECONDS)); });
         metricTelemetry.setMax(meter.max(getBaseTimeUnit()));
         client.trackMetric(metricTelemetry);
-        logger.info("sent timer to azure");
+        logger.trace(String.format("sent metric with name %s", metricTelemetry.getName()));
     }
 
     /**
@@ -202,6 +210,7 @@ public class AzureMeterRegistry extends StepMeterRegistry {
         metricTelemetry.setValue(meter.totalTime(getBaseTimeUnit()));
         metricTelemetry.setCount((int)meter.count());
         client.trackMetric(metricTelemetry);
+        logger.trace(String.format("sent metric with name %s", metricTelemetry.getName()));
     }
 
     /**
@@ -217,6 +226,7 @@ public class AzureMeterRegistry extends StepMeterRegistry {
         //TODO : Verify this conversion
         metricTelemetry.setCount((int)Math.round(meter.count()));
         client.trackMetric(metricTelemetry);
+        logger.trace(String.format("sent metric with name %s", metricTelemetry.getName()));
     }
     /**
      * Converts FunctionCounter type meter to Azure Format and transmits to Azure Monitor backend
@@ -231,6 +241,7 @@ public class AzureMeterRegistry extends StepMeterRegistry {
         //TODO : Verify this conversion
         metricTelemetry.setCount((int)Math.round(meter.count()));
         client.trackMetric(metricTelemetry);
+        logger.trace(String.format("sent metric with name %s", metricTelemetry.getName()));
     }
     /**
      * Converts Gauge type meter to Azure Format and transmits to Azure Monitor backend
@@ -245,6 +256,7 @@ public class AzureMeterRegistry extends StepMeterRegistry {
         //Since the value of gauge is the value at the current instant and is send over aggregate period.
         metricTelemetry.setCount(1);
         client.trackMetric(metricTelemetry);
+        logger.trace(String.format("sent metric with name %s", metricTelemetry.getName()));
     }
 
     /**
@@ -260,6 +272,7 @@ public class AzureMeterRegistry extends StepMeterRegistry {
         //Since the value of gauge is the value at the current instant and is send over aggregate period.
         metricTelemetry.setCount(1);
         client.trackMetric(metricTelemetry);
+        logger.trace(String.format("sent metric with name %s", metricTelemetry.getName()));
     }
 
     /**

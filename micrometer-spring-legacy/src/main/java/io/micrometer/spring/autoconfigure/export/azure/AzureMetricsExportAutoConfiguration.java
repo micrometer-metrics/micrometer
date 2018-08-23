@@ -15,9 +15,11 @@
  */
 package io.micrometer.spring.autoconfigure.export.azure;
 
+import com.microsoft.applicationinsights.TelemetryConfiguration;
 import io.micrometer.azure.AzureConfig;
 import io.micrometer.azure.AzureMeterRegistry;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.spring.autoconfigure.CompositeMeterRegistryAutoConfiguration;
 import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
@@ -56,7 +58,18 @@ public class AzureMetricsExportAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public AzureMeterRegistry azureMeterRegistry(AzureConfig config, Clock clock) {
-        return new AzureMeterRegistry(config, clock);
+    public TelemetryConfiguration telemetryConfiguration(AzureConfig config) {
+        // Gets the active instance of TelemetryConfiguration either created by starter or xml
+        TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.getActive();
+        if (StringUtils.isEmpty(telemetryConfiguration.getInstrumentationKey())) {
+            telemetryConfiguration.setInstrumentationKey(config.instrumentationKey());
+        }
+        return telemetryConfiguration;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public AzureMeterRegistry azureMeterRegistry(AzureConfig config, TelemetryConfiguration configuration, Clock clock) {
+        return new AzureMeterRegistry(config, configuration, clock);
     }
 }

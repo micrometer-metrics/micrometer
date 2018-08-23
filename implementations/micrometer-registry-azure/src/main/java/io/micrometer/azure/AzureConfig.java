@@ -35,13 +35,6 @@ public interface AzureConfig extends StepRegistryConfig {
      */
     int ALLOWED_CUSTOM_DIMENSIONS = 10;
 
-    /**
-     * Possible externalization of properties according to Application Insights Java SDK support
-     * Rethink : Should be matched with iKey property name in Application Insights Spring Boot starter
-     */
-    String EXTERNAL_PROPERTY_IKEY_NAME = "APPLICATION_INSIGHTS_IKEY";
-    String EXTERNAL_PROPERTY_IKEY_NAME_SECONDARY = "APPINSIGHTS_INSTRUMENTATIONKEY";
-
     @Override
     default String prefix() {
         return AZURE_PREFIX;
@@ -58,25 +51,6 @@ public interface AzureConfig extends StepRegistryConfig {
             return v;
         }
 
-        v = System.getProperty(EXTERNAL_PROPERTY_IKEY_NAME);
-        if (!StringUtils.isBlank(v)) {
-            return v;
-        }
-
-        v = System.getProperty(EXTERNAL_PROPERTY_IKEY_NAME_SECONDARY);
-        if (!StringUtils.isBlank(v)) {
-            return v;
-        }
-
-        // Second, try to find the i-key as an environment variable 'APPLICATION_INSIGHTS_IKEY' or 'APPINSIGHTS_INSTRUMENTATIONKEY'
-        v = System.getenv(EXTERNAL_PROPERTY_IKEY_NAME);
-        if (!StringUtils.isBlank(v)) {
-            return v;
-        }
-        v = System.getenv(EXTERNAL_PROPERTY_IKEY_NAME_SECONDARY);
-        if (!StringUtils.isBlank(v)) {
-            return v;
-        }
         if (v == null)
             throw new MissingRequiredConfigurationException("instrumentationKey must be set to report metrics to Application Insights");
         return v;
