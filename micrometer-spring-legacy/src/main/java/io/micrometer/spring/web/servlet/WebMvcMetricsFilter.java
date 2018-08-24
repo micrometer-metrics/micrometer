@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
  * @author Jon Schneider
  */
 @NonNullApi
-@Order(Ordered.HIGHEST_PRECEDENCE)
+@Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class WebMvcMetricsFilter extends OncePerRequestFilter {
     private static final String TIMING_SAMPLE = "micrometer.timingSample";
 
