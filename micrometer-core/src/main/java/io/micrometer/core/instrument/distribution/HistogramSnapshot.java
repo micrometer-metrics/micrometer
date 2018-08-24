@@ -27,7 +27,6 @@ public final class HistogramSnapshot {
     private static final ValueAtPercentile[] EMPTY_VALUES = new ValueAtPercentile[0];
     private static final CountAtBucket[] EMPTY_COUNTS = new CountAtBucket[0];
 
-    private static final HistogramSnapshot EMPTY = new HistogramSnapshot(0, 0, 0, null, null, null);
     private final ValueAtPercentile[] percentileValues;
     private final CountAtBucket[] histogramCounts;
 
