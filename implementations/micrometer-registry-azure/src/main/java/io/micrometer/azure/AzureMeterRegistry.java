@@ -58,7 +58,7 @@ public class AzureMeterRegistry extends StepMeterRegistry {
     private final TelemetryClient client;
     private final Logger logger = LoggerFactory.getLogger(AzureMeterRegistry.class);
 
-    public AzureMeterRegistry(AzureConfig config, TelemetryConfiguration configuration, Clock clock) {
+    public AzureMeterRegistry(AzureConfig config, @Nullable TelemetryConfiguration configuration, Clock clock) {
         this(config, clock, configuration, Executors.defaultThreadFactory());
     }
 
@@ -83,7 +83,6 @@ public class AzureMeterRegistry extends StepMeterRegistry {
         requireNonNull(clientConfig.getInstrumentationKey());
 
         this.client = new TelemetryClient(clientConfig);
-        //config().meterFilter(MeterFilter.maximumAllowableTags(1));
         start(threadFactory);
     }
 

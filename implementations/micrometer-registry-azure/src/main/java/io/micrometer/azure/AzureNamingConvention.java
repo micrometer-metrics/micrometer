@@ -26,6 +26,9 @@ import java.util.regex.Pattern;
  */
 public class AzureNamingConvention implements NamingConvention {
 
+    /**
+     * Regex to detect unusable characters in tags
+     */
     private static final Pattern NAME_AND_TAGKEY_PATTERN = Pattern.compile("[^a-zA-Z0-9\\-]");
 
     private final NamingConvention delegate;
@@ -48,6 +51,4 @@ public class AzureNamingConvention implements NamingConvention {
     public String tagKey(String key) {
         return NAME_AND_TAGKEY_PATTERN.matcher(delegate.tagKey(key)).replaceAll("_");
     }
-
-    // TODO : Special sanitation for value if needed (eg : non-ascii characters)
 }

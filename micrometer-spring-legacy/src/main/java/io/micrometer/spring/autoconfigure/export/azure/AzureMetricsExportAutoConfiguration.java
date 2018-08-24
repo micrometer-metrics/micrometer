@@ -36,7 +36,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 /**
- * Configuration for exporting metrics to Azure Application Insights
+ * Auto-Configuration for exporting metrics to Azure Application Insights
  * @author Dhaval Doshi
  */
 @Configuration
@@ -56,6 +56,7 @@ public class AzureMetricsExportAutoConfiguration {
         return new AzurePropertiesConfigAdapter(properties);
     }
 
+    // This bean is usually available if the user has configured ApplicationInsights-Spring-Boot-Starter
     @Bean
     @ConditionalOnMissingBean
     public TelemetryConfiguration telemetryConfiguration(AzureConfig config) {

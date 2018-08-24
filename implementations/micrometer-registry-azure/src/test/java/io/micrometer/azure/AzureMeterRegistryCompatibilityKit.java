@@ -34,7 +34,7 @@ public class AzureMeterRegistryCompatibilityKit extends MeterRegistryCompatibili
             public boolean enabled() {
                 return false;
             }
-        }, new MockClock());
+        }, null, new MockClock());
     }
 
     @Override

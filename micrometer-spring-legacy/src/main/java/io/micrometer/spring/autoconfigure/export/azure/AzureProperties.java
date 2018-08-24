@@ -33,7 +33,6 @@ public class AzureProperties extends StepRegistryProperties {
     }
 
     public void setInstrumentationKey(String instrumentationKey) {
-        //System.out.println("Instrumentation key is " +instrumentationKey);
         this.instrumentationKey = instrumentationKey;
     }
 }
