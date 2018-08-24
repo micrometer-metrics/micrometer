@@ -70,12 +70,16 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         Map<String, DatadogMetricMetadata> metadataToSend = new HashMap<>();
 
+        String uriString = config.uri() + "/api/v1/series?api_key=" + config.apiKey();
         URL postTimeSeriesEndpoint;
         try {
-            postTimeSeriesEndpoint = URI.create(config.uri() + "/api/v1/series?api_key=" + config.apiKey()).toURL();
+            postTimeSeriesEndpoint = URI.create(uriString).toURL();
         } catch (MalformedURLException e) {
             // not possible
             throw new RuntimeException(e);
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid URI string for an endpoint to send time series: " + uriString);
+            return;
         }
 
         try {
