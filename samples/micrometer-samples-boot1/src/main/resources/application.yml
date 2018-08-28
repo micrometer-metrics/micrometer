@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-server.port: 8083
+server.port: 8080
 management.security.enabled: false
 
 # see https://stackoverflow.com/questions/44474160/spring-integration-display-warning-that-header-is-ignored-for-population-because
