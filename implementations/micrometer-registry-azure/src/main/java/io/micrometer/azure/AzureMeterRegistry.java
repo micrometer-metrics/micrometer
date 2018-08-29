@@ -41,8 +41,6 @@ import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -64,10 +62,10 @@ public class AzureMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(AzureMeterRegistry.class);
 
     public AzureMeterRegistry(AzureConfig config, @Nullable TelemetryConfiguration configuration, Clock clock) {
-        this(config, clock, configuration, Executors.defaultThreadFactory());
+        this(config, clock, configuration);
     }
 
-    private AzureMeterRegistry(AzureConfig config, Clock clock, @Nullable TelemetryConfiguration clientConfig, ThreadFactory threadFactory) {
+    private AzureMeterRegistry(AzureConfig config, Clock clock, @Nullable TelemetryConfiguration clientConfig) {
         super(config, clock);
 
         config().namingConvention(new AzureNamingConvention());
@@ -89,7 +87,9 @@ public class AzureMeterRegistry extends StepMeterRegistry {
 
         this.client = new TelemetryClient(clientConfig);
         client.getContext().getInternal().setSdkVersion("AzureMicrometerRegistry");
-        start(threadFactory);
+
+        // use Default Daemon ThreadFactory from StepMeterRegistry
+        start();
     }
 
     @Override
