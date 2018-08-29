@@ -26,7 +26,6 @@ import org.springframework.context.annotation.Import;
  * {@link CompositeMeterRegistry}.
  *
  * @author Andy Wilkinson
- * @since 2.0.0
  */
 @Import({ NoOpMeterRegistryConfiguration.class,
         CompositeMeterRegistryConfiguration.class })

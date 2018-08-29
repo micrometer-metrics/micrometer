@@ -23,10 +23,12 @@ import io.micrometer.spring.jdbc.DataSourcePoolMetrics;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.AllNestedConditions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProvider;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
 
@@ -40,12 +42,13 @@ import java.util.Map;
  * {@link DataSource datasources}.
  *
  * @author Stephane Nicoll
+ * @author Johnny Lim
  */
 @Configuration
 @AutoConfigureAfter({ MetricsAutoConfiguration.class, DataSourceAutoConfiguration.class,
     SimpleMetricsExportAutoConfiguration.class })
 @ConditionalOnClass({ DataSource.class, MeterRegistry.class })
-@ConditionalOnBean({ DataSource.class, MeterRegistry.class })
+@Conditional(DataSourcePoolMetricsAutoConfiguration.DataSourcePoolMetricsConditionalOnBeans.class)
 public class DataSourcePoolMetricsAutoConfiguration {
 
     @Configuration
@@ -87,6 +90,22 @@ public class DataSourcePoolMetricsAutoConfiguration {
                     beanName.length() - DATASOURCE_SUFFIX.length());
             }
             return beanName;
+        }
+
+    }
+
+    static class DataSourcePoolMetricsConditionalOnBeans extends AllNestedConditions {
+
+        DataSourcePoolMetricsConditionalOnBeans() {
+            super(ConfigurationPhase.REGISTER_BEAN);
+        }
+
+        @ConditionalOnBean(DataSource.class)
+        static class ConditionalOnDataSourceBean {
+        }
+
+        @ConditionalOnBean(MeterRegistry.class)
+        static class ConditionalOnMeterRegistryBean {
         }
 
     }

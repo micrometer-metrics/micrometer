@@ -30,7 +30,7 @@ import java.util.stream.Stream;
  */
 class CreateDatabaseQueryBuilder {
 
-    private static final String QUERY_MANDATORY_TEMPLATE = "CREATE DATABASE %s";
+    private static final String QUERY_MANDATORY_TEMPLATE = "CREATE DATABASE \"%s\"";
     private static final String RETENTION_POLICY_INTRODUCTION = " WITH";
     private static final String DURATION_CLAUSE_TEMPLATE = " DURATION %s";
     private static final String REPLICATION_FACTOR_CLAUSE_TEMPLATE = " REPLICATION %d";

@@ -69,6 +69,7 @@ public class GangliaMeterRegistry extends DropwizardMeterRegistry {
     public void close() {
         reporter.report();
         stop();
+        this.reporter.close();
         super.close();
     }
 
