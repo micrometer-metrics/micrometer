@@ -315,4 +315,16 @@ public class AzureMeterRegistry extends StepMeterRegistry {
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
     }
+
+    @Override
+    public void close() {
+        try {
+            client.flush();
+            Thread.sleep(2000);
+        }
+        catch (InterruptedException e) {
+            logger.warn("Exception occurred while closing AzureMeterRegistry");
+        }
+
+    }
 }
