@@ -257,25 +257,25 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<String> writeTimer(Timer timer) {
-        final Stream.Builder<Field> fields = Stream.builder();
+        final Stream<Field> fields = Stream.of(
+                new Field("sum", timer.totalTime(getBaseTimeUnit())),
+                new Field("count", timer.count()),
+                new Field("mean", timer.mean(getBaseTimeUnit())),
+                new Field("upper", timer.max(getBaseTimeUnit()))
+        );
 
-        fields.add(new Field("sum", timer.totalTime(getBaseTimeUnit())));
-        fields.add(new Field("count", timer.count()));
-        fields.add(new Field("mean", timer.mean(getBaseTimeUnit())));
-        fields.add(new Field("upper", timer.max(getBaseTimeUnit())));
-
-        return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields.build(), clock.wallTime()));
+        return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields, clock.wallTime()));
     }
 
     private Stream<String> writeSummary(DistributionSummary summary) {
-        final Stream.Builder<Field> fields = Stream.builder();
+        final Stream<Field> fields = Stream.of(
+                new Field("sum", summary.totalAmount()),
+                new Field("count", summary.count()),
+                new Field("mean", summary.mean()),
+                new Field("upper", summary.max())
+        );
 
-        fields.add(new Field("sum", summary.totalAmount()));
-        fields.add(new Field("count", summary.count()));
-        fields.add(new Field("mean", summary.mean()));
-        fields.add(new Field("upper", summary.max()));
-
-        return Stream.of(influxLineProtocol(summary.getId(), "histogram", fields.build(), clock.wallTime()));
+        return Stream.of(influxLineProtocol(summary.getId(), "histogram", fields, clock.wallTime()));
     }
 
     private String influxLineProtocol(Meter.Id id, String metricType, Stream<Field> fields, long time) {
