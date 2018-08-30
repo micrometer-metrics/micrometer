@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.autoconfigure.export.azure;
+package io.micrometer.spring.autoconfigure.export.azuremonitor;
 
 import io.micrometer.spring.autoconfigure.export.StepRegistryProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -24,7 +24,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @author Dhaval Doshi
  */
 @ConfigurationProperties(prefix = "management.metrics.export.azure.application-insights")
-public class AzureProperties extends StepRegistryProperties {
+public class AzureMonitorProperties extends StepRegistryProperties {
 
     private String instrumentationKey;
 

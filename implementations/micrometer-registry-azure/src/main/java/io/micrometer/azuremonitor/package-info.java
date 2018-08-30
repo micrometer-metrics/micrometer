@@ -15,7 +15,7 @@
  */
 @NonNullApi
 @NonNullFields
-package io.micrometer.azure;
+package io.micrometer.azuremonitor;
 
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;

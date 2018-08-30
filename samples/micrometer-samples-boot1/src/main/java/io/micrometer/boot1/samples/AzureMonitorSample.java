@@ -22,9 +22,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackageClasses = PersonController.class)
 @EnableScheduling
-public class AzureSample {
+public class AzureMonitorSample {
 
     public static void main(String[] args) {
-        new SpringApplicationBuilder(AtlasSample.class).profiles("azure").run(args);
+        new SpringApplicationBuilder(AtlasSample.class).profiles("azuremonitor").run(args);
     }
 }

@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.autoconfigure.export.azure;
+package io.micrometer.spring.autoconfigure.export.azuremonitor;
 
 import com.microsoft.applicationinsights.TelemetryConfiguration;
-import io.micrometer.azure.AzureConfig;
-import io.micrometer.azure.AzureMeterRegistry;
+import io.micrometer.azuremonitor.AzureMonitorConfig;
+import io.micrometer.azuremonitor.AzureMonitorMeterRegistry;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.spring.autoconfigure.CompositeMeterRegistryAutoConfiguration;
@@ -44,22 +44,22 @@ import org.springframework.context.annotation.Import;
     SimpleMetricsExportAutoConfiguration.class})
 @AutoConfigureAfter(MetricsAutoConfiguration.class)
 @ConditionalOnBean(Clock.class)
-@ConditionalOnClass(AzureMeterRegistry.class)
+@ConditionalOnClass(AzureMonitorMeterRegistry.class)
 @ConditionalOnProperty(prefix = "management.metrics.export.azure.application-insights", name = "enabled", havingValue = "true", matchIfMissing = true)
-@EnableConfigurationProperties(AzureProperties.class)
+@EnableConfigurationProperties(AzureMonitorProperties.class)
 @Import(StringToDurationConverter.class)
-public class AzureMetricsExportAutoConfiguration {
+public class AzureMonitorMetricsExportAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public AzureConfig azureConfig(AzureProperties properties) {
-        return new AzurePropertiesConfigAdapter(properties);
+    public AzureMonitorConfig azureConfig(AzureMonitorProperties properties) {
+        return new AzureMonitorPropertiesConfigAdapter(properties);
     }
 
     // This bean is usually available if the user has configured ApplicationInsights-Spring-Boot-Starter
     @Bean
     @ConditionalOnMissingBean
-    public TelemetryConfiguration telemetryConfiguration(AzureConfig config) {
+    public TelemetryConfiguration telemetryConfiguration(AzureMonitorConfig config) {
         // Gets the active instance of TelemetryConfiguration either created by starter or xml
         TelemetryConfiguration telemetryConfiguration = TelemetryConfiguration.getActive();
         if (StringUtils.isEmpty(telemetryConfiguration.getInstrumentationKey())) {
@@ -70,7 +70,7 @@ public class AzureMetricsExportAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public AzureMeterRegistry azureMeterRegistry(AzureConfig config, TelemetryConfiguration configuration, Clock clock) {
-        return new AzureMeterRegistry(config, configuration, clock);
+    public AzureMonitorMeterRegistry azureMeterRegistry(AzureMonitorConfig config, TelemetryConfiguration configuration, Clock clock) {
+        return new AzureMonitorMeterRegistry(config, configuration, clock);
     }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.azure;
+package io.micrometer.azuremonitor;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
  * Naming convention to push metrics to Azure Application Insights
  * @author Dhaval Doshi
  */
-public class AzureNamingConvention implements NamingConvention {
+public class AzureMonitorNamingConvention implements NamingConvention {
 
     /**
      * Regex to detect unusable characters in tags
@@ -33,11 +33,11 @@ public class AzureNamingConvention implements NamingConvention {
 
     private final NamingConvention delegate;
 
-    public AzureNamingConvention() {
+    public AzureMonitorNamingConvention() {
         this(NamingConvention.dot);
     }
 
-    public AzureNamingConvention(NamingConvention delegate) {
+    public AzureMonitorNamingConvention(NamingConvention delegate) {
         this.delegate = delegate;
     }
 

@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.autoconfigure.export.azure;
+package io.micrometer.spring.autoconfigure.export.azuremonitor;
 
-import io.micrometer.azure.AzureConfig;
+import io.micrometer.azuremonitor.AzureMonitorConfig;
 import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
 
 /**
- * Adapter to convert {@link AzureProperties} to a {@link AzureConfig}.
+ * Adapter to convert {@link AzureMonitorProperties} to a {@link AzureMonitorConfig}.
  *
  * @author Dhaval Doshi
  */
-public class AzurePropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<AzureProperties>
-implements AzureConfig {
+public class AzureMonitorPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<AzureMonitorProperties>
+implements AzureMonitorConfig {
 
-    AzurePropertiesConfigAdapter(
-        AzureProperties properties) {
+    AzureMonitorPropertiesConfigAdapter(
+        AzureMonitorProperties properties) {
         super(properties);
     }
 
     @Override
     public String instrumentationKey() {
-        return get(AzureProperties::getInstrumentationKey, AzureConfig.super::instrumentationKey);
+        return get(AzureMonitorProperties::getInstrumentationKey, AzureMonitorConfig.super::instrumentationKey);
     }
 }

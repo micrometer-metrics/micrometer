@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.azure;
+package io.micrometer.azuremonitor;
 
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.instrument.util.StringUtils;
 
 /**
- * Configuration for {@link AzureMeterRegistry}
+ * Configuration for {@link AzureMonitorMeterRegistry}
  * @author Dhaval Doshi
  */
-public interface AzureConfig extends StepRegistryConfig {
-    AzureConfig DEFAULT = k -> null;
+public interface AzureMonitorConfig extends StepRegistryConfig {
+    AzureMonitorConfig DEFAULT = k -> null;
     /**
      * Azure Monitor Prefix
      */

@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.azure;
+package io.micrometer.azuremonitor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.micrometer.core.instrument.Meter.Type;
 import org.junit.jupiter.api.Test;
 
-class AzureNamingConventionTest {
-    private final AzureNamingConvention namingConvention = new AzureNamingConvention();
+class AzureMonitorNamingConventionTest {
+    private final AzureMonitorNamingConvention namingConvention = new AzureMonitorNamingConvention();
 
     @Test
     void testNameContainsDesiredCharacters() {
