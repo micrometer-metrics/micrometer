@@ -226,7 +226,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             fields.add(new Field(fieldKey, measurement.getValue()));
         }
 
-        return Stream.of(influxLineProtocol(m.getId(), "unknown", fields.build(), clock.wallTime()));
+        return Stream.of(influxLineProtocol(m.getId(), "unknown", fields.build()));
     }
 
     private Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
@@ -234,16 +234,16 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 new Field("active_tasks", timer.activeTasks()),
                 new Field("duration", timer.duration(getBaseTimeUnit()))
         );
-        return Stream.of(influxLineProtocol(timer.getId(), "long_task_timer", fields, clock.wallTime()));
+        return Stream.of(influxLineProtocol(timer.getId(), "long_task_timer", fields));
     }
 
     private Stream<String> writeCounter(Meter.Id id, double count) {
-        return Stream.of(influxLineProtocol(id, "counter", Stream.of(new Field("value", count)), clock.wallTime()));
+        return Stream.of(influxLineProtocol(id, "counter", Stream.of(new Field("value", count))));
     }
 
     private Stream<String> writeGauge(Meter.Id id, Double value) {
         return value.isNaN() ? Stream.empty() :
-                Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value)), clock.wallTime()));
+                Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value))));
     }
 
     private Stream<String> writeTimer(FunctionTimer timer) {
@@ -253,7 +253,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 new Field("mean", timer.mean(getBaseTimeUnit()))
         );
 
-        return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields, clock.wallTime()));
+        return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields));
     }
 
     private Stream<String> writeTimer(Timer timer) {
@@ -264,7 +264,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 new Field("upper", timer.max(getBaseTimeUnit()))
         );
 
-        return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields, clock.wallTime()));
+        return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields));
     }
 
     private Stream<String> writeSummary(DistributionSummary summary) {
@@ -275,10 +275,10 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 new Field("upper", summary.max())
         );
 
-        return Stream.of(influxLineProtocol(summary.getId(), "histogram", fields, clock.wallTime()));
+        return Stream.of(influxLineProtocol(summary.getId(), "histogram", fields));
     }
 
-    private String influxLineProtocol(Meter.Id id, String metricType, Stream<Field> fields, long time) {
+    private String influxLineProtocol(Meter.Id id, String metricType, Stream<Field> fields) {
         String tags = getConventionTags(id).stream()
                 .map(t -> "," + t.getKey() + "=" + t.getValue())
                 .collect(joining(""));
@@ -286,7 +286,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return getConventionName(id)
                 + tags + ",metric_type=" + metricType + " "
                 + fields.map(Field::toString).collect(joining(","))
-                + " " + time;
+                + " " + clock.wallTime();
     }
 
     @Override
