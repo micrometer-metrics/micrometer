@@ -59,6 +59,8 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
 
     private final String SDKTELEMETRY_SYNTHETIC_SOURCENAME = "SDKTelemetry";
 
+    private final String SDK_VERSION = "micrometer:1.0.0";
+
     private final Logger logger = LoggerFactory.getLogger(AzureMonitorMeterRegistry.class);
 
     public AzureMonitorMeterRegistry(AzureMonitorConfig config, @Nullable TelemetryConfiguration configuration, Clock clock) {
@@ -83,10 +85,12 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
             clientConfig.setInstrumentationKey(config.instrumentationKey());
         }
 
+        //TODO: If clientConfig.getChannel() instance of LocalForwarderTelemetryChannel
+        // set step size for aggregation to be 1sec to support live stream
         requireNonNull(clientConfig);
 
         this.client = new TelemetryClient(clientConfig);
-        client.getContext().getInternal().setSdkVersion("AzureMicrometerRegistry");
+        client.getContext().getInternal().setSdkVersion(SDK_VERSION);
 
         // use Default Daemon ThreadFactory from StepMeterRegistry
         start();
@@ -320,6 +324,7 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     public void close() {
         try {
             client.flush();
+            //This will attempt to send any remaining items on wire, but is not always assured.
             Thread.sleep(2000);
         }
         catch (InterruptedException e) {
