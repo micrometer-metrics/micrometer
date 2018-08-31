@@ -47,6 +47,7 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
 
     private static final String DESCRIPTION_HYSTRIX_EXECUTION = "Execution results. See https://github.com/Netflix/Hystrix/wiki/Metrics-and-Monitoring#command-execution-event-types-comnetflixhystrixhystrixeventtype for type definitions";
     private static final String DESCRIPTION_HYSTRIX_EXECUTION_TERMINAL_TOTAL = "Sum of all terminal executions. Use this to derive percentages from hystrix.execution";
+    private static final double[] HYSTRIX_METRIC_PERCENTILES = {.05, .25, .50, .75, .90, .99, .995};
 
     private final MeterRegistry meterRegistry;
     private final HystrixCommandMetrics metrics;
@@ -82,8 +83,12 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
             .tags(Tags.concat(tags))
             .register(meterRegistry);
 
-        final Timer latencyExecution = Timer.builder(NAME_HYSTRIX_LATENCY_EXECUTION).tags(tags).register(meterRegistry);
-        final Timer latencyTotal = Timer.builder(NAME_HYSTRIX_LATENCY_TOTAL).tags(tags).register(meterRegistry);
+        final Timer latencyExecution = Timer.builder(NAME_HYSTRIX_LATENCY_EXECUTION).tags(tags)
+            .publishPercentiles(HYSTRIX_METRIC_PERCENTILES)
+            .register(meterRegistry);
+        final Timer latencyTotal = Timer.builder(NAME_HYSTRIX_LATENCY_TOTAL).tags(tags)
+            .publishPercentiles(HYSTRIX_METRIC_PERCENTILES)
+            .register(meterRegistry);
 
         HystrixCommandCompletionStream.getInstance(commandKey)
             .observe()
