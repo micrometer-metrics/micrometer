@@ -38,19 +38,20 @@ import java.util.function.BiConsumer;
 @NonNullApi
 @NonNullFields
 public class TomcatMetrics implements MeterBinder {
-    private final MBeanServer mBeanServer;
-    private final Iterable<Tag> tags;
 
     @Nullable
     private final Manager manager;
+
+    private final MBeanServer mBeanServer;
+    private final Iterable<Tag> tags;
 
     public TomcatMetrics(@Nullable Manager manager, Iterable<Tag> tags) {
         this(manager, tags, getMBeanServer());
     }
 
     public TomcatMetrics(@Nullable Manager manager, Iterable<Tag> tags, MBeanServer mBeanServer) {
-        this.tags = tags;
         this.manager = manager;
+        this.tags = tags;
         this.mBeanServer = mBeanServer;
     }
 
@@ -71,12 +72,15 @@ public class TomcatMetrics implements MeterBinder {
     }
 
     @Override
-    public void bindTo(MeterRegistry reg) {
-        registerGlobalRequestMetrics(reg);
-        registerServletMetrics(reg);
-        registerCacheMetrics(reg);
-        registerThreadPoolMetrics(reg);
+    public void bindTo(MeterRegistry registry) {
+        registerGlobalRequestMetrics(registry);
+        registerServletMetrics(registry);
+        registerCacheMetrics(registry);
+        registerThreadPoolMetrics(registry);
+        registerSessionMetrics(registry);
+    }
 
+    private void registerSessionMetrics(MeterRegistry registry) {
         if (manager == null) {
             // If the binder is created but unable to find the session manager don't register those metrics
             return;
@@ -84,27 +88,27 @@ public class TomcatMetrics implements MeterBinder {
 
         Gauge.builder("tomcat.sessions.active.max", manager, Manager::getMaxActive)
             .tags(tags)
-            .register(reg);
+            .register(registry);
 
         Gauge.builder("tomcat.sessions.active.current", manager, Manager::getActiveSessions)
             .tags(tags)
-            .register(reg);
+            .register(registry);
 
         FunctionCounter.builder("tomcat.sessions.created", manager, Manager::getSessionCounter)
             .tags(tags)
-            .register(reg);
+            .register(registry);
 
         FunctionCounter.builder("tomcat.sessions.expired", manager, Manager::getExpiredSessions)
             .tags(tags)
-            .register(reg);
+            .register(registry);
 
         FunctionCounter.builder("tomcat.sessions.rejected", manager, Manager::getRejectedSessions)
             .tags(tags)
-            .register(reg);
+            .register(registry);
 
         TimeGauge.builder("tomcat.sessions.alive.max", manager, TimeUnit.SECONDS, Manager::getSessionMaxAliveTime)
             .tags(tags)
-            .register(reg);
+            .register(registry);
     }
 
     private void registerThreadPoolMetrics(MeterRegistry registry) {
@@ -198,10 +202,10 @@ public class TomcatMetrics implements MeterBinder {
      */
     private void registerMetricsEventually(String key, String value, BiConsumer<ObjectName, Iterable<Tag>> perObject) {
         try {
-            Set<ObjectName> objs = mBeanServer.queryNames(new ObjectName("Tomcat:" + key + "=" + value + ",*"), null);
-            if (!objs.isEmpty()) {
+            Set<ObjectName> objectNames = mBeanServer.queryNames(new ObjectName("Tomcat:" + key + "=" + value + ",*"), null);
+            if (!objectNames.isEmpty()) {
                 // MBean is present, so we can register metrics now.
-                objs.forEach(o -> perObject.accept(o, Tags.concat(tags, nameTag(o))));
+                objectNames.forEach(objectName -> perObject.accept(objectName, Tags.concat(tags, nameTag(objectName))));
                 return;
             }
         } catch (MalformedObjectNameException e) {
@@ -212,23 +216,23 @@ public class TomcatMetrics implements MeterBinder {
         // MBean isn't yet registered, so we'll set up a notification to wait for them to be present and register
         // metrics later.
         NotificationListener notificationListener = (notification, handback) -> {
-            MBeanServerNotification mbs = (MBeanServerNotification) notification;
-            ObjectName obj = mbs.getMBeanName();
-            perObject.accept(obj, Tags.concat(tags, nameTag(obj)));
+            MBeanServerNotification mBeanServerNotification = (MBeanServerNotification) notification;
+            ObjectName objectName = mBeanServerNotification.getMBeanName();
+            perObject.accept(objectName, Tags.concat(tags, nameTag(objectName)));
         };
 
-        NotificationFilter filter = (NotificationFilter) notification -> {
-            if (!MBeanServerNotification.REGISTRATION_NOTIFICATION.equals(notification.getType()))
+        NotificationFilter notificationFilter = (NotificationFilter) notification -> {
+            if (!MBeanServerNotification.REGISTRATION_NOTIFICATION.equals(notification.getType())) {
                 return false;
+            }
 
             // we can safely downcast now
-            ObjectName obj = ((MBeanServerNotification) notification).getMBeanName();
-            return obj.getDomain().equals("Tomcat") && obj.getKeyProperty(key).equals(value);
-
+            ObjectName objectName = ((MBeanServerNotification) notification).getMBeanName();
+            return objectName.getDomain().equals("Tomcat") && objectName.getKeyProperty(key).equals(value);
         };
 
         try {
-            mBeanServer.addNotificationListener(MBeanServerDelegate.DELEGATE_NAME, notificationListener, filter, null);
+            mBeanServer.addNotificationListener(MBeanServerDelegate.DELEGATE_NAME, notificationListener, notificationFilter, null);
         } catch (InstanceNotFoundException e) {
             // should never happen
             throw new RuntimeException("Error registering MBean listener", e);
@@ -252,10 +256,10 @@ public class TomcatMetrics implements MeterBinder {
     }
 
     private Iterable<Tag> nameTag(ObjectName name) {
-        if (name.getKeyProperty("name") != null) {
-            return Tags.of("name", name.getKeyProperty("name").replaceAll("\"", ""));
-        } else {
-            return Collections.emptyList();
+        String nameTagValue = name.getKeyProperty("name");
+        if (nameTagValue != null) {
+            return Tags.of("name", nameTagValue.replaceAll("\"", ""));
         }
+        return Collections.emptyList();
     }
 }
