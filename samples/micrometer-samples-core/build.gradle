@@ -9,7 +9,7 @@ dependencies {
         force = true
     }
 
-    ['atlas', 'prometheus', 'datadog', 'ganglia', 'elastic','graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront', 'dynatrace', 'azure'].each { sys ->
+    ['atlas', 'prometheus', 'datadog', 'ganglia', 'elastic','graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront', 'dynatrace', 'azuremonitor'].each { sys ->
         compile project(":micrometer-registry-$sys")
     }
 
