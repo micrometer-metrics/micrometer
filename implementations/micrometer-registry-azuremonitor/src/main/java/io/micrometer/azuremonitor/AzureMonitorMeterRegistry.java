@@ -326,6 +326,7 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
             client.flush();
             //This will attempt to send any remaining items on wire, but is not always assured.
             Thread.sleep(2000);
+            super.close();
         }
         catch (InterruptedException e) {
             logger.warn("Exception occurred while closing AzureMonitorMeterRegistry");
