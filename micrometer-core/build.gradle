@@ -75,6 +75,8 @@ dependencies {
     testCompile 'org.assertj:assertj-core:latest.release'
 
     testCompile 'org.ehcache:ehcache:3.+'
+
+    testCompile 'org.apache.kafka:kafka-clients:latest.release'
 }
 
 shadowJar {

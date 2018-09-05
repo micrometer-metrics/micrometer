@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,37 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
-
+import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 
 import javax.management.*;
 import java.lang.management.ManagementFactory;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import static java.util.Collections.emptyList;
+
 /**
- * Kafka Consumer metrics collected from metrics exposed by org.apache.kafka.clients.consumer.KafkaConsumer
+ * Kafka consumer metrics collected from metrics exposed by {@see org.apache.kafka.clients.consumer.KafkaConsumer}
  * via the MBeanServer. Metrics are exposed at each consumer thread.
+ * <p>
+ * Metric names here are based on the naming scheme as it was last changed in Kafka version 0.11.0. Metric for earlier
+ * versions of Kafka will not report correctly.
  *
  * @author Wardha Perinkadakattu
+ * @author Jon Schneider
+ * @link https://docs.confluent.io/current/kafka/monitoring.html
  */
-
 @NonNullApi
 @NonNullFields
+@Incubating(since = "1.1.0")
 public class KafkaConsumerMetrics implements MeterBinder {
 
     private final MBeanServer mBeanServer;
@@ -57,7 +65,7 @@ public class KafkaConsumerMetrics implements MeterBinder {
         this.mBeanServer = mBeanServer;
     }
 
-    public static MBeanServer getMBeanServer() {
+    private static MBeanServer getMBeanServer() {
         List<MBeanServer> mBeanServers = MBeanServerFactory.findMBeanServer(null);
         if (!mBeanServers.isEmpty()) {
             return mBeanServers.get(0);
@@ -66,77 +74,126 @@ public class KafkaConsumerMetrics implements MeterBinder {
     }
 
     @Override
-    public void bindTo(MeterRegistry reg) {
-        registerConsumerFetchMetrics(reg);
-        registerConsumerCoordinatorMetrics(reg);
-    }
+    public void bindTo(MeterRegistry registry) {
+        registerMetricsEventually("consumer-fetch-manager-metrics", (o, tags) -> {
 
-    private void registerConsumerFetchMetrics(MeterRegistry registry) {
+            registerGaugeForObject(registry, o, "records-lag-max", tags, "The maximum lag in terms of number of records for any partition in this window. An increasing value over time is your best indication that the consumer group is not keeping up with the producers.", "records");
+            registerGaugeForObject(registry, o, "fetch-size-avg", tags, "The average number of bytes fetched per request.", "bytes");
+            registerGaugeForObject(registry, o, "fetch-size-max", tags, "The maximum number of bytes fetched per request.", "bytes");
+            registerGaugeForObject(registry, o, "records-per-request-avg", tags, "The average number of records in each request.", "records");
 
-        registerMetricsEventually("type", "consumer-fetch-manager-metrics", (name, allTags) -> {
+            registerFunctionCounterForObject(registry, o, "fetch-total", tags, "The number of fetch requests.", "requests");
+            registerFunctionCounterForObject(registry, o, "bytes-consumed-total", tags, "The average number of bytes consumed.", "bytes");
+            registerFunctionCounterForObject(registry, o, "records-consumed-total", tags, "The average number of records consumed.", "records");
 
-                Gauge.builder("kafka.records.lag.max", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "records-lag-max")))
-                    .tags(allTags)
-                    .register(registry);
-
-                Gauge.builder("kafka.fetch.latency.avg", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "fetch-latency-avg")))
-                    .tags(allTags)
-                    .register(registry);
-
-                FunctionCounter.builder("kafka.bytes.consumed", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "bytes-consumed-rate")))
-                    .tags(allTags)
-                    .baseUnit("bytes")
-                    .register(registry);
-
-                Gauge.builder("kafka.fetch.size.max", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "fetch-size-max")))
-                    .tags(allTags)
-                    .baseUnit("bytes")
-                    .register(registry);
-
-                FunctionCounter.builder("kafka.records.consumed", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "records-consumed-rate")))
-                    .tags(allTags)
-                    .register(registry);
+            if (kafkaMajorVersion(tags) >= 2) {
+                // KAFKA-6184
+                registerTimeGaugeForObject(registry, o, "records-lead-min", tags, "The lag between the consumer offset and the start offset of the log. If this gets close to zero, it's an indication that the consumer may lose data soon.");
             }
-        );
-    }
 
-    private void registerConsumerCoordinatorMetrics(MeterRegistry registry) {
+            registerTimeGaugeForObject(registry, o, "fetch-latency-avg", tags, "The average time taken for a fetch request.");
+            registerTimeGaugeForObject(registry, o, "fetch-latency-max", tags, "The max time taken for a fetch request.");
+            registerTimeGaugeForObject(registry, o, "fetch-throttle-time-avg", tags, "The average throttle time. When quotas are enabled, the broker may delay fetch requests in order to throttle a consumer which has exceeded its limit. This metric indicates how throttling time has been added to fetch requests on average.");
+            registerTimeGaugeForObject(registry, o, "fetch-throttle-time-max", tags, "The maximum throttle time.");
+        });
 
-        registerMetricsEventually("type", "consumer-coordinator-metrics", (name, allTags) -> {
+        registerMetricsEventually("consumer-coordinator-metrics", (o, tags) -> {
+            registerGaugeForObject(registry, o, "assigned-partitions", tags, "The number of partitions currently assigned to this consumer.", "partitions");
+            registerGaugeForObject(registry, o, "commit-rate", tags, "The number of commit calls per second.", "commits");
+            registerGaugeForObject(registry, o, "join-rate", tags, "The number of group joins per second. Group joining is the first phase of the rebalance protocol. A large value indicates that the consumer group is unstable and will likely be coupled with increased lag.", "joins");
+            registerGaugeForObject(registry, o, "sync-rate", tags, "The number of group syncs per second. Group synchronization is the second and last phase of the rebalance protocol. A large value indicates group instability.", "syncs");
+            registerGaugeForObject(registry, o, "heartbeat-rate", tags, "The average number of heartbeats per second. After a rebalance, the consumer sends heartbeats to the coordinator to keep itself active in the group. You may see a lower rate than configured if the processing loop is taking more time to handle message batches. Usually this is OK as long as you see no increase in the join rate.", "heartbeats");
 
-                Gauge.builder("kafka.assigned.partitions", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "assigned-partitions")))
-                    .tags(allTags)
-                    .register(registry);
+            registerTimeGaugeForObject(registry, o, "commit-latency-avg", tags, "The average time taken for a commit request.");
+            registerTimeGaugeForObject(registry, o, "commit-latency-max", tags, "The max time taken for a commit request.");
+            registerTimeGaugeForObject(registry, o, "join-time-avg", tags, "The average time taken for a group rejoin. This value can get as high as the configured session timeout for the consumer, but should usually be lower.");
+            registerTimeGaugeForObject(registry, o, "join-time-max", tags, "The max time taken for a group rejoin. This value should not get much higher than the configured session timeout for the consumer.");
+            registerTimeGaugeForObject(registry, o, "sync-time-avg", tags, "The average time taken for a group sync.");
+            registerTimeGaugeForObject(registry, o, "sync-time-max", tags, "The max time taken for a group sync.");
+            registerTimeGaugeForObject(registry, o, "heartbeat-response-time-max", tags, "The max time taken to receive a response to a heartbeat request.");
+            registerTimeGaugeForObject(registry, o, "last-heartbeat-seconds-ago", "last-heartbeat", tags, "The time since the last controller heartbeat.");
+        });
 
-                Gauge.builder("kafka.commit.latency.avg", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "commit-latency-avg")))
-                    .tags(allTags)
-                    .register(registry);
+        registerMetricsEventually("consumer-metrics", (o, tags) -> {
+            registerGaugeForObject(registry, o, "connection-count", tags, "The current number of active connections.", "connections");
+            registerGaugeForObject(registry, o, "connections-creation-total", tags, "New connections established.", "connections");
+            registerGaugeForObject(registry, o, "connections-close-total", tags, "Connections closed.", "connections");
+            registerGaugeForObject(registry, o, "io-ratio", tags, "The fraction of time the I/O thread spent doing I/O.", null);
+            registerGaugeForObject(registry, o, "io-wait-ratio", tags, "The fraction of time the I/O thread spent waiting.", null);
+            registerGaugeForObject(registry, o, "select-total", tags, "Number of times the I/O layer checked for new I/O to perform.", null);
 
-                Gauge.builder("kafka.commit.latency.max", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "commit-latency-max")))
-                    .tags(allTags)
-                    .register(registry);
+            registerTimeGaugeForObject(registry, o, "io-time-ns-avg", "io-time-avg", tags, "The average length of time for I/O per select call.");
+            registerTimeGaugeForObject(registry, o, "io-wait-time-ns-avg", "io-wait-time-avg", tags, "The average length of time the I/O thread spent waiting for a socket to be ready for reads or writes.");
 
-                FunctionCounter.builder("kafka.commit", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "commit-rate")))
-                    .tags(allTags)
-                    .register(registry);
+            if (kafkaMajorVersion(tags) >= 2) {
+                registerGaugeForObject(registry, o, "successful-authentication-total", "authentication-attempts",
+                        Tags.concat(tags, "result", "successful"), "The number of authentication attempts.", "");
+                registerGaugeForObject(registry, o, "failed-authentication-total", "authentication-attempts",
+                        Tags.concat(tags, "result", "failed"), "The number of authentication attempts.", "");
+
+                registerGaugeForObject(registry, o, "network-io-total", tags, "", "bytes");
+                registerGaugeForObject(registry, o, "outgoing-byte-total", tags, "", "bytes");
+                registerGaugeForObject(registry, o, "request-total", tags, "", "requests");
+                registerGaugeForObject(registry, o, "response-total", tags, "", "responses");
+
+                registerTimeGaugeForObject(registry, o, "io-waittime-total", "io-wait-time-total", tags, "Time spent on the I/O thread waiting for a socket to be ready for reads or writes.");
+                registerTimeGaugeForObject(registry, o, "iotime-total", "io-time-total", tags, "Time spent in I/O during select calls.");
             }
-        );
+        });
     }
 
-    private void registerMetricsEventually(String key, String value, BiConsumer<ObjectName, Iterable<Tag>> perObject) {
+    private void registerGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, String meterName, Tags allTags, String description, @Nullable String baseUnit) {
+        Gauge.builder("kafka.consumer." + meterName, mBeanServer, s -> safeDouble(() -> s.getAttribute(o, jmxMetricName)))
+                .description(description)
+                .baseUnit(baseUnit)
+                .tags(allTags)
+                .register(registry);
+    }
+
+    private void registerGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, Tags allTags, String description, @Nullable String baseUnit) {
+        registerGaugeForObject(registry, o, jmxMetricName, jmxMetricName.replaceAll("-", "."), allTags, description, baseUnit);
+    }
+
+    private void registerFunctionCounterForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, Tags allTags, String description, @Nullable String baseUnit) {
+        FunctionCounter.builder("kafka.consumer." + jmxMetricName.replaceAll("-", "."), mBeanServer, s -> safeDouble(() -> s.getAttribute(o, jmxMetricName)))
+                .description(description)
+                .baseUnit(baseUnit)
+                .tags(allTags)
+                .register(registry);
+    }
+
+    private void registerTimeGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, String meterName, Tags allTags, String description) {
+        TimeGauge.builder("kafka.consumer." + meterName, mBeanServer, TimeUnit.MILLISECONDS,
+                s -> safeDouble(() -> s.getAttribute(o, jmxMetricName)))
+                .description(description)
+                .tags(allTags)
+                .register(registry);
+    }
+
+    private void registerTimeGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, Tags allTags, String description) {
+        registerTimeGaugeForObject(registry, o, jmxMetricName, jmxMetricName.replaceAll("-", "."), allTags, description);
+    }
+
+    int kafkaMajorVersion(Tags tags) {
+        return tags.stream().filter(t -> "client.id".equals(t.getKey())).findAny()
+                .map(clientId -> {
+                    try {
+                        String version = (String) mBeanServer.getAttribute(new ObjectName("kafka.consumer:type=app-info,client-id=" + clientId.getValue()), "version");
+                        return Integer.parseInt(version.substring(0, version.indexOf('.')));
+                    } catch (Throwable e) {
+                        return -1; // should never happen
+                    }
+                })
+                .orElse(-1);
+    }
+
+    private void registerMetricsEventually(String type, BiConsumer<ObjectName, Tags> perObject) {
         try {
-            Set<ObjectName> objs = mBeanServer.queryNames(new ObjectName("kafka.consumer:" + key + "=" + value + ",*"), null);
+            Set<ObjectName> objs = mBeanServer.queryNames(new ObjectName("kafka.consumer:type=" + type + ",*"), null);
             if (!objs.isEmpty()) {
-                objs.forEach(o -> perObject.accept(o, Tags.concat(tags, nameTag(o))));
+                for (ObjectName o : objs) {
+                    perObject.accept(o, Tags.concat(tags, nameTag(o)));
+                }
                 return;
             }
         } catch (MalformedObjectNameException e) {
@@ -145,15 +202,15 @@ public class KafkaConsumerMetrics implements MeterBinder {
 
         NotificationListener notificationListener = (notification, handback) -> {
             MBeanServerNotification mbs = (MBeanServerNotification) notification;
-            ObjectName obj = mbs.getMBeanName();
-            perObject.accept(obj, Tags.concat(tags, nameTag(obj)));
+            ObjectName o = mbs.getMBeanName();
+            perObject.accept(o, Tags.concat(tags, nameTag(o)));
         };
 
         NotificationFilter filter = (NotificationFilter) notification -> {
             if (!MBeanServerNotification.REGISTRATION_NOTIFICATION.equals(notification.getType()))
                 return false;
             ObjectName obj = ((MBeanServerNotification) notification).getMBeanName();
-            return obj.getDomain().equals("kafka.consumer") && obj.getKeyProperty(key).equals(value);
+            return obj.getDomain().equals("kafka.consumer") && obj.getKeyProperty("type").equals(type);
         };
 
         try {
@@ -167,16 +224,21 @@ public class KafkaConsumerMetrics implements MeterBinder {
         try {
             return Double.parseDouble(callable.call().toString());
         } catch (Exception e) {
-            return 0.0;
+            return Double.NaN;
         }
     }
 
     private Iterable<Tag> nameTag(ObjectName name) {
+        Tags tags = Tags.empty();
+
         if (name.getKeyProperty("client-id") != null) {
-            return Tags.of("consumer", name.getKeyProperty("client-id"),
-                "topic", (null != name.getKeyProperty("topic") ? name.getKeyProperty("topic") : "all"));
-        } else {
-            return emptyList();
+            tags = Tags.concat(tags, "client.id", name.getKeyProperty("client-id"));
         }
+
+        if (name.getKeyProperty("topic") != null) {
+            tags = Tags.concat(tags, "topic", name.getKeyProperty("topic"));
+        }
+
+        return tags;
     }
 }

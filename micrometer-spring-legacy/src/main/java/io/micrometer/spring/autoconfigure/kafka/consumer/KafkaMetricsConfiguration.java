@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,17 @@ import io.micrometer.core.instrument.binder.kafka.KafkaConsumerMetrics;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 /**
- * Configuration for KafkaConsumerMetrics {@link KafkaConsumerMetrics}.
+ * Configuration for {@link KafkaConsumerMetrics}.
  *
  * @author Wardha Perinkadakattu
  */
 @Configuration
-@ConditionalOnProperty(value = "management.metrics.kafka.consumer.enabled", matchIfMissing = true)
-public class KafkaConsumerMetricsConfiguration {
+public class KafkaMetricsConfiguration {
 
     @Bean
+    @ConditionalOnProperty(value = "management.metrics.kafka.consumer.enabled", matchIfMissing = true)
     public KafkaConsumerMetrics kafkaConsumerMetrics() {
         return new KafkaConsumerMetrics();
     }

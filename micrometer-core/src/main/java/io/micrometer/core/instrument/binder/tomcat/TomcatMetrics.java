@@ -239,7 +239,7 @@ public class TomcatMetrics implements MeterBinder {
         try {
             return Double.parseDouble(callable.call().toString());
         } catch (Exception e) {
-            return 0.0;
+            return Double.NaN;
         }
     }
 
