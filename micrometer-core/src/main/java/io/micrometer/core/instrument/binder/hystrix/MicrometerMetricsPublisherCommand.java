@@ -42,8 +42,8 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
     private static final String NAME_HYSTRIX_EXECUTION_TERMINAL_TOTAL = "hystrix.execution.terminal";
     private static final String NAME_HYSTRIX_LATENCY_EXECUTION = "hystrix.latency.execution";
     private static final String NAME_HYSTRIX_LATENCY_TOTAL = "hystrix.latency.total";
-    private static final String NAME_HYSTRIX_THREADPOOL_CONCURRENT_EXECUTION_CURRENT = "hystrix.threadpool.concurrent.execution.current";
-    private static final String NAME_HYSTRIX_THREADPOOL_CONCURRENT_EXECUTION_ROLLING_MAX = "hystrix.threadpool.concurrent.execution.rolling.max";
+    private static final String NAME_HYSTRIX_CONCURRENT_EXECUTION_CURRENT = "hystrix.concurrent.execution.current";
+    private static final String NAME_HYSTRIX_CONCURRENT_EXECUTION_ROLLING_MAX = "hystrix.concurrent.execution.rolling.max";
 
     private static final String DESCRIPTION_HYSTRIX_EXECUTION = "Execution results. See https://github.com/Netflix/Hystrix/wiki/Metrics-and-Monitoring#command-execution-event-types-comnetflixhystrixhystrixeventtype for type definitions";
     private static final String DESCRIPTION_HYSTRIX_EXECUTION_TERMINAL_TOTAL = "Sum of all terminal executions. Use this to derive percentages from hystrix.execution";
@@ -123,12 +123,13 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
                     }
                 }
             });
-        String threadPool = metrics.getThreadPoolKey().name();
-        Gauge.builder(NAME_HYSTRIX_THREADPOOL_CONCURRENT_EXECUTION_CURRENT, metrics, HystrixCommandMetrics::getCurrentConcurrentExecutionCount)
-            .tags(Tags.concat(tags, "threadpool", threadPool))
+
+        Gauge.builder(NAME_HYSTRIX_CONCURRENT_EXECUTION_CURRENT, metrics, HystrixCommandMetrics::getCurrentConcurrentExecutionCount)
+            .tags(tags)
             .register(meterRegistry);
-        Gauge.builder(NAME_HYSTRIX_THREADPOOL_CONCURRENT_EXECUTION_ROLLING_MAX, metrics, HystrixCommandMetrics::getRollingMaxConcurrentExecutions)
-            .tags(Tags.concat(tags, "threadpool", threadPool))
+
+        Gauge.builder(NAME_HYSTRIX_CONCURRENT_EXECUTION_ROLLING_MAX, metrics, HystrixCommandMetrics::getRollingMaxConcurrentExecutions)
+            .tags(tags)
             .register(meterRegistry);
     }
 

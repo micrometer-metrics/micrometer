@@ -20,7 +20,6 @@ import com.netflix.hystrix.strategy.HystrixPlugins;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisher;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.hystrix.deprecated10.MicrometerMetricsPublisherDeprecated10x;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +48,7 @@ class MicrometerMetricsPublisherCommandTest {
     }
 
     @Test
-    void testCumulativeCounters() throws Exception {
+    void cumulativeCounters() throws Exception {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         HystrixMetricsPublisher metricsPublisher = HystrixPlugins.getInstance().getMetricsPublisher();
         HystrixPlugins.reset();
@@ -90,7 +89,7 @@ class MicrometerMetricsPublisherCommandTest {
     }
 
     @Test
-    void testOpenCircuit() {
+    void openCircuit() {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         HystrixMetricsPublisher metricsPublisher = HystrixPlugins.getInstance().getMetricsPublisher();
         HystrixPlugins.reset();
@@ -113,23 +112,6 @@ class MicrometerMetricsPublisherCommandTest {
         assertExecutionMetric(registry, tags, HystrixEventType.TIMEOUT, 0.0);
         assertExecutionMetric(registry, tags, HystrixEventType.FAILURE, 0.0);
         assertThat(registry.get("hystrix.circuit.breaker.open").tags(tags).gauge().value()).isEqualTo(1.0);
-    }
-
-    @Test
-    void testRunCombinedWithDeprecatedMetrics() {
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
-        HystrixMetricsPublisher metricsPublisher = HystrixPlugins.getInstance().getMetricsPublisher();
-        HystrixPlugins.reset();
-        HystrixPlugins.getInstance().registerMetricsPublisher(
-            new MicrometerMetricsPublisher(registry,
-                new MicrometerMetricsPublisherDeprecated10x(registry, metricsPublisher)));
-        HystrixCommandKey key = HystrixCommandKey.Factory.asKey("MicrometerCOMMAND-C");
-
-        new SuccessCommand(key).execute();
-
-        Iterable<Tag> tags = Tags.of("group", groupKey.name(), "key", key.name());
-        assertExecutionMetric(registry, tags, HystrixEventType.SUCCESS, 1.0);
-        assertThat(registry.get("hystrix.execution").tags(tags).tags("event", "success").counter().count()).isEqualTo(1.0);
     }
 
     class SampleCommand extends HystrixCommand<Integer> {
