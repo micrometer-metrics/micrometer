@@ -29,7 +29,7 @@ public class AzureMonitorProperties extends StepRegistryProperties {
     private String instrumentationKey;
 
     public String getInstrumentationKey() {
-        return instrumentationKey;
+        return this.instrumentationKey;
     }
 
     public void setInstrumentationKey(String instrumentationKey) {
