@@ -141,14 +141,16 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
 
     private Stream<String> writeTimer(FunctionTimer timer) {
         long wallTime = clock.wallTime();
+        Stream.Builder<String> metrics = Stream.builder();
 
         Meter.Id id = timer.getId();
 
         // we can't know anything about max and percentiles originating from a function timer
-        return Stream.of(
-                writeMetric(id, "count", wallTime, timer.count()),
-                writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit())),
-                writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit())));
+        addMetric(metrics, id, "count", wallTime, timer.count());
+        addMetric(metrics, id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
+        addMetric(metrics, id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()));
+
+        return metrics.build();
     }
 
     private Stream<String> writeTimer(Timer timer) {
@@ -156,10 +158,10 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         final Stream.Builder<String> metrics = Stream.builder();
 
         Meter.Id id = timer.getId();
-        metrics.add(writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit())));
-        metrics.add(writeMetric(id, "count", wallTime, timer.count()));
-        metrics.add(writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit())));
-        metrics.add(writeMetric(id, "max", wallTime, timer.max(getBaseTimeUnit())));
+        addMetric(metrics, id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()));
+        addMetric(metrics, id, "count", wallTime, timer.count());
+        addMetric(metrics, id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
+        addMetric(metrics, id, "max", wallTime, timer.max(getBaseTimeUnit()));
 
         return metrics.build();
     }
@@ -169,21 +171,31 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         final Stream.Builder<String> metrics = Stream.builder();
 
         Meter.Id id = summary.getId();
-        metrics.add(writeMetric(id, "sum", wallTime, summary.totalAmount()));
-        metrics.add(writeMetric(id, "count", wallTime, summary.count()));
-        metrics.add(writeMetric(id, "avg", wallTime, summary.mean()));
-        metrics.add(writeMetric(id, "max", wallTime, summary.max()));
+        addMetric(metrics, id, "sum", wallTime, summary.totalAmount());
+        addMetric(metrics, id, "count", wallTime, summary.count());
+        addMetric(metrics, id, "avg", wallTime, summary.mean());
+        addMetric(metrics, id, "max", wallTime, summary.max());
 
         return metrics.build();
     }
 
-    private Stream<String> writeMeter(Meter m) {
+    private Stream<String> writeMeter(Meter meter) {
         long wallTime = clock.wallTime();
-        return stream(m.measure().spliterator(), false)
-                .map(ms -> {
-                    Meter.Id id = m.getId().withTag(ms.getStatistic());
-                    return writeMetric(id, null, wallTime, ms.getValue());
+        Stream.Builder<String> metrics = Stream.builder();
+
+        stream(meter.measure().spliterator(), false)
+                .forEach(measurement -> {
+                    Meter.Id id = meter.getId().withTag(measurement.getStatistic());
+                    addMetric(metrics, id, null, wallTime, measurement.getValue());
                 });
+
+        return metrics.build();
+    }
+
+    private void addMetric(Stream.Builder<String> metrics, Meter.Id id, @Nullable String suffix, long wallTime, double value) {
+        if (value != Double.NaN) {
+            metrics.add(writeMetric(id, suffix, wallTime, value));
+        }
     }
 
     /**
