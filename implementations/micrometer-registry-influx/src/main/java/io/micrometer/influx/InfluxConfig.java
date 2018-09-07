@@ -129,4 +129,13 @@ public interface InfluxConfig extends StepRegistryConfig {
         String v = get(prefix() + ".autoCreateDb");
         return v == null || Boolean.valueOf(v);
     }
+
+    /**
+     * @return {@code true} if Micrometer should verify the server's ssl certificate before attempting to publish
+     * metrics to it. Default value is {@code true}
+     */
+    default boolean sslVerify() {
+        String v = get(prefix() + ".sslVerify");
+        return v == null || Boolean.valueOf(v);
+    }
 }

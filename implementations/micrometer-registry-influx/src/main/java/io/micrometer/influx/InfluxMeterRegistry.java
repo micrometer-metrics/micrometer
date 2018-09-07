@@ -22,9 +22,14 @@ import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.*;
 import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -72,6 +77,9 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             con.setConnectTimeout((int) config.connectTimeout().toMillis());
             con.setReadTimeout((int) config.readTimeout().toMillis());
             con.setRequestMethod(HttpMethod.POST);
+
+            doNotVerifySslCertificateIfDesired(config.sslVerify(), queryEndpoint.getProtocol(), con);
+
             authenticateRequest(con);
 
             int status = con.getResponseCode();
@@ -111,6 +119,9 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     con.setRequestMethod(HttpMethod.POST);
                     con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.PLAIN_TEXT);
                     con.setDoOutput(true);
+
+                    doNotVerifySslCertificateIfDesired(config.sslVerify(), influxEndpoint.getProtocol(), con);
+
 
                     authenticateRequest(con);
 
@@ -193,12 +204,27 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         }
     }
 
+    private SSLSocketFactory createSslSocketFactory() throws NoSuchAlgorithmException, KeyManagementException {
+        SSLContext context = SSLContext.getInstance("TLS");
+        context.init(null, new TrustManager[] { new NoopX509TrustManager() },
+            new SecureRandom());
+        return context.getSocketFactory();
+    }
+
     private void quietlyCloseUrlConnection(@Nullable HttpURLConnection con) {
         try {
             if (con != null) {
                 con.disconnect();
             }
         } catch (Exception ignore) {
+        }
+    }
+
+    private void doNotVerifySslCertificateIfDesired(boolean sslVerify, String protocol, HttpURLConnection connection)
+        throws KeyManagementException, NoSuchAlgorithmException {
+        if (!sslVerify && "https".equals(protocol)) {
+            HttpsURLConnection.class.cast(connection).setSSLSocketFactory(createSslSocketFactory());
+            HttpsURLConnection.class.cast(connection).setHostnameVerifier(new NoopHostnameVerifier());
         }
     }
 
@@ -215,6 +241,32 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         public String toString() {
             return key + "=" + DoubleFormat.decimalOrNan(value);
         }
+    }
+
+    private class NoopHostnameVerifier implements HostnameVerifier {
+
+        @Override
+        public boolean verify(String s, SSLSession sslSession) {
+            return true;
+        }
+
+    }
+
+    private static class NoopX509TrustManager implements X509TrustManager {
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[0];
+        }
+
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType) {
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType) {
+        }
+
     }
 
     private Stream<String> writeMeter(Meter m) {
