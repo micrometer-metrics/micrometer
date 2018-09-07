@@ -28,10 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.Socket;
-import java.net.URI;
-import java.net.URL;
+import java.net.*;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -94,6 +91,8 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                     try {
                         URL url = new URL(uri.getScheme(), uri.getHost(), uri.getPort(), String.format("/report/metrics?t=%s&h=%s", config.apiToken(), config.source()));
                         con = (HttpURLConnection) url.openConnection();
+                        con.setConnectTimeout((int) config.connectTimeout().toMillis());
+                        con.setReadTimeout((int) config.readTimeout().toMillis());
                         con.setDoOutput(true);
                         con.addRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
                         con.addRequestProperty(HttpHeader.ACCEPT, MediaType.APPLICATION_JSON);
@@ -118,16 +117,26 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                         quietlyCloseUrlConnection(con);
                     }
                 } else {
-                    try (Socket socket = new Socket(uri.getHost(), uri.getPort());
-                         OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream(), "UTF-8")) {
-                        writer.write(stream.collect(joining("\n")) + "\n");
-                        writer.flush();
+                    SocketAddress endpoint = getSocketAddress(uri.getHost(), uri.getPort());
+                    int timeout = (int) this.config.connectTimeout().toMillis();
+
+                    try (Socket socket = new Socket()) {
+                        socket.connect(endpoint, timeout);
+                        try (OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream(), "UTF-8")) {
+                          writer.write(stream.collect(joining("\n")) + "\n");
+                          writer.flush();
+                        }
                     }
                 }
             }
         } catch (Throwable t) {
             logger.warn("failed to send metrics", t);
         }
+    }
+
+    private static SocketAddress getSocketAddress(String host, int port) throws UnknownHostException {
+        return host != null ? new InetSocketAddress(host, port) :
+                new InetSocketAddress(InetAddress.getByName(null), port);
     }
 
     private void quietlyCloseUrlConnection(@Nullable HttpURLConnection con) {
