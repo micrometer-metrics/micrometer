@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.MeterVisitor;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.ArrayList;
@@ -147,4 +148,10 @@ public interface FunctionTimer extends Meter {
                     totalTimeFunctionUnit);
         }
     }
+
+    @Override
+    default void accept(MeterVisitor visitor) {
+        visitor.visitFunctionCounter(this);
+    }
+
 }

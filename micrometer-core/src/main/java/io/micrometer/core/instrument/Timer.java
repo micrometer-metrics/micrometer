@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.MeterVisitor;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
@@ -447,5 +448,10 @@ public interface Timer extends Meter, HistogramSupport {
             return registry.timer(new Meter.Id(name, tags, null, description, Type.TIMER), distributionConfigBuilder.build(),
                     pauseDetector == null ? registry.config().pauseDetector() : pauseDetector);
         }
+    }
+
+    @Override
+    default void accept(MeterVisitor visitor) {
+        visitor.visitTimer(this);
     }
 }

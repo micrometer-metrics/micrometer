@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.MeterVisitor;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
 import io.micrometer.core.lang.Nullable;
@@ -146,5 +147,10 @@ public interface Gauge extends Meter {
         public Gauge register(MeterRegistry registry) {
             return registry.gauge(new Meter.Id(name, tags, baseUnit, description, Type.GAUGE, synthetic), obj, f);
         }
+    }
+
+    @Override
+    default void accept(MeterVisitor visitor) {
+        visitor.visitGauge(this);
     }
 }

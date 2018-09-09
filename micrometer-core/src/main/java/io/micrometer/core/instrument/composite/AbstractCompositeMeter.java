@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.composite;
 
+import io.micrometer.core.MeterVisitor;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -102,5 +103,10 @@ abstract class AbstractCompositeMeter<T extends Meter> extends AbstractMeter imp
                 }
             }
         }
+    }
+
+    @Override
+    public void accept(MeterVisitor visitor) {
+        forEachChild(child -> child.accept(visitor));
     }
 }

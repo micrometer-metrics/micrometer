@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.MeterVisitor;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
@@ -119,5 +120,10 @@ public interface TimeGauge extends Gauge {
             return registry.more().timeGauge(new Meter.Id(name, tags, null, description, Type.GAUGE),
                     obj, fUnits, f);
         }
+    }
+
+    @Override
+    default void accept(MeterVisitor visitor) {
+        visitor.visitTimeGauge(this);
     }
 }

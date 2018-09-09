@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.MeterVisitor;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.ArrayList;
@@ -124,4 +125,10 @@ public interface FunctionCounter extends Meter {
             return registry.more().counter(new Meter.Id(name, tags, baseUnit, description, Type.COUNTER), obj, f);
         }
     }
+
+    @Override
+    default void accept(MeterVisitor visitor) {
+        visitor.visitFunctionTimer(this);
+    }
+
 }

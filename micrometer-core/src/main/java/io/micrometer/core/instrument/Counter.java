@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.MeterVisitor;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.ArrayList;
@@ -130,4 +131,10 @@ public interface Counter extends Meter {
             return registry.counter(new Meter.Id(name, tags, baseUnit, description, Type.COUNTER));
         }
     }
+
+    @Override
+    default void accept(MeterVisitor visitor) {
+        visitor.visitCounter(this);
+    }
+
 }

@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.MeterVisitor;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
@@ -47,6 +48,11 @@ public interface Meter extends AutoCloseable {
      * @return The set of measurements that represents the instantaneous value of this meter.
      */
     Iterable<Measurement> measure();
+
+    /**
+     * Accepts a {@link MeterVisitor}.
+     */
+    void accept(MeterVisitor visitor);
 
     /**
      * Custom meters may emit metrics like one of these types without implementing
