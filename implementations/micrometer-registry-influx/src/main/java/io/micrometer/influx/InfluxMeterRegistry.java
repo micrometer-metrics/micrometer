@@ -97,12 +97,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         createDatabaseIfNecessary();
 
         try {
-            String write = "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
-            if (StringUtils.isNotBlank(config.retentionPolicy())) {
-                write += "&rp=" + config.retentionPolicy();
-            }
-            URL influxEndpoint = URI.create(config.uri() + write).toURL();
-
+            URL influxEndpoint = buildInfluxPublishUrl();
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
                 publishBatch(batch, influxEndpoint);
             }
@@ -111,6 +106,14 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         } catch (Throwable e) {
             logger.error("failed to send metrics", e);
         }
+    }
+
+    private URL buildInfluxPublishUrl() throws MalformedURLException {
+        String write = "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
+        if (StringUtils.isNotBlank(config.retentionPolicy())) {
+            write += "&rp=" + config.retentionPolicy();
+        }
+        return URI.create(config.uri() + write).toURL();
     }
 
     private void publishBatch(List<Meter> batch, URL influxEndpoint) throws IOException {
