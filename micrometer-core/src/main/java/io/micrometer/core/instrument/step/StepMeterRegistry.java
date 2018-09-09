@@ -57,11 +57,7 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     }
 
     public void start() {
-        start((r) -> {
-            Thread t = Executors.defaultThreadFactory().newThread(r);
-            t.setDaemon(true);
-            return t;
-        });
+        start(Executors.defaultThreadFactory());
     }
 
     public void start(ThreadFactory threadFactory) {
