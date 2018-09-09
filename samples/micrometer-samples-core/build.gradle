@@ -4,7 +4,7 @@ dependencies {
     compile('ch.qos.logback:logback-classic:1.2.+') {
         force = true
     }
-    compile('org.slf4j:slf4j-api:1.7.5') {
+    compile('org.slf4j:slf4j-api:1.7.25') {
         // logback doesn't yet work with slf4j 1.8
         force = true
     }
