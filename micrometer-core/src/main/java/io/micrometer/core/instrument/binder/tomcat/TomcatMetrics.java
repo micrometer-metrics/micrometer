@@ -32,18 +32,29 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 /**
+ * {@link MeterBinder} for Tomcat.
+ *
  * @author Clint Checketts
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 @NonNullApi
 @NonNullFields
 public class TomcatMetrics implements MeterBinder {
+
+    private static final String JMX_DOMAIN_EMBEDDED = "Tomcat";
+    private static final String JMX_DOMAIN_STANDALONE = "Catalina";
+    private static final String OBJECT_NAME_SERVER_SUFFIX = ":type=Server";
+    private static final String OBJECT_NAME_SERVER_EMBEDDED = JMX_DOMAIN_EMBEDDED + OBJECT_NAME_SERVER_SUFFIX;
+    private static final String OBJECT_NAME_SERVER_STANDALONE = JMX_DOMAIN_STANDALONE + OBJECT_NAME_SERVER_SUFFIX;
 
     @Nullable
     private final Manager manager;
 
     private final MBeanServer mBeanServer;
     private final Iterable<Tag> tags;
+
+    private String jmxDomain;
 
     public TomcatMetrics(@Nullable Manager manager, Iterable<Tag> tags) {
         this(manager, tags, getMBeanServer());
@@ -201,16 +212,19 @@ public class TomcatMetrics implements MeterBinder {
      * with the MBeanServer and register metrics when/if the MBean becomes available.
      */
     private void registerMetricsEventually(String key, String value, BiConsumer<ObjectName, Iterable<Tag>> perObject) {
-        try {
-            Set<ObjectName> objectNames = mBeanServer.queryNames(new ObjectName("Tomcat:" + key + "=" + value + ",*"), null);
-            if (!objectNames.isEmpty()) {
-                // MBean is present, so we can register metrics now.
-                objectNames.forEach(objectName -> perObject.accept(objectName, Tags.concat(tags, nameTag(objectName))));
-                return;
+        if (getJmxDomain() != null) {
+            try {
+                Set<ObjectName> objectNames = this.mBeanServer.queryNames(new ObjectName(getJmxDomain() + ":" + key + "=" + value + ",*"), null);
+                if (!objectNames.isEmpty()) {
+                    // MBean is present, so we can register metrics now.
+                    objectNames.forEach(objectName -> perObject.accept(objectName, Tags.concat(tags, nameTag(objectName))));
+                    return;
+                }
             }
-        } catch (MalformedObjectNameException e) {
-            // should never happen
-            throw new RuntimeException("Error registering Tomcat JMX based metrics", e);
+            catch (MalformedObjectNameException e) {
+                // should never happen
+                throw new RuntimeException("Error registering Tomcat JMX based metrics", e);
+            }
         }
 
         // MBean isn't yet registered, so we'll set up a notification to wait for them to be present and register
@@ -228,7 +242,7 @@ public class TomcatMetrics implements MeterBinder {
 
             // we can safely downcast now
             ObjectName objectName = ((MBeanServerNotification) notification).getMBeanName();
-            return objectName.getDomain().equals("Tomcat") && objectName.getKeyProperty(key).equals(value);
+            return objectName.getDomain().equals(getJmxDomain()) && objectName.getKeyProperty(key).equals(value);
         };
 
         try {
@@ -236,6 +250,27 @@ public class TomcatMetrics implements MeterBinder {
         } catch (InstanceNotFoundException e) {
             // should never happen
             throw new RuntimeException("Error registering MBean listener", e);
+        }
+    }
+
+    private String getJmxDomain() {
+        if (this.jmxDomain == null) {
+            if (hasObjectName(OBJECT_NAME_SERVER_EMBEDDED)) {
+                this.jmxDomain = JMX_DOMAIN_EMBEDDED;
+            }
+            else if (hasObjectName(OBJECT_NAME_SERVER_STANDALONE)) {
+                this.jmxDomain = JMX_DOMAIN_STANDALONE;
+            }
+        }
+        return this.jmxDomain;
+    }
+
+    private boolean hasObjectName(String name) {
+        try {
+            return this.mBeanServer.queryNames(new ObjectName(name), null).size() == 1;
+        }
+        catch (MalformedObjectNameException ex) {
+            throw new RuntimeException(ex);
         }
     }
 
