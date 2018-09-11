@@ -35,9 +35,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
+ * Tests for {@link CompositeMeterRegistry}.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 class CompositeMeterRegistryTest {
     private MockClock clock = new MockClock();
@@ -298,4 +303,20 @@ class CompositeMeterRegistryTest {
         latch.await(10, TimeUnit.SECONDS);
         assertThat(latch.getCount()).isZero();
     }
+
+    @Issue("#838")
+    @Test
+    void closeShouldCloseAllMeterRegistries() {
+        MeterRegistry registry1 = mock(MeterRegistry.class);
+        MeterRegistry registry2 = mock(MeterRegistry.class);
+
+        CompositeMeterRegistry compositeMeterRegistry = new CompositeMeterRegistry();
+        compositeMeterRegistry.add(registry1);
+        compositeMeterRegistry.add(registry2);
+
+        compositeMeterRegistry.close();
+        verify(registry1).close();
+        verify(registry2).close();
+    }
+
 }
