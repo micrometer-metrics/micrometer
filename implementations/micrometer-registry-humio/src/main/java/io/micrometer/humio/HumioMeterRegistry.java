@@ -73,9 +73,24 @@ public class HumioMeterRegistry extends StepMeterRegistry {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             long wallTime = config().clock().wallTime();
 
-            HttpURLConnection connection = openConnection("/api/v1/dataspaces/" + repository + "/ingest");
+            HttpURLConnection connection;
 
-            if (connection == null) {
+            String host = config.host();
+            try {
+                URL templateUrl = new URL(host + "/api/v1/dataspaces/" + repository + "/ingest");
+                connection = (HttpURLConnection) templateUrl.openConnection();
+                connection.setRequestMethod(HttpMethod.POST);
+                connection.setConnectTimeout((int) config.connectTimeout().toMillis());
+                connection.setReadTimeout((int) config.readTimeout().toMillis());
+                connection.setUseCaches(false);
+                connection.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+                connection.setDoOutput(true);
+
+                connection.setRequestProperty(HttpHeader.AUTHORIZATION, "Bearer " + apiToken);
+
+                connection.connect();
+            } catch (IOException e) {
+                logger.error("Error connecting to {}: {}", host, e);
                 if (logger.isErrorEnabled()) {
                     logger.error("Could not connect to configured Humio: {}", config.host());
                 }
@@ -242,29 +257,4 @@ public class HumioMeterRegistry extends StepMeterRegistry {
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
     }
-
-    private HttpURLConnection openConnection(String uri) {
-        String host = config.host();
-        try {
-            URL templateUrl = new URL(host + uri);
-            HttpURLConnection connection = (HttpURLConnection) templateUrl.openConnection();
-            connection.setRequestMethod(HttpMethod.POST);
-            connection.setConnectTimeout((int) config.connectTimeout().toMillis());
-            connection.setReadTimeout((int) config.readTimeout().toMillis());
-            connection.setUseCaches(false);
-            connection.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-            connection.setDoOutput(true);
-
-            connection.setRequestProperty(HttpHeader.AUTHORIZATION, "Bearer " + apiToken);
-
-            connection.connect();
-
-            return connection;
-        } catch (IOException e) {
-            logger.error("Error connecting to {}: {}", host, e);
-        }
-
-        return null;
-    }
-
 }
