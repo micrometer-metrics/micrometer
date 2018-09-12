@@ -37,10 +37,10 @@ class CreateDatabaseQueryBuilder {
     private static final String SHARD_DURATION_CLAUSE_TEMPLATE = " SHARD DURATION %s";
     private static final String NAME_CLAUSE_TEMPLATE = " NAME %s";
 
-    private String databaseName;
-    private String[] retentionPolicyClauses = new String[4];
+    private final String databaseName;
+    private final String[] retentionPolicyClauses = new String[4];
 
-    CreateDatabaseQueryBuilder(@Nullable String databaseName) {
+    CreateDatabaseQueryBuilder(String databaseName) {
         if (isEmpty(databaseName)) {
             throw new IllegalArgumentException("The database name cannot be null or empty");
         }
@@ -77,7 +77,7 @@ class CreateDatabaseQueryBuilder {
 
     String build() {
         StringBuilder queryStringBuilder = new StringBuilder(String.format(QUERY_MANDATORY_TEMPLATE, databaseName));
-        if (toCreateRetentionPolicy()) {
+        if (hasAnyRetentionPolicy()) {
             String retentionPolicyClause = Stream.of(retentionPolicyClauses).filter(Objects::nonNull)
                     .reduce(RETENTION_POLICY_INTRODUCTION, String::concat);
             queryStringBuilder.append(retentionPolicyClause);
@@ -85,7 +85,7 @@ class CreateDatabaseQueryBuilder {
         return queryStringBuilder.toString();
     }
 
-    private boolean toCreateRetentionPolicy() {
+    private boolean hasAnyRetentionPolicy() {
         return Stream.of(retentionPolicyClauses).anyMatch(Objects::nonNull);
     }
 
