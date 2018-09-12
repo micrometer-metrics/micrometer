@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CreateDatabaseQueryBuilderTest {
 
-    private static String TEST_DB_NAME = "dummy_database_0";
+    private static final String TEST_DB_NAME = "dummy_database_0";
 
     /**
      * Class Parameters:

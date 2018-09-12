@@ -93,7 +93,7 @@ public interface InfluxConfig extends StepRegistryConfig {
     @Nullable
     default Integer retentionReplicationFactor() {
         String v = get(prefix() + ".retentionReplicationFactor");
-        return v == null ? null : Integer.parseInt(v);
+        return v == null ? null : Integer.valueOf(v);
     }
 
     /**
