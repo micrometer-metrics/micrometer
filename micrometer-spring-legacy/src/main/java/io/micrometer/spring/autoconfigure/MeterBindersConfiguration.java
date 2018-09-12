@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
+import io.micrometer.core.instrument.binder.logging.Log4j2Metrics;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics;
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
@@ -64,6 +65,14 @@ class MeterBindersConfiguration {
     @ConditionalOnMissingBean
     public ClassLoaderMetrics classLoaderMetrics() {
         return new ClassLoaderMetrics();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(Log4j2Metrics.class)
+    @ConditionalOnProperty(value = "management.metrics.binders.log4j2.enabled", matchIfMissing = true)
+    @ConditionalOnClass(name = "org.apache.logging.log4j.Logger")
+    public Log4j2Metrics log4j2Metrics() {
+        return new Log4j2Metrics();
     }
 
     @Bean

@@ -38,6 +38,7 @@ dependencies {
 
     // log monitoring
     compile 'ch.qos.logback:logback-classic:1.2.+', optional
+    compile 'org.apache.logging.log4j:log4j-core:2.+', optional
 
     // reactor
     compile 'io.projectreactor:reactor-core:latest.release', optional

@@ -32,6 +32,8 @@ javax.validation:validation-api:1.1.0.Final
 javax.ws.rs:javax.ws.rs-api:2.0.1
 net.bytebuddy:byte-buddy:1.8.17
 net.sf.ehcache:ehcache:2.10.4
+org.apache.logging.log4j:log4j-api:2.11.1
+org.apache.logging.log4j:log4j-core:2.11.1
 org.apache.tomcat.embed:tomcat-embed-core:8.5.34
 org.apache.tomcat:tomcat-annotations-api:8.5.34
 org.aspectj:aspectjweaver:1.8.13

@@ -34,6 +34,8 @@ junit:junit:4.12
 net.bytebuddy:byte-buddy-agent:1.8.21
 net.bytebuddy:byte-buddy:1.8.21
 net.sf.ehcache:ehcache:2.10.4
+org.apache.logging.log4j:log4j-api:2.11.1
+org.apache.logging.log4j:log4j-core:2.11.1
 org.apache.tomcat.embed:tomcat-embed-core:8.5.34
 org.apache.tomcat:tomcat-annotations-api:8.5.34
 org.aspectj:aspectjweaver:1.8.13

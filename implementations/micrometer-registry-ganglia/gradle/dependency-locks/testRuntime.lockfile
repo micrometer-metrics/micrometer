@@ -31,6 +31,8 @@ javax.servlet:javax.servlet-api:3.1.0
 net.bytebuddy:byte-buddy:1.8.17
 net.sf.ehcache:ehcache:2.10.4
 org.acplt:oncrpc:1.0.7
+org.apache.logging.log4j:log4j-api:2.11.1
+org.apache.logging.log4j:log4j-core:2.11.1
 org.apache.tomcat.embed:tomcat-embed-core:8.5.34
 org.apache.tomcat:tomcat-annotations-api:8.5.34
 org.apiguardian:apiguardian-api:1.0.0
