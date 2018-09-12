@@ -23,6 +23,12 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
+/**
+ * Tests for {@link InfluxNamingConvention}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class InfluxNamingConventionTest {
     private InfluxNamingConvention convention = new InfluxNamingConvention(NamingConvention.snakeCase);
 
@@ -54,4 +60,35 @@ class InfluxNamingConventionTest {
         // ...but escaping of special characters still applies
         assertThat(convention.tagValue("org.example.service=")).isEqualTo("org.example.service\\=");
     }
+
+    @Test
+    void respectDelegateNamingConvention() {
+        CustomNamingConvention delegateNamingConvention = new CustomNamingConvention();
+
+        InfluxNamingConvention convention = new InfluxNamingConvention(delegateNamingConvention);
+
+        assertThat(convention.name("my.name", Meter.Type.TIMER)).isEqualTo("name:my.name");
+        assertThat(convention.tagKey("my.tag.key")).isEqualTo("key:my.tag.key");
+        assertThat(convention.tagValue("my.tag.value")).isEqualTo("value:my.tag.value");
+    }
+
+    private static class CustomNamingConvention implements NamingConvention {
+
+        @Override
+        public String name(String name, Meter.Type type, String baseUnit) {
+            return "name:" + name;
+        }
+
+        @Override
+        public String tagKey(String key) {
+            return "key:" + key;
+        }
+
+        @Override
+        public String tagValue(String value) {
+            return "value:" + value;
+        }
+
+    }
+
 }
