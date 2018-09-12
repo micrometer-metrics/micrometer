@@ -35,6 +35,7 @@ import java.util.function.ToLongFunction;
  * be overridden.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public class CompositeMeterRegistry extends MeterRegistry {
     private final AtomicBoolean registriesLock = new AtomicBoolean(false);
@@ -218,4 +219,11 @@ public class CompositeMeterRegistry extends MeterRegistry {
     public Set<MeterRegistry> getRegistries() {
         return unmodifiableRegistries;
     }
+
+    @Override
+    public void close() {
+        this.registries.forEach(MeterRegistry::close);
+        super.close();
+    }
+
 }
