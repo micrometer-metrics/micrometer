@@ -9,10 +9,11 @@ dependencies {
         force = true
     }
 
-    ['atlas', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront', 'dynatrace'].each { sys ->
+    ['atlas', 'prometheus', 'datadog', 'ganglia', 'elastic','graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront', 'dynatrace', 'azuremonitor'].each { sys ->
         compile project(":micrometer-registry-$sys")
     }
 
     compile 'io.prometheus:simpleclient_pushgateway:latest.release'
+
     compile 'io.projectreactor.ipc:reactor-netty:0.7.3.RELEASE'
 }

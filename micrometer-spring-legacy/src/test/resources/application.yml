@@ -34,3 +34,4 @@ management.metrics:
     newrelic.enabled: false
     signalfx.enabled: false
     wavefront.enabled: false
+    azure.application-insights.enabled: false

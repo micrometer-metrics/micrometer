@@ -35,7 +35,7 @@ management.metrics.export:
   statsd.enabled: false
   signalfx.enabled: false
   wavefront.enabled: false
-
+  azure.application-insights.enabled: true
 security.ignored: /**
 
 endpoints.shutdown.enabled: true
