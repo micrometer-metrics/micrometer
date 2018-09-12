@@ -95,6 +95,7 @@ public class MetricsAutoConfigurationTest {
     public void automaticallyRegisteredBinders() {
         assertThat(context.getBeansOfType(MeterBinder.class).values())
             .hasAtLeastOneElementOfType(LogbackMetrics.class)
+            .hasAtLeastOneElementOfType(LogbackMetrics.class)
             .hasAtLeastOneElementOfType(JvmGcMetrics.class)
             .hasAtLeastOneElementOfType(JvmThreadMetrics.class)
             .hasAtLeastOneElementOfType(ClassLoaderMetrics.class)
