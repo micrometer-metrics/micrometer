@@ -22,7 +22,7 @@ dom4j:dom4j:1.6.1
 info.ganglia.gmetric4j:gmetric4j:1.0.7
 io.dropwizard.metrics:metrics-core:3.2.6
 io.dropwizard.metrics:metrics-ganglia:3.2.6
-io.projectreactor:reactor-core:3.1.8.RELEASE
+io.projectreactor:reactor-core:3.1.9.RELEASE
 io.reactivex:rxjava:1.2.0
 javax.activation:javax.activation-api:1.2.0
 javax.cache:cache-api:1.0.0
@@ -31,8 +31,8 @@ javax.servlet:javax.servlet-api:3.1.0
 net.bytebuddy:byte-buddy:1.8.17
 net.sf.ehcache:ehcache:2.10.4
 org.acplt:oncrpc:1.0.7
-org.apache.tomcat.embed:tomcat-embed-core:8.5.33
-org.apache.tomcat:tomcat-annotations-api:8.5.33
+org.apache.tomcat.embed:tomcat-embed-core:8.5.34
+org.apache.tomcat:tomcat-annotations-api:8.5.34
 org.aspectj:aspectjweaver:1.8.13
 org.checkerframework:checker-qual:2.5.2
 org.codehaus.mojo:animal-sniffer-annotations:1.14

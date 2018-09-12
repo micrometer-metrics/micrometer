@@ -16,7 +16,7 @@ dependencyManagement {
 dependencies {
     compile project(':micrometer-spring-legacy')
 
-    ['atlas', 'azuremonitor', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront'].each { sys ->
+    ['atlas', 'azure-monitor', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront'].each { sys ->
         compile project(":micrometer-registry-$sys")
     }
 
