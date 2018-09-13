@@ -70,7 +70,7 @@ public class TimedAspect {
 
         try {
             return pjp.proceed();
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             exceptionClass = ex.getClass().getSimpleName();
             throw ex;
         } finally {
