@@ -32,6 +32,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -69,8 +70,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     private void sendMetricData(List<MetricDatum> metricData) {
         PutMetricDataRequest putMetricDataRequest = new PutMetricDataRequest()
-            .withNamespace(config.namespace())
-            .withMetricData(metricData);
+                .withNamespace(config.namespace())
+                .withMetricData(metricData);
         amazonCloudWatchAsync.putMetricDataAsync(putMetricDataRequest, new AsyncHandler<PutMetricDataRequest, PutMetricDataResult>() {
             @Override
             public void onError(Exception exception) {
@@ -85,30 +86,29 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     }
 
     private List<MetricDatum> metricData() {
-        return getMeters().stream().flatMap(m -> {
-            if (m instanceof Timer) {
-                return metricData((Timer) m);
-            }
-            if (m instanceof DistributionSummary) {
-                return metricData((DistributionSummary) m);
-            }
-            if (m instanceof FunctionTimer) {
-                return metricData((FunctionTimer) m);
-            }
-            return metricData(m);
-        }).collect(toList());
+        return getMeters().stream().flatMap(m -> match(m,
+                this::meterData,
+                this::meterData,
+                this::timerData,
+                this::summaryData,
+                this::meterData,
+                this::meterData,
+                this::meterData,
+                this::functionTimerData,
+                this::meterData)
+        ).collect(toList());
     }
 
-    private Stream<MetricDatum> metricData(FunctionTimer timer) {
+    private Stream<MetricDatum> functionTimerData(FunctionTimer timer) {
         long wallTime = clock.wallTime();
 
         // we can't know anything about max and percentiles originating from a function timer
         return Stream.of(
-            metricDatum(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
-            metricDatum(idWithSuffix(timer.getId(), "avg"), wallTime, timer.mean(getBaseTimeUnit())));
+                metricDatum(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
+                metricDatum(idWithSuffix(timer.getId(), "avg"), wallTime, timer.mean(getBaseTimeUnit())));
     }
 
-    private Stream<MetricDatum> metricData(Timer timer) {
+    private Stream<MetricDatum> timerData(Timer timer) {
         final long wallTime = clock.wallTime();
         final Stream.Builder<MetricDatum> metrics = Stream.builder();
 
@@ -120,7 +120,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         return metrics.build();
     }
 
-    private Stream<MetricDatum> metricData(DistributionSummary summary) {
+    private Stream<MetricDatum> summaryData(DistributionSummary summary) {
         final long wallTime = clock.wallTime();
         final Stream.Builder<MetricDatum> metrics = Stream.builder();
 
@@ -132,21 +132,21 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         return metrics.build();
     }
 
-    private Stream<MetricDatum> metricData(Meter m) {
+    private Stream<MetricDatum> meterData(Meter m) {
         long wallTime = clock.wallTime();
         return stream(m.measure().spliterator(), false)
-            .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), wallTime, ms.getValue()));
+                .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), wallTime, ms.getValue()));
     }
 
     private MetricDatum metricDatum(Meter.Id id, long wallTime, double value) {
         String metricName = id.getConventionName(config().namingConvention());
         List<Tag> tags = id.getConventionTags(config().namingConvention());
         return new MetricDatum()
-            .withMetricName(metricName)
-            .withDimensions(toDimensions(tags))
-            .withTimestamp(new Date(wallTime))
-            .withValue(CloudWatchUtils.clampMetricValue(value))
-            .withUnit(toStandardUnit(id.getBaseUnit()));
+                .withMetricName(metricName)
+                .withDimensions(toDimensions(tags))
+                .withTimestamp(new Date(wallTime))
+                .withValue(CloudWatchUtils.clampMetricValue(value))
+                .withUnit(toStandardUnit(id.getBaseUnit()));
     }
 
     private StandardUnit toStandardUnit(@Nullable String unit) {
@@ -167,8 +167,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     private List<Dimension> toDimensions(List<Tag> tags) {
         return tags.stream()
-            .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
-            .collect(toList());
+                .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
+                .collect(toList());
     }
 
     @Override

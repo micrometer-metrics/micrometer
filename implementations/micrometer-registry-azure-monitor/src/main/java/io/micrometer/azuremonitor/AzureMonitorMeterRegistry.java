@@ -22,32 +22,36 @@ import com.microsoft.applicationinsights.telemetry.SeverityLevel;
 import com.microsoft.applicationinsights.telemetry.TraceTelemetry;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.stream.StreamSupport.stream;
 
 /**
  * Publishes Metrics to Azure Monitor.
  *
  * @author Dhaval Doshi
+ * @author Jon Schneider
  */
 public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     private static final String SDKTELEMETRY_SYNTHETIC_SOURCENAME = "SDKTelemetry";
     private static final String SDK_VERSION = "micrometer";
 
-    private final TelemetryClient client;
-
     private final Logger logger = LoggerFactory.getLogger(AzureMonitorMeterRegistry.class);
+    private final TelemetryClient client;
+    private final AzureMonitorConfig config;
 
     public AzureMonitorMeterRegistry(AzureMonitorConfig config, Clock clock, @Nullable TelemetryConfiguration clientConfig) {
         super(config, clock);
+        this.config = config;
 
         config().namingConvention(new AzureMonitorNamingConvention());
 
@@ -67,136 +71,119 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        getMeters().forEach(meter -> {
-            try {
-                Meter.Id id = meter.getId();
-                String name = getConventionName(id);
-                Map<String, String> properties = getConventionTags(id).stream()
-                        .collect(Collectors.toMap(Tag::getKey, Tag::getValue));
-
-                if (meter instanceof TimeGauge) {
-                    trackGauge(name, properties, (TimeGauge) meter);
-                } else if (meter instanceof Gauge) {
-                    trackGauge(name, properties, ((Gauge) meter));
-                } else if (meter instanceof Counter) {
-                    trackCounter(name, properties, (Counter) meter);
-                } else if (meter instanceof FunctionCounter) {
-                    trackCounter(name, properties, ((FunctionCounter) meter));
-                } else if (meter instanceof Timer) {
-                    trackTimer(name, properties, ((Timer) meter));
-                } else if (meter instanceof FunctionTimer) {
-                    trackTimer(name, properties, ((FunctionTimer) meter));
-                } else if (meter instanceof DistributionSummary) {
-                    trackDistributionSummary(name, properties, ((DistributionSummary) meter));
-                } else if (meter instanceof LongTaskTimer) {
-                    trackLongTaskTimer(id, properties, ((LongTaskTimer) meter));
-                } else {
-                    trackMeter(name, properties, meter);
-                }
-            } catch (Exception e) {
-                logger.warn("Failed to track metric with name {}", getConventionName(meter.getId()));
-                TraceTelemetry traceTelemetry = new TraceTelemetry("Failed to track metric with name " + getConventionName(meter.getId()));
-                traceTelemetry.getContext().getOperation().setSyntheticSource(SDKTELEMETRY_SYNTHETIC_SOURCENAME);
-                traceTelemetry.setSeverityLevel(SeverityLevel.Warning);
-                client.trackTrace(traceTelemetry);
-                client.flush();
+        for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
+            for (Meter meter : batch) {
+                match(meter,
+                        this::trackGauge,
+                        this::trackCounter,
+                        this::trackTimer,
+                        this::trackDistributionSummary,
+                        this::trackLongTaskTimer,
+                        this::trackTimeGauge,
+                        this::trackFunctionCounter,
+                        this::trackFunctionTimer,
+                        this::trackMeter
+                ).forEach(telemetry -> {
+                    try {
+                        client.track(telemetry);
+                    } catch (Throwable e) {
+                        logger.warn("Failed to track metric {}", meter.getId());
+                        TraceTelemetry traceTelemetry = new TraceTelemetry("Failed to track metric " + meter.getId());
+                        traceTelemetry.getContext().getOperation().setSyntheticSource(SDKTELEMETRY_SYNTHETIC_SOURCENAME);
+                        traceTelemetry.setSeverityLevel(SeverityLevel.Warning);
+                        client.trackTrace(traceTelemetry);
+                        client.flush();
+                    }
+                });
             }
-        });
+            client.flush();
+        }
     }
 
-    private void trackMeter(String meterName, Map<String, String> properties, Meter meter) {
-        stream(meter.measure().spliterator(), false)
-                .forEach(ms -> {
-                    MetricTelemetry mt = createMetricTelemetry(meterName, properties);
+    private Stream<MetricTelemetry> trackMeter(Meter meter) {
+        return stream(meter.measure().spliterator(), false)
+                .map(ms -> {
+                    MetricTelemetry mt = createMetricTelemetry(meter, ms.getStatistic().toString().toLowerCase());
                     mt.setValue(ms.getValue());
-                    client.track(mt);
+                    return mt;
                 });
     }
 
-    /**
-     * Utilized to transform longTask timer into two time series with suffix _active and _duration of Azure format
-     * and send to Azure Monitor endpoint
-     *
-     * @param id         Id of the meter
-     * @param properties dimensions of LongTaskTimer
-     * @param meter      meter holding the rate aggregated metric values
-     */
-    private void trackLongTaskTimer(Meter.Id id, Map<String, String> properties,
-                                    LongTaskTimer meter) {
-        MetricTelemetry metricTelemetry = createMetricTelemetry(getConventionName(id, "active"), properties);
-        metricTelemetry.setValue(meter.activeTasks());
-        client.trackMetric(metricTelemetry);
+    private Stream<MetricTelemetry> trackLongTaskTimer(LongTaskTimer timer) {
+        MetricTelemetry active = createMetricTelemetry(timer, "active");
+        active.setValue(timer.activeTasks());
 
-        metricTelemetry = createMetricTelemetry(getConventionName(id, "duration"), properties);
-        metricTelemetry.setValue(meter.duration(getBaseTimeUnit()));
-        client.trackMetric(metricTelemetry);
+        MetricTelemetry duration = createMetricTelemetry(timer, "duration");
+        duration.setValue(timer.duration(getBaseTimeUnit()));
+
+        return Stream.of(active, duration);
     }
 
-    private void trackDistributionSummary(String meterName, Map<String, String> properties,
-                                          DistributionSummary meter) {
-        MetricTelemetry metricTelemetry = createMetricTelemetry(meterName, properties);
-        metricTelemetry.setValue(meter.totalAmount());
-        metricTelemetry.setCount((int) meter.count());
-        metricTelemetry.setMax(meter.max());
-        metricTelemetry.setMin(0.0); // TODO: when #457 is resolved, support min
-        client.trackMetric(metricTelemetry);
+    private Stream<MetricTelemetry> trackDistributionSummary(DistributionSummary summary) {
+        MetricTelemetry mt = createMetricTelemetry(summary, null);
+        mt.setValue(summary.totalAmount());
+        mt.setCount((int) summary.count());
+        mt.setMax(summary.max());
+        mt.setMin(0.0); // TODO: when #457 is resolved, support min
+        return Stream.of(mt);
     }
 
-    private void trackTimer(String meterName, Map<String, String> properties, Timer meter) {
-        MetricTelemetry metricTelemetry = createMetricTelemetry(meterName, properties);
-        metricTelemetry.setValue(meter.totalTime(getBaseTimeUnit()));
-        metricTelemetry.setCount((int) meter.count());
-        metricTelemetry.setMin(0.0); // TODO: when #457 is resolved, support min
-        metricTelemetry.setMax(meter.max(getBaseTimeUnit()));
-        client.trackMetric(metricTelemetry);
+    private Stream<MetricTelemetry> trackTimer(Timer timer) {
+        MetricTelemetry mt = createMetricTelemetry(timer, null);
+        mt.setValue(timer.totalTime(getBaseTimeUnit()));
+        mt.setCount((int) timer.count());
+        mt.setMin(0.0); // TODO: when #457 is resolved, support min
+        mt.setMax(timer.max(getBaseTimeUnit()));
+        return Stream.of(mt);
     }
 
-    private void trackTimer(String meterName, Map<String, String> properties, FunctionTimer meter) {
-        MetricTelemetry metricTelemetry = createMetricTelemetry(meterName, properties);
-        metricTelemetry.setValue(meter.totalTime(getBaseTimeUnit()));
-        metricTelemetry.setCount((int) meter.count());
-        client.trackMetric(metricTelemetry);
+    private Stream<MetricTelemetry> trackFunctionTimer(FunctionTimer timer) {
+        MetricTelemetry mt = createMetricTelemetry(timer, null);
+        mt.setValue(timer.totalTime(getBaseTimeUnit()));
+        mt.setCount((int) timer.count());
+        return Stream.of(mt);
     }
 
-    private void trackCounter(String meterName, Map<String, String> properties, Counter meter) {
-        MetricTelemetry metricTelemetry = createMetricTelemetry(meterName, properties);
-        metricTelemetry.setValue(meter.count());
-        metricTelemetry.setCount((int) Math.round(meter.count()));
-        client.trackMetric(metricTelemetry);
+    private Stream<MetricTelemetry> trackCounter(Counter counter) {
+        MetricTelemetry mt = createMetricTelemetry(counter, null);
+        mt.setValue(counter.count());
+        mt.setCount((int) Math.round(counter.count()));
+        return Stream.of(mt);
     }
 
-    private void trackCounter(String meterName, Map<String, String> properties, FunctionCounter meter) {
-        MetricTelemetry metricTelemetry = createMetricTelemetry(meterName, properties);
-        metricTelemetry.setValue(meter.count());
-        metricTelemetry.setCount((int) Math.round(meter.count()));
-        client.trackMetric(metricTelemetry);
+    private Stream<MetricTelemetry> trackFunctionCounter(FunctionCounter counter) {
+        MetricTelemetry mt = createMetricTelemetry(counter, null);
+        mt.setValue(counter.count());
+        mt.setCount((int) Math.round(counter.count()));
+        return Stream.of(mt);
     }
 
-    private void trackGauge(String meterName, Map<String, String> properties, Gauge meter) {
-        MetricTelemetry metricTelemetry = createMetricTelemetry(meterName, properties);
-        metricTelemetry.setValue(meter.value());
-        metricTelemetry.setCount(1);
-        client.trackMetric(metricTelemetry);
+    private Stream<MetricTelemetry> trackGauge(Gauge gauge) {
+        MetricTelemetry mt = createMetricTelemetry(gauge, null);
+        mt.setValue(gauge.value());
+        mt.setCount(1);
+        return Stream.of(mt);
     }
 
-    private void trackGauge(String meterName, Map<String, String> properties, TimeGauge meter) {
-        MetricTelemetry metricTelemetry = createMetricTelemetry(meterName, properties);
-        metricTelemetry.setValue(meter.value(getBaseTimeUnit()));
-        metricTelemetry.setCount(1);
-        client.trackMetric(metricTelemetry);
+    private Stream<MetricTelemetry> trackTimeGauge(TimeGauge meter) {
+        MetricTelemetry mt = createMetricTelemetry(meter, null);
+        mt.setValue(meter.value(getBaseTimeUnit()));
+        mt.setCount(1);
+        return Stream.of(mt);
     }
 
-    private MetricTelemetry createMetricTelemetry(String meterName, Map<String, String> properties) {
-        MetricTelemetry metricTelemetry = new MetricTelemetry();
-        metricTelemetry.setName(meterName);
-        Map<String, String> metricTelemetryProperties = metricTelemetry.getContext().getProperties();
-        properties.forEach(metricTelemetryProperties::putIfAbsent);
-        return metricTelemetry;
-    }
+    private MetricTelemetry createMetricTelemetry(Meter meter, @Nullable String suffix) {
+        MetricTelemetry mt = new MetricTelemetry();
 
-    private String getConventionName(Meter.Id id, String suffix) {
-        return config().namingConvention()
-                .name(id.getName() + "." + suffix, id.getType(), id.getBaseUnit());
+        Meter.Id id = meter.getId();
+        mt.setName(config().namingConvention().name(id.getName() + (suffix == null ? "" : "." + suffix),
+                id.getType(), id.getBaseUnit()));
+
+        for (Tag tag : getConventionTags(meter.getId())) {
+            mt.getContext().getProperties().putIfAbsent(tag.getKey(), tag.getValue());
+        }
+
+        return mt;
     }
 
     @Override

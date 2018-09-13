@@ -18,13 +18,9 @@ package io.micrometer.elastic;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.HttpHeader;
-import io.micrometer.core.instrument.util.HttpMethod;
-import io.micrometer.core.instrument.util.IOUtils;
-import io.micrometer.core.instrument.util.MediaType;
-import io.micrometer.core.instrument.util.MeterPartition;
-import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.instrument.util.*;
 import io.micrometer.core.lang.NonNull;
+import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,10 +36,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import static io.micrometer.core.instrument.Meter.Type.match;
+import static java.util.stream.Collectors.joining;
 
 /**
  * @author Nicolas Portmann
@@ -55,7 +55,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_INSTANT;
     private static final String ES_METRICS_TEMPLATE = "/_template/metrics_template";
-    private static final byte[] INDEX_LINE = "{ \"index\" : {} }\n".getBytes(StandardCharsets.UTF_8);
+    private static final String INDEX_LINE = "{ \"index\" : {} }\n";
 
     private final ElasticConfig config;
     private final String authHeader;
@@ -112,13 +112,12 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             try (OutputStream outputStream = putTemplateConnection.getOutputStream()) {
                 outputStream.write("{\"template\":\"metrics*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false},\"properties\":{\"name\":{\"type\":\"keyword\"}}}}}".getBytes());
                 outputStream.flush();
-                
+
                 if (putTemplateConnection.getResponseCode() != 200) {
                     logger.error("Error adding metrics template to elasticsearch: {}/{}", putTemplateConnection.getResponseCode(), putTemplateConnection.getResponseMessage());
                     return;
                 }
-            }
-            finally {
+            } finally {
                 putTemplateConnection.disconnect();
             }
 
@@ -135,9 +134,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }
 
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-            long wallTime = config().clock().wallTime();
-
-            ZonedDateTime dt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(wallTime), ZoneOffset.UTC);
+            ZonedDateTime dt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(config().clock().wallTime()), ZoneOffset.UTC);
             String indexName = config.index() + "-" + DateTimeFormatter.ofPattern(config.indexDateFormat()).format(dt);
             HttpURLConnection connection = openConnection(indexName + "/doc/_bulk", HttpMethod.POST);
 
@@ -148,30 +145,24 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 return;
             }
 
-            try (OutputStream outputStream = connection.getOutputStream()) {
-                for (Meter m : batch) {
-                    if (m instanceof TimeGauge) {
-                        writeGauge(outputStream, (TimeGauge) m, wallTime);
-                    } else if (m instanceof Gauge) {
-                        writeGauge(outputStream, (Gauge) m, wallTime);
-                    } else if (m instanceof Counter) {
-                        writeCounter(outputStream, (Counter) m, wallTime);
-                    } else if (m instanceof FunctionCounter) {
-                        writeCounter(outputStream, (FunctionCounter) m, wallTime);
-                    } else if (m instanceof Timer) {
-                        writeTimer(outputStream, (Timer) m, wallTime);
-                    } else if (m instanceof FunctionTimer) {
-                        writeTimer(outputStream, (FunctionTimer) m, wallTime);
-                    } else if (m instanceof DistributionSummary) {
-                        writeSummary(outputStream, (DistributionSummary) m, wallTime);
-                    } else if (m instanceof LongTaskTimer) {
-                        writeLongTaskTimer(outputStream, (LongTaskTimer) m, wallTime);
-                    } else {
-                        writeMeter(outputStream, m, wallTime);
-                    }
-                }
+            try (OutputStream os = connection.getOutputStream()) {
+                String body = batch.stream()
+                        .map(m -> match(m,
+                                this::writeGauge,
+                                this::writeCounter,
+                                this::writeTimer,
+                                this::writeSummary,
+                                this::writeLongTaskTimer,
+                                this::writeTimeGauge,
+                                this::writeFunctionCounter,
+                                this::writeFunctionTimer,
+                                this::writeMeter))
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .collect(joining("\n")) + "\n";
 
-                outputStream.flush();
+                os.write(body.getBytes(StandardCharsets.UTF_8));
+                os.flush();
 
                 if (connection.getResponseCode() >= 400) {
                     if (logger.isErrorEnabled()) {
@@ -205,104 +196,99 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     // VisibleForTesting
-    void writeCounter(OutputStream os, Counter counter, long wallTime) throws IOException {
-        os.write(INDEX_LINE);
-        writeDocument(os, counter, wallTime, builder -> {
+    Optional<String> writeCounter(Counter counter) {
+        return Optional.of(INDEX_LINE + writeDocument(counter, builder -> {
             builder.append(",\"count\":").append(counter.count());
-        });
+        }));
     }
 
     // VisibleForTesting
-    void writeCounter(OutputStream os, FunctionCounter counter, long wallTime) throws IOException {
-        os.write(INDEX_LINE);
-        writeDocument(os, counter, wallTime, builder -> {
+    Optional<String> writeFunctionCounter(FunctionCounter counter) {
+        return Optional.of(INDEX_LINE + writeDocument(counter, builder -> {
             builder.append(",\"count\":").append(counter.count());
-        });
+        }));
     }
 
     // VisibleForTesting
-    void writeGauge(OutputStream os, Gauge gauge, long wallTime) throws IOException {
+    @Nullable
+    Optional<String> writeGauge(Gauge gauge) {
         Double value = gauge.value();
         if (!value.isNaN()) {
-            os.write(INDEX_LINE);
-            writeDocument(os, gauge, wallTime, builder -> {
+            return Optional.of(INDEX_LINE + writeDocument(gauge, builder -> {
                 builder.append(",\"value\":").append(value);
-            });
+            }));
         }
+        return Optional.empty();
     }
 
     // VisibleForTesting
-    void writeGauge(OutputStream os, TimeGauge gauge, long wallTime) throws IOException {
+    @Nullable
+    Optional<String> writeTimeGauge(TimeGauge gauge) {
         Double value = gauge.value();
         if (!value.isNaN()) {
-            os.write(INDEX_LINE);
-            writeDocument(os, gauge, wallTime, builder -> {
+            return Optional.of(INDEX_LINE + writeDocument(gauge, builder -> {
                 builder.append(",\"value\":").append(gauge.value(getBaseTimeUnit()));
-            });
+            }));
         }
+        return Optional.empty();
     }
 
     // VisibleForTesting
-    void writeTimer(OutputStream os, FunctionTimer timer, long wallTime) throws IOException {
-        os.write(INDEX_LINE);
-        writeDocument(os, timer, wallTime, builder -> {
+    Optional<String> writeFunctionTimer(FunctionTimer timer) {
+        return Optional.of(INDEX_LINE + writeDocument(timer, builder -> {
             builder.append(",\"count\":").append(timer.count());
             builder.append(",\"sum\" :").append(timer.totalTime(getBaseTimeUnit()));
             builder.append(",\"mean\":").append(timer.mean(getBaseTimeUnit()));
-        });
+        }));
     }
 
     // VisibleForTesting
-    void writeLongTaskTimer(OutputStream os, LongTaskTimer timer, long wallTime) throws IOException {
-        os.write(INDEX_LINE);
-        writeDocument(os, timer, wallTime, builder -> {
+    Optional<String> writeLongTaskTimer(LongTaskTimer timer) {
+        return Optional.of(INDEX_LINE + writeDocument(timer, builder -> {
             builder.append(",\"activeTasks\":").append(timer.activeTasks());
             builder.append(",\"duration\":").append(timer.duration(getBaseTimeUnit()));
-        });
+        }));
     }
 
     // VisibleForTesting
-    void writeTimer(OutputStream os, Timer timer, long wallTime) throws IOException {
-        os.write(INDEX_LINE);
-        writeDocument(os, timer, wallTime, builder -> {
+    Optional<String> writeTimer(Timer timer) {
+        return Optional.of(INDEX_LINE + writeDocument(timer, builder -> {
             builder.append(",\"count\":").append(timer.count());
             builder.append(",\"sum\":").append(timer.totalTime(getBaseTimeUnit()));
             builder.append(",\"mean\":").append(timer.mean(getBaseTimeUnit()));
             builder.append(",\"max\":").append(timer.max(getBaseTimeUnit()));
-        });
+        }));
     }
 
     // VisibleForTesting
-    void writeSummary(OutputStream os, DistributionSummary summary, long wallTime) throws IOException {
+    Optional<String> writeSummary(DistributionSummary summary) {
         summary.takeSnapshot();
-        os.write(INDEX_LINE);
-        writeDocument(os, summary, wallTime, builder -> {
+        return Optional.of(INDEX_LINE + writeDocument(summary, builder -> {
             builder.append(",\"count\":").append(summary.count());
             builder.append(",\"sum\":").append(summary.totalAmount());
             builder.append(",\"mean\":").append(summary.mean());
             builder.append(",\"max\":").append(summary.max());
-        });
+        }));
     }
 
     // VisibleForTesting
-    void writeMeter(OutputStream os, Meter meter, long wallTime) throws IOException {
-        os.write(INDEX_LINE);
-        writeDocument(os, meter, wallTime, builder -> {
+    Optional<String> writeMeter(Meter meter) {
+        return Optional.of(INDEX_LINE + writeDocument(meter, builder -> {
             for (Measurement measurement : meter.measure()) {
                 builder.append(",\"").append(measurement.getStatistic().getTagValueRepresentation()).append("\":\"").append(measurement.getValue()).append("\"");
             }
-        });
+        }));
     }
 
     // VisibleForTesting
-    void writeDocument(OutputStream os, Meter meter, long wallTime, Consumer<StringBuilder> consumer) throws IOException {
+    String writeDocument(Meter meter, Consumer<StringBuilder> consumer) {
         StringBuilder sb = new StringBuilder();
-        String timestamp = FORMATTER.format(Instant.ofEpochMilli(wallTime));
+        String timestamp = FORMATTER.format(Instant.ofEpochMilli(config().clock().wallTime()));
         String name = getConventionName(meter.getId());
         String type = meter.getId().getType().toString().toLowerCase();
         sb.append("{\"").append(config.timestampFieldName()).append("\":\"").append(timestamp).append('"')
-            .append(",\"name\":\"").append(name).append('"')
-            .append(",\"type\":\"").append(type).append('"');
+                .append(",\"name\":\"").append(name).append('"')
+                .append(",\"type\":\"").append(type).append('"');
 
         List<Tag> tags = getConventionTags(meter.getId());
         for (Tag tag : tags) {
@@ -310,9 +296,9 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }
 
         consumer.accept(sb);
-        sb.append("}\n");
+        sb.append("}");
 
-        os.write(sb.toString().getBytes());
+        return sb.toString();
     }
 
     @Override

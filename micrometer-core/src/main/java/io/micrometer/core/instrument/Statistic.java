@@ -29,7 +29,7 @@ public enum Statistic {
     /**
      * The sum of the times recorded. Reported in the monitoring system's base unit of time
      */
-    TOTAL_TIME("totalTime"),
+    TOTAL_TIME("total"),
 
     /**
      * Rate per second for calls.
@@ -54,7 +54,7 @@ public enum Statistic {
     /**
      * Number of currently active tasks for a long task timer.
      */
-    ACTIVE_TASKS("activeTasks"),
+    ACTIVE_TASKS("active"),
 
     /**
      * Duration of a running task in a long task timer. Always reported in the monitoring system's base unit of time.

@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
+import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
@@ -115,33 +116,16 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     authenticateRequest(con);
 
                     List<String> bodyLines = batch.stream()
-                            .flatMap(m -> {
-                                if (m instanceof Timer) {
-                                    return writeTimer((Timer) m);
-                                }
-                                if (m instanceof DistributionSummary) {
-                                    return writeSummary((DistributionSummary) m);
-                                }
-                                if (m instanceof FunctionTimer) {
-                                    return writeTimer((FunctionTimer) m);
-                                }
-                                if (m instanceof TimeGauge) {
-                                    return writeGauge(m.getId(), ((TimeGauge) m).value(getBaseTimeUnit()));
-                                }
-                                if (m instanceof Gauge) {
-                                    return writeGauge(m.getId(), ((Gauge) m).value());
-                                }
-                                if (m instanceof FunctionCounter) {
-                                    return writeCounter(m.getId(), ((FunctionCounter) m).count());
-                                }
-                                if (m instanceof Counter) {
-                                    return writeCounter(m.getId(), ((Counter) m).count());
-                                }
-                                if (m instanceof LongTaskTimer) {
-                                    return writeLongTaskTimer((LongTaskTimer) m);
-                                }
-                                return writeMeter(m);
-                            })
+                            .flatMap(m -> match(m,
+                                    gauge -> writeGauge(gauge.getId(), gauge.value()),
+                                    counter -> writeCounter(counter.getId(), counter.count()),
+                                    this::writeTimer,
+                                    this::writeSummary,
+                                    this::writeLongTaskTimer,
+                                    gauge -> writeGauge(gauge.getId(), gauge.value(getBaseTimeUnit())),
+                                    counter -> writeCounter(counter.getId(), counter.count()),
+                                    this::writeFunctionTimer,
+                                    this::writeMeter))
                             .collect(toList());
 
                     String body = String.join("\n", bodyLines);
@@ -246,7 +230,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value))));
     }
 
-    private Stream<String> writeTimer(FunctionTimer timer) {
+    private Stream<String> writeFunctionTimer(FunctionTimer timer) {
         Stream<Field> fields = Stream.of(
                 new Field("sum", timer.totalTime(getBaseTimeUnit())),
                 new Field("count", timer.count()),

@@ -18,16 +18,13 @@ package io.micrometer.wavefront;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.HttpHeader;
-import io.micrometer.core.instrument.util.IOUtils;
-import io.micrometer.core.instrument.util.MediaType;
-import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.*;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.*;
 import java.util.List;
 import java.util.UUID;
@@ -36,6 +33,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
 
@@ -72,19 +70,16 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         try {
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-                Stream<String> stream =
-                        batch.stream().flatMap(m -> {
-                            if (m instanceof Timer) {
-                                return writeTimer((Timer) m);
-                            }
-                            if (m instanceof DistributionSummary) {
-                                return writeSummary((DistributionSummary) m);
-                            }
-                            if (m instanceof FunctionTimer) {
-                                return writeTimer((FunctionTimer) m);
-                            }
-                            return writeMeter(m);
-                        });
+                Stream<String> stream = batch.stream().flatMap(m -> match(m,
+                        this::writeMeter,
+                        this::writeMeter,
+                        this::writeTimer,
+                        this::writeSummary,
+                        this::writeMeter,
+                        this::writeMeter,
+                        this::writeMeter,
+                        this::writeFunctionTimer,
+                        this::writeMeter));
 
                 if (directToApi) {
                     HttpURLConnection con = null;
@@ -123,8 +118,8 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                     try (Socket socket = new Socket()) {
                         socket.connect(endpoint, timeout);
                         try (OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream(), "UTF-8")) {
-                          writer.write(stream.collect(joining("\n")) + "\n");
-                          writer.flush();
+                            writer.write(stream.collect(joining("\n")) + "\n");
+                            writer.flush();
                         }
                     }
                 }
@@ -134,7 +129,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private static SocketAddress getSocketAddress(String host, int port) throws UnknownHostException {
+    private static SocketAddress getSocketAddress(@Nullable String host, int port) throws UnknownHostException {
         return host != null ? new InetSocketAddress(host, port) :
                 new InetSocketAddress(InetAddress.getByName(null), port);
     }
@@ -148,7 +143,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private Stream<String> writeTimer(FunctionTimer timer) {
+    private Stream<String> writeFunctionTimer(FunctionTimer timer) {
         long wallTime = clock.wallTime();
         Stream.Builder<String> metrics = Stream.builder();
 

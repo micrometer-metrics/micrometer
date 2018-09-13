@@ -204,25 +204,25 @@ class StatsdMeterRegistryTest {
         switch (flavor) {
             case ETSY:
                 expectLines = new String[]{
-                        "myLongTask.myTag.val.statistic.activeTasks:1|g",
+                        "myLongTask.myTag.val.statistic.active:1|g",
                         "myLongTask.myTag.val.statistic.duration:" + stepMillis + "|g",
                 };
                 break;
             case DATADOG:
                 expectLines = new String[]{
-                        "my.long.task:1|g|#statistic:activeTasks,my.tag:val",
+                        "my.long.task:1|g|#statistic:active,my.tag:val",
                         "my.long.task:" + stepMillis + "|g|#statistic:duration,my.tag:val",
                 };
                 break;
             case TELEGRAF:
                 expectLines = new String[]{
-                        "my_long_task,statistic=activeTasks,my_tag=val:1|g",
+                        "my_long_task,statistic=active,my_tag=val:1|g",
                         "my_long_task,statistic=duration,my_tag=val:" + stepMillis + "|g",
                 };
                 break;
             case SYSDIG:
                 expectLines = new String[]{
-                    "my.long.task#statistic=activeTasks,my.tag=val:1|g",
+                    "my.long.task#statistic=active,my.tag=val:1|g",
                     "my.long.task#statistic=duration,my.tag=val:" + stepMillis + "|g",
                 };
                 break;
