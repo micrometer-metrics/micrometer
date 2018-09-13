@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-management.metrics.export.azure.application-insights:
+management.metrics.export.azuremonitor:
   enabled: true
   step: PT10S
   instrumentation-key: fakeKey

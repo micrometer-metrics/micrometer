@@ -37,15 +37,16 @@ import org.springframework.context.annotation.Import;
 
 /**
  * Auto-Configuration for exporting metrics to Azure Application Insights
+ *
  * @author Dhaval Doshi
  */
 @Configuration
 @AutoConfigureBefore({CompositeMeterRegistryAutoConfiguration.class,
-    SimpleMetricsExportAutoConfiguration.class})
+        SimpleMetricsExportAutoConfiguration.class})
 @AutoConfigureAfter(MetricsAutoConfiguration.class)
 @ConditionalOnBean(Clock.class)
 @ConditionalOnClass(AzureMonitorMeterRegistry.class)
-@ConditionalOnProperty(prefix = "management.metrics.export.azure.application-insights", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "management.metrics.export.azuremonitor", name = "enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(AzureMonitorProperties.class)
 @Import(StringToDurationConverter.class)
 public class AzureMonitorMetricsExportAutoConfiguration {
@@ -56,7 +57,10 @@ public class AzureMonitorMetricsExportAutoConfiguration {
         return new AzureMonitorPropertiesConfigAdapter(properties);
     }
 
-    // This bean is usually available if the user has configured ApplicationInsights-Spring-Boot-Starter
+    /**
+     * This bean is already available when the {@see <a href="https://github.com/Microsoft/ApplicationInsights-Java/tree/master/azure-application-insights-spring-boot-starter">Azure Application Insights starter</a>}
+     * is present.
+     */
     @Bean
     @ConditionalOnMissingBean
     public TelemetryConfiguration telemetryConfiguration(AzureMonitorConfig config) {
@@ -71,6 +75,6 @@ public class AzureMonitorMetricsExportAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public AzureMonitorMeterRegistry azureMeterRegistry(AzureMonitorConfig config, TelemetryConfiguration configuration, Clock clock) {
-        return new AzureMonitorMeterRegistry(config, configuration, clock);
+        return new AzureMonitorMeterRegistry(config, clock, configuration);
     }
 }

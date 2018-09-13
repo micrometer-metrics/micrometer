@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package io.micrometer.azuremonitor;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import io.micrometer.core.instrument.Meter.Type;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class AzureMonitorNamingConventionTest {
     private final AzureMonitorNamingConvention namingConvention = new AzureMonitorNamingConvention();

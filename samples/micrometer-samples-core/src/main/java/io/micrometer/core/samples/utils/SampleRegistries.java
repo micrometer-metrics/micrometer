@@ -369,7 +369,7 @@ public class SampleRegistries {
             public Duration step() {
                 return Duration.ofSeconds(10);
             }
-        }, null, Clock.SYSTEM);
+        }, Clock.SYSTEM, null);
     }
 
     public static DynatraceMeterRegistry dynatrace(String apiToken, String uri) {

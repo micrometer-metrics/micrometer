@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,35 +17,27 @@ package io.micrometer.azuremonitor;
 
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
-import io.micrometer.core.instrument.util.StringUtils;
 
 /**
- * Configuration for {@link AzureMonitorMeterRegistry}
+ * Configuration for {@link AzureMonitorMeterRegistry}.
+ *
  * @author Dhaval Doshi
  */
 public interface AzureMonitorConfig extends StepRegistryConfig {
     AzureMonitorConfig DEFAULT = k -> null;
-    /**
-     * Azure Monitor Prefix
-     */
-    String AZURE_PREFIX = "azure.application-insights";
 
     @Override
     default String prefix() {
-        return AZURE_PREFIX;
+        return "azure.monitor";
     }
 
     /**
      * default implementation to get the instrumentation key from the config
+     *
      * @return Instrumentation Key
      */
     default String instrumentationKey() {
-        String v = get(prefix() + ".instrumentation-key");
-
-        if (!StringUtils.isBlank(v)) {
-            return v;
-        }
-
+        String v = get(prefix() + ".instrumentationKey");
         if (v == null)
             throw new MissingRequiredConfigurationException("instrumentationKey must be set to report metrics to Application Insights");
         return v;

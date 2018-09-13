@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,30 +18,30 @@ package io.micrometer.azuremonitor;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
+
 import java.util.regex.Pattern;
 
 /**
- * Naming convention to push metrics to Azure Application Insights
+ * Naming convention to push metrics to Azure Monitor.
+ *
  * @author Dhaval Doshi
  */
 public class AzureMonitorNamingConvention implements NamingConvention {
-
-    /**
-     * Regex to detect unusable characters in tags
-     */
     private static final Pattern NAME_AND_TAGKEY_PATTERN = Pattern.compile("[^a-zA-Z0-9\\-]");
 
     private final NamingConvention delegate;
 
     public AzureMonitorNamingConvention() {
-        this(NamingConvention.dot);
+        this(NamingConvention.snakeCase);
     }
 
     public AzureMonitorNamingConvention(NamingConvention delegate) {
         this.delegate = delegate;
     }
 
-    // Trimming takes place in AI core SDK
+    /**
+     * Trimming takes place in App Insights core SDK.
+     */
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
         return NAME_AND_TAGKEY_PATTERN.matcher(delegate.name(name, type, baseUnit)).replaceAll("_");

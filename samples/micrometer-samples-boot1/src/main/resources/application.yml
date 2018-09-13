@@ -23,6 +23,7 @@ logging.level.org.springframework.boot: INFO
 
 management.metrics.export:
   atlas.enabled: false
+  azuremonitor.enabled: false
   datadog.enabled: false
   dynatrace.enabled: false
   elastic.enabled: false
@@ -35,7 +36,6 @@ management.metrics.export:
   statsd.enabled: false
   signalfx.enabled: false
   wavefront.enabled: false
-  azure.application-insights.enabled: true
 security.ignored: /**
 
 endpoints.shutdown.enabled: true

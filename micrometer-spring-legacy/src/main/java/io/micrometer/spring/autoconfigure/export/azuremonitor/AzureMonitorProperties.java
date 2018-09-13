@@ -23,7 +23,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @author Dhaval Doshi
  */
-@ConfigurationProperties(prefix = "management.metrics.export.azure.application-insights")
+@ConfigurationProperties(prefix = "management.metrics.export.azuremonitor")
 public class AzureMonitorProperties extends StepRegistryProperties {
 
     private String instrumentationKey;
