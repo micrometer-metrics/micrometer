@@ -1,0 +1,156 @@
+/**
+ * Copyright 2017 Pivotal Software, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micrometer.core.instrument.binder.logging;
+
+import static java.util.Collections.*;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.filter.AbstractFilter;
+
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
+
+/**
+ * @author Steven Sheehy
+ */
+@NonNullApi
+@NonNullFields
+public class Log4j2Metrics implements MeterBinder, AutoCloseable {
+
+    private final Iterable<Tag> tags;
+    private final LoggerContext loggerContext;
+    private MetricsFilter metricsFilter;
+
+    public Log4j2Metrics() {
+        this(emptyList());
+    }
+
+    public Log4j2Metrics(Iterable<Tag> tags) {
+        this(tags, (LoggerContext) LogManager.getContext(false));
+    }
+
+    public Log4j2Metrics(Iterable<Tag> tags, LoggerContext loggerContext) {
+        this.tags = tags;
+        this.loggerContext = loggerContext;
+    }
+
+
+    @Override
+    public void bindTo(MeterRegistry registry) {
+        metricsFilter = new MetricsFilter(registry, tags);
+        metricsFilter.start();
+
+        Configuration configuration = loggerContext.getConfiguration();
+        configuration.getLoggerConfig(LogManager.ROOT_LOGGER_NAME).addFilter(metricsFilter);
+        loggerContext.updateLoggers(configuration);
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (metricsFilter != null) {
+            Configuration configuration = loggerContext.getConfiguration();
+            configuration.getLoggerConfig(LogManager.ROOT_LOGGER_NAME).removeFilter(metricsFilter);
+            metricsFilter.stop();
+        }
+    }
+
+    @NonNullApi
+    @NonNullFields
+    class MetricsFilter extends AbstractFilter {
+
+        private static final long serialVersionUID = -6470026303103548813L;
+        private final Counter fatalCounter;
+        private final Counter errorCounter;
+        private final Counter warnCounter;
+        private final Counter infoCounter;
+        private final Counter debugCounter;
+        private final Counter traceCounter;
+
+        public MetricsFilter(MeterRegistry registry, Iterable<Tag> tags) {
+            fatalCounter = Counter.builder("log4j2.events")
+                .tags(tags)
+                .tags("level", "fatal")
+                .description("Number of fatal level log events")
+                .register(registry);
+
+            errorCounter = Counter.builder("log4j2.events")
+                .tags(tags)
+                .tags("level", "error")
+                .description("Number of error level log events")
+                .register(registry);
+
+            warnCounter = Counter.builder("log4j2.events")
+                .tags(tags)
+                .tags("level", "warn")
+                .description("Number of warn level log events")
+                .register(registry);
+
+            infoCounter = Counter.builder("log4j2.events")
+                .tags(tags)
+                .tags("level", "info")
+                .description("Number of info level log events")
+                .register(registry);
+
+            debugCounter = Counter.builder("log4j2.events")
+                .tags(tags)
+                .tags("level", "debug")
+                .description("Number of debug level log events")
+                .register(registry);
+
+            traceCounter = Counter.builder("log4j2.events")
+                .tags(tags)
+                .tags("level", "trace")
+                .description("Number of trace level log events")
+                .register(registry);
+        }
+
+        @Override
+        public Result filter(LogEvent event) {
+            switch (event.getLevel().getStandardLevel()) {
+                case FATAL:
+                    fatalCounter.increment();
+                    break;
+                case ERROR:
+                    errorCounter.increment();
+                    break;
+                case WARN:
+                    warnCounter.increment();
+                    break;
+                case INFO:
+                    infoCounter.increment();
+                    break;
+                case DEBUG:
+                    debugCounter.increment();
+                    break;
+                case TRACE:
+                    traceCounter.increment();
+                    break;
+                default:
+                    break;
+            }
+
+            return Result.NEUTRAL;
+        }
+    }
+}
+
