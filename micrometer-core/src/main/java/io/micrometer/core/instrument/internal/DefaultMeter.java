@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.internal;
 
+import io.micrometer.core.MeterVisitor;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
@@ -36,5 +37,11 @@ public class DefaultMeter extends AbstractMeter {
 
     public Type getType() {
         return type;
+    }
+
+
+    @Override
+    public void accept(MeterVisitor visitor) {
+        visitor.defaultVisit(this);
     }
 }

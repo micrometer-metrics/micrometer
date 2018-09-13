@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.MeterVisitor;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.lang.Nullable;
 
@@ -246,5 +247,10 @@ public interface LongTaskTimer extends Meter {
         public LongTaskTimer register(MeterRegistry registry) {
             return registry.more().longTaskTimer(new Meter.Id(name, tags, null, description, Type.LONG_TASK_TIMER));
         }
+    }
+
+    @Override
+    default void accept(MeterVisitor visitor) {
+        visitor.visitLongTaskTimer(this);
     }
 }

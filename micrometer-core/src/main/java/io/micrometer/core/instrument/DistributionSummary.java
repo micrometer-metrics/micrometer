@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.MeterVisitor;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSupport;
@@ -315,6 +316,11 @@ public interface DistributionSummary extends Meter, HistogramSupport {
         public DistributionSummary register(MeterRegistry registry) {
             return registry.summary(new Meter.Id(name, tags, baseUnit, description, Type.DISTRIBUTION_SUMMARY), distributionConfigBuilder.build(), scale);
         }
+    }
+
+    @Override
+    default void accept(MeterVisitor visitor) {
+        visitor.visitDistributionSummary(this);
     }
 
 }

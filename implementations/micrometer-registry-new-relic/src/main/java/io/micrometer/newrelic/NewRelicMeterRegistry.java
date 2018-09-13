@@ -15,6 +15,7 @@
  */
 package io.micrometer.newrelic;
 
+import io.micrometer.core.MeterVisitor;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
@@ -39,10 +40,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
 /**
@@ -77,111 +76,76 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             // New Relic's Insights API limits us to 1000 events per call
             final int batchSize = Math.min(config.batchSize(), 1000);
 
-            List<String> events = getMeters().stream().flatMap(meter -> {
-                if (meter instanceof Timer) {
-                    return writeTimer((Timer) meter);
-                } else if (meter instanceof FunctionTimer) {
-                    return writeTimer((FunctionTimer) meter);
-                } else if (meter instanceof DistributionSummary) {
-                    return writeSummary((DistributionSummary) meter);
-                } else if (meter instanceof TimeGauge) {
-                    return writeGauge((TimeGauge) meter);
-                } else if (meter instanceof Gauge) {
-                    return writeGauge((Gauge) meter);
-                } else if (meter instanceof Counter) {
-                    return writeCounter((Counter) meter);
-                } else if (meter instanceof FunctionCounter) {
-                    return writeCounter((FunctionCounter) meter);
-                } else if (meter instanceof LongTaskTimer) {
-                    return writeLongTaskTimer((LongTaskTimer) meter);
-                } else {
-                    return writeMeter(meter);
+            final List<String> events = new ArrayList<>(getMeters().size());
+            MeterVisitor meterVisitor = new MeterVisitor() {
+                @Override
+                public void visitTimer(Timer timer) {
+                    events.add(event(timer.getId(),
+                        new Attribute("count", timer.count()),
+                        new Attribute("avg", timer.mean(getBaseTimeUnit())),
+                        new Attribute("totalTime", timer.totalTime(getBaseTimeUnit())),
+                        new Attribute("max", timer.max(getBaseTimeUnit()))));
                 }
-            }).collect(toList());
 
-            if (events.size() > batchSize) {
-                sendEvents(insightsEndpoint, events.subList(0, batchSize));
-                events = new ArrayList<>(events.subList(batchSize, events.size()));
-            } else if (events.size() == batchSize) {
-                sendEvents(insightsEndpoint, events);
-                events = new ArrayList<>();
+                @Override
+                public void visitCounter(Counter counter) {
+                    events.add(event(counter.getId(), new Attribute("throughput", counter.count())));
+                }
+
+                @Override
+                public void visitGauge(Gauge gauge) {
+                    Double value = gauge.value();
+                    if (!value.isNaN()) events.add(event(gauge.getId(), new Attribute("value", value)));
+                }
+
+                @Override
+                public void visitLongTaskTimer(LongTaskTimer longTaskTimer) {
+                    events.add(event(longTaskTimer.getId(),
+                        new Attribute("activeTasks", longTaskTimer.activeTasks()),
+                        new Attribute("duration", longTaskTimer.duration(getBaseTimeUnit()))));
+                }
+
+                @Override
+                public void defaultVisit(Meter meter) {
+                    events.add(event(meter.getId(),
+                        stream(meter.measure().spliterator(), false)
+                            .map(measure -> new Attribute(measure.getStatistic().getTagValueRepresentation(), measure.getValue()))
+                            .toArray(Attribute[]::new)
+                    ));
+                }
+
+                @Override
+                public void visitDistributionSummary(DistributionSummary summary) {
+                    events.add(event(summary.getId(),
+                        new Attribute("count", summary.count()),
+                        new Attribute("avg", summary.mean()),
+                        new Attribute("total", summary.totalAmount()),
+                        new Attribute("max", summary.max())
+                    ));
+                }
+            };
+
+            getMeters().forEach(meter -> meter.accept(meterVisitor));
+
+            List<String> eventsToSend = events;
+
+            if (eventsToSend.size() > batchSize) {
+                sendEvents(insightsEndpoint, eventsToSend.subList(0, batchSize));
+                eventsToSend = new ArrayList<>(eventsToSend.subList(batchSize, events.size()));
+            } else if (eventsToSend.size() == batchSize) {
+                sendEvents(insightsEndpoint, eventsToSend);
+                eventsToSend = new ArrayList<>();
             }
 
             // drain the remaining event list
-            if (!events.isEmpty()) {
-                sendEvents(insightsEndpoint, events);
+            if (!eventsToSend.isEmpty()) {
+                sendEvents(insightsEndpoint, eventsToSend);
             }
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("malformed New Relic insights endpoint -- see the 'uri' configuration", e);
         } catch (Throwable t) {
             logger.warn("failed to send metrics", t);
         }
-    }
-
-    private Stream<String> writeLongTaskTimer(LongTaskTimer ltt) {
-        return Stream.of(
-                event(ltt.getId(),
-                        new Attribute("activeTasks", ltt.activeTasks()),
-                        new Attribute("duration", ltt.duration(getBaseTimeUnit())))
-        );
-    }
-
-    private Stream<String> writeCounter(FunctionCounter counter) {
-        return Stream.of(event(counter.getId(), new Attribute("throughput", counter.count())));
-    }
-
-    private Stream<String> writeCounter(Counter counter) {
-        return Stream.of(event(counter.getId(), new Attribute("throughput", counter.count())));
-    }
-
-    private Stream<String> writeGauge(Gauge gauge) {
-        Double value = gauge.value();
-        return value.isNaN() ? Stream.empty() : Stream.of(event(gauge.getId(), new Attribute("value", value)));
-    }
-
-    private Stream<String> writeGauge(TimeGauge gauge) {
-        Double value = gauge.value(getBaseTimeUnit());
-        return value.isNaN() ? Stream.empty() : Stream.of(event(gauge.getId(), new Attribute("value", value)));
-    }
-
-    private Stream<String> writeSummary(DistributionSummary summary) {
-        return Stream.of(
-                event(summary.getId(),
-                        new Attribute("count", summary.count()),
-                        new Attribute("avg", summary.mean()),
-                        new Attribute("total", summary.totalAmount()),
-                        new Attribute("max", summary.max())
-                )
-        );
-    }
-
-    private Stream<String> writeTimer(Timer timer) {
-        return Stream.of(event(timer.getId(),
-                new Attribute("count", timer.count()),
-                new Attribute("avg", timer.mean(getBaseTimeUnit())),
-                new Attribute("totalTime", timer.totalTime(getBaseTimeUnit())),
-                new Attribute("max", timer.max(getBaseTimeUnit()))
-        ));
-    }
-
-    private Stream<String> writeTimer(FunctionTimer timer) {
-        return Stream.of(
-                event(timer.getId(),
-                        new Attribute("count", timer.count()),
-                        new Attribute("avg", timer.mean(getBaseTimeUnit())),
-                        new Attribute("totalTime", timer.totalTime(getBaseTimeUnit()))
-                )
-        );
-    }
-
-    private Stream<String> writeMeter(Meter meter) {
-        return Stream.of(
-                event(meter.getId(),
-                        stream(meter.measure().spliterator(), false)
-                                .map(measure -> new Attribute(measure.getStatistic().getTagValueRepresentation(), measure.getValue()))
-                                .toArray(Attribute[]::new)
-                )
-        );
     }
 
     private String event(Meter.Id id, Attribute... attributes) {

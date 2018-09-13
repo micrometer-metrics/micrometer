@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.noop;
 
+import io.micrometer.core.MeterVisitor;
 import io.micrometer.core.instrument.AbstractMeter;
 import io.micrometer.core.instrument.Measurement;
 
@@ -30,5 +31,10 @@ public class NoopMeter extends AbstractMeter {
     @Override
     public List<Measurement> measure() {
         return emptyList();
+    }
+
+    @Override
+    public void accept(MeterVisitor visitor) {
+        // do nothing
     }
 }
