@@ -18,11 +18,7 @@ package io.micrometer.newrelic;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.HttpHeader;
-import io.micrometer.core.instrument.util.HttpMethod;
-import io.micrometer.core.instrument.util.IOUtils;
-import io.micrometer.core.instrument.util.MediaType;
+import io.micrometer.core.instrument.util.*;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,27 +73,16 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             // New Relic's Insights API limits us to 1000 events per call
             final int batchSize = Math.min(config.batchSize(), 1000);
 
-            List<String> events = getMeters().stream().flatMap(meter -> {
-                if (meter instanceof Timer) {
-                    return writeTimer((Timer) meter);
-                } else if (meter instanceof FunctionTimer) {
-                    return writeTimer((FunctionTimer) meter);
-                } else if (meter instanceof DistributionSummary) {
-                    return writeSummary((DistributionSummary) meter);
-                } else if (meter instanceof TimeGauge) {
-                    return writeGauge((TimeGauge) meter);
-                } else if (meter instanceof Gauge) {
-                    return writeGauge((Gauge) meter);
-                } else if (meter instanceof Counter) {
-                    return writeCounter((Counter) meter);
-                } else if (meter instanceof FunctionCounter) {
-                    return writeCounter((FunctionCounter) meter);
-                } else if (meter instanceof LongTaskTimer) {
-                    return writeLongTaskTimer((LongTaskTimer) meter);
-                } else {
-                    return writeMeter(meter);
-                }
-            }).collect(toList());
+            List<String> events = getMeters().stream().flatMap(meter -> Meter.Type.match(meter,
+                    this::writeGauge,
+                    this::writeCounter,
+                    this::writeTimer,
+                    this::writeSummary,
+                    this::writeLongTaskTimer,
+                    this::writeTimeGauge,
+                    this::writeFunctionCounter,
+                    this::writeFunctionTimer,
+                    this::writeMeter)).collect(toList());
 
             if (events.size() > batchSize) {
                 sendEvents(insightsEndpoint, events.subList(0, batchSize));
@@ -126,7 +111,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         );
     }
 
-    private Stream<String> writeCounter(FunctionCounter counter) {
+    private Stream<String> writeFunctionCounter(FunctionCounter counter) {
         return Stream.of(event(counter.getId(), new Attribute("throughput", counter.count())));
     }
 
@@ -139,7 +124,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         return value.isNaN() ? Stream.empty() : Stream.of(event(gauge.getId(), new Attribute("value", value)));
     }
 
-    private Stream<String> writeGauge(TimeGauge gauge) {
+    private Stream<String> writeTimeGauge(TimeGauge gauge) {
         Double value = gauge.value(getBaseTimeUnit());
         return value.isNaN() ? Stream.empty() : Stream.of(event(gauge.getId(), new Attribute("value", value)));
     }
@@ -164,7 +149,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         ));
     }
 
-    private Stream<String> writeTimer(FunctionTimer timer) {
+    private Stream<String> writeFunctionTimer(FunctionTimer timer) {
         return Stream.of(
                 event(timer.getId(),
                         new Attribute("count", timer.count()),
