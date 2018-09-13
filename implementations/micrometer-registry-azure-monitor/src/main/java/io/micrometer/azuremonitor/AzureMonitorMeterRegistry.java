@@ -22,13 +22,11 @@ import com.microsoft.applicationinsights.telemetry.SeverityLevel;
 import com.microsoft.applicationinsights.telemetry.TraceTelemetry;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -71,32 +69,29 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-            for (Meter meter : batch) {
-                match(meter,
-                        this::trackGauge,
-                        this::trackCounter,
-                        this::trackTimer,
-                        this::trackDistributionSummary,
-                        this::trackLongTaskTimer,
-                        this::trackTimeGauge,
-                        this::trackFunctionCounter,
-                        this::trackFunctionTimer,
-                        this::trackMeter
-                ).forEach(telemetry -> {
-                    try {
-                        client.track(telemetry);
-                    } catch (Throwable e) {
-                        logger.warn("Failed to track metric {}", meter.getId());
-                        TraceTelemetry traceTelemetry = new TraceTelemetry("Failed to track metric " + meter.getId());
-                        traceTelemetry.getContext().getOperation().setSyntheticSource(SDKTELEMETRY_SYNTHETIC_SOURCENAME);
-                        traceTelemetry.setSeverityLevel(SeverityLevel.Warning);
-                        client.trackTrace(traceTelemetry);
-                        client.flush();
-                    }
-                });
-            }
-            client.flush();
+        for (Meter meter : getMeters()) {
+            match(meter,
+                    this::trackGauge,
+                    this::trackCounter,
+                    this::trackTimer,
+                    this::trackDistributionSummary,
+                    this::trackLongTaskTimer,
+                    this::trackTimeGauge,
+                    this::trackFunctionCounter,
+                    this::trackFunctionTimer,
+                    this::trackMeter
+            ).forEach(telemetry -> {
+                try {
+                    client.track(telemetry);
+                } catch (Throwable e) {
+                    logger.warn("Failed to track metric {}", meter.getId());
+                    TraceTelemetry traceTelemetry = new TraceTelemetry("Failed to track metric " + meter.getId());
+                    traceTelemetry.getContext().getOperation().setSyntheticSource(SDKTELEMETRY_SYNTHETIC_SOURCENAME);
+                    traceTelemetry.setSeverityLevel(SeverityLevel.Warning);
+                    client.trackTrace(traceTelemetry);
+                    client.flush();
+                }
+            });
         }
     }
 
