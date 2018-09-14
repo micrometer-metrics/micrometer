@@ -28,7 +28,7 @@ public interface AzureMonitorConfig extends StepRegistryConfig {
 
     @Override
     default String prefix() {
-        return "azure.monitor";
+        return "azuremonitor";
     }
 
     /**
