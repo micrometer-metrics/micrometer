@@ -90,12 +90,12 @@ public class AppOpticsDto {
         private List<Measurement> measurements = new ArrayList<>();
 
         public Builder withTime(long val) {
-            time = val;
+            this.time = val;
             return this;
         }
 
         public Builder withPeriod(int val) {
-            period = val;
+            this.period = val;
             return this;
         }
 
@@ -114,18 +114,16 @@ public class AppOpticsDto {
         }
 
         public Builder withMeasurements(List<Measurement> measurements) {
-            this.measurements.addAll(measurements);
-            return this;
+            return withMeasurements(measurements.stream());
         }
 
         public Builder withMeasurements(Stream<Measurement> measurementStream) {
-            measurementStream.forEach( this.measurements::add);
+            measurementStream.forEach(this.measurements::add);
             return this;
         }
 
         public Builder withMeasurement(Measurement measurement) {
-            this.measurements.add(measurement);
-            return this;
+            return withMeasurements(Collections.singletonList(measurement));
         }
 
         public AppOpticsDto build() {
