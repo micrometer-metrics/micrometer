@@ -82,13 +82,14 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         try {
             final URL endpoint = URI.create(config.uri()).toURL();
 
-            final AppOpticsDto dto = AppOpticsDto.newBuilder()
+            final AppOpticsDto.Builder dtoBuilder = AppOpticsDto.newBuilder()
                 .withTime(System.currentTimeMillis() / 1000)
                 .withPeriod((int) config.step().getSeconds())
-                .withTag("source", config.source())
-                .build();
+                .withTag("source", config.source());
 
-            getMeters().forEach(meter -> addMeter(meter, dto));
+            getMeters().forEach(meter -> addMeter(meter, dtoBuilder));
+
+            final AppOpticsDto dto = dtoBuilder.build();
 
             if(dto.getMeasurements().isEmpty()) {
                 logger.debug("No metrics to send.");
@@ -104,28 +105,28 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private void addMeter(Meter meter, AppOpticsDto dto) {
+    private void addMeter(Meter meter, AppOpticsDto.Builder dto) {
 
         if (meter instanceof Timer) {
-            dto.addMeasurement(fromTimer((Timer) meter));
+            dto.withMeasurement(fromTimer((Timer) meter));
         } else if (meter instanceof FunctionTimer) {
-            dto.addMeasurement(fromFunctionTimer((FunctionTimer) meter));
+            dto.withMeasurement(fromFunctionTimer((FunctionTimer) meter));
         } else if (meter instanceof DistributionSummary) {
-            dto.addMeasurement(fromDistributionSummary((DistributionSummary) meter));
+            dto.withMeasurement(fromDistributionSummary((DistributionSummary) meter));
         } else if (meter instanceof TimeGauge) {
             final Measurement measurement = fromTimeGauge((TimeGauge) meter);
-            if(null != measurement) dto.addMeasurement(measurement);
+            if(null != measurement) dto.withMeasurement(measurement);
         } else if (meter instanceof Gauge) {
             final Measurement measurement = fromGauge((Gauge) meter);
-            if(null != measurement) dto.addMeasurement(measurement);
+            if(null != measurement) dto.withMeasurement(measurement);
         } else if (meter instanceof Counter) {
-            dto.addMeasurement(fromCounter((Counter) meter));
+            dto.withMeasurement(fromCounter((Counter) meter));
         } else if (meter instanceof FunctionCounter) {
-            dto.addMeasurement(fromFunctionCounter((FunctionCounter) meter));
+            dto.withMeasurement(fromFunctionCounter((FunctionCounter) meter));
         } else if (meter instanceof LongTaskTimer) {
-            dto.addMeasurement(fromLongTaskTimer((LongTaskTimer) meter));
+            dto.withMeasurement(fromLongTaskTimer((LongTaskTimer) meter));
         } else {
-            dto.addMeasurements(fromMeter(meter));
+            dto.withMeasurements(fromMeter(meter));
         }
     }
 

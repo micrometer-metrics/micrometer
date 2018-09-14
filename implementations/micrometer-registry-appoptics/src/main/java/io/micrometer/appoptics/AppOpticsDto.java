@@ -16,7 +16,7 @@
 package io.micrometer.appoptics;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,36 +36,26 @@ public class AppOpticsDto {
     private final List<Measurement> measurements;
 
     private AppOpticsDto(Builder builder) {
-        time = builder.time;
-        period = builder.period;
-        tags = builder.tags;
-        measurements = builder.measurements;
+        this.time = builder.time;
+        this.period = builder.period;
+        this.tags = Collections.unmodifiableMap(builder.tags);
+        this.measurements = Collections.unmodifiableList(builder.measurements);
     }
 
     public static Builder newBuilder() {
         return new Builder();
     }
 
-    public AppOpticsDto addMeasurement(Measurement measurement) {
-        measurements.add(measurement);
-        return this;
-    }
-
-    public AppOpticsDto addMeasurements(Stream<Measurement> measurements) {
-        measurements.forEach(this.measurements::add);
-        return this;
-    }
-
     public List<Measurement> getMeasurements() {
-        return measurements;
+        return this.measurements;
     }
 
     public List<AppOpticsDto> batch(int size) {
 
         if(this.measurements.size() <= size) {
-            return Arrays.asList(this);
+            return Collections.singletonList(this);
         }
-        final List<AppOpticsDto> batches = new ArrayList();
+        final List<AppOpticsDto> batches = new ArrayList<>();
         for (int i = 0; i < this.measurements.size(); i += size) {
             batches.add(AppOpticsDto.newBuilder()
                 .withPeriod(this.period)
@@ -96,14 +86,8 @@ public class AppOpticsDto {
     public static final class Builder {
         private long time;
         private int period;
-        private Map<String, String> tags;
-        private List<Measurement> measurements;
-
-        private Builder() {
-
-            this.measurements = new ArrayList();
-            this.tags = new HashMap();
-        }
+        private Map<String, String> tags = new HashMap<>();
+        private List<Measurement> measurements = new ArrayList<>();
 
         public Builder withTime(long val) {
             time = val;
@@ -127,8 +111,18 @@ public class AppOpticsDto {
             return this;
         }
 
-        public Builder withMeasurements(List<Measurement> val) {
-            measurements = val;
+        public Builder withMeasurements(List<Measurement> measurements) {
+            this.measurements.addAll(measurements);
+            return this;
+        }
+
+        public Builder withMeasurements(Stream<Measurement> measurementStream) {
+            measurementStream.forEach( this.measurements::add);
+            return this;
+        }
+
+        public Builder withMeasurement(Measurement measurement) {
+            this.measurements.add(measurement);
             return this;
         }
 
