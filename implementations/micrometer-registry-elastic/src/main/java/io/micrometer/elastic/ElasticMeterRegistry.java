@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -43,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static io.micrometer.core.instrument.Meter.Type.match;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -67,7 +67,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         this.config = config;
 
         if (StringUtils.isNotBlank(config.userName()) && StringUtils.isNotBlank(config.password())) {
-            byte[] authBinary = (config.userName() + ":" + config.password()).getBytes(StandardCharsets.UTF_8);
+            byte[] authBinary = (config.userName() + ":" + config.password()).getBytes(UTF_8);
             String authEncoded = Base64.getEncoder().encodeToString(authBinary);
             this.authHeader = "Basic " + authEncoded;
         } else {
@@ -161,13 +161,13 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                         .map(Optional::get)
                         .collect(joining("\n")) + "\n";
 
-                os.write(body.getBytes(StandardCharsets.UTF_8));
+                os.write(body.getBytes(UTF_8));
                 os.flush();
 
                 if (connection.getResponseCode() >= 400) {
                     if (logger.isErrorEnabled()) {
                         try {
-                            logger.error("failed to send metrics to elasticsearch (HTTP {}). Cause: {}", connection.getResponseCode(), IOUtils.toString(connection.getErrorStream(), StandardCharsets.UTF_8));
+                            logger.error("failed to send metrics to elasticsearch (HTTP {}). Cause: {}", connection.getResponseCode(), IOUtils.toString(connection.getErrorStream(), UTF_8));
                         } catch (IOException ignored) {
                         }
                     }
@@ -176,7 +176,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                     try {
                         // It's not enough to look at response code. ES could return {"errors":true} in body:
                         // {"took":16,"errors":true,"items":[{"index":{"_index":"metrics-2018-03","_type":"timer","_id":"i8kdBmIBmtn9wpUGezjX","status":400,"error":{"type":"illegal_argument_exception","reason":"Rejecting mapping update to [metrics-2018-03] as the final mapping would have more than 1 type: [metric, doc]"}}}]}
-                        String response = IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
+                        String response = IOUtils.toString(connection.getInputStream(), UTF_8);
                         if (response.contains("\"errors\":true")) {
                             logger.warn("failed to send metrics to elasticsearch (HTTP {}). Cause: {}", connection.getResponseCode(), response);
                             return;

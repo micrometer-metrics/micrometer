@@ -16,10 +16,10 @@
 package io.micrometer.core.instrument.util;
 
 import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -42,9 +42,9 @@ class IOUtilsTest {
     public void testToStringWithCharset() {
         String expected = "This is a sample.";
 
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(expected.getBytes(UTF_8));
 
-        assertThat(IOUtils.toString(inputStream, StandardCharsets.UTF_8)).isEqualTo(expected);
+        assertThat(IOUtils.toString(inputStream, UTF_8)).isEqualTo(expected);
     }
 
 }
