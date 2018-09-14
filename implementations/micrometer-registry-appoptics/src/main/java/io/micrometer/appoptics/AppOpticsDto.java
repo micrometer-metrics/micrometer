@@ -99,16 +99,18 @@ public class AppOpticsDto {
             return this;
         }
 
-        private Builder withTags(Map<String, String> val) {
-            this.tags.putAll(val);
+        private Builder withTags(Map<String, String> tags) {
+            tags.forEach((key, value) ->
+                             this.tags.put(
+                                 Sanitizer.TAG_NAME_SANITIZER.apply(key),
+                                 Sanitizer.TAG_VALUE_SANITIZER.apply(value)
+                             )
+            );
             return this;
         }
 
-        public Builder withTag(String key, String val) {
-            this.tags.put(
-                Sanitizer.TAG_NAME_SANITIZER.apply(key),
-                Sanitizer.TAG_VALUE_SANITIZER.apply(val));
-            return this;
+        public Builder withTag(String key, String value) {
+            return withTags(Collections.singletonMap(key, value));
         }
 
         public Builder withMeasurements(List<Measurement> measurements) {
