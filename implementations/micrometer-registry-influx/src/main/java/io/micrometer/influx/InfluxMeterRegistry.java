@@ -136,11 +136,11 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     try (OutputStream os = con.getOutputStream()) {
                         if (config.compressed()) {
                             try (GZIPOutputStream gz = new GZIPOutputStream(os)) {
-                                gz.write(body.getBytes());
+                                gz.write(body.getBytes(UTF_8));
                                 gz.flush();
                             }
                         } else {
-                            os.write(body.getBytes());
+                            os.write(body.getBytes(UTF_8));
                         }
                         os.flush();
                     }

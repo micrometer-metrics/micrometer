@@ -21,7 +21,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
-import java.nio.charset.Charset;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Utilities for IO.
@@ -35,15 +36,14 @@ public final class IOUtils {
     private static final int DEFAULT_BUFFER_SIZE = 1024;
 
     /**
-     * Create a {@code String} from {@link InputStream} with {@link Charset}.
+     * Create a {@code String} from UTF-8 encoded {@link InputStream} .
      *
      * @param inputStream source {@link InputStream}
-     * @param charset source {@link Charset}
      * @return created {@code String}
      */
-    public static String toString(InputStream inputStream, Charset charset) {
+    public static String toString(InputStream inputStream) {
         try (StringWriter writer = new StringWriter();
-                InputStreamReader reader = new InputStreamReader(inputStream, charset);
+                InputStreamReader reader = new InputStreamReader(inputStream, UTF_8);
                 BufferedReader bufferedReader = new BufferedReader(reader)) {
             char[] chars = new char[DEFAULT_BUFFER_SIZE];
             int readChars;
@@ -54,16 +54,6 @@ public final class IOUtils {
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
-    }
-
-    /**
-     * Create a {@code String} from {@link InputStream} with default {@link Charset}.
-     *
-     * @param inputStream source {@link InputStream}
-     * @return created {@code String}
-     */
-    public static String toString(InputStream inputStream) {
-        return toString(inputStream, Charset.defaultCharset());
     }
 
     private IOUtils() {

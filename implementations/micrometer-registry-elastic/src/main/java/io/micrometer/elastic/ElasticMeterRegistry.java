@@ -110,7 +110,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             }
 
             try (OutputStream outputStream = putTemplateConnection.getOutputStream()) {
-                outputStream.write("{\"template\":\"metrics*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false},\"properties\":{\"name\":{\"type\":\"keyword\"}}}}}".getBytes());
+                outputStream.write("{\"template\":\"metrics*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false},\"properties\":{\"name\":{\"type\":\"keyword\"}}}}}".getBytes(UTF_8));
                 outputStream.flush();
 
                 if (putTemplateConnection.getResponseCode() != 200) {
@@ -167,7 +167,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 if (connection.getResponseCode() >= 400) {
                     if (logger.isErrorEnabled()) {
                         try {
-                            logger.error("failed to send metrics to elasticsearch (HTTP {}). Cause: {}", connection.getResponseCode(), IOUtils.toString(connection.getErrorStream(), UTF_8));
+                            logger.error("failed to send metrics to elasticsearch (HTTP {}). Cause: {}", connection.getResponseCode(), IOUtils.toString(connection.getErrorStream()));
                         } catch (IOException ignored) {
                         }
                     }
@@ -176,7 +176,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                     try {
                         // It's not enough to look at response code. ES could return {"errors":true} in body:
                         // {"took":16,"errors":true,"items":[{"index":{"_index":"metrics-2018-03","_type":"timer","_id":"i8kdBmIBmtn9wpUGezjX","status":400,"error":{"type":"illegal_argument_exception","reason":"Rejecting mapping update to [metrics-2018-03] as the final mapping would have more than 1 type: [metric, doc]"}}}]}
-                        String response = IOUtils.toString(connection.getInputStream(), UTF_8);
+                        String response = IOUtils.toString(connection.getInputStream());
                         if (response.contains("\"errors\":true")) {
                             logger.warn("failed to send metrics to elasticsearch (HTTP {}). Cause: {}", connection.getResponseCode(), response);
                             return;

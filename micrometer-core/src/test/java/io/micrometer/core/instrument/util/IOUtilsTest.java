@@ -33,18 +33,9 @@ class IOUtilsTest {
     public void testToString() {
         String expected = "This is a sample.";
 
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(expected.getBytes());
-
-        assertThat(IOUtils.toString(inputStream)).isEqualTo(expected);
-    }
-
-    @Test
-    public void testToStringWithCharset() {
-        String expected = "This is a sample.";
-
         ByteArrayInputStream inputStream = new ByteArrayInputStream(expected.getBytes(UTF_8));
 
-        assertThat(IOUtils.toString(inputStream, UTF_8)).isEqualTo(expected);
+        assertThat(IOUtils.toString(inputStream)).isEqualTo(expected);
     }
 
 }
