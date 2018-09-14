@@ -229,10 +229,19 @@ public class TomcatMetrics implements MeterBinder {
 
         // MBean isn't yet registered, so we'll set up a notification to wait for them to be present and register
         // metrics later.
-        NotificationListener notificationListener = (notification, handback) -> {
-            MBeanServerNotification mBeanServerNotification = (MBeanServerNotification) notification;
-            ObjectName objectName = mBeanServerNotification.getMBeanName();
-            perObject.accept(objectName, Tags.concat(tags, nameTag(objectName)));
+        NotificationListener notificationListener = new NotificationListener() {
+            @Override
+            public void handleNotification(Notification notification, Object handback) {
+                MBeanServerNotification mBeanServerNotification = (MBeanServerNotification) notification;
+                ObjectName objectName = mBeanServerNotification.getMBeanName();
+                perObject.accept(objectName, Tags.concat(tags, nameTag(objectName)));
+                try {
+                    mBeanServer.removeNotificationListener(MBeanServerDelegate.DELEGATE_NAME, this);
+                }
+                catch (InstanceNotFoundException | ListenerNotFoundException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
         };
 
         NotificationFilter notificationFilter = (NotificationFilter) notification -> {

@@ -21,4 +21,5 @@ io.micrometer.spring.autoconfigure.export.statsd.StatsdMetricsExportAutoConfigur
 io.micrometer.spring.autoconfigure.export.wavefront.WavefrontMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.web.client.RestTemplateMetricsAutoConfiguration,\
 io.micrometer.spring.autoconfigure.jdbc.DataSourcePoolMetricsAutoConfiguration,\
-io.micrometer.spring.autoconfigure.web.jetty.JettyMetricsAutoConfiguration
+io.micrometer.spring.autoconfigure.web.jetty.JettyMetricsAutoConfiguration,\
+io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsAutoConfiguration
