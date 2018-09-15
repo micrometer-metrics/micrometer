@@ -96,7 +96,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
 
                         try (OutputStream os = con.getOutputStream();
                              OutputStreamWriter writer = new OutputStreamWriter(os, "UTF-8")) {
-                            writer.write("{" + stream.collect(joining(",")) + "}");
+                            writer.write(stream.collect(joining(",", "{", "}")));
                             writer.flush();
                         }
 
@@ -121,7 +121,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                     try (Socket socket = new Socket()) {
                         socket.connect(endpoint, timeout);
                         try (OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream(), "UTF-8")) {
-                          writer.write(stream.collect(joining("\n")) + "\n");
+                          writer.write(stream.collect(joining("\n", "", "\n")));
                           writer.flush();
                         }
                     }
