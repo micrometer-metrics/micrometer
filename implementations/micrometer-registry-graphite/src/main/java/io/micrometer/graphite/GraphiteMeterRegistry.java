@@ -28,8 +28,8 @@ import java.util.concurrent.TimeUnit;
 
 public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
 
-    private final GraphiteReporter reporter;
     private final GraphiteConfig config;
+    private final GraphiteReporter reporter;
 
     public GraphiteMeterRegistry(GraphiteConfig config, Clock clock) {
         this(config, clock, new GraphiteHierarchicalNameMapper(config.tagsAsPrefix()));
@@ -56,24 +56,24 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
     }
 
     private static GraphiteReporter defaultGraphiteReporter(GraphiteConfig config, Clock clock, MetricRegistry metricRegistry) {
-        GraphiteSender sender;
-        switch (config.protocol()) {
-            case PLAINTEXT:
-                sender = new Graphite(new InetSocketAddress(config.host(), config.port()));
-                break;
-            case UDP:
-                sender = new GraphiteUDP(new InetSocketAddress(config.host(), config.port()));
-                break;
-            case PICKLED:
-            default:
-                sender = new PickledGraphite(new InetSocketAddress(config.host(), config.port()));
-        }
-
         return GraphiteReporter.forRegistry(metricRegistry)
             .withClock(new DropwizardClock(clock))
             .convertRatesTo(config.rateUnits())
             .convertDurationsTo(config.durationUnits())
-            .build(sender);
+            .build(getGraphiteSender(config));
+    }
+
+    private static GraphiteSender getGraphiteSender(GraphiteConfig config) {
+        InetSocketAddress address = new InetSocketAddress(config.host(), config.port());
+        switch (config.protocol()) {
+            case PLAINTEXT:
+                return new Graphite(address);
+            case UDP:
+                return new GraphiteUDP(address);
+            case PICKLED:
+            default:
+                return new PickledGraphite(address);
+        }
     }
 
     public void stop() {
