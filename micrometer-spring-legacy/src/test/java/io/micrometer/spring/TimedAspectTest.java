@@ -35,7 +35,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import static io.micrometer.core.aop.TimedAspect.DEFAULT_EXCEPTION_TAG;
+import static io.micrometer.core.aop.TimedAspect.EXCEPTION_TAG;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -63,13 +63,13 @@ public class TimedAspectTest {
     @Test
     public void serviceIsTimedWhenThereIsAnException() {
         assertThrows(RuntimeException.class, () -> service.timeWithException());
-        assertThat(registry.get("somethingElse").tags(DEFAULT_EXCEPTION_TAG, "RuntimeException").timer().count()).isEqualTo(1);
+        assertThat(registry.get("somethingElse").tags(EXCEPTION_TAG, "RuntimeException").timer().count()).isEqualTo(1);
     }
 
     @Test
     public void serviceIsTimedWhenThereIsNoException() {
         service.timeWithoutException();
-        assertThat(registry.get("somethingElse").tags(DEFAULT_EXCEPTION_TAG, "none").timer().count()).isEqualTo(1);
+        assertThat(registry.get("somethingElse").tags(EXCEPTION_TAG, "none").timer().count()).isEqualTo(1);
     }
 
     @Test
