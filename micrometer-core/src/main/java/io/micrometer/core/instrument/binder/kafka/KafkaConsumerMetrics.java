@@ -40,18 +40,25 @@ import static java.util.Collections.emptyList;
  *
  * @author Wardha Perinkadakattu
  * @author Jon Schneider
+ * @author Johnny Lim
  * @link https://docs.confluent.io/current/kafka/monitoring.html
+ * @since 1.1.0
  */
 @NonNullApi
 @NonNullFields
 public class KafkaConsumerMetrics implements MeterBinder {
 
+    private static final String JMX_DOMAIN = "kafka.consumer";
+    private static final String METRIC_NAME_PREFIX = "kafka.consumer.";
+
     private final MBeanServer mBeanServer;
 
     private final Iterable<Tag> tags;
 
+    private Integer kafkaMajorVersion;
+
     public KafkaConsumerMetrics() {
-        this(getMBeanServer(), emptyList());
+        this(emptyList());
     }
 
     public KafkaConsumerMetrics(Iterable<Tag> tags) {
@@ -59,8 +66,8 @@ public class KafkaConsumerMetrics implements MeterBinder {
     }
 
     public KafkaConsumerMetrics(MBeanServer mBeanServer, Iterable<Tag> tags) {
-        this.tags = tags;
         this.mBeanServer = mBeanServer;
+        this.tags = tags;
     }
 
     private static MBeanServer getMBeanServer() {
@@ -74,17 +81,16 @@ public class KafkaConsumerMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         registerMetricsEventually("consumer-fetch-manager-metrics", (o, tags) -> {
-
             registerGaugeForObject(registry, o, "records-lag-max", tags, "The maximum lag in terms of number of records for any partition in this window. An increasing value over time is your best indication that the consumer group is not keeping up with the producers.", "records");
             registerGaugeForObject(registry, o, "fetch-size-avg", tags, "The average number of bytes fetched per request.", "bytes");
             registerGaugeForObject(registry, o, "fetch-size-max", tags, "The maximum number of bytes fetched per request.", "bytes");
             registerGaugeForObject(registry, o, "records-per-request-avg", tags, "The average number of records in each request.", "records");
 
             registerFunctionCounterForObject(registry, o, "fetch-total", tags, "The number of fetch requests.", "requests");
-            registerFunctionCounterForObject(registry, o, "bytes-consumed-total", tags, "The average number of bytes consumed.", "bytes");
-            registerFunctionCounterForObject(registry, o, "records-consumed-total", tags, "The average number of records consumed.", "records");
+            registerFunctionCounterForObject(registry, o, "bytes-consumed-total", tags, "The total number of bytes consumed.", "bytes");
+            registerFunctionCounterForObject(registry, o, "records-consumed-total", tags, "The total number of records consumed.", "records");
 
-            if (kafkaMajorVersion(tags) >= 2) {
+            if (getKafkaMajorVersion(tags) >= 2) {
                 // KAFKA-6184
                 registerTimeGaugeForObject(registry, o, "records-lead-min", tags, "The lag between the consumer offset and the start offset of the log. If this gets close to zero, it's an indication that the consumer may lose data soon.");
             }
@@ -123,11 +129,11 @@ public class KafkaConsumerMetrics implements MeterBinder {
             registerTimeGaugeForObject(registry, o, "io-time-ns-avg", "io-time-avg", tags, "The average length of time for I/O per select call.");
             registerTimeGaugeForObject(registry, o, "io-wait-time-ns-avg", "io-wait-time-avg", tags, "The average length of time the I/O thread spent waiting for a socket to be ready for reads or writes.");
 
-            if (kafkaMajorVersion(tags) >= 2) {
+            if (getKafkaMajorVersion(tags) >= 2) {
                 registerGaugeForObject(registry, o, "successful-authentication-total", "authentication-attempts",
-                        Tags.concat(tags, "result", "successful"), "The number of authentication attempts.", "");
+                        Tags.concat(tags, "result", "successful"), "The number of successful authentication attempts.", null);
                 registerGaugeForObject(registry, o, "failed-authentication-total", "authentication-attempts",
-                        Tags.concat(tags, "result", "failed"), "The number of authentication attempts.", "");
+                        Tags.concat(tags, "result", "failed"), "The number of failed authentication attempts.", null);
 
                 registerGaugeForObject(registry, o, "network-io-total", tags, "", "bytes");
                 registerGaugeForObject(registry, o, "outgoing-byte-total", tags, "", "bytes");
@@ -141,7 +147,7 @@ public class KafkaConsumerMetrics implements MeterBinder {
     }
 
     private void registerGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, String meterName, Tags allTags, String description, @Nullable String baseUnit) {
-        Gauge.builder("kafka.consumer." + meterName, mBeanServer, s -> safeDouble(() -> s.getAttribute(o, jmxMetricName)))
+        Gauge.builder(METRIC_NAME_PREFIX + meterName, mBeanServer, s -> safeDouble(() -> s.getAttribute(o, jmxMetricName)))
                 .description(description)
                 .baseUnit(baseUnit)
                 .tags(allTags)
@@ -149,11 +155,11 @@ public class KafkaConsumerMetrics implements MeterBinder {
     }
 
     private void registerGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, Tags allTags, String description, @Nullable String baseUnit) {
-        registerGaugeForObject(registry, o, jmxMetricName, jmxMetricName.replaceAll("-", "."), allTags, description, baseUnit);
+        registerGaugeForObject(registry, o, jmxMetricName, sanitize(jmxMetricName), allTags, description, baseUnit);
     }
 
     private void registerFunctionCounterForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, Tags allTags, String description, @Nullable String baseUnit) {
-        FunctionCounter.builder("kafka.consumer." + jmxMetricName.replaceAll("-", "."), mBeanServer, s -> safeDouble(() -> s.getAttribute(o, jmxMetricName)))
+        FunctionCounter.builder(METRIC_NAME_PREFIX + sanitize(jmxMetricName), mBeanServer, s -> safeDouble(() -> s.getAttribute(o, jmxMetricName)))
                 .description(description)
                 .baseUnit(baseUnit)
                 .tags(allTags)
@@ -161,7 +167,7 @@ public class KafkaConsumerMetrics implements MeterBinder {
     }
 
     private void registerTimeGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, String meterName, Tags allTags, String description) {
-        TimeGauge.builder("kafka.consumer." + meterName, mBeanServer, TimeUnit.MILLISECONDS,
+        TimeGauge.builder(METRIC_NAME_PREFIX + meterName, mBeanServer, TimeUnit.MILLISECONDS,
                 s -> safeDouble(() -> s.getAttribute(o, jmxMetricName)))
                 .description(description)
                 .tags(allTags)
@@ -169,25 +175,28 @@ public class KafkaConsumerMetrics implements MeterBinder {
     }
 
     private void registerTimeGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, Tags allTags, String description) {
-        registerTimeGaugeForObject(registry, o, jmxMetricName, jmxMetricName.replaceAll("-", "."), allTags, description);
+        registerTimeGaugeForObject(registry, o, jmxMetricName, sanitize(jmxMetricName), allTags, description);
     }
 
-    int kafkaMajorVersion(Tags tags) {
-        return tags.stream().filter(t -> "client.id".equals(t.getKey())).findAny()
-                .map(clientId -> {
-                    try {
-                        String version = (String) mBeanServer.getAttribute(new ObjectName("kafka.consumer:type=app-info,client-id=" + clientId.getValue()), "version");
-                        return Integer.parseInt(version.substring(0, version.indexOf('.')));
-                    } catch (Throwable e) {
-                        return -1; // should never happen
-                    }
-                })
-                .orElse(-1);
+    int getKafkaMajorVersion(Tags tags) {
+        if (this.kafkaMajorVersion == null) {
+            this.kafkaMajorVersion = tags.stream().filter(t -> "client.id".equals(t.getKey())).findAny()
+                    .map(clientId -> {
+                        try {
+                            String version = (String) mBeanServer.getAttribute(new ObjectName(JMX_DOMAIN + ":type=app-info,client-id=" + clientId.getValue()), "version");
+                            return Integer.parseInt(version.substring(0, version.indexOf('.')));
+                        } catch (Throwable e) {
+                            return -1; // should never happen
+                        }
+                    })
+                    .orElse(-1);
+        }
+        return this.kafkaMajorVersion;
     }
 
     private void registerMetricsEventually(String type, BiConsumer<ObjectName, Tags> perObject) {
         try {
-            Set<ObjectName> objs = mBeanServer.queryNames(new ObjectName("kafka.consumer:type=" + type + ",*"), null);
+            Set<ObjectName> objs = mBeanServer.queryNames(new ObjectName(JMX_DOMAIN + ":type=" + type + ",*"), null);
             if (!objs.isEmpty()) {
                 for (ObjectName o : objs) {
                     perObject.accept(o, Tags.concat(tags, nameTag(o)));
@@ -198,17 +207,27 @@ public class KafkaConsumerMetrics implements MeterBinder {
             throw new RuntimeException("Error registering Kafka JMX based metrics", e);
         }
 
-        NotificationListener notificationListener = (notification, handback) -> {
-            MBeanServerNotification mbs = (MBeanServerNotification) notification;
-            ObjectName o = mbs.getMBeanName();
-            perObject.accept(o, Tags.concat(tags, nameTag(o)));
+        NotificationListener notificationListener = new NotificationListener() {
+
+            @Override
+            public void handleNotification(Notification notification, Object handback) {
+                MBeanServerNotification mbs = (MBeanServerNotification) notification;
+                ObjectName o = mbs.getMBeanName();
+                perObject.accept(o, Tags.concat(tags, nameTag(o)));
+                try {
+                    mBeanServer.removeNotificationListener(MBeanServerDelegate.DELEGATE_NAME, this);
+                } catch (InstanceNotFoundException | ListenerNotFoundException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+
         };
 
         NotificationFilter filter = (NotificationFilter) notification -> {
             if (!MBeanServerNotification.REGISTRATION_NOTIFICATION.equals(notification.getType()))
                 return false;
             ObjectName obj = ((MBeanServerNotification) notification).getMBeanName();
-            return obj.getDomain().equals("kafka.consumer") && obj.getKeyProperty("type").equals(type);
+            return obj.getDomain().equals(JMX_DOMAIN) && obj.getKeyProperty("type").equals(type);
         };
 
         try {
@@ -229,14 +248,21 @@ public class KafkaConsumerMetrics implements MeterBinder {
     private Iterable<Tag> nameTag(ObjectName name) {
         Tags tags = Tags.empty();
 
-        if (name.getKeyProperty("client-id") != null) {
-            tags = Tags.concat(tags, "client.id", name.getKeyProperty("client-id"));
+        String clientId = name.getKeyProperty("client-id");
+        if (clientId != null) {
+            tags = Tags.concat(tags, "client.id", clientId);
         }
 
-        if (name.getKeyProperty("topic") != null) {
-            tags = Tags.concat(tags, "topic", name.getKeyProperty("topic"));
+        String topic = name.getKeyProperty("topic");
+        if (topic != null) {
+            tags = Tags.concat(tags, "topic", topic);
         }
 
         return tags;
     }
+
+    private static String sanitize(String value) {
+        return value.replaceAll("-", ".");
+    }
+
 }
