@@ -97,6 +97,7 @@ public class HistogramGauges {
 
             Gauge.builder(percentileName.apply(valueAtPercentiles[i]), meter, percentileValueFunction)
                     .tags(percentileTags.apply(valueAtPercentiles[i]))
+                    .baseUnit(meter.getId().getBaseUnit())
                     .synthetic(true)
                     .register(registry);
         }
