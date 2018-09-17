@@ -110,11 +110,13 @@ public class AtlasMeterRegistry extends MeterRegistry {
     @Override
     protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
                                                                                        double scale) {
-        com.netflix.spectator.api.DistributionSummary internalSummary = registry.distributionSummary(spectatorId(id));
+        com.netflix.spectator.api.DistributionSummary internalSummary;
 
         if (distributionStatisticConfig.isPercentileHistogram()) {
             // This doesn't report the normal count/totalTime/max stats, so we treat it as additive
-            PercentileDistributionSummary.get(registry, spectatorId(id));
+            internalSummary = PercentileDistributionSummary.get(registry, spectatorId(id));
+        } else {
+            internalSummary = registry.distributionSummary(spectatorId(id));
         }
 
         SpectatorDistributionSummary summary = new SpectatorDistributionSummary(id, internalSummary, clock, distributionStatisticConfig, scale);
@@ -132,11 +134,13 @@ public class AtlasMeterRegistry extends MeterRegistry {
     @SuppressWarnings("ConstantConditions")
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        com.netflix.spectator.api.Timer internalTimer = registry.timer(spectatorId(id));
+        com.netflix.spectator.api.Timer internalTimer;
 
         if (distributionStatisticConfig.isPercentileHistogram()) {
             // This doesn't report the normal count/totalTime/max stats, so we treat it as additive
-            PercentileTimer.get(registry, spectatorId(id));
+            internalTimer = PercentileTimer.get(registry, spectatorId(id));
+        } else {
+            internalTimer = registry.timer(spectatorId(id));
         }
 
         SpectatorTimer timer = new SpectatorTimer(id, internalTimer, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit());
