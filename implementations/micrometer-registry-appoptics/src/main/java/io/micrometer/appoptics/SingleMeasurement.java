@@ -59,7 +59,9 @@ public class SingleMeasurement implements Measurement {
         private double value;
         private Map<String, String> tags;
 
-        private Builder() {}
+        private Builder() {
+            // no-op
+        }
 
         public Builder withName(String val) {
             name = Sanitizer.NAME_SANITIZER.apply(val);
