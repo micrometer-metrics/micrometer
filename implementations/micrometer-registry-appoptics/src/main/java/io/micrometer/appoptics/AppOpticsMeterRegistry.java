@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
@@ -30,6 +31,7 @@ import io.micrometer.core.instrument.util.HttpHeader;
 import io.micrometer.core.instrument.util.HttpMethod;
 import io.micrometer.core.instrument.util.IOUtils;
 import io.micrometer.core.instrument.util.MediaType;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,12 +69,17 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         super(config, clock);
 
         this.config = config;
-        if(!config.metricPrefix().isEmpty() && !config.metricPrefix().endsWith(".")) {
+
+        if (!StringUtils.isEmpty(config.source()))
+            config().commonTags(Tags.of("host_hostname_alias", config.source())); //this makes AO add the magic `@host` group by
+
+        if (!config.metricPrefix().isEmpty() && !config.metricPrefix().endsWith(".")) {
             this.prefix = config.metricPrefix() + ".";
         } else {
             this.prefix = config.metricPrefix();
         }
-        if(config.enabled())
+
+        if (config.enabled())
             start(threadFactory);
     }
 
@@ -84,14 +91,13 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
 
             final AppOpticsDto.Builder dtoBuilder = AppOpticsDto.newBuilder()
                 .withTime(System.currentTimeMillis() / 1000)
-                .withPeriod((int) config.step().getSeconds())
-                .withTag("host_hostname_alias", config.source()); //this makes AO give the magic `@host` group by
+                .withPeriod((int) config.step().getSeconds());
 
             getMeters().forEach(meter -> addMeter(meter, dtoBuilder));
 
             final AppOpticsDto dto = dtoBuilder.build();
 
-            if(dto.getMeasurements().isEmpty()) {
+            if (dto.getMeasurements().isEmpty()) {
                 logger.debug("No metrics to send.");
                 return;
             }
@@ -115,10 +121,10 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
             dto.withMeasurement(fromDistributionSummary((DistributionSummary) meter));
         } else if (meter instanceof TimeGauge) {
             final Measurement measurement = fromTimeGauge((TimeGauge) meter);
-            if(null != measurement) dto.withMeasurement(measurement);
+            if (null != measurement) dto.withMeasurement(measurement);
         } else if (meter instanceof Gauge) {
             final Measurement measurement = fromGauge((Gauge) meter);
-            if(null != measurement) dto.withMeasurement(measurement);
+            if (null != measurement) dto.withMeasurement(measurement);
         } else if (meter instanceof Counter) {
             dto.withMeasurement(fromCounter((Counter) meter));
         } else if (meter instanceof FunctionCounter) {
@@ -177,7 +183,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
 
         final Double val = gauge.value(getBaseTimeUnit());
 
-        if(val.isNaN()) return null;
+        if (val.isNaN()) return null;
         return SingleMeasurement.newBuilder()
             .withName(
                 addPrefix(gauge.getId().getName()))
@@ -191,7 +197,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
 
         final Double val = gauge.value();
 
-        if(val.isNaN()) return null;
+        if (val.isNaN()) return null;
         return SingleMeasurement.newBuilder()
             .withName(
                 addPrefix(gauge.getId().getName()))
