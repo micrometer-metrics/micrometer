@@ -133,8 +133,8 @@ public class AppOpticsDto {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if(this == o) return true;
+        if(o == null || getClass() != o.getClass()) return false;
         AppOpticsDto that = (AppOpticsDto) o;
         return time == that.time &&
             period == that.period &&

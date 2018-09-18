@@ -85,8 +85,8 @@ public class SingleMeasurement implements Measurement {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if(this == o) return true;
+        if(o == null || getClass() != o.getClass()) return false;
         SingleMeasurement that = (SingleMeasurement) o;
         return Double.compare(that.value, value) == 0 &&
             Objects.equals(name, that.name) &&

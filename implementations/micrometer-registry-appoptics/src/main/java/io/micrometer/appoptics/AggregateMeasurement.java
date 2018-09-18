@@ -106,8 +106,8 @@ public class AggregateMeasurement implements Measurement {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if(this == o) return true;
+        if(o == null || getClass() != o.getClass()) return false;
         AggregateMeasurement that = (AggregateMeasurement) o;
         return Double.compare(that.sum, sum) == 0 &&
             count == that.count &&
