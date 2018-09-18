@@ -24,6 +24,7 @@ import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
 import okhttp3.Call;
 import okhttp3.EventListener;
+import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
@@ -36,18 +37,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
+ * {@link EventListener} for collecting metrics from {@link OkHttpClient}.
+ *
+ * {@literal uri} tag is usually limited to URI patterns to mitigate tag cardinality explosion but {@link OkHttpClient}
+ * doesn't provide URI patterns. We provide {@value URI_PATTERN} header to support {@literal uri} tag or you can
+ * configure a {@link Builder#uriMapper(Function) URI mapper} to provide your own tag values for {@literal uri} tag.
+ *
  * @author Bjarte S. Karlsen
  * @author Jon Schneider
  */
 @NonNullApi
 @NonNullFields
 public class OkHttpMetricsEventListener extends EventListener {
+
+    /**
+     * Header name for URI patterns which will be used for tag values.
+     */
     public static final String URI_PATTERN = "URI_PATTERN";
 
+    private final MeterRegistry registry;
     private final String requestsMetricName;
     private final Function<Request, String> urlMapper;
     private final Iterable<Tag> extraTags;
-    private final MeterRegistry registry;
     private final ConcurrentMap<Call, CallState> callState = new ConcurrentHashMap<>();
 
     OkHttpMetricsEventListener(MeterRegistry registry, String requestsMetricName, Function<Request, String> urlMapper, Iterable<Tag> extraTags) {
@@ -137,8 +148,8 @@ public class OkHttpMetricsEventListener extends EventListener {
     }
 
     public static class Builder {
-        private MeterRegistry registry;
-        private String name;
+        private final MeterRegistry registry;
+        private final String name;
         private Function<Request, String> uriMapper = (request) -> Optional.ofNullable(request.header(URI_PATTERN)).orElse("none");
         private Iterable<Tag> tags = Collections.emptyList();
 
