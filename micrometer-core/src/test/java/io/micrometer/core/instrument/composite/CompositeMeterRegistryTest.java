@@ -24,6 +24,8 @@ import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
@@ -33,9 +35,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
+ * Tests for {@link CompositeMeterRegistry}.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 class CompositeMeterRegistryTest {
     private MockClock clock = new MockClock();
@@ -275,4 +282,41 @@ class CompositeMeterRegistryTest {
 
         assertThat(composite.getRegistries()).isEmpty();
     }
+
+    @Issue("#704")
+    @Test
+    void noDeadlockOnAddingAndRemovingRegistries() throws InterruptedException {
+        CompositeMeterRegistry composite2 = new CompositeMeterRegistry();
+        composite.add(composite2);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        Flux.range(0, 10000)
+                .parallel(8)
+                .doOnTerminate(latch::countDown)
+                .runOn(Schedulers.parallel())
+                .subscribe(n -> {
+                    if (n % 2 == 0)
+                        composite2.add(simple);
+                    else composite2.remove(simple);
+                });
+
+        latch.await(10, TimeUnit.SECONDS);
+        assertThat(latch.getCount()).isZero();
+    }
+
+    @Issue("#838")
+    @Test
+    void closeShouldCloseAllMeterRegistries() {
+        MeterRegistry registry1 = mock(MeterRegistry.class);
+        MeterRegistry registry2 = mock(MeterRegistry.class);
+
+        CompositeMeterRegistry compositeMeterRegistry = new CompositeMeterRegistry();
+        compositeMeterRegistry.add(registry1);
+        compositeMeterRegistry.add(registry2);
+
+        compositeMeterRegistry.close();
+        verify(registry1).close();
+        verify(registry2).close();
+    }
+
 }

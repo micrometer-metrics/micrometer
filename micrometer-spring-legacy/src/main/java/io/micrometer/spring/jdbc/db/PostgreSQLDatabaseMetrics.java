@@ -33,13 +33,25 @@ import java.util.function.DoubleSupplier;
 
 
 /**
+ * {@link MeterBinder} for a PostgreSQL database.
+ *
  * @author Kristof Depypere
+ * @author Jon Schneider
+ * @author Johnny Lim
  */
 @NonNullApi
 @NonNullFields
 public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private static final String SELECT = "SELECT ";
+
+    private static final String QUERY_DEAD_TUPLE_COUNT = getUserTableQuery("n_dead_tup");
+    private static final String QUERY_TIMED_CHECKPOINTS_COUNT = getBgWriterQuery("checkpoints_timed");
+    private static final String QUERY_REQUESTED_CHECKPOINTS_COUNT = getBgWriterQuery("checkpoints_req");
+    private static final String QUERY_BUFFERS_CLEAN = getBgWriterQuery("buffers_clean");
+    private static final String QUERY_BUFFERS_BACKEND = getBgWriterQuery("buffers_backend");
+    private static final String QUERY_BUFFERS_CHECKPOINT = getBgWriterQuery("buffers_checkpoint");
+
     private final Logger logger = LoggerFactory.getLogger(PostgreSQLDatabaseMetrics.class);
 
     private final String database;
@@ -48,8 +60,18 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     private final Map<String, Double> beforeResetValuesCacheMap;
     private final Map<String, Double> previousValueCacheMap;
 
+    private final String queryConnectionCount;
+    private final String queryReadCount;
+    private final String queryInsertCount;
+    private final String queryTempBytes;
+    private final String queryUpdateCount;
+    private final String queryDeleteCount;
+    private final String queryBlockHits;
+    private final String queryBlockReads;
+    private final String queryTransactionCount;
+
     public PostgreSQLDatabaseMetrics(DataSource postgresDataSource, String database) {
-        this(postgresDataSource, database, Tags.of(createDbTag(database)));
+        this(postgresDataSource, database, Tags.empty());
     }
 
     public PostgreSQLDatabaseMetrics(DataSource postgresDataSource, String database, Iterable<Tag> tags) {
@@ -58,6 +80,16 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         this.tags = Tags.of(tags).and(createDbTag(database));
         this.beforeResetValuesCacheMap = new ConcurrentHashMap<>();
         this.previousValueCacheMap = new ConcurrentHashMap<>();
+
+        this.queryConnectionCount = getDBStatQuery(database, "SUM(numbackends)");
+        this.queryReadCount = getDBStatQuery(database, "tup_fetched");
+        this.queryInsertCount = getDBStatQuery(database, "tup_inserted");
+        this.queryTempBytes = getDBStatQuery(database, "tmp_bytes");
+        this.queryUpdateCount = getDBStatQuery(database, "tup_updated");
+        this.queryDeleteCount = getDBStatQuery(database, "tup_deleted");
+        this.queryBlockHits = getDBStatQuery(database, "blks_hit");
+        this.queryBlockReads = getDBStatQuery(database, "blks_read");
+        this.queryTransactionCount = getDBStatQuery(database, "xact_commit + xact_rollback");
     }
 
     private static Tag createDbTag(String database) {
@@ -154,12 +186,12 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         FunctionCounter.builder("postgres.buffers.clean", postgresDataSource,
                 dataSource -> resettableFunctionalCounter("postgres.buffers.clean", this::getBuffersClean))
                 .tags(tags)
-                .description("Number of buffers written directly by a backend")
+                .description("Number of buffers written by the background writer")
                 .register(registry);
         FunctionCounter.builder("postgres.buffers.backend", postgresDataSource,
                 dataSource -> resettableFunctionalCounter("postgres.buffers.backend", this::getBuffersBackend))
                 .tags(tags)
-                .description("Number of buffers written by the background writer")
+                .description("Number of buffers written directly by a backend")
                 .register(registry);
     }
 
@@ -172,78 +204,63 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     }
 
     private Long getConnectionCount() {
-        String query = getDBStatQuery("SUM(numbackends)");
-        return runQuery(query);
+        return runQuery(this.queryConnectionCount);
     }
 
     private Long getReadCount() {
-        String query = getDBStatQuery("tup_fetched");
-        return runQuery(query);
+        return runQuery(this.queryReadCount);
     }
 
     private Long getInsertCount() {
-        String query = getDBStatQuery("tup_inserted");
-        return runQuery(query);
+        return runQuery(this.queryInsertCount);
     }
 
     private Long getTempBytes() {
-        String query = getDBStatQuery("tmp_bytes");
-        return runQuery(query);
+        return runQuery(this.queryTempBytes);
     }
 
     private Long getUpdateCount() {
-        String query = getDBStatQuery("tup_updated");
-        return runQuery(query);
+        return runQuery(this.queryUpdateCount);
     }
 
     private Long getDeleteCount() {
-        String query = getDBStatQuery("tup_deleted");
-        return runQuery(query);
+        return runQuery(this.queryDeleteCount);
     }
 
     private Long getBlockHits() {
-        String query = getDBStatQuery("blks_hit");
-        return runQuery(query);
+        return runQuery(this.queryBlockHits);
     }
 
     private Long getBlockReads() {
-        String query = getDBStatQuery("blks_read");
-        return runQuery(query);
+        return runQuery(this.queryBlockReads);
     }
 
     private Long getTransactionCount() {
-        String query = getDBStatQuery("xact_commit + xact_rollback");
-        return runQuery(query);
+        return runQuery(this.queryTransactionCount);
     }
 
     private Long getDeadTupleCount() {
-        String query = getUserTableQuery("n_dead_tup");
-        return runQuery(query);
+        return runQuery(QUERY_DEAD_TUPLE_COUNT);
     }
 
     private Long getTimedCheckpointsCount() {
-        String query = getBgWriterQuery("checkpoints_timed");
-        return runQuery(query);
+        return runQuery(QUERY_TIMED_CHECKPOINTS_COUNT);
     }
 
     private Long getRequestedCheckpointsCount() {
-        String query = getBgWriterQuery("checkpoints_req");
-        return runQuery(query);
+        return runQuery(QUERY_REQUESTED_CHECKPOINTS_COUNT);
     }
 
     private Long getBuffersClean() {
-        String query = getBgWriterQuery("buffers_clean");
-        return runQuery(query);
+        return runQuery(QUERY_BUFFERS_CLEAN);
     }
 
     private Long getBuffersBackend() {
-        String query = getBgWriterQuery("buffers_backend");
-        return runQuery(query);
+        return runQuery(QUERY_BUFFERS_BACKEND);
     }
 
     private Long getBuffersCheckpoint() {
-        String query = getBgWriterQuery("buffers_checkpoint");
-        return runQuery(query);
+        return runQuery(QUERY_BUFFERS_CHECKPOINT);
     }
 
     /**
@@ -263,28 +280,26 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         return correctedValue;
     }
 
-    private <T> Long runQuery(String query) {
-        try (Connection connection = postgresDataSource.getConnection()) {
-            try (Statement statement = connection.createStatement()) {
-                try (ResultSet resultSet = statement.executeQuery(query)) {
-                    return resultSet.getObject(1, Long.class);
-                }
-            }
+    private Long runQuery(String query) {
+        try (Connection connection = postgresDataSource.getConnection();
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(query)) {
+            return resultSet.getObject(1, Long.class);
         } catch (SQLException e) {
             logger.error("Error getting statistic from postgreSQL database");
             return 0L;
         }
     }
 
-    private String getDBStatQuery(String statName) {
+    private static String getDBStatQuery(String database, String statName) {
         return SELECT + statName + " FROM pg_stat_database WHERE datname = '" + database + "'";
     }
 
-    private String getUserTableQuery(String statName) {
+    private static String getUserTableQuery(String statName) {
         return SELECT + statName + " FROM pg_stat_user_tables";
     }
 
-    private String getBgWriterQuery(String statName) {
+    private static String getBgWriterQuery(String statName) {
         return SELECT + statName + " FROM pg_stat_bgwriter";
     }
 }

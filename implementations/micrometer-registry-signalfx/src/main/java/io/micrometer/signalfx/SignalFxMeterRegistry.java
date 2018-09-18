@@ -20,6 +20,7 @@ import com.signalfx.endpoint.SignalFxReceiverEndpoint;
 import com.signalfx.metrics.auth.StaticAuthToken;
 import com.signalfx.metrics.connection.HttpDataPointProtobufReceiverFactory;
 import com.signalfx.metrics.connection.HttpEventProtobufReceiverFactory;
+import com.signalfx.metrics.errorhandler.OnSendErrorHandler;
 import com.signalfx.metrics.flush.AggregateMetricSender;
 import com.signalfx.metrics.protobuf.SignalFxProtocolBuffers;
 import io.micrometer.core.instrument.*;
@@ -33,12 +34,16 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.COUNTER;
 import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.GAUGE;
+import static io.micrometer.core.instrument.Meter.Type.match;
+import static java.util.stream.StreamSupport.stream;
 
 /**
  * @author Jon Schneider
@@ -46,7 +51,10 @@ import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.G
 public class SignalFxMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(SignalFxMeterRegistry.class);
     private final SignalFxConfig config;
-    private final AggregateMetricSender metricSender;
+    private final HttpDataPointProtobufReceiverFactory dataPointReceiverFactory;
+    private final HttpEventProtobufReceiverFactory eventReceiverFactory;
+    private final Set<OnSendErrorHandler> onSendErrorHandlerCollection = Collections.singleton(
+            metricError -> this.logger.warn("failed to send metrics: {}", metricError.getMessage()));
 
     public SignalFxMeterRegistry(SignalFxConfig config, Clock clock) {
         this(config, clock, Executors.defaultThreadFactory());
@@ -67,12 +75,8 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         }
 
         SignalFxReceiverEndpoint signalFxEndpoint = new SignalFxEndpoint(apiUri.getScheme(), apiUri.getHost(), port);
-
-        metricSender = new AggregateMetricSender(config.source(),
-                new HttpDataPointProtobufReceiverFactory(signalFxEndpoint).setVersion(2),
-                new HttpEventProtobufReceiverFactory(signalFxEndpoint),
-                new StaticAuthToken(config.accessToken()),
-                Collections.singleton(metricError -> logger.warn("failed to send metrics: " + metricError.getMessage())));
+        this.dataPointReceiverFactory = new HttpDataPointProtobufReceiverFactory(signalFxEndpoint);
+        this.eventReceiverFactory = new HttpEventProtobufReceiverFactory(signalFxEndpoint);
 
         config().namingConvention(new SignalFxNamingConvention());
 
@@ -83,29 +87,25 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         final long timestamp = clock.wallTime();
 
+        AggregateMetricSender metricSender = new AggregateMetricSender(this.config.source(),
+                this.dataPointReceiverFactory, this.eventReceiverFactory,
+                new StaticAuthToken(this.config.accessToken()), this.onSendErrorHandlerCollection);
+
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try (AggregateMetricSender.Session session = metricSender.createSession()) {
-                for (Meter meter : batch) {
-                    if (meter instanceof Counter) {
-                        addCounter((Counter) meter, session, timestamp);
-                    } else if (meter instanceof Timer) {
-                        addTimer((Timer) meter, session, timestamp);
-                    } else if (meter instanceof DistributionSummary) {
-                        addDistributionSummary((DistributionSummary) meter, session, timestamp);
-                    } else if (meter instanceof TimeGauge) {
-                        addTimeGauge((TimeGauge) meter, session, timestamp);
-                    } else if (meter instanceof Gauge) {
-                        addGauge((Gauge) meter, session, timestamp);
-                    } else if (meter instanceof FunctionTimer) {
-                        addFunctionTimer((FunctionTimer) meter, session, timestamp);
-                    } else if (meter instanceof FunctionCounter) {
-                        addFunctionCounter((FunctionCounter) meter, session, timestamp);
-                    } else if (meter instanceof LongTaskTimer) {
-                        addLongTaskTimer((LongTaskTimer) meter, session, timestamp);
-                    } else {
-                        addMeter(meter, session, timestamp);
-                    }
-                }
+                batch.stream()
+                        .map(meter -> match(meter,
+                                this::addGauge,
+                                this::addCounter,
+                                this::addTimer,
+                                this::addDistributionSummary,
+                                this::addLongTaskTimer,
+                                this::addTimeGauge,
+                                this::addFunctionCounter,
+                                this::addFunctionTimer,
+                                this::addMeter))
+                        .flatMap(builders -> builders.map(builder -> builder.setTimestamp(timestamp).build()))
+                        .forEach(session::setDatapoint);
 
                 logger.info("successfully sent " + batch.size() + " metrics to SignalFx");
             } catch (Throwable e) {
@@ -114,28 +114,26 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private void addMeter(Meter meter, AggregateMetricSender.Session session, long timestamp) {
-        for (Measurement measurement : meter.measure()) {
+    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addMeter(Meter meter) {
+        return stream(meter.measure().spliterator(), false).flatMap(measurement -> {
             String statSuffix = NamingConvention.camelCase.tagKey(measurement.getStatistic().toString());
-
             switch (measurement.getStatistic()) {
                 case TOTAL:
                 case TOTAL_TIME:
                 case COUNT:
                 case DURATION:
-                    addDatapoint(meter, COUNTER, statSuffix, session, measurement.getValue(), timestamp);
-                    break;
+                    return Stream.of(addDatapoint(meter, COUNTER, statSuffix, measurement.getValue()));
                 case MAX:
                 case VALUE:
                 case UNKNOWN:
                 case ACTIVE_TASKS:
-                    addDatapoint(meter, GAUGE, statSuffix, session, measurement.getValue(), timestamp);
-                    break;
+                    return Stream.of(addDatapoint(meter, GAUGE, statSuffix, measurement.getValue()));
             }
-        }
+            return Stream.empty();
+        });
     }
 
-    private void addDatapoint(Meter meter, SignalFxProtocolBuffers.MetricType metricType, @Nullable String statSuffix, AggregateMetricSender.Session session, Number value, long timestamp) {
+    private SignalFxProtocolBuffers.DataPoint.Builder addDatapoint(Meter meter, SignalFxProtocolBuffers.MetricType metricType, @Nullable String statSuffix, Number value) {
         SignalFxProtocolBuffers.Datum.Builder datumBuilder = SignalFxProtocolBuffers.Datum.newBuilder();
         SignalFxProtocolBuffers.Datum datum = (value instanceof Double ?
                 datumBuilder.setDoubleValue((Double) value) :
@@ -148,8 +146,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         SignalFxProtocolBuffers.DataPoint.Builder dataPointBuilder = SignalFxProtocolBuffers.DataPoint.newBuilder()
                 .setMetric(metricName)
                 .setMetricType(metricType)
-                .setValue(datum)
-                .setTimestamp(timestamp);
+                .setValue(datum);
 
         for (Tag tag : getConventionTags(meter.getId())) {
             dataPointBuilder.addDimensions(SignalFxProtocolBuffers.Dimension.newBuilder()
@@ -158,48 +155,56 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
                     .build());
         }
 
-        session.setDatapoint(dataPointBuilder.build());
+        return dataPointBuilder;
     }
 
-    private void addLongTaskTimer(LongTaskTimer longTaskTimer, AggregateMetricSender.Session session, long timestamp) {
-        addDatapoint(longTaskTimer, GAUGE, "activeTasks", session, longTaskTimer.activeTasks(), timestamp);
-        addDatapoint(longTaskTimer, COUNTER, "duration", session, longTaskTimer.duration(getBaseTimeUnit()), timestamp);
+    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addLongTaskTimer(LongTaskTimer longTaskTimer) {
+        return Stream.of(
+                addDatapoint(longTaskTimer, GAUGE, "activeTasks", longTaskTimer.activeTasks()),
+                addDatapoint(longTaskTimer, COUNTER, "duration", longTaskTimer.duration(getBaseTimeUnit()))
+        );
     }
 
-    private void addTimeGauge(TimeGauge timeGauge, AggregateMetricSender.Session session, long timestamp) {
-        addDatapoint(timeGauge, GAUGE, null, session, timeGauge.value(getBaseTimeUnit()), timestamp);
+    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addTimeGauge(TimeGauge timeGauge) {
+        return Stream.of(addDatapoint(timeGauge, GAUGE, null, timeGauge.value(getBaseTimeUnit())));
     }
 
-    private void addGauge(Gauge gauge, AggregateMetricSender.Session session, long timestamp) {
-        addDatapoint(gauge, GAUGE, null, session, gauge.value(), timestamp);
+    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addGauge(Gauge gauge) {
+        return Stream.of(addDatapoint(gauge, GAUGE, null, gauge.value()));
     }
 
-    private void addCounter(Counter counter, AggregateMetricSender.Session session, long timestamp) {
-        addDatapoint(counter, COUNTER, null, session, counter.count(), timestamp);
+    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addCounter(Counter counter) {
+        return Stream.of(addDatapoint(counter, COUNTER, null, counter.count()));
     }
 
-    private void addFunctionCounter(FunctionCounter counter, AggregateMetricSender.Session session, long timestamp) {
-        addDatapoint(counter, COUNTER, null, session, counter.count(), timestamp);
+    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addFunctionCounter(FunctionCounter counter) {
+        return Stream.of(addDatapoint(counter, COUNTER, null, counter.count()));
     }
 
-    private void addTimer(Timer timer, AggregateMetricSender.Session session, long timestamp) {
-        addDatapoint(timer, COUNTER, "count", session, timer.count(), timestamp);
-        addDatapoint(timer, COUNTER, "totalTime", session, timer.totalTime(getBaseTimeUnit()), timestamp);
-        addDatapoint(timer, GAUGE, "avg", session, timer.mean(getBaseTimeUnit()), timestamp);
-        addDatapoint(timer, GAUGE, "max", session, timer.max(getBaseTimeUnit()), timestamp);
+    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addTimer(Timer timer) {
+        return Stream.of(
+                addDatapoint(timer, COUNTER, "count", timer.count()),
+                addDatapoint(timer, COUNTER, "totalTime", timer.totalTime(getBaseTimeUnit())),
+                addDatapoint(timer, GAUGE, "avg", timer.mean(getBaseTimeUnit())),
+                addDatapoint(timer, GAUGE, "max", timer.max(getBaseTimeUnit()))
+        );
     }
 
-    private void addFunctionTimer(FunctionTimer timer, AggregateMetricSender.Session session, long timestamp) {
-        addDatapoint(timer, COUNTER, "count", session, timer.count(), timestamp);
-        addDatapoint(timer, COUNTER, "totalTime", session, timer.totalTime(getBaseTimeUnit()), timestamp);
-        addDatapoint(timer, GAUGE, "avg", session, timer.mean(getBaseTimeUnit()), timestamp);
+    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addFunctionTimer(FunctionTimer timer) {
+        return Stream.of(
+                addDatapoint(timer, COUNTER, "count", timer.count()),
+                addDatapoint(timer, COUNTER, "totalTime", timer.totalTime(getBaseTimeUnit())),
+                addDatapoint(timer, GAUGE, "avg", timer.mean(getBaseTimeUnit()))
+        );
     }
 
-    private void addDistributionSummary(DistributionSummary summary, AggregateMetricSender.Session session, long timestamp) {
-        addDatapoint(summary, COUNTER, "count", session, summary.count(), timestamp);
-        addDatapoint(summary, COUNTER, "totalTime", session, summary.totalAmount(), timestamp);
-        addDatapoint(summary, GAUGE, "avg", session, summary.mean(), timestamp);
-        addDatapoint(summary, GAUGE, "max", session, summary.max(), timestamp);
+    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addDistributionSummary(DistributionSummary summary) {
+        return Stream.of(
+                addDatapoint(summary, COUNTER, "count", summary.count()),
+                addDatapoint(summary, COUNTER, "totalTime", summary.totalAmount()),
+                addDatapoint(summary, GAUGE, "avg", summary.mean()),
+                addDatapoint(summary, GAUGE, "max", summary.max())
+        );
     }
 
     @Override

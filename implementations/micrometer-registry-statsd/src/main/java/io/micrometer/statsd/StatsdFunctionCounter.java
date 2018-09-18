@@ -23,20 +23,20 @@ import java.util.function.ToDoubleFunction;
 
 public class StatsdFunctionCounter<T> extends CumulativeFunctionCounter<T> implements StatsdPollable {
     private final StatsdLineBuilder lineBuilder;
-    private final Subscriber<String> publisher;
+    private final Subscriber<String> subscriber;
     private final AtomicReference<Long> lastValue = new AtomicReference<>(0L);
 
-    StatsdFunctionCounter(Id id, T obj, ToDoubleFunction<T> f, StatsdLineBuilder lineBuilder, Subscriber<String> publisher) {
+    StatsdFunctionCounter(Id id, T obj, ToDoubleFunction<T> f, StatsdLineBuilder lineBuilder, Subscriber<String> subscriber) {
         super(id, obj, f);
         this.lineBuilder = lineBuilder;
-        this.publisher = publisher;
+        this.subscriber = subscriber;
     }
 
     @Override
     public void poll() {
         lastValue.updateAndGet(prev -> {
             long count = (long) count();
-            publisher.onNext(lineBuilder.count(count - prev));
+            subscriber.onNext(lineBuilder.count(count - prev));
             return count;
         });
     }

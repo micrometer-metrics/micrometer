@@ -22,5 +22,7 @@
             <property name="ignoreComments" value="true" />
         </module>
 
+        <!-- Whitespace -->
+        <module name="com.puppycrawl.tools.checkstyle.checks.whitespace.WhitespaceAroundCheck" />
     </module>
 </module>

@@ -39,6 +39,7 @@ import static java.util.stream.StreamSupport.stream;
  * All new metrics should pass through each {@link MeterFilter} in the order in which they were added.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public interface MeterFilter {
     /**
@@ -248,22 +249,31 @@ public interface MeterFilter {
 
             @Override
             public MeterFilterReply accept(Meter.Id id) {
-                if (id.getName().equals(meterNamePrefix)) {
-                    String value = id.getTag(tagKey);
-                    if (value != null)
+                String value = getTagValue(id);
+                if (value != null) {
+                    if (!observedTagValues.contains(value)) {
+                        if (observedTagValues.size() >= maximumTagValues) {
+                            return onMaxReached.accept(id);
+                        }
                         observedTagValues.add(value);
-                    if (observedTagValues.size() > maximumTagValues) {
-                        return onMaxReached.accept(id);
                     }
                 }
-
                 return MeterFilterReply.NEUTRAL;
+            }
+
+            private String getTagValue(Meter.Id id) {
+                return (id.getName().startsWith(meterNamePrefix) ? id.getTag(tagKey) : null);
             }
 
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
-                if (observedTagValues.size() > maximumTagValues) {
-                    return onMaxReached.configure(id, config);
+                String value = getTagValue(id);
+                if (value != null) {
+                    if (!observedTagValues.contains(value)) {
+                        if (observedTagValues.size() >= maximumTagValues) {
+                            return onMaxReached.configure(id, config);
+                        }
+                    }
                 }
                 return config;
             }

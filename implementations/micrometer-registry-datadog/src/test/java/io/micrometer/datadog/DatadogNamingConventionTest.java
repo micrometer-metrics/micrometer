@@ -18,12 +18,10 @@ package io.micrometer.datadog;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.mock;
 
 /**
  * Tests for {@link DatadogNamingConvention}.
@@ -48,8 +46,19 @@ class DatadogNamingConventionTest {
     void tagKeyWhenStartsWithNumberShouldRespectDelegateNamingConvention() {
         String tagKey = "123";
 
-        NamingConvention delegate = mock(NamingConvention.class);
-        given(delegate.tagKey(eq(tagKey))).willReturn("123456");
+        NamingConvention delegate = new NamingConvention() {
+            @Override
+            public String name(String name, Meter.Type type, @Nullable String baseUnit) {
+                return name;
+            }
+
+            @Override
+            public String tagKey(String key) {
+                return "123456";
+            }
+        };
+
+        assertThat(delegate.tagKey(tagKey)).isEqualTo("123456");
 
         DatadogNamingConvention convention = new DatadogNamingConvention(delegate);
 

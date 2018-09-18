@@ -16,6 +16,7 @@
 package io.micrometer.spring;
 
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
@@ -27,24 +28,51 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
+/**
+ * {@link MeterFilter} to apply settings from {@link MetricsProperties}.
+ *
+ * @author Jon Schneider
+ * @author Phillip Webb
+ * @author Stephane Nicoll
+ */
 @NonNullApi
 public class PropertiesMeterFilter implements MeterFilter {
-    private static final ServiceLevelAgreementBoundary[] EMPTY_SLA = {};
 
-    private MetricsProperties properties;
+    private final MetricsProperties properties;
+
+    private final MeterFilter mapFilter;
 
     public PropertiesMeterFilter(MetricsProperties properties) {
         Assert.notNull(properties, "Properties must not be null");
         this.properties = properties;
+        this.mapFilter = createMapFilter(properties.getTags());
+    }
+
+    private static MeterFilter createMapFilter(Map<String, String> tags) {
+        if (tags.isEmpty()) {
+            return new MeterFilter() {
+            };
+        }
+        List<Tag> commonTags = tags.entrySet().stream()
+                .map((entry) -> Tag.of(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
+        return MeterFilter.commonTags(commonTags);
     }
 
     @Override
     public MeterFilterReply accept(Meter.Id id) {
         boolean enabled = lookup(this.properties.getEnable(), id, true);
         return (enabled ? MeterFilterReply.NEUTRAL : MeterFilterReply.DENY);
+    }
+
+    @Override
+    public Meter.Id map(Meter.Id id) {
+        return this.mapFilter.map(id);
     }
 
     @Override
@@ -60,7 +88,10 @@ public class PropertiesMeterFilter implements MeterFilter {
 
     @Nullable
     private long[] convertSla(Meter.Type meterType, @Nullable ServiceLevelAgreementBoundary[] sla) {
-        long[] converted = Arrays.stream(sla == null ? EMPTY_SLA : sla)
+        if (sla == null) {
+            return null;
+        }
+        long[] converted = Arrays.stream(sla)
                 .map((candidate) -> candidate.getValue(meterType))
                 .filter(Objects::nonNull).mapToLong(Long::longValue).toArray();
         return converted.length == 0 ? null : converted;

@@ -18,11 +18,7 @@ package io.micrometer.newrelic;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.HttpHeader;
-import io.micrometer.core.instrument.util.HttpMethod;
-import io.micrometer.core.instrument.util.IOUtils;
-import io.micrometer.core.instrument.util.MediaType;
+import io.micrometer.core.instrument.util.*;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,17 +28,17 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
 /**
@@ -75,41 +71,17 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             URL insightsEndpoint = URI.create(config.uri() + "/v1/accounts/" + config.accountId() + "/events").toURL();
 
             // New Relic's Insights API limits us to 1000 events per call
-            final int batchSize = Math.min(config.batchSize(), 1000);
-
-            List<String> events = getMeters().stream().flatMap(meter -> {
-                if (meter instanceof Timer) {
-                    return writeTimer((Timer) meter);
-                } else if (meter instanceof FunctionTimer) {
-                    return writeTimer((FunctionTimer) meter);
-                } else if (meter instanceof DistributionSummary) {
-                    return writeSummary((DistributionSummary) meter);
-                } else if (meter instanceof TimeGauge) {
-                    return writeGauge((TimeGauge) meter);
-                } else if (meter instanceof Gauge) {
-                    return writeGauge((Gauge) meter);
-                } else if (meter instanceof Counter) {
-                    return writeCounter((Counter) meter);
-                } else if (meter instanceof FunctionCounter) {
-                    return writeCounter((FunctionCounter) meter);
-                } else if (meter instanceof LongTaskTimer) {
-                    return writeLongTaskTimer((LongTaskTimer) meter);
-                } else {
-                    return writeMeter(meter);
-                }
-            }).collect(toList());
-
-            if (events.size() > batchSize) {
-                sendEvents(insightsEndpoint, events.subList(0, batchSize));
-                events = new ArrayList<>(events.subList(batchSize, events.size()));
-            } else if (events.size() == batchSize) {
-                sendEvents(insightsEndpoint, events);
-                events = new ArrayList<>();
-            }
-
-            // drain the remaining event list
-            if (!events.isEmpty()) {
-                sendEvents(insightsEndpoint, events);
+            for (List<Meter> batch : MeterPartition.partition(this, Math.min(config.batchSize(), 1000))) {
+                sendEvents(insightsEndpoint, batch.stream().flatMap(meter -> match(meter,
+                        this::writeGauge,
+                        this::writeCounter,
+                        this::writeTimer,
+                        this::writeSummary,
+                        this::writeLongTaskTimer,
+                        this::writeTimeGauge,
+                        this::writeFunctionCounter,
+                        this::writeFunctionTimer,
+                        this::writeMeter)));
             }
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("malformed New Relic insights endpoint -- see the 'uri' configuration", e);
@@ -126,7 +98,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         );
     }
 
-    private Stream<String> writeCounter(FunctionCounter counter) {
+    private Stream<String> writeFunctionCounter(FunctionCounter counter) {
         return Stream.of(event(counter.getId(), new Attribute("throughput", counter.count())));
     }
 
@@ -139,7 +111,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         return value.isNaN() ? Stream.empty() : Stream.of(event(gauge.getId(), new Attribute("value", value)));
     }
 
-    private Stream<String> writeGauge(TimeGauge gauge) {
+    private Stream<String> writeTimeGauge(TimeGauge gauge) {
         Double value = gauge.value(getBaseTimeUnit());
         return value.isNaN() ? Stream.empty() : Stream.of(event(gauge.getId(), new Attribute("value", value)));
     }
@@ -164,7 +136,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         ));
     }
 
-    private Stream<String> writeTimer(FunctionTimer timer) {
+    private Stream<String> writeFunctionTimer(FunctionTimer timer) {
         return Stream.of(
                 event(timer.getId(),
                         new Attribute("count", timer.count()),
@@ -205,7 +177,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                         .collect(Collectors.joining("")) + tagsJson.toString() + "}";
     }
 
-    private void sendEvents(URL insightsEndpoint, List<String> events) {
+    private void sendEvents(URL insightsEndpoint, Stream<String> events) {
 
         HttpURLConnection con = null;
 
@@ -219,7 +191,8 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
             con.setDoOutput(true);
 
-            String body = "[" + events.stream().collect(Collectors.joining(",")) + "]";
+            AtomicInteger totalEvents = new AtomicInteger();
+            String body = "[" + events.peek(ev -> totalEvents.incrementAndGet()).collect(Collectors.joining(",")) + "]";
 
             logger.trace("Sending payload to New Relic:");
             logger.trace(body);
@@ -232,7 +205,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             int status = con.getResponseCode();
 
             if (status >= 200 && status < 300) {
-                logger.info("successfully sent {} events to New Relic", events.size());
+                logger.info("successfully sent {} events to New Relic", totalEvents);
             } else if (status >= 400) {
                 if (logger.isErrorEnabled()) {
                     logger.error("failed to send metrics: {}", IOUtils.toString(con.getErrorStream()));

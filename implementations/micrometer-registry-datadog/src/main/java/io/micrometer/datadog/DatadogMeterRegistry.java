@@ -17,18 +17,17 @@ package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.HttpHeader;
-import io.micrometer.core.instrument.util.HttpMethod;
-import io.micrometer.core.instrument.util.IOUtils;
-import io.micrometer.core.instrument.util.MediaType;
-import io.micrometer.core.instrument.util.MeterPartition;
-import io.micrometer.core.instrument.util.URIUtils;
+import io.micrometer.core.instrument.util.*;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +38,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
@@ -47,8 +47,6 @@ import static java.util.stream.StreamSupport.stream;
  * @author Jon Schneider
  */
 public class DatadogMeterRegistry extends StepMeterRegistry {
-    private final URL postTimeSeriesEndpoint;
-
     private final Logger logger = LoggerFactory.getLogger(DatadogMeterRegistry.class);
     private final DatadogConfig config;
 
@@ -67,17 +65,24 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         this.config().namingConvention(new DatadogNamingConvention());
 
-        this.postTimeSeriesEndpoint = URIUtils.toURL(config.uri() + "/api/v1/series?api_key=" + config.apiKey());
-
         this.config = config;
 
-        if(config.enabled())
+        if (config.enabled())
             start(threadFactory);
     }
 
     @Override
     protected void publish() {
         Map<String, DatadogMetricMetadata> metadataToSend = new HashMap<>();
+
+        String uriString = config.uri() + "/api/v1/series?api_key=" + config.apiKey();
+        URL postTimeSeriesEndpoint;
+        try {
+            postTimeSeriesEndpoint = URIUtils.toURL(uriString);
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid URI string for an endpoint to send time series: " + uriString);
+            return;
+        }
 
         try {
             HttpURLConnection con = null;
@@ -103,18 +108,17 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                     */
 
                     String body = "{\"series\":[" +
-                            batch.stream().flatMap(m -> {
-                                if (m instanceof Timer) {
-                                    return writeTimer((Timer) m, metadataToSend);
-                                }
-                                if (m instanceof DistributionSummary) {
-                                    return writeSummary((DistributionSummary) m, metadataToSend);
-                                }
-                                if (m instanceof FunctionTimer) {
-                                    return writeTimer((FunctionTimer) m, metadataToSend);
-                                }
-                                return writeMeter(m, metadataToSend);
-                            }).collect(joining(",")) +
+                            batch.stream().flatMap(meter -> match(meter,
+                                    m -> writeMeter(m, metadataToSend),
+                                    m -> writeMeter(m, metadataToSend),
+                                    timer -> writeTimer(timer, metadataToSend),
+                                    summary -> writeSummary(summary, metadataToSend),
+                                    m -> writeMeter(m, metadataToSend),
+                                    m -> writeMeter(m, metadataToSend),
+                                    m -> writeMeter(m, metadataToSend),
+                                    timer -> writeTimer(timer, metadataToSend),
+                                    m -> writeMeter(m, metadataToSend))
+                            ).collect(joining(",")) +
                             "]}";
 
                     logger.debug(body);

@@ -35,7 +35,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+import static io.micrometer.core.aop.TimedAspect.EXCEPTION_TAG;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = TimedAspectTest.TestAspectConfig.class)
@@ -56,6 +58,18 @@ public class TimedAspectTest {
     public void serviceIsTimedWhenNoValue() {
         service.timeWithoutValue();
         assertThat(registry.get(TimedAspect.DEFAULT_METRIC_NAME).timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    public void serviceIsTimedWhenThereIsAnException() {
+        assertThrows(RuntimeException.class, () -> service.timeWithException());
+        assertThat(registry.get("somethingElse").tags(EXCEPTION_TAG, "RuntimeException").timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    public void serviceIsTimedWhenThereIsNoException() {
+        service.timeWithoutException();
+        assertThat(registry.get("somethingElse").tags(EXCEPTION_TAG, "none").timer().count()).isEqualTo(1);
     }
 
     @Test
@@ -107,6 +121,16 @@ public class TimedAspectTest {
         @Timed
         public String timeWithoutValue() {
             return "hello universe";
+        }
+
+        @Timed("somethingElse")
+        public String timeWithException() {
+            throw new RuntimeException("universe destroyed.");
+        }
+
+        @Timed("somethingElse")
+        public String timeWithoutException() {
+            return "hello world";
         }
 
         @Timed(value = "something", histogram = true)

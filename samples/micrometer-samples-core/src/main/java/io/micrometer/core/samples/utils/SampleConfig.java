@@ -22,6 +22,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 public class SampleConfig {
     public static MeterRegistry myMonitoringSystem() {
         // Pick a monitoring system here to use in your samples.
-        return SampleRegistries.appOptics("Your Token Here");
+        return SampleRegistries.prometheus();
     }
 }

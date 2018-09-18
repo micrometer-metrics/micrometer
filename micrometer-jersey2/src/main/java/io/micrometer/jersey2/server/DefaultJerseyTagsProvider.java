@@ -89,7 +89,8 @@ public final class DefaultJerseyTagsProvider implements JerseyTagsProvider {
         final Throwable exception = event.getException();
         if (exception != null && statusCode != 404 && !isRedirect(statusCode)) {
             final Throwable cause = exception.getCause() != null ? exception.getCause() : exception;
-            return Tag.of(TAG_EXCEPTION, cause.getClass().getSimpleName());
+            final String simpleName = cause.getClass().getSimpleName();
+            return Tag.of(TAG_EXCEPTION, simpleName.isEmpty() ? cause.getClass().getName() : simpleName);
         }
         return Tag.of(TAG_EXCEPTION, "None");
     }

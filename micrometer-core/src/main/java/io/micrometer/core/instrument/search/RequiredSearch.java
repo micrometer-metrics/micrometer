@@ -206,7 +206,7 @@ public final class RequiredSearch {
                 .map(clazz::cast)
                 .collect(toList());
 
-        if(meters.isEmpty()) {
+        if (meters.isEmpty()) {
             throw MeterNotFoundException.forSearch(this, clazz);
         }
 
@@ -220,7 +220,7 @@ public final class RequiredSearch {
     public Collection<Meter> meters() {
         List<Meter> meters = meterStream().collect(Collectors.toList());
 
-        if(meters.isEmpty()) {
+        if (meters.isEmpty()) {
             throw MeterNotFoundException.forSearch(this, Meter.class);
         }
 

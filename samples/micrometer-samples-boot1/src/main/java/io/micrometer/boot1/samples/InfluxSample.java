@@ -24,6 +24,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class InfluxSample {
     public static void main(String[] args) {
-        new SpringApplicationBuilder(AtlasSample.class).profiles("influx").run(args);
+        new SpringApplicationBuilder(InfluxSample.class).profiles("influx").run(args);
     }
 }

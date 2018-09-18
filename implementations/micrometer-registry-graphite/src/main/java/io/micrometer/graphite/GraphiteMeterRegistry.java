@@ -71,10 +71,10 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
         }
 
         return GraphiteReporter.forRegistry(metricRegistry)
-            .withClock(new DropwizardClock(clock))
-            .convertRatesTo(config.rateUnits())
-            .convertDurationsTo(config.durationUnits())
-            .build(sender);
+                .withClock(new DropwizardClock(clock))
+                .convertRatesTo(config.rateUnits())
+                .convertDurationsTo(config.durationUnits())
+                .build(sender);
     }
 
     public void stop() {
@@ -87,8 +87,11 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
 
     @Override
     public void close() {
-        reporter.report();
+        if (config.enabled()) {
+            reporter.report();
+        }
         stop();
+        this.reporter.close();
         super.close();
     }
 

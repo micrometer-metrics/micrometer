@@ -85,7 +85,7 @@ class DatadogMetricMetadata {
             String whitelistedBaseUnit = UNIT_WHITELIST.contains(baseUnit) ? baseUnit :
                 PLURALIZED_UNIT_MAPPING.get(baseUnit);
 
-            if(whitelistedBaseUnit != null) {
+            if (whitelistedBaseUnit != null) {
                 body += ",\"unit\":\"" + whitelistedBaseUnit + "\"";
             }
         }

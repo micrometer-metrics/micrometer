@@ -101,6 +101,8 @@ public class HistogramGauges {
 
             Gauge.builder(percentileName.apply(valueAtPercentiles[i]), meter, percentileValueFunction)
                     .tags(percentileTags.apply(valueAtPercentiles[i]))
+                    .baseUnit(meter.getId().getBaseUnit())
+                    .synthetic(true)
                     .register(registry);
         }
 
@@ -115,6 +117,7 @@ public class HistogramGauges {
 
             Gauge.builder(bucketName.apply(countAtBuckets[i]), meter, bucketCountFunction)
                     .tags(bucketTags.apply(countAtBuckets[i]))
+                    .synthetic(true)
                     .register(registry);
         }
     }

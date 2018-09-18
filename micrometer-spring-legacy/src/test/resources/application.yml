@@ -23,6 +23,7 @@ management.metrics:
   export:
     appoptics.enabled: false
     atlas.enabled: false
+    azuremonitor.enabled: false
     dynatrace.enabled: false
     datadog.enabled: false
     elastic.enabled: false
@@ -35,3 +36,4 @@ management.metrics:
     newrelic.enabled: false
     signalfx.enabled: false
     wavefront.enabled: false
+    azure.application-insights.enabled: false

@@ -65,7 +65,7 @@ subprojects {
         }
 
         if (project.extensions.findByName('bintray')) {
-            bintray.labels = ['micrometer', 'appoptics', 'atlas', 'metrics', 'prometheus', 'spectator', 'influx', 'new-relic', 'signalfx', 'wavefront', 'elastic', 'dynatrace']
+            bintray.labels = ['micrometer', 'appoptics', 'atlas', 'metrics', 'prometheus', 'spectator', 'influx', 'new-relic', 'signalfx', 'wavefront', 'elastic', 'dynatrace', 'azure-monitor']
         }
     }
 
@@ -73,6 +73,7 @@ subprojects {
 
     repositories {
         mavenCentral()
+        mavenLocal()
     }
 
     checkstyle {
@@ -89,10 +90,14 @@ subprojects {
         maxHeapSize = "1500m"
     }
 
+    license {
+        ext.year = Calendar.getInstance().get(Calendar.YEAR)
+        skipExistingHeaders = true
+    }
 }
 
 wrapper {
-    gradleVersion = '4.8'
+    gradleVersion = '4.10.1'
 }
 
 defaultTasks 'build'

@@ -17,14 +17,7 @@ package io.micrometer.influx;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.HttpContentCoding;
-import io.micrometer.core.instrument.util.HttpHeader;
-import io.micrometer.core.instrument.util.HttpMethod;
-import io.micrometer.core.instrument.util.IOUtils;
-import io.micrometer.core.instrument.util.MediaType;
-import io.micrometer.core.instrument.util.MeterPartition;
-import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.instrument.util.*;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
+import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
@@ -68,7 +62,12 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
         HttpURLConnection con = null;
         try {
-            URL queryEndpoint = URI.create(config.uri() + "/query?q=" + URLEncoder.encode("CREATE DATABASE \"" + config.db() + "\"", "UTF-8")).toURL();
+            String createDatabaseQuery = new CreateDatabaseQueryBuilder(config.db()).setRetentionDuration(config.retentionDuration())
+                    .setRetentionPolicyName(config.retentionPolicy())
+                    .setRetentionReplicationFactor(config.retentionReplicationFactor())
+                    .setRetentionShardDuration(config.retentionShardDuration()).build();
+
+            URL queryEndpoint = URI.create(config.uri() + "/query?q=" + URLEncoder.encode(createDatabaseQuery, "UTF-8")).toURL();
 
             con = (HttpURLConnection) queryEndpoint.openConnection();
             con.setConnectTimeout((int) config.connectTimeout().toMillis());
@@ -117,33 +116,16 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     authenticateRequest(con);
 
                     List<String> bodyLines = batch.stream()
-                            .flatMap(m -> {
-                                if (m instanceof Timer) {
-                                    return writeTimer((Timer) m);
-                                }
-                                if (m instanceof DistributionSummary) {
-                                    return writeSummary((DistributionSummary) m);
-                                }
-                                if (m instanceof FunctionTimer) {
-                                    return writeTimer((FunctionTimer) m);
-                                }
-                                if (m instanceof TimeGauge) {
-                                    return writeGauge(m.getId(), ((TimeGauge) m).value(getBaseTimeUnit()));
-                                }
-                                if (m instanceof Gauge) {
-                                    return writeGauge(m.getId(), ((Gauge) m).value());
-                                }
-                                if (m instanceof FunctionCounter) {
-                                    return writeCounter(m.getId(), ((FunctionCounter) m).count());
-                                }
-                                if (m instanceof Counter) {
-                                    return writeCounter(m.getId(), ((Counter) m).count());
-                                }
-                                if (m instanceof LongTaskTimer) {
-                                    return writeLongTaskTimer((LongTaskTimer) m);
-                                }
-                                return writeMeter(m);
-                            })
+                            .flatMap(m -> match(m,
+                                    gauge -> writeGauge(gauge.getId(), gauge.value()),
+                                    counter -> writeCounter(counter.getId(), counter.count()),
+                                    this::writeTimer,
+                                    this::writeSummary,
+                                    this::writeLongTaskTimer,
+                                    gauge -> writeGauge(gauge.getId(), gauge.value(getBaseTimeUnit())),
+                                    counter -> writeCounter(counter.getId(), counter.count()),
+                                    this::writeFunctionTimer,
+                                    this::writeMeter))
                             .collect(toList());
 
                     String body = String.join("\n", bodyLines);
@@ -228,7 +210,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             fields.add(new Field(fieldKey, measurement.getValue()));
         }
 
-        return Stream.of(influxLineProtocol(m.getId(), "unknown", fields.build(), clock.wallTime()));
+        return Stream.of(influxLineProtocol(m.getId(), "unknown", fields.build()));
     }
 
     private Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
@@ -236,51 +218,51 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 new Field("active_tasks", timer.activeTasks()),
                 new Field("duration", timer.duration(getBaseTimeUnit()))
         );
-        return Stream.of(influxLineProtocol(timer.getId(), "long_task_timer", fields, clock.wallTime()));
+        return Stream.of(influxLineProtocol(timer.getId(), "long_task_timer", fields));
     }
 
     private Stream<String> writeCounter(Meter.Id id, double count) {
-        return Stream.of(influxLineProtocol(id, "counter", Stream.of(new Field("value", count)), clock.wallTime()));
+        return Stream.of(influxLineProtocol(id, "counter", Stream.of(new Field("value", count))));
     }
 
     private Stream<String> writeGauge(Meter.Id id, Double value) {
         return value.isNaN() ? Stream.empty() :
-            Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value)), clock.wallTime()));
+                Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value))));
     }
 
-    private Stream<String> writeTimer(FunctionTimer timer) {
+    private Stream<String> writeFunctionTimer(FunctionTimer timer) {
         Stream<Field> fields = Stream.of(
                 new Field("sum", timer.totalTime(getBaseTimeUnit())),
                 new Field("count", timer.count()),
                 new Field("mean", timer.mean(getBaseTimeUnit()))
         );
 
-        return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields, clock.wallTime()));
+        return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields));
     }
 
     private Stream<String> writeTimer(Timer timer) {
-        final Stream.Builder<Field> fields = Stream.builder();
+        final Stream<Field> fields = Stream.of(
+                new Field("sum", timer.totalTime(getBaseTimeUnit())),
+                new Field("count", timer.count()),
+                new Field("mean", timer.mean(getBaseTimeUnit())),
+                new Field("upper", timer.max(getBaseTimeUnit()))
+        );
 
-        fields.add(new Field("sum", timer.totalTime(getBaseTimeUnit())));
-        fields.add(new Field("count", timer.count()));
-        fields.add(new Field("mean", timer.mean(getBaseTimeUnit())));
-        fields.add(new Field("upper", timer.max(getBaseTimeUnit())));
-
-        return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields.build(), clock.wallTime()));
+        return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields));
     }
 
     private Stream<String> writeSummary(DistributionSummary summary) {
-        final Stream.Builder<Field> fields = Stream.builder();
+        final Stream<Field> fields = Stream.of(
+                new Field("sum", summary.totalAmount()),
+                new Field("count", summary.count()),
+                new Field("mean", summary.mean()),
+                new Field("upper", summary.max())
+        );
 
-        fields.add(new Field("sum", summary.totalAmount()));
-        fields.add(new Field("count", summary.count()));
-        fields.add(new Field("mean", summary.mean()));
-        fields.add(new Field("upper", summary.max()));
-
-        return Stream.of(influxLineProtocol(summary.getId(), "histogram", fields.build(), clock.wallTime()));
+        return Stream.of(influxLineProtocol(summary.getId(), "histogram", fields));
     }
 
-    private String influxLineProtocol(Meter.Id id, String metricType, Stream<Field> fields, long time) {
+    private String influxLineProtocol(Meter.Id id, String metricType, Stream<Field> fields) {
         String tags = getConventionTags(id).stream()
                 .map(t -> "," + t.getKey() + "=" + t.getValue())
                 .collect(joining(""));
@@ -288,7 +270,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return getConventionName(id)
                 + tags + ",metric_type=" + metricType + " "
                 + fields.map(Field::toString).collect(joining(","))
-                + " " + time;
+                + " " + clock.wallTime();
     }
 
     @Override

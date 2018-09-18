@@ -21,14 +21,14 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguration;
+import io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsAutoConfiguration;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
@@ -83,7 +83,7 @@ public class WebMvcMetricsFilterCustomExceptionHandlerTest {
 
     @Configuration
     @EnableWebMvc
-    @Import(ServletMetricsConfiguration.class)
+    @ImportAutoConfiguration(WebMvcMetricsAutoConfiguration.class)
     static class TestConfiguration {
         @Bean
         MockClock clock() {

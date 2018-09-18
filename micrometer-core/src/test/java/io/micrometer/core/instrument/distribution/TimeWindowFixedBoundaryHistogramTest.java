@@ -49,16 +49,21 @@ class TimeWindowFixedBoundaryHistogramTest {
 
         histogram.recordDouble(3);
 
-        assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).contains(new CountAtBucket(3, 1));
+        assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
+                new CountAtBucket(3, 1),
+                new CountAtBucket(6, 1),
+                new CountAtBucket(7, 1));
 
         histogram.recordDouble(6);
+
+        histogram.recordDouble(7);
 
         // Proves that the accumulated histogram is truly cumulative, and not just a representation
         // of the last snapshot
         assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
                 new CountAtBucket(3, 1),
                 new CountAtBucket(6, 2),
-                new CountAtBucket(7, 2)
+                new CountAtBucket(7, 3)
         );
     }
 }

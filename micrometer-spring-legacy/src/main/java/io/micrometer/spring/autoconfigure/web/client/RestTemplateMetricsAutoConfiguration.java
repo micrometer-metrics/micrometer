@@ -21,7 +21,9 @@ import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.lang.NonNull;
 import io.micrometer.spring.autoconfigure.MeterRegistryCustomizer;
+import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.MetricsProperties;
+import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
 import io.micrometer.spring.web.client.DefaultRestTemplateExchangeTagsProvider;
 import io.micrometer.spring.web.client.MetricsRestTemplateCustomizer;
 import io.micrometer.spring.web.client.RestTemplateExchangeTagsProvider;
@@ -29,6 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -48,13 +52,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Phillip Webb
  */
 @Configuration
+@AutoConfigureAfter({ MetricsAutoConfiguration.class, SimpleMetricsExportAutoConfiguration.class })
 @ConditionalOnClass(name = {
     "org.springframework.web.client.RestTemplate",
     "org.springframework.web.client.AsyncRestTemplate",
     "org.springframework.boot.web.client.RestTemplateCustomizer" // didn't exist until Boot 1.4
 })
-public class RestTemplateMetricsConfiguration {
-    private final Logger logger = LoggerFactory.getLogger(RestTemplateMetricsConfiguration.class);
+@ConditionalOnBean(MeterRegistry.class)
+public class RestTemplateMetricsAutoConfiguration {
+    private final Logger logger = LoggerFactory.getLogger(RestTemplateMetricsAutoConfiguration.class);
 
     @Bean
     @ConditionalOnMissingBean(RestTemplateExchangeTagsProvider.class)

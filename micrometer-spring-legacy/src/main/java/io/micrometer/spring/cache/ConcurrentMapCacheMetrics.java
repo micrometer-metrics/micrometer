@@ -38,7 +38,6 @@ public class ConcurrentMapCacheMetrics extends CacheMeterBinder {
      * @param cache    The cache to instrument.
      * @param tags     Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
-     * @see com.google.common.cache.CacheStats
      */
     public static ConcurrentMapCache monitor(MeterRegistry registry, ConcurrentMapCache cache, String... tags) {
         return monitor(registry, cache, Tags.of(tags));
@@ -51,7 +50,6 @@ public class ConcurrentMapCacheMetrics extends CacheMeterBinder {
      * @param cache    The cache to instrument.
      * @param tags     Tags to apply to all recorded metrics.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
-     * @see com.google.common.cache.CacheStats
      */
     public static ConcurrentMapCache monitor(MeterRegistry registry, ConcurrentMapCache cache, Iterable<Tag> tags) {
         new ConcurrentMapCacheMetrics(cache, tags).bindTo(registry);
@@ -137,7 +135,7 @@ public class ConcurrentMapCacheMetrics extends CacheMeterBinder {
         @Nullable
         private ValueWrapper countGet(Object key) {
             ValueWrapper valueWrapper = delegate.get(key);
-            if(valueWrapper != null)
+            if (valueWrapper != null)
                 hitCount.incrementAndGet();
             else
                 missCount.incrementAndGet();
@@ -152,7 +150,7 @@ public class ConcurrentMapCacheMetrics extends CacheMeterBinder {
 
         @Override
         public ValueWrapper putIfAbsent(Object key, Object value) {
-            if(!getNativeCache().containsKey(key)) {
+            if (!getNativeCache().containsKey(key)) {
                 // no need to synchronize this with the subsequent putIfAbsent, as put count is
                 // OK to be an approximation.
                 putCount.incrementAndGet();

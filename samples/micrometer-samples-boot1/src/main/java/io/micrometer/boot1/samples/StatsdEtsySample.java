@@ -27,6 +27,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class StatsdEtsySample {
     public static void main(String[] args) {
-        new SpringApplicationBuilder(AtlasSample.class).profiles("statsd-etsy").run(args);
+        new SpringApplicationBuilder(StatsdEtsySample.class).profiles("statsd-etsy").run(args);
     }
 }

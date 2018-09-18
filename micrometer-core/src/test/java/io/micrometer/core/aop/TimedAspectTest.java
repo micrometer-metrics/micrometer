@@ -44,6 +44,7 @@ class TimedAspectTest {
 
     static class TimedService {
         @Timed(value = "call", extraTags = {"extra", "tag"})
-        void call() {}
+        void call() {
+        }
     }
 }

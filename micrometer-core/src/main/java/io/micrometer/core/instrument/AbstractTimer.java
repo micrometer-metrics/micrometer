@@ -103,7 +103,7 @@ public abstract class AbstractTimer extends AbstractMeter implements Timer {
             return null;
         });
 
-        if(pauseDetector instanceof SimplePauseDetector) {
+        if (pauseDetector instanceof SimplePauseDetector) {
             this.intervalEstimator = new TimeCappedMovingAverageIntervalEstimator(128,
                     10000000000L, pauseDetector);
 

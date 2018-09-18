@@ -18,6 +18,7 @@ package io.micrometer.datadog;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 
 /**
@@ -27,6 +28,9 @@ import io.micrometer.core.lang.Nullable;
  * @author Johnny Lim
  */
 public class DatadogNamingConvention implements NamingConvention {
+
+    private static final int MAX_NAME_LENGTH = 200;
+
     private final NamingConvention delegate;
 
     public DatadogNamingConvention() {
@@ -49,13 +53,10 @@ public class DatadogNamingConvention implements NamingConvention {
 
         // Metrics that don't start with a letter get dropped on the floor by the Datadog publish API,
         // so we will prepend them with 'm.'.
-        if(!Character.isLetter(sanitized.charAt(0))) {
+        if (!Character.isLetter(sanitized.charAt(0))) {
             sanitized = "m." + sanitized;
         }
-
-        if(sanitized.length() > 200)
-            return sanitized.substring(0, 200);
-        return sanitized;
+        return StringUtils.truncate(sanitized, MAX_NAME_LENGTH);
     }
 
     /**
@@ -65,7 +66,7 @@ public class DatadogNamingConvention implements NamingConvention {
     @Override
     public String tagKey(String key) {
         String sanitized = StringEscapeUtils.escapeJson(delegate.tagKey(key));
-        if(Character.isDigit(sanitized.charAt(0))) {
+        if (Character.isDigit(sanitized.charAt(0))) {
             sanitized = "m." + sanitized;
         }
         return sanitized;

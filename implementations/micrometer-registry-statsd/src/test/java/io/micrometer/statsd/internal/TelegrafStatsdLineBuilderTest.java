@@ -26,20 +26,20 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TelegrafStatsdLineBuilderTest {
+    private final MeterRegistry registry = new SimpleMeterRegistry();
+
     @Issue("#644")
     @Test
     void escapeCharactersForTelegraf() {
-        MeterRegistry registry = new SimpleMeterRegistry();
         Counter c = registry.counter("hikari.pools", "pool", "poolname = abc,::hikari");
 
         TelegrafStatsdLineBuilder lineBuilder = new TelegrafStatsdLineBuilder(c.getId(), registry.config());
 
-        assertThat(lineBuilder.count(1, Statistic.COUNT)).isEqualTo("hikari_pools,statistic=count,pool=poolname\\ \\=\\ abc\\,::hikari:1|c");
+        assertThat(lineBuilder.count(1, Statistic.COUNT)).isEqualTo("hikari_pools,statistic=count,pool=poolname\\ \\=\\ abc\\,\\:\\:hikari:1|c");
     }
 
     @Test
     void changingNamingConvention() {
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
         Counter c = registry.counter("my.counter", "my.tag", "value");
         TelegrafStatsdLineBuilder lb = new TelegrafStatsdLineBuilder(c.getId(), registry.config());
 
@@ -48,5 +48,15 @@ class TelegrafStatsdLineBuilderTest {
 
         registry.config().namingConvention(NamingConvention.camelCase);
         assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("myCounter,statistic=count,myTag=value:1|c");
+    }
+
+    @Issue("#739")
+    @Test
+    void sanitizeColons() {
+        Counter c = registry.counter("my:counter", "my:tag", "my:value");
+        TelegrafStatsdLineBuilder lb = new TelegrafStatsdLineBuilder(c.getId(), registry.config());
+
+        registry.config().namingConvention(NamingConvention.dot);
+        assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my\\:counter,statistic=count,my\\:tag=my\\:value:1|c");
     }
 }

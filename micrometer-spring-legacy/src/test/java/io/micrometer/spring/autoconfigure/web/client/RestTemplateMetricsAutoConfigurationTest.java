@@ -49,13 +49,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = RestTemplateMetricsConfigurationTest.ClientApp.class, webEnvironment = WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = RestTemplateMetricsAutoConfigurationTest.ClientApp.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = {
         "management.port=-1", // Disable the entire Spring Boot actuator, so that it does not get needlessly instrumented
         "security.ignored=/**",
 })
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
-public class RestTemplateMetricsConfigurationTest {
+public class RestTemplateMetricsAutoConfigurationTest {
     @Autowired
     private MeterRegistry registry;
 

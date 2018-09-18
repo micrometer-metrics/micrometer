@@ -15,10 +15,13 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.distribution.HistogramGauges;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.stream.StreamSupport.stream;
@@ -58,7 +61,45 @@ public interface Meter extends AutoCloseable {
         LONG_TASK_TIMER,
         TIMER,
         DISTRIBUTION_SUMMARY,
-        OTHER
+        OTHER;
+
+        /**
+         * This method contract will change in minor releases if ever a new {@link Meter} type is created.
+         * In this case only, this is considered a feature. By using this method, you are declaring that
+         * you want to be sure to handle all types of meters. A breaking API change during the introduction of
+         * a new {@link Meter} indicates that there is a new meter type for you to consider and the compiler will
+         * effectively require you to consider it.
+         */
+        public static <T> T match(Meter meter,
+                                  Function<Gauge, T> visitGauge,
+                                  Function<Counter, T> visitCounter,
+                                  Function<Timer, T> visitTimer,
+                                  Function<DistributionSummary, T> visitSummary,
+                                  Function<LongTaskTimer, T> visitLongTaskTimer,
+                                  Function<TimeGauge, T> visitTimeGauge,
+                                  Function<FunctionCounter, T> visitFunctionCounter,
+                                  Function<FunctionTimer, T> visitFunctionTimer,
+                                  Function<Meter, T> visitMeter) {
+            if (meter instanceof Counter) {
+                return visitCounter.apply((Counter) meter);
+            } else if (meter instanceof Timer) {
+                return visitTimer.apply((Timer) meter);
+            } else if (meter instanceof DistributionSummary) {
+                return visitSummary.apply((DistributionSummary) meter);
+            } else if (meter instanceof TimeGauge) {
+                return visitTimeGauge.apply((TimeGauge) meter);
+            } else if (meter instanceof Gauge) {
+                return visitGauge.apply((Gauge) meter);
+            } else if (meter instanceof FunctionTimer) {
+                return visitFunctionTimer.apply((FunctionTimer) meter);
+            } else if (meter instanceof FunctionCounter) {
+                return visitFunctionCounter.apply((FunctionCounter) meter);
+            } else if (meter instanceof LongTaskTimer) {
+                return visitLongTaskTimer.apply((LongTaskTimer) meter);
+            } else {
+                return visitMeter.apply(meter);
+            }
+        }
     }
 
     /**
@@ -67,26 +108,33 @@ public interface Meter extends AutoCloseable {
     class Id {
         private final String name;
         private final List<Tag> tags;
-        private Type type;
+        private final Type type;
+        private final boolean synthetic;
 
         @Nullable
         private final String description;
 
         @Nullable
-        private String baseUnit;
+        private final String baseUnit;
 
-        public Id(String name, Iterable<Tag> tags, @Nullable String baseUnit, @Nullable String description, Type type) {
+        @Incubating(since = "1.0.6")
+        public Id(String name, Iterable<Tag> tags, @Nullable String baseUnit, @Nullable String description, Type type,
+                  boolean synthetic) {
             this.name = name;
 
             this.tags = Collections.unmodifiableList(stream(tags.spliterator(), false)
-                .sorted(Comparator.comparing(Tag::getKey))
-                .distinct()
-                .collect(Collectors.toList()));
+                    .sorted(Comparator.comparing(Tag::getKey))
+                    .distinct()
+                    .collect(Collectors.toList()));
 
             this.baseUnit = baseUnit;
             this.description = description;
-
             this.type = type;
+            this.synthetic = synthetic;
+        }
+
+        public Id(String name, Iterable<Tag> tags, @Nullable String baseUnit, @Nullable String description, Type type) {
+            this(name, tags, baseUnit, description, type, false);
         }
 
         /**
@@ -182,8 +230,8 @@ public interface Meter extends AutoCloseable {
          */
         public List<Tag> getConventionTags(NamingConvention namingConvention) {
             return tags.stream()
-                .map(t -> Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())))
-                .collect(Collectors.toList());
+                    .map(t -> Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())))
+                    .collect(Collectors.toList());
         }
 
         /**
@@ -198,9 +246,9 @@ public interface Meter extends AutoCloseable {
         @Override
         public String toString() {
             return "MeterId{" +
-                "name='" + name + '\'' +
-                ", tags=" + tags +
-                '}';
+                    "name='" + name + '\'' +
+                    ", tags=" + tags +
+                    '}';
         }
 
         @Override
@@ -224,6 +272,21 @@ public interface Meter extends AutoCloseable {
          */
         public Type getType() {
             return type;
+        }
+
+        /**
+         * For internal use. Indicates that this Id is tied to a meter that is a derivative of another metric.
+         * For example, percentiles and histogram gauges generated by {@link HistogramGauges} are derivatives
+         * of a {@link Timer} or {@link DistributionSummary}.
+         * <p>
+         * This method may be removed in future minor or major releases if we find a way to mark derivatives in a
+         * private way that does not have other API compatibility consequences.
+         *
+         * @return Whether this gauge is a synthetic derivative or not.
+         */
+        @Incubating(since = "1.0.6")
+        public boolean isSynthetic() {
+            return synthetic;
         }
     }
 
@@ -266,7 +329,7 @@ public interface Meter extends AutoCloseable {
         }
 
         /**
-         * @param key The tag key.
+         * @param key   The tag key.
          * @param value The tag value.
          * @return The custom meter builder with a single added tag.
          */
@@ -307,5 +370,6 @@ public interface Meter extends AutoCloseable {
     }
 
     @Override
-    default void close() {}
+    default void close() {
+    }
 }

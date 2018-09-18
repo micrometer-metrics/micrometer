@@ -27,9 +27,9 @@ public enum Statistic {
     TOTAL("total"),
 
     /**
-     * The sum of the times recorded. Always reported in nanoseconds.
+     * The sum of the times recorded. Reported in the monitoring system's base unit of time
      */
-    TOTAL_TIME("totalTime"),
+    TOTAL_TIME("total"),
 
     /**
      * Rate per second for calls.
@@ -37,13 +37,13 @@ public enum Statistic {
     COUNT("count"),
 
     /**
-     * The maximum amount recorded. When this represents a time, it is always reported in nanoseconds.
+     * The maximum amount recorded. When this represents a time, it is reported in the monitoring system's base unit of time.
      */
     MAX("max"),
 
     /**
      * Instantaneous value, such as those reported by gauges.
-     **/
+     */
     VALUE("value"),
 
     /**
@@ -54,10 +54,10 @@ public enum Statistic {
     /**
      * Number of currently active tasks for a long task timer.
      */
-    ACTIVE_TASKS("activeTasks"),
+    ACTIVE_TASKS("active"),
 
     /**
-     * Duration of a running task in a long task timer. Always reported in nanoseconds.
+     * Duration of a running task in a long task timer. Always reported in the monitoring system's base unit of time.
      */
     DURATION("duration");
 

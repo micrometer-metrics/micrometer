@@ -20,6 +20,8 @@ import com.sun.net.httpserver.HttpServer;
 import io.micrometer.appoptics.AppOpticsConfig;
 import io.micrometer.appoptics.AppOpticsMeterRegistry;
 import io.micrometer.atlas.AtlasMeterRegistry;
+import io.micrometer.azuremonitor.AzureMonitorConfig;
+import io.micrometer.azuremonitor.AzureMonitorMeterRegistry;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.lang.Nullable;
@@ -372,6 +374,25 @@ public class SampleRegistries {
                 return "https://longboard.wavefront.com";
             }
         }, Clock.SYSTEM);
+    }
+
+    public static AzureMonitorMeterRegistry azure(String apiKey) {
+        return new AzureMonitorMeterRegistry(new AzureMonitorConfig() {
+            @Override
+            public String instrumentationKey() {
+                return apiKey;
+            }
+
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+        }, Clock.SYSTEM, null);
     }
 
     public static DynatraceMeterRegistry dynatrace(String apiToken, String uri) {
