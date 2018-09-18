@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.distribution;
 
+import io.micrometer.core.instrument.Meter;
+
 public interface HistogramSupport {
     /**
      * Summary statistics should be published off of a single snapshot instance so that, for example, there isn't
@@ -36,4 +38,6 @@ public interface HistogramSupport {
     default HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
         return takeSnapshot();
     }
+
+    Meter.Id getId();
 }

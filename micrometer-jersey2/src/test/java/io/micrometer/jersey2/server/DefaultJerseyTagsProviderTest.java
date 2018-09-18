@@ -82,6 +82,7 @@ public class DefaultJerseyTagsProviderTest {
     }
 
     @Test
+    @SuppressWarnings("serial")
     public void exceptionsAreMappedCorrectly() {
         assertThat(uut.httpRequestTags(
             event(500, new IllegalArgumentException(), "/app", (String[]) null)))
@@ -92,6 +93,9 @@ public class DefaultJerseyTagsProviderTest {
         assertThat(uut.httpRequestTags(
             event(406, new NotAcceptableException(), "/app", (String[]) null)))
             .containsExactlyInAnyOrder(tagsFrom("/app", 406, "NotAcceptableException"));
+        assertThat(uut.httpRequestTags(
+            event(500, new Exception("anonymous") { }, "/app", (String[]) null)))
+            .containsExactlyInAnyOrder(tagsFrom("/app", 500, "io.micrometer.jersey2.server.DefaultJerseyTagsProviderTest$1"));
     }
 
     @Test
