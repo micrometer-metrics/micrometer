@@ -85,7 +85,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
             final AppOpticsDto.Builder dtoBuilder = AppOpticsDto.newBuilder()
                 .withTime(System.currentTimeMillis() / 1000)
                 .withPeriod((int) config.step().getSeconds())
-                .withTag("source", config.source());
+                .withTag("host_hostname_alias", config.source()); //this makes AO give the magic `@host` group by
 
             getMeters().forEach(meter -> addMeter(meter, dtoBuilder));
 
