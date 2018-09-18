@@ -50,10 +50,10 @@ public class AggregateMeasurement implements Measurement {
         json.append("{\"name\":\"").append(name)
             .append("\",\"sum\":").append(sum)
             .append(",\"count\":").append(count);
-        if(null != max) {
+        if (null != max) {
             json.append(",\"max\":").append(max);
         }
-        if(null != tags && !tags.isEmpty()) {
+        if (null != tags && !tags.isEmpty()) {
             json.append(",\"tags\":").append(Measurement.tagsJson(tags));
         }
         return json.append("},").toString();
@@ -106,8 +106,12 @@ public class AggregateMeasurement implements Measurement {
 
     @Override
     public boolean equals(Object o) {
-        if(this == o) return true;
-        if(o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         AggregateMeasurement that = (AggregateMeasurement) o;
         return Double.compare(that.sum, sum) == 0 &&
             count == that.count &&

@@ -52,7 +52,7 @@ public class AppOpticsDto {
 
     public List<AppOpticsDto> batch(int size) {
 
-        if(this.measurements.size() <= size) {
+        if (this.measurements.size() <= size) {
             return Collections.singletonList(this);
         }
         final List<AppOpticsDto> batches = new ArrayList<>();
@@ -73,7 +73,7 @@ public class AppOpticsDto {
 
         final StringBuilder json = new StringBuilder("{\"time\":").append(time)
             .append(",\"period\":").append(period).append(",");
-        if(null != tags && !tags.isEmpty()) {
+        if (null != tags && !tags.isEmpty()) {
             json.append("\"tags\":").append(Measurement.tagsJson(tags)).append(",");
         }
         json.append("\"measurements\":[");
@@ -133,8 +133,12 @@ public class AppOpticsDto {
 
     @Override
     public boolean equals(Object o) {
-        if(this == o) return true;
-        if(o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         AppOpticsDto that = (AppOpticsDto) o;
         return time == that.time &&
             period == that.period &&

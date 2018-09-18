@@ -48,7 +48,7 @@ public class SingleMeasurement implements Measurement {
         json
             .append("{\"name\":\"").append(name)
             .append("\",\"value\":").append(value);
-        if(null != tags && !tags.isEmpty()) {
+        if (null != tags && !tags.isEmpty()) {
             json.append(",\"tags\":").append(Measurement.tagsJson(tags));
         }
         return json.append("},").toString();
@@ -85,8 +85,12 @@ public class SingleMeasurement implements Measurement {
 
     @Override
     public boolean equals(Object o) {
-        if(this == o) return true;
-        if(o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         SingleMeasurement that = (SingleMeasurement) o;
         return Double.compare(that.value, value) == 0 &&
             Objects.equals(name, that.name) &&
