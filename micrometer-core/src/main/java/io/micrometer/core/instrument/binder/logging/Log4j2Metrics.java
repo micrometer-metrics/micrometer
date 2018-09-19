@@ -15,8 +15,12 @@
  */
 package io.micrometer.core.instrument.binder.logging;
 
-import static java.util.Collections.*;
-
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.lang.NonNullApi;
+import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LogEvent;
@@ -24,12 +28,7 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.filter.AbstractFilter;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
+import static java.util.Collections.emptyList;
 
 /**
  * @author Steven Sheehy
@@ -89,40 +88,46 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
         MetricsFilter(MeterRegistry registry, Iterable<Tag> tags) {
             fatalCounter = Counter.builder("log4j2.events")
-                .tags(tags)
-                .tags("level", "fatal")
-                .description("Number of fatal level log events")
-                .register(registry);
+                    .tags(tags)
+                    .tags("level", "fatal")
+                    .description("Number of fatal level log events")
+                    .baseUnit("events")
+                    .register(registry);
 
             errorCounter = Counter.builder("log4j2.events")
-                .tags(tags)
-                .tags("level", "error")
-                .description("Number of error level log events")
-                .register(registry);
+                    .tags(tags)
+                    .tags("level", "error")
+                    .description("Number of error level log events")
+                    .baseUnit("events")
+                    .register(registry);
 
             warnCounter = Counter.builder("log4j2.events")
-                .tags(tags)
-                .tags("level", "warn")
-                .description("Number of warn level log events")
-                .register(registry);
+                    .tags(tags)
+                    .tags("level", "warn")
+                    .description("Number of warn level log events")
+                    .baseUnit("events")
+                    .register(registry);
 
             infoCounter = Counter.builder("log4j2.events")
-                .tags(tags)
-                .tags("level", "info")
-                .description("Number of info level log events")
-                .register(registry);
+                    .tags(tags)
+                    .tags("level", "info")
+                    .description("Number of info level log events")
+                    .baseUnit("events")
+                    .register(registry);
 
             debugCounter = Counter.builder("log4j2.events")
-                .tags(tags)
-                .tags("level", "debug")
-                .description("Number of debug level log events")
-                .register(registry);
+                    .tags(tags)
+                    .tags("level", "debug")
+                    .description("Number of debug level log events")
+                    .baseUnit("events")
+                    .register(registry);
 
             traceCounter = Counter.builder("log4j2.events")
-                .tags(tags)
-                .tags("level", "trace")
-                .description("Number of trace level log events")
-                .register(registry);
+                    .tags(tags)
+                    .tags("level", "trace")
+                    .description("Number of trace level log events")
+                    .baseUnit("events")
+                    .register(registry);
         }
 
         @Override
