@@ -31,11 +31,16 @@ import org.apache.logging.log4j.core.filter.AbstractFilter;
 import static java.util.Collections.emptyList;
 
 /**
+ * {@link MeterBinder} for Apache Log4j 2.
+ *
  * @author Steven Sheehy
+ * @since 1.1.0
  */
 @NonNullApi
 @NonNullFields
 public class Log4j2Metrics implements MeterBinder, AutoCloseable {
+
+    private static final String METER_NAME = "log4j2.events";
 
     private final Iterable<Tag> tags;
     private final LoggerContext loggerContext;
@@ -63,7 +68,6 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
         Configuration configuration = loggerContext.getConfiguration();
         configuration.getLoggerConfig(LogManager.ROOT_LOGGER_NAME).addFilter(metricsFilter);
-        loggerContext.updateLoggers(configuration);
     }
 
     @Override
@@ -87,42 +91,42 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
         private final Counter traceCounter;
 
         MetricsFilter(MeterRegistry registry, Iterable<Tag> tags) {
-            fatalCounter = Counter.builder("log4j2.events")
+            fatalCounter = Counter.builder(METER_NAME)
                     .tags(tags)
                     .tags("level", "fatal")
                     .description("Number of fatal level log events")
                     .baseUnit("events")
                     .register(registry);
 
-            errorCounter = Counter.builder("log4j2.events")
+            errorCounter = Counter.builder(METER_NAME)
                     .tags(tags)
                     .tags("level", "error")
                     .description("Number of error level log events")
                     .baseUnit("events")
                     .register(registry);
 
-            warnCounter = Counter.builder("log4j2.events")
+            warnCounter = Counter.builder(METER_NAME)
                     .tags(tags)
                     .tags("level", "warn")
                     .description("Number of warn level log events")
                     .baseUnit("events")
                     .register(registry);
 
-            infoCounter = Counter.builder("log4j2.events")
+            infoCounter = Counter.builder(METER_NAME)
                     .tags(tags)
                     .tags("level", "info")
                     .description("Number of info level log events")
                     .baseUnit("events")
                     .register(registry);
 
-            debugCounter = Counter.builder("log4j2.events")
+            debugCounter = Counter.builder(METER_NAME)
                     .tags(tags)
                     .tags("level", "debug")
                     .description("Number of debug level log events")
                     .baseUnit("events")
                     .register(registry);
 
-            traceCounter = Counter.builder("log4j2.events")
+            traceCounter = Counter.builder(METER_NAME)
                     .tags(tags)
                     .tags("level", "trace")
                     .description("Number of trace level log events")
