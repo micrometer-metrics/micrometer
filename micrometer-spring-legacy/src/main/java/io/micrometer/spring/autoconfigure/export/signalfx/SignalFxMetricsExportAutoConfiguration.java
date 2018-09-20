@@ -34,7 +34,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 /**
- * Configuration for exporting metrics to Signalfx.
+ * Configuration for exporting metrics to SignalFx.
  *
  * @author Jon Schneider
  */
@@ -51,7 +51,7 @@ public class SignalFxMetricsExportAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public SignalFxConfig signalfxConfig(SignalFxProperties props) {
+    public SignalFxConfig signalFxConfig(SignalFxProperties props) {
         return new SignalFxPropertiesConfigAdapter(props);
     }
 

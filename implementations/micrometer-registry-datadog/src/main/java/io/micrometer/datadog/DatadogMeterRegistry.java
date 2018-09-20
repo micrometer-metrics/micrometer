@@ -38,6 +38,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
@@ -74,7 +75,14 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         Map<String, DatadogMetricMetadata> metadataToSend = new HashMap<>();
 
-        URL postTimeSeriesEndpoint = URIUtils.toURL(config.uri() + "/api/v1/series?api_key=" + config.apiKey());
+        String uriString = config.uri() + "/api/v1/series?api_key=" + config.apiKey();
+        URL postTimeSeriesEndpoint;
+        try {
+            postTimeSeriesEndpoint = URIUtils.toURL(uriString);
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid URI string for an endpoint to send time series: " + uriString);
+            return;
+        }
 
         try {
             HttpURLConnection con = null;
@@ -100,18 +108,17 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                     */
 
                     String body = "{\"series\":[" +
-                            batch.stream().flatMap(m -> {
-                                if (m instanceof Timer) {
-                                    return writeTimer((Timer) m, metadataToSend);
-                                }
-                                if (m instanceof DistributionSummary) {
-                                    return writeSummary((DistributionSummary) m, metadataToSend);
-                                }
-                                if (m instanceof FunctionTimer) {
-                                    return writeTimer((FunctionTimer) m, metadataToSend);
-                                }
-                                return writeMeter(m, metadataToSend);
-                            }).collect(joining(",")) +
+                            batch.stream().flatMap(meter -> match(meter,
+                                    m -> writeMeter(m, metadataToSend),
+                                    m -> writeMeter(m, metadataToSend),
+                                    timer -> writeTimer(timer, metadataToSend),
+                                    summary -> writeSummary(summary, metadataToSend),
+                                    m -> writeMeter(m, metadataToSend),
+                                    m -> writeMeter(m, metadataToSend),
+                                    m -> writeMeter(m, metadataToSend),
+                                    timer -> writeTimer(timer, metadataToSend),
+                                    m -> writeMeter(m, metadataToSend))
+                            ).collect(joining(",")) +
                             "]}";
 
                     logger.debug(body);

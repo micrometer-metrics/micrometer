@@ -35,6 +35,7 @@ import java.util.function.ToLongFunction;
  * be overridden.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public class CompositeMeterRegistry extends MeterRegistry {
     private final AtomicBoolean registriesLock = new AtomicBoolean(false);
@@ -52,6 +53,10 @@ public class CompositeMeterRegistry extends MeterRegistry {
     }
 
     public CompositeMeterRegistry(Clock clock) {
+        this(clock, Collections.emptySet());
+    }
+
+    public CompositeMeterRegistry(Clock clock, Iterable<MeterRegistry> registries) {
         super(clock);
         config().namingConvention(NamingConvention.identity);
         config().onMeterAdded(m -> {
@@ -59,10 +64,6 @@ public class CompositeMeterRegistry extends MeterRegistry {
                 lock(registriesLock, () -> nonCompositeDescendants.forEach(((CompositeMeter) m)::add));
             }
         });
-    }
-
-    public CompositeMeterRegistry(Clock clock, Iterable<MeterRegistry> registries) {
-        this(clock);
         registries.forEach(this::add);
     }
 
@@ -218,4 +219,11 @@ public class CompositeMeterRegistry extends MeterRegistry {
     public Set<MeterRegistry> getRegistries() {
         return unmodifiableRegistries;
     }
+
+    @Override
+    public void close() {
+        this.registries.forEach(MeterRegistry::close);
+        super.close();
+    }
+
 }

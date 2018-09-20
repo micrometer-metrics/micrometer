@@ -42,8 +42,15 @@ import java.util.function.Function;
 @Incubating(since = "1.0.0")
 public class TimedAspect {
     public static final String DEFAULT_METRIC_NAME = "method.timed";
+
+    /**
+     * Tag key for an exception.
+     * @since 1.1.0
+     */
+    public static final String EXCEPTION_TAG = "exception";
+
     private final MeterRegistry registry;
-    private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinpoint;
+    private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint;
 
     public TimedAspect(MeterRegistry registry) {
         this(registry, pjp ->
@@ -52,9 +59,9 @@ public class TimedAspect {
         );
     }
 
-    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinpoint) {
+    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint) {
         this.registry = registry;
-        this.tagsBasedOnJoinpoint = tagsBasedOnJoinpoint;
+        this.tagsBasedOnJoinPoint = tagsBasedOnJoinPoint;
     }
 
     @Around("execution (@io.micrometer.core.annotation.Timed * *.*(..))")
@@ -62,15 +69,20 @@ public class TimedAspect {
         Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         Timed timed = method.getAnnotation(Timed.class);
         final String metricName = timed.value().isEmpty() ? DEFAULT_METRIC_NAME : timed.value();
-
         Timer.Sample sample = Timer.start(registry);
+        String exceptionClass = "none";
+
         try {
             return pjp.proceed();
+        } catch (Exception ex) {
+            exceptionClass = ex.getClass().getSimpleName();
+            throw ex;
         } finally {
             sample.stop(Timer.builder(metricName)
                     .description(timed.description().isEmpty() ? null : timed.description())
                     .tags(timed.extraTags())
-                    .tags(tagsBasedOnJoinpoint.apply(pjp))
+                    .tags(EXCEPTION_TAG, exceptionClass)
+                    .tags(tagsBasedOnJoinPoint.apply(pjp))
                     .publishPercentileHistogram(timed.histogram())
                     .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles())
                     .register(registry));

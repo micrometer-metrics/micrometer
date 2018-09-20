@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static io.micrometer.core.instrument.Meter.Type.match;
 import static io.micrometer.dynatrace.DynatraceMetricDefinition.DynatraceUnit;
 import static java.util.stream.Collectors.joining;
 
@@ -80,19 +81,17 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             final List<DynatraceCustomMetric> series = batch.stream()
-                    .flatMap(meter -> {
-                        if (meter instanceof Timer) {
-                            return createCustomMetric((Timer) meter);
-                        } else if (meter instanceof FunctionTimer) {
-                            return createCustomMetric((FunctionTimer) meter);
-                        } else if (meter instanceof DistributionSummary) {
-                            return createCustomMetric((DistributionSummary) meter);
-                        } else if (meter instanceof LongTaskTimer) {
-                            return createCustomMetric((LongTaskTimer) meter);
-                        } else {
-                            return createCustomMetric(meter);
-                        }
-                    })
+                    .flatMap(meter -> match(meter,
+                            this::writeMeter,
+                            this::writeMeter,
+                            this::writeTimer,
+                            this::writeSummary,
+                            this::writeLongTaskTimer,
+                            this::writeMeter,
+                            this::writeMeter,
+                            this::writeFunctionTimer,
+                            this::writeMeter)
+                    )
                     .collect(Collectors.toList());
 
             series.stream()
@@ -112,13 +111,13 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private Stream<DynatraceCustomMetric> createCustomMetric(final Meter meter) {
+    private Stream<DynatraceCustomMetric> writeMeter(Meter meter) {
         final long wallTime = clock.wallTime();
         return StreamSupport.stream(meter.measure().spliterator(), false)
                 .map(ms -> createCustomMetric(meter.getId(), wallTime, ms.getValue()));
     }
 
-    private Stream<DynatraceCustomMetric> createCustomMetric(final LongTaskTimer longTaskTimer) {
+    private Stream<DynatraceCustomMetric> writeLongTaskTimer(LongTaskTimer longTaskTimer) {
         final long wallTime = clock.wallTime();
         final Meter.Id id = longTaskTimer.getId();
         return Stream.of(
@@ -126,7 +125,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                 createCustomMetric(idWithSuffix(id, "count"), wallTime, longTaskTimer.duration(getBaseTimeUnit())));
     }
 
-    private Stream<DynatraceCustomMetric> createCustomMetric(final DistributionSummary summary) {
+    private Stream<DynatraceCustomMetric> writeSummary(DistributionSummary summary) {
         final long wallTime = clock.wallTime();
         final Meter.Id id = summary.getId();
         final HistogramSnapshot snapshot = summary.takeSnapshot();
@@ -138,7 +137,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                 createCustomMetric(idWithSuffix(id, "max"), wallTime, snapshot.max(getBaseTimeUnit())));
     }
 
-    private Stream<DynatraceCustomMetric> createCustomMetric(final FunctionTimer timer) {
+    private Stream<DynatraceCustomMetric> writeFunctionTimer(FunctionTimer timer) {
         final long wallTime = clock.wallTime();
         final Meter.Id id = timer.getId();
 
@@ -148,7 +147,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                 createCustomMetric(idWithSuffix(id, "sum"), wallTime, timer.totalTime(getBaseTimeUnit())));
     }
 
-    private Stream<DynatraceCustomMetric> createCustomMetric(final Timer timer) {
+    private Stream<DynatraceCustomMetric> writeTimer(Timer timer) {
         final long wallTime = clock.wallTime();
         final Meter.Id id = timer.getId();
         final HistogramSnapshot snapshot = timer.takeSnapshot();

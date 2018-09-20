@@ -53,7 +53,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private final StatsdConfig statsdConfig;
     private final HierarchicalNameMapper nameMapper;
     private final Collection<StatsdPollable> pollableMeters = new CopyOnWriteArrayList<>();
-    Processor<String, String> publisher;
+    Processor<String, String> processor;
 
     private final AtomicBoolean started = new AtomicBoolean(false);
 
@@ -155,17 +155,17 @@ public class StatsdMeterRegistry extends MeterRegistry {
         this.lineSink = lineSink;
         config().namingConvention(namingConvention);
 
-        UnicastProcessor<String> processor = UnicastProcessor.create(Queues.<String>unboundedMultiproducer().get());
+        UnicastProcessor<String> unicastProcessor = UnicastProcessor.create(Queues.<String>unboundedMultiproducer().get());
 
         try {
             Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, getClass().getClassLoader());
-            this.publisher = new LogbackMetricsSuppressingUnicastProcessor(processor);
+            this.processor = new LogbackMetricsSuppressingUnicastProcessor(unicastProcessor);
         } catch (ClassNotFoundException e) {
-            this.publisher = processor;
+            this.processor = unicastProcessor;
         }
 
         if (lineSink != null) {
-            publisher.subscribe(new Subscriber<String>() {
+            processor.subscribe(new Subscriber<String>() {
                 @Override
                 public void onSubscribe(Subscription s) {
                     s.request(Long.MAX_VALUE);
@@ -203,7 +203,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             UdpClient.create(statsdConfig.host(), statsdConfig.port())
                     .newHandler((in, out) -> out
                             .options(NettyPipeline.SendOptions::flushOnEach)
-                            .sendString(publisher)
+                            .sendString(processor)
                             .neverComplete()
                     )
                     .subscribe(client -> {
@@ -233,7 +233,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Override
     protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
-        StatsdGauge<T> gauge = new StatsdGauge<>(id, lineBuilder(id), publisher, obj, valueFunction, statsdConfig.publishUnchangedMeters());
+        StatsdGauge<T> gauge = new StatsdGauge<>(id, lineBuilder(id), processor, obj, valueFunction, statsdConfig.publishUnchangedMeters());
         pollableMeters.add(gauge);
         return gauge;
     }
@@ -259,12 +259,12 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Override
     protected Counter newCounter(Meter.Id id) {
-        return new StatsdCounter(id, lineBuilder(id), publisher);
+        return new StatsdCounter(id, lineBuilder(id), processor);
     }
 
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
-        StatsdLongTaskTimer ltt = new StatsdLongTaskTimer(id, lineBuilder(id), publisher, clock, statsdConfig.publishUnchangedMeters());
+        StatsdLongTaskTimer ltt = new StatsdLongTaskTimer(id, lineBuilder(id), processor, clock, statsdConfig.publishUnchangedMeters());
         pollableMeters.add(ltt);
         return ltt;
     }
@@ -273,7 +273,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector
             pauseDetector) {
-        Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
+        Timer timer = new StatsdTimer(id, lineBuilder(id), processor, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
                 statsdConfig.step().toMillis());
         HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
@@ -283,14 +283,14 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig
             distributionStatisticConfig, double scale) {
-        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), publisher, clock, distributionStatisticConfig, scale);
+        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), processor, clock, distributionStatisticConfig, scale);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
-        StatsdFunctionCounter fc = new StatsdFunctionCounter<>(id, obj, countFunction, lineBuilder(id), publisher);
+        StatsdFunctionCounter fc = new StatsdFunctionCounter<>(id, obj, countFunction, lineBuilder(id), processor);
         pollableMeters.add(fc);
         return fc;
     }
@@ -300,7 +300,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
             obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit
                                                          totalTimeFunctionUnit) {
         StatsdFunctionTimer ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
-                getBaseTimeUnit(), lineBuilder(id), publisher);
+                getBaseTimeUnit(), lineBuilder(id), processor);
         pollableMeters.add(ft);
         return ft;
     }
@@ -313,13 +313,13 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 case COUNT:
                 case TOTAL:
                 case TOTAL_TIME:
-                    pollableMeters.add(() -> publisher.onNext(line.count((long) ms.getValue(), ms.getStatistic())));
+                    pollableMeters.add(() -> processor.onNext(line.count((long) ms.getValue(), ms.getStatistic())));
                     break;
                 case VALUE:
                 case ACTIVE_TASKS:
                 case DURATION:
                 case UNKNOWN:
-                    pollableMeters.add(() -> publisher.onNext(line.gauge(ms.getValue(), ms.getStatistic())));
+                    pollableMeters.add(() -> processor.onNext(line.gauge(ms.getValue(), ms.getStatistic())));
                     break;
             }
         });
@@ -341,7 +341,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     public int queueSize() {
         try {
-            return (Integer) publisher.getClass().getMethod("size").invoke(publisher);
+            return (Integer) processor.getClass().getMethod("size").invoke(processor);
         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             // should never happen
             return 0;
@@ -350,7 +350,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     public int queueCapacity() {
         try {
-            return (Integer) publisher.getClass().getMethod("getBufferSize").invoke(publisher);
+            return (Integer) processor.getClass().getMethod("getBufferSize").invoke(processor);
         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             // should never happen
             return 0;

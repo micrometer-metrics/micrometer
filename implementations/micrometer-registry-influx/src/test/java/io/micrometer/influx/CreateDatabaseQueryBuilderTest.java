@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CreateDatabaseQueryBuilderTest {
 
-    private static String TEST_DB_NAME = "dummy_database_0";
+    private static final String TEST_DB_NAME = "dummy_database_0";
 
     /**
      * Class Parameters:
@@ -44,13 +44,13 @@ class CreateDatabaseQueryBuilderTest {
     @Test
     void noRetentionPolicy() {
         String query = createDatabaseQueryBuilder.build();
-        assertEquals("CREATE DATABASE dummy_database_0", query);
+        assertEquals("CREATE DATABASE \"dummy_database_0\"", query);
     }
 
     @Test
     void oneClauseInRetentionPolicy() {
         String query = createDatabaseQueryBuilder.setRetentionPolicyName("dummy_policy").build();
-        assertEquals("CREATE DATABASE dummy_database_0 WITH NAME dummy_policy", query);
+        assertEquals("CREATE DATABASE \"dummy_database_0\" WITH NAME dummy_policy", query);
     }
 
     @Test
@@ -60,7 +60,7 @@ class CreateDatabaseQueryBuilderTest {
                 .setRetentionReplicationFactor(1)
                 .setRetentionShardDuration("3")
                 .build();
-        assertEquals("CREATE DATABASE dummy_database_0 WITH DURATION 2d REPLICATION 1 SHARD DURATION 3 NAME dummy_policy", query);
+        assertEquals("CREATE DATABASE \"dummy_database_0\" WITH DURATION 2d REPLICATION 1 SHARD DURATION 3 NAME dummy_policy", query);
     }
 
 }

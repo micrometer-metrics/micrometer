@@ -25,7 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,66 +36,54 @@ import java.util.concurrent.TimeUnit;
 @NonNullFields
 public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublisherCommand {
     private static final Logger LOG = LoggerFactory.getLogger(MicrometerMetricsPublisherCommand.class);
-    private static final List<HystrixEventType> executionEvents = Arrays.asList(
-        HystrixEventType.EMIT,
-        HystrixEventType.SUCCESS,
-        HystrixEventType.FAILURE,
-        HystrixEventType.TIMEOUT,
-        HystrixEventType.BAD_REQUEST,
-        HystrixEventType.SHORT_CIRCUITED,
-        HystrixEventType.THREAD_POOL_REJECTED,
-        HystrixEventType.SEMAPHORE_REJECTED);
-    private static final List<HystrixEventType> fallbackEvents = Arrays.asList(
-        HystrixEventType.FALLBACK_EMIT,
-        HystrixEventType.FALLBACK_SUCCESS,
-        HystrixEventType.FALLBACK_FAILURE,
-        HystrixEventType.FALLBACK_REJECTION,
-        HystrixEventType.FALLBACK_MISSING);
 
     private static final String NAME_HYSTRIX_CIRCUIT_BREAKER_OPEN = "hystrix.circuit.breaker.open";
-    private static final String NAME_HYSTRIX_COMMAND_OTHER = "hystrix.command.other";
     private static final String NAME_HYSTRIX_EXECUTION = "hystrix.execution";
-    private static final String NAME_HYSTRIX_FALLBACK = "hystrix.fallback";
-    private static final String NAME_HYSTRIX_ERRORS = "hystrix.errors";
-    private static final String NAME_HYSTRIX_REQUESTS = "hystrix.requests";
+    private static final String NAME_HYSTRIX_EXECUTION_TERMINAL_TOTAL = "hystrix.execution.terminal";
     private static final String NAME_HYSTRIX_LATENCY_EXECUTION = "hystrix.latency.execution";
     private static final String NAME_HYSTRIX_LATENCY_TOTAL = "hystrix.latency.total";
-    private static final String NAME_HYSTRIX_THREADPOOL_CONCURRENT_EXECUTION_CURRENT = "hystrix.threadpool.concurrent.execution.current";
-    private static final String NAME_HYSTRIX_THREADPOOL_CONCURRENT_EXECUTION_ROLLING_MAX = "hystrix.threadpool.concurrent.execution.rolling.max";
+    private static final String NAME_HYSTRIX_CONCURRENT_EXECUTION_CURRENT = "hystrix.concurrent.execution.current";
+    private static final String NAME_HYSTRIX_CONCURRENT_EXECUTION_ROLLING_MAX = "hystrix.concurrent.execution.rolling.max";
 
-    private static final String DESCRIPTION_HYSTRIX_COMMAND_OTHER = "Other execution results. See https://github.com/Netflix/Hystrix/wiki/Metrics-and-Monitoring#other-command-event-types-comnetflixhystrixhystrixeventtype for type definitions";
     private static final String DESCRIPTION_HYSTRIX_EXECUTION = "Execution results. See https://github.com/Netflix/Hystrix/wiki/Metrics-and-Monitoring#command-execution-event-types-comnetflixhystrixhystrixeventtype for type definitions";
-    private static final String DESCRIPTION_HYSTRIX_FALLBACK = "Fallback execution results. See https://github.com/Netflix/Hystrix/wiki/Metrics-and-Monitoring#command-fallback-event-types-comnetflixhystrixhystrixeventtype for type definitions";
+    private static final String DESCRIPTION_HYSTRIX_EXECUTION_TERMINAL_TOTAL = "Sum of all terminal executions. Use this to derive percentages from hystrix.execution";
 
     private final MeterRegistry meterRegistry;
     private final HystrixCommandMetrics metrics;
     private final HystrixCircuitBreaker circuitBreaker;
     private final Iterable<Tag> tags;
     private final HystrixCommandKey commandKey;
+    private HystrixMetricsPublisherCommand metricsPublisherForCommand;
 
-    public MicrometerMetricsPublisherCommand(MeterRegistry meterRegistry, HystrixCommandKey commandKey, HystrixCommandGroupKey commandGroupKey, HystrixCommandMetrics metrics, HystrixCircuitBreaker circuitBreaker, HystrixCommandProperties properties) {
+    public MicrometerMetricsPublisherCommand(MeterRegistry meterRegistry, HystrixCommandKey commandKey, HystrixCommandGroupKey commandGroupKey, HystrixCommandMetrics metrics, HystrixCircuitBreaker circuitBreaker, HystrixMetricsPublisherCommand metricsPublisherForCommand) {
         this.meterRegistry = meterRegistry;
         this.metrics = metrics;
         this.circuitBreaker = circuitBreaker;
         this.commandKey = commandKey;
+        this.metricsPublisherForCommand = metricsPublisherForCommand;
 
         tags = Tags.of("group", commandGroupKey.name(), "key", commandKey.name());
-
-        //Initialize commands at zero
-        Counter.builder(NAME_HYSTRIX_ERRORS).tags(tags).register(meterRegistry);
-        Counter.builder(NAME_HYSTRIX_REQUESTS).tags(tags).register(meterRegistry);
-        Timer.builder(NAME_HYSTRIX_LATENCY_EXECUTION).tags(tags).register(meterRegistry);
-        Timer.builder(NAME_HYSTRIX_LATENCY_TOTAL).tags(tags).register(meterRegistry);
-        executionEvents.forEach(this::getExecutionCounter);
-        fallbackEvents.forEach(this::getFallbackCounter);
-        Arrays.stream(HystrixEventType.values()).filter(e -> !executionEvents.contains(e) && !fallbackEvents.contains(e))
-            .forEach(this::getOtherExecutionCounter);
     }
 
     @Override
     public void initialize() {
+        metricsPublisherForCommand.initialize();
         Gauge.builder(NAME_HYSTRIX_CIRCUIT_BREAKER_OPEN, circuitBreaker, c -> c.isOpen() ? 1 : 0)
             .tags(tags).register(meterRegistry);
+
+        // initialize all commands counters and timers with zero
+        final Map<HystrixEventType, Counter> eventCounters = new HashMap<>();
+        Arrays.asList(HystrixEventType.values()).forEach(hystrixEventType -> {
+            eventCounters.put(hystrixEventType, getCounter(hystrixEventType));
+        });
+
+        Counter terminalEventCounterTotal = Counter.builder(NAME_HYSTRIX_EXECUTION_TERMINAL_TOTAL)
+            .description(DESCRIPTION_HYSTRIX_EXECUTION_TERMINAL_TOTAL)
+            .tags(Tags.concat(tags))
+            .register(meterRegistry);
+
+        final Timer latencyExecution = Timer.builder(NAME_HYSTRIX_LATENCY_EXECUTION).tags(tags).register(meterRegistry);
+        final Timer latencyTotal = Timer.builder(NAME_HYSTRIX_LATENCY_TOTAL).tags(tags).register(meterRegistry);
 
         HystrixCommandCompletionStream.getInstance(commandKey)
             .observe()
@@ -110,10 +99,7 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
                      */
                 long totalLatency = hystrixCommandCompletion.getTotalLatency();
                 if (totalLatency >= 0) {
-                    Timer.builder(NAME_HYSTRIX_LATENCY_TOTAL)
-                        .tags(tags)
-                        .register(meterRegistry)
-                        .record(totalLatency, TimeUnit.MILLISECONDS);
+                    latencyTotal.record(totalLatency, TimeUnit.MILLISECONDS);
                 } else if (totalLatency < -1) {
                     LOG.warn("received negative totalLatency, event not counted. " +
                             "This indicates a clock skew? {}",
@@ -121,10 +107,7 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
                 }
                 long executionLatency = hystrixCommandCompletion.getExecutionLatency();
                 if (executionLatency >= 0) {
-                    Timer.builder(NAME_HYSTRIX_LATENCY_EXECUTION)
-                        .tags(tags)
-                        .register(meterRegistry)
-                        .record(executionLatency, TimeUnit.MILLISECONDS);
+                    latencyExecution.record(executionLatency, TimeUnit.MILLISECONDS);
                 } else if (executionLatency < -1) {
                     LOG.warn("received negative executionLatency, event not counted. " +
                             "This indicates a clock skew? {}",
@@ -133,64 +116,27 @@ public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublishe
                 for (HystrixEventType hystrixEventType : HystrixEventType.values()) {
                     int count = hystrixCommandCompletion.getEventCounts().getCount(hystrixEventType);
                     if (count > 0) {
-                        switch (hystrixEventType) {
-                            /* this list is derived from {@link HystrixCommandMetrics.HealthCounts.plus} */
-                            case FAILURE:
-                            case TIMEOUT:
-                            case THREAD_POOL_REJECTED:
-                            case SEMAPHORE_REJECTED:
-                                Counter.builder(NAME_HYSTRIX_ERRORS)
-                                    .tags(tags)
-                                    .register(meterRegistry)
-                                    .increment(count);
-                            case SUCCESS:
-                                Counter.builder(NAME_HYSTRIX_REQUESTS)
-                                    .tags(tags)
-                                    .register(meterRegistry)
-                                    .increment(count);
-
-                                break;
-                        }
-
-                        if (executionEvents.contains(hystrixEventType)) {
-                            getExecutionCounter(hystrixEventType).increment(count);
-                        } else if (fallbackEvents.contains(hystrixEventType)) {
-                            getFallbackCounter(hystrixEventType).increment(count);
-                        } else {
-                            getOtherExecutionCounter(hystrixEventType).increment(count);
+                        eventCounters.get(hystrixEventType).increment(count);
+                        if (hystrixEventType.isTerminal()) {
+                            terminalEventCounterTotal.increment(count);
                         }
                     }
                 }
             });
 
-        String threadPool = metrics.getThreadPoolKey().name();
-        Gauge.builder(NAME_HYSTRIX_THREADPOOL_CONCURRENT_EXECUTION_CURRENT, metrics, HystrixCommandMetrics::getCurrentConcurrentExecutionCount)
-            .tags(Tags.concat(tags, "threadpool", threadPool))
-            .register(meterRegistry);
-        Gauge.builder(NAME_HYSTRIX_THREADPOOL_CONCURRENT_EXECUTION_ROLLING_MAX, metrics, HystrixCommandMetrics::getRollingMaxConcurrentExecutions)
-            .tags(Tags.concat(tags, "threadpool", threadPool))
+        Gauge.builder(NAME_HYSTRIX_CONCURRENT_EXECUTION_CURRENT, metrics, HystrixCommandMetrics::getCurrentConcurrentExecutionCount)
+            .tags(tags)
             .register(meterRegistry);
 
-    }
-
-    private Counter getOtherExecutionCounter(HystrixEventType hystrixEventType) {
-        return Counter.builder(NAME_HYSTRIX_COMMAND_OTHER)
-            .description(DESCRIPTION_HYSTRIX_COMMAND_OTHER)
-            .tags(Tags.concat(tags, "event", hystrixEventType.name().toLowerCase()))
+        Gauge.builder(NAME_HYSTRIX_CONCURRENT_EXECUTION_ROLLING_MAX, metrics, HystrixCommandMetrics::getRollingMaxConcurrentExecutions)
+            .tags(tags)
             .register(meterRegistry);
     }
 
-    private Counter getFallbackCounter(HystrixEventType hystrixEventType) {
-        return Counter.builder(NAME_HYSTRIX_FALLBACK)
-            .description(DESCRIPTION_HYSTRIX_FALLBACK)
-            .tags(Tags.concat(tags, "event", hystrixEventType.name().toLowerCase()))
-            .register(meterRegistry);
-    }
-
-    private Counter getExecutionCounter(HystrixEventType hystrixEventType) {
+    private Counter getCounter(HystrixEventType hystrixEventType) {
         return Counter.builder(NAME_HYSTRIX_EXECUTION)
             .description(DESCRIPTION_HYSTRIX_EXECUTION)
-            .tags(Tags.concat(tags, "event", hystrixEventType.name().toLowerCase()))
+            .tags(Tags.concat(tags, "event", hystrixEventType.name().toLowerCase(), "terminal", Boolean.toString(hystrixEventType.isTerminal())))
             .register(meterRegistry);
     }
 

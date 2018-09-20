@@ -34,7 +34,6 @@ import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
@@ -94,22 +93,6 @@ public class PrometheusMetricsExportAutoConfiguration {
         }
     }
 
-    static class PrometheusPushGatewayEnabledCondition extends AllNestedConditions {
-        public PrometheusPushGatewayEnabledCondition() {
-            super(ConfigurationPhase.PARSE_CONFIGURATION);
-        }
-
-        @ConditionalOnProperty(value = "management.metrics.export.prometheus.enabled", matchIfMissing = true)
-        static class PrometheusMeterRegistryEnabled {
-            //
-        }
-
-        @ConditionalOnProperty("management.metrics.export.prometheus.pushgateway.enabled")
-        static class PushGatewayEnabled {
-            //
-        }
-    }
-
     /**
      * Configuration for <a href="https://github.com/prometheus/pushgateway">Prometheus Pushgateway</a>.
      *
@@ -117,71 +100,84 @@ public class PrometheusMetricsExportAutoConfiguration {
      */
     @Configuration
     @ConditionalOnClass(PushGateway.class)
-    @Conditional(PrometheusPushGatewayEnabledCondition.class)
+    @ConditionalOnProperty(prefix = "management.metrics.export.prometheus.pushgateway", name = "enabled", havingValue = "true", matchIfMissing = false)
     @Incubating(since = "1.0.0")
-    public class PrometheusPushGatewayConfiguration {
-        private final Logger logger = LoggerFactory.getLogger(PrometheusPushGatewayConfiguration.class);
-        private final CollectorRegistry collectorRegistry;
-        private final PrometheusProperties.PushgatewayProperties pushgatewayProperties;
-        private final PushGateway pushGateway;
-        private final Environment environment;
-        private final ScheduledExecutorService executorService;
+    public static class PrometheusPushGatewayConfiguration {
 
-        PrometheusPushGatewayConfiguration(CollectorRegistry collectorRegistry, PrometheusProperties prometheusProperties,
-                                           Environment environment) {
-            this.collectorRegistry = collectorRegistry;
-            this.pushgatewayProperties = prometheusProperties.getPushgateway();
-            this.pushGateway = new PushGateway(pushgatewayProperties.getBaseUrl());
-            this.environment = environment;
-            this.executorService = Executors.newSingleThreadScheduledExecutor(
+        @Bean
+        public PushGatewayHandler pushGatewayHandler(CollectorRegistry collectorRegistry,
+                PrometheusProperties prometheusProperties, Environment environment) {
+            return new PushGatewayHandler(collectorRegistry, prometheusProperties, environment);
+        }
+
+        public static class PushGatewayHandler {
+
+            private final Logger logger = LoggerFactory.getLogger(PrometheusPushGatewayConfiguration.class);
+            private final CollectorRegistry collectorRegistry;
+            private final PrometheusProperties.PushgatewayProperties pushgatewayProperties;
+            private final PushGateway pushGateway;
+            private final Environment environment;
+            private final ScheduledExecutorService executorService;
+
+            public PushGatewayHandler(CollectorRegistry collectorRegistry, PrometheusProperties prometheusProperties,
+                    Environment environment) {
+                this.collectorRegistry = collectorRegistry;
+                this.pushgatewayProperties = prometheusProperties.getPushgateway();
+                this.pushGateway = new PushGateway(pushgatewayProperties.getBaseUrl());
+                this.environment = environment;
+                this.executorService = Executors.newSingleThreadScheduledExecutor(
                     (r) -> {
                         final Thread thread = new Thread(r);
                         thread.setDaemon(true);
                         thread.setName("micrometer-pushgateway");
                         return thread;
                     }
-            );
-            executorService.scheduleAtFixedRate(this::push, 0, pushgatewayProperties.getPushRate().toMillis(),
+                );
+                executorService.scheduleAtFixedRate(this::push, 0, pushgatewayProperties.getPushRate().toMillis(),
                     TimeUnit.MILLISECONDS);
-        }
-
-        void push() {
-            try {
-                pushGateway.pushAdd(collectorRegistry, job(), pushgatewayProperties.getGroupingKeys());
-            } catch (UnknownHostException e) {
-                logger.error("Unable to locate host '" + pushgatewayProperties.getBaseUrl() + "'. No longer attempting metrics publication to this host");
-                executorService.shutdown();
-            } catch (Throwable t) {
-                logger.error("Unable to push metrics to Prometheus Pushgateway", t);
             }
-        }
 
-        @PreDestroy
-        void shutdown() {
-            executorService.shutdown();
-            if (pushgatewayProperties.isPushOnShutdown()) {
-                push();
-            }
-            if (pushgatewayProperties.isDeleteOnShutdown()) {
+            void push() {
                 try {
-                    pushGateway.delete(job(), pushgatewayProperties.getGroupingKeys());
+                    pushGateway.pushAdd(collectorRegistry, job(), pushgatewayProperties.getGroupingKeys());
+                } catch (UnknownHostException e) {
+                    logger.error("Unable to locate host '" + pushgatewayProperties.getBaseUrl() + "'. No longer attempting metrics publication to this host");
+                    executorService.shutdown();
                 } catch (Throwable t) {
-                    logger.error("Unable to delete metrics from Prometheus Pushgateway", t);
+                    logger.error("Unable to push metrics to Prometheus Pushgateway", t);
                 }
             }
+
+            @PreDestroy
+            void shutdown() {
+                executorService.shutdown();
+                if (pushgatewayProperties.isPushOnShutdown()) {
+                    push();
+                }
+                if (pushgatewayProperties.isDeleteOnShutdown()) {
+                    try {
+                        pushGateway.delete(job(), pushgatewayProperties.getGroupingKeys());
+                    } catch (Throwable t) {
+                        logger.error("Unable to delete metrics from Prometheus Pushgateway", t);
+                    }
+                }
+            }
+
+            private String job() {
+                String job = pushgatewayProperties.getJob();
+                if (job == null) {
+                    job = environment.getProperty("spring.application.name");
+                }
+                if (job == null) {
+                    // There's a history of Prometheus spring integration defaulting the job name to "spring" from when
+                    // Prometheus integration didn't exist in Spring itself.
+                    job = "spring";
+                }
+                return job;
+            }
+
         }
 
-        private String job() {
-            String job = pushgatewayProperties.getJob();
-            if (job == null) {
-                job = environment.getProperty("spring.application.name");
-            }
-            if (job == null) {
-                // There's a history of Prometheus spring integration defaulting the job name to "spring" from when
-                // Prometheus integration didn't exist in Spring itself.
-                job = "spring";
-            }
-            return job;
-        }
     }
+
 }

@@ -23,6 +23,7 @@ logging.level.org.springframework.boot: INFO
 
 management.metrics.export:
   atlas.enabled: false
+  azuremonitor.enabled: false
   datadog.enabled: false
   dynatrace.enabled: false
   elastic.enabled: false

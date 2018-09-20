@@ -23,10 +23,10 @@ import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.lang.Nullable;
 
 public class WavefrontNamingConvention implements NamingConvention {
-	
+
     private static final Pattern NAME_CLEANUP_PATTERN = Pattern.compile("[^a-zA-Z0-9\\-_\\./,]");
     private static final Pattern KEY_CLEANUP_PATTERN = Pattern.compile("[^a-zA-Z0-9\\-_\\.]");
-	
+
     private final NamingConvention delegate;
 
     @Nullable
