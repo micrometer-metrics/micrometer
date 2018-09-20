@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.cache;
 
 import com.hazelcast.core.IMap;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
@@ -119,13 +120,13 @@ public class HazelcastCacheMetrics extends CacheMeterBinder {
         Gauge.builder("cache.entry.memory", cache, cache -> cache.getLocalMapStats().getBackupEntryMemoryCost())
                 .tags(getTagsWithCacheName()).tag("ownership", "backup")
                 .description("Memory cost of backup entries held by this member")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
         Gauge.builder("cache.entry.memory", cache, cache -> cache.getLocalMapStats().getOwnedEntryMemoryCost())
                 .tags(getTagsWithCacheName()).tag("ownership", "owned")
                 .description("Memory cost of owned entries held by this member")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
         FunctionCounter.builder("cache.partition.gets", cache, cache -> cache.getLocalMapStats().getGetOperationCount())

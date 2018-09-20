@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -116,7 +117,7 @@ public class DatabaseTableMetrics implements MeterBinder {
                 .tag("db", dataSourceName)
                 .tag("table", tableName)
                 .description("Number of rows in a database table")
-                .baseUnit("rows")
+                .baseUnit(BaseUnits.ROWS)
                 .register(registry);
     }
 }

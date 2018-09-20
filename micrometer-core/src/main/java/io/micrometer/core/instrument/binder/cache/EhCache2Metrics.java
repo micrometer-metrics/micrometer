@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.cache;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import net.sf.ehcache.Ehcache;
@@ -115,19 +116,19 @@ public class EhCache2Metrics extends CacheMeterBinder {
         Gauge.builder("cache.local.offheap.size", stats, StatisticsGateway::getLocalOffHeapSize)
                 .tags(getTagsWithCacheName())
                 .description("Local off-heap size")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
         Gauge.builder("cache.local.heap.size", stats, StatisticsGateway::getLocalHeapSizeInBytes)
                 .tags(getTagsWithCacheName())
                 .description("Local heap size")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
         Gauge.builder("cache.local.disk.size", stats, StatisticsGateway::getLocalDiskSizeInBytes)
                 .tags(getTagsWithCacheName())
                 .description("Local disk size")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .register(registry);
     }
 
