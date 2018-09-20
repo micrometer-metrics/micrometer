@@ -49,11 +49,10 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
         super(config, metricRegistry, nameMapper, clock);
 
         this.config = config;
-        this.config().namingConvention(new GraphiteNamingConvention());
+        config().namingConvention(new GraphiteNamingConvention());
         this.reporter = reporter;
 
-        if (config.enabled())
-            start();
+        start();
     }
 
     private static GraphiteReporter defaultGraphiteReporter(GraphiteConfig config, Clock clock, MetricRegistry metricRegistry) {
@@ -78,11 +77,15 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
     }
 
     public void stop() {
-        this.reporter.stop();
+        if (config.enabled()) {
+            reporter.stop();
+        }
     }
 
     public void start() {
-        this.reporter.start(config.step().getSeconds(), TimeUnit.SECONDS);
+        if (config.enabled()) {
+            reporter.start(config.step().getSeconds(), TimeUnit.SECONDS);
+        }
     }
 
     @Override
@@ -91,7 +94,9 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
             reporter.report();
         }
         stop();
-        this.reporter.close();
+        if (config.enabled()) {
+            reporter.close();
+        }
         super.close();
     }
 
