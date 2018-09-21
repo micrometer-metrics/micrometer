@@ -45,7 +45,6 @@ import static java.util.Collections.emptyList;
  */
 @NonNullApi
 @NonNullFields
-@Incubating(since = "1.1.0")
 public class KafkaConsumerMetrics implements MeterBinder {
 
     private final MBeanServer mBeanServer;
