@@ -47,7 +47,7 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
         this.dropwizardClock = new DropwizardClock(clock);
         this.registry = registry;
         this.nameMapper = nameMapper;
-        this.config().namingConvention(NamingConvention.camelCase);
+        config().namingConvention(NamingConvention.camelCase);
     }
 
     public MetricRegistry getDropwizardRegistry() {

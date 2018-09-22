@@ -50,7 +50,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     public InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
-        this.config().namingConvention(new InfluxNamingConvention());
+        config().namingConvention(new InfluxNamingConvention());
         this.config = config;
         start(threadFactory);
     }

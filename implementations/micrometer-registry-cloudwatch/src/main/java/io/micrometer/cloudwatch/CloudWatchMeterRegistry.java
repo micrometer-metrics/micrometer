@@ -56,7 +56,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         this.amazonCloudWatchAsync = amazonCloudWatchAsync;
         this.config = config;
-        this.config().namingConvention(NamingConvention.identity);
+        config().namingConvention(NamingConvention.identity);
         start(threadFactory);
     }
 
