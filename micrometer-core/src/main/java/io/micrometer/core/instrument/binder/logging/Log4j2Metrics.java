@@ -68,6 +68,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
 
         Configuration configuration = loggerContext.getConfiguration();
         configuration.getLoggerConfig(LogManager.ROOT_LOGGER_NAME).addFilter(metricsFilter);
+        loggerContext.updateLoggers(configuration);
     }
 
     @Override
@@ -75,6 +76,7 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
         if (metricsFilter != null) {
             Configuration configuration = loggerContext.getConfiguration();
             configuration.getLoggerConfig(LogManager.ROOT_LOGGER_NAME).removeFilter(metricsFilter);
+            loggerContext.updateLoggers(configuration);
             metricsFilter.stop();
         }
     }
