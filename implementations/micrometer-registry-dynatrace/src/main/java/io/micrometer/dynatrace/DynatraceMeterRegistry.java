@@ -42,10 +42,14 @@ import java.util.stream.StreamSupport;
 
 import static io.micrometer.core.instrument.Meter.Type.match;
 import static io.micrometer.dynatrace.DynatraceMetricDefinition.DynatraceUnit;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 
 /**
+ * {@link StepMeterRegistry} for Dynatrace.
+ *
  * @author Oriol Barcelona
+ * @since 1.1.0
  */
 public class DynatraceMeterRegistry extends StepMeterRegistry {
 
@@ -64,6 +68,10 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     public DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
+        requireNonNull(config.uri());
+        requireNonNull(config.deviceId());
+        requireNonNull(config.apiToken());
+
         this.config = config;
 
         this.config().namingConvention(new DynatraceNamingConvention());

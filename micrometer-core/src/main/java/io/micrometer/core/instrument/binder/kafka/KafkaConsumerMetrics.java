@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
-import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
@@ -45,7 +44,6 @@ import static java.util.Collections.emptyList;
  */
 @NonNullApi
 @NonNullFields
-@Incubating(since = "1.1.0")
 public class KafkaConsumerMetrics implements MeterBinder {
 
     private final MBeanServer mBeanServer;
