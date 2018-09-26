@@ -39,5 +39,11 @@ public interface HistogramSupport {
         return takeSnapshot();
     }
 
+    /**
+     * Return the meter ID.
+     *
+     * @return the meter ID
+     * @since 1.0.7
+     */
     Meter.Id getId();
 }
