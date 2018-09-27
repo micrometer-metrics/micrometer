@@ -39,10 +39,27 @@ import java.util.function.Supplier;
  * @author Jon Schneider
  */
 public interface Timer extends Meter, HistogramSupport {
+    /**
+     * Start a timing sample.
+     * @return A timing sample with start time recorded.
+     * @since 1.1.0
+     */
+    static Sample start() {
+        return new Sample(Clock.SYSTEM);
+    }
+
+    /**
+     * Start a timing sample.
+     * @return A timing sample with start time recorded.
+     */
     static Sample start(MeterRegistry registry) {
         return start(registry.config().clock());
     }
 
+    /**
+     * Start a timing sample.
+     * @return A timing sample with start time recorded.
+     */
     static Sample start(Clock clock) {
         return new Sample(clock);
     }
