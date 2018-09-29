@@ -22,6 +22,7 @@ import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -97,75 +98,82 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         createDatabaseIfNecessary();
 
         try {
-            String write = "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
-            if (StringUtils.isNotBlank(config.retentionPolicy())) {
-                write += "&rp=" + config.retentionPolicy();
-            }
-            URL influxEndpoint = URI.create(config.uri() + write).toURL();
-            HttpURLConnection con = null;
-
+            URL influxEndpoint = buildInfluxPublishUrl();
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-                try {
-                    con = (HttpURLConnection) influxEndpoint.openConnection();
-                    con.setConnectTimeout((int) config.connectTimeout().toMillis());
-                    con.setReadTimeout((int) config.readTimeout().toMillis());
-                    con.setRequestMethod(HttpMethod.POST);
-                    con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.PLAIN_TEXT);
-                    con.setDoOutput(true);
-
-                    authenticateRequest(con);
-
-                    List<String> bodyLines = batch.stream()
-                            .flatMap(m -> match(m,
-                                    gauge -> writeGauge(gauge.getId(), gauge.value()),
-                                    counter -> writeCounter(counter.getId(), counter.count()),
-                                    this::writeTimer,
-                                    this::writeSummary,
-                                    this::writeLongTaskTimer,
-                                    gauge -> writeGauge(gauge.getId(), gauge.value(getBaseTimeUnit())),
-                                    counter -> writeCounter(counter.getId(), counter.count()),
-                                    this::writeFunctionTimer,
-                                    this::writeMeter))
-                            .collect(toList());
-
-                    String body = String.join("\n", bodyLines);
-
-                    if (config.compressed())
-                        con.setRequestProperty(HttpHeader.CONTENT_ENCODING, HttpContentCoding.GZIP);
-
-                    try (OutputStream os = con.getOutputStream()) {
-                        if (config.compressed()) {
-                            try (GZIPOutputStream gz = new GZIPOutputStream(os)) {
-                                gz.write(body.getBytes());
-                                gz.flush();
-                            }
-                        } else {
-                            os.write(body.getBytes());
-                        }
-                        os.flush();
-                    }
-
-                    int status = con.getResponseCode();
-
-                    if (status >= 200 && status < 300) {
-                        logger.info("successfully sent {} metrics to influx", batch.size());
-                        databaseExists = true;
-                    } else if (status >= 400) {
-                        if (logger.isErrorEnabled()) {
-                            logger.error("failed to send metrics: {}", IOUtils.toString(con.getErrorStream()));
-                        }
-                    } else {
-                        logger.error("failed to send metrics: http {}", status);
-                    }
-
-                } finally {
-                    quietlyCloseUrlConnection(con);
-                }
+                publishBatch(batch, influxEndpoint);
             }
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Malformed InfluxDB publishing endpoint, see '" + config.prefix() + ".uri'", e);
         } catch (Throwable e) {
             logger.error("failed to send metrics", e);
+        }
+    }
+
+    private URL buildInfluxPublishUrl() throws MalformedURLException {
+        String write = "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
+        if (StringUtils.isNotBlank(config.retentionPolicy())) {
+            write += "&rp=" + config.retentionPolicy();
+        }
+        return URI.create(config.uri() + write).toURL();
+    }
+
+    private void publishBatch(List<Meter> batch, URL influxEndpoint) throws IOException {
+        HttpURLConnection con = null;
+        try {
+            con = (HttpURLConnection) influxEndpoint.openConnection();
+            con.setConnectTimeout((int) config.connectTimeout().toMillis());
+            con.setReadTimeout((int) config.readTimeout().toMillis());
+            con.setRequestMethod(HttpMethod.POST);
+            con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.PLAIN_TEXT);
+            con.setDoOutput(true);
+
+            authenticateRequest(con);
+
+            List<String> bodyLines = batch.stream()
+                .flatMap(m -> match(m,
+                    gauge -> writeGauge(gauge.getId(), gauge.value()),
+                    counter -> writeCounter(counter.getId(), counter.count()),
+                    this::writeTimer,
+                    this::writeSummary,
+                    this::writeLongTaskTimer,
+                    gauge -> writeGauge(gauge.getId(), gauge.value(getBaseTimeUnit())),
+                    counter -> writeCounter(counter.getId(), counter.count()),
+                    this::writeFunctionTimer,
+                    this::writeMeter))
+                .collect(toList());
+
+            String body = String.join("\n", bodyLines);
+
+            if (config.compressed())
+                con.setRequestProperty(HttpHeader.CONTENT_ENCODING, HttpContentCoding.GZIP);
+
+            try (OutputStream os = con.getOutputStream()) {
+                if (config.compressed()) {
+                    try (GZIPOutputStream gz = new GZIPOutputStream(os)) {
+                        gz.write(body.getBytes());
+                        gz.flush();
+                    }
+                } else {
+                    os.write(body.getBytes());
+                }
+                os.flush();
+            }
+
+            int status = con.getResponseCode();
+
+            if (status >= 200 && status < 300) {
+                logger.info("successfully sent {} metrics to influx", batch.size());
+                databaseExists = true;
+            } else if (status >= 400) {
+                if (logger.isErrorEnabled()) {
+                    logger.error("failed to send metrics: {}", IOUtils.toString(con.getErrorStream()));
+                }
+            } else {
+                logger.error("failed to send metrics: http {}", status);
+            }
+
+        } finally {
+            quietlyCloseUrlConnection(con);
         }
     }
 
