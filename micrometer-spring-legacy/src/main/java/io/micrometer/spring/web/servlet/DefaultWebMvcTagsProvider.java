@@ -57,7 +57,7 @@ public class DefaultWebMvcTagsProvider implements WebMvcTagsProvider {
                                          @Nullable Object handler,
                                          @Nullable Throwable ex) {
         return Arrays.asList(WebMvcTags.method(request), WebMvcTags.uri(request, response),
-            WebMvcTags.exception(ex), WebMvcTags.status(response));
+            WebMvcTags.exception(ex), WebMvcTags.status(response), WebMvcTags.outcome(response));
     }
 
 }
