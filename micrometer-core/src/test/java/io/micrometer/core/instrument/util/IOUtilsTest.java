@@ -31,7 +31,7 @@ class IOUtilsTest {
 
     @Test
     public void testToString() {
-        String expected = "This is a sample.";
+        String expected = "ありがとうございます";
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(expected.getBytes(UTF_8));
 
