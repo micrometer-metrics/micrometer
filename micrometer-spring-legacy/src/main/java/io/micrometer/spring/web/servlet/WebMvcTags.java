@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author Jon Schneider
  * @author Andy Wilkinson
+ * @author Michael McFadyen
  */
 @NonNullApi
 public final class WebMvcTags {
@@ -46,6 +47,18 @@ public final class WebMvcTags {
     private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
 
     private static final Tag STATUS_UNKNOWN = Tag.of("status", "UNKNOWN");
+
+    private static final Tag OUTCOME_UNKNOWN = Tag.of("outcome", "UNKNOWN");
+
+    private static final Tag OUTCOME_INFORMATIONAL = Tag.of("outcome", "INFORMATIONAL");
+
+    private static final Tag OUTCOME_SUCCESS = Tag.of("outcome", "SUCCESS");
+
+    private static final Tag OUTCOME_REDIRECTION = Tag.of("outcome", "REDIRECTION");
+
+    private static final Tag OUTCOME_CLIENT_ERROR = Tag.of("outcome", "CLIENT_ERROR");
+
+    private static final Tag OUTCOME_SERVER_ERROR = Tag.of("outcome", "SERVER_ERROR");
 
     private static final Tag METHOD_UNKNOWN = Tag.of("method", "UNKNOWN");
 
@@ -142,4 +155,31 @@ public final class WebMvcTags {
         String simpleName = exception.getClass().getSimpleName();
         return Tag.of("exception", simpleName.isEmpty() ? exception.getClass().getName() : simpleName);
     }
+
+    /**
+     * Creates an {@code outcome} tag based on the status of the given {@code response}.
+     * @param response the HTTP response
+     * @return the outcome tag derived from the status of the response
+     * @since 1.1.0
+     */
+    public static Tag outcome(HttpServletResponse response) {
+        if (response != null) {
+            int status = response.getStatus();
+            if (status < 200) {
+                return OUTCOME_INFORMATIONAL;
+            }
+            if (status < 300) {
+                return OUTCOME_SUCCESS;
+            }
+            if (status < 400) {
+                return OUTCOME_REDIRECTION;
+            }
+            if (status < 500) {
+                return OUTCOME_CLIENT_ERROR;
+            }
+            return OUTCOME_SERVER_ERROR;
+        }
+        return OUTCOME_UNKNOWN;
+    }
+
 }
