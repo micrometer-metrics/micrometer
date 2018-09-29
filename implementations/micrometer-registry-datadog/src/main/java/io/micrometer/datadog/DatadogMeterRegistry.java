@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static io.micrometer.core.instrument.Meter.Type.match;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
@@ -124,7 +125,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                     logger.debug(body);
 
                     try (OutputStream os = con.getOutputStream()) {
-                        os.write(body.getBytes());
+                        os.write(body.getBytes(UTF_8));
                         os.flush();
                     }
 
@@ -279,7 +280,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
             con.setDoOutput(true);
 
             try (OutputStream os = con.getOutputStream()) {
-                os.write(metadata.editMetadataBody().getBytes());
+                os.write(metadata.editMetadataBody().getBytes(UTF_8));
                 os.flush();
             }
 

@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.OutputStream;
 import java.net.*;
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -34,6 +33,7 @@ import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
 import static io.micrometer.core.instrument.Meter.Type.match;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
@@ -136,11 +136,11 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     try (OutputStream os = con.getOutputStream()) {
                         if (config.compressed()) {
                             try (GZIPOutputStream gz = new GZIPOutputStream(os)) {
-                                gz.write(body.getBytes());
+                                gz.write(body.getBytes(UTF_8));
                                 gz.flush();
                             }
                         } else {
-                            os.write(body.getBytes());
+                            os.write(body.getBytes(UTF_8));
                         }
                         os.flush();
                     }
@@ -172,7 +172,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     private void authenticateRequest(HttpURLConnection con) {
         if (config.userName() != null && config.password() != null) {
             String encoded = Base64.getEncoder().encodeToString((config.userName() + ":" +
-                    config.password()).getBytes(StandardCharsets.UTF_8));
+                    config.password()).getBytes(UTF_8));
             con.setRequestProperty(HttpHeader.AUTHORIZATION, "Basic " + encoded);
         }
     }

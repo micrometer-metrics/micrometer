@@ -54,6 +54,8 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 public class SampleRegistries {
     public static MeterRegistry pickOne() {
         throw new RuntimeException("Pick some other method on SampleRegistries to ship sample metrics to the system of your choice");
@@ -85,7 +87,7 @@ public class SampleRegistries {
                 String response = prometheusRegistry.scrape();
                 httpExchange.sendResponseHeaders(200, response.length());
                 OutputStream os = httpExchange.getResponseBody();
-                os.write(response.getBytes());
+                os.write(response.getBytes(UTF_8));
                 os.close();
             });
 

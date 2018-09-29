@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.micrometer.core.instrument.Meter.Type.match;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.StreamSupport.stream;
 
@@ -198,7 +199,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             logger.trace(body);
 
             try (OutputStream os = con.getOutputStream()) {
-                os.write(body.getBytes());
+                os.write(body.getBytes(UTF_8));
                 os.flush();
             }
 
