@@ -21,13 +21,21 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.boot.autoconfigure.web.HttpMessageConvertersAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration;
+import org.springframework.boot.test.util.EnvironmentTestUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.mock.web.MockServletContext;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
+import io.micrometer.spring.autoconfigure.web.TestController;
 import io.micrometer.spring.web.servlet.DefaultWebMvcTagsProvider;
 import io.micrometer.spring.web.servlet.WebMvcMetricsFilter;
 import io.micrometer.spring.web.servlet.WebMvcTagsProvider;
@@ -36,12 +44,15 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Tests for {@link WebMvcMetricsAutoConfiguration}.
  *
  * @author Andy Wilkinson
  * @author Johnny Lim
+ * @author Dmytro Nosan
  */
 class WebMvcMetricsAutoConfigurationTest {
 
@@ -78,6 +89,50 @@ class WebMvcMetricsAutoConfigurationTest {
         assertThatThrownBy(() -> this.context.getBean(DefaultWebMvcTagsProvider.class))
             .isInstanceOf(NoSuchBeanDefinitionException.class);
         assertThat(this.context.getBean(TestWebMvcTagsProvider.class)).isNotNull();
+    }
+
+    @Test
+    public void afterMaxUrisReachedFurtherUrisAreDenied() throws Exception {
+        this.context.setServletContext(new MockServletContext());
+
+        EnvironmentTestUtils.addEnvironment(this.context, "management.metrics.web.server.max-uri-tags=2");
+
+        registerAndRefresh(MeterRegistryConfiguration.class, TestController.class,
+                HttpMessageConvertersAutoConfiguration.class, WebMvcAutoConfiguration.class,
+                MetricsAutoConfiguration.class, WebMvcMetricsAutoConfiguration.class);
+
+        WebMvcMetricsFilter filter = this.context.getBean(WebMvcMetricsFilter.class);
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(this.context).addFilters(filter)
+            .build();
+        for (int i = 0; i < 3; i++) {
+            mockMvc.perform(get("/test" + i))
+                .andExpect(status().isOk());
+        }
+
+        MeterRegistry registry = this.context.getBean(MeterRegistry.class);
+        assertThat(registry.get("http.server.requests").meters()).hasSize(2);
+    }
+
+    @Test
+    public void shouldNotDenyIfMaxUrisIsNotReached() throws Exception {
+        this.context.setServletContext(new MockServletContext());
+
+        EnvironmentTestUtils.addEnvironment(this.context, "management.metrics.web.server.max-uri-tags=5");
+
+        registerAndRefresh(MeterRegistryConfiguration.class, TestController.class,
+            HttpMessageConvertersAutoConfiguration.class, WebMvcAutoConfiguration.class,
+            MetricsAutoConfiguration.class, WebMvcMetricsAutoConfiguration.class);
+
+        WebMvcMetricsFilter filter = this.context.getBean(WebMvcMetricsFilter.class);
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(this.context).addFilters(filter)
+            .build();
+        for (int i = 0; i < 3; i++) {
+            mockMvc.perform(get("/test" + i))
+                .andExpect(status().isOk());
+        }
+
+        MeterRegistry registry = this.context.getBean(MeterRegistry.class);
+        assertThat(registry.get("http.server.requests").meters()).hasSize(3);
     }
 
     private void registerAndRefresh(Class<?>... configurationClasses) {
