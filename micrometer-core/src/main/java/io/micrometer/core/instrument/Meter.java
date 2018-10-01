@@ -97,22 +97,22 @@ public interface Meter extends AutoCloseable {
                                   Function<FunctionCounter, T> visitFunctionCounter,
                                   Function<FunctionTimer, T> visitFunctionTimer,
                                   Function<Meter, T> visitMeter) {
-            if (meter instanceof Counter) {
+            if (meter instanceof Gauge) {
+                return visitGauge.apply((Gauge) meter);
+            } else if (meter instanceof Counter) {
                 return visitCounter.apply((Counter) meter);
             } else if (meter instanceof Timer) {
                 return visitTimer.apply((Timer) meter);
             } else if (meter instanceof DistributionSummary) {
                 return visitSummary.apply((DistributionSummary) meter);
-            } else if (meter instanceof TimeGauge) {
-                return visitTimeGauge.apply((TimeGauge) meter);
-            } else if (meter instanceof Gauge) {
-                return visitGauge.apply((Gauge) meter);
-            } else if (meter instanceof FunctionTimer) {
-                return visitFunctionTimer.apply((FunctionTimer) meter);
-            } else if (meter instanceof FunctionCounter) {
-                return visitFunctionCounter.apply((FunctionCounter) meter);
             } else if (meter instanceof LongTaskTimer) {
                 return visitLongTaskTimer.apply((LongTaskTimer) meter);
+            } else if (meter instanceof TimeGauge) {
+                return visitTimeGauge.apply((TimeGauge) meter);
+            } else if (meter instanceof FunctionCounter) {
+                return visitFunctionCounter.apply((FunctionCounter) meter);
+            } else if (meter instanceof FunctionTimer) {
+                return visitFunctionTimer.apply((FunctionTimer) meter);
             } else {
                 return visitMeter.apply(meter);
             }
