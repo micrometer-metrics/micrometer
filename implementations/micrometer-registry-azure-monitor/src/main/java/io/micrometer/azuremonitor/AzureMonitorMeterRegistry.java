@@ -141,15 +141,17 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
 
     private Stream<MetricTelemetry> trackCounter(Counter counter) {
         MetricTelemetry mt = createMetricTelemetry(counter, null);
-        mt.setValue(counter.count());
-        mt.setCount((int) Math.round(counter.count()));
+        double count = counter.count();
+        mt.setValue(count);
+        mt.setCount((int) Math.round(count));
         return Stream.of(mt);
     }
 
     private Stream<MetricTelemetry> trackFunctionCounter(FunctionCounter counter) {
         MetricTelemetry mt = createMetricTelemetry(counter, null);
-        mt.setValue(counter.count());
-        mt.setCount((int) Math.round(counter.count()));
+        double count = counter.count();
+        mt.setValue(count);
+        mt.setCount((int) Math.round(count));
         return Stream.of(mt);
     }
 
