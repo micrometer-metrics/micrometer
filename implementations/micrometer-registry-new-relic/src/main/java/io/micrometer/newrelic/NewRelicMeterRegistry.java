@@ -169,9 +169,9 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             tagsJson.append(",\"").append(convention.tagKey(tag.getKey())).append("\":\"").append(convention.tagValue(tag.getValue())).append("\"");
         }
 
-        return "{\"eventType\":\"" + getConventionName(id) + "\"" +
-                Arrays.stream(attributes).map(attr -> ",\"" + attr.getName() + "\":" + DoubleFormat.decimalOrWhole(attr.getValue().doubleValue()))
-                        .collect(Collectors.joining("")) + tagsJson.toString() + "}";
+        return Arrays.stream(attributes)
+                .map(attr -> ",\"" + attr.getName() + "\":" + DoubleFormat.decimalOrWhole(attr.getValue().doubleValue()))
+                .collect(Collectors.joining("", "{\"eventType\":\"" + getConventionName(id) + "\"", tagsJson + "}"));
     }
 
     private void sendEvents(String insightsEndpoint, Stream<String> events) {
@@ -180,7 +180,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
             httpClient.post(insightsEndpoint)
                     .withHeader("X-Insert-Key", config.apiKey())
-                    .withJsonContent("[" + events.peek(ev -> totalEvents.incrementAndGet()).collect(Collectors.joining(",")) + "]")
+                    .withJsonContent(events.peek(ev -> totalEvents.incrementAndGet()).collect(Collectors.joining(",", "[", "]")))
                     .send()
                     .onSuccess(response -> logger.info("successfully sent {} metrics to new relic", totalEvents.get()))
                     .onError(response -> logger.error("failed to send metrics to new relic: {}", response.body()));
