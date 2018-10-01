@@ -159,7 +159,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                                 this::writeMeter))
                         .filter(Optional::isPresent)
                         .map(Optional::get)
-                        .collect(joining("\n")) + "\n";
+                        .collect(joining("\n", "", "\n"));
 
                 os.write(body.getBytes(StandardCharsets.UTF_8));
                 os.flush();
