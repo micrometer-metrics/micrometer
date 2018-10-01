@@ -21,7 +21,6 @@ import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.ipc.http.HttpClient;
 import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
 import io.micrometer.core.lang.NonNull;
-import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -157,7 +156,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     // VisibleForTesting
-    @Nullable
     Optional<String> writeGauge(Gauge gauge) {
         Double value = gauge.value();
         if (!value.isNaN()) {
@@ -169,7 +167,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     // VisibleForTesting
-    @Nullable
     Optional<String> writeTimeGauge(TimeGauge gauge) {
         Double value = gauge.value();
         if (!value.isNaN()) {
