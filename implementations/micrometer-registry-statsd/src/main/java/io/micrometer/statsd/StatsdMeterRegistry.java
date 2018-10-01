@@ -230,13 +230,16 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     public void start() {
+        final Flux<String> bufferingPublisher = BufferingFlux.create(Flux.from(processor), "\n", statsdConfig.maxPacketLength(), statsdConfig.pollingFrequency().toMillis())
+            .onBackpressureLatest();
+
         if (started.compareAndSet(false, true) && lineSink == null) {
             UdpClient.create()
                     .host(statsdConfig.host())
                     .port(statsdConfig.port())
                     .handle((in, out) -> out
                             .options(NettyPipeline.SendOptions::flushOnEach)
-                            .sendString(processor)
+                            .sendString(bufferingPublisher)
                             .neverComplete()
                     )
                     .connect()
