@@ -105,8 +105,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                     }"
                     */
 
-                    String body = "{\"series\":[" +
-                            batch.stream().flatMap(m -> {
+                    String body = batch.stream().flatMap(m -> {
                                 if (m instanceof Timer) {
                                     return writeTimer((Timer) m, metadataToSend);
                                 }
@@ -117,8 +116,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                                     return writeTimer((FunctionTimer) m, metadataToSend);
                                 }
                                 return writeMeter(m, metadataToSend);
-                            }).collect(joining(",")) +
-                            "]}";
+                            }).collect(joining(",", "{\"series\":[", "]}"));
 
                     logger.debug(body);
 
@@ -250,11 +248,11 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                 .map(t -> ",\"host\":\"" + t.getValue() + "\"")
                 .orElse("");
 
-        String tagsArray = tags.iterator().hasNext() ?
-                ",\"tags\":[" +
-                        stream(tags.spliterator(), false)
-                                .map(t -> "\"" + t.getKey() + ":" + t.getValue() + "\"")
-                                .collect(joining(",")) + "]" : "";
+        String tagsArray = tags.iterator().hasNext()
+            	? stream(tags.spliterator(), false)
+                        .map(t -> "\"" + t.getKey() + ":" + t.getValue() + "\"")
+                        .collect(joining(",", ",\"tags\":[", "]"))
+            	: "";
 
         return "{\"metric\":\"" + getConventionName(fullId) + "\"," +
                 "\"points\":[[" + (wallTime / 1000) + ", " + value + "]]" + host + tagsArray + "}";

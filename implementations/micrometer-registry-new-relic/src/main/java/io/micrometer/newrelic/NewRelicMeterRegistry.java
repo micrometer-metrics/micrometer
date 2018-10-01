@@ -200,9 +200,9 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             tagsJson.append(",\"").append(convention.tagKey(tag.getKey())).append("\":\"").append(convention.tagValue(tag.getValue())).append("\"");
         }
 
-        return "{\"eventType\":\"" + getConventionName(id) + "\"" +
-                Arrays.stream(attributes).map(attr -> ",\"" + attr.getName() + "\":" + DoubleFormat.decimalOrWhole(attr.getValue().doubleValue()))
-                        .collect(Collectors.joining("")) + tagsJson.toString() + "}";
+        return Arrays.stream(attributes)
+                .map(attr -> ",\"" + attr.getName() + "\":" + DoubleFormat.decimalOrWhole(attr.getValue().doubleValue()))
+                .collect(Collectors.joining("", "{\"eventType\":\"" + getConventionName(id) + "\"", tagsJson + "}"));
     }
 
     private void sendEvents(URL insightsEndpoint, List<String> events) {
@@ -219,7 +219,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
             con.setDoOutput(true);
 
-            String body = "[" + events.stream().collect(Collectors.joining(",")) + "]";
+            String body = events.stream().collect(Collectors.joining(",", "[", "]"));
 
             logger.trace("Sending payload to New Relic:");
             logger.trace(body);
