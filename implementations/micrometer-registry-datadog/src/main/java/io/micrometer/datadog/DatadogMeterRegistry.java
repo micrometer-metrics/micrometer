@@ -93,7 +93,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                 }"
                 */
                 httpClient.post(datadogEndpoint)
-                        .withJsonContent("{\"series\":[" +
+                        .withJsonContent(
                                 batch.stream().flatMap(meter -> match(meter,
                                         m -> writeMeter(m, metadataToSend),
                                         m -> writeMeter(m, metadataToSend),
@@ -104,8 +104,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                                         m -> writeMeter(m, metadataToSend),
                                         timer -> writeTimer(timer, metadataToSend),
                                         m -> writeMeter(m, metadataToSend))
-                                ).collect(joining(",")) +
-                                "]}")
+                                ).collect(joining(",", "{\"series\":[", "]}")))
                         .send()
                         .onSuccess(response -> logger.info("successfully sent {} metrics to datadog", batch.size()))
                         .onError(response -> logger.error("failed to send metrics to datadog: {}", response.body()));
@@ -208,11 +207,11 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                 .map(t -> ",\"host\":\"" + t.getValue() + "\"")
                 .orElse("");
 
-        String tagsArray = tags.iterator().hasNext() ?
-                ",\"tags\":[" +
-                        stream(tags.spliterator(), false)
-                                .map(t -> "\"" + t.getKey() + ":" + t.getValue() + "\"")
-                                .collect(joining(",")) + "]" : "";
+        String tagsArray = tags.iterator().hasNext()
+                ? stream(tags.spliterator(), false)
+                .map(t -> "\"" + t.getKey() + ":" + t.getValue() + "\"")
+                .collect(joining(",", ",\"tags\":[", "]"))
+                : "";
 
         return "{\"metric\":\"" + getConventionName(fullId) + "\"," +
                 "\"points\":[[" + (wallTime / 1000) + ", " + value + "]]" + host + tagsArray + "}";
