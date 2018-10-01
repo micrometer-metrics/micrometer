@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.*;
 import io.micrometer.core.lang.NonNull;
-import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -210,7 +209,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     // VisibleForTesting
-    @Nullable
     Optional<String> writeGauge(Gauge gauge) {
         Double value = gauge.value();
         if (!value.isNaN()) {
@@ -222,7 +220,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     }
 
     // VisibleForTesting
-    @Nullable
     Optional<String> writeTimeGauge(TimeGauge gauge) {
         Double value = gauge.value();
         if (!value.isNaN()) {
