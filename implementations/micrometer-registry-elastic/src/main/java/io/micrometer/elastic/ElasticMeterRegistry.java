@@ -159,7 +159,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                                 this::writeMeter))
                         .filter(Optional::isPresent)
                         .map(Optional::get)
-                        .collect(joining("\n")) + "\n";
+                        .collect(joining("\n", "", "\n"));
 
                 os.write(body.getBytes(StandardCharsets.UTF_8));
                 os.flush();
@@ -197,14 +197,14 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeCounter(Counter counter) {
-        return Optional.of(INDEX_LINE + writeDocument(counter, builder -> {
+        return Optional.of(writeDocument(counter, builder -> {
             builder.append(",\"count\":").append(counter.count());
         }));
     }
 
     // VisibleForTesting
     Optional<String> writeFunctionCounter(FunctionCounter counter) {
-        return Optional.of(INDEX_LINE + writeDocument(counter, builder -> {
+        return Optional.of(writeDocument(counter, builder -> {
             builder.append(",\"count\":").append(counter.count());
         }));
     }
@@ -214,7 +214,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     Optional<String> writeGauge(Gauge gauge) {
         Double value = gauge.value();
         if (!value.isNaN()) {
-            return Optional.of(INDEX_LINE + writeDocument(gauge, builder -> {
+            return Optional.of(writeDocument(gauge, builder -> {
                 builder.append(",\"value\":").append(value);
             }));
         }
@@ -226,7 +226,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     Optional<String> writeTimeGauge(TimeGauge gauge) {
         Double value = gauge.value();
         if (!value.isNaN()) {
-            return Optional.of(INDEX_LINE + writeDocument(gauge, builder -> {
+            return Optional.of(writeDocument(gauge, builder -> {
                 builder.append(",\"value\":").append(gauge.value(getBaseTimeUnit()));
             }));
         }
@@ -235,7 +235,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeFunctionTimer(FunctionTimer timer) {
-        return Optional.of(INDEX_LINE + writeDocument(timer, builder -> {
+        return Optional.of(writeDocument(timer, builder -> {
             builder.append(",\"count\":").append(timer.count());
             builder.append(",\"sum\" :").append(timer.totalTime(getBaseTimeUnit()));
             builder.append(",\"mean\":").append(timer.mean(getBaseTimeUnit()));
@@ -244,7 +244,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeLongTaskTimer(LongTaskTimer timer) {
-        return Optional.of(INDEX_LINE + writeDocument(timer, builder -> {
+        return Optional.of(writeDocument(timer, builder -> {
             builder.append(",\"activeTasks\":").append(timer.activeTasks());
             builder.append(",\"duration\":").append(timer.duration(getBaseTimeUnit()));
         }));
@@ -252,7 +252,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeTimer(Timer timer) {
-        return Optional.of(INDEX_LINE + writeDocument(timer, builder -> {
+        return Optional.of(writeDocument(timer, builder -> {
             builder.append(",\"count\":").append(timer.count());
             builder.append(",\"sum\":").append(timer.totalTime(getBaseTimeUnit()));
             builder.append(",\"mean\":").append(timer.mean(getBaseTimeUnit()));
@@ -263,7 +263,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     Optional<String> writeSummary(DistributionSummary summary) {
         summary.takeSnapshot();
-        return Optional.of(INDEX_LINE + writeDocument(summary, builder -> {
+        return Optional.of(writeDocument(summary, builder -> {
             builder.append(",\"count\":").append(summary.count());
             builder.append(",\"sum\":").append(summary.totalAmount());
             builder.append(",\"mean\":").append(summary.mean());
@@ -273,7 +273,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeMeter(Meter meter) {
-        return Optional.of(INDEX_LINE + writeDocument(meter, builder -> {
+        return Optional.of(writeDocument(meter, builder -> {
             for (Measurement measurement : meter.measure()) {
                 builder.append(",\"").append(measurement.getStatistic().getTagValueRepresentation()).append("\":\"").append(measurement.getValue()).append("\"");
             }
@@ -282,7 +282,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     String writeDocument(Meter meter, Consumer<StringBuilder> consumer) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(INDEX_LINE);
         String timestamp = FORMATTER.format(Instant.ofEpochMilli(config().clock().wallTime()));
         String name = getConventionName(meter.getId());
         String type = meter.getId().getType().toString().toLowerCase();
