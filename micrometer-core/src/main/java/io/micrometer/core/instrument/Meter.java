@@ -64,11 +64,28 @@ public interface Meter extends AutoCloseable {
         OTHER;
 
         /**
-         * This method contract will change in minor releases if ever a new {@link Meter} type is created.
+         * Match a {@link Meter} with series of dedicated functions for specific {@link Meter}s and
+         * return a result from the matched function.
+         *
+         * NOTE: This method contract will change in minor releases if ever a new {@link Meter} type is created.
          * In this case only, this is considered a feature. By using this method, you are declaring that
          * you want to be sure to handle all types of meters. A breaking API change during the introduction of
          * a new {@link Meter} indicates that there is a new meter type for you to consider and the compiler will
          * effectively require you to consider it.
+         *
+         * @param meter meter to match
+         * @param visitGauge function to apply for {@link Gauge}
+         * @param visitCounter function to apply for {@link Counter}
+         * @param visitTimer function to apply for {@link Timer}
+         * @param visitSummary function to apply for {@link DistributionSummary}
+         * @param visitLongTaskTimer function to apply for {@link LongTaskTimer}
+         * @param visitTimeGauge function to apply for {@link TimeGauge}
+         * @param visitFunctionCounter function to apply for {@link FunctionCounter}
+         * @param visitFunctionTimer function to apply for {@link FunctionTimer}
+         * @param visitMeter function to apply as a fallback
+         * @param <T> return type of function to apply
+         * @return return value from the applied function
+         * @since 1.1.0
          */
         public static <T> T match(Meter meter,
                                   Function<Gauge, T> visitGauge,
