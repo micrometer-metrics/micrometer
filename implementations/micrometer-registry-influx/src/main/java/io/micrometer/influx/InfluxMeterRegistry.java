@@ -38,7 +38,6 @@ import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 
 /**
  * @author Jon Schneider
@@ -119,7 +118,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
                     authenticateRequest(con);
 
-                    List<String> bodyLines = batch.stream()
+                    String body = batch.stream()
                             .flatMap(m -> {
                                 if (m instanceof Timer) {
                                     return writeTimer((Timer) m);
@@ -147,9 +146,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                                 }
                                 return writeMeter(m);
                             })
-                            .collect(toList());
-
-                    String body = String.join("\n", bodyLines);
+                            .collect(joining("\n"));
 
                     if (config.compressed())
                         con.setRequestProperty("Content-Encoding", "gzip");
