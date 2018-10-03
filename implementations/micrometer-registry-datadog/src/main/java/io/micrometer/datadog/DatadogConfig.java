@@ -25,10 +25,6 @@ import io.micrometer.core.lang.Nullable;
  * @author Jon Schneider
  */
 public interface DatadogConfig extends StepRegistryConfig {
-    /**
-     * Accept configuration defaults
-     */
-    DatadogConfig DEFAULT = k -> null;
 
     @Override
     default String prefix() {

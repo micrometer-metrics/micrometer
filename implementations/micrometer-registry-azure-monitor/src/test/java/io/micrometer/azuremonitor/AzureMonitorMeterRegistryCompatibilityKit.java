@@ -22,23 +22,26 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import java.time.Duration;
 
 public class AzureMonitorMeterRegistryCompatibilityKit extends MeterRegistryCompatibilityKit {
+
+    private final AzureMonitorConfig config = new AzureMonitorConfig() {
+        @Override
+        public String get(String key) {
+            return null;
+        }
+
+        @Override
+        public boolean enabled() {
+            return false;
+        }
+    };
+
     @Override
     public MeterRegistry registry() {
-        return new AzureMonitorMeterRegistry(new AzureMonitorConfig() {
-            @Override
-            public String get(String key) {
-                return null;
-            }
-
-            @Override
-            public boolean enabled() {
-                return false;
-            }
-        }, new MockClock(), null);
+        return new AzureMonitorMeterRegistry(config, new MockClock(), null);
     }
 
     @Override
     public Duration step() {
-        return AzureMonitorConfig.DEFAULT.step();
+        return config.step();
     }
 }

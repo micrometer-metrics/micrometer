@@ -24,10 +24,6 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
  * @author Jon Schneider
  */
 public interface NewRelicConfig extends StepRegistryConfig {
-    /**
-     * Accept configuration defaults
-     */
-    NewRelicConfig DEFAULT = k -> null;
 
     @Override
     default String prefix() {

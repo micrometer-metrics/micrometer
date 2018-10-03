@@ -23,29 +23,32 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import java.time.Duration;
 
 class DatadogMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
+    private final DatadogConfig config = new DatadogConfig() {
+        @Override
+        public boolean enabled() {
+            return false;
+        }
+
+        @Override
+        public String apiKey() {
+            return "DOESNOTMATTER";
+        }
+
+        @Override
+        @Nullable
+        public String get(String key) {
+            return null;
+        }
+    };
+
     @Override
     public MeterRegistry registry() {
-        return new DatadogMeterRegistry(new DatadogConfig() {
-            @Override
-            public boolean enabled() {
-                return false;
-            }
-
-            @Override
-            public String apiKey() {
-                return "DOESNOTMATTER";
-            }
-
-            @Override
-            @Nullable
-            public String get(String key) {
-                return null;
-            }
-        }, new MockClock());
+        return new DatadogMeterRegistry(config, new MockClock());
     }
 
     @Override
     public Duration step() {
-        return DatadogConfig.DEFAULT.step();
+        return config.step();
     }
 }

@@ -23,30 +23,33 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import java.time.Duration;
 
 class CloudWatchMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
+    private final CloudWatchConfig config = new CloudWatchConfig() {
+        @Override
+        @Nullable
+        public String get(String key) {
+            return null;
+        }
+
+        @Override
+        public boolean enabled() {
+            return false;
+        }
+
+        @Override
+        public String namespace() {
+            return "DOESNOTMATTER";
+        }
+    };
+
     @Override
     public MeterRegistry registry() {
         //noinspection ConstantConditions
-        return new CloudWatchMeterRegistry(new CloudWatchConfig() {
-            @Override
-            @Nullable
-            public String get(String key) {
-                return null;
-            }
-
-            @Override
-            public boolean enabled() {
-                return false;
-            }
-
-            @Override
-            public String namespace() {
-                return "DOESNOTMATTER";
-            }
-        }, new MockClock(), null);
+        return new CloudWatchMeterRegistry(config, new MockClock(), null);
     }
 
     @Override
     public Duration step() {
-        return CloudWatchConfig.DEFAULT.step();
+        return config.step();
     }
 }

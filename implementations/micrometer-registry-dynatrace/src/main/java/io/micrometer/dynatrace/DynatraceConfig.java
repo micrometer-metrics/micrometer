@@ -26,8 +26,6 @@ import io.micrometer.core.instrument.util.StringUtils;
  */
 public interface DynatraceConfig extends StepRegistryConfig {
 
-    DynatraceConfig DEFAULT = k -> null;
-
     @Override
     default String prefix() {
         return "dynatrace";
