@@ -28,7 +28,6 @@ import java.time.Duration;
  * @author Jon Schneider
  */
 public interface SignalFxConfig extends StepRegistryConfig {
-    SignalFxConfig DEFAULT = k -> null;
 
     @Override
     default String prefix() {

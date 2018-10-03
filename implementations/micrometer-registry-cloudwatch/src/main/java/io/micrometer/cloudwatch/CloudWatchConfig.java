@@ -28,11 +28,6 @@ public interface CloudWatchConfig extends StepRegistryConfig {
 
     int MAX_BATCH_SIZE = 20;
 
-    /**
-     * Accept configuration defaults
-     */
-    CloudWatchConfig DEFAULT = k -> null;
-
     @Override
     default String prefix() {
         return "cloudwatch";

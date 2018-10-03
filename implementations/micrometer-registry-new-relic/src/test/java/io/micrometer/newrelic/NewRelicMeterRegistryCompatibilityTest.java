@@ -23,34 +23,37 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import java.time.Duration;
 
 public class NewRelicMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
+    private final NewRelicConfig config = new NewRelicConfig() {
+        @Override
+        public boolean enabled() {
+            return false;
+        }
+
+        @Override
+        public String apiKey() {
+            return "DOESNOTMATTER";
+        }
+
+        @Override
+        public String accountId() {
+            return "DOESNOTMATTER";
+        }
+
+        @Override
+        @Nullable
+        public String get(String key) {
+            return null;
+        }
+    };
+
     @Override
     public MeterRegistry registry() {
-        return new NewRelicMeterRegistry(new NewRelicConfig() {
-            @Override
-            public boolean enabled() {
-                return false;
-            }
-
-            @Override
-            public String apiKey() {
-                return "DOESNOTMATTER";
-            }
-
-            @Override
-            public String accountId() {
-                return "DOESNOTMATTER";
-            }
-
-            @Override
-            @Nullable
-            public String get(String key) {
-                return null;
-            }
-        }, new MockClock());
+        return new NewRelicMeterRegistry(config, new MockClock());
     }
 
     @Override
     public Duration step() {
-        return NewRelicConfig.DEFAULT.step();
+        return config.step();
     }
 }

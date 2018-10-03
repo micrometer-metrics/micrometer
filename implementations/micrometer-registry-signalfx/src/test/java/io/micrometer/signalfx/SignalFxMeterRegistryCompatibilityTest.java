@@ -23,29 +23,32 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import java.time.Duration;
 
 public class SignalFxMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+
+    private final SignalFxConfig config = new SignalFxConfig() {
+        @Override
+        @Nullable
+        public String get(String key) {
+            return null;
+        }
+
+        @Override
+        public boolean enabled() {
+            return false;
+        }
+
+        @Override
+        public String accessToken() {
+            return "fake";
+        }
+    };
+
     @Override
     public MeterRegistry registry() {
-        return new SignalFxMeterRegistry(new SignalFxConfig() {
-            @Override
-            @Nullable
-            public String get(String key) {
-                return null;
-            }
-
-            @Override
-            public boolean enabled() {
-                return false;
-            }
-
-            @Override
-            public String accessToken() {
-                return "fake";
-            }
-        }, new MockClock());
+        return new SignalFxMeterRegistry(config, new MockClock());
     }
 
     @Override
     public Duration step() {
-        return SignalFxConfig.DEFAULT.step();
+        return config.step();
     }
 }

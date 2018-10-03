@@ -24,7 +24,6 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
  * @author Dhaval Doshi
  */
 public interface AzureMonitorConfig extends StepRegistryConfig {
-    AzureMonitorConfig DEFAULT = k -> null;
 
     @Override
     default String prefix() {
