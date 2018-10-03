@@ -41,7 +41,7 @@ import static java.util.stream.StreamSupport.stream;
  */
 public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     private static final String SDKTELEMETRY_SYNTHETIC_SOURCENAME = "SDKTelemetry";
-    private static final String SDK_VERSION = "micrometer";
+    private static final String SDK_VERSION = "java:micrometer";
 
     private final Logger logger = LoggerFactory.getLogger(AzureMonitorMeterRegistry.class);
     private final TelemetryClient client;
