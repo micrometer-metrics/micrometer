@@ -131,4 +131,11 @@ class ElasticMeterRegistryTest {
         assertThat(registry.writeCounter(c)).contains("{ \"index\" : {} }\n" +
                 "{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"counter\",\"type\":\"counter\",\"count\":0.0}");
     }
+
+    @Issue("#896")
+    @Test
+    void getPublishingUriShouldHaveALeadingSlash() {
+        assertThat(registry.getPublishingUri()).isEqualTo("/metrics-1970-01/doc/_bulk");
+    }
+
 }
