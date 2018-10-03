@@ -134,9 +134,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }
 
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-            ZonedDateTime dt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(config().clock().wallTime()), ZoneOffset.UTC);
-            String indexName = config.index() + "-" + DateTimeFormatter.ofPattern(config.indexDateFormat()).format(dt);
-            HttpURLConnection connection = openConnection(indexName + "/doc/_bulk", HttpMethod.POST);
+            String publishingUri = getPublishingUri();
+            HttpURLConnection connection = openConnection(publishingUri, HttpMethod.POST);
 
             if (connection == null) {
                 if (logger.isErrorEnabled()) {
@@ -193,6 +192,13 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 connection.disconnect();
             }
         }
+    }
+
+    // VisibleForTesting
+     String getPublishingUri() {
+        ZonedDateTime dt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(config().clock().wallTime()), ZoneOffset.UTC);
+        String indexName = config.index() + "-" + DateTimeFormatter.ofPattern(config.indexDateFormat()).format(dt);
+        return "/" + indexName + "/doc/_bulk";
     }
 
     // VisibleForTesting
