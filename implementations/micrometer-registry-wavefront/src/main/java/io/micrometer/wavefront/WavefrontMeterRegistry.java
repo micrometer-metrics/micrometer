@@ -91,7 +91,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                             .acceptJson()
                             .withJsonContent("{" + stream.collect(joining(",")) + "}")
                             .send()
-                            .onSuccess(response -> logger.info("successfully sent {} metrics to wavefront", batch.size()))
+                            .onSuccess(response -> logger.debug("Successfully sent {} metrics to Wavefront.", batch.size()))
                             .onError(response -> logger.error("failed to send metrics to wavefront: {}", response.body()));
                 } catch (Throwable e) {
                     logger.error("failed to send metrics to wavefront", e);

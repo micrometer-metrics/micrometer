@@ -131,7 +131,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                             if (body.contains("\"errors\":true")) {
                                 logger.error("failed to send metrics to elastic: {}", response);
                             } else {
-                                logger.info("successfully sent {} metrics to elastic", batch.size());
+                                logger.debug("Successfully sent {} metrics to Elasticsearch.", batch.size());
                             }
                         })
                         .onError(response -> logger.error("failed to send metrics to elastic: {}", response.body()));

@@ -113,7 +113,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                         .compressWhen(config::compressed)
                         .send()
                         .onSuccess(response -> {
-                            logger.info("successfully sent {} metrics to influx", batch.size());
+                            logger.debug("Successfully sent {} metrics to InfluxDB.", batch.size());
                             databaseExists = true;
                         })
                         .onError(response -> logger.error("failed to send metrics to influx: {}", response.body()));
