@@ -17,6 +17,8 @@ package io.micrometer.spring.autoconfigure;
 
 import java.util.List;
 
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.boot.test.util.EnvironmentTestUtils;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,10 +33,13 @@ import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.spring.PropertiesMeterFilter;
+
+import io.micrometer.spring.scheduling.ScheduledMethodMetrics;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -80,6 +85,40 @@ class MetricsAutoConfigurationTest {
         assertThat(filters.get(2).accept((Meter.Id) null)).isEqualTo(MeterFilterReply.ACCEPT);
         verify((MeterBinder) context.getBean("meterBinder")).bindTo(meterRegistry);
         verify(context.getBean(MeterRegistryCustomizer.class)).customize(meterRegistry);
+    }
+
+    @Test
+    void backsOffWhenSpringAopEnabledIsFalse() {
+        EnvironmentTestUtils.addEnvironment(context, "spring.aop.enabled=false");
+
+        registerAndRefresh(BaseMeterRegistryConfiguration.class);
+
+        assertThatThrownBy(() -> context.getBean(ScheduledMethodMetrics.class))
+            .isInstanceOf(NoSuchBeanDefinitionException.class);
+    }
+
+    @Test
+    void backsOffWhenScheduledEnabledIsFalse() {
+        EnvironmentTestUtils.addEnvironment(context, "management.metrics.binders.scheduled.enabled=false");
+
+        registerAndRefresh(BaseMeterRegistryConfiguration.class);
+
+        assertThatThrownBy(() -> context.getBean(ScheduledMethodMetrics.class))
+            .isInstanceOf(NoSuchBeanDefinitionException.class);
+    }
+
+    @Test
+    void backsOffWhenCustomScheduledMethodMetricsIsProvided() {
+        registerAndRefresh(BaseMeterRegistryConfiguration.class, ScheduledMethodMetricsConfiguration.class);
+
+        assertThat(context.getBean(ScheduledMethodMetrics.class)).isInstanceOf(MyScheduledMethodMetrics.class);
+    }
+
+    @Test
+    void scheduledMethodMetricsIsAvailableByDefault() {
+        registerAndRefresh(BaseMeterRegistryConfiguration.class);
+
+        assertThat(context.getBean(ScheduledMethodMetrics.class)).isInstanceOf(ScheduledMethodMetrics.class);
     }
 
     private void registerAndRefresh(Class<?>... configurationClasses) {
@@ -141,6 +180,24 @@ class MetricsAutoConfigurationTest {
         @Order(-1)
         MeterFilter denyMeterFilter() {
             return MeterFilter.deny();
+        }
+
+    }
+
+    @Configuration
+    static class ScheduledMethodMetricsConfiguration {
+
+        @Bean
+        public ScheduledMethodMetrics scheduledMethodMetrics(MeterRegistry registry) {
+            return new MyScheduledMethodMetrics(registry);
+        }
+
+    }
+
+    static class MyScheduledMethodMetrics extends ScheduledMethodMetrics {
+
+        public MyScheduledMethodMetrics(MeterRegistry registry) {
+            super(registry);
         }
 
     }

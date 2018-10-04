@@ -92,14 +92,6 @@ public class MetricsAutoConfiguration {
         return new PropertiesMeterFilter(properties);
     }
 
-    // If AOP is not enabled, scheduled interception will not work.
-    @Bean
-    @ConditionalOnClass(name = "org.aspectj.lang.ProceedingJoinPoint")
-    @ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)
-    public ScheduledMethodMetrics metricsSchedulingAspect(MeterRegistry registry) {
-        return new ScheduledMethodMetrics(registry);
-    }
-
     @Bean
     @ConditionalOnClass(name = "com.netflix.hystrix.strategy.HystrixPlugins")
     @ConditionalOnProperty(value = "management.metrics.binders.hystrix.enabled", matchIfMissing = true)
@@ -129,4 +121,20 @@ public class MetricsAutoConfiguration {
             return new SpringIntegrationMetrics(configurer);
         }
     }
+
+    @Configuration
+    @ConditionalOnClass(name = "org.aspectj.lang.ProceedingJoinPoint")
+    @ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)
+    static class AopRequiredConfiguration {
+
+        // If AOP is not enabled, scheduled interception will not work.
+        @Bean
+        @ConditionalOnProperty(value = "management.metrics.binders.scheduled.enabled", matchIfMissing = true)
+        @ConditionalOnMissingBean
+        public ScheduledMethodMetrics metricsSchedulingAspect(MeterRegistry registry) {
+            return new ScheduledMethodMetrics(registry);
+        }
+
+    }
+
 }
