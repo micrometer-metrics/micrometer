@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.util;
+package io.micrometer.core.ipc.http;
 
-/**
- * Content codings for {@literal Accept-Encoding} or {@literal Content-Encoding} header.
- *
- * @author Johnny Lim
- */
-public final class HttpContentCoding {
-
-    /**
-     * For {@literal gzip}.
-     */
-    public static final String GZIP = "gzip";
-
-    private HttpContentCoding() {
+public class ReactorNettyClientTest extends HttpClientCompatibilityKit {
+    @Override
+    public HttpClient httpClient() {
+        return new ReactorNettyClient();
     }
-
 }

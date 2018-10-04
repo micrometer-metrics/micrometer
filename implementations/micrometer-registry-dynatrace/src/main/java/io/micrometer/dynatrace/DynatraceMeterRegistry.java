@@ -18,15 +18,13 @@ package io.micrometer.dynatrace;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.*;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.ipc.http.HttpClient;
+import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,8 +32,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -46,8 +42,6 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 
 /**
- * {@link StepMeterRegistry} for Dynatrace.
- *
  * @author Oriol Barcelona
  * @since 1.1.0
  */
@@ -55,28 +49,30 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     private final Logger logger = LoggerFactory.getLogger(DynatraceMeterRegistry.class);
     private final DynatraceConfig config;
+    private final HttpClient httpClient;
 
     /**
      * Metric names for which we have created the custom metric in the API
      */
     private final Set<String> createdCustomMetrics = ConcurrentHashMap.newKeySet();
-    private final URL customMetricEndpointTemplate;
+    private final String customMetricEndpointTemplate;
 
     public DynatraceMeterRegistry(DynatraceConfig config, Clock clock) {
-        this(config, clock, Executors.defaultThreadFactory());
+        this(config, clock, Executors.defaultThreadFactory(), new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
     }
 
-    public DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory) {
+    private DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
         super(config, clock);
         requireNonNull(config.uri());
         requireNonNull(config.deviceId());
         requireNonNull(config.apiToken());
 
         this.config = config;
+        this.httpClient = httpClient;
 
         this.config().namingConvention(new DynatraceNamingConvention());
 
-        this.customMetricEndpointTemplate = URIUtils.toURL(config.uri() + "/api/v1/timeseries/");
+        this.customMetricEndpointTemplate = config.uri() + "/api/v1/timeseries/";
 
         if (config.enabled())
             start(threadFactory);
@@ -84,8 +80,8 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        URL customDeviceMetricEndpoint = URIUtils.toURL(config.uri() +
-                "/api/v1/entity/infrastructure/custom/" + config.deviceId() + "?api-token=" + config.apiToken());
+        String customDeviceMetricEndpoint = config.uri() + "/api/v1/entity/infrastructure/custom/" +
+                config.deviceId() + "?api-token=" + config.apiToken();
 
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             final List<DynatraceCustomMetric> series = batch.stream()
@@ -102,6 +98,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                     )
                     .collect(Collectors.toList());
 
+            // TODO is there a way to batch submissions of multiple metrics?
             series.stream()
                     .map(DynatraceCustomMetric::getMetricDefinition)
                     .filter(this::isCustomMetricNotCreated)
@@ -197,70 +194,35 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     private void putCustomMetric(final DynatraceMetricDefinition customMetric) {
         try {
-            final URL customMetricEndpoint = new URL(customMetricEndpointTemplate +
-                    customMetric.getMetricId() + "?api-token=" + config.apiToken());
-
-            executeHttpCall(customMetricEndpoint, HttpMethod.PUT, customMetric.asJson(),
-                    status -> {
-                        logger.debug("created '{}' as custom metric", customMetric.getMetricId());
-                        createdCustomMetrics.add(customMetric.getMetricId());
-                    },
-                    (status, errorMsg) -> logger.error("failed to create custom metric '{}', status: {} message: {}",
-                            customMetric.getMetricId(), status, errorMsg));
-        } catch (final MalformedURLException e) {
-            logger.warn("Failed to compose URL for custom metric '{}'", customMetric.getMetricId());
+            httpClient.put(customMetricEndpointTemplate + customMetric.getMetricId() + "?api-token=" + config.apiToken())
+                    .withJsonContent(customMetric.asJson())
+                    .send()
+                    .onSuccess(response -> logger.debug("created {} as custom metric in dynatrace", customMetric.getMetricId()))
+                    .onError(response -> {
+                        if (logger.isErrorEnabled()) {
+                            logger.error("failed to create custom metric {} in dynatrace: {}", customMetric.getMetricId(),
+                                    response.body());
+                        }
+                    });
+        } catch (Throwable e) {
+            logger.error("failed to create custom metric in dynatrace: {}", customMetric.getMetricId(), e);
         }
     }
 
-    private void postCustomMetricValues(String type, List<DynatraceTimeSeries> timeSeries, URL customDeviceMetricEndpoint) {
-        executeHttpCall(customDeviceMetricEndpoint, HttpMethod.POST,
-                "{\"type\":\"" + type + "\"" +
-                        ",\"series\":[" +
-                        timeSeries.stream()
-                                .map(DynatraceTimeSeries::asJson)
-                                .collect(joining(",")) +
-                        "]}",
-                status -> logger.info("successfully sent {} timeSeries to Dynatrace", timeSeries.size()),
-                (status, errorBody) -> logger.error("failed to send timeSeries, status: {} body: {}", status, errorBody));
-    }
-
-    private void executeHttpCall(URL url,
-                                 String method,
-                                 String body,
-                                 Consumer<Integer> successHandler,
-                                 BiConsumer<Integer, String> errorHandler) {
-        HttpURLConnection con = null;
-
+    private void postCustomMetricValues(String type, List<DynatraceTimeSeries> timeSeries, String customDeviceMetricEndpoint) {
         try {
-            con = (HttpURLConnection) url.openConnection();
-            con.setConnectTimeout((int) config.connectTimeout().toMillis());
-            con.setReadTimeout((int) config.readTimeout().toMillis());
-            con.setRequestMethod(method);
-            con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-
-            con.setDoOutput(true);
-
-            try (final OutputStream os = con.getOutputStream()) {
-                os.write(body.getBytes());
-                os.flush();
-            }
-
-            final int status = con.getResponseCode();
-
-            if (status >= 200 && status < 300) {
-                successHandler.accept(status);
-            } else {
-                errorHandler.accept(status, IOUtils.toString(con.getErrorStream()));
-            }
-        } catch (final Throwable e) {
-            logger.warn("failed to execute http call to '{}' using method '{}'", url, method, e);
-        } finally {
-            try {
-                if (con != null) {
-                    con.disconnect();
-                }
-            } catch (Exception ignore) {
-            }
+            httpClient.post(customDeviceMetricEndpoint)
+                    .withJsonContent("{\"type\":\"" + type + "\"" +
+                            ",\"series\":[" +
+                            timeSeries.stream()
+                                    .map(DynatraceTimeSeries::asJson)
+                                    .collect(joining(",")) +
+                            "]}")
+                    .send()
+                    .onSuccess(response -> logger.info("successfully sent {} metrics to dynatrace", timeSeries.size()))
+                    .onError(response -> logger.error("failed to send metrics to dynatrace: {}", response.body()));
+        } catch (Throwable e) {
+            logger.error("failed to send metrics to dynatrace", e);
         }
     }
 
@@ -288,6 +250,38 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
         DynatraceTimeSeries getTimeSeries() {
             return timeSeries;
+        }
+    }
+
+    public static class Builder {
+        private final DynatraceConfig config;
+
+        private Clock clock = Clock.SYSTEM;
+        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        private HttpClient pushHandler;
+
+        public Builder(DynatraceConfig config) {
+            this.config = config;
+            this.pushHandler = new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout());
+        }
+
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+
+        public Builder threadFactory(ThreadFactory threadFactory) {
+            this.threadFactory = threadFactory;
+            return this;
+        }
+
+        public Builder httpPushHandler(HttpClient pushHandler) {
+            this.pushHandler = pushHandler;
+            return this;
+        }
+
+        public DynatraceMeterRegistry build() {
+            return new DynatraceMeterRegistry(config, clock, threadFactory, pushHandler);
         }
     }
 }

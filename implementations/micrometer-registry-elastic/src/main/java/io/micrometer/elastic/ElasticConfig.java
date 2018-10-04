@@ -45,14 +45,13 @@ public interface ElasticConfig extends StepRegistryConfig {
     }
 
     /**
-     * The hosts to send the metrics to
-     * Default is "http://localhost:9200"
+     * The host to send metrics to.
      *
-     * @return hosts
+     * @return host
      */
-    default String[] hosts() {
-        String v = get(prefix() + ".hosts");
-        return v == null ? new String[]{"http://localhost:9200"} : v.split(",");
+    default String host() {
+        String v = get(prefix() + ".host");
+        return v == null ? "http://localhost:9200" : v;
     }
 
     /**

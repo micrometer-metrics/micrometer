@@ -42,6 +42,7 @@ dependencies {
 
     // reactor
     compile 'io.projectreactor:reactor-core:latest.release', optional
+    compile 'io.projectreactor.netty:reactor-netty:latest.release', optional
 
     // @Timed AOP
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
@@ -49,7 +50,6 @@ dependencies {
     compile 'com.squareup.okhttp3:okhttp:latest.release', optional
 
     testCompile 'io.projectreactor:reactor-test:latest.release'
-    testCompile 'io.projectreactor.ipc:reactor-netty:latest.release'
 
     // JUnit 5
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.+'

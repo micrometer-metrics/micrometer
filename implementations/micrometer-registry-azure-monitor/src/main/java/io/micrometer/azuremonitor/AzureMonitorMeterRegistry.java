@@ -45,11 +45,9 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
 
     private final Logger logger = LoggerFactory.getLogger(AzureMonitorMeterRegistry.class);
     private final TelemetryClient client;
-    private final AzureMonitorConfig config;
 
     public AzureMonitorMeterRegistry(AzureMonitorConfig config, Clock clock, @Nullable TelemetryConfiguration clientConfig) {
         super(config, clock);
-        this.config = config;
 
         config().namingConvention(new AzureMonitorNamingConvention());
 

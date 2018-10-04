@@ -18,14 +18,18 @@ package io.micrometer.wavefront;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.*;
+import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.ipc.http.HttpClient;
+import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.OutputStream;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -44,20 +48,21 @@ import static java.util.stream.StreamSupport.stream;
 public class WavefrontMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(WavefrontMeterRegistry.class);
     private final WavefrontConfig config;
-    private final URI uri;
-    private final boolean directToApi;
+    private final HttpClient httpClient;
 
     public WavefrontMeterRegistry(WavefrontConfig config, Clock clock) {
         this(config, clock, Executors.defaultThreadFactory());
     }
 
     public WavefrontMeterRegistry(WavefrontConfig config, Clock clock, ThreadFactory threadFactory) {
+        this(config, clock, threadFactory, new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
+    }
+
+    private WavefrontMeterRegistry(WavefrontConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
         super(config, clock);
         this.config = config;
-        this.uri = URI.create(config.uri());
-        this.directToApi = !"proxy".equals(uri.getScheme());
-
-        if (directToApi && config.apiToken() == null) {
+        this.httpClient = httpClient;
+        if (directToApi() && config.apiToken() == null) {
             throw new MissingRequiredConfigurationException("apiToken must be set whenever publishing directly to the Wavefront API");
         }
 
@@ -68,79 +73,52 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        try {
-            for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-                Stream<String> stream = batch.stream().flatMap(m -> match(m,
-                        this::writeMeter,
-                        this::writeMeter,
-                        this::writeTimer,
-                        this::writeSummary,
-                        this::writeMeter,
-                        this::writeMeter,
-                        this::writeMeter,
-                        this::writeFunctionTimer,
-                        this::writeMeter));
+        for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
+            Stream<String> stream = batch.stream().flatMap(m -> match(m,
+                    this::writeMeter,
+                    this::writeMeter,
+                    this::writeTimer,
+                    this::writeSummary,
+                    this::writeMeter,
+                    this::writeMeter,
+                    this::writeMeter,
+                    this::writeFunctionTimer,
+                    this::writeMeter));
 
-                if (directToApi) {
-                    HttpURLConnection con = null;
-                    try {
-                        URL url = new URL(uri.getScheme(), uri.getHost(), uri.getPort(), String.format("/report/metrics?t=%s&h=%s", config.apiToken(), config.source()));
-                        con = (HttpURLConnection) url.openConnection();
-                        con.setConnectTimeout((int) config.connectTimeout().toMillis());
-                        con.setReadTimeout((int) config.readTimeout().toMillis());
-                        con.setDoOutput(true);
-                        con.addRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-                        con.addRequestProperty(HttpHeader.ACCEPT, MediaType.APPLICATION_JSON);
-
-                        try (OutputStream os = con.getOutputStream();
-                             OutputStreamWriter writer = new OutputStreamWriter(os, "UTF-8")) {
-                            writer.write("{" + stream.collect(joining(",")) + "}");
-                            writer.flush();
-                        }
-
-                        int status = con.getResponseCode();
-                        if (status >= 200 && status < 300) {
-                            logger.info("successfully sent {} metrics to Wavefront", batch.size());
-                        } else {
-                            if (logger.isErrorEnabled()) {
-                                logger.error("failed to send metrics: {}", IOUtils.toString(con.getErrorStream()));
-                            }
-                        }
-                    } catch (Exception e) {
-                        logger.error(e.getMessage(), e);
-                    } finally {
-                        quietlyCloseUrlConnection(con);
-                    }
-                } else {
-                    SocketAddress endpoint = getSocketAddress(uri.getHost(), uri.getPort());
-                    int timeout = (int) this.config.connectTimeout().toMillis();
-
+            if (directToApi()) {
+                try {
+                    httpClient.post(config.uri() + "/report/metrics?t=" + config.apiToken() + "&h=" + config.source())
+                            .acceptJson()
+                            .withJsonContent("{" + stream.collect(joining(",")) + "}")
+                            .send()
+                            .onSuccess(response -> logger.info("successfully sent {} metrics to wavefront", batch.size()))
+                            .onError(response -> logger.error("failed to send metrics to wavefront: {}", response.body()));
+                } catch (Throwable e) {
+                    logger.error("failed to send metrics to wavefront", e);
+                }
+            } else {
+                URI uri = URI.create(config.uri());
+                try {
+                    SocketAddress endpoint = uri.getHost() != null ? new InetSocketAddress(uri.getHost(), uri.getPort()) :
+                            new InetSocketAddress(InetAddress.getByName(null), uri.getPort());
                     try (Socket socket = new Socket()) {
-                        socket.connect(endpoint, timeout);
-                        try (OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream(), "UTF-8")) {
+                        socket.connect(endpoint, (int) this.config.connectTimeout().toMillis());
+                        try (OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8)) {
                             writer.write(stream.collect(joining("\n")) + "\n");
                             writer.flush();
                         }
+                    } catch (IOException e) {
+                        logger.error("failed to send metrics to wavefront", e);
                     }
+                } catch (UnknownHostException e) {
+                    logger.error("failed to send metrics to wavefront: unknown host + " + uri.getHost());
                 }
             }
-        } catch (Throwable t) {
-            logger.warn("failed to send metrics", t);
         }
     }
 
-    private static SocketAddress getSocketAddress(@Nullable String host, int port) throws UnknownHostException {
-        return host != null ? new InetSocketAddress(host, port) :
-                new InetSocketAddress(InetAddress.getByName(null), port);
-    }
-
-    private void quietlyCloseUrlConnection(@Nullable HttpURLConnection con) {
-        try {
-            if (con != null) {
-                con.disconnect();
-            }
-        } catch (Exception ignore) {
-        }
+    private boolean directToApi() {
+        return !"proxy".equals(URI.create(config.uri()).getScheme());
     }
 
     private Stream<String> writeFunctionTimer(FunctionTimer timer) {
@@ -209,7 +187,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
      * https://docs.wavefront.com/wavefront_data_format.html#wavefront-data-format-syntax
      */
     private String writeMetric(Meter.Id id, @Nullable String suffix, long wallTime, double value) {
-        return directToApi ?
+        return directToApi() ?
                 writeMetricDirect(id, suffix, value) :
                 writeMetricProxy(id, suffix, wallTime, value);
     }
@@ -263,5 +241,37 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.SECONDS;
+    }
+
+    public static class Builder {
+        private final WavefrontConfig config;
+
+        private Clock clock = Clock.SYSTEM;
+        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        private HttpClient httpClient;
+
+        public Builder(WavefrontConfig config) {
+            this.config = config;
+            this.httpClient = new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout());
+        }
+
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+
+        public Builder threadFactory(ThreadFactory threadFactory) {
+            this.threadFactory = threadFactory;
+            return this;
+        }
+
+        public Builder httpClient(HttpClient httpClient) {
+            this.httpClient = httpClient;
+            return this;
+        }
+
+        public WavefrontMeterRegistry build() {
+            return new WavefrontMeterRegistry(config, clock, threadFactory, httpClient);
+        }
     }
 }

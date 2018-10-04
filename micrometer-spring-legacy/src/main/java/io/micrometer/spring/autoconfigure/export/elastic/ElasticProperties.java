@@ -29,7 +29,7 @@ public class ElasticProperties extends StepRegistryProperties {
     /**
      * The hosts to send the metrics to
      */
-    private String[] hosts;
+    private String host;
 
     /**
      * The index name to write metrics to.
@@ -67,12 +67,12 @@ public class ElasticProperties extends StepRegistryProperties {
      */
     private String password;
 
-    public String[] getHosts() {
-        return hosts;
+    public String getHost() {
+        return host;
     }
 
-    public void setHosts(String[] hosts) {
-        this.hosts = hosts;
+    public void setHost(String host) {
+        this.host = host;
     }
 
     public String getIndex() {

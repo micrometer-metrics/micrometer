@@ -15,27 +15,16 @@
  */
 package io.micrometer.core.instrument.step;
 
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.micrometer.core.instrument.push.PushMeterRegistry;
 import io.micrometer.core.lang.Nullable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
+
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
@@ -45,49 +34,13 @@ import java.util.function.ToLongFunction;
  *
  * @author Jon Schneider
  */
-public abstract class StepMeterRegistry extends MeterRegistry {
+public abstract class StepMeterRegistry extends PushMeterRegistry {
     private final StepRegistryConfig config;
 
-    @Nullable
-    private ScheduledExecutorService scheduledExecutorService;
-
     public StepMeterRegistry(StepRegistryConfig config, Clock clock) {
-        super(clock);
+        super(config, clock);
         this.config = config;
     }
-
-    public void start() {
-        start(Executors.defaultThreadFactory());
-    }
-
-    public void start(ThreadFactory threadFactory) {
-        if (scheduledExecutorService != null)
-            stop();
-
-        if (config.enabled()) {
-            scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
-            scheduledExecutorService.scheduleAtFixedRate(this::publish, config.step()
-                .toMillis(), config.step().toMillis(), TimeUnit.MILLISECONDS);
-        }
-    }
-
-    public void stop() {
-        if (scheduledExecutorService != null) {
-            scheduledExecutorService.shutdown();
-            scheduledExecutorService = null;
-        }
-    }
-
-    @Override
-    public void close() {
-        if (config.enabled()) {
-            publish();
-        }
-        stop();
-        super.close();
-    }
-
-    protected abstract void publish();
 
     @Override
     protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {

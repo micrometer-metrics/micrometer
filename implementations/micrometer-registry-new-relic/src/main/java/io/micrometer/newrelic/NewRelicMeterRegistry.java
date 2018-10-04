@@ -18,16 +18,13 @@ package io.micrometer.newrelic;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.*;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.ipc.http.HttpClient;
+import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -48,6 +45,7 @@ import static java.util.stream.StreamSupport.stream;
  */
 public class NewRelicMeterRegistry extends StepMeterRegistry {
     private final NewRelicConfig config;
+    private final HttpClient httpClient;
     private final Logger logger = LoggerFactory.getLogger(NewRelicMeterRegistry.class);
 
     public NewRelicMeterRegistry(NewRelicConfig config, Clock clock) {
@@ -55,8 +53,13 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     }
 
     public NewRelicMeterRegistry(NewRelicConfig config, Clock clock, ThreadFactory threadFactory) {
+        this(config, clock, threadFactory, new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
+    }
+
+    private NewRelicMeterRegistry(NewRelicConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
         super(config, clock);
         this.config = config;
+        this.httpClient = httpClient;
 
         requireNonNull(config.accountId());
         requireNonNull(config.apiKey());
@@ -67,26 +70,20 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        try {
-            URL insightsEndpoint = URI.create(config.uri() + "/v1/accounts/" + config.accountId() + "/events").toURL();
+        String insightsEndpoint = config.uri() + "/v1/accounts/" + config.accountId() + "/events";
 
-            // New Relic's Insights API limits us to 1000 events per call
-            for (List<Meter> batch : MeterPartition.partition(this, Math.min(config.batchSize(), 1000))) {
-                sendEvents(insightsEndpoint, batch.stream().flatMap(meter -> match(meter,
-                        this::writeGauge,
-                        this::writeCounter,
-                        this::writeTimer,
-                        this::writeSummary,
-                        this::writeLongTaskTimer,
-                        this::writeTimeGauge,
-                        this::writeFunctionCounter,
-                        this::writeFunctionTimer,
-                        this::writeMeter)));
-            }
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException("malformed New Relic insights endpoint -- see the 'uri' configuration", e);
-        } catch (Throwable t) {
-            logger.warn("failed to send metrics", t);
+        // New Relic's Insights API limits us to 1000 events per call
+        for (List<Meter> batch : MeterPartition.partition(this, Math.min(config.batchSize(), 1000))) {
+            sendEvents(insightsEndpoint, batch.stream().flatMap(meter -> match(meter,
+                    this::writeGauge,
+                    this::writeCounter,
+                    this::writeTimer,
+                    this::writeSummary,
+                    this::writeLongTaskTimer,
+                    this::writeTimeGauge,
+                    this::writeFunctionCounter,
+                    this::writeFunctionTimer,
+                    this::writeMeter)));
         }
     }
 
@@ -177,56 +174,18 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                         .collect(Collectors.joining("")) + tagsJson.toString() + "}";
     }
 
-    private void sendEvents(URL insightsEndpoint, Stream<String> events) {
-
-        HttpURLConnection con = null;
-
+    private void sendEvents(String insightsEndpoint, Stream<String> events) {
         try {
-            con = (HttpURLConnection) insightsEndpoint.openConnection();
-            con.setConnectTimeout((int) config.connectTimeout().toMillis());
-            con.setReadTimeout((int) config.readTimeout().toMillis());
-            con.setRequestMethod(HttpMethod.POST);
-            con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-            con.setRequestProperty("X-Insert-Key", config.apiKey());
-
-            con.setDoOutput(true);
-
             AtomicInteger totalEvents = new AtomicInteger();
-            String body = "[" + events.peek(ev -> totalEvents.incrementAndGet()).collect(Collectors.joining(",")) + "]";
 
-            logger.trace("Sending payload to New Relic:");
-            logger.trace(body);
-
-            try (OutputStream os = con.getOutputStream()) {
-                os.write(body.getBytes());
-                os.flush();
-            }
-
-            int status = con.getResponseCode();
-
-            if (status >= 200 && status < 300) {
-                logger.info("successfully sent {} events to New Relic", totalEvents);
-            } else if (status >= 400) {
-                if (logger.isErrorEnabled()) {
-                    logger.error("failed to send metrics: {}", IOUtils.toString(con.getErrorStream()));
-                }
-            } else {
-                logger.error("failed to send metrics: http {}", status);
-            }
-
+            httpClient.post(insightsEndpoint)
+                    .withHeader("X-Insert-Key", config.apiKey())
+                    .withJsonContent("[" + events.peek(ev -> totalEvents.incrementAndGet()).collect(Collectors.joining(",")) + "]")
+                    .send()
+                    .onSuccess(response -> logger.info("successfully sent {} metrics to new relic", totalEvents.get()))
+                    .onError(response -> logger.error("failed to send metrics to new relic: {}", response.body()));
         } catch (Throwable e) {
-            logger.warn("failed to send metrics", e);
-        } finally {
-            quietlyCloseUrlConnection(con);
-        }
-    }
-
-    private void quietlyCloseUrlConnection(@Nullable HttpURLConnection con) {
-        try {
-            if (con != null) {
-                con.disconnect();
-            }
-        } catch (Exception ignore) {
+            logger.warn("failed to send metrics to new relic", e);
         }
     }
 

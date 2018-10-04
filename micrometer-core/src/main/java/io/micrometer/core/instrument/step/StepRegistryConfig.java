@@ -15,67 +15,8 @@
  */
 package io.micrometer.core.instrument.step;
 
-import io.micrometer.core.instrument.config.MeterRegistryConfig;
+import io.micrometer.core.instrument.push.PushRegistryConfig;
 
-import java.time.Duration;
 
-/**
- * Common configuration settings for any registry that pushes aggregated
- * metrics on a regular interval.
- *
- * @author Jon Schneider
- */
-public interface StepRegistryConfig extends MeterRegistryConfig {
-    /**
-     * @return The step size (reporting frequency) to use. The default is 1 minute.
-     */
-    default Duration step() {
-        String v = get(prefix() + ".step");
-        return v == null ? Duration.ofMinutes(1) : Duration.parse(v);
-    }
-
-    /**
-     * @return {@code true} if publishing is enabled. Default is {@code true}.
-     */
-    default boolean enabled() {
-        String v = get(prefix() + ".enabled");
-        return v == null || Boolean.valueOf(v);
-    }
-
-    /**
-     * @return The number of threads to use with the scheduler. The default is
-     * 2 threads.
-     */
-    default int numThreads() {
-        String v = get(prefix() + ".numThreads");
-        return v == null ? 2 : Integer.parseInt(v);
-    }
-
-    /**
-     * @return The connection timeout for requests to the backend. The default is
-     * 1 second.
-     */
-    default Duration connectTimeout() {
-        String v = get(prefix() + ".connectTimeout");
-        return v == null ? Duration.ofSeconds(1) : Duration.parse(v);
-    }
-
-    /**
-     * @return The read timeout for requests to the backend. The default is
-     * 10 seconds.
-     */
-    default Duration readTimeout() {
-        String v = get(prefix() + ".readTimeout");
-        return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
-    }
-
-    /**
-     * @return The number of measurements per request to use for the backend. If more
-     * measurements are found, then multiple requests will be made. The default is
-     * 10,000.
-     */
-    default int batchSize() {
-        String v = get(prefix() + ".batchSize");
-        return v == null ? 10000 : Integer.parseInt(v);
-    }
+public interface StepRegistryConfig extends PushRegistryConfig {
 }

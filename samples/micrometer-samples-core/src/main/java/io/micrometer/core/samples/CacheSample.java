@@ -22,7 +22,7 @@ import io.micrometer.core.instrument.binder.cache.GuavaCacheMetrics;
 import io.micrometer.core.samples.utils.SampleConfig;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
-import reactor.ipc.netty.http.client.HttpClient;
+import reactor.netty.http.client.HttpClient;
 
 import java.time.Duration;
 import java.util.stream.IntStream;
@@ -45,9 +45,13 @@ public class CacheSample {
         GuavaCacheMetrics.monitor(registry, guavaCache, "book.guava");
 
         // read all of Frankenstein
-        HttpClient.create("www.gutenberg.org")
-            .get("/cache/epub/84/pg84.txt")
-            .flatMapMany(res -> res.addHandler(wordDecoder()).receive().asString())
+        HttpClient.create()
+            .baseUrl("www.gutenberg.org")
+            .doOnRequest((req, conn) -> conn.addHandler(wordDecoder()))
+            .get()
+            .uri("/files/84/84-0.txt")
+            .responseContent()
+            .asString()
             .delayElements(Duration.ofMillis(10)) // one word per 10 ms
             .filter(word -> !word.isEmpty())
             .doOnNext(word -> {

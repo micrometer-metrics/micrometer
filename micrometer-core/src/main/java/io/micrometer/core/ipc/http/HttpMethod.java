@@ -13,35 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.util;
-
-import java.io.UncheckedIOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
+package io.micrometer.core.ipc.http;
 
 /**
- * Utilities for {@link URI}.
+ * HTTP methods.
  *
  * @author Johnny Lim
  */
-public final class URIUtils {
-
-    /**
-     * Constructs a URL from a URI string.
-     *
-     * @param uri string to be parsed into a URI
-     * @return a URL
-     */
-    public static URL toURL(String uri) {
-        try {
-            return URI.create(uri).toURL();
-        } catch (MalformedURLException ex) {
-            throw new UncheckedIOException(ex);
-        }
-    }
-
-    private URIUtils() {
-    }
-
+public enum HttpMethod {
+    GET, HEAD, POST, PUT, DELETE, OPTIONS
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.util;
+package io.micrometer.core.ipc.http;
 
-/**
- * MIME types for HTTP.
- *
- * @author Johnny Lim
- */
-public final class MediaType {
-
-    /**
-     * For {@literal application/json}.
-     */
-    public static final String APPLICATION_JSON = "application/json";
-
-    /**
-     * For {@literal plain/text}.
-     */
-    public static final String PLAIN_TEXT = "plain/text";
-
-    private MediaType() {
+public class HttpUrlConnectionClientTest extends HttpClientCompatibilityKit {
+    @Override
+    public HttpClient httpClient() {
+        return new HttpUrlConnectionClient();
     }
-
 }

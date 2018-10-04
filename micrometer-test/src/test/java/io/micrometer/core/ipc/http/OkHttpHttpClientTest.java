@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,36 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.util;
+package io.micrometer.core.ipc.http;
 
-/**
- * HTTP methods.
- *
- * @author Johnny Lim
- */
-public class HttpMethod {
-
-    /**
-     * For {@literal GET}.
-     */
-    public static final String GET = "GET";
-
-    /**
-     * For {@literal HEAD}.
-     */
-    public static final String HEAD = "HEAD";
-
-    /**
-     * For {@literal POST}.
-     */
-    public static final String POST = "POST";
-
-    /**
-     * For {@literal PUT}.
-     */
-    public static final String PUT = "PUT";
-
-    private HttpMethod() {
+public class OkHttpHttpClientTest extends HttpClientCompatibilityKit {
+    @Override
+    public HttpClient httpClient() {
+        return new OkHttpHttpClient();
     }
-
 }

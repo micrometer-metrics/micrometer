@@ -5,5 +5,5 @@ dependencies {
     compile 'io.dropwizard.metrics:metrics-graphite:3.+'
 
     testCompile project(':micrometer-test')
-    testCompile 'io.projectreactor.ipc:reactor-netty:latest.release'
+    testCompile 'io.projectreactor.netty:reactor-netty:latest.release'
 }

@@ -1,0 +1,83 @@
+/**
+ * Copyright 2018 Pivotal Software, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micrometer.core.ipc.http;
+
+import io.micrometer.core.instrument.util.IOUtils;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.time.Duration;
+import java.util.Map;
+
+public class HttpUrlConnectionClient implements HttpClient {
+    private final int connectTimeoutMs;
+    private final int readTimeoutMs;
+
+    public HttpUrlConnectionClient(Duration connectTimeout, Duration readTimeout) {
+        this.connectTimeoutMs = (int) connectTimeout.toMillis();
+        this.readTimeoutMs = (int) readTimeout.toMillis();
+    }
+
+    public HttpUrlConnectionClient() {
+        this.connectTimeoutMs = 1000;
+        this.readTimeoutMs = 10000;
+    }
+
+    @Override
+    public HttpResponse send(URL url, HttpRequest request) throws IOException {
+        HttpURLConnection con = null;
+        try {
+            con = (HttpURLConnection) url.openConnection();
+            con.setConnectTimeout(connectTimeoutMs);
+            con.setReadTimeout(readTimeoutMs);
+            con.setRequestMethod(request.getMethod().toString());
+
+            for (Map.Entry<String, String> header : request.getRequestHeaders().entrySet()) {
+                con.setRequestProperty(header.getKey(), header.getValue());
+            }
+
+            con.setDoOutput(true);
+
+            try (OutputStream os = con.getOutputStream()) {
+                os.write(request.getEntity());
+                os.flush();
+            }
+
+            int status = con.getResponseCode();
+
+            String body = null;
+            try {
+                if (con.getErrorStream() != null) {
+                    body = IOUtils.toString(con.getErrorStream());
+                } else if (con.getInputStream() != null) {
+                    body = IOUtils.toString(con.getInputStream());
+                }
+            } catch (IOException ignored) {
+            }
+
+            return new HttpResponse(status, body);
+        } finally {
+            try {
+                if (con != null) {
+                    con.disconnect();
+                }
+            } catch (Exception ignore) {
+            }
+        }
+    }
+}

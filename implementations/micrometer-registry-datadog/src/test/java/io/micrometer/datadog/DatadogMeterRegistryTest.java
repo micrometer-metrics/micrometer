@@ -15,31 +15,25 @@
  */
 package io.micrometer.datadog;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import reactor.core.Disposable;
-import reactor.ipc.netty.http.server.HttpServer;
+import org.junit.jupiter.api.extension.ExtendWith;
+import ru.lanwen.wiremock.ext.WiremockResolver;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-@Disabled("Fails on CircleCI?")
+@ExtendWith(WiremockResolver.class)
 class DatadogMeterRegistryTest {
 
     @Issue("#463")
     @Test
-    void encodeMetricName() throws InterruptedException {
+    void encodeMetricName(@WiremockResolver.Wiremock WireMockServer server) {
         DatadogMeterRegistry registry = new DatadogMeterRegistry(new DatadogConfig() {
             @Override
             public String uri() {
-                return "http://localhost:3036";
+                return server.baseUrl();
             }
 
             @Override
@@ -63,29 +57,11 @@ class DatadogMeterRegistryTest {
             }
         }, Clock.SYSTEM);
 
-        CountDownLatch metadataRequests = new CountDownLatch(1);
-        AtomicReference<String> metadataMetricName = new AtomicReference<>();
+        server.stubFor(any(anyUrl()));
 
-        Pattern p = Pattern.compile("/api/v1/metrics/([^\\?]+)\\?.*");
+        registry.counter("my.counter#abc").increment();
+        registry.publish();
 
-        Disposable server = HttpServer.create(3036)
-                .newHandler((req, resp) -> {
-                    Matcher matcher = p.matcher(req.uri());
-                    if (matcher.matches()) {
-                        metadataMetricName.set(matcher.group(1));
-                        metadataRequests.countDown();
-                    }
-                    return req.receive().then(resp.status(200).send());
-                })
-                .subscribe();
-
-        try {
-            registry.counter("my.counter#abc").increment();
-            registry.publish();
-            metadataRequests.await(10, TimeUnit.SECONDS);
-            assertThat(metadataMetricName.get()).isEqualTo("my.counter%23abc");
-        } finally {
-            server.dispose();
-        }
+        server.verify(putRequestedFor(urlMatching("/api/v1/metrics/my.counter%23abc?.+")));
     }
 }

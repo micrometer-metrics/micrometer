@@ -17,16 +17,13 @@ package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.*;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.ipc.http.HttpClient;
+import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +46,7 @@ import static java.util.stream.StreamSupport.stream;
 public class DatadogMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(DatadogMeterRegistry.class);
     private final DatadogConfig config;
+    private final HttpClient httpClient;
 
     /**
      * Metric names for which we have posted metadata concerning type and base unit
@@ -60,12 +58,17 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     }
 
     public DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory) {
+        this(config, clock, threadFactory, new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
+    }
+
+    private DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
         super(config, clock);
         requireNonNull(config.apiKey());
 
         this.config().namingConvention(new DatadogNamingConvention());
 
         this.config = config;
+        this.httpClient = httpClient;
 
         if (config.enabled())
             start(threadFactory);
@@ -75,88 +78,43 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         Map<String, DatadogMetricMetadata> metadataToSend = new HashMap<>();
 
-        String uriString = config.uri() + "/api/v1/series?api_key=" + config.apiKey();
-        URL postTimeSeriesEndpoint;
-        try {
-            postTimeSeriesEndpoint = URIUtils.toURL(uriString);
-        } catch (IllegalArgumentException e) {
-            logger.error("Invalid URI string for an endpoint to send time series: " + uriString);
-            return;
-        }
+        String datadogEndpoint = config.uri() + "/api/v1/series?api_key=" + config.apiKey();
 
         try {
-            HttpURLConnection con = null;
-
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-                try {
-                    con = (HttpURLConnection) postTimeSeriesEndpoint.openConnection();
-                    con.setConnectTimeout((int) config.connectTimeout().toMillis());
-                    con.setReadTimeout((int) config.readTimeout().toMillis());
-                    con.setRequestMethod(HttpMethod.POST);
-                    con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-                    con.setDoOutput(true);
-
-                    /*
-                    Example post body from Datadog API docs. Host and tags are optional.
-                    "{ \"series\" :
-                            [{\"metric\":\"test.metric\",
-                              \"points\":[[$currenttime, 20]],
-                              \"host\":\"test.example.com\",
-                              \"tags\":[\"environment:test\"]}
-                            ]
-                    }"
-                    */
-
-                    String body = "{\"series\":[" +
-                            batch.stream().flatMap(meter -> match(meter,
-                                    m -> writeMeter(m, metadataToSend),
-                                    m -> writeMeter(m, metadataToSend),
-                                    timer -> writeTimer(timer, metadataToSend),
-                                    summary -> writeSummary(summary, metadataToSend),
-                                    m -> writeMeter(m, metadataToSend),
-                                    m -> writeMeter(m, metadataToSend),
-                                    m -> writeMeter(m, metadataToSend),
-                                    timer -> writeTimer(timer, metadataToSend),
-                                    m -> writeMeter(m, metadataToSend))
-                            ).collect(joining(",")) +
-                            "]}";
-
-                    logger.debug(body);
-
-                    try (OutputStream os = con.getOutputStream()) {
-                        os.write(body.getBytes());
-                        os.flush();
-                    }
-
-                    int status = con.getResponseCode();
-
-                    if (status >= 200 && status < 300) {
-                        logger.info("successfully sent {} metrics to datadog", batch.size());
-                    } else if (status >= 400) {
-                        if (logger.isErrorEnabled()) {
-                            logger.error("failed to send metrics: {}", IOUtils.toString(con.getErrorStream()));
-                        }
-                    } else {
-                        logger.error("failed to send metrics: http {}", status);
-                    }
-                } finally {
-                    quietlyCloseUrlConnection(con);
-                }
+                /*
+                Example post body from Datadog API docs. Host and tags are optional.
+                "{ \"series\" :
+                        [{\"metric\":\"test.metric\",
+                          \"points\":[[$currenttime, 20]],
+                          \"host\":\"test.example.com\",
+                          \"tags\":[\"environment:test\"]}
+                        ]
+                }"
+                */
+                httpClient.post(datadogEndpoint)
+                        .withJsonContent("{\"series\":[" +
+                                batch.stream().flatMap(meter -> match(meter,
+                                        m -> writeMeter(m, metadataToSend),
+                                        m -> writeMeter(m, metadataToSend),
+                                        timer -> writeTimer(timer, metadataToSend),
+                                        summary -> writeSummary(summary, metadataToSend),
+                                        m -> writeMeter(m, metadataToSend),
+                                        m -> writeMeter(m, metadataToSend),
+                                        m -> writeMeter(m, metadataToSend),
+                                        timer -> writeTimer(timer, metadataToSend),
+                                        m -> writeMeter(m, metadataToSend))
+                                ).collect(joining(",")) +
+                                "]}")
+                        .send()
+                        .onSuccess(response -> logger.info("successfully sent {} metrics to datadog", batch.size()))
+                        .onError(response -> logger.error("failed to send metrics to datadog: {}", response.body()));
             }
         } catch (Throwable e) {
-            logger.warn("failed to send metrics", e);
+            logger.warn("failed to send metrics to datadog", e);
         }
 
         metadataToSend.forEach(this::postMetricMetadata);
-    }
-
-    private void quietlyCloseUrlConnection(@Nullable HttpURLConnection con) {
-        try {
-            if (con != null) {
-                con.disconnect();
-            }
-        } catch (Exception ignore) {
-        }
     }
 
     private Stream<String> writeTimer(FunctionTimer timer, Map<String, DatadogMetricMetadata> metadata) {
@@ -268,42 +226,28 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         if (verifiedMetadata.contains(metricName))
             return;
 
-        HttpURLConnection con = null;
         try {
-            con = (HttpURLConnection) URI.create(config.uri() + "/api/v1/metrics/" + URLEncoder.encode(metricName, "UTF-8")
-                    + "?api_key=" + config.apiKey() + "&application_key=" + config.applicationKey()).toURL().openConnection();
-            con.setConnectTimeout((int) config.connectTimeout().toMillis());
-            con.setReadTimeout((int) config.readTimeout().toMillis());
-            con.setRequestMethod(HttpMethod.PUT);
-            con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-            con.setDoOutput(true);
+            httpClient
+                    .put(config.uri() + "/api/v1/metrics/" + URLEncoder.encode(metricName, "UTF-8")
+                            + "?api_key=" + config.apiKey() + "&application_key=" + config.applicationKey())
+                    .withJsonContent(metadata.editMetadataBody())
+                    .send()
+                    .onSuccess(response -> verifiedMetadata.add(metricName))
+                    .onError(response -> {
+                        if (logger.isErrorEnabled()) {
+                            String msg = response.body();
 
-            try (OutputStream os = con.getOutputStream()) {
-                os.write(metadata.editMetadataBody().getBytes());
-                os.flush();
-            }
-
-            int status = con.getResponseCode();
-
-            if (status >= 200 && status < 300) {
-                verifiedMetadata.add(metricName);
-            } else if (status >= 400) {
-                String msg = IOUtils.toString(con.getErrorStream());
-
-                // Ignore when the response content contains "metric_name not found".
-                // Metrics that are newly created in Datadog are not immediately available
-                // for metadata modification. We will keep trying this request on subsequent publishes,
-                // where it will eventually succeed.
-                if (!msg.contains("metric_name not found")) {
-                    logger.error("failed to send metric metadata: {}", msg);
-                }
-            } else {
-                logger.error("failed to send metric metadata: http {}", status);
-            }
-        } catch (IOException e) {
-            logger.warn("failed to send metric metadata", e);
-        } finally {
-            quietlyCloseUrlConnection(con);
+                            // Ignore when the response content contains "metric_name not found".
+                            // Metrics that are newly created in Datadog are not immediately available
+                            // for metadata modification. We will keep trying this request on subsequent publishes,
+                            // where it will eventually succeed.
+                            if (!msg.contains("metric_name not found")) {
+                                logger.error("failed to send metric metadata to datadog: {}", msg);
+                            }
+                        }
+                    });
+        } catch (Throwable e) {
+            logger.warn("failed to send metric metadata to datadog", e);
         }
     }
 
@@ -317,5 +261,37 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
      */
     private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
         return new Meter.Id(id.getName() + "." + suffix, id.getTags(), id.getBaseUnit(), id.getDescription(), id.getType());
+    }
+
+    public static class Builder {
+        private final DatadogConfig config;
+
+        private Clock clock = Clock.SYSTEM;
+        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        private HttpClient httpClient;
+
+        public Builder(DatadogConfig config) {
+            this.config = config;
+            this.httpClient = new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout());
+        }
+
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+
+        public Builder threadFactory(ThreadFactory threadFactory) {
+            this.threadFactory = threadFactory;
+            return this;
+        }
+
+        public Builder httpClient(HttpClient httpClient) {
+            this.httpClient = httpClient;
+            return this;
+        }
+
+        public DatadogMeterRegistry build() {
+            return new DatadogMeterRegistry(config, clock, threadFactory, httpClient);
+        }
     }
 }

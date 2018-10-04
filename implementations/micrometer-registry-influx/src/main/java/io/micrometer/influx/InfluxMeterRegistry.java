@@ -17,78 +17,71 @@ package io.micrometer.influx;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.*;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.ipc.http.HttpClient;
+import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.OutputStream;
-import java.net.*;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import java.net.MalformedURLException;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
-import java.util.zip.GZIPOutputStream;
 
 import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 
 /**
  * @author Jon Schneider
  */
 public class InfluxMeterRegistry extends StepMeterRegistry {
     private final InfluxConfig config;
+    private final HttpClient httpClient;
     private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
     private boolean databaseExists = false;
 
     public InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory) {
-        super(config, clock);
-        this.config().namingConvention(new InfluxNamingConvention());
-        this.config = config;
-        start(threadFactory);
+        this(config, clock, threadFactory, new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
     }
 
     public InfluxMeterRegistry(InfluxConfig config, Clock clock) {
         this(config, clock, Executors.defaultThreadFactory());
     }
 
+    private InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
+        super(config, clock);
+        this.config().namingConvention(new InfluxNamingConvention());
+        this.config = config;
+        this.httpClient = httpClient;
+        start(threadFactory);
+    }
+
     private void createDatabaseIfNecessary() {
         if (!config.autoCreateDb() || databaseExists)
             return;
 
-        HttpURLConnection con = null;
         try {
             String createDatabaseQuery = new CreateDatabaseQueryBuilder(config.db()).setRetentionDuration(config.retentionDuration())
                     .setRetentionPolicyName(config.retentionPolicy())
                     .setRetentionReplicationFactor(config.retentionReplicationFactor())
                     .setRetentionShardDuration(config.retentionShardDuration()).build();
 
-            URL queryEndpoint = URI.create(config.uri() + "/query?q=" + URLEncoder.encode(createDatabaseQuery, "UTF-8")).toURL();
-
-            con = (HttpURLConnection) queryEndpoint.openConnection();
-            con.setConnectTimeout((int) config.connectTimeout().toMillis());
-            con.setReadTimeout((int) config.readTimeout().toMillis());
-            con.setRequestMethod(HttpMethod.POST);
-            authenticateRequest(con);
-
-            int status = con.getResponseCode();
-
-            if (status >= 200 && status < 300) {
-                logger.debug("influx database {} is ready to receive metrics", config.db());
-                databaseExists = true;
-            } else if (status >= 400) {
-                if (logger.isErrorEnabled()) {
-                    logger.error("unable to create database '{}': {}", config.db(), IOUtils.toString(con.getErrorStream()));
-                }
-            }
+            httpClient
+                    .post(config.uri() + "/query?q=" + URLEncoder.encode(createDatabaseQuery, "UTF-8"))
+                    .withBasicAuthentication(config.userName(), config.password())
+                    .send()
+                    .onSuccess(response -> {
+                        logger.debug("influx database {} is ready to receive metrics", config.db());
+                        databaseExists = true;
+                    })
+                    .onError(response -> logger.error("unable to create database '{}': {}", config.db(), response.body()));
         } catch (Throwable e) {
             logger.error("unable to create database '{}'", config.db(), e);
-        } finally {
-            quietlyCloseUrlConnection(con);
         }
     }
 
@@ -97,92 +90,38 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         createDatabaseIfNecessary();
 
         try {
-            String write = "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
+            String influxEndpoint = config.uri() + "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
             if (StringUtils.isNotBlank(config.retentionPolicy())) {
-                write += "&rp=" + config.retentionPolicy();
+                influxEndpoint += "&rp=" + config.retentionPolicy();
             }
-            URL influxEndpoint = URI.create(config.uri() + write).toURL();
-            HttpURLConnection con = null;
 
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-                try {
-                    con = (HttpURLConnection) influxEndpoint.openConnection();
-                    con.setConnectTimeout((int) config.connectTimeout().toMillis());
-                    con.setReadTimeout((int) config.readTimeout().toMillis());
-                    con.setRequestMethod(HttpMethod.POST);
-                    con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.PLAIN_TEXT);
-                    con.setDoOutput(true);
-
-                    authenticateRequest(con);
-
-                    List<String> bodyLines = batch.stream()
-                            .flatMap(m -> match(m,
-                                    gauge -> writeGauge(gauge.getId(), gauge.value()),
-                                    counter -> writeCounter(counter.getId(), counter.count()),
-                                    this::writeTimer,
-                                    this::writeSummary,
-                                    this::writeLongTaskTimer,
-                                    gauge -> writeGauge(gauge.getId(), gauge.value(getBaseTimeUnit())),
-                                    counter -> writeCounter(counter.getId(), counter.count()),
-                                    this::writeFunctionTimer,
-                                    this::writeMeter))
-                            .collect(toList());
-
-                    String body = String.join("\n", bodyLines);
-
-                    if (config.compressed())
-                        con.setRequestProperty(HttpHeader.CONTENT_ENCODING, HttpContentCoding.GZIP);
-
-                    try (OutputStream os = con.getOutputStream()) {
-                        if (config.compressed()) {
-                            try (GZIPOutputStream gz = new GZIPOutputStream(os)) {
-                                gz.write(body.getBytes());
-                                gz.flush();
-                            }
-                        } else {
-                            os.write(body.getBytes());
-                        }
-                        os.flush();
-                    }
-
-                    int status = con.getResponseCode();
-
-                    if (status >= 200 && status < 300) {
-                        logger.info("successfully sent {} metrics to influx", batch.size());
-                        databaseExists = true;
-                    } else if (status >= 400) {
-                        if (logger.isErrorEnabled()) {
-                            logger.error("failed to send metrics: {}", IOUtils.toString(con.getErrorStream()));
-                        }
-                    } else {
-                        logger.error("failed to send metrics: http {}", status);
-                    }
-
-                } finally {
-                    quietlyCloseUrlConnection(con);
-                }
+                httpClient.post(influxEndpoint)
+                        .withBasicAuthentication(config.userName(), config.password())
+                        .withPlainText(batch.stream()
+                                .flatMap(m -> match(m,
+                                        gauge -> writeGauge(gauge.getId(), gauge.value()),
+                                        counter -> writeCounter(counter.getId(), counter.count()),
+                                        this::writeTimer,
+                                        this::writeSummary,
+                                        this::writeLongTaskTimer,
+                                        gauge -> writeGauge(gauge.getId(), gauge.value(getBaseTimeUnit())),
+                                        counter -> writeCounter(counter.getId(), counter.count()),
+                                        this::writeFunctionTimer,
+                                        this::writeMeter))
+                                .collect(joining("\n")))
+                        .compressWhen(config::compressed)
+                        .send()
+                        .onSuccess(response -> {
+                            logger.info("successfully sent {} metrics to influx", batch.size());
+                            databaseExists = true;
+                        })
+                        .onError(response -> logger.error("failed to send metrics to influx: {}", response.body()));
             }
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Malformed InfluxDB publishing endpoint, see '" + config.prefix() + ".uri'", e);
         } catch (Throwable e) {
-            logger.error("failed to send metrics", e);
-        }
-    }
-
-    private void authenticateRequest(HttpURLConnection con) {
-        if (config.userName() != null && config.password() != null) {
-            String encoded = Base64.getEncoder().encodeToString((config.userName() + ":" +
-                    config.password()).getBytes(StandardCharsets.UTF_8));
-            con.setRequestProperty(HttpHeader.AUTHORIZATION, "Basic " + encoded);
-        }
-    }
-
-    private void quietlyCloseUrlConnection(@Nullable HttpURLConnection con) {
-        try {
-            if (con != null) {
-                con.disconnect();
-            }
-        } catch (Exception ignore) {
+            logger.error("failed to send metrics to influx", e);
         }
     }
 
@@ -278,4 +217,35 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return TimeUnit.MILLISECONDS;
     }
 
+    public static class Builder {
+        private final InfluxConfig config;
+
+        private Clock clock = Clock.SYSTEM;
+        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        private HttpClient httpClient;
+
+        public Builder(InfluxConfig config) {
+            this.config = config;
+            this.httpClient = new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout());
+        }
+
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+
+        public Builder threadFactory(ThreadFactory threadFactory) {
+            this.threadFactory = threadFactory;
+            return this;
+        }
+
+        public Builder httpClient(HttpClient httpClient) {
+            this.httpClient = httpClient;
+            return this;
+        }
+
+        public InfluxMeterRegistry build() {
+            return new InfluxMeterRegistry(config, clock, threadFactory, httpClient);
+        }
+    }
 }

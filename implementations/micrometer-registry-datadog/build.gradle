@@ -7,5 +7,4 @@ dependencies {
     compile 'org.apache.commons:commons-text:latest.release'
 
     testCompile project(':micrometer-test')
-    testCompile 'io.projectreactor.ipc:reactor-netty:latest.release'
 }

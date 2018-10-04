@@ -15,40 +15,35 @@
  */
 package io.micrometer.atlas;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.netflix.spectator.atlas.AtlasConfig;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Clock;
 import org.junit.jupiter.api.Test;
-import reactor.ipc.netty.http.server.HttpServer;
-import reactor.ipc.netty.tcp.BlockingNettyContext;
+import org.junit.jupiter.api.extension.ExtendWith;
+import ru.lanwen.wiremock.ext.WiremockResolver;
 
-import java.net.URI;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+@ExtendWith(WiremockResolver.class)
 class AtlasMeterRegistryTest {
-    private AtlasConfig config = k -> null;
-    private AtlasMeterRegistry registry = new AtlasMeterRegistry(config, Clock.SYSTEM);
-
     @Issue("#484")
     @Test
-    void publishOneLastTimeOnClose() throws InterruptedException {
-        URI uri = URI.create(config.uri());
-        CountDownLatch latch = new CountDownLatch(1);
+    void publishOneLastTimeOnClose(@WiremockResolver.Wiremock WireMockServer server) {
+        AtlasConfig config = new AtlasConfig() {
+            @Override
+            public String get(String k) {
+                return null;
+            }
 
-        BlockingNettyContext blockingFacade = HttpServer.create(uri.getHost(), uri.getPort())
-                .start((req, resp) -> {
-                    latch.countDown();
-                    return resp.send();
-                });
-        try {
-            registry.close();
-            latch.await(10, TimeUnit.SECONDS);
-            assertThat(latch.getCount()).isZero();
-        } finally {
-            blockingFacade.shutdown();
-        }
+            @Override
+            public String uri() {
+                return server.baseUrl() + "/api/v1/publish";
+            }
+        };
+
+        server.stubFor(any(anyUrl()));
+        new AtlasMeterRegistry(config, Clock.SYSTEM).close();
+        server.verify(postRequestedFor(urlEqualTo("/api/v1/publish")));
     }
 }

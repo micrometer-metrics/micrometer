@@ -32,8 +32,8 @@ import reactor.core.Disposable;
 import reactor.core.Disposables;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.UnicastProcessor;
-import reactor.ipc.netty.NettyPipeline;
-import reactor.ipc.netty.udp.UdpClient;
+import reactor.netty.NettyPipeline;
+import reactor.netty.udp.UdpClient;
 import reactor.util.concurrent.Queues;
 
 import java.lang.reflect.InvocationTargetException;
@@ -200,12 +200,15 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     public void start() {
         if (started.compareAndSet(false, true) && lineSink == null) {
-            UdpClient.create(statsdConfig.host(), statsdConfig.port())
-                    .newHandler((in, out) -> out
+            UdpClient.create()
+                    .host(statsdConfig.host())
+                    .port(statsdConfig.port())
+                    .handle((in, out) -> out
                             .options(NettyPipeline.SendOptions::flushOnEach)
                             .sendString(processor)
                             .neverComplete()
                     )
+                    .connect()
                     .subscribe(client -> {
                         this.udpClient.replace(client);
 
