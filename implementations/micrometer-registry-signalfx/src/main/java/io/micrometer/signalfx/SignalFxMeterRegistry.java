@@ -107,7 +107,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
                         .flatMap(builders -> builders.map(builder -> builder.setTimestamp(timestamp).build()))
                         .forEach(session::setDatapoint);
 
-                logger.info("successfully sent " + batch.size() + " metrics to SignalFx");
+                logger.debug("Successfully sent {} metrics to SignalFx.", batch.size());
             } catch (Throwable e) {
                 logger.warn("failed to send metrics", e);
             }
