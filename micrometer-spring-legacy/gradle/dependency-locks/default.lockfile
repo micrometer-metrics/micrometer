@@ -38,6 +38,7 @@ info.ganglia.gmetric4j:gmetric4j:1.0.7
 io.dropwizard.metrics:metrics-core:3.1.5
 io.dropwizard.metrics:metrics-ganglia:3.1.5
 io.dropwizard.metrics:metrics-graphite:3.1.5
+io.dropwizard.metrics:metrics-jmx:4.0.3
 io.grpc:grpc-context:1.14.0
 io.grpc:grpc-core:1.14.0
 io.grpc:grpc-netty-shaded:1.14.0

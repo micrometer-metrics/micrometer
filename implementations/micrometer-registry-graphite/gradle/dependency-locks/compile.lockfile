@@ -13,14 +13,15 @@ com.google.j2objc:j2objc-annotations:1.1
 com.hazelcast:hazelcast:3.8.9
 com.netflix.archaius:archaius-core:0.4.1
 com.netflix.hystrix:hystrix-core:1.5.12
+com.rabbitmq:amqp-client:4.4.1
 com.squareup.okhttp3:okhttp:3.11.0
 com.squareup.okio:okio:1.14.0
 commons-configuration:commons-configuration:1.8
 commons-lang:commons-lang:2.6
 commons-logging:commons-logging:1.1.1
 dom4j:dom4j:1.6.1
-io.dropwizard.metrics:metrics-core:3.2.6
-io.dropwizard.metrics:metrics-graphite:3.2.6
+io.dropwizard.metrics:metrics-core:4.0.3
+io.dropwizard.metrics:metrics-graphite:4.0.3
 io.netty:netty-buffer:4.1.29.Final
 io.netty:netty-codec-http2:4.1.29.Final
 io.netty:netty-codec-http:4.1.29.Final

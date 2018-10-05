@@ -19,7 +19,7 @@ dependencies {
     }
 
     // instrumentation options
-    compile 'io.dropwizard.metrics:metrics-core:3.+', optional
+    compile 'io.dropwizard.metrics:metrics-core:4.0.+', optional
 
     // cache monitoring
     compile 'com.google.guava:guava:latest.release', optional

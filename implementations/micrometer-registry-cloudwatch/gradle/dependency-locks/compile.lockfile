@@ -27,7 +27,7 @@ commons-configuration:commons-configuration:1.8
 commons-lang:commons-lang:2.6
 commons-logging:commons-logging:1.2
 dom4j:dom4j:1.6.1
-io.dropwizard.metrics:metrics-core:3.2.6
+io.dropwizard.metrics:metrics-core:4.0.3
 io.netty:netty-buffer:4.1.29.Final
 io.netty:netty-codec-http2:4.1.29.Final
 io.netty:netty-codec-http:4.1.29.Final

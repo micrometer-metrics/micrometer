@@ -22,7 +22,7 @@ commons-configuration:commons-configuration:1.8
 commons-lang:commons-lang:2.6
 commons-logging:commons-logging:1.1.1
 dom4j:dom4j:1.6.1
-io.dropwizard.metrics:metrics-core:3.2.6
+io.dropwizard.metrics:metrics-core:4.0.3
 io.grpc:grpc-context:1.14.0
 io.grpc:grpc-core:1.14.0
 io.grpc:grpc-netty-shaded:1.14.0

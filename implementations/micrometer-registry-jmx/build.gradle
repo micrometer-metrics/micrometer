@@ -2,7 +2,7 @@ apply plugin: 'org.junit.platform.gradle.plugin'
 
 dependencies {
     compile project(':micrometer-core')
-    compile 'io.dropwizard.metrics:metrics-core:3.+'
+    compile 'io.dropwizard.metrics:metrics-jmx:4.0.+'
 
     testCompile project(':micrometer-test')
 }

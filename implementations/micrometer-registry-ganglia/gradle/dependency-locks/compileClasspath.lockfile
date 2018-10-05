@@ -20,7 +20,7 @@ commons-lang:commons-lang:2.6
 commons-logging:commons-logging:1.1.1
 dom4j:dom4j:1.6.1
 info.ganglia.gmetric4j:gmetric4j:1.0.7
-io.dropwizard.metrics:metrics-core:3.2.6
+io.dropwizard.metrics:metrics-core:4.0.3
 io.dropwizard.metrics:metrics-ganglia:3.2.6
 io.netty:netty-buffer:4.1.29.Final
 io.netty:netty-codec-http2:4.1.29.Final
