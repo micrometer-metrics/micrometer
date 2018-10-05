@@ -27,9 +27,7 @@ class WavefrontMeterRegistryCompatibilityTest extends MeterRegistryCompatibility
     public MeterRegistry registry() {
         return new WavefrontMeterRegistry(new WavefrontConfig() {
             @Override
-            public boolean enabled() {
-                return false;
-            }
+            public boolean enabled() { return false; }
 
             @Override
             @Nullable
@@ -38,8 +36,11 @@ class WavefrontMeterRegistryCompatibilityTest extends MeterRegistryCompatibility
             }
 
             @Override
-            public String uri() {
-                return WavefrontConfig.DEFAULT_PROXY.uri();
+            public boolean sendToProxy() { return true; }
+
+            @Override
+            public ProxyConfig proxyConfig() {
+                return WavefrontConfig.DEFAULT_PROXY.proxyConfig();
             }
         }, new MockClock());
     }
