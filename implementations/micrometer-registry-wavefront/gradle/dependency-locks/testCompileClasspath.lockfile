@@ -21,6 +21,7 @@ com.netflix.archaius:archaius-core:0.4.1
 com.netflix.hystrix:hystrix-core:1.5.12
 com.squareup.okhttp3:okhttp:3.11.0
 com.squareup.okio:okio:1.14.0
+com.wavefront:wavefront-sdk-java:0.9.0
 commons-codec:commons-codec:1.10
 commons-configuration:commons-configuration:1.8
 commons-lang:commons-lang:2.6
