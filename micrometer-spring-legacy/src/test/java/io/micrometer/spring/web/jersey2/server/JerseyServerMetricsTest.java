@@ -15,8 +15,11 @@
  */
 package io.micrometer.spring.web.jersey2.server;
 
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.spring.autoconfigure.jersey2.server.JerseyServerMetricsConfiguration;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Test;
@@ -32,6 +35,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import java.time.Duration;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = JerseyServerMetricsTest.JerseyApp.class,
@@ -51,9 +55,18 @@ public class JerseyServerMetricsTest {
     @Test
     public void jerseyWeb() {
         client.getForObject("/ping/1", String.class);
-        registry.get("http.server.requests")
-                .tag("uri", "/ping/{id}")
-                .timer();
+
+        RetryConfig retryConfig = RetryConfig.custom()
+                .maxAttempts(3)
+                .waitDuration(Duration.ofMillis(250))
+                .retryExceptions(MeterNotFoundException.class)
+                .build();
+
+        Retry.of("searchForTimer", retryConfig).executeRunnable(() ->
+                registry.get("http.server.requests")
+                        .tag("uri", "/ping/{id}")
+                        .timer()
+        );
     }
 
     @SpringBootApplication(scanBasePackages = "ignore")

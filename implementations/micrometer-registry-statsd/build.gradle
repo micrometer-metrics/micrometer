@@ -21,7 +21,7 @@ shadowJar {
     classifier = null
     dependencies {
         include(dependency('io.projectreactor:'))
-        include(dependency('io.projectreactor.ipc:'))
+        include(dependency('io.projectreactor.netty:'))
         include(dependency('org.reactivestreams:reactive-streams'))
         include(dependency('io.netty:'))
         include(dependency('org.pcollections:'))

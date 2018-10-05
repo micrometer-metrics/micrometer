@@ -28,4 +28,8 @@
     <root level="info">
         <appender-ref ref="STDOUT" />
     </root>
+
+    <logger name="org.apache.kafka" level="warn"/>
+
+    <logger name="org.eclipse.jetty" level="error"/>
 </configuration>

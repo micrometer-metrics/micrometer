@@ -4,7 +4,7 @@ plugins {
 
 dependencyManagement {
     imports {
-        mavenBom 'org.springframework.boot:spring-boot-dependencies:1.5.10.RELEASE'
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:1.5.14.RELEASE'
     }
     dependencies {
         // not necessary in real Boot 1.5.x apps because reactor is shaded inside the

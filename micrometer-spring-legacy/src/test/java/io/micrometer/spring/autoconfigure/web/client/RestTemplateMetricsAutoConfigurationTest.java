@@ -43,7 +43,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.AsyncRestTemplate;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
@@ -94,19 +95,13 @@ public class RestTemplateMetricsAutoConfigurationTest {
         // therefore a full absolute URI is used
         ListenableFuture<ResponseEntity<String>> future = asyncClient.getForEntity(rootUri + "/it/2", String.class);
 
-        final CyclicBarrier barrier = new CyclicBarrier(2);
-        future.addCallback(result -> {
-                    try {
-                        barrier.await();
-                    } catch (Throwable e) {
-                        fail("barrier broken", e);
-                    }
-                },
+        final CountDownLatch latch = new CountDownLatch(1);
+        future.addCallback(result -> latch.countDown(),
                 result -> fail("should not have failed"));
 
         future.get();
 
-        barrier.await();
+        latch.await(10, TimeUnit.SECONDS);
         assertThat(registry.get("http.client.requests").timer().count()).isEqualTo(1);
     }
 

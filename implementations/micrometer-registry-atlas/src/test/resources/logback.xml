@@ -34,6 +34,7 @@
     <logger name="WireMock" level="warn"/>
     <logger name="ru.lanwen.wiremock" level="warn"/>
 
-
     <logger name="org.eclipse.jetty" level="error"/>
+
+    <logger name="com.netflix.spectator.atlas" level="warn"/>
 </configuration>

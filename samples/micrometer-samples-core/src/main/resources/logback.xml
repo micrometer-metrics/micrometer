@@ -29,5 +29,4 @@
         <appender-ref ref="STDOUT" />
     </root>
 
-    <logger name="reactor" level="warn"/>
 </configuration>

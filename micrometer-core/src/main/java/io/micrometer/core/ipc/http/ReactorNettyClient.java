@@ -37,11 +37,11 @@ public class ReactorNettyClient implements HttpClient {
         Tuple2<Integer, String> response = httpClient.request(toNettyHttpMethod(request.getMethod()))
                 .uri(url.toString())
                 .send(ByteBufFlux.fromString(Mono.just(new String(request.getEntity()))))
-                .responseSingle((r, body) -> Mono.just(r.status().code()).zipWith(body.asString()))
+                .responseSingle((r, body) -> Mono.just(r.status().code()).zipWith(body.asString().defaultIfEmpty("")))
+                .log()
                 .block();
 
-        return response == null ?
-                new HttpResponse(500, null) : new HttpResponse(response.getT1(), response.getT2());
+        return new HttpResponse(response.getT1(), response.getT2());
     }
 
     private io.netty.handler.codec.http.HttpMethod toNettyHttpMethod(HttpMethod method) {

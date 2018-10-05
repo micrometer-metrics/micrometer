@@ -7,7 +7,7 @@ apply plugin: 'nebula.facet'
 
 dependencyManagement {
     imports {
-        mavenBom 'org.springframework.boot:spring-boot-dependencies:1.5.10.RELEASE'
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:1.5.14.RELEASE'
     }
     dependencies {
         dependency 'org.assertj:assertj-core:3.8.0'
@@ -70,6 +70,8 @@ dependencies {
     testCompile 'org.springframework.integration:spring-integration-xml'
 
     testCompile 'org.springframework.security:spring-security-test'
+
+    testCompile 'io.github.resilience4j:resilience4j-retry:latest.release'
 
     // required for jdk 9 testing
     testRuntime 'javax.xml.bind:jaxb-api:2.3.0'

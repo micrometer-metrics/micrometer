@@ -18,7 +18,6 @@ package io.micrometer.graphite;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.lang.Nullable;
 import io.netty.channel.ChannelOption;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.netty.Connection;
@@ -32,8 +31,6 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-// FIXME reactor-netty 0.8 UDP server tests fail, and there is no obvious way to make this work right now
-@Disabled
 class GraphiteMeterRegistryTest {
     /**
      * A port that is NOT the default for DogStatsD or Telegraf, so these unit tests
@@ -93,7 +90,6 @@ class GraphiteMeterRegistryTest {
                 .handle((in, out) -> {
                     in.receive()
                             .asString()
-                            .log()
                             .subscribe(line -> {
                                 assertThat(line).startsWith("APPNAME.myTimer");
                                 receiveLatch.countDown();
