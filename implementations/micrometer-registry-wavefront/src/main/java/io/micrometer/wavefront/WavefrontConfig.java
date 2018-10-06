@@ -88,6 +88,17 @@ public interface WavefrontConfig extends StepRegistryConfig {
     }
 
     /**
+     * @return The port to send to when sending histogram distributions to a Wavefront proxy.
+     * Default is 40000.
+     * <p>For details on configuring the histogram proxy port, see
+     * https://docs.wavefront.com/proxies_installing.html#configuring-proxy-ports-for-metrics-histograms-and-traces
+     */
+    default int distributionPort() {
+        String v = get(prefix() + ".distributionPort");
+        return v == null ? 40000 : Integer.parseInt(v);
+    }
+
+    /**
      * @return Unique identifier for the app instance that is publishing metrics to Wavefront. Defaults to the local host name.
      */
     default String source() {
@@ -111,6 +122,33 @@ public interface WavefrontConfig extends StepRegistryConfig {
     default String apiToken() {
         String v = get(prefix() + ".apiToken");
         return v == null ? null : v.trim().length() > 0 ? v : null;
+    }
+
+    /**
+     * @return {@code true} to report histogram distributions aggregated into minute intervals.
+     * Default is {@code true}.
+     */
+    default boolean reportMinuteDistribution() {
+        String v = get(prefix() + ".reportMinuteDistribution");
+        return v == null || Boolean.valueOf(v);
+    }
+
+    /**
+     * @return {@code true} to report histogram distributions aggregated into hour intervals.
+     * Default is {@code false}.
+     */
+    default boolean reportHourDistribution() {
+        String v = get(prefix() + ".reportHourDistribution");
+        return Boolean.valueOf(v);
+    }
+
+    /**
+     * @return {@code true} to report histogram distributions aggregated into day intervals.
+     * Default is {@code false}.
+     */
+    default boolean reportDayDistribution() {
+        String v = get(prefix() + ".reportDayDistribution");
+        return Boolean.valueOf(v);
     }
 
     /**

@@ -57,6 +57,21 @@ public class WavefrontProperties extends StepRegistryProperties {
      */
     private String globalPrefix;
 
+    /**
+     * Report histogram distributions aggregated into minute intervals.
+     */
+    private Boolean reportMinuteDistribution = true;
+
+    /**
+     * Report histogram distributions aggregated into hour intervals.
+     */
+    private Boolean reportHourDistribution = true;
+
+    /**
+     * Report histogram distributions aggregated into day intervals.
+     */
+    private Boolean reportDayDistribution = true;
+
     public URI getUri() {
         return this.uri;
     }
@@ -99,4 +114,27 @@ public class WavefrontProperties extends StepRegistryProperties {
         this.globalPrefix = globalPrefix;
     }
 
+    public Boolean getReportMinuteDistribution() {
+        return reportMinuteDistribution;
+    }
+
+    public void setReportMinuteDistribution(Boolean reportMinuteDistribution) {
+        this.reportMinuteDistribution = reportMinuteDistribution;
+    }
+
+    public Boolean getReportHourDistribution() {
+        return reportHourDistribution;
+    }
+
+    public void setReportHourDistribution(Boolean reportHourDistribution) {
+        this.reportHourDistribution = reportHourDistribution;
+    }
+
+    public Boolean getReportDayDistribution() {
+        return reportDayDistribution;
+    }
+
+    public void setReportDayDistribution(Boolean reportDayDistribution) {
+        this.reportDayDistribution = reportDayDistribution;
+    }
 }

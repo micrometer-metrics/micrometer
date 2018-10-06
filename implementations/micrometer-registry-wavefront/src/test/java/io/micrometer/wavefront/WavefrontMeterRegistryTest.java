@@ -15,10 +15,14 @@
  */
 package io.micrometer.wavefront;
 
+import com.wavefront.sdk.common.Pair;
+import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,11 +50,12 @@ class WavefrontMeterRegistryTest {
         }
     };
 
-    private final WavefrontMeterRegistry registry = new WavefrontMeterRegistry(config, new MockClock());
+    private final MockClock clock = new MockClock();
+    private final WavefrontMeterRegistry registry = new WavefrontMeterRegistry(config, clock);
 
     @Test
     void addMetric() {
-        Stream.Builder<String> metricsStreamBuilder = Stream.builder();
+        Stream.Builder<WavefrontMetricLineData> metricsStreamBuilder = Stream.builder();
         Meter.Id id = registry.counter("name").getId();
         registry.addMetric(metricsStreamBuilder, id, null, System.currentTimeMillis(), 1d);
         assertThat(metricsStreamBuilder.build().count()).isEqualTo(1);
@@ -58,10 +63,22 @@ class WavefrontMeterRegistryTest {
 
     @Test
     void addMetricWhenNanOrInfinityShouldNotAdd() {
-        Stream.Builder<String> metricsStreamBuilder = Stream.builder();
+        Stream.Builder<WavefrontMetricLineData> metricsStreamBuilder = Stream.builder();
         Meter.Id id = registry.counter("name").getId();
         registry.addMetric(metricsStreamBuilder, id, null, System.currentTimeMillis(), Double.NaN);
         registry.addMetric(metricsStreamBuilder, id, null, System.currentTimeMillis(), Double.POSITIVE_INFINITY);
         assertThat(metricsStreamBuilder.build().count()).isEqualTo(0);
+    }
+
+    @Test
+    void addDistribution() {
+        Stream.Builder<WavefrontMetricLineData> metricsStreamBuilder = Stream.builder();
+        Meter.Id id = registry.summary("name").getId();
+        List<Pair<Double, Integer>> centroids = Arrays.asList(new Pair<>(1d, 1));
+        List<WavefrontHistogramImpl.Distribution> distributions = Arrays.asList(
+            new WavefrontHistogramImpl.Distribution(System.currentTimeMillis(), centroids)
+        );
+        registry.addDistribution(metricsStreamBuilder, id, distributions);
+        assertThat(metricsStreamBuilder.build().count()).isEqualTo(1);
     }
 }
