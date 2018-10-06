@@ -120,8 +120,7 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
 
         // the long running task is timed
         assertThat(registry.get("long.task.in.request")
-            .tags(Tags.of(DefaultJerseyTagsProvider.TAG_METHOD, "GET",
-                DefaultJerseyTagsProvider.TAG_URI, "/long-timed"))
+            .tags(Tags.of("method", "GET", "uri", "/long-timed"))
             .longTaskTimer().activeTasks())
             .isEqualTo(1);
 
@@ -169,8 +168,6 @@ public class MetricsRequestEventListenerTimedTest extends JerseyTest {
     }
 
     private static Iterable<Tag> tagsFrom(String uri, int status) {
-        return Tags.of(DefaultJerseyTagsProvider.TAG_METHOD, "GET",
-            DefaultJerseyTagsProvider.TAG_URI, uri, DefaultJerseyTagsProvider.TAG_STATUS,
-            String.valueOf(status), DefaultJerseyTagsProvider.TAG_EXCEPTION, "None");
+        return Tags.of("method", "GET", "uri", uri, "status", String.valueOf(status), "exception", "None");
     }
 }

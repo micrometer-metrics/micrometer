@@ -65,6 +65,17 @@ public final class StringUtils {
     }
 
     /**
+     * Check if the String has any character.
+     *
+     * @param string String to check
+     * @return {@code true} if the String has any character
+     * @since 1.1.0
+     */
+    public static boolean isNotEmpty(@Nullable String string) {
+        return !isEmpty(string);
+    }
+
+    /**
      * Truncate the String to the max length.
      *
      * @param string String to truncate

@@ -33,7 +33,10 @@ import java.util.logging.Logger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
+ * Tests for {@link MetricsApplicationEventListener}.
+ *
  * @author Michael Weirauch
+ * @author Johnny Lim
  */
 public class MetricsRequestEventListenerTest extends JerseyTest {
 
@@ -69,19 +72,19 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
         target("sub-resource/sub-hello/peter").request().get();
 
         assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("/", 200, null)).timer().count())
+            .tags(tagsFrom("root", "200", null)).timer().count())
             .isEqualTo(1);
 
         assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("/hello", 200, null)).timer().count())
+            .tags(tagsFrom("/hello", "200", null)).timer().count())
             .isEqualTo(2);
 
         assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("/hello/{name}", 200, null)).timer().count())
+            .tags(tagsFrom("/hello/{name}", "200", null)).timer().count())
             .isEqualTo(1);
 
         assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("/sub-resource/sub-hello/{name}", 200, null)).timer().count())
+            .tags(tagsFrom("/sub-resource/sub-hello/{name}", "200", null)).timer().count())
             .isEqualTo(1);
 
         // assert we are not auto-timing long task @Timed
@@ -100,7 +103,7 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
         }
 
         assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("NOT_FOUND", 404, null)).timer().count())
+            .tags(tagsFrom("NOT_FOUND", "404", null)).timer().count())
             .isEqualTo(2);
     }
 
@@ -110,11 +113,11 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
         target("redirect/307").request().get();
 
         assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("REDIRECTION", 302, null)).timer().count())
+            .tags(tagsFrom("REDIRECTION", "302", null)).timer().count())
             .isEqualTo(1);
 
         assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("REDIRECTION", 307, null)).timer().count())
+            .tags(tagsFrom("REDIRECTION", "307", null)).timer().count())
             .isEqualTo(1);
     }
 
@@ -134,25 +137,23 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
         }
 
         assertThat(registry.get(METRIC_NAME)
-            .tags(tagsFrom("/throws-exception", 500, "IllegalArgumentException"))
+            .tags(tagsFrom("/throws-exception", "UNKNOWN", "IllegalArgumentException"))
             .timer().count())
             .isEqualTo(1);
 
         assertThat(registry.get(METRIC_NAME).tags(
-            tagsFrom("/throws-webapplication-exception", 401, "NotAuthorizedException"))
+            tagsFrom("/throws-webapplication-exception", "401", "NotAuthorizedException"))
             .timer().count())
             .isEqualTo(1);
 
         assertThat(registry.get(METRIC_NAME).tags(
-            tagsFrom("/throws-mappable-exception", 410, "ResourceGoneException"))
+            tagsFrom("/throws-mappable-exception", "410", "ResourceGoneException"))
             .timer().count())
             .isEqualTo(1);
     }
 
-    private static Iterable<Tag> tagsFrom(String uri, int status, String exception) {
-        return Tags.of(DefaultJerseyTagsProvider.TAG_METHOD, "GET",
-            DefaultJerseyTagsProvider.TAG_URI, uri, DefaultJerseyTagsProvider.TAG_STATUS,
-            String.valueOf(status), DefaultJerseyTagsProvider.TAG_EXCEPTION,
-            exception == null ? "None" : exception);
+    private static Iterable<Tag> tagsFrom(String uri, String status, String exception) {
+        return Tags.of("method", "GET", "uri", uri, "status", String.valueOf(status),
+                "exception", exception == null ? "None" : exception);
     }
 }

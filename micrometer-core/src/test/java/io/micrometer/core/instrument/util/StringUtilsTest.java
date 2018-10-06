@@ -36,4 +36,19 @@ class StringUtilsTest {
         assertThat(StringUtils.truncate("123", 5)).isEqualTo("123");
     }
 
+    @Test
+    void isNotEmptyWhenNullShouldBeFalse() {
+        assertThat(StringUtils.isNotEmpty(null)).isFalse();
+    }
+
+    @Test
+    void isNotEmptyWhenEmptyShouldBeFalse() {
+        assertThat(StringUtils.isNotEmpty("")).isFalse();
+    }
+
+    @Test
+    void isNotEmptyWhenHasAnyCharacterShouldBeFalse() {
+        assertThat(StringUtils.isNotEmpty(" ")).isTrue();
+    }
+
 }
