@@ -34,74 +34,76 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static io.micrometer.jersey2.server.DefaultJerseyTagsProvider.*;
 import static java.util.stream.StreamSupport.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
+ * Tests for {@link DefaultJerseyTagsProvider}.
+ *
  * @author Michael Weirauch
+ * @author Johnny Lim
  */
 public class DefaultJerseyTagsProviderTest {
 
-    private final DefaultJerseyTagsProvider uut = new DefaultJerseyTagsProvider();
+    private final DefaultJerseyTagsProvider tagsProvider = new DefaultJerseyTagsProvider();
 
     @Test
     public void testRootPath() {
-        assertThat(uut.httpRequestTags(event(200, null, "/", (String[]) null)))
-            .containsExactlyInAnyOrder(tagsFrom("/", 200, null));
+        assertThat(tagsProvider.httpRequestTags(event(200, null, "/", (String[]) null)))
+            .containsExactlyInAnyOrder(tagsFrom("root", 200, null, "SUCCESS"));
     }
 
     @Test
     public void templatedPathsAreReturned() {
-        assertThat(uut.httpRequestTags(event(200, null, "/", "/", "/hello/{name}")))
-            .containsExactlyInAnyOrder(tagsFrom("/hello/{name}", 200, null));
+        assertThat(tagsProvider.httpRequestTags(event(200, null, "/", "/", "/hello/{name}")))
+            .containsExactlyInAnyOrder(tagsFrom("/hello/{name}", 200, null, "SUCCESS"));
     }
 
     @Test
     public void applicationPathIsPresent() {
-        assertThat(uut.httpRequestTags(event(200, null, "/app", "/", "/hello")))
-            .containsExactlyInAnyOrder(tagsFrom("/app/hello", 200, null));
+        assertThat(tagsProvider.httpRequestTags(event(200, null, "/app", "/", "/hello")))
+            .containsExactlyInAnyOrder(tagsFrom("/app/hello", 200, null, "SUCCESS"));
     }
 
     @Test
     public void notFoundsAreShunted() {
-        assertThat(uut.httpRequestTags(event(404, null, "/app", "/", "/not-found")))
-            .containsExactlyInAnyOrder(tagsFrom("NOT_FOUND", 404, null));
+        assertThat(tagsProvider.httpRequestTags(event(404, null, "/app", "/", "/not-found")))
+            .containsExactlyInAnyOrder(tagsFrom("NOT_FOUND", 404, null, "CLIENT_ERROR"));
     }
 
     @Test
     public void redirectsAreShunted() {
-        assertThat(uut.httpRequestTags(event(301, null, "/app", "/", "/redirect301")))
-            .containsExactlyInAnyOrder(tagsFrom("REDIRECTION", 301, null));
-        assertThat(uut.httpRequestTags(event(302, null, "/app", "/", "/redirect302")))
-            .containsExactlyInAnyOrder(tagsFrom("REDIRECTION", 302, null));
-        assertThat(uut.httpRequestTags(event(399, null, "/app", "/", "/redirect399")))
-            .containsExactlyInAnyOrder(tagsFrom("REDIRECTION", 399, null));
+        assertThat(tagsProvider.httpRequestTags(event(301, null, "/app", "/", "/redirect301")))
+            .containsExactlyInAnyOrder(tagsFrom("REDIRECTION", 301, null, "REDIRECTION"));
+        assertThat(tagsProvider.httpRequestTags(event(302, null, "/app", "/", "/redirect302")))
+            .containsExactlyInAnyOrder(tagsFrom("REDIRECTION", 302, null, "REDIRECTION"));
+        assertThat(tagsProvider.httpRequestTags(event(399, null, "/app", "/", "/redirect399")))
+            .containsExactlyInAnyOrder(tagsFrom("REDIRECTION", 399, null, "REDIRECTION"));
     }
 
     @Test
     @SuppressWarnings("serial")
     public void exceptionsAreMappedCorrectly() {
-        assertThat(uut.httpRequestTags(
+        assertThat(tagsProvider.httpRequestTags(
             event(500, new IllegalArgumentException(), "/app", (String[]) null)))
-            .containsExactlyInAnyOrder(tagsFrom("/app", 500, "IllegalArgumentException"));
-        assertThat(uut.httpRequestTags(event(500,
+            .containsExactlyInAnyOrder(tagsFrom("/app", 500, "IllegalArgumentException", "SERVER_ERROR"));
+        assertThat(tagsProvider.httpRequestTags(event(500,
             new IllegalArgumentException(new NullPointerException()), "/app", (String[]) null)))
-            .containsExactlyInAnyOrder(tagsFrom("/app", 500, "NullPointerException"));
-        assertThat(uut.httpRequestTags(
+            .containsExactlyInAnyOrder(tagsFrom("/app", 500, "NullPointerException", "SERVER_ERROR"));
+        assertThat(tagsProvider.httpRequestTags(
             event(406, new NotAcceptableException(), "/app", (String[]) null)))
-            .containsExactlyInAnyOrder(tagsFrom("/app", 406, "NotAcceptableException"));
-        assertThat(uut.httpRequestTags(
+            .containsExactlyInAnyOrder(tagsFrom("/app", 406, "NotAcceptableException", "CLIENT_ERROR"));
+        assertThat(tagsProvider.httpRequestTags(
             event(500, new Exception("anonymous") { }, "/app", (String[]) null)))
-            .containsExactlyInAnyOrder(tagsFrom("/app", 500, "io.micrometer.jersey2.server.DefaultJerseyTagsProviderTest$1"));
+            .containsExactlyInAnyOrder(tagsFrom("/app", 500, "io.micrometer.jersey2.server.DefaultJerseyTagsProviderTest$1", "SERVER_ERROR"));
     }
 
     @Test
     public void longRequestTags() {
-        assertThat(uut.httpLongRequestTags(event(0, null, "/app", (String[]) null)))
-            .containsExactlyInAnyOrder(Tag.of(TAG_METHOD, "GET"), Tag.of(TAG_URI, "/app"));
+        assertThat(tagsProvider.httpLongRequestTags(event(0, null, "/app", (String[]) null)))
+            .containsExactlyInAnyOrder(Tag.of("method", "GET"), Tag.of("uri", "/app"));
     }
 
     private static RequestEvent event(Integer status, Exception exception, String baseUri, String... uriTemplateStrings) {
@@ -131,12 +133,13 @@ public class DefaultJerseyTagsProviderTest {
         return builder.build(Type.FINISHED);
     }
 
-    private static Tag[] tagsFrom(String uri, int status, String exception) {
+    private static Tag[] tagsFrom(String uri, int status, String exception, String outcome) {
         Iterable<Tag> expectedTags = Tags.of(
-            TAG_METHOD, "GET",
-            TAG_URI, uri,
-            TAG_STATUS, String.valueOf(status),
-            TAG_EXCEPTION, exception == null ? "None" : exception
+            "method", "GET",
+            "uri", uri,
+            "status", String.valueOf(status),
+            "exception", exception == null ? "None" : exception,
+            "outcome", outcome
         );
 
         return stream(expectedTags.spliterator(), false)
