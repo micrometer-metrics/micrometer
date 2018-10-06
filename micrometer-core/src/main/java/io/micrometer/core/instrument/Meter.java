@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.distribution.HistogramGauges;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -66,24 +67,24 @@ public interface Meter extends AutoCloseable {
         /**
          * Match a {@link Meter} with series of dedicated functions for specific {@link Meter}s and
          * return a result from the matched function.
-         *
+         * <p>
          * NOTE: This method contract will change in minor releases if ever a new {@link Meter} type is created.
          * In this case only, this is considered a feature. By using this method, you are declaring that
          * you want to be sure to handle all types of meters. A breaking API change during the introduction of
          * a new {@link Meter} indicates that there is a new meter type for you to consider and the compiler will
          * effectively require you to consider it.
          *
-         * @param meter meter to match
-         * @param visitGauge function to apply for {@link Gauge}
-         * @param visitCounter function to apply for {@link Counter}
-         * @param visitTimer function to apply for {@link Timer}
-         * @param visitSummary function to apply for {@link DistributionSummary}
-         * @param visitLongTaskTimer function to apply for {@link LongTaskTimer}
-         * @param visitTimeGauge function to apply for {@link TimeGauge}
+         * @param meter                meter to match
+         * @param visitGauge           function to apply for {@link Gauge}
+         * @param visitCounter         function to apply for {@link Counter}
+         * @param visitTimer           function to apply for {@link Timer}
+         * @param visitSummary         function to apply for {@link DistributionSummary}
+         * @param visitLongTaskTimer   function to apply for {@link LongTaskTimer}
+         * @param visitTimeGauge       function to apply for {@link TimeGauge}
          * @param visitFunctionCounter function to apply for {@link FunctionCounter}
-         * @param visitFunctionTimer function to apply for {@link FunctionTimer}
-         * @param visitMeter function to apply as a fallback
-         * @param <T> return type of function to apply
+         * @param visitFunctionTimer   function to apply for {@link FunctionTimer}
+         * @param visitMeter           function to apply as a fallback
+         * @param <T>                  return type of function to apply
          * @return return value from the applied function
          * @since 1.1.0
          */
@@ -97,7 +98,9 @@ public interface Meter extends AutoCloseable {
                                   Function<FunctionCounter, T> visitFunctionCounter,
                                   Function<FunctionTimer, T> visitFunctionTimer,
                                   Function<Meter, T> visitMeter) {
-            if (meter instanceof Gauge) {
+            if (meter instanceof TimeGauge) {
+                return visitTimeGauge.apply((TimeGauge) meter);
+            } else if (meter instanceof Gauge) {
                 return visitGauge.apply((Gauge) meter);
             } else if (meter instanceof Counter) {
                 return visitCounter.apply((Counter) meter);
@@ -107,14 +110,64 @@ public interface Meter extends AutoCloseable {
                 return visitSummary.apply((DistributionSummary) meter);
             } else if (meter instanceof LongTaskTimer) {
                 return visitLongTaskTimer.apply((LongTaskTimer) meter);
-            } else if (meter instanceof TimeGauge) {
-                return visitTimeGauge.apply((TimeGauge) meter);
             } else if (meter instanceof FunctionCounter) {
                 return visitFunctionCounter.apply((FunctionCounter) meter);
             } else if (meter instanceof FunctionTimer) {
                 return visitFunctionTimer.apply((FunctionTimer) meter);
             } else {
                 return visitMeter.apply(meter);
+            }
+        }
+
+        /**
+         * Match a {@link Meter} with series of dedicated functions for specific {@link Meter}s.
+         * <p>
+         * NOTE: This method contract will change in minor releases if ever a new {@link Meter} type is created.
+         * In this case only, this is considered a feature. By using this method, you are declaring that
+         * you want to be sure to handle all types of meters. A breaking API change during the introduction of
+         * a new {@link Meter} indicates that there is a new meter type for you to consider and the compiler will
+         * effectively require you to consider it.
+         *
+         * @param meter                meter to match
+         * @param visitGauge           function to apply for {@link Gauge}
+         * @param visitCounter         function to apply for {@link Counter}
+         * @param visitTimer           function to apply for {@link Timer}
+         * @param visitSummary         function to apply for {@link DistributionSummary}
+         * @param visitLongTaskTimer   function to apply for {@link LongTaskTimer}
+         * @param visitTimeGauge       function to apply for {@link TimeGauge}
+         * @param visitFunctionCounter function to apply for {@link FunctionCounter}
+         * @param visitFunctionTimer   function to apply for {@link FunctionTimer}
+         * @param visitMeter           function to apply as a fallback
+         * @since 1.1.0
+         */
+        public static void match(Meter meter,
+                                 Consumer<Gauge> visitGauge,
+                                 Consumer<Counter> visitCounter,
+                                 Consumer<Timer> visitTimer,
+                                 Consumer<DistributionSummary> visitSummary,
+                                 Consumer<LongTaskTimer> visitLongTaskTimer,
+                                 Consumer<TimeGauge> visitTimeGauge,
+                                 Consumer<FunctionCounter> visitFunctionCounter,
+                                 Consumer<FunctionTimer> visitFunctionTimer,
+                                 Consumer<Meter> visitMeter) {
+            if (meter instanceof TimeGauge) {
+                visitTimeGauge.accept((TimeGauge) meter);
+            } else if (meter instanceof Gauge) {
+                visitGauge.accept((Gauge) meter);
+            } else if (meter instanceof Counter) {
+                visitCounter.accept((Counter) meter);
+            } else if (meter instanceof Timer) {
+                visitTimer.accept((Timer) meter);
+            } else if (meter instanceof DistributionSummary) {
+                visitSummary.accept((DistributionSummary) meter);
+            } else if (meter instanceof LongTaskTimer) {
+                visitLongTaskTimer.accept((LongTaskTimer) meter);
+            } else if (meter instanceof FunctionCounter) {
+                visitFunctionCounter.accept((FunctionCounter) meter);
+            } else if (meter instanceof FunctionTimer) {
+                visitFunctionTimer.accept((FunctionTimer) meter);
+            } else {
+                visitMeter.accept(meter);
             }
         }
     }
