@@ -14,4 +14,7 @@
 # limitations under the License.
 #
 
-management.metrics.export.ganglia.enabled: true
+management.metrics.export.ganglia:
+  enabled: true
+  step: PT10S
+  addressing-mode: unicast

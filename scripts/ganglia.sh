@@ -5,6 +5,8 @@ if [ ! -f .ganglia ]; then
     mkdir -p .ganglia/data
 fi
 
+rm -r $(pwd)/.ganglia
+
 docker run \
   -v $(pwd)/.ganglia/etc:/etc/ganglia \
   -v $(pwd)/.ganglia/data:/var/lib/ganglia \

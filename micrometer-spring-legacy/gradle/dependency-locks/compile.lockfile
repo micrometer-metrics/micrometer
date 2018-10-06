@@ -34,9 +34,8 @@ commons-configuration:commons-configuration:1.8
 commons-lang:commons-lang:2.6
 commons-logging:commons-logging:1.2
 dom4j:dom4j:1.6.1
-info.ganglia.gmetric4j:gmetric4j:1.0.7
+info.ganglia.gmetric4j:gmetric4j:1.0.10
 io.dropwizard.metrics:metrics-core:3.1.5
-io.dropwizard.metrics:metrics-ganglia:3.1.5
 io.dropwizard.metrics:metrics-graphite:3.1.5
 io.dropwizard.metrics:metrics-jmx:4.0.3
 io.grpc:grpc-context:1.14.0
@@ -72,7 +71,7 @@ javax.validation:validation-api:1.1.0.Final
 javax.ws.rs:javax.ws.rs-api:2.0.1
 joda-time:joda-time:2.9.9
 net.sf.ehcache:ehcache:2.10.5
-org.acplt:oncrpc:1.0.7
+org.acplt.remotetea:remotetea-oncrpc:1.1.2
 org.apache.commons:commons-lang3:3.8.1
 org.apache.commons:commons-text:1.5
 org.apache.geronimo.specs:geronimo-jta_1.1_spec:1.1.1

@@ -26,9 +26,8 @@ commons-configuration:commons-configuration:1.8
 commons-lang:commons-lang:2.6
 commons-logging:commons-logging:1.2
 dom4j:dom4j:1.6.1
-info.ganglia.gmetric4j:gmetric4j:1.0.7
+info.ganglia.gmetric4j:gmetric4j:1.0.10
 io.dropwizard.metrics:metrics-core:4.0.3
-io.dropwizard.metrics:metrics-ganglia:3.2.6
 io.netty:netty-buffer:4.1.29.Final
 io.netty:netty-codec-http2:4.1.29.Final
 io.netty:netty-codec-http:4.1.29.Final
@@ -53,7 +52,7 @@ net.minidev:accessors-smart:1.2
 net.minidev:json-smart:2.3
 net.sf.ehcache:ehcache:2.10.4
 net.sf.jopt-simple:jopt-simple:5.0.3
-org.acplt:oncrpc:1.0.7
+org.acplt.remotetea:remotetea-oncrpc:1.1.2
 org.antlr:antlr4-runtime:4.7.1
 org.apache.commons:commons-lang3:3.7
 org.apache.httpcomponents:httpclient:4.5.5

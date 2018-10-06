@@ -2,7 +2,7 @@ apply plugin: 'org.junit.platform.gradle.plugin'
 
 dependencies {
     compile project(':micrometer-core')
-    compile 'io.dropwizard.metrics:metrics-ganglia:3.+'
+    compile 'info.ganglia.gmetric4j:gmetric4j:latest.release'
 
     testCompile project(':micrometer-test')
 }

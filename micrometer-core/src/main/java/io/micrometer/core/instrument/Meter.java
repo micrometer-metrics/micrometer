@@ -140,7 +140,7 @@ public interface Meter extends AutoCloseable {
          * @param visitMeter           function to apply as a fallback
          * @since 1.1.0
          */
-        public static void match(Meter meter,
+        public static void consume(Meter meter,
                                  Consumer<Gauge> visitGauge,
                                  Consumer<Counter> visitCounter,
                                  Consumer<Timer> visitTimer,
