@@ -387,6 +387,21 @@ public class SampleRegistries {
     }
 
     public static WavefrontMeterRegistry wavefrontDirect(String apiToken) {
+        WavefrontConfig.DirectIngestionConfig directIngestionConfig = new WavefrontConfig.DirectIngestionConfig() {
+            @Override
+            public String get(String key) { return null; }
+
+            @Override
+            public String uri() {
+                return "https://longboard.wavefront.com";
+            }
+
+            @Override
+            public String apiToken() {
+                return apiToken;
+            }
+        };
+
         return new WavefrontMeterRegistry(new WavefrontConfig() {
             @Override
             public String get(String key) {
@@ -394,13 +409,11 @@ public class SampleRegistries {
             }
 
             @Override
-            public String apiToken() {
-                return apiToken;
-            }
+            public boolean sendToProxy() { return false; }
 
             @Override
-            public String uri() {
-                return "https://longboard.wavefront.com";
+            public DirectIngestionConfig directIngestionConfig() {
+                return directIngestionConfig;
             }
         }, Clock.SYSTEM);
     }

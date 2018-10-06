@@ -15,6 +15,7 @@
  */
 package io.micrometer.wavefront;
 
+import io.micrometer.core.instrument.config.MeterRegistryConfig;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
@@ -31,7 +32,7 @@ import java.time.Duration;
  */
 public interface WavefrontConfig extends StepRegistryConfig {
     /**
-     * Publishes to a wavefront sidecar running out of process.
+     * Publishes to the Wavefront proxy running out of process.
      */
     WavefrontConfig DEFAULT_PROXY = new WavefrontConfig() {
         @Override
@@ -40,14 +41,16 @@ public interface WavefrontConfig extends StepRegistryConfig {
         }
 
         @Override
-        public String uri() {
-            String v = get(prefix() + ".uri");
-            return v == null ? "proxy://localhost:2878" : v;
+        public boolean sendToProxy() { return true; }
+
+        @Override
+        public ProxyConfig proxyConfig() {
+            return DEFAULT_PROXY_CONFIG;
         }
     };
 
     /**
-     * Publishes directly to the Wavefront API, not passing through a sidecar.
+     * Publishes directly to the Wavefront API, not passing through the proxy.
      */
     WavefrontConfig DEFAULT_DIRECT = new WavefrontConfig() {
         @Override
@@ -56,11 +59,72 @@ public interface WavefrontConfig extends StepRegistryConfig {
         }
 
         @Override
+        public boolean sendToProxy() { return false; }
+
+        @Override
+        public DirectIngestionConfig directIngestionConfig() {
+            return DEFAULT_DIRECT_CONFIG;
+        }
+    };
+
+    /**
+     * The default configuration for the Wavefront proxy component of WavefrontConfig:
+     *  hostName: localhost
+     *  metricsPort: 2878
+     *  distributionPort: 40000
+     */
+    WavefrontConfig.ProxyConfig DEFAULT_PROXY_CONFIG = new ProxyConfig() {
+        @Override
+        public String get(String key) { return null; }
+
+        @Override
+        public String hostName() {
+            String v = get(prefix() + ".hostName");
+            return v == null ? "localhost" : v;
+        }
+
+        @Override
+        public Integer metricsPort() {
+            String v = get(prefix() + ".metricsPort");
+            return v == null ? 2878 : Integer.parseInt(v);
+        }
+
+        @Override
+        public Integer distributionPort() {
+            String v = get(prefix() + ".distributionPort");
+            return v == null ? 40000 : Integer.parseInt(v);
+        }
+    };
+
+    /**
+     * The default configuration for the direct-to-Wavefront component of WavefrontConfig:
+     *  uri: https://longboard.wavefront.com
+     *  apiToken: null
+     *  maxQueueSize: null
+     *  batchSize: null
+     */
+    WavefrontConfig.DirectIngestionConfig DEFAULT_DIRECT_CONFIG = new DirectIngestionConfig() {
+        @Override
+        public String get(String key) { return null; }
+
+        @Override
         public String uri() {
             String v = get(prefix() + ".uri");
             return v == null ? "https://longboard.wavefront.com" : v;
         }
     };
+
+    /**
+     * The default configuration for the WavefrontHistogram component of WavefrontConfig:
+     *  reportMinuteDistribution: false
+     *  reportHourDistribution: false
+     *  reportDayDistribution: false
+     */
+    WavefrontConfig.WavefrontHistogramConfig DEFAULT_WAVEFRONT_HISTOGRAM_CONFIG =
+        new WavefrontHistogramConfig() {
+            @Override
+            public String get(String key) { return null; }
+        };
 
     @Override
     default Duration step() {
@@ -74,43 +138,65 @@ public interface WavefrontConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return The URI to publish metrics to. The URI could represent a Wavefront sidecar or the
-     * Wavefront API host. This host could also represent an internal proxy set up in your environment
-     * that forwards metrics data to the Wavefront API host.
-     * <p>If publishing metrics to a Wavefront proxy (as described in https://docs.wavefront.com/proxies_installing.html),
-     * the host must be in the proxy://HOST:PORT format.
+     * @return {@code true} to publish to the Wavefront proxy,
+     *         {@code false} to publish directly to the Wavefront API.
      */
-    default String uri() {
-        String v = get(prefix() + ".uri");
-        if (v == null)
-            throw new MissingRequiredConfigurationException("A uri is required to publish metrics to Wavefront");
-        return v;
+    default boolean sendToProxy() {
+        String v = get(prefix() + ".sendToProxy");
+        return v == null ? false : Boolean.valueOf(v);
     }
 
     /**
-     * @return Unique identifier for the app instance that is publishing metrics to Wavefront. Defaults to the local host name.
+     * Required when publishing to the Wavefront proxy.
+     *
+     * @return configuration properties specific to publishing to the Wavefront proxy.
+     */
+    @Nullable
+    default ProxyConfig proxyConfig() {
+        if (sendToProxy()) {
+            throw new MissingRequiredConfigurationException(
+                "A proxy config is required to publish metrics to a Wavefront proxy");
+        }
+        return null;
+    }
+
+    /**
+     * Required when publishing directly to the Wavefront API.
+     *
+     * @return configuration properties specific to publishing directly to the Wavefront API.
+     */
+    @Nullable
+    default DirectIngestionConfig directIngestionConfig() {
+        if (!sendToProxy()) {
+            throw new MissingRequiredConfigurationException(
+                "A direct ingestion config is required to publish metrics directly to Wavefront");
+        }
+        return null;
+    }
+
+    /**
+     * At least one of reportMinuteDistribution(), reportHourDistribution(), and reportDayDistribution()
+     * must return {@code true} for WavefrontHistograms to be published to Wavefront.
+     *
+     * @return configuration properties specific to publishing WavefrontHistograms.
+     */
+    default WavefrontHistogramConfig wavefrontHistogramConfig() {
+        return DEFAULT_WAVEFRONT_HISTOGRAM_CONFIG;
+    }
+
+    /**
+     * @return Unique identifier for the app instance that is publishing metrics to Wavefront.
+     *         Defaults to the local host name.
      */
     default String source() {
         String v = get(prefix() + ".source");
         if (v != null)
             return v;
-
         try {
             return InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException uhe) {
             return "unknown";
         }
-    }
-
-    /**
-     * Required when publishing directly to the Wavefront API host, otherwise does nothing.
-     *
-     * @return The Wavefront API token.
-     */
-    @Nullable
-    default String apiToken() {
-        String v = get(prefix() + ".apiToken");
-        return v == null ? null : v.trim().length() > 0 ? v : null;
     }
 
     /**
@@ -123,5 +209,144 @@ public interface WavefrontConfig extends StepRegistryConfig {
     @Nullable
     default String globalPrefix() {
         return get(prefix() + ".globalPrefix");
+    }
+
+    /**
+     * @return Interval at which to flush points to Wavefront, in seconds.
+     *         If null, points will be flushed at a default interval defined by WavefrontSender.
+     */
+    @Nullable
+    default Integer flushIntervalSeconds() {
+        String v = get(prefix() + ".flushIntervalSeconds");
+        return v == null ? null : Integer.parseInt(v);
+    }
+
+    interface ProxyConfig extends MeterRegistryConfig {
+        @Override
+        default String prefix() {
+            return "wavefront.proxy";
+        }
+
+        /**
+         * Required when publishing to the Wavefront proxy.
+         *
+         * @return The host name of the Wavefront proxy to publish to.
+         */
+        default String hostName() {
+            String v = get(prefix() + ".hostName");
+            if (v == null) {
+                throw new MissingRequiredConfigurationException(
+                    "A host name is required to publish metrics to a Wavefront proxy");
+            }
+            return v;
+        }
+
+        /**
+         * Required when publishing metrics to the Wavefront proxy.
+         *
+         * @return The port on which the Wavefront proxy is listening to metrics.
+         */
+        @Nullable
+        default Integer metricsPort() {
+            String v = get(prefix() + ".metricsPort");
+            return v == null ? null : Integer.parseInt(v);
+        }
+
+        /**
+         * Required when publishing WavefrontHistograms to the Wavefront proxy.
+         *
+         * @return The port on which the Wavefront proxy is listening to WavefrontHistogram distributions.
+         */
+        @Nullable
+        default Integer distributionPort() {
+            String v = get(prefix() + ".distributionPort");
+            return v == null ? null : Integer.parseInt(v);
+        }
+    }
+
+    interface DirectIngestionConfig extends MeterRegistryConfig {
+        @Override
+        default String prefix() {
+            return "wavefront.directIngestion";
+        }
+
+        /**
+         * Required when publishing directly to the Wavefront API host.
+         *
+         * @return The URI of the Wavefront API host to publish to.
+         */
+        default String uri() {
+            String v = get(prefix() + ".uri");
+            if (v == null) {
+                throw new MissingRequiredConfigurationException(
+                    "A uri is required to publish metrics directly to Wavefront");
+            }
+            return v;
+        }
+
+        /**
+         * Required when publishing directly to the Wavefront API host.
+         *
+         * @return The Wavefront API token.
+         */
+        @Nullable
+        default String apiToken() {
+            String v = get(prefix() + ".apiToken");
+            return v == null ? null : v.trim().length() > 0 ? v : null;
+        }
+
+        /**
+         * @return The max queue size of the in-memory buffer
+         *         when publishing directly to the Wavefront API host.
+         */
+        @Nullable
+        default Integer maxQueueSize() {
+            String v = get(prefix() + ".maxQueueSize");
+            return v == null ? null : Integer.parseInt(v);
+        }
+
+        /**
+         * @return The size of the batch to be reported during every flush
+         *         when publishing directly to the Wavefront API host.
+         */
+        @Nullable
+        default Integer batchSize() {
+            String v = get(prefix() + ".batchSize");
+            return v == null ? null : Integer.parseInt(v);
+        }
+    }
+
+    interface WavefrontHistogramConfig extends MeterRegistryConfig {
+        @Override
+        default String prefix() {
+            return "wavefront.wavefrontHistogram";
+        }
+
+        /**
+         * @return {@code true} to report WavefrontHistogram distributions aggregated into minute intervals,
+         *         {@code false} otherwise.
+         */
+        default boolean reportMinuteDistribution() {
+            String v = get(prefix() + ".reportMinuteDistribution");
+            return v == null ? false : Boolean.valueOf(v);
+        }
+
+        /**
+         * @return {@code true} to report WavefrontHistogram distributions aggregated into hour intervals,
+         *         {@code false} otherwise.
+         */
+        default boolean reportHourDistribution() {
+            String v = get(prefix() + ".reportHourDistribution");
+            return v == null ? false : Boolean.valueOf(v);
+        }
+
+        /**
+         * @return {@code true} to report WavefrontHistogram distributions aggregated into day intervals,
+         *         {@code false} otherwise.
+         */
+        default boolean reportDayDistribution() {
+            String v = get(prefix() + ".reportDayDistribution");
+            return v == null ? false : Boolean.valueOf(v);
+        }
     }
 }
