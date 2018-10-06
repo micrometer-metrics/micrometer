@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -132,13 +133,19 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         return metrics.build();
     }
 
-    private Stream<MetricDatum> metricData(Meter m) {
+    // VisibleForTesting
+    Stream<MetricDatum> metricData(Meter m) {
         long wallTime = clock.wallTime();
         return stream(m.measure().spliterator(), false)
-            .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), wallTime, ms.getValue()));
+            .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), wallTime, ms.getValue()))
+            .filter(Objects::nonNull);
     }
 
     private MetricDatum metricDatum(Meter.Id id, long wallTime, double value) {
+        if (Double.isNaN(value)) {
+            return null;
+        }
+
         String metricName = id.getConventionName(config().namingConvention());
         List<Tag> tags = id.getConventionTags(config().namingConvention());
         return new MetricDatum()
