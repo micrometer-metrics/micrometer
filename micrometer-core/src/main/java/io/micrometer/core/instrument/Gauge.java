@@ -22,6 +22,7 @@ import io.micrometer.core.lang.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 
 /**
@@ -31,8 +32,30 @@ import java.util.function.ToDoubleFunction;
  * @author Jon Schneider
  */
 public interface Gauge extends Meter {
+    /**
+     * @param name The gauge's name.
+     * @param obj  An object with some state or function which the gauge's instantaneous value
+     *             is determined from.
+     * @param f    A function that yields a double value for the gauge, based on the state of
+     *             {@code obj}.
+     * @return A new gauge builder.
+     */
     static <T> Builder<T> builder(String name, @Nullable T obj, ToDoubleFunction<T> f) {
         return new Builder<>(name, obj, f);
+    }
+
+    /**
+     * A convenience method for building a gauge from a supplying function, holding a strong
+     * reference to this function.
+     *
+     * @param name The gauge's name.
+     * @param f    A function that yields a double value for the gauge.
+     * @return A new gauge builder.
+     * @since 1.1.0
+     */
+    @Incubating(since = "1.1.0")
+    static Builder<Supplier<Double>> builder(String name, Supplier<Double> f) {
+        return new Builder<>(name, f, Supplier::get).strongReference(true);
     }
 
     /**
@@ -58,6 +81,7 @@ public interface Gauge extends Meter {
         private final ToDoubleFunction<T> f;
         private final List<Tag> tags = new ArrayList<>();
         private boolean synthetic = false;
+        private boolean strongReference = false;
 
         @Nullable
         private final T obj;
@@ -136,6 +160,18 @@ public interface Gauge extends Meter {
         }
 
         /**
+         * Indicates that the gauge should maintain a strong reference on the object upon which
+         * its instantaneous value is determined.
+         *
+         * @since 1.1.0
+         */
+        @Incubating(since = "1.1.0")
+        public Builder<T> strongReference(boolean strong) {
+            this.strongReference = strong;
+            return this;
+        }
+
+        /**
          * Add the gauge to a single registry, or return an existing gauge in that registry. The returned
          * gauge will be unique for each registry, but each registry is guaranteed to only create one gauge
          * for the same combination of name and tags.
@@ -144,7 +180,8 @@ public interface Gauge extends Meter {
          * @return A new or existing gauge.
          */
         public Gauge register(MeterRegistry registry) {
-            return registry.gauge(new Meter.Id(name, tags, baseUnit, description, Type.GAUGE, synthetic), obj, f);
+            return registry.gauge(new Meter.Id(name, tags, baseUnit, description, Type.GAUGE, synthetic), obj,
+                    strongReference ? new StrongReferenceGaugeFunction<>(obj, f) : f);
         }
     }
 }

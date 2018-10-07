@@ -171,12 +171,12 @@ public abstract class MeterRegistry implements AutoCloseable {
     /**
      * Build a new function timer to be added to the registry. This is guaranteed to only be called if the function timer doesn't already exist.
      *
-     * @param id                     The id that uniquely identifies the function timer.
-     * @param obj                    The state object from which the count and total functions derive measurements.
-     * @param countFunction          A monotonically increasing count function.
-     * @param totalTimeFunction      A monotonically increasing total time function.
+     * @param id                    The id that uniquely identifies the function timer.
+     * @param obj                   The state object from which the count and total functions derive measurements.
+     * @param countFunction         A monotonically increasing count function.
+     * @param totalTimeFunction     A monotonically increasing total time function.
      * @param totalTimeFunctionUnit The base unit of time of the totals returned by the total time function.
-     * @param <T>                    The type of the object upon which the value functions derives their measurements.
+     * @param <T>                   The type of the object upon which the value functions derives their measurements.
      * @return A new function timer.
      */
     protected abstract <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit);
@@ -578,7 +578,7 @@ public abstract class MeterRegistry implements AutoCloseable {
 
     private boolean accept(Meter.Id id) {
         return this.filters.stream()
-            .noneMatch((filter) -> filter.accept(id) == MeterFilterReply.DENY);
+                .noneMatch((filter) -> filter.accept(id) == MeterFilterReply.DENY);
     }
 
     /**

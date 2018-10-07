@@ -77,4 +77,18 @@ interface GaugeTest {
         registry.gauge("my.gauge", emptyList(), (Map) null, Map::size);
         assertThat(registry.get("my.gauge").gauge().value()).matches(val -> val == null || Double.isNaN(val) || val == 0.0);
     }
+
+    @Test
+    @DisplayName("strong reference gauges")
+    default void strongReferenceGauges(MeterRegistry registry) {
+        Gauge.builder("weak.ref", 1.0, n -> n).register(registry);
+        Gauge.builder("strong.ref", 1.0, n -> n)
+                .strongReference(true)
+                .register(registry);
+
+        System.gc();
+
+        assertThat(registry.get("weak.ref").gauge().value()).isEqualTo(Double.NaN);
+        assertThat(registry.get("strong.ref").gauge().value()).isEqualTo(1.0);
+    }
 }
