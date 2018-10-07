@@ -16,7 +16,6 @@
 package io.micrometer.ganglia;
 
 import info.ganglia.gmetric4j.gmetric.GMetric;
-import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
