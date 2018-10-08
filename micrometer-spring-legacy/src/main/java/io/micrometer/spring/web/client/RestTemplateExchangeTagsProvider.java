@@ -16,6 +16,7 @@
 package io.micrometer.spring.web.client;
 
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.TagsProvider;
 import io.micrometer.core.lang.Nullable;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
@@ -28,7 +29,7 @@ import org.springframework.web.client.RestTemplate;
  * @author Andy Wilkinson
  */
 @FunctionalInterface
-public interface RestTemplateExchangeTagsProvider {
+public interface RestTemplateExchangeTagsProvider extends TagsProvider {
 
     /**
      * Provides the tags to be associated with metrics that are recorded for the given

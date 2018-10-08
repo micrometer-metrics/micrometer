@@ -17,6 +17,7 @@ package io.micrometer.spring.web.servlet;
 
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.TagsProvider;
 import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.Nullable;
@@ -31,7 +32,7 @@ import javax.servlet.http.HttpServletResponse;
  * @author Andy Wilkinson
  */
 @NonNullApi
-public interface WebMvcTagsProvider {
+public interface WebMvcTagsProvider extends TagsProvider {
 
     /**
      * Provides tags to be used by {@link LongTaskTimer long task timers}.
