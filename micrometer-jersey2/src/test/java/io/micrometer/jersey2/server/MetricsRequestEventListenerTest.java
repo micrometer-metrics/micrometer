@@ -153,7 +153,7 @@ public class MetricsRequestEventListenerTest extends JerseyTest {
     }
 
     private static Iterable<Tag> tagsFrom(String uri, String status, String exception) {
-        return Tags.of("method", "GET", "uri", uri, "status", String.valueOf(status),
+        return Tags.of("method", "GET", "uri", uri, "status", status,
                 "exception", exception == null ? "None" : exception);
     }
 }

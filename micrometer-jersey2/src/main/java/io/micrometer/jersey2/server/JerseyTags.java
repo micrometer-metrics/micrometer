@@ -169,19 +169,25 @@ public final class JerseyTags {
     public static Tag outcome(ContainerResponse response) {
         if (response != null) {
             int status = response.getStatus();
-            if (status < 200) {
-                return OUTCOME_INFORMATIONAL;
+            switch (Response.Status.Family.familyOf(status)) {
+                case INFORMATIONAL:
+                    return OUTCOME_INFORMATIONAL;
+
+                case SUCCESSFUL:
+                    return OUTCOME_SUCCESS;
+
+                case REDIRECTION:
+                    return OUTCOME_REDIRECTION;
+
+                case CLIENT_ERROR:
+                    return OUTCOME_CLIENT_ERROR;
+
+                case SERVER_ERROR:
+                    return OUTCOME_SERVER_ERROR;
+
+                default:
+                    return OUTCOME_UNKNOWN;
             }
-            if (status < 300) {
-                return OUTCOME_SUCCESS;
-            }
-            if (status < 400) {
-                return OUTCOME_REDIRECTION;
-            }
-            if (status < 500) {
-                return OUTCOME_CLIENT_ERROR;
-            }
-            return OUTCOME_SERVER_ERROR;
         }
         return OUTCOME_UNKNOWN;
     }
