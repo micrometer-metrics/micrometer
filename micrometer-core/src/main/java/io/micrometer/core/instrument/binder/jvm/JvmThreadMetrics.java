@@ -24,9 +24,16 @@ import io.micrometer.core.lang.NonNullFields;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.util.Arrays;
 
 import static java.util.Collections.emptyList;
 
+/**
+ * {@link MeterBinder} for JVM threads.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 @NonNullApi
 @NonNullFields
 public class JvmThreadMetrics implements MeterBinder {
@@ -58,5 +65,32 @@ public class JvmThreadMetrics implements MeterBinder {
             .tags(tags)
             .description("The current number of live threads including both daemon and non-daemon threads")
             .register(registry);
+
+        Gauge.builder("jvm.threads.runnable", threadBean, (bean) -> getThreadStateCount(bean, Thread.State.RUNNABLE))
+            .tags(tags)
+            .description("The current number of threads having runnable state")
+            .register(registry);
+
+        Gauge.builder("jvm.threads.blocked", threadBean, (bean) -> getThreadStateCount(bean, Thread.State.BLOCKED))
+            .tags(tags)
+            .description("The current number of threads having blocked state")
+            .register(registry);
+
+        Gauge.builder("jvm.threads.waiting", threadBean, (bean) -> getThreadStateCount(bean, Thread.State.WAITING))
+            .tags(tags)
+            .description("The current number of threads having waiting state")
+            .register(registry);
+
+        Gauge.builder("jvm.threads.timed-waiting", threadBean, (bean) -> getThreadStateCount(bean, Thread.State.TIMED_WAITING))
+            .tags(tags)
+            .description("The current number of threads having timed waiting state")
+            .register(registry);
     }
+
+    private long getThreadStateCount(ThreadMXBean threadBean, Thread.State state) {
+        return Arrays.stream(threadBean.getThreadInfo(threadBean.getAllThreadIds()))
+                .filter(threadInfo -> threadInfo.getThreadState() == state)
+                .count();
+    }
+
 }

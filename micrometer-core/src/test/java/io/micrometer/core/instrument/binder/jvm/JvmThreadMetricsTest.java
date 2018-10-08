@@ -15,12 +15,20 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import java.util.concurrent.TimeUnit;
+
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+/**
+ * Tests for {@link JvmThreadMetrics}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class JvmThreadMetricsTest {
     @Test
     void threadMetrics() {
@@ -30,5 +38,44 @@ class JvmThreadMetricsTest {
         assertThat(registry.get("jvm.threads.live").gauge().value()).isGreaterThan(0);
         assertThat(registry.get("jvm.threads.daemon").gauge().value()).isGreaterThan(0);
         assertThat(registry.get("jvm.threads.peak").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("jvm.threads.runnable").gauge().value()).isGreaterThan(0);
+
+        createBlockedThread();
+        assertThat(registry.get("jvm.threads.blocked").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("jvm.threads.waiting").gauge().value()).isGreaterThan(0);
+
+        createTimedWaitingThread();
+        assertThat(registry.get("jvm.threads.timed-waiting").gauge().value()).isGreaterThan(0);
     }
+
+    private void createTimedWaitingThread() {
+        new Thread(() -> {
+            sleep(5);
+        }).start();
+        sleep(1);
+    }
+
+    private void sleep(int seconds) {
+        try {
+            TimeUnit.SECONDS.sleep(seconds);
+        }
+        catch (InterruptedException ignored) {
+        }
+    }
+
+    private void createBlockedThread() {
+        Object lock = new Object();
+        new Thread(() -> {
+            synchronized (lock) {
+                sleep(5);
+            }
+        }).start();
+        new Thread(() -> {
+            synchronized (lock) {
+                sleep(5);
+            }
+        }).start();
+        sleep(1);
+    }
+
 }
