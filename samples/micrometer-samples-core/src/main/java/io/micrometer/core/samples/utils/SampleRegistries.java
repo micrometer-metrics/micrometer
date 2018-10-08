@@ -17,6 +17,8 @@ package io.micrometer.core.samples.utils;
 
 import com.netflix.spectator.atlas.AtlasConfig;
 import com.sun.net.httpserver.HttpServer;
+import io.micrometer.appoptics.AppOpticsConfig;
+import io.micrometer.appoptics.AppOpticsMeterRegistry;
 import io.micrometer.atlas.AtlasMeterRegistry;
 import io.micrometer.azuremonitor.AzureMonitorConfig;
 import io.micrometer.azuremonitor.AzureMonitorMeterRegistry;
@@ -57,6 +59,27 @@ import java.time.Duration;
 public class SampleRegistries {
     public static MeterRegistry pickOne() {
         throw new RuntimeException("Pick some other method on SampleRegistries to ship sample metrics to the system of your choice");
+    }
+
+    public static AppOpticsMeterRegistry appOptics(String apiToken) {
+        return new AppOpticsMeterRegistry(new AppOpticsConfig() {
+            @Override
+            public String token() { return apiToken; }
+
+            @Override
+            public String metricPrefix() { return "micrometer.samples.test"; }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+
+            @Override
+            @Nullable
+            public String get(String k) {
+                return null;
+            }
+        }, Clock.SYSTEM);
     }
 
     /**
