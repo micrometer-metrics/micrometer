@@ -31,6 +31,7 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
     private final LongAdder count = new LongAdder();
     private final DoubleAdder amount = new DoubleAdder();
     private final TimeWindowMax max;
+    private volatile boolean shutdown = false;
 
     private final StatsdLineBuilder lineBuilder;
     private final Subscriber<String> subscriber;
@@ -45,7 +46,7 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
 
     @Override
     protected void recordNonNegative(double amount) {
-        if (amount >= 0) {
+        if (!shutdown && amount >= 0) {
             count.increment();
             this.amount.add(amount);
             max.record(amount);
@@ -81,5 +82,9 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
     @Override
     public int hashCode() {
         return MeterEquivalence.hashCode(this);
+    }
+
+    void shutdown() {
+        this.shutdown = true;
     }
 }

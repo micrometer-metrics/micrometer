@@ -37,8 +37,8 @@ import reactor.netty.udp.UdpClient;
 import reactor.util.concurrent.Queues;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -46,13 +46,16 @@ import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
+import static io.micrometer.core.instrument.Meter.Type.consume;
+
 /**
  * @author Jon Schneider
  */
 public class StatsdMeterRegistry extends MeterRegistry {
     private final StatsdConfig statsdConfig;
     private final HierarchicalNameMapper nameMapper;
-    private final Collection<StatsdPollable> pollableMeters = new CopyOnWriteArrayList<>();
+    private final Map<Meter.Id, StatsdPollable> pollableMeters = new ConcurrentHashMap<>();
+
     Processor<String, String> processor;
 
     private final AtomicBoolean started = new AtomicBoolean(false);
@@ -190,12 +193,40 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
             // now that we're connected, start polling gauges and other pollable meter types
             meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
-                    .doOnEach(n -> pollableMeters.forEach(StatsdPollable::poll))
+                    .doOnEach(n -> poll())
                     .subscribe());
         }
 
+        this.config().onMeterRemoved(meter -> {
+            //noinspection SuspiciousMethodCalls
+            consume(meter,
+                    this::removePollableMeter,
+                    c -> ((StatsdCounter) c).shutdown(),
+                    t -> ((StatsdTimer) t).shutdown(),
+                    d -> ((StatsdDistributionSummary) d).shutdown(),
+                    this::removePollableMeter,
+                    this::removePollableMeter,
+                    this::removePollableMeter,
+                    this::removePollableMeter,
+                    m -> {
+                        for (Measurement measurement : m.measure()) {
+                            pollableMeters.remove(m.getId().withTag(measurement.getStatistic()));
+                        }
+                    });
+        });
+
         if (config.enabled())
             start();
+    }
+
+    private <M extends Meter> void removePollableMeter(M m) {
+        pollableMeters.remove(m.getId());
+    }
+
+    void poll() {
+        for (StatsdPollable pollableMeter : pollableMeters.values()) {
+            pollableMeter.poll();
+        }
     }
 
     public void start() {
@@ -214,7 +245,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
                         // now that we're connected, start polling gauges and other pollable meter types
                         meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
-                                .doOnEach(n -> pollableMeters.forEach(StatsdPollable::poll))
+                                .doOnEach(n -> poll())
                                 .subscribe());
                     });
         }
@@ -229,7 +260,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Override
     public void close() {
-        pollableMeters.forEach(StatsdPollable::poll);
+        poll();
         stop();
         super.close();
     }
@@ -237,7 +268,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
         StatsdGauge<T> gauge = new StatsdGauge<>(id, lineBuilder(id), processor, obj, valueFunction, statsdConfig.publishUnchangedMeters());
-        pollableMeters.add(gauge);
+        pollableMeters.put(id, gauge);
         return gauge;
     }
 
@@ -268,7 +299,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
         StatsdLongTaskTimer ltt = new StatsdLongTaskTimer(id, lineBuilder(id), processor, clock, statsdConfig.publishUnchangedMeters());
-        pollableMeters.add(ltt);
+        pollableMeters.put(id, ltt);
         return ltt;
     }
 
@@ -294,7 +325,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
         StatsdFunctionCounter fc = new StatsdFunctionCounter<>(id, obj, countFunction, lineBuilder(id), processor);
-        pollableMeters.add(fc);
+        pollableMeters.put(id, fc);
         return fc;
     }
 
@@ -304,7 +335,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
                                                          totalTimeFunctionUnit) {
         StatsdFunctionTimer ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
                 getBaseTimeUnit(), lineBuilder(id), processor);
-        pollableMeters.add(ft);
+        pollableMeters.put(id, ft);
         return ft;
     }
 
@@ -312,17 +343,18 @@ public class StatsdMeterRegistry extends MeterRegistry {
     protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         measurements.forEach(ms -> {
             StatsdLineBuilder line = lineBuilder(id);
-            switch (ms.getStatistic()) {
+            Statistic stat = ms.getStatistic();
+            switch (stat) {
                 case COUNT:
                 case TOTAL:
                 case TOTAL_TIME:
-                    pollableMeters.add(() -> processor.onNext(line.count((long) ms.getValue(), ms.getStatistic())));
+                    pollableMeters.put(id.withTag(stat), () -> processor.onNext(line.count((long) ms.getValue(), stat)));
                     break;
                 case VALUE:
                 case ACTIVE_TASKS:
                 case DURATION:
                 case UNKNOWN:
-                    pollableMeters.add(() -> processor.onNext(line.gauge(ms.getValue(), ms.getStatistic())));
+                    pollableMeters.put(id.withTag(stat), () -> processor.onNext(line.gauge(ms.getValue(), stat)));
                     break;
             }
         });

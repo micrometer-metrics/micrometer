@@ -29,6 +29,7 @@ public class StatsdCounter extends AbstractMeter implements Counter {
     private DoubleAdder count = new DoubleAdder();
     private final StatsdLineBuilder lineBuilder;
     private final Subscriber<String> subscriber;
+    private volatile boolean shutdown = false;
 
     StatsdCounter(Id id, StatsdLineBuilder lineBuilder, Subscriber<String> subscriber) {
         super(id);
@@ -38,7 +39,7 @@ public class StatsdCounter extends AbstractMeter implements Counter {
 
     @Override
     public void increment(double amount) {
-        if (amount > 0) {
+        if (!shutdown && amount > 0) {
             count.add(amount);
             subscriber.onNext(lineBuilder.count((long) amount));
         }
@@ -58,5 +59,9 @@ public class StatsdCounter extends AbstractMeter implements Counter {
     @Override
     public int hashCode() {
         return MeterEquivalence.hashCode(this);
+    }
+
+    void shutdown() {
+        this.shutdown = true;
     }
 }

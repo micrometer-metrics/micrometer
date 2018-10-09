@@ -34,11 +34,14 @@ import reactor.test.StepVerifier;
 import reactor.util.concurrent.Queues;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import static java.util.Collections.singletonList;
 import static java.util.stream.IntStream.range;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -222,8 +225,8 @@ class StatsdMeterRegistryTest {
                 break;
             case SYSDIG:
                 expectLines = new String[]{
-                    "my.long.task#statistic=active,my.tag=val:1|g",
-                    "my.long.task#statistic=duration,my.tag=val:" + stepMillis + "|g",
+                        "my.long.task#statistic=active,my.tag=val:1|g",
+                        "my.long.task#statistic=duration,my.tag=val:" + stepMillis + "|g",
                 };
                 break;
             default:
@@ -354,6 +357,81 @@ class StatsdMeterRegistryTest {
                 assertThat(namingConventionUses.intValue()).isEqualTo(5);
                 break;
         }
+    }
+
+    @Test
+    void stopTrackingMetersThatAreRemoved() {
+        Map<String, Integer> lines = new HashMap<>();
+
+        StatsdMeterRegistry registry = StatsdMeterRegistry.builder(configWithFlavor(StatsdFlavor.ETSY))
+                .clock(clock)
+                .lineSink(line -> {
+                    int firstTag = line.indexOf('.');
+                    lines.compute(line.substring(0, firstTag == -1 ? line.indexOf(':') : firstTag),
+                            (l, count) -> count == null ? 1 : count + 1);
+                })
+                .build();
+
+        Meter custom = Meter.builder("custom", Meter.Type.COUNTER, singletonList(new Measurement(() -> 1.0, Statistic.COUNT)))
+                .register(registry);
+        registry.poll();
+        registry.remove(custom);
+        registry.poll();
+        assertThat(lines.get("custom")).isEqualTo(1);
+
+        AtomicInteger tgObj = new AtomicInteger(1);
+        registry.more().timeGauge("timegauge", Tags.empty(), tgObj, TimeUnit.MILLISECONDS, AtomicInteger::incrementAndGet);
+        registry.poll();
+        registry.remove(registry.get("timegauge").timeGauge());
+        registry.poll();
+        assertThat(lines.get("timegauge")).isEqualTo(1);
+
+        AtomicInteger gaugeObj = new AtomicInteger(1);
+        registry.gauge("gauge", gaugeObj, AtomicInteger::incrementAndGet);
+        registry.poll();
+        registry.remove(registry.get("gauge").gauge());
+        registry.poll();
+        assertThat(lines.get("gauge")).isEqualTo(1);
+
+        Counter counter = registry.counter("counter");
+        counter.increment();
+        registry.remove(counter);
+        counter.increment();
+        assertThat(lines.get("counter")).isEqualTo(1);
+
+        Timer timer = registry.timer("timer");
+        timer.record(1, TimeUnit.MILLISECONDS);
+        registry.remove(timer);
+        timer.record(1, TimeUnit.MILLISECONDS);
+        assertThat(lines.get("timer")).isEqualTo(1);
+
+        DistributionSummary summary = registry.summary("summary");
+        summary.record(1.0);
+        registry.remove(summary);
+        summary.record(1.0);
+        assertThat(lines.get("summary")).isEqualTo(1);
+
+        LongTaskTimer ltt = registry.more().longTaskTimer("ltt");
+        ltt.start();
+        registry.poll();
+        registry.remove(ltt);
+        registry.poll();
+        assertThat(lines.get("ltt")).isEqualTo(2); // 2 lines shipped for a LongTaskTimer for each poll
+
+        AtomicInteger ftObj = new AtomicInteger(1);
+        registry.more().timer("functiontimer", Tags.empty(), ftObj, AtomicInteger::incrementAndGet,
+                AtomicInteger::get, TimeUnit.MILLISECONDS);
+        registry.poll();
+        registry.remove(registry.get("functiontimer").functionTimer());
+        registry.poll();
+        assertThat(lines.get("functiontimer")).isEqualTo(2); // 2 lines shipped for a FunctionTimer for each poll
+
+        AtomicInteger fcObj = new AtomicInteger(1);
+        registry.more().counter("functioncounter", Tags.empty(), fcObj, AtomicInteger::incrementAndGet);
+        registry.poll();
+        registry.remove(registry.get("functioncounter").functionCounter());
+        registry.poll();
+        assertThat(lines.get("functioncounter")).isEqualTo(1);
     }
 
     private static StatsdConfig configWithFlavor(StatsdFlavor flavor) {

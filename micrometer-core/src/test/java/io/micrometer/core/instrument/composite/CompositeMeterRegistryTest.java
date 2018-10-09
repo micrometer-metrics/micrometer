@@ -22,17 +22,22 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.step.StepRegistryConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
@@ -319,4 +324,124 @@ class CompositeMeterRegistryTest {
         verify(registry2).close();
     }
 
+    private class CountingMeterRegistry extends StepMeterRegistry {
+        Map<Meter.Id, Integer> publishCountById = new HashMap<>();
+
+        public CountingMeterRegistry() {
+            super(new StepRegistryConfig() {
+                @Override
+                public String prefix() {
+                    return "test";
+                }
+
+                @Override
+                public String get(String key) {
+                    return null;
+                }
+
+                @Override
+                public boolean enabled() {
+                    return false;
+                }
+            }, Clock.SYSTEM);
+        }
+
+        @Override
+        public void publish() {
+            for (Meter meter : getMeters()) {
+                publishCountById.compute(meter.getId(), (l, count) -> count == null ? 1 : count + 1);
+            }
+        }
+
+        public int count(Meter m) {
+            return count(m.getId());
+        }
+
+        public int count(Meter.Id id) {
+            return publishCountById.getOrDefault(id, 0);
+        }
+
+        @Override
+        protected TimeUnit getBaseTimeUnit() {
+            return TimeUnit.MILLISECONDS;
+        }
+    }
+
+    @Test
+    void stopTrackingMetersThatAreRemoved() {
+        CompositeMeterRegistry registry = new CompositeMeterRegistry();
+        CountingMeterRegistry counting = new CountingMeterRegistry();
+        registry.add(counting);
+
+        Meter custom = Meter.builder("custom", Meter.Type.COUNTER, singletonList(new Measurement(() -> 1.0, Statistic.COUNT)))
+                .register(registry);
+        counting.publish();
+        registry.remove(custom);
+        counting.publish();
+        assertThat(counting.count(custom)).isEqualTo(1);
+
+        AtomicInteger tgObj = new AtomicInteger(1);
+        registry.more().timeGauge("timegauge", Tags.empty(), tgObj, TimeUnit.MILLISECONDS, AtomicInteger::incrementAndGet);
+        TimeGauge timeGauge = registry.get("timegauge").timeGauge();
+        counting.publish();
+        registry.remove(timeGauge);
+        counting.publish();
+        assertThat(counting.count(timeGauge)).isEqualTo(1);
+
+        AtomicInteger gaugeObj = new AtomicInteger(1);
+        registry.gauge("gauge", gaugeObj, AtomicInteger::incrementAndGet);
+        Gauge gauge = registry.get("gauge").gauge();
+        counting.publish();
+        registry.remove(gauge);
+        counting.publish();
+        assertThat(counting.count(gauge)).isEqualTo(1);
+
+        Counter counter = registry.counter("counter");
+        counter.increment();
+        counting.publish();
+        registry.remove(counter);
+        counter.increment();
+        counting.publish();
+        assertThat(counting.count(counter)).isEqualTo(1);
+
+        Timer timer = registry.timer("timer");
+        timer.record(1, TimeUnit.MILLISECONDS);
+        counting.publish();
+        registry.remove(timer);
+        timer.record(1, TimeUnit.MILLISECONDS);
+        counting.publish();
+        assertThat(counting.count(timer)).isEqualTo(1);
+
+        DistributionSummary summary = registry.summary("summary");
+        summary.record(1.0);
+        counting.publish();
+        registry.remove(summary);
+        summary.record(1.0);
+        counting.publish();
+        assertThat(counting.count(summary)).isEqualTo(1);
+
+        LongTaskTimer ltt = registry.more().longTaskTimer("ltt");
+        ltt.start();
+        counting.publish();
+        registry.remove(ltt);
+        counting.publish();
+        assertThat(counting.count(ltt)).isEqualTo(1);
+
+        AtomicInteger ftObj = new AtomicInteger(1);
+        registry.more().timer("functiontimer", Tags.empty(), ftObj, AtomicInteger::incrementAndGet,
+                AtomicInteger::get, TimeUnit.MILLISECONDS);
+        FunctionTimer functionTimer = registry.get("functiontimer").functionTimer();
+        counting.publish();
+        registry.remove(functionTimer);
+        counting.publish();
+        assertThat(counting.count(functionTimer)).isEqualTo(1);
+
+        AtomicInteger fcObj = new AtomicInteger(1);
+        registry.more().counter("functioncounter", Tags.empty(), fcObj, AtomicInteger::incrementAndGet);
+        FunctionCounter functionCounter = registry.get("functioncounter").functionCounter();
+        counting.publish();
+        registry.remove(functionCounter);
+        counting.publish();
+        assertThat(counting.count(functionCounter)).isEqualTo(1);
+    }
 }

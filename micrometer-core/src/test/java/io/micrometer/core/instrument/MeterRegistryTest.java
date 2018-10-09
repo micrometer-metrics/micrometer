@@ -87,4 +87,60 @@ class MeterRegistryTest {
         assertThat(registry.timer("my.timer.before")).isNotInstanceOf(NoopTimer.class);
         assertThat(registry.timer("my.timer.after")).isInstanceOf(NoopTimer.class);
     }
+
+    @Test
+    void removeMeters() {
+        registry.counter("my.counter");
+
+        Counter counter = registry.find("my.counter").counter();
+        assertThat(counter).isNotNull();
+
+        assertThat(registry.remove(counter)).isSameAs(counter);
+        assertThat(registry.find("my.counter").counter()).isNull();
+        assertThat(registry.remove(counter)).isNull();
+    }
+
+    @Test
+    void removeMetersAffectedByMeterFilter() {
+        registry.config().meterFilter(new MeterFilter() {
+            @Override
+            public Meter.Id map(Meter.Id id) {
+                return id.withName("another.name");
+            }
+        });
+
+        Counter counter = registry.counter("name");
+        assertThat(registry.find("another.name").counter()).isSameAs(counter);
+        assertThat(registry.remove(counter)).isSameAs(counter);
+        assertThat(registry.find("another.name").counter()).isNull();
+    }
+
+    @Test
+    void removeMetersWithSynthetics() {
+        Timer timer = Timer.builder("my.timer")
+                .publishPercentiles(0.95)
+                .register(registry);
+
+        assertThat(registry.getMeters()).hasSize(2);
+        registry.remove(timer);
+        assertThat(registry.getMeters()).isEmpty();
+    }
+
+    @Test
+    void removeMetersWithSyntheticsAffectedByMeterFilter() {
+        registry.config().meterFilter(new MeterFilter() {
+            @Override
+            public Meter.Id map(Meter.Id id) {
+                return id.withName("another.name");
+            }
+        });
+
+        Timer timer = Timer.builder("my.timer")
+                .publishPercentiles(0.95)
+                .register(registry);
+
+        assertThat(registry.getMeters()).hasSize(2);
+        registry.remove(timer);
+        assertThat(registry.getMeters()).isEmpty();
+    }
 }

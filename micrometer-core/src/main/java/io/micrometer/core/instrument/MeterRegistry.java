@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
@@ -29,7 +30,9 @@ import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import org.pcollections.HashTreePMap;
+import org.pcollections.HashTreePSet;
 import org.pcollections.PMap;
+import org.pcollections.PSet;
 
 import java.time.Duration;
 import java.util.*;
@@ -56,9 +59,19 @@ public abstract class MeterRegistry implements AutoCloseable {
     private final Object meterMapLock = new Object();
     private final List<MeterFilter> filters = new CopyOnWriteArrayList<>();
     private final List<Consumer<Meter>> meterAddedListeners = new CopyOnWriteArrayList<>();
+    private final List<Consumer<Meter>> meterRemovedListeners = new CopyOnWriteArrayList<>();
     private final Config config = new Config();
     private final More more = new More();
+
     private volatile PMap<Id, Meter> meterMap = HashTreePMap.empty();
+
+    /**
+     * Map of meter id whose associated meter contains synthetic counterparts to those synthetic ids.
+     * We maintain these associations so that when we remove a meter with synthetics, they can removed
+     * as well.
+     */
+    private volatile PMap<Id, PSet<Id>> syntheticAssociations = HashTreePMap.empty();
+
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private PauseDetector pauseDetector = new ClockDriftPauseDetector(
             Duration.ofMillis(100),
@@ -521,7 +534,7 @@ public abstract class MeterRegistry implements AutoCloseable {
                                                          Function<Meter.Id, M> noopBuilder) {
         Meter.Id mappedId = id;
 
-        if (!id.isSynthetic()) {
+        if (id.syntheticAssociation() == null) {
             for (MeterFilter filter : filters) {
                 mappedId = filter.map(mappedId);
             }
@@ -566,6 +579,13 @@ public abstract class MeterRegistry implements AutoCloseable {
 
                     m = builder.apply(mappedId, config);
                     meterMap = meterMap.plus(mappedId, m);
+
+                    Id synAssoc = originalId.syntheticAssociation();
+                    if (synAssoc != null) {
+                        PSet<Id> existingSynthetics = syntheticAssociations.getOrDefault(synAssoc, HashTreePSet.empty());
+                        syntheticAssociations = syntheticAssociations.plus(synAssoc, existingSynthetics.plus(originalId));
+                    }
+
                     for (Consumer<Meter> onAdd : meterAddedListeners) {
                         onAdd.accept(m);
                     }
@@ -579,6 +599,58 @@ public abstract class MeterRegistry implements AutoCloseable {
     private boolean accept(Meter.Id id) {
         return this.filters.stream()
                 .noneMatch((filter) -> filter.accept(id) == MeterFilterReply.DENY);
+    }
+
+    /**
+     * @param meter The meter to remove
+     * @return The removed meter, or null if the provided meter is not currently registered.
+     * @since 1.1.0
+     */
+    @Incubating(since = "1.1.0")
+    @Nullable
+    public Meter remove(Meter meter) {
+        return remove(meter.getId());
+    }
+
+    /**
+     * @param id The id of the meter to remove
+     * @return The removed meter, or null if no meter matched the provided id.
+     * @since 1.1.0
+     */
+    @Incubating(since = "1.1.0")
+    @Nullable
+    public Meter remove(Meter.Id id) {
+        Meter.Id mappedId = id;
+
+        if (id.syntheticAssociation() == null) {
+            for (MeterFilter filter : filters) {
+                mappedId = filter.map(mappedId);
+            }
+        }
+
+        Meter m = meterMap.get(mappedId);
+
+        if (m != null) {
+            synchronized (meterMapLock) {
+                m = meterMap.get(mappedId);
+                if (m != null) {
+                    meterMap = meterMap.minus(mappedId);
+
+                    for (Id synthetic : syntheticAssociations.getOrDefault(id, HashTreePSet.empty())) {
+                        remove(synthetic);
+                    }
+                    syntheticAssociations = syntheticAssociations.minus(id);
+
+                    for (Consumer<Meter> onRemove : meterRemovedListeners) {
+                        onRemove.accept(m);
+                    }
+
+                    return m;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -626,6 +698,19 @@ public abstract class MeterRegistry implements AutoCloseable {
          */
         public Config onMeterAdded(Consumer<Meter> meter) {
             meterAddedListeners.add(meter);
+            return this;
+        }
+
+        /**
+         * Register an event listener for each meter removed from the registry.
+         *
+         * @param meter The meter that has just been added
+         * @return This configuration instance.
+         * @since 1.1.0
+         */
+        @Incubating(since = "1.1.0")
+        public Config onMeterRemoved(Consumer<Meter> meter) {
+            meterRemovedListeners.add(meter);
             return this;
         }
 

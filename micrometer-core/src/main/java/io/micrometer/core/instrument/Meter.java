@@ -141,15 +141,15 @@ public interface Meter extends AutoCloseable {
          * @since 1.1.0
          */
         public static void consume(Meter meter,
-                                 Consumer<Gauge> visitGauge,
-                                 Consumer<Counter> visitCounter,
-                                 Consumer<Timer> visitTimer,
-                                 Consumer<DistributionSummary> visitSummary,
-                                 Consumer<LongTaskTimer> visitLongTaskTimer,
-                                 Consumer<TimeGauge> visitTimeGauge,
-                                 Consumer<FunctionCounter> visitFunctionCounter,
-                                 Consumer<FunctionTimer> visitFunctionTimer,
-                                 Consumer<Meter> visitMeter) {
+                                   Consumer<Gauge> visitGauge,
+                                   Consumer<Counter> visitCounter,
+                                   Consumer<Timer> visitTimer,
+                                   Consumer<DistributionSummary> visitSummary,
+                                   Consumer<LongTaskTimer> visitLongTaskTimer,
+                                   Consumer<TimeGauge> visitTimeGauge,
+                                   Consumer<FunctionCounter> visitFunctionCounter,
+                                   Consumer<FunctionTimer> visitFunctionTimer,
+                                   Consumer<Meter> visitMeter) {
             if (meter instanceof TimeGauge) {
                 visitTimeGauge.accept((TimeGauge) meter);
             } else if (meter instanceof Gauge) {
@@ -179,7 +179,9 @@ public interface Meter extends AutoCloseable {
         private final String name;
         private final List<Tag> tags;
         private final Type type;
-        private final boolean synthetic;
+
+        @Nullable
+        private final Meter.Id syntheticAssociation;
 
         @Nullable
         private final String description;
@@ -187,9 +189,9 @@ public interface Meter extends AutoCloseable {
         @Nullable
         private final String baseUnit;
 
-        @Incubating(since = "1.0.6")
+        @Incubating(since = "1.1.0")
         public Id(String name, Iterable<Tag> tags, @Nullable String baseUnit, @Nullable String description, Type type,
-                  boolean synthetic) {
+                  @Nullable Meter.Id syntheticAssociation) {
             this.name = name;
 
             this.tags = Collections.unmodifiableList(stream(tags.spliterator(), false)
@@ -200,11 +202,11 @@ public interface Meter extends AutoCloseable {
             this.baseUnit = baseUnit;
             this.description = description;
             this.type = type;
-            this.synthetic = synthetic;
+            this.syntheticAssociation = syntheticAssociation;
         }
 
         public Id(String name, Iterable<Tag> tags, @Nullable String baseUnit, @Nullable String description, Type type) {
-            this(name, tags, baseUnit, description, type, false);
+            this(name, tags, baseUnit, description, type, null);
         }
 
         /**
@@ -352,11 +354,12 @@ public interface Meter extends AutoCloseable {
          * This method may be removed in future minor or major releases if we find a way to mark derivatives in a
          * private way that does not have other API compatibility consequences.
          *
-         * @return Whether this gauge is a synthetic derivative or not.
+         * @return The meter id of a meter for which this metric is a synthetic derivative.
          */
-        @Incubating(since = "1.0.6")
-        public boolean isSynthetic() {
-            return synthetic;
+        @Incubating(since = "1.1.0")
+        @Nullable
+        public Meter.Id syntheticAssociation() {
+            return syntheticAssociation;
         }
     }
 

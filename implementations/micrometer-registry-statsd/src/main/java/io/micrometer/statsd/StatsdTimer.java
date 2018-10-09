@@ -31,6 +31,7 @@ public class StatsdTimer extends AbstractTimer {
     private final LongAdder count = new LongAdder();
     private final DoubleAdder totalTime = new DoubleAdder();
     private StepDouble max;
+    private volatile boolean shutdown = false;
 
     private final StatsdLineBuilder lineBuilder;
     private final Subscriber<String> subscriber;
@@ -45,7 +46,7 @@ public class StatsdTimer extends AbstractTimer {
 
     @Override
     protected void recordNonNegative(long amount, TimeUnit unit) {
-        if (amount >= 0) {
+        if (!shutdown && amount >= 0) {
             count.increment();
 
             double msAmount = TimeUtils.convert(amount, unit, TimeUnit.MILLISECONDS);
@@ -75,5 +76,9 @@ public class StatsdTimer extends AbstractTimer {
     @Override
     public double max(TimeUnit unit) {
         return TimeUtils.convert(max.poll(), TimeUnit.MILLISECONDS, unit);
+    }
+
+    void shutdown() {
+        this.shutdown = true;
     }
 }

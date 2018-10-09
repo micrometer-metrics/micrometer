@@ -58,12 +58,19 @@ public class CompositeMeterRegistry extends MeterRegistry {
 
     public CompositeMeterRegistry(Clock clock, Iterable<MeterRegistry> registries) {
         super(clock);
-        config().namingConvention(NamingConvention.identity);
-        config().onMeterAdded(m -> {
-            if (m instanceof CompositeMeter) { // should always be
-                lock(registriesLock, () -> nonCompositeDescendants.forEach(((CompositeMeter) m)::add));
-            }
-        });
+        config()
+                .namingConvention(NamingConvention.identity)
+                .onMeterAdded(m -> {
+                    if (m instanceof CompositeMeter) { // should always be
+                        lock(registriesLock, () -> nonCompositeDescendants.forEach(((CompositeMeter) m)::add));
+                    }
+                })
+                .onMeterRemoved(m -> {
+                    if (m instanceof CompositeMeter) { // should always be
+                        lock(registriesLock, () -> nonCompositeDescendants.forEach(r -> r.remove(m)));
+                    }
+                });
+
         registries.forEach(this::add);
     }
 

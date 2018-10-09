@@ -80,8 +80,10 @@ public interface Gauge extends Meter {
         private final String name;
         private final ToDoubleFunction<T> f;
         private final List<Tag> tags = new ArrayList<>();
-        private boolean synthetic = false;
         private boolean strongReference = false;
+
+        @Nullable
+        private Meter.Id syntheticAssociation = null;
 
         @Nullable
         private final T obj;
@@ -151,11 +153,11 @@ public interface Gauge extends Meter {
          * This method may be removed in future minor or major releases if we find a way to mark derivatives in a
          * private way that does not have other API compatibility consequences.
          *
-         * @return Whether this gauge is a synthetic derivative or not.
+         * @return The meter id of a meter for which this metric is a synthetic derivative.
          */
-        @Incubating(since = "1.0.6")
-        public Builder<T> synthetic(boolean synthetic) {
-            this.synthetic = synthetic;
+        @Incubating(since = "1.1.0")
+        public Builder<T> synthetic(Meter.Id syntheticAssociation) {
+            this.syntheticAssociation = syntheticAssociation;
             return this;
         }
 
@@ -180,7 +182,7 @@ public interface Gauge extends Meter {
          * @return A new or existing gauge.
          */
         public Gauge register(MeterRegistry registry) {
-            return registry.gauge(new Meter.Id(name, tags, baseUnit, description, Type.GAUGE, synthetic), obj,
+            return registry.gauge(new Meter.Id(name, tags, baseUnit, description, Type.GAUGE, syntheticAssociation), obj,
                     strongReference ? new StrongReferenceGaugeFunction<>(obj, f) : f);
         }
     }
