@@ -67,6 +67,11 @@ public class JvmThreadMetrics implements MeterBinder {
             .description("The current number of live threads including both daemon and non-daemon threads")
             .register(registry);
 
+        Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, Thread.State.NEW))
+            .tags(Tags.concat(tags, "state", "new"))
+            .description("The current number of threads having new state")
+            .register(registry);
+
         Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, Thread.State.RUNNABLE))
             .tags(Tags.concat(tags, "state", "runnable"))
             .description("The current number of threads having runnable state")
@@ -85,6 +90,11 @@ public class JvmThreadMetrics implements MeterBinder {
         Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, Thread.State.TIMED_WAITING))
             .tags(Tags.concat(tags, "state", "timed-waiting"))
             .description("The current number of threads having timed waiting state")
+            .register(registry);
+
+        Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, Thread.State.TERMINATED))
+            .tags(Tags.concat(tags, "state", "terminated"))
+            .description("The current number of threads having timed terminated state")
             .register(registry);
     }
 
