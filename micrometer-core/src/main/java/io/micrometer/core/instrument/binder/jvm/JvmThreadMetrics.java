@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.jvm;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -66,23 +67,23 @@ public class JvmThreadMetrics implements MeterBinder {
             .description("The current number of live threads including both daemon and non-daemon threads")
             .register(registry);
 
-        Gauge.builder("jvm.threads.runnable", threadBean, (bean) -> getThreadStateCount(bean, Thread.State.RUNNABLE))
-            .tags(tags)
+        Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, Thread.State.RUNNABLE))
+            .tags(Tags.concat(tags, "state", "runnable"))
             .description("The current number of threads having runnable state")
             .register(registry);
 
-        Gauge.builder("jvm.threads.blocked", threadBean, (bean) -> getThreadStateCount(bean, Thread.State.BLOCKED))
-            .tags(tags)
+        Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, Thread.State.BLOCKED))
+            .tags(Tags.concat(tags, "state", "blocked"))
             .description("The current number of threads having blocked state")
             .register(registry);
 
-        Gauge.builder("jvm.threads.waiting", threadBean, (bean) -> getThreadStateCount(bean, Thread.State.WAITING))
-            .tags(tags)
+        Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, Thread.State.WAITING))
+            .tags(Tags.concat(tags, "state", "waiting"))
             .description("The current number of threads having waiting state")
             .register(registry);
 
-        Gauge.builder("jvm.threads.timed-waiting", threadBean, (bean) -> getThreadStateCount(bean, Thread.State.TIMED_WAITING))
-            .tags(tags)
+        Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, Thread.State.TIMED_WAITING))
+            .tags(Tags.concat(tags, "state", "timed-waiting"))
             .description("The current number of threads having timed waiting state")
             .register(registry);
     }

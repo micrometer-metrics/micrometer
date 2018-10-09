@@ -38,14 +38,14 @@ class JvmThreadMetricsTest {
         assertThat(registry.get("jvm.threads.live").gauge().value()).isGreaterThan(0);
         assertThat(registry.get("jvm.threads.daemon").gauge().value()).isGreaterThan(0);
         assertThat(registry.get("jvm.threads.peak").gauge().value()).isGreaterThan(0);
-        assertThat(registry.get("jvm.threads.runnable").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("jvm.threads.states").tag("state", "runnable").gauge().value()).isGreaterThan(0);
 
         createBlockedThread();
-        assertThat(registry.get("jvm.threads.blocked").gauge().value()).isGreaterThan(0);
-        assertThat(registry.get("jvm.threads.waiting").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("jvm.threads.states").tag("state", "blocked").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("jvm.threads.states").tag("state", "waiting").gauge().value()).isGreaterThan(0);
 
         createTimedWaitingThread();
-        assertThat(registry.get("jvm.threads.timed-waiting").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("jvm.threads.states").tag("state", "timed-waiting").gauge().value()).isGreaterThan(0);
     }
 
     private void createTimedWaitingThread() {
