@@ -20,18 +20,23 @@ import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
 
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.AllNestedConditions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.web.EmbeddedServletContainerAutoConfiguration;
 import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 
 /**
+ * Auto-configuration for Jetty metrics.
+ *
  * @author Manabu Matsuzaki
  * @author Jon Schneider
  * @author Michael Weirauch
+ * @author Johnny Lim
  */
 @Configuration
 @AutoConfigureAfter({
@@ -40,11 +45,28 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnClass(name = {
         "javax.servlet.Servlet", "org.eclipse.jetty.server.Server", "org.eclipse.jetty.util.Loader",
         "org.eclipse.jetty.webapp.WebAppContext" })
-@ConditionalOnBean({ JettyEmbeddedServletContainerFactory.class, MeterRegistry.class })
+@Conditional(JettyMetricsAutoConfiguration.JettyMetricsAutoConfigurationConditionalOnBeans.class)
 public class JettyMetricsAutoConfiguration {
 
     @Bean
     public JettyMetricsPostProcessor jettyMetricsPostProcessor(ApplicationContext context) {
         return new JettyMetricsPostProcessor(context);
     }
+
+    static class JettyMetricsAutoConfigurationConditionalOnBeans extends AllNestedConditions {
+
+        JettyMetricsAutoConfigurationConditionalOnBeans() {
+            super(ConfigurationPhase.REGISTER_BEAN);
+        }
+
+        @ConditionalOnBean(JettyEmbeddedServletContainerFactory.class)
+        static class ConditionalOnJettyEmbeddedServletContainerFactoryBean {
+        }
+
+        @ConditionalOnBean(MeterRegistry.class)
+        static class ConditionalOnMeterRegistryBean {
+        }
+
+    }
+
 }
