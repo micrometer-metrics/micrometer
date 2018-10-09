@@ -52,9 +52,6 @@ import org.springframework.integration.support.management.IntegrationManagementC
 @ConditionalOnClass(Timed.class)
 @EnableConfigurationProperties(MetricsProperties.class)
 @Import({
-        // default binders
-        MeterBindersConfiguration.class,
-
         // default instrumentation
         TomcatMetricsConfiguration.class,
         JerseyServerMetricsConfiguration.class,
