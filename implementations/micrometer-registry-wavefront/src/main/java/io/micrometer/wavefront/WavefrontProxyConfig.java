@@ -24,41 +24,34 @@ import java.net.UnknownHostException;
 import java.time.Duration;
 
 /**
- * Configuration for {@link WavefrontMeterRegistry}.
+ * Configuration for {@link WavefrontMeterRegistry} that publishes to a Wavefront proxy.
  *
- * @author Howard Yoo
- * @author Jon Schneider
+ * @author Han Zhang
  */
-public interface WavefrontConfig extends StepRegistryConfig {
+public interface WavefrontProxyConfig extends StepRegistryConfig {
     /**
-     * Publishes to a wavefront sidecar running out of process.
+     * Publishes to a Wavefront proxy.
+     *
+     * Defaults:
+     *  hostName: localhost
+     *  metricsPort: 2878
      */
-    WavefrontConfig DEFAULT_PROXY = new WavefrontConfig() {
+    WavefrontProxyConfig DEFAULT = new WavefrontProxyConfig() {
         @Override
         public String get(String key) {
             return null;
         }
 
         @Override
-        public String uri() {
-            String v = get(prefix() + ".uri");
-            return v == null ? "proxy://localhost:2878" : v;
-        }
-    };
-
-    /**
-     * Publishes directly to the Wavefront API, not passing through a sidecar.
-     */
-    WavefrontConfig DEFAULT_DIRECT = new WavefrontConfig() {
-        @Override
-        public String get(String key) {
-            return null;
+        public String hostName() {
+            String v = get(prefix() + ".hostName");
+            return v == null ? "localhost" : v;
         }
 
         @Override
-        public String uri() {
-            String v = get(prefix() + ".uri");
-            return v == null ? "https://longboard.wavefront.com" : v;
+        public Integer metricsPort() {
+            String v = get(prefix() + ".metricsPort");
+            return v == null ? 2878 : Integer.parseInt(v);
         }
     };
 
@@ -70,47 +63,47 @@ public interface WavefrontConfig extends StepRegistryConfig {
 
     @Override
     default String prefix() {
-        return "wavefront";
+        return "wavefront.proxy";
     }
 
     /**
-     * @return The URI to publish metrics to. The URI could represent a Wavefront sidecar or the
-     * Wavefront API host. This host could also represent an internal proxy set up in your environment
-     * that forwards metrics data to the Wavefront API host.
-     * <p>If publishing metrics to a Wavefront proxy (as described in https://docs.wavefront.com/proxies_installing.html),
-     * the host must be in the proxy://HOST:PORT format.
+     * Required when publishing to the Wavefront proxy.
+     *
+     * @return The host name of the Wavefront proxy to publish to.
      */
-    default String uri() {
-        String v = get(prefix() + ".uri");
-        if (v == null)
-            throw new MissingRequiredConfigurationException("A uri is required to publish metrics to Wavefront");
+    default String hostName() {
+        String v = get(prefix() + ".hostName");
+        if (v == null) {
+            throw new MissingRequiredConfigurationException(
+                "A host name is required to publish metrics to a Wavefront proxy");
+        }
         return v;
     }
 
     /**
-     * @return Unique identifier for the app instance that is publishing metrics to Wavefront. Defaults to the local host name.
+     * Required when publishing metrics to the Wavefront proxy.
+     *
+     * @return The port on which the Wavefront proxy is listening to metrics.
+     */
+    @Nullable
+    default Integer metricsPort() {
+        String v = get(prefix() + ".metricsPort");
+        return v == null ? null : Integer.parseInt(v);
+    }
+
+    /**
+     * @return Unique identifier for the app instance that is publishing metrics to Wavefront.
+     *         Defaults to the local host name.
      */
     default String source() {
         String v = get(prefix() + ".source");
         if (v != null)
             return v;
-
         try {
             return InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException uhe) {
             return "unknown";
         }
-    }
-
-    /**
-     * Required when publishing directly to the Wavefront API host, otherwise does nothing.
-     *
-     * @return The Wavefront API token.
-     */
-    @Nullable
-    default String apiToken() {
-        String v = get(prefix() + ".apiToken");
-        return v == null ? null : v.trim().length() > 0 ? v : null;
     }
 
     /**
@@ -123,5 +116,15 @@ public interface WavefrontConfig extends StepRegistryConfig {
     @Nullable
     default String globalPrefix() {
         return get(prefix() + ".globalPrefix");
+    }
+
+    /**
+     * @return Interval at which to flush points to Wavefront, in seconds.
+     *         If null, points will be flushed at a default interval defined by WavefrontSender.
+     */
+    @Nullable
+    default Integer flushIntervalSeconds() {
+        String v = get(prefix() + ".flushIntervalSeconds");
+        return v == null ? null : Integer.parseInt(v);
     }
 }

@@ -16,5 +16,4 @@
 
 management.metrics.export.wavefront:
   enabled: true
-  directionIngestion:
-    apiToken: fake
+  apiToken: fake
