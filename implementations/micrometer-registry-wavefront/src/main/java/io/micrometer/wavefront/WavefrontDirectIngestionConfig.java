@@ -15,7 +15,6 @@
  */
 package io.micrometer.wavefront;
 
-import io.micrometer.core.instrument.config.MeterRegistryConfig;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
