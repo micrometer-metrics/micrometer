@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static java.util.Collections.singletonList;
 import static java.util.stream.StreamSupport.stream;
 
 /**
@@ -227,8 +228,21 @@ public interface Meter extends AutoCloseable {
          * @return A new id with the provided tag. The source id remains unchanged.
          */
         public Id withTag(Tag tag) {
-            return new Id(name, Tags.concat(tags, Collections.singletonList(tag)), baseUnit, description, type);
+            return withTags(singletonList(tag));
         }
+
+        /**
+         * Generate a new id with an additional tag. If the key of the provided tag already exists, this overwrites
+         * the tag value.
+         *
+         * @param tag The tag to add.
+         * @return A new id with the provided tag. The source id remains unchanged.
+         * @since 1.1.0
+         */
+        public Id withTags(Iterable<Tag> tag) {
+            return new Id(name, Tags.concat(tags, tag), baseUnit, description, type);
+        }
+
 
         /**
          * Generate a new id with an additional tag with a tag key of "statistic". If the "statistic" tag already exists,
