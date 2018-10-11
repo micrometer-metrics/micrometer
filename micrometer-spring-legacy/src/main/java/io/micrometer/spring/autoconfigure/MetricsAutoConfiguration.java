@@ -21,7 +21,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.hystrix.HystrixMetricsBinder;
 import io.micrometer.spring.PropertiesMeterFilter;
 import io.micrometer.spring.autoconfigure.jersey2.server.JerseyServerMetricsConfiguration;
-import io.micrometer.spring.autoconfigure.web.tomcat.TomcatMetricsConfiguration;
 import io.micrometer.spring.integration.SpringIntegrationMetrics;
 import io.micrometer.spring.scheduling.ScheduledMethodMetrics;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -53,7 +52,6 @@ import org.springframework.integration.support.management.IntegrationManagementC
 @EnableConfigurationProperties(MetricsProperties.class)
 @Import({
         // default instrumentation
-        TomcatMetricsConfiguration.class,
         JerseyServerMetricsConfiguration.class,
 })
 @AutoConfigureAfter({
