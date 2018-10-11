@@ -4,9 +4,9 @@
 antlr:antlr:2.7.7
 ch.qos.logback:logback-classic:1.2.3
 ch.qos.logback:logback-core:1.2.3
-com.amazonaws:aws-java-sdk-cloudwatch:1.11.422
-com.amazonaws:aws-java-sdk-core:1.11.422
-com.amazonaws:jmespath-java:1.11.422
+com.amazonaws:aws-java-sdk-cloudwatch:1.11.427
+com.amazonaws:aws-java-sdk-core:1.11.427
+com.amazonaws:jmespath-java:1.11.427
 com.fasterxml.jackson.core:jackson-annotations:2.8.11
 com.fasterxml.jackson.core:jackson-core:2.8.11
 com.fasterxml.jackson.core:jackson-databind:2.8.11.2
@@ -43,8 +43,8 @@ io.netty:netty-resolver:4.1.29.Final
 io.netty:netty-transport-native-epoll:4.1.29.Final
 io.netty:netty-transport-native-unix-common:4.1.29.Final
 io.netty:netty-transport:4.1.29.Final
-io.projectreactor.netty:reactor-netty:0.8.0.RELEASE
-io.projectreactor:reactor-core:3.2.0.RELEASE
+io.projectreactor.netty:reactor-netty:0.8.1.RELEASE
+io.projectreactor:reactor-core:3.2.1.RELEASE
 io.reactivex:rxjava:1.2.0
 javax.cache:cache-api:1.0.0
 javax.persistence:javax.persistence-api:2.2
