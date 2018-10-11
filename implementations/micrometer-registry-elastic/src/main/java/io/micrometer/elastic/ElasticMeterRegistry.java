@@ -129,7 +129,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                             // {"took":16,"errors":true,"items":[{"index":{"_index":"metrics-2018-03","_type":"timer","_id":"i8kdBmIBmtn9wpUGezjX","status":400,"error":{"type":"illegal_argument_exception","reason":"Rejecting mapping update to [metrics-2018-03] as the final mapping would have more than 1 type: [metric, doc]"}}}]}
                             String body = response.body();
                             if (body.contains("\"errors\":true")) {
-                                logger.error("failed to send metrics to elastic: {}", response);
+                                logger.error("failed to send metrics to elastic: {}", body);
                             } else {
                                 logger.debug("Successfully sent {} metrics to Elasticsearch.", batch.size());
                             }
