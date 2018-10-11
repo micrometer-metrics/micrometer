@@ -15,17 +15,22 @@
  */
 package io.micrometer.spring.autoconfigure.web.jetty;
 
+import java.util.Collections;
+
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.jetty.JettyServerThreadPoolMetrics;
 import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
+import org.eclipse.jetty.server.Server;
 
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.AllNestedConditions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.web.EmbeddedServletContainerAutoConfiguration;
+import org.springframework.boot.context.embedded.EmbeddedServletContainerCustomizer;
 import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerFactory;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -37,6 +42,7 @@ import org.springframework.context.annotation.Configuration;
  * @author Jon Schneider
  * @author Michael Weirauch
  * @author Johnny Lim
+ * @author Andy Wilkinson
  */
 @Configuration
 @AutoConfigureAfter({
@@ -48,9 +54,23 @@ import org.springframework.context.annotation.Configuration;
 @Conditional(JettyMetricsAutoConfiguration.JettyMetricsAutoConfigurationConditionalOnBeans.class)
 public class JettyMetricsAutoConfiguration {
 
+    private volatile Server server;
+
     @Bean
-    public JettyMetricsPostProcessor jettyMetricsPostProcessor(ApplicationContext context) {
-        return new JettyMetricsPostProcessor(context);
+    public EmbeddedServletContainerCustomizer jettyCustomizer() {
+        return (jetty) -> {
+            ((JettyEmbeddedServletContainerFactory) jetty).setServerCustomizers(Collections.singleton(this::setServer));
+        };
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public JettyServerThreadPoolMetrics jettyThreadPoolMetrics() {
+        return new JettyServerThreadPoolMetrics(this.server.getThreadPool(), Collections.emptyList());
+    }
+
+    private void setServer(Server server) {
+        this.server = server;
     }
 
     static class JettyMetricsAutoConfigurationConditionalOnBeans extends AllNestedConditions {
