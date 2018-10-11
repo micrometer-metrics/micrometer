@@ -29,6 +29,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.web.EmbeddedServletContainerAutoConfiguration;
+import org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext;
 import org.springframework.boot.context.embedded.EmbeddedServletContainerCustomizer;
 import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerFactory;
 import org.springframework.context.annotation.Bean;
@@ -52,6 +53,7 @@ import org.springframework.context.annotation.Configuration;
         "javax.servlet.Servlet", "org.eclipse.jetty.server.Server", "org.eclipse.jetty.util.Loader",
         "org.eclipse.jetty.webapp.WebAppContext" })
 @Conditional(JettyMetricsAutoConfiguration.JettyMetricsAutoConfigurationConditionalOnBeans.class)
+@ConditionalOnBean(AnnotationConfigEmbeddedWebApplicationContext.class)
 public class JettyMetricsAutoConfiguration {
 
     private volatile Server server;
