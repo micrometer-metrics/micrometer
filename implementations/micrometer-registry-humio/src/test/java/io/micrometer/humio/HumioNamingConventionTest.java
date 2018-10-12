@@ -27,10 +27,4 @@ class HumioNamingConventionTest {
     void replaceNameTag() {
         assertThat(namingConvention.tagKey("name")).isEqualTo("name_tag");
     }
-
-    @Test
-    void replaceTypeTag() {
-        assertThat(namingConvention.tagKey("type")).isEqualTo("type_tag");
-    }
-
 }

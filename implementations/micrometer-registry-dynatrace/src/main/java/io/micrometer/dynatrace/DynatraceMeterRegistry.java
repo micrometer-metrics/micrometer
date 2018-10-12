@@ -219,7 +219,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                                     .collect(joining(",")) +
                             "]}")
                     .send()
-                    .onSuccess(response -> logger.debug("Successfully sent {} metrics to Dynatrace.", timeSeries.size()))
+                    .onSuccess(response -> logger.debug("successfully sent {} metrics to Dynatrace.", timeSeries.size()))
                     .onError(response -> logger.error("failed to send metrics to dynatrace: {}", response.body()));
         } catch (Throwable e) {
             logger.error("failed to send metrics to dynatrace", e);

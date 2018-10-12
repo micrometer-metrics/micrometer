@@ -15,144 +15,45 @@
  */
 package io.micrometer.humio;
 
-import io.micrometer.core.instrument.*;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import io.micrometer.core.instrument.MockClock;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import ru.lanwen.wiremock.ext.WiremockResolver;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.time.Instant;
-import java.util.concurrent.TimeUnit;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+@ExtendWith(WiremockResolver.class)
 class HumioMeterRegistryTest {
     private MockClock clock = new MockClock();
-    private HumioConfig config = new HumioConfig() {
-        @Override
-        public String get(String key) {
-            return null;
-        }
-
-        @Override
-        public String repository() {
-            return "fake-repository";
-        }
-
-        @Override
-        public String apiToken() {
-            return "fakeIngestToken";
-        }
-
-        @Override
-        public boolean enabled() {
-            return false;
-        }
-    };
-
-    private HumioMeterRegistry registry = new HumioMeterRegistry(config, clock);
-    private ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
     @Test
-    void timestampFormat() {
-        assertThat(HumioMeterRegistry.FORMATTER.format(Instant.ofEpochMilli(1))).isEqualTo("1970-01-01T00:00:00.001Z");
+    void writeTimer(@WiremockResolver.Wiremock WireMockServer server) {
+        HumioMeterRegistry registry = humioRegistry(server);
+        registry.timer("my.timer", "status", "success");
+
+        server.stubFor(any(anyUrl()));
+        registry.publish();
+        server.verify(postRequestedFor(urlMatching("/api/v1/dataspaces/repo/ingest"))
+                .withRequestBody(equalTo("[{\"tags\":{\"name\": \"micrometer\"},\"events\": [{\"timestamp\":\"1970-01-01T00:00:00.001Z\",\"attributes\":{\"name\":\"my_timer\",\"count\":0,\"sum\":0,\"avg\":0,\"max\":0,\"status\":\"success\"}}]}]")));
     }
 
-    @Test
-    void writeTimer() throws IOException {
-        Timer timer = Timer.builder("myTimer").register(registry);
-        registry.writeTimer(bos, timer, 0);
-        assertThat(bos.toString()).isEqualTo("{\"timestamp\":\"1970-01-01T00:00:00Z\",\"attributes\":{\"name\":\"myTimer\",\"type\":\"timer\",\"count\":0,\"sum\":0.0,\"mean\":0.0,\"max\":0.0}}");
-//        JSONAssert.assertEquals(expectedJSONString, actualJSON, strictMode);
-    }
+    private HumioMeterRegistry humioRegistry(WireMockServer server) {
+        return new HumioMeterRegistry(new HumioConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
 
-    @Test
-    void writeCounter() throws Exception {
-        Counter counter = Counter.builder("myCounter").register(registry);
-        counter.increment();
-        registry.writeCounter(bos, counter, 0);
-        assertThat(bos.toString()).isEqualTo("{\"timestamp\":\"1970-01-01T00:00:00Z\",\"attributes\":{\"name\":\"myCounter\",\"type\":\"counter\",\"count\":0.0}}");
-    }
+            @Override
+            public String uri() {
+                return server.baseUrl();
+            }
 
-    @Test
-    void writeFunctionCounter() throws Exception {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", 123.0, Number::doubleValue).register(registry);
-        registry.writeCounter(bos, counter, 0);
-        assertThat(bos.toString())
-            .isEqualTo("{\"timestamp\":\"1970-01-01T00:00:00Z\",\"attributes\":{\"name\":\"myCounter\",\"type\":\"counter\",\"count\":0.0}}");
-    }
-
-    @Test
-    void writeGauge() throws Exception {
-        Gauge gauge = Gauge.builder("myGauge", 123.0, Number::doubleValue).register(registry);
-        registry.writeGauge(bos, gauge, 0);
-        assertThat(bos.toString())
-            .isEqualTo("{\"timestamp\":\"1970-01-01T00:00:00Z\",\"attributes\":{\"name\":\"myGauge\",\"type\":\"gauge\",\"value\":123.0}}");
-    }
-
-    @Test
-    void writeTimeGauge() throws Exception {
-        TimeGauge gauge = TimeGauge.builder("myGauge", 123.0, TimeUnit.MILLISECONDS, Number::doubleValue).register(registry);
-        registry.writeGauge(bos, gauge, 0);
-        assertThat(bos.toString())
-            .isEqualTo("{\"timestamp\":\"1970-01-01T00:00:00Z\",\"attributes\":{\"name\":\"myGauge\",\"type\":\"gauge\",\"value\":123.0}}");
-    }
-
-    @Test
-    void writeLongTaskTimer() throws Exception {
-        LongTaskTimer timer = LongTaskTimer.builder("longTaskTimer").register(registry);
-        registry.writeLongTaskTimer(bos, timer, 0);
-        assertThat(bos.toString())
-            .isEqualTo("{\"timestamp\":\"1970-01-01T00:00:00Z\",\"attributes\":{\"name\":\"longTaskTimer\",\"type\":\"long_task_timer\",\"activeTasks\":0,\"duration\":0.0}}");
-    }
-
-    @Test
-    void writeSummary() throws Exception {
-        DistributionSummary summary = DistributionSummary.builder("summary").register(registry);
-        summary.record(123);
-        summary.record(456);
-        registry.writeSummary(bos, summary, 0);
-        assertThat(bos.toString())
-            .isEqualTo("{\"timestamp\":\"1970-01-01T00:00:00Z\",\"attributes\":{\"name\":\"summary\",\"type\":\"distribution_summary\",\"count\":0,\"sum\":0.0,\"mean\":0.0,\"max\":456.0}}");
-    }
-
-    @Test
-    void writeMeter() throws Exception {
-        Timer timer = Timer.builder("myTimer").register(registry);
-        registry.writeTimer(bos, timer, 0);
-        assertThat(bos.toString()).isEqualTo("{\"timestamp\":\"1970-01-01T00:00:00Z\",\"attributes\":{\"name\":\"myTimer\",\"type\":\"timer\",\"count\":0,\"sum\":0.0,\"mean\":0.0,\"max\":0.0}}");
-    }
-
-    @Test
-    void writeTags() throws Exception {
-        Counter counter = Counter.builder("myCounter").tag("foo", "bar").tag("spam", "eggs").register(registry);
-        counter.increment();
-        registry.writeCounter(bos, counter, 0);
-        assertThat(bos.toString()).isEqualTo("{\"timestamp\":\"1970-01-01T00:00:00Z\",\"attributes\":{\"name\":\"myCounter\",\"type\":\"counter\",\"foo\":\"bar\",\"spam\":\"eggs\",\"count\":0.0}}");
-    }
-
-    @Test
-    void nullGauge() throws IOException {
-        {
-            Gauge g = Gauge.builder("gauge", null, o -> 1).register(registry);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            registry.writeGauge(bos, g, 0);
-            assertThat(bos.size()).isEqualTo(0);
-        }
-
-        {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            TimeGauge tg = TimeGauge.builder("time.gauge", null, TimeUnit.MILLISECONDS, o -> 1).register(registry);
-            registry.writeGauge(bos, tg, 0);
-            assertThat(bos.size()).isEqualTo(0L);
-        }
-    }
-
-    @Test
-    void wholeCountIsReportedWithDecimal() throws IOException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        Counter c = Counter.builder("counter").register(registry);
-        c.increment(10);
-        registry.writeCounter(bos, c, 0);
-        assertThat(bos.toString()).isEqualTo("{\"timestamp\":\"1970-01-01T00:00:00Z\",\"attributes\":{\"name\":\"counter\",\"type\":\"counter\",\"count\":0.0}}");
+            @Override
+            public String repository() {
+                return "repo";
+            }
+        }, clock);
     }
 }

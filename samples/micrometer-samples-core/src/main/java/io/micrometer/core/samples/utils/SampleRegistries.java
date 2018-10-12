@@ -33,6 +33,8 @@ import io.micrometer.ganglia.GangliaConfig;
 import io.micrometer.ganglia.GangliaMeterRegistry;
 import io.micrometer.graphite.GraphiteConfig;
 import io.micrometer.graphite.GraphiteMeterRegistry;
+import io.micrometer.humio.HumioConfig;
+import io.micrometer.humio.HumioMeterRegistry;
 import io.micrometer.influx.InfluxConfig;
 import io.micrometer.influx.InfluxMeterRegistry;
 import io.micrometer.jmx.JmxConfig;
@@ -397,6 +399,20 @@ public class SampleRegistries {
             @Override
             public Duration step() {
                 return Duration.ofSeconds(10);
+            }
+        }, Clock.SYSTEM);
+    }
+
+    public static HumioMeterRegistry humio(String apiToken) {
+        return new HumioMeterRegistry(new HumioConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String apiToken() {
+                return apiToken;
             }
         }, Clock.SYSTEM);
     }

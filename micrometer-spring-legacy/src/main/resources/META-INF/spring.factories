@@ -15,6 +15,7 @@ io.micrometer.spring.autoconfigure.export.dynatrace.DynatraceMetricsExportAutoCo
 io.micrometer.spring.autoconfigure.export.elastic.ElasticMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.ganglia.GangliaMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.graphite.GraphiteMetricsExportAutoConfiguration,\
+io.micrometer.spring.autoconfigure.export.humio.HumioMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.influx.InfluxMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.jmx.JmxMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.newrelic.NewRelicMetricsExportAutoConfiguration,\

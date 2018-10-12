@@ -28,6 +28,7 @@ management.metrics:
     elastic.enabled: false
     ganglia.enabled: false
     graphite.enabled: false
+    humio.enabled: false
     influx.enabled: false
     jmx.enabled: false
     prometheus.enabled: false

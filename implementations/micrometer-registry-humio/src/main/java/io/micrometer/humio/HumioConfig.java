@@ -15,8 +15,15 @@
  */
 package io.micrometer.humio;
 
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.lang.Nullable;
+
+import java.time.Duration;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toMap;
 
 /**
  * @author Martin Westergaard Lassen
@@ -42,38 +49,43 @@ public interface HumioConfig extends StepRegistryConfig {
     }
 
     /**
-     * The host to send the metrics to
-     * Default is "https://cloud.humio.com"
-     *
-     * @return host
+     * @return The URI to ship metrics to. If you need to publish metrics to an internal proxy en route to
+     * Humio, you can define the location of the proxy with this.
      */
-    default String host() {
-        String v = get(prefix() + ".host");
+    default String uri() {
+        String v = get(prefix() + ".uri");
         return v == null ? "https://cloud.humio.com" : v;
     }
 
     /**
-     * The repository name to write metrics to.
-     * Default is: "metrics"
-     *
-     * @return repository name
+     * @return The repository name to write metrics to.
      */
     default String repository() {
         String v = get(prefix() + ".repository");
-        if (v == null) {
-            throw new MissingRequiredConfigurationException("repository must be set to report metrics to Humio");
-        }
-        return v;
+        return v == null ? "sandbox" : v;
     }
 
     /**
-     * The Basic Authentication username.
-     * Default is: "" (= do not perform Basic Authentication)
+     * Humio uses a concept called "tags" to decide which datasource to store metrics in. This concept
+     * is distinct from Micrometer's notion of tags, which divides a metric along dimensional boundaries.
+     * All metrics from this registry will be stored under a datasource defined by these tags.
      *
-     * @return username for Basic Authentication
+     * @return Tags which unique determine the datasource to store metrics in.
      */
+    default Map<String, String> tags() {
+        return Stream.of("name").collect(toMap(Function.identity(), k -> "micrometer"));
+    }
+
+    @Nullable
     default String apiToken() {
-        String v = get(prefix() + ".apiToken");
-        return v == null ? "" : v;
+        return get(prefix() + ".apiToken");
+    }
+
+    @Deprecated
+    @Override
+    default Duration connectTimeout() {
+        String v = get(prefix() + ".connectTimeout");
+        // Humio regularly times out when the default is 1 second.
+        return v == null ? Duration.ofSeconds(5) : Duration.parse(v);
     }
 }

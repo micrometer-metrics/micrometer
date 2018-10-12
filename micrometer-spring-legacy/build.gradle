@@ -34,7 +34,7 @@ dependencies {
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
     compile 'io.prometheus:simpleclient_pushgateway:latest.release', optional
 
-    ['atlas', 'azure-monitor', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront', 'dynatrace'].each { sys ->
+    ['atlas', 'azure-monitor', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront', 'dynatrace', 'humio'].each { sys ->
         compile project(":micrometer-registry-$sys"), optional
     }
 

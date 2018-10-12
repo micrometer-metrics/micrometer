@@ -119,7 +119,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     }
 
     private void logSuccessfulMetricsSent(List<Meter> batch) {
-        logger.debug("Successfully sent {} metrics to Wavefront.", batch.size());
+        logger.debug("successfully sent {} metrics to Wavefront.", batch.size());
     }
 
     private boolean directToApi() {

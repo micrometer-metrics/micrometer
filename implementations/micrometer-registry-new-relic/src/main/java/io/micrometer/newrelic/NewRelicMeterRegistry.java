@@ -182,7 +182,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                     .withHeader("X-Insert-Key", config.apiKey())
                     .withJsonContent(events.peek(ev -> totalEvents.incrementAndGet()).collect(Collectors.joining(",", "[", "]")))
                     .send()
-                    .onSuccess(response -> logger.debug("Successfully sent {} metrics to New Relic.", totalEvents))
+                    .onSuccess(response -> logger.debug("successfully sent {} metrics to New Relic.", totalEvents))
                     .onError(response -> logger.error("failed to send metrics to new relic: {}", response.body()));
         } catch (Throwable e) {
             logger.warn("failed to send metrics to new relic", e);

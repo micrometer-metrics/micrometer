@@ -29,6 +29,7 @@ management.metrics.export:
   elastic.enabled: false
   ganglia.enabled: false
   graphite.enabled: false
+  humio.enabled: false
   influx.enabled: false
   jmx.enabled: false
   newrelic.enabled: false

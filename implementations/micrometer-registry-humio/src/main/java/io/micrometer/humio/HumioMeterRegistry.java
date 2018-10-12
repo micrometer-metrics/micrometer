@@ -16,245 +16,262 @@
 package io.micrometer.humio;
 
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.HttpHeader;
-import io.micrometer.core.instrument.util.HttpMethod;
-import io.micrometer.core.instrument.util.IOUtils;
-import io.micrometer.core.instrument.util.MediaType;
+import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.ipc.http.HttpClient;
+import io.micrometer.core.ipc.http.HttpRequest;
+import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
 import io.micrometer.core.lang.NonNull;
+import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
+import java.util.stream.StreamSupport;
+
+import static io.micrometer.core.instrument.Meter.Type.match;
+import static java.util.stream.Collectors.joining;
 
 /**
  * @author Martin Westergaard Lassen
+ * @author Jon Schneider
  */
 public class HumioMeterRegistry extends StepMeterRegistry {
 
     private final Logger logger = LoggerFactory.getLogger(HumioMeterRegistry.class);
 
-    static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_INSTANT;
-
     private final HumioConfig config;
-    private final String repository;
-    private final String apiToken;
-
-    public HumioMeterRegistry(HumioConfig config, Clock clock, NamingConvention namingConvention, ThreadFactory threadFactory) {
-        super(config, clock);
-        this.config().namingConvention(namingConvention);
-        this.config = config;
-
-        this.repository = config.repository();
-        this.apiToken = config.apiToken();
-
-        start(threadFactory);
-    }
+    private final HttpClient httpClient;
 
     public HumioMeterRegistry(HumioConfig config, Clock clock) {
-        this(config, clock, new HumioNamingConvention(), Executors.defaultThreadFactory());
+        this(config, clock, Executors.defaultThreadFactory(), new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
+    }
+
+    private HumioMeterRegistry(HumioConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
+        super(config, clock);
+
+        this.config().namingConvention(new HumioNamingConvention());
+
+        this.config = config;
+        this.httpClient = httpClient;
+
+        if (config.enabled())
+            start(threadFactory);
     }
 
     @Override
     protected void publish() {
-        for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-            long wallTime = config().clock().wallTime();
-
-            HttpURLConnection connection;
-
-            String host = config.host();
+        for (List<Meter> meters : MeterPartition.partition(this, config.batchSize())) {
             try {
-                URL templateUrl = new URL(host + "/api/v1/dataspaces/" + repository + "/ingest");
-                connection = (HttpURLConnection) templateUrl.openConnection();
-                connection.setRequestMethod(HttpMethod.POST);
-                connection.setConnectTimeout((int) config.connectTimeout().toMillis());
-                connection.setReadTimeout((int) config.readTimeout().toMillis());
-                connection.setUseCaches(false);
-                connection.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-                connection.setDoOutput(true);
-
-                connection.setRequestProperty(HttpHeader.AUTHORIZATION, "Bearer " + apiToken);
-
-                connection.connect();
-            } catch (IOException e) {
-                logger.error("Error connecting to {}: {}", host, e);
-                if (logger.isErrorEnabled()) {
-                    logger.error("Could not connect to configured Humio: {}", config.host());
+                HttpRequest.Builder post = httpClient.post(config.uri() + "/api/v1/dataspaces/" + config.repository() + "/ingest");
+                String token = config.apiToken();
+                if (token != null) {
+                    post.withHeader("Authorization", "Bearer " + token);
                 }
-                return;
-            }
 
-            try (OutputStream outputStream = connection.getOutputStream()) {
-                boolean first = true;
-                outputStream.write("[{\"tags\": {\"type\":\"micrometrics\"},\"events\":[".getBytes());
-                for (Meter m : batch) {
-                    if (first) {
-                        first = false;
-                    }
-                    else {
-                        outputStream.write(',');
-                    }
-                    if (m instanceof TimeGauge) {
-                        writeGauge(outputStream, (TimeGauge) m, wallTime);
-                    } else if (m instanceof Gauge) {
-                        writeGauge(outputStream, (Gauge) m, wallTime);
-                    } else if (m instanceof Counter) {
-                        writeCounter(outputStream, (Counter) m, wallTime);
-                    } else if (m instanceof FunctionCounter) {
-                        writeCounter(outputStream, (FunctionCounter) m, wallTime);
-                    } else if (m instanceof Timer) {
-                        writeTimer(outputStream, (Timer) m, wallTime);
-                    } else if (m instanceof FunctionTimer) {
-                        writeTimer(outputStream, (FunctionTimer) m, wallTime);
-                    } else if (m instanceof DistributionSummary) {
-                        writeSummary(outputStream, (DistributionSummary) m, wallTime);
-                    } else if (m instanceof LongTaskTimer) {
-                        writeLongTaskTimer(outputStream, (LongTaskTimer) m, wallTime);
-                    } else {
-                        writeMeter(outputStream, m, wallTime);
-                    }
-                }
-                outputStream.write("]}]".getBytes());
-                outputStream.flush();
+                Batch batch = new Batch(config().clock().wallTime());
 
-                if (connection.getResponseCode() >= 400) {
-                    if (logger.isErrorEnabled()) {
-                        try {
-                            logger.error("failed to send metrics to Humio (HTTP {}). Cause: {}", connection.getResponseCode(), IOUtils.toString(connection.getErrorStream(), StandardCharsets.UTF_8));
-                        } catch (IOException ignored) {
-                        }
-                    }
-                    return; // don't try another batch
-                } else {
-                    logger.info("successfully sent {} metrics to Humio", batch.size());
-                }
-            } catch (IOException e) {
-                logger.error("Could not serialize meter", e);
-                return;
-            } finally {
-                connection.disconnect();
+                post.withJsonContent(meters.stream()
+                        .map(m -> match(m,
+                                batch::writeGauge,
+                                batch::writeCounter,
+                                batch::writeTimer,
+                                batch::writeSummary,
+                                batch::writeLongTaskTimer,
+                                batch::writeTimeGauge,
+                                batch::writeFunctionCounter,
+                                batch::writeFunctionTimer,
+                                batch::writeMeter)
+                        )
+                        .collect(joining(",", "[{\"tags\":{" +
+                                config.tags().entrySet().stream().map(tag -> "\"" + tag.getKey() + "\": \"" + tag.getValue() + "\"")
+                                        .collect(joining(",")) +
+                                "},\"events\": [", "]}]")))
+                        .send()
+                        .onSuccess(response -> logger.debug("successfully sent {} metrics to humio.", meters.size()))
+                        .onError(response -> logger.error("failed to send metrics to humio: {}", response.body()));
+            } catch (Throwable e) {
+                logger.warn("failed to send metrics to humio", e);
             }
         }
     }
 
     // VisibleForTesting
-    void writeCounter(OutputStream os, Counter counter, long wallTime) throws IOException {
-        writeEvent(os, counter, wallTime, builder -> {
-            builder.append(",\"count\":").append(counter.count());
-        });
-    }
+    class Batch {
+        private final String timestamp;
 
-    // VisibleForTesting
-    void writeCounter(OutputStream os, FunctionCounter counter, long wallTime) throws IOException {
-        writeEvent(os, counter, wallTime, builder -> {
-            builder.append(",\"count\":").append(counter.count());
-        });
-    }
-
-    // VisibleForTesting
-    void writeGauge(OutputStream os, Gauge gauge, long wallTime) throws IOException {
-        Double value = gauge.value();
-        if (!value.isNaN()) {
-            writeEvent(os, gauge, wallTime, builder -> {
-                builder.append(",\"value\":").append(value);
-            });
+        private Batch(long wallTime) {
+            timestamp = DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(wallTime));
         }
-    }
 
-    // VisibleForTesting
-    void writeGauge(OutputStream os, TimeGauge gauge, long wallTime) throws IOException {
-        Double value = gauge.value();
-        if (!value.isNaN()) {
-            writeEvent(os, gauge, wallTime, builder -> {
-                builder.append(",\"value\":").append(gauge.value(getBaseTimeUnit()));
-            });
+        // VisibleForTesting
+        String writeCounter(Counter counter) {
+            return writeEvent(counter, event("count", counter.count()));
         }
-    }
 
-    // VisibleForTesting
-    void writeTimer(OutputStream os, FunctionTimer timer, long wallTime) throws IOException {
-        writeEvent(os, timer, wallTime, builder -> {
-            builder.append(",\"count\":").append(timer.count());
-            builder.append(",\"sum\" :").append(timer.totalTime(getBaseTimeUnit()));
-            builder.append(",\"mean\":").append(timer.mean(getBaseTimeUnit()));
-        });
-    }
+        // VisibleForTesting
+        String writeFunctionCounter(FunctionCounter counter) {
+            return writeEvent(counter, event("count", counter.count()));
+        }
 
-    // VisibleForTesting
-    void writeLongTaskTimer(OutputStream os, LongTaskTimer timer, long wallTime) throws IOException {
-        writeEvent(os, timer, wallTime, builder -> {
-            builder.append(",\"activeTasks\":").append(timer.activeTasks());
-            builder.append(",\"duration\":").append(timer.duration(getBaseTimeUnit()));
-        });
-    }
-
-    // VisibleForTesting
-    void writeTimer(OutputStream os, Timer timer, long wallTime) throws IOException {
-        writeEvent(os, timer, wallTime, builder -> {
-            builder.append(",\"count\":").append(timer.count());
-            builder.append(",\"sum\":").append(timer.totalTime(getBaseTimeUnit()));
-            builder.append(",\"mean\":").append(timer.mean(getBaseTimeUnit()));
-            builder.append(",\"max\":").append(timer.max(getBaseTimeUnit()));
-        });
-    }
-
-    // VisibleForTesting
-    void writeSummary(OutputStream os, DistributionSummary summary, long wallTime) throws IOException {
-        summary.takeSnapshot();
-        writeEvent(os, summary, wallTime, builder -> {
-            builder.append(",\"count\":").append(summary.count());
-            builder.append(",\"sum\":").append(summary.totalAmount());
-            builder.append(",\"mean\":").append(summary.mean());
-            builder.append(",\"max\":").append(summary.max());
-        });
-    }
-
-    // VisibleForTesting
-    void writeMeter(OutputStream os, Meter meter, long wallTime) throws IOException {
-        writeEvent(os, meter, wallTime, builder -> {
-            for (Measurement measurement : meter.measure()) {
-                builder.append(",\"").append(measurement.getStatistic().getTagValueRepresentation()).append("\":\"").append(measurement.getValue()).append("\"");
+        // VisibleForTesting
+        @Nullable
+        String writeGauge(Gauge gauge) {
+            Double value = gauge.value();
+            if (!value.isNaN()) {
+                return writeEvent(gauge, event("value", gauge.value()));
             }
-        });
-    }
-
-    // VisibleForTesting
-    void writeEvent(OutputStream os, Meter meter, long wallTime, Consumer<StringBuilder> consumer) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        String timestamp = FORMATTER.format(Instant.ofEpochMilli(wallTime));
-        String name = getConventionName(meter.getId());
-        String type = meter.getId().getType().toString().toLowerCase();
-        sb.append("{\"timestamp\":\"").append(timestamp).append("\",\"attributes\":{")
-            .append("\"name\":\"").append(name).append('"')
-            .append(",\"type\":\"").append(type).append('"');
-
-        List<Tag> tags = getConventionTags(meter.getId());
-        for (Tag tag : tags) {
-            sb.append(",\"").append(tag.getKey()).append("\":\"").append(tag.getValue()).append('"');
+            return null;
         }
 
-        consumer.accept(sb);
-        sb.append("}}");
+        // VisibleForTesting
+        @Nullable
+        String writeTimeGauge(TimeGauge gauge) {
+            Double value = gauge.value();
+            if (!value.isNaN()) {
+                return writeEvent(gauge, event("value", gauge.value(getBaseTimeUnit())));
+            }
+            return null;
+        }
 
-        os.write(sb.toString().getBytes());
+        // VisibleForTesting
+        String writeFunctionTimer(FunctionTimer timer) {
+            return writeEvent(timer,
+                    event("count", timer.count()),
+                    event("sum", timer.totalTime(getBaseTimeUnit())),
+                    event("avg", timer.mean(getBaseTimeUnit())));
+        }
+
+        // VisibleForTesting
+        String writeLongTaskTimer(LongTaskTimer timer) {
+            return writeEvent(timer,
+                    event(config().namingConvention().tagKey("active.tasks"), timer.activeTasks()),
+                    event("duration", timer.duration(getBaseTimeUnit())));
+        }
+
+        // VisibleForTesting
+        String writeTimer(Timer timer) {
+            HistogramSnapshot snap = timer.takeSnapshot();
+            return writeEvent(timer,
+                    event("count", snap.count()),
+                    event("sum", snap.total(getBaseTimeUnit())),
+                    event("avg", snap.mean(getBaseTimeUnit())),
+                    event("max", snap.max(getBaseTimeUnit())));
+        }
+
+        // VisibleForTesting
+        String writeSummary(DistributionSummary summary) {
+            HistogramSnapshot snap = summary.takeSnapshot();
+            return writeEvent(summary,
+                    event("count", snap.count()),
+                    event("sum", snap.total()),
+                    event("avg", snap.mean()),
+                    event("max", snap.max()));
+        }
+
+        // VisibleForTesting
+        String writeMeter(Meter meter) {
+            return writeEvent(meter, StreamSupport.stream(meter.measure().spliterator(), false)
+                    .map(ms -> event(ms.getStatistic().getTagValueRepresentation(), ms.getValue()))
+                    .toArray(Attribute[]::new));
+        }
+
+        /*
+          {
+            "timestamp": "2016-06-06T13:00:02+02:00",
+            "attributes": {
+              "name": "value1"
+          }
+         */
+        // VisibleForTesting
+        String writeEvent(Meter meter, Attribute... attributes) {
+            StringBuilder sb = new StringBuilder();
+
+            String name = getConventionName(meter.getId());
+
+            sb.append("{\"timestamp\":\"").append(timestamp).append("\",\"attributes\":{\"name\":\"").append(name).append('"');
+            for (Attribute attribute : attributes) {
+                sb.append(",\"").append(attribute.name).append("\":").append(DoubleFormat.decimalOrWhole(attribute.value));
+            }
+
+            List<Tag> tags = getConventionTags(meter.getId());
+            for (Tag tag : tags) {
+                String key = tag.getKey();
+                for (Attribute attribute : attributes) {
+                    if (attribute.name.equals(tag.getKey())) {
+                        key = "_" + key;
+                        break;
+                    }
+                }
+
+                sb.append(",\"").append(key).append("\":\"").append(tag.getValue()).append('"');
+            }
+
+            sb.append("}}");
+            return sb.toString();
+        }
+    }
+
+    private static class Attribute {
+        private final String name;
+        private final double value;
+
+        private Attribute(String name, double value) {
+            this.name = name;
+            this.value = value;
+        }
+    }
+
+    private static Attribute event(String name, double value) {
+        return new Attribute(name, value);
     }
 
     @Override
     @NonNull
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
+    }
+
+    public static HumioMeterRegistry.Builder builder(HumioConfig config) {
+        return new Builder(config);
+    }
+
+    public static class Builder {
+        private final HumioConfig config;
+
+        private Clock clock = Clock.SYSTEM;
+        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        private HttpClient httpClient;
+
+        public Builder(HumioConfig config) {
+            this.config = config;
+            this.httpClient = new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout());
+        }
+
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+
+        public Builder threadFactory(ThreadFactory threadFactory) {
+            this.threadFactory = threadFactory;
+            return this;
+        }
+
+        public Builder httpClient(HttpClient httpClient) {
+            this.httpClient = httpClient;
+            return this;
+        }
+
+        public HumioMeterRegistry build() {
+            return new HumioMeterRegistry(config, clock, threadFactory, httpClient);
+        }
     }
 }
