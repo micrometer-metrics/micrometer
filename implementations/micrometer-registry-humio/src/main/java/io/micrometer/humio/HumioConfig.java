@@ -29,12 +29,6 @@ import static java.util.stream.Collectors.toMap;
  * @author Martin Westergaard Lassen
  */
 public interface HumioConfig extends StepRegistryConfig {
-
-    /**
-     * Accept configuration defaults
-     */
-    HumioConfig DEFAULT = k -> null;
-
     /**
      * Get the value associated with a key.
      *

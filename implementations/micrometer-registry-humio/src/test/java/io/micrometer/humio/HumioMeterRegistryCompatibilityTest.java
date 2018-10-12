@@ -23,6 +23,18 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 import java.time.Duration;
 
 public class HumioMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+    private final HumioConfig config = new HumioConfig() {
+        @Override
+        public String get(String key) {
+            return null;
+        }
+
+        @Override
+        public boolean enabled() {
+            return false;
+        }
+    };
+
     @Override
     public MeterRegistry registry() {
         return new HumioMeterRegistry(new HumioConfig() {
@@ -51,6 +63,6 @@ public class HumioMeterRegistryCompatibilityTest extends MeterRegistryCompatibil
 
     @Override
     public Duration step() {
-        return HumioConfig.DEFAULT.step();
+        return config.step();
     }
 }
