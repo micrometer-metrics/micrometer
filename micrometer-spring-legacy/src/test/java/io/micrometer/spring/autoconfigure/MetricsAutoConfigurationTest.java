@@ -15,135 +15,134 @@
  */
 package io.micrometer.spring.autoconfigure;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
-import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
-import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
-import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
-import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics;
-import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
-import io.micrometer.core.instrument.binder.system.UptimeMetrics;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.context.ApplicationContext;
+import java.util.List;
+
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.config.MeterFilterReply;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.spring.PropertiesMeterFilter;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.client.ExpectedCount.once;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 /**
  * Tests for {@link MetricsAutoConfiguration}.
  *
- * @author Jon Schneider
+ * @author Andy Wilkinson
+ * @author Johnny Lim
  */
-@RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = MetricsAutoConfigurationTest.MetricsApp.class)
-public class MetricsAutoConfigurationTest {
+class MetricsAutoConfigurationTest {
 
-    @Autowired
-    private ApplicationContext context;
+    private final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 
-    @Autowired
-    private RestTemplate external;
+    @AfterEach
+    void cleanUp() {
+        if (context != null) {
+            context.close();
+        }
+    }
 
-    @Autowired
-    private TestRestTemplate loopback;
+    @Test
+    void autoConfiguresAClock() {
+        registerAndRefresh(BaseMeterRegistryConfiguration.class);
+        assertThat(context.getBean(Clock.class)).isNotNull();
+    }
 
-    @Autowired
-    private MeterRegistry registry;
+    @Test
+    void allowsACustomClockToBeUsed() {
+        registerAndRefresh(BaseMeterRegistryConfiguration.class, CustomClockConfiguration.class);
+        assertThat(context.getBean(Clock.class)).isEqualTo(context.getBean("customClock"));
+    }
 
     @SuppressWarnings("unchecked")
     @Test
-    public void restTemplateIsInstrumented() {
-        MockRestServiceServer server = MockRestServiceServer.bindTo(external).build();
-        server.expect(once(), requestTo("/api/external"))
-            .andExpect(method(HttpMethod.GET)).andRespond(withSuccess(
-            "hello", MediaType.APPLICATION_JSON));
-
-        assertThat(external.getForObject("/api/external", String.class)).isEqualTo("hello");
-
-        assertThat(registry.get("http.client.requests").timer().count()).isEqualTo(1L);
+    void configuresMeterRegistries() {
+        registerAndRefresh(CustomMeterRegistryConfiguration.class);
+        MeterRegistry meterRegistry = context.getBean(MeterRegistry.class);
+        List<MeterFilter> filters = (List<MeterFilter>) ReflectionTestUtils.getField(meterRegistry, "filters");
+        assertThat(filters).hasSize(3);
+        assertThat(filters.get(0).accept((Meter.Id) null)).isEqualTo(MeterFilterReply.DENY);
+        assertThat(filters.get(1)).isInstanceOf(PropertiesMeterFilter.class);
+        assertThat(filters.get(2).accept((Meter.Id) null)).isEqualTo(MeterFilterReply.ACCEPT);
+        verify((MeterBinder) context.getBean("meterBinder")).bindTo(meterRegistry);
+        verify(context.getBean(MeterRegistryCustomizer.class)).customize(meterRegistry);
     }
 
-    @Test
-    public void requestMappingIsInstrumented() {
-        loopback.getForObject("/api/people", String.class);
-
-        assertThat(registry.get("http.server.requests").timer().count()).isEqualTo(1L);
+    private void registerAndRefresh(Class<?>... configurationClasses) {
+        if (configurationClasses.length > 0) {
+            this.context.register(configurationClasses);
+        }
+        this.context.register(MetricsAutoConfiguration.class);
+        this.context.refresh();
     }
 
-    @Test
-    public void automaticallyRegisteredBinders() {
-        assertThat(context.getBeansOfType(MeterBinder.class).values())
-            .hasAtLeastOneElementOfType(LogbackMetrics.class)
-            .hasAtLeastOneElementOfType(JvmGcMetrics.class)
-            .hasAtLeastOneElementOfType(JvmGcMetrics.class)
-            .hasAtLeastOneElementOfType(JvmThreadMetrics.class)
-            .hasAtLeastOneElementOfType(ClassLoaderMetrics.class)
-            .hasAtLeastOneElementOfType(UptimeMetrics.class)
-            .hasAtLeastOneElementOfType(ProcessorMetrics.class)
-            .hasAtLeastOneElementOfType(FileDescriptorMetrics.class);
-    }
+    @Configuration
+    static class BaseMeterRegistryConfiguration {
 
-    @Test
-    public void registryCustomizersAreAppliedBeforeRegistryIsInjectableElsewhere() {
-        registry.get("my.thing").tags("common", "tag").gauge();
-    }
-
-    @SpringBootApplication(scanBasePackages = "ignored")
-    @Import(PersonController.class)
-    static class MetricsApp {
         @Bean
-        MockClock mockClock() {
-            return new MockClock();
+        MeterRegistry meterRegistry() {
+            SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+            return spy(meterRegistry);
         }
 
-        @Bean
-        public MeterRegistryCustomizer commonTags() {
-            return r -> r.config().commonTags("common", "tag");
-        }
+    }
+
+    @Configuration
+    static class CustomClockConfiguration {
 
         @Bean
-        public MyThing myBinder(MeterRegistry registry) {
-            // this should have the common tag
-            registry.gauge("my.thing", 0);
-            return new MyThing();
+        Clock customClock() {
+            return Clock.SYSTEM;
+        }
+
+    }
+
+    @Configuration
+    static class CustomMeterRegistryConfiguration {
+
+        @Bean
+        MeterRegistry meterRegistry() {
+            SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+            return spy(meterRegistry);
         }
 
         @Bean
-        public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
-            return restTemplateBuilder.build();
+        @SuppressWarnings("rawtypes")
+        MeterRegistryCustomizer meterRegistryCustomizer() {
+            return mock(MeterRegistryCustomizer.class);
         }
 
-        private class MyThing {
+        @Bean
+        MeterBinder meterBinder() {
+            return mock(MeterBinder.class);
+        }
+
+        @Bean
+        @Order(1)
+        MeterFilter acceptMeterFilter() {
+            return MeterFilter.accept();
+        }
+
+        @Bean
+        @Order(-1)
+        MeterFilter denyMeterFilter() {
+            return MeterFilter.deny();
         }
 
     }
 
-    @RestController
-    static class PersonController {
-        @GetMapping("/api/people")
-        String personName() {
-            return "Jon";
-        }
-    }
 }
