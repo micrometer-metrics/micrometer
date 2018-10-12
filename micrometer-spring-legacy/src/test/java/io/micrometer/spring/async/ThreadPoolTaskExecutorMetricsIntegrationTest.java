@@ -18,7 +18,6 @@ package io.micrometer.spring.async;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
-import io.micrometer.spring.autoconfigure.MeterRegistryPostProcessor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,7 +58,7 @@ public class ThreadPoolTaskExecutorMetricsIntegrationTest {
 
     /**
      * Injecting the registry instead would cause early evaluation of the registry and the registry
-     * wouldn't be discovered by {@link MeterRegistryPostProcessor}.
+     * wouldn't be discovered by {@code MeterRegistryPostProcessor}.
      */
     @Configuration
     @EnableAsync
