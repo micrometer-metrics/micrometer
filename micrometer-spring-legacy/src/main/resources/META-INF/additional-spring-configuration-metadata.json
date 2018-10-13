@@ -72,6 +72,35 @@
       "deprecation": {
         "reason": "Instead, filter 'process.uptime' and 'process.start.time' metrics."
       }
+    },
+    {
+      "name": "management.metrics.jersey2.server.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether to enable Jersey 2 metrics.",
+      "defaultValue": true,
+      "deprecation": {
+        "reason": "Instead, disable JerseyServerMetricsAutoConfiguration."
+      }
+    },
+    {
+      "name": "management.metrics.jersey2.server.requests-metric-name",
+      "type": "java.lang.String",
+      "description": "Name of the metric for received requests.",
+      "defaultValue": "http.server.requests",
+      "deprecation": {
+        "replacement": "management.metrics.web.server.requests-metric-name",
+        "reason": "Use common version for web server requests metric name."
+      }
+    },
+    {
+      "name": "management.metrics.jersey2.server.auto-time-tequests",
+      "type": "java.lang.Boolean",
+      "description": "Whether requests handled by Jersey should be automatically timed.",
+      "defaultValue": true,
+      "deprecation": {
+        "replacement": "management.metrics.web.server.auto-time-tequests",
+        "reason": "Use common version for web server auto time requests."
+      }
     }
   ]
 }
