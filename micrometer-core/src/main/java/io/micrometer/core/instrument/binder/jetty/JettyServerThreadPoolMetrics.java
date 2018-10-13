@@ -28,6 +28,7 @@ import org.eclipse.jetty.util.thread.ThreadPool.SizedThreadPool;
  *
  * @author Manabu Matsuzaki
  * @author Andy Wilkinson
+ * @author Johnny Lim
  */
 public class JettyServerThreadPoolMetrics implements MeterBinder {
 
@@ -42,32 +43,30 @@ public class JettyServerThreadPoolMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        if (this.threadPool instanceof SizedThreadPool) {
-            SizedThreadPool sizedThreadPool = (SizedThreadPool) this.threadPool;
-            Gauge.builder("jetty.threads.config.min", sizedThreadPool,
-                SizedThreadPool::getMinThreads)
-                .description("The minimum number of threads in the pool")
-                .tags(this.tags).register(registry);
-            Gauge.builder("jetty.threads.config.max", sizedThreadPool,
-                SizedThreadPool::getMaxThreads)
-                .description("The maximum number of threads in the pool")
-                .tags(this.tags).register(registry);
-            if (this.threadPool instanceof QueuedThreadPool) {
-                QueuedThreadPool queuedThreadPool = (QueuedThreadPool) this.threadPool;
-                Gauge.builder("jetty.threads.busy", queuedThreadPool,
-                    QueuedThreadPool::getBusyThreads)
-                    .description("The number of busy threads in the pool")
-                    .tags(this.tags).register(registry);
+        if (threadPool instanceof SizedThreadPool) {
+            SizedThreadPool sizedThreadPool = (SizedThreadPool) threadPool;
+            Gauge.builder("jetty.threads.config.min", sizedThreadPool, SizedThreadPool::getMinThreads)
+                    .description("The minimum number of threads in the pool")
+                    .tags(tags).register(registry);
+            Gauge.builder("jetty.threads.config.max", sizedThreadPool, SizedThreadPool::getMaxThreads)
+                    .description("The maximum number of threads in the pool")
+                    .tags(tags).register(registry);
+            if (threadPool instanceof QueuedThreadPool) {
+                QueuedThreadPool queuedThreadPool = (QueuedThreadPool) threadPool;
+                Gauge.builder("jetty.threads.busy", queuedThreadPool, QueuedThreadPool::getBusyThreads)
+                        .description("The number of busy threads in the pool")
+                        .tags(tags).register(registry);
+                Gauge.builder("jetty.threads.jobs", queuedThreadPool, QueuedThreadPool::getQueueSize)
+                        .description("Number of jobs queued waiting for a thread")
+                        .tags(tags).register(registry);
             }
         }
-        Gauge.builder("jetty.threads.current", this.threadPool,
-            ThreadPool::getThreads)
-            .description("The total number of threads in the pool")
-            .tags(this.tags).register(registry);
-        Gauge.builder("jetty.threads.idle", this.threadPool,
-            ThreadPool::getIdleThreads)
-            .description("The number of idle threads in the pool").tags(this.tags)
-            .register(registry);
+        Gauge.builder("jetty.threads.current", threadPool, ThreadPool::getThreads)
+                .description("The total number of threads in the pool")
+                .tags(tags).register(registry);
+        Gauge.builder("jetty.threads.idle", threadPool, ThreadPool::getIdleThreads)
+                .description("The number of idle threads in the pool").tags(tags)
+                .register(registry);
     }
 
 }
