@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.hystrix.HystrixMetricsBinder;
 import io.micrometer.spring.PropertiesMeterFilter;
-import io.micrometer.spring.autoconfigure.jersey2.server.JerseyServerMetricsConfiguration;
 import io.micrometer.spring.integration.SpringIntegrationMetrics;
 import io.micrometer.spring.scheduling.ScheduledMethodMetrics;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -37,7 +36,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.Order;
 import org.springframework.integration.config.EnableIntegrationManagement;
 import org.springframework.integration.support.management.IntegrationManagementConfigurer;
@@ -50,10 +48,6 @@ import org.springframework.integration.support.management.IntegrationManagementC
 @Configuration
 @ConditionalOnClass(Timed.class)
 @EnableConfigurationProperties(MetricsProperties.class)
-@Import({
-        // default instrumentation
-        JerseyServerMetricsConfiguration.class,
-})
 @AutoConfigureAfter({
         DataSourceAutoConfiguration.class,
         RabbitAutoConfiguration.class,

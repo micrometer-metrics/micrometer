@@ -20,7 +20,6 @@ import io.github.resilience4j.retry.RetryConfig;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
-import io.micrometer.spring.autoconfigure.jersey2.server.JerseyServerMetricsConfiguration;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -70,7 +69,7 @@ public class JerseyServerMetricsTest {
     }
 
     @SpringBootApplication(scanBasePackages = "ignore")
-    @Import({JerseyServerMetricsConfiguration.class, JerseyConfig.class, PingResource.class})
+    @Import({JerseyConfig.class, PingResource.class})
     public static class JerseyApp {
     }
 
