@@ -65,7 +65,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         super(config, clock);
         requireNonNull(config.apiKey());
 
-        this.config().namingConvention(new DatadogNamingConvention());
+        config().namingConvention(new DatadogNamingConvention());
 
         this.config = config;
         this.httpClient = httpClient;

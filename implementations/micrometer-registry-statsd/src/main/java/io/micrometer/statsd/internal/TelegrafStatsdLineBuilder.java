@@ -24,9 +24,13 @@ import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
 
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
+
+    private static final Pattern PATTERN_SPECIAL_CHARACTERS = Pattern.compile("([, =:])");
+
     private static final AtomicReferenceFieldUpdater<TelegrafStatsdLineBuilder, NamingConvention> namingConventionUpdater =
             AtomicReferenceFieldUpdater.newUpdater(TelegrafStatsdLineBuilder.class, NamingConvention.class, "namingConvention");
 
@@ -96,9 +100,6 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
     }
 
     private String telegrafEscape(String value) {
-        return value.replace(",", "\\,")
-                .replace("=", "\\=")
-                .replace(" ", "\\ ")
-                .replace(":", "\\:");
+        return PATTERN_SPECIAL_CHARACTERS.matcher(value).replaceAll("\\\\$1");
     }
 }

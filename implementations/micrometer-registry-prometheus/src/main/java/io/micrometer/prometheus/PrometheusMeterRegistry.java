@@ -61,7 +61,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     public PrometheusMeterRegistry(PrometheusConfig config, CollectorRegistry registry, Clock clock) {
         super(clock);
         this.registry = registry;
-        this.config().namingConvention(new PrometheusNamingConvention());
+        config().namingConvention(new PrometheusNamingConvention());
         this.prometheusConfig = config;
     }
 

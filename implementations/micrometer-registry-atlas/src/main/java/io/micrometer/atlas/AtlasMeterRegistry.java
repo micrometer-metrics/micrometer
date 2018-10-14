@@ -69,7 +69,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
         // invalid character replacement happens in the spectator-reg-atlas module, so doesn't need
         // to be duplicated here.
-        this.config().namingConvention(new AtlasNamingConvention());
+        config().namingConvention(new AtlasNamingConvention());
 
         start();
     }

@@ -103,7 +103,6 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
                     this::announceFunctionTimer,
                     this::announceMeter);
         }
-
     }
 
     private void announceMeter(Meter meter) {
@@ -113,7 +112,7 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
     }
 
     private void announceFunctionTimer(FunctionTimer functionTimer) {
-        announce(functionTimer, functionTimer.count(),"count");
+        announce(functionTimer, functionTimer.count(), "count");
         announce(functionTimer, functionTimer.totalTime(getBaseTimeUnit()), "sum");
         announce(functionTimer, functionTimer.mean(getBaseTimeUnit()), "avg");
     }

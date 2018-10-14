@@ -28,8 +28,8 @@ import java.util.concurrent.TimeUnit;
 
 public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
 
-    private final GraphiteReporter reporter;
     private final GraphiteConfig config;
+    private final GraphiteReporter reporter;
 
     public GraphiteMeterRegistry(GraphiteConfig config, Clock clock) {
         this(config, clock, new GraphiteHierarchicalNameMapper(config.tagsAsPrefix()));
@@ -49,40 +49,43 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
         super(config, metricRegistry, nameMapper, clock);
 
         this.config = config;
-        this.config().namingConvention(new GraphiteNamingConvention());
+        config().namingConvention(new GraphiteNamingConvention());
         this.reporter = reporter;
 
-        if (config.enabled())
-            start();
+        start();
     }
 
     private static GraphiteReporter defaultGraphiteReporter(GraphiteConfig config, Clock clock, MetricRegistry metricRegistry) {
-        GraphiteSender sender;
+        return GraphiteReporter.forRegistry(metricRegistry)
+            .withClock(new DropwizardClock(clock))
+            .convertRatesTo(config.rateUnits())
+            .convertDurationsTo(config.durationUnits())
+            .build(getGraphiteSender(config));
+    }
+
+    private static GraphiteSender getGraphiteSender(GraphiteConfig config) {
+        InetSocketAddress address = new InetSocketAddress(config.host(), config.port());
         switch (config.protocol()) {
             case PLAINTEXT:
-                sender = new Graphite(new InetSocketAddress(config.host(), config.port()));
-                break;
+                return new Graphite(address);
             case UDP:
-                sender = new GraphiteUDP(new InetSocketAddress(config.host(), config.port()));
-                break;
+                return new GraphiteUDP(address);
             case PICKLED:
             default:
-                sender = new PickledGraphite(new InetSocketAddress(config.host(), config.port()));
+                return new PickledGraphite(address);
         }
-
-        return GraphiteReporter.forRegistry(metricRegistry)
-                .withClock(new DropwizardClock(clock))
-                .convertRatesTo(config.rateUnits())
-                .convertDurationsTo(config.durationUnits())
-                .build(sender);
     }
 
     public void stop() {
-        this.reporter.stop();
+        if (config.enabled()) {
+            reporter.stop();
+        }
     }
 
     public void start() {
-        this.reporter.start(config.step().getSeconds(), TimeUnit.SECONDS);
+        if (config.enabled()) {
+            reporter.start(config.step().getSeconds(), TimeUnit.SECONDS);
+        }
     }
 
     @Override
@@ -91,7 +94,9 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
             reporter.report();
         }
         stop();
-        this.reporter.close();
+        if (config.enabled()) {
+            reporter.close();
+        }
         super.close();
     }
 

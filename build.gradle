@@ -77,7 +77,7 @@ subprojects {
     }
 
     checkstyle {
-        toolVersion = '8.4'
+        toolVersion = '8.12'
         configFile = rootProject.file('config/checkstyle/checkstyle.xml')
     }
 
@@ -97,7 +97,7 @@ subprojects {
 }
 
 wrapper {
-    gradleVersion = '4.10.1'
+    gradleVersion = '4.10.2'
 }
 
 defaultTasks 'build'

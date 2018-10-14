@@ -15,13 +15,19 @@
  */
 package io.micrometer.spring.autoconfigure;
 
+import java.util.List;
+
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.binder.hystrix.HystrixMetricsBinder;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.spring.PropertiesMeterFilter;
 import io.micrometer.spring.integration.SpringIntegrationMetrics;
 import io.micrometer.spring.scheduling.ScheduledMethodMetrics;
+
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -33,7 +39,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.SearchStrategy;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -62,22 +67,18 @@ public class MetricsAutoConfiguration {
     }
 
     @Bean
-    public static MeterRegistryPostProcessor meterRegistryPostProcessor(ApplicationContext context) {
-        return new MeterRegistryPostProcessor(context);
+    public static MeterRegistryPostProcessor meterRegistryPostProcessor(
+            ObjectProvider<List<MeterBinder>> meterBinders,
+            ObjectProvider<List<MeterFilter>> meterFilters,
+            ObjectProvider<List<MeterRegistryCustomizer<?>>> meterRegistryCustomizers,
+            ObjectProvider<MetricsProperties> metricsProperties) {
+        return new MeterRegistryPostProcessor(meterBinders, meterFilters, meterRegistryCustomizers, metricsProperties);
     }
 
     @Bean
     @Order(0)
-    public MeterRegistryCustomizer<MeterRegistry> propertyBasedFilter(MetricsProperties props) {
-        return r -> r.config().meterFilter(new PropertiesMeterFilter(props));
-    }
-
-    // If AOP is not enabled, scheduled interception will not work.
-    @Bean
-    @ConditionalOnClass(name = "org.aspectj.lang.ProceedingJoinPoint")
-    @ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)
-    public ScheduledMethodMetrics metricsSchedulingAspect(MeterRegistry registry) {
-        return new ScheduledMethodMetrics(registry);
+    public PropertiesMeterFilter propertiesMeterFilter(MetricsProperties properties) {
+        return new PropertiesMeterFilter(properties);
     }
 
     @Bean
@@ -109,4 +110,20 @@ public class MetricsAutoConfiguration {
             return new SpringIntegrationMetrics(configurer);
         }
     }
+
+    @Configuration
+    @ConditionalOnClass(name = "org.aspectj.lang.ProceedingJoinPoint")
+    @ConditionalOnProperty(value = "spring.aop.enabled", havingValue = "true", matchIfMissing = true)
+    static class AopRequiredConfiguration {
+
+        // If AOP is not enabled, scheduled interception will not work.
+        @Bean
+        @ConditionalOnProperty(value = "management.metrics.binders.scheduled.enabled", matchIfMissing = true)
+        @ConditionalOnMissingBean
+        public ScheduledMethodMetrics metricsSchedulingAspect(MeterRegistry registry) {
+            return new ScheduledMethodMetrics(registry);
+        }
+
+    }
+
 }

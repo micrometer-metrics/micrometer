@@ -15,12 +15,11 @@
  */
 package io.micrometer.spring.autoconfigure;
 
-import org.springframework.boot.test.util.EnvironmentTestUtils;
-import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.util.EnvironmentTestUtils;
+import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -63,5 +62,4 @@ class MetricsAutoConfigurationIntegrationTest {
         this.context.register(configurationClasses);
         this.context.refresh();
     }
-
 }
