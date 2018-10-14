@@ -89,7 +89,7 @@ class MetricsAutoConfigurationTest {
 
     @Test
     void backsOffWhenSpringAopEnabledIsFalse() {
-        EnvironmentTestUtils.addEnvironment(context, "spring.aop.enabled=false");
+        EnvironmentTestUtils.addEnvironment(context, "spring.aop.auto=false");
 
         registerAndRefresh(BaseMeterRegistryConfiguration.class);
 
