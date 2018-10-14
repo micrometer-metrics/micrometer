@@ -16,12 +16,14 @@
 package io.micrometer.spring.autoconfigure.jersey;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.jersey2.server.AnnotationFinder;
 import io.micrometer.jersey2.server.DefaultJerseyTagsProvider;
 import io.micrometer.jersey2.server.JerseyTagsProvider;
 import io.micrometer.jersey2.server.MetricsApplicationEventListener;
 import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.MetricsProperties;
+import io.micrometer.spring.autoconfigure.OnlyOnceLoggingDenyMeterFilter;
 import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
 import org.glassfish.jersey.server.ResourceConfig;
 
@@ -39,6 +41,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.core.annotation.Order;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
@@ -81,6 +84,16 @@ public class JerseyServerMetricsAutoConfiguration {
                 config.register(new MetricsApplicationEventListener(meterRegistry,
                         tagsProvider, server.getRequestsMetricName(),
                         server.isAutoTimeRequests(), new AnnotationUtilsAnnotationFinder()));
+    }
+
+    @Bean
+    @Order(0)
+    public MeterFilter jerseyMetricsUriTagFilter() {
+        String metricName = this.properties.getWeb().getServer().getRequestsMetricName();
+        MeterFilter filter = new OnlyOnceLoggingDenyMeterFilter(() -> String
+                .format("Reached the maximum number of URI tags for '%s'.", metricName));
+        return MeterFilter.maximumAllowableTags(metricName, "uri",
+                this.properties.getWeb().getServer().getMaxUriTags(), filter);
     }
 
     /**
