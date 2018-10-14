@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package io.micrometer.kairos;
 
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.lang.Nullable;
 
 /**
  * @author Anton Ilinchik
@@ -37,35 +38,30 @@ public interface KairosConfig extends StepRegistryConfig {
     }
 
     /**
-     * The host to send the metrics to
-     * Default is "http://localhost:8080"
+     * The URI to send the metrics to.
      *
-     * @return host
+     * @return uri
      */
-    default String host() {
-        String v = get(prefix() + ".host");
+    default String uri() {
+        String v = get(prefix() + ".uri");
         return v == null ? "http://localhost:8080/api/v1/datapoints" : v;
     }
 
     /**
-     * The Basic Authentication username.
-     * Default is: "" (= do not perform Basic Authentication)
-     *
-     * @return username for Basic Authentication
+     * @return Authenticate requests with this user. By default is {@code null}, and the registry will not
+     * attempt to present credentials to KairosDB.
      */
+    @Nullable
     default String userName() {
-        String v = get(prefix() + ".userName");
-        return v == null ? "" : v;
+        return get(prefix() + ".userName");
     }
 
     /**
-     * The Basic Authentication password.
-     * Default is: "" (= do not perform Basic Authentication)
-     *
-     * @return password for Basic Authentication
+     * @return Authenticate requests with this password. By default is {@code null}, and the registry will not
+     * attempt to present credentials to KairosDB.
      */
+    @Nullable
     default String password() {
-        String v = get(prefix() + ".password");
-        return v == null ? "" : v;
+        return get(prefix() + ".password");
     }
 }

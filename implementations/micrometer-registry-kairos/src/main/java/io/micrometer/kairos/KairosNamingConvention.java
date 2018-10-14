@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package io.micrometer.kairos;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
+import io.micrometer.core.lang.Nullable;
 
 import java.util.regex.Pattern;
 
@@ -25,8 +26,7 @@ import java.util.regex.Pattern;
  * @author Anton Ilinchik
  */
 public class KairosNamingConvention implements NamingConvention {
-
-    private static final Pattern blacklistedChars = Pattern.compile("[{}():,=\\[\\]]");
+    private static final Pattern BLACKLISTED_CHARS = Pattern.compile("[{}():,=\\[\\]]");
 
     private final NamingConvention delegate;
 
@@ -40,22 +40,21 @@ public class KairosNamingConvention implements NamingConvention {
 
     private String format(String name) {
         String normalized = StringEscapeUtils.escapeJson(name);
-        return blacklistedChars.matcher(normalized).replaceAll("_");
+        return BLACKLISTED_CHARS.matcher(normalized).replaceAll("_");
     }
 
     @Override
-    public String name(String name, Meter.Type type, String baseUnit) {
-        return delegate.name(format(name), type, baseUnit);
+    public String name(String name, Meter.Type type, @Nullable String baseUnit) {
+        return format(delegate.name(name, type, baseUnit));
     }
 
     @Override
     public String tagKey(String key) {
-        return format(key);
+        return format(delegate.tagKey(key));
     }
 
     @Override
     public String tagValue(String value) {
-        return format(value);
+        return format(delegate.tagValue(value));
     }
-
 }

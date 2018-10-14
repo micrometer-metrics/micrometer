@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ public class KairosPropertiesConfigAdapter extends StepRegistryPropertiesConfigA
     }
 
     @Override
-    public String host() {
-        return get(KairosProperties::getHost, KairosConfig.super::host);
+    public String uri() {
+        return get(KairosProperties::getUri, KairosConfig.super::uri);
     }
 
     @Override

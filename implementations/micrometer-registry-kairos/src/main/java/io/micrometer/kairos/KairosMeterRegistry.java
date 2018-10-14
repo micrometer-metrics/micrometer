@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,34 +15,16 @@
  */
 package io.micrometer.kairos;
 
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.HttpHeader;
-import io.micrometer.core.instrument.util.HttpMethod;
-import io.micrometer.core.instrument.util.MediaType;
 import io.micrometer.core.instrument.util.MeterPartition;
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.ipc.http.HttpClient;
+import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.InetAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -51,117 +33,58 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static java.util.Objects.requireNonNull;
+import static io.micrometer.core.instrument.Meter.Type.match;
 
 /**
  * @author Anton Ilinchik
  */
 public class KairosMeterRegistry extends StepMeterRegistry {
-
     private final Logger logger = LoggerFactory.getLogger(KairosMeterRegistry.class);
-
     private final KairosConfig config;
-
-    public KairosMeterRegistry(KairosConfig config) {
-        this(config, Clock.SYSTEM);
-    }
+    private final HttpClient httpClient;
 
     public KairosMeterRegistry(KairosConfig config, Clock clock) {
-        this(config, clock, Executors.defaultThreadFactory());
+        this(config, clock, Executors.defaultThreadFactory(), new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
     }
 
-    public KairosMeterRegistry(KairosConfig config, Clock clock, ThreadFactory threadFactory) {
+    private KairosMeterRegistry(KairosConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
         super(config, clock);
-        requireNonNull(config, "config must not be null");
-        requireNonNull(threadFactory, "threadFactory must not be null");
+
+        this.config().namingConvention(new KairosNamingConvention());
 
         this.config = config;
-        config().namingConvention(new KairosNamingConvention());
-        start(threadFactory);
+        this.httpClient = httpClient;
+
+        if (config.enabled())
+            start(threadFactory);
     }
 
     @Override
     protected void publish() {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-            long wallTime = config().clock().wallTime();
-            String payload =
-                batch.stream().flatMap(m -> {
-                    if (m instanceof Timer) {
-                        return writeTimer((Timer) m, wallTime);
-                    }
-                    if (m instanceof Counter) {
-                        return writeCounter((Counter) m, wallTime);
-                    }
-                    if (m instanceof LongTaskTimer) {
-                        return writeLongTaskTimer((LongTaskTimer) m, wallTime);
-                    }
-                    if (m instanceof Gauge) {
-                        return writeGauge((Gauge) m, wallTime);
-                    }
-                    if (m instanceof TimeGauge) {
-                        return writeTimeGauge((TimeGauge) m, wallTime);
-                    }
-                    if (m instanceof FunctionTimer) {
-                        return writeFunctionTimer((FunctionTimer) m, wallTime);
-                    }
-                    if (m instanceof FunctionCounter) {
-                        return writeFunctionCounter((FunctionCounter) m, wallTime);
-                    }
-                    if (m instanceof DistributionSummary) {
-                        return writeSummary((DistributionSummary) m, wallTime);
-                    }
-                    return writeCustomMetric(m, wallTime);
-                }).collect(Collectors.joining(", "));
-
-            sendToKairos(String.format("[%s]", payload));
-        }
-    }
-
-    private void sendToKairos(String bulkPayload) {
-        HttpURLConnection con = null;
-
-        try {
-            URL templateUrl = new URL(config.host());
-            con = (HttpURLConnection) templateUrl.openConnection();
-            con.setConnectTimeout((int) config.connectTimeout().toMillis());
-            con.setReadTimeout((int) config.readTimeout().toMillis());
-            con.setRequestMethod(HttpMethod.POST);
-            con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-            con.setDoOutput(true);
-
-            if (StringUtils.isNotBlank(config.userName()) && StringUtils.isNotBlank(config.password())) {
-                byte[] authBinary = (config.userName() + ":" + config.password()).getBytes(StandardCharsets.UTF_8);
-                String authEncoded = Base64.getEncoder().encodeToString(authBinary);
-                con.setRequestProperty(HttpHeader.AUTHORIZATION, "Basic " + authEncoded);
+            try {
+                httpClient.post(config.uri())
+                        .withBasicAuthentication(config.userName(), config.password())
+                        .withJsonContent(
+                                batch.stream().flatMap(m -> match(m,
+                                        this::writeGauge,
+                                        this::writeCounter,
+                                        this::writeTimer,
+                                        this::writeSummary,
+                                        this::writeLongTaskTimer,
+                                        this::writeTimeGauge,
+                                        this::writeFunctionCounter,
+                                        this::writeFunctionTimer,
+                                        this::writeCustomMetric)
+                                ).collect(Collectors.joining(",", "[", "]"))
+                        )
+                        .print()
+                        .send()
+                        .onSuccess(response -> logger.debug("successfully sent {} metrics to kairos.", batch.size()))
+                        .onError(response -> logger.error("failed to send metrics to kairos: {}", response.body()));
+            } catch (Throwable t) {
+                logger.warn("failed to send metrics to kairos", t);
             }
-            logger.trace("Sending payload to KairosDB:");
-            logger.trace(bulkPayload);
-
-            try (OutputStream os = con.getOutputStream()) {
-                os.write(bulkPayload.getBytes(StandardCharsets.UTF_8));
-                os.flush();
-            }
-
-            int status = con.getResponseCode();
-
-            if (status >= 200 && status < 300) {
-                logger.trace("successfully sent events to KairosDB");
-            } else {
-                logger.error("failed to send metrics, status: {} message: {}", status, con.getResponseMessage());
-            }
-        } catch (Throwable e) {
-            logger.warn("failed to send metrics", e);
-        } finally {
-            quietlyCloseUrlConnection(con);
-        }
-    }
-
-    private void quietlyCloseUrlConnection(@Nullable HttpURLConnection con) {
-        try {
-            if (con != null) {
-                con.disconnect();
-            }
-        } catch (Exception ignore) {
         }
     }
 
@@ -205,72 +128,77 @@ public class KairosMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    Stream<String> writeSummary(DistributionSummary summary, Long wallTime) {
+    Stream<String> writeSummary(DistributionSummary summary) {
+        long wallTime = config().clock().wallTime();
         return Stream.of(
-            writeMetric(idWithSuffix(summary.getId(), "count"), wallTime, summary.count()),
-            writeMetric(idWithSuffix(summary.getId(), "mean"), wallTime, summary.mean()),
-            writeMetric(idWithSuffix(summary.getId(), "sum"), wallTime, summary.totalAmount()),
-            writeMetric(idWithSuffix(summary.getId(), "max"), wallTime, summary.max())
+                writeMetric(idWithSuffix(summary.getId(), "count"), wallTime, summary.count()),
+                writeMetric(idWithSuffix(summary.getId(), "avg"), wallTime, summary.mean()),
+                writeMetric(idWithSuffix(summary.getId(), "sum"), wallTime, summary.totalAmount()),
+                writeMetric(idWithSuffix(summary.getId(), "max"), wallTime, summary.max())
         );
     }
 
-    Stream<String> writeFunctionTimer(FunctionTimer timer, Long wallTime) {
+    Stream<String> writeFunctionTimer(FunctionTimer timer) {
+        long wallTime = config().clock().wallTime();
         return Stream.of(
-            writeMetric(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
-            writeMetric(idWithSuffix(timer.getId(), "mean"), wallTime, timer.mean(getBaseTimeUnit())),
-            writeMetric(idWithSuffix(timer.getId(), "sum"), wallTime, timer.totalTime(getBaseTimeUnit()))
+                writeMetric(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
+                writeMetric(idWithSuffix(timer.getId(), "avg"), wallTime, timer.mean(getBaseTimeUnit())),
+                writeMetric(idWithSuffix(timer.getId(), "sum"), wallTime, timer.totalTime(getBaseTimeUnit()))
         );
     }
 
-    Stream<String> writeTimer(Timer timer, Long wallTime) {
+    Stream<String> writeTimer(Timer timer) {
+        long wallTime = config().clock().wallTime();
         return Stream.of(
-            writeMetric(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
-            writeMetric(idWithSuffix(timer.getId(), "max"), wallTime, timer.max(getBaseTimeUnit())),
-            writeMetric(idWithSuffix(timer.getId(), "mean"), wallTime, timer.mean(getBaseTimeUnit())),
-            writeMetric(idWithSuffix(timer.getId(), "sum"), wallTime, timer.totalTime(getBaseTimeUnit()))
+                writeMetric(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
+                writeMetric(idWithSuffix(timer.getId(), "max"), wallTime, timer.max(getBaseTimeUnit())),
+                writeMetric(idWithSuffix(timer.getId(), "avg"), wallTime, timer.mean(getBaseTimeUnit())),
+                writeMetric(idWithSuffix(timer.getId(), "sum"), wallTime, timer.totalTime(getBaseTimeUnit()))
         );
     }
 
-    Stream<String> writeFunctionCounter(FunctionCounter counter, Long wallTime) {
-        return Stream.of(writeMetric(counter.getId(), wallTime, counter.count()));
+    Stream<String> writeFunctionCounter(FunctionCounter counter) {
+        return Stream.of(writeMetric(counter.getId(), config().clock().wallTime(), counter.count()));
     }
 
-    Stream<String> writeCounter(Counter counter, Long wallTime) {
-        return Stream.of(writeMetric(counter.getId(), wallTime, counter.count()));
+    Stream<String> writeCounter(Counter counter) {
+        return Stream.of(writeMetric(counter.getId(), config().clock().wallTime(), counter.count()));
     }
 
-    Stream<String> writeGauge(Gauge gauge, Long wallTime) {
+    Stream<String> writeGauge(Gauge gauge) {
         Double value = gauge.value();
-        return value.isNaN() ? Stream.empty() : Stream.of(writeMetric(gauge.getId(), wallTime, value));
+        return value.isNaN() ? Stream.empty() : Stream.of(writeMetric(gauge.getId(), config().clock().wallTime(), value));
     }
 
-    Stream<String> writeTimeGauge(TimeGauge timeGauge, Long wallTime) {
+    Stream<String> writeTimeGauge(TimeGauge timeGauge) {
         Double value = timeGauge.value(getBaseTimeUnit());
-        return value.isNaN() ? Stream.empty() : Stream.of(writeMetric(timeGauge.getId(), wallTime, value));
+        return value.isNaN() ? Stream.empty() : Stream.of(writeMetric(timeGauge.getId(), config().clock().wallTime(), value));
     }
 
-    Stream<String> writeLongTaskTimer(LongTaskTimer timer, long wallTime) {
+    Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
+        long wallTime = config().clock().wallTime();
         return Stream.of(
-            writeMetric(idWithSuffix(timer.getId(), "activeTasks"), wallTime, timer.activeTasks()),
-            writeMetric(idWithSuffix(timer.getId(), "duration"), wallTime, timer.duration(getBaseTimeUnit()))
+                writeMetric(idWithSuffix(timer.getId(), "activeTasks"), wallTime, timer.activeTasks()),
+                writeMetric(idWithSuffix(timer.getId(), "duration"), wallTime, timer.duration(getBaseTimeUnit()))
         );
     }
 
-    private Stream<String> writeCustomMetric(final Meter meter, Long wallTime) {
+    private Stream<String> writeCustomMetric(final Meter meter) {
+        long wallTime = config().clock().wallTime();
         return StreamSupport.stream(meter.measure().spliterator(), false)
-                            .map(ms -> new KairosMetricBuilder()
-                                .field("name", ms.getStatistic().getTagValueRepresentation())
-                                .datapoints(wallTime, ms.getValue())
-                                .tags(getConventionTags(meter.getId()))
-                                .build());
+                .map(ms -> new KairosMetricBuilder()
+                        .field("name", ms.getStatistic().getTagValueRepresentation())
+                        .datapoints(wallTime, ms.getValue())
+                        .tags(getConventionTags(meter.getId()))
+                        .build());
     }
 
-    String writeMetric(Meter.Id id, Long wallTime, Number value) {
+    String writeMetric(Meter.Id id, long wallTime, Number value) {
         return new KairosMetricBuilder()
-            .field("name", getConventionName(id))
-            .datapoints(wallTime, value)
-            .tags(getConventionTags(id))
-            .build();
+                .field("name", getConventionName(id))
+                .datapoints(wallTime, value)
+                .tags(getConventionTags(id))
+                .build();
     }
 
     private Meter.Id idWithSuffix(final Meter.Id id, final String suffix) {
@@ -280,5 +208,41 @@ public class KairosMeterRegistry extends StepMeterRegistry {
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
+    }
+
+    public static Builder builder(KairosConfig config) {
+        return new Builder(config);
+    }
+
+    public static class Builder {
+        private final KairosConfig config;
+
+        private Clock clock = Clock.SYSTEM;
+        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        private HttpClient httpClient;
+
+        public Builder(KairosConfig config) {
+            this.config = config;
+            this.httpClient = new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout());
+        }
+
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+
+        public Builder threadFactory(ThreadFactory threadFactory) {
+            this.threadFactory = threadFactory;
+            return this;
+        }
+
+        public Builder httpClient(HttpClient httpClient) {
+            this.httpClient = httpClient;
+            return this;
+        }
+
+        public KairosMeterRegistry build() {
+            return new KairosMeterRegistry(config, clock, threadFactory, httpClient);
+        }
     }
 }

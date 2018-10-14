@@ -41,6 +41,8 @@ import io.micrometer.influx.InfluxConfig;
 import io.micrometer.influx.InfluxMeterRegistry;
 import io.micrometer.jmx.JmxConfig;
 import io.micrometer.jmx.JmxMeterRegistry;
+import io.micrometer.kairos.KairosConfig;
+import io.micrometer.kairos.KairosMeterRegistry;
 import io.micrometer.newrelic.NewRelicConfig;
 import io.micrometer.newrelic.NewRelicMeterRegistry;
 import io.micrometer.prometheus.PrometheusConfig;
@@ -66,7 +68,9 @@ public class SampleRegistries {
     public static AppOpticsMeterRegistry appOptics(String apiToken) {
         return new AppOpticsMeterRegistry(new AppOpticsConfig() {
             @Override
-            public String token() { return apiToken; }
+            public String token() {
+                return apiToken;
+            }
 
             @Override
             public Duration step() {
@@ -433,6 +437,25 @@ public class SampleRegistries {
             @Override
             public String apiToken() {
                 return apiToken;
+            }
+        }, Clock.SYSTEM);
+    }
+
+    public static KairosMeterRegistry kairos() {
+        return new KairosMeterRegistry(new KairosConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String uri() {
+                return "http://localhost:8083/api/v1/datapoints";
+            }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
             }
         }, Clock.SYSTEM);
     }

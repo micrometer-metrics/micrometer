@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class KairosProperties extends StepRegistryProperties {
 
     /**
-     * The host to send the metrics to
+     * URI to ship metrics to.
      */
-    private String host;
+    private String uri;
 
     /**
      * The Basic Authentication username.
@@ -41,12 +41,12 @@ public class KairosProperties extends StepRegistryProperties {
      */
     private String password;
 
-    public String getHost() {
-        return host;
+    public String getUri() {
+        return uri;
     }
 
-    public void setHost(String host) {
-        this.host = host;
+    public void setUri(String uri) {
+        this.uri = uri;
     }
 
     public String getUserName() {
