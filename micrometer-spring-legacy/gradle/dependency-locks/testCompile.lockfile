@@ -5,9 +5,9 @@ antlr:antlr:2.7.7
 aopalliance:aopalliance:1.0
 ch.qos.logback:logback-classic:1.1.11
 ch.qos.logback:logback-core:1.1.11
-com.amazonaws:aws-java-sdk-cloudwatch:1.11.427
-com.amazonaws:aws-java-sdk-core:1.11.427
-com.amazonaws:jmespath-java:1.11.427
+com.amazonaws:aws-java-sdk-cloudwatch:1.11.428
+com.amazonaws:aws-java-sdk-core:1.11.428
+com.amazonaws:jmespath-java:1.11.428
 com.fasterxml.jackson.core:jackson-annotations:2.8.0
 com.fasterxml.jackson.core:jackson-core:2.8.11
 com.fasterxml.jackson.core:jackson-databind:2.8.11.2

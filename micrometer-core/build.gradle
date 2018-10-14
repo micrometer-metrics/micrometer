@@ -78,6 +78,9 @@ dependencies {
     testCompile 'org.ehcache:ehcache:3.+'
 
     testCompile 'org.apache.kafka:kafka-clients:latest.release'
+
+    testCompile 'ru.lanwen.wiremock:wiremock-junit5:1.2.0'
+    testCompile 'com.github.tomakehurst:wiremock:2.+'
 }
 
 shadowJar {

@@ -88,15 +88,15 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     private List<MetricDatum> metricData() {
         return getMeters().stream().flatMap(m -> match(m,
-                this::meterData,
-                this::meterData,
+                this::metricData,
+                this::metricData,
                 this::timerData,
                 this::summaryData,
-                this::meterData,
-                this::meterData,
-                this::meterData,
+                this::metricData,
+                this::metricData,
+                this::metricData,
                 this::functionTimerData,
-                this::meterData)
+                this::metricData)
         ).collect(toList());
     }
 
@@ -133,7 +133,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         return metrics.build();
     }
 
-    private Stream<MetricDatum> meterData(Meter m) {
+    // VisibleForTesting
+    Stream<MetricDatum> metricData(Meter m) {
         long wallTime = clock.wallTime();
         return stream(m.measure().spliterator(), false)
                 .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), wallTime, ms.getValue()))

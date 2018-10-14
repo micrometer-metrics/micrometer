@@ -15,12 +15,12 @@
  */
 package io.micrometer.cloudwatch;
 
-import java.util.stream.Stream;
-
 import com.amazonaws.services.cloudwatch.model.MetricDatum;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MockClock;
 import org.junit.jupiter.api.Test;
+
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -30,7 +30,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
  * @author Johnny Lim
  */
 class CloudWatchMeterRegistryTest {
-
     private final CloudWatchConfig config = new CloudWatchConfig() {
         @Override
         public String get(String key) {
@@ -48,7 +47,7 @@ class CloudWatchMeterRegistryTest {
     @Test
     void metricData() {
         registry.gauge("test", 1d);
-        Gauge gauge = registry.find("test").gauge();
+        Gauge gauge = registry.get("test").gauge();
         Stream<MetricDatum> metricDatumStream = registry.metricData(gauge);
         assertThat(metricDatumStream.count()).isEqualTo(1);
     }
@@ -56,9 +55,8 @@ class CloudWatchMeterRegistryTest {
     @Test
     void metricDataWhenNaNShouldNotAdd() {
         registry.gauge("test", Double.NaN);
-        Gauge gauge = registry.find("test").gauge();
+        Gauge gauge = registry.get("test").gauge();
         Stream<MetricDatum> metricDatumStream = registry.metricData(gauge);
         assertThat(metricDatumStream.count()).isEqualTo(0);
     }
-
 }
