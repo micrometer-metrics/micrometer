@@ -69,9 +69,6 @@ public class SampleRegistries {
             public String token() { return apiToken; }
 
             @Override
-            public String metricPrefix() { return "micrometer.samples.test"; }
-
-            @Override
             public Duration step() {
                 return Duration.ofSeconds(10);
             }

@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.ipc.http;
 
+import io.micrometer.core.instrument.util.JsonUtils;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
 
@@ -58,6 +59,16 @@ public class HttpRequest {
         return new HttpRequest.Builder(uri, sender);
     }
 
+    @Override
+    public String toString() {
+        if (entity.length == 0) {
+            return "<no request body>";
+        } else if ("application/json".equals(requestHeaders.get("Content-Type"))) {
+            return JsonUtils.prettyPrint(new String(entity));
+        }
+        return new String(entity);
+    }
+
     public static class Builder {
         private static final String APPLICATION_JSON = "application/json";
         private static final String TEXT_PLAIN = "text/plain";
@@ -96,9 +107,9 @@ public class HttpRequest {
          * @return This request builder.
          */
         public final Builder withBasicAuthentication(@Nullable String user, @Nullable String password) {
-            if (StringUtils.isNotBlank(user) && StringUtils.isNotBlank(password)) {
-                String encoded = Base64.getEncoder().encodeToString((user + ":" +
-                        password).getBytes(StandardCharsets.UTF_8));
+            if (user != null && StringUtils.isNotBlank(user)) {
+                String encoded = Base64.getEncoder().encodeToString((user.trim() + ":" + (password == null ? "" : password.trim()))
+                        .getBytes(StandardCharsets.UTF_8));
                 withHeader("Authorization", "Basic " + encoded);
             }
             return this;
@@ -187,6 +198,11 @@ public class HttpRequest {
                 out.write(data);
             }
             return bos.toByteArray();
+        }
+
+        public final Builder print() {
+            System.out.println(new HttpRequest(entity, method, requestHeaders));
+            return this;
         }
 
         public HttpResponse send() throws Throwable {

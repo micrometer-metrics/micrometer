@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,69 +15,61 @@
  */
 package io.micrometer.appoptics;
 
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.FunctionTimer;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.LongTaskTimer;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.HttpHeader;
-import io.micrometer.core.instrument.util.HttpMethod;
-import io.micrometer.core.instrument.util.IOUtils;
-import io.micrometer.core.instrument.util.MediaType;
-import io.micrometer.core.instrument.util.StringUtils;
-import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.ipc.http.HttpClient;
+import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.util.Base64;
+import javax.annotation.Nullable;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static io.micrometer.core.instrument.Meter.Type.match;
+import static io.micrometer.core.instrument.util.DoubleFormat.decimal;
+import static java.util.stream.Collectors.joining;
 
 /**
  * Publishes metrics to AppOptics.
  *
  * @author Hunter Sherman
+ * @author Jon Schneider
  */
 public class AppOpticsMeterRegistry extends StepMeterRegistry {
-
     private final Logger logger = LoggerFactory.getLogger(AppOpticsMeterRegistry.class);
 
     private final AppOpticsConfig config;
-    private final String prefix;
+    private final HttpClient httpClient;
 
     public AppOpticsMeterRegistry(AppOpticsConfig config, Clock clock) {
-        this(config, clock, Executors.defaultThreadFactory());
+        this(config, clock, Executors.defaultThreadFactory(), new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
     }
 
-    public AppOpticsMeterRegistry(AppOpticsConfig config, Clock clock, ThreadFactory threadFactory) {
+    private AppOpticsMeterRegistry(AppOpticsConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
         super(config, clock);
 
+        this.config().namingConvention(new AppOpticsNamingConvention());
+
         this.config = config;
+        this.httpClient = httpClient;
 
-        if (!StringUtils.isEmpty(config.source()))
-            config().commonTags(Tags.of("host_hostname_alias", config.source())); //this makes AO add the magic `@host` group by
-
-        if (!config.metricPrefix().isEmpty() && !config.metricPrefix().endsWith(".")) {
-            this.prefix = config.metricPrefix() + ".";
-        } else {
-            this.prefix = config.metricPrefix();
-        }
+        config().meterFilter(new MeterFilter() {
+            @Override
+            public Meter.Id map(Meter.Id id) {
+                if (id.getName().startsWith("system.")) {
+                    return id.withName("micrometer." + id.getName());
+                }
+                return id;
+            }
+        });
 
         if (config.enabled())
             start(threadFactory);
@@ -85,160 +77,169 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-
         try {
-            final URL endpoint = URI.create(config.uri()).toURL();
-
-            final AppOpticsDto.Builder dtoBuilder = AppOpticsDto.newBuilder()
-                .withTime(System.currentTimeMillis() / 1000)
-                .withPeriod((int) config.step().getSeconds());
-
-            getMeters().forEach(meter -> addMeter(meter, dtoBuilder));
-
-            final AppOpticsDto dto = dtoBuilder.build();
-
-            if (dto.getMeasurements().isEmpty()) {
-                logger.debug("No metrics to send.");
-                return;
+            for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
+                httpClient.post(config.uri())
+                        .withBasicAuthentication(config.token(), "")
+                        .withJsonContent(
+                                batch.stream()
+                                        .map(meter -> match(meter,
+                                                this::writeGauge,
+                                                this::writeCounter,
+                                                this::writeTimer,
+                                                this::writeSummary,
+                                                this::writeLongTaskTimer,
+                                                this::writeTimeGauge,
+                                                this::writeFunctionCounter,
+                                                this::writeFunctionTimer,
+                                                this::writeMeter)
+                                        )
+                                        .filter(Optional::isPresent)
+                                        .map(Optional::get)
+                                        .collect(joining(",", "{\"measurements\":[", "]}")))
+                        .send()
+                        .onSuccess(response -> {
+                            if (!response.body().contains("\"failed\":0")) {
+                                logger.error("failed to send at least some metrics to appoptics: {}", response.body());
+                            } else {
+                                logger.debug("successfully sent {} metrics to appoptics", batch.size());
+                            }
+                        })
+                        .onError(response -> logger.error("failed to send metrics to appoptics: {}", response.body()));
             }
-
-            dto.batch(config.batchSize()).forEach(it -> sendMeasurements(endpoint, it));
-
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException("Malformed AppOptics endpoint -- see the 'uri' configuration", e);
         } catch (Throwable t) {
-            logger.warn("Failed to send metrics to AppOptics", t);
+            logger.warn("failed to send metrics to appoptics", t);
         }
     }
 
-    private void addMeter(Meter meter, AppOpticsDto.Builder dto) {
+    private Optional<String> writeMeter(Meter meter) {
+        return Optional.of(StreamSupport.stream(meter.measure().spliterator(), false)
+                .map(ms -> write(meter.getId().withTag(ms.getStatistic()), null, Fields.Value.tag(), decimal(ms.getValue())))
+                .collect(joining(",")));
+    }
 
-        if (meter instanceof Timer) {
-            dto.withMeasurement(fromTimer((Timer) meter));
-        } else if (meter instanceof FunctionTimer) {
-            dto.withMeasurement(fromFunctionTimer((FunctionTimer) meter));
-        } else if (meter instanceof DistributionSummary) {
-            dto.withMeasurement(fromDistributionSummary((DistributionSummary) meter));
-        } else if (meter instanceof TimeGauge) {
-            final Measurement measurement = fromTimeGauge((TimeGauge) meter);
-            if (null != measurement) dto.withMeasurement(measurement);
-        } else if (meter instanceof Gauge) {
-            final Measurement measurement = fromGauge((Gauge) meter);
-            if (null != measurement) dto.withMeasurement(measurement);
-        } else if (meter instanceof Counter) {
-            dto.withMeasurement(fromCounter((Counter) meter));
-        } else if (meter instanceof FunctionCounter) {
-            dto.withMeasurement(fromFunctionCounter((FunctionCounter) meter));
-        } else if (meter instanceof LongTaskTimer) {
-            dto.withMeasurement(fromLongTaskTimer((LongTaskTimer) meter));
-        } else {
-            dto.withMeasurements(fromMeter(meter));
+    private Optional<String> writeGauge(Gauge gauge) {
+        return Optional.of(write(gauge.getId(), "gauge", Fields.Value.tag(), decimal(gauge.value())));
+    }
+
+    private Optional<String> writeTimeGauge(TimeGauge timeGauge) {
+        return Optional.of(write(timeGauge.getId(), "timeGauge", Fields.Value.tag(), decimal(timeGauge.value(getBaseTimeUnit()))));
+    }
+
+    @Nullable
+    private Optional<String> writeCounter(Counter counter) {
+        if (counter.count() > 0) {
+            // can't use "count" field because sum is required whenever count is set.
+            return Optional.of(write(counter.getId(), "counter", Fields.Value.tag(), decimal(counter.count())));
         }
-    }
-
-    protected AggregateMeasurement fromTimer(Timer timer) {
-
-        return AggregateMeasurement.newBuilder()
-            .withName(addPrefix(timer.getId().getName()))
-            .withSum(timer.totalTime(getBaseTimeUnit()))
-            .withCount(timer.count())
-            .withMax(timer.max(getBaseTimeUnit()))
-            .withTags(timer.getId().getTags())
-            .build();
-    }
-
-    protected AggregateMeasurement fromFunctionTimer(FunctionTimer timer) {
-
-        return AggregateMeasurement.newBuilder()
-            .withName(addPrefix(timer.getId().getName()))
-            .withSum(timer.totalTime(getBaseTimeUnit()))
-            .withCount((long) timer.count())
-            .withTags(timer.getId().getTags())
-            .build();
-    }
-
-    protected AggregateMeasurement fromLongTaskTimer(LongTaskTimer timer) {
-
-        return AggregateMeasurement.newBuilder()
-            .withName(addPrefix(timer.getId().getName()))
-            .withSum(timer.duration(getBaseTimeUnit()))
-            .withCount((long)timer.activeTasks())
-            .withTags(timer.getId().getTags())
-            .build();
-    }
-
-    protected AggregateMeasurement fromDistributionSummary(DistributionSummary summary) {
-
-        return AggregateMeasurement.newBuilder()
-            .withName(addPrefix(summary.getId().getName()))
-            .withSum(summary.totalAmount())
-            .withCount(summary.count())
-            .withMax(summary.max())
-            .withTags(summary.getId().getTags())
-            .build();
+        return Optional.empty();
     }
 
     @Nullable
-    protected SingleMeasurement fromTimeGauge(TimeGauge gauge) {
-
-        final Double val = gauge.value(getBaseTimeUnit());
-
-        if (val.isNaN()) return null;
-        return SingleMeasurement.newBuilder()
-            .withName(
-                addPrefix(gauge.getId().getName()))
-            .withValue(val)
-            .withTags(gauge.getId().getTags())
-            .build();
+    private Optional<String> writeFunctionCounter(FunctionCounter counter) {
+        if (counter.count() > 0) {
+            // can't use "count" field because sum is required whenever count is set.
+            return Optional.of(write(counter.getId(), "functionCounter", Fields.Value.tag(), decimal(counter.count())));
+        }
+        return Optional.empty();
     }
 
     @Nullable
-    protected SingleMeasurement fromGauge(Gauge gauge) {
-
-        final Double val = gauge.value();
-
-        if (val.isNaN()) return null;
-        return SingleMeasurement.newBuilder()
-            .withName(
-                addPrefix(gauge.getId().getName()))
-            .withValue(val)
-            .withTags(gauge.getId().getTags())
-            .build();
+    private Optional<String> writeFunctionTimer(FunctionTimer timer) {
+        if (timer.count() > 0) {
+            return Optional.of(write(timer.getId(), "functionTimer",
+                    Fields.Count.tag(), decimal(timer.count()),
+                    Fields.Sum.tag(), decimal(timer.totalTime(getBaseTimeUnit()))));
+        }
+        return Optional.empty();
     }
 
-    protected SingleMeasurement fromCounter(Counter counter) {
-
-        return SingleMeasurement.newBuilder()
-            .withName(
-                addPrefix(counter.getId().getName()))
-            .withValue(counter.count())
-            .withTags(counter.getId().getTags())
-            .build();
+    @Nullable
+    private Optional<String> writeTimer(Timer timer) {
+        HistogramSnapshot snapshot = timer.takeSnapshot();
+        if (snapshot.count() > 0) {
+            return Optional.of(write(timer.getId(), "timer",
+                    Fields.Count.tag(), decimal(snapshot.count()),
+                    Fields.Sum.tag(), decimal(snapshot.total(getBaseTimeUnit())),
+                    Fields.Max.tag(), decimal(snapshot.max(getBaseTimeUnit()))));
+        }
+        return Optional.empty();
     }
 
-    protected SingleMeasurement fromFunctionCounter(FunctionCounter counter) {
-
-        return SingleMeasurement.newBuilder()
-            .withName(
-                addPrefix(counter.getId().getName()))
-            .withValue(counter.count())
-            .withTags(counter.getId().getTags())
-            .build();
+    @Nullable
+    private Optional<String> writeSummary(DistributionSummary summary) {
+        HistogramSnapshot snapshot = summary.takeSnapshot();
+        if (snapshot.count() > 0) {
+            return Optional.of(write(summary.getId(), "distributionSummary",
+                    Fields.Count.tag(), decimal(summary.count()),
+                    Fields.Sum.tag(), decimal(summary.totalAmount()),
+                    Fields.Max.tag(), decimal(summary.max())));
+        }
+        return Optional.empty();
     }
 
-    protected Stream<Measurement> fromMeter(Meter meter) {
-
-        return StreamSupport.stream(meter.measure().spliterator(), false)
-                    .map(stat -> SingleMeasurement.newBuilder()
-                            .withName(addPrefix(stat.getStatistic().getTagValueRepresentation()))
-                            .withValue(stat.getValue())
-                            .withTags(meter.getId().getTags())
-                            .build());
+    @Nullable
+    private Optional<String> writeLongTaskTimer(LongTaskTimer timer) {
+        if (timer.activeTasks() > 0) {
+            return Optional.of(write(timer.getId(), "longTaskTimer",
+                    Fields.Count.tag(), decimal(timer.activeTasks()),
+                    Fields.Sum.tag(), decimal(timer.duration(getBaseTimeUnit()))));
+        }
+        return Optional.empty();
     }
 
-    private String addPrefix(String metricName) {
+    private String write(Meter.Id id, @Nullable String type, String... statistics) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"name\":\"").append(getConventionName(id)).append("\",\"period\":").append(config.step().getSeconds());
 
-        return prefix + metricName;
+        if (!"value".equals(statistics[0])) {
+            sb.append(",\"attributes\":{\"aggregate\":false}");
+        }
+
+        for (int i = 0; i < statistics.length; i += 2) {
+            sb.append(",\"").append(statistics[i]).append("\":").append(statistics[i + 1]);
+        }
+        List<Tag> tags = id.getTags();
+
+        sb.append(",\"tags\":{");
+        if (type != null) {
+            // appoptics requires at least one tag for every metric, so we hang something here that may be useful.
+            sb.append("\"_type\":\"").append(type).append('"');
+            if (!tags.isEmpty())
+                sb.append(",");
+        }
+
+        if (!tags.isEmpty()) {
+            sb.append(tags.stream()
+                    .map(tag -> {
+                        String key = tag.getKey();
+                        if (key.equals(config.hostTag())) {
+                            key = "host_hostname_alias";
+                        }
+                        return "\"" + config().namingConvention().tagKey(key) + "\":\"" +
+                                config().namingConvention().tagValue(tag.getValue()) + "\"";
+                    })
+                    .collect(joining(",")));
+        }
+        sb.append("}}");
+        return sb.toString();
+    }
+
+    /**
+     * A subset of the supported summary field names supported by AppOptics.
+     */
+    private enum Fields {
+        Value("value"), Count("count"), Sum("sum"), Max("max"), Last("last");
+
+        private final String tag;
+
+        Fields(String tag) {
+            this.tag = tag;
+        }
+
+        String tag() {
+            return tag;
+        }
     }
 
     @Override
@@ -246,49 +247,39 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return TimeUnit.MILLISECONDS;
     }
 
-    private void sendMeasurements(URL endpoint, AppOpticsDto dto) {
+    public static Builder builder(AppOpticsConfig config) {
+        return new Builder(config);
+    }
 
-        HttpURLConnection con = null;
+    public static class Builder {
+        private final AppOpticsConfig config;
 
-        try {
-            con = (HttpURLConnection) endpoint.openConnection();
-            con.setConnectTimeout((int) config.connectTimeout().toMillis());
-            con.setReadTimeout((int) config.readTimeout().toMillis());
-            con.setRequestMethod(HttpMethod.POST);
-            con.setRequestProperty(HttpHeader.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-            con.setRequestProperty(HttpHeader.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString(
-                config.token().concat(":").getBytes(Charset.forName("UTF-8"))));
+        private Clock clock = Clock.SYSTEM;
+        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        private HttpClient httpClient;
 
-            con.setDoOutput(true);
+        Builder(AppOpticsConfig config) {
+            this.config = config;
+            this.httpClient = new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout());
+        }
 
-            final String body = dto.toJson();
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
 
-            try (OutputStream os = con.getOutputStream()) {
-                os.write(body.getBytes());
-                os.flush();
-            }
+        public Builder threadFactory(ThreadFactory threadFactory) {
+            this.threadFactory = threadFactory;
+            return this;
+        }
 
-            int status = con.getResponseCode();
+        public Builder httpClient(HttpClient httpClient) {
+            this.httpClient = httpClient;
+            return this;
+        }
 
-            if (status >= 200 && status < 300) {
-                logger.info("Successfully sent {} measurements to AppOptics", dto.getMeasurements().size());
-            } else if (status >= 400) {
-                if (logger.isErrorEnabled()) {
-                    logger.error("failed to send metrics: {}", IOUtils.toString(con.getErrorStream()));
-                }
-            } else {
-                logger.error("failed to send metrics: http {}", status);
-            }
-
-        } catch (Throwable e) {
-            logger.warn("failed to send metrics", e);
-        } finally {
-            try {
-                if (con != null) {
-                    con.disconnect();
-                }
-            } catch (Exception ignore) {
-            }
+        public AppOpticsMeterRegistry build() {
+            return new AppOpticsMeterRegistry(config, clock, threadFactory, httpClient);
         }
     }
 }

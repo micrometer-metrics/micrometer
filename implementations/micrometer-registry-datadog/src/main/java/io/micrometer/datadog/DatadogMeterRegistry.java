@@ -106,7 +106,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                                         m -> writeMeter(m, metadataToSend))
                                 ).collect(joining(",", "{\"series\":[", "]}")))
                         .send()
-                        .onSuccess(response -> logger.debug("successfully sent {} metrics to Datadog.", batch.size()))
+                        .onSuccess(response -> logger.debug("successfully sent {} metrics to datadog", batch.size()))
                         .onError(response -> logger.error("failed to send metrics to datadog: {}", response.body()));
             }
         } catch (Throwable e) {

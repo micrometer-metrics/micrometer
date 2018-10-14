@@ -17,7 +17,5 @@
 management.metrics.export:
   appoptics:
     enabled: true
-    metricPrefix: micrometer.sample
-    token: fake
-    source: micrometer.sample
     step: 10s
+    token: fake

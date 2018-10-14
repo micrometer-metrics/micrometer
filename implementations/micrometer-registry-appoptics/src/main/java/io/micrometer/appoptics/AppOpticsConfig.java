@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package io.micrometer.appoptics;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
+
+import java.time.Duration;
 
 /**
  * Configuration for {@link AppOpticsMeterRegistry}.
@@ -41,40 +43,39 @@ public interface AppOpticsConfig extends StepRegistryConfig {
     default String token() {
         final String t = get(prefix() + ".token");
         if (null == t)
-            throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to AppOptics");
+            throw new MissingRequiredConfigurationException("token must be set to report metrics to AppOptics");
         return t;
     }
 
     /**
-     * @return source identifier (usually hostname)
+     * @return The tag that will be mapped to "@host" when shipping metrics to AppOptics, or {@code null} if
+     * "@host" should be omitted on publishing.
      */
     @Nullable
-    default String source() {
-        final String s = get(prefix() + ".source");
-        return null == s ? "instance" : s;
+    default String hostTag() {
+        String v = get(prefix() + ".hostTag");
+        return v == null ? "instance" : v;
     }
 
     /**
      * @return the URI to ship metrics to
      */
     default String uri() {
-
-        final String uri = get(prefix() + ".uri");
-        return null == uri ? "https://api.appoptics.com/v1/measurements" : uri;
-    }
-
-    /**
-     * @return optional (string), prepended to metric names
-     */
-    default String metricPrefix() {
-
-        final String mp = get(prefix() + ".metricPrefix");
-        return null == mp ? "" : mp;
+        String v = get(prefix() + ".uri");
+        return v == null ? "https://api.appoptics.com/v1/measurements" : v;
     }
 
     @Override
     default int batchSize() {
         final String v = get(prefix() + ".batchSize");
         return null == v ? DEFAULT_BATCH_SIZE : Math.min(Integer.parseInt(v), MAX_BATCH_SIZE);
+    }
+
+    @Deprecated
+    @Override
+    default Duration connectTimeout() {
+        String v = get(prefix() + ".connectTimeout");
+        // AppOptics regularly times out when the default is 1 second.
+        return v == null ? Duration.ofSeconds(5) : Duration.parse(v);
     }
 }

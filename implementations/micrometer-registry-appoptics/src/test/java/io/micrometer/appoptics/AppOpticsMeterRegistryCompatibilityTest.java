@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.humio;
+package io.micrometer.appoptics;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
@@ -21,8 +21,8 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
 
-public class HumioMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
-    private final HumioConfig config = new HumioConfig() {
+public class AppOpticsMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+    private final AppOpticsConfig config = new AppOpticsConfig() {
         @Override
         public String get(String key) {
             return null;
@@ -36,7 +36,7 @@ public class HumioMeterRegistryCompatibilityTest extends MeterRegistryCompatibil
 
     @Override
     public MeterRegistry registry() {
-        return new HumioMeterRegistry(config, new MockClock());
+        return new AppOpticsMeterRegistry(config, new MockClock());
     }
 
     @Override

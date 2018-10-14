@@ -24,41 +24,37 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @author Hunter Sherman
  */
 @ConfigurationProperties(prefix = "management.metrics.export.appoptics")
-public class AppopticsProperties extends StepRegistryProperties {
+public class AppOpticsProperties extends StepRegistryProperties {
 
     /**
-     * AppOptics API token
+     * AppOptics API token.
      */
     public String token;
 
     /**
-     * source identifier (usually hostname)
+     * The tag that will be mapped to "@host" when shipping metrics to AppOptics, or {@code null} if
+     * "@host" should be omitted on publishing.
      */
-    public String source;
+    public String hostTag;
 
     /**
-     * the URI to ship metrics to
+     * The URI to ship metrics to.
      */
     public String uri;
-
-    /**
-     * optional (string), prepended to metric names
-     */
-    public String metricPrefix;
 
     public String getToken() { return token; }
 
     public void setToken(String token) { this.token = token; }
 
-    public String getSource() { return source; }
+    public String getHostTag() {
+        return hostTag;
+    }
 
-    public void setSource(String source) { this.source = source; }
+    public void setHostTag(String hostTag) {
+        this.hostTag = hostTag;
+    }
 
     public String getUri() { return uri; }
 
     public void setUri(String uri) { this.uri = uri; }
-
-    public String getMetricPrefix() { return metricPrefix; }
-
-    public void setMetricPrefix(String metricPrefix) { this.metricPrefix = metricPrefix; }
 }

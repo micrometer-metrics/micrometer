@@ -45,19 +45,19 @@ import org.springframework.context.annotation.Import;
 @ConditionalOnBean(Clock.class)
 @ConditionalOnClass(AppOpticsMeterRegistry.class)
 @ConditionalOnProperty(prefix = "management.metrics.export.appoptics", name = "enabled", havingValue = "true", matchIfMissing = true)
-@EnableConfigurationProperties(AppopticsProperties.class)
+@EnableConfigurationProperties(AppOpticsProperties.class)
 @Import(StringToDurationConverter.class)
-public class AppopticsMetricsExportAutoConfiguration {
+public class AppOpticsMetricsExportAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(AppOpticsConfig.class)
-    public AppOpticsConfig appopticsConfig(AppopticsProperties appopticsProperties) {
-        return new AppopticsPropertiesConfigAdapter(appopticsProperties);
+    public AppOpticsConfig appOpticsConfig(AppOpticsProperties appOpticsProperties) {
+        return new AppOpticsPropertiesConfigAdapter(appOpticsProperties);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public AppOpticsMeterRegistry appopticsMeterRegistry(AppOpticsConfig config, Clock clock) {
+    public AppOpticsMeterRegistry appOpticsMeterRegistry(AppOpticsConfig config, Clock clock) {
         return new AppOpticsMeterRegistry(config, clock);
     }
 }
