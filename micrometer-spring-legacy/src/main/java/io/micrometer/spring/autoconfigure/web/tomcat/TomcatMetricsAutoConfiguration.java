@@ -15,20 +15,18 @@
  */
 package io.micrometer.spring.autoconfigure.web.tomcat;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.tomcat.TomcatMetrics;
-import org.apache.catalina.Context;
+import io.micrometer.spring.web.tomcat.TomcatMetricsBinder;
 import org.apache.catalina.Manager;
 
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
-import org.springframework.boot.context.embedded.EmbeddedServletContainerCustomizer;
-import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.Collections;
 
 /**
  * {@link EnableAutoConfiguration Auto-configuration} for {@link TomcatMetrics}.
@@ -43,26 +41,11 @@ import java.util.Collections;
 @ConditionalOnClass({ TomcatMetrics.class, Manager.class })
 public class TomcatMetricsAutoConfiguration {
 
-    private volatile Context context;
-
     @Bean
-    @ConditionalOnMissingBean
-    public TomcatMetrics tomcatMetrics() {
-        return new TomcatMetrics(
-                (this.context != null) ? this.context.getManager() : null, Collections.emptyList());
-    }
-
-    @Bean
-    public EmbeddedServletContainerCustomizer contextCapturingServletTomcatCustomizer() {
-        return (tomcatFactory) -> {
-            if (tomcatFactory instanceof TomcatEmbeddedServletContainerFactory) {
-                ((TomcatEmbeddedServletContainerFactory) tomcatFactory).addContextCustomizers(this::setContext);
-            }
-        };
-    }
-
-    private void setContext(Context context) {
-        this.context = context;
+    @ConditionalOnBean(MeterRegistry.class)
+    @ConditionalOnMissingBean({ TomcatMetrics.class, TomcatMetricsBinder.class })
+    public TomcatMetricsBinder tomcatMetricsBinder(MeterRegistry meterRegistry) {
+        return new TomcatMetricsBinder(meterRegistry);
     }
 
 }
