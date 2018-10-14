@@ -251,6 +251,10 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         return TimeUnit.MILLISECONDS;
     }
 
+    public static Builder builder(ElasticConfig config) {
+        return new Builder(config);
+    }
+
     public static class Builder {
         private final ElasticConfig config;
 

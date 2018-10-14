@@ -239,7 +239,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
         return TimeUnit.MILLISECONDS;
     }
 
-    public static HumioMeterRegistry.Builder builder(HumioConfig config) {
+    public static Builder builder(HumioConfig config) {
         return new Builder(config);
     }
 

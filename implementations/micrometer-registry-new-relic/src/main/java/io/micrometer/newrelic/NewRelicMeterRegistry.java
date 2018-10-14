@@ -211,4 +211,40 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             return value;
         }
     }
+
+    public static Builder builder(NewRelicConfig config) {
+        return new Builder(config);
+    }
+
+    public static class Builder {
+        private final NewRelicConfig config;
+
+        private Clock clock = Clock.SYSTEM;
+        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        private HttpClient httpClient;
+
+        public Builder(NewRelicConfig config) {
+            this.config = config;
+            this.httpClient = new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout());
+        }
+
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+
+        public Builder threadFactory(ThreadFactory threadFactory) {
+            this.threadFactory = threadFactory;
+            return this;
+        }
+
+        public Builder httpClient(HttpClient httpClient) {
+            this.httpClient = httpClient;
+            return this;
+        }
+
+        public NewRelicMeterRegistry build() {
+            return new NewRelicMeterRegistry(config, clock, threadFactory, httpClient);
+        }
+    }
 }

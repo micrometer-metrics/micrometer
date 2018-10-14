@@ -253,6 +253,10 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         }
     }
 
+    public static Builder builder(DynatraceConfig config) {
+        return new Builder(config);
+    }
+
     public static class Builder {
         private final DynatraceConfig config;
 

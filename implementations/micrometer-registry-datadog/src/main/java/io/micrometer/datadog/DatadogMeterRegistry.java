@@ -262,6 +262,10 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         return new Meter.Id(id.getName() + "." + suffix, id.getTags(), id.getBaseUnit(), id.getDescription(), id.getType());
     }
 
+    public static Builder builder(DatadogConfig config) {
+        return new Builder(config);
+    }
+
     public static class Builder {
         private final DatadogConfig config;
 

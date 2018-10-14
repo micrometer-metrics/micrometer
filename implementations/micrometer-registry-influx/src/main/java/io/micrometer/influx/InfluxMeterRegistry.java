@@ -217,6 +217,10 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return TimeUnit.MILLISECONDS;
     }
 
+    public static Builder builder(InfluxConfig config) {
+        return new Builder(config);
+    }
+
     public static class Builder {
         private final InfluxConfig config;
 

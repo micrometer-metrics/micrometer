@@ -85,7 +85,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
         this(config, nameMapper, namingConventionFromFlavor(config.flavor()), clock, null, null);
     }
 
-    public static StatsdMeterRegistry.Builder builder(StatsdConfig config) {
+    public static Builder builder(StatsdConfig config) {
         return new Builder(config);
     }
 

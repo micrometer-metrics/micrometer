@@ -248,6 +248,10 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         return TimeUnit.SECONDS;
     }
 
+    public static Builder builder(WavefrontConfig config) {
+        return new Builder(config);
+    }
+
     public static class Builder {
         private final WavefrontConfig config;
 
