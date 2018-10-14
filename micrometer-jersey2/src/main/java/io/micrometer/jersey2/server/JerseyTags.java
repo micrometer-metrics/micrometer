@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.util.StringUtils;
@@ -46,7 +47,7 @@ public final class JerseyTags {
 
     private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
 
-    private static final Tag STATUS_UNKNOWN = Tag.of("status", "UNKNOWN");
+    private static final Tag STATUS_SERVER_ERROR = Tag.of("status", String.valueOf(Status.INTERNAL_SERVER_ERROR.getStatusCode()));
 
     private static final Tag OUTCOME_UNKNOWN = Tag.of("outcome", "UNKNOWN");
 
@@ -85,9 +86,10 @@ public final class JerseyTags {
      * @return the status tag derived from the status of the response
      */
     public static Tag status(ContainerResponse response) {
+        /* In case there is no response we are dealing with an unmapped exception. */
         return (response != null)
                 ? Tag.of("status", Integer.toString(response.getStatus()))
-                : STATUS_UNKNOWN;
+                : STATUS_SERVER_ERROR;
     }
 
     /**
@@ -189,7 +191,8 @@ public final class JerseyTags {
                     return OUTCOME_UNKNOWN;
             }
         }
-        return OUTCOME_UNKNOWN;
+        /* In case there is no response we are dealing with an unmapped exception. */
+        return OUTCOME_SERVER_ERROR;
     }
 
 }
