@@ -21,6 +21,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 @ExtendWith(WiremockResolver.class)
@@ -35,10 +38,21 @@ class HumioMeterRegistryTest {
         server.stubFor(any(anyUrl()));
         registry.publish();
         server.verify(postRequestedFor(urlMatching("/api/v1/dataspaces/repo/ingest"))
-                .withRequestBody(equalTo("[{\"tags\":{\"name\": \"micrometer\"},\"events\": [{\"timestamp\":\"1970-01-01T00:00:00.001Z\",\"attributes\":{\"name\":\"my_timer\",\"count\":0,\"sum\":0,\"avg\":0,\"max\":0,\"status\":\"success\"}}]}]")));
+                .withRequestBody(equalTo("[{\"events\": [{\"timestamp\":\"1970-01-01T00:00:00.001Z\",\"attributes\":{\"name\":\"my_timer\",\"count\":0,\"sum\":0,\"avg\":0,\"max\":0,\"status\":\"success\"}}]}]")));
     }
 
-    private HumioMeterRegistry humioRegistry(WireMockServer server) {
+    @Test
+    void datasourceTags(@WiremockResolver.Wiremock WireMockServer server) {
+        HumioMeterRegistry registry = humioRegistry(server, "name", "micrometer");
+        registry.counter("my.counter").increment();
+
+        server.stubFor(any(anyUrl()));
+        registry.publish();
+        server.verify(postRequestedFor(urlMatching("/api/v1/dataspaces/repo/ingest"))
+                .withRequestBody(containing("\"tags\":{\"name\": \"micrometer\"}")));
+    }
+
+    private HumioMeterRegistry humioRegistry(WireMockServer server, String... tags) {
         return new HumioMeterRegistry(new HumioConfig() {
             @Override
             public String get(String key) {
@@ -53,6 +67,15 @@ class HumioMeterRegistryTest {
             @Override
             public String repository() {
                 return "repo";
+            }
+
+            @Override
+            public Map<String, String> tags() {
+                Map<String, String> tagMap = new HashMap<>();
+                for (int i = 0; i < tags.length; i += 2) {
+                    tagMap.put(tags[i], tags[i + 1]);
+                }
+                return tagMap;
             }
         }, clock);
     }

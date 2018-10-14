@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -78,6 +79,13 @@ public class HumioMeterRegistry extends StepMeterRegistry {
 
                 Batch batch = new Batch(config().clock().wallTime());
 
+                String tags = "";
+                Map<String, String> datasourceTags = config.tags();
+                if (datasourceTags != null && !datasourceTags.isEmpty()) {
+                    tags = "\"tags\":{" + datasourceTags.entrySet().stream().map(tag -> "\"" + tag.getKey() + "\": \"" + tag.getValue() + "\"")
+                            .collect(joining(",")) + "},";
+                }
+
                 post.withJsonContent(meters.stream()
                         .map(m -> match(m,
                                 batch::writeGauge,
@@ -90,10 +98,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                                 batch::writeFunctionTimer,
                                 batch::writeMeter)
                         )
-                        .collect(joining(",", "[{\"tags\":{" +
-                                config.tags().entrySet().stream().map(tag -> "\"" + tag.getKey() + "\": \"" + tag.getValue() + "\"")
-                                        .collect(joining(",")) +
-                                "},\"events\": [", "]}]")))
+                        .collect(joining(",", "[{" + tags + "\"events\": [", "]}]")))
                         .send()
                         .onSuccess(response -> logger.debug("successfully sent {} metrics to humio.", meters.size()))
                         .onError(response -> logger.error("failed to send metrics to humio: {}", response.body()));

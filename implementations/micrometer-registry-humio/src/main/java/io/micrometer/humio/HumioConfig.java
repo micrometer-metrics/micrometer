@@ -20,10 +20,6 @@ import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.toMap;
 
 /**
  * @author Martin Westergaard Lassen
@@ -66,8 +62,9 @@ public interface HumioConfig extends StepRegistryConfig {
      *
      * @return Tags which unique determine the datasource to store metrics in.
      */
+    @Nullable
     default Map<String, String> tags() {
-        return Stream.of("name").collect(toMap(Function.identity(), k -> "micrometer"));
+        return null;
     }
 
     @Nullable
