@@ -15,28 +15,31 @@
  */
 package io.micrometer.spring.autoconfigure.web.jetty;
 
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext;
 import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerFactory;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.spring.web.jetty.JettyServerThreadPoolMetricsBinder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
 
 /**
  * Tests for {@link JettyMetricsAutoConfiguration}.
  *
  * @author Johnny Lim
+ * @author Andy Wilkinson
  */
 class JettyMetricsAutoConfigurationTest {
 
-    private AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+    private final AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
 
     @AfterEach
     void cleanUp() {
@@ -46,28 +49,27 @@ class JettyMetricsAutoConfigurationTest {
     }
 
     @Test
-    void backsOffWhenMeterRegistryIsMissing() {
-        registerAndRefresh(JettyEmbeddedServletContainerFactoryConfiguration.class,
+    public void autoConfiguresThreadPoolMetricsWithEmbeddedServletJetty() {
+        AnnotationConfigEmbeddedWebApplicationContext context = new AnnotationConfigEmbeddedWebApplicationContext();
+        context.register(MeterRegistryConfiguration.class, ServletWebServerConfiguration.class,
                 JettyMetricsAutoConfiguration.class);
+        context.refresh();
 
-        assertThatThrownBy(() -> context.getBean(JettyMetricsAutoConfiguration.class))
-                .isInstanceOf(NoSuchBeanDefinitionException.class);
+        context.publishEvent(new ApplicationReadyEvent(new SpringApplication(), null, context));
+        assertThat(context.getBean(JettyServerThreadPoolMetricsBinder.class)).isNotNull();
+        SimpleMeterRegistry registry = context.getBean(SimpleMeterRegistry.class);
+        assertThat(registry.find("jetty.threads.config.min").meter()).isNotNull();
+
+        context.close();
     }
 
     @Test
-    void backsOffWhenJettyEmbeddedServletContainerFactoryIsMissing() {
-        registerAndRefresh(MeterRegistryConfiguration.class, JettyMetricsAutoConfiguration.class);
-
-        assertThatThrownBy(() -> context.getBean(JettyMetricsAutoConfiguration.class))
-                .isInstanceOf(NoSuchBeanDefinitionException.class);
-    }
-
-    @Test
-    void autoConfigurationKicksIn() {
-        registerAndRefresh(JettyEmbeddedServletContainerFactoryConfiguration.class,
-                MeterRegistryConfiguration.class, JettyMetricsAutoConfiguration.class);
-
-        assertThat(context.getBean(JettyMetricsAutoConfiguration.class)).isNotNull();
+    public void allowsCustomJettyServerThreadPoolMetricsBinderToBeUsed() {
+        registerAndRefresh(MeterRegistryConfiguration.class,
+                CustomJettyServerThreadPoolMetricsBinder.class,
+                JettyMetricsAutoConfiguration.class);
+        assertThat(context.getBean(JettyServerThreadPoolMetricsBinder.class))
+                .isEqualTo(context.getBean("customJettyServerThreadPoolMetricsBinder"));
     }
 
     private void registerAndRefresh(Class<?>... configurationClasses) {
@@ -76,21 +78,32 @@ class JettyMetricsAutoConfigurationTest {
     }
 
     @Configuration
-    static class JettyEmbeddedServletContainerFactoryConfiguration {
+    static class MeterRegistryConfiguration {
 
         @Bean
-        public JettyEmbeddedServletContainerFactory jettyEmbeddedServletContainerFactory() {
-            return mock(JettyEmbeddedServletContainerFactory.class);
+        public SimpleMeterRegistry meterRegistry() {
+            return new SimpleMeterRegistry();
         }
 
     }
 
     @Configuration
-    static class MeterRegistryConfiguration {
+    static class ServletWebServerConfiguration {
 
         @Bean
-        public MeterRegistry meterRegistry() {
-            return mock(MeterRegistry.class);
+        public JettyEmbeddedServletContainerFactory jettyFactory() {
+            return new JettyEmbeddedServletContainerFactory(0);
+        }
+
+    }
+
+    @Configuration
+    static class CustomJettyServerThreadPoolMetricsBinder {
+
+        @Bean
+        public JettyServerThreadPoolMetricsBinder customJettyServerThreadPoolMetricsBinder(
+                MeterRegistry meterRegistry) {
+            return new JettyServerThreadPoolMetricsBinder(meterRegistry);
         }
 
     }
