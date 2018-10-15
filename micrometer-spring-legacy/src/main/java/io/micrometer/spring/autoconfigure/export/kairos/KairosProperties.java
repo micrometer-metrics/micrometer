@@ -27,17 +27,17 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class KairosProperties extends StepRegistryProperties {
 
     /**
-     * URI to ship metrics to.
+     * URI of the KairosDB server.
      */
-    private String uri;
+    private String uri = "http://localhost:8080/api/v1/datapoints";
 
     /**
-     * The Basic Authentication username.
+     * Login user of the KairosDB server.
      */
     private String userName;
 
     /**
-     * The Basic Authentication password.
+     * Login password of the KairosDB server.
      */
     private String password;
 
