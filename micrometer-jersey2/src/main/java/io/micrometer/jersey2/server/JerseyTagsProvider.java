@@ -15,7 +15,6 @@
  */
 package io.micrometer.jersey2.server;
 
-import io.micrometer.core.instrument.TagsProvider;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 
 import io.micrometer.core.instrument.Tag;
@@ -25,7 +24,7 @@ import io.micrometer.core.instrument.Tag;
  * 
  * @author Michael Weirauch
  */
-public interface JerseyTagsProvider extends TagsProvider {
+public interface JerseyTagsProvider {
 
     /**
      * Provides tags to be associated with metrics for the given {@code event}.
