@@ -16,6 +16,7 @@
 package io.micrometer.spring.autoconfigure.export.wavefront;
 
 import io.micrometer.spring.autoconfigure.export.PropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
 import io.micrometer.wavefront.WavefrontConfig;
 
 /**
@@ -23,7 +24,7 @@ import io.micrometer.wavefront.WavefrontConfig;
  *
  * @author Jon Schneider
  */
-public class WavefrontPropertiesConfigAdapter extends PropertiesConfigAdapter<WavefrontProperties> implements WavefrontConfig {
+public class WavefrontPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<WavefrontProperties> implements WavefrontConfig {
 
     public WavefrontPropertiesConfigAdapter(WavefrontProperties properties) {
         super(properties);
