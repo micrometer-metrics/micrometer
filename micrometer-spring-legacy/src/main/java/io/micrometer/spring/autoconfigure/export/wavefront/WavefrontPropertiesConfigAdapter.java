@@ -15,7 +15,6 @@
  */
 package io.micrometer.spring.autoconfigure.export.wavefront;
 
-import io.micrometer.spring.autoconfigure.export.PropertiesConfigAdapter;
 import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
 import io.micrometer.wavefront.WavefrontConfig;
 
