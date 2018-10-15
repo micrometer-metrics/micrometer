@@ -41,7 +41,7 @@ public interface WavefrontConfig extends StepRegistryConfig {
 
         @Override
         public String uri() {
-            String v = get(prefix() + ".uri");
+            String v = get((prefix() == null ? "" : prefix() + ".") + "uri");
             return v == null ? "proxy://localhost:2878" : v;
         }
     };
@@ -57,20 +57,20 @@ public interface WavefrontConfig extends StepRegistryConfig {
 
         @Override
         public String uri() {
-            String v = get(prefix() + ".uri");
+            String v = get((prefix() == null ? "" : prefix() + ".") + "uri");
             return v == null ? "https://longboard.wavefront.com" : v;
         }
     };
 
     @Override
     default Duration step() {
-        String v = get(prefix() + ".step");
+        String v = get((prefix() == null ? "" : prefix() + ".") + "step");
         return v == null ? Duration.ofSeconds(10) : Duration.parse(v);
     }
 
     @Override
     default String prefix() {
-        return "wavefront";
+        return null;
     }
 
     /**
@@ -81,7 +81,7 @@ public interface WavefrontConfig extends StepRegistryConfig {
      * the host must be in the proxy://HOST:PORT format.
      */
     default String uri() {
-        String v = get(prefix() + ".uri");
+        String v = get((prefix() == null ? "" : prefix() + ".") + "uri");
         if (v == null)
             throw new MissingRequiredConfigurationException("A uri is required to publish metrics to Wavefront");
         return v;
@@ -91,7 +91,7 @@ public interface WavefrontConfig extends StepRegistryConfig {
      * @return Unique identifier for the app instance that is publishing metrics to Wavefront. Defaults to the local host name.
      */
     default String source() {
-        String v = get(prefix() + ".source");
+        String v = get((prefix() == null ? "" : prefix() + ".") + "source");
         if (v != null)
             return v;
 
@@ -109,7 +109,7 @@ public interface WavefrontConfig extends StepRegistryConfig {
      */
     @Nullable
     default String apiToken() {
-        String v = get(prefix() + ".apiToken");
+        String v = get((prefix() == null ? "" : prefix() + ".") + "apiToken");
         return v == null ? null : v.trim().length() > 0 ? v : null;
     }
 
@@ -122,6 +122,6 @@ public interface WavefrontConfig extends StepRegistryConfig {
      */
     @Nullable
     default String globalPrefix() {
-        return get(prefix() + ".globalPrefix");
+        return get((prefix() == null ? "" : prefix() + ".") + "globalPrefix");
     }
 }
