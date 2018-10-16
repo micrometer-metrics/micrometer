@@ -47,7 +47,7 @@ public class DatadogProperties extends StepRegistryProperties {
      * Tag that will be mapped to "host" when shipping metrics to Datadog. Can be
      * omitted if host should be omitted on publishing.
      */
-    private String hostTag;
+    private String hostTag = "instance";
 
     /**
      * URI to ship metrics to. If you need to publish metrics to an internal proxy

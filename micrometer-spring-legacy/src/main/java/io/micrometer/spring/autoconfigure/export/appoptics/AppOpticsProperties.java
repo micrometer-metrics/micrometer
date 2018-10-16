@@ -32,10 +32,9 @@ public class AppOpticsProperties extends StepRegistryProperties {
     public String apiToken;
 
     /**
-     * The tag that will be mapped to "@host" when shipping metrics to AppOptics, or {@code null} if
-     * "@host" should be omitted on publishing.
+     * The tag that will be mapped to "@host" when shipping metrics to AppOptics.
      */
-    public String hostTag;
+    public String hostTag = "instance";
 
     /**
      * The URI to ship metrics to.
