@@ -31,28 +31,14 @@ import java.time.Duration;
 public class SimpleProperties {
 
     /**
-     * Enable in-memory metrics that aren't published anywhere (allows you to see
-     * what metrics are collected in the metrics actuator endpoint).
-     */
-    private boolean enabled;
-
-    /**
      * Step size (i.e. reporting frequency) to use.
      */
-    private Duration step = Duration.ofSeconds(10);
+    private Duration step = Duration.ofMinutes(1);
 
     /**
      * Counting mode.
      */
     private CountingMode mode = CountingMode.CUMULATIVE;
-
-    public boolean getEnabled() {
-        return this.enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
 
     public Duration getStep() {
         return this.step;

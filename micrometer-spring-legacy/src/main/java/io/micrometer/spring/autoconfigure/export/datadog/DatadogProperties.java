@@ -32,8 +32,8 @@ public class DatadogProperties extends StepRegistryProperties {
     private String apiKey;
 
     /**
-     * Datadog application key. Not strictly required, but improves the Datadog
-     * experience by sending meter descriptions, types, and base units to Datadog.
+     * Datadog application key. Not strictly required, but improves the Datadog experience
+     * by sending meter descriptions, types, and base units to Datadog.
      */
     private String applicationKey;
 
@@ -41,11 +41,10 @@ public class DatadogProperties extends StepRegistryProperties {
      * Whether to publish descriptions metadata to Datadog. Turn this off to minimize the
      * amount of metadata sent.
      */
-    private Boolean descriptions;
+    private boolean descriptions = true;
 
     /**
-     * Tag that will be mapped to "host" when shipping metrics to Datadog. Can be
-     * omitted if host should be omitted on publishing.
+     * Tag that will be mapped to "host" when shipping metrics to Datadog.
      */
     private String hostTag = "instance";
 
@@ -53,7 +52,7 @@ public class DatadogProperties extends StepRegistryProperties {
      * URI to ship metrics to. If you need to publish metrics to an internal proxy
      * en-route to Datadog, you can define the location of the proxy with this.
      */
-    private String uri;
+    private String uri = "https://app.datadoghq.com";
 
     public String getApiKey() {
         return this.apiKey;
@@ -71,11 +70,11 @@ public class DatadogProperties extends StepRegistryProperties {
         this.applicationKey = applicationKey;
     }
 
-    public Boolean getDescriptions() {
+    public boolean isDescriptions() {
         return this.descriptions;
     }
 
-    public void setDescriptions(Boolean descriptions) {
+    public void setDescriptions(boolean descriptions) {
         this.descriptions = descriptions;
     }
 
@@ -94,4 +93,5 @@ public class DatadogProperties extends StepRegistryProperties {
     public void setUri(String uri) {
         this.uri = uri;
     }
+
 }

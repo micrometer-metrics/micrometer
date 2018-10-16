@@ -36,7 +36,7 @@ public class WavefrontPropertiesConfigAdapter extends StepRegistryPropertiesConf
 
     @Override
     public String uri() {
-        return get(WavefrontProperties::getUri, WavefrontConfig.DEFAULT_DIRECT::uri);
+        return get(this::getUriAsString, WavefrontConfig.DEFAULT_DIRECT::uri);
     }
 
     @Override
@@ -53,4 +53,9 @@ public class WavefrontPropertiesConfigAdapter extends StepRegistryPropertiesConf
     public String globalPrefix() {
         return get(WavefrontProperties::getGlobalPrefix, WavefrontConfig.super::globalPrefix);
     }
+
+    private String getUriAsString(WavefrontProperties properties) {
+        return (properties.getUri() != null) ? properties.getUri().toString() : null;
+    }
+
 }

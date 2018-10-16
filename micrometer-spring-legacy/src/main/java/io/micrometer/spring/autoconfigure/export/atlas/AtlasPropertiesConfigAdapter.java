@@ -45,7 +45,7 @@ class AtlasPropertiesConfigAdapter extends PropertiesConfigAdapter<AtlasProperti
 
     @Override
     public boolean enabled() {
-        return get(AtlasProperties::getEnabled, AtlasConfig.super::enabled);
+        return get(AtlasProperties::isEnabled, AtlasConfig.super::enabled);
     }
 
     @Override
@@ -80,7 +80,7 @@ class AtlasPropertiesConfigAdapter extends PropertiesConfigAdapter<AtlasProperti
 
     @Override
     public boolean lwcEnabled() {
-        return get(AtlasProperties::getLwcEnabled, AtlasConfig.super::lwcEnabled);
+        return get(AtlasProperties::isLwcEnabled, AtlasConfig.super::lwcEnabled);
     }
 
     @Override

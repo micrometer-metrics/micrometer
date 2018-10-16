@@ -27,48 +27,43 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class ElasticProperties extends StepRegistryProperties {
 
     /**
-     * The hosts to send the metrics to
+     * Host to export metrics to.
      */
-    private String host;
+    private String host = "http://localhost:9200";
 
     /**
-     * The index name to write metrics to.
+     * Index to export metrics to.
      */
-    private String index;
+    private String index = "metrics";
 
     /**
-     * The index date format used for rolling indices.
-     * This is appended to the index name, split by a '-'.
+     * Index date format used for rolling indices. Appended to the index name, preceded by
+     * a '-'.
      */
-    private String indexDateFormat;
+    private String indexDateFormat = "yyyy-MM";
 
     /**
-     * The bulk size per request.
+     * Name of the timestamp field.
      */
-    private int bulkSize;
+    private String timestampFieldName = "@timestamp";
 
     /**
-     * The name of the timestamp field.
+     * Whether to create the index automatically if it does not exist.
      */
-    private String timestampFieldName;
+    private boolean autoCreateIndex = true;
 
     /**
-     * Whether to create the index automatically if it doesn't exist.
+     * Login user of the Elastic server.
      */
-    private boolean autoCreateIndex;
+    private String userName = "";
 
     /**
-     * The Basic Authentication username.
+     * Login password of the Elastic server.
      */
-    private String userName;
-
-    /**
-     * The Basic Authentication password.
-     */
-    private String password;
+    private String password = "";
 
     public String getHost() {
-        return host;
+        return this.host;
     }
 
     public void setHost(String host) {
@@ -76,7 +71,7 @@ public class ElasticProperties extends StepRegistryProperties {
     }
 
     public String getIndex() {
-        return index;
+        return this.index;
     }
 
     public void setIndex(String index) {
@@ -84,23 +79,15 @@ public class ElasticProperties extends StepRegistryProperties {
     }
 
     public String getIndexDateFormat() {
-        return indexDateFormat;
+        return this.indexDateFormat;
     }
 
     public void setIndexDateFormat(String indexDateFormat) {
         this.indexDateFormat = indexDateFormat;
     }
 
-    public int getBulkSize() {
-        return bulkSize;
-    }
-
-    public void setBulkSize(int bulkSize) {
-        this.bulkSize = bulkSize;
-    }
-
     public String getTimestampFieldName() {
-        return timestampFieldName;
+        return this.timestampFieldName;
     }
 
     public void setTimestampFieldName(String timestampFieldName) {
@@ -108,7 +95,7 @@ public class ElasticProperties extends StepRegistryProperties {
     }
 
     public boolean isAutoCreateIndex() {
-        return autoCreateIndex;
+        return this.autoCreateIndex;
     }
 
     public void setAutoCreateIndex(boolean autoCreateIndex) {
@@ -116,7 +103,7 @@ public class ElasticProperties extends StepRegistryProperties {
     }
 
     public String getUserName() {
-        return userName;
+        return this.userName;
     }
 
     public void setUserName(String userName) {
@@ -124,10 +111,11 @@ public class ElasticProperties extends StepRegistryProperties {
     }
 
     public String getPassword() {
-        return password;
+        return this.password;
     }
 
     public void setPassword(String password) {
         this.password = password;
     }
+
 }

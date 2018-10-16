@@ -42,7 +42,7 @@ public class KairosProperties extends StepRegistryProperties {
     private String password;
 
     public String getUri() {
-        return uri;
+        return this.uri;
     }
 
     public void setUri(String uri) {
@@ -50,7 +50,7 @@ public class KairosProperties extends StepRegistryProperties {
     }
 
     public String getUserName() {
-        return userName;
+        return this.userName;
     }
 
     public void setUserName(String userName) {
@@ -58,10 +58,11 @@ public class KairosProperties extends StepRegistryProperties {
     }
 
     public String getPassword() {
-        return password;
+        return this.password;
     }
 
     public void setPassword(String password) {
         this.password = password;
     }
+
 }

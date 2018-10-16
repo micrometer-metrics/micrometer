@@ -44,7 +44,7 @@ public class StatsdPropertiesConfigAdapter extends PropertiesConfigAdapter<Stats
 
     @Override
     public boolean enabled() {
-        return get(StatsdProperties::getEnabled, StatsdConfig.super::enabled);
+        return get(StatsdProperties::isEnabled, StatsdConfig.super::enabled);
     }
 
     @Override
@@ -69,15 +69,9 @@ public class StatsdPropertiesConfigAdapter extends PropertiesConfigAdapter<Stats
             StatsdConfig.super::pollingFrequency);
     }
 
-    @Deprecated
-    @Override
-    public int queueSize() {
-        return get(StatsdProperties::getQueueSize, StatsdConfig.super::queueSize);
-    }
-
     @Override
     public boolean publishUnchangedMeters() {
-        return get(StatsdProperties::getPublishUnchangedMeters, StatsdConfig.super::publishUnchangedMeters);
+        return get(StatsdProperties::isPublishUnchangedMeters, StatsdConfig.super::publishUnchangedMeters);
     }
 
 }

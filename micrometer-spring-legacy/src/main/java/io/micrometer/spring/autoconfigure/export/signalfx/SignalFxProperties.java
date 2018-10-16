@@ -15,6 +15,8 @@
  */
 package io.micrometer.spring.autoconfigure.export.signalfx;
 
+import java.time.Duration;
+
 import io.micrometer.spring.autoconfigure.export.StepRegistryProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -25,24 +27,40 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "management.metrics.export.signalfx")
 public class SignalFxProperties extends StepRegistryProperties {
+
     /**
-     * Your access token, found in your account settings at SignalFX. This property is required.
+     * Step size (i.e. reporting frequency) to use.
+     */
+    private Duration step = Duration.ofSeconds(10);
+
+    /**
+     * SignalFX access token.
      */
     private String accessToken;
 
     /**
-     * Uniquely identifies the app instance that is publishing metrics to SignalFx. Defaults to the local host name.
+     * URI to ship metrics to.
+     */
+    private String uri = "https://ingest.signalfx.com";
+
+    /**
+     * Uniquely identifies the app instance that is publishing metrics to SignalFx.
+     * Defaults to the local host name.
      */
     private String source;
 
-    /**
-     * The URI to ship metrics to. If you need to publish metrics to an internal proxy en route to
-     * SignalFx, you can define the location of the proxy with this.
-     */
-    private String uri;
+    @Override
+    public Duration getStep() {
+        return this.step;
+    }
+
+    @Override
+    public void setStep(Duration step) {
+        this.step = step;
+    }
 
     public String getAccessToken() {
-        return accessToken;
+        return this.accessToken;
     }
 
     public void setAccessToken(String accessToken) {
@@ -50,7 +68,7 @@ public class SignalFxProperties extends StepRegistryProperties {
     }
 
     public String getUri() {
-        return uri;
+        return this.uri;
     }
 
     public void setUri(String uri) {
@@ -58,10 +76,11 @@ public class SignalFxProperties extends StepRegistryProperties {
     }
 
     public String getSource() {
-        return source;
+        return this.source;
     }
 
     public void setSource(String source) {
         this.source = source;
     }
+
 }
