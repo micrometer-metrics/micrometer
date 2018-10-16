@@ -68,7 +68,7 @@ public class SampleRegistries {
     public static AppOpticsMeterRegistry appOptics(String apiToken) {
         return new AppOpticsMeterRegistry(new AppOpticsConfig() {
             @Override
-            public String token() {
+            public String apiToken() {
                 return apiToken;
             }
 

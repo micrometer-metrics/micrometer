@@ -29,7 +29,7 @@ public class AppOpticsProperties extends StepRegistryProperties {
     /**
      * AppOptics API token.
      */
-    public String token;
+    public String apiToken;
 
     /**
      * The tag that will be mapped to "@host" when shipping metrics to AppOptics, or {@code null} if
@@ -42,9 +42,9 @@ public class AppOpticsProperties extends StepRegistryProperties {
      */
     public String uri;
 
-    public String getToken() { return token; }
+    public String getApiToken() { return apiToken; }
 
-    public void setToken(String token) { this.token = token; }
+    public void setApiToken(String apiToken) { this.apiToken = apiToken; }
 
     public String getHostTag() {
         return hostTag;
