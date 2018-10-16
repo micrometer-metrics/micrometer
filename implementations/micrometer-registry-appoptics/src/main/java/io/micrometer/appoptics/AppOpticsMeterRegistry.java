@@ -80,7 +80,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         try {
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
                 httpClient.post(config.uri())
-                        .withBasicAuthentication(config.token(), "")
+                        .withBasicAuthentication(config.apiToken(), "")
                         .withJsonContent(
                                 batch.stream()
                                         .map(meter -> match(meter,

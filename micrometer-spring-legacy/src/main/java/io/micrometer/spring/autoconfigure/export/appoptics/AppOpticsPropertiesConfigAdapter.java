@@ -28,7 +28,7 @@ public class AppOpticsPropertiesConfigAdapter extends StepRegistryPropertiesConf
 
     public AppOpticsPropertiesConfigAdapter(AppOpticsProperties properties) { super(properties); }
 
-    public String token() { return get(AppOpticsProperties::getToken, AppOpticsConfig.super::token); }
+    public String apiToken() { return get(AppOpticsProperties::getApiToken, AppOpticsConfig.super::apiToken); }
 
     public String hostTag() { return get(AppOpticsProperties::getHostTag, AppOpticsConfig.super::hostTag); }
 
