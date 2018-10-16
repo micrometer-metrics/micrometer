@@ -15,7 +15,6 @@
  */
 package io.micrometer.spring.autoconfigure.export.prometheus;
 
-import io.micrometer.core.annotation.Incubating;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
@@ -31,40 +30,27 @@ import java.util.Map;
 public class PrometheusProperties {
 
     /**
-     * Enable publishing to Prometheus.
+     * Whether to enable publishing descriptions as part of the scrape payload to
+     * Prometheus. Turn this off to minimize the amount of data sent on each scrape.
      */
-    private Boolean enabled;
+    private boolean descriptions = true;
 
     /**
-     * Enable publishing descriptions as part of the scrape payload to Prometheus. Turn
-     * this off to minimize the amount of data sent on each scrape.
+     * Configuration options for using Prometheus Pushgateway, allowing metrics to be
+     * pushed when they cannot be scraped.
      */
-    private Boolean descriptions;
+    private PushgatewayProperties pushgateway = new PushgatewayProperties();
 
     /**
      * Step size (i.e. reporting frequency) to use.
      */
     private Duration step = Duration.ofMinutes(1);
 
-    /**
-     * Configuration options for using Prometheus Pushgateway, allowing metrics to be pushed
-     * when they cannot be scraped.
-     */
-    private PushgatewayProperties pushgateway = new PushgatewayProperties();
-
-    public Boolean getEnabled() {
-        return this.enabled;
-    }
-
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public Boolean getDescriptions() {
+    public boolean isDescriptions() {
         return this.descriptions;
     }
 
-    public void setDescriptions(Boolean descriptions) {
+    public void setDescriptions(boolean descriptions) {
         this.descriptions = descriptions;
     }
 
@@ -77,7 +63,7 @@ public class PrometheusProperties {
     }
 
     public PushgatewayProperties getPushgateway() {
-        return pushgateway;
+        return this.pushgateway;
     }
 
     public void setPushgateway(PushgatewayProperties pushgateway) {
@@ -87,27 +73,32 @@ public class PrometheusProperties {
     /**
      * Configuration options for push-based interaction with Prometheus.
      */
-    @Incubating(since = "1.0.0")
     public static class PushgatewayProperties {
+
         /**
          * Enable publishing via a Prometheus Pushgateway.
          */
         private Boolean enabled = false;
 
         /**
-         * Required host:port or ip:port of the Pushgateway.
+         * Base URL for the Pushgateway.
          */
         private String baseUrl = "localhost:9091";
 
         /**
-         * Required identifier for this application instance.
+         * Frequency with which to push metrics.
+         */
+        private Duration pushRate = Duration.ofMinutes(1);
+
+        /**
+         * Job identifier for this application instance.
          */
         private String job;
 
         /**
-         * Frequency with which to push metrics to Pushgateway.
+         * Grouping key for the pushed metrics.
          */
-        private Duration pushRate = Duration.ofMinutes(1);
+        private Map<String, String> groupingKeys = new HashMap<>();
 
         /**
          * Push metrics right before shut-down. Mostly useful for batch jobs.
@@ -115,17 +106,13 @@ public class PrometheusProperties {
         private boolean pushOnShutdown = true;
 
         /**
-         * Delete metrics from Pushgateway when application is shut-down
+         * Delete metrics from Pushgateway when application is shut-down.
          */
         private boolean deleteOnShutdown = true;
 
-        /**
-         * Used to group metrics in pushgateway. A common example is setting
-         */
-        private Map<String, String> groupingKeys = new HashMap<>();
 
         public Boolean getEnabled() {
-            return enabled;
+            return this.enabled;
         }
 
         public void setEnabled(Boolean enabled) {
@@ -133,33 +120,41 @@ public class PrometheusProperties {
         }
 
         public String getBaseUrl() {
-            return baseUrl;
+            return this.baseUrl;
         }
 
         public void setBaseUrl(String baseUrl) {
             this.baseUrl = baseUrl;
         }
 
+        public Duration getPushRate() {
+            return this.pushRate;
+        }
+
+        public void setPushRate(Duration pushRate) {
+            this.pushRate = pushRate;
+        }
+
         public String getJob() {
-            return job;
+            return this.job;
         }
 
         public void setJob(String job) {
             this.job = job;
         }
 
-        public Duration getPushRate() {
-            return pushRate;
+        public Map<String, String> getGroupingKeys() {
+            return this.groupingKeys;
         }
 
-        public void setPushRate(Duration pushRate) {
-            this.pushRate = pushRate;
+        public void setGroupingKeys(Map<String, String> groupingKeys) {
+            this.groupingKeys = groupingKeys;
         }
-        
+
         public boolean isPushOnShutdown() {
             return pushOnShutdown;
         }
-        
+
         public void setPushOnShutdown(boolean pushOnShutdown) {
             this.pushOnShutdown = pushOnShutdown;
         }
@@ -172,12 +167,6 @@ public class PrometheusProperties {
             this.deleteOnShutdown = deleteOnShutdown;
         }
 
-        public Map<String, String> getGroupingKeys() {
-            return groupingKeys;
-        }
-
-        public void setGroupingKeys(Map<String, String> groupingKeys) {
-            this.groupingKeys = groupingKeys;
-        }
     }
+
 }

@@ -30,9 +30,9 @@ import java.time.Duration;
 public class StatsdProperties {
 
     /**
-     * Export metrics to StatsD.
+     * Whether exporting of metrics to StatsD is enabled.
      */
-    private Boolean enabled;
+    private boolean enabled = true;
 
     /**
      * StatsD line protocol to use.
@@ -55,27 +55,22 @@ public class StatsdProperties {
     private Integer maxPacketLength = 1400;
 
     /**
-     * How often gauges will be polled. When a gauge is polled, its value is
-     * recalculated and if the value has changed, it is sent to the StatsD server.
+     * How often gauges will be polled. When a gauge is polled, its value is recalculated
+     * and if the value has changed (or publishUnchangedMeters is true), it is sent to the
+     * StatsD server.
      */
     private Duration pollingFrequency = Duration.ofSeconds(10);
 
     /**
-     * Maximum size of the queue of items waiting to be sent to the StatsD server.
+     * Whether to send unchanged meters to the StatsD server.
      */
-    @Deprecated
-    private Integer queueSize = Integer.MAX_VALUE;
+    private boolean publishUnchangedMeters = true;
 
-    /**
-     * Enables or disables sending of unchanged meters to StatsD server
-     */
-    private Boolean publishUnchangedMeters = true;
-
-    public Boolean getEnabled() {
+    public boolean isEnabled() {
         return this.enabled;
     }
 
-    public void setEnabled(Boolean enabled) {
+    public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 
@@ -119,21 +114,11 @@ public class StatsdProperties {
         this.pollingFrequency = pollingFrequency;
     }
 
-    @Deprecated
-    public Integer getQueueSize() {
-        return this.queueSize;
+    public boolean isPublishUnchangedMeters() {
+        return this.publishUnchangedMeters;
     }
 
-    @Deprecated
-    public void setQueueSize(Integer queueSize) {
-        this.queueSize = queueSize;
-    }
-
-    public Boolean getPublishUnchangedMeters() {
-        return publishUnchangedMeters;
-    }
-
-    public void setPublishUnchangedMeters(Boolean publishUnchangedMeters) {
+    public void setPublishUnchangedMeters(boolean publishUnchangedMeters) {
         this.publishUnchangedMeters = publishUnchangedMeters;
     }
 

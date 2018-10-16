@@ -25,47 +25,40 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @author Oriol Barcelona
  */
 @ConfigurationProperties(prefix = "management.metrics.export.dynatrace")
-public class DynatraceProperties  extends StepRegistryProperties {
+public class DynatraceProperties extends StepRegistryProperties {
 
     /**
-     * Dynatrace API token
+     * Dynatrace authentication token.
      */
     private String apiToken;
 
     /**
-     * URI to ship metrics to. Should be used for SaaS, self managed
-     * instances or to en-route through an internal proxy
-     */
-    private String uri;
-
-    /**
-     * The custom device used to identify the sender into Dynatrace
+     * ID of the custom device that is exporting metrics to Dynatrace.
      */
     private String deviceId;
 
     /**
-     * The type of technology used to create the custom device and its metrics
+     * Technology type for exported metrics. Used to group metrics under a logical
+     * technology name in the Dynatrace UI.
      */
-    private String technologyType;
+    private String technologyType = "java";
+
+    /**
+     * URI to ship metrics to. Should be used for SaaS, self managed instances or to
+     * en-route through an internal proxy.
+     */
+    private String uri;
 
     public String getApiToken() {
-        return apiToken;
+        return this.apiToken;
     }
 
     public void setApiToken(String apiToken) {
         this.apiToken = apiToken;
     }
 
-    public String getUri() {
-        return uri;
-    }
-
-    public void setUri(String uri) {
-        this.uri = uri;
-    }
-
     public String getDeviceId() {
-        return deviceId;
+        return this.deviceId;
     }
 
     public void setDeviceId(String deviceId) {
@@ -73,10 +66,19 @@ public class DynatraceProperties  extends StepRegistryProperties {
     }
 
     public String getTechnologyType() {
-        return technologyType;
+        return this.technologyType;
     }
 
     public void setTechnologyType(String technologyType) {
         this.technologyType = technologyType;
     }
+
+    public String getUri() {
+        return this.uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
+    }
+
 }

@@ -25,17 +25,24 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "management.metrics.export.newrelic")
 public class NewRelicProperties extends StepRegistryProperties {
+
     /**
-     * Your API key, found in your account settings at New Relic. This property is required.
+     * New Relic API key.
      */
     private String apiKey;
 
+    /**
+     * New Relic account ID.
+     */
     private String accountId;
 
-    private String uri;
+    /**
+     * URI to ship metrics to.
+     */
+    private String uri = "https://insights-collector.newrelic.com";
 
     public String getApiKey() {
-        return apiKey;
+        return this.apiKey;
     }
 
     public void setApiKey(String apiKey) {
@@ -43,7 +50,7 @@ public class NewRelicProperties extends StepRegistryProperties {
     }
 
     public String getAccountId() {
-        return accountId;
+        return this.accountId;
     }
 
     public void setAccountId(String accountId) {
@@ -51,10 +58,11 @@ public class NewRelicProperties extends StepRegistryProperties {
     }
 
     public String getUri() {
-        return uri;
+        return this.uri;
     }
 
     public void setUri(String uri) {
         this.uri = uri;
     }
+
 }

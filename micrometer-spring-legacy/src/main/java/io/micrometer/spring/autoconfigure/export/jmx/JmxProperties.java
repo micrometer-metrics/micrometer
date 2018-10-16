@@ -26,10 +26,6 @@ import java.time.Duration;
  */
 @ConfigurationProperties(prefix = "management.metrics.export.jmx")
 public class JmxProperties {
-    /**
-     * Whether exporting of metrics to JMX is enabled.
-     */
-    private Boolean enabled;
 
     /**
      * Metrics JMX domain name.
@@ -39,10 +35,10 @@ public class JmxProperties {
     /**
      * Step size (i.e. reporting frequency) to use.
      */
-    private Duration step;
+    private Duration step = Duration.ofMinutes(1);
 
     public String getDomain() {
-        return domain;
+        return this.domain;
     }
 
     public void setDomain(String domain) {
@@ -57,11 +53,4 @@ public class JmxProperties {
         this.step = step;
     }
 
-    public Boolean getEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
-    }
 }

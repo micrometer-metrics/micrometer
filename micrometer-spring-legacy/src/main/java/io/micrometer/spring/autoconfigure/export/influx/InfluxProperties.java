@@ -28,15 +28,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class InfluxProperties extends StepRegistryProperties {
 
     /**
-     * Tag that will be mapped to "host" when shipping metrics to Influx. Can be
-     * omitted if host should be omitted on publishing.
+     * Tag that will be mapped to "host" when shipping metrics to Influx.
      */
-    private String db;
+    private String db = "mydb";
 
     /**
      * Write consistency for each point.
      */
-    private InfluxConsistency consistency;
+    private InfluxConsistency consistency = InfluxConsistency.ONE;
 
     /**
      * Login user of the Influx server.
@@ -55,34 +54,39 @@ public class InfluxProperties extends StepRegistryProperties {
     private String retentionPolicy;
 
     /**
-     * URI of the Influx server.
-     */
-    private String uri;
-
-    /**
-     * Enable GZIP compression of metrics batches published to Influx.
-     */
-    private Boolean compressed;
-
-    /**
-     * Check if Influx database exists before attempting to publish metrics to it, creating it if it does not exist.
-     */
-    private Boolean autoCreateDb;
-
-    /**
-     * Time period for which influx should retain data in the current database (e.g. 2h, 52w)
+     * Time period for which Influx should retain data in the current database. For
+     * instance 7d, check the influx documentation for more details on the duration
+     * format.
      */
     private String retentionDuration;
 
     /**
-     * How many copies of the data are stored in the cluster. Must be 1 for a single node instance.
+     * How many copies of the data are stored in the cluster. Must be 1 for a single node
+     * instance.
      */
     private Integer retentionReplicationFactor;
 
     /**
-     * The time range covered by a shard group (e.g. 2h, 52w).
+     * Time range covered by a shard group. For instance 2w, check the influx
+     * documentation for more details on the duration format.
      */
     private String retentionShardDuration;
+
+    /**
+     * URI of the Influx server.
+     */
+    private String uri = "http://localhost:8086";
+
+    /**
+     * Whether to enable GZIP compression of metrics batches published to Influx.
+     */
+    private boolean compressed = true;
+
+    /**
+     * Whether to create the Influx database if it does not exist before attempting to
+     * publish metrics to it.
+     */
+    private boolean autoCreateDb = true;
 
     public String getDb() {
         return this.db;
@@ -124,6 +128,30 @@ public class InfluxProperties extends StepRegistryProperties {
         this.retentionPolicy = retentionPolicy;
     }
 
+    public String getRetentionDuration() {
+        return this.retentionDuration;
+    }
+
+    public void setRetentionDuration(String retentionDuration) {
+        this.retentionDuration = retentionDuration;
+    }
+
+    public Integer getRetentionReplicationFactor() {
+        return this.retentionReplicationFactor;
+    }
+
+    public void setRetentionReplicationFactor(Integer retentionReplicationFactor) {
+        this.retentionReplicationFactor = retentionReplicationFactor;
+    }
+
+    public String getRetentionShardDuration() {
+        return this.retentionShardDuration;
+    }
+
+    public void setRetentionShardDuration(String retentionShardDuration) {
+        this.retentionShardDuration = retentionShardDuration;
+    }
+
     public String getUri() {
         return this.uri;
     }
@@ -132,43 +160,20 @@ public class InfluxProperties extends StepRegistryProperties {
         this.uri = uri;
     }
 
-    public Boolean getCompressed() {
+    public boolean isCompressed() {
         return this.compressed;
     }
 
-    public void setCompressed(Boolean compressed) {
+    public void setCompressed(boolean compressed) {
         this.compressed = compressed;
     }
 
-    public Boolean getAutoCreateDb() {
-        return autoCreateDb;
+    public boolean isAutoCreateDb() {
+        return this.autoCreateDb;
     }
 
-    public void setAutoCreateDb(Boolean autoCreateDb) {
+    public void setAutoCreateDb(boolean autoCreateDb) {
         this.autoCreateDb = autoCreateDb;
     }
 
-    public String getRetentionDuration() {
-        return retentionDuration;
-    }
-
-    public void setRetentionDuration(String retentionDuration) {
-        this.retentionDuration = retentionDuration;
-    }
-
-    public Integer getRetentionReplicationFactor() {
-        return retentionReplicationFactor;
-    }
-
-    public void setRetentionReplicationFactor(Integer retentionReplicationFactor) {
-        this.retentionReplicationFactor = retentionReplicationFactor;
-    }
-
-    public String getRetentionShardDuration() {
-        return retentionShardDuration;
-    }
-
-    public void setRetentionShardDuration(String retentionShardDuration) {
-        this.retentionShardDuration = retentionShardDuration;
-    }
 }

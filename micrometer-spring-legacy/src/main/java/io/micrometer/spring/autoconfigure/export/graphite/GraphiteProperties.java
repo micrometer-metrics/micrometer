@@ -30,51 +30,51 @@ import java.util.concurrent.TimeUnit;
 public class GraphiteProperties {
 
     /**
-     * Enable publishing to Graphite.
+     * Whether exporting of metrics to Graphite is enabled.
      */
-    private Boolean enabled;
+    private boolean enabled = true;
 
     /**
      * Step size (i.e. reporting frequency) to use.
      */
-    private Duration step;
+    private Duration step = Duration.ofMinutes(1);
 
     /**
      * Base time unit used to report rates.
      */
-    private TimeUnit rateUnits;
+    private TimeUnit rateUnits = TimeUnit.SECONDS;
 
     /**
      * Base time unit used to report durations.
      */
-    private TimeUnit durationUnits;
+    private TimeUnit durationUnits = TimeUnit.MILLISECONDS;
 
     /**
      * Host of the Graphite server to receive exported metrics.
      */
-    private String host;
+    private String host = "localhost";
 
     /**
      * Port of the Graphite server to receive exported metrics.
      */
-    private Integer port;
-
-    /**
-     * For the default naming convention, turn the specified tag keys into
-     * part of the metric prefix.
-     */
-    private String[] tagsAsPrefix;
+    private Integer port = 2004;
 
     /**
      * Protocol to use while shipping data to Graphite.
      */
-    private GraphiteProtocol protocol;
+    private GraphiteProtocol protocol = GraphiteProtocol.PICKLED;
 
-    public Boolean getEnabled() {
+    /**
+     * For the default naming convention, turn the specified tag keys into part of the
+     * metric prefix.
+     */
+    private String[] tagsAsPrefix = new String[0];
+
+    public boolean isEnabled() {
         return this.enabled;
     }
 
-    public void setEnabled(Boolean enabled) {
+    public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 
@@ -127,10 +127,11 @@ public class GraphiteProperties {
     }
 
     public String[] getTagsAsPrefix() {
-        return tagsAsPrefix;
+        return this.tagsAsPrefix;
     }
 
     public void setTagsAsPrefix(String[] tagsAsPrefix) {
         this.tagsAsPrefix = tagsAsPrefix;
     }
+
 }
