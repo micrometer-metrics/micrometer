@@ -30,7 +30,6 @@ import io.micrometer.core.instrument.binder.system.UptimeMetrics;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.spring.PropertiesMeterFilter;
 import io.micrometer.spring.scheduling.ScheduledMethodMetrics;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
