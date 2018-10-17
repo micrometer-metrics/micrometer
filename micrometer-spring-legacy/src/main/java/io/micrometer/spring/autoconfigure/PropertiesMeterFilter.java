@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring;
+package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
@@ -22,8 +22,6 @@ import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.Nullable;
-import io.micrometer.spring.autoconfigure.MetricsProperties;
-import io.micrometer.spring.autoconfigure.ServiceLevelAgreementBoundary;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.filter;
+package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
@@ -22,9 +22,6 @@ import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.spring.PropertiesMeterFilter;
-import io.micrometer.spring.autoconfigure.MetricsProperties;
-import io.micrometer.spring.autoconfigure.ServiceLevelAgreementBoundary;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
