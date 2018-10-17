@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
  * @author Jon Schneider
  * @author Phillip Webb
  * @author Stephane Nicoll
+ * @author Alexander Abramov
  */
 @NonNullApi
 public class PropertiesMeterFilter implements MeterFilter {
@@ -80,6 +81,10 @@ public class PropertiesMeterFilter implements MeterFilter {
                 .percentilesHistogram(lookup(distribution.getPercentilesHistogram(), id, null))
                 .percentiles(lookup(distribution.getPercentiles(), id, null))
                 .sla(convertSla(id.getType(), lookup(distribution.getSla(), id, null)))
+                .minimumExpectedValue(convertMeterValue(id.getType(),
+                        lookup(distribution.getMinimumExpectedValue(), id, null)))
+                .maximumExpectedValue(convertMeterValue(id.getType(),
+                        lookup(distribution.getMaximumExpectedValue(), id, null)))
                 .build()
                 .merge(config);
     }
@@ -93,6 +98,10 @@ public class PropertiesMeterFilter implements MeterFilter {
                 .map((candidate) -> candidate.getValue(meterType))
                 .filter(Objects::nonNull).mapToLong(Long::longValue).toArray();
         return converted.length == 0 ? null : converted;
+    }
+
+    private Long convertMeterValue(Meter.Type meterType, String value) {
+        return (value != null) ? MeterValue.valueOf(value).getValue(meterType) : null;
     }
 
     private <T> T lookup(Map<String, T> values, Meter.Id id, @Nullable T defaultValue) {

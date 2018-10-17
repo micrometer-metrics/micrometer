@@ -16,94 +16,52 @@
 package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Meter.Type;
-import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 /**
- * A service level agreement boundary. Can be specified as either a {@link Long}
- * (applicable to timers and distribution summaries) or a {@link Duration}
- * (applicable to only timers).
+ * A service level agreement boundary for use when configuring Micrometer. Can be
+ * specified as either a {@link Long} (applicable to timers and distribution summaries) or
+ * a {@link Duration} (applicable to only timers).
  *
  * @author Phillip Webb
  */
 public final class ServiceLevelAgreementBoundary {
-    private static final StringToDurationConverter durationConverter = new StringToDurationConverter();
-    private final Object value;
 
-    ServiceLevelAgreementBoundary(long value) {
-        this.value = value;
-    }
+    private final MeterValue value;
 
-    ServiceLevelAgreementBoundary(Duration value) {
+    ServiceLevelAgreementBoundary(MeterValue value) {
         this.value = value;
     }
 
     /**
      * Return the underlying value of the SLA in form suitable to apply to the given meter
      * type.
-     *
      * @param meterType the meter type
      * @return the value or {@code null} if the value cannot be applied
      */
     public Long getValue(Meter.Type meterType) {
-        if (meterType == Type.DISTRIBUTION_SUMMARY) {
-            return getDistributionSummaryValue();
-        }
-        if (meterType == Type.TIMER) {
-            return getTimerValue();
-        }
-        return null;
-    }
-
-    private Long getDistributionSummaryValue() {
-        if (this.value instanceof Long) {
-            return (Long) this.value;
-        }
-        return null;
-    }
-
-    private Long getTimerValue() {
-        if (this.value instanceof Long) {
-            return TimeUnit.MILLISECONDS.toNanos((long) this.value);
-        }
-        if (this.value instanceof Duration) {
-            return ((Duration) this.value).toNanos();
-        }
-        return null;
-    }
-
-    public static ServiceLevelAgreementBoundary valueOf(String value) {
-        if (isNumber(value)) {
-            return new ServiceLevelAgreementBoundary(Long.parseLong(value));
-        }
-        return new ServiceLevelAgreementBoundary(
-                durationConverter.convert(value));
+        return this.value.getValue(meterType);
     }
 
     /**
      * Return a new {@link ServiceLevelAgreementBoundary} instance for the given long
      * value.
-     *
      * @param value the source value
      * @return a {@link ServiceLevelAgreementBoundary} instance
      */
     public static ServiceLevelAgreementBoundary valueOf(long value) {
-        return new ServiceLevelAgreementBoundary(value);
+        return new ServiceLevelAgreementBoundary(MeterValue.valueOf(value));
     }
 
     /**
-     * Return a new {@link ServiceLevelAgreementBoundary} instance for the given String
-     * value. The value may contain a simple number, or a {@link StringToDurationConverter}
-     * duration formatted value.
-     *
+     * Return a new {@link ServiceLevelAgreementBoundary} instance for the given long
+     * value.
      * @param value the source value
      * @return a {@link ServiceLevelAgreementBoundary} instance
      */
-    private static boolean isNumber(String value) {
-        return value.chars().allMatch(Character::isDigit);
+    public static ServiceLevelAgreementBoundary valueOf(String value) {
+        return new ServiceLevelAgreementBoundary(MeterValue.valueOf(value));
     }
 
 }

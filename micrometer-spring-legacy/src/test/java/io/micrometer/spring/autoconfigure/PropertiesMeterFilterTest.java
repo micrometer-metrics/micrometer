@@ -26,11 +26,19 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link PropertiesMeterFilter}.
+ *
+ * @author Phillip Webb
+ * @author Jon Schneider
+ * @author Artsiom Yudovin
+ */
 @SuppressWarnings("ConstantConditions")
 public class PropertiesMeterFilterTest {
     @Rule
@@ -249,6 +257,56 @@ public class PropertiesMeterFilterTest {
                 .isNull();
     }
 
+    @Test
+    public void configureWhenHasMinimumExpectedValueShouldSetMinimumExpectedToValue() {
+        setMinimumExpectedValue("spring.boot", 10);
+        assertThat(filter.configure(createSpringBootMeter(),
+                DistributionStatisticConfig.DEFAULT).getMinimumExpectedValue())
+                        .isEqualTo(Duration.ofMillis(10).toNanos());
+    }
+
+    @Test
+    public void configureWhenHasHigherMinimumExpectedValueShouldSetMinimumExpectedValueToValue() {
+        setMinimumExpectedValue("spring", 10);
+        assertThat(filter.configure(createSpringBootMeter(),
+                DistributionStatisticConfig.DEFAULT).getMinimumExpectedValue())
+                        .isEqualTo(Duration.ofMillis(10).toNanos());
+    }
+
+    @Test
+    public void configureWhenHasHigherMinimumExpectedValueAndLowerShouldSetMinimumExpectedValueToHigher() {
+        setMinimumExpectedValue("spring", 10);
+        setMinimumExpectedValue("spring.boot", 50);
+        assertThat(filter.configure(createSpringBootMeter(),
+                DistributionStatisticConfig.DEFAULT).getMinimumExpectedValue())
+                        .isEqualTo(Duration.ofMillis(50).toNanos());
+    }
+
+    @Test
+    public void configureWhenHasMaximumExpectedValueShouldSetMaximumExpectedToValue() {
+        setMaximumExpectedValue("spring.boot", 5000);
+        assertThat(filter.configure(createSpringBootMeter(),
+                DistributionStatisticConfig.DEFAULT).getMaximumExpectedValue())
+                        .isEqualTo(Duration.ofMillis(5000).toNanos());
+    }
+
+    @Test
+    public void configureWhenHasHigherMaximumExpectedValueShouldSetMaximumExpectedValueToValue() {
+        setMaximumExpectedValue("spring", 5000);
+        assertThat(filter.configure(createSpringBootMeter(),
+                DistributionStatisticConfig.DEFAULT).getMaximumExpectedValue())
+                        .isEqualTo(Duration.ofMillis(5000).toNanos());
+    }
+
+    @Test
+    public void configureWhenHasHigherMaximumExpectedValueAndLowerShouldSetMaximumExpectedValueToHigher() {
+        setMaximumExpectedValue("spring", 5000);
+        setMaximumExpectedValue("spring.boot", 10000);
+        assertThat(filter.configure(createSpringBootMeter(),
+                DistributionStatisticConfig.DEFAULT).getMaximumExpectedValue())
+                        .isEqualTo(Duration.ofMillis(10000).toNanos());
+    }
+
     private Meter.Id createSpringBootMeter() {
         Meter.Type meterType = Meter.Type.TIMER;
         return createSpringBootMeter(meterType);
@@ -277,4 +335,15 @@ public class PropertiesMeterFilterTest {
                 Arrays.stream(slas).map(ServiceLevelAgreementBoundary::valueOf)
                         .toArray(ServiceLevelAgreementBoundary[]::new));
     }
+
+    private void setMinimumExpectedValue(String metricPrefix, long minimumExpectedValue) {
+        properties.getDistribution().getMinimumExpectedValue()
+                .put(metricPrefix, Long.toString(minimumExpectedValue));
+    }
+
+    private void setMaximumExpectedValue(String metricPrefix, long maximumExpectedValue) {
+        properties.getDistribution().getMaximumExpectedValue()
+                .put(metricPrefix, Long.toString(maximumExpectedValue));
+    }
+
 }
