@@ -44,8 +44,7 @@ public class DatadogProperties extends StepRegistryProperties {
     private Boolean descriptions;
 
     /**
-     * Tag that will be mapped to "host" when shipping metrics to Datadog. Can be
-     * omitted if host should be omitted on publishing.
+     * Tag that will be mapped to "host" when shipping metrics to Datadog.
      */
     private String hostTag = "instance";
 
