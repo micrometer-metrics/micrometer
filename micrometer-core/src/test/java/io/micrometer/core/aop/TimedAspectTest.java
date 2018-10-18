@@ -15,13 +15,33 @@
  */
 package io.micrometer.core.aop;
 
-import io.micrometer.core.annotation.Timed;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.concurrent.TimeUnit;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
+
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Meter.Id;
+import io.micrometer.core.instrument.Meter.Type;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import io.micrometer.core.instrument.search.MeterNotFoundException;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 class TimedAspectTest {
     @Test
@@ -40,6 +60,39 @@ class TimedAspectTest {
                 .tag("method", "call")
                 .tag("extra", "tag")
                 .timer().count()).isEqualTo(1);
+    }
+    
+    @Test
+    void timeMethodFailure() {
+        MeterRegistry failingRegistry = new FailingMeterRegistry();
+        
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
+        pf.addAspect(new TimedAspect(failingRegistry));
+        
+        TimedService service = pf.getProxy();
+        
+        service.call();
+        
+        Assertions.assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> {
+            failingRegistry.get("call")
+                    .tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedService")
+                    .tag("method", "call")
+                    .tag("extra", "tag")
+                    .timer();
+        });
+        
+        
+    }
+
+    private final class FailingMeterRegistry extends SimpleMeterRegistry {
+        private FailingMeterRegistry() {
+            super();
+        }
+
+        @Override
+        protected Timer newTimer(Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+            throw new RuntimeException();
+        }
     }
 
     static class TimedService {
