@@ -62,6 +62,13 @@ public class PropertiesMeterFilterTest {
     }
 
     @Test
+    public void acceptWhenHasNoMatchingEnabledPropertyShouldReturnNeutral() {
+        properties.getEnable().put("something.else", false);
+        assertThat(filter.accept(createSpringBootMeter()))
+            .isEqualTo(MeterFilterReply.NEUTRAL);
+    }
+
+    @Test
     public void acceptWhenHasEnableFalseShouldReturnDeny() {
         enable("spring.boot", false);
         assertThat(filter.accept(createSpringBootMeter()))
@@ -220,41 +227,6 @@ public class PropertiesMeterFilterTest {
         slas("spring.boot", "4", "5", "6");
         assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
                 .getSlaBoundaries()).containsExactly(4000000, 5000000, 6000000);
-    }
-
-    @Test
-    public void configureWhenAllSlaSetShouldSetSlaToValue() {
-        slas("all", "1", "2", "3");
-        assertThat(filter.configure(createSpringBootMeter(), DistributionStatisticConfig.DEFAULT)
-                .getSlaBoundaries()).containsExactly(1000000, 2000000, 3000000);
-    }
-
-    @Test
-    public void configureWhenSlaDurationShouldOnlyApplyToTimer() {
-        slas("all", "1ms", "2ms", "3ms");
-        Meter.Id timer = createSpringBootMeter(Meter.Type.TIMER);
-        Meter.Id summary = createSpringBootMeter(Meter.Type.DISTRIBUTION_SUMMARY);
-        Meter.Id counter = createSpringBootMeter(Meter.Type.COUNTER);
-        assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT).getSlaBoundaries())
-                .containsExactly(1000000, 2000000, 3000000);
-        assertThat(filter.configure(summary, DistributionStatisticConfig.DEFAULT).getSlaBoundaries())
-                .isNull();
-        assertThat(filter.configure(counter, DistributionStatisticConfig.DEFAULT).getSlaBoundaries())
-                .isNull();
-    }
-
-    @Test
-    public void configureWhenSlaLongShouldOnlyApplyToTimerAndDistributionSummary() {
-        slas("all", "1", "2", "3");
-        Meter.Id timer = createSpringBootMeter(Meter.Type.TIMER);
-        Meter.Id summary = createSpringBootMeter(Meter.Type.DISTRIBUTION_SUMMARY);
-        Meter.Id counter = createSpringBootMeter(Meter.Type.COUNTER);
-        assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT).getSlaBoundaries())
-                .containsExactly(1000000, 2000000, 3000000);
-        assertThat(filter.configure(summary, DistributionStatisticConfig.DEFAULT).getSlaBoundaries())
-                .containsExactly(1, 2, 3);
-        assertThat(filter.configure(counter, DistributionStatisticConfig.DEFAULT).getSlaBoundaries())
-                .isNull();
     }
 
     @Test

@@ -169,10 +169,11 @@ public class MetricsProperties {
     public static class Distribution {
 
         /**
-         * Whether meter IDs starting-with the specified name should be publish percentile
-         * histograms. Monitoring systems that support aggregable percentile calculation
-         * based on a histogram be set to true. For other systems, this has no effect. The
-         * longest match wins, the key `all` can also be used to configure all meters.
+         * Whether meter IDs starting with the specified name should publish percentile
+         * histograms. For monitoring systems that support aggregable percentile
+         * calculation based on a histogram, this can be set to true. For other systems,
+         * this has no effect. The longest match wins, the key `all` can also be used to
+         * configure all meters.
          */
         private final Map<String, Boolean> percentilesHistogram = new LinkedHashMap<>();
 
@@ -185,10 +186,9 @@ public class MetricsProperties {
 
         /**
          * Specific SLA boundaries for meter IDs starting-with the specified name. The
-         * longest match wins, the key `all` can also be used to configure all meters.
-         * Counters will be published for each specified boundary. Values can be
-         * specified as a long or as a Duration value (for timer meters, defaulting to ms
-         * if no unit specified).
+         * longest match wins. Counters will be published for each specified boundary.
+         * Values can be specified as a long or as a Duration value (for timer meters,
+         * defaulting to ms if no unit specified).
          */
         private final Map<String, ServiceLevelAgreementBoundary[]> sla = new LinkedHashMap<>();
 
@@ -227,4 +227,5 @@ public class MetricsProperties {
         }
 
     }
+
 }
