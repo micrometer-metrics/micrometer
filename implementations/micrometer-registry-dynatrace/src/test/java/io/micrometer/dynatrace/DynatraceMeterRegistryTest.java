@@ -15,10 +15,15 @@
  */
 package io.micrometer.dynatrace;
 
+import java.lang.reflect.Field;
+import java.util.Set;
+
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
+import io.micrometer.core.ipc.http.HttpResponse;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
@@ -92,6 +97,43 @@ class DynatraceMeterRegistryTest {
         }, Clock.SYSTEM))
             .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
             .hasMessage("apiToken must be set to report metrics to Dynatrace");
+    }
+
+    @Test
+    void putCustomMetricOnSuccessShouldAddMetricIdToCreatedCustomMetrics() throws NoSuchFieldException, IllegalAccessException {
+        DynatraceConfig config = new DynatraceConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String uri() {
+                return "http://uri";
+            }
+
+            @Override
+            public String deviceId() {
+                return "deviceId";
+            }
+
+            @Override
+            public String apiToken() {
+                return "apiToken";
+            }
+        };
+        DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(config)
+                .httpPushHandler((url, request) -> new HttpResponse(200, null))
+                .build();
+
+        Field createdCustomMetricsField = DynatraceMeterRegistry.class.getDeclaredField("createdCustomMetrics");
+        createdCustomMetricsField.setAccessible(true);
+        Set<String> createdCustomMetrics = (Set<String>) createdCustomMetricsField.get(registry);
+        assertThat(createdCustomMetrics).isEmpty();
+
+        DynatraceMetricDefinition customMetric = new DynatraceMetricDefinition("metricId", null, null, null, new String[] { "type" });
+        registry.putCustomMetric(customMetric);
+        assertThat(createdCustomMetrics).hasSize(1);
     }
 
 }

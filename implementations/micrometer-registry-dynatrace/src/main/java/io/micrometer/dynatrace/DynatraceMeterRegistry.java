@@ -42,7 +42,11 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 
 /**
+ * {@link StepMeterRegistry} for Dynatrace.
+ *
  * @author Oriol Barcelona
+ * @author Jon Schneider
+ * @author Johnny Lim
  * @since 1.1.0
  */
 public class DynatraceMeterRegistry extends StepMeterRegistry {
@@ -192,12 +196,16 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         return createdCustomMetrics.contains(timeSeries.getMetricId());
     }
 
-    private void putCustomMetric(final DynatraceMetricDefinition customMetric) {
+    // VisibleForTesting
+    void putCustomMetric(final DynatraceMetricDefinition customMetric) {
         try {
             httpClient.put(customMetricEndpointTemplate + customMetric.getMetricId() + "?api-token=" + config.apiToken())
                     .withJsonContent(customMetric.asJson())
                     .send()
-                    .onSuccess(response -> logger.debug("created {} as custom metric in dynatrace", customMetric.getMetricId()))
+                    .onSuccess(response -> {
+                        logger.debug("created {} as custom metric in dynatrace", customMetric.getMetricId());
+                        createdCustomMetrics.add(customMetric.getMetricId());
+                    })
                     .onError(response -> {
                         if (logger.isErrorEnabled()) {
                             logger.error("failed to create custom metric {} in dynatrace: {}", customMetric.getMetricId(),
