@@ -32,6 +32,12 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.zip.GZIPOutputStream;
 
+/**
+ * HTTP request.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 public class HttpRequest {
     private final byte[] entity;
     private final HttpMethod method;
@@ -182,6 +188,7 @@ public class HttpRequest {
         }
 
         public final Builder compress() throws IOException {
+            withHeader("Content-Encoding", "gzip");
             this.entity = gzip(entity);
             return this;
         }
