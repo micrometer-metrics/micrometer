@@ -133,7 +133,7 @@ class DynatraceMeterRegistryTest {
 
         DynatraceMetricDefinition customMetric = new DynatraceMetricDefinition("metricId", null, null, null, new String[] { "type" });
         registry.putCustomMetric(customMetric);
-        assertThat(createdCustomMetrics).hasSize(1);
+        assertThat(createdCustomMetrics).containsExactly("metricId");
     }
 
 }
