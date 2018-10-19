@@ -37,6 +37,7 @@ import java.util.zip.GZIPOutputStream;
  *
  * @author Jon Schneider
  * @author Johnny Lim
+ * @since 1.1.0
  */
 public class HttpRequest {
     private final byte[] entity;
