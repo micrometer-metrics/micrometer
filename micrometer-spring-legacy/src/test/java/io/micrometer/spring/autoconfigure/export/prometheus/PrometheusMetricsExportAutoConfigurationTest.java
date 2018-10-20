@@ -23,6 +23,7 @@ import org.springframework.web.context.support.AnnotationConfigWebApplicationCon
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.micrometer.spring.export.prometheus.PrometheusPushGatewayManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -37,62 +38,74 @@ import static org.mockito.Mockito.mock;
  */
 class PrometheusMetricsExportAutoConfigurationTest {
 
-    private AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
+    private final AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
+
+    @AfterEach
+    void cleanUp() {
+        if (context != null) {
+            context.close();
+        }
+    }
 
     @Test
     void autoConfigureByDefault() {
-        registerAndRefresh(ClockConfiguration.class, PrometheusMetricsExportAutoConfiguration.class);
+        registerAndRefresh();
 
-        assertThat(this.context.getBean(PrometheusMeterRegistry.class)).isNotNull();
+        assertThat(context.getBean(PrometheusMeterRegistry.class)).isNotNull();
     }
 
     @Test
     void autoConfigureDisabledByProperty() {
-        EnvironmentTestUtils.addEnvironment(this.context, "management.metrics.export.prometheus.enabled=false");
+        EnvironmentTestUtils.addEnvironment(context, "management.metrics.export.prometheus.enabled=false");
 
-        registerAndRefresh(ClockConfiguration.class, PrometheusMetricsExportAutoConfiguration.class);
+        registerAndRefresh();
 
-        assertThatThrownBy(() -> this.context.getBean(PrometheusMeterRegistry.class))
+        assertThatThrownBy(() -> context.getBean(PrometheusMeterRegistry.class))
             .isInstanceOf(NoSuchBeanDefinitionException.class);
     }
 
     @Test
     void autoConfigurePrometheusPushGatewayDisabledByDefault() {
-        registerAndRefresh(ClockConfiguration.class, PrometheusMetricsExportAutoConfiguration.class);
+        registerAndRefresh();
 
-        assertThatThrownBy(() -> this.context.getBean(PrometheusMetricsExportAutoConfiguration.PrometheusPushGatewayConfiguration.class))
+        assertThatThrownBy(() -> context.getBean(PrometheusMetricsExportAutoConfiguration.PrometheusPushGatewayConfiguration.class))
             .isInstanceOf(NoSuchBeanDefinitionException.class);
     }
 
     @Test
     void autoConfigurePrometheusPushGatewayEnabledByProperty() {
-        EnvironmentTestUtils.addEnvironment(this.context, "management.metrics.export.prometheus.pushgateway.enabled=true");
+        EnvironmentTestUtils.addEnvironment(context, "management.metrics.export.prometheus.pushgateway.enabled=true");
 
-        registerAndRefresh(ClockConfiguration.class, PrometheusMetricsExportAutoConfiguration.class);
+        registerAndRefresh();
 
-        assertThat(this.context.getBean(PrometheusMetricsExportAutoConfiguration.PrometheusPushGatewayConfiguration.class)).isNotNull();
+        assertThat(context.getBean(PrometheusMetricsExportAutoConfiguration.PrometheusPushGatewayConfiguration.class)).isNotNull();
     }
 
     @Test
     void autoConfigurePrometheusPushGatewayDisabledByPrometheusEnabledProperty() {
-        EnvironmentTestUtils.addEnvironment(this.context, "management.metrics.export.prometheus.enabled=false", "management.metrics.export.prometheus.pushgateway.enabled=true");
+        EnvironmentTestUtils.addEnvironment(context, "management.metrics.export.prometheus.enabled=false", "management.metrics.export.prometheus.pushgateway.enabled=true");
 
-        registerAndRefresh(ClockConfiguration.class, PrometheusMetricsExportAutoConfiguration.class);
+        registerAndRefresh();
 
-        assertThatThrownBy(() -> this.context.getBean(PrometheusMetricsExportAutoConfiguration.PrometheusPushGatewayConfiguration.class))
+        assertThatThrownBy(() -> context.getBean(PrometheusMetricsExportAutoConfiguration.PrometheusPushGatewayConfiguration.class))
             .isInstanceOf(NoSuchBeanDefinitionException.class);
     }
 
-    @AfterEach
-    void cleanUp() {
-        if (this.context != null) {
-            this.context.close();
-        }
+    @Test
+    public void withPushGatewayEnabled() {
+        EnvironmentTestUtils.addEnvironment(context, "management.metrics.export.prometheus.pushgateway.enabled=true");
+
+        registerAndRefresh();
+
+        assertThat(context.getBean(PrometheusPushGatewayManager.class)).isNotNull();
     }
 
     private void registerAndRefresh(Class<?>... configurationClasses) {
-        this.context.register(configurationClasses);
-        this.context.refresh();
+        if (configurationClasses.length > 0) {
+            context.register(configurationClasses);
+        }
+        context.register(ClockConfiguration.class, PrometheusMetricsExportAutoConfiguration.class);
+        context.refresh();
     }
 
     @Configuration

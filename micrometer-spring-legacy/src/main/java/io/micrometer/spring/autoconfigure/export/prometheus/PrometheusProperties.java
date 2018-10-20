@@ -21,6 +21,8 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.micrometer.spring.export.prometheus.PrometheusPushGatewayManager.ShutdownOperation;
+
 /**
  * {@link ConfigurationProperties} for configuring metrics export to Prometheus.
  *
@@ -39,7 +41,7 @@ public class PrometheusProperties {
      * Configuration options for using Prometheus Pushgateway, allowing metrics to be
      * pushed when they cannot be scraped.
      */
-    private PushgatewayProperties pushgateway = new PushgatewayProperties();
+    private Pushgateway pushgateway = new Pushgateway();
 
     /**
      * Step size (i.e. reporting frequency) to use.
@@ -62,18 +64,18 @@ public class PrometheusProperties {
         this.step = step;
     }
 
-    public PushgatewayProperties getPushgateway() {
+    public Pushgateway getPushgateway() {
         return this.pushgateway;
     }
 
-    public void setPushgateway(PushgatewayProperties pushgateway) {
+    public void setPushgateway(Pushgateway pushgateway) {
         this.pushgateway = pushgateway;
     }
 
     /**
      * Configuration options for push-based interaction with Prometheus.
      */
-    public static class PushgatewayProperties {
+    public static class Pushgateway {
 
         /**
          * Enable publishing via a Prometheus Pushgateway.
@@ -98,18 +100,12 @@ public class PrometheusProperties {
         /**
          * Grouping key for the pushed metrics.
          */
-        private Map<String, String> groupingKeys = new HashMap<>();
+        private Map<String, String> groupingKey = new HashMap<>();
 
         /**
-         * Push metrics right before shut-down. Mostly useful for batch jobs.
+         * Operation that should be performed on shutdown.
          */
-        private boolean pushOnShutdown = true;
-
-        /**
-         * Delete metrics from Pushgateway when application is shut-down.
-         */
-        private boolean deleteOnShutdown = true;
-
+        private ShutdownOperation shutdownOperation = ShutdownOperation.NONE;
 
         public Boolean getEnabled() {
             return this.enabled;
@@ -143,28 +139,20 @@ public class PrometheusProperties {
             this.job = job;
         }
 
-        public Map<String, String> getGroupingKeys() {
-            return this.groupingKeys;
+        public Map<String, String> getGroupingKey() {
+            return this.groupingKey;
         }
 
-        public void setGroupingKeys(Map<String, String> groupingKeys) {
-            this.groupingKeys = groupingKeys;
+        public void setGroupingKey(Map<String, String> groupingKey) {
+            this.groupingKey = groupingKey;
         }
 
-        public boolean isPushOnShutdown() {
-            return pushOnShutdown;
+        public ShutdownOperation getShutdownOperation() {
+            return this.shutdownOperation;
         }
 
-        public void setPushOnShutdown(boolean pushOnShutdown) {
-            this.pushOnShutdown = pushOnShutdown;
-        }
-
-        public boolean isDeleteOnShutdown() {
-            return deleteOnShutdown;
-        }
-
-        public void setDeleteOnShutdown(boolean deleteOnShutdown) {
-            this.deleteOnShutdown = deleteOnShutdown;
+        public void setShutdownOperation(ShutdownOperation shutdownOperation) {
+            this.shutdownOperation = shutdownOperation;
         }
 
     }
