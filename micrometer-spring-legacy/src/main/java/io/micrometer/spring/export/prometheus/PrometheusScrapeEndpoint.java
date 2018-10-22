@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.autoconfigure.export.prometheus;
+package io.micrometer.spring.export.prometheus;
 
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
@@ -38,7 +38,7 @@ public class PrometheusScrapeEndpoint extends AbstractEndpoint<ResponseEntity<St
 
     private final CollectorRegistry collectorRegistry;
 
-    PrometheusScrapeEndpoint(CollectorRegistry collectorRegistry) {
+    public PrometheusScrapeEndpoint(CollectorRegistry collectorRegistry) {
         super("prometheus");
         this.collectorRegistry = collectorRegistry;
     }
