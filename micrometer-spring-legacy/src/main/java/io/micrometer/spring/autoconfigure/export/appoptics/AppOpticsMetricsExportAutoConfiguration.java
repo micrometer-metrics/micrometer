@@ -24,6 +24,7 @@ import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -34,13 +35,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 /**
- * Configuration for exporting metrics to AppOptics.
+ * {@link EnableAutoConfiguration Auto-configuration} for exporting metrics to AppOptics.
  *
  * @author Hunter Sherman
+ * @author Stephane Nicoll
+ * @since 1.1.0
  */
 @Configuration
-@AutoConfigureBefore({CompositeMeterRegistryAutoConfiguration.class,
-    SimpleMetricsExportAutoConfiguration.class})
+@AutoConfigureBefore({ CompositeMeterRegistryAutoConfiguration.class,
+        SimpleMetricsExportAutoConfiguration.class })
 @AutoConfigureAfter(MetricsAutoConfiguration.class)
 @ConditionalOnBean(Clock.class)
 @ConditionalOnClass(AppOpticsMeterRegistry.class)
@@ -50,14 +53,16 @@ import org.springframework.context.annotation.Import;
 public class AppOpticsMetricsExportAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean(AppOpticsConfig.class)
+    @ConditionalOnMissingBean
     public AppOpticsConfig appOpticsConfig(AppOpticsProperties appOpticsProperties) {
         return new AppOpticsPropertiesConfigAdapter(appOpticsProperties);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public AppOpticsMeterRegistry appOpticsMeterRegistry(AppOpticsConfig config, Clock clock) {
+    public AppOpticsMeterRegistry appOpticsMeterRegistry(AppOpticsConfig config,
+            Clock clock) {
         return new AppOpticsMeterRegistry(config, clock);
     }
+
 }
