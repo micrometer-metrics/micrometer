@@ -19,18 +19,32 @@ import io.micrometer.appoptics.AppOpticsConfig;
 import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
 
 /**
- * Adapter to convert {@link AppOpticsProperties} to a {@link io.micrometer.appoptics.AppOpticsConfig}.
+ * Adapter to convert {@link AppOpticsProperties} to an {@link AppOpticsConfig}.
  *
  * @author Hunter Sherman
+ * @author Stephane Nicoll
  */
-public class AppOpticsPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<AppOpticsProperties>
-    implements AppOpticsConfig {
+class AppOpticsPropertiesConfigAdapter
+        extends StepRegistryPropertiesConfigAdapter<AppOpticsProperties>
+        implements AppOpticsConfig {
 
-    public AppOpticsPropertiesConfigAdapter(AppOpticsProperties properties) { super(properties); }
+    AppOpticsPropertiesConfigAdapter(AppOpticsProperties properties) {
+        super(properties);
+    }
 
-    public String apiToken() { return get(AppOpticsProperties::getApiToken, AppOpticsConfig.super::apiToken); }
+    @Override
+    public String uri() {
+        return get(AppOpticsProperties::getUri, AppOpticsConfig.super::uri);
+    }
 
-    public String hostTag() { return get(AppOpticsProperties::getHostTag, AppOpticsConfig.super::hostTag); }
+    @Override
+    public String apiToken() {
+        return get(AppOpticsProperties::getApiToken, AppOpticsConfig.super::apiToken);
+    }
 
-    public String uri() { return get(AppOpticsProperties::getUri, AppOpticsConfig.super::uri); }
+    @Override
+    public String hostTag() {
+        return get(AppOpticsProperties::getHostTag, AppOpticsConfig.super::hostTag);
+    }
+
 }

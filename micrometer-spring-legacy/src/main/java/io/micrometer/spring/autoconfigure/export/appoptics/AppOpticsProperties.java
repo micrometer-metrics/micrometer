@@ -15,6 +15,8 @@
  */
 package io.micrometer.spring.autoconfigure.export.appoptics;
 
+import java.time.Duration;
+
 import io.micrometer.spring.autoconfigure.export.StepRegistryProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -22,9 +24,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * {@link ConfigurationProperties} for configuring AppOptics metrics export.
  *
  * @author Hunter Sherman
+ * @author Stephane Nicoll
+ * @since 1.1.0
  */
 @ConfigurationProperties(prefix = "management.metrics.export.appoptics")
 public class AppOpticsProperties extends StepRegistryProperties {
+
+    /**
+     * URI to ship metrics to.
+     */
+    private String uri = "https://api.appoptics.com/v1/measurements";
 
     /**
      * AppOptics API token.
@@ -32,28 +41,63 @@ public class AppOpticsProperties extends StepRegistryProperties {
     private String apiToken;
 
     /**
-     * The tag that will be mapped to "@host" when shipping metrics to AppOptics.
+     * Tag that will be mapped to "@host" when shipping metrics to AppOptics.
      */
     private String hostTag = "instance";
 
     /**
-     * The URI to ship metrics to.
+     * Number of measurements per request to use for this backend. If more measurements
+     * are found, then multiple requests will be made.
      */
-    private String uri;
+    private Integer batchSize = 500;
 
-    public String getApiToken() { return apiToken; }
+    /**
+     * Connection timeout for requests to this backend.
+     */
+    private Duration connectTimeout = Duration.ofSeconds(5);
 
-    public void setApiToken(String apiToken) { this.apiToken = apiToken; }
+    public String getUri() {
+        return this.uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
+    }
+
+    public String getApiToken() {
+        return this.apiToken;
+    }
+
+    public void setApiToken(String apiToken) {
+        this.apiToken = apiToken;
+    }
 
     public String getHostTag() {
-        return hostTag;
+        return this.hostTag;
     }
 
     public void setHostTag(String hostTag) {
         this.hostTag = hostTag;
     }
 
-    public String getUri() { return uri; }
+    @Override
+    public Integer getBatchSize() {
+        return this.batchSize;
+    }
 
-    public void setUri(String uri) { this.uri = uri; }
+    @Override
+    public void setBatchSize(Integer batchSize) {
+        this.batchSize = batchSize;
+    }
+
+    @Override
+    public Duration getConnectTimeout() {
+        return this.connectTimeout;
+    }
+
+    @Override
+    public void setConnectTimeout(Duration connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
 }
