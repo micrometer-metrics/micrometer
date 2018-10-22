@@ -23,6 +23,8 @@ import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.export.StringToDurationConverter;
 import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
 import io.micrometer.spring.export.prometheus.PrometheusPushGatewayManager;
+import io.micrometer.spring.export.prometheus.PrometheusScrapeEndpoint;
+import io.micrometer.spring.export.prometheus.PrometheusScrapeMvcEndpoint;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.PushGateway;
 import org.springframework.boot.actuate.autoconfigure.ManagementContextConfiguration;

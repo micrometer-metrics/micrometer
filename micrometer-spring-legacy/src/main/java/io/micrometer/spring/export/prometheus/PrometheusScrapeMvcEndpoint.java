@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.autoconfigure.export.prometheus;
+package io.micrometer.spring.export.prometheus;
 
 import org.springframework.boot.actuate.endpoint.mvc.EndpointMvcAdapter;
 import org.springframework.web.bind.annotation.GetMapping;
 
 public class PrometheusScrapeMvcEndpoint extends EndpointMvcAdapter {
 
-    PrometheusScrapeMvcEndpoint(PrometheusScrapeEndpoint delegate) {
+    public PrometheusScrapeMvcEndpoint(PrometheusScrapeEndpoint delegate) {
         super(delegate);
     }
 
