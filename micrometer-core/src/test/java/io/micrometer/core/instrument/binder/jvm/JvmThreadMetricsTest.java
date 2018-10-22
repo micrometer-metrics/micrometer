@@ -15,6 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.util.concurrent.TimeUnit;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -22,6 +24,8 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link JvmThreadMetrics}.
@@ -46,6 +50,17 @@ class JvmThreadMetricsTest {
 
         createTimedWaitingThread();
         assertThat(registry.get("jvm.threads.states").tag("state", "timed-waiting").gauge().value()).isGreaterThan(0);
+    }
+
+    @Test
+    void getThreadStateCountWhenThreadInfoIsNullShouldWork() {
+        ThreadMXBean threadBean = mock(ThreadMXBean.class);
+        long[] threadIds = {1L, 2L};
+        when(threadBean.getAllThreadIds()).thenReturn(threadIds);
+        ThreadInfo threadInfo = mock(ThreadInfo.class);
+        when(threadInfo.getThreadState()).thenReturn(Thread.State.RUNNABLE);
+        when(threadBean.getThreadInfo(threadIds)).thenReturn(new ThreadInfo[] { threadInfo, null });
+        assertThat(JvmThreadMetrics.getThreadStateCount(threadBean, Thread.State.RUNNABLE)).isEqualTo(1);
     }
 
     private void createTimedWaitingThread() {

@@ -75,9 +75,10 @@ public class JvmThreadMetrics implements MeterBinder {
         }
     }
 
-    private static long getThreadStateCount(ThreadMXBean threadBean, Thread.State state) {
+    // VisibleForTesting
+    static long getThreadStateCount(ThreadMXBean threadBean, Thread.State state) {
         return Arrays.stream(threadBean.getThreadInfo(threadBean.getAllThreadIds()))
-                .filter(threadInfo -> threadInfo.getThreadState() == state)
+                .filter(threadInfo -> threadInfo != null && threadInfo.getThreadState() == state)
                 .count();
     }
 
