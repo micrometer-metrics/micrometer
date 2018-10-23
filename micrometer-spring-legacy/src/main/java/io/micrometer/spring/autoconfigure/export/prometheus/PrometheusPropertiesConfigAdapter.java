@@ -16,7 +16,7 @@
 package io.micrometer.spring.autoconfigure.export.prometheus;
 
 import io.micrometer.prometheus.PrometheusConfig;
-import io.micrometer.spring.autoconfigure.export.PropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.properties.PropertiesConfigAdapter;
 
 import java.time.Duration;
 

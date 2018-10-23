@@ -16,7 +16,7 @@
 package io.micrometer.spring.autoconfigure.export.azuremonitor;
 
 import io.micrometer.azuremonitor.AzureMonitorConfig;
-import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.properties.StepRegistryPropertiesConfigAdapter;
 
 /**
  * Adapter to convert {@link AzureMonitorProperties} to a {@link AzureMonitorConfig}.

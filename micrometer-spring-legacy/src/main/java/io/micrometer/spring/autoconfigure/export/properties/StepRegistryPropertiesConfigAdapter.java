@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.autoconfigure.export;
+package io.micrometer.spring.autoconfigure.export.properties;
 
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 

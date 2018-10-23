@@ -15,7 +15,7 @@
  */
 package io.micrometer.spring.autoconfigure.export.atlas;
 
-import io.micrometer.spring.autoconfigure.export.StepRegistryProperties;
+import io.micrometer.spring.autoconfigure.export.properties.StepRegistryProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;

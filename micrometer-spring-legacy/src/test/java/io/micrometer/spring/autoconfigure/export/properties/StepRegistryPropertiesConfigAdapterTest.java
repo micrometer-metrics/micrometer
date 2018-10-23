@@ -17,8 +17,6 @@ package io.micrometer.spring.autoconfigure.export.properties;
 
 import java.time.Duration;
 
-import io.micrometer.spring.autoconfigure.export.StepRegistryProperties;
-import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

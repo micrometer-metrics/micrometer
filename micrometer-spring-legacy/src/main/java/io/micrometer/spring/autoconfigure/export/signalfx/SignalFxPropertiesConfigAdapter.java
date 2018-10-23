@@ -16,7 +16,7 @@
 package io.micrometer.spring.autoconfigure.export.signalfx;
 
 import io.micrometer.signalfx.SignalFxConfig;
-import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.properties.StepRegistryPropertiesConfigAdapter;
 
 /**
  * Adapter to convert {@link SignalFxProperties} to a {@link SignalFxConfig}.

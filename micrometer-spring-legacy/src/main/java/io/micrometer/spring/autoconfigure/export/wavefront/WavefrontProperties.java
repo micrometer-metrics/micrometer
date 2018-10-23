@@ -18,7 +18,7 @@ package io.micrometer.spring.autoconfigure.export.wavefront;
 import java.net.URI;
 import java.time.Duration;
 
-import io.micrometer.spring.autoconfigure.export.StepRegistryProperties;
+import io.micrometer.spring.autoconfigure.export.properties.StepRegistryProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**

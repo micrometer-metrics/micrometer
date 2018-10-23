@@ -16,7 +16,6 @@
 package io.micrometer.spring.autoconfigure.export.properties;
 
 import io.micrometer.core.instrument.step.StepRegistryConfig;
-import io.micrometer.spring.autoconfigure.export.StepRegistryProperties;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

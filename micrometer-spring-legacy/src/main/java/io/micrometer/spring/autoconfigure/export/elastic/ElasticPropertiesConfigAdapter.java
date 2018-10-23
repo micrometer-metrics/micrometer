@@ -16,7 +16,7 @@
 package io.micrometer.spring.autoconfigure.export.elastic;
 
 import io.micrometer.elastic.ElasticConfig;
-import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.properties.StepRegistryPropertiesConfigAdapter;
 
 /**
  * Adapter to convert {@link ElasticProperties} to an {@link ElasticConfig}.

@@ -16,7 +16,7 @@
 package io.micrometer.spring.autoconfigure.export.influx;
 
 import io.micrometer.influx.InfluxConsistency;
-import io.micrometer.spring.autoconfigure.export.StepRegistryProperties;
+import io.micrometer.spring.autoconfigure.export.properties.StepRegistryProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
