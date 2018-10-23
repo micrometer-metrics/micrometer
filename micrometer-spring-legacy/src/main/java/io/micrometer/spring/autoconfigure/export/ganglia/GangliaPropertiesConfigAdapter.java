@@ -17,7 +17,7 @@ package io.micrometer.spring.autoconfigure.export.ganglia;
 
 import info.ganglia.gmetric4j.gmetric.GMetric;
 import io.micrometer.ganglia.GangliaConfig;
-import io.micrometer.spring.autoconfigure.export.PropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.properties.PropertiesConfigAdapter;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;

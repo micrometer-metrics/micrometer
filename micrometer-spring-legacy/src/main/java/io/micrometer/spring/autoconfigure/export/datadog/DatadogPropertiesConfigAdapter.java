@@ -16,7 +16,7 @@
 package io.micrometer.spring.autoconfigure.export.datadog;
 
 import io.micrometer.datadog.DatadogConfig;
-import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.properties.StepRegistryPropertiesConfigAdapter;
 
 /**
  * Adapter to convert {@link DatadogProperties} to a {@link DatadogConfig}.

@@ -16,7 +16,7 @@
 package io.micrometer.spring.autoconfigure.export.dynatrace;
 
 import io.micrometer.dynatrace.DynatraceConfig;
-import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.properties.StepRegistryPropertiesConfigAdapter;
 
 /**
  * Adapter to convert {@link DynatraceProperties} to a {@link io.micrometer.dynatrace.DynatraceConfig}.

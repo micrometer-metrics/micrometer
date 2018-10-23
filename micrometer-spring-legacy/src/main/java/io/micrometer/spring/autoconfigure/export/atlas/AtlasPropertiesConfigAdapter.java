@@ -16,7 +16,7 @@
 package io.micrometer.spring.autoconfigure.export.atlas;
 
 import com.netflix.spectator.atlas.AtlasConfig;
-import io.micrometer.spring.autoconfigure.export.PropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.properties.PropertiesConfigAdapter;
 
 import java.time.Duration;
 

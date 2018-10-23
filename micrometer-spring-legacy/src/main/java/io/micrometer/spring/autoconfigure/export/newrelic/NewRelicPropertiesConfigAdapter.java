@@ -16,7 +16,7 @@
 package io.micrometer.spring.autoconfigure.export.newrelic;
 
 import io.micrometer.newrelic.NewRelicConfig;
-import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.properties.StepRegistryPropertiesConfigAdapter;
 
 /**
  * Adapter to convert {@link NewRelicProperties} to a {@link NewRelicConfig}.

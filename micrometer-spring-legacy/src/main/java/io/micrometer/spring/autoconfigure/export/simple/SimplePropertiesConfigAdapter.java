@@ -17,7 +17,7 @@ package io.micrometer.spring.autoconfigure.export.simple;
 
 import io.micrometer.core.instrument.simple.CountingMode;
 import io.micrometer.core.instrument.simple.SimpleConfig;
-import io.micrometer.spring.autoconfigure.export.PropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.properties.PropertiesConfigAdapter;
 
 import java.time.Duration;
 

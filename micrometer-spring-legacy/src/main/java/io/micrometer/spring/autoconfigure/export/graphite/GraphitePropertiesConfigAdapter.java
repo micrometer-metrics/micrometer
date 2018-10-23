@@ -17,7 +17,7 @@ package io.micrometer.spring.autoconfigure.export.graphite;
 
 import io.micrometer.graphite.GraphiteConfig;
 import io.micrometer.graphite.GraphiteProtocol;
-import io.micrometer.spring.autoconfigure.export.PropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.properties.PropertiesConfigAdapter;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;

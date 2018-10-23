@@ -16,7 +16,7 @@
 package io.micrometer.spring.autoconfigure.export.appoptics;
 
 import io.micrometer.appoptics.AppOpticsConfig;
-import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.properties.StepRegistryPropertiesConfigAdapter;
 
 /**
  * Adapter to convert {@link AppOpticsProperties} to an {@link AppOpticsConfig}.

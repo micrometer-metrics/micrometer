@@ -15,7 +15,7 @@
  */
 package io.micrometer.spring.autoconfigure.export.statsd;
 
-import io.micrometer.spring.autoconfigure.export.PropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.properties.PropertiesConfigAdapter;
 import io.micrometer.statsd.StatsdConfig;
 import io.micrometer.statsd.StatsdFlavor;
 

@@ -16,7 +16,7 @@
 package io.micrometer.spring.autoconfigure.export.humio;
 
 import io.micrometer.humio.HumioConfig;
-import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.properties.StepRegistryPropertiesConfigAdapter;
 
 import java.util.Map;
 

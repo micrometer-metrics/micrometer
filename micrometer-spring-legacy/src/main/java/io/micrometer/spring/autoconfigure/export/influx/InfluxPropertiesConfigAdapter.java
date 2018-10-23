@@ -17,7 +17,7 @@ package io.micrometer.spring.autoconfigure.export.influx;
 
 import io.micrometer.influx.InfluxConfig;
 import io.micrometer.influx.InfluxConsistency;
-import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.properties.StepRegistryPropertiesConfigAdapter;
 
 /**
  * Adapter to convert {@link InfluxProperties} to an {@link InfluxConfig}.

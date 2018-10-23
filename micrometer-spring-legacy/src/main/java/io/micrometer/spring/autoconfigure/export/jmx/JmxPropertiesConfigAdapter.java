@@ -16,7 +16,7 @@
 package io.micrometer.spring.autoconfigure.export.jmx;
 
 import io.micrometer.jmx.JmxConfig;
-import io.micrometer.spring.autoconfigure.export.PropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.properties.PropertiesConfigAdapter;
 
 import java.time.Duration;
 
