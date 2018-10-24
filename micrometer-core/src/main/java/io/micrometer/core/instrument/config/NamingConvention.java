@@ -115,6 +115,25 @@ public interface NamingConvention {
         }
     };
 
+    /**
+     * @since 1.1.0
+     */
+    NamingConvention slashes = new NamingConvention() {
+        @Override
+        public String name(String name, Meter.Type type, @Nullable String baseUnit) {
+            return toSnakeCase(name);
+        }
+
+        @Override
+        public String tagKey(String key) {
+            return toSnakeCase(key);
+        }
+
+        private String toSnakeCase(String value) {
+            return Arrays.stream(value.split("\\.")).filter(Objects::nonNull).collect(Collectors.joining("/"));
+        }
+    };
+
     default String name(String name, Meter.Type type) {
         return name(name, type, null);
     }

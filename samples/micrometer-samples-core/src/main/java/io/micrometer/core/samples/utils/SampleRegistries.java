@@ -49,6 +49,8 @@ import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.micrometer.signalfx.SignalFxConfig;
 import io.micrometer.signalfx.SignalFxMeterRegistry;
+import io.micrometer.stackdriver.StackdriverConfig;
+import io.micrometer.stackdriver.StackdriverMeterRegistry;
 import io.micrometer.statsd.StatsdConfig;
 import io.micrometer.statsd.StatsdFlavor;
 import io.micrometer.statsd.StatsdMeterRegistry;
@@ -451,6 +453,25 @@ public class SampleRegistries {
             @Override
             public String uri() {
                 return "http://localhost:8083/api/v1/datapoints";
+            }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+        }, Clock.SYSTEM);
+    }
+
+    public static StackdriverMeterRegistry stackdriver(String projectId) {
+        return new StackdriverMeterRegistry(new StackdriverConfig() {
+            @Override
+            public String projectId() {
+                return projectId;
+            }
+
+            @Override
+            public String get(String key) {
+                return null;
             }
 
             @Override

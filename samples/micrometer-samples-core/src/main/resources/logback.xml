@@ -29,4 +29,5 @@
         <appender-ref ref="STDOUT" />
     </root>
 
+    <logger name="io.micrometer" level="debug"/>
 </configuration>
