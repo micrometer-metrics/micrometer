@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Track the sample distribution of events. An example would be the response sizes for requests
- * hitting and http server.
+ * hitting an http server.
  *
  * @author Jon Schneider
  */
