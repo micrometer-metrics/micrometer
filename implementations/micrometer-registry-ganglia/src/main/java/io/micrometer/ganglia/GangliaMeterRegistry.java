@@ -36,7 +36,10 @@ import java.util.concurrent.TimeUnit;
 import static io.micrometer.core.instrument.Meter.Type.consume;
 
 /**
+ * {@link StepMeterRegistry} for Ganglia.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public class GangliaMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(GangliaMeterRegistry.class);
@@ -162,8 +165,7 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
         Meter.Id id = meter.getId();
         String baseUnit = id.getBaseUnit();
         try {
-            ganglia.announce(nameMapper.toHierarchicalName(id.withName(id.getName() + "." + suffix),
-                    config().namingConvention()),
+            ganglia.announce(getMetricName(id, suffix),
                     DoubleFormat.decimalOrNan(value),
                     GMetricType.DOUBLE,
                     baseUnit == null ? "" : baseUnit,
@@ -174,6 +176,12 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
         } catch (GangliaException e) {
             logger.warn("Unable to publish metric " + id.getName() + " to ganglia", e);
         }
+    }
+
+    // VisibleForTesting
+    String getMetricName(Meter.Id id, @Nullable String suffix) {
+        return nameMapper.toHierarchicalName(id.withName(suffix != null ? id.getName() + "." + suffix : id.getName()),
+                config().namingConvention());
     }
 
     @Override
