@@ -50,7 +50,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
     private KairosMeterRegistry(KairosConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
         super(config, clock);
 
-        this.config().namingConvention(new KairosNamingConvention());
+        config().namingConvention(new KairosNamingConvention());
 
         this.config = config;
         this.httpClient = httpClient;

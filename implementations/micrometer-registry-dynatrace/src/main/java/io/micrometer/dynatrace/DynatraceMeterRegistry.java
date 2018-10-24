@@ -74,7 +74,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         this.config = config;
         this.httpClient = httpClient;
 
-        this.config().namingConvention(new DynatraceNamingConvention());
+        config().namingConvention(new DynatraceNamingConvention());
 
         this.customMetricEndpointTemplate = config.uri() + "/api/v1/timeseries/";
 

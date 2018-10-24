@@ -61,7 +61,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     private ElasticMeterRegistry(ElasticConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
         super(config, clock);
-        this.config().namingConvention(new ElasticNamingConvention());
+        config().namingConvention(new ElasticNamingConvention());
         this.config = config;
         this.httpClient = httpClient;
         start(threadFactory);

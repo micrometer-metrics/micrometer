@@ -55,7 +55,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     private InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
         super(config, clock);
-        this.config().namingConvention(new InfluxNamingConvention());
+        config().namingConvention(new InfluxNamingConvention());
         this.config = config;
         this.httpClient = httpClient;
         start(threadFactory);

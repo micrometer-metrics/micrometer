@@ -67,12 +67,11 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
         // horrible in the UI. So be aware...
         this.config = config;
         this.nameMapper = nameMapper;
-        this.config().namingConvention(NamingConvention.camelCase);
+        config().namingConvention(NamingConvention.camelCase);
 
         try {
             this.ganglia = new GMetric(config.host(), config.port(), config.addressingMode(), config.ttl());
-            if (config.enabled())
-                start();
+            start();
         } catch (IOException e) {
             throw new RuntimeException("Failed to configure Ganglia metrics reporting", e);
         }
@@ -94,7 +93,7 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        for (Meter meter : this.getMeters()) {
+        for (Meter meter : getMeters()) {
             consume(meter,
                     this::announceGauge,
                     this::announceCounter,

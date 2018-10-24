@@ -45,11 +45,12 @@ public interface Timer extends Meter, HistogramSupport {
      * @since 1.1.0
      */
     static Sample start() {
-        return new Sample(Clock.SYSTEM);
+        return start(Clock.SYSTEM);
     }
 
     /**
      * Start a timing sample.
+     * @param registry a meter registry to be used
      * @return A timing sample with start time recorded.
      */
     static Sample start(MeterRegistry registry) {
@@ -58,6 +59,7 @@ public interface Timer extends Meter, HistogramSupport {
 
     /**
      * Start a timing sample.
+     * @param clock a clock to be used
      * @return A timing sample with start time recorded.
      */
     static Sample start(Clock clock) {
