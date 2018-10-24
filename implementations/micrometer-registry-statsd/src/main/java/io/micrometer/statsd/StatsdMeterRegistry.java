@@ -197,7 +197,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
                     .subscribe());
         }
 
-        this.config().onMeterRemoved(meter -> {
+        config().onMeterRemoved(meter -> {
             //noinspection SuspiciousMethodCalls
             consume(meter,
                     this::removePollableMeter,

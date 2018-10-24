@@ -58,7 +58,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
     private HumioMeterRegistry(HumioConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
         super(config, clock);
 
-        this.config().namingConvention(new HumioNamingConvention());
+        config().namingConvention(new HumioNamingConvention());
 
         this.config = config;
         this.httpClient = httpClient;

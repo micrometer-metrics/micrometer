@@ -56,7 +56,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
     private AppOpticsMeterRegistry(AppOpticsConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
         super(config, clock);
 
-        this.config().namingConvention(new AppOpticsNamingConvention());
+        config().namingConvention(new AppOpticsNamingConvention());
 
         this.config = config;
         this.httpClient = httpClient;
