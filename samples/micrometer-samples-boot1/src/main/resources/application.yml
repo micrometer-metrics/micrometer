@@ -37,6 +37,7 @@ management.metrics.export:
   prometheus.enabled: false
   statsd.enabled: false
   signalfx.enabled: false
+  stackdriver.enabled: false
   wavefront.enabled: false
   kairos.enabled: false
 security.ignored: /**

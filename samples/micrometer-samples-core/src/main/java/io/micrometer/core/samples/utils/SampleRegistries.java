@@ -15,6 +15,9 @@
  */
 package io.micrometer.core.samples.utils;
 
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.monitoring.v3.MetricServiceSettings;
 import com.netflix.spectator.atlas.AtlasConfig;
 import com.sun.net.httpserver.HttpServer;
 import io.micrometer.appoptics.AppOpticsConfig;
@@ -49,14 +52,15 @@ import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.micrometer.signalfx.SignalFxConfig;
 import io.micrometer.signalfx.SignalFxMeterRegistry;
+import io.micrometer.stackdriver.StackdriverConfig;
+import io.micrometer.stackdriver.StackdriverMeterRegistry;
 import io.micrometer.statsd.StatsdConfig;
 import io.micrometer.statsd.StatsdFlavor;
 import io.micrometer.statsd.StatsdMeterRegistry;
 import io.micrometer.wavefront.WavefrontConfig;
 import io.micrometer.wavefront.WavefrontMeterRegistry;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 
@@ -458,5 +462,40 @@ public class SampleRegistries {
                 return Duration.ofSeconds(10);
             }
         }, Clock.SYSTEM);
+    }
+
+    /**
+     * @param serviceAccountJson The fully qualified path on the local file system to a service account's JSON. To create,
+     *                           see {@link <a href="https://cloud.google.com/monitoring/docs/reference/libraries#setting_up_authentication">this</a>}.
+     * @param projectId          The Google Cloud project id found on the dropdown at the top of the Google Cloud console.
+     * @return A Stackdriver registry.
+     */
+    public static StackdriverMeterRegistry stackdriver(String serviceAccountJson, String projectId) {
+        try (InputStream credentials = new FileInputStream(new File(serviceAccountJson))) {
+            return StackdriverMeterRegistry
+                    .builder(new StackdriverConfig() {
+                        @Override
+                        public String projectId() {
+                            return projectId;
+                        }
+
+                        @Override
+                        public String get(String key) {
+                            return null;
+                        }
+
+                        @Override
+                        public Duration step() {
+                            return Duration.ofSeconds(10);
+                        }
+                    })
+                    .metricServiceSettings(() -> MetricServiceSettings.newBuilder()
+                            .setCredentialsProvider(FixedCredentialsProvider.create(ServiceAccountCredentials.fromStream(credentials)))
+                            .build()
+                    )
+                    .build();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

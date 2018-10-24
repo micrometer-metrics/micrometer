@@ -162,7 +162,7 @@ public final class WebMvcTags {
      * @return the outcome tag derived from the status of the response
      * @since 1.1.0
      */
-    public static Tag outcome(HttpServletResponse response) {
+    public static Tag outcome(@Nullable HttpServletResponse response) {
         if (response != null) {
             int status = response.getStatus();
             if (status < 200) {

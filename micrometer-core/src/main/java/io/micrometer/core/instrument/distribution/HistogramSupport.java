@@ -17,7 +17,7 @@ package io.micrometer.core.instrument.distribution;
 
 import io.micrometer.core.instrument.Meter;
 
-public interface HistogramSupport {
+public interface HistogramSupport extends Meter {
     /**
      * Summary statistics should be published off of a single snapshot instance so that, for example, there isn't
      * disagreement between the distribution's bucket counts because more events continue to stream in.
@@ -38,12 +38,4 @@ public interface HistogramSupport {
     default HistogramSnapshot takeSnapshot(boolean supportsAggregablePercentiles) {
         return takeSnapshot();
     }
-
-    /**
-     * Return the meter ID.
-     *
-     * @return the meter ID
-     * @since 1.0.7
-     */
-    Meter.Id getId();
 }

@@ -36,5 +36,6 @@ management.metrics:
     statsd.enabled: false
     newrelic.enabled: false
     signalfx.enabled: false
+    stackdriver.enabled: false
     wavefront.enabled: false
     kairos.enabled: false
