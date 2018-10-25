@@ -15,10 +15,10 @@
  */
 package io.micrometer.elastic;
 
-import java.util.regex.Pattern;
-
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
+
+import java.util.regex.Pattern;
 
 public class ElasticNamingConvention implements NamingConvention {
 

@@ -15,12 +15,12 @@
  */
 package io.micrometer.wavefront;
 
-import java.util.regex.Pattern;
-
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.lang.Nullable;
+
+import java.util.regex.Pattern;
 
 public class WavefrontNamingConvention implements NamingConvention {
 

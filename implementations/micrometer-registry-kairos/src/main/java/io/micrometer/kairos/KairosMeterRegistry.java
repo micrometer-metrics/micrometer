@@ -18,6 +18,7 @@ package io.micrometer.kairos;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpClient;
 import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
 import org.slf4j.Logger;
@@ -55,8 +56,19 @@ public class KairosMeterRegistry extends StepMeterRegistry {
         this.config = config;
         this.httpClient = httpClient;
 
-        if (config.enabled())
-            start(threadFactory);
+        start(threadFactory);
+    }
+
+    public static Builder builder(KairosConfig config) {
+        return new Builder(config);
+    }
+
+    @Override
+    public void start(ThreadFactory threadFactory) {
+        if (config.enabled()) {
+            logger.info("Publishing metrics to kairos every " + TimeUtils.format(config.step()));
+        }
+        super.start(threadFactory);
     }
 
     @Override
@@ -85,46 +97,6 @@ public class KairosMeterRegistry extends StepMeterRegistry {
             } catch (Throwable t) {
                 logger.warn("failed to send metrics to kairos", t);
             }
-        }
-    }
-
-    private static class KairosMetricBuilder {
-        private StringBuilder sb = new StringBuilder("{");
-
-        KairosMetricBuilder field(String key, String value) {
-            if (sb.length() > 1) {
-                sb.append(',');
-            }
-            sb.append('\"').append(key).append("\":\"").append(value).append('\"');
-            return this;
-        }
-
-        KairosMetricBuilder datapoints(Long wallTime, Number value) {
-            sb.append(",\"datapoints\":[[").append(wallTime).append(',').append(value).append("]]");
-            return this;
-        }
-
-        KairosMetricBuilder tags(List<Tag> tags) {
-            KairosMetricBuilder tagBuilder = new KairosMetricBuilder();
-            if (tags.isEmpty()) {
-                // tags field is required for KairosDB, use hostname as a default tag
-                try {
-                    tagBuilder.field("hostname", InetAddress.getLocalHost().getHostName());
-                } catch (UnknownHostException ignore) {
-                    /* ignore */
-                }
-            } else {
-                for (Tag tag : tags) {
-                    tagBuilder.field(tag.getKey(), tag.getValue());
-                }
-            }
-
-            sb.append(",\"tags\":").append(tagBuilder.build());
-            return this;
-        }
-
-        String build() {
-            return sb.append('}').toString();
         }
     }
 
@@ -210,8 +182,44 @@ public class KairosMeterRegistry extends StepMeterRegistry {
         return TimeUnit.MILLISECONDS;
     }
 
-    public static Builder builder(KairosConfig config) {
-        return new Builder(config);
+    private static class KairosMetricBuilder {
+        private StringBuilder sb = new StringBuilder("{");
+
+        KairosMetricBuilder field(String key, String value) {
+            if (sb.length() > 1) {
+                sb.append(',');
+            }
+            sb.append('\"').append(key).append("\":\"").append(value).append('\"');
+            return this;
+        }
+
+        KairosMetricBuilder datapoints(Long wallTime, Number value) {
+            sb.append(",\"datapoints\":[[").append(wallTime).append(',').append(value).append("]]");
+            return this;
+        }
+
+        KairosMetricBuilder tags(List<Tag> tags) {
+            KairosMetricBuilder tagBuilder = new KairosMetricBuilder();
+            if (tags.isEmpty()) {
+                // tags field is required for KairosDB, use hostname as a default tag
+                try {
+                    tagBuilder.field("hostname", InetAddress.getLocalHost().getHostName());
+                } catch (UnknownHostException ignore) {
+                    /* ignore */
+                }
+            } else {
+                for (Tag tag : tags) {
+                    tagBuilder.field(tag.getKey(), tag.getValue());
+                }
+            }
+
+            sb.append(",\"tags\":").append(tagBuilder.build());
+            return this;
+        }
+
+        String build() {
+            return sb.append('}').toString();
+        }
     }
 
     public static class Builder {

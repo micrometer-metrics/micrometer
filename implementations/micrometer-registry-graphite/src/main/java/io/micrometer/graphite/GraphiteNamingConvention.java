@@ -29,13 +29,12 @@ import java.util.regex.Pattern;
  * @author Johnny Lim
  */
 public class GraphiteNamingConvention implements NamingConvention {
-    private final NamingConvention delegate;
-
     /**
      * A list that probably is blacklisted: https://github.com/graphite-project/graphite-web/blob/master/webapp/graphite/render/grammar.py#L48-L55.
      * Empirically, we have found others.
      */
     private static final Pattern blacklistedChars = Pattern.compile("[{}(),=\\[\\]/]");
+    private final NamingConvention delegate;
 
     public GraphiteNamingConvention() {
         this(NamingConvention.camelCase);

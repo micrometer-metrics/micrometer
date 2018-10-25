@@ -65,6 +65,10 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         this.prometheusConfig = config;
     }
 
+    private static List<String> tagValues(Meter.Id id) {
+        return id.getTags().stream().map(Tag::getValue).collect(toList());
+    }
+
     /**
      * @return Content that should be included in the response body for an endpoint designate for
      * Prometheus to scrape from.
@@ -337,10 +341,6 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      */
     public CollectorRegistry getPrometheusRegistry() {
         return registry;
-    }
-
-    private static List<String> tagValues(Meter.Id id) {
-        return id.getTags().stream().map(Tag::getValue).collect(toList());
     }
 
     private MicrometerCollector collectorByName(Meter.Id id) {

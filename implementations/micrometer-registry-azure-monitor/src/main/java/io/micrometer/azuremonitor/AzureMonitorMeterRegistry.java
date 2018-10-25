@@ -23,10 +23,13 @@ import com.microsoft.applicationinsights.telemetry.TraceTelemetry;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -45,24 +48,40 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
 
     private final Logger logger = LoggerFactory.getLogger(AzureMonitorMeterRegistry.class);
     private final TelemetryClient client;
+    private final AzureMonitorConfig config;
 
-    public AzureMonitorMeterRegistry(AzureMonitorConfig config, Clock clock, @Nullable TelemetryConfiguration clientConfig) {
+    public AzureMonitorMeterRegistry(AzureMonitorConfig config, Clock clock) {
+        this(config, clock, TelemetryConfiguration.getActive(), Executors.defaultThreadFactory());
+    }
+
+    private AzureMonitorMeterRegistry(AzureMonitorConfig config, Clock clock,
+                                      TelemetryConfiguration telemetryConfiguration,
+                                      ThreadFactory threadFactory) {
         super(config, clock);
+        this.config = config;
 
         config().namingConvention(new AzureMonitorNamingConvention());
 
-        if (clientConfig == null) {
-            clientConfig = TelemetryConfiguration.getActive();
+        if (StringUtils.isEmpty(telemetryConfiguration.getInstrumentationKey())) {
+            telemetryConfiguration.setInstrumentationKey(config.instrumentationKey());
         }
 
-        if (StringUtils.isEmpty(clientConfig.getInstrumentationKey())) {
-            clientConfig.setInstrumentationKey(config.instrumentationKey());
-        }
-
-        this.client = new TelemetryClient(clientConfig);
+        this.client = new TelemetryClient(telemetryConfiguration);
         client.getContext().getInternal().setSdkVersion(SDK_VERSION);
 
-        start();
+        start(threadFactory);
+    }
+
+    public static Builder builder(AzureMonitorConfig config) {
+        return new Builder(config);
+    }
+
+    @Override
+    public void start(ThreadFactory threadFactory) {
+        if (config.enabled()) {
+            logger.info("Publishing metrics to signalfx every " + TimeUtils.format(config.step()));
+        }
+        super.start(threadFactory);
     }
 
     @Override
@@ -190,5 +209,39 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     public void close() {
         client.flush();
         super.close();
+    }
+
+    public static class Builder {
+        private final AzureMonitorConfig config;
+
+        private Clock clock = Clock.SYSTEM;
+        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
+
+        @Nullable
+        private TelemetryConfiguration telemetryConfiguration;
+
+        public Builder(AzureMonitorConfig config) {
+            this.config = config;
+        }
+
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+
+        public Builder threadFactory(ThreadFactory threadFactory) {
+            this.threadFactory = threadFactory;
+            return this;
+        }
+
+        public Builder telemetryConfiguration(TelemetryConfiguration telemetryConfiguration) {
+            this.telemetryConfiguration = telemetryConfiguration;
+            return this;
+        }
+
+        public AzureMonitorMeterRegistry build() {
+            return new AzureMonitorMeterRegistry(config, clock,
+                    telemetryConfiguration == null ? TelemetryConfiguration.getActive() : telemetryConfiguration, threadFactory);
+        }
     }
 }

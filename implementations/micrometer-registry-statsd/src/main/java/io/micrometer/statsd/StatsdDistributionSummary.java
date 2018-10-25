@@ -31,10 +31,9 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
     private final LongAdder count = new LongAdder();
     private final DoubleAdder amount = new DoubleAdder();
     private final TimeWindowMax max;
-    private volatile boolean shutdown = false;
-
     private final StatsdLineBuilder lineBuilder;
     private final Subscriber<String> subscriber;
+    private volatile boolean shutdown = false;
 
     StatsdDistributionSummary(Meter.Id id, StatsdLineBuilder lineBuilder, Subscriber<String> subscriber, Clock clock,
                               DistributionStatisticConfig distributionStatisticConfig, double scale) {

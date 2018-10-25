@@ -26,14 +26,11 @@ import org.pcollections.PMap;
 
 public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private final HierarchicalNameMapper nameMapper;
-
+    private final Object namesLock = new Object();
     @SuppressWarnings({"NullableProblems", "unused"})
     private volatile NamingConvention namingConvention;
-
     @Nullable
     private volatile String nameNoStat;
-
-    private final Object namesLock = new Object();
     private volatile PMap<Statistic, String> names = HashTreePMap.empty();
 
     public EtsyStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config, HierarchicalNameMapper nameMapper) {

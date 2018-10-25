@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.Meter;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 class WavefrontNamingConventionTest {
     private final WavefrontNamingConvention convention = new WavefrontNamingConvention(null);

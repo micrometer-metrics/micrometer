@@ -16,8 +16,9 @@
 package io.micrometer.prometheus;
 
 import io.micrometer.core.instrument.Meter;
-import java.util.Collections;
 import org.junit.jupiter.api.Test;
+
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

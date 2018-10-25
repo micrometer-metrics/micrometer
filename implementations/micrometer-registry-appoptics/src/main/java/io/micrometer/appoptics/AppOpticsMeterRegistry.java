@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpClient;
 import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
 import org.slf4j.Logger;
@@ -71,8 +72,19 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
             }
         });
 
-        if (config.enabled())
-            start(threadFactory);
+        start(threadFactory);
+    }
+
+    public static Builder builder(AppOpticsConfig config) {
+        return new Builder(config);
+    }
+
+    @Override
+    public void start(ThreadFactory threadFactory) {
+        if (config.enabled()) {
+            logger.info("Publishing metrics to appoptics every " + TimeUtils.format(config.step()));
+        }
+        super.start(threadFactory);
     }
 
     @Override
@@ -192,7 +204,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         StringBuilder sb = new StringBuilder();
         sb.append("{\"name\":\"").append(getConventionName(id)).append("\",\"period\":").append(config.step().getSeconds());
 
-        if (!"value".equals(statistics[0])) {
+        if (!"value" .equals(statistics[0])) {
             sb.append(",\"attributes\":{\"aggregate\":false}");
         }
 
@@ -225,6 +237,11 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return sb.toString();
     }
 
+    @Override
+    protected TimeUnit getBaseTimeUnit() {
+        return TimeUnit.MILLISECONDS;
+    }
+
     /**
      * A subset of the supported summary field names supported by AppOptics.
      */
@@ -240,15 +257,6 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         String tag() {
             return tag;
         }
-    }
-
-    @Override
-    protected TimeUnit getBaseTimeUnit() {
-        return TimeUnit.MILLISECONDS;
-    }
-
-    public static Builder builder(AppOpticsConfig config) {
-        return new Builder(config);
     }
 
     public static class Builder {

@@ -27,6 +27,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,9 +68,9 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         URI apiUri = URI.create(config.uri());
         int port = apiUri.getPort();
         if (port == -1) {
-            if ("http".equals(apiUri.getScheme())) {
+            if ("http" .equals(apiUri.getScheme())) {
                 port = 80;
-            } else if ("https".equals(apiUri.getScheme())) {
+            } else if ("https" .equals(apiUri.getScheme())) {
                 port = 443;
             }
         }
@@ -81,6 +82,14 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         config().namingConvention(new SignalFxNamingConvention());
 
         start(threadFactory);
+    }
+
+    @Override
+    public void start(ThreadFactory threadFactory) {
+        if (config.enabled()) {
+            logger.info("Publishing metrics to signalfx every " + TimeUtils.format(config.step()));
+        }
+        super.start(threadFactory);
     }
 
     @Override

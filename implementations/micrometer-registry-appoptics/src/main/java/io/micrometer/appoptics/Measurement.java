@@ -20,13 +20,13 @@ import java.util.stream.Collectors;
 
 public interface Measurement {
 
-    String appendJson(StringBuilder builder);
-
     static String tagsJson(Map<String, String> tags) {
 
         return "{" + tags.entrySet().stream()
-            .map(e -> "\"" + e.getKey() + "\":\"" + e.getValue() + "\"")
-            .collect(Collectors.joining(",")) +
-            "}";
+                .map(e -> "\"" + e.getKey() + "\":\"" + e.getValue() + "\"")
+                .collect(Collectors.joining(",")) +
+                "}";
     }
+
+    String appendJson(StringBuilder builder);
 }

@@ -37,6 +37,10 @@ public class MetricDatumPartition extends AbstractList<List<MetricDatum>> {
         this.partitionCount = MathUtils.divideWithCeilingRoundingMode(list.size(), partitionSize);
     }
 
+    public static List<List<MetricDatum>> partition(List<MetricDatum> metricData, int partitionSize) {
+        return new MetricDatumPartition(metricData, partitionSize);
+    }
+
     @Override
     public List<MetricDatum> get(int index) {
         int start = index * partitionSize;
@@ -52,9 +56,5 @@ public class MetricDatumPartition extends AbstractList<List<MetricDatum>> {
     @Override
     public boolean isEmpty() {
         return list.isEmpty();
-    }
-
-    public static List<List<MetricDatum>> partition(List<MetricDatum> metricData, int partitionSize) {
-        return new MetricDatumPartition(metricData, partitionSize);
     }
 }

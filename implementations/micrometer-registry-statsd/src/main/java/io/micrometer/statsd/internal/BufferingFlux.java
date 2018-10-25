@@ -31,7 +31,7 @@ public class BufferingFlux {
      * Creates a Flux that implements Nagle's algorithm to buffer messages -- joined by a delimiter string -- to up a
      * maximum number of bytes, or a maximum duration of time. This avoids sending many small packets in favor of fewer
      * larger ones.
-     *
+     * <p>
      * Also see: https://en.wikipedia.org/wiki/Nagle%27s_algorithm
      */
     public static Flux<String> create(final Flux<String> source, final String delimiter, final int maxByteArraySize, final long maxMillisecondsBetweenEmits) {
@@ -43,49 +43,49 @@ public class BufferingFlux {
             final DirectProcessor<Void> intervalEnd = DirectProcessor.create();
 
             final Flux<String> hearbeat = Flux.interval(Duration.ofMillis(maxMillisecondsBetweenEmits))
-                .map(l -> "")
-                .takeUntilOther(intervalEnd);
+                    .map(l -> "")
+                    .takeUntilOther(intervalEnd);
 
             // Create a stream that emits at least once every $maxMillisecondsBetweenEmits, to avoid long pauses between
             // buffer flushes when the source doesn't emit for a while.
             final Flux<String> sourceWithEmptyStringKeepAlive = source
-                .doOnTerminate(intervalEnd::onComplete)
-                .mergeWith(hearbeat);
+                    .doOnTerminate(intervalEnd::onComplete)
+                    .mergeWith(hearbeat);
 
             return sourceWithEmptyStringKeepAlive
-                .bufferUntil(line -> {
-                    final int bytesLength = line.getBytes().length;
-                    final long now = System.currentTimeMillis();
-                    final long last = lastTime.getAndSet(now);
-                    long diff;
-                    if (last != 0L) {
-                        diff = now - last;
-                        if (diff > maxMillisecondsBetweenEmits && byteSize.get() > 0) {
+                    .bufferUntil(line -> {
+                        final int bytesLength = line.getBytes().length;
+                        final long now = System.currentTimeMillis();
+                        final long last = lastTime.getAndSet(now);
+                        long diff;
+                        if (last != 0L) {
+                            diff = now - last;
+                            if (diff > maxMillisecondsBetweenEmits && byteSize.get() > 0) {
+                                // This creates a buffer, reset size
+                                byteSize.set(bytesLength);
+                                return true;
+                            }
+                        }
+
+                        int additionalBytes = bytesLength;
+                        if (additionalBytes > 0 && byteSize.get() > 0) {
+                            additionalBytes += delimiterSize;  // Make up for the delimiter that's added when joining the strings
+                        }
+
+                        final int projectedBytes = byteSize.addAndGet(additionalBytes);
+
+                        if (projectedBytes > maxByteArraySize) {
                             // This creates a buffer, reset size
                             byteSize.set(bytesLength);
                             return true;
                         }
-                    }
 
-                    int additionalBytes = bytesLength;
-                    if (additionalBytes > 0 && byteSize.get() > 0) {
-                        additionalBytes += delimiterSize;  // Make up for the delimiter that's added when joining the strings
-                    }
-
-                    final int projectedBytes = byteSize.addAndGet(additionalBytes);
-
-                    if (projectedBytes > maxByteArraySize) {
-                        // This creates a buffer, reset size
-                        byteSize.set(bytesLength);
-                        return true;
-                    }
-
-                    return false;
-                }, true)
-                .map(lines -> {
-                    lines.removeIf(String::isEmpty); // Ignore empty messages
-                    return String.join(delimiter, lines);
-                });
+                        return false;
+                    }, true)
+                    .map(lines -> {
+                        lines.removeIf(String::isEmpty); // Ignore empty messages
+                        return String.join(delimiter, lines);
+                    });
         });
     }
 }

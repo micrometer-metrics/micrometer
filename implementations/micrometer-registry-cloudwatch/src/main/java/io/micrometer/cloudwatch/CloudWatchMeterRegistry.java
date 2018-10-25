@@ -21,6 +21,7 @@ import com.amazonaws.services.cloudwatch.model.*;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +61,14 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         this.config = config;
         config().namingConvention(NamingConvention.identity);
         start(threadFactory);
+    }
+
+    @Override
+    public void start(ThreadFactory threadFactory) {
+        if (config.enabled()) {
+            logger.info("Publishing metrics to cloudwatch every " + TimeUtils.format(config.step()));
+        }
+        super.start(threadFactory);
     }
 
     @Override

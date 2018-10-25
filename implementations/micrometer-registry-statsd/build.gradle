@@ -43,9 +43,9 @@ publishing {
                         .dependencies
                         .dependency
                         .findAll {
-                            ['reactor-core', 'reactor-netty', 'pcollections'].contains(it.artifactId.text())
-                        }
-                        .each { it.parent().remove(it) }
+                    ['reactor-core', 'reactor-netty', 'pcollections'].contains(it.artifactId.text())
+                }
+                .each { it.parent().remove(it) }
             }
         }
     }

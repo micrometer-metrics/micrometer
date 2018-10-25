@@ -18,6 +18,7 @@ package io.micrometer.elastic;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpClient;
 import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
 import io.micrometer.core.lang.NonNull;
@@ -65,6 +66,18 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         this.config = config;
         this.httpClient = httpClient;
         start(threadFactory);
+    }
+
+    public static Builder builder(ElasticConfig config) {
+        return new Builder(config);
+    }
+
+    @Override
+    public void start(ThreadFactory threadFactory) {
+        if (config.enabled()) {
+            logger.info("Publishing metrics to elastic every " + TimeUtils.format(config.step()));
+        }
+        super.start(threadFactory);
     }
 
     private void createIndexIfNeeded() {
@@ -249,10 +262,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     @NonNull
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
-    }
-
-    public static Builder builder(ElasticConfig config) {
-        return new Builder(config);
     }
 
     public static class Builder {

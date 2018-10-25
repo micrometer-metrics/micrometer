@@ -33,20 +33,15 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
 
     private static final AtomicReferenceFieldUpdater<TelegrafStatsdLineBuilder, NamingConvention> namingConventionUpdater =
             AtomicReferenceFieldUpdater.newUpdater(TelegrafStatsdLineBuilder.class, NamingConvention.class, "namingConvention");
-
+    private final Object tagsLock = new Object();
     @SuppressWarnings({"NullableProblems", "unused"})
     private volatile NamingConvention namingConvention;
-
     @SuppressWarnings("NullableProblems")
     private volatile String name;
-
     @Nullable
     private volatile String conventionTags;
-
     @SuppressWarnings("NullableProblems")
     private volatile String tagsNoStat;
-
-    private final Object tagsLock = new Object();
     private volatile PMap<Statistic, String> tags = HashTreePMap.empty();
 
     public TelegrafStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {

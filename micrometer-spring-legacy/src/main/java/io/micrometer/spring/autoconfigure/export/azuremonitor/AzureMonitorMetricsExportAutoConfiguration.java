@@ -75,6 +75,9 @@ public class AzureMonitorMetricsExportAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public AzureMonitorMeterRegistry azureMeterRegistry(AzureMonitorConfig config, TelemetryConfiguration configuration, Clock clock) {
-        return new AzureMonitorMeterRegistry(config, clock, configuration);
+        return AzureMonitorMeterRegistry.builder(config)
+                .clock(clock)
+                .telemetryConfiguration(configuration)
+                .build();
     }
 }

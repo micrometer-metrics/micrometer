@@ -28,9 +28,9 @@ import java.util.regex.Pattern;
  * @author Jon Schneider
  */
 public final class TimeUtils {
-	
+
     private static final Pattern PARSE_PATTERN = Pattern.compile("[,_ ]");
-	
+
     private static final long C0 = 1L;
     private static final long C1 = C0 * 1000L;
     private static final long C2 = C1 * 1000L;
@@ -218,5 +218,13 @@ public final class TimeUtils {
             return Duration.of(Long.parseLong(timeLower.substring(0, timeLower.length() - 1)), ChronoUnit.DAYS);
         }
         throw new DateTimeParseException("Unable to parse " + time + " into duration", timeLower, 0);
+    }
+
+    public static String format(Duration duration) {
+        // Courtesy of https://stackoverflow.com/a/40487511/510017
+        return duration.toString()
+                .substring(2)
+                .replaceAll("(\\d[HMS])(?!$)", "$1 ")
+                .toLowerCase();
     }
 }

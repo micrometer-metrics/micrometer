@@ -37,7 +37,7 @@ public class AzureMonitorMeterRegistryCompatibilityKit extends MeterRegistryComp
 
     @Override
     public MeterRegistry registry() {
-        return new AzureMonitorMeterRegistry(config, new MockClock(), null);
+        return new AzureMonitorMeterRegistry(config, new MockClock());
     }
 
     @Override

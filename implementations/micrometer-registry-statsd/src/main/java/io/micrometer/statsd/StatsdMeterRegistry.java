@@ -55,11 +55,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
     private final StatsdConfig statsdConfig;
     private final HierarchicalNameMapper nameMapper;
     private final Map<Meter.Id, StatsdPollable> pollableMeters = new ConcurrentHashMap<>();
-
-    Processor<String, String> processor;
-
     private final AtomicBoolean started = new AtomicBoolean(false);
-
+    Processor<String, String> processor;
     private Disposable.Swap udpClient = Disposables.swap();
     private Disposable.Swap meterPoller = Disposables.swap();
 
@@ -83,65 +80,6 @@ public class StatsdMeterRegistry extends MeterRegistry {
      */
     public StatsdMeterRegistry(StatsdConfig config, HierarchicalNameMapper nameMapper, Clock clock) {
         this(config, nameMapper, namingConventionFromFlavor(config.flavor()), clock, null, null);
-    }
-
-    public static Builder builder(StatsdConfig config) {
-        return new Builder(config);
-    }
-
-    /**
-     * A builder for configuration of less common knobs on {@link StatsdMeterRegistry}.
-     */
-    @Incubating(since = "1.0.1")
-    public static class Builder {
-        private final StatsdConfig config;
-
-        private Clock clock = Clock.SYSTEM;
-        private NamingConvention namingConvention;
-        private HierarchicalNameMapper nameMapper = HierarchicalNameMapper.DEFAULT;
-
-        @Nullable
-        private Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction = null;
-
-        @Nullable
-        private Consumer<String> lineSink;
-
-        public Builder(StatsdConfig config) {
-            this.config = config;
-            this.namingConvention = namingConventionFromFlavor(config.flavor());
-        }
-
-        public Builder clock(Clock clock) {
-            this.clock = clock;
-            return this;
-        }
-
-        /**
-         * Used for completely customizing the StatsD line format. Intended for use by custom, proprietary
-         * StatsD flavors.
-         *
-         * @param lineBuilderFunction A mapping from a meter ID to a StatsD line generator that knows how to write counts, gauges
-         *                            timers, and histograms in the proprietary format.
-         * @return This builder.
-         */
-        public Builder lineBuilder(Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction) {
-            this.lineBuilderFunction = lineBuilderFunction;
-            return this;
-        }
-
-        public Builder nameMapper(HierarchicalNameMapper nameMapper) {
-            this.nameMapper = nameMapper;
-            return this;
-        }
-
-        public Builder lineSink(Consumer<String> lineSink) {
-            this.lineSink = lineSink;
-            return this;
-        }
-
-        public StatsdMeterRegistry build() {
-            return new StatsdMeterRegistry(config, nameMapper, namingConvention, clock, lineBuilderFunction, lineSink);
-        }
     }
 
     private StatsdMeterRegistry(StatsdConfig config,
@@ -219,6 +157,22 @@ public class StatsdMeterRegistry extends MeterRegistry {
             start();
     }
 
+    public static Builder builder(StatsdConfig config) {
+        return new Builder(config);
+    }
+
+    private static NamingConvention namingConventionFromFlavor(StatsdFlavor flavor) {
+        switch (flavor) {
+            case DATADOG:
+            case SYSDIG:
+                return NamingConvention.dot;
+            case TELEGRAF:
+                return NamingConvention.snakeCase;
+            default:
+                return NamingConvention.camelCase;
+        }
+    }
+
     private <M extends Meter> void removePollableMeter(M m) {
         pollableMeters.remove(m.getId());
     }
@@ -231,7 +185,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     public void start() {
         final Flux<String> bufferingPublisher = BufferingFlux.create(Flux.from(processor), "\n", statsdConfig.maxPacketLength(), statsdConfig.pollingFrequency().toMillis())
-            .onBackpressureLatest();
+                .onBackpressureLatest();
 
         if (started.compareAndSet(false, true) && lineSink == null) {
             UdpClient.create()
@@ -395,15 +349,58 @@ public class StatsdMeterRegistry extends MeterRegistry {
         }
     }
 
-    private static NamingConvention namingConventionFromFlavor(StatsdFlavor flavor) {
-        switch (flavor) {
-            case DATADOG:
-            case SYSDIG:
-                return NamingConvention.dot;
-            case TELEGRAF:
-                return NamingConvention.snakeCase;
-            default:
-                return NamingConvention.camelCase;
+    /**
+     * A builder for configuration of less common knobs on {@link StatsdMeterRegistry}.
+     */
+    @Incubating(since = "1.0.1")
+    public static class Builder {
+        private final StatsdConfig config;
+
+        private Clock clock = Clock.SYSTEM;
+        private NamingConvention namingConvention;
+        private HierarchicalNameMapper nameMapper = HierarchicalNameMapper.DEFAULT;
+
+        @Nullable
+        private Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction = null;
+
+        @Nullable
+        private Consumer<String> lineSink;
+
+        public Builder(StatsdConfig config) {
+            this.config = config;
+            this.namingConvention = namingConventionFromFlavor(config.flavor());
+        }
+
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+
+        /**
+         * Used for completely customizing the StatsD line format. Intended for use by custom, proprietary
+         * StatsD flavors.
+         *
+         * @param lineBuilderFunction A mapping from a meter ID to a StatsD line generator that knows how to write counts, gauges
+         *                            timers, and histograms in the proprietary format.
+         * @return This builder.
+         */
+        public Builder lineBuilder(Function<Meter.Id, StatsdLineBuilder> lineBuilderFunction) {
+            this.lineBuilderFunction = lineBuilderFunction;
+            return this;
+        }
+
+        public Builder nameMapper(HierarchicalNameMapper nameMapper) {
+            this.nameMapper = nameMapper;
+            return this;
+        }
+
+        public Builder lineSink(Consumer<String> lineSink) {
+            this.lineSink = lineSink;
+            return this;
+        }
+
+        public StatsdMeterRegistry build() {
+            return new StatsdMeterRegistry(config, nameMapper, namingConvention, clock, lineBuilderFunction, lineSink);
         }
     }
 }

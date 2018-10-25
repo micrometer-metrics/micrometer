@@ -30,11 +30,10 @@ import java.util.concurrent.atomic.LongAdder;
 public class StatsdTimer extends AbstractTimer {
     private final LongAdder count = new LongAdder();
     private final DoubleAdder totalTime = new DoubleAdder();
-    private StepDouble max;
-    private volatile boolean shutdown = false;
-
     private final StatsdLineBuilder lineBuilder;
     private final Subscriber<String> subscriber;
+    private StepDouble max;
+    private volatile boolean shutdown = false;
 
     StatsdTimer(Id id, StatsdLineBuilder lineBuilder, Subscriber<String> subscriber, Clock clock,
                 DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis) {

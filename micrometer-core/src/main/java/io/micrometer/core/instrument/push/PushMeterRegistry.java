@@ -37,7 +37,11 @@ public abstract class PushMeterRegistry extends MeterRegistry {
 
     protected abstract void publish();
 
-    public void start() {
+    /**
+     * @deprecated Use {@link #start(ThreadFactory)} instead.
+     */
+    @Deprecated
+    public final void start() {
         start(Executors.defaultThreadFactory());
     }
 

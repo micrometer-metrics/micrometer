@@ -15,13 +15,13 @@
  */
 package io.micrometer.dynatrace;
 
-import java.lang.reflect.Field;
-import java.util.Set;
-
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.ipc.http.HttpResponse;
 import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Field;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -51,8 +51,8 @@ class DynatraceMeterRegistryTest {
                 return "apiToken";
             }
         }, Clock.SYSTEM))
-            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
-            .hasMessage("uri must be set to report metrics to Dynatrace");
+                .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
+                .hasMessage("uri must be set to report metrics to Dynatrace");
     }
 
     @Test
@@ -73,8 +73,8 @@ class DynatraceMeterRegistryTest {
                 return "apiToken";
             }
         }, Clock.SYSTEM))
-            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
-            .hasMessage("deviceId must be set to report metrics to Dynatrace");
+                .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
+                .hasMessage("deviceId must be set to report metrics to Dynatrace");
     }
 
     @Test
@@ -95,8 +95,8 @@ class DynatraceMeterRegistryTest {
                 return "deviceId";
             }
         }, Clock.SYSTEM))
-            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
-            .hasMessage("apiToken must be set to report metrics to Dynatrace");
+                .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
+                .hasMessage("apiToken must be set to report metrics to Dynatrace");
     }
 
     @Test
@@ -131,7 +131,7 @@ class DynatraceMeterRegistryTest {
         Set<String> createdCustomMetrics = (Set<String>) createdCustomMetricsField.get(registry);
         assertThat(createdCustomMetrics).isEmpty();
 
-        DynatraceMetricDefinition customMetric = new DynatraceMetricDefinition("metricId", null, null, null, new String[] { "type" });
+        DynatraceMetricDefinition customMetric = new DynatraceMetricDefinition("metricId", null, null, null, new String[]{"type"});
         registry.putCustomMetric(customMetric);
         assertThat(createdCustomMetrics).containsExactly("metricId");
     }

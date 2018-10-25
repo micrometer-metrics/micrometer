@@ -4,6 +4,6 @@ dependencies {
     compile project(':micrometer-core')
     compile 'com.signalfx.public:signalfx-java:latest.release'
     compile 'org.slf4j:slf4j-api:1.7.+'
-    
+
     testCompile project(':micrometer-test')
 }

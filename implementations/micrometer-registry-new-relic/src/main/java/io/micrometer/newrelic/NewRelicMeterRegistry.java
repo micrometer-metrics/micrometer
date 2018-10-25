@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpClient;
 import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
 import org.slf4j.Logger;
@@ -52,6 +53,10 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         this(config, clock, Executors.defaultThreadFactory());
     }
 
+    /**
+     * @deprecated Use {@link #builder(NewRelicConfig)} instead.
+     */
+    @Deprecated
     public NewRelicMeterRegistry(NewRelicConfig config, Clock clock, ThreadFactory threadFactory) {
         this(config, clock, threadFactory, new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
     }
@@ -66,6 +71,18 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
         config().namingConvention(new NewRelicNamingConvention());
         start(threadFactory);
+    }
+
+    public static Builder builder(NewRelicConfig config) {
+        return new Builder(config);
+    }
+
+    @Override
+    public void start(ThreadFactory threadFactory) {
+        if (config.enabled()) {
+            logger.info("Publishing metrics to new relic every " + TimeUtils.format(config.step()));
+        }
+        super.start(threadFactory);
     }
 
     @Override
@@ -194,28 +211,6 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         return TimeUnit.SECONDS;
     }
 
-    private class Attribute {
-        private final String name;
-        private final Number value;
-
-        private Attribute(String name, Number value) {
-            this.name = name;
-            this.value = value;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public Number getValue() {
-            return value;
-        }
-    }
-
-    public static Builder builder(NewRelicConfig config) {
-        return new Builder(config);
-    }
-
     public static class Builder {
         private final NewRelicConfig config;
 
@@ -245,6 +240,24 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
         public NewRelicMeterRegistry build() {
             return new NewRelicMeterRegistry(config, clock, threadFactory, httpClient);
+        }
+    }
+
+    private class Attribute {
+        private final String name;
+        private final Number value;
+
+        private Attribute(String name, Number value) {
+            this.name = name;
+            this.value = value;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Number getValue() {
+            return value;
         }
     }
 }

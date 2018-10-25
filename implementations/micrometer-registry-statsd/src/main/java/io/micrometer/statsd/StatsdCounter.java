@@ -26,9 +26,9 @@ import java.util.concurrent.atomic.DoubleAdder;
  * @author Jon Schneider
  */
 public class StatsdCounter extends AbstractMeter implements Counter {
-    private DoubleAdder count = new DoubleAdder();
     private final StatsdLineBuilder lineBuilder;
     private final Subscriber<String> subscriber;
+    private DoubleAdder count = new DoubleAdder();
     private volatile boolean shutdown = false;
 
     StatsdCounter(Id id, StatsdLineBuilder lineBuilder, Subscriber<String> subscriber) {

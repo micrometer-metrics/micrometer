@@ -26,11 +26,14 @@ import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import static io.micrometer.core.instrument.Meter.Type.consume;
@@ -52,15 +55,21 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
      * @param clock  The clock to use for timings.
      */
     public GangliaMeterRegistry(GangliaConfig config, Clock clock) {
-        this(config, clock, HierarchicalNameMapper.DEFAULT);
+        this(config, clock, HierarchicalNameMapper.DEFAULT, Executors.defaultThreadFactory());
     }
 
     /**
      * @param config     The registry configuration.
      * @param clock      The clock to use for timings.
      * @param nameMapper The name mapper to use in converting dimensional metrics to hierarchical names.
+     * @deprecated Use {@link #builder(GangliaConfig)} instead.
      */
+    @Deprecated
     public GangliaMeterRegistry(GangliaConfig config, Clock clock, HierarchicalNameMapper nameMapper) {
+        this(config, clock, nameMapper, Executors.defaultThreadFactory());
+    }
+
+    private GangliaMeterRegistry(GangliaConfig config, Clock clock, HierarchicalNameMapper nameMapper, ThreadFactory threadFactory) {
         super(config, clock);
 
         // Technically, Ganglia doesn't have any constraints on metric or tag names, but the encoding of Unicode can look
@@ -71,7 +80,7 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
 
         try {
             this.ganglia = new GMetric(config.host(), config.port(), config.addressingMode(), config.ttl());
-            start();
+            start(threadFactory);
         } catch (IOException e) {
             throw new RuntimeException("Failed to configure Ganglia metrics reporting", e);
         }
@@ -83,12 +92,24 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
      * @param nameMapper     The name mapper to use in converting dimensional metrics to hierarchical names.
      * @param metricRegistry Ignored as of Micrometer 1.1.0.
      * @deprecated The Ganglia registry no longer uses Dropwizard as of Micrometer 1.1.0, because Dropwizard
-     * dropped support for Ganglia in its 4.0.0 release.
+     * dropped support for Ganglia in its 4.0.0 release. Use {@link #builder(GangliaConfig)} instead.
      */
     @SuppressWarnings("unused")
     @Deprecated
     public GangliaMeterRegistry(GangliaConfig config, Clock clock, HierarchicalNameMapper nameMapper, MetricRegistry metricRegistry) {
         this(config, clock, nameMapper);
+    }
+
+    public static Builder builder(GangliaConfig config) {
+        return new Builder(config);
+    }
+
+    @Override
+    public void start(ThreadFactory threadFactory) {
+        if (config.enabled()) {
+            logger.info("Publishing metrics to ganglia every " + TimeUtils.format(config.step()));
+        }
+        super.start(threadFactory);
     }
 
     @Override
@@ -186,5 +207,36 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
+    }
+
+    public static class Builder {
+        private final GangliaConfig config;
+
+        private Clock clock = Clock.SYSTEM;
+        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        private HierarchicalNameMapper nameMapper = HierarchicalNameMapper.DEFAULT;
+
+        public Builder(GangliaConfig config) {
+            this.config = config;
+        }
+
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+
+        public Builder threadFactory(ThreadFactory threadFactory) {
+            this.threadFactory = threadFactory;
+            return this;
+        }
+
+        public Builder nameMapper(HierarchicalNameMapper nameMapper) {
+            this.nameMapper = nameMapper;
+            return this;
+        }
+
+        public GangliaMeterRegistry build() {
+            return new GangliaMeterRegistry(config, clock, nameMapper, threadFactory);
+        }
     }
 }

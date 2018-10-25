@@ -15,12 +15,12 @@
  */
 package io.micrometer.wavefront;
 
-import java.util.stream.Stream;
-
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
 import org.junit.jupiter.api.Test;
+
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

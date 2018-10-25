@@ -48,8 +48,8 @@ public class JmxMeterRegistry extends DropwizardMeterRegistry {
 
     private static JmxReporter defaultJmxReporter(JmxConfig config, MetricRegistry metricRegistry) {
         return JmxReporter.forRegistry(metricRegistry)
-            .inDomain(config.domain())
-            .build();
+                .inDomain(config.domain())
+                .build();
     }
 
     public void stop() {

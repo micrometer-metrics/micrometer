@@ -22,7 +22,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 public class SampleConfig {
     public static MeterRegistry myMonitoringSystem() {
         // Pick a monitoring system here to use in your samples.
-        return SampleRegistries.stackdriver("/Users/jschneider/Downloads/cf-sandbox-jschneider-8b62d505f1e5.json",
-                "cf-sandbox-jschneider");
+        return SampleRegistries.prometheus();
     }
 }

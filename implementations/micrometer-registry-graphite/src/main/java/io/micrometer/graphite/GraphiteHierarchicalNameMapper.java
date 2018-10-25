@@ -48,10 +48,10 @@ public class GraphiteHierarchicalNameMapper implements HierarchicalNameMapper {
         }
         return hierarchicalName.toString();
     }
-    
+
     private String sanitize(String value) {
         return value.replace(" ", "_");
     }
-    
+
 }
 

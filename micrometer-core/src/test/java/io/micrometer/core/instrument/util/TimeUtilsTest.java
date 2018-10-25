@@ -45,4 +45,10 @@ class TimeUtilsTest {
             .isInstanceOf(NumberFormatException.class);
     }
 
+    @Test
+    void formatDuration() {
+        assertThat(TimeUtils.format(Duration.ofSeconds(10))).isEqualTo("10s");
+        assertThat(TimeUtils.format(Duration.ofSeconds(90))).isEqualTo("1m 30s");
+        assertThat(TimeUtils.format(Duration.ofMinutes(2))).isEqualTo("2m");
+    }
 }

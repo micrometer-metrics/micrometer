@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.StringUtils;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpClient;
 import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
 import org.slf4j.Logger;
@@ -59,6 +60,18 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         this.config = config;
         this.httpClient = httpClient;
         start(threadFactory);
+    }
+
+    public static Builder builder(InfluxConfig config) {
+        return new Builder(config);
+    }
+
+    @Override
+    public void start(ThreadFactory threadFactory) {
+        if (config.enabled()) {
+            logger.info("Publishing metrics to influx every " + TimeUtils.format(config.step()));
+        }
+        super.start(threadFactory);
     }
 
     private void createDatabaseIfNecessary() {
@@ -122,21 +135,6 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             throw new IllegalArgumentException("Malformed InfluxDB publishing endpoint, see '" + config.prefix() + ".uri'", e);
         } catch (Throwable e) {
             logger.error("failed to send metrics to influx", e);
-        }
-    }
-
-    class Field {
-        final String key;
-        final double value;
-
-        Field(String key, double value) {
-            this.key = key;
-            this.value = value;
-        }
-
-        @Override
-        public String toString() {
-            return key + "=" + DoubleFormat.decimalOrNan(value);
         }
     }
 
@@ -217,10 +215,6 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return TimeUnit.MILLISECONDS;
     }
 
-    public static Builder builder(InfluxConfig config) {
-        return new Builder(config);
-    }
-
     public static class Builder {
         private final InfluxConfig config;
 
@@ -250,6 +244,21 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
         public InfluxMeterRegistry build() {
             return new InfluxMeterRegistry(config, clock, threadFactory, httpClient);
+        }
+    }
+
+    class Field {
+        final String key;
+        final double value;
+
+        Field(String key, double value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return key + "=" + DoubleFormat.decimalOrNan(value);
         }
     }
 }

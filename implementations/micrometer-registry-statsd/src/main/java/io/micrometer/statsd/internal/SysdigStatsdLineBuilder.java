@@ -26,19 +26,15 @@ import org.pcollections.PMap;
 import java.util.stream.Collectors;
 
 public class SysdigStatsdLineBuilder extends FlavorStatsdLineBuilder {
+    private final Object tagsLock = new Object();
     @SuppressWarnings({"NullableProblems", "unused"})
     private volatile NamingConvention namingConvention;
-
     @SuppressWarnings("NullableProblems")
     private volatile String name;
-
     @Nullable
     private volatile String conventionTags;
-
     @SuppressWarnings("NullableProblems")
     private volatile String tagsNoStat;
-
-    private final Object tagsLock = new Object();
     private volatile PMap<Statistic, String> tags = HashTreePMap.empty();
 
     public SysdigStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {

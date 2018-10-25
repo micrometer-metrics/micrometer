@@ -18,6 +18,7 @@ package io.micrometer.datadog;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpClient;
 import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
 import io.micrometer.core.lang.Nullable;
@@ -57,6 +58,10 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         this(config, clock, Executors.defaultThreadFactory());
     }
 
+    /**
+     * @deprecated Use {@link #builder(DatadogConfig)} instead.
+     */
+    @Deprecated
     public DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory) {
         this(config, clock, threadFactory, new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
     }
@@ -70,8 +75,19 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         this.config = config;
         this.httpClient = httpClient;
 
-        if (config.enabled())
-            start(threadFactory);
+        start(threadFactory);
+    }
+
+    public static Builder builder(DatadogConfig config) {
+        return new Builder(config);
+    }
+
+    @Override
+    public void start(ThreadFactory threadFactory) {
+        if (config.enabled()) {
+            logger.info("Publishing metrics to datadog every " + TimeUtils.format(config.step()));
+        }
+        super.start(threadFactory);
     }
 
     @Override
@@ -260,10 +276,6 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
      */
     private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
         return new Meter.Id(id.getName() + "." + suffix, id.getTags(), id.getBaseUnit(), id.getDescription(), id.getType());
-    }
-
-    public static Builder builder(DatadogConfig config) {
-        return new Builder(config);
     }
 
     public static class Builder {

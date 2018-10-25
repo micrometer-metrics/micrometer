@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpClient;
 import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
 import io.micrometer.core.lang.Nullable;
@@ -78,8 +79,19 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
         this.customMetricEndpointTemplate = config.uri() + "/api/v1/timeseries/";
 
-        if (config.enabled())
-            start(threadFactory);
+        start(threadFactory);
+    }
+
+    public static Builder builder(DynatraceConfig config) {
+        return new Builder(config);
+    }
+
+    @Override
+    public void start(ThreadFactory threadFactory) {
+        if (config.enabled()) {
+            logger.info("Publishing metrics to dynatrace every " + TimeUtils.format(config.step()));
+        }
+        super.start(threadFactory);
     }
 
     @Override
@@ -243,28 +255,6 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         return TimeUnit.MILLISECONDS;
     }
 
-    class DynatraceCustomMetric {
-        private final DynatraceMetricDefinition metricDefinition;
-        private final DynatraceTimeSeries timeSeries;
-
-        DynatraceCustomMetric(final DynatraceMetricDefinition metricDefinition, final DynatraceTimeSeries timeSeries) {
-            this.metricDefinition = metricDefinition;
-            this.timeSeries = timeSeries;
-        }
-
-        DynatraceMetricDefinition getMetricDefinition() {
-            return metricDefinition;
-        }
-
-        DynatraceTimeSeries getTimeSeries() {
-            return timeSeries;
-        }
-    }
-
-    public static Builder builder(DynatraceConfig config) {
-        return new Builder(config);
-    }
-
     public static class Builder {
         private final DynatraceConfig config;
 
@@ -294,6 +284,24 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
         public DynatraceMeterRegistry build() {
             return new DynatraceMeterRegistry(config, clock, threadFactory, pushHandler);
+        }
+    }
+
+    class DynatraceCustomMetric {
+        private final DynatraceMetricDefinition metricDefinition;
+        private final DynatraceTimeSeries timeSeries;
+
+        DynatraceCustomMetric(final DynatraceMetricDefinition metricDefinition, final DynatraceTimeSeries timeSeries) {
+            this.metricDefinition = metricDefinition;
+            this.timeSeries = timeSeries;
+        }
+
+        DynatraceMetricDefinition getMetricDefinition() {
+            return metricDefinition;
+        }
+
+        DynatraceTimeSeries getTimeSeries() {
+            return timeSeries;
         }
     }
 }

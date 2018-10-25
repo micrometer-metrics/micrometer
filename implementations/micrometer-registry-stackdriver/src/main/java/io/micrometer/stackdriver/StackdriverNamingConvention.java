@@ -23,14 +23,12 @@ import io.micrometer.core.lang.Nullable;
 import java.util.regex.Pattern;
 
 public class StackdriverNamingConvention implements NamingConvention {
-    private final NamingConvention nameDelegate;
-    private final NamingConvention tagKeyDelegate;
-
     private static final int MAX_NAME_LENGTH = 200;
     private static final int MAX_TAG_KEY_LENGTH = 100;
-
     private static final Pattern NAME_WHITELIST = Pattern.compile("[^\\w./]");
     private static final Pattern TAG_KEY_WHITELIST = Pattern.compile("[^\\w]");
+    private final NamingConvention nameDelegate;
+    private final NamingConvention tagKeyDelegate;
 
     public StackdriverNamingConvention() {
         this(NamingConvention.slashes, NamingConvention.snakeCase);

@@ -15,16 +15,16 @@
  */
 package io.micrometer.dynatrace;
 
-import java.util.regex.Pattern;
-
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
 
+import java.util.regex.Pattern;
+
 public class DynatraceNamingConvention implements NamingConvention {
 
     private static final Pattern KEY_CLEANUP_PATTERN = Pattern.compile("[^\\w.-]");
-	
+
     private final NamingConvention delegate;
 
     public DynatraceNamingConvention(NamingConvention delegate) {

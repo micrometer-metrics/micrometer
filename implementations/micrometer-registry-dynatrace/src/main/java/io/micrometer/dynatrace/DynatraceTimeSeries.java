@@ -40,14 +40,14 @@ class DynatraceTimeSeries {
 
     String asJson() {
         String body = "{\"timeseriesId\":\"" + metricId + "\"" +
-            ",\"dataPoints\":[[" + time + "," + DoubleFormat.decimalOrWhole(value) + "]]";
+                ",\"dataPoints\":[[" + time + "," + DoubleFormat.decimalOrWhole(value) + "]]";
 
         if (dimensions != null && !dimensions.isEmpty()) {
             body += ",\"dimensions\":{" +
-                dimensions.entrySet().stream()
-                    .map(t -> "\"" + t.getKey() + "\":\"" + t.getValue() + "\"")
-                    .collect(Collectors.joining(",")) +
-                "}";
+                    dimensions.entrySet().stream()
+                            .map(t -> "\"" + t.getKey() + "\":\"" + t.getValue() + "\"")
+                            .collect(Collectors.joining(",")) +
+                    "}";
         }
         body += "}";
         return body;

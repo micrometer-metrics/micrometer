@@ -30,39 +30,39 @@ class CloudWatchUtilsTest {
     @Test
     void testClamp() {
         assertThat(CloudWatchUtils.clampMetricValue(Double.NaN))
-            .as("Check NaN")
-            .isEqualTo(Double.NaN);
+                .as("Check NaN")
+                .isEqualTo(Double.NaN);
 
         assertThat(CloudWatchUtils.clampMetricValue(Double.MIN_VALUE))
-            .as("Check minimum value")
-            .isEqualTo(EXPECTED_MIN);
+                .as("Check minimum value")
+                .isEqualTo(EXPECTED_MIN);
 
         assertThat(CloudWatchUtils.clampMetricValue(Double.NEGATIVE_INFINITY))
-            .as("Check negative infinity")
-            .isEqualTo(-EXPECTED_MAX);
+                .as("Check negative infinity")
+                .isEqualTo(-EXPECTED_MAX);
 
         assertThat(CloudWatchUtils.clampMetricValue(Double.POSITIVE_INFINITY))
-            .as("Check positive infinity")
-            .isEqualTo(EXPECTED_MAX);
+                .as("Check positive infinity")
+                .isEqualTo(EXPECTED_MAX);
 
         assertThat(CloudWatchUtils.clampMetricValue(-Double.MAX_VALUE))
-            .as("Check negative max value")
-            .isEqualTo(-EXPECTED_MAX);
+                .as("Check negative max value")
+                .isEqualTo(-EXPECTED_MAX);
 
         assertThat(CloudWatchUtils.clampMetricValue(0))
-            .as("Check 0")
-            .isEqualTo(0);
+                .as("Check 0")
+                .isEqualTo(0);
 
         assertThat(CloudWatchUtils.clampMetricValue(-0))
-            .as("Check -0")
-            .isEqualTo(0);
+                .as("Check -0")
+                .isEqualTo(0);
 
         assertThat(CloudWatchUtils.clampMetricValue(100.1))
-            .as("Check positive value")
-            .isEqualTo(100.1);
+                .as("Check positive value")
+                .isEqualTo(100.1);
 
         assertThat(CloudWatchUtils.clampMetricValue(-10.2))
-            .as("Check negative value")
-            .isEqualTo(-10.2);
+                .as("Check negative value")
+                .isEqualTo(-10.2);
     }
 }

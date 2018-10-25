@@ -29,20 +29,20 @@ class DatadogMetricMetadata {
 
     // Datadog rejects anything not on this list: https://docs.datadoghq.com/units/
     private static final Set<String> UNIT_WHITELIST = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-        "bit", "byte", "kibibyte", "mebibyte", "gibibyte", "tebibyte", "pebibyte", "exbibyte",
-        "microsecond", "millisecond", "second", "minute", "hour", "day", "week", "nanosecond",
-        "fraction", "percent", "percent_nano", "apdex",
-        "connection", "request", "packet", "segment", "response", "message", "payload", "timeout", "datagram", "route", "session",
-        "process", "core", "thread", "host", "node", "fault", "service", "instance", "cpu",
-        "file", "inode", "sector", "block",
-        "buffer", "error", "read", "write", "occurrence", "event", "time", "unit", "operation", "item", "task", "worker", "resource",
-        "email", "sample", "stage", "monitor", "location", "check", "attempt", "device", "update", "method", "job", "container",
-        "table", "index", "lock", "transaction", "query", "row", "key", "command", "offset", "record", "object", "cursor", "assertion", "scan", "document", "shard", "flush", "merge", "refresh", "fetch", "column", "commit", "wait", "ticket", "question",
-        "hit", "miss", "eviction", "get", "set",
-        "dollar", "cent",
-        "page", "split",
-        "hertz", "kilohertz", "megahertz", "gigahertz",
-        "entry")));
+            "bit", "byte", "kibibyte", "mebibyte", "gibibyte", "tebibyte", "pebibyte", "exbibyte",
+            "microsecond", "millisecond", "second", "minute", "hour", "day", "week", "nanosecond",
+            "fraction", "percent", "percent_nano", "apdex",
+            "connection", "request", "packet", "segment", "response", "message", "payload", "timeout", "datagram", "route", "session",
+            "process", "core", "thread", "host", "node", "fault", "service", "instance", "cpu",
+            "file", "inode", "sector", "block",
+            "buffer", "error", "read", "write", "occurrence", "event", "time", "unit", "operation", "item", "task", "worker", "resource",
+            "email", "sample", "stage", "monitor", "location", "check", "attempt", "device", "update", "method", "job", "container",
+            "table", "index", "lock", "transaction", "query", "row", "key", "command", "offset", "record", "object", "cursor", "assertion", "scan", "document", "shard", "flush", "merge", "refresh", "fetch", "column", "commit", "wait", "ticket", "question",
+            "hit", "miss", "eviction", "get", "set",
+            "dollar", "cent",
+            "page", "split",
+            "hertz", "kilohertz", "megahertz", "gigahertz",
+            "entry")));
 
     private static final Map<String, String> PLURALIZED_UNIT_MAPPING;
 
@@ -58,7 +58,8 @@ class DatadogMetricMetadata {
     private final String type;
     private final boolean descriptionsEnabled;
 
-    @Nullable private final String overrideBaseUnit;
+    @Nullable
+    private final String overrideBaseUnit;
 
     DatadogMetricMetadata(Meter.Id id, Statistic statistic, boolean descriptionsEnabled,
                           @Nullable String overrideBaseUnit) {
@@ -83,7 +84,7 @@ class DatadogMetricMetadata {
         String baseUnit = overrideBaseUnit != null ? overrideBaseUnit : id.getBaseUnit();
         if (baseUnit != null) {
             String whitelistedBaseUnit = UNIT_WHITELIST.contains(baseUnit) ? baseUnit :
-                PLURALIZED_UNIT_MAPPING.get(baseUnit);
+                    PLURALIZED_UNIT_MAPPING.get(baseUnit);
 
             if (whitelistedBaseUnit != null) {
                 body += ",\"unit\":\"" + whitelistedBaseUnit + "\"";

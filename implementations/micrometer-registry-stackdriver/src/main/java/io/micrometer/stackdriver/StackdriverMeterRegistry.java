@@ -37,6 +37,7 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.step.StepTimer;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,16 +56,14 @@ import static java.util.stream.StreamSupport.stream;
 
 @Incubating(since = "1.1.0")
 public class StackdriverMeterRegistry extends StepMeterRegistry {
-    private final Logger logger = LoggerFactory.getLogger(StackdriverMeterRegistry.class);
-    private final StackdriverConfig config;
-
     /**
      * The "global" type is meant as a catch-all when no other resource type is suitable, which
      * includes everything that Micrometer ships.
      * https://cloud.google.com/monitoring/custom-metrics/creating-metrics#which-resource
      */
     private static final String RESOURCE_TYPE = "global";
-
+    private final Logger logger = LoggerFactory.getLogger(StackdriverMeterRegistry.class);
+    private final StackdriverConfig config;
     /**
      * Metric names for which we have posted a custom metric
      */
@@ -93,20 +92,26 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
         config().namingConvention(new StackdriverNamingConvention());
 
-        if (config.enabled())
-            start(threadFactory);
+        start(threadFactory);
+    }
+
+    public static Builder builder(StackdriverConfig config) {
+        return new Builder(config);
     }
 
     @Override
     public void start(ThreadFactory threadFactory) {
-        if (metricServiceSettings == null) {
-            logger.error("unable to start stackdriver, service settings are not available");
-        } else {
-            try {
-                this.client = MetricServiceClient.create(metricServiceSettings);
-                super.start(threadFactory);
-            } catch (Exception e) {
-                logger.error("unable to create stackdriver client", e);
+        if (config.enabled()) {
+            if (metricServiceSettings == null) {
+                logger.error("unable to start stackdriver, service settings are not available");
+            } else {
+                try {
+                    this.client = MetricServiceClient.create(metricServiceSettings);
+                    logger.info("Publishing metrics to stackdriver every " + TimeUtils.format(config.step()));
+                    super.start(threadFactory);
+                } catch (Exception e) {
+                    logger.error("unable to create stackdriver client", e);
+                }
             }
         }
     }
@@ -146,7 +151,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                         .addAllTimeSeries(series)
                         .build();
 
-                if(logger.isTraceEnabled()) {
+                if (logger.isTraceEnabled()) {
                     logger.trace("publishing batch to stackdriver:\n{}", request);
                 }
 
@@ -206,6 +211,53 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                 batch.createTimeSeries(longTaskTimer, longTaskTimer.activeTasks(), "activeTasks"),
                 batch.createTimeSeries(longTaskTimer, longTaskTimer.duration(getBaseTimeUnit()), "duration")
         );
+    }
+
+    @Override
+    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        return new StepDistributionSummary(id, clock, distributionStatisticConfig, scale,
+                config.step().toMillis(), true);
+    }
+
+    @Override
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+        return new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
+                this.config.step().toMillis(), true);
+    }
+
+    @Override
+    protected TimeUnit getBaseTimeUnit() {
+        return TimeUnit.MILLISECONDS;
+    }
+
+    public static class Builder {
+        private final StackdriverConfig config;
+        private Clock clock = Clock.SYSTEM;
+        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        private Callable<MetricServiceSettings> metricServiceSettings = () -> MetricServiceSettings.newBuilder().build();
+
+        Builder(StackdriverConfig config) {
+            this.config = config;
+        }
+
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+
+        public Builder threadFactory(ThreadFactory threadFactory) {
+            this.threadFactory = threadFactory;
+            return this;
+        }
+
+        public Builder metricServiceSettings(Callable<MetricServiceSettings> metricServiceSettings) {
+            this.metricServiceSettings = metricServiceSettings;
+            return this;
+        }
+
+        public StackdriverMeterRegistry build() {
+            return new StackdriverMeterRegistry(config, clock, threadFactory, metricServiceSettings);
+        }
     }
 
     private class Batch {
@@ -289,7 +341,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                         .setMetricDescriptor(descriptor)
                         .build();
 
-                if(logger.isTraceEnabled()) {
+                if (logger.isTraceEnabled()) {
                     logger.trace("creating metric descriptor:\n{}", request);
                 }
 
@@ -359,57 +411,6 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                             .build())
                     .addAllBucketCounts(bucketCounts)
                     .build();
-        }
-    }
-
-    @Override
-    protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        return new StepDistributionSummary(id, clock, distributionStatisticConfig, scale,
-                config.step().toMillis(), true);
-    }
-
-    @Override
-    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        return new StepTimer(id, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-                this.config.step().toMillis(), true);
-    }
-
-    @Override
-    protected TimeUnit getBaseTimeUnit() {
-        return TimeUnit.MILLISECONDS;
-    }
-
-    public static Builder builder(StackdriverConfig config) {
-        return new Builder(config);
-    }
-
-    public static class Builder {
-        private final StackdriverConfig config;
-        private Clock clock = Clock.SYSTEM;
-        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
-        private Callable<MetricServiceSettings> metricServiceSettings = () -> MetricServiceSettings.newBuilder().build();
-
-        Builder(StackdriverConfig config) {
-            this.config = config;
-        }
-
-        public Builder clock(Clock clock) {
-            this.clock = clock;
-            return this;
-        }
-
-        public Builder threadFactory(ThreadFactory threadFactory) {
-            this.threadFactory = threadFactory;
-            return this;
-        }
-
-        public Builder metricServiceSettings(Callable<MetricServiceSettings> metricServiceSettings) {
-            this.metricServiceSettings = metricServiceSettings;
-            return this;
-        }
-
-        public StackdriverMeterRegistry build() {
-            return new StackdriverMeterRegistry(config, clock, threadFactory, metricServiceSettings);
         }
     }
 }

@@ -30,43 +30,11 @@ import static java.util.stream.Collectors.toList;
  * @author Jon Schneider
  */
 class MicrometerCollector extends Collector {
-    interface Child {
-        Stream<Family> samples(String conventionName, List<String> tagKeys);
-    }
-
-    static class Family {
-        final Type type;
-        final String conventionName;
-        final List<MetricFamilySamples.Sample> samples = new ArrayList<>();
-
-        Family(Type type, String conventionName, MetricFamilySamples.Sample... samples) {
-            this.type = type;
-            this.conventionName = conventionName;
-            Collections.addAll(this.samples, samples);
-        }
-
-        Family(Type type, String conventionName, Stream<MetricFamilySamples.Sample> samples) {
-            this.type = type;
-            this.conventionName = conventionName;
-            samples.forEach(this.samples::add);
-        }
-
-        String getConventionName() {
-            return conventionName;
-        }
-
-        Family addSamples(Collection<MetricFamilySamples.Sample> samples) {
-            this.samples.addAll(samples);
-            return this;
-        }
-    }
-
     private final Meter.Id id;
     private final List<Child> children = new CopyOnWriteArrayList<>();
     private final String conventionName;
     private final List<String> tagKeys;
     private final PrometheusConfig config;
-
     public MicrometerCollector(Meter.Id id, NamingConvention convention, PrometheusConfig config) {
         this.id = id;
         this.conventionName = id.getConventionName(convention);
@@ -98,5 +66,36 @@ class MicrometerCollector extends Collector {
         return families.values().stream()
                 .map(family -> new MetricFamilySamples(family.conventionName, family.type, help, family.samples))
                 .collect(toList());
+    }
+
+    interface Child {
+        Stream<Family> samples(String conventionName, List<String> tagKeys);
+    }
+
+    static class Family {
+        final Type type;
+        final String conventionName;
+        final List<MetricFamilySamples.Sample> samples = new ArrayList<>();
+
+        Family(Type type, String conventionName, MetricFamilySamples.Sample... samples) {
+            this.type = type;
+            this.conventionName = conventionName;
+            Collections.addAll(this.samples, samples);
+        }
+
+        Family(Type type, String conventionName, Stream<MetricFamilySamples.Sample> samples) {
+            this.type = type;
+            this.conventionName = conventionName;
+            samples.forEach(this.samples::add);
+        }
+
+        String getConventionName() {
+            return conventionName;
+        }
+
+        Family addSamples(Collection<MetricFamilySamples.Sample> samples) {
+            this.samples.addAll(samples);
+            return this;
+        }
     }
 }

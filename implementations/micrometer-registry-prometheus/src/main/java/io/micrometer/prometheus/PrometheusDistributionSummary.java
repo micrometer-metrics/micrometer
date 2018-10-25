@@ -27,13 +27,11 @@ import java.util.concurrent.atomic.LongAdder;
 
 public class PrometheusDistributionSummary extends AbstractDistributionSummary {
     private static final CountAtBucket[] EMPTY_HISTOGRAM = new CountAtBucket[0];
-
+    @Nullable
+    private final Histogram histogram;
     private LongAdder count = new LongAdder();
     private DoubleAdder amount = new DoubleAdder();
     private TimeWindowMax max;
-
-    @Nullable
-    private final Histogram histogram;
 
     PrometheusDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
         super(id, clock,

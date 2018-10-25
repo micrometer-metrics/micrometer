@@ -29,53 +29,53 @@ class BufferingFluxTest {
     @Test
     void bufferSingleStrings() {
         final Flux<String> source = Flux.just(
-            "twelve bytes",
-            "fourteen bytes",
-            "twelve bytes",
-            "fourteen bytes"
+                "twelve bytes",
+                "fourteen bytes",
+                "twelve bytes",
+                "fourteen bytes"
         ).delayElements(Duration.ofMillis(50));
 
         final Flux<String> buffered = BufferingFlux.create(source, "\n", 14, 200);
 
         StepVerifier.create(buffered)
-            .expectNext("twelve bytes")
-            .expectNext("fourteen bytes")
-            .expectNext("twelve bytes")
-            .expectNext("fourteen bytes")
-            .verifyComplete();
+                .expectNext("twelve bytes")
+                .expectNext("fourteen bytes")
+                .expectNext("twelve bytes")
+                .expectNext("fourteen bytes")
+                .verifyComplete();
     }
 
     @Test
     void bufferMultipleStrings() {
         final Flux<String> source = Flux.just(
-            "twelve bytes",
-            "fourteen bytes",
-            "twelve bytes",
-            "fourteen bytes"
+                "twelve bytes",
+                "fourteen bytes",
+                "twelve bytes",
+                "fourteen bytes"
         );
 
         final Flux<String> buffered = BufferingFlux.create(source, "\n", 27, Long.MAX_VALUE);
 
         StepVerifier.create(buffered)
-            .expectNext("twelve bytes\nfourteen bytes")
-            .expectNext("twelve bytes\nfourteen bytes")
-            .verifyComplete();
+                .expectNext("twelve bytes\nfourteen bytes")
+                .expectNext("twelve bytes\nfourteen bytes")
+                .verifyComplete();
     }
 
     @Test
     void bufferUntilTimeout() {
         final Flux<String> source = Flux.concat(
-            Mono.just("twelve bytes"),
-            Mono.just("fourteen bytes"),
-            Mono.just("twelve bytes"),
-            Mono.just("fourteen bytes").delayElement(Duration.ofMillis(500))
+                Mono.just("twelve bytes"),
+                Mono.just("fourteen bytes"),
+                Mono.just("twelve bytes"),
+                Mono.just("fourteen bytes").delayElement(Duration.ofMillis(500))
         );
 
         final Flux<String> buffered = BufferingFlux.create(source, "\n", Integer.MAX_VALUE, 100);
 
         StepVerifier.create(buffered)
-            .expectNext("twelve bytes\nfourteen bytes\ntwelve bytes")
-            .expectNext("fourteen bytes")
-            .verifyComplete();
+                .expectNext("twelve bytes\nfourteen bytes\ntwelve bytes")
+                .expectNext("fourteen bytes")
+                .verifyComplete();
     }
 }
