@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.jdbc.db;
+package io.micrometer.core.instrument.binder.db;
 
-import com.zaxxer.hikari.HikariDataSource;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.Test;
@@ -23,6 +22,7 @@ import org.junit.Test;
 import javax.sql.DataSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 /**
  * @author Kristof Depypere
@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class PostgreSQLDatabaseMetricsTest {
     private static final String DATABASE_NAME = "test";
     private static final String FUNCTIONAL_COUNTER_KEY = "key";
-    private DataSource dataSource = new HikariDataSource();
+    private DataSource dataSource = mock(DataSource.class);
     private MeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
