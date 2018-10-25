@@ -21,12 +21,14 @@ import cern.jet.random.engine.RandomEngine;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.samples.utils.SampleConfig;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class TimerSample {
     public static void main(String[] args) {
@@ -37,10 +39,12 @@ public class TimerSample {
                 .sla(Duration.ofMillis(275), Duration.ofMillis(300), Duration.ofMillis(500))
                 .distributionStatisticExpiry(Duration.ofSeconds(10))
                 .distributionStatisticBufferLength(3)
-                .register(registry);
+                .register(new SimpleMeterRegistry());
 
-//        FunctionTimer.builder("ftimer", timer, Timer::count, t -> t.totalTime(TimeUnit.SECONDS), TimeUnit.SECONDS)
-//                .register(registry);
+        AtomicLong totalCount = new AtomicLong();
+        AtomicLong totalTime = new AtomicLong();
+        FunctionTimer.builder("ftimer", totalCount, t -> totalCount.get(), t -> totalTime.get(), TimeUnit.MILLISECONDS)
+                .register(registry);
 
         RandomEngine r = new MersenneTwister64(0);
         Normal incomingRequests = new Normal(0, 1, r);
@@ -57,7 +61,10 @@ public class TimerSample {
                     if (incomingRequests.nextDouble() + 0.4 > 0) {
                         // pretend the request took some amount of time, such that the time is
                         // distributed normally with a mean of 250ms
-                        timer.record(latencyForThisSecond.get(), TimeUnit.MILLISECONDS);
+                        int latency = latencyForThisSecond.get();
+                        timer.record(latency, TimeUnit.MILLISECONDS);
+                        totalTime.addAndGet(latency);
+                        totalCount.incrementAndGet();
                     }
                 })
                 .blockLast();
