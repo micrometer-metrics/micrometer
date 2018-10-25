@@ -21,7 +21,6 @@ import cern.jet.random.engine.RandomEngine;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.samples.utils.SampleConfig;
 import reactor.core.publisher.Flux;
 
@@ -39,7 +38,7 @@ public class TimerSample {
                 .sla(Duration.ofMillis(275), Duration.ofMillis(300), Duration.ofMillis(500))
                 .distributionStatisticExpiry(Duration.ofSeconds(10))
                 .distributionStatisticBufferLength(3)
-                .register(new SimpleMeterRegistry());
+                .register(registry);
 
         AtomicLong totalCount = new AtomicLong();
         AtomicLong totalTime = new AtomicLong();
