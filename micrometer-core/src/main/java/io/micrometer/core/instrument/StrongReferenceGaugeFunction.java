@@ -35,7 +35,7 @@ class StrongReferenceGaugeFunction<T> implements ToDoubleFunction<T> {
     private final ToDoubleFunction<T> f;
 
     StrongReferenceGaugeFunction(@Nullable T obj, ToDoubleFunction<T> f) {
-        this.obj = obj == null ? new Object() : obj;
+        this.obj = obj;
         this.f = f;
     }
 
