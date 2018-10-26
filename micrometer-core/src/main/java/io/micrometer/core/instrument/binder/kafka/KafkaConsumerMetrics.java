@@ -47,7 +47,6 @@ import static java.util.Collections.emptyList;
 @NonNullApi
 @NonNullFields
 public class KafkaConsumerMetrics implements MeterBinder {
-
     private static final String JMX_DOMAIN = "kafka.consumer";
     private static final String METRIC_NAME_PREFIX = "kafka.consumer.";
 
@@ -55,6 +54,7 @@ public class KafkaConsumerMetrics implements MeterBinder {
 
     private final Iterable<Tag> tags;
 
+    @Nullable
     private Integer kafkaMajorVersion;
 
     public KafkaConsumerMetrics() {
@@ -90,7 +90,7 @@ public class KafkaConsumerMetrics implements MeterBinder {
             registerFunctionCounterForObject(registry, o, "bytes-consumed-total", tags, "The total number of bytes consumed.", "bytes");
             registerFunctionCounterForObject(registry, o, "records-consumed-total", tags, "The total number of records consumed.", "records");
 
-            if (getKafkaMajorVersion(tags) >= 2) {
+            if (kafkaMajorVersion(tags) >= 2) {
                 // KAFKA-6184
                 registerTimeGaugeForObject(registry, o, "records-lead-min", tags, "The lag between the consumer offset and the start offset of the log. If this gets close to zero, it's an indication that the consumer may lose data soon.");
             }
@@ -129,7 +129,7 @@ public class KafkaConsumerMetrics implements MeterBinder {
             registerTimeGaugeForObject(registry, o, "io-time-ns-avg", "io-time-avg", tags, "The average length of time for I/O per select call.");
             registerTimeGaugeForObject(registry, o, "io-wait-time-ns-avg", "io-wait-time-avg", tags, "The average length of time the I/O thread spent waiting for a socket to be ready for reads or writes.");
 
-            if (getKafkaMajorVersion(tags) >= 2) {
+            if (kafkaMajorVersion(tags) >= 2) {
                 registerGaugeForObject(registry, o, "successful-authentication-total", "authentication-attempts",
                         Tags.concat(tags, "result", "successful"), "The number of successful authentication attempts.", null);
                 registerGaugeForObject(registry, o, "failed-authentication-total", "authentication-attempts",
@@ -178,9 +178,9 @@ public class KafkaConsumerMetrics implements MeterBinder {
         registerTimeGaugeForObject(registry, o, jmxMetricName, sanitize(jmxMetricName), allTags, description);
     }
 
-    int getKafkaMajorVersion(Tags tags) {
-        if (this.kafkaMajorVersion == null) {
-            this.kafkaMajorVersion = tags.stream().filter(t -> "client.id".equals(t.getKey())).findAny()
+    int kafkaMajorVersion(Tags tags) {
+        if (kafkaMajorVersion == null) {
+            kafkaMajorVersion = tags.stream().filter(t -> "client.id" .equals(t.getKey())).findAny()
                     .map(clientId -> {
                         try {
                             String version = (String) mBeanServer.getAttribute(new ObjectName(JMX_DOMAIN + ":type=app-info,client-id=" + clientId.getValue()), "version");
@@ -191,7 +191,7 @@ public class KafkaConsumerMetrics implements MeterBinder {
                     })
                     .orElse(-1);
         }
-        return this.kafkaMajorVersion;
+        return kafkaMajorVersion;
     }
 
     private void registerMetricsEventually(String type, BiConsumer<ObjectName, Tags> perObject) {

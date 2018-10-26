@@ -70,6 +70,6 @@ class KafkaConsumerMetricsTest {
     void kafkaMajorVersion() {
         createConsumer();
 
-        assertThat(kafkaConsumerMetrics.getKafkaMajorVersion(Tags.of("client.id", "consumer-1"))).isGreaterThanOrEqualTo(2);
+        assertThat(kafkaConsumerMetrics.kafkaMajorVersion(Tags.of("client.id", "consumer-1"))).isGreaterThanOrEqualTo(2);
     }
 }
