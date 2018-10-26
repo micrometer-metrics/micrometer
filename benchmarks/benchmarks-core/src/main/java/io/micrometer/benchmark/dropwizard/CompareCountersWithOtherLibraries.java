@@ -15,6 +15,9 @@
  */
 package io.micrometer.benchmark.dropwizard;
 
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.PercentileHistogramBuckets;
+import org.apache.commons.lang3.ArrayUtils;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.profile.GCProfiler;
@@ -35,7 +38,8 @@ import java.util.concurrent.TimeUnit;
 @Warmup(iterations = 2)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
-public class CompareCountersWithMicrometerAndDropwizard {
+@Threads(16)
+public class CompareCountersWithOtherLibraries {
     @State(Scope.Benchmark)
     public static class DropwizardState {
         com.codahale.metrics.MetricRegistry registry;
@@ -101,20 +105,29 @@ public class CompareCountersWithMicrometerAndDropwizard {
         }
     }
 
-    @Threads(16)
+    @State(Scope.Benchmark)
+    public static class PrometheusState {
+        io.prometheus.client.Counter counter;
+        io.prometheus.client.Counter counterWithTags;
+
+        @Setup(Level.Trial)
+        public void setup() {
+            counter = io.prometheus.client.Counter.build().name("counter").help("A counter").create();
+            counterWithTags = io.prometheus.client.Counter.build().name("counter").help("Counter with two tags declared").labelNames("key1", "key2").register();
+        }
+    }
+
 //    @Benchmark
     public void dropwizard5Counter(Dropwizard5State state) {
         state.counter.inc();
     }
 
-    @Threads(16)
 //    @Benchmark
     public void dropwizard5CounterFixedTags(Dropwizard5State state) {
         state.counterWithTags.inc();
     }
 
-    @Threads(16)
-    @Benchmark
+//    @Benchmark
     public void dropwizard5CounterTags(Dropwizard5State state) {
         Map<String, String> tags = new HashMap<>();
         tags.put("key1", "value1");
@@ -122,27 +135,34 @@ public class CompareCountersWithMicrometerAndDropwizard {
         state.registry.counter(new io.dropwizard.metrics5.MetricName("tagged", tags)).inc();
     }
 
-    @Threads(16)
 //    @Benchmark
     public void micrometerCounter(MicrometerState state) {
         state.counter.increment();
     }
 
-    @Threads(16)
     @Benchmark
     public void micrometerCounterTags(MicrometerState state) {
         state.registry.counter("dynamicTags", "key1", "value1", "key2", "value2").increment();
     }
 
-    @Threads(16)
 //    @Benchmark
     public void micrometerCounterFixedTags(MicrometerState state) {
         state.counterWithTags.increment();
     }
 
+//    @Benchmark
+    public void prometheusCounter(PrometheusState state) {
+        state.counter.inc();
+    }
+
+    @Benchmark
+    public void prometheusCounterWithTags(PrometheusState state) {
+        state.counterWithTags.labels("value1", "value2").inc();
+    }
+
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
-                .include(CompareCountersWithMicrometerAndDropwizard.class.getSimpleName())
+                .include(CompareCountersWithOtherLibraries.class.getSimpleName())
                 .addProfiler(GCProfiler.class)
                 .build();
         new Runner(opt).run();
