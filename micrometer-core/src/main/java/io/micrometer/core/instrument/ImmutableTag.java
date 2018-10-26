@@ -60,9 +60,6 @@ public class ImmutableTag implements Tag {
 
     @Override
     public String toString() {
-        return "ImmutableTag{" +
-            "key='" + key + '\'' +
-            ", value='" + value + '\'' +
-            '}';
+        return "tag(" + key + "=" + value + ")";
     }
 }

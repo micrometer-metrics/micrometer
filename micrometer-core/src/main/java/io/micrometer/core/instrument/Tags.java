@@ -17,9 +17,13 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.lang.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static java.util.stream.Collectors.joining;
 
 /**
  * An immutable collection of {@link Tag Tags} that are guaranteed to be sorted and deduplicated by tag key.
@@ -249,5 +253,10 @@ public final class Tags implements Iterable<Tag> {
      */
     public static Tags empty() {
         return EMPTY;
+    }
+
+    @Override
+    public String toString() {
+        return Arrays.stream(tags).map(Tag::toString).collect(joining(",", "[", "]"));
     }
 }
