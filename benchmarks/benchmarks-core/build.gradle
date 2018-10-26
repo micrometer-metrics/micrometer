@@ -1,6 +1,7 @@
 dependencies {
     compile project(':micrometer-core')
     compile project(':micrometer-samples-core')
+    compile project(':micrometer-registry-prometheus')
 
     compile 'org.openjdk.jmh:jmh-core:latest.release'
     compile 'io.dropwizard.metrics5:metrics-core:latest.release'
