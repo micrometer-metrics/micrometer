@@ -44,7 +44,7 @@ final class CloudWatchUtils {
      */
     static double clampMetricValue(double value) {
         // Leave as is and let the SDK reject it
-        if (Double.isNaN(value) || Double.isInfinite(value)) {
+        if (Double.isNaN(value)) {
             return value;
         }
         double magnitude = Math.abs(value);

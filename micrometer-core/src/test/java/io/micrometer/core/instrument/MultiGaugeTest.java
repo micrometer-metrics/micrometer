@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -71,6 +72,15 @@ class MultiGaugeTest {
         for (Color color : colors) {
             assertThat(registry.get("colors").tag("color", color.name).gauge().value()).isEqualTo(1);
         }
+    }
+
+    @Test
+    void rowGaugesHoldStrongReferences() {
+        colorGauges.register(Collections.singletonList(Row.of(Tags.of("color", "red"), () -> 1)));
+
+        System.gc();
+
+        assertThat(registry.get("colors").tag("color", "red").gauge().value()).isEqualTo(1);
     }
 
     private static class Color {

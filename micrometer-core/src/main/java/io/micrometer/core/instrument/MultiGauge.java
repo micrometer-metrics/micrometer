@@ -20,6 +20,7 @@ import io.micrometer.core.lang.Nullable;
 
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -67,8 +68,8 @@ public class MultiGauge {
                         }
 
                         if (overwrite || !previouslyDefined) {
-                            //noinspection unchecked
-                            registry.gauge(rowId, row.obj, row.valueFunction);
+//                            noinspection unchecked
+                            registry.gauge(rowId, row.obj, new StrongReferenceGaugeFunction<>(row.obj, row.valueFunction));
                         }
 
                         return rowId;
@@ -99,6 +100,17 @@ public class MultiGauge {
 
         public static <T> Row of(Tags uniqueTags, T obj, ToDoubleFunction<T> valueFunction) {
             return new Row<>(uniqueTags, obj, valueFunction);
+        }
+
+        public static Row of(Tags uniqueTags, Number number) {
+            return new Row<>(uniqueTags, number, Number::doubleValue);
+        }
+
+        public static Row of(Tags uniqueTags, Supplier<Number> valueFunction) {
+            return new Row<>(uniqueTags, valueFunction, f -> {
+                Number value = valueFunction.get();
+                return value == null ? Double.NaN : value.doubleValue();
+            });
         }
     }
 

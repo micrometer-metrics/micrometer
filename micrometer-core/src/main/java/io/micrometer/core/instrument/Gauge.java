@@ -52,8 +52,11 @@ public interface Gauge extends Meter {
      * @since 1.1.0
      */
     @Incubating(since = "1.1.0")
-    static Builder<Supplier<Double>> builder(String name, Supplier<Double> f) {
-        return new Builder<>(name, f, Supplier::get).strongReference(true);
+    static Builder<Supplier<Number>> builder(String name, Supplier<Number> f) {
+        return new Builder<>(name, f, f2 -> {
+            Number val = f2.get();
+            return val == null ? Double.NaN : val.doubleValue();
+        }).strongReference(true);
     }
 
     /**
