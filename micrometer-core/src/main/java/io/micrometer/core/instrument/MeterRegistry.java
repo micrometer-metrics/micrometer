@@ -54,7 +54,7 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Jon Schneider
  */
-public abstract class MeterRegistry implements AutoCloseable {
+public abstract class MeterRegistry {
     protected final Clock clock;
     private final Object meterMapLock = new Object();
     private volatile MeterFilter[] filters = new MeterFilter[0];
@@ -924,7 +924,6 @@ public abstract class MeterRegistry implements AutoCloseable {
      * Closes this registry, releasing any resources in the process. Once closed, this registry will no longer
      * accept new meters and any publishing activity will cease.
      */
-    @Override
     public void close() {
         if (closed.compareAndSet(false, true)) {
             synchronized (meterMapLock) {

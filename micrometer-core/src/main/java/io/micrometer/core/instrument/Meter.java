@@ -36,7 +36,7 @@ import static java.util.Collections.singletonList;
  *
  * @author Jon Schneider
  */
-public interface Meter extends AutoCloseable {
+public interface Meter {
     static Builder builder(String name, Type type, Iterable<Measurement> measurements) {
         return new Builder(name, type, measurements);
     }
@@ -472,7 +472,6 @@ public interface Meter extends AutoCloseable {
         }
     }
 
-    @Override
     default void close() {
     }
 }
