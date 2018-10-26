@@ -33,7 +33,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.stream.StreamSupport.stream;
 
 /**
@@ -87,7 +86,7 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     @Override
     protected void publish() {
         for (Meter meter : getMeters()) {
-            match(meter,
+            meter.apply(
                     this::trackGauge,
                     this::trackCounter,
                     this::trackTimer,

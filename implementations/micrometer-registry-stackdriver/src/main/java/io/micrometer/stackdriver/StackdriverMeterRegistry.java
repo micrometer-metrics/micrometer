@@ -49,7 +49,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -133,7 +132,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             Batch publishBatch = new Batch();
 
             Iterable<TimeSeries> series = batch.stream()
-                    .flatMap(meter -> match(meter,
+                    .flatMap(meter -> meter.apply(
                             m -> createGauge(publishBatch, m),
                             m -> createCounter(publishBatch, m),
                             m -> createTimer(publishBatch, m),

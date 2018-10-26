@@ -34,7 +34,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -96,7 +95,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     }
 
     private List<MetricDatum> metricData() {
-        return getMeters().stream().flatMap(m -> match(m,
+        return getMeters().stream().flatMap(m -> m.apply(
                 this::metricData,
                 this::metricData,
                 this::timerData,

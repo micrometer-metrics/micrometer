@@ -34,7 +34,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
 
-import static io.micrometer.core.instrument.Meter.Type.match;
 import static io.micrometer.core.instrument.util.DoubleFormat.decimal;
 import static java.util.stream.Collectors.joining;
 
@@ -95,7 +94,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
                         .withBasicAuthentication(config.apiToken(), "")
                         .withJsonContent(
                                 batch.stream()
-                                        .map(meter -> match(meter,
+                                        .map(meter -> meter.apply(
                                                 this::writeGauge,
                                                 this::writeCounter,
                                                 this::writeTimer,

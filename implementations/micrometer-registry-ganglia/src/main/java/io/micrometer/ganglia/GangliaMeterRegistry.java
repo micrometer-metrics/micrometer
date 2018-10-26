@@ -36,8 +36,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import static io.micrometer.core.instrument.Meter.Type.consume;
-
 /**
  * {@link StepMeterRegistry} for Ganglia.
  *
@@ -115,7 +113,7 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
     @Override
     protected void publish() {
         for (Meter meter : getMeters()) {
-            consume(meter,
+            meter.use(
                     this::announceGauge,
                     this::announceCounter,
                     this::announceTimer,

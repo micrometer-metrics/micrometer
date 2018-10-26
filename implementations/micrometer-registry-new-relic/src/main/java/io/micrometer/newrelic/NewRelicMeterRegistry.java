@@ -35,7 +35,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.StreamSupport.stream;
 
@@ -91,7 +90,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
         // New Relic's Insights API limits us to 1000 events per call
         for (List<Meter> batch : MeterPartition.partition(this, Math.min(config.batchSize(), 1000))) {
-            sendEvents(insightsEndpoint, batch.stream().flatMap(meter -> match(meter,
+            sendEvents(insightsEndpoint, batch.stream().flatMap(meter -> meter.apply(
                     this::writeGauge,
                     this::writeCounter,
                     this::writeTimer,

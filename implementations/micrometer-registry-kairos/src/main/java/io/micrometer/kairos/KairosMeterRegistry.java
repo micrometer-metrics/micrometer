@@ -34,8 +34,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static io.micrometer.core.instrument.Meter.Type.match;
-
 /**
  * @author Anton Ilinchik
  */
@@ -78,7 +76,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
                 httpClient.post(config.uri())
                         .withBasicAuthentication(config.userName(), config.password())
                         .withJsonContent(
-                                batch.stream().flatMap(m -> match(m,
+                                batch.stream().flatMap(m -> m.apply(
                                         this::writeGauge,
                                         this::writeCounter,
                                         this::writeTimer,

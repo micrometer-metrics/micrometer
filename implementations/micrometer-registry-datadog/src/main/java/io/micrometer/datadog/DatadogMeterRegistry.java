@@ -36,7 +36,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
@@ -106,7 +105,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                 */
                 httpClient.post(datadogEndpoint)
                         .withJsonContent(
-                                batch.stream().flatMap(meter -> match(meter,
+                                batch.stream().flatMap(meter -> meter.apply(
                                         m -> writeMeter(m, metadataToSend),
                                         m -> writeMeter(m, metadataToSend),
                                         timer -> writeTimer(timer, metadataToSend),

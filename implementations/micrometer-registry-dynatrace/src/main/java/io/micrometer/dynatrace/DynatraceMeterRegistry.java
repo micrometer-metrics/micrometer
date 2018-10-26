@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static io.micrometer.core.instrument.Meter.Type.match;
 import static io.micrometer.dynatrace.DynatraceMetricDefinition.DynatraceUnit;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
@@ -101,7 +100,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             final List<DynatraceCustomMetric> series = batch.stream()
-                    .flatMap(meter -> match(meter,
+                    .flatMap(meter -> meter.apply(
                             this::writeMeter,
                             this::writeMeter,
                             this::writeTimer,

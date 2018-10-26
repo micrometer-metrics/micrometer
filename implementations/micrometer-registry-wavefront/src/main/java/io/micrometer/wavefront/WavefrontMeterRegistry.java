@@ -38,7 +38,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
 
@@ -87,7 +86,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     @Override
     protected void publish() {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-            Stream<String> stream = batch.stream().flatMap(m -> match(m,
+            Stream<String> stream = batch.stream().flatMap(m -> m.apply(
                     this::writeMeter,
                     this::writeMeter,
                     this::writeTimer,

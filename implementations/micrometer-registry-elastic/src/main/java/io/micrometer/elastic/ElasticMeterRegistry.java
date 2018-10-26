@@ -36,7 +36,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -123,7 +122,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                         .post(config.host() + "/" + indexName + "/doc/_bulk")
                         .withBasicAuthentication(config.userName(), config.password())
                         .withJsonContent(batch.stream()
-                                .map(m -> match(m,
+                                .map(m -> m.apply(
                                         this::writeGauge,
                                         this::writeCounter,
                                         this::writeTimer,

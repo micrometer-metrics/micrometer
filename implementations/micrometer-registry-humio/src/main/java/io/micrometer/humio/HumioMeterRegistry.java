@@ -38,7 +38,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
 
-import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -103,7 +102,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                 }
 
                 post.withJsonContent(meters.stream()
-                        .map(m -> match(m,
+                        .map(m -> m.apply(
                                 batch::writeGauge,
                                 batch::writeCounter,
                                 batch::writeTimer,

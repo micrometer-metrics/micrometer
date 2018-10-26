@@ -15,7 +15,10 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -26,11 +29,12 @@ import static org.mockito.Mockito.mock;
  * @author Johnny Lim
  */
 class MeterTest {
+    TimeGauge gauge = TimeGauge.builder("time.gauge", null, TimeUnit.MILLISECONDS, o -> 1.0)
+            .register(new SimpleMeterRegistry());
 
     @Test
     void matchWhenTimeGaugeShouldUseFunctionForTimeGauge() {
-        String matched = Meter.Type.match(
-                mock(TimeGauge.class),
+        String matched = gauge.apply(
                 (gauge) -> "gauge",
                 (counter) -> "counter",
                 (timer) -> "timer",
@@ -46,8 +50,7 @@ class MeterTest {
     @Test
     void consumeWhenTimeGaugeShouldUseConsumerForTimeGauge() {
         StringBuilder consumed = new StringBuilder();
-        Meter.Type.consume(
-                mock(TimeGauge.class),
+        gauge.use(
                 (gauge) -> consumed.append("gauge"),
                 (counter) -> consumed.append("counter"),
                 (timer) -> consumed.append("timer"),

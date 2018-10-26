@@ -43,7 +43,6 @@ import java.util.stream.Stream;
 
 import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.COUNTER;
 import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.GAUGE;
-import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.stream.StreamSupport.stream;
 
 /**
@@ -103,7 +102,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try (AggregateMetricSender.Session session = metricSender.createSession()) {
                 batch.stream()
-                        .map(meter -> match(meter,
+                        .map(meter -> meter.apply(
                                 this::addGauge,
                                 this::addCounter,
                                 this::addTimer,

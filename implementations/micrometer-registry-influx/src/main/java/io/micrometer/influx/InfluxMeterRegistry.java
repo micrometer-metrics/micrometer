@@ -34,7 +34,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static io.micrometer.core.instrument.Meter.Type.match;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -112,7 +111,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 httpClient.post(influxEndpoint)
                         .withBasicAuthentication(config.userName(), config.password())
                         .withPlainText(batch.stream()
-                                .flatMap(m -> match(m,
+                                .flatMap(m -> m.apply(
                                         gauge -> writeGauge(gauge.getId(), gauge.value()),
                                         counter -> writeCounter(counter.getId(), counter.count()),
                                         this::writeTimer,

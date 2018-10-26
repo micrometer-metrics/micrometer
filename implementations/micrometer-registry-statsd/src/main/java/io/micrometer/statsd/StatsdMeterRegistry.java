@@ -46,8 +46,6 @@ import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
-import static io.micrometer.core.instrument.Meter.Type.consume;
-
 /**
  * @author Jon Schneider
  */
@@ -137,7 +135,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
         config().onMeterRemoved(meter -> {
             //noinspection SuspiciousMethodCalls
-            consume(meter,
+            meter.use(
                     this::removePollableMeter,
                     c -> ((StatsdCounter) c).shutdown(),
                     t -> ((StatsdTimer) t).shutdown(),
