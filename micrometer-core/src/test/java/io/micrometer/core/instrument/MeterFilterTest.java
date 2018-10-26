@@ -26,13 +26,9 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.util.Collections.emptyList;
 import static java.util.stream.StreamSupport.stream;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link MeterFilter}.
@@ -47,7 +43,7 @@ class MeterFilterTest {
 
     private static Condition<Meter.Id> tag(String tagKey, @Nullable String tagValue) {
         return new Condition<>(
-            id -> stream(id.getTags().spliterator(), false)
+            id -> stream(id.getTagsAsIterable().spliterator(), false)
                 .anyMatch(t -> t.getKey().equals(tagKey) && (tagValue == null || t.getValue().equals(tagValue))),
             "Must have a tag with key '" + tagKey + "'");
     }
@@ -101,8 +97,8 @@ class MeterFilterTest {
     void maximumAllowableMetrics() {
         MeterFilter filter = MeterFilter.maximumAllowableMetrics(1);
 
-        Meter.Id id = new Meter.Id("name", emptyList(), null, null, Meter.Type.COUNTER);
-        Meter.Id id2 = new Meter.Id("name2", emptyList(), null, null, Meter.Type.COUNTER);
+        Meter.Id id = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.COUNTER);
+        Meter.Id id2 = new Meter.Id("name2", Tags.empty(), null, null, Meter.Type.COUNTER);
 
         assertThat(filter.accept(id)).isEqualTo(MeterFilterReply.NEUTRAL);
         assertThat(filter.accept(id)).isEqualTo(MeterFilterReply.NEUTRAL);
@@ -186,7 +182,7 @@ class MeterFilterTest {
     @Test
     void minExpectedOnSummary() {
         MeterFilter filter = MeterFilter.minExpected("name", 100);
-        Meter.Id timer = new Meter.Id("name", emptyList(), null, null, Meter.Type.DISTRIBUTION_SUMMARY);
+        Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.DISTRIBUTION_SUMMARY);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
                 .satisfies(conf -> assertThat(conf.getMinimumExpectedValue()).isEqualTo(100));
@@ -195,7 +191,7 @@ class MeterFilterTest {
     @Test
     void maxExpectedOnSummary() {
         MeterFilter filter = MeterFilter.maxExpected("name", 100);
-        Meter.Id timer = new Meter.Id("name", emptyList(), null, null, Meter.Type.DISTRIBUTION_SUMMARY);
+        Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.DISTRIBUTION_SUMMARY);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
                 .satisfies(conf -> assertThat(conf.getMaximumExpectedValue()).isEqualTo(100));
@@ -204,7 +200,7 @@ class MeterFilterTest {
     @Test
     void minExpectedOnTimer() {
         MeterFilter filter = MeterFilter.minExpected("name", Duration.ofNanos(100));
-        Meter.Id timer = new Meter.Id("name", emptyList(), null, null, Meter.Type.TIMER);
+        Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.TIMER);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
                 .satisfies(conf -> assertThat(conf.getMinimumExpectedValue()).isEqualTo(100));
@@ -213,7 +209,7 @@ class MeterFilterTest {
     @Test
     void maxExpectedOnTimer() {
         MeterFilter filter = MeterFilter.maxExpected("name", Duration.ofNanos(100));
-        Meter.Id timer = new Meter.Id("name", emptyList(), null, null, Meter.Type.TIMER);
+        Meter.Id timer = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.TIMER);
 
         assertThat(filter.configure(timer, DistributionStatisticConfig.DEFAULT))
                 .satisfies(conf -> assertThat(conf.getMaximumExpectedValue()).isEqualTo(100));
@@ -221,8 +217,8 @@ class MeterFilterTest {
 
     @Test
     void denyUnless() {
-        Meter.Id id1 = new Meter.Id("my.counter", emptyList(), null, null, Meter.Type.COUNTER);
-        Meter.Id id2 = new Meter.Id("other.counter", emptyList(), null, null, Meter.Type.COUNTER);
+        Meter.Id id1 = new Meter.Id("my.counter", Tags.empty(), null, null, Meter.Type.COUNTER);
+        Meter.Id id2 = new Meter.Id("other.counter", Tags.empty(), null, null, Meter.Type.COUNTER);
 
         MeterFilter filter = MeterFilter.denyUnless(id -> id.getName().startsWith("my"));
         assertThat(filter.accept(id1)).isEqualTo(MeterFilterReply.NEUTRAL);

@@ -18,9 +18,7 @@ package io.micrometer.core.instrument;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.lang.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -190,7 +188,7 @@ public interface LongTaskTimer extends Meter {
      */
     class Builder {
         private final String name;
-        private final List<Tag> tags = new ArrayList<>();
+        private Tags tags = Tags.empty();
 
         @Nullable
         private String description;
@@ -208,21 +206,21 @@ public interface LongTaskTimer extends Meter {
         }
 
         /**
-         * @param tags Tags to add to the eventual long task timer.
-         * @return The long task timer builder with added tags.
+         * @param tags Tags to add to the eventual counter.
+         * @return The counter builder with added tags.
          */
         public Builder tags(Iterable<Tag> tags) {
-            tags.forEach(this.tags::add);
+            this.tags = this.tags.and(tags);
             return this;
         }
 
         /**
          * @param key   The tag key.
          * @param value The tag value.
-         * @return The long task timer builder with a single added tag.
+         * @return The counter builder with a single added tag.
          */
         public Builder tag(String key, String value) {
-            tags.add(Tag.of(key, value));
+            this.tags = tags.and(key, value);
             return this;
         }
 

@@ -53,7 +53,9 @@ public class ImmutableTag implements Tag {
 
     @Override
     public int hashCode() {
-        return Objects.hash(key, value);
+        int result = key.hashCode();
+        result = 31 * result + value.hashCode();
+        return result;
     }
 
     @Override

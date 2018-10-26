@@ -17,16 +17,16 @@ package io.micrometer.graphite;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GraphiteHierarchicalNameMapperTest {
     private final GraphiteHierarchicalNameMapper nameMapper = new GraphiteHierarchicalNameMapper("stack", "app.name");
-    private final Meter.Id id = new Meter.Id("my.name", Tags.of("app.name", "MYAPP", "stack", "PROD", "other.tag", "value"),
-            null, null, Meter.Type.COUNTER);
+    private final Meter.Id id = new SimpleMeterRegistry().counter("my.name",
+            "app.name", "MYAPP", "stack", "PROD", "other.tag", "value").getId();
 
     @Issue("#561")
     @Test

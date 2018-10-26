@@ -66,7 +66,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private static List<String> tagValues(Meter.Id id) {
-        return id.getTags().stream().map(Tag::getValue).collect(toList());
+        return stream(id.getTagsAsIterable().spliterator(), false).map(Tag::getValue).collect(toList());
     }
 
     /**

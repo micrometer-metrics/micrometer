@@ -15,10 +15,11 @@
  */
 package io.micrometer.prometheus;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
-
-import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,17 +31,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PrometheusRenameFilterTest {
 
     private final PrometheusRenameFilter filter = new PrometheusRenameFilter();
+    private final MeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
     void doesNotChangeUnrelatedMeter() {
-        Meter.Id original = new Meter.Id("system.cpu.count", Collections.emptyList(), null, null, Meter.Type.GAUGE);
+        Meter.Id original = Gauge.builder("system.cpu.count", () -> 1.0).register(registry).getId();
         Meter.Id actual = filter.map(original);
         assertThat(actual).isEqualTo(original);
     }
 
     @Test
     void doesChangeApplicableMeter() {
-        Meter.Id original = new Meter.Id("process.files.open", Collections.emptyList(), null, null, Meter.Type.GAUGE);
+        Meter.Id original = Gauge.builder("process.files.open", () -> 1.0).register(registry).getId();
         Meter.Id actual = filter.map(original);
         assertThat(actual).isNotEqualTo(original);
         assertThat(actual.getName()).isEqualTo("process.open.fds");

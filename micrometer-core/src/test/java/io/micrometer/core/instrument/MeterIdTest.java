@@ -17,20 +17,19 @@ package io.micrometer.core.instrument;
 
 import org.junit.jupiter.api.Test;
 
-import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MeterIdTest {
     @Test
     void withStatistic() {
-        Meter.Id id = new Meter.Id("my.id", emptyList(), null, null, Meter.Type.TIMER);
+        Meter.Id id = new Meter.Id("my.id", Tags.empty(), null, null, Meter.Type.TIMER);
         assertThat(id.withTag(Statistic.TOTAL_TIME).getTags()).contains(Tag.of("statistic", "total"));
     }
 
     @Test
     void equalsAndHashCode() {
-        Meter.Id id = new Meter.Id("my.id", emptyList(), null, null, Meter.Type.COUNTER);
-        Meter.Id id2 = new Meter.Id("my.id", emptyList(), null, null, Meter.Type.COUNTER);
+        Meter.Id id = new Meter.Id("my.id", Tags.empty(), null, null, Meter.Type.COUNTER);
+        Meter.Id id2 = new Meter.Id("my.id", Tags.empty(), null, null, Meter.Type.COUNTER);
 
         assertThat(id).isEqualTo(id2);
         assertThat(id.hashCode()).isEqualTo(id2.hashCode());

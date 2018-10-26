@@ -76,10 +76,6 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         start(threadFactory);
     }
 
-    public static Builder builder(WavefrontConfig config) {
-        return new Builder(config);
-    }
-
     @Override
     public void start(ThreadFactory threadFactory) {
         if (config.enabled()) {
@@ -254,16 +250,17 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                 "}";
     }
 
-    /**
-     * Copy tags, unit, and description from an existing id, but change the name.
-     */
     private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
-        return new Meter.Id(id.getName() + "." + suffix, id.getTags(), id.getBaseUnit(), id.getDescription(), id.getType());
+        return id.withName(id.getName() + "." + suffix);
     }
 
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.SECONDS;
+    }
+
+    public static Builder builder(WavefrontConfig config) {
+        return new Builder(config);
     }
 
     public static class Builder {
@@ -273,7 +270,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         private ThreadFactory threadFactory = Executors.defaultThreadFactory();
         private HttpClient httpClient;
 
-        public Builder(WavefrontConfig config) {
+        Builder(WavefrontConfig config) {
             this.config = config;
             this.httpClient = new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout());
         }

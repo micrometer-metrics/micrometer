@@ -53,7 +53,7 @@ public class SysdigStatsdLineBuilder extends FlavorStatsdLineBuilder {
             this.namingConvention = next;
             this.name = next.name(id.getName(), id.getType(), id.getBaseUnit()).replace(':', '_');
             this.tags = HashTreePMap.empty();
-            this.conventionTags = id.getTags().iterator().hasNext() ?
+            this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
                     id.getConventionTags(this.namingConvention).stream()
                             .map(t -> t.getKey().replace(':', '_') + "=" + t.getValue().replace(':', '_'))
                             .collect(Collectors.joining(","))

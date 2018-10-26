@@ -22,11 +22,7 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
-import okhttp3.Call;
-import okhttp3.EventListener;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import okhttp3.*;
 
 import java.io.IOException;
 import java.util.Collections;

@@ -52,7 +52,7 @@ public class CompositeFunctionCounter<T> extends AbstractCompositeMeter<Function
         }
 
         return FunctionCounter.builder(getId().getName(), obj, f)
-            .tags(getId().getTags())
+            .tags(getId().getTagsAsIterable())
             .description(getId().getDescription())
             .baseUnit(getId().getBaseUnit())
             .register(registry);

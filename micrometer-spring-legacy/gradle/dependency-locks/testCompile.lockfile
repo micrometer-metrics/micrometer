@@ -5,9 +5,9 @@ antlr:antlr:2.7.7
 aopalliance:aopalliance:1.0
 ch.qos.logback:logback-classic:1.1.11
 ch.qos.logback:logback-core:1.1.11
-com.amazonaws:aws-java-sdk-cloudwatch:1.11.430
-com.amazonaws:aws-java-sdk-core:1.11.430
-com.amazonaws:jmespath-java:1.11.430
+com.amazonaws:aws-java-sdk-cloudwatch:1.11.436
+com.amazonaws:aws-java-sdk-core:1.11.436
+com.amazonaws:jmespath-java:1.11.436
 com.fasterxml.jackson.core:jackson-annotations:2.8.0
 com.fasterxml.jackson.core:jackson-core:2.8.11
 com.fasterxml.jackson.core:jackson-databind:2.8.11.2
@@ -47,9 +47,9 @@ com.jayway.jsonpath:json-path:2.2.0
 com.microsoft.azure:applicationinsights-core:2.2.0
 com.netflix.archaius:archaius-core:0.4.1
 com.netflix.hystrix:hystrix-core:1.5.13
-com.netflix.spectator:spectator-api:0.78.0
-com.netflix.spectator:spectator-ext-ipc:0.78.0
-com.netflix.spectator:spectator-reg-atlas:0.78.0
+com.netflix.spectator:spectator-api:0.79.0
+com.netflix.spectator:spectator-ext-ipc:0.79.0
+com.netflix.spectator:spectator-reg-atlas:0.79.0
 com.signalfx.public:signalfx-java:0.0.48
 com.squareup.okhttp3:okhttp:3.11.0
 com.squareup.okio:okio:1.14.0

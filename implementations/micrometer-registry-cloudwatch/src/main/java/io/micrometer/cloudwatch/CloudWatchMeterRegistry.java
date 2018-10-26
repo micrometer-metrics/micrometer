@@ -114,18 +114,18 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         // we can't know anything about max and percentiles originating from a function timer
         return Stream.of(
-                metricDatum(idWithSuffix(timer.getId(), "count"), wallTime, timer.count()),
-                metricDatum(idWithSuffix(timer.getId(), "avg"), wallTime, timer.mean(getBaseTimeUnit())));
+                metricDatum(timer.getId(), "count", wallTime, timer.count()),
+                metricDatum(timer.getId(), "avg", wallTime, timer.mean(getBaseTimeUnit())));
     }
 
     private Stream<MetricDatum> timerData(Timer timer) {
         final long wallTime = clock.wallTime();
         final Stream.Builder<MetricDatum> metrics = Stream.builder();
 
-        metrics.add(metricDatum(idWithSuffixAndUnit(timer.getId(), "sum", getBaseTimeUnit().name()), wallTime, timer.totalTime(getBaseTimeUnit())));
-        metrics.add(metricDatum(idWithSuffixAndUnit(timer.getId(), "count", "count"), wallTime, timer.count()));
-        metrics.add(metricDatum(idWithSuffixAndUnit(timer.getId(), "avg", getBaseTimeUnit().name()), wallTime, timer.mean(getBaseTimeUnit())));
-        metrics.add(metricDatum(idWithSuffixAndUnit(timer.getId(), "max", getBaseTimeUnit().name()), wallTime, timer.max(getBaseTimeUnit())));
+        metrics.add(metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), wallTime, timer.totalTime(getBaseTimeUnit())));
+        metrics.add(metricDatum(timer.getId(), "count", "count", wallTime, timer.count()));
+        metrics.add(metricDatum(timer.getId(), "avg", getBaseTimeUnit().name(), wallTime, timer.mean(getBaseTimeUnit())));
+        metrics.add(metricDatum(timer.getId(), "max", getBaseTimeUnit().name(), wallTime, timer.max(getBaseTimeUnit())));
 
         return metrics.build();
     }
@@ -134,10 +134,10 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         final long wallTime = clock.wallTime();
         final Stream.Builder<MetricDatum> metrics = Stream.builder();
 
-        metrics.add(metricDatum(idWithSuffix(summary.getId(), "sum"), wallTime, summary.totalAmount()));
-        metrics.add(metricDatum(idWithSuffix(summary.getId(), "count"), wallTime, summary.count()));
-        metrics.add(metricDatum(idWithSuffix(summary.getId(), "avg"), wallTime, summary.mean()));
-        metrics.add(metricDatum(idWithSuffix(summary.getId(), "max"), wallTime, summary.max()));
+        metrics.add(metricDatum(summary.getId(), "sum", wallTime, summary.totalAmount()));
+        metrics.add(metricDatum(summary.getId(), "count", wallTime, summary.count()));
+        metrics.add(metricDatum(summary.getId(), "avg", wallTime, summary.mean()));
+        metrics.add(metricDatum(summary.getId(), "max", wallTime, summary.max()));
 
         return metrics.build();
     }
@@ -152,18 +152,28 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     @Nullable
     private MetricDatum metricDatum(Meter.Id id, long wallTime, double value) {
+        return metricDatum(id, null, null, wallTime, value);
+    }
+
+    @Nullable
+    private MetricDatum metricDatum(Meter.Id id, @Nullable String suffix, long wallTime, double value) {
+        return metricDatum(id, suffix, null, wallTime, value);
+    }
+
+    @Nullable
+    private MetricDatum metricDatum(Meter.Id id, @Nullable String suffix, @Nullable String unit, long wallTime, double value) {
         if (Double.isNaN(value)) {
             return null;
         }
 
-        String metricName = id.getConventionName(config().namingConvention());
+        String metricName = config().namingConvention().name(id.getName() + "." + suffix, id.getType(), id.getBaseUnit());
         List<Tag> tags = id.getConventionTags(config().namingConvention());
         return new MetricDatum()
                 .withMetricName(metricName)
                 .withDimensions(toDimensions(tags))
                 .withTimestamp(new Date(wallTime))
                 .withValue(CloudWatchUtils.clampMetricValue(value))
-                .withUnit(toStandardUnit(id.getBaseUnit()));
+                .withUnit(toStandardUnit(unit));
     }
 
     private StandardUnit toStandardUnit(@Nullable String unit) {
@@ -191,19 +201,5 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.MILLISECONDS;
-    }
-
-    /**
-     * Copy tags, unit, and description from an existing id, but change the name.
-     */
-    private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
-        return idWithSuffixAndUnit(id, suffix, id.getBaseUnit());
-    }
-
-    /**
-     * Copy tags and description from an existing id, but change the name and unit.
-     */
-    private Meter.Id idWithSuffixAndUnit(Meter.Id id, String suffix, @Nullable String unit) {
-        return new Meter.Id(id.getName() + "." + suffix, id.getTags(), unit, id.getDescription(), id.getType());
     }
 }

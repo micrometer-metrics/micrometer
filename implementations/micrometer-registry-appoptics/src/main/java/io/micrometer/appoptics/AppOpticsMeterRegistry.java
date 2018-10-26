@@ -211,6 +211,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         for (int i = 0; i < statistics.length; i += 2) {
             sb.append(",\"").append(statistics[i]).append("\":").append(statistics[i + 1]);
         }
+
         List<Tag> tags = id.getTags();
 
         sb.append(",\"tags\":{");

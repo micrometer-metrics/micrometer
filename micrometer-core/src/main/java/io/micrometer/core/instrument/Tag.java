@@ -20,12 +20,17 @@ package io.micrometer.core.instrument;
  *
  * @author Jon Schneider
  */
-public interface Tag {
+public interface Tag extends Comparable<Tag> {
     String getKey();
 
     String getValue();
 
     static Tag of(String key, String value) {
         return new ImmutableTag(key, value);
+    }
+
+    @Override
+    default int compareTo(Tag o) {
+        return getKey().compareTo(o.getKey());
     }
 }

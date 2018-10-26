@@ -15,27 +15,51 @@
  */
 package io.micrometer.core.instrument.step;
 
-import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tags;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class StepFunctionCounterTest {
+    private MockClock clock = new MockClock();
+
+    private StepRegistryConfig config = new StepRegistryConfig() {
+        @Override
+        public String prefix() {
+            return "test";
+        }
+
+        @Override
+        public String get(String key) {
+            return null;
+        }
+    };
+
+    private MeterRegistry registry = new StepMeterRegistry(config, clock) {
+        @Override
+        protected void publish() {
+        }
+
+        @Override
+        protected TimeUnit getBaseTimeUnit() {
+            return TimeUnit.SECONDS;
+        }
+    };
+
     @Test
     void count() {
         AtomicInteger n = new AtomicInteger(1);
-        MockClock clock = new MockClock();
-        StepFunctionCounter<AtomicInteger> counter = new StepFunctionCounter<>(
-                new Meter.Id("my.counter", emptyList(), null, null, Meter.Type.COUNTER),
-                clock, 1, n, AtomicInteger::get);
+        FunctionCounter counter = registry.more().counter("my.counter", Tags.empty(), n);
 
+        assertThat(counter).isInstanceOf(StepFunctionCounter.class);
         assertThat(counter.count()).isEqualTo(0);
-        clock.add(1, TimeUnit.MILLISECONDS);
+        clock.add(config.step());
         assertThat(counter.count()).isEqualTo(1);
     }
 }

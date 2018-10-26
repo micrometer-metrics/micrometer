@@ -19,9 +19,10 @@ import io.micrometer.core.lang.Nullable;
 
 import java.util.*;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
- * An immutable collection of {@link Tag Tags}.
+ * An immutable collection of {@link Tag Tags} that are guaranteed to be sorted and deduplicated by tag key.
  *
  * @author Jon Schneider
  * @author Maciej Walkowiak
@@ -29,12 +30,34 @@ import java.util.stream.Stream;
  */
 public final class Tags implements Iterable<Tag> {
 
-    private static final Tags EMPTY = new Tags(Collections.emptyMap());
+    private static final Tags EMPTY = new Tags(new Tag[]{});
 
-    private final Map<String, Tag> tags;
+    private final Tag[] tags;
+    private int last;
 
-    private Tags(Map<String, Tag> tags) {
-        this.tags = Collections.unmodifiableMap(tags);
+    private Tags(Tag[] tags) {
+        this.tags = tags;
+        Arrays.sort(this.tags);
+        dedup();
+    }
+
+    private void dedup() {
+        int n = tags.length;
+
+        if (n == 0 || n == 1) {
+            last = n;
+            return;
+        }
+
+        // index of next unique element
+        int j = 0;
+
+        for (int i = 0; i < n - 1; i++)
+            if (!tags[i].getKey().equals(tags[i + 1].getKey()))
+                tags[j++] = tags[i];
+
+        tags[j++] = tags[n - 1];
+        last = j;
     }
 
     /**
@@ -78,7 +101,10 @@ public final class Tags implements Iterable<Tag> {
         if (tags == null || tags.length == 0) {
             return this;
         }
-        return and(Arrays.asList(tags));
+        Tag[] newTags = new Tag[this.tags.length + tags.length];
+        System.arraycopy(this.tags, 0, newTags, 0, this.tags.length);
+        System.arraycopy(tags, 0, newTags, this.tags.length, tags.length);
+        return new Tags(newTags);
     }
 
     /**
@@ -91,14 +117,36 @@ public final class Tags implements Iterable<Tag> {
         if (tags == null || !tags.iterator().hasNext()) {
             return this;
         }
-        Map<String, Tag> merged = new LinkedHashMap<>(this.tags);
-        tags.forEach(tag -> merged.put(tag.getKey(), tag));
-        return new Tags(merged);
+
+        if (this.tags.length == 0) {
+            return Tags.of(tags);
+        }
+
+        return and(Tags.of(tags).tags);
     }
 
     @Override
     public Iterator<Tag> iterator() {
-        return tags.values().iterator();
+        return new ArrayIterator();
+    }
+
+    private class ArrayIterator implements Iterator<Tag> {
+        private int currentIndex = 0;
+
+        @Override
+        public boolean hasNext() {
+            return currentIndex < last;
+        }
+
+        @Override
+        public Tag next() {
+            return tags[currentIndex++];
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException("cannot remove items from tags");
+        }
     }
 
     /**
@@ -107,17 +155,17 @@ public final class Tags implements Iterable<Tag> {
      * @return a tags stream
      */
     public Stream<Tag> stream() {
-        return tags.values().stream();
+        return Arrays.stream(tags);
     }
 
     @Override
     public int hashCode() {
-        return tags.hashCode();
+        return Arrays.hashCode(tags);
     }
 
     @Override
     public boolean equals(@Nullable Object obj) {
-        return this == obj || obj != null && getClass() == obj.getClass() && tags.equals(((Tags) obj).tags);
+        return this == obj || obj != null && getClass() == obj.getClass() && Arrays.equals(tags, ((Tags) obj).tags);
     }
 
     /**
@@ -151,8 +199,13 @@ public final class Tags implements Iterable<Tag> {
     public static Tags of(Iterable<? extends Tag> tags) {
         if (tags instanceof Tags) {
             return (Tags) tags;
+        } else if (tags instanceof Collection) {
+            @SuppressWarnings("unchecked")
+            Collection<? extends Tag> tagsCollection = (Collection<? extends Tag>) tags;
+            return new Tags(tagsCollection.toArray(new Tag[0]));
+        } else {
+            return new Tags(StreamSupport.stream(tags.spliterator(), false).toArray(Tag[]::new));
         }
-        return empty().and(tags);
     }
 
     /**
@@ -163,7 +216,7 @@ public final class Tags implements Iterable<Tag> {
      * @return a new {@link Tags} instance
      */
     public static Tags of(String key, String value) {
-        return empty().and(key, value);
+        return new Tags(new Tag[]{Tag.of(key, value)});
     }
 
     /**
@@ -173,7 +226,17 @@ public final class Tags implements Iterable<Tag> {
      * @return a new {@link Tags} instance
      */
     public static Tags of(String... keyValues) {
-        return empty().and(keyValues);
+        if (keyValues.length == 0) {
+            return empty();
+        }
+        if (keyValues.length % 2 == 1) {
+            throw new IllegalArgumentException("size must be even, it is a set of key=value pairs");
+        }
+        Tag[] tags = new Tag[keyValues.length / 2];
+        for (int i = 0; i < keyValues.length; i += 2) {
+            tags[i / 2] = Tag.of(keyValues[i], keyValues[i + 1]);
+        }
+        return new Tags(tags);
     }
 
     /**

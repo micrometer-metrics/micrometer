@@ -30,18 +30,10 @@ public interface HierarchicalNameMapper {
      * Sort tags alphabetically by key and append tag key values to the name with '.', e.g.
      * {@code http_server_requests.response.200.method.GET}
      */
-    HierarchicalNameMapper DEFAULT = (id, convention) -> {
-        String tags = "";
-
-        if (id.getTags().iterator().hasNext()) {
-            tags = "." + id.getConventionTags(convention).stream()
-                .map(t -> t.getKey() + "." + t.getValue())
-                .map(nameSegment -> nameSegment.replace(" ", "_"))
-                .collect(Collectors.joining("."));
-        }
-
-        return id.getConventionName(convention) + tags;
-    };
+    HierarchicalNameMapper DEFAULT = (id, convention) -> id.getConventionName(convention) + id.getConventionTags(convention).stream()
+            .map(t -> "." + t.getKey() + "." + t.getValue())
+            .map(nameSegment -> nameSegment.replace(" ", "_"))
+            .collect(Collectors.joining(""));
 
     String toHierarchicalName(Meter.Id id, NamingConvention convention);
 }

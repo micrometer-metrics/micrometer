@@ -15,28 +15,26 @@
  */
 package io.micrometer.datadog;
 
-import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Statistic;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DatadogMetricMetadataTest {
-
     @Test
     void escapesStringsInDescription() {
-        DatadogMetricMetadata metricMetadata = new DatadogMetricMetadata(new Meter.Id("name",
-                Tags.of(Tag.of("key", "value")),
-                null,
-                "The /\"recent cpu usage\" for the Java Virtual Machine process",
-                Meter.Type.GAUGE),
+        DatadogMetricMetadata metricMetadata = new DatadogMetricMetadata(
+                Counter.builder("name")
+                        .tag("key", "value")
+                        .description("The /\"recent cpu usage\" for the Java Virtual Machine process")
+                        .register(new SimpleMeterRegistry()).getId(),
                 Statistic.COUNT,
                 true,
-                null);
+                null
+        );
 
         assertThat(metricMetadata.editMetadataBody()).isEqualTo("{\"type\":\"count\",\"description\":\"The /\\\"recent cpu usage\\\" for the Java Virtual Machine process\"}");
     }
-
 }

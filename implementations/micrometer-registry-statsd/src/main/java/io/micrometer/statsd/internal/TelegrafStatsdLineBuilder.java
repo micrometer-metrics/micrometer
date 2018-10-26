@@ -64,7 +64,7 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
 
             this.name = telegrafEscape(next.name(id.getName(), id.getType(), id.getBaseUnit()));
             this.tags = HashTreePMap.empty();
-            this.conventionTags = id.getTags().iterator().hasNext() ?
+            this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
                     id.getConventionTags(this.namingConvention).stream()
                             .map(t -> telegrafEscape(t.getKey()) + "=" + telegrafEscape(t.getValue()))
                             .collect(Collectors.joining(","))

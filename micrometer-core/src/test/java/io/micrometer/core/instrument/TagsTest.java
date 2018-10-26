@@ -32,6 +32,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TagsTest {
 
     @Test
+    void dedup() {
+        assertThat(Tags.of("k1", "v1", "k2", "v2")).containsExactly(Tag.of("k1", "v1"), Tag.of("k2", "v2"));
+        assertThat(Tags.of("k1", "v1", "k1", "v2")).containsExactly(Tag.of("k1", "v2"));
+        assertThat(Tags.of("k1", "v1", "k1", "v2", "k3", "v3")).containsExactly(Tag.of("k1", "v2"), Tag.of("k3", "v3"));
+        assertThat(Tags.of("k1", "v1", "k2", "v2", "k2", "v3")).containsExactly(Tag.of("k1", "v1"), Tag.of("k2", "v3"));
+    }
+
+    @Test
     void createsListWithSingleTag() {
         Iterable<Tag> tags = Tags.of("k1", "v1");
         assertThat(tags).containsExactly(Tag.of("k1", "v1"));

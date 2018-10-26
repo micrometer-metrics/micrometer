@@ -27,8 +27,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
 /**
@@ -52,9 +52,7 @@ public interface MeterFilter {
         return new MeterFilter() {
             @Override
             public Meter.Id map(Meter.Id id) {
-                List<Tag> allTags = new ArrayList<>(id.getTags());
-                tags.forEach(allTags::add);
-                return new Meter.Id(id.getName(), allTags, id.getBaseUnit(), id.getDescription(), id.getType());
+                return id.withTags(Tags.concat(tags, id.getTagsAsIterable()));
             }
         };
     }
@@ -75,13 +73,13 @@ public interface MeterFilter {
                     return id;
 
                 List<Tag> tags = new ArrayList<>();
-                for (Tag tag : id.getTags()) {
+                for (Tag tag : id.getTagsAsIterable()) {
                     if (tag.getKey().equals(fromTagKey))
                         tags.add(Tag.of(toTagKey, tag.getValue()));
                     else tags.add(tag);
                 }
 
-                return new Meter.Id(id.getName(), tags, id.getBaseUnit(), id.getDescription(), id.getType());
+                return id.replaceTags(tags);
             }
         };
     }
@@ -96,16 +94,16 @@ public interface MeterFilter {
         return new MeterFilter() {
             @Override
             public Meter.Id map(Meter.Id id) {
-                List<Tag> tags = stream(id.getTags().spliterator(), false)
+                List<Tag> tags = stream(id.getTagsAsIterable().spliterator(), false)
                         .filter(t -> {
                             for (String tagKey : tagKeys) {
                                 if (t.getKey().equals(tagKey))
                                     return false;
                             }
                             return true;
-                        }).collect(Collectors.toList());
+                        }).collect(toList());
 
-                return new Meter.Id(id.getName(), tags, id.getBaseUnit(), id.getDescription(), id.getType());
+                return id.replaceTags(tags);
             }
         };
     }
@@ -124,7 +122,7 @@ public interface MeterFilter {
         return new MeterFilter() {
             @Override
             public Meter.Id map(Meter.Id id) {
-                List<Tag> tags = stream(id.getTags().spliterator(), false)
+                List<Tag> tags = stream(id.getTagsAsIterable().spliterator(), false)
                         .map(t -> {
                             if (!t.getKey().equals(tagKey))
                                 return t;
@@ -134,9 +132,9 @@ public interface MeterFilter {
                             }
                             return Tag.of(tagKey, replacement.apply(t.getValue()));
                         })
-                        .collect(Collectors.toList());
+                        .collect(toList());
 
-                return new Meter.Id(id.getName(), tags, id.getBaseUnit(), id.getDescription(), id.getType());
+                return id.replaceTags(tags);
             }
         };
     }
@@ -249,7 +247,7 @@ public interface MeterFilter {
 
             @Override
             public MeterFilterReply accept(Meter.Id id) {
-                String value = getTagValue(id);
+                String value = matchNameAndGetTagValue(id);
                 if (value != null) {
                     if (!observedTagValues.contains(value)) {
                         if (observedTagValues.size() >= maximumTagValues) {
@@ -261,13 +259,14 @@ public interface MeterFilter {
                 return MeterFilterReply.NEUTRAL;
             }
 
-            private String getTagValue(Meter.Id id) {
-                return (id.getName().startsWith(meterNamePrefix) ? id.getTag(tagKey) : null);
+            @Nullable
+            private String matchNameAndGetTagValue(Meter.Id id) {
+                return id.getName().startsWith(meterNamePrefix) ? id.getTag(tagKey) : null;
             }
 
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
-                String value = getTagValue(id);
+                String value = matchNameAndGetTagValue(id);
                 if (value != null) {
                     if (!observedTagValues.contains(value)) {
                         if (observedTagValues.size() >= maximumTagValues) {

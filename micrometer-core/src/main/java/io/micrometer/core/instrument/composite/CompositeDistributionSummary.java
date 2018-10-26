@@ -67,7 +67,7 @@ class CompositeDistributionSummary extends AbstractCompositeMeter<DistributionSu
     @Override
     DistributionSummary registerNewMeter(MeterRegistry registry) {
         return DistributionSummary.builder(getId().getName())
-                .tags(getId().getTags())
+                .tags(getId().getTagsAsIterable())
                 .description(getId().getDescription())
                 .baseUnit(getId().getBaseUnit())
                 .publishPercentiles(distributionStatisticConfig.getPercentiles())

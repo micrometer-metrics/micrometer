@@ -15,56 +15,63 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
-import org.reactivestreams.Subscriber;
 
-import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class StatsdGaugeTest {
-
-
     private AtomicInteger value = new AtomicInteger(1);
-
-    private StatsdLineBuilder lineBuilder = mock(StatsdLineBuilder.class);
-
-    @SuppressWarnings("unchecked")
-    private Subscriber<String> subscriber = mock(Subscriber.class);
 
     @Test
     void shouldAlwaysPublishValue() {
-        StatsdGauge<?> alwaysPublishingGauge = gauge(true);
+        AtomicInteger lines = new AtomicInteger(0);
+        MeterRegistry registry = StatsdMeterRegistry.builder(StatsdConfig.DEFAULT)
+                .lineSink(l -> lines.incrementAndGet())
+                .build();
+
+        StatsdGauge<?> alwaysPublishingGauge = (StatsdGauge<?>) Gauge
+                .builder("test", value, AtomicInteger::get).register(registry);
 
         alwaysPublishingGauge.poll();
         alwaysPublishingGauge.poll();
 
-        verify(subscriber, times(2)).onNext(any());
+        assertThat(lines.get()).isEqualTo(2);
     }
 
     @Test
-    void shouldOnlyPublishValue_WhenValueChanges() {
-        StatsdGauge<?> gaugePublishingOnChange = gauge(false);
+    void shouldOnlyPublishValueWhenValueChanges() {
+        AtomicInteger lines = new AtomicInteger(0);
+        MeterRegistry registry = StatsdMeterRegistry
+                .builder(new StatsdConfig() {
+                    @Override
+                    public String get(String key) {
+                        return null;
+                    }
+
+                    @Override
+                    public boolean publishUnchangedMeters() {
+                        return false;
+                    }
+                })
+                .lineSink(l -> lines.incrementAndGet())
+                .build();
+
+        StatsdGauge<?> gaugePublishingOnChange = (StatsdGauge<?>) Gauge
+                .builder("test", value, AtomicInteger::get).register(registry);
 
         gaugePublishingOnChange.poll();
         gaugePublishingOnChange.poll();
 
-        verify(subscriber, times(1)).onNext(any());
+        assertThat(lines.get()).isEqualTo(1);
 
         //update value and expect the publisher to be called again
         value.incrementAndGet();
         gaugePublishingOnChange.poll();
 
-
-        verify(subscriber, times(2)).onNext(any());
+        assertThat(lines.get()).isEqualTo(2);
     }
-
-
-    private StatsdGauge<?> gauge(boolean alwaysPublish) {
-        Meter.Id meterId = new Meter.Id("test", Collections.emptyList(), null, null, Meter.Type.GAUGE);
-        return new StatsdGauge<>(meterId, lineBuilder, subscriber, value, AtomicInteger::get, alwaysPublish);
-    }
-
 }

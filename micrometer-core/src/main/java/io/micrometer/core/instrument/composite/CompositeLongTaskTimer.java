@@ -85,7 +85,7 @@ class CompositeLongTaskTimer extends AbstractCompositeMeter<LongTaskTimer> imple
     @Override
     LongTaskTimer registerNewMeter(MeterRegistry registry) {
         return LongTaskTimer.builder(getId().getName())
-                .tags(getId().getTags())
+                .tags(getId().getTagsAsIterable())
                 .description(getId().getDescription())
                 .register(registry);
     }

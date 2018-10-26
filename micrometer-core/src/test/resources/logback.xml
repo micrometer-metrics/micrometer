@@ -31,5 +31,16 @@
 
     <logger name="org.apache.kafka" level="warn"/>
 
+    <logger name="org.apache.catalina" level="warn"/>
+    <logger name="org.apache.tomcat" level="warn"/>
+    <logger name="org.apache.coyote" level="warn"/>
+
+    <!-- WireMock related logging -->
+    <logger name="/" level="warn"/>
+    <logger name="WireMock" level="warn"/>
+    <logger name="ru.lanwen.wiremock" level="warn"/>
+
+    <logger name="org.springframework" level="warn"/>
+
     <logger name="org.eclipse.jetty" level="error"/>
 </configuration>

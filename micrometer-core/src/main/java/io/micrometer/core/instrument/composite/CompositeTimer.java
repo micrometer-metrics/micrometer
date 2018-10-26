@@ -117,7 +117,7 @@ class CompositeTimer extends AbstractCompositeMeter<Timer> implements Timer {
     @Override
     Timer registerNewMeter(MeterRegistry registry) {
         Timer.Builder builder = Timer.builder(getId().getName())
-                .tags(getId().getTags())
+                .tags(getId().getTagsAsIterable())
                 .description(getId().getDescription())
                 .maximumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMaximumExpectedValue()))
                 .minimumExpectedValue(Duration.ofNanos(distributionStatisticConfig.getMinimumExpectedValue()))

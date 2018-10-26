@@ -38,7 +38,6 @@ public class PrometheusRenameFilter implements MeterFilter {
     @Override
     public Meter.Id map(Meter.Id id) {
         String convertedName = MICROMETER_TO_PROMETHEUS_NAMES.get(id.getName());
-        return convertedName == null ? id :
-                new Meter.Id(convertedName, id.getTags(), id.getBaseUnit(), id.getDescription(), id.getType());
+        return convertedName == null ? id : id.withName(convertedName);
     }
 }

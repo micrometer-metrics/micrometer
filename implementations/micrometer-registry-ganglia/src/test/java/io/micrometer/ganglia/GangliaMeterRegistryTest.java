@@ -17,7 +17,6 @@ package io.micrometer.ganglia;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Tags;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,19 +27,17 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class GangliaMeterRegistryTest {
-
     private final GangliaMeterRegistry registry = new GangliaMeterRegistry(GangliaConfig.DEFAULT, Clock.SYSTEM);
 
     @Test
     void getMetricNameWhenSuffixIsNullShouldNotAppendSuffix() {
-        Meter.Id id = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.COUNTER);
+        Meter.Id id = registry.counter("name").getId();
         assertThat(registry.getMetricName(id, null)).isEqualTo("name");
     }
 
     @Test
     void getMetricNameWhenSuffixIsNotNullShouldAppendSuffix() {
-        Meter.Id id = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.COUNTER);
+        Meter.Id id = registry.counter("name").getId();
         assertThat(registry.getMetricName(id, "suffix")).isEqualTo("nameSuffix");
     }
-
 }

@@ -19,9 +19,7 @@ import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
 import io.micrometer.core.lang.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 
@@ -79,7 +77,7 @@ public interface Gauge extends Meter {
     class Builder<T> {
         private final String name;
         private final ToDoubleFunction<T> f;
-        private final List<Tag> tags = new ArrayList<>();
+        private Tags tags = Tags.empty();
         private boolean strongReference = false;
 
         @Nullable
@@ -109,21 +107,21 @@ public interface Gauge extends Meter {
         }
 
         /**
-         * @param tags Tags to add to the eventual meter.
-         * @return The gauge builder with added tags.
+         * @param tags Tags to add to the eventual counter.
+         * @return The counter builder with added tags.
          */
         public Builder<T> tags(Iterable<Tag> tags) {
-            tags.forEach(this.tags::add);
+            this.tags = this.tags.and(tags);
             return this;
         }
 
         /**
          * @param key   The tag key.
          * @param value The tag value.
-         * @return The gauge builder with a single added tag.
+         * @return The counter builder with a single added tag.
          */
         public Builder<T> tag(String key, String value) {
-            tags.add(Tag.of(key, value));
+            this.tags = tags.and(key, value);
             return this;
         }
 

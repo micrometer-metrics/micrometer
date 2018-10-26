@@ -60,7 +60,7 @@ class CompositeTimeGauge<T> extends AbstractCompositeMeter<TimeGauge> implements
         }
 
         return TimeGauge.builder(getId().getName(), obj, fUnit, f)
-            .tags(getId().getTags())
+            .tags(getId().getTagsAsIterable())
             .description(getId().getDescription())
             .register(registry);
     }

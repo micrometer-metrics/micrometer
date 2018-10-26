@@ -17,9 +17,7 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.lang.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
@@ -79,7 +77,7 @@ public interface FunctionTimer extends Meter {
         private final ToLongFunction<T> countFunction;
         private final ToDoubleFunction<T> totalTimeFunction;
         private final TimeUnit totalTimeFunctionUnit;
-        private final List<Tag> tags = new ArrayList<>();
+        private Tags tags = Tags.empty();
 
         @Nullable
         private final T obj;
@@ -107,21 +105,21 @@ public interface FunctionTimer extends Meter {
         }
 
         /**
-         * @param tags Tags to add to the eventual meter.
-         * @return The function timer builder with added tags.
+         * @param tags Tags to add to the eventual counter.
+         * @return The counter builder with added tags.
          */
         public Builder<T> tags(Iterable<Tag> tags) {
-            tags.forEach(this.tags::add);
+            this.tags = this.tags.and(tags);
             return this;
         }
 
         /**
          * @param key   The tag key.
          * @param value The tag value.
-         * @return The function timer builder with a single added tag.
+         * @return The counter builder with a single added tag.
          */
         public Builder<T> tag(String key, String value) {
-            tags.add(Tag.of(key, value));
+            this.tags = tags.and(key, value);
             return this;
         }
 

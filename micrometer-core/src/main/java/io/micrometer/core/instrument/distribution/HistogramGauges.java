@@ -45,20 +45,20 @@ public class HistogramGauges {
         Meter.Id id = timer.getId();
         return HistogramGauges.register(timer, registry,
                 percentile -> id.getName() + ".percentile",
-                percentile -> Tags.concat(id.getTags(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
+                percentile -> Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
                 percentile -> percentile.value(timer.baseTimeUnit()),
                 bucket -> id.getName() + ".histogram",
-                bucket -> Tags.concat(id.getTags(), "le", DoubleFormat.decimalOrWhole(bucket.bucket(timer.baseTimeUnit()))));
+                bucket -> Tags.concat(id.getTagsAsIterable(), "le", DoubleFormat.decimalOrWhole(bucket.bucket(timer.baseTimeUnit()))));
     }
 
     public static HistogramGauges registerWithCommonFormat(DistributionSummary summary, MeterRegistry registry) {
         Meter.Id id = summary.getId();
         return HistogramGauges.register(summary, registry,
                 percentile -> id.getName() + ".percentile",
-                percentile -> Tags.concat(id.getTags(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
+                percentile -> Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
                 ValueAtPercentile::value,
                 bucket -> id.getName() + ".histogram",
-                bucket -> Tags.concat(id.getTags(), "le", DoubleFormat.decimalOrWhole(bucket.bucket())));
+                bucket -> Tags.concat(id.getTagsAsIterable(), "le", DoubleFormat.decimalOrWhole(bucket.bucket())));
     }
 
     public static HistogramGauges register(HistogramSupport meter, MeterRegistry registry,

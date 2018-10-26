@@ -44,7 +44,6 @@ public final class RequiredSearch {
     Predicate<String> nameMatches;
 
 
-
     private RequiredSearch(MeterRegistry registry) {
         this.registry = registry;
     }
@@ -189,9 +188,9 @@ public final class RequiredSearch {
 
     private <M extends Meter> M findOne(Class<M> clazz) {
         Optional<M> meter = meterStream()
-            .filter(clazz::isInstance)
-            .findAny()
-            .map(clazz::cast);
+                .filter(clazz::isInstance)
+                .findAny()
+                .map(clazz::cast);
 
         if (meter.isPresent()) {
             return meter.get();
@@ -236,11 +235,11 @@ public final class RequiredSearch {
                 boolean requiredKeysPresent = true;
                 if (!requiredTagKeys.isEmpty()) {
                     final List<String> tagKeys = new ArrayList<>();
-                    m.getId().getTags().forEach(t -> tagKeys.add(t.getKey()));
+                    m.getId().getTagsAsIterable().forEach(t -> tagKeys.add(t.getKey()));
                     requiredKeysPresent = tagKeys.containsAll(requiredTagKeys);
                 }
 
-                return m.getId().getTags().containsAll(requiredTags) && requiredKeysPresent;
+                return requiredKeysPresent && m.getId().getTags().containsAll(requiredTags);
             });
         }
 

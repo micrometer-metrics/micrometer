@@ -20,13 +20,16 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
 import io.micrometer.core.lang.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static java.util.Collections.singletonList;
-import static java.util.stream.StreamSupport.stream;
 
 /**
  * A named and dimensioned producer of one or more measurements.
@@ -178,7 +181,7 @@ public interface Meter extends AutoCloseable {
      */
     class Id {
         private final String name;
-        private final List<Tag> tags;
+        private final Tags tags;
         private final Type type;
 
         @Nullable
@@ -191,22 +194,17 @@ public interface Meter extends AutoCloseable {
         private final String baseUnit;
 
         @Incubating(since = "1.1.0")
-        public Id(String name, Iterable<Tag> tags, @Nullable String baseUnit, @Nullable String description, Type type,
+        Id(String name, Tags tags, @Nullable String baseUnit, @Nullable String description, Type type,
                   @Nullable Meter.Id syntheticAssociation) {
             this.name = name;
-
-            this.tags = Collections.unmodifiableList(stream(tags.spliterator(), false)
-                    .sorted(Comparator.comparing(Tag::getKey))
-                    .distinct()
-                    .collect(Collectors.toList()));
-
+            this.tags = tags;
             this.baseUnit = baseUnit;
             this.description = description;
             this.type = type;
             this.syntheticAssociation = syntheticAssociation;
         }
 
-        public Id(String name, Iterable<Tag> tags, @Nullable String baseUnit, @Nullable String description, Type type) {
+        Id(String name, Tags tags, @Nullable String baseUnit, @Nullable String description, Type type) {
             this(name, tags, baseUnit, description, type, null);
         }
 
@@ -225,7 +223,7 @@ public interface Meter extends AutoCloseable {
          * the tag value.
          *
          * @param tag The tag to add.
-         * @return A new id with the provided tag. The source id remains unchanged.
+         * @return A new id with the provided tag added. The source id remains unchanged.
          */
         public Id withTag(Tag tag) {
             return withTags(singletonList(tag));
@@ -235,14 +233,24 @@ public interface Meter extends AutoCloseable {
          * Generate a new id with an additional tag. If the key of the provided tag already exists, this overwrites
          * the tag value.
          *
-         * @param tag The tag to add.
-         * @return A new id with the provided tag. The source id remains unchanged.
+         * @param tags The tag to add.
+         * @return A new id with the provided tags added. The source id remains unchanged.
          * @since 1.1.0
          */
-        public Id withTags(Iterable<Tag> tag) {
-            return new Id(name, Tags.concat(tags, tag), baseUnit, description, type);
+        public Id withTags(Iterable<Tag> tags) {
+            return new Id(name, Tags.concat(getTags(), tags), baseUnit, description, type);
         }
 
+        /**
+         * Generate a new id replacing all tags with new ones.
+         *
+         * @param tags The tag to add.
+         * @return A new id with the only the provided tags. The source id remains unchanged.
+         * @since 1.1.0
+         */
+        public Id replaceTags(Iterable<Tag> tags) {
+            return new Id(name, Tags.of(tags), baseUnit, description, type);
+        }
 
         /**
          * Generate a new id with an additional tag with a tag key of "statistic". If the "statistic" tag already exists,
@@ -276,6 +284,12 @@ public interface Meter extends AutoCloseable {
          * @return A set of dimensions that allows you to break down the name.
          */
         public List<Tag> getTags() {
+            List<Tag> tags = new ArrayList<>();
+            this.tags.forEach(tags::add);
+            return Collections.unmodifiableList(tags);
+        }
+
+        public Iterable<Tag> getTagsAsIterable() {
             return tags;
         }
 
@@ -315,7 +329,7 @@ public interface Meter extends AutoCloseable {
          * @return A list of tags that have been stylized to a particular monitoring system's expectations.
          */
         public List<Tag> getConventionTags(NamingConvention namingConvention) {
-            return tags.stream()
+            return StreamSupport.stream(tags.spliterator(), false)
                     .map(t -> Tag.of(namingConvention.tagKey(t.getKey()), namingConvention.tagValue(t.getValue())))
                     .collect(Collectors.toList());
         }
@@ -347,7 +361,9 @@ public interface Meter extends AutoCloseable {
 
         @Override
         public int hashCode() {
-            return Objects.hash(name, tags);
+            int result = name.hashCode();
+            result = 31 * result + tags.hashCode();
+            return result;
         }
 
         /**
@@ -384,7 +400,7 @@ public interface Meter extends AutoCloseable {
         private final String name;
         private final Type type;
         private final Iterable<Measurement> measurements;
-        private final List<Tag> tags = new ArrayList<>();
+        private Tags tags = Tags.empty();
 
         @Nullable
         private String description;
@@ -411,7 +427,7 @@ public interface Meter extends AutoCloseable {
          * @return The custom meter builder with added tags.
          */
         public Builder tags(Iterable<Tag> tags) {
-            tags.forEach(this.tags::add);
+            this.tags = this.tags.and(tags);
             return this;
         }
 
@@ -421,7 +437,7 @@ public interface Meter extends AutoCloseable {
          * @return The custom meter builder with a single added tag.
          */
         public Builder tag(String key, String value) {
-            tags.add(Tag.of(key, value));
+            this.tags = tags.and(key, value);
             return this;
         }
 

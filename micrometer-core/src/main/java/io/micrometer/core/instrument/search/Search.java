@@ -206,7 +206,7 @@ public final class Search {
                     requiredKeysPresent = tagKeys.containsAll(requiredTagKeys);
                 }
 
-                return m.getId().getTags().containsAll(tags) && requiredKeysPresent;
+                return requiredKeysPresent && m.getId().getTags().containsAll(tags);
             });
         }
 

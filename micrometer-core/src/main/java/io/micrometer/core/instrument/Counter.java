@@ -17,9 +17,7 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.lang.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * Counters monitor monotonically increasing values. Counters may never be reset to a lesser value. If you
@@ -61,7 +59,7 @@ public interface Counter extends Meter {
      */
     class Builder {
         private final String name;
-        private final List<Tag> tags = new ArrayList<>();
+        private Tags tags = Tags.empty();
 
         @Nullable
         private String description;
@@ -86,7 +84,7 @@ public interface Counter extends Meter {
          * @return The counter builder with added tags.
          */
         public Builder tags(Iterable<Tag> tags) {
-            tags.forEach(this.tags::add);
+            this.tags = this.tags.and(tags);
             return this;
         }
 
@@ -96,7 +94,7 @@ public interface Counter extends Meter {
          * @return The counter builder with a single added tag.
          */
         public Builder tag(String key, String value) {
-            tags.add(Tag.of(key, value));
+            this.tags = tags.and(key, value);
             return this;
         }
 

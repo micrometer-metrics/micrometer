@@ -16,12 +16,14 @@
 package io.micrometer.core.samples.utils;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 // Run: git update-index --assume-unchanged **/SampleConfig.java
 // If you legitimately need to change this file, you can undo this with: git update-index --no-assume-unchanged **/SampleConfig.java
 public class SampleConfig {
     public static MeterRegistry myMonitoringSystem() {
         // Pick a monitoring system here to use in your samples.
-        return SampleRegistries.prometheus();
+//        return SampleRegistries.prometheus();
+        return new SimpleMeterRegistry();
     }
 }

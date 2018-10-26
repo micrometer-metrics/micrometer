@@ -22,9 +22,7 @@ import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.lang.Nullable;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -117,7 +115,7 @@ public interface DistributionSummary extends Meter, HistogramSupport {
      */
     class Builder {
         private final String name;
-        private final List<Tag> tags = new ArrayList<>();
+        private Tags tags = Tags.empty();
         private DistributionStatisticConfig.Builder distributionConfigBuilder = DistributionStatisticConfig.builder();
 
         @Nullable
@@ -141,24 +139,23 @@ public interface DistributionSummary extends Meter, HistogramSupport {
         }
 
         /**
-         * @param tags Tags to add to the eventual distribution summary.
-         * @return The distribution summary builder with added tags.
+         * @param tags Tags to add to the eventual counter.
+         * @return The counter builder with added tags.
          */
         public Builder tags(Iterable<Tag> tags) {
-            tags.forEach(this.tags::add);
+            this.tags = this.tags.and(tags);
             return this;
         }
 
         /**
          * @param key   The tag key.
          * @param value The tag value.
-         * @return The distribution summary builder with a single added tag.
+         * @return The counter builder with a single added tag.
          */
         public Builder tag(String key, String value) {
-            tags.add(Tag.of(key, value));
+            this.tags = tags.and(key, value);
             return this;
         }
-
         /**
          * @param description Description text of the eventual distribution summary.
          * @return The distribution summary builder with added description.
