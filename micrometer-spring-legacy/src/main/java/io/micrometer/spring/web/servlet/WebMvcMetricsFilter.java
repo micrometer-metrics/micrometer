@@ -21,8 +21,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.spring.TimedUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
 public class WebMvcMetricsFilter extends OncePerRequestFilter {
     private static final String TIMING_SAMPLE = "micrometer.timingSample";
 
-    private final Logger logger = LoggerFactory.getLogger(WebMvcMetricsFilter.class);
+    private static final Log logger = LogFactory.getLog(WebMvcMetricsFilter.class);
 
     private final MeterRegistry registry;
     private final WebMvcTagsProvider tagsProvider;
