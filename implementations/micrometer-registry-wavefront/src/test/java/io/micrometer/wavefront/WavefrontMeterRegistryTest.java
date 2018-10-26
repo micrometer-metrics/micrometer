@@ -57,10 +57,11 @@ class WavefrontMeterRegistryTest {
     }
 
     @Test
-    void addMetricWhenNanShouldNotAdd() {
+    void addMetricWhenNanOrInfinityShouldNotAdd() {
         Stream.Builder<String> metricsStreamBuilder = Stream.builder();
         Meter.Id id = registry.counter("name").getId();
         registry.addMetric(metricsStreamBuilder, id, null, System.currentTimeMillis(), Double.NaN);
+        registry.addMetric(metricsStreamBuilder, id, null, System.currentTimeMillis(), Double.POSITIVE_INFINITY);
         assertThat(metricsStreamBuilder.build().count()).isEqualTo(0);
     }
 }

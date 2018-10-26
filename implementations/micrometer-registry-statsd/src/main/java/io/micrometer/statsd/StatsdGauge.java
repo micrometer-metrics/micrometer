@@ -53,10 +53,7 @@ public class StatsdGauge<T> extends AbstractMeter implements Gauge, StatsdPollab
     @Override
     public void poll() {
         double val = value();
-        if (val == Double.NaN) {
-            val = 0;
-        }
-        if (!shutdown && (alwaysPublish || lastValue.getAndSet(val) != val)) {
+        if (!shutdown && !Double.isNaN(val) && !Double.isInfinite(val) && (alwaysPublish || lastValue.getAndSet(val) != val)) {
             subscriber.onNext(lineBuilder.gauge(val));
         }
     }

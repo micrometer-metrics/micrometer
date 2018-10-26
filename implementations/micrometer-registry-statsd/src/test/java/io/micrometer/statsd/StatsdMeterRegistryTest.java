@@ -375,6 +375,29 @@ class StatsdMeterRegistryTest {
     }
 
     @Test
+    @Issue("#778")
+    void doNotPublishNanOrInfiniteGaugeValues() {
+        AtomicInteger lineCount = new AtomicInteger(0);
+        MeterRegistry registry = StatsdMeterRegistry.builder(StatsdConfig.DEFAULT)
+                .lineSink(l -> lineCount.incrementAndGet())
+                .build();
+
+        AtomicReference<Double> value = new AtomicReference<>(1.0);
+        StatsdGauge<?> gauge = (StatsdGauge<?>) Gauge.builder("my.gauge", value, AtomicReference::get).register(registry);
+
+        gauge.poll();
+        assertThat(lineCount.get()).isEqualTo(1);
+
+        value.set(Double.NaN);
+        gauge.poll();
+        assertThat(lineCount.get()).isEqualTo(1);
+
+        value.set(Double.POSITIVE_INFINITY);
+        gauge.poll();
+        assertThat(lineCount.get()).isEqualTo(1);
+    }
+
+    @Test
     void stopTrackingMetersThatAreRemoved() {
         Map<String, Integer> lines = new HashMap<>();
 

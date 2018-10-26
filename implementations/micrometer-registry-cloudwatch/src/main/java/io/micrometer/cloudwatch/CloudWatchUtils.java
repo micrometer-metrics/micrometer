@@ -40,11 +40,11 @@ final class CloudWatchUtils {
      * {@link com.amazonaws.services.cloudwatch.model.MetricDatum#setValue(Double)}
      *
      * @param value unsanitized value
-     * @return value clamped to allowable range, 0, or NaN
+     * @return value clamped to allowable range
      */
     static double clampMetricValue(double value) {
         // Leave as is and let the SDK reject it
-        if (Double.isNaN(value)) {
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
             return value;
         }
         double magnitude = Math.abs(value);
