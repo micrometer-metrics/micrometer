@@ -23,6 +23,7 @@ import io.micrometer.core.lang.Nullable;
 import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
 
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class SysdigStatsdLineBuilder extends FlavorStatsdLineBuilder {
@@ -36,6 +37,8 @@ public class SysdigStatsdLineBuilder extends FlavorStatsdLineBuilder {
     @SuppressWarnings("NullableProblems")
     private volatile String tagsNoStat;
     private volatile PMap<Statistic, String> tags = HashTreePMap.empty();
+
+    private static final Pattern NAME_WHITELIST = Pattern.compile("[^\\w._]");
 
     public SysdigStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config) {
         super(id, config);
@@ -51,34 +54,19 @@ public class SysdigStatsdLineBuilder extends FlavorStatsdLineBuilder {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
             this.namingConvention = next;
-            this.name = sanitizeCharacters(next.name(id.getName(), id.getType(), id.getBaseUnit()));
+            this.name = sanitize(next.name(id.getName(), id.getType(), id.getBaseUnit()));
             this.tags = HashTreePMap.empty();
             this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
                     id.getConventionTags(this.namingConvention).stream()
-                            .map(t -> sanitizeCharacters(t.getKey()) + "=" + sanitizeCharacters(t.getValue()))
+                            .map(t -> sanitize(t.getKey()) + "=" + sanitize(t.getValue()))
                             .collect(Collectors.joining(","))
                     : null;
             this.tagsNoStat = tags(null, conventionTags, "=", "#");
         }
     }
 
-    private String sanitizeCharacters(String toSanitize) {
-        if (toSanitize == null || toSanitize.isEmpty()) {
-            return toSanitize;
-        }
-        char[] strArr = toSanitize.toCharArray();
-        char[] newArr = new char[strArr.length];
-        for (int x = 0; x < strArr.length; x++) {
-            Character c = strArr[x];
-            if (!Character.isAlphabetic(c) && !Character.isDigit(c) && c != '_' && c != '.') {
-                newArr[x] = '_';
-            } else {
-                newArr[x] = c;
-            }
-
-        }
-        String sanitized = String.valueOf(newArr);
-        return sanitized;
+    private static String sanitize(String name) {
+        return NAME_WHITELIST.matcher(name).replaceAll("_");
     }
 
     private String tagsByStatistic(@Nullable Statistic stat) {
