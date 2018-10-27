@@ -27,6 +27,8 @@ import io.micrometer.azuremonitor.AzureMonitorConfig;
 import io.micrometer.azuremonitor.AzureMonitorMeterRegistry;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
+import io.micrometer.core.instrument.logging.LoggingRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.datadog.DatadogConfig;
 import io.micrometer.datadog.DatadogMeterRegistry;
@@ -497,5 +499,19 @@ public class SampleRegistries {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public static LoggingMeterRegistry logging() {
+        return new LoggingMeterRegistry(new LoggingRegistryConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+        }, Clock.SYSTEM);
     }
 }
