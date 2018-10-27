@@ -43,7 +43,7 @@ import org.springframework.context.annotation.Import;
 @AutoConfigureAfter(MetricsAutoConfiguration.class)
 @ConditionalOnBean(Clock.class)
 @ConditionalOnClass(LoggingMeterRegistry.class)
-@ConditionalOnProperty(prefix = "management.metrics.export.logging", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "management.metrics.export.logging", name = "enabled", havingValue = "true", matchIfMissing = false)
 @EnableConfigurationProperties(LoggingRegistryProperties.class)
 @Import(StringToDurationConverter.class)
 public class LoggingMetricsExportAutoConfiguration {
