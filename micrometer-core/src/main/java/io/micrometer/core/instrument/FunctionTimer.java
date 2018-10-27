@@ -105,8 +105,8 @@ public interface FunctionTimer extends Meter {
         }
 
         /**
-         * @param tags Tags to add to the eventual counter.
-         * @return The counter builder with added tags.
+         * @param tags Tags to add to the eventual function timer.
+         * @return The function timer builder with added tags.
          */
         public Builder<T> tags(Iterable<Tag> tags) {
             this.tags = this.tags.and(tags);
@@ -116,7 +116,7 @@ public interface FunctionTimer extends Meter {
         /**
          * @param key   The tag key.
          * @param value The tag value.
-         * @return The counter builder with a single added tag.
+         * @return The function timer builder with a single added tag.
          */
         public Builder<T> tag(String key, String value) {
             this.tags = tags.and(key, value);

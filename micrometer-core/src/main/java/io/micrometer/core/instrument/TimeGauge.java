@@ -71,15 +71,15 @@ public interface TimeGauge extends Gauge {
 
         /**
          * @param tags Must be an even number of arguments representing key/value pairs of tags.
-         * @return This builder.
+         * @return This time gauge builder.
          */
         public Builder<T> tags(String... tags) {
             return tags(Tags.of(tags));
         }
 
         /**
-         * @param tags Tags to add to the eventual counter.
-         * @return The counter builder with added tags.
+         * @param tags Tags to add to the eventual time gauge.
+         * @return The time gauge builder with added tags.
          */
         public Builder<T> tags(Iterable<Tag> tags) {
             this.tags = this.tags.and(tags);
@@ -89,7 +89,7 @@ public interface TimeGauge extends Gauge {
         /**
          * @param key   The tag key.
          * @param value The tag value.
-         * @return The counter builder with a single added tag.
+         * @return The time gauge builder with a single added tag.
          */
         public Builder<T> tag(String key, String value) {
             this.tags = tags.and(key, value);
