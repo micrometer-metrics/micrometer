@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
 
+import static io.micrometer.core.instrument.util.DoubleFormat.decimal;
 import static io.micrometer.core.instrument.util.DoubleFormat.decimalOrWhole;
 import static java.util.stream.Collectors.joining;
 
@@ -97,14 +98,14 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                                 timer -> {
                                     HistogramSnapshot snapshot = timer.takeSnapshot();
                                     if (snapshot.count() == 0) return;
-                                    loggingSink.accept(print.id() + " throughput=" + print.rate(snapshot.count()) +
+                                    loggingSink.accept(print.id() + " throughput=" + print.unitlessRate(snapshot.count()) +
                                             " mean=" + print.time(snapshot.mean(getBaseTimeUnit())) +
                                             " max=" + print.time(snapshot.max(getBaseTimeUnit())));
                                 },
                                 summary -> {
                                     HistogramSnapshot snapshot = summary.takeSnapshot();
                                     if (snapshot.count() == 0) return;
-                                    loggingSink.accept(print.id() + " throughput=" + print.rate(snapshot.count()) +
+                                    loggingSink.accept(print.id() + " throughput=" + print.unitlessRate(snapshot.count()) +
                                             " mean=" + print.value(snapshot.mean()) +
                                             " max=" + print.value(snapshot.max()));
                                 },
@@ -168,6 +169,10 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
 
         String rate(double rate) {
             return humanReadableBaseUnit(rate / (double) config.step().getSeconds()) + "/s";
+        }
+
+        String unitlessRate(double rate) {
+            return decimal(rate / (double) config.step().getSeconds()) + "/s";
         }
 
         String value(double value) {
