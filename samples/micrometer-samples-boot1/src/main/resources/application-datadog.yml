@@ -17,3 +17,4 @@
 management.metrics.export.datadog:
   enabled: true
   apiKey: fake
+  step: PT10S
