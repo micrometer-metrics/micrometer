@@ -33,13 +33,14 @@ management.metrics.export:
   humio.enabled: false
   influx.enabled: false
   jmx.enabled: false
+  kairos.enabled: false
+  logging.enabled: false
   newrelic.enabled: false
   prometheus.enabled: false
-  statsd.enabled: false
   signalfx.enabled: false
   stackdriver.enabled: false
+  statsd.enabled: false
   wavefront.enabled: false
-  kairos.enabled: false
 security.ignored: /**
 
 endpoints.shutdown.enabled: true

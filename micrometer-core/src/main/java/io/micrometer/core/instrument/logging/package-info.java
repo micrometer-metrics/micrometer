@@ -15,7 +15,7 @@
  */
 @NonNullApi
 @NonNullFields
-package io.micrometer.core.instrument.log;
+package io.micrometer.core.instrument.logging;
 
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;

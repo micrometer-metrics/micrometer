@@ -50,5 +50,6 @@ class TimeUtilsTest {
         assertThat(TimeUtils.format(Duration.ofSeconds(10))).isEqualTo("10s");
         assertThat(TimeUtils.format(Duration.ofSeconds(90))).isEqualTo("1m 30s");
         assertThat(TimeUtils.format(Duration.ofMinutes(2))).isEqualTo("2m");
+        assertThat(TimeUtils.format(Duration.ofNanos(1001234000000L))).isEqualTo("16m 41.234s");
     }
 }
