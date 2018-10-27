@@ -37,8 +37,8 @@ import static java.util.Collections.emptyList;
  * <p>
  * Supported JVM implementations:
  * <ul>
- *     <li>HotSpot</li>
- *     <li>J9</li>
+ * <li>HotSpot</li>
+ * <li>J9</li>
  * </ul>
  *
  * @author Michael Weirauch
@@ -48,10 +48,12 @@ import static java.util.Collections.emptyList;
 @NonNullFields
 public class FileDescriptorMetrics implements MeterBinder {
 
-    /** List of public, exported interface class names from supported JVM implementations. */
+    /**
+     * List of public, exported interface class names from supported JVM implementations.
+     */
     private static final List<String> UNIX_OPERATING_SYSTEM_BEAN_CLASS_NAMES = Arrays.asList(
-        "com.sun.management.UnixOperatingSystemMXBean", // HotSpot
-        "com.ibm.lang.management.UnixOperatingSystemMXBean" // J9
+            "com.sun.management.UnixOperatingSystemMXBean", // HotSpot
+            "com.ibm.lang.management.UnixOperatingSystemMXBean" // J9
     );
 
     private final OperatingSystemMXBean osBean;
@@ -88,16 +90,18 @@ public class FileDescriptorMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         if (openFilesMethod != null) {
             Gauge.builder("process.files.open", osBean, x -> invoke(openFilesMethod))
-                .tags(tags)
-                .description("The open file descriptor count")
-                .register(registry);
+                    .tags(tags)
+                    .description("The open file descriptor count")
+                    .baseUnit("files")
+                    .register(registry);
         }
 
         if (maxFilesMethod != null) {
             Gauge.builder("process.files.max", osBean, x -> invoke(maxFilesMethod))
-                .tags(tags)
-                .description("The maximum file descriptor count")
-                .register(registry);
+                    .tags(tags)
+                    .description("The maximum file descriptor count")
+                    .baseUnit("files")
+                    .register(registry);
         }
     }
 

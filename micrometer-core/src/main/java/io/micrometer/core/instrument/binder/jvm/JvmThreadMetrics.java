@@ -53,25 +53,29 @@ public class JvmThreadMetrics implements MeterBinder {
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
 
         Gauge.builder("jvm.threads.peak", threadBean, ThreadMXBean::getPeakThreadCount)
-            .tags(tags)
-            .description("The peak live thread count since the Java virtual machine started or peak was reset")
-            .register(registry);
+                .tags(tags)
+                .description("The peak live thread count since the Java virtual machine started or peak was reset")
+                .baseUnit("threads")
+                .register(registry);
 
         Gauge.builder("jvm.threads.daemon", threadBean, ThreadMXBean::getDaemonThreadCount)
-            .tags(tags)
-            .description("The current number of live daemon threads")
-            .register(registry);
+                .tags(tags)
+                .description("The current number of live daemon threads")
+                .baseUnit("threads")
+                .register(registry);
 
         Gauge.builder("jvm.threads.live", threadBean, ThreadMXBean::getThreadCount)
-            .tags(tags)
-            .description("The current number of live threads including both daemon and non-daemon threads")
-            .register(registry);
+                .tags(tags)
+                .description("The current number of live threads including both daemon and non-daemon threads")
+                .baseUnit("threads")
+                .register(registry);
 
         for (Thread.State state : Thread.State.values()) {
             Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, state))
-                .tags(Tags.concat(tags, "state", getStateTagValue(state)))
-                .description("The current number of threads having " + state + " state")
-                .register(registry);
+                    .tags(Tags.concat(tags, "state", getStateTagValue(state)))
+                    .description("The current number of threads having " + state + " state")
+                    .baseUnit("threads")
+                    .register(registry);
         }
     }
 
