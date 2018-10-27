@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpClient;
 import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
@@ -28,7 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -44,12 +44,13 @@ import static java.util.stream.StreamSupport.stream;
  * @author Jon Schneider
  */
 public class NewRelicMeterRegistry extends StepMeterRegistry {
+    private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("new-relic-metrics-publisher");
     private final NewRelicConfig config;
     private final HttpClient httpClient;
     private final Logger logger = LoggerFactory.getLogger(NewRelicMeterRegistry.class);
 
     public NewRelicMeterRegistry(NewRelicConfig config, Clock clock) {
-        this(config, clock, Executors.defaultThreadFactory());
+        this(config, clock, DEFAULT_THREAD_FACTORY);
     }
 
     /**
@@ -214,7 +215,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         private final NewRelicConfig config;
 
         private Clock clock = Clock.SYSTEM;
-        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
         private HttpClient httpClient;
 
         public Builder(NewRelicConfig config) {

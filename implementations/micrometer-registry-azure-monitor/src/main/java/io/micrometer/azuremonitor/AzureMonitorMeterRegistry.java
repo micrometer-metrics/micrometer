@@ -22,13 +22,13 @@ import com.microsoft.applicationinsights.telemetry.SeverityLevel;
 import com.microsoft.applicationinsights.telemetry.TraceTelemetry;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -42,6 +42,7 @@ import static java.util.stream.StreamSupport.stream;
  * @author Jon Schneider
  */
 public class AzureMonitorMeterRegistry extends StepMeterRegistry {
+    private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("azure-metrics-publisher");
     private static final String SDKTELEMETRY_SYNTHETIC_SOURCENAME = "SDKTelemetry";
     private static final String SDK_VERSION = "java:micrometer";
 
@@ -50,7 +51,7 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     private final AzureMonitorConfig config;
 
     public AzureMonitorMeterRegistry(AzureMonitorConfig config, Clock clock) {
-        this(config, clock, TelemetryConfiguration.getActive(), Executors.defaultThreadFactory());
+        this(config, clock, TelemetryConfiguration.getActive(), DEFAULT_THREAD_FACTORY);
     }
 
     private AzureMonitorMeterRegistry(AzureMonitorConfig config, Clock clock,
@@ -214,7 +215,7 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
         private final AzureMonitorConfig config;
 
         private Clock clock = Clock.SYSTEM;
-        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
 
         @Nullable
         private TelemetryConfiguration telemetryConfiguration;

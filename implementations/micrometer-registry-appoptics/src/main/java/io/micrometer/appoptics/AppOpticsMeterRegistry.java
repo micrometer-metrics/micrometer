@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpClient;
 import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
@@ -29,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
@@ -44,13 +44,15 @@ import static java.util.stream.Collectors.joining;
  * @author Jon Schneider
  */
 public class AppOpticsMeterRegistry extends StepMeterRegistry {
+    private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("appoptics-metrics-publisher");
+
     private final Logger logger = LoggerFactory.getLogger(AppOpticsMeterRegistry.class);
 
     private final AppOpticsConfig config;
     private final HttpClient httpClient;
 
     public AppOpticsMeterRegistry(AppOpticsConfig config, Clock clock) {
-        this(config, clock, Executors.defaultThreadFactory(), new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
     }
 
     private AppOpticsMeterRegistry(AppOpticsConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
@@ -263,7 +265,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         private final AppOpticsConfig config;
 
         private Clock clock = Clock.SYSTEM;
-        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
         private HttpClient httpClient;
 
         Builder(AppOpticsConfig config) {

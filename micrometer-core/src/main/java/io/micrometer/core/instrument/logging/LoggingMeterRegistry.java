@@ -27,12 +27,12 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepDistributionSummary;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.step.StepTimer;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.Duration;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -55,7 +55,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
     }
 
     public LoggingMeterRegistry(LoggingRegistryConfig config, Clock clock) {
-        this(config, clock, Executors.defaultThreadFactory(), defaultLoggingSink());
+        this(config, clock, new NamedThreadFactory("logging-metrics-publisher"), defaultLoggingSink());
     }
 
     private LoggingMeterRegistry(LoggingRegistryConfig config, Clock clock, ThreadFactory threadFactory, Consumer<String> loggingSink) {
@@ -224,7 +224,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         private final LoggingRegistryConfig config;
 
         private Clock clock = Clock.SYSTEM;
-        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        private ThreadFactory threadFactory = new NamedThreadFactory("logging-metrics-publisher");
         private Consumer<String> loggingSink = defaultLoggingSink();
 
         Builder(LoggingRegistryConfig config) {

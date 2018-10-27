@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.samples.utils;
+package io.micrometer.core.instrument.util;
 
-import io.micrometer.core.instrument.MeterRegistry;
+import org.junit.jupiter.api.Test;
 
-// Run: git update-index --assume-unchanged **/SampleConfig.java
-// If you legitimately need to change this file, you can undo this with: git update-index --no-assume-unchanged **/SampleConfig.java
-public class SampleConfig {
-    public static MeterRegistry myMonitoringSystem() {
-        // Pick a monitoring system here to use in your samples.
-        return SampleRegistries.elastic();
+import static org.assertj.core.api.Assertions.assertThat;
+
+class NamedThreadFactoryTest {
+    @Test
+    void nameThreads() {
+        NamedThreadFactory threadFactory = new NamedThreadFactory("name");
+        Runnable body = () -> {
+        };
+
+        assertThat(threadFactory.newThread(body).getName()).isEqualTo("name");
+        assertThat(threadFactory.newThread(body).getName()).isEqualTo("name-2");
     }
 }

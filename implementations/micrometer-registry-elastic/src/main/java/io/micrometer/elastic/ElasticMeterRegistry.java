@@ -18,6 +18,7 @@ package io.micrometer.elastic;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpClient;
 import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
@@ -31,7 +32,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -43,6 +43,7 @@ import static java.util.stream.Collectors.joining;
  * @author Jon Schneider
  */
 public class ElasticMeterRegistry extends StepMeterRegistry {
+    private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("elastic-metrics-publisher");
     static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_INSTANT;
     private static final String ES_METRICS_TEMPLATE = "/_template/metrics_template";
     private static final String INDEX_LINE = "{ \"index\" : {} }\n";
@@ -55,7 +56,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     private boolean checkedForIndexTemplate = false;
 
     public ElasticMeterRegistry(ElasticConfig config, Clock clock) {
-        this(config, clock, Executors.defaultThreadFactory(),
+        this(config, clock, DEFAULT_THREAD_FACTORY,
                 new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
     }
 
@@ -267,7 +268,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         private final ElasticConfig config;
 
         private Clock clock = Clock.SYSTEM;
-        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
         private HttpClient httpClient;
 
         public Builder(ElasticConfig config) {

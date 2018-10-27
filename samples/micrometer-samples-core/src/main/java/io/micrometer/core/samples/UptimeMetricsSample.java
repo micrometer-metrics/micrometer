@@ -18,6 +18,9 @@ package io.micrometer.core.samples;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.system.UptimeMetrics;
 import io.micrometer.core.samples.utils.SampleConfig;
+import reactor.core.publisher.Flux;
+
+import java.time.Duration;
 
 /**
  * Sample to diagnose issue #243
@@ -27,5 +30,6 @@ public class UptimeMetricsSample {
         MeterRegistry registry = SampleConfig.myMonitoringSystem();
         registry.config().commonTags("instance", "sample-host");
         new UptimeMetrics().bindTo(registry);
+        Flux.interval(Duration.ofSeconds(1)).blockLast();
     }
 }

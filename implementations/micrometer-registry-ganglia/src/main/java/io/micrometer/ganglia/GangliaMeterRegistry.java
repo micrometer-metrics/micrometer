@@ -26,13 +26,13 @@ import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
  * @author Johnny Lim
  */
 public class GangliaMeterRegistry extends StepMeterRegistry {
+    private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("ganglia-metrics-publisher");
     private final Logger logger = LoggerFactory.getLogger(GangliaMeterRegistry.class);
     private final GangliaConfig config;
     private final HierarchicalNameMapper nameMapper;
@@ -53,7 +54,7 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
      * @param clock  The clock to use for timings.
      */
     public GangliaMeterRegistry(GangliaConfig config, Clock clock) {
-        this(config, clock, HierarchicalNameMapper.DEFAULT, Executors.defaultThreadFactory());
+        this(config, clock, HierarchicalNameMapper.DEFAULT, DEFAULT_THREAD_FACTORY);
     }
 
     /**
@@ -64,7 +65,7 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
      */
     @Deprecated
     public GangliaMeterRegistry(GangliaConfig config, Clock clock, HierarchicalNameMapper nameMapper) {
-        this(config, clock, nameMapper, Executors.defaultThreadFactory());
+        this(config, clock, nameMapper, DEFAULT_THREAD_FACTORY);
     }
 
     private GangliaMeterRegistry(GangliaConfig config, Clock clock, HierarchicalNameMapper nameMapper, ThreadFactory threadFactory) {
@@ -211,7 +212,7 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
         private final GangliaConfig config;
 
         private Clock clock = Clock.SYSTEM;
-        private ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
         private HierarchicalNameMapper nameMapper = HierarchicalNameMapper.DEFAULT;
 
         public Builder(GangliaConfig config) {
