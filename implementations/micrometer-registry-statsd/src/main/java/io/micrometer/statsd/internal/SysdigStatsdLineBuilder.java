@@ -51,15 +51,34 @@ public class SysdigStatsdLineBuilder extends FlavorStatsdLineBuilder {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
             this.namingConvention = next;
-            this.name = next.name(id.getName(), id.getType(), id.getBaseUnit()).replace(':', '_');
+            this.name = sanitizeCharacters(next.name(id.getName(), id.getType(), id.getBaseUnit()));
             this.tags = HashTreePMap.empty();
             this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
                     id.getConventionTags(this.namingConvention).stream()
-                            .map(t -> t.getKey().replace(':', '_') + "=" + t.getValue().replace(':', '_'))
+                            .map(t -> sanitizeCharacters(t.getKey()) + "=" + sanitizeCharacters(t.getValue()))
                             .collect(Collectors.joining(","))
                     : null;
             this.tagsNoStat = tags(null, conventionTags, "=", "#");
         }
+    }
+
+    private String sanitizeCharacters(String toSanitize) {
+        if (toSanitize == null || toSanitize.isEmpty()) {
+            return toSanitize;
+        }
+        char[] strArr = toSanitize.toCharArray();
+        char[] newArr = new char[strArr.length];
+        for (int x = 0; x < strArr.length; x++) {
+            Character c = strArr[x];
+            if (!Character.isAlphabetic(c) && !Character.isDigit(c) && c != '_' && c != '.') {
+                newArr[x] = '_';
+            } else {
+                newArr[x] = c;
+            }
+
+        }
+        String sanitized = String.valueOf(newArr);
+        return sanitized;
     }
 
     private String tagsByStatistic(@Nullable Statistic stat) {
