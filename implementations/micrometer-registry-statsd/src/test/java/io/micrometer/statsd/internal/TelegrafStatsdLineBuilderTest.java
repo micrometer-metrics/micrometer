@@ -32,10 +32,8 @@ class TelegrafStatsdLineBuilderTest {
     @Test
     void escapeCharactersForTelegraf() {
         Counter c = registry.counter("hikari.pools", "pool", "poolname = abc,::hikari");
-
         TelegrafStatsdLineBuilder lineBuilder = new TelegrafStatsdLineBuilder(c.getId(), registry.config());
-
-        assertThat(lineBuilder.count(1, Statistic.COUNT)).isEqualTo("hikari_pools,statistic=count,pool=poolname\\ \\=\\ abc\\,\\:\\:hikari:1|c");
+        assertThat(lineBuilder.count(1, Statistic.COUNT)).isEqualTo("hikari_pools,statistic=count,pool=poolname_=_abc___hikari:1|c");
     }
 
     @Test
@@ -57,6 +55,6 @@ class TelegrafStatsdLineBuilderTest {
         TelegrafStatsdLineBuilder lb = new TelegrafStatsdLineBuilder(c.getId(), registry.config());
 
         registry.config().namingConvention(NamingConvention.dot);
-        assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my\\:counter,statistic=count,my\\:tag=my\\:value:1|c");
+        assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("my_counter,statistic=count,my_tag=my_value:1|c");
     }
 }
