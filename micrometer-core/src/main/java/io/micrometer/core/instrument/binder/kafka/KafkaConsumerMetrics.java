@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
+import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
@@ -44,6 +45,7 @@ import static java.util.Collections.emptyList;
  * @link https://docs.confluent.io/current/kafka/monitoring.html
  * @since 1.1.0
  */
+@Incubating(since = "1.1.0")
 @NonNullApi
 @NonNullFields
 public class KafkaConsumerMetrics implements MeterBinder {
