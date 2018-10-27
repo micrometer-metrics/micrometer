@@ -24,5 +24,7 @@
 
         <!-- Whitespace -->
         <module name="com.puppycrawl.tools.checkstyle.checks.whitespace.WhitespaceAroundCheck" />
+
+        <module name="SuppressionCommentFilter"/>
     </module>
 </module>

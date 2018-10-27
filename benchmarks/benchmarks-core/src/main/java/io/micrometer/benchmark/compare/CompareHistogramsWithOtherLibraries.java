@@ -1,11 +1,28 @@
+/**
+ * Copyright 2018 Pivotal Software, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micrometer.benchmark.compare;
 
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SlidingTimeWindowReservoir;
 import com.codahale.metrics.UniformReservoir;
+//CHECKSTYLE:OFF
 import com.google.common.collect.Iterators;
 import com.google.common.primitives.Doubles;
+////CHECKSTYLE:ON
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
@@ -47,8 +64,8 @@ public class CompareHistogramsWithOtherLibraries {
         public void setup() {
             final Random r = new Random(1234567891L);
             dataIterator = Iterators.cycle(
-                Stream.generate(() -> Math.round(Math.exp(2.0 + r.nextGaussian()))).limit(1048576)
-                    .collect(Collectors.toList()));
+                    Stream.generate(() -> Math.round(Math.exp(2.0 + r.nextGaussian()))).limit(1048576)
+                            .collect(Collectors.toList()));
         }
     }
 
@@ -65,11 +82,11 @@ public class CompareHistogramsWithOtherLibraries {
             registry = new MetricRegistry();
             histogram = registry.histogram("histogram");
             histogramSlidingTimeWindow =
-                registry.register("slidingTimeWindowHistogram",
-                                  new Histogram(new SlidingTimeWindowReservoir(10, TimeUnit.SECONDS)));
+                    registry.register("slidingTimeWindowHistogram",
+                            new Histogram(new SlidingTimeWindowReservoir(10, TimeUnit.SECONDS)));
             histogramUniform =
-                registry.register("uniformHistogram",
-                                  new Histogram(new UniformReservoir()));
+                    registry.register("uniformHistogram",
+                            new Histogram(new UniformReservoir()));
         }
 
         @TearDown(Level.Iteration)
@@ -91,8 +108,8 @@ public class CompareHistogramsWithOtherLibraries {
             registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, new CollectorRegistry(),
                     Clock.SYSTEM);
             summary = DistributionSummary.builder("summary")
-                .publishPercentileHistogram()
-                .register(registry);
+                    .publishPercentileHistogram()
+                    .register(registry);
         }
 
         @TearDown(Level.Iteration)
@@ -127,11 +144,11 @@ public class CompareHistogramsWithOtherLibraries {
         @Setup(Level.Trial)
         public void setup() {
             double[] micrometerBuckets =
-                Doubles.toArray(PercentileHistogramBuckets.buckets(
-                    DistributionStatisticConfig.builder().minimumExpectedValue(0L).maximumExpectedValue(Long.MAX_VALUE)
-                        .percentilesHistogram(true).build()));
+                    Doubles.toArray(PercentileHistogramBuckets.buckets(
+                            DistributionStatisticConfig.builder().minimumExpectedValue(0L).maximumExpectedValue(Long.MAX_VALUE)
+                                    .percentilesHistogram(true).build()));
             histogram = io.prometheus.client.Histogram.build("histogram", "A histogram")
-                .buckets(micrometerBuckets).create();
+                    .buckets(micrometerBuckets).create();
         }
 
         @TearDown(Level.Iteration)
@@ -145,12 +162,12 @@ public class CompareHistogramsWithOtherLibraries {
         state.summary.record(1);
     }
 
-//    @Benchmark
+    //    @Benchmark
     public void micrometerHistogram(MicrometerState state, Data data) {
         state.summary.record(data.dataIterator.next());
     }
 
-//    @Benchmark
+    //    @Benchmark
     public void dropwizardHistogram(DropwizardState state, Data data) {
         state.histogram.update(data.dataIterator.next());
     }
@@ -161,20 +178,20 @@ public class CompareHistogramsWithOtherLibraries {
         state.histogramSlidingTimeWindow.update(data.dataIterator.next());
     }
 
-//    @Benchmark
+    //    @Benchmark
     public void dropwizardHistogramUniform(DropwizardState state, Data data) {
         state.histogramUniform.update(data.dataIterator.next());
     }
 
-//    @Benchmark
+    //    @Benchmark
     public void prometheusHistogram(PrometheusState state, Data data) {
         state.histogram.observe(data.dataIterator.next());
     }
 
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
-            .include(CompareHistogramsWithOtherLibraries.class.getSimpleName())
-            .build();
+                .include(CompareHistogramsWithOtherLibraries.class.getSimpleName())
+                .build();
         new Runner(opt).run();
     }
 }
