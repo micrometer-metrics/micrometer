@@ -88,7 +88,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     @Override
     public void start(ThreadFactory threadFactory) {
         if (config.enabled()) {
-            logger.info("Publishing metrics to dynatrace every " + TimeUtils.format(config.step()));
+            logger.info("publishing metrics to dynatrace every " + TimeUtils.format(config.step()));
         }
         super.start(threadFactory);
     }

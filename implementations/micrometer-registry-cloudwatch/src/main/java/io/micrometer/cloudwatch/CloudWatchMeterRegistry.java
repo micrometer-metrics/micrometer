@@ -65,7 +65,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     @Override
     public void start(ThreadFactory threadFactory) {
         if (config.enabled()) {
-            logger.info("Publishing metrics to cloudwatch every " + TimeUtils.format(config.step()));
+            logger.info("publishing metrics to cloudwatch every " + TimeUtils.format(config.step()));
         }
         super.start(threadFactory);
     }
@@ -89,7 +89,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
             @Override
             public void onSuccess(PutMetricDataRequest request, PutMetricDataResult result) {
-                logger.debug("Published metric with namespace:{}", request.getNamespace());
+                logger.debug("published metric with namespace:{}", request.getNamespace());
             }
         });
     }

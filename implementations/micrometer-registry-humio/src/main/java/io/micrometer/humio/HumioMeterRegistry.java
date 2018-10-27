@@ -77,7 +77,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
     @Override
     public void start(ThreadFactory threadFactory) {
         if (config.enabled()) {
-            logger.info("Publishing metrics to humio every " + TimeUtils.format(config.step()));
+            logger.info("publishing metrics to humio every " + TimeUtils.format(config.step()));
         }
         super.start(threadFactory);
     }

@@ -105,7 +105,7 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
     @Override
     public void start(ThreadFactory threadFactory) {
         if (config.enabled()) {
-            logger.info("Publishing metrics to ganglia every " + TimeUtils.format(config.step()));
+            logger.info("publishing metrics to ganglia every " + TimeUtils.format(config.step()));
         }
         super.start(threadFactory);
     }

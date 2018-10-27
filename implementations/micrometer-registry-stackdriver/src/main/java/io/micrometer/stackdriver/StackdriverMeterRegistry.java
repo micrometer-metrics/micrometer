@@ -106,7 +106,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             } else {
                 try {
                     this.client = MetricServiceClient.create(metricServiceSettings);
-                    logger.info("Publishing metrics to stackdriver every " + TimeUtils.format(config.step()));
+                    logger.info("publishing metrics to stackdriver every " + TimeUtils.format(config.step()));
                     super.start(threadFactory);
                 } catch (Exception e) {
                     logger.error("unable to create stackdriver client", e);

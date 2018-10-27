@@ -64,7 +64,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
     @Override
     public void start(ThreadFactory threadFactory) {
         if (config.enabled()) {
-            logger.info("Publishing metrics to kairos every " + TimeUtils.format(config.step()));
+            logger.info("publishing metrics to kairos every " + TimeUtils.format(config.step()));
         }
         super.start(threadFactory);
     }
