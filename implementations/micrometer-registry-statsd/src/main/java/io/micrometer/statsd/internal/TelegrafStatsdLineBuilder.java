@@ -24,13 +24,9 @@ import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
 
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
-
-    private static final Pattern PATTERN_SPECIAL_CHARACTERS = Pattern.compile("([, =:])");
-
     private static final AtomicReferenceFieldUpdater<TelegrafStatsdLineBuilder, NamingConvention> namingConventionUpdater =
             AtomicReferenceFieldUpdater.newUpdater(TelegrafStatsdLineBuilder.class, NamingConvention.class, "namingConvention");
     private final Object tagsLock = new Object();
@@ -51,7 +47,9 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
     @Override
     String line(String amount, @Nullable Statistic stat, String type) {
         updateIfNamingConventionChanged();
-        return name + tagsByStatistic(stat) + ":" + amount + "|" + type;
+        String line = name + tagsByStatistic(stat) + ":" + amount + "|" + type;
+        System.out.println(line);
+        return line;
     }
 
     private void updateIfNamingConventionChanged() {
@@ -94,7 +92,16 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
         }
     }
 
+    /**
+     * Backslash escape '=' works fine.
+     * <p>
+     * Trying to escape spaces and commas causes the rest of the name to be dropped by telegraf.
+     * Trying to escape colons doesn't work. All of these must be replaced.
+     */
+    // backslash escape =
+    // trying to escape spaces and comma drops everything after that
     private String telegrafEscape(String value) {
-        return PATTERN_SPECIAL_CHARACTERS.matcher(value).replaceAll("\\\\$1");
+        return value.replaceAll("=", "\\=")
+                .replaceAll("[\\s,:]", "_");
     }
 }
