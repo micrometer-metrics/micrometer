@@ -18,8 +18,12 @@ package io.micrometer.cloudwatch;
 import com.amazonaws.services.cloudwatch.model.MetricDatum;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tags;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -46,17 +50,19 @@ class CloudWatchMeterRegistryTest {
 
     @Test
     void metricData() {
-        registry.gauge("test", 1d);
-        Gauge gauge = registry.get("test").gauge();
-        Stream<MetricDatum> metricDatumStream = registry.metricData(gauge);
-        assertThat(metricDatumStream.count()).isEqualTo(1);
+        registry.gauge("gauge", 1d);
+        List<MetricDatum> metricDatumStream = registry.metricData();
+        assertThat(metricDatumStream.size()).isEqualTo(1);
     }
 
     @Test
     void metricDataWhenNaNShouldNotAdd() {
-        registry.gauge("test", Double.NaN);
-        Gauge gauge = registry.get("test").gauge();
-        Stream<MetricDatum> metricDatumStream = registry.metricData(gauge);
-        assertThat(metricDatumStream.count()).isEqualTo(0);
+        registry.gauge("gauge", Double.NaN);
+
+        AtomicReference<Double> value = new AtomicReference<>(Double.NaN);
+        registry.more().timeGauge("time.gauge", Tags.empty(), value, TimeUnit.MILLISECONDS, AtomicReference::get);
+
+        List<MetricDatum> metricDatumStream = registry.metricData();
+        assertThat(metricDatumStream.size()).isEqualTo(0);
     }
 }

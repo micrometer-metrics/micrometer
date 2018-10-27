@@ -94,107 +94,135 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         });
     }
 
-    private List<MetricDatum> metricData() {
+    //VisibleForTesting
+    List<MetricDatum> metricData() {
+        Batch batch = new Batch();
         return getMeters().stream().flatMap(m -> m.apply(
-                this::metricData,
-                this::metricData,
-                this::timerData,
-                this::summaryData,
-                this::metricData,
-                this::metricData,
-                this::metricData,
-                this::functionTimerData,
-                this::metricData)
+                batch::gaugeData,
+                batch::counterData,
+                batch::timerData,
+                batch::summaryData,
+                batch::longTaskTimerData,
+                batch::timeGaugeData,
+                batch::functionCounterData,
+                batch::functionTimerData,
+                batch::metricData)
         ).collect(toList());
     }
 
-    private Stream<MetricDatum> functionTimerData(FunctionTimer timer) {
-        long wallTime = clock.wallTime();
+    private class Batch {
+        private long wallTime = clock.wallTime();
 
-        // we can't know anything about max and percentiles originating from a function timer
-        return Stream.of(
-                metricDatum(timer.getId(), "count", wallTime, timer.count()),
-                metricDatum(timer.getId(), "avg", wallTime, timer.mean(getBaseTimeUnit())));
-    }
-
-    private Stream<MetricDatum> timerData(Timer timer) {
-        final long wallTime = clock.wallTime();
-        final Stream.Builder<MetricDatum> metrics = Stream.builder();
-
-        metrics.add(metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), wallTime, timer.totalTime(getBaseTimeUnit())));
-        metrics.add(metricDatum(timer.getId(), "count", "count", wallTime, timer.count()));
-        metrics.add(metricDatum(timer.getId(), "avg", getBaseTimeUnit().name(), wallTime, timer.mean(getBaseTimeUnit())));
-        metrics.add(metricDatum(timer.getId(), "max", getBaseTimeUnit().name(), wallTime, timer.max(getBaseTimeUnit())));
-
-        return metrics.build();
-    }
-
-    private Stream<MetricDatum> summaryData(DistributionSummary summary) {
-        final long wallTime = clock.wallTime();
-        final Stream.Builder<MetricDatum> metrics = Stream.builder();
-
-        metrics.add(metricDatum(summary.getId(), "sum", wallTime, summary.totalAmount()));
-        metrics.add(metricDatum(summary.getId(), "count", wallTime, summary.count()));
-        metrics.add(metricDatum(summary.getId(), "avg", wallTime, summary.mean()));
-        metrics.add(metricDatum(summary.getId(), "max", wallTime, summary.max()));
-
-        return metrics.build();
-    }
-
-    // VisibleForTesting
-    Stream<MetricDatum> metricData(Meter m) {
-        long wallTime = clock.wallTime();
-        return stream(m.measure().spliterator(), false)
-                .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), wallTime, ms.getValue()))
-                .filter(Objects::nonNull);
-    }
-
-    @Nullable
-    private MetricDatum metricDatum(Meter.Id id, long wallTime, double value) {
-        return metricDatum(id, null, null, wallTime, value);
-    }
-
-    @Nullable
-    private MetricDatum metricDatum(Meter.Id id, @Nullable String suffix, long wallTime, double value) {
-        return metricDatum(id, suffix, null, wallTime, value);
-    }
-
-    @Nullable
-    private MetricDatum metricDatum(Meter.Id id, @Nullable String suffix, @Nullable String unit, long wallTime, double value) {
-        if (Double.isNaN(value)) {
-            return null;
+        private Stream<MetricDatum> gaugeData(Gauge gauge) {
+            double value = gauge.value();
+            if (Double.isNaN(value) || Double.isInfinite(value))
+                return Stream.empty();
+            return Stream.of(metricDatum(gauge.getId(), "value", value));
         }
 
-        String metricName = config().namingConvention().name(id.getName() + "." + suffix, id.getType(), id.getBaseUnit());
-        List<Tag> tags = id.getConventionTags(config().namingConvention());
-        return new MetricDatum()
-                .withMetricName(metricName)
-                .withDimensions(toDimensions(tags))
-                .withTimestamp(new Date(wallTime))
-                .withValue(CloudWatchUtils.clampMetricValue(value))
-                .withUnit(toStandardUnit(unit));
-    }
+        private Stream<MetricDatum> counterData(Counter counter) {
+            return Stream.of(metricDatum(counter.getId(), "count", counter.count()));
+        }
 
-    private StandardUnit toStandardUnit(@Nullable String unit) {
-        if (unit == null) {
+        private Stream<MetricDatum> timerData(Timer timer) {
+            final Stream.Builder<MetricDatum> metrics = Stream.builder();
+
+            metrics.add(metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
+            metrics.add(metricDatum(timer.getId(), "count", "count", timer.count()));
+            metrics.add(metricDatum(timer.getId(), "avg", getBaseTimeUnit().name(), timer.mean(getBaseTimeUnit())));
+            metrics.add(metricDatum(timer.getId(), "max", getBaseTimeUnit().name(), timer.max(getBaseTimeUnit())));
+
+            return metrics.build();
+        }
+
+        private Stream<MetricDatum> summaryData(DistributionSummary summary) {
+            final Stream.Builder<MetricDatum> metrics = Stream.builder();
+
+            metrics.add(metricDatum(summary.getId(), "sum", summary.totalAmount()));
+            metrics.add(metricDatum(summary.getId(), "count", summary.count()));
+            metrics.add(metricDatum(summary.getId(), "avg", summary.mean()));
+            metrics.add(metricDatum(summary.getId(), "max", summary.max()));
+
+            return metrics.build();
+        }
+
+        private Stream<MetricDatum> longTaskTimerData(LongTaskTimer longTaskTimer) {
+            return Stream.of(
+                    metricDatum(longTaskTimer.getId(), "activeTasks", longTaskTimer.activeTasks()),
+                    metricDatum(longTaskTimer.getId(), "duration", longTaskTimer.duration(getBaseTimeUnit())));
+        }
+
+        private Stream<MetricDatum> timeGaugeData(TimeGauge gauge) {
+            double value = gauge.value(getBaseTimeUnit());
+            if (Double.isNaN(value) || Double.isInfinite(value))
+                return Stream.empty();
+            return Stream.of(metricDatum(gauge.getId(), "value", value));
+        }
+
+        private Stream<MetricDatum> functionCounterData(FunctionCounter counter) {
+            return Stream.of(metricDatum(counter.getId(), "count", counter.count()));
+        }
+
+        private Stream<MetricDatum> functionTimerData(FunctionTimer timer) {
+            // we can't know anything about max and percentiles originating from a function timer
+            return Stream.of(
+                    metricDatum(timer.getId(), "count", timer.count()),
+                    metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit())));
+        }
+
+        private Stream<MetricDatum> metricData(Meter m) {
+            return stream(m.measure().spliterator(), false)
+                    .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), ms.getValue()))
+                    .filter(Objects::nonNull);
+        }
+
+        @Nullable
+        private MetricDatum metricDatum(Meter.Id id, double value) {
+            return metricDatum(id, null, null, value);
+        }
+
+        @Nullable
+        private MetricDatum metricDatum(Meter.Id id, @Nullable String suffix, double value) {
+            return metricDatum(id, suffix, null, value);
+        }
+
+        @Nullable
+        private MetricDatum metricDatum(Meter.Id id, @Nullable String suffix, @Nullable String unit, double value) {
+            if (Double.isNaN(value)) {
+                return null;
+            }
+
+            String metricName = config().namingConvention().name(id.getName() + "." + suffix, id.getType(), id.getBaseUnit());
+            List<Tag> tags = id.getConventionTags(config().namingConvention());
+            return new MetricDatum()
+                    .withMetricName(metricName)
+                    .withDimensions(toDimensions(tags))
+                    .withTimestamp(new Date(wallTime))
+                    .withValue(CloudWatchUtils.clampMetricValue(value))
+                    .withUnit(toStandardUnit(unit));
+        }
+
+        private StandardUnit toStandardUnit(@Nullable String unit) {
+            if (unit == null) {
+                return StandardUnit.None;
+            }
+            switch (unit.toLowerCase()) {
+                case "bytes":
+                    return StandardUnit.Bytes;
+                case "milliseconds":
+                    return StandardUnit.Milliseconds;
+                case "count":
+                    return StandardUnit.Count;
+            }
             return StandardUnit.None;
         }
-        switch (unit.toLowerCase()) {
-            case "bytes":
-                return StandardUnit.Bytes;
-            case "milliseconds":
-                return StandardUnit.Milliseconds;
-            case "count":
-                return StandardUnit.Count;
+
+
+        private List<Dimension> toDimensions(List<Tag> tags) {
+            return tags.stream()
+                    .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
+                    .collect(toList());
         }
-        return StandardUnit.None;
-    }
-
-
-    private List<Dimension> toDimensions(List<Tag> tags) {
-        return tags.stream()
-                .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
-                .collect(toList());
     }
 
     @Override
