@@ -201,7 +201,7 @@ public interface Meter {
             this.syntheticAssociation = syntheticAssociation;
         }
 
-        Id(String name, Tags tags, @Nullable String baseUnit, @Nullable String description, Type type) {
+        public Id(String name, Tags tags, @Nullable String baseUnit, @Nullable String description, Type type) {
             this(name, tags, baseUnit, description, type, null);
         }
 
