@@ -36,6 +36,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
@@ -104,19 +105,23 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                         ]
                 }"
                 */
+                String body = batch.stream().flatMap(meter -> meter.apply(
+                        m -> writeMeter(m, metadataToSend),
+                        m -> writeMeter(m, metadataToSend),
+                        timer -> writeTimer(timer, metadataToSend),
+                        summary -> writeSummary(summary, metadataToSend),
+                        m -> writeMeter(m, metadataToSend),
+                        m -> writeMeter(m, metadataToSend),
+                        m -> writeMeter(m, metadataToSend),
+                        timer -> writeTimer(timer, metadataToSend),
+                        m -> writeMeter(m, metadataToSend))
+                ).collect(joining(",", "{\"series\":[", "]}"));
+
+                logger.trace("sending metrics batch to datadog:\n{}", body);
+
                 httpClient.post(datadogEndpoint)
                         .withJsonContent(
-                                batch.stream().flatMap(meter -> meter.apply(
-                                        m -> writeMeter(m, metadataToSend),
-                                        m -> writeMeter(m, metadataToSend),
-                                        timer -> writeTimer(timer, metadataToSend),
-                                        summary -> writeSummary(summary, metadataToSend),
-                                        m -> writeMeter(m, metadataToSend),
-                                        m -> writeMeter(m, metadataToSend),
-                                        m -> writeMeter(m, metadataToSend),
-                                        timer -> writeTimer(timer, metadataToSend),
-                                        m -> writeMeter(m, metadataToSend))
-                                ).collect(joining(",", "{\"series\":[", "]}")))
+                                body)
                         .send()
                         .onSuccess(response -> logger.debug("successfully sent {} metrics to datadog", batch.size()))
                         .onError(response -> logger.error("failed to send metrics to datadog: {}", response.body()));
@@ -216,16 +221,16 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         String host = config.hostTag() == null ? "" : stream(tags.spliterator(), false)
                 .filter(t -> requireNonNull(config.hostTag()).equals(t.getKey()))
                 .findAny()
-                .map(t -> ",\"host\":\"" + t.getValue() + "\"")
+                .map(t -> ",\"host\":\"" + escapeJson(t.getValue()) + "\"")
                 .orElse("");
 
         String tagsArray = tags.iterator().hasNext()
                 ? stream(tags.spliterator(), false)
-                .map(t -> "\"" + t.getKey() + ":" + t.getValue() + "\"")
+                .map(t -> "\"" + escapeJson(t.getKey()) + ":" + escapeJson(t.getValue()) + "\"")
                 .collect(joining(",", ",\"tags\":[", "]"))
                 : "";
 
-        return "{\"metric\":\"" + getConventionName(fullId) + "\"," +
+        return "{\"metric\":\"" + escapeJson(getConventionName(fullId)) + "\"," +
                 "\"points\":[[" + (wallTime / 1000) + ", " + value + "]]" + host + tagsArray + "}";
     }
 
