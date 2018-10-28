@@ -30,6 +30,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadFactory;
@@ -90,8 +91,13 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             if (httpClient
                     .head(config.host() + ES_METRICS_TEMPLATE)
                     .withBasicAuthentication(config.userName(), config.password())
+                    .print()
                     .send()
-                    .onError(response -> logger.error("could not connect to elastic: HTTP {}", response.code()))
+                    .onError(response -> {
+                        if (response.code() != 404) {
+                            logger.error("could not create index in elastic (HTTP {})", response.code(), response.body());
+                        }
+                    })
                     .isSuccessful()) {
                 checkedForIndexTemplate = true;
                 logger.debug("metrics template already exists");
@@ -104,7 +110,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                     .send()
                     .onError(response -> logger.error("failed to add metrics template to elastic", response.body()));
         } catch (Throwable e) {
-            logger.error("could not connect to elastic", e);
+            logger.error("could not create index in elastic", e);
             return;
         }
 
@@ -115,13 +121,10 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         createIndexIfNeeded();
 
-        ZonedDateTime dt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(config().clock().wallTime()), ZoneOffset.UTC);
-        String indexName = config.index() + "-" + DateTimeFormatter.ofPattern(config.indexDateFormat()).format(dt);
-
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try {
                 httpClient
-                        .post(config.host() + "/" + indexName + "/doc/_bulk")
+                        .post(config.host() + "/" + indexName() + "/doc/_bulk")
                         .withBasicAuthentication(config.userName(), config.password())
                         .withJsonContent(batch.stream()
                                 .map(m -> m.apply(
@@ -145,7 +148,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                             if (body.contains("\"errors\":true")) {
                                 logger.error("failed to send metrics to elastic: {}", body);
                             } else {
-                                logger.debug("successfully sent {} metrics to Elasticsearch.", batch.size());
+                                logger.debug("successfully sent {} metrics to elastic", batch.size());
                             }
                         })
                         .onError(response -> logger.error("failed to send metrics to elastic: {}", response.body()));
@@ -153,6 +156,11 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 logger.error("failed to send metrics to elastic", e);
             }
         }
+    }
+
+    private String indexName() {
+        ZonedDateTime dt = ZonedDateTime.ofInstant(new Date(config().clock().wallTime()).toInstant(), ZoneOffset.UTC);
+        return config.index() + "-" + DateTimeFormatter.ofPattern(config.indexDateFormat()).format(dt);
     }
 
     // VisibleForTesting
