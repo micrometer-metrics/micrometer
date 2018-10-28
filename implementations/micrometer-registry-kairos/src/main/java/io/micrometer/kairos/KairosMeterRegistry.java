@@ -17,6 +17,7 @@ package io.micrometer.kairos;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
@@ -33,6 +34,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 
 /**
  * @author Anton Ilinchik
@@ -138,12 +141,12 @@ public class KairosMeterRegistry extends StepMeterRegistry {
 
     Stream<String> writeGauge(Gauge gauge) {
         Double value = gauge.value();
-        return value.isNaN() ? Stream.empty() : Stream.of(writeMetric(gauge.getId(), config().clock().wallTime(), value));
+        return (value.isNaN() || value.isInfinite()) ? Stream.empty() : Stream.of(writeMetric(gauge.getId(), config().clock().wallTime(), value));
     }
 
     Stream<String> writeTimeGauge(TimeGauge timeGauge) {
         Double value = timeGauge.value(getBaseTimeUnit());
-        return value.isNaN() ? Stream.empty() : Stream.of(writeMetric(timeGauge.getId(), config().clock().wallTime(), value));
+        return (value.isNaN() || value.isInfinite()) ? Stream.empty() : Stream.of(writeMetric(timeGauge.getId(), config().clock().wallTime(), value));
     }
 
     Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
@@ -164,7 +167,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
                         .build());
     }
 
-    String writeMetric(Meter.Id id, long wallTime, Number value) {
+    String writeMetric(Meter.Id id, long wallTime, double value) {
         return new KairosMetricBuilder()
                 .field("name", getConventionName(id))
                 .datapoints(wallTime, value)
@@ -188,12 +191,12 @@ public class KairosMeterRegistry extends StepMeterRegistry {
             if (sb.length() > 1) {
                 sb.append(',');
             }
-            sb.append('\"').append(key).append("\":\"").append(value).append('\"');
+            sb.append('\"').append(escapeJson(key)).append("\":\"").append(escapeJson(value)).append('\"');
             return this;
         }
 
-        KairosMetricBuilder datapoints(Long wallTime, Number value) {
-            sb.append(",\"datapoints\":[[").append(wallTime).append(',').append(value).append("]]");
+        KairosMetricBuilder datapoints(Long wallTime, double value) {
+            sb.append(",\"datapoints\":[[").append(wallTime).append(',').append(DoubleFormat.decimalOrWhole(value)).append("]]");
             return this;
         }
 
