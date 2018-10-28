@@ -25,16 +25,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 /**
- * Tests for {@link HttpRequest}.
+ * Tests for {@link HttpSender.Request}.
  *
  * @author Johnny Lim
  */
-class HttpRequestTest {
+class RequestTest {
 
     @Test
     void compressShouldAddContentEncodingHeader() throws IOException, NoSuchFieldException, IllegalAccessException {
-        HttpRequest.Builder builder = HttpRequest.build("https://micrometer.io/", mock(HttpClient.class)).compress();
-        Field requestHeadersField = HttpRequest.Builder.class.getDeclaredField("requestHeaders");
+        HttpSender.Request.Builder builder = HttpSender.Request.build("https://micrometer.io/", mock(HttpSender.class)).compress();
+        Field requestHeadersField = HttpSender.Request.Builder.class.getDeclaredField("requestHeaders");
         requestHeadersField.setAccessible(true);
         Map<String, String> requestHeaders = (Map<String, String>) requestHeadersField.get(builder);
         assertThat(requestHeaders).containsEntry("Content-Encoding", "gzip");

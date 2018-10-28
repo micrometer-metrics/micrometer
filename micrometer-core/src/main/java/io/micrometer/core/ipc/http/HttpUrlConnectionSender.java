@@ -23,22 +23,22 @@ import java.net.HttpURLConnection;
 import java.time.Duration;
 import java.util.Map;
 
-public class HttpUrlConnectionClient implements HttpClient {
+public class HttpUrlConnectionSender implements HttpSender {
     private final int connectTimeoutMs;
     private final int readTimeoutMs;
 
-    public HttpUrlConnectionClient(Duration connectTimeout, Duration readTimeout) {
+    public HttpUrlConnectionSender(Duration connectTimeout, Duration readTimeout) {
         this.connectTimeoutMs = (int) connectTimeout.toMillis();
         this.readTimeoutMs = (int) readTimeout.toMillis();
     }
 
-    public HttpUrlConnectionClient() {
+    public HttpUrlConnectionSender() {
         this.connectTimeoutMs = 1000;
         this.readTimeoutMs = 10000;
     }
 
     @Override
-    public HttpResponse send(HttpRequest request) throws IOException {
+    public Response send(Request request) throws IOException {
         HttpURLConnection con = null;
         try {
             con = (HttpURLConnection) request.getUrl().openConnection();
@@ -69,7 +69,7 @@ public class HttpUrlConnectionClient implements HttpClient {
             } catch (IOException ignored) {
             }
 
-            return new HttpResponse(status, body);
+            return new Response(status, body);
         } finally {
             try {
                 if (con != null) {

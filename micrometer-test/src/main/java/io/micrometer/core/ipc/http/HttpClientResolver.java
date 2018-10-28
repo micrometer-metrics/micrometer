@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.fail;
 public class HttpClientResolver implements ParameterResolver {
     @Override
     public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-        return parameterContext.getParameter().getType().equals(HttpClient.class);
+        return parameterContext.getParameter().getType().equals(HttpSender.class);
     }
 
     @Override

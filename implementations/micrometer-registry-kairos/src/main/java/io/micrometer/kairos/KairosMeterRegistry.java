@@ -21,8 +21,8 @@ import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.ipc.http.HttpClient;
-import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,13 +44,13 @@ public class KairosMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("kairos-metrics-publisher");
     private final Logger logger = LoggerFactory.getLogger(KairosMeterRegistry.class);
     private final KairosConfig config;
-    private final HttpClient httpClient;
+    private final HttpSender httpClient;
 
     public KairosMeterRegistry(KairosConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
-    private KairosMeterRegistry(KairosConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
+    private KairosMeterRegistry(KairosConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
 
         config().namingConvention(new KairosNamingConvention());
@@ -229,11 +229,11 @@ public class KairosMeterRegistry extends StepMeterRegistry {
 
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
-        private HttpClient httpClient;
+        private HttpSender httpClient;
 
         public Builder(KairosConfig config) {
             this.config = config;
-            this.httpClient = new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout());
+            this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());
         }
 
         public Builder clock(Clock clock) {
@@ -246,7 +246,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
-        public Builder httpClient(HttpClient httpClient) {
+        public Builder httpClient(HttpSender httpClient) {
             this.httpClient = httpClient;
             return this;
         }

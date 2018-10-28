@@ -18,8 +18,8 @@ package io.micrometer.influx;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.*;
-import io.micrometer.core.ipc.http.HttpClient;
-import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,19 +38,19 @@ import static java.util.stream.Collectors.joining;
 public class InfluxMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("influx-metrics-publisher");
     private final InfluxConfig config;
-    private final HttpClient httpClient;
+    private final HttpSender httpClient;
     private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
     private boolean databaseExists = false;
 
     public InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
     public InfluxMeterRegistry(InfluxConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY);
     }
 
-    private InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
+    private InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
         config().namingConvention(new InfluxNamingConvention());
         this.config = config;
@@ -216,11 +216,11 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
-        private HttpClient httpClient;
+        private HttpSender httpClient;
 
         public Builder(InfluxConfig config) {
             this.config = config;
-            this.httpClient = new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout());
+            this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());
         }
 
         public Builder clock(Clock clock) {
@@ -233,7 +233,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
-        public Builder httpClient(HttpClient httpClient) {
+        public Builder httpClient(HttpSender httpClient) {
             this.httpClient = httpClient;
             return this;
         }

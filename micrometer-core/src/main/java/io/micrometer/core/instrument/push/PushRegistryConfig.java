@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument.push;
 
 import io.micrometer.core.instrument.config.MeterRegistryConfig;
-import io.micrometer.core.ipc.http.HttpClient;
+import io.micrometer.core.ipc.http.HttpSender;
 
 import java.time.Duration;
 
@@ -56,7 +56,7 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
      * @return The connection timeout for requests to the backend. The default is
      * 1 second.
      * @deprecated Connect timeout and read timeout have different meanings depending on the HTTP client. Configure
-     * timeout options on your {@link HttpClient} of choice instead.
+     * timeout options on your {@link HttpSender} of choice instead.
      */
     @Deprecated
     default Duration connectTimeout() {
@@ -68,7 +68,7 @@ public interface PushRegistryConfig extends MeterRegistryConfig {
      * @return The read timeout for requests to the backend. The default is
      * 10 seconds.
      * @deprecated Connect timeout and read timeout have different meanings depending on the HTTP client. Configure
-     * timeout options on your {@link HttpClient} of choice instead.
+     * timeout options on your {@link HttpSender} of choice instead.
      */
     @Deprecated
     default Duration readTimeout() {

@@ -20,7 +20,7 @@ package io.micrometer.core.ipc.http;
  *
  * @author Jon Schneider
  */
-public enum HttpStatusClass {
+enum HttpStatusClass {
     INFORMATIONAL(100, 200),
     SUCCESS(200, 300),
     REDIRECTION(300, 400),

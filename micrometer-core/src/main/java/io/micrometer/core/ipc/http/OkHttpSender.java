@@ -19,20 +19,20 @@ import okhttp3.*;
 
 import java.util.Map;
 
-public class OkHttpHttpClient implements HttpClient {
+public class OkHttpSender implements HttpSender {
     private final OkHttpClient client;
 
-    public OkHttpHttpClient(OkHttpClient client) {
+    public OkHttpSender(OkHttpClient client) {
         this.client = client;
     }
 
-    public OkHttpHttpClient() {
+    public OkHttpSender() {
         this(new OkHttpClient());
     }
 
     @Override
-    public HttpResponse send(HttpRequest request) throws Throwable {
-        Request.Builder requestBuilder = new Request.Builder().url(request.getUrl());
+    public Response send(Request request) throws Throwable {
+        okhttp3.Request.Builder requestBuilder = new okhttp3.Request.Builder().url(request.getUrl());
 
         for (Map.Entry<String, String> requestHeader : request.getRequestHeaders().entrySet()) {
             requestBuilder.addHeader(requestHeader.getKey(), requestHeader.getValue());
@@ -53,7 +53,7 @@ public class OkHttpHttpClient implements HttpClient {
             }
         }
 
-        Response response = client.newCall(requestBuilder.build()).execute();
-        return new HttpResponse(response.code(), response.body() == null ? null : response.body().string());
+        okhttp3.Response response = client.newCall(requestBuilder.build()).execute();
+        return new Response(response.code(), response.body() == null ? null : response.body().string());
     }
 }

@@ -25,7 +25,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * A compatibility kit that can be used to verify user-provided {@link HttpClient} implementations.
+ * A compatibility kit that can be used to verify user-provided {@link HttpSender} implementations.
  *
  * @author Jon Schneider
  */
@@ -33,17 +33,17 @@ import static org.assertj.core.api.Assertions.assertThat;
         HttpClientResolver.class,
         WiremockResolver.class
 })
-public abstract class HttpClientCompatibilityKit {
-    public abstract HttpClient httpClient();
+public abstract class HttpSenderCompatibilityKit {
+    public abstract HttpSender httpClient();
 
     @Test
     @DisplayName("compatibility test provides a non-null http client instance")
-    void httpClientIsNotNull(HttpClient httpClient) {
+    void httpClientIsNotNull(HttpSender httpClient) {
         assertThat(httpClient).isNotNull();
     }
 
     @Test
-    void successfulPostWithBody(HttpClient httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+    void successfulPostWithBody(HttpSender httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
         server.stubFor(any(anyUrl()).willReturn(aResponse()
                 .withBody("a body")));
 
@@ -55,18 +55,18 @@ public abstract class HttpClientCompatibilityKit {
     }
 
     @Test
-    void successfulPostNoBody(HttpClient httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+    void successfulPostNoBody(HttpSender httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
         server.stubFor(any(anyUrl()));
 
         assertThat(httpClient.post(server.baseUrl() + "/api")
                 .withPlainText("this is a line")
-                .send().body()).isEqualTo(HttpResponse.NO_RESPONSE_BODY);
+                .send().body()).isEqualTo(HttpSender.Response.NO_RESPONSE_BODY);
 
         server.verify(postRequestedFor(urlEqualTo("/api")).withRequestBody(equalTo("this is a line")));
     }
 
     @Test
-    void failedPostWithBody(HttpClient httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+    void failedPostWithBody(HttpSender httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
         server.stubFor(any(anyUrl()).willReturn(aResponse()
                 .withStatus(500)
                 .withBody("a body")));
@@ -75,26 +75,26 @@ public abstract class HttpClientCompatibilityKit {
     }
 
     @Test
-    void failedPostWithNoBody(HttpClient httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+    void failedPostWithNoBody(HttpSender httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
         server.stubFor(any(anyUrl()).willReturn(aResponse()
                 .withStatus(500)));
 
-        assertThat(httpClient.post(server.baseUrl() + "/api").send().body()).isEqualTo(HttpResponse.NO_RESPONSE_BODY);
+        assertThat(httpClient.post(server.baseUrl() + "/api").send().body()).isEqualTo(HttpSender.Response.NO_RESPONSE_BODY);
     }
 
     @Test
-    void successfulHead(HttpClient httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+    void successfulHead(HttpSender httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
         server.stubFor(any(anyUrl()));
 
         assertThat(httpClient.head(server.baseUrl() + "/api")
-                .send().body()).isEqualTo(HttpResponse.NO_RESPONSE_BODY);
+                .send().body()).isEqualTo(HttpSender.Response.NO_RESPONSE_BODY);
     }
 
     @Test
-    void failedHeadWithNoBody(HttpClient httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+    void failedHeadWithNoBody(HttpSender httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
         server.stubFor(any(anyUrl()).willReturn(aResponse().withStatus(500)));
 
         assertThat(httpClient.head(server.baseUrl() + "/api")
-                .send().body()).isEqualTo(HttpResponse.NO_RESPONSE_BODY);
+                .send().body()).isEqualTo(HttpSender.Response.NO_RESPONSE_BODY);
     }
 }

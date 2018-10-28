@@ -21,8 +21,8 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.ipc.http.HttpClient;
-import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +53,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("dynatrace-metrics-publisher");
     private final Logger logger = LoggerFactory.getLogger(DynatraceMeterRegistry.class);
     private final DynatraceConfig config;
-    private final HttpClient httpClient;
+    private final HttpSender httpClient;
 
     /**
      * Metric names for which we have created the custom metric in the API
@@ -62,10 +62,10 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     private final String customMetricEndpointTemplate;
 
     public DynatraceMeterRegistry(DynatraceConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
-    private DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
+    private DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
         requireNonNull(config.uri());
         requireNonNull(config.deviceId());
@@ -259,11 +259,11 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
-        private HttpClient pushHandler;
+        private HttpSender pushHandler;
 
         public Builder(DynatraceConfig config) {
             this.config = config;
-            this.pushHandler = new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout());
+            this.pushHandler = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());
         }
 
         public Builder clock(Clock clock) {
@@ -276,7 +276,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
-        public Builder httpPushHandler(HttpClient pushHandler) {
+        public Builder httpPushHandler(HttpSender pushHandler) {
             this.pushHandler = pushHandler;
             return this;
         }

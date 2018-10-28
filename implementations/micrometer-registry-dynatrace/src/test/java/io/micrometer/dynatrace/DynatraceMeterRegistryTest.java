@@ -17,7 +17,7 @@ package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
-import io.micrometer.core.ipc.http.HttpResponse;
+import io.micrometer.core.ipc.http.HttpSender;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
@@ -123,7 +123,7 @@ class DynatraceMeterRegistryTest {
             }
         };
         DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(config)
-                .httpPushHandler(request -> new HttpResponse(200, null))
+                .httpPushHandler(request -> new HttpSender.Response(200, null))
                 .build();
 
         Field createdCustomMetricsField = DynatraceMeterRegistry.class.getDeclaredField("createdCustomMetrics");

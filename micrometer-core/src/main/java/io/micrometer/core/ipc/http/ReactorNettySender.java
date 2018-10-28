@@ -19,19 +19,19 @@ import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufFlux;
 import reactor.util.function.Tuple2;
 
-public class ReactorNettyClient implements HttpClient {
+public class ReactorNettySender implements HttpSender {
     private final reactor.netty.http.client.HttpClient httpClient;
 
-    public ReactorNettyClient(reactor.netty.http.client.HttpClient httpClient) {
+    public ReactorNettySender(reactor.netty.http.client.HttpClient httpClient) {
         this.httpClient = httpClient;
     }
 
-    public ReactorNettyClient() {
+    public ReactorNettySender() {
         this(reactor.netty.http.client.HttpClient.create());
     }
 
     @Override
-    public HttpResponse send(HttpRequest request) {
+    public Response send(Request request) {
         Tuple2<Integer, String> response = httpClient.request(toNettyHttpMethod(request.getMethod()))
                 .uri(request.getUrl().toString())
                 .send(ByteBufFlux.fromString(Mono.just(new String(request.getEntity()))))
@@ -39,10 +39,10 @@ public class ReactorNettyClient implements HttpClient {
                 .log()
                 .block();
 
-        return new HttpResponse(response.getT1(), response.getT2());
+        return new Response(response.getT1(), response.getT2());
     }
 
-    private io.netty.handler.codec.http.HttpMethod toNettyHttpMethod(HttpMethod method) {
+    private io.netty.handler.codec.http.HttpMethod toNettyHttpMethod(Method method) {
         switch (method) {
             case PUT:
                 return io.netty.handler.codec.http.HttpMethod.PUT;

@@ -20,8 +20,8 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.ipc.http.HttpClient;
-import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +48,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("datadog-metrics-publisher");
     private final Logger logger = LoggerFactory.getLogger(DatadogMeterRegistry.class);
     private final DatadogConfig config;
-    private final HttpClient httpClient;
+    private final HttpSender httpClient;
 
     /**
      * Metric names for which we have posted metadata concerning type and base unit
@@ -64,10 +64,10 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
      */
     @Deprecated
     public DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
-    private DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
+    private DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
         requireNonNull(config.apiKey());
 
@@ -285,11 +285,11 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
-        private HttpClient httpClient;
+        private HttpSender httpClient;
 
         Builder(DatadogConfig config) {
             this.config = config;
-            this.httpClient = new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout());
+            this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());
         }
 
         public Builder clock(Clock clock) {
@@ -302,7 +302,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
-        public Builder httpClient(HttpClient httpClient) {
+        public Builder httpClient(HttpSender httpClient) {
             this.httpClient = httpClient;
             return this;
         }

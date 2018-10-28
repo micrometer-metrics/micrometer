@@ -22,9 +22,8 @@ import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.ipc.http.HttpClient;
-import io.micrometer.core.ipc.http.HttpRequest;
-import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
@@ -50,13 +49,13 @@ public class HumioMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(HumioMeterRegistry.class);
 
     private final HumioConfig config;
-    private final HttpClient httpClient;
+    private final HttpSender httpClient;
 
     public HumioMeterRegistry(HumioConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
-    private HumioMeterRegistry(HumioConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
+    private HumioMeterRegistry(HumioConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
 
         config().namingConvention(new HumioNamingConvention());
@@ -87,7 +86,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         for (List<Meter> meters : MeterPartition.partition(this, config.batchSize())) {
             try {
-                HttpRequest.Builder post = httpClient.post(config.uri() + "/api/v1/dataspaces/" + config.repository() + "/ingest");
+                HttpSender.Request.Builder post = httpClient.post(config.uri() + "/api/v1/dataspaces/" + config.repository() + "/ingest");
                 String token = config.apiToken();
                 if (token != null) {
                     post.withHeader("Authorization", "Bearer " + token);
@@ -145,11 +144,11 @@ public class HumioMeterRegistry extends StepMeterRegistry {
 
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
-        private HttpClient httpClient;
+        private HttpSender httpClient;
 
         public Builder(HumioConfig config) {
             this.config = config;
-            this.httpClient = new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout());
+            this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());
         }
 
         public Builder clock(Clock clock) {
@@ -162,7 +161,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
-        public Builder httpClient(HttpClient httpClient) {
+        public Builder httpClient(HttpSender httpClient) {
             this.httpClient = httpClient;
             return this;
         }

@@ -22,8 +22,8 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.ipc.http.HttpClient;
-import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
 
 import static io.micrometer.core.instrument.util.DoubleFormat.decimal;
+import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -49,13 +50,13 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(AppOpticsMeterRegistry.class);
 
     private final AppOpticsConfig config;
-    private final HttpClient httpClient;
+    private final HttpSender httpClient;
 
     public AppOpticsMeterRegistry(AppOpticsConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
-    private AppOpticsMeterRegistry(AppOpticsConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
+    private AppOpticsMeterRegistry(AppOpticsConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
 
         config().namingConvention(new AppOpticsNamingConvention());
@@ -203,7 +204,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
 
     private String write(Meter.Id id, @Nullable String type, String... statistics) {
         StringBuilder sb = new StringBuilder();
-        sb.append("{\"name\":\"").append(getConventionName(id)).append("\",\"period\":").append(config.step().getSeconds());
+        sb.append("{\"name\":\"").append(escapeJson(getConventionName(id))).append("\",\"period\":").append(config.step().getSeconds());
 
         if (!"value" .equals(statistics[0])) {
             sb.append(",\"attributes\":{\"aggregate\":false}");
@@ -230,8 +231,8 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
                         if (key.equals(config.hostTag())) {
                             key = "host_hostname_alias";
                         }
-                        return "\"" + config().namingConvention().tagKey(key) + "\":\"" +
-                                config().namingConvention().tagValue(tag.getValue()) + "\"";
+                        return "\"" + config().namingConvention().tagKey(escapeJson(key)) + "\":\"" +
+                                config().namingConvention().tagValue(escapeJson(tag.getValue())) + "\"";
                     })
                     .collect(joining(",")));
         }
@@ -266,11 +267,11 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
 
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
-        private HttpClient httpClient;
+        private HttpSender httpClient;
 
         Builder(AppOpticsConfig config) {
             this.config = config;
-            this.httpClient = new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout());
+            this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());
         }
 
         public Builder clock(Clock clock) {
@@ -283,7 +284,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
-        public Builder httpClient(HttpClient httpClient) {
+        public Builder httpClient(HttpSender httpClient) {
             this.httpClient = httpClient;
             return this;
         }

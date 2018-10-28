@@ -20,8 +20,8 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.core.ipc.http.HttpClient;
-import io.micrometer.core.ipc.http.HttpUrlConnectionClient;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import io.micrometer.core.lang.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,16 +53,16 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(ElasticMeterRegistry.class);
 
     private final ElasticConfig config;
-    private final HttpClient httpClient;
+    private final HttpSender httpClient;
 
     private boolean checkedForIndexTemplate = false;
 
     public ElasticMeterRegistry(ElasticConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY,
-                new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout()));
+                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
-    private ElasticMeterRegistry(ElasticConfig config, Clock clock, ThreadFactory threadFactory, HttpClient httpClient) {
+    private ElasticMeterRegistry(ElasticConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
         config().namingConvention(new ElasticNamingConvention());
         this.config = config;
@@ -279,11 +279,11 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
-        private HttpClient httpClient;
+        private HttpSender httpClient;
 
         public Builder(ElasticConfig config) {
             this.config = config;
-            this.httpClient = new HttpUrlConnectionClient(config.connectTimeout(), config.readTimeout());
+            this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());
         }
 
         public Builder clock(Clock clock) {
@@ -296,7 +296,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
-        public Builder httpClient(HttpClient httpClient) {
+        public Builder httpClient(HttpSender httpClient) {
             this.httpClient = httpClient;
             return this;
         }
