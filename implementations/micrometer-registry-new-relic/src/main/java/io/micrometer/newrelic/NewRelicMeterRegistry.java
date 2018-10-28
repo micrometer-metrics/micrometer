@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.StreamSupport.stream;
 
@@ -178,17 +179,18 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         StringBuilder tagsJson = new StringBuilder();
 
         for (Tag tag : getConventionTags(id)) {
-            tagsJson.append(",\"").append(tag.getKey()).append("\":\"").append(tag.getValue()).append("\"");
+            tagsJson.append(",\"").append(escapeJson(tag.getKey())).append("\":\"").append(escapeJson(tag.getValue())).append("\"");
         }
 
         NamingConvention convention = config().namingConvention();
         for (Tag tag : extraTags) {
-            tagsJson.append(",\"").append(convention.tagKey(tag.getKey())).append("\":\"").append(convention.tagValue(tag.getValue())).append("\"");
+            tagsJson.append(",\"").append(escapeJson(convention.tagKey(tag.getKey())))
+                    .append("\":\"").append(escapeJson(convention.tagValue(tag.getValue()))).append("\"");
         }
 
         return Arrays.stream(attributes)
                 .map(attr -> ",\"" + attr.getName() + "\":" + DoubleFormat.decimalOrWhole(attr.getValue().doubleValue()))
-                .collect(Collectors.joining("", "{\"eventType\":\"" + getConventionName(id) + "\"", tagsJson + "}"));
+                .collect(Collectors.joining("", "{\"eventType\":\"" + escapeJson(getConventionName(id)) + "\"", tagsJson + "}"));
     }
 
     private void sendEvents(String insightsEndpoint, Stream<String> events) {
