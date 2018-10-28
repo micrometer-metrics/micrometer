@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.util.IOUtils;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.time.Duration;
 import java.util.Map;
 
@@ -39,10 +38,10 @@ public class HttpUrlConnectionClient implements HttpClient {
     }
 
     @Override
-    public HttpResponse send(URL url, HttpRequest request) throws IOException {
+    public HttpResponse send(HttpRequest request) throws IOException {
         HttpURLConnection con = null;
         try {
-            con = (HttpURLConnection) url.openConnection();
+            con = (HttpURLConnection) request.getUrl().openConnection();
             con.setConnectTimeout(connectTimeoutMs);
             con.setReadTimeout(readTimeoutMs);
             con.setRequestMethod(request.getMethod().toString());

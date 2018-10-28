@@ -19,8 +19,6 @@ import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufFlux;
 import reactor.util.function.Tuple2;
 
-import java.net.URL;
-
 public class ReactorNettyClient implements HttpClient {
     private final reactor.netty.http.client.HttpClient httpClient;
 
@@ -33,9 +31,9 @@ public class ReactorNettyClient implements HttpClient {
     }
 
     @Override
-    public HttpResponse send(URL url, HttpRequest request) {
+    public HttpResponse send(HttpRequest request) {
         Tuple2<Integer, String> response = httpClient.request(toNettyHttpMethod(request.getMethod()))
-                .uri(url.toString())
+                .uri(request.getUrl().toString())
                 .send(ByteBufFlux.fromString(Mono.just(new String(request.getEntity()))))
                 .responseSingle((r, body) -> Mono.just(r.status().code()).zipWith(body.asString().defaultIfEmpty("")))
                 .log()

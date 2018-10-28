@@ -15,10 +15,8 @@
  */
 package io.micrometer.core.ipc.http;
 
-import java.net.URL;
-
 public interface HttpClient {
-    HttpResponse send(URL url, HttpRequest request) throws Throwable;
+    HttpResponse send(HttpRequest request) throws Throwable;
 
     default HttpRequest.Builder post(String uri) {
         return newRequest(uri).withMethod(HttpMethod.POST);

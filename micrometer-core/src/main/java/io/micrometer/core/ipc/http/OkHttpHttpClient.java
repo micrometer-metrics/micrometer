@@ -17,7 +17,6 @@ package io.micrometer.core.ipc.http;
 
 import okhttp3.*;
 
-import java.net.URL;
 import java.util.Map;
 
 public class OkHttpHttpClient implements HttpClient {
@@ -32,8 +31,8 @@ public class OkHttpHttpClient implements HttpClient {
     }
 
     @Override
-    public HttpResponse send(URL url, HttpRequest request) throws Throwable {
-        Request.Builder requestBuilder = new Request.Builder().url(url);
+    public HttpResponse send(HttpRequest request) throws Throwable {
+        Request.Builder requestBuilder = new Request.Builder().url(request.getUrl());
 
         for (Map.Entry<String, String> requestHeader : request.getRequestHeaders().entrySet()) {
             requestBuilder.addHeader(requestHeader.getKey(), requestHeader.getValue());

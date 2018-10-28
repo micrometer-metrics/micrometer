@@ -40,14 +40,20 @@ import java.util.zip.GZIPOutputStream;
  * @since 1.1.0
  */
 public class HttpRequest {
+    private final URL url;
     private final byte[] entity;
     private final HttpMethod method;
     private final Map<String, String> requestHeaders;
 
-    public HttpRequest(byte[] entity, HttpMethod method, Map<String, String> requestHeaders) {
+    public HttpRequest(URL url, byte[] entity, HttpMethod method, Map<String, String> requestHeaders) {
+        this.url = url;
         this.entity = entity;
         this.method = method;
         this.requestHeaders = requestHeaders;
+    }
+
+    public URL getUrl() {
+        return url;
     }
 
     public byte[] getEntity() {
@@ -68,12 +74,16 @@ public class HttpRequest {
 
     @Override
     public String toString() {
+        StringBuilder printed = new StringBuilder(method.toString()).append(" ")
+                .append(url.toString()).append("\n");
         if (entity.length == 0) {
-            return "<no request body>";
+            printed.append("<no request body>");
         } else if ("application/json".equals(requestHeaders.get("Content-Type"))) {
-            return JsonUtils.prettyPrint(new String(entity));
+            printed.append(JsonUtils.prettyPrint(new String(entity)));
+        } else {
+            printed.append(new String(entity));
         }
-        return new String(entity);
+        return printed.toString();
     }
 
     public static class Builder {
@@ -209,12 +219,12 @@ public class HttpRequest {
         }
 
         public final Builder print() {
-            System.out.println(new HttpRequest(entity, method, requestHeaders));
+            System.out.println(new HttpRequest(url, entity, method, requestHeaders));
             return this;
         }
 
         public HttpResponse send() throws Throwable {
-            return sender.send(url, new HttpRequest(entity, method, requestHeaders));
+            return sender.send(new HttpRequest(url, entity, method, requestHeaders));
         }
     }
 }
