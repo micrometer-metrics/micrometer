@@ -49,7 +49,8 @@ public class DatadogNamingConvention implements NamingConvention {
      */
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        String sanitized = StringEscapeUtils.escapeJson(delegate.name(name, type, baseUnit));
+        String sanitized = StringEscapeUtils.escapeJson(delegate.name(name, type, baseUnit)
+                .replace('/', '_')); // forward slashes, even URL encoded, blow up the POST metadata API
 
         // Metrics that don't start with a letter get dropped on the floor by the Datadog publish API,
         // so we will prepend them with 'm.'.
