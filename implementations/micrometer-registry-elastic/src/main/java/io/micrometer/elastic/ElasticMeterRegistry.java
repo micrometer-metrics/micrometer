@@ -36,6 +36,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -244,12 +245,13 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         String name = getConventionName(meter.getId());
         String type = meter.getId().getType().toString().toLowerCase();
         sb.append("{\"").append(config.timestampFieldName()).append("\":\"").append(timestamp).append('"')
-                .append(",\"name\":\"").append(name).append('"')
+                .append(",\"name\":\"").append(escapeJson(name)).append('"')
                 .append(",\"type\":\"").append(type).append('"');
 
         List<Tag> tags = getConventionTags(meter.getId());
         for (Tag tag : tags) {
-            sb.append(",\"").append(tag.getKey()).append("\":\"").append(tag.getValue()).append('"');
+            sb.append(",\"").append(escapeJson(tag.getKey())).append("\":\"")
+                    .append(escapeJson(tag.getValue())).append('"');
         }
 
         consumer.accept(sb);
