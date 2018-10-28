@@ -79,7 +79,7 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     @Override
     public void start(ThreadFactory threadFactory) {
         if (config.enabled()) {
-            logger.info("publishing metrics to signalfx every " + TimeUtils.format(config.step()));
+            logger.info("publishing metrics to azure monitor every " + TimeUtils.format(config.step()));
         }
         super.start(threadFactory);
     }
@@ -101,8 +101,8 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
                 try {
                     client.track(telemetry);
                 } catch (Throwable e) {
-                    logger.warn("Failed to track metric {}", meter.getId());
-                    TraceTelemetry traceTelemetry = new TraceTelemetry("Failed to track metric " + meter.getId());
+                    logger.warn("failed to track metric {} in azure monitor", meter.getId());
+                    TraceTelemetry traceTelemetry = new TraceTelemetry("failed to track metric " + meter.getId());
                     traceTelemetry.getContext().getOperation().setSyntheticSource(SDKTELEMETRY_SYNTHETIC_SOURCENAME);
                     traceTelemetry.setSeverityLevel(SeverityLevel.Warning);
                     client.trackTrace(traceTelemetry);
