@@ -87,7 +87,7 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     @Override
     protected void publish() {
         for (Meter meter : getMeters()) {
-            meter.apply(
+            meter.match(
                     this::trackGauge,
                     this::trackCounter,
                     this::trackTimer,

@@ -88,7 +88,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     @Override
     protected void publish() {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-            Stream<String> stream = batch.stream().flatMap(m -> m.apply(
+            Stream<String> stream = batch.stream().flatMap(m -> m.match(
                     this::writeMeter,
                     this::writeMeter,
                     this::writeTimer,

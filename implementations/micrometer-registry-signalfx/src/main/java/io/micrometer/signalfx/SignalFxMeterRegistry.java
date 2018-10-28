@@ -103,7 +103,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try (AggregateMetricSender.Session session = metricSender.createSession()) {
                 batch.stream()
-                        .map(meter -> meter.apply(
+                        .map(meter -> meter.match(
                                 this::addGauge,
                                 this::addCounter,
                                 this::addTimer,

@@ -105,7 +105,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                         ]
                 }"
                 */
-                String body = batch.stream().flatMap(meter -> meter.apply(
+                String body = batch.stream().flatMap(meter -> meter.match(
                         m -> writeMeter(m, metadataToSend),
                         m -> writeMeter(m, metadataToSend),
                         timer -> writeTimer(timer, metadataToSend),

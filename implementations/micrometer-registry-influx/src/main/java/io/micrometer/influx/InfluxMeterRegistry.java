@@ -108,7 +108,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 httpClient.post(influxEndpoint)
                         .withBasicAuthentication(config.userName(), config.password())
                         .withPlainText(batch.stream()
-                                .flatMap(m -> m.apply(
+                                .flatMap(m -> m.match(
                                         gauge -> writeGauge(gauge.getId(), gauge.value()),
                                         counter -> writeCounter(counter.getId(), counter.count()),
                                         this::writeTimer,

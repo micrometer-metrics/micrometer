@@ -97,7 +97,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
                         .withBasicAuthentication(config.apiToken(), "")
                         .withJsonContent(
                                 batch.stream()
-                                        .map(meter -> meter.apply(
+                                        .map(meter -> meter.match(
                                                 this::writeGauge,
                                                 this::writeCounter,
                                                 this::writeTimer,

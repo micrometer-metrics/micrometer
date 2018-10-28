@@ -97,7 +97,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     //VisibleForTesting
     List<MetricDatum> metricData() {
         Batch batch = new Batch();
-        return getMeters().stream().flatMap(m -> m.apply(
+        return getMeters().stream().flatMap(m -> m.match(
                 batch::gaugeData,
                 batch::counterData,
                 batch::timerData,

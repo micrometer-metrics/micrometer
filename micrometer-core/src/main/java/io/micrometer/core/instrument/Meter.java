@@ -92,7 +92,7 @@ public interface Meter {
      * @return return value from the applied function
      * @since 1.1.0
      */
-    default <T> T apply(Function<Gauge, T> visitGauge,
+    default <T> T match(Function<Gauge, T> visitGauge,
                         Function<Counter, T> visitCounter,
                         Function<Timer, T> visitTimer,
                         Function<DistributionSummary, T> visitSummary,

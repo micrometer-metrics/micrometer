@@ -100,7 +100,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             final List<DynatraceCustomMetric> series = batch.stream()
-                    .flatMap(meter -> meter.apply(
+                    .flatMap(meter -> meter.match(
                             this::writeMeter,
                             this::writeMeter,
                             this::writeTimer,

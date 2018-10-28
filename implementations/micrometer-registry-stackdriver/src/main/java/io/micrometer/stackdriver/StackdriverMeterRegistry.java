@@ -138,7 +138,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             Batch publishBatch = new Batch();
 
             Iterable<TimeSeries> series = batch.stream()
-                    .flatMap(meter -> meter.apply(
+                    .flatMap(meter -> meter.match(
                             m -> createGauge(publishBatch, m),
                             m -> createCounter(publishBatch, m),
                             m -> createTimer(publishBatch, m),

@@ -80,7 +80,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
                 httpClient.post(config.uri())
                         .withBasicAuthentication(config.userName(), config.password())
                         .withJsonContent(
-                                batch.stream().flatMap(m -> m.apply(
+                                batch.stream().flatMap(m -> m.match(
                                         this::writeGauge,
                                         this::writeCounter,
                                         this::writeTimer,

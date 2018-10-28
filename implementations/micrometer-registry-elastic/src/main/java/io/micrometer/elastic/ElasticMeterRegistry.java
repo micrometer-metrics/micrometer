@@ -127,7 +127,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                         .post(config.host() + "/" + indexName() + "/doc/_bulk")
                         .withBasicAuthentication(config.userName(), config.password())
                         .withJsonContent(batch.stream()
-                                .map(m -> m.apply(
+                                .map(m -> m.match(
                                         this::writeGauge,
                                         this::writeCounter,
                                         this::writeTimer,

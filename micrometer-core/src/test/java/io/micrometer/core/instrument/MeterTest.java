@@ -33,7 +33,7 @@ class MeterTest {
 
     @Test
     void matchWhenTimeGaugeShouldUseFunctionForTimeGauge() {
-        String matched = gauge.apply(
+        String matched = gauge.match(
                 (gauge) -> "gauge",
                 (counter) -> "counter",
                 (timer) -> "timer",

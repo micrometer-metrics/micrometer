@@ -92,7 +92,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
         // New Relic's Insights API limits us to 1000 events per call
         for (List<Meter> batch : MeterPartition.partition(this, Math.min(config.batchSize(), 1000))) {
-            sendEvents(insightsEndpoint, batch.stream().flatMap(meter -> meter.apply(
+            sendEvents(insightsEndpoint, batch.stream().flatMap(meter -> meter.match(
                     this::writeGauge,
                     this::writeCounter,
                     this::writeTimer,
