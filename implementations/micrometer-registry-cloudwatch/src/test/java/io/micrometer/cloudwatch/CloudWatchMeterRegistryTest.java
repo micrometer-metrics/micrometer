@@ -16,7 +16,6 @@
 package io.micrometer.cloudwatch;
 
 import com.amazonaws.services.cloudwatch.model.MetricDatum;
-import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
 import org.junit.jupiter.api.Test;
@@ -24,7 +23,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 

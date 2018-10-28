@@ -123,12 +123,12 @@ class DynatraceMeterRegistryTest {
             }
         };
         DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(config)
-                .httpPushHandler((url, request) -> new HttpResponse(200, null))
+                .httpPushHandler(request -> new HttpResponse(200, null))
                 .build();
 
         Field createdCustomMetricsField = DynatraceMeterRegistry.class.getDeclaredField("createdCustomMetrics");
         createdCustomMetricsField.setAccessible(true);
-        Set<String> createdCustomMetrics = (Set<String>) createdCustomMetricsField.get(registry);
+        @SuppressWarnings("unchecked") Set<String> createdCustomMetrics = (Set<String>) createdCustomMetricsField.get(registry);
         assertThat(createdCustomMetrics).isEmpty();
 
         DynatraceMetricDefinition customMetric = new DynatraceMetricDefinition("metricId", null, null, null, new String[]{"type"});
