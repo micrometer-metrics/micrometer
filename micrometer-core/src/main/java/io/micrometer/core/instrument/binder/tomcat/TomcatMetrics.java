@@ -132,6 +132,7 @@ public class TomcatMetrics implements MeterBinder {
             Gauge.builder("tomcat.threads.config.max", mBeanServer,
                     s -> safeDouble(() -> s.getAttribute(name, "maxThreads")))
                     .tags(allTags)
+                    .baseUnit("threads")
                     .register(registry);
 
             Gauge.builder("tomcat.threads.busy", mBeanServer,
