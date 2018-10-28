@@ -16,5 +16,5 @@
 
 management.metrics.export.humio:
   enabled: true
-  step: 10s
+  step: PT10S
   apiToken: fake

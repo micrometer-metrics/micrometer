@@ -38,6 +38,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
 
+import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -264,7 +265,9 @@ public class HumioMeterRegistry extends StepMeterRegistry {
 
             String name = getConventionName(meter.getId());
 
-            sb.append("{\"timestamp\":\"").append(timestamp).append("\",\"attributes\":{\"name\":\"").append(name).append('"');
+            sb.append("{\"timestamp\":\"").append(timestamp).append("\",\"attributes\":{\"name\":\"")
+                    .append(escapeJson(name)).append('"');
+
             for (Attribute attribute : attributes) {
                 sb.append(",\"").append(attribute.name).append("\":").append(DoubleFormat.decimalOrWhole(attribute.value));
             }
@@ -279,7 +282,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                     }
                 }
 
-                sb.append(",\"").append(key).append("\":\"").append(tag.getValue()).append('"');
+                sb.append(",\"").append(escapeJson(key)).append("\":\"").append(escapeJson(tag.getValue())).append('"');
             }
 
             sb.append("}}");

@@ -444,6 +444,11 @@ public class SampleRegistries {
             public String apiToken() {
                 return apiToken;
             }
+
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
         }, Clock.SYSTEM);
     }
 
