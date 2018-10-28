@@ -47,19 +47,19 @@ class MeterTest {
     }
 
     @Test
-    void consumeWhenTimeGaugeShouldUseConsumerForTimeGauge() {
-        StringBuilder consumed = new StringBuilder();
+    void useWhenTimeGaugeShouldUseConsumerForTimeGauge() {
+        StringBuilder used = new StringBuilder();
         gauge.use(
-                (gauge) -> consumed.append("gauge"),
-                (counter) -> consumed.append("counter"),
-                (timer) -> consumed.append("timer"),
-                (distributionSummary) -> consumed.append("distributionSummary"),
-                (longTaskTimer) -> consumed.append("longTaskTimer"),
-                (timeGauge) -> consumed.append("timeGauge"),
-                (functionCounter) -> consumed.append("functionCounter"),
-                (functionTimer) -> consumed.append("functionTimer"),
-                (meter) -> consumed.append("meter"));
-        assertThat(consumed.toString()).isEqualTo("timeGauge");
+                (gauge) -> used.append("gauge"),
+                (counter) -> used.append("counter"),
+                (timer) -> used.append("timer"),
+                (distributionSummary) -> used.append("distributionSummary"),
+                (longTaskTimer) -> used.append("longTaskTimer"),
+                (timeGauge) -> used.append("timeGauge"),
+                (functionCounter) -> used.append("functionCounter"),
+                (functionTimer) -> used.append("functionTimer"),
+                (meter) -> used.append("meter"));
+        assertThat(used.toString()).isEqualTo("timeGauge");
     }
 
 }
