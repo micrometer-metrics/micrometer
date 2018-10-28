@@ -38,6 +38,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
 
@@ -234,7 +235,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
 
         String tags = conventionTags
                 .stream()
-                .map(t -> "\"" + t.getKey() + "\": \"" + t.getValue() + "\"")
+                .map(t -> "\"" + escapeJson(t.getKey()) + "\": \"" + escapeJson(t.getValue()) + "\"")
                 .collect(joining(","));
 
         UUID uuid = UUID.randomUUID();
@@ -243,7 +244,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         // To be valid JSON, the metric name must be unique. Since the same name can occur in multiple entries because of
         // variance in tag values, we need to append a suffix to the name. The suffix must be numeric, or Wavefront interprets
         // it as part of the name. Wavefront strips a $<NUMERIC> suffix from the name at parsing time.
-        return "\"" + getConventionName(fullId) + "$" + uniqueNameSuffix + "\"" +
+        return "\"" + escapeJson(getConventionName(fullId)) + "$" + uniqueNameSuffix + "\"" +
                 ": {" +
                 "\"value\": " + DoubleFormat.decimalOrNan(value) + "," +
                 "\"tags\": {" + tags + "}" +
