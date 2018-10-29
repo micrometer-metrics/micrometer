@@ -364,7 +364,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
         @Nullable
         private Consumer<String> lineSink;
 
-        public Builder(StatsdConfig config) {
+        Builder(StatsdConfig config) {
             this.config = config;
             this.namingConvention = namingConventionFromFlavor(config.flavor());
         }

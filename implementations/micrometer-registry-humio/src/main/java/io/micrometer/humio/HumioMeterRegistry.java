@@ -51,6 +51,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
     private final HumioConfig config;
     private final HttpSender httpClient;
 
+    @SuppressWarnings("deprecation")
     public HumioMeterRegistry(HumioConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
@@ -146,7 +147,8 @@ public class HumioMeterRegistry extends StepMeterRegistry {
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
         private HttpSender httpClient;
 
-        public Builder(HumioConfig config) {
+        @SuppressWarnings("deprecation")
+        Builder(HumioConfig config) {
             this.config = config;
             this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());
         }

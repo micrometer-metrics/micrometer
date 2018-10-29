@@ -26,7 +26,7 @@ public interface LoggingRegistryConfig extends StepRegistryConfig {
     }
 
     /**
-     * Determines whether counters and timers that have no activity in an
+     * @return Whether counters and timers that have no activity in an
      * interval are still logged.
      */
     default boolean logInactive() {

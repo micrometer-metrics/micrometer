@@ -28,10 +28,10 @@ import java.io.UncheckedIOException;
 
 /**
  * When running this as a main method, supply an environment variable GOOGLE_APPLICATION_CREDENTIALS with a service
- * account JSON as described in the {@link <a href="https://cloud.google.com/monitoring/docs/reference/libraries#setting_up_authentication">here</a>}
- * <p>
- * Your service account must have the "monitoring.editor" role at least, as described
- * {@link <a href="https://cloud.google.com/monitoring/access-control">here</a>}
+ * account JSON. Your service account must have the "monitoring.editor" role at least.
+ *
+ * @see <a href="https://cloud.google.com/monitoring/docs/reference/libraries#setting_up_authentication">Google Cloud authentication</a>
+ * @see <a href="https://cloud.google.com/monitoring/access-control">Google Cloud access control</a>
  */
 public class ClearCustomMetricDescriptors {
     public static void clearCustomMetricDescriptors(MetricServiceSettings settings, String projectId) {

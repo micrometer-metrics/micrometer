@@ -33,16 +33,16 @@ import java.util.function.BiConsumer;
 import static java.util.Collections.emptyList;
 
 /**
- * Kafka consumer metrics collected from metrics exposed by {@see org.apache.kafka.clients.consumer.KafkaConsumer}
- * via the MBeanServer. Metrics are exposed at each consumer thread.
+ * Kafka consumer metrics collected from metrics exposed by Kafka consumers via the MBeanServer. Metrics are exposed
+ * at each consumer thread.
  * <p>
- * Metric names here are based on the naming scheme as it was last changed in Kafka version 0.11.0. Metric for earlier
+ * Metric names here are based on the naming scheme as it was last changed in Kafka version 0.11.0. Metrics for earlier
  * versions of Kafka will not report correctly.
  *
  * @author Wardha Perinkadakattu
  * @author Jon Schneider
  * @author Johnny Lim
- * @link https://docs.confluent.io/current/kafka/monitoring.html
+ * @see <a href="https://docs.confluent.io/current/kafka/monitoring.html">Kakfa monitoring documentation</a>
  * @since 1.1.0
  */
 @Incubating(since = "1.1.0")
@@ -182,7 +182,7 @@ public class KafkaConsumerMetrics implements MeterBinder {
 
     int kafkaMajorVersion(Tags tags) {
         if (kafkaMajorVersion == null) {
-            kafkaMajorVersion = tags.stream().filter(t -> "client.id" .equals(t.getKey())).findAny()
+            kafkaMajorVersion = tags.stream().filter(t -> "client.id".equals(t.getKey())).findAny()
                     .map(clientId -> {
                         try {
                             String version = (String) mBeanServer.getAttribute(new ObjectName(JMX_DOMAIN + ":type=app-info,client-id=" + clientId.getValue()), "version");

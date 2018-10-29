@@ -52,11 +52,20 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     private final WavefrontConfig config;
     private final HttpSender httpClient;
 
+    /**
+     * @param config Configuration options for the registry that are describable as properties.
+     * @param clock  The clock to use for timings.
+     */
+    @SuppressWarnings("deprecation")
     public WavefrontMeterRegistry(WavefrontConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY);
+        this(config, clock, DEFAULT_THREAD_FACTORY,
+                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
     /**
+     * @param config        Configuration options for the registry that are describable as properties.
+     * @param clock         The clock to use for timings.
+     * @param threadFactory The thread factory to use to create the publishing thread.
      * @deprecated Use {@link #builder(WavefrontConfig)} instead.
      */
     @Deprecated
@@ -85,6 +94,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         super.start(threadFactory);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     protected void publish() {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
@@ -116,6 +126,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                     SocketAddress endpoint = uri.getHost() != null ? new InetSocketAddress(uri.getHost(), uri.getPort()) :
                             new InetSocketAddress(InetAddress.getByName(null), uri.getPort());
                     try (Socket socket = new Socket()) {
+                        // connectTimeout should be pulled up to WavefrontConfig when it is removed elsewhere
                         socket.connect(endpoint, (int) this.config.connectTimeout().toMillis());
                         try (OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8)) {
                             writer.write(stream.collect(joining("\n")) + "\n");
@@ -137,7 +148,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     }
 
     private boolean directToApi() {
-        return !"proxy" .equals(URI.create(config.uri()).getScheme());
+        return !"proxy".equals(URI.create(config.uri()).getScheme());
     }
 
     private Stream<String> writeFunctionTimer(FunctionTimer timer) {
@@ -271,6 +282,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
         private HttpSender httpClient;
 
+        @SuppressWarnings("deprecation")
         Builder(WavefrontConfig config) {
             this.config = config;
             this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());

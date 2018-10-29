@@ -492,9 +492,9 @@ public class SampleRegistries {
     }
 
     /**
-     * @param serviceAccountJson The fully qualified path on the local file system to a service account's JSON. To create,
-     *                           see {@link <a href="https://cloud.google.com/monitoring/docs/reference/libraries#setting_up_authentication">this</a>}.
+     * @param serviceAccountJson The fully qualified path on the local file system to a service account's JSON.
      * @param projectId          The Google Cloud project id found on the dropdown at the top of the Google Cloud console.
+     * @see <a href="https://cloud.google.com/monitoring/docs/reference/libraries#setting_up_authentication">Google Cloud authentication</a>
      * @return A Stackdriver registry.
      */
     public static StackdriverMeterRegistry stackdriver(String serviceAccountJson, String projectId) {

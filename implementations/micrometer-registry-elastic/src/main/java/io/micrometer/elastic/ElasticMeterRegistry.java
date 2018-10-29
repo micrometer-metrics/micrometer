@@ -57,6 +57,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     private boolean checkedForIndexTemplate = false;
 
+    @SuppressWarnings("deprecation")
     public ElasticMeterRegistry(ElasticConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY,
                 new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
@@ -281,7 +282,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
         private HttpSender httpClient;
 
-        public Builder(ElasticConfig config) {
+        @SuppressWarnings("deprecation")
+        Builder(ElasticConfig config) {
             this.config = config;
             this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());
         }

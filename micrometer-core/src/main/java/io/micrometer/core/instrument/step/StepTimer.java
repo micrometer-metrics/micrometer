@@ -35,12 +35,11 @@ public class StepTimer extends AbstractTimer {
     /**
      * Create a new {@code StepTimer}.
      *
-     * @param id ID
-     * @param clock clock
+     * @param id                          ID
+     * @param clock                       clock
      * @param distributionStatisticConfig distribution statistic configuration
-     * @param pauseDetector pause detector
-     * @param baseTimeUnit base time unit
-     * @deprecated Use {@link #StepTimer(Id, Clock, DistributionStatisticConfig, PauseDetector, TimeUnit, long, boolean)}
+     * @param pauseDetector               pause detector
+     * @param baseTimeUnit                base time unit
      */
     @Deprecated
     public StepTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
@@ -51,13 +50,12 @@ public class StepTimer extends AbstractTimer {
     /**
      * Create a new {@code StepTimer}.
      *
-     * @param id ID
-     * @param clock clock
-     * @param distributionStatisticConfig distribution statistic configuration
-     * @param pauseDetector pause detector
-     * @param baseTimeUnit base time unit
+     * @param id                            ID
+     * @param clock                         clock
+     * @param distributionStatisticConfig   distribution statistic configuration
+     * @param pauseDetector                 pause detector
+     * @param baseTimeUnit                  base time unit
      * @param supportsAggregablePercentiles whether it supports aggregable percentiles
-     * @deprecated Use {@link #StepTimer(Id, Clock, DistributionStatisticConfig, PauseDetector, TimeUnit, long, boolean)}
      */
     @Deprecated
     @SuppressWarnings("ConstantConditions")
@@ -69,12 +67,12 @@ public class StepTimer extends AbstractTimer {
     /**
      * Create a new {@code StepTimer}.
      *
-     * @param id ID
-     * @param clock clock
-     * @param distributionStatisticConfig distribution statistic configuration
-     * @param pauseDetector pause detector
-     * @param baseTimeUnit base time unit
-     * @param stepMillis step in milliseconds
+     * @param id                            ID
+     * @param clock                         clock
+     * @param distributionStatisticConfig   distribution statistic configuration
+     * @param pauseDetector                 pause detector
+     * @param baseTimeUnit                  base time unit
+     * @param stepMillis                    step in milliseconds
      * @param supportsAggregablePercentiles whether it supports aggregable percentiles
      */
     @SuppressWarnings("ConstantConditions")

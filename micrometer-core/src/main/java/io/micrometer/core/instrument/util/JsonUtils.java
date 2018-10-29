@@ -18,6 +18,9 @@ package io.micrometer.core.instrument.util;
 public class JsonUtils {
     /**
      * Based on https://stackoverflow.com/a/49564514/510017
+     *
+     * @param unformattedJsonString JSON string that has not been formatted at all.
+     * @return A best-effort at pretty printed JSON, even for malformed JSON.
      */
     public static String prettyPrint(String unformattedJsonString) {
         StringBuilder sb = new StringBuilder();

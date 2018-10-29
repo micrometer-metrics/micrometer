@@ -50,11 +50,20 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     private final HttpSender httpClient;
     private final Logger logger = LoggerFactory.getLogger(NewRelicMeterRegistry.class);
 
+    /**
+     * @param config Configuration options for the registry that are describable as properties.
+     * @param clock  The clock to use for timings.
+     */
+    @SuppressWarnings("deprecation")
     public NewRelicMeterRegistry(NewRelicConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY);
+        this(config, clock, DEFAULT_THREAD_FACTORY,
+                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
     /**
+     * @param config        Configuration options for the registry that are describable as properties.
+     * @param clock         The clock to use for timings.
+     * @param threadFactory The thread factory to use to create the publishing thread.
      * @deprecated Use {@link #builder(NewRelicConfig)} instead.
      */
     @Deprecated
@@ -220,7 +229,8 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
         private HttpSender httpClient;
 
-        public Builder(NewRelicConfig config) {
+        @SuppressWarnings("deprecation")
+        Builder(NewRelicConfig config) {
             this.config = config;
             this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());
         }

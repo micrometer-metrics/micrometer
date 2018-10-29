@@ -36,6 +36,7 @@ public interface Gauge extends Meter {
      *             is determined from.
      * @param f    A function that yields a double value for the gauge, based on the state of
      *             {@code obj}.
+     * @param <T>  The type of object to gauge.
      * @return A new gauge builder.
      */
     static <T> Builder<T> builder(String name, @Nullable T obj, ToDoubleFunction<T> f) {
@@ -154,7 +155,8 @@ public interface Gauge extends Meter {
          * This method may be removed in future minor or major releases if we find a way to mark derivatives in a
          * private way that does not have other API compatibility consequences.
          *
-         * @return The meter id of a meter for which this metric is a synthetic derivative.
+         * @param syntheticAssociation The meter id of a meter for which this metric is a synthetic derivative.
+         * @return The gauge builder with added base unit.
          */
         @Incubating(since = "1.1.0")
         public Builder<T> synthetic(Meter.Id syntheticAssociation) {
@@ -166,6 +168,8 @@ public interface Gauge extends Meter {
          * Indicates that the gauge should maintain a strong reference on the object upon which
          * its instantaneous value is determined.
          *
+         * @param strong Whether or not to maintain a strong reference on the gauged object.
+         * @return The gauge builder with added base unit.
          * @since 1.1.0
          */
         @Incubating(since = "1.1.0")

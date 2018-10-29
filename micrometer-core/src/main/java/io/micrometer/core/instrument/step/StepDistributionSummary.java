@@ -32,11 +32,10 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
     /**
      * Create a new {@code StepDistributionSummary}.
      *
-     * @param id ID
-     * @param clock clock
+     * @param id                          ID
+     * @param clock                       clock
      * @param distributionStatisticConfig distribution static configuration
-     * @param scale scale
-     * @deprecated Use {@link #StepDistributionSummary(Id, Clock, DistributionStatisticConfig, double, long, boolean)}
+     * @param scale                       scale
      */
     @Deprecated
     public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
@@ -46,12 +45,11 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
     /**
      * Create a new {@code StepDistributionSummary}.
      *
-     * @param id ID
-     * @param clock clock
-     * @param distributionStatisticConfig distribution static configuration
-     * @param scale scale
+     * @param id                            ID
+     * @param clock                         clock
+     * @param distributionStatisticConfig   distribution static configuration
+     * @param scale                         scale
      * @param supportsAggregablePercentiles whether it supports aggregable percentiles
-     * @deprecated Use {@link #StepDistributionSummary(Id, Clock, DistributionStatisticConfig, double, long, boolean)}
      */
     @Deprecated
     @SuppressWarnings("ConstantConditions")
@@ -63,11 +61,11 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
     /**
      * Create a new {@code StepDistributionSummary}.
      *
-     * @param id ID
-     * @param clock clock
-     * @param distributionStatisticConfig distribution static configuration
-     * @param scale scale
-     * @param stepMillis step in milliseconds
+     * @param id                            ID
+     * @param clock                         clock
+     * @param distributionStatisticConfig   distribution static configuration
+     * @param scale                         scale
+     * @param stepMillis                    step in milliseconds
      * @param supportsAggregablePercentiles whether it supports aggregable percentiles
      */
     @SuppressWarnings("ConstantConditions")

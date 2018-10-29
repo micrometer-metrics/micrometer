@@ -55,11 +55,20 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
      */
     private final Set<String> verifiedMetadata = ConcurrentHashMap.newKeySet();
 
+    /**
+     * @param config Configuration options for the registry that are describable as properties.
+     * @param clock  The clock to use for timings.
+     */
+    @SuppressWarnings("deprecation")
     public DatadogMeterRegistry(DatadogConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY);
+        this(config, clock, DEFAULT_THREAD_FACTORY,
+                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
     /**
+     * @param config        Configuration options for the registry that are describable as properties.
+     * @param clock         The clock to use for timings.
+     * @param threadFactory The thread factory to use to create the publishing thread.
      * @deprecated Use {@link #builder(DatadogConfig)} instead.
      */
     @Deprecated
@@ -287,6 +296,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
         private HttpSender httpClient;
 
+        @SuppressWarnings("deprecation")
         Builder(DatadogConfig config) {
             this.config = config;
             this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());

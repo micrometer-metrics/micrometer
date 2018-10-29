@@ -31,8 +31,13 @@ public class BufferingFlux {
      * Creates a Flux that implements Nagle's algorithm to buffer messages -- joined by a delimiter string -- to up a
      * maximum number of bytes, or a maximum duration of time. This avoids sending many small packets in favor of fewer
      * larger ones.
-     * <p>
-     * Also see: https://en.wikipedia.org/wiki/Nagle%27s_algorithm
+     *
+     * @param source                      The input flux.
+     * @param delimiter                   The delimiter to use to join messages
+     * @param maxByteArraySize            The buffered payload will contain no more than this number of bytes
+     * @param maxMillisecondsBetweenEmits Buffered payloads will be emitted no less frequently than this.
+     * @return A flux implementing Nagle's algorithm.
+     * @see <a href="https://en.wikipedia.org/wiki/Nagle%27s_algorithm">Nagle's algorithm</a>
      */
     public static Flux<String> create(final Flux<String> source, final String delimiter, final int maxByteArraySize, final long maxMillisecondsBetweenEmits) {
         return Flux.defer(() -> {

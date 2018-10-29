@@ -46,6 +46,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
     private final KairosConfig config;
     private final HttpSender httpClient;
 
+    @SuppressWarnings("deprecation")
     public KairosMeterRegistry(KairosConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
@@ -231,7 +232,8 @@ public class KairosMeterRegistry extends StepMeterRegistry {
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
         private HttpSender httpClient;
 
-        public Builder(KairosConfig config) {
+        @SuppressWarnings("deprecation")
+        Builder(KairosConfig config) {
             this.config = config;
             this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());
         }

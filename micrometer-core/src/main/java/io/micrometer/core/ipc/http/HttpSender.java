@@ -34,6 +34,10 @@ import java.util.function.Supplier;
 import java.util.zip.GZIPOutputStream;
 
 /**
+ * A general-purpose interface for controlling how {@link io.micrometer.core.instrument.MeterRegistry} implementations
+ * perform HTTP calls for various purposes. This interface can be used to inject more advanced customization like SSL
+ * verification, key loading, etc. without requiring further additions to registry configurations.
+ *
  * @author Jon Schneider
  * @since 1.1.0
  */
@@ -138,6 +142,8 @@ public interface HttpSender {
             /**
              * Add a header to the request.
              *
+             * @param name  The name of the header.
+             * @param value The value of the header.
              * @return This request builder.
              */
             public final Builder withHeader(String name, String value) {
@@ -164,6 +170,7 @@ public interface HttpSender {
             /**
              * Set the request body as JSON.
              *
+             * @param content The request body.
              * @return This request builder.
              */
             public final Builder withJsonContent(String content) {
@@ -173,6 +180,7 @@ public interface HttpSender {
             /**
              * Set the request body as JSON.
              *
+             * @param content The request body.
              * @return This request builder.
              */
             public final Builder withPlainText(String content) {
@@ -182,6 +190,8 @@ public interface HttpSender {
             /**
              * Set the request body.
              *
+             * @param type    The value of the "Content-Type" header to add.
+             * @param content The request body.
              * @return This request builder.
              */
             public final Builder withContent(String type, String content) {
@@ -191,6 +201,8 @@ public interface HttpSender {
             /**
              * Set the request body.
              *
+             * @param type    The value of the "Content-Type" header to add.
+             * @param content The request body.
              * @return This request builder.
              */
             public final Builder withContent(String type, byte[] content) {
@@ -202,7 +214,7 @@ public interface HttpSender {
             /**
              * Add header to accept {@code application/json} data.
              *
-             * @return This request builder;
+             * @return This request builder.
              */
             public Builder acceptJson() {
                 return accept(APPLICATION_JSON);
@@ -211,6 +223,7 @@ public interface HttpSender {
             /**
              * Add accept header.
              *
+             * @param type The value of the "Accept" header to add.
              * @return This request builder.
              */
             public Builder accept(String type) {
@@ -220,6 +233,7 @@ public interface HttpSender {
             /**
              * Set the request method.
              *
+             * @param method An HTTP method.
              * @return This request builder.
              */
             public final Builder withMethod(Method method) {
@@ -227,12 +241,26 @@ public interface HttpSender {
                 return this;
             }
 
+            /**
+             * Add a "Content-Encoding" header of "gzip" and compress the request body.
+             *
+             * @return This request builder.
+             * @throws IOException If compression fails.
+             */
             public final Builder compress() throws IOException {
                 withHeader("Content-Encoding", "gzip");
                 this.entity = gzip(entity);
                 return this;
             }
 
+            /**
+             * Add a "Content-Encoding" header of "gzip" and compress the request body when the supplied
+             * condition is true.
+             *
+             * @param when Condition that governs when to compress the request body.
+             * @return This request builder.
+             * @throws IOException If compression fails.
+             */
             public final Builder compressWhen(Supplier<Boolean> when) throws IOException {
                 if (when.get())
                     return compress();

@@ -52,6 +52,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
     private final AppOpticsConfig config;
     private final HttpSender httpClient;
 
+    @SuppressWarnings("deprecation")
     public AppOpticsMeterRegistry(AppOpticsConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
@@ -269,6 +270,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
         private HttpSender httpClient;
 
+        @SuppressWarnings("deprecation")
         Builder(AppOpticsConfig config) {
             this.config = config;
             this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());

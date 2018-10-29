@@ -42,12 +42,21 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
     private boolean databaseExists = false;
 
-    public InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+    @SuppressWarnings("deprecation")
+    public InfluxMeterRegistry(InfluxConfig config, Clock clock) {
+        this(config, clock, DEFAULT_THREAD_FACTORY,
+                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
-    public InfluxMeterRegistry(InfluxConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY);
+    /**
+     * @param config        Configuration options for the registry that are describable as properties.
+     * @param clock         The clock to use for timings.
+     * @param threadFactory The thread factory to use to create the publishing thread.
+     * @deprecated Use {@link #builder(InfluxConfig)} instead.
+     */
+    @Deprecated
+    public InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory) {
+        this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
     private InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
@@ -218,7 +227,8 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
         private HttpSender httpClient;
 
-        public Builder(InfluxConfig config) {
+        @SuppressWarnings("deprecation")
+        Builder(InfluxConfig config) {
             this.config = config;
             this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());
         }

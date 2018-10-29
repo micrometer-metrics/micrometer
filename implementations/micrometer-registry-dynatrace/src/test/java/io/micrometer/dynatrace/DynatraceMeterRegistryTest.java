@@ -123,7 +123,7 @@ class DynatraceMeterRegistryTest {
             }
         };
         DynatraceMeterRegistry registry = DynatraceMeterRegistry.builder(config)
-                .httpPushHandler(request -> new HttpSender.Response(200, null))
+                .httpClient(request -> new HttpSender.Response(200, null))
                 .build();
 
         Field createdCustomMetricsField = DynatraceMeterRegistry.class.getDeclaredField("createdCustomMetrics");

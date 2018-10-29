@@ -55,6 +55,7 @@ public class MultiGauge {
         register(rows, false);
     }
 
+    @SuppressWarnings("unchecked")
     public void register(Iterable<Row> rows, boolean overwrite) {
         registeredRows.getAndUpdate(oldRows -> {
             // for some reason the compiler needs type assistance by creating this intermediate variable.
@@ -68,7 +69,6 @@ public class MultiGauge {
                         }
 
                         if (overwrite || !previouslyDefined) {
-//                            noinspection unchecked
                             registry.gauge(rowId, row.obj, new StrongReferenceGaugeFunction<>(row.obj, row.valueFunction));
                         }
 

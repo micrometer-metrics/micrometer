@@ -220,7 +220,7 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
         @Nullable
         private TelemetryConfiguration telemetryConfiguration;
 
-        public Builder(AzureMonitorConfig config) {
+        Builder(AzureMonitorConfig config) {
             this.config = config;
         }
 

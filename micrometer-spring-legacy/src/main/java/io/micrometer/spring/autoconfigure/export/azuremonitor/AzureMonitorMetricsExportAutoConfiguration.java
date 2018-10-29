@@ -57,10 +57,6 @@ public class AzureMonitorMetricsExportAutoConfiguration {
         return new AzureMonitorPropertiesConfigAdapter(properties);
     }
 
-    /**
-     * This bean is already available when the {@see <a href="https://github.com/Microsoft/ApplicationInsights-Java/tree/master/azure-application-insights-spring-boot-starter">Azure Application Insights starter</a>}
-     * is present.
-     */
     @Bean
     @ConditionalOnMissingBean
     public TelemetryConfiguration telemetryConfiguration(AzureMonitorConfig config) {

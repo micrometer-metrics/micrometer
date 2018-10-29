@@ -61,6 +61,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     private final Set<String> createdCustomMetrics = ConcurrentHashMap.newKeySet();
     private final String customMetricEndpointTemplate;
 
+    @SuppressWarnings("deprecation")
     public DynatraceMeterRegistry(DynatraceConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
@@ -259,11 +260,12 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
-        private HttpSender pushHandler;
+        private HttpSender httpClient;
 
-        public Builder(DynatraceConfig config) {
+        @SuppressWarnings("deprecation")
+        Builder(DynatraceConfig config) {
             this.config = config;
-            this.pushHandler = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());
+            this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());
         }
 
         public Builder clock(Clock clock) {
@@ -276,13 +278,13 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
-        public Builder httpPushHandler(HttpSender pushHandler) {
-            this.pushHandler = pushHandler;
+        public Builder httpClient(HttpSender httpClient) {
+            this.httpClient = httpClient;
             return this;
         }
 
         public DynatraceMeterRegistry build() {
-            return new DynatraceMeterRegistry(config, clock, threadFactory, pushHandler);
+            return new DynatraceMeterRegistry(config, clock, threadFactory, httpClient);
         }
     }
 

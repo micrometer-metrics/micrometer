@@ -215,7 +215,7 @@ public class GangliaMeterRegistry extends StepMeterRegistry {
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
         private HierarchicalNameMapper nameMapper = HierarchicalNameMapper.DEFAULT;
 
-        public Builder(GangliaConfig config) {
+        Builder(GangliaConfig config) {
             this.config = config;
         }
 
