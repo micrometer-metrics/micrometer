@@ -247,6 +247,26 @@ public class SampleRegistries {
         }, Clock.SYSTEM);
     }
 
+    public static StatsdMeterRegistry etsyStatsd() {
+        return new StatsdMeterRegistry(new StatsdConfig() {
+            @Override
+            public Duration step() {
+                return Duration.ofSeconds(10);
+            }
+
+            @Override
+            @Nullable
+            public String get(String k) {
+                return null;
+            }
+
+            @Override
+            public StatsdFlavor flavor() {
+                return StatsdFlavor.ETSY;
+            }
+        }, Clock.SYSTEM);
+    }
+
     public static GangliaMeterRegistry ganglia() {
         return new GangliaMeterRegistry(new GangliaConfig() {
             @Override
