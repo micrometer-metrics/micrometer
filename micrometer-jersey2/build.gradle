@@ -2,12 +2,13 @@ apply plugin: 'nebula.optional-base'
 
 dependencies {
     compile project(':micrometer-core')
-    compile 'org.glassfish.jersey.core:jersey-server:2.25.1', optional
+    compile 'org.glassfish.jersey.core:jersey-server:2.+', optional
+    runtime 'org.glassfish.jersey.inject:jersey-hk2:2.+'
 
-    testCompile 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:2.25.1'
+    testCompile 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:2.+'
 
     // required by jdk 9
-    testRuntime 'javax.xml.bind:jaxb-api:2.3.0'
+    testRuntime 'javax.xml.bind:jaxb-api:2.3.+'
 
     testCompile 'org.assertj:assertj-core:3.+'
 

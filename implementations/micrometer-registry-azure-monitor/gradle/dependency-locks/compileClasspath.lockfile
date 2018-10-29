@@ -12,7 +12,7 @@ com.google.code.gson:gson:2.7
 com.google.errorprone:error_prone_annotations:2.1.2
 com.google.guava:guava:20.0
 com.google.protobuf:protobuf-java:3.6.1
-com.hazelcast:hazelcast:3.8.9
+com.hazelcast:hazelcast:3.11
 com.microsoft.azure:applicationinsights-core:2.2.0
 com.netflix.archaius:archaius-core:0.4.1
 com.netflix.hystrix:hystrix-core:1.5.12
@@ -46,11 +46,11 @@ io.opencensus:opencensus-contrib-grpc-metrics:0.12.3
 io.projectreactor.netty:reactor-netty:0.8.1.RELEASE
 io.projectreactor:reactor-core:3.2.1.RELEASE
 io.reactivex:rxjava:1.2.0
-javax.cache:cache-api:1.0.0
+javax.cache:cache-api:1.1.0
 javax.persistence:javax.persistence-api:2.2
 javax.servlet:javax.servlet-api:3.1.0
 net.bytebuddy:byte-buddy:1.6.14
-net.sf.ehcache:ehcache:2.10.4
+net.sf.ehcache:ehcache:2.10.6
 org.apache.logging.log4j:log4j-api:2.11.1
 org.apache.logging.log4j:log4j-core:2.11.1
 org.apache.tomcat.embed:tomcat-embed-core:8.5.34

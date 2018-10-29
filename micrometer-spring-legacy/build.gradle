@@ -7,7 +7,7 @@ apply plugin: 'nebula.facet'
 
 dependencyManagement {
     imports {
-        mavenBom 'org.springframework.boot:spring-boot-dependencies:1.5.14.RELEASE'
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:1.5.17.RELEASE'
     }
     dependencies {
         dependency 'org.assertj:assertj-core:3.8.0'

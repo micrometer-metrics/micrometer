@@ -24,9 +24,9 @@ dependencies {
     // cache monitoring
     compile 'com.google.guava:guava:latest.release', optional
     compile 'com.github.ben-manes.caffeine:caffeine:latest.release', optional
-    compile 'net.sf.ehcache:ehcache:2.10.4', optional
-    compile 'javax.cache:cache-api:1.0.0', optional
-    compile 'com.hazelcast:hazelcast:3.8.+', optional
+    compile 'net.sf.ehcache:ehcache:latest.release', optional
+    compile 'javax.cache:cache-api:latest.release', optional
+    compile 'com.hazelcast:hazelcast:latest.release', optional
     compile 'org.hibernate:hibernate-entitymanager:latest.release', optional
 
     // server runtime monitoring
@@ -75,12 +75,12 @@ dependencies {
 
     testCompile 'org.assertj:assertj-core:latest.release'
 
-    testCompile 'org.ehcache:ehcache:3.+'
+    testCompile 'org.ehcache:ehcache:latest.release'
 
     testCompile 'org.apache.kafka:kafka-clients:latest.release'
 
     testCompile 'ru.lanwen.wiremock:wiremock-junit5:1.2.0'
-    testCompile 'com.github.tomakehurst:wiremock:2.+'
+    testCompile 'com.github.tomakehurst:wiremock:latest.release'
 }
 
 shadowJar {

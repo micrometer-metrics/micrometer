@@ -12,7 +12,7 @@ com.google.guava:failureaccess:1.0
 com.google.guava:guava:27.0-jre
 com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava
 com.google.j2objc:j2objc-annotations:1.1
-com.hazelcast:hazelcast:3.8.9
+com.hazelcast:hazelcast:3.11
 com.netflix.archaius:archaius-core:0.4.1
 com.netflix.hystrix:hystrix-core:1.5.12
 com.squareup.okhttp3:okhttp:3.11.0
@@ -38,11 +38,11 @@ io.netty:netty-transport:4.1.29.Final
 io.projectreactor.netty:reactor-netty:0.8.1.RELEASE
 io.projectreactor:reactor-core:3.2.1.RELEASE
 io.reactivex:rxjava:1.2.0
-javax.cache:cache-api:1.0.0
+javax.cache:cache-api:1.1.0
 javax.persistence:javax.persistence-api:2.2
 javax.servlet:javax.servlet-api:3.1.0
 net.bytebuddy:byte-buddy:1.6.14
-net.sf.ehcache:ehcache:2.10.4
+net.sf.ehcache:ehcache:2.10.6
 org.acplt.remotetea:remotetea-oncrpc:1.1.2
 org.apache.logging.log4j:log4j-api:2.11.1
 org.apache.logging.log4j:log4j-core:2.11.1

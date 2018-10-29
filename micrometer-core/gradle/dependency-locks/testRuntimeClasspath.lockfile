@@ -17,7 +17,7 @@ com.github.tomakehurst:wiremock:2.19.0
 com.google.code.findbugs:jsr305:3.0.2
 com.google.guava:guava:20.0
 com.google.inject:guice:4.1.0
-com.hazelcast:hazelcast:3.8.9
+com.hazelcast:hazelcast:3.11
 com.jayway.jsonpath:json-path:2.4.0
 com.netflix.archaius:archaius-core:0.4.1
 com.netflix.hystrix:hystrix-core:1.5.12
@@ -42,10 +42,10 @@ io.netty:netty-transport-native-epoll:4.1.29.Final
 io.netty:netty-transport-native-unix-common:4.1.29.Final
 io.netty:netty-transport:4.1.29.Final
 io.projectreactor.netty:reactor-netty:0.8.1.RELEASE
-io.projectreactor:reactor-core:3.2.1.RELEASE
-io.projectreactor:reactor-test:3.2.1.RELEASE
+io.projectreactor:reactor-core:3.2.2.RELEASE
+io.projectreactor:reactor-test:3.2.2.RELEASE
 io.reactivex:rxjava:1.2.0
-javax.cache:cache-api:1.0.0
+javax.cache:cache-api:1.1.0
 javax.inject:javax.inject:1
 javax.persistence:javax.persistence-api:2.2
 javax.servlet:javax.servlet-api:3.1.0
@@ -54,7 +54,7 @@ net.bytebuddy:byte-buddy-agent:1.9.0
 net.bytebuddy:byte-buddy:1.9.0
 net.minidev:accessors-smart:1.2
 net.minidev:json-smart:2.3
-net.sf.ehcache:ehcache:2.10.4
+net.sf.ehcache:ehcache:2.10.6
 net.sf.jopt-simple:jopt-simple:5.0.3
 org.antlr:antlr4-runtime:4.7.1
 org.apache.commons:commons-lang3:3.7

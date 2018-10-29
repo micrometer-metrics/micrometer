@@ -19,7 +19,7 @@ com.google.code.gson:gson:2.7
 com.google.errorprone:error_prone_annotations:2.1.2
 com.google.guava:guava:20.0
 com.google.protobuf:protobuf-java:3.6.1
-com.hazelcast:hazelcast:3.8.9
+com.hazelcast:hazelcast:3.11
 com.jayway.jsonpath:json-path:2.4.0
 com.microsoft.azure:applicationinsights-core:2.2.0
 com.netflix.archaius:archaius-core:0.4.1
@@ -55,14 +55,14 @@ io.opencensus:opencensus-contrib-grpc-metrics:0.12.3
 io.projectreactor.netty:reactor-netty:0.8.1.RELEASE
 io.projectreactor:reactor-core:3.2.1.RELEASE
 io.reactivex:rxjava:1.2.0
-javax.cache:cache-api:1.0.0
+javax.cache:cache-api:1.1.0
 javax.persistence:javax.persistence-api:2.2
 javax.servlet:javax.servlet-api:3.1.0
 junit:junit:4.12
 net.bytebuddy:byte-buddy:1.6.14
 net.minidev:accessors-smart:1.2
 net.minidev:json-smart:2.3
-net.sf.ehcache:ehcache:2.10.4
+net.sf.ehcache:ehcache:2.10.6
 net.sf.jopt-simple:jopt-simple:5.0.3
 org.antlr:antlr4-runtime:4.7.1
 org.apache.commons:commons-lang3:3.7
