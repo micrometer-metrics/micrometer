@@ -39,7 +39,11 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
 /**
+ * {@link StepMeterRegistry} for Amazon CloudWatch.
+ *
  * @author Dawid Kublik
+ * @author Jon Schneider
+ * @author Johnny Lim
  */
 public class CloudWatchMeterRegistry extends StepMeterRegistry {
     private final CloudWatchConfig config;
@@ -110,7 +114,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         ).collect(toList());
     }
 
-    private class Batch {
+    // VisibleForTesting
+    class Batch {
         private long wallTime = clock.wallTime();
 
         private Stream<MetricDatum> gaugeData(Gauge gauge) {
@@ -192,14 +197,19 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
                 return null;
             }
 
-            String metricName = config().namingConvention().name(id.getName() + "." + suffix, id.getType(), id.getBaseUnit());
             List<Tag> tags = id.getConventionTags(config().namingConvention());
             return new MetricDatum()
-                    .withMetricName(metricName)
+                    .withMetricName(getMetricName(id, suffix))
                     .withDimensions(toDimensions(tags))
                     .withTimestamp(new Date(wallTime))
                     .withValue(CloudWatchUtils.clampMetricValue(value))
                     .withUnit(toStandardUnit(unit));
+        }
+
+        // VisibleForTesting
+        String getMetricName(Meter.Id id, @Nullable String suffix) {
+            String name = suffix != null ? id.getName() + "." + suffix : id.getName();
+            return config().namingConvention().name(name, id.getType(), id.getBaseUnit());
         }
 
         private StandardUnit toStandardUnit(@Nullable String unit) {
