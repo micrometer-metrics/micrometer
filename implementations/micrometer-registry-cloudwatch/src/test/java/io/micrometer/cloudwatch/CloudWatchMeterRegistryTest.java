@@ -16,6 +16,7 @@
 package io.micrometer.cloudwatch;
 
 import com.amazonaws.services.cloudwatch.model.MetricDatum;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
 import org.junit.jupiter.api.Test;
@@ -62,5 +63,17 @@ class CloudWatchMeterRegistryTest {
 
         List<MetricDatum> metricDatumStream = registry.metricData();
         assertThat(metricDatumStream.size()).isEqualTo(0);
+    }
+
+    @Test
+    void batchGetMetricName() {
+        Meter.Id id = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.COUNTER);
+        assertThat(registry.new Batch().getMetricName(id, "suffix")).isEqualTo("name.suffix");
+    }
+
+    @Test
+    void batchGetMetricNameWhenSuffixIsNullShouldNotAppend() {
+        Meter.Id id = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.COUNTER);
+        assertThat(registry.new Batch().getMetricName(id, null)).isEqualTo("name");
     }
 }
