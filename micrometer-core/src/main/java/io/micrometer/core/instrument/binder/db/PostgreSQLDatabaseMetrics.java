@@ -292,7 +292,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
                 return 0L;
             }
         } catch (SQLException e) {
-            logger.error("Error getting statistic from PostgreSQL database.");
+            logger.error("Error getting statistic from PostgreSQL database.", e);
             return 0L;
         }
     }
