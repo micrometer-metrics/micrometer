@@ -22,8 +22,6 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.management.NotificationEmitter;
 import javax.management.openmbean.CompositeData;
@@ -73,9 +71,6 @@ enum GcGenerationAge {
 @NonNullApi
 @NonNullFields
 public class JvmGcMetrics implements MeterBinder {
-
-    private static final Logger logger = LoggerFactory.getLogger(JvmGcMetrics.class);
-
     private boolean managementExtensionsPresent = isManagementExtensionsPresent();
 
     private Iterable<Tag> tags;
@@ -104,28 +99,28 @@ public class JvmGcMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         AtomicLong maxDataSize = new AtomicLong(0L);
         Gauge.builder("jvm.gc.max.data.size", maxDataSize, AtomicLong::get)
-            .tags(tags)
-            .description("Max size of old generation memory pool")
-            .baseUnit("bytes")
-            .register(registry);
+                .tags(tags)
+                .description("Max size of old generation memory pool")
+                .baseUnit("bytes")
+                .register(registry);
 
         AtomicLong liveDataSize = new AtomicLong(0L);
 
         Gauge.builder("jvm.gc.live.data.size", liveDataSize, AtomicLong::get)
-            .tags(tags)
-            .description("Size of old generation memory pool after a full GC")
-            .baseUnit("bytes")
-            .register(registry);
+                .tags(tags)
+                .description("Size of old generation memory pool after a full GC")
+                .baseUnit("bytes")
+                .register(registry);
 
         Counter promotedBytes = Counter.builder("jvm.gc.memory.promoted").tags(tags)
-            .baseUnit("bytes")
-            .description("Count of positive increases in the size of the old generation memory pool before GC to after GC")
-            .register(registry);
+                .baseUnit("bytes")
+                .description("Count of positive increases in the size of the old generation memory pool before GC to after GC")
+                .register(registry);
 
         Counter allocatedBytes = Counter.builder("jvm.gc.memory.allocated").tags(tags)
-            .baseUnit("bytes")
-            .description("Incremented for an increase in the size of the young generation memory pool after one GC to before the next")
-            .register(registry);
+                .baseUnit("bytes")
+                .description("Incremented for an increase in the size of the young generation memory pool after one GC to before the next")
+                .register(registry);
 
         if (this.managementExtensionsPresent) {
             // start watching for GC notifications
@@ -199,12 +194,10 @@ public class JvmGcMetrics implements MeterBinder {
     private static boolean isManagementExtensionsPresent() {
         try {
             Class.forName("com.sun.management.GarbageCollectionNotificationInfo", false,
-                JvmGcMetrics.class.getClassLoader());
+                    JvmGcMetrics.class.getClassLoader());
             return true;
         } catch (Throwable e) {
             // We are operating in a JVM without access to this level of detail
-            logger.warn("GC notifications will not be available because " +
-                "com.sun.management.GarbageCollectionNotificationInfo is not present");
             return false;
         }
     }
