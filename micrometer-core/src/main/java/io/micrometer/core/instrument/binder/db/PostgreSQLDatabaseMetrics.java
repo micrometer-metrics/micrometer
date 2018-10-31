@@ -19,8 +19,6 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -51,8 +49,6 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
     private static final String QUERY_BUFFERS_CLEAN = getBgWriterQuery("buffers_clean");
     private static final String QUERY_BUFFERS_BACKEND = getBgWriterQuery("buffers_backend");
     private static final String QUERY_BUFFERS_CHECKPOINT = getBgWriterQuery("buffers_checkpoint");
-
-    private final Logger logger = LoggerFactory.getLogger(PostgreSQLDatabaseMetrics.class);
 
     private final String database;
     private final DataSource postgresDataSource;
@@ -282,19 +278,14 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
 
     private Long runQuery(String query) {
         try (Connection connection = postgresDataSource.getConnection();
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery(query)) {
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(query)) {
             if (resultSet.next()) {
                 return resultSet.getObject(1, Long.class);
             }
-            else {
-                logger.error("Error getting statistic from PostgreSQL database due to missing expected row.");
-                return 0L;
-            }
-        } catch (SQLException e) {
-            logger.error("Error getting statistic from PostgreSQL database.");
-            return 0L;
+        } catch (SQLException ignored) {
         }
+        return 0L;
     }
 
     private static String getDBStatQuery(String database, String statName) {
