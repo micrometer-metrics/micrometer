@@ -17,9 +17,7 @@ package io.micrometer.core.instrument;
 
 import io.micrometer.core.lang.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -98,8 +96,8 @@ public final class Tags implements Iterable<Tag> {
         if (tags == null || tags.length == 0) {
             return this;
         }
-        Tag[] newTags = new Tag[this.tags.length + tags.length];
-        System.arraycopy(this.tags, 0, newTags, 0, this.tags.length);
+        Tag[] newTags = new Tag[last + tags.length];
+        System.arraycopy(this.tags, 0, newTags, 0, last);
         System.arraycopy(tags, 0, newTags, this.tags.length, tags.length);
         return new Tags(newTags);
     }
@@ -152,17 +150,37 @@ public final class Tags implements Iterable<Tag> {
      * @return a tags stream
      */
     public Stream<Tag> stream() {
-        return Arrays.stream(tags);
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator(),
+                Spliterator.ORDERED | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.SORTED), false);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(tags);
+        int result = 1;
+        for (int i = 0; i < last; i++) {
+            result = 31 * result + tags[i].hashCode();
+        }
+        return result;
     }
 
     @Override
     public boolean equals(@Nullable Object obj) {
-        return this == obj || obj != null && getClass() == obj.getClass() && Arrays.equals(tags, ((Tags) obj).tags);
+        return this == obj || obj != null && getClass() == obj.getClass() && tagsEqual((Tags) obj);
+    }
+
+    private boolean tagsEqual(Tags obj) {
+        if (tags == obj.tags)
+            return true;
+
+        if (last != obj.last)
+            return false;
+
+        for (int i = 0; i < last; i++) {
+            if (!tags[i].equals(obj.tags[i]))
+                return false;
+        }
+
+        return true;
     }
 
     /**
@@ -257,6 +275,6 @@ public final class Tags implements Iterable<Tag> {
 
     @Override
     public String toString() {
-        return Arrays.stream(tags).map(Tag::toString).collect(joining(",", "[", "]"));
+        return stream().map(Tag::toString).collect(joining(",", "[", "]"));
     }
 }
