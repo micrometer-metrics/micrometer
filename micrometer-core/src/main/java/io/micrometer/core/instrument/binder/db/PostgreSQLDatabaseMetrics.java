@@ -37,6 +37,7 @@ import java.util.function.DoubleSupplier;
  * @author Kristof Depypere
  * @author Jon Schneider
  * @author Johnny Lim
+ * @since 1.1.0
  */
 @NonNullApi
 @NonNullFields
@@ -283,9 +284,15 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         try (Connection connection = postgresDataSource.getConnection();
                 Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(query)) {
-            return resultSet.getObject(1, Long.class);
+            if (resultSet.next()) {
+                return resultSet.getObject(1, Long.class);
+            }
+            else {
+                logger.error("Error getting statistic from PostgreSQL database due to missing expected row.");
+                return 0L;
+            }
         } catch (SQLException e) {
-            logger.error("Error getting statistic from postgreSQL database");
+            logger.error("Error getting statistic from PostgreSQL database.");
             return 0L;
         }
     }
