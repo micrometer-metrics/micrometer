@@ -161,7 +161,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     private String indexName() {
         ZonedDateTime dt = ZonedDateTime.ofInstant(new Date(config().clock().wallTime()).toInstant(), ZoneOffset.UTC);
-        return config.index() + "-" + DateTimeFormatter.ofPattern(config.indexDateFormat()).format(dt);
+        return config.indexDate() ? config.index() + "-" + DateTimeFormatter.ofPattern(config.indexDateFormat()).format(dt) : config.index();
     }
 
     // VisibleForTesting

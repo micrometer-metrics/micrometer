@@ -120,4 +120,15 @@ public interface ElasticConfig extends StepRegistryConfig {
         String v = get(prefix() + ".password");
         return v == null ? "" : v;
     }
+
+    /**
+     * Whether to add the indexDate suffix on the index name.
+     * Default is: {@code true}
+     *
+     * @return whether to add the indexDate suffix on the index name
+     */
+    default boolean indexDate() {
+        String v = get(prefix() + ".indexDate");
+        return v == null || Boolean.valueOf(v);
+    }
 }
