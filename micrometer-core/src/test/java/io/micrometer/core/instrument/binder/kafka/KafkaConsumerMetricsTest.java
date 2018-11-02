@@ -27,6 +27,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -71,5 +73,21 @@ class KafkaConsumerMetricsTest {
         createConsumer();
 
         assertThat(kafkaConsumerMetrics.kafkaMajorVersion(Tags.of("client.id", "consumer-1"))).isGreaterThanOrEqualTo(2);
+    }
+
+    @Test
+    void newConsumersAreDiscoveredByListener() throws InterruptedException {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        kafkaConsumerMetrics.bindTo(registry);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        registry.config().onMeterAdded(m -> {
+            if (m.getId().getName().contains("kafka"))
+                latch.countDown();
+        });
+
+        createConsumer();
+
+        latch.await(10, TimeUnit.SECONDS);
     }
 }
