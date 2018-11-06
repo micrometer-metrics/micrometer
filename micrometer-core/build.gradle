@@ -81,6 +81,10 @@ dependencies {
 
     testCompile 'ru.lanwen.wiremock:wiremock-junit5:1.2.0'
     testCompile 'com.github.tomakehurst:wiremock:latest.release'
+
+    // Embedded kafka
+    testCompile group: 'com.salesforce.kafka.test', name: 'kafka-junit5', version: '3.0.1'
+    testCompile group: 'org.apache.kafka', name: 'kafka_2.12', version: '2.0.0'
 }
 
 shadowJar {

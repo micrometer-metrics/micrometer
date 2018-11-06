@@ -203,7 +203,6 @@ public class KafkaConsumerMetrics implements MeterBinder {
                 for (ObjectName o : objs) {
                     perObject.accept(o, Tags.concat(tags, nameTag(o)));
                 }
-                return;
             }
         } catch (MalformedObjectNameException e) {
             throw new RuntimeException("Error registering Kafka JMX based metrics", e);

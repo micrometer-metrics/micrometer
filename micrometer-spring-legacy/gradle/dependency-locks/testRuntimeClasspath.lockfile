@@ -5,9 +5,9 @@ antlr:antlr:2.7.7
 aopalliance:aopalliance:1.0
 ch.qos.logback:logback-classic:1.1.11
 ch.qos.logback:logback-core:1.1.11
-com.amazonaws:aws-java-sdk-cloudwatch:1.11.438
-com.amazonaws:aws-java-sdk-core:1.11.438
-com.amazonaws:jmespath-java:1.11.438
+com.amazonaws:aws-java-sdk-cloudwatch:1.11.443
+com.amazonaws:aws-java-sdk-core:1.11.443
+com.amazonaws:jmespath-java:1.11.443
 com.fasterxml.jackson.core:jackson-annotations:2.8.0
 com.fasterxml.jackson.core:jackson-core:2.8.11
 com.fasterxml.jackson.core:jackson-databind:2.8.11.2
@@ -22,7 +22,7 @@ com.github.ben-manes.caffeine:caffeine:2.3.5
 com.github.jknack:handlebars-helpers:4.0.7
 com.github.jknack:handlebars:4.0.7
 com.github.tomakehurst:wiremock:2.19.0
-com.google.api.grpc:proto-google-cloud-monitoring-v3:1.32.0
+com.google.api.grpc:proto-google-cloud-monitoring-v3:1.33.0
 com.google.api.grpc:proto-google-common-protos:1.12.0
 com.google.api.grpc:proto-google-iam-v1:0.12.0
 com.google.api:api-common:1.7.0
@@ -30,9 +30,9 @@ com.google.api:gax-grpc:1.34.0
 com.google.api:gax:1.34.0
 com.google.auth:google-auth-library-credentials:0.11.0
 com.google.auth:google-auth-library-oauth2-http:0.11.0
-com.google.cloud:google-cloud-core-grpc:1.50.0
-com.google.cloud:google-cloud-core:1.50.0
-com.google.cloud:google-cloud-monitoring:1.50.0
+com.google.cloud:google-cloud-core-grpc:1.51.0
+com.google.cloud:google-cloud-core:1.51.0
+com.google.cloud:google-cloud-monitoring:1.51.0
 com.google.code.findbugs:jsr305:3.0.2
 com.google.code.gson:gson:2.8.5
 com.google.errorprone:error_prone_annotations:2.2.0
@@ -47,9 +47,9 @@ com.jayway.jsonpath:json-path:2.2.0
 com.microsoft.azure:applicationinsights-core:2.2.0
 com.netflix.archaius:archaius-core:0.4.1
 com.netflix.hystrix:hystrix-core:1.5.13
-com.netflix.spectator:spectator-api:0.79.0
-com.netflix.spectator:spectator-ext-ipc:0.79.0
-com.netflix.spectator:spectator-reg-atlas:0.79.0
+com.netflix.spectator:spectator-api:0.80.0
+com.netflix.spectator:spectator-ext-ipc:0.80.0
+com.netflix.spectator:spectator-reg-atlas:0.80.0
 com.signalfx.public:signalfx-java:0.0.48
 com.squareup.okhttp3:okhttp:3.11.0
 com.squareup.okio:okio:1.14.0
@@ -88,7 +88,7 @@ io.netty:netty-transport-native-unix-common:4.1.29.Final
 io.netty:netty-transport:4.1.29.Final
 io.opencensus:opencensus-api:0.12.3
 io.opencensus:opencensus-contrib-grpc-metrics:0.12.3
-io.projectreactor.netty:reactor-netty:0.8.1.RELEASE
+io.projectreactor.netty:reactor-netty:0.8.2.RELEASE
 io.projectreactor:reactor-core:3.1.4.RELEASE
 io.prometheus:simpleclient:0.5.0
 io.prometheus:simpleclient_common:0.5.0

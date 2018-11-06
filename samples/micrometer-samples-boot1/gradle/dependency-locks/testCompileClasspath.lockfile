@@ -4,9 +4,9 @@
 antlr:antlr:2.7.7
 ch.qos.logback:logback-classic:1.1.11
 ch.qos.logback:logback-core:1.1.11
-com.amazonaws:aws-java-sdk-cloudwatch:1.11.440
-com.amazonaws:aws-java-sdk-core:1.11.440
-com.amazonaws:jmespath-java:1.11.440
+com.amazonaws:aws-java-sdk-cloudwatch:1.11.443
+com.amazonaws:aws-java-sdk-core:1.11.443
+com.amazonaws:jmespath-java:1.11.443
 com.fasterxml.jackson.core:jackson-annotations:2.8.0
 com.fasterxml.jackson.core:jackson-core:2.8.11
 com.fasterxml.jackson.core:jackson-databind:2.8.11.2
@@ -14,7 +14,7 @@ com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.8.11
 com.fasterxml.jackson.dataformat:jackson-dataformat-smile:2.8.11
 com.fasterxml:classmate:1.3.4
 com.github.ben-manes.caffeine:caffeine:2.3.5
-com.google.api.grpc:proto-google-cloud-monitoring-v3:1.32.0
+com.google.api.grpc:proto-google-cloud-monitoring-v3:1.33.0
 com.google.api.grpc:proto-google-common-protos:1.12.0
 com.google.api.grpc:proto-google-iam-v1:0.12.0
 com.google.api:api-common:1.7.0
@@ -22,9 +22,9 @@ com.google.api:gax-grpc:1.34.0
 com.google.api:gax:1.34.0
 com.google.auth:google-auth-library-credentials:0.11.0
 com.google.auth:google-auth-library-oauth2-http:0.11.0
-com.google.cloud:google-cloud-core-grpc:1.50.0
-com.google.cloud:google-cloud-core:1.50.0
-com.google.cloud:google-cloud-monitoring:1.50.0
+com.google.cloud:google-cloud-core-grpc:1.51.0
+com.google.cloud:google-cloud-core:1.51.0
+com.google.cloud:google-cloud-monitoring:1.51.0
 com.google.code.findbugs:jsr305:3.0.2
 com.google.code.gson:gson:2.8.5
 com.google.errorprone:error_prone_annotations:2.2.0
