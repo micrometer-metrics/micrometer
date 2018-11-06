@@ -142,6 +142,16 @@ class KafkaConsumerMetricsTest {
     }
 
     @Test
+    void consumerClose() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        kafkaConsumerMetrics.bindTo(registry);
+        Consumer<Long, String> consumer = createConsumer("Test3", "C8");
+        consumer.close();
+        double value = registry.get("kafka.consumer.records.lag.max").tag("client.id", "C8").gauge().value();
+        assertEquals(value, Double.NaN, 0);
+    }
+
+    @Test
     void kafkaMajorVersion() {
         createConsumer("Test", "C3");
         assertThat(kafkaConsumerMetrics.kafkaMajorVersion(Tags.of("client.id", "C3"))).isGreaterThanOrEqualTo(2);

@@ -236,10 +236,7 @@ public class KafkaConsumerMetrics implements MeterBinder {
     private double safeDouble(Callable<Object> callable) {
         try {
             return Double.parseDouble(callable.call().toString());
-        } catch (InstanceNotFoundException e) {
-            return 0;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return Double.NaN;
         }
     }
