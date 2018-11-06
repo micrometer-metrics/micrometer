@@ -216,11 +216,6 @@ public class KafkaConsumerMetrics implements MeterBinder {
                 MBeanServerNotification mbs = (MBeanServerNotification) notification;
                 ObjectName o = mbs.getMBeanName();
                 perObject.accept(o, Tags.concat(tags, nameTag(o)));
-                try {
-                    mBeanServer.removeNotificationListener(MBeanServerDelegate.DELEGATE_NAME, this);
-                } catch (InstanceNotFoundException | ListenerNotFoundException ex) {
-                    throw new RuntimeException(ex);
-                }
             }
 
         };
@@ -242,7 +237,10 @@ public class KafkaConsumerMetrics implements MeterBinder {
     private double safeDouble(Callable<Object> callable) {
         try {
             return Double.parseDouble(callable.call().toString());
-        } catch (Exception e) {
+        } catch (InstanceNotFoundException e) {
+            return 0;
+        }
+        catch (Exception e) {
             return Double.NaN;
         }
     }
