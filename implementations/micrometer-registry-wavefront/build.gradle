@@ -1,7 +1,7 @@
 dependencies {
     compile project(':micrometer-core')
     compile 'org.slf4j:slf4j-api:1.7.+'
-    compile 'com.wavefront:wavefront-sdk-java:0.9.0'
+    compile 'com.wavefront:wavefront-sdk-java:1.0'
 
     testCompile project(':micrometer-test')
 }

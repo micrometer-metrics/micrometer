@@ -16,7 +16,7 @@
 package io.micrometer.wavefront;
 
 import com.wavefront.sdk.common.WavefrontSender;
-import com.wavefront.sdk.direct_ingestion.WavefrontDirectIngestionClient;
+import com.wavefront.sdk.direct.ingestion.WavefrontDirectIngestionClient;
 import com.wavefront.sdk.proxy.WavefrontProxyClient;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
