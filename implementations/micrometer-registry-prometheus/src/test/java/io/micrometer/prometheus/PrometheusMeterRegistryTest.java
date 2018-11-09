@@ -361,6 +361,21 @@ class PrometheusMeterRegistryTest {
         assertThat(scraped).containsOnlyOnce("# HELP my_timer_duration_seconds ");
     }
 
+    @Issue("#989")
+    @Test
+    @DisplayName("removed meters correctly handled")
+    void meterRemoval() {
+        Timer timer = Timer.builder("timer_to_be_removed")
+            .publishPercentiles(0.5)
+            .register(registry);
+
+        assertThat(prometheusRegistry.metricFamilySamples()).has(withNameAndQuantile("timer_to_be_removed_duration_seconds"));
+
+        registry.remove(timer);
+
+        assertThat(prometheusRegistry.metricFamilySamples()).doesNotHave(withNameAndQuantile("timer_to_be_removed_duration_seconds"));
+    }
+
     @Test
     void timerQuantilesAreBasedOffOfOnlyRecentSamples() {
         Timer timer = Timer.builder("my.timer")

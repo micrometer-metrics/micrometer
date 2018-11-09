@@ -62,6 +62,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         super(clock);
         this.registry = registry;
         config().namingConvention(new PrometheusNamingConvention());
+        config().onMeterRemoved(this::onMeterRemoved);
         this.prometheusConfig = config;
     }
 
@@ -341,6 +342,13 @@ public class PrometheusMeterRegistry extends MeterRegistry {
      */
     public CollectorRegistry getPrometheusRegistry() {
         return registry;
+    }
+
+    private void onMeterRemoved(Meter meter) {
+        MicrometerCollector collector = collectorMap.remove(getConventionName(meter.getId()));
+        if (collector != null) {
+            registry.unregister(collector);
+        }
     }
 
     private MicrometerCollector collectorByName(Meter.Id id) {
