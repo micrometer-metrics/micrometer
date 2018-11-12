@@ -28,6 +28,7 @@ import io.prometheus.client.exporter.PushGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.autoconfigure.ManagementContextConfiguration;
+import org.springframework.boot.actuate.condition.ConditionalOnEnabledEndpoint;
 import org.springframework.boot.actuate.endpoint.AbstractEndpoint;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
@@ -48,6 +49,7 @@ import java.util.concurrent.TimeUnit;
  * Configuration for exporting metrics to Prometheus.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 @Configuration
 @AutoConfigureBefore({CompositeMeterRegistryAutoConfiguration.class,
@@ -88,6 +90,7 @@ public class PrometheusMetricsExportAutoConfiguration {
         }
 
         @Bean
+        @ConditionalOnEnabledEndpoint("prometheus")
         public PrometheusScrapeMvcEndpoint prometheusMvcEndpoint(PrometheusScrapeEndpoint delegate) {
             return new PrometheusScrapeMvcEndpoint(delegate);
         }
