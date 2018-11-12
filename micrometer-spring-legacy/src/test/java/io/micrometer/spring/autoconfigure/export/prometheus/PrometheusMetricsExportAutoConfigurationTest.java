@@ -83,6 +83,35 @@ class PrometheusMetricsExportAutoConfigurationTest {
             .isInstanceOf(NoSuchBeanDefinitionException.class);
     }
 
+    @Test
+    void autoConfigurePrometheusScrapeMvcEndpoint() {
+        EnvironmentTestUtils.addEnvironment(this.context);
+
+        registerAndRefresh(ClockConfiguration.class, PrometheusMetricsExportAutoConfiguration.class);
+
+        assertThat(this.context.getBean(PrometheusScrapeMvcEndpoint.class)).isNotNull();
+    }
+
+    @Test
+    void autoConfigurePrometheusScrapeMvcEndpointDisabledByEndpointsEnabledFalse() {
+        EnvironmentTestUtils.addEnvironment(this.context, "endpoints.enabled=false");
+
+        registerAndRefresh(ClockConfiguration.class, PrometheusMetricsExportAutoConfiguration.class);
+
+        assertThatThrownBy(() -> this.context.getBean(PrometheusScrapeMvcEndpoint.class))
+            .isInstanceOf(NoSuchBeanDefinitionException.class);
+    }
+
+    @Test
+    void autoConfigurePrometheusScrapeMvcEndpointDisabledByEndpointsPrometheusEnabledFalse() {
+        EnvironmentTestUtils.addEnvironment(this.context, "endpoints.prometheus.enabled=false");
+
+        registerAndRefresh(ClockConfiguration.class, PrometheusMetricsExportAutoConfiguration.class);
+
+        assertThatThrownBy(() -> this.context.getBean(PrometheusScrapeMvcEndpoint.class))
+            .isInstanceOf(NoSuchBeanDefinitionException.class);
+    }
+
     @AfterEach
     void cleanUp() {
         if (this.context != null) {
