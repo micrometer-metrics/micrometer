@@ -28,6 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URLEncoder;
+import java.net.Proxy;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +58,14 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
      */
     private final Set<String> verifiedMetadata = ConcurrentHashMap.newKeySet();
 
+    private static Proxy proxy(DatadogConfig config){
+        Proxy proxy = null;
+        if( config.proxyUrl() != null ){
+            proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(config.proxyUrl(), config.proxyPort()));
+        }
+        return proxy;
+    }
+
     /**
      * @param config Configuration options for the registry that are describable as properties.
      * @param clock  The clock to use for timings.
@@ -63,7 +73,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     @SuppressWarnings("deprecation")
     public DatadogMeterRegistry(DatadogConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY,
-                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout(), proxy(config)));
     }
 
     /**
@@ -74,7 +84,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
      */
     @Deprecated
     public DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout(), proxy(config)));
     }
 
     private DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {

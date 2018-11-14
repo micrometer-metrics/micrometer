@@ -73,4 +73,22 @@ public interface DatadogConfig extends StepRegistryConfig {
         String v = get(prefix() + ".descriptions");
         return v == null || Boolean.valueOf(v);
     }
+
+    /**
+     * @return The http proxy used to publish metrics to datadog, or {@code null} if direct connection can 
+     * be used.
+     */
+    @Nullable
+    default String proxyUrl() {
+        return get(prefix() + ".proxyUrl");
+    }
+
+    /**
+     * @return The http proxy port to be used to publish metrics to datadog, or {@code 8080}
+     */
+    @Nullable
+    default Integer proxyPort() {
+        Integer v = Integer.valueOf(get(prefix() + ".proxyPort"));
+        return v == null ? 8080 : v;
+    }
 }
