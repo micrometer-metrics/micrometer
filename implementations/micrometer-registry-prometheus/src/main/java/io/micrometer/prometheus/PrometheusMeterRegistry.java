@@ -355,7 +355,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             }
 
             throw new IllegalArgumentException("Prometheus requires that all meters with the same name have the same" +
-                    " set of tag keys. There is already an existing meter containing tag keys [" +
+                    " set of tag keys. There is already an existing meter named '" + name + "' containing tag keys [" +
                     existingCollector.getTagKeys().stream().collect(joining(", ")) + "]. The meter you are attempting to register" +
                     " has keys [" + tagKeys.stream().collect(joining(", ")) + "].");
         });
