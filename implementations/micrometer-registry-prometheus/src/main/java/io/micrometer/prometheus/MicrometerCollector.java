@@ -21,7 +21,7 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.prometheus.client.Collector;
 
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -31,7 +31,7 @@ import static java.util.stream.Collectors.toList;
  */
 class MicrometerCollector extends Collector {
     private final Meter.Id id;
-    private final List<Child> children = new CopyOnWriteArrayList<>();
+    private final ConcurrentHashMap<List<String>, Child> children = new ConcurrentHashMap<>();
     private final String conventionName;
     private final List<String> tagKeys;
     private final PrometheusConfig config;
@@ -42,8 +42,16 @@ class MicrometerCollector extends Collector {
         this.config = config;
     }
 
-    public void add(Child child) {
-        children.add(child);
+    public void add(List<String> tagValues, Child child) {
+        children.put(tagValues, child);
+    }
+
+    public void remove(List<String> tagValues) {
+        children.remove(tagValues);
+    }
+
+    public boolean isEmpty() {
+        return children.isEmpty();
     }
 
     public List<String> getTagKeys() {
@@ -56,7 +64,7 @@ class MicrometerCollector extends Collector {
 
         Map<String, Family> families = new HashMap<>();
 
-        for (Child child : children) {
+        for (Child child : children.values()) {
             child.samples(conventionName, tagKeys).forEach(family -> {
                 families.compute(family.getConventionName(), (name, matchingFamily) -> matchingFamily != null ?
                         matchingFamily.addSamples(family.samples) : family);

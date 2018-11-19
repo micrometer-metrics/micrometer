@@ -91,7 +91,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         PrometheusCounter counter = new PrometheusCounter(id);
         List<String> tagValues = tagValues(id);
 
-        collector.add((conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.COUNTER, conventionName,
+        collector.add(tagValues, (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.COUNTER, conventionName,
                 new Collector.MetricFamilySamples.Sample(conventionName, tagKeys, tagValues, counter.count()))));
 
         return counter;
@@ -103,7 +103,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         PrometheusDistributionSummary summary = new PrometheusDistributionSummary(id, clock, distributionStatisticConfig, scale);
         List<String> tagValues = tagValues(id);
 
-        collector.add((conventionName, tagKeys) -> {
+        collector.add(tagValues, (conventionName, tagKeys) -> {
             Stream.Builder<Collector.MetricFamilySamples.Sample> samples = Stream.builder();
 
             final ValueAtPercentile[] percentileValues = summary.takeSnapshot().percentileValues();
@@ -166,7 +166,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         PrometheusTimer timer = new PrometheusTimer(id, clock, distributionStatisticConfig, pauseDetector);
         List<String> tagValues = tagValues(id);
 
-        collector.add((conventionName, tagKeys) -> {
+        collector.add(tagValues, (conventionName, tagKeys) -> {
             Stream.Builder<Collector.MetricFamilySamples.Sample> samples = Stream.builder();
 
             final ValueAtPercentile[] percentileValues = timer.takeSnapshot().percentileValues();
@@ -231,7 +231,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         Gauge gauge = new DefaultGauge(id, obj, valueFunction);
         List<String> tagValues = tagValues(id);
 
-        collector.add((conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.GAUGE, conventionName,
+        collector.add(tagValues, (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.GAUGE, conventionName,
                 new Collector.MetricFamilySamples.Sample(conventionName, tagKeys, tagValues, gauge.value()))));
 
         return gauge;
@@ -243,7 +243,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         LongTaskTimer ltt = new DefaultLongTaskTimer(id, clock);
         List<String> tagValues = tagValues(id);
 
-        collector.add((conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.UNTYPED, conventionName,
+        collector.add(tagValues, (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.UNTYPED, conventionName,
                 new Collector.MetricFamilySamples.Sample(conventionName + "_active_count", tagKeys, tagValues, ltt.activeTasks()),
                 new Collector.MetricFamilySamples.Sample(conventionName + "_duration_sum", tagKeys, tagValues, ltt.duration(TimeUnit.SECONDS))
         )));
@@ -257,7 +257,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         FunctionTimer ft = new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
         List<String> tagValues = tagValues(id);
 
-        collector.add((conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.SUMMARY, conventionName,
+        collector.add(tagValues, (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.SUMMARY, conventionName,
                 new Collector.MetricFamilySamples.Sample(conventionName + "_count", tagKeys, tagValues, ft.count()),
                 new Collector.MetricFamilySamples.Sample(conventionName + "_sum", tagKeys, tagValues, ft.totalTime(TimeUnit.SECONDS))
         )));
@@ -271,7 +271,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         FunctionCounter fc = new CumulativeFunctionCounter<>(id, obj, countFunction);
         List<String> tagValues = tagValues(id);
 
-        collector.add((conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.COUNTER, conventionName,
+        collector.add(tagValues, (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.COUNTER, conventionName,
                 new Collector.MetricFamilySamples.Sample(conventionName, tagKeys, tagValues, fc.count())
         )));
 
@@ -298,7 +298,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         List<String> tagValues = tagValues(id);
 
         final Collector.Type finalPromType = promType;
-        collector.add((conventionName, tagKeys) -> {
+        collector.add(tagValues, (conventionName, tagKeys) -> {
             List<String> statKeys = new LinkedList<>(tagKeys);
             statKeys.add("statistic");
 
@@ -345,9 +345,13 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     private void onMeterRemoved(Meter meter) {
-        MicrometerCollector collector = collectorMap.remove(getConventionName(meter.getId()));
+        MicrometerCollector collector = collectorMap.get(getConventionName(meter.getId()));
         if (collector != null) {
-            registry.unregister(collector);
+            collector.remove(tagValues(meter.getId()));
+            if (collector.isEmpty()) {
+                collectorMap.remove(getConventionName(meter.getId()));
+                getPrometheusRegistry().unregister(collector);
+            }
         }
     }
 

@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.prometheus.client.Collector;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.stream.Stream;
 
 import static java.util.Collections.singletonList;
@@ -37,7 +38,7 @@ class MicrometerCollectorTest {
             Collector.MetricFamilySamples.Sample sample = new Collector.MetricFamilySamples.Sample("my_counter",
                     singletonList("k"), singletonList(i.toString()), 1.0);
 
-            collector.add((conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.COUNTER,
+            collector.add(Collections.emptyList(), (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.COUNTER,
                     "my_counter", sample)));
         }
 
