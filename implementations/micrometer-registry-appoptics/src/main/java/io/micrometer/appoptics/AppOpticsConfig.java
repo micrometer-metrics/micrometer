@@ -48,8 +48,7 @@ public interface AppOpticsConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return The tag that will be mapped to {@literal @}host when shipping metrics to AppOptics, or {@code null} if
-     * {@literal @}host should be omitted on publishing.
+     * @return The tag that will be mapped to {@literal @}host when shipping metrics to AppOptics.
      */
     @Nullable
     default String hostTag() {
