@@ -26,9 +26,9 @@ public class AppOpticsNamingConvention implements NamingConvention {
     private static final int MAX_NAME_LENGTH = 255;
     private static final int MAX_TAG_KEY_LENGTH = 64;
     private static final int MAX_TAG_VALUE_LENGTH = 255;
-    private static final Pattern NAME_BLACKLIST = Pattern.compile("[^-:A-Za-z0-9_.]");
-    private static final Pattern TAG_KEY_BLACKLIST = Pattern.compile("[^-.:_\\w]");
-    private static final Pattern TAG_VALUE_BLACKLIST = Pattern.compile("[^-.:_?\\\\/\\w ]");
+    private static final Pattern NAME_BLACKLIST = Pattern.compile("[^-.:\\w]");
+    private static final Pattern TAG_KEY_BLACKLIST = Pattern.compile("[^-.:\\w]");
+    private static final Pattern TAG_VALUE_BLACKLIST = Pattern.compile("[^-.:\\w?\\\\/ ]");
     private final NamingConvention delegate;
 
     public AppOpticsNamingConvention() {
