@@ -48,8 +48,7 @@ public interface DatadogConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return The tag that will be mapped to "host" when shipping metrics to datadog, or {@code null} if
-     * host should be omitted on publishing.
+     * @return The tag that will be mapped to "host" when shipping metrics to datadog.
      */
     @Nullable
     default String hostTag() {
