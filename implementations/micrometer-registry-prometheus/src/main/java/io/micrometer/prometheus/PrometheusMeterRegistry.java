@@ -76,12 +76,19 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     public String scrape() {
         Writer writer = new StringWriter();
         try {
-            TextFormat.write004(writer, registry.metricFamilySamples());
+            scrape(writer);
         } catch (IOException e) {
             // This actually never happens since StringWriter::write() doesn't throw any IOException
             throw new RuntimeException(e);
         }
         return writer.toString();
+    }
+
+    /**
+     * @param writer Target that serves the content to be scraped by Prometheus.
+     */
+    public void scrape(Writer writer) throws IOException {
+        TextFormat.write004(writer, registry.metricFamilySamples());
     }
 
     @Override
