@@ -16,6 +16,7 @@
 package io.micrometer.spring.autoconfigure.export.statsd;
 
 import io.micrometer.statsd.StatsdFlavor;
+import io.micrometer.statsd.StatsdProtocol;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
@@ -48,6 +49,11 @@ public class StatsdProperties {
      * Port of the StatsD server to receive exported metrics.
      */
     private Integer port = 8125;
+
+    /**
+     * Protocol of the StatsD server to receive exported metrics.
+     */
+    private StatsdProtocol protocol = StatsdProtocol.UDP;
 
     /**
      * Total length of a single payload should be kept within your network's MTU.
@@ -96,6 +102,14 @@ public class StatsdProperties {
 
     public void setPort(Integer port) {
         this.port = port;
+    }
+
+    public StatsdProtocol getProtocol() {
+        return this.protocol;
+    }
+
+    public void setProtocol(StatsdProtocol protocol) {
+        this.protocol = protocol;
     }
 
     public Integer getMaxPacketLength() {

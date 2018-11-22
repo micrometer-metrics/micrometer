@@ -72,11 +72,28 @@ public interface StatsdConfig extends MeterRegistryConfig {
     }
 
     /**
-     * @return The UDP port of the StatsD agent.
+     * @return The port of the StatsD agent.
      */
     default int port() {
         String v = get(prefix() + ".port");
         return (v == null) ? 8125 : Integer.parseInt(v);
+    }
+
+    /**
+     * @return the protocol of the connection to the agent
+     */
+    default StatsdProtocol protocol() {
+        final String v = get(prefix() + ".protocol");
+
+        if (v == null)
+            return StatsdProtocol.UDP;
+
+        for (StatsdProtocol protocol : StatsdProtocol.values()) {
+            if (protocol.toString().equalsIgnoreCase(v))
+                return protocol;
+        }
+
+        throw new IllegalArgumentException("Unrecognized statsd protocol '" + v + "' (check property " + prefix() + ".protocol)");
     }
 
     /**
