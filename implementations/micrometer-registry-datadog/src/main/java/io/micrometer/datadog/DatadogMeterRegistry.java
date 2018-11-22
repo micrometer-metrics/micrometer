@@ -58,9 +58,9 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
      */
     private final Set<String> verifiedMetadata = ConcurrentHashMap.newKeySet();
 
-    private static Proxy proxy(DatadogConfig config){
+    private static Proxy proxy(DatadogConfig config) {
         Proxy proxy = null;
-        if( config.proxyUrl() != null ){
+        if ( config.proxyUrl() != null ) {
             proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(config.proxyUrl(), config.proxyPort()));
         }
         return proxy;
