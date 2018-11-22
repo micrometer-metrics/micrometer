@@ -231,7 +231,6 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
                     .doOnEach(n -> poll())
                     .subscribe());
-
             });
     }
 
