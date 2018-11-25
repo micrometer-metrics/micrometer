@@ -93,12 +93,12 @@
       }
     },
     {
-      "name": "management.metrics.jersey2.server.auto-time-tequests",
+      "name": "management.metrics.jersey2.server.auto-time-requests",
       "type": "java.lang.Boolean",
       "description": "Whether requests handled by Jersey should be automatically timed.",
       "defaultValue": true,
       "deprecation": {
-        "replacement": "management.metrics.web.server.auto-time-tequests",
+        "replacement": "management.metrics.web.server.auto-time-requests",
         "reason": "Use common version for web server auto time requests."
       }
     }
