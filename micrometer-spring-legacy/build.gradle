@@ -42,6 +42,8 @@ dependencies {
 
     compile 'org.springframework.integration:spring-integration-core', optional
 
+    annotationProcessor 'org.springframework.boot:spring-boot-autoconfigure-processor'
+
     // to validate auto-completion on configuration properties
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
