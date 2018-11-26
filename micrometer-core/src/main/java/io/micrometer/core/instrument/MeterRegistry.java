@@ -577,8 +577,15 @@ public abstract class MeterRegistry implements AutoCloseable {
     }
 
     private boolean accept(Meter.Id id) {
-        return this.filters.stream()
-            .noneMatch((filter) -> filter.accept(id) == MeterFilterReply.DENY);
+        for (MeterFilter filter : filters) {
+            MeterFilterReply reply = filter.accept(id);
+            if (reply == MeterFilterReply.DENY) {
+                return false;
+            } else if (reply == MeterFilterReply.ACCEPT) {
+                return true;
+            }
+        }
+        return true;
     }
 
     /**

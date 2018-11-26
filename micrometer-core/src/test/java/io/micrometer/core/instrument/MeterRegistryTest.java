@@ -45,6 +45,16 @@ class MeterRegistryTest {
     }
 
     @Test
+    void overidingAcceptMeterFilter() {
+        registry.config().meterFilter(MeterFilter.accept(m -> m.getName().startsWith("jvm.important")));
+        registry.config().meterFilter(MeterFilter.deny(m -> m.getName().startsWith("jvm")));
+	
+        assertThat(registry.counter("jvm.my.counter")).isInstanceOf(NoopCounter.class);
+        assertThat(registry.counter("jvm.important.counter")).isNotInstanceOf(NoopCounter.class);
+        assertThat(registry.counter("my.counter")).isNotInstanceOf(NoopCounter.class);
+    }
+
+    @Test
     void idTransformingMeterFilter() {
         registry.config().meterFilter(MeterFilter.ignoreTags("k1"));
 
