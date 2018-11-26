@@ -7,4 +7,5 @@ dependencies {
     compile 'com.amazonaws:aws-java-sdk-cloudwatch:latest.release'
 
     testCompile project(':micrometer-test')
+    testCompile 'org.mockito:mockito-core:latest.release'
 }

@@ -129,26 +129,29 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             return Stream.of(metricDatum(counter.getId(), "count", counter.count()));
         }
 
-        private Stream<MetricDatum> timerData(Timer timer) {
+        // VisibleForTesting
+        Stream<MetricDatum> timerData(Timer timer) {
             final Stream.Builder<MetricDatum> metrics = Stream.builder();
 
             metrics.add(metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
             metrics.add(metricDatum(timer.getId(), "count", "count", timer.count()));
-            metrics.add(metricDatum(timer.getId(), "avg", getBaseTimeUnit().name(), timer.mean(getBaseTimeUnit())));
-            metrics.add(metricDatum(timer.getId(), "max", getBaseTimeUnit().name(), timer.max(getBaseTimeUnit())));
 
-            return metrics.build();
+            MetricDatum avg = metricDatum(timer.getId(), "avg", getBaseTimeUnit().name(), timer.mean(getBaseTimeUnit()));
+            MetricDatum max = metricDatum(timer.getId(), "max", getBaseTimeUnit().name(), timer.max(getBaseTimeUnit()));
+            return timer.count() > 0 ? metrics.add(avg).add(max).build() : metrics.build();
         }
 
-        private Stream<MetricDatum> summaryData(DistributionSummary summary) {
+        // VisibleForTesting
+        Stream<MetricDatum> summaryData(DistributionSummary summary) {
             final Stream.Builder<MetricDatum> metrics = Stream.builder();
 
             metrics.add(metricDatum(summary.getId(), "sum", summary.totalAmount()));
             metrics.add(metricDatum(summary.getId(), "count", summary.count()));
-            metrics.add(metricDatum(summary.getId(), "avg", summary.mean()));
-            metrics.add(metricDatum(summary.getId(), "max", summary.max()));
 
-            return metrics.build();
+            MetricDatum avg = metricDatum(summary.getId(), "avg", summary.mean());
+            MetricDatum max = metricDatum(summary.getId(), "max", summary.max());
+            return summary.count() > 0 ? metrics.add(avg).add(max).build() : metrics.build();
+
         }
 
         private Stream<MetricDatum> longTaskTimerData(LongTaskTimer longTaskTimer) {
@@ -168,11 +171,14 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             return Stream.of(metricDatum(counter.getId(), "count", counter.count()));
         }
 
-        private Stream<MetricDatum> functionTimerData(FunctionTimer timer) {
+        // VisibleForTesting
+        Stream<MetricDatum> functionTimerData(FunctionTimer timer) {
             // we can't know anything about max and percentiles originating from a function timer
-            return Stream.of(
-                    metricDatum(timer.getId(), "count", timer.count()),
-                    metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit())));
+
+            MetricDatum count = metricDatum(timer.getId(),"count", timer.count());
+            MetricDatum avg = metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit()));
+
+            return timer.count() > 0 ? Stream.of(count, avg) : Stream.of(count);
         }
 
         private Stream<MetricDatum> metricData(Meter m) {
