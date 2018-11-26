@@ -598,8 +598,12 @@ public abstract class MeterRegistry {
 
     private boolean accept(Meter.Id id) {
         for (MeterFilter filter : filters) {
-            if (filter.accept(id) == MeterFilterReply.DENY)
+            MeterFilterReply reply = filter.accept(id);
+            if (reply == MeterFilterReply.DENY) {
                 return false;
+            } else if (reply == MeterFilterReply.ACCEPT) {
+                return true;
+            }
         }
         return true;
     }
