@@ -19,6 +19,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jpa.HibernateMetrics;
 import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
+import org.hibernate.SessionFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -43,7 +45,7 @@ import java.util.Map;
 @Configuration
 @AutoConfigureAfter({MetricsAutoConfiguration.class, HibernateJpaAutoConfiguration.class,
         SimpleMetricsExportAutoConfiguration.class})
-@ConditionalOnClass({EntityManagerFactory.class, MeterRegistry.class})
+@ConditionalOnClass({EntityManagerFactory.class, SessionFactory.class, MeterRegistry.class})
 @ConditionalOnBean({EntityManagerFactory.class, MeterRegistry.class})
 public class HibernateMetricsAutoConfiguration {
     private static final String ENTITY_MANAGER_FACTORY_SUFFIX = "entityManagerFactory";
