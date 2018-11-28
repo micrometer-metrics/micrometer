@@ -33,7 +33,10 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
 /**
+ * Dropwizard {@link MeterRegistry}.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public abstract class DropwizardMeterRegistry extends MeterRegistry {
     private final MetricRegistry registry;
@@ -47,7 +50,13 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
         this.dropwizardClock = new DropwizardClock(clock);
         this.registry = registry;
         this.nameMapper = nameMapper;
-        config().namingConvention(NamingConvention.camelCase);
+        config()
+            .namingConvention(NamingConvention.camelCase)
+            .onMeterRemoved(this::onMeterRemoved);
+    }
+
+    private void onMeterRemoved(Meter meter) {
+        registry.remove(hierarchicalName(meter.getId()));
     }
 
     public MetricRegistry getDropwizardRegistry() {
