@@ -33,7 +33,6 @@ import org.springframework.boot.autoconfigure.condition.AllNestedConditions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.autoconfigure.jersey.ResourceConfigCustomizer;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -61,7 +60,6 @@ import java.lang.reflect.AnnotatedElement;
 @ConditionalOnClass({ ResourceConfig.class, MetricsApplicationEventListener.class })
 @Conditional(JerseyServerMetricsAutoConfiguration.JerseyServerMetricsConditionalOnBeans.class)
 @EnableConfigurationProperties(MetricsProperties.class)
-@ConditionalOnProperty(value = "management.metrics.jersey2.server.enabled", matchIfMissing = true)
 public class JerseyServerMetricsAutoConfiguration {
 
     private final MetricsProperties properties;
