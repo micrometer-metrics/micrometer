@@ -36,8 +36,6 @@ public class CrazyCharactersSample {
                 badTagName,
                 badValueName);
 
-//        Counter counter = registry.counter("my*counter", "tag", "value");
-
         RandomEngine r = new MersenneTwister64(0);
         Normal dist = new Normal(0, 1, r);
 

@@ -28,6 +28,7 @@ import io.micrometer.spring.export.prometheus.PrometheusScrapeMvcEndpoint;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.PushGateway;
 import org.springframework.boot.actuate.autoconfigure.ManagementContextConfiguration;
+import org.springframework.boot.actuate.condition.ConditionalOnEnabledEndpoint;
 import org.springframework.boot.actuate.endpoint.AbstractEndpoint;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
@@ -46,6 +47,7 @@ import java.util.Map;
  *
  * @author Jon Schneider
  * @author David J. M. Karlsen
+ * @author Johnny Lim
  */
 @Configuration
 @AutoConfigureBefore({CompositeMeterRegistryAutoConfiguration.class,
@@ -86,6 +88,7 @@ public class PrometheusMetricsExportAutoConfiguration {
         }
 
         @Bean
+        @ConditionalOnEnabledEndpoint("prometheus")
         public PrometheusScrapeMvcEndpoint prometheusMvcEndpoint(PrometheusScrapeEndpoint delegate) {
             return new PrometheusScrapeMvcEndpoint(delegate);
         }

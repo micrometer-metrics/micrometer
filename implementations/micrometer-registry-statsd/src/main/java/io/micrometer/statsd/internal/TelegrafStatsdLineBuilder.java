@@ -47,9 +47,7 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
     @Override
     String line(String amount, @Nullable Statistic stat, String type) {
         updateIfNamingConventionChanged();
-        String line = name + tagsByStatistic(stat) + ":" + amount + "|" + type;
-        System.out.println(line);
-        return line;
+        return name + tagsByStatistic(stat) + ":" + amount + "|" + type;
     }
 
     private void updateIfNamingConventionChanged() {
