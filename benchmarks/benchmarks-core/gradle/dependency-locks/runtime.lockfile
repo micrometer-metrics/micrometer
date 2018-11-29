@@ -30,7 +30,7 @@ com.google.cloud:google-cloud-core:1.50.0
 com.google.cloud:google-cloud-monitoring:1.50.0
 com.google.code.findbugs:jsr305:3.0.2
 com.google.code.gson:gson:2.7
-com.google.errorprone:error_prone_annotations:2.0.18
+com.google.errorprone:error_prone_annotations:2.2.0
 com.google.guava:guava:23.3-jre
 com.google.http-client:google-http-client-jackson2:1.24.1
 com.google.http-client:google-http-client:1.24.1
@@ -114,7 +114,7 @@ org.apache.tomcat.embed:tomcat-embed-core:8.5.34
 org.apache.tomcat:tomcat-annotations-api:8.5.34
 org.apache.zookeeper:zookeeper:3.5.3-beta
 org.aspectj:aspectjweaver:1.8.13
-org.codehaus.mojo:animal-sniffer-annotations:1.14
+org.codehaus.mojo:animal-sniffer-annotations:1.17
 org.eclipse.jetty:jetty-http:9.4.12.RC2
 org.eclipse.jetty:jetty-io:9.4.12.RC2
 org.eclipse.jetty:jetty-server:9.4.12.RC2
