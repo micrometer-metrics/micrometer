@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.junit.jupiter.api.Test;
@@ -31,14 +32,32 @@ import org.junit.jupiter.api.BeforeEach;
 import static java.util.Collections.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link Log4j2Metrics}.
+ *
+ * @author Steven Sheehy
+ * @author Johnny Lim
+ */
 class Log4j2MetricsTest {
 
     private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     private final Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
+    private final Logger additivityDisabledLogger = LogManager.getLogger("additivityDisabledLogger");
 
     @BeforeEach
-    void bindLog4j2Metrics() {
+    void setUp() {
+        configureAdditivityDisabledLogger();
+
         new Log4j2Metrics().bindTo(registry);
+    }
+
+    private void configureAdditivityDisabledLogger() {
+        Configurator.setLevel("additivityDisabledLogger", Level.INFO);
+
+        LoggerContext loggerContext = (LoggerContext) LogManager.getContext();
+        Configuration configuration = loggerContext.getConfiguration();
+        LoggerConfig loggerConfig = configuration.getLoggerConfig("additivityDisabledLogger");
+        loggerConfig.setAdditive(false);
     }
 
     @Test
@@ -52,6 +71,14 @@ class Log4j2MetricsTest {
 
         assertThat(registry.get("log4j2.events").tags("level", "warn").counter().count()).isEqualTo(1.0);
         assertThat(registry.get("log4j2.events").tags("level", "debug").counter().count()).isEqualTo(0.0);
+    }
+
+    @Test
+    void filterWhenLoggerAdditivityIsFalseShouldWork() {
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(0);
+
+        additivityDisabledLogger.info("Hello, world!");
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1);
     }
 
     @Test
@@ -73,4 +100,3 @@ class Log4j2MetricsTest {
         assertThat(loggerConfig.getFilter()).isNull();
     }
 }
-
