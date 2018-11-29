@@ -15,7 +15,6 @@
  */
 package io.micrometer.statsd.internal;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.DirectProcessor;
@@ -24,21 +23,22 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.Duration;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @Disabled
 class BufferingFluxTest {
 
     @Test
     void bufferSingleStrings() {
-        final Flux<String> source = Flux.just(
+        Flux<String> source = Flux.just(
                 "twelve bytes",
                 "fourteen bytes",
                 "twelve bytes",
                 "fourteen bytes"
         ).delayElements(Duration.ofMillis(50));
 
-        final Flux<String> buffered = BufferingFlux.create(source, "\n", 14, 200);
+        Flux<String> buffered = BufferingFlux.create(source, "\n", 14, 200);
 
         StepVerifier.create(buffered)
                 .expectNext("twelve bytes")
@@ -50,14 +50,14 @@ class BufferingFluxTest {
 
     @Test
     void bufferMultipleStrings() {
-        final Flux<String> source = Flux.just(
+        Flux<String> source = Flux.just(
                 "twelve bytes",
                 "fourteen bytes",
                 "twelve bytes",
                 "fourteen bytes"
         );
 
-        final Flux<String> buffered = BufferingFlux.create(source, "\n", 27, Long.MAX_VALUE);
+        Flux<String> buffered = BufferingFlux.create(source, "\n", 27, Long.MAX_VALUE);
 
         StepVerifier.create(buffered)
                 .expectNext("twelve bytes\nfourteen bytes")
@@ -67,14 +67,14 @@ class BufferingFluxTest {
 
     @Test
     void bufferUntilTimeout() {
-        final Flux<String> source = Flux.concat(
+        Flux<String> source = Flux.concat(
                 Mono.just("twelve bytes"),
                 Mono.just("fourteen bytes"),
                 Mono.just("twelve bytes"),
                 Mono.just("fourteen bytes").delayElement(Duration.ofMillis(500))
         );
 
-        final Flux<String> buffered = BufferingFlux.create(source, "\n", Integer.MAX_VALUE, 100);
+        Flux<String> buffered = BufferingFlux.create(source, "\n", Integer.MAX_VALUE, 100);
 
         StepVerifier.create(buffered)
                 .expectNext("twelve bytes\nfourteen bytes\ntwelve bytes")
@@ -89,19 +89,19 @@ class BufferingFluxTest {
     @Test
     void doNotBufferIndefinitely() throws InterruptedException {
         // Produce a value at a more frequent interval than the maxMillisecondsBetweenEmits
-        final DirectProcessor<Void> end = DirectProcessor.create();
-        final Flux<String> source = Flux.interval(Duration.ofMillis(100))
-            .map(l -> l.toString());
+        DirectProcessor<Void> end = DirectProcessor.create();
+        Flux<String> source = Flux.interval(Duration.ofMillis(100))
+            .map(Object::toString);
 
-        final Flux<String> buffered = BufferingFlux.create(source, "\n", Integer.MAX_VALUE, 200);
+        Flux<String> buffered = BufferingFlux.create(source, "\n", Integer.MAX_VALUE, 200);
 
-        // Record whether any value came through
-        final AtomicBoolean receivedValue = new AtomicBoolean(false);
-        buffered.subscribe(v -> receivedValue.set(true));
+        CountDownLatch received = new CountDownLatch(1);
+        buffered.subscribe(v -> received.countDown());
 
-        // There should be something emitted after 500ms
-        Thread.sleep(500);
-        assertTrue(receivedValue.get(), "No values emitted after 500ms");
-        end.onComplete();
+        try {
+            received.await(10, TimeUnit.SECONDS);
+        } finally {
+            end.onComplete();
+        }
     }
 }
