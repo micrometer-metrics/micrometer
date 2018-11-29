@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.statsd.internal.*;
 import org.reactivestreams.Processor;
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
@@ -201,25 +202,29 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
                 startPolling();
             } else {
-                final Flux<String> bufferingPublisher = BufferingFlux.create(Flux.from(processor), "\n", statsdConfig.maxPacketLength(), statsdConfig.pollingFrequency().toMillis())
-                    .onBackpressureLatest();
-
+                final Publisher<String> publisher;
+                if (statsdConfig.buffered()) {
+                    publisher = BufferingFlux.create(Flux.from(processor), "\n", statsdConfig.maxPacketLength(), statsdConfig.pollingFrequency().toMillis())
+                        .onBackpressureLatest();
+                } else {
+                    publisher = processor;
+                }
                 if (statsdConfig.protocol() == StatsdProtocol.UDP) {
-                    prepareUdpClient(bufferingPublisher);
+                    prepareUdpClient(publisher);
                 } else if (statsdConfig.protocol() == StatsdProtocol.TCP) {
-                    prepareTcpClient(bufferingPublisher);
+                    prepareTcpClient(publisher);
                 }
             }
         }
     }
 
-    private void prepareUdpClient(Flux<String> bufferingPublisher) {
+    private void prepareUdpClient(Publisher<String> publisher) {
         UdpClient.create()
                 .host(statsdConfig.host())
                 .port(statsdConfig.port())
                 .handle((in, out) -> out
                         .options(NettyPipeline.SendOptions::flushOnEach)
-                        .sendString(bufferingPublisher)
+                        .sendString(publisher)
                         .neverComplete()
                 )
                 .connect()
@@ -231,13 +236,13 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 });
     }
 
-    private void prepareTcpClient(Flux<String> bufferingPublisher) {
+    private void prepareTcpClient(Publisher<String> publisher) {
         TcpClient.create()
                 .host(statsdConfig.host())
                 .port(statsdConfig.port())
                 .handle((in, out) -> out
                         .options(NettyPipeline.SendOptions::flushOnEach)
-                        .sendString(bufferingPublisher)
+                        .sendString(publisher)
                         .neverComplete())
                 .connect()
                 .subscribe(client -> {
