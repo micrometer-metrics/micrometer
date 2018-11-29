@@ -29,6 +29,7 @@ import static java.util.stream.Collectors.joining;
  * @author Jon Schneider
  * @author Maciej Walkowiak
  * @author Phillip Webb
+ * @author Johnny Lim
  */
 public final class Tags implements Iterable<Tag> {
 
@@ -98,7 +99,7 @@ public final class Tags implements Iterable<Tag> {
         }
         Tag[] newTags = new Tag[last + tags.length];
         System.arraycopy(this.tags, 0, newTags, 0, last);
-        System.arraycopy(tags, 0, newTags, this.tags.length, tags.length);
+        System.arraycopy(tags, 0, newTags, last, tags.length);
         return new Tags(newTags);
     }
 

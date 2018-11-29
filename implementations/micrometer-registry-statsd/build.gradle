@@ -29,6 +29,7 @@ shadowJar {
     relocate 'reactor', 'io.micrometer.shaded.reactor'
     relocate 'org.reactivestreams', 'io.micrometer.shaded.org.reactorstreams'
     relocate 'io.netty', 'io.micrometer.shaded.io.netty'
+    relocate 'META-INF/native/libnetty', 'META-INF/native/libio_micrometer_shaded_netty'
     relocate 'org.pcollections', 'io.micrometer.shaded.statsd.org.pcollections'
 }
 

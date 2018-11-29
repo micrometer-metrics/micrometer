@@ -29,6 +29,12 @@ import java.util.concurrent.TimeUnit;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link DropwizardMeterRegistry}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class DropwizardMeterRegistryTest {
     private final MockClock clock = new MockClock();
 
@@ -90,4 +96,14 @@ class DropwizardMeterRegistryTest {
         assertThat(summaryHist2.value()).isEqualTo(0);
         assertThat(timerHist.value()).isEqualTo(0);
     }
+
+    @Issue("#1038")
+    @Test
+    void removeShouldWork() {
+        Counter counter = registry.counter("test");
+        assertThat(registry.getDropwizardRegistry().getMeters()).hasSize(1);
+        registry.remove(counter);
+        assertThat(registry.getDropwizardRegistry().getMeters()).isEmpty();
+    }
+
 }

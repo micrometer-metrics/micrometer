@@ -92,7 +92,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             if (httpClient
                     .head(config.host() + ES_METRICS_TEMPLATE)
                     .withBasicAuthentication(config.userName(), config.password())
-                    .print()
                     .send()
                     .onError(response -> {
                         if (response.code() != 404) {

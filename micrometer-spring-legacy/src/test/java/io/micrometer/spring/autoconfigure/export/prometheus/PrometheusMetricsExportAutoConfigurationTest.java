@@ -15,6 +15,7 @@
  */
 package io.micrometer.spring.autoconfigure.export.prometheus;
 
+import io.micrometer.spring.export.prometheus.PrometheusScrapeMvcEndpoint;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.test.util.EnvironmentTestUtils;
 import org.springframework.context.annotation.Bean;
@@ -42,11 +43,8 @@ class PrometheusMetricsExportAutoConfigurationTest {
 
     @AfterEach
     void cleanUp() {
-        if (context != null) {
-            context.close();
-        }
+        context.close();
     }
-
     @Test
     void autoConfigureByDefault() {
         registerAndRefresh();
@@ -92,12 +90,41 @@ class PrometheusMetricsExportAutoConfigurationTest {
     }
 
     @Test
-    public void withPushGatewayEnabled() {
+    void withPushGatewayEnabled() {
         EnvironmentTestUtils.addEnvironment(context, "management.metrics.export.prometheus.pushgateway.enabled=true");
 
         registerAndRefresh();
 
         assertThat(context.getBean(PrometheusPushGatewayManager.class)).isNotNull();
+    }
+
+    @Test
+    void autoConfigurePrometheusScrapeMvcEndpoint() {
+        EnvironmentTestUtils.addEnvironment(this.context);
+
+        registerAndRefresh(ClockConfiguration.class, PrometheusMetricsExportAutoConfiguration.class);
+
+        assertThat(this.context.getBean(PrometheusScrapeMvcEndpoint.class)).isNotNull();
+    }
+
+    @Test
+    void autoConfigurePrometheusScrapeMvcEndpointDisabledByEndpointsEnabledFalse() {
+        EnvironmentTestUtils.addEnvironment(this.context, "endpoints.enabled=false");
+
+        registerAndRefresh(ClockConfiguration.class, PrometheusMetricsExportAutoConfiguration.class);
+
+        assertThatThrownBy(() -> this.context.getBean(PrometheusScrapeMvcEndpoint.class))
+            .isInstanceOf(NoSuchBeanDefinitionException.class);
+    }
+
+    @Test
+    void autoConfigurePrometheusScrapeMvcEndpointDisabledByEndpointsPrometheusEnabledFalse() {
+        EnvironmentTestUtils.addEnvironment(this.context, "endpoints.prometheus.enabled=false");
+
+        registerAndRefresh(ClockConfiguration.class, PrometheusMetricsExportAutoConfiguration.class);
+
+        assertThatThrownBy(() -> this.context.getBean(PrometheusScrapeMvcEndpoint.class))
+            .isInstanceOf(NoSuchBeanDefinitionException.class);
     }
 
     private void registerAndRefresh(Class<?>... configurationClasses) {
@@ -110,12 +137,9 @@ class PrometheusMetricsExportAutoConfigurationTest {
 
     @Configuration
     static class ClockConfiguration {
-
         @Bean
         public Clock clock() {
             return mock(Clock.class);
         }
-
     }
-
 }

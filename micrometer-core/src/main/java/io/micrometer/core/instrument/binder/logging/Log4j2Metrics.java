@@ -34,6 +34,7 @@ import static java.util.Collections.emptyList;
  * {@link MeterBinder} for Apache Log4j 2.
  *
  * @author Steven Sheehy
+ * @author Johnny Lim
  * @since 1.1.0
  */
 @NonNullApi
@@ -67,7 +68,10 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
         metricsFilter.start();
 
         Configuration configuration = loggerContext.getConfiguration();
-        configuration.getLoggerConfig(LogManager.ROOT_LOGGER_NAME).addFilter(metricsFilter);
+        configuration.getRootLogger().addFilter(metricsFilter);
+        loggerContext.getLoggers().stream()
+            .filter(logger -> !logger.isAdditive())
+            .forEach(logger -> configuration.getLoggerConfig(logger.getName()).addFilter(metricsFilter));
         loggerContext.updateLoggers(configuration);
     }
 
@@ -75,7 +79,10 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
     public void close() {
         if (metricsFilter != null) {
             Configuration configuration = loggerContext.getConfiguration();
-            configuration.getLoggerConfig(LogManager.ROOT_LOGGER_NAME).removeFilter(metricsFilter);
+            configuration.getRootLogger().removeFilter(metricsFilter);
+            loggerContext.getLoggers().stream()
+                .filter(logger -> !logger.isAdditive())
+                .forEach(logger -> configuration.getLoggerConfig(logger.getName()).removeFilter(metricsFilter));
             loggerContext.updateLoggers(configuration);
             metricsFilter.stop();
         }

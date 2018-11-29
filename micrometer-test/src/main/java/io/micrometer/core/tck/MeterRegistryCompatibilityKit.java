@@ -127,6 +127,17 @@ public abstract class MeterRegistryCompatibilityKit {
             });
     }
 
+    @Test
+    @DisplayName("meters with synthetics can be removed without causing deadlocks")
+    void removeMeterWithSynthetic(MeterRegistry registry) {
+        Timer timer = Timer.builder("my.timer")
+                .publishPercentiles(0.95)
+                .sla(Duration.ofMillis(10))
+                .register(registry);
+
+        registry.remove(timer);
+    }
+
     @DisplayName("counters")
     @Nested
     class CounterTck implements CounterTest {

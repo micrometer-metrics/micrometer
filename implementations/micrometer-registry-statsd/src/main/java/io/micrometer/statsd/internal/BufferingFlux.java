@@ -61,13 +61,16 @@ public class BufferingFlux {
                     .bufferUntil(line -> {
                         final int bytesLength = line.getBytes().length;
                         final long now = System.currentTimeMillis();
-                        final long last = lastTime.getAndSet(now);
+                        // Update last time to now if this is the first time
+                        lastTime.compareAndSet(0, now);
+                        final long last = lastTime.get();
                         long diff;
                         if (last != 0L) {
                             diff = now - last;
                             if (diff > maxMillisecondsBetweenEmits && byteSize.get() > 0) {
                                 // This creates a buffer, reset size
                                 byteSize.set(bytesLength);
+                                lastTime.compareAndSet(last, now);
                                 return true;
                             }
                         }
@@ -82,6 +85,7 @@ public class BufferingFlux {
                         if (projectedBytes > maxByteArraySize) {
                             // This creates a buffer, reset size
                             byteSize.set(bytesLength);
+                            lastTime.compareAndSet(last, now);
                             return true;
                         }
 

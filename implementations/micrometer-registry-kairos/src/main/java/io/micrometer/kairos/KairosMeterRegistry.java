@@ -93,7 +93,6 @@ public class KairosMeterRegistry extends StepMeterRegistry {
                                         this::writeCustomMetric)
                                 ).collect(Collectors.joining(",", "[", "]"))
                         )
-                        .print()
                         .send()
                         .onSuccess(response -> logger.debug("successfully sent {} metrics to kairos.", batch.size()))
                         .onError(response -> logger.error("failed to send metrics to kairos: {}", response.body()));

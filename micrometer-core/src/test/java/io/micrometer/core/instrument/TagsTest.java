@@ -26,8 +26,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
+ * Tests for {@link Tags}.
+ *
  * @author Phil Webb
  * @author Maciej Walkowiak
+ * @author Jon Schneider
+ * @author Johnny Lim
  */
 class TagsTest {
 
@@ -141,6 +145,17 @@ class TagsTest {
         Tags source = Tags.of("t1", "v1");
         Tags merged = source.and((Tag[]) null);
         assertThat(source).isSameAs(merged);
+    }
+
+    @Test
+    void andTagsMultipleTimesShouldWork() {
+        Tags tags = Tags.empty().and(Tag.of("t1", "v1"));
+
+        Tags firstAnd = tags.and(Tag.of("t1", "v1"));
+        assertThat(firstAnd).isEqualTo(tags);
+
+        Tags secondAnd = firstAnd.and(Tag.of("t1", "v1"));
+        assertThat(secondAnd).isEqualTo(tags);
     }
 
     @Test

@@ -22,9 +22,12 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.prometheus.client.Collector;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.stream.Stream;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class MicrometerCollectorTest {
     @Issue("#769")
@@ -37,11 +40,29 @@ class MicrometerCollectorTest {
             Collector.MetricFamilySamples.Sample sample = new Collector.MetricFamilySamples.Sample("my_counter",
                     singletonList("k"), singletonList(i.toString()), 1.0);
 
-            collector.add((conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.COUNTER,
+            collector.add(Collections.emptyList(), (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.COUNTER,
                     "my_counter", sample)));
         }
 
         // Threw StackOverflowException because of too many nested streams originally
         collector.collect();
+    }
+
+    @Test
+    void sameValuesDifferentOrder() {
+        Meter.Id id = Metrics.counter("my.counter").getId();
+        MicrometerCollector collector = new MicrometerCollector(id, NamingConvention.dot, PrometheusConfig.DEFAULT);
+
+        Collector.MetricFamilySamples.Sample sample = new Collector.MetricFamilySamples.Sample("my_counter",
+                asList("k", "k2"), asList("v1", "v2"), 1.0);
+        Collector.MetricFamilySamples.Sample sample2 = new Collector.MetricFamilySamples.Sample("my_counter",
+                asList("k", "k2"), asList("v2", "v1"), 1.0);
+
+        collector.add(asList("v1", "v2"), (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.COUNTER,
+                "my_counter", sample)));
+        collector.add(asList("v2", "v1"), (conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.COUNTER,
+                "my_counter", sample2)));
+
+        assertThat(collector.collect().get(0).samples).hasSize(2);
     }
 }
