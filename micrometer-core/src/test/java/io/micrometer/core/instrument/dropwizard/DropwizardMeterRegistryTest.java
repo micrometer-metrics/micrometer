@@ -101,8 +101,9 @@ class DropwizardMeterRegistryTest {
     @Test
     void removeShouldWork() {
         Counter counter = registry.counter("test");
+        assertThat(registry.getDropwizardRegistry().getMeters()).hasSize(1);
         registry.remove(counter);
-        assertThat(registry.counter("test")).isNotNull();
+        assertThat(registry.getDropwizardRegistry().getMeters()).isEmpty();
     }
 
 }
