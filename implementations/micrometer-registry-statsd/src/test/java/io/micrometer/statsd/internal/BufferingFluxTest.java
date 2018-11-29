@@ -15,13 +15,16 @@
  */
 package io.micrometer.statsd.internal;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Disabled
 class BufferingFluxTest {
@@ -77,5 +80,28 @@ class BufferingFluxTest {
                 .expectNext("twelve bytes\nfourteen bytes\ntwelve bytes")
                 .expectNext("fourteen bytes")
                 .verifyComplete();
+    }
+
+    /**
+     * Covers a situation where events were produced at a faster rate than the maxMillisecondsBetweenEmits, and a bug
+     * caused it to never emit the events until it reached the maxByteArraySize
+     */
+    @Test
+    void doNotBufferIndefinitely() throws InterruptedException {
+        // Produce a value at a more frequent interval than the maxMillisecondsBetweenEmits
+        final DirectProcessor<Void> end = DirectProcessor.create();
+        final Flux<String> source = Flux.interval(Duration.ofMillis(100))
+            .map(l -> l.toString());
+
+        final Flux<String> buffered = BufferingFlux.create(source, "\n", Integer.MAX_VALUE, 200);
+
+        // Record whether any value came through
+        final AtomicBoolean receivedValue = new AtomicBoolean(false);
+        buffered.subscribe(v -> receivedValue.set(true));
+
+        // There should be something emitted after 500ms
+        Thread.sleep(500);
+        assertTrue(receivedValue.get(), "No values emitted after 500ms");
+        end.onComplete();
     }
 }
