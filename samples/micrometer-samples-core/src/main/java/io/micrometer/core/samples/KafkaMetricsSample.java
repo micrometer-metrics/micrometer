@@ -48,8 +48,8 @@ public class KafkaMetricsSample {
         Flux.interval(Duration.ofMillis(10))
                 .doOnEach(n -> producer.send(new ProducerRecord<>(TOPIC, "hello", "world")))
                 .subscribe();
-     
-        for(;;) {
+
+        for (; ; ) {
             consumer.poll(Duration.ofMillis(100));
             consumer.commitAsync();
         }
