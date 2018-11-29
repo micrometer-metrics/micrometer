@@ -15,12 +15,6 @@
  */
 package io.micrometer.core.aop;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-
-import org.junit.jupiter.api.Test;
-import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
-
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -29,6 +23,12 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.lang.NonNull;
+import org.junit.jupiter.api.Test;
+import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 class TimedAspectTest {
     @Test
@@ -76,8 +76,11 @@ class TimedAspectTest {
             super();
         }
 
+        @NonNull
         @Override
-        protected Timer newTimer(Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
+        protected Timer newTimer(@NonNull Id id,
+                                 @NonNull DistributionStatisticConfig distributionStatisticConfig,
+                                 @NonNull PauseDetector pauseDetector) {
             throw new RuntimeException();
         }
     }
