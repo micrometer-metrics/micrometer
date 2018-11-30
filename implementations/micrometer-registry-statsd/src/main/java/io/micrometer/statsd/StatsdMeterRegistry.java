@@ -130,26 +130,26 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
             // now that we're connected, start polling gauges and other pollable meter types
             meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
-                .doOnEach(n -> poll())
-                .subscribe());
+                    .doOnEach(n -> poll())
+                    .subscribe());
         }
 
         config().onMeterRemoved(meter -> {
             //noinspection SuspiciousMethodCalls
             meter.use(
-                this::removePollableMeter,
-                c -> ((StatsdCounter) c).shutdown(),
-                t -> ((StatsdTimer) t).shutdown(),
-                d -> ((StatsdDistributionSummary) d).shutdown(),
-                this::removePollableMeter,
-                this::removePollableMeter,
-                this::removePollableMeter,
-                this::removePollableMeter,
-                m -> {
-                    for (Measurement measurement : m.measure()) {
-                        pollableMeters.remove(m.getId().withTag(measurement.getStatistic()));
-                    }
-                });
+                    this::removePollableMeter,
+                    c -> ((StatsdCounter) c).shutdown(),
+                    t -> ((StatsdTimer) t).shutdown(),
+                    d -> ((StatsdDistributionSummary) d).shutdown(),
+                    this::removePollableMeter,
+                    this::removePollableMeter,
+                    this::removePollableMeter,
+                    this::removePollableMeter,
+                    m -> {
+                        for (Measurement measurement : m.measure()) {
+                            pollableMeters.remove(m.getId().withTag(measurement.getStatistic()));
+                        }
+                    });
         });
 
         if (config.enabled())
@@ -184,7 +184,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     public void start() {
         final Flux<String> bufferingPublisher = BufferingFlux.create(Flux.from(processor), "\n", statsdConfig.maxPacketLength(), statsdConfig.pollingFrequency().toMillis())
-            .onBackpressureLatest();
+                .onBackpressureLatest();
 
         if (started.compareAndSet(false, true) && lineSink == null) {
             if (statsdConfig.protocol() == StatsdProtocol.UDP) {
@@ -197,41 +197,41 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private void prepareUdpClient(Flux<String> bufferingPublisher) {
         UdpClient.create()
-            .host(statsdConfig.host())
-            .port(statsdConfig.port())
-            .handle((in, out) -> out
-                .options(NettyPipeline.SendOptions::flushOnEach)
-                .sendString(bufferingPublisher)
-                .neverComplete()
-            )
-            .connect()
-            .subscribe(client -> {
-                this.client.replace(client);
+                .host(statsdConfig.host())
+                .port(statsdConfig.port())
+                .handle((in, out) -> out
+                        .options(NettyPipeline.SendOptions::flushOnEach)
+                        .sendString(bufferingPublisher)
+                        .neverComplete()
+                )
+                .connect()
+                .subscribe(client -> {
+                    this.client.replace(client);
 
-                // now that we're connected, start polling gauges and other pollable meter types
-                meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
-                    .doOnEach(n -> poll())
-                    .subscribe());
-            });
+                    // now that we're connected, start polling gauges and other pollable meter types
+                    meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
+                            .doOnEach(n -> poll())
+                            .subscribe());
+                });
     }
 
     private void prepareTcpClient(Flux<String> bufferingPublisher) {
         TcpClient.create()
-            .host(statsdConfig.host())
-            .port(statsdConfig.port())
-            .handle((in, out) -> out
-                .options(NettyPipeline.SendOptions::flushOnEach)
-                .sendString(bufferingPublisher)
-                .neverComplete())
-            .connect()
-            .subscribe(client -> {
-                this.client.replace(client);
+                .host(statsdConfig.host())
+                .port(statsdConfig.port())
+                .handle((in, out) -> out
+                        .options(NettyPipeline.SendOptions::flushOnEach)
+                        .sendString(bufferingPublisher)
+                        .neverComplete())
+                .connect()
+                .subscribe(client -> {
+                    this.client.replace(client);
 
-                // now that we're connected, start polling gauges and other pollable meter types
-                meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
-                    .doOnEach(n -> poll())
-                    .subscribe());
-            });
+                    // now that we're connected, start polling gauges and other pollable meter types
+                    meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
+                            .doOnEach(n -> poll())
+                            .subscribe());
+                });
     }
 
     public void stop() {
@@ -289,9 +289,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @SuppressWarnings("ConstantConditions")
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector
-        pauseDetector) {
+            pauseDetector) {
         Timer timer = new StatsdTimer(id, lineBuilder(id), processor, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-            statsdConfig.step().toMillis());
+                statsdConfig.step().toMillis());
         HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
     }
@@ -299,7 +299,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @SuppressWarnings("ConstantConditions")
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig
-        distributionStatisticConfig, double scale) {
+            distributionStatisticConfig, double scale) {
         DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), processor, clock, distributionStatisticConfig, scale);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
@@ -314,10 +314,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T
-        obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit
-                                                     totalTimeFunctionUnit) {
+            obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit
+                                                         totalTimeFunctionUnit) {
         StatsdFunctionTimer ft = new StatsdFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit,
-            getBaseTimeUnit(), lineBuilder(id), processor);
+                getBaseTimeUnit(), lineBuilder(id), processor);
         pollableMeters.put(id, ft);
         return ft;
     }
@@ -352,9 +352,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected DistributionStatisticConfig defaultHistogramConfig() {
         return DistributionStatisticConfig.builder()
-            .expiry(statsdConfig.step())
-            .build()
-            .merge(DistributionStatisticConfig.DEFAULT);
+                .expiry(statsdConfig.step())
+                .build()
+                .merge(DistributionStatisticConfig.DEFAULT);
     }
 
     public int queueSize() {
