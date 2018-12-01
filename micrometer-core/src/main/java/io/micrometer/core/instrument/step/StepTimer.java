@@ -40,7 +40,7 @@ public class StepTimer extends AbstractTimer {
      * @param distributionStatisticConfig distribution statistic configuration
      * @param pauseDetector pause detector
      * @param baseTimeUnit base time unit
-     * @deprecated Use {@link #StepTimer(Id, Clock, DistributionStatisticConfig, PauseDetector, TimeUnit, long, boolean)}
+     * @deprecated Use {@link #StepTimer(io.micrometer.core.instrument.Meter.Id, Clock, DistributionStatisticConfig, PauseDetector, TimeUnit, long, boolean)}
      */
     @Deprecated
     public StepTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
@@ -57,7 +57,7 @@ public class StepTimer extends AbstractTimer {
      * @param pauseDetector pause detector
      * @param baseTimeUnit base time unit
      * @param supportsAggregablePercentiles whether it supports aggregable percentiles
-     * @deprecated Use {@link #StepTimer(Id, Clock, DistributionStatisticConfig, PauseDetector, TimeUnit, long, boolean)}
+     * @deprecated Use {@link #StepTimer(io.micrometer.core.instrument.Meter.Id, Clock, DistributionStatisticConfig, PauseDetector, TimeUnit, long, boolean)}
      */
     @Deprecated
     @SuppressWarnings("ConstantConditions")

@@ -36,7 +36,7 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
      * @param clock clock
      * @param distributionStatisticConfig distribution static configuration
      * @param scale scale
-     * @deprecated Use {@link #StepDistributionSummary(Id, Clock, DistributionStatisticConfig, double, long, boolean)}
+     * @deprecated Use {@link #StepDistributionSummary(io.micrometer.core.instrument.Meter.Id, Clock, DistributionStatisticConfig, double, long, boolean)}
      */
     @Deprecated
     public StepDistributionSummary(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig, double scale) {
@@ -51,7 +51,7 @@ public class StepDistributionSummary extends AbstractDistributionSummary {
      * @param distributionStatisticConfig distribution static configuration
      * @param scale scale
      * @param supportsAggregablePercentiles whether it supports aggregable percentiles
-     * @deprecated Use {@link #StepDistributionSummary(Id, Clock, DistributionStatisticConfig, double, long, boolean)}
+     * @deprecated Use {@link #StepDistributionSummary(io.micrometer.core.instrument.Meter.Id, Clock, DistributionStatisticConfig, double, long, boolean)}
      */
     @Deprecated
     @SuppressWarnings("ConstantConditions")

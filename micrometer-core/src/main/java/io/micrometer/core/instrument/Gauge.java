@@ -127,6 +127,7 @@ public interface Gauge extends Meter {
          * This method may be removed in future minor or major releases if we find a way to mark derivatives in a
          * private way that does not have other API compatibility consequences.
          *
+         * @param synthetic whether this gauge is a synthetic derivative or not
          * @return Whether this gauge is a synthetic derivative or not.
          */
         @Incubating(since = "1.0.6")

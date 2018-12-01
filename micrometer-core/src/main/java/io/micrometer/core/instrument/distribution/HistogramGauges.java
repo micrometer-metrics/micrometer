@@ -36,6 +36,10 @@ public class HistogramGauges {
     /**
      * Register a set of gauges for percentiles and histogram buckets that follow a common format when
      * the monitoring system doesn't have an opinion about the structure of this data.
+     *
+     * @param timer the timer to register
+     * @param registry the registry to register the timer
+     * @return registered {@code HistogramGauges}
      */
     public static HistogramGauges registerWithCommonFormat(Timer timer, MeterRegistry registry) {
         Meter.Id id = timer.getId();
