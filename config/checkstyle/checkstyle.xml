@@ -21,10 +21,20 @@
                       value="Line has leading tab characters; indentation should be performed with spaces only." />
             <property name="ignoreComments" value="true" />
         </module>
+        <module name="Regexp">
+            <property name="id" value="sysout"/>
+            <property name="format" value="System\.out\.println"/>
+            <property name="illegalPattern" value="true"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
 
         <!-- Whitespace -->
         <module name="com.puppycrawl.tools.checkstyle.checks.whitespace.WhitespaceAroundCheck" />
 
         <module name="SuppressionCommentFilter"/>
+    </module>
+
+    <module name="SuppressionFilter">
+        <property name="file" value="${config_loc}/suppressions.xml"/>
     </module>
 </module>
