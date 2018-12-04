@@ -31,6 +31,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceException;
+
 import java.util.Collections;
 import java.util.Map;
 
@@ -63,8 +65,13 @@ public class HibernateMetricsAutoConfiguration {
 
     private void bindEntityManagerFactoryToRegistry(String beanName, EntityManagerFactory entityManagerFactory) {
         String entityManagerFactoryName = getEntityManagerFactoryName(beanName);
-        new HibernateMetrics(entityManagerFactory, entityManagerFactoryName,
+        try {
+            SessionFactory sessionFactory = entityManagerFactory.unwrap(SessionFactory.class);
+            new HibernateMetrics(sessionFactory, entityManagerFactoryName,
                 Collections.emptyList()).bindTo(this.registry);
+        }
+        catch (PersistenceException ex) {
+        }
     }
 
     /**
