@@ -30,39 +30,112 @@ import java.util.function.ToDoubleFunction;
 
 /**
  * A {@link MeterBinder} implementation that provides Hibernate metrics. It exposes the
- * same stats as would be exposed when calling {@code Statistics#logSummary}.
+ * same statistics as would be exposed when calling {@link Statistics#logSummary()}.
  *
  * @author Marten Deinum
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 @NonNullApi
 @NonNullFields
 public class HibernateMetrics implements MeterBinder {
 
+    private static final String SESSION_FACTORY_TAG_NAME = "entityManagerFactory";
+
     private final Iterable<Tag> tags;
 
     @Nullable
-    private final Statistics stats;
+    private final Statistics statistics;
 
+    /**
+     * Create {@code HibernateMetrics} and bind to the specified meter registry.
+     *
+     * @param registry meter registry to use
+     * @param sessionFactory session factory to use
+     * @param sessionFactoryName session factory name as a tag value
+     * @param tags additional tags
+     */
+    public static void monitor(MeterRegistry registry, SessionFactory sessionFactory, String sessionFactoryName, String... tags) {
+        monitor(registry, sessionFactory, sessionFactoryName, Tags.of(tags));
+    }
+
+    /**
+     * Create {@code HibernateMetrics} and bind to the specified meter registry.
+     *
+     * @param registry meter registry to use
+     * @param sessionFactory session factory to use
+     * @param sessionFactoryName session factory name as a tag value
+     * @param tags additional tags
+     */
+    public static void monitor(MeterRegistry registry, SessionFactory sessionFactory, String sessionFactoryName, Iterable<Tag> tags) {
+        new HibernateMetrics(sessionFactory, sessionFactoryName, tags).bindTo(registry);
+    }
+
+    /**
+     * Create {@code HibernateMetrics} and bind to the specified meter registry.
+     *
+     * @param registry meter registry to use
+     * @param entityManagerFactory entity manager factory to use
+     * @param entityManagerFactoryName entity manager factory name as a tag value
+     * @param tags additional tags
+     * @deprecated since 1.1.2 in favor of {@link #monitor(MeterRegistry, SessionFactory, String, String...)}
+     */
+    @Deprecated
     public static void monitor(MeterRegistry registry, EntityManagerFactory entityManagerFactory, String entityManagerFactoryName, String... tags) {
         monitor(registry, entityManagerFactory, entityManagerFactoryName, Tags.of(tags));
     }
 
+    /**
+     * Create {@code HibernateMetrics} and bind to the specified meter registry.
+     *
+     * @param registry meter registry to use
+     * @param entityManagerFactory entity manager factory to use
+     * @param entityManagerFactoryName entity manager factory name as a tag value
+     * @param tags additional tags
+     * @deprecated since 1.1.2 in favor of {@link #monitor(MeterRegistry, SessionFactory, String, Iterable)}
+     */
+    @Deprecated
     public static void monitor(MeterRegistry registry, EntityManagerFactory entityManagerFactory, String entityManagerFactoryName, Iterable<Tag> tags) {
         new HibernateMetrics(entityManagerFactory, entityManagerFactoryName, tags).bindTo(registry);
     }
 
+    /**
+     * Create a {@code HibernateMetrics}.
+     * @param sessionFactory session factory to use
+     * @param sessionFactoryName session factory name as a tag value
+     * @param tags additional tags
+     */
+    public HibernateMetrics(SessionFactory sessionFactory, String sessionFactoryName, Iterable<Tag> tags) {
+        this.tags = Tags.concat(tags, SESSION_FACTORY_TAG_NAME, sessionFactoryName);
+        Statistics statistics = sessionFactory.getStatistics();
+        this.statistics = statistics.isStatisticsEnabled() ? statistics : null;
+    }
+
+    /**
+     * Create a {@code HibernateMetrics}.
+     * @param entityManagerFactory entity manager factory to use
+     * @param entityManagerFactoryName entity manager factory name as a tag value
+     * @param tags additional tags
+     * @deprecated since 1.1.2 in favor of {@link #HibernateMetrics(SessionFactory, String, Iterable)}
+     */
+    @Deprecated
     public HibernateMetrics(EntityManagerFactory entityManagerFactory, String entityManagerFactoryName, Iterable<Tag> tags) {
-        this.tags = Tags.concat(tags, "entityManagerFactory", entityManagerFactoryName);
-        this.stats = hasStatisticsEnabled(entityManagerFactory) ? getStatistics(entityManagerFactory) : null;
+        this.tags = Tags.concat(tags, SESSION_FACTORY_TAG_NAME, entityManagerFactoryName);
+        SessionFactory sessionFactory = unwrap(entityManagerFactory);
+        if (sessionFactory != null) {
+            Statistics statistics = sessionFactory.getStatistics();
+            this.statistics = statistics.isStatisticsEnabled() ? statistics : null;
+        } else {
+            this.statistics = null;
+        }
     }
 
     private void counter(MeterRegistry registry, String name, String description, ToDoubleFunction<Statistics> f, String... extraTags) {
-        if (this.stats == null) {
+        if (this.statistics == null) {
             return;
         }
 
-        FunctionCounter.builder(name, stats, f)
+        FunctionCounter.builder(name, statistics, f)
             .tags(tags)
             .tags(extraTags)
             .description(description)
@@ -71,15 +144,15 @@ public class HibernateMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        if (this.stats == null) {
+        if (this.statistics == null) {
             return;
         }
 
-        // Session stats
+        // Session statistics
         counter(registry, "hibernate.sessions.open", "Sessions opened", Statistics::getSessionOpenCount);
         counter(registry, "hibernate.sessions.closed", "Sessions closed", Statistics::getSessionCloseCount);
 
-        // Transaction stats
+        // Transaction statistics
         counter(registry, "hibernate.transactions", "The number of transactions we know to have been successful",
             Statistics::getSuccessfulTransactionCount, "result", "success");
         counter(registry, "hibernate.transactions", "The number of transactions we know to have failed",
@@ -132,15 +205,15 @@ public class HibernateMetrics implements MeterBinder {
         counter(registry, "hibernate.query.natural.id.executions", "The number of naturalId queries executed against the database",
             Statistics::getNaturalIdQueryExecutionCount);
 
-        TimeGauge.builder("hibernate.query.natural.id.executions.max", stats, TimeUnit.MILLISECONDS, Statistics::getNaturalIdQueryExecutionMaxTime)
+        TimeGauge.builder("hibernate.query.natural.id.executions.max", statistics, TimeUnit.MILLISECONDS, Statistics::getNaturalIdQueryExecutionMaxTime)
             .description("The maximum query time for naturalId queries executed against the database")
             .tags(tags)
             .register(registry);
 
-        // Query stats
+        // Query statistics
         counter(registry, "hibernate.query.executions", "The number of executed queries", Statistics::getQueryExecutionCount);
 
-        TimeGauge.builder("hibernate.query.executions.max", stats, TimeUnit.MILLISECONDS, Statistics::getQueryExecutionMaxTime)
+        TimeGauge.builder("hibernate.query.executions.max", statistics, TimeUnit.MILLISECONDS, Statistics::getQueryExecutionMaxTime)
             .description("The time of the slowest query")
             .tags(tags)
             .register(registry);
@@ -162,24 +235,17 @@ public class HibernateMetrics implements MeterBinder {
             Statistics::getQueryCachePutCount);
     }
 
-    private boolean hasStatisticsEnabled(EntityManagerFactory emf) {
-        final Statistics stats = getStatistics(emf);
-        return (stats != null && stats.isStatisticsEnabled());
-    }
-
     /**
-     * Get the {@code Statistics} object from the underlying {@code SessionFactory}. If it isn't hibernate that is
-     * used return {@code null}.
+     * Unwrap the {@link SessionFactory} from {@link EntityManagerFactory}.
      *
-     * @param emf an {@code EntityManagerFactory}
-     * @return the {@code Statistics} from the underlying {@code SessionFactory} or {@code null}.
+     * @param entityManagerFactory {@link EntityManagerFactory} to unwrap
+     * @return unwrapped {@link SessionFactory}
      */
     @Nullable
-    private Statistics getStatistics(EntityManagerFactory emf) {
+    private SessionFactory unwrap(EntityManagerFactory entityManagerFactory) {
         try {
-            SessionFactory sf = emf.unwrap(SessionFactory.class);
-            return sf.getStatistics();
-        } catch (PersistenceException pe) {
+            return entityManagerFactory.unwrap(SessionFactory.class);
+        } catch (PersistenceException ex) {
             return null;
         }
     }
