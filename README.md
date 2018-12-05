@@ -32,7 +32,7 @@ dependencies {
 
 ## Building Locally
 
-Run `./gradlew pTML` to publish a Maven-style snapshot to your Maven local repo. To consume:
+Run `./gradlew clean pTML` to publish a Maven-style snapshot to your Maven local repo. To consume:
 
 ```groovy
 repositories {
