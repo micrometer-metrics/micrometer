@@ -43,6 +43,7 @@ import static java.util.stream.Collectors.joining;
  *
  * @author Hunter Sherman
  * @author Jon Schneider
+ * @since 1.1.0
  */
 public class AppOpticsMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("appoptics-metrics-publisher");
@@ -143,27 +144,30 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
 
     @Nullable
     private Optional<String> writeCounter(Counter counter) {
-        if (counter.count() > 0) {
+        double count = counter.count();
+        if (count > 0) {
             // can't use "count" field because sum is required whenever count is set.
-            return Optional.of(write(counter.getId(), "counter", Fields.Value.tag(), decimal(counter.count())));
+            return Optional.of(write(counter.getId(), "counter", Fields.Value.tag(), decimal(count)));
         }
         return Optional.empty();
     }
 
     @Nullable
     private Optional<String> writeFunctionCounter(FunctionCounter counter) {
-        if (counter.count() > 0) {
+        double count = counter.count();
+        if (count > 0) {
             // can't use "count" field because sum is required whenever count is set.
-            return Optional.of(write(counter.getId(), "functionCounter", Fields.Value.tag(), decimal(counter.count())));
+            return Optional.of(write(counter.getId(), "functionCounter", Fields.Value.tag(), decimal(count)));
         }
         return Optional.empty();
     }
 
     @Nullable
     private Optional<String> writeFunctionTimer(FunctionTimer timer) {
-        if (timer.count() > 0) {
+        double count = timer.count();
+        if (count > 0) {
             return Optional.of(write(timer.getId(), "functionTimer",
-                    Fields.Count.tag(), decimal(timer.count()),
+                    Fields.Count.tag(), decimal(count),
                     Fields.Sum.tag(), decimal(timer.totalTime(getBaseTimeUnit()))));
         }
         return Optional.empty();
@@ -172,9 +176,10 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
     @Nullable
     private Optional<String> writeTimer(Timer timer) {
         HistogramSnapshot snapshot = timer.takeSnapshot();
-        if (snapshot.count() > 0) {
+        long count = snapshot.count();
+        if (count > 0) {
             return Optional.of(write(timer.getId(), "timer",
-                    Fields.Count.tag(), decimal(snapshot.count()),
+                    Fields.Count.tag(), decimal(count),
                     Fields.Sum.tag(), decimal(snapshot.total(getBaseTimeUnit())),
                     Fields.Max.tag(), decimal(snapshot.max(getBaseTimeUnit()))));
         }
@@ -195,9 +200,10 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
 
     @Nullable
     private Optional<String> writeLongTaskTimer(LongTaskTimer timer) {
-        if (timer.activeTasks() > 0) {
+        int activeTasks = timer.activeTasks();
+        if (activeTasks > 0) {
             return Optional.of(write(timer.getId(), "longTaskTimer",
-                    Fields.Count.tag(), decimal(timer.activeTasks()),
+                    Fields.Count.tag(), decimal(activeTasks),
                     Fields.Sum.tag(), decimal(timer.duration(getBaseTimeUnit()))));
         }
         return Optional.empty();
@@ -207,7 +213,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         StringBuilder sb = new StringBuilder();
         sb.append("{\"name\":\"").append(escapeJson(getConventionName(id))).append("\",\"period\":").append(config.step().getSeconds());
 
-        if (!"value" .equals(statistics[0])) {
+        if (!Fields.Value.tag().equals(statistics[0])) {
             sb.append(",\"attributes\":{\"aggregate\":false}");
         }
 
