@@ -159,8 +159,8 @@ public class ExecutorServiceMetrics implements MeterBinder {
 
         Gauge.builder("executor.queued", tp, tpRef -> tpRef.getQueue().size())
                 .tags(tags)
-                .description("The approximate number of threads that are queued for execution")
-                .baseUnit("threads")
+                .description("The approximate number of tasks that are queued for execution")
+                .baseUnit("tasks")
                 .register(registry);
 
         Gauge.builder("executor.pool.size", tp, ThreadPoolExecutor::getPoolSize)
