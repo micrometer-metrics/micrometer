@@ -20,9 +20,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * {@link ConfigurationProperties} for configuring metrics logging.
+ *
+ * @author Jon Schneider
+ * @since 1.1.0
  */
 @ConfigurationProperties(prefix = "management.metrics.export.logging")
 public class LoggingRegistryProperties extends StepRegistryProperties {
+
+    /**
+     * Whether counters and timers that have no activity in an interval are still logged.
+     */
     private boolean logInactive = false;
 
     public boolean isLogInactive() {

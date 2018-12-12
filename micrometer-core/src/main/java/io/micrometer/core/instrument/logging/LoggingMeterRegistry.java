@@ -43,7 +43,10 @@ import static io.micrometer.core.instrument.util.DoubleFormat.decimalOrWhole;
 import static java.util.stream.Collectors.joining;
 
 /**
+ * Logging {@link io.micrometer.core.instrument.MeterRegistry}.
+ *
  * @author Jon Schneider
+ * @since 1.1.0
  */
 @Incubating(since = "1.1.0")
 public class LoggingMeterRegistry extends StepMeterRegistry {
@@ -199,12 +202,12 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
             int unit = 1024;
             if (bytes < unit) return bytes + " B";
             int exp = (int) (Math.log(bytes) / Math.log(unit));
-            String pre = "KMGTPE" .charAt(exp - 1) + "i";
+            String pre = "KMGTPE".charAt(exp - 1) + "i";
             return String.format("%.2f %sB", bytes / Math.pow(unit, exp), pre);
         }
 
         private String humanReadableBaseUnit(double value) {
-            if (" bytes" .equals(baseUnit)) {
+            if (" bytes".equals(baseUnit)) {
                 return humanReadableByteCount(value);
             }
             return decimalOrWhole(value) + baseUnit;

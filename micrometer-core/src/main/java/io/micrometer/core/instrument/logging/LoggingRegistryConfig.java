@@ -17,6 +17,12 @@ package io.micrometer.core.instrument.logging;
 
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
+/**
+ * Configuration for {@link LoggingMeterRegistry}.
+ *
+ * @author Jon Schneider
+ * @since 1.1.0
+ */
 public interface LoggingRegistryConfig extends StepRegistryConfig {
     LoggingRegistryConfig DEFAULT = k -> null;
 
