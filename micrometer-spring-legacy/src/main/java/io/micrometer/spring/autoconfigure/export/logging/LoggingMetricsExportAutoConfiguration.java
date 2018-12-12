@@ -26,7 +26,6 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -35,14 +34,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 /**
- * {@link EnableAutoConfiguration Auto-configuration} for exporting metrics to Slf4jDB.
+ * {@link EnableAutoConfiguration Auto-configuration} for exporting metrics to a logging framework.
+ *
+ * Try SLF4J first and fallback to the standard output if it's unavailable.
+ *
+ * @author Jon Schneider
+ * @since 1.1.0
  */
 @Configuration
 @AutoConfigureBefore({CompositeMeterRegistryAutoConfiguration.class,
     SimpleMetricsExportAutoConfiguration.class})
 @AutoConfigureAfter(MetricsAutoConfiguration.class)
 @ConditionalOnBean(Clock.class)
-@ConditionalOnClass(LoggingMeterRegistry.class)
 @ConditionalOnProperty(prefix = "management.metrics.export.logging", name = "enabled", havingValue = "true", matchIfMissing = false)
 @EnableConfigurationProperties(LoggingRegistryProperties.class)
 @Import(StringToDurationConverter.class)
@@ -50,13 +53,13 @@ public class LoggingMetricsExportAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public LoggingRegistryConfig Slf4jConfig(LoggingRegistryProperties props) {
+    public LoggingRegistryConfig loggingRegistryConfig(LoggingRegistryProperties props) {
         return new LoggingRegistryPropertiesConfigAdapter(props);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public LoggingMeterRegistry Slf4jMeterRegistry(LoggingRegistryConfig config, Clock clock) {
+    public LoggingMeterRegistry loggingMeterRegistry(LoggingRegistryConfig config, Clock clock) {
         return new LoggingMeterRegistry(config, clock);
     }
 }
