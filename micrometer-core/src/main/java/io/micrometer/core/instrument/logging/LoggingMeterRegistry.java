@@ -107,40 +107,47 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                         m.use(
                                 gauge -> loggingSink.accept(print.id() + " value=" + print.value(gauge.value())),
                                 counter -> {
-                                    if (counter.count() == 0) return;
-                                    loggingSink.accept(print.id() + " throughput=" + print.rate(counter.count()));
+                                    double count = counter.count();
+                                    if (!config.logInactive() && count == 0) return;
+                                    loggingSink.accept(print.id() + " throughput=" + print.rate(count));
                                 },
                                 timer -> {
                                     HistogramSnapshot snapshot = timer.takeSnapshot();
-                                    if (snapshot.count() == 0) return;
-                                    loggingSink.accept(print.id() + " throughput=" + print.unitlessRate(snapshot.count()) +
+                                    long count = snapshot.count();
+                                    if (!config.logInactive() && count == 0) return;
+                                    loggingSink.accept(print.id() + " throughput=" + print.unitlessRate(count) +
                                             " mean=" + print.time(snapshot.mean(getBaseTimeUnit())) +
                                             " max=" + print.time(snapshot.max(getBaseTimeUnit())));
                                 },
                                 summary -> {
                                     HistogramSnapshot snapshot = summary.takeSnapshot();
-                                    if (snapshot.count() == 0) return;
-                                    loggingSink.accept(print.id() + " throughput=" + print.unitlessRate(snapshot.count()) +
+                                    long count = snapshot.count();
+                                    if (!config.logInactive() && count == 0) return;
+                                    loggingSink.accept(print.id() + " throughput=" + print.unitlessRate(count) +
                                             " mean=" + print.value(snapshot.mean()) +
                                             " max=" + print.value(snapshot.max()));
                                 },
                                 longTaskTimer -> {
-                                    if (longTaskTimer.activeTasks() == 0) return;
+                                    int activeTasks = longTaskTimer.activeTasks();
+                                    if (!config.logInactive() && activeTasks == 0) return;
                                     loggingSink.accept(print.id() +
-                                            " active=" + print.value(longTaskTimer.activeTasks()) +
+                                            " active=" + print.value(activeTasks) +
                                             " duration=" + print.time(longTaskTimer.duration(getBaseTimeUnit())));
                                 },
                                 timeGauge -> {
-                                    if (timeGauge.value(getBaseTimeUnit()) == 0) return;
-                                    loggingSink.accept(print.id() + " value=" + print.time(timeGauge.value(getBaseTimeUnit())));
+                                    double value = timeGauge.value(getBaseTimeUnit());
+                                    if (!config.logInactive() && value == 0) return;
+                                    loggingSink.accept(print.id() + " value=" + print.time(value));
                                 },
                                 counter -> {
-                                    if (counter.count() == 0) return;
-                                    loggingSink.accept(print.id() + " throughput=" + print.rate(counter.count()));
+                                    double count = counter.count();
+                                    if (!config.logInactive() && count == 0) return;
+                                    loggingSink.accept(print.id() + " throughput=" + print.rate(count));
                                 },
                                 timer -> {
-                                    if (timer.count() == 0) return;
-                                    loggingSink.accept(print.id() + " throughput=" + print.rate(timer.count()) +
+                                    double count = timer.count();
+                                    if (!config.logInactive() && count == 0) return;
+                                    loggingSink.accept(print.id() + " throughput=" + print.rate(count) +
                                             " mean=" + print.time(timer.mean(getBaseTimeUnit())));
                                 },
                                 meter -> loggingSink.accept(print.id() + StreamSupport.stream(meter.measure().spliterator(), false)

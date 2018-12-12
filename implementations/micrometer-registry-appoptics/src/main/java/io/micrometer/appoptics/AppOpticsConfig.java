@@ -25,6 +25,7 @@ import java.time.Duration;
  * Configuration for {@link AppOpticsMeterRegistry}.
  *
  * @author Hunter Sherman
+ * @since 1.1.0
  */
 public interface AppOpticsConfig extends StepRegistryConfig {
 
@@ -41,14 +42,14 @@ public interface AppOpticsConfig extends StepRegistryConfig {
      * @return AppOptics API token
      */
     default String apiToken() {
-        final String t = get(prefix() + ".apiToken");
-        if (null == t)
+        String t = get(prefix() + ".apiToken");
+        if (t == null)
             throw new MissingRequiredConfigurationException("token must be set to report metrics to AppOptics");
         return t;
     }
 
     /**
-     * @return The tag that will be mapped to {@literal @}host when shipping metrics to AppOptics.
+     * @return The tag that will be mapped to {@literal @host} when shipping metrics to AppOptics.
      */
     @Nullable
     default String hostTag() {
@@ -66,8 +67,8 @@ public interface AppOpticsConfig extends StepRegistryConfig {
 
     @Override
     default int batchSize() {
-        final String v = get(prefix() + ".batchSize");
-        return null == v ? DEFAULT_BATCH_SIZE : Math.min(Integer.parseInt(v), MAX_BATCH_SIZE);
+        String v = get(prefix() + ".batchSize");
+        return v == null ? DEFAULT_BATCH_SIZE : Math.min(Integer.parseInt(v), MAX_BATCH_SIZE);
     }
 
     @Deprecated

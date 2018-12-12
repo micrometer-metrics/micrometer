@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -85,17 +86,25 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         PutMetricDataRequest putMetricDataRequest = new PutMetricDataRequest()
                 .withNamespace(config.namespace())
                 .withMetricData(metricData);
+        CountDownLatch latch = new CountDownLatch(1);
         amazonCloudWatchAsync.putMetricDataAsync(putMetricDataRequest, new AsyncHandler<PutMetricDataRequest, PutMetricDataResult>() {
             @Override
             public void onError(Exception exception) {
-                logger.error("Error sending metric data.", exception);
+                logger.error("error sending metric data.", exception);
+                latch.countDown();
             }
 
             @Override
             public void onSuccess(PutMetricDataRequest request, PutMetricDataResult result) {
                 logger.debug("published metric with namespace:{}", request.getNamespace());
+                latch.countDown();
             }
         });
+        try {
+            latch.await(config.readTimeout().toMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            logger.warn("metrics push to cloudwatch took longer than expected");
+        }
     }
 
     //VisibleForTesting
