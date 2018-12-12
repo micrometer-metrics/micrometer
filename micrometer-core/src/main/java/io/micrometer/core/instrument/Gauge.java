@@ -156,7 +156,7 @@ public interface Gauge extends Meter {
          * private way that does not have other API compatibility consequences.
          *
          * @param syntheticAssociation The meter id of a meter for which this metric is a synthetic derivative.
-         * @return The gauge builder with added base unit.
+         * @return The gauge builder with an added synthetic association.
          */
         @Incubating(since = "1.1.0")
         public Builder<T> synthetic(Meter.Id syntheticAssociation) {
@@ -169,7 +169,7 @@ public interface Gauge extends Meter {
          * its instantaneous value is determined.
          *
          * @param strong Whether or not to maintain a strong reference on the gauged object.
-         * @return The gauge builder with added base unit.
+         * @return The gauge builder with altered strong reference semantics.
          * @since 1.1.0
          */
         @Incubating(since = "1.1.0")

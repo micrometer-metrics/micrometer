@@ -37,9 +37,11 @@ public class HistogramGauges {
      * Register a set of gauges for percentiles and histogram buckets that follow a common format when
      * the monitoring system doesn't have an opinion about the structure of this data.
      *
-     * @param timer timer to register to the meter registry
+     * @param timer    timer to register to the meter registry
      * @param registry registry to register gauges
-     * @return histogram gauges
+     * @param timer    the timer to register
+     * @param registry the registry to register the timer
+     * @return registered {@code HistogramGauges}
      */
     public static HistogramGauges registerWithCommonFormat(Timer timer, MeterRegistry registry) {
         Meter.Id id = timer.getId();
@@ -62,11 +64,11 @@ public class HistogramGauges {
     }
 
     public static HistogramGauges register(HistogramSupport meter, MeterRegistry registry,
-                                Function<ValueAtPercentile, String> percentileName,
-                                Function<ValueAtPercentile, Iterable<Tag>> percentileTags,
-                                Function<ValueAtPercentile, Double> percentileValue,
-                                Function<CountAtBucket, String> bucketName,
-                                Function<CountAtBucket, Iterable<Tag>> bucketTags) {
+                                           Function<ValueAtPercentile, String> percentileName,
+                                           Function<ValueAtPercentile, Iterable<Tag>> percentileTags,
+                                           Function<ValueAtPercentile, Double> percentileValue,
+                                           Function<CountAtBucket, String> bucketName,
+                                           Function<CountAtBucket, Iterable<Tag>> bucketTags) {
         return new HistogramGauges(meter, registry, percentileName, percentileTags, percentileValue, bucketName, bucketTags);
     }
 
