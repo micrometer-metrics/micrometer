@@ -232,18 +232,26 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     private void postCustomMetricValues(String type, List<DynatraceTimeSeries> timeSeries, String customDeviceMetricEndpoint) {
         try {
             httpClient.post(customDeviceMetricEndpoint)
-                    .withJsonContent("{\"type\":\"" + type + "\"" +
-                            ",\"series\":[" +
-                            timeSeries.stream()
-                                    .map(DynatraceTimeSeries::asJson)
-                                    .collect(joining(",")) +
-                            "]}")
+                    .withJsonContent(createPostMessage(type, timeSeries))
                     .send()
                     .onSuccess(response -> logger.debug("successfully sent {} metrics to Dynatrace.", timeSeries.size()))
                     .onError(response -> logger.error("failed to send metrics to dynatrace: {}", response.body()));
         } catch (Throwable e) {
             logger.error("failed to send metrics to dynatrace", e);
         }
+    }
+
+    private String createPostMessage(String type, List<DynatraceTimeSeries> timeSeries) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"type\":\"").append(type).append('\"')
+            .append(",\"series\":[")
+            .append(timeSeries.stream()
+                    .map(DynatraceTimeSeries::asJson)
+                    .collect(joining(",")))
+            .append("]}");
+        String message = sb.toString();
+        logger.debug("created post message:\n{}", message);
+        return message;
     }
 
     private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
