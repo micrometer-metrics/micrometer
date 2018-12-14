@@ -663,9 +663,9 @@ public abstract class MeterRegistry {
 
     /**
      * Remove all meters.
-     * @since 1.1.2
+     * @since 1.2.0
      */
-    @Incubating(since = "1.1.2")
+    @Incubating(since = "1.2.0")
     public void removeAllMeters() {
         meterMap.keySet().forEach(this::remove);
     }
