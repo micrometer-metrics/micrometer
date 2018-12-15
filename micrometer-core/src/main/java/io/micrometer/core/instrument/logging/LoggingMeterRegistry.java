@@ -167,12 +167,9 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
 
     private class Printer {
         private final Meter meter;
-        private final String baseUnit;
 
         private Printer(Meter meter) {
             this.meter = meter;
-            String unit = meter.getId().getBaseUnit();
-            this.baseUnit = unit == null ? "" : " " + unit;
         }
 
         String id() {
@@ -207,10 +204,11 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         }
 
         private String humanReadableBaseUnit(double value) {
-            if (" bytes".equals(baseUnit)) {
+            String baseUnit = meter.getId().getBaseUnit();
+            if ("bytes".equals(baseUnit)) {
                 return humanReadableByteCount(value);
             }
-            return decimalOrWhole(value) + baseUnit;
+            return decimalOrWhole(value) + (baseUnit != null ? " " + baseUnit : "");
         }
     }
 
