@@ -161,14 +161,14 @@ class MeterRegistryTest {
     }
 
     @Test
-    void removeAllMeters() {
+    void clear() {
         registry.counter("my.counter");
         registry.counter("my.counter2");
 
         assertThat(registry.find("my.counter").counter()).isNotNull();
         assertThat(registry.find("my.counter2").counter()).isNotNull();
 
-        registry.removeAllMeters();
+        registry.clear();
 
         assertThat(registry.find("my.counter").counter()).isNull();
         assertThat(registry.find("my.counter2").counter()).isNull();

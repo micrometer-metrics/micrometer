@@ -662,11 +662,11 @@ public abstract class MeterRegistry {
     }
 
     /**
-     * Remove all meters.
+     * Clear all meters.
      * @since 1.2.0
      */
     @Incubating(since = "1.2.0")
-    public void removeAllMeters() {
+    public void clear() {
         meterMap.keySet().forEach(this::remove);
     }
 
