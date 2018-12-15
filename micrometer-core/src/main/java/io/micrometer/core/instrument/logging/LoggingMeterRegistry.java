@@ -172,10 +172,10 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                 config.step().toMillis(), false);
     }
 
-    private class Printer {
+    class Printer {
         private final Meter meter;
 
-        private Printer(Meter meter) {
+        Printer(Meter meter) {
             this.meter = meter;
         }
 
@@ -202,15 +202,15 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         }
 
         // see https://stackoverflow.com/a/3758880/510017
-        private String humanReadableByteCount(double bytes) {
+        String humanReadableByteCount(double bytes) {
             int unit = 1024;
-            if (bytes < unit) return bytes + " B";
+            if (bytes < unit) return decimalOrWhole(bytes) + " B";
             int exp = (int) (Math.log(bytes) / Math.log(unit));
             String pre = "KMGTPE".charAt(exp - 1) + "i";
-            return String.format("%.2f %sB", bytes / Math.pow(unit, exp), pre);
+            return decimalOrWhole(bytes / Math.pow(unit, exp)) + " " + pre + "B";
         }
 
-        private String humanReadableBaseUnit(double value) {
+        String humanReadableBaseUnit(double value) {
             String baseUnit = meter.getId().getBaseUnit();
             if ("bytes".equals(baseUnit)) {
                 return humanReadableByteCount(value);
