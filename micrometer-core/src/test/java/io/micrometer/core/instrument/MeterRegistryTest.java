@@ -28,6 +28,12 @@ import javax.annotation.Nonnull;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link MeterRegistry}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class MeterRegistryTest {
     private MeterRegistry registry = new SimpleMeterRegistry();
 
@@ -152,5 +158,19 @@ class MeterRegistryTest {
         assertThat(registry.getMeters()).hasSize(2);
         registry.remove(timer);
         assertThat(registry.getMeters()).isEmpty();
+    }
+
+    @Test
+    void clear() {
+        registry.counter("my.counter");
+        registry.counter("my.counter2");
+
+        assertThat(registry.find("my.counter").counter()).isNotNull();
+        assertThat(registry.find("my.counter2").counter()).isNotNull();
+
+        registry.clear();
+
+        assertThat(registry.find("my.counter").counter()).isNull();
+        assertThat(registry.find("my.counter2").counter()).isNull();
     }
 }
