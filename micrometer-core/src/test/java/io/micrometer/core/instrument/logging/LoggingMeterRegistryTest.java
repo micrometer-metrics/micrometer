@@ -18,10 +18,13 @@ package io.micrometer.core.instrument.logging;
 import io.micrometer.core.instrument.DistributionSummary;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link LoggingMeterRegistry}.
+ *
+ * @author Jon Schneider
+ */
 class LoggingMeterRegistryTest {
     private final LoggingMeterRegistry registry = new LoggingMeterRegistry();
 
