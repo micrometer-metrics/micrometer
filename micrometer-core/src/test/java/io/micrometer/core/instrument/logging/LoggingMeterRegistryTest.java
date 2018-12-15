@@ -20,6 +20,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link LoggingMeterRegistry}.
+ *
+ * @author Jon Schneider
+ */
 class LoggingMeterRegistryTest {
     private final LoggingMeterRegistry registry = new LoggingMeterRegistry();
 
