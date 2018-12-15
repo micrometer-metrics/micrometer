@@ -19,7 +19,10 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
 /**
+ * Configuration for {@link KairosMeterRegistry}.
+ *
  * @author Anton Ilinchik
+ * @since 1.1.0
  */
 public interface KairosConfig extends StepRegistryConfig {
 

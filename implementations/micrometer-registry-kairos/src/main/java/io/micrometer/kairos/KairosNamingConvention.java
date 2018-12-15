@@ -23,7 +23,10 @@ import io.micrometer.core.lang.Nullable;
 import java.util.regex.Pattern;
 
 /**
+ * {@link NamingConvention} for KairosDB.
+ *
  * @author Anton Ilinchik
+ * @since 1.1.0
  */
 public class KairosNamingConvention implements NamingConvention {
     private static final Pattern BLACKLISTED_CHARS = Pattern.compile("[{}():,=\\[\\]]");

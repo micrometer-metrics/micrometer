@@ -38,6 +38,7 @@ import org.springframework.context.annotation.Import;
  * {@link EnableAutoConfiguration Auto-configuration} for exporting metrics to KairosDB.
  *
  * @author Anton Ilinchik
+ * @since 1.1.0
  */
 @Configuration
 @AutoConfigureBefore({CompositeMeterRegistryAutoConfiguration.class,
