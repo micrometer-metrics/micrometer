@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.NavigableSet;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
  * A histogram implementation that does not support precomputed percentiles but supports
@@ -103,7 +103,7 @@ public class TimeWindowFixedBoundaryHistogram
         for (int i = 0; i < buckets.length; i++) {
             printStream.format(Locale.US, bucketFormatString,
                     buckets[i] / bucketScaling,
-                    currentHistogram().values[i].get());
+                    currentHistogram().values.get(i));
         }
 
         printStream.write('\n');
@@ -114,12 +114,10 @@ public class TimeWindowFixedBoundaryHistogram
          * For recording efficiency, this is a normal histogram. We turn these values into
          * cumulative counts only on calls to {@link #countAtValue(long)}.
          */
-        final AtomicLong[] values;
+        final AtomicLongArray values;
 
         FixedBoundaryHistogram() {
-            this.values = new AtomicLong[buckets.length];
-            for (int i = 0; i < values.length; i++)
-                values[i] = new AtomicLong(0);
+            this.values = new AtomicLongArray(buckets.length);
         }
 
         long countAtValue(long value) {
@@ -128,18 +126,21 @@ public class TimeWindowFixedBoundaryHistogram
                 return 0;
             long count = 0;
             for (int i = 0; i <= index; i++)
-                count += values[i].get();
+                count += values.get(i);
             return count;
         }
 
         void reset() {
-            for (AtomicLong value : values) value.set(0);
+            for (int i = 0; i < values.length(); i++) {
+               values.set(i, 0);
+
+            }
         }
 
         void record(long value) {
             int index = leastLessThanOrEqualTo(value);
             if (index > -1)
-                values[index].incrementAndGet();
+                values.incrementAndGet(index);
         }
 
         /**
