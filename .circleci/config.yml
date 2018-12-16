@@ -39,12 +39,12 @@ jobs:
       - store_artifacts:
           path: ~/micrometer/test-results/
 
-  build_jdk10:
+  build_jdk11:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
     docker:
-    - image: circleci/openjdk:10-jdk
+    - image: circleci/openjdk:11-jdk
     steps:
 
     - checkout
@@ -94,11 +94,11 @@ workflows:
   build_and_deploy:
     jobs:
       - build
-      - build_jdk10
+      - build_jdk11
       - deploy:
           requires:
             - build
-            - build_jdk10
+            - build_jdk11
           filters:
             branches:
               only:
