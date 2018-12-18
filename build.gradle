@@ -10,7 +10,6 @@ buildscript {
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.2.0'
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
-        classpath "gradle.plugin.com.dorongold.plugins:task-tree:1.3"
     }
 
     configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
@@ -20,7 +19,6 @@ apply plugin: 'io.spring.release'
 
 allprojects {
     apply plugin: 'io.spring.license'
-    apply plugin: 'com.dorongold.task-tree'
 
     afterEvaluate { project ->
         println "I'm building $project.name with version $project.version"
