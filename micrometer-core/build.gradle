@@ -92,7 +92,7 @@ shadowJar {
     relocate 'org.pcollections', 'io.micrometer.shaded.org.pcollections'
 }
 
-jar.deleteAllActions()
+jar.enabled = false
 jar.dependsOn shadowJar
 
 publishing {
