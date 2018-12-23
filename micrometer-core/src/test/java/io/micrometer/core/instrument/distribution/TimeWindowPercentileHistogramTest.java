@@ -29,7 +29,7 @@ class TimeWindowPercentileHistogramTest {
     
     @Test
     void histogramsAreCumulative() {
-        try(TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
+        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
                 DistributionStatisticConfig.builder()
                         .sla(3, 6, 7)
                         .build()
@@ -56,7 +56,7 @@ class TimeWindowPercentileHistogramTest {
 
     @Test
     void sampleValueAboveMaximumExpectedValue() {
-        try(TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(), DistributionStatisticConfig.builder()
+        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(), DistributionStatisticConfig.builder()
                 .sla(3)
                 .maximumExpectedValue(2L)
                 .build()
@@ -85,7 +85,7 @@ class TimeWindowPercentileHistogramTest {
 
     @Test
     void percentiles() {
-        try(TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
+        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
                 DistributionStatisticConfig.builder()
                         .percentiles(0.5, 0.9, 0.95)
                         .minimumExpectedValue((long) millisToUnit(1, TimeUnit.NANOSECONDS))
@@ -111,7 +111,7 @@ class TimeWindowPercentileHistogramTest {
                 .build()
                 .merge(DistributionStatisticConfig.DEFAULT);
 
-        try(TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
+        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
                 config, false)) {
 
             ValueAtPercentile expectedPercentile = new ValueAtPercentile(0.5, 0);
@@ -127,7 +127,7 @@ class TimeWindowPercentileHistogramTest {
                 .build()
                 .merge(DistributionStatisticConfig.DEFAULT);
 
-        try(TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
+        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
                 config, false)) {
 
             for (int i = 1; i <= 10; i++) {

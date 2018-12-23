@@ -42,7 +42,7 @@ class TimeWindowFixedBoundaryHistogramTest {
 
     @Test
     void histogramsAreCumulative() {
-        try(TimeWindowFixedBoundaryHistogram histogram = new TimeWindowFixedBoundaryHistogram(new MockClock(),
+        try (TimeWindowFixedBoundaryHistogram histogram = new TimeWindowFixedBoundaryHistogram(new MockClock(),
                 DistributionStatisticConfig.builder()
                         .sla(3, 6, 7)
                         .bufferLength(1)
