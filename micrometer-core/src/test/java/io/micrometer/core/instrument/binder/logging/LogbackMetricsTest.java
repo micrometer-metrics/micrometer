@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.logging;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
+
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;

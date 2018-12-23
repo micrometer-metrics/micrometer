@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,11 +27,11 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.LoggerConfig;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static java.util.Collections.*;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -73,12 +74,19 @@ class Log4j2MetricsTest {
         assertThat(registry.get("log4j2.events").counter().count()).isEqualTo(0.0);
 
         Configurator.setLevel(Log4j2MetricsTest.class.getName(), Level.INFO);
+        logger.info("info");
         logger.warn("warn");
+        logger.fatal("fatal");
         logger.error("error");
-        logger.debug("debug"); // shouldn't record a metric
+        logger.debug("debug"); // shouldn't record a metric as per log level config
+        logger.trace("trace"); // shouldn't record a metric as per log level config
 
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1.0);
         assertThat(registry.get("log4j2.events").tags("level", "warn").counter().count()).isEqualTo(1.0);
+        assertThat(registry.get("log4j2.events").tags("level", "fatal").counter().count()).isEqualTo(1.0);
+        assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(1.0);
         assertThat(registry.get("log4j2.events").tags("level", "debug").counter().count()).isEqualTo(0.0);
+        assertThat(registry.get("log4j2.events").tags("level", "trace").counter().count()).isEqualTo(0.0);
     }
 
     @Test
