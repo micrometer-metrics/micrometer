@@ -27,6 +27,8 @@ import io.micrometer.core.instrument.cumulative.CumulativeCounter;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.lang.NonNullApi;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
@@ -37,10 +39,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LogbackMetricsTest {
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     private Logger logger = (Logger) LoggerFactory.getLogger("foo");
-
+    private LogbackMetrics logbackMetrics;
+    
     @BeforeEach
     void bindLogbackMetrics() {
-        new LogbackMetrics().bindTo(registry);
+        logbackMetrics = new LogbackMetrics();
+        logbackMetrics.bindTo(registry);
+    }
+    
+    @AfterEach
+    void tearDown() {
+        logbackMetrics.close();
     }
 
     @Test
@@ -69,8 +78,10 @@ class LogbackMetricsTest {
     @Test
     void ignoringMetricsInsideCounters() {
         registry = new LoggingCounterMeterRegistry();
-        new LogbackMetrics().bindTo(registry);
-        registry.counter("my.counter").increment();
+        try (LogbackMetrics logbackMetrics = new LogbackMetrics()) {
+            logbackMetrics.bindTo(registry);
+            registry.counter("my.counter").increment();
+        }
     }
 
     @Issue("#421")

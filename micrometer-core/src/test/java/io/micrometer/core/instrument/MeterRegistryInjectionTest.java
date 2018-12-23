@@ -38,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Jon Schneider
  */
 class MeterRegistryInjectionTest {
+    
     @Test
     void injectWithSpring() {
         AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(SpringConfiguration.class);

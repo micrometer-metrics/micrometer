@@ -27,6 +27,7 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import static java.util.Collections.*;
@@ -43,12 +44,19 @@ class Log4j2MetricsTest {
     private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     private final Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
     private final Logger additivityDisabledLogger = LogManager.getLogger("additivityDisabledLogger");
+    
+    private Log4j2Metrics log4j2Metrics;
 
     @BeforeEach
     void setUp() {
         configureAdditivityDisabledLogger();
-
-        new Log4j2Metrics().bindTo(registry);
+        log4j2Metrics = new Log4j2Metrics();
+        log4j2Metrics.bindTo(registry);
+    }
+    
+    @AfterEach
+    void tearDown() {
+        log4j2Metrics.close();
     }
 
     private void configureAdditivityDisabledLogger() {
