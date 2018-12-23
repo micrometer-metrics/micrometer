@@ -41,11 +41,12 @@ class MeterRegistryInjectionTest {
     
     @Test
     void injectWithSpring() {
-        AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(SpringConfiguration.class);
-        MyComponent component = ctx.getBean(MyComponent.class);
-        component.performanceCriticalFeature();
-        assertThat(component.registry).isInstanceOf(SimpleMeterRegistry.class);
-        component.registry.get("feature.counter").counter();
+        try (AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(SpringConfiguration.class)) {
+            MyComponent component = ctx.getBean(MyComponent.class);
+            component.performanceCriticalFeature();
+            assertThat(component.registry).isInstanceOf(SimpleMeterRegistry.class);
+            component.registry.get("feature.counter").counter();
+        }
     }
 
 //    @Test
