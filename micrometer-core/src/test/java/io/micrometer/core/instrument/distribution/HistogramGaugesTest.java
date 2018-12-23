@@ -56,10 +56,10 @@ class HistogramGaugesTest {
             }
         });
 
-        Timer timer = Timer.builder("my.timer")
-                .sla(Duration.ofMillis(1))
-                .publishPercentiles(0.95)
-                .register(registry);
+        Timer.builder("my.timer")
+             .sla(Duration.ofMillis(1))
+             .publishPercentiles(0.95)
+             .register(registry);
 
         registry.get("MYPREFIX.my.timer.percentile").tag("phi", "0.95").gauge();
         registry.get("MYPREFIX.my.timer.histogram").tag("le", "0.001").gauge();
