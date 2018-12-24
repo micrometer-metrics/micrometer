@@ -15,9 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
-import io.micrometer.core.instrument.ImmutableTag;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
@@ -28,9 +26,7 @@ import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +38,7 @@ class KafkaConsumerMetricsTest {
     private final static String BOOTSTRAP_SERVERS = "localhost:9092";
     private static int consumerCount = 0;
 
-    private List<Tag> tags = Arrays.asList(new ImmutableTag("app", "myApp"), new ImmutableTag("version", "1"));
+    private Tags tags = Tags.of("app", "myapp", "version", "1");
     private KafkaConsumerMetrics kafkaConsumerMetrics = new KafkaConsumerMetrics(tags);
 
     @Test
