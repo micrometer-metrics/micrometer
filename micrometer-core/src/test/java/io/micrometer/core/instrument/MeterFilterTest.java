@@ -224,4 +224,14 @@ class MeterFilterTest {
         assertThat(filter.accept(id1)).isEqualTo(MeterFilterReply.NEUTRAL);
         assertThat(filter.accept(id2)).isEqualTo(MeterFilterReply.DENY);
     }
+
+    @Test
+    void acceptNameStartsWith() {
+        Meter.Id id1 = new Meter.Id("my.counter", Tags.empty(), null, null, Meter.Type.COUNTER);
+        Meter.Id id2 = new Meter.Id("other.counter", Tags.empty(), null, null, Meter.Type.COUNTER);
+
+        MeterFilter filter = MeterFilter.acceptNameStartsWith("my");
+        assertThat(filter.accept(id1)).isEqualTo(MeterFilterReply.ACCEPT);
+        assertThat(filter.accept(id2)).isEqualTo(MeterFilterReply.NEUTRAL);
+    }
 }
