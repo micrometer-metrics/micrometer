@@ -18,7 +18,7 @@
 <configuration>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <!-- encoders are  by default assigned the type
+        <!-- encoders are by default assigned the type
              ch.qos.logback.classic.encoder.PatternLayoutEncoder -->
         <encoder>
             <pattern>%d{:mm:ss} %thread %-3level %logger{24} - %msg%n</pattern>

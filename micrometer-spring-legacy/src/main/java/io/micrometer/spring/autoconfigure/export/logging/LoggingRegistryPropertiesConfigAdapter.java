@@ -20,6 +20,9 @@ import io.micrometer.spring.autoconfigure.export.properties.StepRegistryProperti
 
 /**
  * Adapter to convert {@link LoggingRegistryProperties} to an {@link LoggingRegistryConfig}.
+ *
+ * @author Jon Schneider
+ * @since 1.1.0
  */
 public class LoggingRegistryPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<LoggingRegistryProperties> implements LoggingRegistryConfig {
 

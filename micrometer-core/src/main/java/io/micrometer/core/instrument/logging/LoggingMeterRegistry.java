@@ -43,7 +43,10 @@ import static io.micrometer.core.instrument.util.DoubleFormat.decimalOrWhole;
 import static java.util.stream.Collectors.joining;
 
 /**
+ * Logging {@link io.micrometer.core.instrument.MeterRegistry}.
+ *
  * @author Jon Schneider
+ * @since 1.1.0
  */
 @Incubating(since = "1.1.0")
 public class LoggingMeterRegistry extends StepMeterRegistry {
@@ -169,14 +172,11 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                 config.step().toMillis(), false);
     }
 
-    private class Printer {
+    class Printer {
         private final Meter meter;
-        private final String baseUnit;
 
-        private Printer(Meter meter) {
+        Printer(Meter meter) {
             this.meter = meter;
-            String unit = meter.getId().getBaseUnit();
-            this.baseUnit = unit == null ? "" : " " + unit;
         }
 
         String id() {
@@ -202,19 +202,20 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         }
 
         // see https://stackoverflow.com/a/3758880/510017
-        private String humanReadableByteCount(double bytes) {
+        String humanReadableByteCount(double bytes) {
             int unit = 1024;
-            if (bytes < unit) return bytes + " B";
+            if (bytes < unit) return decimalOrWhole(bytes) + " B";
             int exp = (int) (Math.log(bytes) / Math.log(unit));
-            String pre = "KMGTPE" .charAt(exp - 1) + "i";
-            return String.format("%.2f %sB", bytes / Math.pow(unit, exp), pre);
+            String pre = "KMGTPE".charAt(exp - 1) + "i";
+            return decimalOrWhole(bytes / Math.pow(unit, exp)) + " " + pre + "B";
         }
 
-        private String humanReadableBaseUnit(double value) {
-            if (" bytes" .equals(baseUnit)) {
+        String humanReadableBaseUnit(double value) {
+            String baseUnit = meter.getId().getBaseUnit();
+            if ("bytes".equals(baseUnit)) {
                 return humanReadableByteCount(value);
             }
-            return decimalOrWhole(value) + baseUnit;
+            return decimalOrWhole(value) + (baseUnit != null ? " " + baseUnit : "");
         }
     }
 

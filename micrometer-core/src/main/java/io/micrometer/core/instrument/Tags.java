@@ -191,7 +191,7 @@ public final class Tags implements Iterable<Tag> {
      * @param otherTags the second set of tags
      * @return the merged tags
      */
-    public static Tags concat(Iterable<? extends Tag> tags, Iterable<Tag> otherTags) {
+    public static Tags concat(@Nullable Iterable<? extends Tag> tags, @Nullable Iterable<Tag> otherTags) {
         return Tags.of(tags).and(otherTags);
     }
 
@@ -202,7 +202,7 @@ public final class Tags implements Iterable<Tag> {
      * @param keyValues the additional key value pairs to add
      * @return the merged tags
      */
-    public static Tags concat(Iterable<? extends Tag> tags, String... keyValues) {
+    public static Tags concat(@Nullable Iterable<? extends Tag> tags, @Nullable String... keyValues) {
         return Tags.of(tags).and(keyValues);
     }
 
@@ -212,8 +212,10 @@ public final class Tags implements Iterable<Tag> {
      * @param tags the tags to add
      * @return a new {@link Tags} instance
      */
-    public static Tags of(Iterable<? extends Tag> tags) {
-        if (tags instanceof Tags) {
+    public static Tags of(@Nullable Iterable<? extends Tag> tags) {
+        if (tags == null || !tags.iterator().hasNext()) {
+            return Tags.empty();
+        } else if (tags instanceof Tags) {
             return (Tags) tags;
         } else if (tags instanceof Collection) {
             @SuppressWarnings("unchecked")
@@ -241,8 +243,8 @@ public final class Tags implements Iterable<Tag> {
      * @param keyValues the key value pairs to add
      * @return a new {@link Tags} instance
      */
-    public static Tags of(String... keyValues) {
-        if (keyValues.length == 0) {
+    public static Tags of(@Nullable String... keyValues) {
+        if (keyValues == null || keyValues.length == 0) {
             return empty();
         }
         if (keyValues.length % 2 == 1) {
@@ -261,7 +263,7 @@ public final class Tags implements Iterable<Tag> {
      * @param tags the tags to add
      * @return a new {@link Tags} instance
      */
-    public static Tags of(Tag... tags) {
+    public static Tags of(@Nullable Tag... tags) {
         return empty().and(tags);
     }
 

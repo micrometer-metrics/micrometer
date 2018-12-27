@@ -1,7 +1,7 @@
 plugins {
     id "net.ltgt.apt" version "0.10" // for dagger injection testing
     id 'idea'
-    id 'com.github.johnrengelman.shadow' version '2.0.4'
+    id 'com.github.johnrengelman.shadow' version '4.0.3'
 }
 
 apply plugin: 'org.junit.platform.gradle.plugin'
@@ -92,7 +92,7 @@ shadowJar {
     relocate 'org.pcollections', 'io.micrometer.shaded.org.pcollections'
 }
 
-jar.deleteAllActions()
+jar.enabled = false
 jar.dependsOn shadowJar
 
 publishing {
