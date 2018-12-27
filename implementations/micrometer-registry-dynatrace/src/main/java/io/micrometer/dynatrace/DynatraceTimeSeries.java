@@ -39,17 +39,24 @@ class DynatraceTimeSeries {
     }
 
     String asJson() {
-        String body = "{\"timeseriesId\":\"" + metricId + "\"" +
-                ",\"dataPoints\":[[" + time + "," + DoubleFormat.decimalOrWhole(value) + "]]";
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"timeseriesId\":\"")
+            .append(metricId)
+            .append('\"')
+            .append(",\"dataPoints\":[[")
+            .append(time)
+            .append(',')
+            .append(DoubleFormat.decimalOrWhole(value))
+            .append("]]");
 
         if (dimensions != null && !dimensions.isEmpty()) {
-            body += ",\"dimensions\":{" +
-                    dimensions.entrySet().stream()
+            sb.append(",\"dimensions\":{")
+              .append(dimensions.entrySet().stream()
                             .map(t -> "\"" + t.getKey() + "\":\"" + t.getValue() + "\"")
-                            .collect(Collectors.joining(",")) +
-                    "}";
+                            .collect(Collectors.joining(",")))
+              .append('}');
         }
-        body += "}";
-        return body;
+        sb.append('}');
+        return sb.toString();
     }
 }
