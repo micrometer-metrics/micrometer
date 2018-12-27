@@ -17,8 +17,12 @@ package io.micrometer.dynatrace;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,5 +35,23 @@ class DynatraceTimeSeriesTest {
         dimensions.put("second", "two");
         final DynatraceTimeSeries timeSeries = new DynatraceTimeSeries("custom:test.metric", 12345, 1, dimensions);
         assertThat(timeSeries.asJson()).isEqualTo("{\"timeseriesId\":\"custom:test.metric\",\"dataPoints\":[[12345,1]],\"dimensions\":{\"first\":\"one\",\"second\":\"two\"}}");
+    }
+
+    @Test
+    void supportsLargeDoubles() throws Exception {
+        final Map<String, String> dimensions = new HashMap<>();
+        dimensions.put("first", "one");
+        dimensions.put("second", "two");
+        final DynatraceTimeSeries timeSeries = new DynatraceTimeSeries("custom:test.metric", 12345, 201712271200.0, dimensions);
+
+        ExecutorService executorService = Executors.newFixedThreadPool(100);
+        ArrayList<Future<String>> futures = new ArrayList<>();
+        for (int i = 0; i < 1000; i++) {
+            futures.add(executorService.submit(() -> timeSeries.asJson()));
+        }
+        for (Future<String> future : futures) {
+            assertThat(future.get()).isEqualTo("{\"timeseriesId\":\"custom:test.metric\",\"dataPoints\":[[12345,201712271200]],\"dimensions\":{\"first\":\"one\",\"second\":\"two\"}}");
+        }
+        executorService.shutdownNow();
     }
 }
