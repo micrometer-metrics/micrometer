@@ -15,11 +15,14 @@
  */
 package io.micrometer.influx;
 
+import com.google.common.collect.Lists;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.*;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -201,6 +204,9 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<String> writeTimer(Timer timer) {
+
+        final Stream<Field> totalFields;
+
         final Stream<Field> fields = Stream.of(
                 new Field("sum", timer.totalTime(getBaseTimeUnit())),
                 new Field("count", timer.count()),
@@ -208,7 +214,19 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 new Field("upper", timer.max(getBaseTimeUnit()))
         );
 
-        return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields));
+        final ValueAtPercentile[] percentileValues = timer.takeSnapshot().percentileValues();
+        if (percentileValues.length > 0) {
+            List<Field> quantiles = Lists.newArrayListWithExpectedSize(percentileValues.length);
+            for (ValueAtPercentile v : percentileValues) {
+                quantiles.add(new Field("quantile" + v.percentile(), v.value(getBaseTimeUnit())));
+            }
+            totalFields = Stream.concat(fields, quantiles.stream());
+        }
+        else {
+            totalFields = fields;
+        }
+
+        return Stream.of(influxLineProtocol(timer.getId(), "histogram", totalFields));
     }
 
     private Stream<String> writeSummary(DistributionSummary summary) {
