@@ -15,7 +15,6 @@
  */
 package io.micrometer.influx;
 
-import com.google.common.collect.Lists;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
@@ -28,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -215,7 +215,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
         final ValueAtPercentile[] percentileValues = timer.takeSnapshot().percentileValues();
         if (percentileValues.length > 0) {
-            List<Field> quantiles = Lists.newArrayListWithExpectedSize(percentileValues.length);
+            List<Field> quantiles = new ArrayList<>(percentileValues.length);
             for (ValueAtPercentile v : percentileValues) {
                 quantiles.add(new Field("quantile" + v.percentile(), v.value(getBaseTimeUnit())));
             }
