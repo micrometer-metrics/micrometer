@@ -1,7 +1,23 @@
+/**
+ * Copyright 2017 Pivotal Software, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micrometer.influx;
 
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
@@ -32,25 +48,25 @@ public class InfluxMeterRegistryWriteTest {
 
         timer.record(Duration.ofSeconds(5));
         timer.record(Duration.ofSeconds(1));
-        String[] result = doTestWriteTimer(timer).collect(Collectors.toList()).get(0).split(",");
-        assertEquals(timer.takeSnapshot().percentileValues().length, 2);
-        assertEquals(timer.takeSnapshot().percentileValues()[0].percentile(), 0.5, 0);
-        assertEquals(timer.takeSnapshot().percentileValues()[1].percentile(), 0.95, 0);
-        assertThat(timer.takeSnapshot().percentileValues()[0].value(TimeUnit.SECONDS))
-            .isEqualTo(1, offset(0.1));
-        assertThat(timer.takeSnapshot().percentileValues()[1].value(TimeUnit.SECONDS))
+        ValueAtPercentile[] percentileValues = timer.takeSnapshot().percentileValues();
+        assertEquals(percentileValues.length, 2);
+        assertEquals(percentileValues[0].percentile(), 0.5, 0);
+        assertEquals(percentileValues[1].percentile(), 0.95, 0);
+        assertThat(percentileValues[0].value(TimeUnit.SECONDS)) .isEqualTo(1, offset(0.1));
+        assertThat(percentileValues[1].value(TimeUnit.SECONDS))
             .isEqualTo(5.0, offset(0.1));
 
+        String[] result = doWriteTimer(timer).collect(Collectors.toList()).get(0).split(",");
         assertEquals(result[0], "test_timer");
         assertTrue(result[5].startsWith("quantile0.5="));
         assertTrue(result[6].startsWith("quantile0.95="));
     }
 
     /**
-     * Not change the visibility of private method testWriteTimer, so test it to use reflection
+     * Not change the visibility of private method writeTimer, so test it to use reflection
      */
     @SuppressWarnings("unchecked")
-    private Stream<String> doTestWriteTimer(Timer timer) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    private Stream<String> doWriteTimer(Timer timer) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Method writeTimer = InfluxMeterRegistry.class.getDeclaredMethod("writeTimer", Timer.class);
         writeTimer.setAccessible(true);
         return (Stream<String>) writeTimer.invoke(registry, timer);
