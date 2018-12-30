@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Oleksii Bondar
  */
-class HazelcastCacheMetricsTest {
+class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Mock
     private static IMap<String, String> cache;
@@ -47,6 +47,8 @@ class HazelcastCacheMetricsTest {
         Tags expectedTag = Tags.of("app", "test");
         HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
         metrics.bindTo(meterRegistry);
+        
+        verifyCommonCacheMetrics(meterRegistry);
 
         meterRegistry.get("cache.entries").tags(expectedTag).tag("ownership", "backup").gauge();
         meterRegistry.get("cache.entries").tags(expectedTag).tag("ownership", "owned").gauge();
