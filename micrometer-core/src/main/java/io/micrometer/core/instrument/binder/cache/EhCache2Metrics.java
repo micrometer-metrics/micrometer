@@ -89,6 +89,7 @@ public class EhCache2Metrics extends CacheMeterBinder {
     @Override
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
         Gauge.builder("cache.remoteSize", stats, StatisticsGateway::getRemoteSize)
+                .tags(getTagsWithCacheName())
                 .description("The number of entries held remotely in this cache")
                 .register(registry);
 
