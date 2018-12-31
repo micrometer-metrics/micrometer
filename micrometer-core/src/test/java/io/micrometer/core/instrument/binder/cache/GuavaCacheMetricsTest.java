@@ -17,9 +17,12 @@ package io.micrometer.core.instrument.binder.cache;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.google.common.cache.CacheStats;
 import com.google.common.cache.LoadingCache;
 
+import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import org.junit.jupiter.api.Test;
@@ -43,14 +46,20 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void reportExpectedMetrics() {
-        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
-        metrics.bindTo(meterRegistry);
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        metrics.bindTo(registry);
 
-        verifyCommonCacheMetrics(meterRegistry);
+        verifyCommonCacheMetrics(registry);
 
-        meterRegistry.get("cache.load.duration").tags(expectedTag).timeGauge();
-        meterRegistry.get("cache.load").tags(expectedTag).tag("result", "success").functionCounter();
-        meterRegistry.get("cache.load").tags(expectedTag).tag("result", "failure").functionCounter();
+        CacheStats stats = cache.stats();
+        TimeGauge loadDuration = fetch(registry, "cache.load.duration").timeGauge();
+        assertThat(loadDuration.value()).isEqualTo(stats.totalLoadTime());
+
+        FunctionCounter successfulLoad = fetch(registry, "cache.load", Tags.of("result", "success")).functionCounter();
+        assertThat(successfulLoad.count()).isEqualTo(stats.loadSuccessCount());
+
+        FunctionCounter failedLoad = fetch(registry, "cache.load", Tags.of("result", "failure")).functionCounter();
+        assertThat(failedLoad.count()).isEqualTo(stats.loadExceptionCount());
     }
     
     @Test
@@ -84,5 +93,10 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
     @Test
     void returnPutCount() {
         assertThat(metrics.putCount()).isEqualTo(cache.stats().loadCount());
+    }
+    
+    @Override
+    protected Tags getTags() {
+        return expectedTag;
     }
 }

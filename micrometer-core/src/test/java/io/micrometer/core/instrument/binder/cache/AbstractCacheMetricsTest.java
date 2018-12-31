@@ -16,15 +16,29 @@
 package io.micrometer.core.instrument.binder.cache;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.search.RequiredSearch;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 /**
  * @author Oleksii Bondar
  */
 abstract class AbstractCacheMetricsTest {
+    
+    protected abstract Tags getTags();
 
     protected void verifyCommonCacheMetrics(MeterRegistry meterRegistry) {
         meterRegistry.get("cache.size").gauge();
         meterRegistry.get("cache.gets").functionCounter();
         meterRegistry.get("cache.puts").functionCounter();
+    }
+    
+    protected RequiredSearch fetch(SimpleMeterRegistry meterRegistry, String name) {
+        return meterRegistry.get(name).tags(getTags());
+    }
+    
+    protected RequiredSearch fetch(SimpleMeterRegistry meterRegistry, String name, Iterable<Tag> tags) {
+        return fetch(meterRegistry, name).tags(tags);
     }
 }

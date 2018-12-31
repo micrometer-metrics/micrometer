@@ -19,8 +19,12 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.CacheLoader;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.stats.CacheStats;
 
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
@@ -46,17 +50,24 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void reportExpectedGeneralMetrics() {
-        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
-        metrics.bindTo(meterRegistry);
-        
-        verifyCommonCacheMetrics(meterRegistry);
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        metrics.bindTo(registry);
 
-        meterRegistry.get("cache.eviction.weight").tags(expectedTag).gauge();
+        verifyCommonCacheMetrics(registry);
+
+        Gauge evictionWeight = fetch(registry, "cache.eviction.weight").gauge();
+        CacheStats stats = cache.stats();
+        assertThat(evictionWeight.value()).isEqualTo(stats.evictionCount());
 
         // specific to LoadingCache instance
-        meterRegistry.get("cache.load.duration").tags(expectedTag).timeGauge();
-        meterRegistry.get("cache.load").tags(expectedTag).tag("result", "success").functionCounter();
-        meterRegistry.get("cache.load").tags(expectedTag).tag("result", "failure").functionCounter();
+        TimeGauge loadDuration = fetch(registry, "cache.load.duration").timeGauge();
+        assertThat(loadDuration.value()).isEqualTo(stats.totalLoadTime());
+
+        FunctionCounter successfulLoad = fetch(registry, "cache.load", Tags.of("result", "success")).functionCounter();
+        assertThat(successfulLoad.count()).isEqualTo(stats.loadSuccessCount());
+
+        FunctionCounter failedLoad = fetch(registry, "cache.load", Tags.of("result", "failure")).functionCounter();
+        assertThat(failedLoad.count()).isEqualTo(stats.loadFailureCount());
     }
     
     @Test
@@ -102,6 +113,11 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
     @Test
     void returnPutCount() {
         assertThat(metrics.putCount()).isEqualTo(cache.stats().loadCount());
+    }
+
+    @Override
+    protected Tags getTags() {
+        return expectedTag;
     }
 
 }

@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
@@ -92,7 +93,8 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
         SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
         metrics.bindTo(meterRegistry);
 
-        meterRegistry.get("cache.removals").tags(expectedTag).gauge();
+        Gauge cacheRemovals = fetch(meterRegistry, "cache.removals").gauge();
+        assertThat(cacheRemovals.value()).isEqualTo(expectedAttributeValue.doubleValue());
     }
     
     @Test
@@ -176,6 +178,11 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
             return new MBeanInfo(CacheMBeanStub.class.getName(), "description", null, null, null, null);
         }
 
+    }
+    
+    @Override
+    protected Tags getTags() {
+        return expectedTag;
     }
 
 }
