@@ -94,6 +94,14 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
 
         meterRegistry.get("cache.removals").tags(expectedTag).gauge();
     }
+    
+    @Test
+    void constructInstanceViaStaticMethodMonitor() {
+        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+        JCacheMetrics.monitor(meterRegistry, cache, expectedTag);
+
+        meterRegistry.get("cache.removals").tags(expectedTag).gauge();
+    }
 
     @Test
     void returnCacheSize() {

@@ -66,6 +66,14 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
         meterRegistry.get("cache.puts.latency").tags(expectedTag).functionTimer();
         meterRegistry.get("cache.removals.latency").tags(expectedTag).functionTimer();
     }
+    
+    @Test
+    void constructInstanceViaStaticMethodMonitor() {
+        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+        HazelcastCacheMetrics.monitor(meterRegistry, cache, expectedTag);
+
+        meterRegistry.get("cache.partition.gets").tags(expectedTag).functionCounter();
+    }
 
     @Test
     void returnCacheSize() {

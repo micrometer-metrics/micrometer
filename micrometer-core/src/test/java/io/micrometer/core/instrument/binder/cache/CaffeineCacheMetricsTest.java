@@ -60,6 +60,14 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
     }
     
     @Test
+    void constructInstanceViaStaticMethodMonitor() {
+        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+        CaffeineCacheMetrics.monitor(meterRegistry, cache, "testCache", expectedTag);
+
+        meterRegistry.get("cache.eviction.weight").tags(expectedTag).gauge();
+    }
+    
+    @Test
     void doNotReportMetricsForNonLoadingCache() {
         SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
         Cache<Object, Object> cache = Caffeine.newBuilder().build();

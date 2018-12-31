@@ -78,6 +78,14 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
         meterRegistry.get("cache.xa.recoveries").tags(expectedTag).tag("result", "nothing").functionCounter();
         meterRegistry.get("cache.xa.recoveries").tags(expectedTag).tag("result", "success").functionCounter();
     }
+    
+    @Test
+    void constructInstanceViaStaticMethodMonitor() {
+        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+        EhCache2Metrics.monitor(meterRegistry, cache, expectedTag);
+
+        meterRegistry.get("cache.remoteSize").tags(expectedTag).gauge();
+    }
 
     @Test
     void returnCacheSize() {

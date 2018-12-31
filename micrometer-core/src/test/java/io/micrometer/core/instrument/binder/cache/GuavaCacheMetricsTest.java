@@ -54,6 +54,14 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
     }
     
     @Test
+    void constructInstanceViaStaticMethodMonitor() {
+        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+        GuavaCacheMetrics.monitor(meterRegistry, cache, "testCache", expectedTag);
+
+        meterRegistry.get("cache.load.duration").tags(expectedTag).timeGauge();
+    }
+    
+    @Test
     void returnCacheSize() {
         assertThat(metrics.size()).isEqualTo(cache.size());
     }
