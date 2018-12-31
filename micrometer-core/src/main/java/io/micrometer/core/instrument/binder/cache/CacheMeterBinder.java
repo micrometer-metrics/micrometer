@@ -47,27 +47,23 @@ public abstract class CacheMeterBinder implements MeterBinder {
 
     @Override
     public final void bindTo(MeterRegistry registry) {
-        if (size() != null) {
-            Gauge.builder("cache.size", cache.get(),
-                    c -> {
-                        Long size = size();
-                        return size == null ? 0 : size;
-                    })
-                    .tags(tags)
-                    .description("The number of entries in this cache. This may be an approximation, depending on the type of cache.")
-                    .register(registry);
-        }
+        Gauge.builder("cache.size", cache.get(),
+                c -> {
+                    Long size = size();
+                    return size == null ? 0 : size;
+                })
+                .tags(tags)
+                .description("The number of entries in this cache. This may be an approximation, depending on the type of cache.")
+                .register(registry);
 
-        if (missCount() != null) {
-            FunctionCounter.builder("cache.gets", cache.get(),
-                    c -> {
-                        Long misses = missCount();
-                        return misses == null ? 0 : misses;
-                    })
-                    .tags(tags).tag("result", "miss")
-                    .description("the number of times cache lookup methods have returned an uncached (newly loaded) value, or null")
-                    .register(registry);
-        }
+        FunctionCounter.builder("cache.gets", cache.get(),
+                c -> {
+                    Long misses = missCount();
+                    return misses == null ? 0 : misses;
+                })
+                .tags(tags).tag("result", "miss")
+                .description("the number of times cache lookup methods have returned an uncached (newly loaded) value, or null")
+                .register(registry);
 
         FunctionCounter.builder("cache.gets", cache.get(), c -> hitCount())
                 .tags(tags).tag("result", "hit")
@@ -79,16 +75,14 @@ public abstract class CacheMeterBinder implements MeterBinder {
                 .description("The number of entries added to the cache")
                 .register(registry);
 
-        if (evictionCount() != null) {
-            FunctionCounter.builder("cache.evictions", cache.get(),
-                    c -> {
-                        Long evictions = evictionCount();
-                        return evictions == null ? 0 : evictions;
-                    })
-                    .tags(tags)
-                    .description("cache evictions")
-                    .register(registry);
-        }
+        FunctionCounter.builder("cache.evictions", cache.get(),
+                c -> {
+                    Long evictions = evictionCount();
+                    return evictions == null ? 0 : evictions;
+                })
+                .tags(tags)
+                .description("cache evictions")
+                .register(registry);
 
         bindImplementationSpecificMetrics(registry);
     }
