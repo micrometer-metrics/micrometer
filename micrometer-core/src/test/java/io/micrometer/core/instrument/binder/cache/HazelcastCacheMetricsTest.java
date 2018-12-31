@@ -62,16 +62,16 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
 
         Gauge backupEntries = fetch(meterRegistry, "cache.entries", Tags.of("ownership", "backup")).gauge();
         assertThat(backupEntries.value()).isEqualTo(localMapStats.getBackupEntryCount());
-        
+
         Gauge ownedEntries = fetch(meterRegistry, "cache.entries", Tags.of("ownership", "owned")).gauge();
         assertThat(ownedEntries.value()).isEqualTo(localMapStats.getOwnedEntryCount());
-        
+
         Gauge backupEntryMemory = fetch(meterRegistry, "cache.entry.memory", Tags.of("ownership", "backup")).gauge();
         assertThat(backupEntryMemory.value()).isEqualTo(localMapStats.getBackupEntryMemoryCost());
-        
+
         Gauge ownedEntryMemory = fetch(meterRegistry, "cache.entry.memory", Tags.of("ownership", "owned")).gauge();
         assertThat(ownedEntryMemory.value()).isEqualTo(localMapStats.getOwnedEntryMemoryCost());
-        
+
         FunctionCounter partitionGets = fetch(meterRegistry, "cache.partition.gets").functionCounter();
         assertThat(partitionGets.count()).isEqualTo(localMapStats.getGetOperationCount());
 
@@ -152,10 +152,10 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
     static void cleanup() {
         Hazelcast.shutdownAll();
     }
-    
+
     @Override
     protected Tags getTags() {
         return expectedTag;
     }
-    
+
 }

@@ -96,7 +96,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
         Gauge cacheRemovals = fetch(meterRegistry, "cache.removals").gauge();
         assertThat(cacheRemovals.value()).isEqualTo(expectedAttributeValue.doubleValue());
     }
-    
+
     @Test
     void constructInstanceViaStaticMethodMonitor() {
         SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
@@ -129,7 +129,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
     void returnPutCount() {
         assertThat(metrics.putCount()).isEqualTo(expectedAttributeValue);
     }
-    
+
     @Test
     void defaultValueWhenNoMBeanAttributeFound() throws MalformedObjectNameException {
         // change source MBean to emulate AttributeNotFoundException
@@ -138,7 +138,16 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
 
         assertThat(metrics.hitCount()).isEqualTo(0L);
     }
-    
+
+    @Test
+    void defaultValueWhenObjectNameNotInitialized() throws MalformedObjectNameException {
+        // set cacheManager to null to emulate scenario when objectName not initialized
+        when(cache.getCacheManager()).thenReturn(null);
+        metrics = new JCacheMetrics(cache, expectedTag);
+
+        assertThat(metrics.hitCount()).isEqualTo(0L);
+    }
+
     private static class CacheMBeanStub implements DynamicMBean {
 
         private Long expectedAttributeValue;
@@ -179,7 +188,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
         }
 
     }
-    
+
     @Override
     protected Tags getTags() {
         return expectedTag;

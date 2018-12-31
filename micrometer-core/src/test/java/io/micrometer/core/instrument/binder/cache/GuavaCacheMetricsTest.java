@@ -61,7 +61,7 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
         FunctionCounter failedLoad = fetch(registry, "cache.load", Tags.of("result", "failure")).functionCounter();
         assertThat(failedLoad.count()).isEqualTo(stats.loadExceptionCount());
     }
-    
+
     @Test
     void constructInstanceViaStaticMethodMonitor() {
         SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
@@ -69,7 +69,7 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
 
         meterRegistry.get("cache.load.duration").tags(expectedTag).timeGauge();
     }
-    
+
     @Test
     void returnCacheSize() {
         assertThat(metrics.size()).isEqualTo(cache.size());
@@ -94,7 +94,7 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
     void returnPutCount() {
         assertThat(metrics.putCount()).isEqualTo(cache.stats().loadCount());
     }
-    
+
     @Override
     protected Tags getTags() {
         return expectedTag;

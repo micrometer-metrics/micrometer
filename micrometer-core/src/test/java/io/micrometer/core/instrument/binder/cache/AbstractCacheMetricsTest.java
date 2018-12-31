@@ -25,19 +25,19 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
  * @author Oleksii Bondar
  */
 abstract class AbstractCacheMetricsTest {
-    
+
     protected abstract Tags getTags();
 
     protected void verifyCommonCacheMetrics(MeterRegistry meterRegistry) {
-        meterRegistry.get("cache.size").gauge();
-        meterRegistry.get("cache.gets").functionCounter();
-        meterRegistry.get("cache.puts").functionCounter();
+        meterRegistry.get("cache.size").tags(getTags()).gauge();
+        meterRegistry.get("cache.gets").tags(getTags()).functionCounter();
+        meterRegistry.get("cache.puts").tags(getTags()).functionCounter();
     }
-    
+
     protected RequiredSearch fetch(SimpleMeterRegistry meterRegistry, String name) {
         return meterRegistry.get(name).tags(getTags());
     }
-    
+
     protected RequiredSearch fetch(SimpleMeterRegistry meterRegistry, String name, Iterable<Tag> tags) {
         return fetch(meterRegistry, name).tags(tags);
     }

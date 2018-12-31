@@ -69,7 +69,7 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
         FunctionCounter failedLoad = fetch(registry, "cache.load", Tags.of("result", "failure")).functionCounter();
         assertThat(failedLoad.count()).isEqualTo(stats.loadFailureCount());
     }
-    
+
     @Test
     void constructInstanceViaStaticMethodMonitor() {
         SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
@@ -77,7 +77,7 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
         meterRegistry.get("cache.eviction.weight").tags(expectedTag).gauge();
     }
-    
+
     @Test
     void doNotReportMetricsForNonLoadingCache() {
         SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
