@@ -27,7 +27,6 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,17 +37,16 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
 
-    @Mock
     private static IMap<String, String> cache;
-    
+
     private Tags expectedTag = Tags.of("app", "test");
+    private HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
 
     @Test
     void reportMetrics() {
         SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
-        HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
         metrics.bindTo(meterRegistry);
-        
+
         verifyCommonCacheMetrics(meterRegistry);
 
         meterRegistry.get("cache.entries").tags(expectedTag).tag("ownership", "backup").gauge();
@@ -71,31 +69,26 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void returnCacheSize() {
-        HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
         assertThat(metrics.size()).isEqualTo(cache.size());
     }
-    
+
     @Test
     void returnNullForMissCount() {
-        HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
         assertThat(metrics.missCount()).isNull();
     }
 
     @Test
     void returnNullForEvictionCount() {
-        HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
         assertThat(metrics.evictionCount()).isNull();
     }
 
     @Test
     void returnHitCount() {
-        HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
         assertThat(metrics.hitCount()).isEqualTo(cache.getLocalMapStats().getHits());
     }
 
     @Test
     void returnPutCount() {
-        HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
         assertThat(metrics.putCount()).isEqualTo(cache.getLocalMapStats().getPutOperationCount());
     }
 
