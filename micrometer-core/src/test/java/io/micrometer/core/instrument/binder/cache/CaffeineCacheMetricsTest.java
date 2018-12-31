@@ -23,6 +23,7 @@ import com.github.benmanes.caffeine.cache.stats.CacheStats;
 
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
@@ -50,7 +51,7 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void reportExpectedGeneralMetrics() {
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        MeterRegistry registry = new SimpleMeterRegistry();
         metrics.bindTo(registry);
 
         verifyCommonCacheMetrics(registry);
@@ -72,7 +73,7 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void constructInstanceViaStaticMethodMonitor() {
-        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
         CaffeineCacheMetrics.monitor(meterRegistry, cache, "testCache", expectedTag);
 
         meterRegistry.get("cache.eviction.weight").tags(expectedTag).gauge();
@@ -80,7 +81,7 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void doNotReportMetricsForNonLoadingCache() {
-        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
         Cache<Object, Object> cache = Caffeine.newBuilder().build();
         CaffeineCacheMetrics metrics = new CaffeineCacheMetrics(cache, "testCache", expectedTag);
         metrics.bindTo(meterRegistry);

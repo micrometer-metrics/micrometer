@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.search.RequiredSearch;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 /**
  * @author Oleksii Bondar
@@ -39,11 +38,11 @@ abstract class AbstractCacheMetricsTest {
         meterRegistry.get("cache.evictions").tags(getTags()).functionCounter();
     }
 
-    protected RequiredSearch fetch(SimpleMeterRegistry meterRegistry, String name) {
+    protected RequiredSearch fetch(MeterRegistry meterRegistry, String name) {
         return meterRegistry.get(name).tags(getTags());
     }
 
-    protected RequiredSearch fetch(SimpleMeterRegistry meterRegistry, String name, Iterable<Tag> tags) {
+    protected RequiredSearch fetch(MeterRegistry meterRegistry, String name, Iterable<Tag> tags) {
         return fetch(meterRegistry, name).tags(tags);
     }
 }

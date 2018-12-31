@@ -22,6 +22,7 @@ import com.google.common.cache.LoadingCache;
 
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -47,7 +48,7 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void reportExpectedMetrics() {
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        MeterRegistry registry = new SimpleMeterRegistry();
         metrics.bindTo(registry);
 
         verifyCommonCacheMetrics(registry);
@@ -81,7 +82,7 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void constructInstanceViaStaticMethodMonitor() {
-        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
         GuavaCacheMetrics.monitor(meterRegistry, cache, "testCache", expectedTag);
 
         meterRegistry.get("cache.load.duration").tags(expectedTag).timeGauge();

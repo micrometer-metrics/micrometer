@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.cache;
 
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
@@ -90,7 +91,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void reportExpectedMetrics() {
-        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
         metrics.bindTo(meterRegistry);
 
         Gauge cacheRemovals = fetch(meterRegistry, "cache.removals").gauge();
@@ -99,7 +100,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void constructInstanceViaStaticMethodMonitor() {
-        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
         JCacheMetrics.monitor(meterRegistry, cache, expectedTag);
 
         meterRegistry.get("cache.removals").tags(expectedTag).gauge();

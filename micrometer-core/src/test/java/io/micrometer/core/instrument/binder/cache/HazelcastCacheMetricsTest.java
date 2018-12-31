@@ -25,6 +25,7 @@ import com.hazelcast.monitor.impl.NearCacheStatsImpl;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
@@ -53,7 +54,7 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void reportMetrics() {
-        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
         metrics.bindTo(meterRegistry);
 
         verifyCommonCacheMetrics(meterRegistry);
@@ -106,7 +107,7 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void constructInstanceViaStaticMethodMonitor() {
-        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
         HazelcastCacheMetrics.monitor(meterRegistry, cache, expectedTag);
 
         meterRegistry.get("cache.partition.gets").tags(expectedTag).functionCounter();
@@ -114,7 +115,7 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void defaultMissCountMetricToZero() {
-        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
         HazelcastCacheMetrics.monitor(meterRegistry, cache, expectedTag);
 
         FunctionCounter cacheEviction = fetch(meterRegistry, "cache.evictions").functionCounter();
@@ -123,7 +124,7 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void defaultEvictionCountmetricToZero() {
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        MeterRegistry registry = new SimpleMeterRegistry();
         HazelcastCacheMetrics.monitor(registry, cache, expectedTag);
 
         FunctionCounter missCount = fetch(registry, "cache.gets", Tags.of("result", "miss")).functionCounter();

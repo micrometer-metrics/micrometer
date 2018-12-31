@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.cache;
 
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
@@ -50,7 +51,7 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void reportMetrics() {
-        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        MeterRegistry registry = new SimpleMeterRegistry();
         metrics.bindTo(registry);
 
         verifyCommonCacheMetrics(registry);
@@ -120,7 +121,7 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void constructInstanceViaStaticMethodMonitor() {
-        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
         EhCache2Metrics.monitor(meterRegistry, cache, expectedTag);
 
         meterRegistry.get("cache.remoteSize").tags(expectedTag).gauge();
