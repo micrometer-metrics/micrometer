@@ -20,6 +20,9 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.statistics.StatisticsGateway;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -34,11 +37,12 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
 
     private static CacheManager cacheManager;
     private static Cache cache;
-
+    
+    private Tags expectedTag = Tags.of("app", "test");
+    private EhCache2Metrics metrics = new EhCache2Metrics(cache, expectedTag);
+    
     @Test
     void reportMetrics() {
-        Tags expectedTag = Tags.of("app", "test");
-        EhCache2Metrics metrics = new EhCache2Metrics(cache, expectedTag);
         SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
         metrics.bindTo(meterRegistry);
 
@@ -68,7 +72,35 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
         // recovery transaction metrics
         meterRegistry.get("cache.xa.recoveries").tags(expectedTag).tag("result", "nothing").functionCounter();
         meterRegistry.get("cache.xa.recoveries").tags(expectedTag).tag("result", "success").functionCounter();
+    }
 
+    @Test
+    void returnCacheSize() {
+        assertThat(metrics.size()).isEqualTo(cache.getStatistics().getSize());
+    }
+
+    @Test
+    void returnEvictionCount() {
+        StatisticsGateway stats = cache.getStatistics();
+        assertThat(metrics.evictionCount()).isEqualTo(stats.cacheEvictedCount());
+    }
+
+    @Test
+    void returnHitCount() {
+        StatisticsGateway stats = cache.getStatistics();
+        assertThat(metrics.evictionCount()).isEqualTo(stats.cacheHitCount());
+    }
+
+    @Test
+    void returnMissCount() {
+        StatisticsGateway stats = cache.getStatistics();
+        assertThat(metrics.evictionCount()).isEqualTo(stats.cacheMissCount());
+    }
+
+    @Test
+    void returnPutCount() {
+        StatisticsGateway stats = cache.getStatistics();
+        assertThat(metrics.evictionCount()).isEqualTo(stats.cachePutCount());
     }
 
     @BeforeAll

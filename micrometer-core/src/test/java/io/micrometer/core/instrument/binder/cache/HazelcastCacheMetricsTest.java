@@ -40,11 +40,12 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
 
     @Mock
     private static IMap<String, String> cache;
+    
+    private Tags expectedTag = Tags.of("app", "test");
 
     @Test
     void reportMetrics() {
         SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
-        Tags expectedTag = Tags.of("app", "test");
         HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
         metrics.bindTo(meterRegistry);
         
@@ -69,26 +70,32 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
     }
 
     @Test
+    void returnCacheSize() {
+        HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
+        assertThat(metrics.size()).isEqualTo(cache.size());
+    }
+    
+    @Test
     void returnNullForMissCount() {
-        HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, Tags.of("app", "test"));
+        HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
         assertThat(metrics.missCount()).isNull();
     }
 
     @Test
     void returnNullForEvictionCount() {
-        HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, Tags.of("app", "test"));
+        HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
         assertThat(metrics.evictionCount()).isNull();
     }
 
     @Test
     void returnHitCount() {
-        HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, Tags.of("app", "test"));
+        HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
         assertThat(metrics.hitCount()).isEqualTo(cache.getLocalMapStats().getHits());
     }
 
     @Test
     void returnPutCount() {
-        HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, Tags.of("app", "test"));
+        HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
         assertThat(metrics.putCount()).isEqualTo(cache.getLocalMapStats().getPutOperationCount());
     }
 
