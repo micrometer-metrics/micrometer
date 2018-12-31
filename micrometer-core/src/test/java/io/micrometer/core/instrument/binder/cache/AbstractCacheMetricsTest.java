@@ -28,7 +28,7 @@ abstract class AbstractCacheMetricsTest {
     protected Tags expectedTag = Tags.of("app", "test");
 
     /**
-     * Verifies base metrics presense
+     * Verifies base metrics presence
      */
     protected void verifyCommonCacheMetrics(MeterRegistry meterRegistry) {
         meterRegistry.get("cache.size").tags(expectedTag).gauge();

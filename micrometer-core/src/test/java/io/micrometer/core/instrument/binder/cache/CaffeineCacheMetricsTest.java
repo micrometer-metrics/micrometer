@@ -26,13 +26,11 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
-import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Tests for {@link CaffeineCacheMetrics}.
@@ -85,9 +83,7 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
         CaffeineCacheMetrics metrics = new CaffeineCacheMetrics(cache, "testCache", expectedTag);
         metrics.bindTo(meterRegistry);
 
-        assertThrows(MeterNotFoundException.class, () -> {
-            meterRegistry.get("cache.load.duration").tags(expectedTag).timeGauge();
-        });
+        assertThat(meterRegistry.find("cache.load.duration").timeGauge()).isNull();
     }
 
     @Test

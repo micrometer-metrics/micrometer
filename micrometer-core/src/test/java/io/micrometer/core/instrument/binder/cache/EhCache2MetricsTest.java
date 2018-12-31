@@ -63,11 +63,10 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
         FunctionCounter cacheRemovals = fetch(registry, "cache.removals").functionCounter();
         assertThat(cacheRemovals.count()).isEqualTo(stats.cacheRemoveCount());
 
-        String cacheAdded = "cache.puts.added";
-        FunctionCounter putsAdded = fetch(registry, cacheAdded, Tags.of("result", "added")).functionCounter();
+        FunctionCounter putsAdded = fetch(registry, "cache.puts.added").functionCounter();
         assertThat(putsAdded.count()).isEqualTo(stats.cachePutAddedCount());
 
-        FunctionCounter putsUpdated = fetch(registry, cacheAdded, Tags.of("result", "updated")).functionCounter();
+        FunctionCounter putsUpdated = fetch(registry, "cache.puts.updated").functionCounter();
         assertThat(putsUpdated.count()).isEqualTo(stats.cachePutUpdatedCount());
 
         Gauge offHeapSize = fetch(registry, "cache.local.offheap.size").gauge();
