@@ -290,6 +290,17 @@ public interface MeterFilter {
     }
 
     /**
+     * Meters that start with the provided name should be present in published metrics.
+     *
+     * @param prefix When a meter name starts with the prefix, guarantee its inclusion in published metrics.
+     * @return A filter that guarantees the inclusion of matching meters.
+     * @since 1.2.0
+     */
+    static MeterFilter acceptNameStartsWith(String prefix) {
+        return accept(id -> id.getName().startsWith(prefix));
+    }
+
+    /**
      * Set a maximum expected value on any {@link Timer} whose name begins with the given prefix.
      *
      * @param prefix Apply the maximum only to timers whose name begins with this prefix.
