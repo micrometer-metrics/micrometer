@@ -91,6 +91,8 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
     void reportExpectedMetrics() {
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         metrics.bindTo(meterRegistry);
+        
+        verifyCommonCacheMetrics(meterRegistry, metrics);
 
         Gauge cacheRemovals = fetch(meterRegistry, "cache.removals").gauge();
         assertThat(cacheRemovals.value()).isEqualTo(expectedAttributeValue.doubleValue());

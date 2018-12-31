@@ -51,7 +51,7 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         metrics.bindTo(registry);
 
-        verifyCommonCacheMetrics(registry);
+        verifyCommonCacheMetrics(registry, metrics);
 
         Gauge evictionWeight = fetch(registry, "cache.eviction.weight").gauge();
         CacheStats stats = cache.stats();

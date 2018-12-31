@@ -53,7 +53,7 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         metrics.bindTo(registry);
 
-        verifyCommonCacheMetrics(registry);
+        verifyCommonCacheMetrics(registry, metrics);
 
         StatisticsGateway stats = cache.getStatistics();
 

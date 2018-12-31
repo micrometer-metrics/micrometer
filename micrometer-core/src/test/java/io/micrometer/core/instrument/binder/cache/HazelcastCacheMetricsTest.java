@@ -56,7 +56,7 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         metrics.bindTo(meterRegistry);
 
-        verifyCommonCacheMetrics(meterRegistry);
+        verifyCommonCacheMetrics(meterRegistry, metrics);
 
         LocalMapStats localMapStats = cache.getLocalMapStats();
 
@@ -113,21 +113,19 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
     }
 
     @Test
-    void defaultMissCountMetricToZero() {
+    void doNotReportEvictionCountSinceNotImplemented() {
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         HazelcastCacheMetrics.monitor(meterRegistry, cache, expectedTag);
 
-        FunctionCounter cacheEviction = fetch(meterRegistry, "cache.evictions").functionCounter();
-        assertThat(cacheEviction.count()).isEqualTo(0.);
+        assertThat(meterRegistry.find("cache.evictions").functionCounter()).isNull();
     }
 
     @Test
-    void defaultEvictionCountmetricToZero() {
+    void doNotReportMissCountSinceNotImplemented() {
         MeterRegistry registry = new SimpleMeterRegistry();
         HazelcastCacheMetrics.monitor(registry, cache, expectedTag);
 
-        FunctionCounter missCount = fetch(registry, "cache.gets", Tags.of("result", "miss")).functionCounter();
-        assertThat(missCount.count()).isEqualTo(0.);
+        assertThat(registry.find("cache.gets").tags(Tags.of("result", "miss")).functionCounter()).isNull();
     }
 
     @Test

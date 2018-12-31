@@ -30,12 +30,19 @@ abstract class AbstractCacheMetricsTest {
     /**
      * Verifies base metrics presence
      */
-    protected void verifyCommonCacheMetrics(MeterRegistry meterRegistry) {
-        meterRegistry.get("cache.size").tags(expectedTag).gauge();
-        meterRegistry.get("cache.gets").tags(expectedTag).tag("result", "hit").functionCounter();
-        meterRegistry.get("cache.gets").tags(expectedTag).tag("result", "miss").functionCounter();
+    protected void verifyCommonCacheMetrics(MeterRegistry meterRegistry, CacheMeterBinder meterBinder) {
         meterRegistry.get("cache.puts").tags(expectedTag).functionCounter();
-        meterRegistry.get("cache.evictions").tags(expectedTag).functionCounter();
+        meterRegistry.get("cache.gets").tags(expectedTag).tag("result", "hit").functionCounter();
+
+        if (meterBinder.size() != null) {
+            meterRegistry.get("cache.size").tags(expectedTag).gauge();
+        }
+        if (meterBinder.missCount() != null) {
+            meterRegistry.get("cache.gets").tags(expectedTag).tag("result", "miss").functionCounter();
+        }
+        if (meterBinder.evictionCount() != null) {
+            meterRegistry.get("cache.evictions").tags(expectedTag).functionCounter();
+        }
     }
 
     protected RequiredSearch fetch(MeterRegistry meterRegistry, String name) {

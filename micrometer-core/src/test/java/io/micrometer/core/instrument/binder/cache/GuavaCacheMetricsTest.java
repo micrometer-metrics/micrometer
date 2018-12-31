@@ -50,7 +50,7 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         metrics.bindTo(registry);
 
-        verifyCommonCacheMetrics(registry);
+        verifyCommonCacheMetrics(registry, metrics);
 
         // common metrics
         Gauge cacheSize = fetch(registry, "cache.size").gauge();
