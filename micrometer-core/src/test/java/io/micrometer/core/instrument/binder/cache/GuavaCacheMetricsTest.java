@@ -15,65 +15,47 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.CacheLoader;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
 import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * Tests for {@link CaffeineCacheMetrics}.
+ * Tests for {@link GuavaCacheMetrics}.
  *
  * @author Oleksii Bondar
  */
-class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
+class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
 
-    private Tags expectedTag = Tags.of("app", "test");
-    private LoadingCache<String, String> cache = Caffeine.newBuilder().build(new CacheLoader<String, String>() {
+    private LoadingCache<String, String> cache = CacheBuilder.newBuilder().build(new CacheLoader<String, String>() {
         public String load(String key) throws Exception {
             return "";
         };
     });
-    private CaffeineCacheMetrics metrics = new CaffeineCacheMetrics(cache, "testCache", expectedTag);
+    private Tags expectedTag = Tags.of("app", "test");
+    private GuavaCacheMetrics metrics = new GuavaCacheMetrics(cache, "testCache", expectedTag);
 
     @Test
-    void reportExpectedGeneralMetrics() {
+    void reportExpectedMetrics() {
         SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
         metrics.bindTo(meterRegistry);
-        
+
         verifyCommonCacheMetrics(meterRegistry);
 
-        meterRegistry.get("cache.eviction.weight").tags(expectedTag).gauge();
-
-        // specific to LoadingCache instance
         meterRegistry.get("cache.load.duration").tags(expectedTag).timeGauge();
         meterRegistry.get("cache.load").tags(expectedTag).tag("result", "success").functionCounter();
         meterRegistry.get("cache.load").tags(expectedTag).tag("result", "failure").functionCounter();
     }
     
     @Test
-    void doNotReportMetricsForNonLoadingCache() {
-        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
-        Cache<Object, Object> cache = Caffeine.newBuilder().build();
-        CaffeineCacheMetrics metrics = new CaffeineCacheMetrics(cache, "testCache", expectedTag);
-        metrics.bindTo(meterRegistry);
-
-        assertThrows(MeterNotFoundException.class, () -> {
-            meterRegistry.get("cache.load.duration").tags(expectedTag).timeGauge();
-        });
-    }
-
-    @Test
     void returnCacheSize() {
-        assertThat(metrics.size()).isEqualTo(cache.estimatedSize());
+        assertThat(metrics.size()).isEqualTo(cache.size());
     }
 
     @Test
@@ -95,5 +77,4 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
     void returnPutCount() {
         assertThat(metrics.putCount()).isEqualTo(cache.stats().loadCount());
     }
-
 }
