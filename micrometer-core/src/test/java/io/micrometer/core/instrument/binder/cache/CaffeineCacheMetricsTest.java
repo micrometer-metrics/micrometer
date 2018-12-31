@@ -41,7 +41,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  */
 class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
-    private Tags expectedTag = Tags.of("app", "test");
     private LoadingCache<String, String> cache = Caffeine.newBuilder().build(new CacheLoader<String, String>() {
         public String load(String key) throws Exception {
             return "";
@@ -114,11 +113,6 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
     @Test
     void returnPutCount() {
         assertThat(metrics.putCount()).isEqualTo(cache.stats().loadCount());
-    }
-
-    @Override
-    protected Tags getTags() {
-        return expectedTag;
     }
 
 }

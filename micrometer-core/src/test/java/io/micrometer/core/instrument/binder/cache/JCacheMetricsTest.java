@@ -61,7 +61,6 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
     @Mock
     private CacheManager cacheManager;
 
-    private Tags expectedTag = Tags.of("app", "test");
     private JCacheMetrics metrics;
     private MBeanServer mbeanServer;
     private Long expectedAttributeValue = new Random().nextLong();
@@ -188,11 +187,6 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
             return new MBeanInfo(CacheMBeanStub.class.getName(), "description", null, null, null, null);
         }
 
-    }
-
-    @Override
-    protected Tags getTags() {
-        return expectedTag;
     }
 
 }

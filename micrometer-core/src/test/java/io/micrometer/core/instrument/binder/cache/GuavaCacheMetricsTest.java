@@ -43,7 +43,6 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
             return "";
         };
     });
-    private Tags expectedTag = Tags.of("app", "test");
     private GuavaCacheMetrics metrics = new GuavaCacheMetrics(cache, "testCache", expectedTag);
 
     @Test
@@ -113,8 +112,4 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
         assertThat(metrics.putCount()).isEqualTo(cache.stats().loadCount());
     }
 
-    @Override
-    protected Tags getTags() {
-        return expectedTag;
-    }
 }

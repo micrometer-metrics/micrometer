@@ -49,7 +49,6 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
 
     private static IMap<String, String> cache;
 
-    private Tags expectedTag = Tags.of("app", "test");
     private HazelcastCacheMetrics metrics = new HazelcastCacheMetrics(cache, expectedTag);
 
     @Test
@@ -182,11 +181,6 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
     @AfterAll
     static void cleanup() {
         Hazelcast.shutdownAll();
-    }
-
-    @Override
-    protected Tags getTags() {
-        return expectedTag;
     }
 
 }

@@ -46,7 +46,6 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
     private static CacheManager cacheManager;
     private static Cache cache;
 
-    private Tags expectedTag = Tags.of("app", "test");
     private EhCache2Metrics metrics = new EhCache2Metrics(cache, expectedTag);
 
     @Test
@@ -195,8 +194,4 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
         cacheManager.removeAllCaches();
     }
 
-    @Override
-    protected Tags getTags() {
-        return expectedTag;
-    }
 }
