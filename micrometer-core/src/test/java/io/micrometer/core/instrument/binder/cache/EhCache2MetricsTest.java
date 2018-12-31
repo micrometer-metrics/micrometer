@@ -162,29 +162,30 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
         cacheManager.addCache("testCache");
         cache = cacheManager.getCache("testCache");
         StatisticsGateway stats = mock(StatisticsGateway.class);
-        // randomize stats to address false-positive checks
+        // generate non-negative random value to address false-positives
+        int valueBound = 100000;
         Random random = new Random();
-        when(stats.getSize()).thenReturn(random.nextLong());
-        when(stats.cacheEvictedCount()).thenReturn(random.nextLong());
-        when(stats.cacheHitCount()).thenReturn(random.nextLong());
-        when(stats.cacheMissCount()).thenReturn(random.nextLong());
-        when(stats.cachePutCount()).thenReturn(random.nextLong());
-        when(stats.getRemoteSize()).thenReturn(random.nextLong());
-        when(stats.cacheRemoveCount()).thenReturn(random.nextLong());
-        when(stats.cachePutAddedCount()).thenReturn(random.nextLong());
-        when(stats.cachePutUpdatedCount()).thenReturn(random.nextLong());
-        when(stats.getLocalOffHeapSizeInBytes()).thenReturn(random.nextLong());
-        when(stats.getLocalHeapSizeInBytes()).thenReturn(random.nextLong());
-        when(stats.getLocalDiskSizeInBytes()).thenReturn(random.nextLong());
-        when(stats.cacheMissExpiredCount()).thenReturn(random.nextLong());
-        when(stats.cacheMissNotFoundCount()).thenReturn(random.nextLong());
-        when(stats.xaCommitCommittedCount()).thenReturn(random.nextLong());
-        when(stats.xaCommitExceptionCount()).thenReturn(random.nextLong());
-        when(stats.xaCommitReadOnlyCount()).thenReturn(random.nextLong());
-        when(stats.xaRollbackExceptionCount()).thenReturn(random.nextLong());
-        when(stats.xaRollbackSuccessCount()).thenReturn(random.nextLong());
-        when(stats.xaRecoveryRecoveredCount()).thenReturn(random.nextLong());
-        when(stats.xaRecoveryNothingCount()).thenReturn(random.nextLong());
+        when(stats.getSize()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.cacheEvictedCount()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.cacheHitCount()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.cacheMissCount()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.cachePutCount()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.getRemoteSize()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.cacheRemoveCount()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.cachePutAddedCount()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.cachePutUpdatedCount()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.getLocalOffHeapSizeInBytes()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.getLocalHeapSizeInBytes()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.getLocalDiskSizeInBytes()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.cacheMissExpiredCount()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.cacheMissNotFoundCount()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.xaCommitCommittedCount()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.xaCommitExceptionCount()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.xaCommitReadOnlyCount()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.xaRollbackExceptionCount()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.xaRollbackSuccessCount()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.xaRecoveryRecoveredCount()).thenReturn((long) random.nextInt(valueBound));
+        when(stats.xaRecoveryNothingCount()).thenReturn((long) random.nextInt(valueBound));
         ReflectionTestUtils.setField(cache, "statistics", stats);
     }
 

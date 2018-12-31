@@ -21,6 +21,7 @@ import com.google.common.cache.CacheStats;
 import com.google.common.cache.LoadingCache;
 
 import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -50,6 +51,22 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
         metrics.bindTo(registry);
 
         verifyCommonCacheMetrics(registry);
+
+        // common metrics
+        Gauge cacheSize = fetch(registry, "cache.size").gauge();
+        assertThat(cacheSize.value()).isEqualTo(cache.size());
+
+        FunctionCounter hitCount = fetch(registry, "cache.gets", Tags.of("result", "hit")).functionCounter();
+        assertThat(hitCount.count()).isEqualTo(metrics.hitCount());
+
+        FunctionCounter missCount = fetch(registry, "cache.gets", Tags.of("result", "miss")).functionCounter();
+        assertThat(missCount.count()).isEqualTo(metrics.missCount().doubleValue());
+
+        FunctionCounter cachePuts = fetch(registry, "cache.puts").functionCounter();
+        assertThat(cachePuts.count()).isEqualTo(metrics.putCount());
+
+        FunctionCounter cacheEviction = fetch(registry, "cache.evictions").functionCounter();
+        assertThat(cacheEviction.count()).isEqualTo(metrics.evictionCount().doubleValue());
 
         CacheStats stats = cache.stats();
         TimeGauge loadDuration = fetch(registry, "cache.load.duration").timeGauge();

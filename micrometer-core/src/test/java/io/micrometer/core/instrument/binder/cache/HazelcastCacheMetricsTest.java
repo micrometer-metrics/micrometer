@@ -90,17 +90,18 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
         assertThat(nearEvictions.value()).isEqualTo(nearCacheStats.getEvictions());
 
         // timings
+        TimeUnit timeUnit = TimeUnit.NANOSECONDS;
         FunctionTimer getsLatency = fetch(meterRegistry, "cache.gets.latency").functionTimer();
         assertThat(getsLatency.count()).isEqualTo(localMapStats.getGetOperationCount());
-        assertThat(getsLatency.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(localMapStats.getTotalGetLatency());
+        assertThat(getsLatency.totalTime(timeUnit)).isEqualTo(localMapStats.getTotalGetLatency());
 
         FunctionTimer putsLatency = fetch(meterRegistry, "cache.puts.latency").functionTimer();
         assertThat(putsLatency.count()).isEqualTo(localMapStats.getPutOperationCount());
-        assertThat(putsLatency.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(localMapStats.getTotalPutLatency());
+        assertThat(putsLatency.totalTime(timeUnit)).isEqualTo(localMapStats.getTotalPutLatency());
 
         FunctionTimer removeLatency = fetch(meterRegistry, "cache.removals.latency").functionTimer();
         assertThat(removeLatency.count()).isEqualTo(localMapStats.getRemoveOperationCount());
-        assertThat(removeLatency.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(localMapStats.getTotalPutLatency());
+        assertThat(removeLatency.totalTime(timeUnit)).isEqualTo(localMapStats.getTotalRemoveLatency());
     }
 
     @Test
@@ -109,6 +110,24 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
         HazelcastCacheMetrics.monitor(meterRegistry, cache, expectedTag);
 
         meterRegistry.get("cache.partition.gets").tags(expectedTag).functionCounter();
+    }
+
+    @Test
+    void defaultMissCountMetricToZero() {
+        SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+        HazelcastCacheMetrics.monitor(meterRegistry, cache, expectedTag);
+
+        FunctionCounter cacheEviction = fetch(meterRegistry, "cache.evictions").functionCounter();
+        assertThat(cacheEviction.count()).isEqualTo(0.);
+    }
+
+    @Test
+    void defaultEvictionCountmetricToZero() {
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        HazelcastCacheMetrics.monitor(registry, cache, expectedTag);
+
+        FunctionCounter missCount = fetch(registry, "cache.gets", Tags.of("result", "miss")).functionCounter();
+        assertThat(missCount.count()).isEqualTo(0.);
     }
 
     @Test
@@ -140,12 +159,23 @@ class HazelcastCacheMetricsTest extends AbstractCacheMetricsTest {
     static void setup() {
         cache = Hazelcast.newHazelcastInstance().getMap("mycache");
         NearCacheStats nearCacheStats = mock(NearCacheStatsImpl.class);
+        // generate non-negative random value to address false-positives
+        int valueBound = 100000;
         Random random = new Random();
-        when(nearCacheStats.getHits()).thenReturn(random.nextLong());
-        when(nearCacheStats.getMisses()).thenReturn(random.nextLong());
-        when(nearCacheStats.getPersistenceCount()).thenReturn(random.nextLong());
-        when(nearCacheStats.getEvictions()).thenReturn(random.nextLong());
-        ((LocalMapStatsImpl) cache.getLocalMapStats()).setNearCacheStats(nearCacheStats);
+        when(nearCacheStats.getMisses()).thenReturn((long) random.nextInt(valueBound));
+        when(nearCacheStats.getPersistenceCount()).thenReturn((long) random.nextInt(valueBound));
+        when(nearCacheStats.getEvictions()).thenReturn((long) random.nextInt(valueBound));
+
+        LocalMapStatsImpl localMapStats = (LocalMapStatsImpl) cache.getLocalMapStats();
+        localMapStats.setNearCacheStats(nearCacheStats);
+
+        localMapStats.setBackupEntryCount(random.nextInt(valueBound));
+        localMapStats.setBackupEntryMemoryCost(random.nextInt(valueBound));
+        localMapStats.setOwnedEntryCount(random.nextInt(valueBound));
+        localMapStats.setOwnedEntryMemoryCost(random.nextInt(valueBound));
+        localMapStats.incrementGetLatencyNanos(random.nextInt(valueBound));
+        localMapStats.incrementPutLatencyNanos(random.nextInt(valueBound));
+        localMapStats.incrementRemoveLatencyNanos(random.nextInt(valueBound));
     }
 
     @AfterAll
