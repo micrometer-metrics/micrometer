@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.cache;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import javax.cache.Cache;
@@ -91,7 +92,7 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
     void reportExpectedMetrics() {
         MeterRegistry meterRegistry = new SimpleMeterRegistry();
         metrics.bindTo(meterRegistry);
-        
+
         verifyCommonCacheMetrics(meterRegistry, metrics);
 
         Gauge cacheRemovals = fetch(meterRegistry, "cache.removals").gauge();
@@ -104,6 +105,14 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
         JCacheMetrics.monitor(meterRegistry, cache, expectedTag);
 
         meterRegistry.get("cache.removals").tags(expectedTag).gauge();
+    }
+
+    @Test
+    void constructInstanceViaStaticMethodMonitorWithVarArgTags() {
+        MeterRegistry meterRegistry = new SimpleMeterRegistry();
+        JCacheMetrics.monitor(meterRegistry, cache, "version", "1.0");
+
+        meterRegistry.get("cache.removals").tags(Tags.of("version", "1.0")).gauge();
     }
 
     @Test
@@ -147,6 +156,17 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
         metrics = new JCacheMetrics(cache, expectedTag);
 
         assertThat(metrics.hitCount()).isEqualTo(0L);
+    }
+
+    @Test
+    void doNotReportMetricWhenObjectNameNotInitialized() throws MalformedObjectNameException {
+        // set cacheManager to null to emulate scenario when objectName not initialized
+        when(cache.getCacheManager()).thenReturn(null);
+        metrics = new JCacheMetrics(cache, expectedTag);
+        MeterRegistry registry = new SimpleMeterRegistry();
+        metrics.bindImplementationSpecificMetrics(registry);
+
+        assertThat(registry.find("cache.removals").tags(expectedTag).functionCounter()).isNull();
     }
 
     private static class CacheMBeanStub implements DynamicMBean {
