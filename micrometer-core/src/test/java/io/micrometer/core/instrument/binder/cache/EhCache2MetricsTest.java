@@ -18,15 +18,20 @@ package io.micrometer.core.instrument.binder.cache;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
+import java.util.Random;
+
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.statistics.StatisticsGateway;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link EhCache2Metrics}.
@@ -76,7 +81,8 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
 
     @Test
     void returnCacheSize() {
-        assertThat(metrics.size()).isEqualTo(cache.getStatistics().getSize());
+        StatisticsGateway stats = cache.getStatistics();
+        assertThat(metrics.size()).isEqualTo(stats.getSize());
     }
 
     @Test
@@ -88,19 +94,19 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
     @Test
     void returnHitCount() {
         StatisticsGateway stats = cache.getStatistics();
-        assertThat(metrics.evictionCount()).isEqualTo(stats.cacheHitCount());
+        assertThat(metrics.hitCount()).isEqualTo(stats.cacheHitCount());
     }
 
     @Test
     void returnMissCount() {
         StatisticsGateway stats = cache.getStatistics();
-        assertThat(metrics.evictionCount()).isEqualTo(stats.cacheMissCount());
+        assertThat(metrics.missCount()).isEqualTo(stats.cacheMissCount());
     }
 
     @Test
     void returnPutCount() {
         StatisticsGateway stats = cache.getStatistics();
-        assertThat(metrics.evictionCount()).isEqualTo(stats.cachePutCount());
+        assertThat(metrics.putCount()).isEqualTo(stats.cachePutCount());
     }
 
     @BeforeAll
@@ -108,6 +114,14 @@ class EhCache2MetricsTest extends AbstractCacheMetricsTest {
         cacheManager = CacheManager.newInstance();
         cacheManager.addCache("testCache");
         cache = cacheManager.getCache("testCache");
+        StatisticsGateway stats = mock(StatisticsGateway.class);
+        Random random = new Random();
+        when(stats.getSize()).thenReturn(random.nextLong());
+        when(stats.cacheEvictedCount()).thenReturn(random.nextLong());
+        when(stats.cacheHitCount()).thenReturn(random.nextLong());
+        when(stats.cacheMissCount()).thenReturn(random.nextLong());
+        when(stats.cachePutCount()).thenReturn(random.nextLong());
+        ReflectionTestUtils.setField(cache, "statistics", stats);
     }
 
     @AfterAll
