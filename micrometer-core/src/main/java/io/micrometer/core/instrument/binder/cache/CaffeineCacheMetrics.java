@@ -67,7 +67,7 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      * @param <C>       The cache type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
-    public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
+    public static <C extends Cache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
         return monitor(registry, cache, cacheName, Tags.of(tags));
     }
 
@@ -83,7 +83,7 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see CacheStats
      */
-    public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
+    public static <C extends Cache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
         new CaffeineCacheMetrics(cache, cacheName, tags).bindTo(registry);
         return cache;
     }
@@ -99,7 +99,7 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      * @param <C>       The cache type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
-    public static <C extends AsyncLoadingCache> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
+    public static <C extends AsyncLoadingCache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
         return monitor(registry, cache, cacheName, Tags.of(tags));
     }
 
@@ -115,7 +115,7 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see CacheStats
      */
-    public static <C extends AsyncLoadingCache> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
+    public static <C extends AsyncLoadingCache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
         monitor(registry, cache.synchronous(), cacheName, tags);
         return cache;
     }
