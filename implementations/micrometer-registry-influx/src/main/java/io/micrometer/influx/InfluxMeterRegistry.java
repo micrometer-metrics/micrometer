@@ -18,11 +18,12 @@ package io.micrometer.influx;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.core.instrument.distribution.ValueAtPercentile;
+import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.MeterPartition;
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -223,19 +225,18 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                 new Field("upper", timer.max(getBaseTimeUnit()))
         );
 
-        final ValueAtPercentile[] percentileValues = timer.takeSnapshot().percentileValues();
-        if (percentileValues.length > 0) {
-            List<Field> quantiles = new ArrayList<>(percentileValues.length);
-            for (ValueAtPercentile v : percentileValues) {
-                quantiles.add(new Field("quantile" + v.percentile(), v.value(getBaseTimeUnit())));
-            }
-            totalFields = Stream.concat(fields, quantiles.stream());
+        try {
+            Collection<Gauge> percentilesGauges = this.get(timer.getId().getName() + ".percentile").gauges();
+            List<Field> percentiles = new ArrayList<>(percentilesGauges.size());
+            percentilesGauges.forEach( gauge -> {
+                percentiles.add(new Field("phi" + gauge.getId().getTag("phi"), gauge.value()));
+            });
+            totalFields = Stream.concat(fields, percentiles.stream());
+            return Stream.of(influxLineProtocol(timer.getId(), "histogram", totalFields));
+        } catch (MeterNotFoundException ex) {
+            // Not all timer has percentile gauges
+            return Stream.of(influxLineProtocol(timer.getId(), "histogram", fields));
         }
-        else {
-            totalFields = fields;
-        }
-
-        return Stream.of(influxLineProtocol(timer.getId(), "histogram", totalFields));
     }
 
     private Stream<String> writeSummary(DistributionSummary summary) {

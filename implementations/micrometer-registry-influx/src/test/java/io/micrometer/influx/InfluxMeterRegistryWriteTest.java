@@ -58,8 +58,8 @@ public class InfluxMeterRegistryWriteTest {
 
         String[] result = doWriteTimer(timer).collect(Collectors.toList()).get(0).split(",");
         assertEquals(result[0], "test_timer");
-        assertTrue(result[5].startsWith("quantile0.5="));
-        assertTrue(result[6].startsWith("quantile0.95="));
+        assertTrue(result[5].startsWith("phi0.5="));
+        assertTrue(result[6].startsWith("phi0.95="));
     }
 
     /**
