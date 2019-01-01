@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.noop;
 
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.Meter.Type;
+import io.micrometer.core.instrument.Tags;
 
 import org.junit.jupiter.api.Test;
 

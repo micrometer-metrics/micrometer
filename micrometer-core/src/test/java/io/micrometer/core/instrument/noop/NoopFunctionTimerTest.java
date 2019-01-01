@@ -15,9 +15,9 @@
  */
 package io.micrometer.core.instrument.noop;
 
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.Meter.Type;
+import io.micrometer.core.instrument.Tags;
 
 import java.util.concurrent.TimeUnit;
 
@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class NoopFunctionTimerTest {
 
-    private Id id = new Id("test", Tags.of("name", "value"), "ms", "", Type.COUNTER);
+    private Id id = new Id("test", Tags.of("name", "value"), "ms", "", Type.TIMER);
     private NoopFunctionTimer timer = new NoopFunctionTimer(id);
 
     @Test
@@ -47,7 +47,7 @@ class NoopFunctionTimerTest {
 
     @Test
     void returnsTotalTimeAsZero() {
-        assertThat(timer.count()).isEqualTo(0.);
+        assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(0.);
     }
 
     @Test

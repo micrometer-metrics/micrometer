@@ -25,6 +25,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link NoopMeter}.
+ *
+ * @author Oleksii Bondar
+ */
 class NoopMeterTest {
 
     private Id id = new Id("test", Tags.of("name", "value"), "", "", Type.OTHER);
