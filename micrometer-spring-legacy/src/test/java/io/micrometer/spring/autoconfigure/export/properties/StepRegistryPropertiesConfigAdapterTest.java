@@ -17,7 +17,7 @@ package io.micrometer.spring.autoconfigure.export.properties;
 
 import java.time.Duration;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,7 +35,7 @@ public abstract class StepRegistryPropertiesConfigAdapterTest<P extends StepRegi
     protected abstract A createConfigAdapter(P properties);
 
     @Test
-    public void whenPropertiesStepIsSetAdapterStepReturnsIt() {
+    void whenPropertiesStepIsSetAdapterStepReturnsIt() {
         P properties = createProperties();
         properties.setStep(Duration.ofSeconds(42));
         assertThat(createConfigAdapter(properties).step())
@@ -43,14 +43,14 @@ public abstract class StepRegistryPropertiesConfigAdapterTest<P extends StepRegi
     }
 
     @Test
-    public void whenPropertiesEnabledIsSetAdapterEnabledReturnsIt() {
+    void whenPropertiesEnabledIsSetAdapterEnabledReturnsIt() {
         P properties = createProperties();
         properties.setEnabled(false);
         assertThat(createConfigAdapter(properties).enabled()).isFalse();
     }
 
     @Test
-    public void whenPropertiesConnectTimeoutIsSetAdapterConnectTimeoutReturnsIt() {
+    void whenPropertiesConnectTimeoutIsSetAdapterConnectTimeoutReturnsIt() {
         P properties = createProperties();
         properties.setConnectTimeout(Duration.ofMinutes(42));
         assertThat(createConfigAdapter(properties).connectTimeout())
@@ -58,7 +58,7 @@ public abstract class StepRegistryPropertiesConfigAdapterTest<P extends StepRegi
     }
 
     @Test
-    public void whenPropertiesReadTimeoutIsSetAdapterReadTimeoutReturnsIt() {
+    void whenPropertiesReadTimeoutIsSetAdapterReadTimeoutReturnsIt() {
         P properties = createProperties();
         properties.setReadTimeout(Duration.ofMillis(42));
         assertThat(createConfigAdapter(properties).readTimeout())
@@ -66,14 +66,14 @@ public abstract class StepRegistryPropertiesConfigAdapterTest<P extends StepRegi
     }
 
     @Test
-    public void whenPropertiesNumThreadsIsSetAdapterNumThreadsReturnsIt() {
+    void whenPropertiesNumThreadsIsSetAdapterNumThreadsReturnsIt() {
         P properties = createProperties();
         properties.setNumThreads(42);
         assertThat(createConfigAdapter(properties).numThreads()).isEqualTo(42);
     }
 
     @Test
-    public void whenPropertiesBatchSizeIsSetAdapterBatchSizeReturnsIt() {
+    void whenPropertiesBatchSizeIsSetAdapterBatchSizeReturnsIt() {
         P properties = createProperties();
         properties.setBatchSize(10042);
         assertThat(createConfigAdapter(properties).batchSize()).isEqualTo(10042);

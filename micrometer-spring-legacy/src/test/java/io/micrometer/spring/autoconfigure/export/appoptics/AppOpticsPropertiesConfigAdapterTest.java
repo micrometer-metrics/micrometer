@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 package io.micrometer.spring.autoconfigure.export.appoptics;
 
 import io.micrometer.spring.autoconfigure.export.properties.StepRegistryPropertiesConfigAdapterTest;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Stephane Nicoll
  */
-public class AppOpticsPropertiesConfigAdapterTest extends
+class AppOpticsPropertiesConfigAdapterTest extends
         StepRegistryPropertiesConfigAdapterTest<AppOpticsProperties, AppOpticsPropertiesConfigAdapter> {
 
     @Override
@@ -40,7 +41,7 @@ public class AppOpticsPropertiesConfigAdapterTest extends
     }
 
     @Test
-    public void whenPropertiesUrisIsSetAdapterUriReturnsIt() {
+    void whenPropertiesUrisIsSetAdapterUriReturnsIt() {
         AppOpticsProperties properties = createProperties();
         properties.setUri("https://appoptics.example.com/v1/measurements");
         assertThat(createConfigAdapter(properties).uri())
@@ -48,14 +49,14 @@ public class AppOpticsPropertiesConfigAdapterTest extends
     }
 
     @Test
-    public void whenPropertiesApiTokenIsSetAdapterApiTokenReturnsIt() {
+    void whenPropertiesApiTokenIsSetAdapterApiTokenReturnsIt() {
         AppOpticsProperties properties = createProperties();
         properties.setApiToken("ABC123");
         assertThat(createConfigAdapter(properties).apiToken()).isEqualTo("ABC123");
     }
 
     @Test
-    public void whenPropertiesHostTagIsSetAdapterHostTagReturnsIt() {
+    void whenPropertiesHostTagIsSetAdapterHostTagReturnsIt() {
         AppOpticsProperties properties = createProperties();
         properties.setHostTag("node");
         assertThat(createConfigAdapter(properties).hostTag()).isEqualTo("node");

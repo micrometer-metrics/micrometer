@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,9 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -40,21 +41,21 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Jon Schneider
  */
-public class MetricsRestTemplateCustomizerTest {
+class MetricsRestTemplateCustomizerTest {
 
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     private RestTemplate restTemplate = new RestTemplate();
     private MockRestServiceServer mockServer = MockRestServiceServer.createServer(restTemplate);
 
-    @Before
-    public void before() {
+    @BeforeEach
+    void before() {
         MetricsRestTemplateCustomizer customizer = new MetricsRestTemplateCustomizer(
                 registry, new DefaultRestTemplateExchangeTagsProvider(), "http.client.requests");
         customizer.customize(restTemplate);
     }
 
     @Test
-    public void interceptRestTemplate() {
+    void interceptRestTemplate() {
         mockServer.expect(MockRestRequestMatchers.requestTo("/test/123"))
                 .andExpect(MockRestRequestMatchers.method(HttpMethod.GET))
                 .andRespond(MockRestResponseCreators.withSuccess("OK",
@@ -76,7 +77,7 @@ public class MetricsRestTemplateCustomizerTest {
 
     @Issue("#283")
     @Test
-    public void normalizeUriToContainLeadingSlash() {
+    void normalizeUriToContainLeadingSlash() {
         mockServer.expect(MockRestRequestMatchers.requestTo("test/123"))
                 .andExpect(MockRestRequestMatchers.method(HttpMethod.GET))
                 .andRespond(MockRestResponseCreators.withSuccess("OK",
@@ -91,7 +92,7 @@ public class MetricsRestTemplateCustomizerTest {
     }
 
     @Test
-    public void interceptRestTemplateWithUri() throws URISyntaxException {
+    void interceptRestTemplateWithUri() throws URISyntaxException {
         mockServer.expect(MockRestRequestMatchers.requestTo("http://localhost/test/123"))
                 .andExpect(MockRestRequestMatchers.method(HttpMethod.GET))
                 .andRespond(MockRestResponseCreators.withSuccess("OK",

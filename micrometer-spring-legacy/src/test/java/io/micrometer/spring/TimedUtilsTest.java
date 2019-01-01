@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 package io.micrometer.spring;
 
 import io.micrometer.core.annotation.Timed;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -25,36 +26,37 @@ import java.lang.annotation.Target;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TimedUtilsTest {
+class TimedUtilsTest {
+
     @Test
-    public void timedClass() {
+    void timedClass() {
         assertThat(TimedUtils.findTimedAnnotations(TimedClass.class)).isNotEmpty();
     }
 
     @Test
-    public void timedMethod() throws NoSuchMethodException {
+    void timedMethod() throws NoSuchMethodException {
         assertThat(TimedUtils.findTimedAnnotations(TimedClass.class.getDeclaredMethod("foo")))
             .isNotEmpty();
     }
 
     @Test
-    public void subclassedTimedClass() {
+    void subclassedTimedClass() {
         assertThat(TimedUtils.findTimedAnnotations(SpecialTimedClass.class)).isNotEmpty();
     }
 
     @Test
-    public void subclassedTimedMethod() throws NoSuchMethodException {
+    void subclassedTimedMethod() throws NoSuchMethodException {
         assertThat(TimedUtils.findTimedAnnotations(SpecialTimedClass.class.getDeclaredMethod("foo")))
             .isNotEmpty();
     }
 
     @Test
-    public void inheritedTimedClass() {
+    void inheritedTimedClass() {
         assertThat(TimedUtils.findTimedAnnotations(SpecialTimedClass.class)).isNotEmpty();
     }
 
     @Test
-    public void inheritedTimedMethod() throws NoSuchMethodException {
+    void inheritedTimedMethod() throws NoSuchMethodException {
         assertThat(TimedUtils.findTimedAnnotations(SpecialTimedClass.class.getDeclaredMethod("foo")))
             .isNotEmpty();
     }
@@ -68,7 +70,7 @@ public class TimedUtilsTest {
     @Timed
     static class TimedClass {
         @Timed
-        public void foo() {
+        void foo() {
         }
     }
 
@@ -81,7 +83,7 @@ public class TimedUtilsTest {
 
     class InheritedTimedClass extends TimedClass {
         @Override
-        public void foo() {
+        void foo() {
             super.foo();
         }
     }

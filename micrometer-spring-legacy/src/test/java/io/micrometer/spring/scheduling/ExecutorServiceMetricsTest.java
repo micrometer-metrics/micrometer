@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2018 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,8 @@ package io.micrometer.spring.scheduling;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
@@ -26,11 +27,11 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
  * @author Jon Schneider
  * @author Clint Checketts
  */
-public class ExecutorServiceMetricsTest {
+class ExecutorServiceMetricsTest {
     private MeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
-    public void threadPoolTaskExecutor() {
+    void threadPoolTaskExecutor() {
         ThreadPoolTaskExecutor exec = new ThreadPoolTaskExecutor();
         exec.initialize();
 
@@ -39,7 +40,7 @@ public class ExecutorServiceMetricsTest {
     }
 
     @Test
-    public void taskScheduler() {
+    void taskScheduler() {
         ThreadPoolTaskScheduler sched = new ThreadPoolTaskScheduler();
         sched.initialize();
 

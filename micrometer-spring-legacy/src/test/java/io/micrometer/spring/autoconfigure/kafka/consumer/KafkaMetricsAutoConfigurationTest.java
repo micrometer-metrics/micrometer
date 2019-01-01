@@ -31,7 +31,7 @@ import static org.mockito.Mockito.mock;
 /**
  * Tests for {@link KafkaMetricsAutoConfiguration}.
  */
-public class KafkaMetricsAutoConfigurationTest {
+class KafkaMetricsAutoConfigurationTest {
 
     private final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 
@@ -43,19 +43,19 @@ public class KafkaMetricsAutoConfigurationTest {
     }
 
     @Test
-    public void whenThereIsNoMBeanServerAutoConfigurationBacksOff() {
+    void whenThereIsNoMBeanServerAutoConfigurationBacksOff() {
         registerAndRefresh();
         assertThat(context.getBeansOfType(KafkaConsumerMetrics.class)).isEmpty();
     }
 
     @Test
-    public void whenThereIsAnMBeanServerKafkaConsumerMetricsIsConfigured() {
+    void whenThereIsAnMBeanServerKafkaConsumerMetricsIsConfigured() {
         registerAndRefresh(JmxAutoConfiguration.class);
         assertThat(context.getBean(KafkaConsumerMetrics.class)).isNotNull();
     }
 
     @Test
-    public void allowsCustomKafkaConsumerMetricsToBeUsed() {
+    void allowsCustomKafkaConsumerMetricsToBeUsed() {
         registerAndRefresh(JmxAutoConfiguration.class, CustomKafkaConsumerMetricsConfiguration.class);
         assertThat(context.getBean(KafkaConsumerMetrics.class)).isEqualTo(context.getBean("customKafkaConsumerMetrics"));
     }

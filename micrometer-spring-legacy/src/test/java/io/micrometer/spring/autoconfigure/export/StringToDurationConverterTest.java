@@ -15,28 +15,28 @@
  */
 package io.micrometer.spring.autoconfigure.export;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class StringToDurationConverterTest {
+class StringToDurationConverterTest {
     private StringToDurationConverter converter = new StringToDurationConverter();
 
     @Test
-    public void rfc() {
+    void rfc() {
         assertThat(converter.convert("PT10M")).isEqualTo(Duration.ofMinutes(10));
     }
 
     @Test
-    public void shorthand() {
+    void shorthand() {
         assertThat(converter.convert("10s")).isEqualTo(Duration.ofSeconds(10));
     }
 
     @Test
-    public void invalidShorthand() {
+    void invalidShorthand() {
         assertThatThrownBy(() -> converter.convert("10rs"))
             .isInstanceOf(IllegalArgumentException.class);
     }

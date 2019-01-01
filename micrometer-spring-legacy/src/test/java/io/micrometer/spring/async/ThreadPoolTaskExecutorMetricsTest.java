@@ -21,8 +21,9 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.CountDownLatch;
@@ -34,13 +35,13 @@ public class ThreadPoolTaskExecutorMetricsTest {
     private MeterRegistry registry;
     private Iterable<Tag> userTags = Tags.of("userTagKey", "userTagValue");
 
-    @Before
-    public void before() {
+    @BeforeEach
+    void before() {
         registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     }
 
     @Test
-    public void executor() throws InterruptedException {
+    void verifyThreadPoolExecutorMetrics() throws InterruptedException {
         CountDownLatch lock = new CountDownLatch(1);
         ThreadPoolTaskExecutor pool = ThreadPoolTaskExecutorMetrics.monitor(registry, "exec", userTags);
         pool.setAwaitTerminationSeconds(1);
@@ -60,7 +61,7 @@ public class ThreadPoolTaskExecutorMetricsTest {
     }
 
     @Test
-    public void monitorExecutorService() throws InterruptedException {
+    void monitorExecutorService() throws InterruptedException {
         CountDownLatch taskStart = new CountDownLatch(1);
         CountDownLatch taskComplete = new CountDownLatch(1);
 
