@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     "security.user.password=foo"
 })
 public class SpringSecurityTest {
+    
     @Autowired
-    MockMvc mvc;
+    private MockMvc mvc;
 
     @Autowired
-    MeterRegistry registry;
+    private MeterRegistry registry;
 
     @Test
     @WithMockUser
