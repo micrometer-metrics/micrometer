@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class NoopTimeGaugeTest {
 
-    private Id id = new Id("test", Tags.of("name", "value"), "entries", "", Type.COUNTER);
+    private Id id = new Id("test", Tags.of("name", "value"), "", "", Type.GAUGE);
     private NoopTimeGauge timeGauge = new NoopTimeGauge(id);
 
     @Test
@@ -41,12 +41,12 @@ class NoopTimeGaugeTest {
     }
 
     @Test
-    void returnsCountAsZero() {
+    void returnsValueAsZero() {
         assertThat(timeGauge.value()).isEqualTo(0.);
     }
 
     @Test
-    void returnsNanosAsTimeUnit() {
+    void returnsBaseTimeUnit() {
         assertThat(timeGauge.baseTimeUnit()).isEqualTo(TimeUnit.NANOSECONDS);
     }
 

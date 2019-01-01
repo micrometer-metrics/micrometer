@@ -15,31 +15,54 @@
  */
 package io.micrometer.core.instrument.noop;
 
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.Meter.Type;
-import io.micrometer.core.instrument.Tags;
+
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link NoopGauge}.
+ * Tests for {@link NoopLongTaskTimer}.
  *
  * @author Oleksii Bondar
  */
-class NoopGaugeTest {
+class NoopLongTaskTimerTest {
 
-    private Id id = new Id("test", Tags.of("name", "value"), "entries", "", Type.GAUGE);
-    private NoopGauge gauge = new NoopGauge(id);
+    private Id id = new Id("test", Tags.of("name", "value"), "ms", "", Type.LONG_TASK_TIMER);
+    private NoopLongTaskTimer timer = new NoopLongTaskTimer(id);
 
     @Test
     void returnsId() {
-        assertThat(gauge.getId()).isEqualTo(id);
+        assertThat(timer.getId()).isEqualTo(id);
     }
 
     @Test
-    void returnsValueAsZero() {
-        assertThat(gauge.value()).isEqualTo(0.);
+    void returnsStart() {
+        assertThat(timer.start()).isNotNull();
     }
+
+    @Test
+    void returnsStop() {
+        assertThat(timer.stop(1)).isEqualTo(-1);
+    }
+
+    @Test
+    void returnsDuration() {
+        assertThat(timer.duration(TimeUnit.MINUTES)).isEqualTo(0);
+    }
+
+    @Test
+    void returnsDurationWithTask() {
+        assertThat(timer.duration(0, TimeUnit.MINUTES)).isEqualTo(-1);
+    }
+
+    @Test
+    void returnsActiveTasks() {
+        assertThat(timer.activeTasks()).isEqualTo(0);
+    }
+
 }

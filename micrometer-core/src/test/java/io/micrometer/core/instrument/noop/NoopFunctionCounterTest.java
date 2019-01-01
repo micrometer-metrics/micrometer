@@ -15,31 +15,31 @@
  */
 package io.micrometer.core.instrument.noop;
 
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.Meter.Type;
-import io.micrometer.core.instrument.Tags;
 
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link NoopGauge}.
+ * Tests for {@link NoopFunctionCounter}.
  *
  * @author Oleksii Bondar
  */
-class NoopGaugeTest {
+class NoopFunctionCounterTest {
 
-    private Id id = new Id("test", Tags.of("name", "value"), "entries", "", Type.GAUGE);
-    private NoopGauge gauge = new NoopGauge(id);
+    private Id id = new Id("test", Tags.of("name", "value"), "entries", "", Type.COUNTER);
+    private NoopFunctionCounter counter = new NoopFunctionCounter(id);
 
     @Test
     void returnsId() {
-        assertThat(gauge.getId()).isEqualTo(id);
+        assertThat(counter.getId()).isEqualTo(id);
     }
 
     @Test
-    void returnsValueAsZero() {
-        assertThat(gauge.value()).isEqualTo(0.);
+    void returnsCountAsZero() {
+        assertThat(counter.count()).isEqualTo(0l);
     }
 }

@@ -19,27 +19,25 @@ import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.Meter.Type;
 import io.micrometer.core.instrument.Tags;
 
+import java.util.Collections;
+
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Tests for {@link NoopGauge}.
- *
- * @author Oleksii Bondar
- */
-class NoopGaugeTest {
+class NoopMeterTest {
 
-    private Id id = new Id("test", Tags.of("name", "value"), "entries", "", Type.GAUGE);
-    private NoopGauge gauge = new NoopGauge(id);
+    private Id id = new Id("test", Tags.of("name", "value"), "", "", Type.OTHER);
+    private NoopMeter meter = new NoopMeter(id);
 
     @Test
     void returnsId() {
-        assertThat(gauge.getId()).isEqualTo(id);
+        assertThat(meter.getId()).isEqualTo(id);
     }
 
     @Test
-    void returnsValueAsZero() {
-        assertThat(gauge.value()).isEqualTo(0.);
+    void returnsMeasureAsEmptyList() {
+        assertThat(meter.measure()).isEqualTo(Collections.emptyList());
     }
+
 }

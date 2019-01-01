@@ -17,12 +17,11 @@ package io.micrometer.core.instrument.noop;
 
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.Meter.Type;
-import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.Tags;
-
-import java.util.concurrent.TimeUnit;
+import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 
 import org.junit.jupiter.api.Test;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -32,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class NoopDistributionSummaryTest {
 
-    private Id id = new Id("test", Tags.of("name", "value"), TimeUnit.SECONDS.toString(), "", Type.TIMER);
+    private Id id = new Id("test", Tags.of("name", "value"), "ms", "", Type.DISTRIBUTION_SUMMARY);
     private NoopDistributionSummary distributionSummary = new NoopDistributionSummary(id);
 
     @Test
