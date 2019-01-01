@@ -31,6 +31,7 @@ import static org.mockito.Mockito.mock;
  */
 class RequestTest {
 
+    @SuppressWarnings("unchecked")
     @Test
     void compressShouldAddContentEncodingHeader() throws IOException, NoSuchFieldException, IllegalAccessException {
         HttpSender.Request.Builder builder = HttpSender.Request.build("https://micrometer.io/", mock(HttpSender.class)).compress();
