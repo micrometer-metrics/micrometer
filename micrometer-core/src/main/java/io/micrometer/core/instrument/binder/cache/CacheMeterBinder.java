@@ -47,15 +47,17 @@ public abstract class CacheMeterBinder implements MeterBinder {
 
     @Override
     public final void bindTo(MeterRegistry registry) {
-        if (size() != null) {
-            Gauge.builder("cache.size", cache.get(), c -> size())
+        Long cacheSize = size();
+        if (cacheSize != null) {
+            Gauge.builder("cache.size", cache.get(), c -> cacheSize)
                     .tags(tags)
                     .description("The number of entries in this cache. This may be an approximation, depending on the type of cache.")
                     .register(registry);
         }
 
-        if (missCount() != null) {
-            FunctionCounter.builder("cache.gets", cache.get(),  c -> missCount())
+        Long missCount = missCount();
+        if (missCount != null) {
+            FunctionCounter.builder("cache.gets", cache.get(),  c -> missCount)
                     .tags(tags).tag("result", "miss")
                     .description("the number of times cache lookup methods have returned an uncached (newly loaded) value, or null")
                     .register(registry);
@@ -71,8 +73,9 @@ public abstract class CacheMeterBinder implements MeterBinder {
                 .description("The number of entries added to the cache")
                 .register(registry);
 
-        if (evictionCount() != null) {
-            FunctionCounter.builder("cache.evictions", cache.get(), c -> evictionCount())
+        Long evictionCount = evictionCount();
+        if (evictionCount != null) {
+            FunctionCounter.builder("cache.evictions", cache.get(), c -> evictionCount)
                     .tags(tags)
                     .description("cache evictions")
                     .register(registry);
