@@ -74,7 +74,7 @@ class WebMvcMetricsAutoConfigurationTest {
     }
 
     @Test
-    public void definesTagsProviderAndFilterWhenMeterRegistryIsPresent() {
+    void definesTagsProviderAndFilterWhenMeterRegistryIsPresent() {
         registerAndRefresh(MeterRegistryConfiguration.class, WebMvcMetricsAutoConfiguration.class);
 
         assertThat(this.context.getBean(DefaultWebMvcTagsProvider.class)).isNotNull();
@@ -82,7 +82,7 @@ class WebMvcMetricsAutoConfigurationTest {
     }
 
     @Test
-    public void tagsProviderBacksOff() {
+    void tagsProviderBacksOff() {
         registerAndRefresh(MeterRegistryConfiguration.class, TagsProviderConfiguration.class,
                 WebMvcMetricsAutoConfiguration.class);
 
@@ -92,7 +92,7 @@ class WebMvcMetricsAutoConfigurationTest {
     }
 
     @Test
-    public void afterMaxUrisReachedFurtherUrisAreDenied() throws Exception {
+    void afterMaxUrisReachedFurtherUrisAreDenied() throws Exception {
         this.context.setServletContext(new MockServletContext());
 
         EnvironmentTestUtils.addEnvironment(this.context, "management.metrics.web.server.max-uri-tags=2");
@@ -114,7 +114,7 @@ class WebMvcMetricsAutoConfigurationTest {
     }
 
     @Test
-    public void shouldNotDenyIfMaxUrisIsNotReached() throws Exception {
+    void shouldNotDenyIfMaxUrisIsNotReached() throws Exception {
         this.context.setServletContext(new MockServletContext());
 
         EnvironmentTestUtils.addEnvironment(this.context, "management.metrics.web.server.max-uri-tags=5");

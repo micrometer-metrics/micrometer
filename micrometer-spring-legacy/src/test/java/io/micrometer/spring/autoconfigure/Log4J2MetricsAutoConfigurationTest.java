@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import static org.mockito.Mockito.mock;
  * @author Andy Wilkinson
  * @author Johnny Lim
  */
-public class Log4J2MetricsAutoConfigurationTest {
+class Log4J2MetricsAutoConfigurationTest {
 
     private final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 
@@ -46,21 +46,21 @@ public class Log4J2MetricsAutoConfigurationTest {
     }
 
     @Test
-    public void autoConfiguresLog4J2Metrics() {
+    void autoConfiguresLog4J2Metrics() {
         registerAndRefresh();
         assertThat(context.getBean(Log4j2Metrics.class)).isNotNull();
     }
 
     @Test
     @Deprecated
-    public void allowsLogbackMetricsToBeDisabled() {
+    void allowsLogbackMetricsToBeDisabled() {
         EnvironmentTestUtils.addEnvironment(context, "management.metrics.binders.log4j2.enabled=false");
         registerAndRefresh();
         assertThat(context.getBeansOfType(Log4j2Metrics.class)).isEmpty();
     }
 
     @Test
-    public void allowsCustomLog4J2MetricsToBeUsed() {
+    void allowsCustomLog4J2MetricsToBeUsed() {
         registerAndRefresh(CustomLog4J2MetricsConfiguration.class);
         assertThat(context.getBean(Log4j2Metrics.class)).isEqualTo(context.getBean("customLog4J2Metrics"));
     }

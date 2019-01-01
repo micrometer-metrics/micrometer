@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ class MetricsAutoConfigurationTest {
     }
 
     @Test
-    public void automaticallyRegisteredBinders() {
+    void automaticallyRegisteredBinders() {
         assertThat(context.getBeansOfType(MeterBinder.class).values())
                 .hasAtLeastOneElementOfType(Log4j2Metrics.class)
                 .hasAtLeastOneElementOfType(LogbackMetrics.class)

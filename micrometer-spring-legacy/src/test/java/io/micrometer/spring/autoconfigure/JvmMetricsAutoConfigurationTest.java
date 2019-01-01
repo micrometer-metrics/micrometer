@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import static org.mockito.Mockito.mock;
  * @author Stephane Nicoll
  * @author Johnny Lim
  */
-public class JvmMetricsAutoConfigurationTest {
+class JvmMetricsAutoConfigurationTest {
 
     private final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 
@@ -50,7 +50,7 @@ public class JvmMetricsAutoConfigurationTest {
     }
 
     @Test
-    public void autoConfiguresJvmMetrics() {
+    void autoConfiguresJvmMetrics() {
         registerAndRefresh();
         assertThat(context.getBean(JvmGcMetrics.class)).isNotNull();
         assertThat(context.getBean(JvmMemoryMetrics.class)).isNotNull();
@@ -60,7 +60,7 @@ public class JvmMetricsAutoConfigurationTest {
 
     @Test
     @Deprecated
-    public void allowsJvmMetricsToBeDisabled() {
+    void allowsJvmMetricsToBeDisabled() {
         EnvironmentTestUtils.addEnvironment(context, "management.metrics.binders.jvm.enabled=false");
         registerAndRefresh();
         assertThat(context.getBeansOfType(JvmGcMetrics.class)).isEmpty();
@@ -70,7 +70,7 @@ public class JvmMetricsAutoConfigurationTest {
     }
 
     @Test
-    public void allowsCustomJvmGcMetricsToBeUsed() {
+    void allowsCustomJvmGcMetricsToBeUsed() {
         registerAndRefresh(CustomJvmGcMetricsConfiguration.class);
         assertThat(context.getBean(JvmGcMetrics.class)).isEqualTo(context.getBean("customJvmGcMetrics"));
         assertThat(context.getBean(JvmMemoryMetrics.class)).isNotNull();
@@ -79,7 +79,7 @@ public class JvmMetricsAutoConfigurationTest {
     }
 
     @Test
-    public void allowsCustomJvmMemoryMetricsToBeUsed() {
+    void allowsCustomJvmMemoryMetricsToBeUsed() {
         registerAndRefresh(CustomJvmMemoryMetricsConfiguration.class);
         assertThat(context.getBean(JvmGcMetrics.class)).isNotNull();
         assertThat(context.getBean(JvmMemoryMetrics.class)).isEqualTo(context.getBean("customJvmMemoryMetrics"));
@@ -88,7 +88,7 @@ public class JvmMetricsAutoConfigurationTest {
     }
 
     @Test
-    public void allowsCustomJvmThreadMetricsToBeUsed() {
+    void allowsCustomJvmThreadMetricsToBeUsed() {
         registerAndRefresh(CustomJvmThreadMetricsConfiguration.class);
         assertThat(context.getBean(JvmGcMetrics.class)).isNotNull();
         assertThat(context.getBean(JvmMemoryMetrics.class)).isNotNull();
@@ -97,7 +97,7 @@ public class JvmMetricsAutoConfigurationTest {
     }
 
     @Test
-    public void allowsCustomClassLoaderMetricsToBeUsed() {
+    void allowsCustomClassLoaderMetricsToBeUsed() {
         registerAndRefresh(CustomClassLoaderMetricsConfiguration.class);
         assertThat(context.getBean(JvmGcMetrics.class)).isNotNull();
         assertThat(context.getBean(JvmMemoryMetrics.class)).isNotNull();

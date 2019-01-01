@@ -151,7 +151,7 @@ class JerseyServerMetricsAutoConfigurationTest {
         }
 
         @Path("/users")
-        public class TestResource {
+        class TestResource {
 
             @GET
             @Path("/{id}")

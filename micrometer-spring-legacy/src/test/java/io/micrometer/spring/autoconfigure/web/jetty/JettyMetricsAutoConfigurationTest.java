@@ -49,7 +49,7 @@ class JettyMetricsAutoConfigurationTest {
     }
 
     @Test
-    public void autoConfiguresThreadPoolMetricsWithEmbeddedServletJetty() {
+    void autoConfiguresThreadPoolMetricsWithEmbeddedServletJetty() {
         AnnotationConfigEmbeddedWebApplicationContext context = new AnnotationConfigEmbeddedWebApplicationContext();
         context.register(MeterRegistryConfiguration.class, ServletWebServerConfiguration.class,
                 JettyMetricsAutoConfiguration.class);
@@ -64,7 +64,7 @@ class JettyMetricsAutoConfigurationTest {
     }
 
     @Test
-    public void allowsCustomJettyServerThreadPoolMetricsBinderToBeUsed() {
+    void allowsCustomJettyServerThreadPoolMetricsBinderToBeUsed() {
         registerAndRefresh(MeterRegistryConfiguration.class,
                 CustomJettyServerThreadPoolMetricsBinder.class,
                 JettyMetricsAutoConfiguration.class);

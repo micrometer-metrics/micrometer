@@ -92,7 +92,7 @@ class AppOpticsMetricsExportAutoConfigurationTest {
     }
 
     @Test
-    public void stopsMeterRegistryWhenContextIsClosed() {
+    void stopsMeterRegistryWhenContextIsClosed() {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
         registerAndRefresh(context, BaseConfiguration.class);
         AppOpticsMeterRegistry registry = spyOnDisposableBean(AppOpticsMeterRegistry.class, context);

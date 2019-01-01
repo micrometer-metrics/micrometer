@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class IOUtilsTest {
 
     @Test
-    public void testToString() {
+    void testToString() {
         String expected = "This is a sample.";
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(expected.getBytes());
@@ -39,7 +39,7 @@ class IOUtilsTest {
     }
 
     @Test
-    public void testToStringWithCharset() {
+    void testToStringWithCharset() {
         String expected = "This is a sample.";
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));

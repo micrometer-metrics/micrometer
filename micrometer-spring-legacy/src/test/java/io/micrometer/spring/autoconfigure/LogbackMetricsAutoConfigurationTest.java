@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import static org.mockito.Mockito.mock;
  * @author Stephane Nicoll
  * @author Johnny Lim
  */
-public class LogbackMetricsAutoConfigurationTest {
+class LogbackMetricsAutoConfigurationTest {
 
     private final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 
@@ -47,21 +47,21 @@ public class LogbackMetricsAutoConfigurationTest {
     }
 
     @Test
-    public void autoConfiguresLogbackMetrics() {
+    void autoConfiguresLogbackMetrics() {
         registerAndRefresh();
         assertThat(context.getBean(LogbackMetrics.class)).isNotNull();
     }
 
     @Test
     @Deprecated
-    public void allowsLogbackMetricsToBeDisabled() {
+    void allowsLogbackMetricsToBeDisabled() {
         EnvironmentTestUtils.addEnvironment(context, "management.metrics.binders.logback.enabled=false");
         registerAndRefresh();
         assertThat(context.getBeansOfType(LogbackMetrics.class)).isEmpty();
     }
 
     @Test
-    public void allowsCustomLogbackMetricsToBeUsed() {
+    void allowsCustomLogbackMetricsToBeUsed() {
         registerAndRefresh(CustomLogbackMetricsConfiguration.class);
         assertThat(context.getBean(LogbackMetrics.class)).isEqualTo(context.getBean("customLogbackMetrics"));
     }

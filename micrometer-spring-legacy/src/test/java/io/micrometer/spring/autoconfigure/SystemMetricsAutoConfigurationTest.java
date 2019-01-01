@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import static org.mockito.Mockito.mock;
  * @author Stephane Nicoll
  * @author Johnny Lim
  */
-public class SystemMetricsAutoConfigurationTest {
+class SystemMetricsAutoConfigurationTest {
 
     private final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 
@@ -49,61 +49,61 @@ public class SystemMetricsAutoConfigurationTest {
     }
 
     @Test
-    public void autoConfiguresUptimeMetrics() {
+    void autoConfiguresUptimeMetrics() {
         registerAndRefresh();
         assertThat(context.getBean(UptimeMetrics.class)).isNotNull();
     }
 
     @Test
     @Deprecated
-    public void allowsUptimeMetricsToBeDisabled() {
+    void allowsUptimeMetricsToBeDisabled() {
         EnvironmentTestUtils.addEnvironment(context, "management.metrics.binders.uptime.enabled=false");
         registerAndRefresh();
         assertThat(context.getBeansOfType(UptimeMetrics.class)).isEmpty();
     }
 
     @Test
-    public void allowsCustomUptimeMetricsToBeUsed() {
+    void allowsCustomUptimeMetricsToBeUsed() {
         registerAndRefresh(CustomUptimeMetricsConfiguration.class);
         assertThat(context.getBean(UptimeMetrics.class)).isEqualTo(context.getBean("customUptimeMetrics"));
     }
 
     @Test
-    public void autoConfiguresProcessorMetrics() {
+    void autoConfiguresProcessorMetrics() {
         registerAndRefresh();
         assertThat(context.getBean(ProcessorMetrics.class)).isNotNull();
     }
 
     @Test
     @Deprecated
-    public void allowsProcessorMetricsToBeDisabled() {
+    void allowsProcessorMetricsToBeDisabled() {
         EnvironmentTestUtils.addEnvironment(context, "management.metrics.binders.processor.enabled=false");
         registerAndRefresh();
         assertThat(context.getBeansOfType(ProcessorMetrics.class)).isEmpty();
     }
 
     @Test
-    public void allowsCustomProcessorMetricsToBeUsed() {
+    void allowsCustomProcessorMetricsToBeUsed() {
         registerAndRefresh(CustomProcessorMetricsConfiguration.class);
         assertThat(context.getBean(ProcessorMetrics.class)).isEqualTo(context.getBean("customProcessorMetrics"));
     }
 
     @Test
-    public void autoConfiguresFileDescriptorMetrics() {
+    void autoConfiguresFileDescriptorMetrics() {
         registerAndRefresh();
         assertThat(context.getBean(FileDescriptorMetrics.class)).isNotNull();
     }
 
     @Test
     @Deprecated
-    public void allowsFileDescriptorMetricsToBeDisabled() {
+    void allowsFileDescriptorMetricsToBeDisabled() {
         EnvironmentTestUtils.addEnvironment(context, "management.metrics.binders.files.enabled=false");
         registerAndRefresh();
         assertThat(context.getBeansOfType(FileDescriptorMetrics.class)).isEmpty();
     }
 
     @Test
-    public void allowsCustomFileDescriptorMetricsToBeUsed() {
+    void allowsCustomFileDescriptorMetricsToBeUsed() {
         registerAndRefresh(CustomFileDescriptorMetricsConfiguration.class);
         assertThat(context.getBean(FileDescriptorMetrics.class)).isEqualTo(context.getBean("customFileDescriptorMetrics"));
     }
