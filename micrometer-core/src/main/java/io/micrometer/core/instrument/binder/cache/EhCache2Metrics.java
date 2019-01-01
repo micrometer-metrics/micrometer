@@ -99,12 +99,12 @@ public class EhCache2Metrics extends CacheMeterBinder {
                 .register(registry);
 
         FunctionCounter.builder("cache.puts.added", stats, StatisticsGateway::cachePutAddedCount)
-                .tags(getTagsWithCacheName())
+                .tags(getTagsWithCacheName()).tags("result", "added")
                 .description("Cache puts resulting in a new key/value pair")
                 .register(registry);
 
-        FunctionCounter.builder("cache.puts.updated", stats, StatisticsGateway::cachePutUpdatedCount)
-                .tags(getTagsWithCacheName())
+        FunctionCounter.builder("cache.puts.added", stats, StatisticsGateway::cachePutUpdatedCount)
+                .tags(getTagsWithCacheName()).tags("result", "updated")
                 .description("Cache puts resulting in an updated value")
                 .register(registry);
 
