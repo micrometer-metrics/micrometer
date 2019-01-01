@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,29 +19,31 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.jmx.JmxMeterRegistry;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = CompositeMeterRegistryConfigurationTest.MetricsApp.class)
 @TestPropertySource(properties = {
     "management.metrics.export.jmx.enabled=true",
     "management.metrics.export.prometheus.enabled=true",
     "management.metrics.export.prometheus.pushgateway.enabled=false",
 })
-public class CompositeMeterRegistryConfigurationTest {
+class CompositeMeterRegistryConfigurationTest {
+
     @Autowired
     private MeterRegistry registry;
 
     @Test
-    public void compositeRegistryIsCreated() {
+    void compositeRegistryIsCreated() {
         assertThat(registry).isInstanceOf(CompositeMeterRegistry.class);
 
         assertThat(((CompositeMeterRegistry) registry).getRegistries())

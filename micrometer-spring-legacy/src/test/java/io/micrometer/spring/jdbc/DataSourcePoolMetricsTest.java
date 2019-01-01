@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@ package io.micrometer.spring.jdbc;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.metadata.DataSourcePoolMetadataProvider;
@@ -27,7 +28,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -38,22 +39,23 @@ import static java.util.Collections.emptyList;
 /**
  * @author Jon Schneider
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @TestPropertySource(properties = {
     "spring.datasource.generate-unique-name=true",
     "management.security.enabled=false",
     "spring.datasource.type=org.apache.tomcat.jdbc.pool.DataSource"
 })
-public class DataSourcePoolMetricsTest {
+class DataSourcePoolMetricsTest {
+    
     @Autowired
-    DataSource dataSource;
+    private DataSource dataSource;
 
     @Autowired
-    MeterRegistry registry;
+    private MeterRegistry registry;
 
     @Test
-    public void dataSourceIsInstrumented() throws SQLException {
+    void dataSourceIsInstrumented() throws SQLException {
         dataSource.getConnection().getMetaData();
         registry.find("data.source.connections.max").meter();
     }

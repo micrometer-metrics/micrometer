@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,25 +19,27 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = CompositeMeterRegistryConfigurationExistingPrimaryRegistryTest.MetricsApp.class)
-public class CompositeMeterRegistryConfigurationExistingPrimaryRegistryTest {
+class CompositeMeterRegistryConfigurationExistingPrimaryRegistryTest {
+    
     @Autowired
-    MeterRegistry registry;
+    private MeterRegistry registry;
 
     @Test
-    public void compositeNotCreatedWhenPrimaryRegistryExists() {
+    void compositeNotCreatedWhenPrimaryRegistryExists() {
         assertThat(registry).isInstanceOf(SimpleMeterRegistry.class);
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,7 +32,7 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Service;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -39,9 +40,10 @@ import static io.micrometer.core.aop.TimedAspect.EXCEPTION_TAG;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = TimedAspectTest.TestAspectConfig.class)
-public class TimedAspectTest {
+class TimedAspectTest {
+    
     @Autowired
     private TimedService service;
 
@@ -49,31 +51,31 @@ public class TimedAspectTest {
     private MeterRegistry registry;
 
     @Test
-    public void serviceIsTimed() {
+    void serviceIsTimed() {
         service.timeMe();
         assertThat(registry.get("something").timer().count()).isEqualTo(1);
     }
 
     @Test
-    public void serviceIsTimedWhenNoValue() {
+    void serviceIsTimedWhenNoValue() {
         service.timeWithoutValue();
         assertThat(registry.get(TimedAspect.DEFAULT_METRIC_NAME).timer().count()).isEqualTo(1);
     }
 
     @Test
-    public void serviceIsTimedWhenThereIsAnException() {
+    void serviceIsTimedWhenThereIsAnException() {
         assertThrows(RuntimeException.class, () -> service.timeWithException());
         assertThat(registry.get("somethingElse").tags(EXCEPTION_TAG, "RuntimeException").timer().count()).isEqualTo(1);
     }
 
     @Test
-    public void serviceIsTimedWhenThereIsNoException() {
+    void serviceIsTimedWhenThereIsNoException() {
         service.timeWithoutException();
         assertThat(registry.get("somethingElse").tags(EXCEPTION_TAG, "none").timer().count()).isEqualTo(1);
     }
 
     @Test
-    public void serviceIsTimedWithHistogram() {
+    void serviceIsTimedWithHistogram() {
         // given...
         // ... we are waiting for a metric to be created with a histogram
         AtomicReference<DistributionStatisticConfig> myConfig = new AtomicReference<>();

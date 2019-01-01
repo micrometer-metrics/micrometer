@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,10 @@ package io.micrometer.spring.autoconfigure.web.client;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.spring.autoconfigure.MetricsProperties;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.embedded.LocalServerPort;
@@ -35,7 +36,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -49,14 +50,15 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = RestTemplateMetricsAutoConfigurationTest.ClientApp.class, webEnvironment = WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = {
         "management.port=-1", // Disable the entire Spring Boot actuator, so that it does not get needlessly instrumented
         "security.ignored=/**",
 })
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
-public class RestTemplateMetricsAutoConfigurationTest {
+class RestTemplateMetricsAutoConfigurationTest {
+    
     @Autowired
     private MeterRegistry registry;
 
@@ -76,8 +78,8 @@ public class RestTemplateMetricsAutoConfigurationTest {
 
     private RestTemplate client;
 
-    @Before
-    public void before() {
+    @BeforeEach
+    void before() {
         rootUri = "http://localhost:" + port;
         client = restTemplateBuilder
                 .rootUri(rootUri)
@@ -85,13 +87,13 @@ public class RestTemplateMetricsAutoConfigurationTest {
     }
 
     @Test
-    public void restTemplatesCreatedWithBuilderAreInstrumented() {
+    void restTemplatesCreatedWithBuilderAreInstrumented() {
         client.getForObject("/it/1", String.class);
         assertThat(registry.get("http.client.requests").meters()).hasSize(1);
     }
 
     @Test
-    public void asyncRestTemplatesInContextAreInstrumented() throws Exception {
+    void asyncRestTemplatesInContextAreInstrumented() throws Exception {
         // therefore a full absolute URI is used
         ListenableFuture<ResponseEntity<String>> future = asyncClient.getForEntity(rootUri + "/it/2", String.class);
 
@@ -106,7 +108,7 @@ public class RestTemplateMetricsAutoConfigurationTest {
     }
 
     @Test
-    public void afterMaxUrisReachedFurtherUrisAreDenied() {
+    void afterMaxUrisReachedFurtherUrisAreDenied() {
         int maxUriTags = metricsProperties.getWeb().getClient().getMaxUriTags();
         for (int i = 0; i < maxUriTags + 10; i++) {
             client.getForObject("/it/" + i, String.class);

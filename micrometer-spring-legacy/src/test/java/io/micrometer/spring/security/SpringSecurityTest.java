@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -29,7 +30,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,23 +38,24 @@ import org.springframework.web.bind.annotation.RestController;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {
     // changed to spring.security.* in Boot 2
     "security.user.password=foo"
 })
-public class SpringSecurityTest {
+class SpringSecurityTest {
+    
     @Autowired
-    MockMvc mvc;
+    private MockMvc mvc;
 
     @Autowired
-    MeterRegistry registry;
+    private MeterRegistry registry;
 
     @Test
     @WithMockUser
-    public void securityAllowsAccess() throws Exception {
+    void securityAllowsAccess() throws Exception {
         mvc.perform(get("/api/secured")).andExpect(status().isOk());
 
         registry.get("http.server.requests")
@@ -62,7 +64,7 @@ public class SpringSecurityTest {
     }
 
     @Test
-    public void securityBlocksAccess() throws Exception {
+    void securityBlocksAccess() throws Exception {
         mvc.perform(get("/api/secured")).andExpect(status().isUnauthorized());
 
         registry.get("http.server.requests")

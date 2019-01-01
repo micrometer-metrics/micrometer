@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,26 +17,28 @@ package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = CompositeMeterRegistryConfigurationTest.MetricsApp.class)
-public class CompositeMeterRegistryConfigurationDefaultSimpleRegistryTest {
+class CompositeMeterRegistryConfigurationDefaultSimpleRegistryTest {
+    
     @Autowired
-    MeterRegistry registry;
+    private MeterRegistry registry;
 
     /**
      * The simple registry is off by default UNLESS there is no other registry implementation on
      * the classpath, in which case it is on.
      */
     @Test
-    public void simpleWithNoCompositeCreated() {
+    void simpleWithNoCompositeCreated() {
         assertThat(registry).isInstanceOf(SimpleMeterRegistry.class);
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +17,30 @@ package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = CompositeMeterRegistryConfigurationTest.MetricsApp.class)
 @TestPropertySource(properties = "management.metrics.export.simple.enabled=false")
-public class CompositeMeterRegistryConfigurationNoRegistryTest {
+class CompositeMeterRegistryConfigurationNoRegistryTest {
+    
     @Autowired
-    MeterRegistry registry;
+    private MeterRegistry registry;
 
     /**
      * An empty composite is created in the absence of any other registry implementation.
      * This effectively no-ops instrumentation code throughout the application.
      */
     @Test
-    public void emptyCompositeCreated() {
+    void emptyCompositeCreated() {
         assertThat(registry)
             .isInstanceOf(CompositeMeterRegistry.class)
             .matches(r -> ((CompositeMeterRegistry) r).getRegistries().isEmpty());

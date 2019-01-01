@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,9 @@ import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsAutoConfiguration;
 import io.prometheus.client.CollectorRegistry;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -40,7 +41,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.*;
@@ -73,11 +74,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Jon Schneider
  * @author Nikolay Rybak
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @WebAppConfiguration
 @AutoConfigureMockMvc
 @TestPropertySource(properties = "security.ignored=/**")
-public class WebMvcMetricsFilterTest {
+class WebMvcMetricsFilterTest {
+
     @Autowired
     private SimpleMeterRegistry registry;
 
@@ -96,7 +98,7 @@ public class WebMvcMetricsFilterTest {
     private CyclicBarrier completableFutureBarrier;
 
     @Test
-    public void timedMethod() throws Exception {
+    void timedMethod() throws Exception {
         mvc.perform(get("/api/c1/10")).andExpect(status().isOk());
 
         assertThat(this.registry.get("http.server.requests")
@@ -105,7 +107,7 @@ public class WebMvcMetricsFilterTest {
     }
 
     @Test
-    public void subclassedTimedMethod() throws Exception {
+    void subclassedTimedMethod() throws Exception {
         mvc.perform(get("/api/c1/metaTimed/10")).andExpect(status().isOk());
 
         assertThat(this.registry.get("http.server.requests")
@@ -114,7 +116,7 @@ public class WebMvcMetricsFilterTest {
     }
 
     @Test
-    public void untimedMethod() throws Exception {
+    void untimedMethod() throws Exception {
         mvc.perform(get("/api/c1/untimed/10")).andExpect(status().isOk());
 
         assertThat(this.registry.find("http.server.requests")
@@ -123,7 +125,7 @@ public class WebMvcMetricsFilterTest {
     }
 
     @Test
-    public void timedControllerClass() throws Exception {
+    void timedControllerClass() throws Exception {
         mvc.perform(get("/api/c2/10")).andExpect(status().isOk());
 
         assertThat(this.registry.get("http.server.requests").tags("status", "200")
@@ -131,7 +133,7 @@ public class WebMvcMetricsFilterTest {
     }
 
     @Test
-    public void badClientRequest() throws Exception {
+    void badClientRequest() throws Exception {
         mvc.perform(get("/api/c1/oops")).andExpect(status().is4xxClientError());
 
         assertThat(this.registry.get("http.server.requests").tags("status", "400")
@@ -139,7 +141,7 @@ public class WebMvcMetricsFilterTest {
     }
 
     @Test
-    public void redirectRequest() throws Exception {
+    void redirectRequest() throws Exception {
         mvc.perform(get("/api/redirect")
                 .header(TEST_MISBEHAVE_HEADER, "302")).andExpect(status().is3xxRedirection());
 
@@ -148,7 +150,7 @@ public class WebMvcMetricsFilterTest {
     }
 
     @Test
-    public void notFoundRequest() throws Exception {
+    void notFoundRequest() throws Exception {
         mvc.perform(get("/api/not/found")
                 .header(TEST_MISBEHAVE_HEADER, "404"))
                 .andExpect(status().is4xxClientError());
@@ -158,7 +160,7 @@ public class WebMvcMetricsFilterTest {
     }
 
     @Test
-    public void unhandledError() {
+    void unhandledError() {
         assertThatCode(() -> mvc.perform(get("/api/c1/unhandledError/10"))
                 .andExpect(status().isOk()))
                 .hasRootCauseInstanceOf(RuntimeException.class);
@@ -169,7 +171,7 @@ public class WebMvcMetricsFilterTest {
     }
 
     @Test
-    public void endpointThrowsError() throws Exception {
+    void endpointThrowsError() throws Exception {
         mvc.perform(get("/api/c1/error/10")).andExpect(status().is4xxClientError());
 
         assertThat(this.registry.get("http.server.requests").tags("status", "422")
@@ -177,7 +179,7 @@ public class WebMvcMetricsFilterTest {
     }
 
     @Test
-    public void endpointThrowsAnonymousError() throws Exception {
+    void endpointThrowsAnonymousError() throws Exception {
         try {
             mvc.perform(get("/api/c1/anonymousError/10"));
         } catch (Throwable ignore) {
@@ -189,7 +191,7 @@ public class WebMvcMetricsFilterTest {
     }
 
     @Test
-    public void regexBasedRequestMapping() throws Exception {
+    void regexBasedRequestMapping() throws Exception {
         mvc.perform(get("/api/c1/regex/.abc")).andExpect(status().isOk());
 
         assertThat(this.registry.get("http.server.requests")
@@ -198,7 +200,7 @@ public class WebMvcMetricsFilterTest {
     }
 
     @Test
-    public void recordQuantiles() throws Exception {
+    void recordQuantiles() throws Exception {
         mvc.perform(get("/api/c1/percentiles/10")).andExpect(status().isOk());
 
         assertThat(prometheusRegistry.scrape()).contains("quantile=\"0.5\"");
@@ -206,7 +208,7 @@ public class WebMvcMetricsFilterTest {
     }
 
     @Test
-    public void recordHistogram() throws Exception {
+    void recordHistogram() throws Exception {
         mvc.perform(get("/api/c1/histogram/10")).andExpect(status().isOk());
 
         assertThat(prometheusRegistry.scrape()).contains("le=\"0.001\"");
@@ -342,6 +344,7 @@ public class WebMvcMetricsFilterTest {
             throw new IllegalStateException("Boom on " + id + "!");
         }
 
+        @SuppressWarnings("serial")
         @Timed
         @GetMapping("/anonymousError/{id}")
         public String alwaysThrowsAnonymousException(@PathVariable Long id) throws Exception {

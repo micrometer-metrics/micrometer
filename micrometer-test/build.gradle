@@ -7,6 +7,7 @@ dependencies {
     // JUnit 5
     compile 'org.junit.jupiter:junit-jupiter-api:5.+'
     runtime 'org.junit.jupiter:junit-jupiter-engine:5.+'
+    compile 'org.springframework.test:spring-test-junit5:1.+'
 
     compile 'ru.lanwen.wiremock:wiremock-junit5:1.2.0'
     compile 'com.github.tomakehurst:wiremock:2.+'

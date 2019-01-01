@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@ package io.micrometer.spring.integration;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,24 +31,22 @@ import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.support.Transformers;
 import org.springframework.integration.ws.SimpleWebServiceOutboundGateway;
 import org.springframework.integration.ws.WebServiceHeaders;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
-public class SpringIntegrationMetricsTest {
+class SpringIntegrationMetricsTest {
+    
     @Autowired
-    TestSpringIntegrationApplication.TempConverter converter;
+    private TestSpringIntegrationApplication.TempConverter converter;
 
     @Autowired
-    MeterRegistry registry;
-
-    @Autowired
-    MockClock clock;
+    private MeterRegistry registry;
 
     @Test
-    public void springIntegrationMetrics() {
+    void springIntegrationMetrics() {
         converter.fahrenheitToCelcius(68.0f);
 
         assertThat(registry.get("spring.integration.channel.sends")
@@ -58,7 +57,8 @@ public class SpringIntegrationMetricsTest {
 
     @SpringBootApplication
     @IntegrationComponentScan
-    public static class TestSpringIntegrationApplication {
+    static class TestSpringIntegrationApplication {
+        
         @Bean
         MockClock clock() {
             return new MockClock();

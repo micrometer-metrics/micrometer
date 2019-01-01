@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@ package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.config.MeterFilter;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,29 +27,29 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, classes = PropertiesMeterFilterIntegrationTest.MetricsApp.class)
 @TestPropertySource(properties = {
     "management.metrics.enable[my.timer]=true", /* overriden by programmatic filter */
     "management.metrics.enable[my.counter]=false"
 })
-public class PropertiesMeterFilterIntegrationTest {
+class PropertiesMeterFilterIntegrationTest {
 
     @Autowired
     private MeterRegistry registry;
 
     @Test
-    public void propertyBasedMeterFilters() {
+    void propertyBasedMeterFilters() {
         registry.counter("my.counter");
         assertThat(registry.find("my.counter").counter()).isNull();
     }
 
     @Test
-    public void propertyBasedMeterFiltersCanTakeLowerPrecedenceThanProgrammaticallyBoundFilters() {
+    void propertyBasedMeterFiltersCanTakeLowerPrecedenceThanProgrammaticallyBoundFilters() {
         registry.timer("my.timer");
         assertThat(registry.find("my.timer").meter()).isNull();
     }
@@ -57,7 +58,7 @@ public class PropertiesMeterFilterIntegrationTest {
     static class MetricsApp {
         @Bean
         @Order(Ordered.HIGHEST_PRECEDENCE)
-        public MeterRegistryCustomizer meterFilter() {
+        public MeterRegistryCustomizer<?> meterFilter() {
             return r -> r.config().meterFilter(MeterFilter.deny(id -> id.getName().contains("my.timer")));
         }
     }

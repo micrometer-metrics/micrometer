@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,35 +18,37 @@ package io.micrometer.spring.autoconfigure;
 import io.micrometer.atlas.AtlasMeterRegistry;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Jon Schneider
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @TestPropertySource(properties = {
         "management.metrics.export.prometheus.enabled=true",
         "management.metrics.export.atlas.enabled=true"
 })
-public class MeterRegistryCustomizerTest {
+class MeterRegistryCustomizerTest {
+    
     @Autowired
-    AtlasMeterRegistry atlasRegistry;
+    private AtlasMeterRegistry atlasRegistry;
 
     @Autowired
-    PrometheusMeterRegistry prometheusRegistry;
+    private PrometheusMeterRegistry prometheusRegistry;
 
     @Test
-    public void commonTagsAreAppliedToAutoConfiguredBinders() {
+    void commonTagsAreAppliedToAutoConfiguredBinders() {
         atlasRegistry.get("jvm.memory.used").tags("region", "us-east-1").gauge();
         prometheusRegistry.get("jvm.memory.used").tags("region", "us-east-1").gauge();
 

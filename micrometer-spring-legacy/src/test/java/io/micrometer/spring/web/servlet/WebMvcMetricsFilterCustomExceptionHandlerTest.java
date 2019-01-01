@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,9 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsAutoConfiguration;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -32,7 +33,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.*;
@@ -49,23 +50,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * @author Jon Schneider
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @WebAppConfiguration
 @AutoConfigureMockMvc
 @TestPropertySource(properties = "security.ignored=/**")
-public class WebMvcMetricsFilterCustomExceptionHandlerTest {
+class WebMvcMetricsFilterCustomExceptionHandlerTest {
 
     @Autowired
     private SimpleMeterRegistry registry;
 
     @Autowired
-    private MockClock clock;
-
-    @Autowired
     private MockMvc mvc;
 
     @Test
-    public void handledExceptionIsRecordedInMetricTag() throws Exception {
+    void handledExceptionIsRecordedInMetricTag() throws Exception {
         mvc.perform(get("/api/handledError")).andExpect(status().is5xxServerError());
 
         assertThat(this.registry.get("http.server.requests")
@@ -73,7 +71,7 @@ public class WebMvcMetricsFilterCustomExceptionHandlerTest {
     }
 
     @Test
-    public void rethrownExceptionIsRecordedInMetricTag() {
+    void rethrownExceptionIsRecordedInMetricTag() {
         assertThatCode(() -> mvc.perform(get("/api/rethrownError"))
             .andExpect(status().is5xxServerError()));
 
@@ -116,16 +114,17 @@ public class WebMvcMetricsFilterCustomExceptionHandlerTest {
         }
     }
 
+    @SuppressWarnings("serial")
     static class Exception1 extends RuntimeException {
     }
 
+    @SuppressWarnings("serial")
     static class Exception2 extends RuntimeException {
     }
 
     @ControllerAdvice
     static class CustomExceptionHandler {
 
-        @SuppressWarnings("unused")
         @ExceptionHandler
         ResponseEntity<String> handleError(Exception1 ex) {
             return new ResponseEntity<>("this is a custom exception body",

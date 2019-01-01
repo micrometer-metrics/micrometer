@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ package io.micrometer.spring.scheduling;
 import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,16 +28,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.concurrent.CountDownLatch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
-@Ignore("Race condition still...")
-public class ScheduledMethodMetricsTest {
+@Disabled
+class ScheduledMethodMetricsTest {
 
     static CountDownLatch longTaskStarted = new CountDownLatch(1);
     static CountDownLatch longTaskShouldComplete = new CountDownLatch(1);
@@ -45,13 +45,13 @@ public class ScheduledMethodMetricsTest {
     static CountDownLatch shortBeepsExecuted = new CountDownLatch(1);
 
     @Autowired
-    MeterRegistry registry;
+    private MeterRegistry registry;
 
     @Autowired
-    ThreadPoolTaskScheduler scheduler;
+    private ThreadPoolTaskScheduler scheduler;
 
     @Test
-    public void shortTasksAreInstrumented() throws InterruptedException {
+    void shortTasksAreInstrumented() throws InterruptedException {
         shortBeepsExecuted.await();
         while (scheduler.getActiveCount() > 0) {
         }
@@ -62,7 +62,7 @@ public class ScheduledMethodMetricsTest {
     }
 
     @Test
-    public void longTasksAreInstrumented() throws InterruptedException {
+    void longTasksAreInstrumented() throws InterruptedException {
         longTaskStarted.await();
 
         assertThat(registry.get("long.beep").longTaskTimer().activeTasks()).isEqualTo(1);

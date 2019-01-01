@@ -242,6 +242,7 @@ org.springframework.security:spring-security-config:4.2.9.RELEASE
 org.springframework.security:spring-security-core:4.2.9.RELEASE
 org.springframework.security:spring-security-test:4.2.9.RELEASE
 org.springframework.security:spring-security-web:4.2.9.RELEASE
+org.springframework.test:spring-test-junit5:1.0.0
 org.springframework.ws:spring-ws-core:2.4.3.RELEASE
 org.springframework.ws:spring-xml:2.4.3.RELEASE
 org.springframework:spring-aop:4.3.20.RELEASE
