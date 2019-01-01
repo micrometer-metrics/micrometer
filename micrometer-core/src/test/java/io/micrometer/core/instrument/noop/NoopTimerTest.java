@@ -30,14 +30,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link NoopTimer}.
  *
  * @author Oleksii Bondar
  */
-@SuppressWarnings("unchecked")
 class NoopTimerTest {
 
     private Id id = new Id("test", Tags.of("name", "value"), "", "", Type.TIMER);
@@ -50,17 +48,15 @@ class NoopTimerTest {
 
     @Test
     void recordSupplier() {
-        Supplier<String> supplier = mock(Supplier.class);
         String expectedResult = "value";
-        when(supplier.get()).thenReturn(expectedResult);
+        Supplier<String> supplier = () -> expectedResult;
         assertThat(timer.record(supplier)).isEqualTo(expectedResult);
     }
 
     @Test
     void recordCallable() throws Exception {
-        Callable<String> callable = mock(Callable.class);
         String expectedResult = "value";
-        when(callable.call()).thenReturn(expectedResult);
+        Callable<String> callable = () -> expectedResult;
         assertThat(timer.recordCallable(callable)).isEqualTo(expectedResult);
     }
 
