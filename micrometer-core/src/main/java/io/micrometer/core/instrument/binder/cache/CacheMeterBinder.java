@@ -23,7 +23,6 @@ import io.micrometer.core.lang.Nullable;
 
 import java.lang.ref.WeakReference;
 
-
 /**
  * A common base class for cache metrics that ensures that all caches are instrumented
  * with the same basic set of metrics while allowing for additional detail that is specific
@@ -47,17 +46,23 @@ public abstract class CacheMeterBinder implements MeterBinder {
 
     @Override
     public final void bindTo(MeterRegistry registry) {
-        Long cacheSize = size();
-        if (cacheSize != null) {
-            Gauge.builder("cache.size", cache.get(), c -> cacheSize)
+        if (size() != null) {
+            Gauge.builder("cache.size", cache.get(),
+                    c -> {
+                        Long size = size();
+                        return size == null ? 0 : size;
+                    })
                     .tags(tags)
                     .description("The number of entries in this cache. This may be an approximation, depending on the type of cache.")
                     .register(registry);
         }
 
-        Long missCount = missCount();
-        if (missCount != null) {
-            FunctionCounter.builder("cache.gets", cache.get(),  c -> missCount)
+        if (missCount() != null) {
+            FunctionCounter.builder("cache.gets", cache.get(),
+                    c -> {
+                        Long misses = missCount();
+                        return misses == null ? 0 : misses;
+                    })
                     .tags(tags).tag("result", "miss")
                     .description("the number of times cache lookup methods have returned an uncached (newly loaded) value, or null")
                     .register(registry);
@@ -73,9 +78,12 @@ public abstract class CacheMeterBinder implements MeterBinder {
                 .description("The number of entries added to the cache")
                 .register(registry);
 
-        Long evictionCount = evictionCount();
-        if (evictionCount != null) {
-            FunctionCounter.builder("cache.evictions", cache.get(), c -> evictionCount)
+        if (evictionCount() != null) {
+            FunctionCounter.builder("cache.evictions", cache.get(),
+                    c -> {
+                        Long evictions = evictionCount();
+                        return evictions == null ? 0 : evictions;
+                    })
                     .tags(tags)
                     .description("cache evictions")
                     .register(registry);
