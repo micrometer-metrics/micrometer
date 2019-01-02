@@ -16,6 +16,7 @@
 package io.micrometer.influx;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 import org.junit.Test;
@@ -49,15 +50,36 @@ public class InfluxMeterRegistryWriteTest {
         timer.record(Duration.ofSeconds(5));
         timer.record(Duration.ofSeconds(1));
         ValueAtPercentile[] percentileValues = timer.takeSnapshot().percentileValues();
-        assertEquals(percentileValues.length, 2);
-        assertEquals(percentileValues[0].percentile(), 0.5, 0);
-        assertEquals(percentileValues[1].percentile(), 0.95, 0);
+        assertEquals(2, percentileValues.length);
+        assertEquals(0.5, percentileValues[0].percentile(), 0);
+        assertEquals(0.95, percentileValues[1].percentile(),  0);
         assertThat(percentileValues[0].value(TimeUnit.SECONDS)) .isEqualTo(1, offset(0.1));
         assertThat(percentileValues[1].value(TimeUnit.SECONDS))
             .isEqualTo(5.0, offset(0.1));
 
         String[] result = doWriteTimer(timer).collect(Collectors.toList()).get(0).split(",");
-        assertEquals(result[0], "test_timer");
+        assertEquals("test_timer", result[0]);
+        assertTrue(result[5].startsWith("phi0.5="));
+        assertTrue(result[6].startsWith("phi0.95="));
+    }
+
+    @Test
+    public void summaryPercentileTest() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        DistributionSummary summary = DistributionSummary.builder("test.summary")
+            .publishPercentiles(0.5, 0.95)
+            .register(registry);
+
+        summary.record(5);
+        summary.record(1);
+        ValueAtPercentile[] percentileValues = summary.takeSnapshot().percentileValues();
+        assertEquals(2, percentileValues.length);
+        assertEquals(0.5, percentileValues[0].percentile(), 0);
+        assertEquals(0.95, percentileValues[1].percentile(),  0);
+        assertEquals(1, percentileValues[0].value(), 0.1);
+        assertEquals(5, percentileValues[1].value(), 0.2);
+
+        String[] result = doWriteSummary(summary).collect(Collectors.toList()).get(0).split(",");
+        assertEquals("test_summary", result[0]);
         assertTrue(result[5].startsWith("phi0.5="));
         assertTrue(result[6].startsWith("phi0.95="));
     }
@@ -70,5 +92,17 @@ public class InfluxMeterRegistryWriteTest {
         Method writeTimer = InfluxMeterRegistry.class.getDeclaredMethod("writeTimer", Timer.class);
         writeTimer.setAccessible(true);
         return (Stream<String>) writeTimer.invoke(registry, timer);
+    }
+
+    /**
+     * Not change the visibility of private method writeSummary, so test it to use reflection
+     */
+    @SuppressWarnings("unchecked")
+    private Stream<String> doWriteSummary(DistributionSummary summary)
+        throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Method writeSummary = InfluxMeterRegistry.class.getDeclaredMethod(
+                            "writeSummary", DistributionSummary.class);
+        writeSummary.setAccessible(true);
+        return (Stream<String>) writeSummary.invoke(registry, summary);
     }
 }
