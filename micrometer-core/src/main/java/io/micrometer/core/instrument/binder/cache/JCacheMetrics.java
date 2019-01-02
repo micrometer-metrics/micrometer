@@ -129,17 +129,19 @@ public class JCacheMetrics extends CacheMeterBinder {
     }
 
     private Long lookupStatistic(String name) {
-        try {
-            List<MBeanServer> mBeanServers = MBeanServerFactory.findMBeanServer(null);
-            for (MBeanServer mBeanServer : mBeanServers) {
-                try {
-                    return (Long) mBeanServer.getAttribute(objectName, name);
-                } catch (AttributeNotFoundException | InstanceNotFoundException ex) {
-                    // did not find MBean, try the next server
+        if (objectName != null) {
+            try {
+                List<MBeanServer> mBeanServers = MBeanServerFactory.findMBeanServer(null);
+                for (MBeanServer mBeanServer : mBeanServers) {
+                    try {
+                        return (Long) mBeanServer.getAttribute(objectName, name);
+                    } catch (AttributeNotFoundException | InstanceNotFoundException ex) {
+                        // did not find MBean, try the next server
+                    }
                 }
+            } catch (MBeanException | ReflectionException ex) {
+                throw new IllegalStateException(ex);
             }
-        } catch (MBeanException | ReflectionException ex) {
-            throw new IllegalStateException(ex);
         }
 
         // didn't find the MBean in any servers

@@ -89,6 +89,7 @@ public class EhCache2Metrics extends CacheMeterBinder {
     @Override
     protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
         Gauge.builder("cache.remoteSize", stats, StatisticsGateway::getRemoteSize)
+                .tags(getTagsWithCacheName())
                 .description("The number of entries held remotely in this cache")
                 .register(registry);
 
@@ -102,7 +103,7 @@ public class EhCache2Metrics extends CacheMeterBinder {
                 .description("Cache puts resulting in a new key/value pair")
                 .register(registry);
 
-        FunctionCounter.builder("cache.puts.added", stats, StatisticsGateway::cachePutAddedCount)
+        FunctionCounter.builder("cache.puts.added", stats, StatisticsGateway::cachePutUpdatedCount)
                 .tags(getTagsWithCacheName()).tags("result", "updated")
                 .description("Cache puts resulting in an updated value")
                 .register(registry);
@@ -112,7 +113,7 @@ public class EhCache2Metrics extends CacheMeterBinder {
         rollbackTransactionMetrics(registry);
         recoveryTransactionMetrics(registry);
 
-        Gauge.builder("cache.local.offheap.size", stats, StatisticsGateway::getLocalOffHeapSize)
+        Gauge.builder("cache.local.offheap.size", stats, StatisticsGateway::getLocalOffHeapSizeInBytes)
                 .tags(getTagsWithCacheName())
                 .description("Local off-heap size")
                 .baseUnit("bytes")
