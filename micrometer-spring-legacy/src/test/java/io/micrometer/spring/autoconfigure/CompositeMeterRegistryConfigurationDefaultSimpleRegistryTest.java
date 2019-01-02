@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = CompositeMeterRegistryConfigurationTest.MetricsApp.class)
 public class CompositeMeterRegistryConfigurationDefaultSimpleRegistryTest {
+    
     @Autowired
-    MeterRegistry registry;
+    private MeterRegistry registry;
 
     /**
      * The simple registry is off by default UNLESS there is no other registry implementation on

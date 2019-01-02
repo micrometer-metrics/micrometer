@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,9 +59,6 @@ public class WebMvcMetricsFilterCustomExceptionHandlerTest {
     private SimpleMeterRegistry registry;
 
     @Autowired
-    private MockClock clock;
-
-    @Autowired
     private MockMvc mvc;
 
     @Test
@@ -116,16 +113,17 @@ public class WebMvcMetricsFilterCustomExceptionHandlerTest {
         }
     }
 
+    @SuppressWarnings("serial")
     static class Exception1 extends RuntimeException {
     }
 
+    @SuppressWarnings("serial")
     static class Exception2 extends RuntimeException {
     }
 
     @ControllerAdvice
     static class CustomExceptionHandler {
 
-        @SuppressWarnings("unused")
         @ExceptionHandler
         ResponseEntity<String> handleError(Exception1 ex) {
             return new ResponseEntity<>("this is a custom exception body",

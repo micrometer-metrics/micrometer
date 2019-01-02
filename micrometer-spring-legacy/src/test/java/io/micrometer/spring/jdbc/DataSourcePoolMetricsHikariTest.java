@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,9 @@ import static java.util.Collections.emptyList;
     "spring.datasource.type=com.zaxxer.hikari.HikariDataSource"
 })
 public class DataSourcePoolMetricsHikariTest {
+    
     @Autowired
-    DataSource dataSource;
-
-    @Autowired
-    MeterRegistry registry;
+    private MeterRegistry registry;
 
     @Test
     public void dataSourceIsInstrumented() {
