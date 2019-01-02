@@ -46,11 +46,12 @@ import static java.util.Collections.emptyList;
     "spring.datasource.type=org.apache.tomcat.jdbc.pool.DataSource"
 })
 public class DataSourcePoolMetricsTest {
+    
     @Autowired
-    DataSource dataSource;
+    private DataSource dataSource;
 
     @Autowired
-    MeterRegistry registry;
+    private MeterRegistry registry;
 
     @Test
     public void dataSourceIsInstrumented() throws SQLException {

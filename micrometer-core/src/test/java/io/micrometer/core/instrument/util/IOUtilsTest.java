@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class IOUtilsTest {
 
     @Test
-    public void testToString() {
+    void testToString() {
         String expected = "This is a sample.";
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(expected.getBytes());
@@ -39,7 +39,7 @@ class IOUtilsTest {
     }
 
     @Test
-    public void testToStringWithCharset() {
+    void testToStringWithCharset() {
         String expected = "This is a sample.";
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));

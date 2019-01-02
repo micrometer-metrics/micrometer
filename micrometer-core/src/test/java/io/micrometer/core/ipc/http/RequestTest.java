@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,11 @@ import static org.mockito.Mockito.mock;
  */
 class RequestTest {
 
+    @SuppressWarnings("unchecked")
     @Test
     void compressShouldAddContentEncodingHeader() throws IOException, NoSuchFieldException, IllegalAccessException {
-        HttpSender.Request.Builder builder = HttpSender.Request.build("https://micrometer.io/", mock(HttpSender.class)).compress();
+        HttpSender sender = mock(HttpSender.class);
+        HttpSender.Request.Builder builder = HttpSender.Request.build("https://micrometer.io/", sender).compress();
         Field requestHeadersField = HttpSender.Request.Builder.class.getDeclaredField("requestHeaders");
         requestHeadersField.setAccessible(true);
         Map<String, String> requestHeaders = (Map<String, String>) requestHeadersField.get(builder);
