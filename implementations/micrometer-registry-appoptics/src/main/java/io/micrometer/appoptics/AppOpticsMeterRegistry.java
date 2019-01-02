@@ -43,6 +43,7 @@ import static java.util.stream.Collectors.joining;
  *
  * @author Hunter Sherman
  * @author Jon Schneider
+ * @author Johnny Lim
  * @since 1.1.0
  */
 public class AppOpticsMeterRegistry extends StepMeterRegistry {
@@ -134,12 +135,22 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
                 .collect(joining(",")));
     }
 
-    private Optional<String> writeGauge(Gauge gauge) {
-        return Optional.of(write(gauge.getId(), "gauge", Fields.Value.tag(), decimal(gauge.value())));
+    // VisibleForTesting
+    Optional<String> writeGauge(Gauge gauge) {
+        double value = gauge.value();
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+            return Optional.empty();
+        }
+        return Optional.of(write(gauge.getId(), "gauge", Fields.Value.tag(), decimal(value)));
     }
 
-    private Optional<String> writeTimeGauge(TimeGauge timeGauge) {
-        return Optional.of(write(timeGauge.getId(), "timeGauge", Fields.Value.tag(), decimal(timeGauge.value(getBaseTimeUnit()))));
+    // VisibleForTesting
+    Optional<String> writeTimeGauge(TimeGauge timeGauge) {
+        double value = timeGauge.value(getBaseTimeUnit());
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+            return Optional.empty();
+        }
+        return Optional.of(write(timeGauge.getId(), "timeGauge", Fields.Value.tag(), decimal(value)));
     }
 
     @Nullable
