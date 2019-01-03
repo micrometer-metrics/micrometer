@@ -15,7 +15,9 @@
  */
 package io.micrometer.cloudwatch;
 
+import com.amazonaws.AbortedException;
 import com.amazonaws.handlers.AsyncHandler;
+import com.amazonaws.http.timers.client.SdkInterruptedException;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
 import com.amazonaws.services.cloudwatch.model.*;
 import io.micrometer.core.instrument.*;
@@ -90,7 +92,11 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         amazonCloudWatchAsync.putMetricDataAsync(putMetricDataRequest, new AsyncHandler<PutMetricDataRequest, PutMetricDataResult>() {
             @Override
             public void onError(Exception exception) {
-                logger.error("error sending metric data.", exception);
+                if (exception instanceof AbortedException) {
+                    logger.warn("sending metric data was aborted: {}", exception.getMessage());
+                } else {
+                    logger.error("error sending metric data.", exception);
+                }
                 latch.countDown();
             }
 
