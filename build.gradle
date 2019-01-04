@@ -10,6 +10,7 @@ buildscript {
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.2.0'
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
+        classpath 'com.diffplug.spotless:spotless-plugin-gradle:3.16.0'
     }
 
     configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
@@ -28,7 +29,7 @@ allprojects {
 
 subprojects {
     apply plugin: 'java'
-    apply plugin: 'checkstyle'
+    apply plugin: 'com.diffplug.gradle.spotless'
 
     dependencyLocking {
         lockAllConfigurations()
@@ -39,7 +40,7 @@ subprojects {
             assert gradle.startParameter.writeDependencyLocks
         }
         doLast {
-            def skip = ['annotationProcessor', 'apt', 'testAnnotationProcessor', 'checkstyle',
+            def skip = ['annotationProcessor', 'apt', 'testAnnotationProcessor', 
                 'shadow', 'testApt', 'archives', 'junitPlatform']
             configurations.each {
                 if (it.canBeResolved && !skip.contains(it.name)) {
@@ -73,16 +74,25 @@ subprojects {
         mavenCentral()
         mavenLocal()
     }
-
-    checkstyle {
-        toolVersion = '8.12'
-        configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+    
+    spotless {
+        java {
+            target project.fileTree(project.rootDir) {
+                include '**/*.java'
+            }
+            importOrder(['com', 'io', 'java', 'javax', 'org'])
+            eclipseFormatFile rootProject.file('config/checkstyle/micrometer-style.xml')
+            trimTrailingWhitespace()
+            removeUnusedImports()
+            custom 'Lambda fix', { it.replace('} )', '})').replace('} ,', '},') }
+            custom 'Remove extra line', { it.replace('\n\n\n', '\n\n') }
+        }
     }
 
     def check = tasks.findByName('check')
     if (check) project.rootProject.tasks.releaseCheck.dependsOn check
 
-    //noinspection GroovyAssignabilityCheck
+    // noinspection GroovyAssignabilityCheck
     test {
         // set heap size for the test JVM(s)
         maxHeapSize = "1500m"
