@@ -79,13 +79,16 @@ subprojects {
         java {
             target project.fileTree(project.rootDir) {
                 include '**/*.java'
+                exclude '**/package-info.java'
             }
-            importOrder(['com', 'io', 'java', 'javax', 'org'])
+            importOrder(['com', 'io', 'org', 'java', 'javax', 'static *'])
             eclipseFormatFile rootProject.file('config/checkstyle/micrometer-style.xml')
+            licenseHeaderFile rootProject.file('config/checkstyle/copyright.txt')
             trimTrailingWhitespace()
             removeUnusedImports()
             custom 'Lambda fix', { it.replace('} )', '})').replace('} ,', '},') }
             custom 'Remove extra line', { it.replace('\n\n\n', '\n\n') }
+            ignoreFormatterProblems=true
         }
     }
 
