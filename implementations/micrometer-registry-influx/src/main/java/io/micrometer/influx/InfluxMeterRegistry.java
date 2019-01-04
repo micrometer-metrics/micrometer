@@ -33,7 +33,10 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.joining;
 
 /**
+ * {@link MeterRegistry} for InfluxDB.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public class InfluxMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("influx-metrics-publisher");
@@ -167,8 +170,9 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return Stream.of(influxLineProtocol(id, "counter", Stream.of(new Field("value", count))));
     }
 
-    private Stream<String> writeGauge(Meter.Id id, Double value) {
-        return value.isNaN() ? Stream.empty() :
+    // VisibleForTesting
+    Stream<String> writeGauge(Meter.Id id, Double value) {
+        return value.isNaN() || value.isInfinite() ? Stream.empty() :
                 Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value))));
     }
 
