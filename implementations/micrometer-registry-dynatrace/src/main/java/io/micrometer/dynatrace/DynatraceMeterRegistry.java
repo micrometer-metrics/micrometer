@@ -136,13 +136,8 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     Stream<DynatraceCustomMetric> writeMeter(Meter meter) {
         final long wallTime = clock.wallTime();
         return StreamSupport.stream(meter.measure().spliterator(), false)
-                .filter(this::isPublishable)
+                .filter(ms -> Double.isFinite(ms.getValue()))
                 .map(ms -> createCustomMetric(meter.getId(), wallTime, ms.getValue()));
-    }
-
-    private boolean isPublishable(Measurement measurement) {
-        double value = measurement.getValue();
-        return !Double.isNaN(value) && !Double.isInfinite(value);
     }
 
     private Stream<DynatraceCustomMetric> writeLongTaskTimer(LongTaskTimer longTaskTimer) {
