@@ -38,7 +38,6 @@ import java.util.stream.StreamSupport;
 
 import static io.micrometer.dynatrace.DynatraceMetricDefinition.DynatraceUnit;
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.joining;
 
 /**
  * {@link StepMeterRegistry} for Dynatrace.
@@ -131,10 +130,12 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private Stream<DynatraceCustomMetric> writeMeter(Meter meter) {
+    // VisibleForTesting
+    Stream<DynatraceCustomMetric> writeMeter(Meter meter) {
         final long wallTime = clock.wallTime();
         return StreamSupport.stream(meter.measure().spliterator(), false)
-                .map(ms -> createCustomMetric(meter.getId(), wallTime, ms.getValue()));
+            .filter(ms -> Double.isFinite(ms.getValue()))
+            .map(ms -> createCustomMetric(meter.getId(), wallTime, ms.getValue()));
     }
 
     private Stream<DynatraceCustomMetric> writeLongTaskTimer(LongTaskTimer longTaskTimer) {
