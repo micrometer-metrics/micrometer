@@ -32,38 +32,41 @@ class TimeWindowFixedBoundaryHistogramTest {
     }
 
     private void assertTailSearch(int search, int expectedIndex, long... buckets) {
-        TimeWindowFixedBoundaryHistogram.FixedBoundaryHistogram hist = new TimeWindowFixedBoundaryHistogram(Clock.SYSTEM,
-                DistributionStatisticConfig.builder().sla(buckets).build()
-                    .merge(DistributionStatisticConfig.DEFAULT), false).newBucket();
-        assertThat(hist.leastLessThanOrEqualTo(search)).isEqualTo(expectedIndex);
+        DistributionStatisticConfig statisticConfig = DistributionStatisticConfig.builder().sla(buckets).build();
+        try (TimeWindowFixedBoundaryHistogram histogram = new TimeWindowFixedBoundaryHistogram(Clock.SYSTEM,
+                statisticConfig.merge(DistributionStatisticConfig.DEFAULT), false)) {
+            TimeWindowFixedBoundaryHistogram.FixedBoundaryHistogram bucket = histogram.newBucket();
+            assertThat(bucket.leastLessThanOrEqualTo(search)).isEqualTo(expectedIndex);
+        }
     }
 
     @Test
     void histogramsAreCumulative() {
-        TimeWindowFixedBoundaryHistogram histogram = new TimeWindowFixedBoundaryHistogram(new MockClock(),
+        try (TimeWindowFixedBoundaryHistogram histogram = new TimeWindowFixedBoundaryHistogram(new MockClock(),
                 DistributionStatisticConfig.builder()
                         .sla(3, 6, 7)
                         .bufferLength(1)
                         .build()
-                        .merge(DistributionStatisticConfig.DEFAULT), false);
+                        .merge(DistributionStatisticConfig.DEFAULT), false)) {
 
-        histogram.recordDouble(3);
-
-        assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
-                new CountAtBucket(3, 1),
-                new CountAtBucket(6, 1),
-                new CountAtBucket(7, 1));
-
-        histogram.recordDouble(6);
-
-        histogram.recordDouble(7);
-
-        // Proves that the accumulated histogram is truly cumulative, and not just a representation
-        // of the last snapshot
-        assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
-                new CountAtBucket(3, 1),
-                new CountAtBucket(6, 2),
-                new CountAtBucket(7, 3)
-        );
+            histogram.recordDouble(3);
+    
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
+                    new CountAtBucket(3, 1),
+                    new CountAtBucket(6, 1),
+                    new CountAtBucket(7, 1));
+    
+            histogram.recordDouble(6);
+    
+            histogram.recordDouble(7);
+    
+            // Proves that the accumulated histogram is truly cumulative, and not just a representation
+            // of the last snapshot
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
+                    new CountAtBucket(3, 1),
+                    new CountAtBucket(6, 2),
+                    new CountAtBucket(7, 3)
+            );
+        }
     }
 }

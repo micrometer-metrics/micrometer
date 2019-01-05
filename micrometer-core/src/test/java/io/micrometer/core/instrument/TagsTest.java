@@ -17,6 +17,7 @@ package io.micrometer.core.instrument;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
@@ -73,6 +74,38 @@ class TagsTest {
     void createsListWithSingleTag() {
         Iterable<Tag> tags = Tags.of("k1", "v1");
         assertThat(tags).containsExactly(Tag.of("k1", "v1"));
+    }
+
+    @Test
+    void nullTagIterableShouldProduceEmptyTags() {
+        assertThat(Tags.of((Iterable<Tag>) null)).isSameAs(Tags.empty());
+    }
+
+    @Test
+    void nullKeyValueArrayShouldProduceEmptyTags() {
+        assertThat(Tags.of((String[]) null)).isSameAs(Tags.empty());
+    }
+
+    @Test
+    void nullTagArrayShouldProduceEmptyTags() {
+        assertThat(Tags.of((Tag[]) null)).isSameAs(Tags.empty());
+    }
+
+    @Test
+    void emptyTagIterableShouldProduceEmptyTags() {
+        assertThat(Tags.of(new ArrayList<>())).isSameAs(Tags.empty());
+    }
+
+    @Test
+    void emptyKeyValueArrayShouldProduceEmptyTags() {
+        String[] emptyStrings = {};
+        assertThat(Tags.of(emptyStrings)).isSameAs(Tags.empty());
+    }
+
+    @Test
+    void emptyTagArrayShouldProduceEmptyTags() {
+        Tag[] emptyTags = {};
+        assertThat(Tags.of(emptyTags)).isSameAs(Tags.empty());
     }
 
     @Test

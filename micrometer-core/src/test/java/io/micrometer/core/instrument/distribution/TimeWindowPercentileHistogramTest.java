@@ -26,74 +26,82 @@ import static io.micrometer.core.instrument.util.TimeUtils.secondsToUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TimeWindowPercentileHistogramTest {
+    
     @Test
     void histogramsAreCumulative() {
-        TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
+        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
                 DistributionStatisticConfig.builder()
                         .sla(3, 6, 7)
                         .build()
-                        .merge(DistributionStatisticConfig.DEFAULT), false);
+                        .merge(DistributionStatisticConfig.DEFAULT), false)) {
 
-        histogram.recordDouble(3);
-
-        assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
-                new CountAtBucket(3, 1),
-                new CountAtBucket(6, 1),
-                new CountAtBucket(7, 1));
-
-        histogram.recordDouble(6);
-
-        // Proves that the accumulated histogram is truly cumulative, and not just a representation
-        // of the last snapshot
-        assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
-                new CountAtBucket(3, 1),
-                new CountAtBucket(6, 2),
-                new CountAtBucket(7, 2)
-        );
+            histogram.recordDouble(3);
+    
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
+                    new CountAtBucket(3, 1),
+                    new CountAtBucket(6, 1),
+                    new CountAtBucket(7, 1));
+    
+            histogram.recordDouble(6);
+    
+            // Proves that the accumulated histogram is truly cumulative, and not just a representation
+            // of the last snapshot
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
+                    new CountAtBucket(3, 1),
+                    new CountAtBucket(6, 2),
+                    new CountAtBucket(7, 2)
+            );
+        }
     }
 
     @Test
     void sampleValueAboveMaximumExpectedValue() {
-        TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(), DistributionStatisticConfig.builder()
+        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(), DistributionStatisticConfig.builder()
                 .sla(3)
                 .maximumExpectedValue(2L)
                 .build()
-                .merge(DistributionStatisticConfig.DEFAULT), false);
-        histogram.recordDouble(3);
-        assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(3, 1));
+                .merge(DistributionStatisticConfig.DEFAULT), false)) {
+            
+            histogram.recordDouble(3);
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(3, 1));
+        }
     }
 
     @Test
     void recordValuesThatExceedTheDynamicRange() {
-        TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(), DistributionStatisticConfig.builder()
-                .sla(Long.MAX_VALUE)
-                .build()
-                .merge(DistributionStatisticConfig.DEFAULT), false);
+        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
+                DistributionStatisticConfig.builder().sla(Long.MAX_VALUE).build()
+                        .merge(DistributionStatisticConfig.DEFAULT),
+                false)) {
 
-        // Regardless of the imputed dynamic bound for the underlying histogram, Double.MAX_VALUE is always too large.
-        histogram.recordDouble(Double.MAX_VALUE);
+            // Regardless of the imputed dynamic bound for the underlying histogram, Double.MAX_VALUE is always too
+            // large.
+            histogram.recordDouble(Double.MAX_VALUE);
 
-        assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(new CountAtBucket(Long.MAX_VALUE, 0));
+            assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts())
+                    .containsExactly(new CountAtBucket(Long.MAX_VALUE, 0));
+        }
     }
 
     @Test
     void percentiles() {
-        TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
+        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
                 DistributionStatisticConfig.builder()
                         .percentiles(0.5, 0.9, 0.95)
                         .minimumExpectedValue((long) millisToUnit(1, TimeUnit.NANOSECONDS))
                         .maximumExpectedValue((long) secondsToUnit(30, TimeUnit.NANOSECONDS))
                         .build()
-                        .merge(DistributionStatisticConfig.DEFAULT), false);
+                        .merge(DistributionStatisticConfig.DEFAULT), false)) {
 
-        for (long i = 1; i <= 10; i++) {
-            histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
+            for (long i = 1; i <= 10; i++) {
+                histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
+            }
+    
+            assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())
+                    .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 5e6))
+                    .anyMatch(p -> percentileValueIsApproximately(p, 0.9, 9e6))
+                    .anyMatch(p -> percentileValueIsApproximately(p, 0.95, 10e6));
         }
-
-        assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())
-                .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 5e6))
-                .anyMatch(p -> percentileValueIsApproximately(p, 0.9, 9e6))
-                .anyMatch(p -> percentileValueIsApproximately(p, 0.95, 10e6));
     }
 
     @Test
@@ -103,12 +111,13 @@ class TimeWindowPercentileHistogramTest {
                 .build()
                 .merge(DistributionStatisticConfig.DEFAULT);
 
-        TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
-                config, false);
+        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
+                config, false)) {
 
-        assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues()).containsExactly(
-                new ValueAtPercentile(0.5, 0)
-        );
+            ValueAtPercentile expectedPercentile = new ValueAtPercentile(0.5, 0);
+            HistogramSnapshot snapshot = histogram.takeSnapshot(0, 0, 0);
+            assertThat(snapshot.percentileValues()).containsExactly(expectedPercentile);
+        }
     }
 
     @Test
@@ -118,24 +127,25 @@ class TimeWindowPercentileHistogramTest {
                 .build()
                 .merge(DistributionStatisticConfig.DEFAULT);
 
-        TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
-                config, false);
+        try (TimeWindowPercentileHistogram histogram = new TimeWindowPercentileHistogram(new MockClock(),
+                config, false)) {
 
-        for (int i = 1; i <= 10; i++) {
-            histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
+            for (int i = 1; i <= 10; i++) {
+                histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
+            }
+    
+            // baseline median
+            assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())
+                    .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 5e6));
+    
+            for (int i = 11; i <= 20; i++) {
+                histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
+            }
+    
+            // median should have moved after seeing 10 more samples
+            assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())
+                    .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 10e6));
         }
-
-        // baseline median
-        assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())
-                .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 5e6));
-
-        for (int i = 11; i <= 20; i++) {
-            histogram.recordLong((long) millisToUnit(i, TimeUnit.NANOSECONDS));
-        }
-
-        // median should have moved after seeing 10 more samples
-        assertThat(histogram.takeSnapshot(0, 0, 0).percentileValues())
-                .anyMatch(p -> percentileValueIsApproximately(p, 0.5, 10e6));
     }
 
     private boolean percentileValueIsApproximately(ValueAtPercentile vp, double percentile, double nanos) {

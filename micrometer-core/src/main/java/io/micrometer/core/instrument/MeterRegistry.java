@@ -53,6 +53,7 @@ import static java.util.Objects.requireNonNull;
  * thread, e.g. it should respond immediately by avoiding IO call, deep stack recursion or any coordination.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public abstract class MeterRegistry {
     protected final Clock clock;
@@ -658,6 +659,15 @@ public abstract class MeterRegistry {
         }
 
         return null;
+    }
+
+    /**
+     * Clear all meters.
+     * @since 1.2.0
+     */
+    @Incubating(since = "1.2.0")
+    public void clear() {
+        meterMap.keySet().forEach(this::remove);
     }
 
     /**
