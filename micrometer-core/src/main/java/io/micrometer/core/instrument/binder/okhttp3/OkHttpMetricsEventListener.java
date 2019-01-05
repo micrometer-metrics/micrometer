@@ -41,6 +41,7 @@ import java.util.function.Function;
  *
  * @author Bjarte S. Karlsen
  * @author Jon Schneider
+ * @author Nurettin Yilmaz
  */
 @NonNullApi
 @NonNullFields
@@ -100,15 +101,20 @@ public class OkHttpMetricsEventListener extends EventListener {
     }
 
     private void time(CallState state) {
+        Request request = state.request;
+        boolean requestAvailable = request != null;
+
         String uri = state.response == null ? "UNKNOWN" :
-            (state.response.code() == 404 || state.response.code() == 301 ? "NOT_FOUND" : urlMapper.apply(state.request));
+            (state.response.code() == 404 || state.response.code() == 301 ? "NOT_FOUND" : urlMapper.apply(request));
+
+        Tags dynamicTags = requestAvailable ? request.tag(Tags.class) : Tags.empty();
 
         Iterable<Tag> tags = Tags.concat(extraTags, Tags.of(
-            "method", state.request != null ? state.request.method() : "UNKNOWN",
+            "method", requestAvailable ? request.method() : "UNKNOWN",
             "uri", uri,
             "status", getStatusMessage(state.response, state.exception),
-            "host", state.request != null ? state.request.url().host() : "UNKNOWN"
-        ));
+            "host", requestAvailable ? request.url().host() : "UNKNOWN"
+        )).and(dynamicTags);
 
         Timer.builder(this.requestsMetricName)
             .tags(tags)
