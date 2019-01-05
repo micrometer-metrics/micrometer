@@ -13,38 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.util;
+package io.micrometer.core.instrument.noop;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
+import io.micrometer.core.instrument.Meter.Id;
+import io.micrometer.core.instrument.Meter.Type;
+import io.micrometer.core.instrument.Tags;
 
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link IOUtils}.
+ * Tests for {@link NoopGauge}.
  *
- * @author Johnny Lim
+ * @author Oleksii Bondar
  */
-class IOUtilsTest {
+class NoopGaugeTest {
+
+    private Id id = new Id("test", Tags.of("name", "value"), "entries", "", Type.GAUGE);
+    private NoopGauge gauge = new NoopGauge(id);
 
     @Test
-    void testToString() {
-        String expected = "This is a sample.";
-
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(expected.getBytes());
-
-        assertThat(IOUtils.toString(inputStream)).isEqualTo(expected);
+    void returnsId() {
+        assertThat(gauge.getId()).isEqualTo(id);
     }
 
     @Test
-    void testToStringWithCharset() {
-        String expected = "This is a sample.";
-
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));
-
-        assertThat(IOUtils.toString(inputStream, StandardCharsets.UTF_8)).isEqualTo(expected);
+    void returnsValueAsZero() {
+        assertThat(gauge.value()).isEqualTo(0.);
     }
-
 }

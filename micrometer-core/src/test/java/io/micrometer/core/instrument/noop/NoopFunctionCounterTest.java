@@ -13,38 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.util;
+package io.micrometer.core.instrument.noop;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
+import io.micrometer.core.instrument.Meter.Id;
+import io.micrometer.core.instrument.Meter.Type;
+import io.micrometer.core.instrument.Tags;
 
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link IOUtils}.
+ * Tests for {@link NoopFunctionCounter}.
  *
- * @author Johnny Lim
+ * @author Oleksii Bondar
  */
-class IOUtilsTest {
+class NoopFunctionCounterTest {
+
+    private Id id = new Id("test", Tags.of("name", "value"), "entries", "", Type.COUNTER);
+    private NoopFunctionCounter counter = new NoopFunctionCounter(id);
 
     @Test
-    void testToString() {
-        String expected = "This is a sample.";
-
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(expected.getBytes());
-
-        assertThat(IOUtils.toString(inputStream)).isEqualTo(expected);
+    void returnsId() {
+        assertThat(counter.getId()).isEqualTo(id);
     }
 
     @Test
-    void testToStringWithCharset() {
-        String expected = "This is a sample.";
-
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8));
-
-        assertThat(IOUtils.toString(inputStream, StandardCharsets.UTF_8)).isEqualTo(expected);
+    void returnsCountAsZero() {
+        assertThat(counter.count()).isEqualTo(0l);
     }
-
 }

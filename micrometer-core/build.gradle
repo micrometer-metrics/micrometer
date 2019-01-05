@@ -30,11 +30,15 @@ dependencies {
     compile 'org.hibernate:hibernate-entitymanager:latest.release', optional
 
     // server runtime monitoring
-    compile 'org.eclipse.jetty:jetty-server:latest.release', optional
+    // 9.4+ are incompatible with the latest version of wiremock as of 1/4/2019
+    compile 'org.eclipse.jetty:jetty-server:9.2.+', optional
     compile 'org.apache.tomcat.embed:tomcat-embed-core:8.+', optional
 
     // hystrix monitoring
-    compile 'com.netflix.hystrix:hystrix-core:latest.release', optional
+    // metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
+    // in hystrix 1.5.12, but Netflix re-released 1.5.11 as 1.5.18 late in 2018.
+    // <=1.5.11 or 1.5.18 doesn't break with Micrometer, but open metrics won't be correct necessarily.
+    compile 'com.netflix.hystrix:hystrix-core:1.5.12', optional
 
     // log monitoring
     compile 'ch.qos.logback:logback-classic:1.2.+', optional
@@ -52,12 +56,12 @@ dependencies {
     testCompile 'io.projectreactor:reactor-test:latest.release'
 
     // JUnit 5
-    testCompile 'org.junit.jupiter:junit-jupiter-api:5.+'
-    testCompile 'org.junit.jupiter:junit-jupiter-params:5.+'
-    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.+'
+    testCompile 'org.junit.jupiter:junit-jupiter-api:latest.release'
+    testCompile 'org.junit.jupiter:junit-jupiter-params:latest.release'
+    testRuntime 'org.junit.jupiter:junit-jupiter-engine:latest.release'
 
     // Eclipse still needs this (as of 4.7.1a)
-    testRuntime 'org.junit.platform:junit-platform-launcher:1.+'
+    testRuntime 'org.junit.platform:junit-platform-launcher:latest.release'
 
     testCompile 'org.mockito:mockito-core:latest.release'
 

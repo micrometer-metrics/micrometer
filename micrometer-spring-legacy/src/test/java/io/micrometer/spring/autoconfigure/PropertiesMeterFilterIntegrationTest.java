@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class PropertiesMeterFilterIntegrationTest {
     static class MetricsApp {
         @Bean
         @Order(Ordered.HIGHEST_PRECEDENCE)
-        public MeterRegistryCustomizer meterFilter() {
+        public MeterRegistryCustomizer<?> meterFilter() {
             return r -> r.config().meterFilter(MeterFilter.deny(id -> id.getName().contains("my.timer")));
         }
     }

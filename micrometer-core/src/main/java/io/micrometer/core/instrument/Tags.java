@@ -218,7 +218,6 @@ public final class Tags implements Iterable<Tag> {
         } else if (tags instanceof Tags) {
             return (Tags) tags;
         } else if (tags instanceof Collection) {
-            @SuppressWarnings("unchecked")
             Collection<? extends Tag> tagsCollection = (Collection<? extends Tag>) tags;
             return new Tags(tagsCollection.toArray(new Tag[0]));
         } else {

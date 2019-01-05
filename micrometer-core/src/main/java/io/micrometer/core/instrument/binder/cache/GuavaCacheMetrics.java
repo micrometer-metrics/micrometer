@@ -44,7 +44,7 @@ public class GuavaCacheMetrics extends CacheMeterBinder {
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see com.google.common.cache.CacheStats
      */
-    public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
+    public static <C extends Cache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
         return monitor(registry, cache, cacheName, Tags.of(tags));
     }
 
@@ -60,7 +60,7 @@ public class GuavaCacheMetrics extends CacheMeterBinder {
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see com.google.common.cache.CacheStats
      */
-    public static <C extends Cache> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
+    public static <C extends Cache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
         new GuavaCacheMetrics(cache, cacheName, tags).bindTo(registry);
         return cache;
     }

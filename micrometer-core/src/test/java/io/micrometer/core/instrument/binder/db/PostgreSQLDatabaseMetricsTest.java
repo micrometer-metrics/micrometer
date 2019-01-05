@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@ package io.micrometer.core.instrument.binder.db;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.Test;
 
 import javax.sql.DataSource;
+
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -27,16 +28,16 @@ import static org.mockito.Mockito.mock;
 /**
  * @author Kristof Depypere
  */
-public class PostgreSQLDatabaseMetricsTest {
+class PostgreSQLDatabaseMetricsTest {
     private static final String DATABASE_NAME = "test";
     private static final String FUNCTIONAL_COUNTER_KEY = "key";
     private DataSource dataSource = mock(DataSource.class);
     private MeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
-    public void shouldRegisterPostesMetrics() {
-        PostgreSQLDatabaseMetrics postgreSQLDatabaseMetrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
-        postgreSQLDatabaseMetrics.bindTo(registry);
+    void shouldRegisterPostgreSqlMetrics() {
+        PostgreSQLDatabaseMetrics metrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
+        metrics.bindTo(registry);
 
         registry.get("postgres.size").tag("database", DATABASE_NAME).gauge();
         registry.get("postgres.connections").tag("database", DATABASE_NAME).gauge();
@@ -62,33 +63,33 @@ public class PostgreSQLDatabaseMetricsTest {
     }
 
     @Test
-    public void shouldBridgePgStatReset() {
-        PostgreSQLDatabaseMetrics postgreSQLDatabaseMetrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
-        postgreSQLDatabaseMetrics.bindTo(registry);
+    void shouldBridgePgStatReset() {
+        PostgreSQLDatabaseMetrics metrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
+        metrics.bindTo(registry);
 
-        postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
-        postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 10);
+        metrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
+        metrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 10);
 
-        //first reset
-        Double result = postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
+        // first reset
+        Double result = metrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
 
-        //then
+        // then
         assertThat(result).isEqualTo(15);
     }
 
     @Test
-    public void shouldBridgeDoublePgStatReset() {
-        PostgreSQLDatabaseMetrics postgreSQLDatabaseMetrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
-        postgreSQLDatabaseMetrics.bindTo(registry);
+    void shouldBridgeDoublePgStatReset() {
+        PostgreSQLDatabaseMetrics metrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
+        metrics.bindTo(registry);
 
-        postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
-        postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 10);
+        metrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 5);
+        metrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 10);
 
-        //first reset
-        postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 3);
+        // first reset
+        metrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 3);
 
-        //second reset
-        Double result = postgreSQLDatabaseMetrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 1);
+        // second reset
+        Double result = metrics.resettableFunctionalCounter(FUNCTIONAL_COUNTER_KEY, () -> 1);
 
         assertThat(result).isEqualTo(14);
     }
