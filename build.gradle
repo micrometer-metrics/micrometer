@@ -88,7 +88,6 @@ subprojects {
             removeUnusedImports()
             custom 'Lambda fix', { it.replace('} )', '})').replace('} ,', '},') }
             custom 'Remove extra line', { it.replace('\n\n\n', '\n\n') }
-            ignoreFormatterProblems=true
         }
     }
 
