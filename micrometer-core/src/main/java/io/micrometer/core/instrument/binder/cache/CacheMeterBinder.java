@@ -23,7 +23,6 @@ import io.micrometer.core.lang.Nullable;
 
 import java.lang.ref.WeakReference;
 
-
 /**
  * A common base class for cache metrics that ensures that all caches are instrumented
  * with the same basic set of metrics while allowing for additional detail that is specific
