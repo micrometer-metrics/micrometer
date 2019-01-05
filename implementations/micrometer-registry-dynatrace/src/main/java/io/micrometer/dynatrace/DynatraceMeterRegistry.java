@@ -132,9 +132,11 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private Stream<DynatraceCustomMetric> writeMeter(Meter meter) {
+    // VisibleForTesting
+    Stream<DynatraceCustomMetric> writeMeter(Meter meter) {
         final long wallTime = clock.wallTime();
         return StreamSupport.stream(meter.measure().spliterator(), false)
+                .filter(ms -> Double.isFinite(ms.getValue()))
                 .map(ms -> createCustomMetric(meter.getId(), wallTime, ms.getValue()));
     }
 
