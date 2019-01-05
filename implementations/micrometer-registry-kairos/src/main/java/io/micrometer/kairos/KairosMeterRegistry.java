@@ -144,12 +144,12 @@ public class KairosMeterRegistry extends StepMeterRegistry {
 
     Stream<String> writeGauge(Gauge gauge) {
         Double value = gauge.value();
-        return (value.isNaN() || value.isInfinite()) ? Stream.empty() : Stream.of(writeMetric(gauge.getId(), config().clock().wallTime(), value));
+        return !Double.isFinite(value) ? Stream.empty() : Stream.of(writeMetric(gauge.getId(), config().clock().wallTime(), value));
     }
 
     Stream<String> writeTimeGauge(TimeGauge timeGauge) {
         Double value = timeGauge.value(getBaseTimeUnit());
-        return (value.isNaN() || value.isInfinite()) ? Stream.empty() : Stream.of(writeMetric(timeGauge.getId(), config().clock().wallTime(), value));
+        return !Double.isFinite(value) ? Stream.empty() : Stream.of(writeMetric(timeGauge.getId(), config().clock().wallTime(), value));
     }
 
     Stream<String> writeLongTaskTimer(LongTaskTimer timer) {

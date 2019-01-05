@@ -129,7 +129,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         private Stream<MetricDatum> gaugeData(Gauge gauge) {
             double value = gauge.value();
-            if (Double.isNaN(value) || Double.isInfinite(value))
+            if (!Double.isFinite(value))
                 return Stream.empty();
             return Stream.of(metricDatum(gauge.getId(), "value", value));
         }
@@ -168,7 +168,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         private Stream<MetricDatum> timeGaugeData(TimeGauge gauge) {
             double value = gauge.value(getBaseTimeUnit());
-            if (Double.isNaN(value) || Double.isInfinite(value))
+            if (!Double.isFinite(value))
                 return Stream.empty();
             return Stream.of(metricDatum(gauge.getId(), "value", value));
         }
