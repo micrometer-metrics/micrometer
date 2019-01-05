@@ -40,6 +40,7 @@ import static org.assertj.core.api.Assertions.fail;
  * @author Bjarte S. Karlsen
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Nurettin Yilmaz
  */
 @ExtendWith(WiremockResolver.class)
 class OkHttpMetricsEventListenerTest {
@@ -139,6 +140,28 @@ class OkHttpMetricsEventListenerTest {
 
         assertThat(registry.get("okhttp.requests")
                 .tags("foo", "bar", "uri", "/helloworld.txt", "status", "200")
+                .timer().count()).isEqualTo(1L);
+    }
+
+    @Test
+    void addDynamicTags(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+        server.stubFor(any(anyUrl()));
+        OkHttpClient client = new OkHttpClient.Builder()
+                .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+                        .uriMapper(req -> req.url().encodedPath())
+                        .tags(Tags.of("foo", "bar"))
+                        .build())
+                .build();
+
+        Request request = new Request.Builder()
+                .url(server.baseUrl() + "/helloworld.txt")
+                .tag(Tags.class, Tags.of("dynamicTag1", "tagValue1"))
+                .build();
+
+        client.newCall(request).execute().close();
+
+        assertThat(registry.get("okhttp.requests")
+                .tags("foo", "bar", "uri", "/helloworld.txt", "status", "200", "dynamicTag1", "tagValue1")
                 .timer().count()).isEqualTo(1L);
     }
 }
