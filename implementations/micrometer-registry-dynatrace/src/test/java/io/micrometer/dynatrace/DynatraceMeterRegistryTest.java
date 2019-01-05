@@ -15,6 +15,7 @@
  */
 package io.micrometer.dynatrace;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Tags;
@@ -24,9 +25,12 @@ import io.micrometer.core.ipc.http.HttpSender;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -173,6 +177,20 @@ class DynatraceMeterRegistryTest {
         assertThat(meterRegistry.writeMeter(timeGauge)).isEmpty();
     }
 
+    @Test
+    void writeCustomMetrics() {
+        meterRegistry.gauge("my.gauge", 1d);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Stream<DynatraceMeterRegistry.DynatraceCustomMetric> series = meterRegistry.writeMeter(gauge);
+        List<DynatraceTimeSeries> timeSeries = series
+            .map(DynatraceMeterRegistry.DynatraceCustomMetric::getTimeSeries)
+            .collect(Collectors.toList());
+        List<Tuple<String, Integer>> entries = meterRegistry.createPostMessages("my.type", timeSeries);
+        assertThat(entries).hasSize(1);
+        assertThat(entries.get(0).y).isEqualTo(1);
+        assertThat(isJSONValid(entries.get(0).x)).isEqualTo(true);
+    }
+
     private DynatraceMeterRegistry createMeterRegistry() {
         DynatraceConfig config = new DynatraceConfig() {
             @Override
@@ -198,6 +216,16 @@ class DynatraceMeterRegistryTest {
         return DynatraceMeterRegistry.builder(config)
             .httpClient(request -> new HttpSender.Response(200, null))
             .build();
+    }
+
+    private static boolean isJSONValid(String jsonInString ) {
+        try {
+            final ObjectMapper mapper = new ObjectMapper();
+            mapper.readTree(jsonInString);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 }

@@ -249,7 +249,8 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private List<Tuple<String, Integer>> createPostMessages(String type, List<DynatraceTimeSeries> timeSeries) {
+    // VisibleForTesting
+    List<Tuple<String, Integer>> createPostMessages(String type, List<DynatraceTimeSeries> timeSeries) {
         final StringBuilder sb = new StringBuilder(1024);
         sb.append("{\"type\":\"").append(type).append('\"')
                 .append(",\"series\":[");
