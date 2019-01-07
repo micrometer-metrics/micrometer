@@ -81,9 +81,9 @@ subprojects {
                 include '**/*.java'
                 exclude '**/package-info.java'
             }
-            importOrder 'cern', 'com', 'io', 'org', 'reactor', 'java', 'javax', 'static *'
-            eclipse().configFile 'config/checkstyle/micrometer-style.xml'
-            licenseHeaderFile rootProject.file('config/checkstyle/copyright.txt')
+            importOrder 'cern', 'com', 'io', 'info', 'org', 'reactor', 'java', 'javax', 'static *'
+			eclipseFormatFile rootProject.file('config/spotless/micrometer-format.xml')
+            licenseHeaderFile rootProject.file('config/spotless/copyright.txt')
             trimTrailingWhitespace()
             removeUnusedImports()
             custom 'Lambda fix', { it.replace('} )', '})').replace('} ,', '},') }
