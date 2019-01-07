@@ -15,6 +15,12 @@
  */
 package io.micrometer.statsd;
 
+/**
+ * Protocol for StatsD.
+ *
+ * @author Soroosh Sarabadani
+ * @since 1.2.0
+ */
 public enum StatsdProtocol {
     UDP,
     TCP
