@@ -40,10 +40,11 @@ import static java.util.stream.StreamSupport.stream;
  *
  * @author Dhaval Doshi
  * @author Jon Schneider
+ * @since 1.1.0
  */
 public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("azure-metrics-publisher");
-    private static final String SDKTELEMETRY_SYNTHETIC_SOURCENAME = "SDKTelemetry";
+    private static final String SDK_TELEMETRY_SYNTHETIC_SOURCE_NAME = "SDKTelemetry";
     private static final String SDK_VERSION = "java:micrometer";
 
     private final Logger logger = LoggerFactory.getLogger(AzureMonitorMeterRegistry.class);
@@ -66,7 +67,7 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
             telemetryConfiguration.setInstrumentationKey(config.instrumentationKey());
         }
 
-        this.client = new TelemetryClient(telemetryConfiguration);
+        client = new TelemetryClient(telemetryConfiguration);
         client.getContext().getInternal().setSdkVersion(SDK_VERSION);
 
         start(threadFactory);
@@ -103,7 +104,7 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
                 } catch (Throwable e) {
                     logger.warn("failed to track metric {} in azure monitor", meter.getId());
                     TraceTelemetry traceTelemetry = new TraceTelemetry("failed to track metric " + meter.getId());
-                    traceTelemetry.getContext().getOperation().setSyntheticSource(SDKTELEMETRY_SYNTHETIC_SOURCENAME);
+                    traceTelemetry.getContext().getOperation().setSyntheticSource(SDK_TELEMETRY_SYNTHETIC_SOURCE_NAME);
                     traceTelemetry.setSeverityLevel(SeverityLevel.Warning);
                     client.trackTrace(traceTelemetry);
                     client.flush();

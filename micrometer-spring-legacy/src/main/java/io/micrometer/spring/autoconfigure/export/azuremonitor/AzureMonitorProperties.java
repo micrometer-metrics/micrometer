@@ -19,9 +19,10 @@ import io.micrometer.spring.autoconfigure.export.properties.StepRegistryProperti
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * {@link ConfigurationProperties} for configuring Azure Application Insights metrics export.
+ * {@link ConfigurationProperties} for configuring Azure Monitor metrics export.
  *
  * @author Dhaval Doshi
+ * @since 1.1.0
  */
 @ConfigurationProperties(prefix = "management.metrics.export.azuremonitor")
 public class AzureMonitorProperties extends StepRegistryProperties {
