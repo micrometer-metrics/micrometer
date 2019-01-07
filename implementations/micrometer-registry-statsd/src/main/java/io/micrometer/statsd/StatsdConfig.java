@@ -81,6 +81,7 @@ public interface StatsdConfig extends MeterRegistryConfig {
 
     /**
      * @return the protocol of the connection to the agent
+     * @since 1.2.0
      */
     default StatsdProtocol protocol() {
         final String v = get(prefix() + ".protocol");
