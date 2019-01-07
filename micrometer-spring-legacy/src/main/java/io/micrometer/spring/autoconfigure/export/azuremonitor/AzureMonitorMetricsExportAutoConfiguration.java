@@ -36,9 +36,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 /**
- * Auto-Configuration for exporting metrics to Azure Application Insights
+ * Auto-configuration for exporting metrics to Azure Monitor.
  *
  * @author Dhaval Doshi
+ * @since 1.1.0
  */
 @Configuration
 @AutoConfigureBefore({CompositeMeterRegistryAutoConfiguration.class,
@@ -53,7 +54,7 @@ public class AzureMonitorMetricsExportAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public AzureMonitorConfig azureConfig(AzureMonitorProperties properties) {
+    public AzureMonitorConfig azureMonitorConfig(AzureMonitorProperties properties) {
         return new AzureMonitorPropertiesConfigAdapter(properties);
     }
 
