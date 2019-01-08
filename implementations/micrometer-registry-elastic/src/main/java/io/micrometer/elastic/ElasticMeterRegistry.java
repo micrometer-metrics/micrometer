@@ -169,16 +169,21 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeCounter(Counter counter) {
-        return Optional.of(writeDocument(counter, builder -> {
-            builder.append(",\"count\":").append(counter.count());
-        }));
+        return writeCounter(counter, counter.count());
     }
 
     // VisibleForTesting
     Optional<String> writeFunctionCounter(FunctionCounter counter) {
-        return Optional.of(writeDocument(counter, builder -> {
-            builder.append(",\"count\":").append(counter.count());
-        }));
+        return writeCounter(counter, counter.count());
+    }
+
+    private Optional<String> writeCounter(Meter meter, Double value) {
+        if (Double.isFinite(value)) {
+            return Optional.of(writeDocument(meter, builder -> {
+                builder.append(",\"count\":").append(value);
+            }));
+        }
+        return Optional.empty();
     }
 
     // VisibleForTesting
