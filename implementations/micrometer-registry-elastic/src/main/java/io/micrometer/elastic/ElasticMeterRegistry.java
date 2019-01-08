@@ -55,7 +55,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     private final ElasticConfig config;
     private final HttpSender httpClient;
 
-    private boolean checkedForIndexTemplate = false;
+    private volatile boolean checkedForIndexTemplate = false;
 
     @SuppressWarnings("deprecation")
     public ElasticMeterRegistry(ElasticConfig config, Clock clock) {
