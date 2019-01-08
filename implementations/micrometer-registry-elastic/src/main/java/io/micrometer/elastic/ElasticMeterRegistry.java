@@ -123,23 +123,27 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try {
+                String jsonContent = batch.stream()
+                    .map(m -> m.match(
+                        this::writeGauge,
+                        this::writeCounter,
+                        this::writeTimer,
+                        this::writeSummary,
+                        this::writeLongTaskTimer,
+                        this::writeTimeGauge,
+                        this::writeFunctionCounter,
+                        this::writeFunctionTimer,
+                        this::writeMeter))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(joining("\n", "", "\n"));
+
+                logger.trace("Sending metrics json to elastic: {}", jsonContent);
+
                 httpClient
                         .post(config.host() + "/" + indexName() + "/doc/_bulk")
                         .withBasicAuthentication(config.userName(), config.password())
-                        .withJsonContent(batch.stream()
-                                .map(m -> m.match(
-                                        this::writeGauge,
-                                        this::writeCounter,
-                                        this::writeTimer,
-                                        this::writeSummary,
-                                        this::writeLongTaskTimer,
-                                        this::writeTimeGauge,
-                                        this::writeFunctionCounter,
-                                        this::writeFunctionTimer,
-                                        this::writeMeter))
-                                .filter(Optional::isPresent)
-                                .map(Optional::get)
-                                .collect(joining("\n", "", "\n")))
+                        .withJsonContent(jsonContent)
                         .send()
                         .onSuccess(response -> {
                             // It's not enough to look at response code. ES could return {"errors":true} in body:
