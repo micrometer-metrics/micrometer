@@ -63,8 +63,16 @@ class ElasticMeterRegistryTest {
     @Test
     void writeFunctionCounter() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", 123.0, Number::doubleValue).register(registry);
+        clock.add(config.step());
         assertThat(registry.writeFunctionCounter(counter))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"count\":0.0}");
+                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"count\":123.0}");
+    }
+
+    @Test
+    void nanFunctionCounterShouldNotBeWritten() {
+        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.NaN, Number::doubleValue).register(registry);
+        clock.add(config.step());
+        assertThat(registry.writeFunctionCounter(counter)).isEmpty();
     }
 
     @Test
@@ -145,5 +153,4 @@ class ElasticMeterRegistryTest {
         TimeGauge gauge = TimeGauge.builder("myGauge", Double.NEGATIVE_INFINITY, TimeUnit.MILLISECONDS, Number::doubleValue).register(registry);
         assertThat(registry.writeTimeGauge(gauge)).isEmpty();
     }
-
 }
