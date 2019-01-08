@@ -184,7 +184,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     Optional<String> writeGauge(Gauge gauge) {
         Double value = gauge.value();
-        if (!value.isNaN()) {
+        if (Double.isFinite(value)) {
             return Optional.of(writeDocument(gauge, builder -> {
                 builder.append(",\"value\":").append(value);
             }));
@@ -195,7 +195,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     Optional<String> writeTimeGauge(TimeGauge gauge) {
         Double value = gauge.value();
-        if (!value.isNaN()) {
+        if (Double.isFinite(value)) {
             return Optional.of(writeDocument(gauge, builder -> {
                 builder.append(",\"value\":").append(gauge.value(getBaseTimeUnit()));
             }));
