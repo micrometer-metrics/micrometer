@@ -21,6 +21,13 @@ import org.reactivestreams.Subscriber;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.ToDoubleFunction;
 
+/**
+ * {@link io.micrometer.core.instrument.FunctionCounter} for StatsD.
+ *
+ * @param <T> the type of the state object from which the counter value is extracted
+ *
+ * @author Jon Schneider
+ */
 public class StatsdFunctionCounter<T> extends CumulativeFunctionCounter<T> implements StatsdPollable {
     private final StatsdLineBuilder lineBuilder;
     private final Subscriber<String> subscriber;
