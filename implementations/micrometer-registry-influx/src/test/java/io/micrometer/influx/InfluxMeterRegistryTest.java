@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -97,18 +96,18 @@ class InfluxMeterRegistryTest {
     void writeCounterWithFunction() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(meterRegistry);
         clock.add(config.step());
-        Assertions.assertThat(meterRegistry.writeCounter(counter.getId(), 1d)).hasSize(1);
+        assertThat(meterRegistry.writeCounter(counter.getId(), 1d)).hasSize(1);
     }
 
     @Test
     void writeCounterWithFunctionCounterShouldDropInfiniteValues() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(meterRegistry);
         clock.add(config.step());
-        Assertions.assertThat(meterRegistry.writeCounter(counter.getId(), Double.POSITIVE_INFINITY)).isEmpty();
+        assertThat(meterRegistry.writeCounter(counter.getId(), Double.POSITIVE_INFINITY)).isEmpty();
 
         counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(meterRegistry);
         clock.add(config.step());
-        Assertions.assertThat(meterRegistry.writeCounter(counter.getId(), Double.NEGATIVE_INFINITY)).isEmpty();
+        assertThat(meterRegistry.writeCounter(counter.getId(), Double.NEGATIVE_INFINITY)).isEmpty();
     }
 
 }

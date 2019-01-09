@@ -20,14 +20,13 @@ import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@link CloudWatchMeterRegistry}.
@@ -83,18 +82,18 @@ class CloudWatchMeterRegistryTest {
     void batchFunctionCounterData() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(registry);
         clock.add(config.step());
-        Assertions.assertThat(registry.new Batch().functionCounterData(counter)).hasSize(1);
+        assertThat(registry.new Batch().functionCounterData(counter)).hasSize(1);
     }
 
     @Test
     void batchFunctionCounterDataShouldDropInfiniteValues() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(registry);
         clock.add(config.step());
-        Assertions.assertThat(registry.new Batch().functionCounterData(counter)).isEmpty();
+        assertThat(registry.new Batch().functionCounterData(counter)).isEmpty();
 
         counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(registry);
         clock.add(config.step());
-        Assertions.assertThat(registry.new Batch().functionCounterData(counter)).isEmpty();
+        assertThat(registry.new Batch().functionCounterData(counter)).isEmpty();
     }
 
 }
