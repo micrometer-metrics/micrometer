@@ -39,6 +39,7 @@ public class DefaultRestTemplateExchangeTagsProvider
             : RestTemplateExchangeTags.uri(request);
         return Arrays.asList(RestTemplateExchangeTags.method(request), uriTag,
             RestTemplateExchangeTags.status(response),
-            RestTemplateExchangeTags.clientName(request));
+            RestTemplateExchangeTags.clientName(request),
+            RestTemplateExchangeTags.outcome(response));
     }
 }
