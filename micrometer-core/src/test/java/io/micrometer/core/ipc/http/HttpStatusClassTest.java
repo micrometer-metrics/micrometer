@@ -21,6 +21,11 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link HttpStatusClass}
+ * 
+ * @author Oleksii Bondar
+ */
 class HttpStatusClassTest {
 
     @ParameterizedTest
