@@ -21,8 +21,6 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.management.*;
 import java.lang.management.ManagementFactory;
@@ -53,9 +51,6 @@ import static java.util.Collections.emptyList;
 @NonNullApi
 @NonNullFields
 public class KafkaConsumerMetrics implements MeterBinder {
-
-    private final Logger logger = LoggerFactory.getLogger(KafkaConsumerMetrics.class);
-
     private static final String JMX_DOMAIN = "kafka.consumer";
     private static final String METRIC_NAME_PREFIX = "kafka.consumer.";
 
@@ -250,7 +245,6 @@ public class KafkaConsumerMetrics implements MeterBinder {
         NotificationListener notificationListener = (notification, handback) -> {
             MBeanServerNotification mbs = (MBeanServerNotification) notification;
             ObjectName o = mbs.getMBeanName();
-            logger.trace("Got a JMX notification for object: {} with properties: {}", o.getCanonicalName(), o.getKeyPropertyListString());
             perObject.accept(o, Tags.concat(tags, nameTag(o)));
         };
 
