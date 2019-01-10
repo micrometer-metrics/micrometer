@@ -108,13 +108,11 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                     .withBasicAuthentication(config.userName(), config.password())
                     .withJsonContent("{\"template\":\"metrics*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false},\"properties\":{\"name\":{\"type\":\"keyword\"}}}}}")
                     .send()
+                    .onSuccess(response -> checkedForIndexTemplate = true)
                     .onError(response -> logger.error("failed to add metrics template to elastic", response.body()));
         } catch (Throwable e) {
             logger.error("could not create index in elastic", e);
-            return;
         }
-
-        checkedForIndexTemplate = true;
     }
 
     @Override
