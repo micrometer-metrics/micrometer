@@ -41,7 +41,6 @@ import java.util.stream.StreamSupport;
 import static io.micrometer.dynatrace.DynatraceMetricDefinition.DynatraceUnit;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.joining;
 
 /**
  * {@link StepMeterRegistry} for Dynatrace.
