@@ -41,6 +41,7 @@ import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
  * {@link MeterRegistry} for KairosDB.
  *
  * @author Anton Ilinchik
+ * @author Johnny Lim
  * @since 1.1.0
  */
 public class KairosMeterRegistry extends StepMeterRegistry {
@@ -134,22 +135,35 @@ public class KairosMeterRegistry extends StepMeterRegistry {
         );
     }
 
+    // VisibleForTesting
     Stream<String> writeFunctionCounter(FunctionCounter counter) {
-        return Stream.of(writeMetric(counter.getId(), config().clock().wallTime(), counter.count()));
+        double count = counter.count();
+        if (Double.isFinite(count)) {
+            return Stream.of(writeMetric(counter.getId(), config().clock().wallTime(), count));
+        }
+        return Stream.empty();
     }
 
     Stream<String> writeCounter(Counter counter) {
         return Stream.of(writeMetric(counter.getId(), config().clock().wallTime(), counter.count()));
     }
 
+    // VisibleForTesting
     Stream<String> writeGauge(Gauge gauge) {
         Double value = gauge.value();
-        return !Double.isFinite(value) ? Stream.empty() : Stream.of(writeMetric(gauge.getId(), config().clock().wallTime(), value));
+        if (Double.isFinite(value)) {
+            return Stream.of(writeMetric(gauge.getId(), config().clock().wallTime(), value));
+        }
+        return Stream.empty();
     }
 
+    // VisibleForTesting
     Stream<String> writeTimeGauge(TimeGauge timeGauge) {
         Double value = timeGauge.value(getBaseTimeUnit());
-        return !Double.isFinite(value) ? Stream.empty() : Stream.of(writeMetric(timeGauge.getId(), config().clock().wallTime(), value));
+        if (Double.isFinite(value)) {
+            return Stream.of(writeMetric(timeGauge.getId(), config().clock().wallTime(), value));
+        }
+        return Stream.empty();
     }
 
     Stream<String> writeLongTaskTimer(LongTaskTimer timer) {

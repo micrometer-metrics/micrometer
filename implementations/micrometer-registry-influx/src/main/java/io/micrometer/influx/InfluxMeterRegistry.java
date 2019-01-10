@@ -166,14 +166,20 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return Stream.of(influxLineProtocol(timer.getId(), "long_task_timer", fields));
     }
 
-    private Stream<String> writeCounter(Meter.Id id, double count) {
-        return Stream.of(influxLineProtocol(id, "counter", Stream.of(new Field("value", count))));
+    // VisibleForTesting
+    Stream<String> writeCounter(Meter.Id id, double count) {
+        if (Double.isFinite(count)) {
+            return Stream.of(influxLineProtocol(id, "counter", Stream.of(new Field("value", count))));
+        }
+        return Stream.empty();
     }
 
     // VisibleForTesting
     Stream<String> writeGauge(Meter.Id id, Double value) {
-        return !Double.isFinite(value) ? Stream.empty() :
-                Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value))));
+        if (Double.isFinite(value)) {
+            return Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value))));
+        }
+        return Stream.empty();
     }
 
     private Stream<String> writeFunctionTimer(FunctionTimer timer) {

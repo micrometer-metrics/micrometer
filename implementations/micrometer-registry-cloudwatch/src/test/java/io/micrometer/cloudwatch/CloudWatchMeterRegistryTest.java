@@ -16,6 +16,7 @@
 package io.micrometer.cloudwatch;
 
 import com.amazonaws.services.cloudwatch.model.MetricDatum;
+import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
@@ -25,7 +26,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@link CloudWatchMeterRegistry}.
@@ -44,8 +45,8 @@ class CloudWatchMeterRegistryTest {
             return "namespace";
         }
     };
-
-    private CloudWatchMeterRegistry registry = new CloudWatchMeterRegistry(config, new MockClock(), null);
+    private final MockClock clock = new MockClock();
+    private final CloudWatchMeterRegistry registry = new CloudWatchMeterRegistry(config, clock, null);
 
     @Test
     void metricData() {
@@ -76,4 +77,23 @@ class CloudWatchMeterRegistryTest {
         Meter.Id id = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.COUNTER);
         assertThat(registry.new Batch().getMetricName(id, null)).isEqualTo("name");
     }
+
+    @Test
+    void batchFunctionCounterData() {
+        FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(registry);
+        clock.add(config.step());
+        assertThat(registry.new Batch().functionCounterData(counter)).hasSize(1);
+    }
+
+    @Test
+    void batchFunctionCounterDataShouldDropInfiniteValues() {
+        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(registry);
+        clock.add(config.step());
+        assertThat(registry.new Batch().functionCounterData(counter)).isEmpty();
+
+        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(registry);
+        clock.add(config.step());
+        assertThat(registry.new Batch().functionCounterData(counter)).isEmpty();
+    }
+
 }

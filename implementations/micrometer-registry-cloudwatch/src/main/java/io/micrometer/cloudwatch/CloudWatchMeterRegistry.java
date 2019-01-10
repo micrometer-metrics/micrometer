@@ -173,8 +173,13 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             return Stream.of(metricDatum(gauge.getId(), "value", value));
         }
 
-        private Stream<MetricDatum> functionCounterData(FunctionCounter counter) {
-            return Stream.of(metricDatum(counter.getId(), "count", counter.count()));
+        // VisibleForTesting
+        Stream<MetricDatum> functionCounterData(FunctionCounter counter) {
+            double count = counter.count();
+            if (Double.isFinite(count)) {
+                return Stream.of(metricDatum(counter.getId(), "count", count));
+            }
+            return Stream.empty();
         }
 
         private Stream<MetricDatum> functionTimerData(FunctionTimer timer) {

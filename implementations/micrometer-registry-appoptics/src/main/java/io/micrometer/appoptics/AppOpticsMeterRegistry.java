@@ -163,10 +163,11 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return Optional.empty();
     }
 
+    // VisibleForTesting
     @Nullable
-    private Optional<String> writeFunctionCounter(FunctionCounter counter) {
+    Optional<String> writeFunctionCounter(FunctionCounter counter) {
         double count = counter.count();
-        if (count > 0) {
+        if (Double.isFinite(count) && count > 0) {
             // can't use "count" field because sum is required whenever count is set.
             return Optional.of(write(counter.getId(), "functionCounter", Fields.Value.tag(), decimal(count)));
         }

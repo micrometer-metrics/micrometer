@@ -18,8 +18,9 @@ package io.micrometer.influx;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class InfluxMeterRegistryTest {
 
-    private final InfluxMeterRegistry meterRegistry = new InfluxMeterRegistry(InfluxConfig.DEFAULT, Clock.SYSTEM);
+    private final InfluxConfig config = InfluxConfig.DEFAULT;
+    private final MockClock clock = new MockClock();
+    private final InfluxMeterRegistry meterRegistry = new InfluxMeterRegistry(config, clock);
 
     @Test
     void writeGauge() {
@@ -87,6 +90,24 @@ class InfluxMeterRegistryTest {
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
         timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
         assertThat(meterRegistry.writeGauge(timeGauge.getId(), Double.NEGATIVE_INFINITY)).isEmpty();
+    }
+
+    @Test
+    void writeCounterWithFunction() {
+        FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(meterRegistry);
+        clock.add(config.step());
+        assertThat(meterRegistry.writeCounter(counter.getId(), 1d)).hasSize(1);
+    }
+
+    @Test
+    void writeCounterWithFunctionCounterShouldDropInfiniteValues() {
+        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(meterRegistry);
+        clock.add(config.step());
+        assertThat(meterRegistry.writeCounter(counter.getId(), Double.POSITIVE_INFINITY)).isEmpty();
+
+        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(meterRegistry);
+        clock.add(config.step());
+        assertThat(meterRegistry.writeCounter(counter.getId(), Double.NEGATIVE_INFINITY)).isEmpty();
     }
 
 }
