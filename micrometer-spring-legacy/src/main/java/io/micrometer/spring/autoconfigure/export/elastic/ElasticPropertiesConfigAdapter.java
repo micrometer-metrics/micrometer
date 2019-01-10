@@ -23,9 +23,9 @@ import io.micrometer.spring.autoconfigure.export.properties.StepRegistryProperti
  *
  * @author Nicolas Portmann
  */
-public class ElasticPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<ElasticProperties> implements ElasticConfig {
+class ElasticPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<ElasticProperties> implements ElasticConfig {
 
-    public ElasticPropertiesConfigAdapter(ElasticProperties properties) {
+    ElasticPropertiesConfigAdapter(ElasticProperties properties) {
         super(properties);
     }
 

@@ -18,7 +18,10 @@ package io.micrometer.elastic;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
 /**
+ * Configuration for {@link ElasticMeterRegistry}.
+ *
  * @author Nicolas Portmann
+ * @since 1.1.0
  */
 public interface ElasticConfig extends StepRegistryConfig {
 
@@ -30,7 +33,7 @@ public interface ElasticConfig extends StepRegistryConfig {
     /**
      * Get the value associated with a key.
      *
-     * @param key Key to lookup in the config.
+     * @param key Key to look up in the config.
      * @return Value for the key or null if no key is present.
      */
     String get(String key);

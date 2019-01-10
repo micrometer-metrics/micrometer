@@ -41,12 +41,15 @@ import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
 
 /**
+ * {@link MeterRegistry} for Elasticsearch.
+ *
  * @author Nicolas Portmann
  * @author Jon Schneider
+ * @since 1.1.0
  */
 public class ElasticMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("elastic-metrics-publisher");
-    static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_INSTANT;
+    static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ISO_INSTANT;
     private static final String ES_METRICS_TEMPLATE = "/_template/metrics_template";
     private static final String INDEX_LINE = "{ \"index\" : {} }\n";
 
@@ -54,6 +57,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     private final ElasticConfig config;
     private final HttpSender httpClient;
+
+    private final DateTimeFormatter indexDateFormatter;
 
     private volatile boolean checkedForIndexTemplate = false;
 
@@ -67,6 +72,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         super(config, clock);
         config().namingConvention(new ElasticNamingConvention());
         this.config = config;
+        indexDateFormatter = DateTimeFormatter.ofPattern(config.indexDateFormat());
         this.httpClient = httpClient;
         start(threadFactory);
     }
@@ -95,7 +101,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                     .send()
                     .onError(response -> {
                         if (response.code() != 404) {
-                            logger.error("could not create index in elastic (HTTP {})", response.code(), response.body());
+                            logger.error("could not create index in elastic (HTTP {}): {}", response.code(), response.body());
                         }
                     })
                     .isSuccessful()) {
@@ -108,7 +114,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                     .withBasicAuthentication(config.userName(), config.password())
                     .withJsonContent("{\"template\":\"metrics*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false},\"properties\":{\"name\":{\"type\":\"keyword\"}}}}}")
                     .send()
-                    .onError(response -> logger.error("failed to add metrics template to elastic", response.body()));
+                    .onError(response -> logger.error("failed to add metrics template to elastic: {}", response.body()));
         } catch (Throwable e) {
             logger.error("could not create index in elastic", e);
             return;
@@ -160,7 +166,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     private String indexName() {
         ZonedDateTime dt = ZonedDateTime.ofInstant(new Date(config().clock().wallTime()).toInstant(), ZoneOffset.UTC);
-        return config.index() + "-" + DateTimeFormatter.ofPattern(config.indexDateFormat()).format(dt);
+        return config.index() + "-" + indexDateFormatter.format(dt);
     }
 
     // VisibleForTesting
@@ -195,10 +201,10 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeTimeGauge(TimeGauge gauge) {
-        Double value = gauge.value();
+        Double value = gauge.value(getBaseTimeUnit());
         if (Double.isFinite(value)) {
             return Optional.of(writeDocument(gauge, builder -> {
-                builder.append(",\"value\":").append(gauge.value(getBaseTimeUnit()));
+                builder.append(",\"value\":").append(value);
             }));
         }
         return Optional.empty();
@@ -254,7 +260,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     String writeDocument(Meter meter, Consumer<StringBuilder> consumer) {
         StringBuilder sb = new StringBuilder(INDEX_LINE);
-        String timestamp = FORMATTER.format(Instant.ofEpochMilli(config().clock().wallTime()));
+        String timestamp = TIMESTAMP_FORMATTER.format(Instant.ofEpochMilli(config().clock().wallTime()));
         String name = getConventionName(meter.getId());
         String type = meter.getId().getType().toString().toLowerCase();
         sb.append("{\"").append(config.timestampFieldName()).append("\":\"").append(timestamp).append('"')

@@ -22,6 +22,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * {@link ConfigurationProperties} for configuring Elastic metrics export.
  *
  * @author Nicolas Portmann
+ * @since 1.1.0
  */
 @ConfigurationProperties(prefix = "management.metrics.export.elastic")
 public class ElasticProperties extends StepRegistryProperties {
