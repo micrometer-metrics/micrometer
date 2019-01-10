@@ -17,7 +17,6 @@ package io.micrometer.cloudwatch;
 
 import com.amazonaws.AbortedException;
 import com.amazonaws.handlers.AsyncHandler;
-import com.amazonaws.http.timers.client.SdkInterruptedException;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
 import com.amazonaws.services.cloudwatch.model.*;
 import io.micrometer.core.instrument.*;
