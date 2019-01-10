@@ -19,12 +19,19 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link ElasticMeterRegistry}.
+ *
+ * @author Jon Schneider
+ * @author Alexander Reelsen
+ * @author Fabian Koehler
+ * @author Johnny Lim
+ */
 class ElasticMeterRegistryTest {
     private MockClock clock = new MockClock();
     private ElasticConfig config = new ElasticConfig() {
@@ -43,7 +50,7 @@ class ElasticMeterRegistryTest {
 
     @Test
     void timestampFormat() {
-        assertThat(ElasticMeterRegistry.FORMATTER.format(Instant.ofEpochMilli(1))).contains("1970-01-01T00:00:00.001Z");
+        assertThat(ElasticMeterRegistry.TIMESTAMP_FORMATTER.format(Instant.ofEpochMilli(1))).contains("1970-01-01T00:00:00.001Z");
     }
 
     @Test
@@ -56,8 +63,9 @@ class ElasticMeterRegistryTest {
     void writeCounter() {
         Counter counter = Counter.builder("myCounter").register(registry);
         counter.increment();
+        clock.add(config.step());
         assertThat(registry.writeCounter(counter))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"count\":0.0}");
+                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"count\":1.0}");
     }
 
     @Test
@@ -101,8 +109,9 @@ class ElasticMeterRegistryTest {
         DistributionSummary summary = DistributionSummary.builder("summary").register(registry);
         summary.record(123);
         summary.record(456);
+        clock.add(config.step());
         assertThat(registry.writeSummary(summary))
-                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"summary\",\"type\":\"distribution_summary\",\"count\":0,\"sum\":0.0,\"mean\":0.0,\"max\":456.0}");
+                .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"summary\",\"type\":\"distribution_summary\",\"count\":2,\"sum\":579.0,\"mean\":289.5,\"max\":456.0}");
     }
 
     @Test
@@ -116,8 +125,9 @@ class ElasticMeterRegistryTest {
     void writeTags() {
         Counter counter = Counter.builder("myCounter").tag("foo", "bar").tag("spam", "eggs").register(registry);
         counter.increment();
+        clock.add(config.step());
         assertThat(registry.writeCounter(counter)).contains("{ \"index\" : {} }\n" +
-                "{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"foo\":\"bar\",\"spam\":\"eggs\",\"count\":0.0}");
+                "{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"myCounter\",\"type\":\"counter\",\"foo\":\"bar\",\"spam\":\"eggs\",\"count\":1.0}");
     }
 
     @Issue("#497")
@@ -133,24 +143,24 @@ class ElasticMeterRegistryTest {
     @Issue("#498")
     @Test
     void wholeCountIsReportedWithDecimal() {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
         Counter c = Counter.builder("counter").register(registry);
         c.increment(10);
+        clock.add(config.step());
         assertThat(registry.writeCounter(c)).contains("{ \"index\" : {} }\n" +
-                "{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"counter\",\"type\":\"counter\",\"count\":0.0}");
+                "{\"@timestamp\":\"1970-01-01T00:01:00.001Z\",\"name\":\"counter\",\"type\":\"counter\",\"count\":10.0}");
     }
 
     @Issue("#1134")
     @Test
     void infinityGaugeShouldNotBeWritten() {
         Gauge gauge = Gauge.builder("myGauge", Double.NEGATIVE_INFINITY, Number::doubleValue).register(registry);
-        assertThat(registry.writeGauge(gauge)).isEmpty();
+        assertThat(registry.writeGauge(gauge)).isNotPresent();
     }
 
     @Issue("#1134")
     @Test
     void infinityTimeGaugeShouldNotBeWritten() {
         TimeGauge gauge = TimeGauge.builder("myGauge", Double.NEGATIVE_INFINITY, TimeUnit.MILLISECONDS, Number::doubleValue).register(registry);
-        assertThat(registry.writeTimeGauge(gauge)).isEmpty();
+        assertThat(registry.writeTimeGauge(gauge)).isNotPresent();
     }
 }

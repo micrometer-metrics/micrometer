@@ -20,6 +20,12 @@ import io.micrometer.core.instrument.config.NamingConvention;
 
 import java.util.regex.Pattern;
 
+/**
+ * {@link NamingConvention} for Elasticsearch.
+ *
+ * @author Jon Schneider
+ * @since 1.1.0
+ */
 public class ElasticNamingConvention implements NamingConvention {
 
     private static final Pattern FIRST_UNDERSCORE_PATTERN = Pattern.compile("^_+");
