@@ -38,8 +38,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
 
-import static io.micrometer.core.instrument.util.DoubleFormat.decimal;
-import static io.micrometer.core.instrument.util.DoubleFormat.decimalOrWhole;
+import static io.micrometer.core.instrument.util.DoubleFormat.decimalOrNan;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -154,7 +153,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                                             " mean=" + print.time(timer.mean(getBaseTimeUnit())));
                                 },
                                 meter -> loggingSink.accept(print.id() + StreamSupport.stream(meter.measure().spliterator(), false)
-                                        .map(ms -> ms.getStatistic().getTagValueRepresentation() + "=" + decimalOrWhole(ms.getValue())))
+                                        .map(ms -> ms.getStatistic().getTagValueRepresentation() + "=" + decimalOrNan(ms.getValue())))
                         );
                     });
         }
@@ -194,7 +193,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         }
 
         String unitlessRate(double rate) {
-            return decimal(rate / (double) config.step().getSeconds()) + "/s";
+            return decimalOrNan(rate / (double) config.step().getSeconds()) + "/s";
         }
 
         String value(double value) {
@@ -204,10 +203,10 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         // see https://stackoverflow.com/a/3758880/510017
         String humanReadableByteCount(double bytes) {
             int unit = 1024;
-            if (bytes < unit) return decimalOrWhole(bytes) + " B";
+            if (bytes < unit) return decimalOrNan(bytes) + " B";
             int exp = (int) (Math.log(bytes) / Math.log(unit));
             String pre = "KMGTPE".charAt(exp - 1) + "i";
-            return decimalOrWhole(bytes / Math.pow(unit, exp)) + " " + pre + "B";
+            return decimalOrNan(bytes / Math.pow(unit, exp)) + " " + pre + "B";
         }
 
         String humanReadableBaseUnit(double value) {
@@ -215,7 +214,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
             if ("bytes".equals(baseUnit)) {
                 return humanReadableByteCount(value);
             }
-            return decimalOrWhole(value) + (baseUnit != null ? " " + baseUnit : "");
+            return decimalOrNan(value) + (baseUnit != null ? " " + baseUnit : "");
         }
     }
 

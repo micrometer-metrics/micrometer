@@ -16,10 +16,17 @@
 package io.micrometer.core.instrument.logging;
 
 import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Gauge;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link LoggingMeterRegistry}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class LoggingMeterRegistryTest {
     private final LoggingMeterRegistry registry = new LoggingMeterRegistry();
 
@@ -49,4 +56,21 @@ class LoggingMeterRegistryTest {
         LoggingMeterRegistry.Printer printer = registry.new Printer(registry.timer("my.timer"));
         assertThat(printer.time(12345 /* ms */)).isEqualTo("12.345s");
     }
+
+    @Test
+    void printerValueWhenGaugeIsNaNShouldPrintNaN() {
+        registry.gauge("my.gauge", Double.NaN);
+        Gauge gauge = registry.find("my.gauge").gauge();
+        LoggingMeterRegistry.Printer printer = registry.new Printer(gauge);
+        assertThat(printer.value(Double.NaN)).isEqualTo("NaN");
+    }
+
+    @Test
+    void printerValueWhenGaugeIsInfinityShouldPrintInfinity() {
+        registry.gauge("my.gauge", Double.POSITIVE_INFINITY);
+        Gauge gauge = registry.find("my.gauge").gauge();
+        LoggingMeterRegistry.Printer printer = registry.new Printer(gauge);
+        assertThat(printer.value(Double.POSITIVE_INFINITY)).isEqualTo("∞");
+    }
+
 }
