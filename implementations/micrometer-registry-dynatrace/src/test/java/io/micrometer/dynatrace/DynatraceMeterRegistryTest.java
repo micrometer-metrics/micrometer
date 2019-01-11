@@ -204,15 +204,29 @@ class DynatraceMeterRegistryTest {
         List<DynatraceBatchedPayload> messages = meterRegistry.createPostMessages("my.type",
             // Max bytes: 15330 (excluding header/footer, 15360 with header/footer)
             Arrays.asList(createTimeSeriesWithDimensions(750), // 14861 bytes
-                createTimeSeriesWithDimensions(23, "asdfg"), // 469 bytes
+                createTimeSeriesWithDimensions(23, "asdfg"), // 469 bytes (overflows due to comma)
                 createTimeSeriesWithDimensions(750), // 14861 bytes
-                createTimeSeriesWithDimensions(23, "asdf") // 468 bytes
+                createTimeSeriesWithDimensions(23, "asdf") // 468 bytes + comma
             ));
         assertThat(messages).hasSize(3);
         assertThat(messages.get(0).metricCount).isEqualTo(1);
         assertThat(messages.get(1).metricCount).isEqualTo(1);
         assertThat(messages.get(2).metricCount).isEqualTo(2);
         assertThat(messages.get(2).payload.getBytes(UTF_8).length).isEqualTo(15360);
+        assertThat(messages.stream().map(message -> message.payload).allMatch(DynatraceMeterRegistryTest::isJSONValid)).isTrue();
+    }
+
+    @Test
+    void countsPreviousAndNextComma() {
+        List<DynatraceBatchedPayload> messages = meterRegistry.createPostMessages("my.type",
+            // Max bytes: 15330 (excluding header/footer, 15360 with header/footer)
+            Arrays.asList(createTimeSeriesWithDimensions(750), // 14861 bytes
+                createTimeSeriesWithDimensions(10, "asdf"), // 234 bytes + comma
+                createTimeSeriesWithDimensions(10, "asdf") // 234 bytes + comma = 15331 bytes (overflow)
+            ));
+        assertThat(messages).hasSize(2);
+        assertThat(messages.get(0).metricCount).isEqualTo(2);
+        assertThat(messages.get(1).metricCount).isEqualTo(1);
         assertThat(messages.stream().map(message -> message.payload).allMatch(DynatraceMeterRegistryTest::isJSONValid)).isTrue();
     }
 

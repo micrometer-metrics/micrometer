@@ -283,6 +283,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             }
             if (payload.length() > 0) {
                 payload.append(',');
+                totalByteCount++;
             }
             payload.append(json);
             totalByteCount += jsonByteCount;
