@@ -85,6 +85,8 @@ public class KafkaConsumerMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
         registerMetricsEventually("consumer-fetch-manager-metrics", (o, tags) -> {
+            registerGaugeForObject(registry, o, "records-lag", tags, "The latest lag of the partition", "records");
+            registerGaugeForObject(registry, o, "records-lag-avg", tags, "The average lag of the partition", "records");
             registerGaugeForObject(registry, o, "records-lag-max", tags, "The maximum lag in terms of number of records for any partition in this window. An increasing value over time is your best indication that the consumer group is not keeping up with the producers.", "records");
             registerGaugeForObject(registry, o, "fetch-size-avg", tags, "The average number of bytes fetched per request.", "bytes");
             registerGaugeForObject(registry, o, "fetch-size-max", tags, "The maximum number of bytes fetched per request.", "bytes");
@@ -96,7 +98,9 @@ public class KafkaConsumerMetrics implements MeterBinder {
 
             if (kafkaMajorVersion(tags) >= 2) {
                 // KAFKA-6184
-                registerTimeGaugeForObject(registry, o, "records-lead-min", tags, "The lag between the consumer offset and the start offset of the log. If this gets close to zero, it's an indication that the consumer may lose data soon.");
+                registerTimeGaugeForObject(registry, o, "records-lead", tags, "The latest lead of the partition.");
+                registerTimeGaugeForObject(registry, o, "records-lead-min", tags, "The min lead of the partition. The lag between the consumer offset and the start offset of the log. If this gets close to zero, it's an indication that the consumer may lose data soon.");
+                registerTimeGaugeForObject(registry, o, "records-lead-avg", tags, "The average lead of the partition.");
             }
 
             registerTimeGaugeForObject(registry, o, "fetch-latency-avg", tags, "The average time taken for a fetch request.");
@@ -248,8 +252,7 @@ public class KafkaConsumerMetrics implements MeterBinder {
             if (!MBeanServerNotification.REGISTRATION_NOTIFICATION.equals(notification.getType()))
                 return false;
             ObjectName obj = ((MBeanServerNotification) notification).getMBeanName();
-            return obj.getDomain().equals(JMX_DOMAIN) && obj.getKeyProperty("type").equals(type) &&
-                    obj.getKeyProperty("partition") == null && obj.getKeyProperty("topic") == null;
+            return obj.getDomain().equals(JMX_DOMAIN) && obj.getKeyProperty("type").equals(type);
         };
 
         try {
@@ -273,6 +276,16 @@ public class KafkaConsumerMetrics implements MeterBinder {
         String clientId = name.getKeyProperty("client-id");
         if (clientId != null) {
             tags = Tags.concat(tags, "client.id", clientId);
+        }
+
+        String topic = name.getKeyProperty("topic");
+        if (topic != null) {
+            tags = Tags.concat(tags, "topic", topic);
+        }
+
+        String partition = name.getKeyProperty("partition");
+        if (partition != null) {
+            tags = Tags.concat(tags, "partition", partition);
         }
 
         return tags;

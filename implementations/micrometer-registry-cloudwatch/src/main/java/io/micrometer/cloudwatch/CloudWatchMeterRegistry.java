@@ -15,6 +15,7 @@
  */
 package io.micrometer.cloudwatch;
 
+import com.amazonaws.AbortedException;
 import com.amazonaws.handlers.AsyncHandler;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
 import com.amazonaws.services.cloudwatch.model.*;
@@ -90,7 +91,11 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         amazonCloudWatchAsync.putMetricDataAsync(putMetricDataRequest, new AsyncHandler<PutMetricDataRequest, PutMetricDataResult>() {
             @Override
             public void onError(Exception exception) {
-                logger.error("error sending metric data.", exception);
+                if (exception instanceof AbortedException) {
+                    logger.warn("sending metric data was aborted: {}", exception.getMessage());
+                } else {
+                    logger.error("error sending metric data.", exception);
+                }
                 latch.countDown();
             }
 
@@ -129,7 +134,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         private Stream<MetricDatum> gaugeData(Gauge gauge) {
             double value = gauge.value();
-            if (Double.isNaN(value) || Double.isInfinite(value))
+            if (!Double.isFinite(value))
                 return Stream.empty();
             return Stream.of(metricDatum(gauge.getId(), "value", value));
         }
@@ -168,13 +173,18 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         private Stream<MetricDatum> timeGaugeData(TimeGauge gauge) {
             double value = gauge.value(getBaseTimeUnit());
-            if (Double.isNaN(value) || Double.isInfinite(value))
+            if (!Double.isFinite(value))
                 return Stream.empty();
             return Stream.of(metricDatum(gauge.getId(), "value", value));
         }
 
-        private Stream<MetricDatum> functionCounterData(FunctionCounter counter) {
-            return Stream.of(metricDatum(counter.getId(), "count", counter.count()));
+        // VisibleForTesting
+        Stream<MetricDatum> functionCounterData(FunctionCounter counter) {
+            double count = counter.count();
+            if (Double.isFinite(count)) {
+                return Stream.of(metricDatum(counter.getId(), "count", count));
+            }
+            return Stream.empty();
         }
 
         private Stream<MetricDatum> functionTimerData(FunctionTimer timer) {

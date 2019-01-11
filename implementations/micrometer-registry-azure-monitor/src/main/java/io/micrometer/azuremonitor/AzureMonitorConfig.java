@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
  * Configuration for {@link AzureMonitorMeterRegistry}.
  *
  * @author Dhaval Doshi
+ * @since 1.1.0
  */
 public interface AzureMonitorConfig extends StepRegistryConfig {
 
@@ -38,7 +39,7 @@ public interface AzureMonitorConfig extends StepRegistryConfig {
     default String instrumentationKey() {
         String v = get(prefix() + ".instrumentationKey");
         if (v == null)
-            throw new MissingRequiredConfigurationException("instrumentationKey must be set to report metrics to Application Insights");
+            throw new MissingRequiredConfigurationException("instrumentationKey must be set to report metrics to Azure Monitor");
         return v;
     }
 }

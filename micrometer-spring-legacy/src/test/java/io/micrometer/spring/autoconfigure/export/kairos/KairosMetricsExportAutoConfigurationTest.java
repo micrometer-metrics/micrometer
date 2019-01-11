@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.spring.autoconfigure.export.appoptics;
+package io.micrometer.spring.autoconfigure.export.kairos;
 
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.test.util.EnvironmentTestUtils;
@@ -22,9 +22,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import io.micrometer.appoptics.AppOpticsConfig;
-import io.micrometer.appoptics.AppOpticsMeterRegistry;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.kairos.KairosConfig;
+import io.micrometer.kairos.KairosMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -32,12 +32,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
- * Tests for {@link AppOpticsMetricsExportAutoConfiguration}.
+ * Tests for {@link KairosMetricsExportAutoConfiguration}.
  *
  * @author Stephane Nicoll
  * @author Johnny Lim
  */
-class AppOpticsMetricsExportAutoConfigurationTest {
+class KairosMetricsExportAutoConfigurationTest {
 
     private final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 
@@ -52,44 +52,44 @@ class AppOpticsMetricsExportAutoConfigurationTest {
     void backsOffWithoutAClock() {
         registerAndRefresh();
         assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
-                .isThrownBy(() -> context.getBean(AppOpticsMeterRegistry.class));
+                .isThrownBy(() -> context.getBean(KairosMeterRegistry.class));
     }
 
     @Test
     void autoConfiguresItsConfigAndMeterRegistry() {
         registerAndRefresh(BaseConfiguration.class);
-        assertThat(context.getBean(AppOpticsMeterRegistry.class)).isNotNull();
-        assertThat(context.getBean(AppOpticsConfig.class)).isNotNull();
+        assertThat(context.getBean(KairosMeterRegistry.class)).isNotNull();
+        assertThat(context.getBean(KairosConfig.class)).isNotNull();
     }
 
     @Test
     void autoConfigurationCanBeDisabled() {
-        EnvironmentTestUtils.addEnvironment(context, "management.metrics.export.appoptics.enabled=false");
+        EnvironmentTestUtils.addEnvironment(context, "management.metrics.export.kairos.enabled=false");
         registerAndRefresh(BaseConfiguration.class);
         assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
-                .isThrownBy(() -> context.getBean(AppOpticsMeterRegistry.class));
+                .isThrownBy(() -> context.getBean(KairosMeterRegistry.class));
         assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
-                .isThrownBy(() -> context.getBean(AppOpticsConfig.class));
+                .isThrownBy(() -> context.getBean(KairosConfig.class));
     }
 
     @Test
     void allowsCustomConfigToBeUsed() {
         registerAndRefresh(CustomConfigConfiguration.class);
-        assertThat(context.getBean(AppOpticsMeterRegistry.class)).isNotNull();
-        assertThat(context.getBean(AppOpticsConfig.class)).isEqualTo(context.getBean("customConfig"));
+        assertThat(context.getBean(KairosMeterRegistry.class)).isNotNull();
+        assertThat(context.getBean(KairosConfig.class)).isEqualTo(context.getBean("customConfig"));
     }
 
     @Test
     void allowsCustomRegistryToBeUsed() {
         registerAndRefresh(CustomRegistryConfiguration.class);
-        assertThat(context.getBean(AppOpticsMeterRegistry.class)).isEqualTo(context.getBean("customRegistry"));
-        assertThat(context.getBean(AppOpticsConfig.class)).isNotNull();
+        assertThat(context.getBean(KairosMeterRegistry.class)).isEqualTo(context.getBean("customRegistry"));
+        assertThat(context.getBean(KairosConfig.class)).isNotNull();
     }
 
     @Test
-    public void stopsMeterRegistryWhenContextIsClosed() {
+    void stopsMeterRegistryWhenContextIsClosed() {
         registerAndRefresh(BaseConfiguration.class);
-        AppOpticsMeterRegistry registry = context.getBean(AppOpticsMeterRegistry.class);
+        KairosMeterRegistry registry = context.getBean(KairosMeterRegistry.class);
         assertThat(registry.isClosed()).isFalse();
         context.close();
         assertThat(registry.isClosed()).isTrue();
@@ -99,7 +99,7 @@ class AppOpticsMetricsExportAutoConfigurationTest {
         if (configurationClasses.length > 0) {
             context.register(configurationClasses);
         }
-        context.register(AppOpticsMetricsExportAutoConfiguration.class);
+        context.register(KairosMetricsExportAutoConfiguration.class);
         context.refresh();
     }
 
@@ -118,7 +118,7 @@ class AppOpticsMetricsExportAutoConfigurationTest {
     static class CustomConfigConfiguration {
 
         @Bean
-        public AppOpticsConfig customConfig() {
+        public KairosConfig customConfig() {
             return (key) -> null;
         }
 
@@ -129,9 +129,8 @@ class AppOpticsMetricsExportAutoConfigurationTest {
     static class CustomRegistryConfiguration {
 
         @Bean
-        public AppOpticsMeterRegistry customRegistry(AppOpticsConfig config,
-                Clock clock) {
-            return new AppOpticsMeterRegistry(config, clock);
+        public KairosMeterRegistry customRegistry(KairosConfig config, Clock clock) {
+            return new KairosMeterRegistry(config, clock);
         }
 
     }

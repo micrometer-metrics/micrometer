@@ -43,6 +43,7 @@ import static java.util.stream.Collectors.joining;
  *
  * @author Hunter Sherman
  * @author Jon Schneider
+ * @author Johnny Lim
  * @since 1.1.0
  */
 public class AppOpticsMeterRegistry extends StepMeterRegistry {
@@ -134,12 +135,22 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
                 .collect(joining(",")));
     }
 
-    private Optional<String> writeGauge(Gauge gauge) {
-        return Optional.of(write(gauge.getId(), "gauge", Fields.Value.tag(), decimal(gauge.value())));
+    // VisibleForTesting
+    Optional<String> writeGauge(Gauge gauge) {
+        double value = gauge.value();
+        if (!Double.isFinite(value)) {
+            return Optional.empty();
+        }
+        return Optional.of(write(gauge.getId(), "gauge", Fields.Value.tag(), decimal(value)));
     }
 
-    private Optional<String> writeTimeGauge(TimeGauge timeGauge) {
-        return Optional.of(write(timeGauge.getId(), "timeGauge", Fields.Value.tag(), decimal(timeGauge.value(getBaseTimeUnit()))));
+    // VisibleForTesting
+    Optional<String> writeTimeGauge(TimeGauge timeGauge) {
+        double value = timeGauge.value(getBaseTimeUnit());
+        if (!Double.isFinite(value)) {
+            return Optional.empty();
+        }
+        return Optional.of(write(timeGauge.getId(), "timeGauge", Fields.Value.tag(), decimal(value)));
     }
 
     @Nullable
@@ -152,10 +163,11 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         return Optional.empty();
     }
 
+    // VisibleForTesting
     @Nullable
-    private Optional<String> writeFunctionCounter(FunctionCounter counter) {
+    Optional<String> writeFunctionCounter(FunctionCounter counter) {
         double count = counter.count();
-        if (count > 0) {
+        if (Double.isFinite(count) && count > 0) {
             // can't use "count" field because sum is required whenever count is set.
             return Optional.of(write(counter.getId(), "functionCounter", Fields.Value.tag(), decimal(count)));
         }

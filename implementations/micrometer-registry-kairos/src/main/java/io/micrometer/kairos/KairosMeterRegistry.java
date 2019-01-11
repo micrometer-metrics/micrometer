@@ -38,7 +38,11 @@ import java.util.stream.StreamSupport;
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 
 /**
+ * {@link MeterRegistry} for KairosDB.
+ *
  * @author Anton Ilinchik
+ * @author Johnny Lim
+ * @since 1.1.0
  */
 public class KairosMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("kairos-metrics-publisher");
@@ -131,22 +135,35 @@ public class KairosMeterRegistry extends StepMeterRegistry {
         );
     }
 
+    // VisibleForTesting
     Stream<String> writeFunctionCounter(FunctionCounter counter) {
-        return Stream.of(writeMetric(counter.getId(), config().clock().wallTime(), counter.count()));
+        double count = counter.count();
+        if (Double.isFinite(count)) {
+            return Stream.of(writeMetric(counter.getId(), config().clock().wallTime(), count));
+        }
+        return Stream.empty();
     }
 
     Stream<String> writeCounter(Counter counter) {
         return Stream.of(writeMetric(counter.getId(), config().clock().wallTime(), counter.count()));
     }
 
+    // VisibleForTesting
     Stream<String> writeGauge(Gauge gauge) {
         Double value = gauge.value();
-        return (value.isNaN() || value.isInfinite()) ? Stream.empty() : Stream.of(writeMetric(gauge.getId(), config().clock().wallTime(), value));
+        if (Double.isFinite(value)) {
+            return Stream.of(writeMetric(gauge.getId(), config().clock().wallTime(), value));
+        }
+        return Stream.empty();
     }
 
+    // VisibleForTesting
     Stream<String> writeTimeGauge(TimeGauge timeGauge) {
         Double value = timeGauge.value(getBaseTimeUnit());
-        return (value.isNaN() || value.isInfinite()) ? Stream.empty() : Stream.of(writeMetric(timeGauge.getId(), config().clock().wallTime(), value));
+        if (Double.isFinite(value)) {
+            return Stream.of(writeMetric(timeGauge.getId(), config().clock().wallTime(), value));
+        }
+        return Stream.empty();
     }
 
     Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
@@ -157,13 +174,14 @@ public class KairosMeterRegistry extends StepMeterRegistry {
         );
     }
 
-    private Stream<String> writeCustomMetric(final Meter meter) {
+    private Stream<String> writeCustomMetric(Meter meter) {
         long wallTime = config().clock().wallTime();
+        List<Tag> tags = getConventionTags(meter.getId());
         return StreamSupport.stream(meter.measure().spliterator(), false)
                 .map(ms -> new KairosMetricBuilder()
                         .field("name", ms.getStatistic().getTagValueRepresentation())
                         .datapoints(wallTime, ms.getValue())
-                        .tags(getConventionTags(meter.getId()))
+                        .tags(tags)
                         .build());
     }
 
@@ -175,7 +193,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
                 .build();
     }
 
-    private Meter.Id idWithSuffix(final Meter.Id id, final String suffix) {
+    private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
         return id.withName(id.getName() + "." + suffix);
     }
 
@@ -185,7 +203,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
     }
 
     private static class KairosMetricBuilder {
-        private StringBuilder sb = new StringBuilder("{");
+        private final StringBuilder sb = new StringBuilder("{");
 
         KairosMetricBuilder field(String key, String value) {
             if (sb.length() > 1) {
@@ -195,7 +213,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
-        KairosMetricBuilder datapoints(Long wallTime, double value) {
+        KairosMetricBuilder datapoints(long wallTime, double value) {
             sb.append(",\"datapoints\":[[").append(wallTime).append(',').append(DoubleFormat.decimalOrWhole(value)).append("]]");
             return this;
         }

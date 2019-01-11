@@ -33,7 +33,10 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.joining;
 
 /**
+ * {@link MeterRegistry} for InfluxDB.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public class InfluxMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("influx-metrics-publisher");
@@ -163,13 +166,20 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return Stream.of(influxLineProtocol(timer.getId(), "long_task_timer", fields));
     }
 
-    private Stream<String> writeCounter(Meter.Id id, double count) {
-        return Stream.of(influxLineProtocol(id, "counter", Stream.of(new Field("value", count))));
+    // VisibleForTesting
+    Stream<String> writeCounter(Meter.Id id, double count) {
+        if (Double.isFinite(count)) {
+            return Stream.of(influxLineProtocol(id, "counter", Stream.of(new Field("value", count))));
+        }
+        return Stream.empty();
     }
 
-    private Stream<String> writeGauge(Meter.Id id, Double value) {
-        return value.isNaN() ? Stream.empty() :
-                Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value))));
+    // VisibleForTesting
+    Stream<String> writeGauge(Meter.Id id, Double value) {
+        if (Double.isFinite(value)) {
+            return Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value))));
+        }
+        return Stream.empty();
     }
 
     private Stream<String> writeFunctionTimer(FunctionTimer timer) {

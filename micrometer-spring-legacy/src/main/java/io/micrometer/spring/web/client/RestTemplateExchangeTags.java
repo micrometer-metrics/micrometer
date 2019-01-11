@@ -18,6 +18,7 @@ package io.micrometer.spring.web.client;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.lang.Nullable;
 import org.springframework.http.HttpRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
@@ -33,6 +34,18 @@ import java.net.URI;
  * @author Jon Schneider
  */
 public final class RestTemplateExchangeTags {
+
+    private static final Tag OUTCOME_UNKNOWN = Tag.of("outcome", "UNKNOWN");
+
+    private static final Tag OUTCOME_INFORMATIONAL = Tag.of("outcome", "INFORMATIONAL");
+
+    private static final Tag OUTCOME_SUCCESS = Tag.of("outcome", "SUCCESS");
+
+    private static final Tag OUTCOME_REDIRECTION = Tag.of("outcome", "REDIRECTION");
+
+    private static final Tag OUTCOME_CLIENT_ERROR = Tag.of("outcome", "CLIENT_ERROR");
+
+    private static final Tag OUTCOME_SERVER_ERROR = Tag.of("outcome", "SERVER_ERROR");
 
     private RestTemplateExchangeTags() {
     }
@@ -118,4 +131,29 @@ public final class RestTemplateExchangeTags {
         return Tag.of("clientName", host);
     }
 
+    public static Tag outcome(ClientHttpResponse response) {
+        try {
+            if (response != null) {
+                HttpStatus statusCode = response.getStatusCode();
+                if (statusCode.is1xxInformational()) {
+                    return OUTCOME_INFORMATIONAL;
+                }
+                if (statusCode.is2xxSuccessful()) {
+                    return OUTCOME_SUCCESS;
+                }
+                if (statusCode.is3xxRedirection()) {
+                    return OUTCOME_REDIRECTION;
+                }
+                if (statusCode.is4xxClientError()) {
+                    return OUTCOME_CLIENT_ERROR;
+                }
+                if (statusCode.is5xxServerError()) {
+                    return OUTCOME_SERVER_ERROR;
+                }
+            }
+            return OUTCOME_UNKNOWN;
+        } catch (IOException | IllegalArgumentException e) {
+            return OUTCOME_UNKNOWN;
+        }
+    }
 }

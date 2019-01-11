@@ -27,6 +27,7 @@ import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,8 +39,8 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static io.micrometer.dynatrace.DynatraceMetricDefinition.DynatraceUnit;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.joining;
 
 /**
  * {@link StepMeterRegistry} for Dynatrace.
@@ -47,10 +48,12 @@ import static java.util.stream.Collectors.joining;
  * @author Oriol Barcelona
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author PJ Fanning
  * @since 1.1.0
  */
 public class DynatraceMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("dynatrace-metrics-publisher");
+    private static final int MAX_MESSAGE_SIZE = 15360; //max message size in bytes that Dynatrace will accept
     private final Logger logger = LoggerFactory.getLogger(DynatraceMeterRegistry.class);
     private final DynatraceConfig config;
     private final HttpSender httpClient;
@@ -132,9 +135,11 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private Stream<DynatraceCustomMetric> writeMeter(Meter meter) {
+    // VisibleForTesting
+    Stream<DynatraceCustomMetric> writeMeter(Meter meter) {
         final long wallTime = clock.wallTime();
         return StreamSupport.stream(meter.measure().spliterator(), false)
+                .filter(ms -> Double.isFinite(ms.getValue()))
                 .map(ms -> createCustomMetric(meter.getId(), wallTime, ms.getValue()));
     }
 
@@ -231,19 +236,63 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     private void postCustomMetricValues(String type, List<DynatraceTimeSeries> timeSeries, String customDeviceMetricEndpoint) {
         try {
-            httpClient.post(customDeviceMetricEndpoint)
-                    .withJsonContent("{\"type\":\"" + type + "\"" +
-                            ",\"series\":[" +
-                            timeSeries.stream()
-                                    .map(DynatraceTimeSeries::asJson)
-                                    .collect(joining(",")) +
-                            "]}")
-                    .send()
-                    .onSuccess(response -> logger.debug("successfully sent {} metrics to Dynatrace.", timeSeries.size()))
-                    .onError(response -> logger.error("failed to send metrics to dynatrace: {}", response.body()));
+            for (DynatraceBatchedPayload postMessage : createPostMessages(type, timeSeries)) {
+                httpClient.post(customDeviceMetricEndpoint)
+                        .withJsonContent(postMessage.payload)
+                        .send()
+                        .onSuccess(response -> logger.debug("successfully sent {} metrics to Dynatrace ({} bytes).",
+                                postMessage.metricCount, postMessage.payload.getBytes(UTF_8).length))
+                        .onError(response -> logger.error("failed to send metrics to dynatrace: {}", response.body()));
+            }
         } catch (Throwable e) {
             logger.error("failed to send metrics to dynatrace", e);
         }
+    }
+
+    // VisibleForTesting
+    List<DynatraceBatchedPayload> createPostMessages(String type, List<DynatraceTimeSeries> timeSeries) {
+        final String header = "{\"type\":\"" + type + '\"' + ",\"series\":[";
+        final String footer = "]}";
+        final int headerFooterBytes = header.getBytes(UTF_8).length + footer.getBytes(UTF_8).length;
+        final int maxMessageSize = MAX_MESSAGE_SIZE - headerFooterBytes;
+        List<DynatraceBatchedPayload> payloadBodies = createPostMessageBodies(timeSeries, maxMessageSize);
+        return payloadBodies.stream().map(body -> {
+            String message = header + body.payload + footer;
+            return new DynatraceBatchedPayload(message, body.metricCount);
+        }).collect(Collectors.toList());
+    }
+
+    private List<DynatraceBatchedPayload> createPostMessageBodies(List<DynatraceTimeSeries> timeSeries, long maxSize) {
+        ArrayList<DynatraceBatchedPayload> messages = new ArrayList<>();
+        StringBuilder payload = new StringBuilder();
+        int metricCount = 0;
+        long totalByteCount = 0;
+        for (DynatraceTimeSeries ts : timeSeries) {
+            String json = ts.asJson();
+            int jsonByteCount = json.getBytes(UTF_8).length;
+            if (jsonByteCount > maxSize) {
+                logger.debug("Time series data for metric '{}' is too large ({} bytes) to send to Dynatrace.", ts.getMetricId(), jsonByteCount);
+                continue;
+            }
+            if ((payload.length() == 0 && totalByteCount + jsonByteCount > maxSize) ||
+                (payload.length() > 0 && totalByteCount + jsonByteCount + 1 > maxSize)) {
+                messages.add(new DynatraceBatchedPayload(payload.toString(), metricCount));
+                payload.setLength(0);
+                totalByteCount = 0;
+                metricCount = 0;
+            }
+            if (payload.length() > 0) {
+                payload.append(',');
+                totalByteCount++;
+            }
+            payload.append(json);
+            totalByteCount += jsonByteCount;
+            metricCount++;
+        }
+        if (payload.length() > 0) {
+            messages.add(new DynatraceBatchedPayload(payload.toString(), metricCount));
+        }
+        return messages;
     }
 
     private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
