@@ -7,4 +7,5 @@ dependencies {
     compile 'org.apache.commons:commons-text:latest.release'
 
     testCompile project(':micrometer-test')
+    testCompile 'com.fasterxml.jackson.core:jackson-databind:latest.release'
 }
