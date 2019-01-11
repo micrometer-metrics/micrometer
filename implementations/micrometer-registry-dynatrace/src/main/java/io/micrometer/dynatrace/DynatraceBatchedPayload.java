@@ -15,11 +15,12 @@
  */
 package io.micrometer.dynatrace;
 
-class Tuple<X, Y> {
-    public final X x;
-    public final Y y;
-    public Tuple(X x, Y y) {
-        this.x = x;
-        this.y = y;
+class DynatraceBatchedPayload {
+    final String payload;
+    final int metricCount;
+
+    DynatraceBatchedPayload(String payload, int metricCount) {
+        this.payload = payload;
+        this.metricCount = metricCount;
     }
 }

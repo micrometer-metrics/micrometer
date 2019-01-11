@@ -48,11 +48,12 @@ import static java.util.Objects.requireNonNull;
  * @author Oriol Barcelona
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author PJ Fanning
  * @since 1.1.0
  */
 public class DynatraceMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("dynatrace-metrics-publisher");
-    private static final int MAX_MESSAGE_SIZE = 15360; //max messsage size that Dynatrace will accept
+    private static final int MAX_MESSAGE_SIZE = 15360; //max message size in bytes that Dynatrace will accept
     private final Logger logger = LoggerFactory.getLogger(DynatraceMeterRegistry.class);
     private final DynatraceConfig config;
     private final HttpSender httpClient;
@@ -235,12 +236,12 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     private void postCustomMetricValues(String type, List<DynatraceTimeSeries> timeSeries, String customDeviceMetricEndpoint) {
         try {
-            for (Tuple<String, Integer> postMessage : createPostMessages(type, timeSeries)) {
+            for (DynatraceBatchedPayload postMessage : createPostMessages(type, timeSeries)) {
                 httpClient.post(customDeviceMetricEndpoint)
-                        .withJsonContent(postMessage.x)
+                        .withJsonContent(postMessage.payload)
                         .send()
                         .onSuccess(response -> logger.debug("successfully sent {} metrics to Dynatrace ({} bytes).",
-                                postMessage.y, postMessage.x.getBytes(UTF_8).length))
+                                postMessage.metricCount, postMessage.payload.getBytes(UTF_8).length))
                         .onError(response -> logger.error("failed to send metrics to dynatrace: {}", response.body()));
             }
         } catch (Throwable e) {
@@ -249,57 +250,46 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     }
 
     // VisibleForTesting
-    List<Tuple<String, Integer>> createPostMessages(String type, List<DynatraceTimeSeries> timeSeries) {
-        final StringBuilder sb = new StringBuilder(1024);
-        sb.append("{\"type\":\"").append(type).append('\"')
-                .append(",\"series\":[");
-        final String header = sb.toString();
+    List<DynatraceBatchedPayload> createPostMessages(String type, List<DynatraceTimeSeries> timeSeries) {
+        final String header = "{\"type\":\"" + type + '\"' + ",\"series\":[";
         final String footer = "]}";
         final int headerFooterBytes = header.getBytes(UTF_8).length + footer.getBytes(UTF_8).length;
         final int maxMessageSize = MAX_MESSAGE_SIZE - headerFooterBytes;
-        List<Tuple<String, Integer>> bodies = createPostMessageBodies(timeSeries, maxMessageSize);
-        return bodies.stream().map(t -> {
-            StringBuilder bsb = new StringBuilder();
-            bsb.append(header).append(t.x).append(footer);
-            String message = bsb.toString();
-            logger.debug("created post message:\n{}", message);
-            return new Tuple<>(message, t.y);
+        List<DynatraceBatchedPayload> payloadBodies = createPostMessageBodies(timeSeries, maxMessageSize);
+        return payloadBodies.stream().map(body -> {
+            String message = header + body.payload + footer;
+            return new DynatraceBatchedPayload(message, body.metricCount);
         }).collect(Collectors.toList());
     }
 
-    private List<Tuple<String, Integer>> createPostMessageBodies(List<DynatraceTimeSeries> timeSeries, long maxSize) {
-        ArrayList<Tuple<String, Integer>> messages = new ArrayList<>();
-        StringBuilder sb = new StringBuilder();
-        int skippedMetrics = 0;
+    private List<DynatraceBatchedPayload> createPostMessageBodies(List<DynatraceTimeSeries> timeSeries, long maxSize) {
+        ArrayList<DynatraceBatchedPayload> messages = new ArrayList<>();
+        StringBuilder payload = new StringBuilder();
         int metricCount = 0;
         long totalByteCount = 0;
         for (DynatraceTimeSeries ts : timeSeries) {
-            boolean skip = false;
             String json = ts.asJson();
             int jsonByteCount = json.getBytes(UTF_8).length;
-            if (maxSize > -1) {
-                if (json.length() > maxSize) {
-                    skip = true;
-                    skippedMetrics++;
-                } else if ((totalByteCount + jsonByteCount) > maxSize) {
-                    messages.add(new Tuple<>(sb.toString(), metricCount));
-                    sb.setLength(0);
-                    totalByteCount = 0;
-                    metricCount = 0;
-                }
+            if (jsonByteCount > maxSize) {
+                logger.debug("Time series data for metric '{}' is too large ({} bytes) to send to Dynatrace.", ts.getMetricId(), jsonByteCount);
+                continue;
             }
-            if (!skip) {
-                if (sb.length() > 0) {
-                    sb.append(',');
-                }
-                sb.append(json);
-                totalByteCount += jsonByteCount;
-                metricCount++;
+            if ((payload.length() == 0 && totalByteCount + jsonByteCount > maxSize) ||
+                (payload.length() > 0 && totalByteCount + jsonByteCount + 1 > maxSize)) {
+                messages.add(new DynatraceBatchedPayload(payload.toString(), metricCount));
+                payload.setLength(0);
+                totalByteCount = 0;
+                metricCount = 0;
             }
+            if (payload.length() > 0) {
+                payload.append(',');
+            }
+            payload.append(json);
+            totalByteCount += jsonByteCount;
+            metricCount++;
         }
-        messages.add(new Tuple<>(sb.toString(), metricCount));
-        if (skippedMetrics > 0) {
-            logger.info("skipped {} timeSeries metrics because they were too large", skippedMetrics);
+        if (payload.length() > 0) {
+            messages.add(new DynatraceBatchedPayload(payload.toString(), metricCount));
         }
         return messages;
     }

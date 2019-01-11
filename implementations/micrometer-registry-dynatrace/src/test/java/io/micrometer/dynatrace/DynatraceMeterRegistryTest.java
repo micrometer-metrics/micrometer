@@ -25,13 +25,14 @@ import io.micrometer.core.ipc.http.HttpSender;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -185,10 +186,46 @@ class DynatraceMeterRegistryTest {
         List<DynatraceTimeSeries> timeSeries = series
             .map(DynatraceMeterRegistry.DynatraceCustomMetric::getTimeSeries)
             .collect(Collectors.toList());
-        List<Tuple<String, Integer>> entries = meterRegistry.createPostMessages("my.type", timeSeries);
+        List<DynatraceBatchedPayload> entries = meterRegistry.createPostMessages("my.type", timeSeries);
         assertThat(entries).hasSize(1);
-        assertThat(entries.get(0).y).isEqualTo(1);
-        assertThat(isJSONValid(entries.get(0).x)).isEqualTo(true);
+        assertThat(entries.get(0).metricCount).isEqualTo(1);
+        assertThat(isJSONValid(entries.get(0).payload)).isEqualTo(true);
+    }
+
+    @Test
+    void whenAllTsTooLargeEmptyMessageListReturned() {
+        List<DynatraceBatchedPayload> messages = meterRegistry.createPostMessages("my.type", Collections.singletonList(createTimeSeriesWithDimensions(10_000)));
+        assertThat(messages).isEmpty();
+    }
+
+    @Test
+    void splitsWhenExactlyExceedingMaxByComma() {
+        // comma needs to be considered when there is more than one time series
+        List<DynatraceBatchedPayload> messages = meterRegistry.createPostMessages("my.type",
+            // Max bytes: 15330 (excluding header/footer, 15360 with header/footer)
+            Arrays.asList(createTimeSeriesWithDimensions(750), // 14861 bytes
+                createTimeSeriesWithDimensions(23, "asdfg"), // 469 bytes
+                createTimeSeriesWithDimensions(750), // 14861 bytes
+                createTimeSeriesWithDimensions(23, "asdf") // 468 bytes
+            ));
+        assertThat(messages).hasSize(3);
+        assertThat(messages.get(0).metricCount).isEqualTo(1);
+        assertThat(messages.get(1).metricCount).isEqualTo(1);
+        assertThat(messages.get(2).metricCount).isEqualTo(2);
+        assertThat(messages.get(2).payload.getBytes(UTF_8).length).isEqualTo(15360);
+        assertThat(messages.stream().map(message -> message.payload).allMatch(DynatraceMeterRegistryTest::isJSONValid)).isTrue();
+    }
+
+    private DynatraceTimeSeries createTimeSeriesWithDimensions(int numberOfDimensions) {
+        return createTimeSeriesWithDimensions(numberOfDimensions, "some.metric");
+    }
+    private DynatraceTimeSeries createTimeSeriesWithDimensions(int numberOfDimensions, String metricId) {
+        return new DynatraceTimeSeries(metricId, System.currentTimeMillis(), 1.23, createDimensionsMap(numberOfDimensions));
+    }
+    private Map<String, String> createDimensionsMap(int numberOfDimensions) {
+        Map<String, String> map = new HashMap<>();
+        IntStream.range(0, numberOfDimensions).forEach(i -> map.put("key" + i, "value" + i));
+        return map;
     }
 
     private DynatraceMeterRegistry createMeterRegistry() {
