@@ -369,6 +369,9 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
         private Distribution distribution(HistogramSnapshot snapshot, boolean timeDomain) {
             CountAtBucket[] histogram = snapshot.histogramCounts();
+            if (histogram.length == 0) {
+                return Distribution.newBuilder().build();
+            }
 
             // selected finite buckets (represented as a normal histogram)
             AtomicLong truncatedSum = new AtomicLong();
