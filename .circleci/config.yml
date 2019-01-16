@@ -1,4 +1,31 @@
 version: 2.1
+commands:
+  build_and_test:
+    steps:
+      - checkout
+      - restore_cache:
+          key: gradle-dependencies-{{ checksum "build.gradle" }}
+      - run:
+          name: downloadDependencies
+          command: ./gradlew downloadDependencies --console=plain
+      - save_cache:
+          key: gradle-dependencies-{{ checksum "build.gradle" }}
+          paths:
+            - ~/.gradle
+      - run:
+          name: run tests
+          command: ./gradlew check test
+      - run:
+          name: collect test reports
+          when: always
+          command: |
+            mkdir -p ~/micrometer/test-results/junit/
+            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/micrometer/test-results/junit/ \;
+      - store_test_results:
+          path: ~/micrometer/test-results/
+      - store_artifacts:
+          path: ~/micrometer/test-results/
+
 jobs:
   build:
     working_directory: ~/micrometer
@@ -7,73 +34,16 @@ jobs:
     docker:
       - image: circleci/openjdk:8-jdk
     steps:
-
-      - checkout
-
-      - restore_cache:
-          key: gradle-dependencies-{{ checksum "build.gradle" }}
-
-      - run:
-          name: downloadDependencies
-          command: ./gradlew downloadDependencies --console=plain
-
-      - save_cache:
-          key: gradle-dependencies-{{ checksum "build.gradle" }}
-          paths:
-            - ~/.gradle
-
-      - run:
-          name: run tests
-          command: ./gradlew check test
-
-      - run:
-          name: collect test reports
-          when: always
-          command: |
-            mkdir -p ~/micrometer/test-results/junit/
-            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/micrometer/test-results/junit/ \;
-
-      - store_test_results:
-          path: ~/micrometer/test-results/
-
-      - store_artifacts:
-          path: ~/micrometer/test-results/
+      - build_and_test
 
   build_jdk11:
     working_directory: ~/micrometer
     environment:
       GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
     docker:
-    - image: circleci/openjdk:11-jdk
+      - image: circleci/openjdk:11-jdk
     steps:
-
-    - checkout
-
-    - restore_cache:
-        key: gradle-dependencies-{{ checksum "build.gradle" }}
-
-    - run:
-        name: downloadDependencies
-        command: ./gradlew downloadDependencies --console=plain
-
-    - save_cache:
-        key: gradle-dependencies-{{ checksum "build.gradle" }}
-        paths:
-        - ~/.gradle
-
-    - run:
-        name: run tests
-        command: ./gradlew check test
-
-    - run:
-        name: collect test reports
-        when: always
-        command: |
-          mkdir -p ~/micrometer/test-results/junit/
-          find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/micrometer/test-results/junit/ \;
-
-    - store_test_results:
-        path: ~/micrometer/test-results/
+      - build_and_test
 
   deploy:
     working_directory: ~/micrometer
