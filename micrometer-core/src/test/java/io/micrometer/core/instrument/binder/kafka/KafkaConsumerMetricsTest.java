@@ -57,10 +57,6 @@ class KafkaConsumerMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         kafkaConsumerMetrics.bindTo(registry);
 
-        // fetch metrics
-        registry.get("kafka.consumer.records.lag.max").tag("client.id", "consumer-1").gauge();
-        registry.get("kafka.consumer.records.lag.max").tag("client.id", "consumer-2").gauge();
-
         // consumer group metrics
         registry.get("kafka.consumer.assigned.partitions").tag("client.id", "consumer-1").gauge();
 
