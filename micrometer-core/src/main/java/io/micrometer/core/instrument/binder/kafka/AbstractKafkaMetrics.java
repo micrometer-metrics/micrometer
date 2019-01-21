@@ -54,7 +54,7 @@ public abstract class AbstractKafkaMetrics implements MetricsReporter {
 
     public void metricChange(KafkaMetric metric) {
         MetricName metricNameRef = metric.metricName();
-        String metricName = metricNameRef.name();
+        String metricName = getMetricPrefix() + metricNameRef.name();
         Map<String, String> metricTags = metricNameRef.tags();
         if (!(metric.metricValue() instanceof Double)) {
             logger.debug("Skipping non-double metric: [{}] -> [{}]", metricName, metric.metricValue().getClass());
@@ -62,7 +62,7 @@ public abstract class AbstractKafkaMetrics implements MetricsReporter {
         }
         Collection<Tag> tags = metricTags.entrySet().stream().map(e -> Tag.of(e.getKey(), e.getValue()))
                 .collect(Collectors.toSet());
-        Metrics.gauge(getMetricPrefix() + metricName, tags, metric, m -> (Double) m.metricValue());
+        Metrics.gauge(metricName, tags, metric, m -> (Double) m.metricValue());
         logger.debug("Reporting metric {} with value {} and tags {}", metricName, metric.metricValue(), tags);
     }
 

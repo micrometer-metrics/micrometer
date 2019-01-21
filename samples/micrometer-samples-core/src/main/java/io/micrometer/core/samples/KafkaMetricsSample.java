@@ -55,6 +55,8 @@ public class KafkaMetricsSample {
             receivedEvents += events.count();
             consumer.commitAsync();
         }
+        consumer.close();
+        producer.close();
         broker.stop();
     }
 
