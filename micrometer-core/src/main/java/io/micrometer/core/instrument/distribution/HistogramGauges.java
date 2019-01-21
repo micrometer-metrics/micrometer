@@ -39,8 +39,6 @@ public class HistogramGauges {
      *
      * @param timer    timer to register to the meter registry
      * @param registry registry to register gauges
-     * @param timer    the timer to register
-     * @param registry the registry to register the timer
      * @return registered {@code HistogramGauges}
      */
     public static HistogramGauges registerWithCommonFormat(Timer timer, MeterRegistry registry) {
