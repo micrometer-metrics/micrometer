@@ -22,10 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Set;
+
+import static java.util.stream.Collectors.toSet;
 
 /**
  * @author Oleksii Bondar
@@ -34,6 +35,8 @@ public abstract class AbstractKafkaMetrics implements MetricsReporter {
 
     private final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+    private static final String METRIC_GROUP_TAG = "metric.group";
+    
     public abstract String getMetricPrefix();
 
     public void configure(Map<String, ?> configs) {
@@ -53,17 +56,23 @@ public abstract class AbstractKafkaMetrics implements MetricsReporter {
     }
 
     public void metricChange(KafkaMetric metric) {
-        MetricName metricNameRef = metric.metricName();
-        String metricName = getMetricPrefix() + metricNameRef.name();
-        Map<String, String> metricTags = metricNameRef.tags();
-        if (!(metric.metricValue() instanceof Double)) {
-            logger.debug("Skipping non-double metric: [{}] -> [{}]", metricName, metric.metricValue().getClass());
-            return;
+        if (metric.metricValue() instanceof Double) {
+            MetricName metricNameRef = metric.metricName();
+            String groupName = metricNameRef.group();
+            String metricName = prepareName(metricNameRef.name());
+            Map<String, String> metricTags = metricNameRef.tags();
+            Set<Tag> tags = metricTags.entrySet().stream().map(e -> Tag.of(e.getKey(), e.getValue())).collect(toSet());
+            tags.add(Tag.of(METRIC_GROUP_TAG, groupName));
+            Metrics.gauge(metricName, tags, metric, m -> (Double) m.metricValue());
+            logger.debug("Registering metric [{}]", metricName);
         }
-        Collection<Tag> tags = metricTags.entrySet().stream().map(e -> Tag.of(e.getKey(), e.getValue()))
-                .collect(Collectors.toSet());
-        Metrics.gauge(metricName, tags, metric, m -> (Double) m.metricValue());
-        logger.debug("Reporting metric {} with value {} and tags {}", metricName, metric.metricValue(), tags);
+    }
+
+    /**
+     * Prepares uniformed metric name to ease migration from {@link KafkaConsumerMetrics}
+     */
+    private String prepareName(String name) {
+        return (getMetricPrefix() + name).replaceAll("-", ".");
     }
 
 }

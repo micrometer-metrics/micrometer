@@ -12,22 +12,16 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
-
 /**
- * Kafka consumer metrics collected from Kafka native plugin interface
- * {@link org.apache.kafka.common.metrics.MetricsReporter}. Supports Kafka versions starting from 0.8.2 and above.
- * 
+ * Tests for {@link KafkaStreamsApiMetrics}.
+ *
  * @author Oleksii Bondar
  */
-@NonNullApi
-@NonNullFields
-public class KafkaConsumerApiMetrics extends AbstractKafkaMetrics {
+class KafkaStreamsApiMetricsTest extends AbstractKafkaMetricsTest {
 
     @Override
-    public String getMetricPrefix() {
-        return "kafka.consumer.";
+    public AbstractKafkaMetrics getMetrics() {
+        return new KafkaStreamsApiMetrics();
     }
 
 }

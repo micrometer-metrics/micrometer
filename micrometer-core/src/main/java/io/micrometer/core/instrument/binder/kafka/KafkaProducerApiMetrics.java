@@ -16,7 +16,8 @@ import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 
 /**
- * Kafka producer metrics collected from Kafka native plugin interface {@link org.apache.kafka.common.metrics.MetricsReporter}
+ * Kafka producer metrics collected from Kafka native plugin interface
+ * {@link org.apache.kafka.common.metrics.MetricsReporter}. Supports Kafka versions starting from 0.8.2 and above.
  * 
  * @author Oleksii Bondar
  */
