@@ -41,8 +41,12 @@ import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
 
 /**
+ * {@link MeterRegistry} for Humio.
+ *
  * @author Martin Westergaard Lassen
  * @author Jon Schneider
+ * @author Johnny Lim
+ * @since 1.1.0
  */
 public class HumioMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("humio-metrics-publisher");
@@ -98,8 +102,8 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                 String tags = "";
                 Map<String, String> datasourceTags = config.tags();
                 if (datasourceTags != null && !datasourceTags.isEmpty()) {
-                    tags = "\"tags\":{" + datasourceTags.entrySet().stream().map(tag -> "\"" + tag.getKey() + "\": \"" + tag.getValue() + "\"")
-                            .collect(joining(",")) + "},";
+                    tags = datasourceTags.entrySet().stream().map(tag -> "\"" + tag.getKey() + "\": \"" + tag.getValue() + "\"")
+                            .collect(joining(",", "\"tags\":{",  "},"));
                 }
 
                 post.withJsonContent(meters.stream()
@@ -177,7 +181,8 @@ public class HumioMeterRegistry extends StepMeterRegistry {
     class Batch {
         private final String timestamp;
 
-        private Batch(long wallTime) {
+        // VisibleForTesting
+        Batch(long wallTime) {
             timestamp = DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(wallTime));
         }
 
@@ -187,16 +192,21 @@ public class HumioMeterRegistry extends StepMeterRegistry {
         }
 
         // VisibleForTesting
+        @Nullable
         String writeFunctionCounter(FunctionCounter counter) {
-            return writeEvent(counter, event("count", counter.count()));
+            double count = counter.count();
+            if (Double.isFinite(count)) {
+                return writeEvent(counter, event("count", count));
+            }
+            return null;
         }
 
         // VisibleForTesting
         @Nullable
         String writeGauge(Gauge gauge) {
-            Double value = gauge.value();
-            if (!value.isNaN()) {
-                return writeEvent(gauge, event("value", gauge.value()));
+            double value = gauge.value();
+            if (Double.isFinite(value)) {
+                return writeEvent(gauge, event("value", value));
             }
             return null;
         }
@@ -204,9 +214,9 @@ public class HumioMeterRegistry extends StepMeterRegistry {
         // VisibleForTesting
         @Nullable
         String writeTimeGauge(TimeGauge gauge) {
-            Double value = gauge.value();
-            if (!value.isNaN()) {
-                return writeEvent(gauge, event("value", gauge.value(getBaseTimeUnit())));
+            double value = gauge.value(getBaseTimeUnit());
+            if (Double.isFinite(value)) {
+                return writeEvent(gauge, event("value", value));
             }
             return null;
         }
@@ -258,6 +268,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
             "timestamp": "2016-06-06T13:00:02+02:00",
             "attributes": {
               "name": "value1"
+            }
           }
          */
         // VisibleForTesting
@@ -277,7 +288,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
             for (Tag tag : tags) {
                 String key = tag.getKey();
                 for (Attribute attribute : attributes) {
-                    if (attribute.name.equals(tag.getKey())) {
+                    if (attribute.name.equals(key)) {
                         key = "_" + key;
                         break;
                     }

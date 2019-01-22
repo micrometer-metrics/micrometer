@@ -22,16 +22,14 @@ import java.time.Duration;
 import java.util.Map;
 
 /**
+ * Configuration for {@link HumioMeterRegistry}.
+ *
  * @author Martin Westergaard Lassen
+ * @since 1.1.0
  */
 public interface HumioConfig extends StepRegistryConfig {
-    /**
-     * Get the value associated with a key.
-     *
-     * @param key Key to lookup in the config.
-     * @return Value for the key or null if no key is present.
-     */
-    String get(String key);
+
+    HumioConfig DEFAULT = k -> null;
 
     @Override
     default String prefix() {
@@ -60,7 +58,7 @@ public interface HumioConfig extends StepRegistryConfig {
      * is distinct from Micrometer's notion of tags, which divides a metric along dimensional boundaries.
      * All metrics from this registry will be stored under a datasource defined by these tags.
      *
-     * @return Tags which unique determine the datasource to store metrics in.
+     * @return Tags which uniquely determine the datasource to store metrics in.
      */
     @Nullable
     default Map<String, String> tags() {

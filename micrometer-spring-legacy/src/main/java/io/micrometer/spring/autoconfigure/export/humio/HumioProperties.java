@@ -26,6 +26,7 @@ import java.util.Map;
  * {@link ConfigurationProperties} for configuring Humio metrics export.
  *
  * @author Jon Schneider
+ * @since 1.1.0
  */
 @ConfigurationProperties(prefix = "management.metrics.export.humio")
 public class HumioProperties extends StepRegistryProperties {
