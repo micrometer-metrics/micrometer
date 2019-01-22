@@ -88,13 +88,16 @@ class HumioMeterRegistryTest {
     }
 
     @Test
-    void writeGaugeShouldDropInfiniteValues() {
+    void writeGaugeShouldDropPositiveInfiniteValue() {
         meterRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
         assertThat(createBatch().writeGauge(gauge)).isNull();
+    }
 
+    @Test
+    void writeGaugeShouldDropNegativeInfiniteValue() {
         meterRegistry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
-        gauge = meterRegistry.find("my.gauge").gauge();
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
         assertThat(createBatch().writeGauge(gauge)).isNull();
     }
 
@@ -115,15 +118,18 @@ class HumioMeterRegistryTest {
     }
 
     @Test
-    void writeTimeGaugeShouldDropInfiniteValues() {
+    void writeTimeGaugeShouldDropPositiveInfiniteValue() {
         AtomicReference<Double> obj = new AtomicReference<>(Double.POSITIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
         TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
         assertThat(createBatch().writeGauge(timeGauge)).isNull();
+    }
 
-        obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
+    @Test
+    void writeTimeGaugeShouldDropNegativeInfiniteValue() {
+        AtomicReference<Double> obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
         assertThat(createBatch().writeGauge(timeGauge)).isNull();
     }
 
@@ -135,12 +141,15 @@ class HumioMeterRegistryTest {
     }
 
     @Test
-    void writeFunctionCounterShouldDropInfiniteValues() {
+    void writeFunctionCounterShouldDropPositiveInfiniteValue() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(meterRegistry);
         clock.add(config.step());
         assertThat(createBatch().writeFunctionCounter(counter)).isNull();
+    }
 
-        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(meterRegistry);
+    @Test
+    void writeFunctionCounterShouldDropNegativeInfiniteValue() {
+        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(meterRegistry);
         clock.add(config.step());
         assertThat(createBatch().writeFunctionCounter(counter)).isNull();
     }
