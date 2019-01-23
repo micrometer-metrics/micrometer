@@ -22,7 +22,6 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -71,17 +70,11 @@ class MeterRegistryPostProcessor implements BeanPostProcessor {
 
     private MeterRegistryConfigurer getConfigurer() {
         if (this.configurer == null) {
-            this.configurer = new MeterRegistryConfigurer(
-                    getOrEmpty(this.meterBinders.getIfAvailable()),
-                    getOrEmpty(this.meterFilters.getIfAvailable()),
-                    getOrEmpty(this.meterRegistryCustomizers.getIfAvailable()),
+            this.configurer = new MeterRegistryConfigurer(this.meterRegistryCustomizers,
+                    this.meterFilters, this.meterBinders,
                     this.metricsProperties.getObject().isUseGlobalRegistry());
         }
         return this.configurer;
-    }
-
-    private <T> List<T> getOrEmpty(List<T> list) {
-        return list != null ? list : Collections.emptyList();
     }
 
 }

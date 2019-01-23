@@ -37,6 +37,7 @@ import org.springframework.context.annotation.Import;
  * Configuration for exporting metrics to Elastic.
  *
  * @author Nicolas Portmann
+ * @since 1.1.0
  */
 @Configuration
 @AutoConfigureBefore({CompositeMeterRegistryAutoConfiguration.class,
