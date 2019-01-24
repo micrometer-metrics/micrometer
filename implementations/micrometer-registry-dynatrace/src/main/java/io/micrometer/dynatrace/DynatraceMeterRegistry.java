@@ -240,8 +240,12 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                 httpClient.post(customDeviceMetricEndpoint)
                         .withJsonContent(postMessage.payload)
                         .send()
-                        .onSuccess(response -> logger.debug("successfully sent {} metrics to Dynatrace ({} bytes).",
-                                postMessage.metricCount, postMessage.payload.getBytes(UTF_8).length))
+                        .onSuccess(response -> {
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("successfully sent {} metrics to Dynatrace ({} bytes).",
+                                    postMessage.metricCount, postMessage.payload.getBytes(UTF_8).length);
+                            }
+                        })
                         .onError(response -> logger.error("failed to send metrics to dynatrace: {}", response.body()));
             }
         } catch (Throwable e) {
