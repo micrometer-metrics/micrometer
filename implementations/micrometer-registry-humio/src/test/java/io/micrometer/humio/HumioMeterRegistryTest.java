@@ -16,23 +16,40 @@
 package io.micrometer.humio;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link HumioMeterRegistry}.
+ *
+ * @author Martin Westergaard Lassen
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 @ExtendWith(WiremockResolver.class)
 class HumioMeterRegistryTest {
-    private MockClock clock = new MockClock();
+
+    private final HumioConfig config = HumioConfig.DEFAULT;
+    private final MockClock clock = new MockClock();
+    private final HumioMeterRegistry meterRegistry = new HumioMeterRegistry(config, clock);
 
     @Test
     void writeTimer(@WiremockResolver.Wiremock WireMockServer server) {
-        HumioMeterRegistry registry = humioRegistry(server);
+        HumioMeterRegistry registry = humioMeterRegistry(server);
         registry.timer("my.timer", "status", "success");
 
         server.stubFor(any(anyUrl()));
@@ -43,7 +60,7 @@ class HumioMeterRegistryTest {
 
     @Test
     void datasourceTags(@WiremockResolver.Wiremock WireMockServer server) {
-        HumioMeterRegistry registry = humioRegistry(server, "name", "micrometer");
+        HumioMeterRegistry registry = humioMeterRegistry(server, "name", "micrometer");
         registry.counter("my.counter").increment();
 
         server.stubFor(any(anyUrl()));
@@ -52,7 +69,92 @@ class HumioMeterRegistryTest {
                 .withRequestBody(containing("\"tags\":{\"name\": \"micrometer\"}")));
     }
 
-    private HumioMeterRegistry humioRegistry(WireMockServer server, String... tags) {
+    @Test
+    void writeGauge() {
+        meterRegistry.gauge("my.gauge", 1d);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        assertThat(createBatch().writeGauge(gauge)).isNotNull();
+    }
+
+    private HumioMeterRegistry.Batch createBatch() {
+        return meterRegistry.new Batch(clock.wallTime());
+    }
+
+    @Test
+    void writeGaugeShouldDropNanValue() {
+        meterRegistry.gauge("my.gauge", Double.NaN);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        assertThat(createBatch().writeGauge(gauge)).isNull();
+    }
+
+    @Test
+    void writeGaugeShouldDropPositiveInfiniteValue() {
+        meterRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        assertThat(createBatch().writeGauge(gauge)).isNull();
+    }
+
+    @Test
+    void writeGaugeShouldDropNegativeInfiniteValue() {
+        meterRegistry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        assertThat(createBatch().writeGauge(gauge)).isNull();
+    }
+
+    @Test
+    void writeTimeGauge() {
+        AtomicReference<Double> obj = new AtomicReference<>(1d);
+        meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
+        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        assertThat(createBatch().writeGauge(timeGauge)).isNotNull();
+    }
+
+    @Test
+    void writeTimeGaugeShouldDropNanValue() {
+        AtomicReference<Double> obj = new AtomicReference<>(Double.NaN);
+        meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
+        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        assertThat(createBatch().writeGauge(timeGauge)).isNull();
+    }
+
+    @Test
+    void writeTimeGaugeShouldDropPositiveInfiniteValue() {
+        AtomicReference<Double> obj = new AtomicReference<>(Double.POSITIVE_INFINITY);
+        meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
+        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        assertThat(createBatch().writeGauge(timeGauge)).isNull();
+    }
+
+    @Test
+    void writeTimeGaugeShouldDropNegativeInfiniteValue() {
+        AtomicReference<Double> obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
+        meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
+        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        assertThat(createBatch().writeGauge(timeGauge)).isNull();
+    }
+
+    @Test
+    void writeFunctionCounter() {
+        FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(meterRegistry);
+        clock.add(config.step());
+        assertThat(createBatch().writeFunctionCounter(counter)).isNotNull();
+    }
+
+    @Test
+    void writeFunctionCounterShouldDropPositiveInfiniteValue() {
+        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(meterRegistry);
+        clock.add(config.step());
+        assertThat(createBatch().writeFunctionCounter(counter)).isNull();
+    }
+
+    @Test
+    void writeFunctionCounterShouldDropNegativeInfiniteValue() {
+        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(meterRegistry);
+        clock.add(config.step());
+        assertThat(createBatch().writeFunctionCounter(counter)).isNull();
+    }
+
+    private HumioMeterRegistry humioMeterRegistry(WireMockServer server, String... tags) {
         return new HumioMeterRegistry(new HumioConfig() {
             @Override
             public String get(String key) {

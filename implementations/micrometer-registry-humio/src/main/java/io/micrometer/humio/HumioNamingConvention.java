@@ -19,6 +19,13 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
 
+/**
+ * {@link NamingConvention} for Humio.
+ *
+ * @author Martin Westergaard Lassen
+ * @author Jon Schneider
+ * @since 1.1.0
+ */
 public class HumioNamingConvention implements NamingConvention {
 
     private final NamingConvention delegate;

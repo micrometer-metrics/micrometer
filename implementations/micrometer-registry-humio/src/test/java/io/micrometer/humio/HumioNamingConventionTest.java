@@ -20,6 +20,12 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link HumioNamingConvention}.
+ *
+ * @author Martin Westergaard Lassen
+ * @author Jon Schneider
+ */
 class HumioNamingConventionTest {
     private final NamingConvention namingConvention = new HumioNamingConvention();
 
