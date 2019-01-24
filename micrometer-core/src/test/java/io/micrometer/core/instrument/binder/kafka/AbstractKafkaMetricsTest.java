@@ -45,7 +45,7 @@ abstract class AbstractKafkaMetricsTest {
         kafkaMetrics.metricChange(metric);
 
         String metricName = kafkaMetrics.getMetricPrefix() + metric.metricName().name();
-        assertThat(Metrics.globalRegistry.get(metricName).tags(Tags.of("app", "my-app")).gauge()).isNotNull();
+        assertThat(Metrics.find(metricName).tags(Tags.of("app", "my-app")).gauge()).isNotNull();
     }
 
     @Test
@@ -56,7 +56,7 @@ abstract class AbstractKafkaMetricsTest {
         kafkaMetrics.metricChange(metric);
 
         String metricName = kafkaMetrics.getMetricPrefix() + metric.metricName().name().replaceAll("-", ".");
-        assertThat(Metrics.globalRegistry.get(metricName).gauge()).isNotNull();
+        assertThat(Metrics.find(metricName).gauge()).isNotNull();
     }
 
     @Test
@@ -72,11 +72,11 @@ abstract class AbstractKafkaMetricsTest {
 
         String metricName = kafkaMetrics.getMetricPrefix() + metric.metricName().name();
         Set<Tag> tags = metricTags.entrySet().stream().map(e -> Tag.of(e.getKey(), e.getValue())).collect(toSet());
-        assertThat(Metrics.globalRegistry.get(metricName).tags(tags).gauge()).isNotNull();
+        assertThat(Metrics.find(metricName).tags(tags).gauge()).isNotNull();
     }
 
     @Test
-    void appendMetricGroupTag() {
+    void appendMetricGroupAndApiTags() {
         AbstractKafkaMetrics kafkaMetrics = getMetrics();
         KafkaMetric metric = getKafkaMetric();
 
@@ -84,8 +84,8 @@ abstract class AbstractKafkaMetricsTest {
 
         MetricName metricNameRef = metric.metricName();
         String metricName = kafkaMetrics.getMetricPrefix() + metricNameRef.name();
-        Tags tags = Tags.of("metric.group", metricNameRef.group());
-        assertThat(Metrics.globalRegistry.get(metricName).tags(tags).gauge()).isNotNull();
+        Tags tags = Tags.of("metric-group", metricNameRef.group());
+        assertThat(Metrics.find(metricName).tags(tags).gauge()).isNotNull();
     }
 
     private KafkaMetric getKafkaMetric() {
@@ -97,7 +97,10 @@ abstract class AbstractKafkaMetricsTest {
     }
 
     private KafkaMetric getKafkaMetric(String name, Map<String, String> tags) {
-        String group = UUID.randomUUID().toString();
+        return getKafkaMetric(name, UUID.randomUUID().toString(), tags);
+    }
+
+    protected KafkaMetric getKafkaMetric(String name, String group, Map<String, String> tags) {
         MetricName metricName = new MetricName(name, group, "description", tags);
         Total valueProvider = new Total(new Random().nextDouble());
         return new KafkaMetric(new Object(), metricName, valueProvider, new MetricConfig(), new SystemTime());
