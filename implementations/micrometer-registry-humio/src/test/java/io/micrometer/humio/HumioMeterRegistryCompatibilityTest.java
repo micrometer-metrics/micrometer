@@ -21,6 +21,12 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
 
+/**
+ * Compatibility tests for {@link HumioMeterRegistry}.
+ *
+ * @author Martin Westergaard Lassen
+ * @author Jon Schneider
+ */
 public class HumioMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     private final HumioConfig config = new HumioConfig() {
         @Override

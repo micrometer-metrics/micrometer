@@ -24,6 +24,7 @@ import java.util.Map;
  * Adapter to convert {@link HumioProperties} to a {@link HumioConfig}.
  *
  * @author Jon Schneider
+ * @since 1.1.0
  */
 class HumioPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<HumioProperties> implements HumioConfig {
 
