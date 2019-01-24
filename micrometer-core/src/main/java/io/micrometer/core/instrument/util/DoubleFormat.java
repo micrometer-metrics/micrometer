@@ -25,10 +25,10 @@ import java.util.Locale;
  *
  * @author Jon Schneider
  */
-public class DoubleFormat {
+public final class DoubleFormat {
     /**
      * Because NumberFormat is not thread-safe we cannot share instances across threads. Use a ThreadLocal to
-     * create one pre thread as this seems to offer a significant performance improvement over creating one per-thread:
+     * create one per thread as this seems to offer a significant performance improvement over creating one per-thread:
      * http://stackoverflow.com/a/1285297/2648
      * https://github.com/indeedeng/java-dogstatsd-client/issues/4
      */
@@ -62,6 +62,9 @@ public class DoubleFormat {
         DecimalFormatSymbols otherSymbols = new DecimalFormatSymbols(Locale.US);
         return new DecimalFormat("##0.0#####",otherSymbols);
     });
+    
+    private DoubleFormat() {
+    }
 
     /**
      * @param d Number to format.
