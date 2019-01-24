@@ -15,7 +15,11 @@
  */
 package io.micrometer.core.instrument.util;
 
-public class JsonUtils {
+public final class JsonUtils {
+
+    private JsonUtils() {
+    }
+    
     /**
      * Based on https://stackoverflow.com/a/49564514/510017
      *
