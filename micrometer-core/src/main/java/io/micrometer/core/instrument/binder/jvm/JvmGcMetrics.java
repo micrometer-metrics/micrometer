@@ -45,6 +45,7 @@ enum GcGenerationAge {
     YOUNG,
     UNKNOWN;
 
+    @SuppressWarnings("serial")
     private static Map<String, GcGenerationAge> knownCollectors = new HashMap<String, GcGenerationAge>() {{
         put("ConcurrentMarkSweep", OLD);
         put("Copy", YOUNG);
