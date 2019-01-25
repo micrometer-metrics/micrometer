@@ -6,6 +6,7 @@ dependencies {
 
     // JUnit 5
     compile 'org.junit.jupiter:junit-jupiter-api:latest.release'
+    compile 'org.junit.jupiter:junit-jupiter-params:latest.release'
     runtime 'org.junit.jupiter:junit-jupiter-engine:latest.release'
 
     compile 'ru.lanwen.wiremock:wiremock-junit5:latest.release'

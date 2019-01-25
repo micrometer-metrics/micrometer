@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DatadogMetricMetadataTest {
+    
     @Test
     void escapesStringsInDescription() {
         DatadogMetricMetadata metricMetadata = new DatadogMetricMetadata(
@@ -35,6 +36,7 @@ class DatadogMetricMetadataTest {
                 null
         );
 
-        assertThat(metricMetadata.editMetadataBody()).isEqualTo("{\"type\":\"count\",\"description\":\"The /\\\"recent cpu usage\\\" for the Java Virtual Machine process\"}");
+        String expectedBody = "{\"type\":\"count\",\"description\":\"The /\\\"recent cpu usage\\\" for the Java Virtual Machine process\"}";
+        assertThat(metricMetadata.editMetadataBody()).isEqualTo(expectedBody);
     }
 }
