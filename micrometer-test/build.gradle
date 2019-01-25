@@ -3,8 +3,7 @@ dependencies {
     compile 'org.assertj:assertj-core:latest.release'
 
     // JUnit 5
-    compile 'org.junit.jupiter:junit-jupiter-api:5.+'
-    runtime 'org.junit.jupiter:junit-jupiter-engine:5.+'
+    compile 'org.junit.jupiter:junit-jupiter:5.4.+'
 
     testCompile 'org.jsr107.ri:cache-ri-impl:1.0.0'
 }
