@@ -43,6 +43,8 @@ import static java.util.stream.StreamSupport.stream;
  * Publishes metrics to New Relic Insights.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
+ * @since 1.0.0
  */
 public class NewRelicMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("new-relic-metrics-publisher");
@@ -122,22 +124,35 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         );
     }
 
-    private Stream<String> writeFunctionCounter(FunctionCounter counter) {
-        return Stream.of(event(counter.getId(), new Attribute("throughput", counter.count())));
+    // VisibleForTesting
+    Stream<String> writeFunctionCounter(FunctionCounter counter) {
+        double count = counter.count();
+        if (Double.isFinite(count)) {
+            return Stream.of(event(counter.getId(), new Attribute("throughput", count)));
+        }
+        return Stream.empty();
     }
 
     private Stream<String> writeCounter(Counter counter) {
         return Stream.of(event(counter.getId(), new Attribute("throughput", counter.count())));
     }
 
-    private Stream<String> writeGauge(Gauge gauge) {
+    // VisibleForTesting
+    Stream<String> writeGauge(Gauge gauge) {
         Double value = gauge.value();
-        return value.isNaN() ? Stream.empty() : Stream.of(event(gauge.getId(), new Attribute("value", value)));
+        if (Double.isFinite(value)) {
+            return Stream.of(event(gauge.getId(), new Attribute("value", value)));
+        }
+        return Stream.empty();
     }
 
-    private Stream<String> writeTimeGauge(TimeGauge gauge) {
+    // VisibleForTesting
+    Stream<String> writeTimeGauge(TimeGauge gauge) {
         Double value = gauge.value(getBaseTimeUnit());
-        return value.isNaN() ? Stream.empty() : Stream.of(event(gauge.getId(), new Attribute("value", value)));
+        if (Double.isFinite(value)) {
+            return Stream.of(event(gauge.getId(), new Attribute("value", value)));
+        }
+        return Stream.empty();
     }
 
     private Stream<String> writeSummary(DistributionSummary summary) {
