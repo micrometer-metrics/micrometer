@@ -131,6 +131,13 @@ public final class RestTemplateExchangeTags {
         return Tag.of("clientName", host);
     }
 
+    /**
+     * Creates an {@code outcome} {@code Tag} derived from the
+     * {@link ClientHttpResponse#getStatusCode() status} of the given {@code response}.
+     * @param response the response
+     * @return the outcome tag
+     * @since 1.1.2
+     */
     public static Tag outcome(ClientHttpResponse response) {
         try {
             if (response != null) {
