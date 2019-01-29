@@ -40,6 +40,6 @@ class NoopGaugeTest {
 
     @Test
     void returnsValueAsZero() {
-        assertThat(gauge.value()).isEqualTo(0.);
+        assertThat(gauge.value()).isEqualTo(0d);
     }
 }

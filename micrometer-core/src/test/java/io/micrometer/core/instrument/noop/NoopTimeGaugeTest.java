@@ -42,7 +42,7 @@ class NoopTimeGaugeTest {
 
     @Test
     void returnsValueAsZero() {
-        assertThat(timeGauge.value()).isEqualTo(0.);
+        assertThat(timeGauge.value()).isEqualTo(0d);
     }
 
     @Test

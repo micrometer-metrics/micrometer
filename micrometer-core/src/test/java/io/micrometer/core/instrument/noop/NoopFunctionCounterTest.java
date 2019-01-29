@@ -40,6 +40,6 @@ class NoopFunctionCounterTest {
 
     @Test
     void returnsCountAsZero() {
-        assertThat(counter.count()).isEqualTo(0l);
+        assertThat(counter.count()).isEqualTo(0L);
     }
 }

@@ -41,17 +41,17 @@ class NoopDistributionSummaryTest {
 
     @Test
     void returnsCountAsZero() {
-        assertThat(distributionSummary.count()).isEqualTo(0l);
+        assertThat(distributionSummary.count()).isEqualTo(0L);
     }
 
     @Test
     void returnsTotalAmountAsZero() {
-        assertThat(distributionSummary.totalAmount()).isEqualTo(0l);
+        assertThat(distributionSummary.totalAmount()).isEqualTo(0L);
     }
 
     @Test
     void returnsMaxAsZero() {
-        assertThat(distributionSummary.max()).isEqualTo(0l);
+        assertThat(distributionSummary.max()).isEqualTo(0L);
     }
 
     @Test

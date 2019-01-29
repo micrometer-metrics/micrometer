@@ -27,7 +27,6 @@ import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -61,26 +60,25 @@ class NoopTimerTest {
     }
 
     @Test
-    void recordRunnable() throws Exception {
+    void recordRunnable() {
         Runnable runnable = mock(Runnable.class);
-        doNothing().when(runnable).run();
         timer.record(runnable);
         verify(runnable).run();
     }
 
     @Test
     void returnsCountAsZero() {
-        assertThat(timer.count()).isEqualTo(0l);
+        assertThat(timer.count()).isEqualTo(0L);
     }
 
     @Test
-    void returnsTotalATimeAsZero() {
-        assertThat(timer.totalTime(TimeUnit.SECONDS)).isEqualTo(0l);
+    void returnsTotalTimeAsZero() {
+        assertThat(timer.totalTime(TimeUnit.SECONDS)).isEqualTo(0L);
     }
 
     @Test
     void returnsMaxAsZero() {
-        assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0l);
+        assertThat(timer.max(TimeUnit.SECONDS)).isEqualTo(0L);
     }
 
     @Test
