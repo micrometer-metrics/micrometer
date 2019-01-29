@@ -42,12 +42,12 @@ class NoopFunctionTimerTest {
 
     @Test
     void returnsCountAsZero() {
-        assertThat(timer.count()).isEqualTo(0.);
+        assertThat(timer.count()).isEqualTo(0d);
     }
 
     @Test
     void returnsTotalTimeAsZero() {
-        assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(0.);
+        assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(0d);
     }
 
     @Test
