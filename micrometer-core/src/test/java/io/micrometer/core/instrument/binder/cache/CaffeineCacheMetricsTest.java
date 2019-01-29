@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.binder.cache;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.CacheLoader;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
@@ -39,11 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
-    private LoadingCache<String, String> cache = Caffeine.newBuilder().build(new CacheLoader<String, String>() {
-        public String load(String key) throws Exception {
-            return "";
-        };
-    });
+    private LoadingCache<String, String> cache = Caffeine.newBuilder().build(key -> "");
     private CaffeineCacheMetrics metrics = new CaffeineCacheMetrics(cache, "testCache", expectedTag);
 
     @Test
@@ -55,7 +50,7 @@ class CaffeineCacheMetricsTest extends AbstractCacheMetricsTest {
 
         Gauge evictionWeight = fetch(registry, "cache.eviction.weight").gauge();
         CacheStats stats = cache.stats();
-        assertThat(evictionWeight.value()).isEqualTo(stats.evictionCount());
+        assertThat(evictionWeight.value()).isEqualTo(stats.evictionWeight());
 
         // specific to LoadingCache instance
         TimeGauge loadDuration = fetch(registry, "cache.load.duration").timeGauge();

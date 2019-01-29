@@ -41,7 +41,7 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
     private LoadingCache<String, String> cache = CacheBuilder.newBuilder().build(new CacheLoader<String, String>() {
         public String load(String key) throws Exception {
             return "";
-        };
+        }
     });
     private GuavaCacheMetrics metrics = new GuavaCacheMetrics(cache, "testCache", expectedTag);
 

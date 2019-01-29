@@ -49,7 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests for {@link CaffeineCacheMetrics}.
+ * Tests for {@link JCacheMetrics}.
  *
  * @author Oleksii Bondar
  */
@@ -116,17 +116,17 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
     }
 
     @Test
-    void returnCacheSize() {
+    void returnNullForCacheSize() {
         assertThat(metrics.size()).isNull();
     }
 
     @Test
-    void returnNullForMissCount() {
+    void returnMissCount() {
         assertThat(metrics.missCount()).isEqualTo(expectedAttributeValue);
     }
 
     @Test
-    void returnNullForEvictionCount() {
+    void returnEvictionCount() {
         assertThat(metrics.evictionCount()).isEqualTo(expectedAttributeValue);
     }
 
