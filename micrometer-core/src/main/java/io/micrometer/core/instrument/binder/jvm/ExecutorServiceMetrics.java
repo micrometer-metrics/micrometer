@@ -35,6 +35,7 @@ import static java.util.Arrays.asList;
  *
  * @author Jon Schneider
  * @author Clint Checketts
+ * @author Johnny Lim
  */
 @NonNullApi
 @NonNullFields
@@ -160,6 +161,12 @@ public class ExecutorServiceMetrics implements MeterBinder {
         Gauge.builder("executor.queued", tp, tpRef -> tpRef.getQueue().size())
                 .tags(tags)
                 .description("The approximate number of tasks that are queued for execution")
+                .baseUnit("tasks")
+                .register(registry);
+
+        Gauge.builder("executor.queue.remaining", tp, tpRef -> tpRef.getQueue().remainingCapacity())
+                .tags(tags)
+                .description("The number of additional elements that this queue can ideally accept without blocking")
                 .baseUnit("tasks")
                 .register(registry);
 
