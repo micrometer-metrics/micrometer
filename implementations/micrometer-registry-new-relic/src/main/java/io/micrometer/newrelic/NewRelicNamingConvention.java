@@ -19,10 +19,16 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.lang.Nullable;
+import java.util.regex.Pattern;
 
 public class NewRelicNamingConvention implements NamingConvention {
     private final NamingConvention delegate;
 
+    private static final Pattern INVALID_CHARACTERS_PATTERN = Pattern.compile("[^\\w:]");
+
+    private static String toValidNewRelicString(String input) {
+        return INVALID_CHARACTERS_PATTERN.matcher(input).replaceAll("_");
+    }
     public NewRelicNamingConvention() {
         this(NamingConvention.camelCase);
     }
@@ -33,12 +39,12 @@ public class NewRelicNamingConvention implements NamingConvention {
 
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        return StringEscapeUtils.escapeJson(delegate.name(name, type, baseUnit));
+        return StringEscapeUtils.escapeJson(toValidNewRelicString(delegate.name(name, type, baseUnit)));
     }
 
     @Override
     public String tagKey(String key) {
-        return StringEscapeUtils.escapeJson(delegate.tagKey(key));
+        return StringEscapeUtils.escapeJson(toValidNewRelicString(delegate.tagKey(key)));
     }
 
     @Override

@@ -98,9 +98,9 @@ public class KafkaConsumerMetrics implements MeterBinder {
 
             if (kafkaMajorVersion(tags) >= 2) {
                 // KAFKA-6184
-                registerTimeGaugeForObject(registry, o, "records-lead", tags, "The latest lead of the partition.");
-                registerTimeGaugeForObject(registry, o, "records-lead-min", tags, "The min lead of the partition. The lag between the consumer offset and the start offset of the log. If this gets close to zero, it's an indication that the consumer may lose data soon.");
-                registerTimeGaugeForObject(registry, o, "records-lead-avg", tags, "The average lead of the partition.");
+                registerGaugeForObject(registry, o, "records-lead", tags, "The latest lead of the partition.", "records");
+                registerGaugeForObject(registry, o, "records-lead-min", tags, "The min lead of the partition. The lag between the consumer offset and the start offset of the log. If this gets close to zero, it's an indication that the consumer may lose data soon.", "records");
+                registerGaugeForObject(registry, o, "records-lead-avg", tags, "The average lead of the partition.", "records");
             }
 
             registerTimeGaugeForObject(registry, o, "fetch-latency-avg", tags, "The average time taken for a fetch request.");
