@@ -23,9 +23,9 @@ import io.micrometer.wavefront.WavefrontConfig;
  *
  * @author Jon Schneider
  */
-public class WavefrontPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<WavefrontProperties> implements WavefrontConfig {
+class WavefrontPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<WavefrontProperties> implements WavefrontConfig {
 
-    public WavefrontPropertiesConfigAdapter(WavefrontProperties properties) {
+    WavefrontPropertiesConfigAdapter(WavefrontProperties properties) {
         super(properties);
     }
 

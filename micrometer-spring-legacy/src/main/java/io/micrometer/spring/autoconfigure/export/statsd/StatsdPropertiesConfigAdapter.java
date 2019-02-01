@@ -27,9 +27,9 @@ import java.time.Duration;
  *
  * @author Jon Schneider
  */
-public class StatsdPropertiesConfigAdapter extends PropertiesConfigAdapter<StatsdProperties> implements StatsdConfig {
+class StatsdPropertiesConfigAdapter extends PropertiesConfigAdapter<StatsdProperties> implements StatsdConfig {
 
-    public StatsdPropertiesConfigAdapter(StatsdProperties properties) {
+    StatsdPropertiesConfigAdapter(StatsdProperties properties) {
         super(properties);
     }
 

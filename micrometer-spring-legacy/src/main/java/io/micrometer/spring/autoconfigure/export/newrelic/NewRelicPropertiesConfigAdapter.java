@@ -23,10 +23,10 @@ import io.micrometer.spring.autoconfigure.export.properties.StepRegistryProperti
  *
  * @author Jon Schneider
  */
-public class NewRelicPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<NewRelicProperties>
+class NewRelicPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<NewRelicProperties>
     implements NewRelicConfig {
 
-    public NewRelicPropertiesConfigAdapter(NewRelicProperties properties) {
+    NewRelicPropertiesConfigAdapter(NewRelicProperties properties) {
         super(properties);
     }
 

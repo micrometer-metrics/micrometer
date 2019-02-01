@@ -17,9 +17,17 @@ package io.micrometer.core.instrument.simple;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
+import io.micrometer.core.instrument.step.StepFunctionCounter;
+import io.micrometer.core.instrument.step.StepFunctionTimer;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -27,6 +35,12 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link SimpleMeterRegistry}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class SimpleMeterRegistryTest {
     private MockClock clock = new MockClock();
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
@@ -54,4 +68,53 @@ class SimpleMeterRegistryTest {
         assertThat(summaryHist2.value()).isEqualTo(0);
         assertThat(timerHist.value()).isEqualTo(0);
     }
+
+    @Test
+    public void newFunctionTimerWhenCountingModeIsCumulativeShouldReturnCumulativeFunctionTimer() {
+        SimpleMeterRegistry registry = createRegistry(CountingMode.CUMULATIVE);
+        Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.TIMER);
+        FunctionTimer functionTimer = registry.newFunctionTimer(id, null, (o) -> 0L, (o) -> 0d, TimeUnit.SECONDS);
+        assertThat(functionTimer).isInstanceOf(CumulativeFunctionTimer.class);
+    }
+
+    @Test
+    public void newFunctionCounterWhenCountingModeIsCumulativeShouldReturnCumulativeFunctionCounter() {
+        SimpleMeterRegistry registry = createRegistry(CountingMode.CUMULATIVE);
+        Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.COUNTER);
+        FunctionCounter functionCounter = registry.newFunctionCounter(id, null, (o) -> 0d);
+        assertThat(functionCounter).isInstanceOf(CumulativeFunctionCounter.class);
+    }
+
+    @Test
+    public void newFunctionTimerWhenCountingModeIsStepShouldReturnStepFunctionTimer() {
+        SimpleMeterRegistry registry = createRegistry(CountingMode.STEP);
+        Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.TIMER);
+        FunctionTimer functionTimer = registry.newFunctionTimer(id, null, (o) -> 0L, (o) -> 0d, TimeUnit.SECONDS);
+        assertThat(functionTimer).isInstanceOf(StepFunctionTimer.class);
+    }
+
+    @Test
+    public void newFunctionCounterWhenCountingModeIsStepShouldReturnStepFunctionCounter() {
+        SimpleMeterRegistry registry = createRegistry(CountingMode.STEP);
+        Meter.Id id = new Meter.Id("some.timer", Tags.empty(), null, null, Meter.Type.COUNTER);
+        FunctionCounter functionCounter = registry.newFunctionCounter(id, null, (o) -> 0d);
+        assertThat(functionCounter).isInstanceOf(StepFunctionCounter.class);
+    }
+
+    private SimpleMeterRegistry createRegistry(CountingMode mode) {
+        return new SimpleMeterRegistry(new SimpleConfig() {
+
+                @Override
+                public String get(String key) {
+                    return null;
+                }
+
+                @Override
+                public CountingMode mode() {
+                    return mode;
+                }
+
+            }, clock);
+    }
+
 }

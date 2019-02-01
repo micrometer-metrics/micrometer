@@ -23,10 +23,10 @@ import io.micrometer.spring.autoconfigure.export.properties.StepRegistryProperti
  *
  * @author Jon Schneider
  */
-public class SignalFxPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<SignalFxProperties>
+class SignalFxPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<SignalFxProperties>
         implements SignalFxConfig {
 
-    public SignalFxPropertiesConfigAdapter(SignalFxProperties properties) {
+    SignalFxPropertiesConfigAdapter(SignalFxProperties properties) {
         super(properties);
         accessToken(); // validate that an access token is set
     }

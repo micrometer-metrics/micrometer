@@ -23,9 +23,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultGauge;
 import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
-import io.micrometer.core.instrument.step.StepCounter;
-import io.micrometer.core.instrument.step.StepDistributionSummary;
-import io.micrometer.core.instrument.step.StepTimer;
+import io.micrometer.core.instrument.step.*;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
@@ -36,6 +34,7 @@ import java.util.function.ToLongFunction;
  * A minimal meter registry implementation primarily used for tests.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public class SimpleMeterRegistry extends MeterRegistry {
     private final SimpleConfig config;
@@ -121,12 +120,26 @@ public class SimpleMeterRegistry extends MeterRegistry {
 
     @Override
     protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
-        return new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
+        switch (config.mode()) {
+            case CUMULATIVE:
+                return new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
+
+            case STEP:
+            default:
+                return new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
+        }
     }
 
     @Override
     protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
-        return new CumulativeFunctionCounter<>(id, obj, countFunction);
+        switch (config.mode()) {
+            case CUMULATIVE:
+                return new CumulativeFunctionCounter<>(id, obj, countFunction);
+
+            case STEP:
+            default:
+                return new StepFunctionCounter<>(id, clock, config.step().toMillis(), obj, countFunction);
+        }
     }
 
     @Override
