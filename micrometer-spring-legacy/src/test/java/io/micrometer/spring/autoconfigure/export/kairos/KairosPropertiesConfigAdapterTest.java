@@ -35,7 +35,7 @@ public class KairosPropertiesConfigAdapterTest extends
 
     @Override
     protected KairosPropertiesConfigAdapter createConfigAdapter(
-        KairosProperties properties) {
+            KairosProperties properties) {
         return new KairosPropertiesConfigAdapter(properties);
     }
 
