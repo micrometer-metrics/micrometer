@@ -19,7 +19,17 @@ import okhttp3.*;
 
 import java.util.Map;
 
+/**
+ * OkHttp-based {@link HttpSender}.
+ *
+ * @author Jon Schneider
+ * @since 1.1.0
+ */
 public class OkHttpSender implements HttpSender {
+
+    private static final MediaType MEDIA_TYPE_APPLICATION_JSON = MediaType.get("application/json; charset=utf-8");
+    private static final MediaType MEDIA_TYPE_TEXT_PLAIN = MediaType.get("text/plain; charset=utf-8");
+
     private final OkHttpClient client;
 
     public OkHttpSender(OkHttpClient client) {
@@ -38,18 +48,21 @@ public class OkHttpSender implements HttpSender {
             requestBuilder.addHeader(requestHeader.getKey(), requestHeader.getValue());
         }
 
-        if (request.getEntity().length > 0) {
+        byte[] entity = request.getEntity();
+        String requestMethod = request.getMethod().toString();
+        if (entity.length > 0) {
             String contentType = request.getRequestHeaders().get("Content-Type");
-            if (contentType == null)
-                contentType = "application/json"; // guess
-            RequestBody body = RequestBody.create(MediaType.get(contentType + "; charset=utf-8"), request.getEntity());
-            requestBuilder.method(request.getMethod().toString(), body);
+            MediaType mediaType = contentType != null
+                    ? MediaType.get(contentType + "; charset=utf-8")
+                    : MEDIA_TYPE_APPLICATION_JSON;
+            RequestBody body = RequestBody.create(mediaType, entity);
+            requestBuilder.method(requestMethod, body);
         } else {
-            if (okhttp3.internal.http.HttpMethod.requiresRequestBody(request.getMethod().toString())) {
-                RequestBody body = RequestBody.create(MediaType.get("text/plain; charset=utf-8"), request.getEntity());
-                requestBuilder.method(request.getMethod().toString(), body);
+            if (okhttp3.internal.http.HttpMethod.requiresRequestBody(requestMethod)) {
+                RequestBody body = RequestBody.create(MEDIA_TYPE_TEXT_PLAIN, entity);
+                requestBuilder.method(requestMethod, body);
             } else {
-                requestBuilder.method(request.getMethod().toString(), null);
+                requestBuilder.method(requestMethod, null);
             }
         }
 
