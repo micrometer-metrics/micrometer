@@ -25,7 +25,7 @@ import java.util.Map;
 
 public class HttpUrlConnectionSender implements HttpSender {
 
-    private static final int DEFAULT_CONNECTION_TIMEOUT_MS = 1000;
+    private static final int DEFAULT_CONNECT_TIMEOUT_MS = 1000;
     private static final int DEFAULT_READ_TIMEOUT_MS = 10000;
     
     private final int connectTimeoutMs;
@@ -37,7 +37,7 @@ public class HttpUrlConnectionSender implements HttpSender {
     }
 
     public HttpUrlConnectionSender() {
-        this.connectTimeoutMs = DEFAULT_CONNECTION_TIMEOUT_MS;
+        this.connectTimeoutMs = DEFAULT_CONNECT_TIMEOUT_MS;
         this.readTimeoutMs = DEFAULT_READ_TIMEOUT_MS;
     }
 
