@@ -37,6 +37,7 @@ import org.springframework.context.annotation.Import;
  * Configuration for exporting metrics to New Relic.
  *
  * @author Jon Schneider
+ * @since 1.0.0
  */
 @Configuration
 @AutoConfigureBefore({CompositeMeterRegistryAutoConfiguration.class,

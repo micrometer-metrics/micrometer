@@ -22,6 +22,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * {@link ConfigurationProperties} for configuring New Relic metrics export.
  *
  * @author Jon Schneider
+ * @since 1.0.0
  */
 @ConfigurationProperties(prefix = "management.metrics.export.newrelic")
 public class NewRelicProperties extends StepRegistryProperties {
