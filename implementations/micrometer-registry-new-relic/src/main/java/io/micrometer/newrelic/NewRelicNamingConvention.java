@@ -21,6 +21,12 @@ import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.lang.Nullable;
 import java.util.regex.Pattern;
 
+/**
+ * {@link NamingConvention} for New Relic Insights.
+ *
+ * @author Jon Schneider
+ * @since 1.0.0
+ */
 public class NewRelicNamingConvention implements NamingConvention {
     private final NamingConvention delegate;
 
