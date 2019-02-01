@@ -35,7 +35,7 @@ public class AppOpticsPropertiesConfigAdapterTest extends
 
     @Override
     protected AppOpticsPropertiesConfigAdapter createConfigAdapter(
-        AppOpticsProperties properties) {
+            AppOpticsProperties properties) {
         return new AppOpticsPropertiesConfigAdapter(properties);
     }
 

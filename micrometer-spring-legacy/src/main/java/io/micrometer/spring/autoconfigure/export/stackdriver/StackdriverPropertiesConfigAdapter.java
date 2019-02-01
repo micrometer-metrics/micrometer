@@ -23,10 +23,10 @@ import io.micrometer.stackdriver.StackdriverConfig;
  *
  * @author Jon Schneider
  */
-public class StackdriverPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<StackdriverProperties>
+class StackdriverPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<StackdriverProperties>
         implements StackdriverConfig {
 
-    public StackdriverPropertiesConfigAdapter(StackdriverProperties properties) {
+    StackdriverPropertiesConfigAdapter(StackdriverProperties properties) {
         super(properties);
     }
 

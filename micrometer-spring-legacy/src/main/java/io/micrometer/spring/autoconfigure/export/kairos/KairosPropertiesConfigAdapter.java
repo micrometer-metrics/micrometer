@@ -22,11 +22,10 @@ import io.micrometer.spring.autoconfigure.export.properties.StepRegistryProperti
  * Adapter to convert {@link KairosProperties} to a {@link KairosConfig}.
  *
  * @author Anton Ilinchik
- * @since 1.1.0
  */
-public class KairosPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<KairosProperties> implements KairosConfig {
+class KairosPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<KairosProperties> implements KairosConfig {
 
-    public KairosPropertiesConfigAdapter(KairosProperties properties) {
+    KairosPropertiesConfigAdapter(KairosProperties properties) {
         super(properties);
     }
 
