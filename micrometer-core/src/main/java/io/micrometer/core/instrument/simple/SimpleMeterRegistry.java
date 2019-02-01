@@ -126,7 +126,7 @@ public class SimpleMeterRegistry extends MeterRegistry {
 
             case STEP:
             default:
-                return new StepFunctionTimer(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
+                return new StepFunctionTimer<>(id, clock, config.step().toMillis(), obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
         }
     }
 
