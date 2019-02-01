@@ -26,9 +26,9 @@ import java.time.Duration;
  *
  * @author Jon Schneider
  */
-public class SimplePropertiesConfigAdapter extends PropertiesConfigAdapter<SimpleProperties> implements SimpleConfig {
+class SimplePropertiesConfigAdapter extends PropertiesConfigAdapter<SimpleProperties> implements SimpleConfig {
 
-    public SimplePropertiesConfigAdapter(SimpleProperties properties) {
+    SimplePropertiesConfigAdapter(SimpleProperties properties) {
         super(properties);
     }
 
