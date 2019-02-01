@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
  * Configuration for {@link NewRelicMeterRegistry}.
  *
  * @author Jon Schneider
+ * @since 1.0.0
  */
 public interface NewRelicConfig extends StepRegistryConfig {
 
