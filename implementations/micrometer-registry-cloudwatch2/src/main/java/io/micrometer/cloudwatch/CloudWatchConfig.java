@@ -23,10 +23,7 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
  * Configuration for CloudWatch exporting.
  *
  * @author Dawid Kublik
- * @deprecated the micrometer-registry-cloudwatch implementation has been deprecated in favour of
- *             micrometer-registry-cloudwatch2, which uses AWS SDK for Java 2.x
  */
-@Deprecated
 public interface CloudWatchConfig extends StepRegistryConfig {
 
     int MAX_BATCH_SIZE = 20;

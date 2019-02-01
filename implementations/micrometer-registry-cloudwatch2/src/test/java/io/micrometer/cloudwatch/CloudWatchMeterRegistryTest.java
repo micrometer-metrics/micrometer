@@ -15,12 +15,12 @@
  */
 package io.micrometer.cloudwatch;
 
-import com.amazonaws.services.cloudwatch.model.MetricDatum;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;

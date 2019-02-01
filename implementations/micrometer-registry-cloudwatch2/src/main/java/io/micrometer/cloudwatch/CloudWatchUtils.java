@@ -17,10 +17,7 @@ package io.micrometer.cloudwatch;
 
 /**
  * Utilities for cloudwatch registry
- * @deprecated the micrometer-registry-cloudwatch implementation has been deprecated in favour of
- *             micrometer-registry-cloudwatch2, which uses AWS SDK for Java 2.x
  */
-@Deprecated
 final class CloudWatchUtils {
 
     /**

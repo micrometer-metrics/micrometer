@@ -15,8 +15,8 @@
  */
 package io.micrometer.cloudwatch;
 
-import com.amazonaws.services.cloudwatch.model.MetricDatum;
 import io.micrometer.core.instrument.util.MathUtils;
+import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
 
 import java.util.AbstractList;
 import java.util.List;
@@ -25,10 +25,7 @@ import java.util.List;
  * Modified from {@link io.micrometer.core.instrument.util.MeterPartition}.
  *
  * @author Dawid Kublik
- * @deprecated the micrometer-registry-cloudwatch implementation has been deprecated in favour of
- *             micrometer-registry-cloudwatch2, which uses AWS SDK for Java 2.x
  */
-@Deprecated
 public class MetricDatumPartition extends AbstractList<List<MetricDatum>> {
     private final List<MetricDatum> list;
     private final int partitionSize;

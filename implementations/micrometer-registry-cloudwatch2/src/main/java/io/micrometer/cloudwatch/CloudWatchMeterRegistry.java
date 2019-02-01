@@ -15,20 +15,23 @@
  */
 package io.micrometer.cloudwatch;
 
-import com.amazonaws.AbortedException;
-import com.amazonaws.handlers.AsyncHandler;
-import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
-import com.amazonaws.services.cloudwatch.model.*;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
+import software.amazon.awssdk.core.exception.AbortedException;
+import software.amazon.awssdk.services.cloudwatch.CloudWatchAsyncClient;
+import software.amazon.awssdk.services.cloudwatch.model.Dimension;
+import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
+import software.amazon.awssdk.services.cloudwatch.model.PutMetricDataRequest;
+import software.amazon.awssdk.services.cloudwatch.model.StandardUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
@@ -46,26 +49,24 @@ import static java.util.stream.StreamSupport.stream;
  * @author Dawid Kublik
  * @author Jon Schneider
  * @author Johnny Lim
- * @deprecated the micrometer-registry-cloudwatch implementation has been deprecated in favour of
- *             micrometer-registry-cloudwatch2, which uses AWS SDK for Java 2.x
+ * @author Pierre-Yves B.
  */
-@Deprecated
 public class CloudWatchMeterRegistry extends StepMeterRegistry {
     private final CloudWatchConfig config;
-    private final AmazonCloudWatchAsync amazonCloudWatchAsync;
+    private final CloudWatchAsyncClient cloudWatchAsyncClient;
     private final Logger logger = LoggerFactory.getLogger(CloudWatchMeterRegistry.class);
 
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
-                                   AmazonCloudWatchAsync amazonCloudWatchAsync) {
-        this(config, clock, amazonCloudWatchAsync, new NamedThreadFactory("cloudwatch-metrics-publisher"));
+                                   CloudWatchAsyncClient cloudWatchAsyncClient) {
+        this(config, clock, cloudWatchAsyncClient, new NamedThreadFactory("cloudwatch-metrics-publisher"));
     }
 
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
-                                   AmazonCloudWatchAsync amazonCloudWatchAsync, ThreadFactory threadFactory) {
+                                   CloudWatchAsyncClient cloudWatchAsyncClient, ThreadFactory threadFactory) {
         super(config, clock);
         requireNonNull(config.namespace());
 
-        this.amazonCloudWatchAsync = amazonCloudWatchAsync;
+        this.cloudWatchAsyncClient = cloudWatchAsyncClient;
         this.config = config;
         config().namingConvention(NamingConvention.identity);
         start(threadFactory);
@@ -87,26 +88,22 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     }
 
     private void sendMetricData(List<MetricDatum> metricData) {
-        PutMetricDataRequest putMetricDataRequest = new PutMetricDataRequest()
-                .withNamespace(config.namespace())
-                .withMetricData(metricData);
+        PutMetricDataRequest putMetricDataRequest = PutMetricDataRequest.builder()
+                .namespace(config.namespace())
+                .metricData(metricData)
+                .build();
         CountDownLatch latch = new CountDownLatch(1);
-        amazonCloudWatchAsync.putMetricDataAsync(putMetricDataRequest, new AsyncHandler<PutMetricDataRequest, PutMetricDataResult>() {
-            @Override
-            public void onError(Exception exception) {
-                if (exception instanceof AbortedException) {
-                    logger.warn("sending metric data was aborted: {}", exception.getMessage());
+        cloudWatchAsyncClient.putMetricData(putMetricDataRequest).whenCompleteAsync((response, t) -> {
+            if (t != null) {
+                if (t instanceof AbortedException) {
+                    logger.warn("sending metric data was aborted: {}", t.getMessage());
                 } else {
-                    logger.error("error sending metric data.", exception);
+                    logger.error("error sending metric data.", t);
                 }
-                latch.countDown();
+            } else {
+                logger.debug("published metric with namespace:{}", putMetricDataRequest.namespace());
             }
-
-            @Override
-            public void onSuccess(PutMetricDataRequest request, PutMetricDataResult result) {
-                logger.debug("published metric with namespace:{}", request.getNamespace());
-                latch.countDown();
-            }
+            latch.countDown();
         });
         try {
             latch.await(config.readTimeout().toMillis(), TimeUnit.MILLISECONDS);
@@ -133,7 +130,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     class Batch {
-        private final long wallTime = clock.wallTime();
+        private long wallTime = clock.wallTime();
 
         private Stream<MetricDatum> gaugeData(Gauge gauge) {
             double value = gauge.value();
@@ -220,12 +217,13 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             }
 
             List<Tag> tags = id.getConventionTags(config().namingConvention());
-            return new MetricDatum()
-                    .withMetricName(getMetricName(id, suffix))
-                    .withDimensions(toDimensions(tags))
-                    .withTimestamp(new Date(wallTime))
-                    .withValue(CloudWatchUtils.clampMetricValue(value))
-                    .withUnit(toStandardUnit(unit));
+            return MetricDatum.builder()
+                    .metricName(getMetricName(id, suffix))
+                    .dimensions(toDimensions(tags))
+                    .timestamp(Instant.ofEpochMilli(wallTime))
+                    .value(CloudWatchUtils.clampMetricValue(value))
+                    .unit(toStandardUnit(unit))
+                    .build();
         }
 
         // VisibleForTesting
@@ -236,23 +234,23 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         private StandardUnit toStandardUnit(@Nullable String unit) {
             if (unit == null) {
-                return StandardUnit.None;
+                return StandardUnit.NONE;
             }
             switch (unit.toLowerCase()) {
                 case "bytes":
-                    return StandardUnit.Bytes;
+                    return StandardUnit.BYTES;
                 case "milliseconds":
-                    return StandardUnit.Milliseconds;
+                    return StandardUnit.MILLISECONDS;
                 case "count":
-                    return StandardUnit.Count;
+                    return StandardUnit.COUNT;
             }
-            return StandardUnit.None;
+            return StandardUnit.NONE;
         }
 
 
         private List<Dimension> toDimensions(List<Tag> tags) {
             return tags.stream()
-                    .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
+                    .map(tag -> Dimension.builder().name(tag.getKey()).value(tag.getValue()).build())
                     .collect(toList());
         }
     }
