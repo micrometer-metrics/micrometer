@@ -35,22 +35,18 @@ public class WavefrontProperties extends StepRegistryProperties {
     private Duration step = Duration.ofSeconds(10);
 
     /**
-     * The URI to publish metrics to. The URI could represent a Wavefront sidecar or the
-     * Wavefront API host. This host could also represent an internal proxy set up in your environment
-     * that forwards metrics data to the Wavefront API host.
-     *
-     * If publishing metrics to a Wavefront proxy (as described in https://docs.wavefront.com/proxies_installing.html),
-     * the host must be in the proxy://HOST:PORT format.
+     * URI to ship metrics to.
      */
-    private String uri;
+    private URI uri = URI.create("https://longboard.wavefront.com");
 
     /**
-     * Uniquely identifies the app instance that is publishing metrics to Wavefront. Defaults to the local host name.
+     * Unique identifier for the app instance that is the source of metrics being
+     * published to Wavefront. Defaults to the local host name.
      */
     private String source;
 
     /**
-     * Required when publishing directly to the Wavefront API host, otherwise does nothing.
+     * API token used when publishing metrics directly to the Wavefront API host.
      */
     private String apiToken;
 
@@ -61,11 +57,11 @@ public class WavefrontProperties extends StepRegistryProperties {
      */
     private String globalPrefix;
 
-    public String getUri() {
-        return uri;
+    public URI getUri() {
+        return this.uri;
     }
 
-    public void setUri(String uri) {
+    public void setUri(URI uri) {
         this.uri = uri;
     }
 
@@ -88,7 +84,7 @@ public class WavefrontProperties extends StepRegistryProperties {
     }
 
     public String getApiToken() {
-        return apiToken;
+        return this.apiToken;
     }
 
     public void setApiToken(String apiToken) {
@@ -96,10 +92,11 @@ public class WavefrontProperties extends StepRegistryProperties {
     }
 
     public String getGlobalPrefix() {
-        return globalPrefix;
+        return this.globalPrefix;
     }
 
     public void setGlobalPrefix(String globalPrefix) {
         this.globalPrefix = globalPrefix;
     }
+
 }
