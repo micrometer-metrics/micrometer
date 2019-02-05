@@ -42,7 +42,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests for {@link OkHttpSender}
+ * Tests for {@link OkHttpSender}.
  * 
  * @author Oleksii Bondar
  */
@@ -57,7 +57,7 @@ class OkHttpSenderTest {
     }
 
     @Test
-    void sendGetRequestWithOutRequestBody() throws Throwable {
+    void sendGetRequestWithoutRequestBody() throws Throwable {
         int expectedCode = 200;
         String expectedBody = "response";
         Method method = Method.GET;
@@ -100,6 +100,7 @@ class OkHttpSenderTest {
         okhttp3.Request capturedRequest = requestCaptor.getValue();
         assertThat(capturedRequest.method()).isEqualTo(method.toString());
         assertThat(capturedRequest.header(headerName)).isEqualTo(headerValue);
+        assertThat(capturedRequest.body().contentType()).isEqualTo(MediaType.get("application/json; charset=utf-8"));
     }
 
     @Test
@@ -114,19 +115,6 @@ class OkHttpSenderTest {
         okhttp3.Request capturedRequest = requestCaptor.getValue();
         assertThat(capturedRequest.header(headerName)).isEqualTo(contentType);
         assertThat(capturedRequest.body().contentType()).isEqualTo(MediaType.get(contentType + "; charset=utf-8"));
-    }
-
-    @Test
-    void defaultContentTypeToApplicationJsonIfNotSpecified() throws Throwable {
-        String headerName = UUID.randomUUID().toString();
-        String headerValue = UUID.randomUUID().toString();
-        Map<String, String> requestHeaders = Collections.singletonMap(headerName, headerValue);
-        Request request = new Request(new URL("http://localhost"), new byte[10], Method.POST, requestHeaders);
-
-        sendRequest(request, 200, "body");
-
-        okhttp3.Request capturedRequest = requestCaptor.getValue();
-        assertThat(capturedRequest.body().contentType()).isEqualTo(MediaType.get("application/json; charset=utf-8"));
     }
 
     private Response sendRequest(Request request, int expectedCode, String expectedBody) throws Throwable {

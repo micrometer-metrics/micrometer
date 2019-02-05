@@ -22,7 +22,6 @@ import io.micrometer.core.ipc.http.HttpSender.Response;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockitoAnnotations;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -48,7 +47,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests for {@link HttpUrlConnectionSender}
+ * Tests for {@link HttpUrlConnectionSender}.
  * 
  * @author Oleksii Bondar
  */
@@ -68,7 +67,6 @@ class HttpUrlConnectionSenderTest {
 
     @BeforeEach
     void setup() {
-        MockitoAnnotations.initMocks(this);
         httpUrlStreamHandler.resetConnections();
     }
 
@@ -132,8 +130,8 @@ class HttpUrlConnectionSenderTest {
     @Test
     void allowToOverrideConnectionSettings() throws IOException {
         Duration readTimeout = Duration.ofMillis(100);
-        Duration connectionTimeout = Duration.ofMillis(200);
-        HttpUrlConnectionSender sender = new HttpUrlConnectionSender(connectionTimeout, readTimeout);
+        Duration connectTimeout = Duration.ofMillis(200);
+        HttpUrlConnectionSender sender = new HttpUrlConnectionSender(connectTimeout, readTimeout);
         URL url = new URL("http://localhost");
         Request request = createRequest(url);
         HttpURLConnection connection = mock(HttpURLConnection.class);
@@ -147,7 +145,7 @@ class HttpUrlConnectionSenderTest {
             sender.send(request);
 
             verify(connection).setReadTimeout(eq((int) readTimeout.toMillis()));
-            verify(connection).setConnectTimeout(eq((int) connectionTimeout.toMillis()));
+            verify(connection).setConnectTimeout(eq((int) connectTimeout.toMillis()));
         }
     }
 
