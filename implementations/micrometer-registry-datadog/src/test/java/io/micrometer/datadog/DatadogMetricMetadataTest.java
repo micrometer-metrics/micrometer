@@ -15,14 +15,17 @@
  */
 package io.micrometer.datadog;
 
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DatadogMetricMetadataTest {
+
     @Test
     void escapesStringsInDescription() {
         DatadogMetricMetadata metricMetadata = new DatadogMetricMetadata(
@@ -37,4 +40,29 @@ class DatadogMetricMetadataTest {
 
         assertThat(metricMetadata.editMetadataBody()).isEqualTo("{\"type\":\"count\",\"description\":\"The /\\\"recent cpu usage\\\" for the Java Virtual Machine process\"}");
     }
+
+    @Test
+    void unitsAreConverted() {
+        DatadogMetricMetadata metricMetadata = new DatadogMetricMetadata(
+            Timer.builder("name")
+                .tag("key", "value")
+                .description("Time spent in GC pause")
+                .register(new DatadogMeterRegistry(new DatadogConfig() {
+                    @Override
+                    public String apiKey() {
+                        return "fake";
+                    }
+
+                    @Override
+                    public String get(String key) {
+                        return null;
+                    }
+                }, Clock.SYSTEM)).getId(),
+            Statistic.TOTAL_TIME,
+            false,
+            null);
+
+        assertThat(metricMetadata.editMetadataBody()).isEqualTo("{\"type\":\"count\",\"unit\":\"millisecond\"}");
+    }
+
 }

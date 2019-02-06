@@ -8,7 +8,7 @@ buildscript {
         classpath 'org.ow2.asm:asm:5.0.3'
         classpath 'io.spring.gradle:spring-release-plugin:0.20.1'
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.2.0'
-        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0'
+        classpath 'me.champeau.gradle:jmh-gradle-plugin:0.4.4'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
     }
 
@@ -86,6 +86,8 @@ subprojects {
     test {
         // set heap size for the test JVM(s)
         maxHeapSize = "1500m"
+
+        useJUnitPlatform()
     }
 
     license {

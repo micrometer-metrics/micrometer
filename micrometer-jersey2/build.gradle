@@ -13,6 +13,7 @@ dependencies {
     testCompile 'org.assertj:assertj-core:3.+'
 
     // JERSEY-3662
-    testCompile 'junit:junit:4.12'
+    testCompileOnly 'junit:junit:4.12'
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:latest.release'
     testCompile 'org.mockito:mockito-core:2.+'
 }

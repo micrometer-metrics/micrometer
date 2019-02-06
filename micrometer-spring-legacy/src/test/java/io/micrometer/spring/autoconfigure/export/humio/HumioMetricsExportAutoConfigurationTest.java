@@ -43,7 +43,7 @@ class HumioMetricsExportAutoConfigurationTest {
     @Test
     void defaultTag() {
         registerAndRefresh(ClockConfiguration.class, HumioMetricsExportAutoConfiguration.class);
-        assertThat(context.getBean(HumioConfig.class).tags()).isNull();
+        assertThat(context.getBean(HumioConfig.class).tags()).isEmpty();
     }
 
     @AfterEach

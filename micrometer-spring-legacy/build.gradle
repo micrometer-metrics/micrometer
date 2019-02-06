@@ -79,4 +79,7 @@ dependencies {
     testRuntime 'javax.xml.bind:jaxb-api:2.3.0'
     testRuntime 'javax.activation:activation:1.1.1'
     testRuntime 'com.sun.xml.messaging.saaj:saaj-impl:1.4.0'
+
+    testCompileOnly 'junit:junit:4.12'
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:latest.release'
 }
