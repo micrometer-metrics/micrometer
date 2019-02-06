@@ -15,24 +15,6 @@
  */
 package io.micrometer.spring.autoconfigure;
 
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
-import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
-import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
-import io.micrometer.core.instrument.binder.logging.Log4j2Metrics;
-import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
-import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics;
-import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
-import io.micrometer.core.instrument.binder.system.UptimeMetrics;
-import io.micrometer.core.instrument.config.MeterFilter;
-import io.micrometer.core.instrument.config.MeterFilterReply;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.spring.scheduling.ScheduledMethodMetrics;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.test.util.EnvironmentTestUtils;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -41,17 +23,29 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.List;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.config.MeterFilterReply;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+
+import io.micrometer.spring.scheduling.ScheduledMethodMetrics;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
  * Tests for {@link MetricsAutoConfiguration}.
  *
  * @author Andy Wilkinson
  * @author Johnny Lim
+ * @author Stephane Nicoll
  */
 class MetricsAutoConfigurationTest {
 
@@ -81,11 +75,11 @@ class MetricsAutoConfigurationTest {
     void configuresMeterRegistries() {
         registerAndRefresh(CustomMeterRegistryConfiguration.class);
         MeterRegistry meterRegistry = context.getBean(MeterRegistry.class);
-        List<MeterFilter> filters = (List<MeterFilter>) ReflectionTestUtils.getField(meterRegistry, "filters");
+        MeterFilter[] filters = (MeterFilter[]) ReflectionTestUtils.getField(meterRegistry, "filters");
         assertThat(filters).hasSize(3);
-        assertThat(filters.get(0).accept((Meter.Id) null)).isEqualTo(MeterFilterReply.DENY);
-        assertThat(filters.get(1)).isInstanceOf(PropertiesMeterFilter.class);
-        assertThat(filters.get(2).accept((Meter.Id) null)).isEqualTo(MeterFilterReply.ACCEPT);
+        assertThat(filters[0].accept((Meter.Id) null)).isEqualTo(MeterFilterReply.DENY);
+        assertThat(filters[1]).isInstanceOf(PropertiesMeterFilter.class);
+        assertThat(filters[2].accept((Meter.Id) null)).isEqualTo(MeterFilterReply.ACCEPT);
         verify((MeterBinder) context.getBean("meterBinder")).bindTo(meterRegistry);
         verify(context.getBean(MeterRegistryCustomizer.class)).customize(meterRegistry);
     }
@@ -111,19 +105,6 @@ class MetricsAutoConfigurationTest {
     }
 
     @Test
-    public void automaticallyRegisteredBinders() {
-        assertThat(context.getBeansOfType(MeterBinder.class).values())
-                .hasAtLeastOneElementOfType(Log4j2Metrics.class)
-                .hasAtLeastOneElementOfType(LogbackMetrics.class)
-                .hasAtLeastOneElementOfType(JvmGcMetrics.class)
-                .hasAtLeastOneElementOfType(JvmThreadMetrics.class)
-                .hasAtLeastOneElementOfType(ClassLoaderMetrics.class)
-                .hasAtLeastOneElementOfType(UptimeMetrics.class)
-                .hasAtLeastOneElementOfType(ProcessorMetrics.class)
-                .hasAtLeastOneElementOfType(FileDescriptorMetrics.class);
-    }
-
-    @Test
     void backsOffWhenCustomScheduledMethodMetricsIsProvided() {
         registerAndRefresh(BaseMeterRegistryConfiguration.class, ScheduledMethodMetricsConfiguration.class);
 
@@ -135,6 +116,24 @@ class MetricsAutoConfigurationTest {
         registerAndRefresh(BaseMeterRegistryConfiguration.class);
 
         assertThat(context.getBean(ScheduledMethodMetrics.class)).isInstanceOf(ScheduledMethodMetrics.class);
+    }
+
+    @Test
+    void definesTagsProviderAndFilterWhenMeterRegistryIsPresent() {
+        prepareEnvironment("management.metrics.tags.region=test",
+            "management.metrics.tags.origin=local");
+        registerAndRefresh(MetricsAutoConfiguration.class,
+            CompositeMeterRegistryAutoConfiguration.class);
+
+        MeterRegistry registry = this.context.getBean(MeterRegistry.class);
+        registry.counter("my.counter", "env", "qa");
+        assertThat(registry.find("my.counter").tags("env", "qa")
+            .tags("region", "test").tags("origin", "local").counter())
+            .isNotNull();
+    }
+
+    private void prepareEnvironment(String... properties) {
+        EnvironmentTestUtils.addEnvironment(this.context, properties);
     }
 
     private void registerAndRefresh(Class<?>... configurationClasses) {
@@ -150,8 +149,7 @@ class MetricsAutoConfigurationTest {
 
         @Bean
         MeterRegistry meterRegistry() {
-            SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
-            return spy(meterRegistry);
+            return new SimpleMeterRegistry();
         }
 
     }
@@ -171,8 +169,7 @@ class MetricsAutoConfigurationTest {
 
         @Bean
         MeterRegistry meterRegistry() {
-            SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
-            return spy(meterRegistry);
+            return new SimpleMeterRegistry();
         }
 
         @Bean

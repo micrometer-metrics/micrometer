@@ -16,50 +16,134 @@
 package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.util.EnvironmentTestUtils;
-import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
+import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
+import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics;
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
+import io.micrometer.core.instrument.binder.system.UptimeMetrics;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.client.ExpectedCount.once;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 /**
  * Integration tests for {@link MetricsAutoConfiguration}.
  *
- * @author Stephane Nicoll
- * @author Johnny Lim
+ * @author Jon Schneider
  */
-class MetricsAutoConfigurationIntegrationTest {
+@RunWith(SpringRunner.class)
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = MetricsAutoConfigurationIntegrationTest.MetricsApp.class)
+public class MetricsAutoConfigurationIntegrationTest {
 
-    private AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
+    @Autowired
+    private ApplicationContext context;
 
-    @AfterEach
-    void cleanUp() {
-        if (this.context != null) {
-            this.context.close();
-        }
+    @Autowired
+    private RestTemplate external;
+
+    @Autowired
+    private TestRestTemplate loopback;
+
+    @Autowired
+    private MeterRegistry registry;
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void restTemplateIsInstrumented() {
+        MockRestServiceServer server = MockRestServiceServer.bindTo(external).build();
+        server.expect(once(), requestTo("/api/external"))
+            .andExpect(method(HttpMethod.GET)).andRespond(withSuccess(
+            "hello", MediaType.APPLICATION_JSON));
+
+        assertThat(external.getForObject("/api/external", String.class)).isEqualTo("hello");
+
+        assertThat(registry.get("http.client.requests").timer().count()).isEqualTo(1L);
     }
 
     @Test
-    void definesTagsProviderAndFilterWhenMeterRegistryIsPresent() {
-        prepareEnvironment("management.metrics.tags.region=test",
-                "management.metrics.tags.origin=local");
-        registerAndRefresh(MetricsAutoConfiguration.class,
-                CompositeMeterRegistryAutoConfiguration.class);
+    public void requestMappingIsInstrumented() {
+        loopback.getForObject("/api/people", String.class);
 
-        MeterRegistry registry = this.context.getBean(MeterRegistry.class);
-        registry.counter("my.counter", "env", "qa");
-        assertThat(registry.find("my.counter").tags("env", "qa")
-                .tags("region", "test").tags("origin", "local").counter())
-                .isNotNull();
+        assertThat(registry.get("http.server.requests").timer().count()).isEqualTo(1L);
     }
 
-    private void prepareEnvironment(String... properties) {
-        EnvironmentTestUtils.addEnvironment(this.context, properties);
+    @Test
+    public void automaticallyRegisteredBinders() {
+        assertThat(context.getBeansOfType(MeterBinder.class).values())
+            .hasAtLeastOneElementOfType(LogbackMetrics.class)
+            .hasAtLeastOneElementOfType(JvmGcMetrics.class)
+            .hasAtLeastOneElementOfType(JvmGcMetrics.class)
+            .hasAtLeastOneElementOfType(JvmThreadMetrics.class)
+            .hasAtLeastOneElementOfType(ClassLoaderMetrics.class)
+            .hasAtLeastOneElementOfType(UptimeMetrics.class)
+            .hasAtLeastOneElementOfType(ProcessorMetrics.class)
+            .hasAtLeastOneElementOfType(FileDescriptorMetrics.class);
     }
 
-    private void registerAndRefresh(Class<?>... configurationClasses) {
-        this.context.register(configurationClasses);
-        this.context.refresh();
+    @Test
+    public void registryCustomizersAreAppliedBeforeRegistryIsInjectableElsewhere() {
+        registry.get("my.thing").tags("common", "tag").gauge();
+    }
+
+    @SpringBootApplication(scanBasePackages = "ignored")
+    @Import(PersonController.class)
+    static class MetricsApp {
+        @Bean
+        MockClock mockClock() {
+            return new MockClock();
+        }
+
+        @Bean
+        public MeterRegistryCustomizer commonTags() {
+            return r -> r.config().commonTags("common", "tag");
+        }
+
+        @Bean
+        public MyThing myBinder(MeterRegistry registry) {
+            // this should have the common tag
+            registry.gauge("my.thing", 0);
+            return new MyThing();
+        }
+
+        @Bean
+        public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
+            return restTemplateBuilder.build();
+        }
+
+        private class MyThing {
+        }
+
+    }
+
+    @RestController
+    static class PersonController {
+        @GetMapping("/api/people")
+        String personName() {
+            return "Jon";
+        }
     }
 }
