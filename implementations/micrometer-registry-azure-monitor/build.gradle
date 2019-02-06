@@ -4,4 +4,6 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.+'
 
     testCompile project(':micrometer-test')
+    // required by jdk 9+
+    testRuntimeClasspath 'javax.xml.bind:jaxb-api:2.3.+'
 }
