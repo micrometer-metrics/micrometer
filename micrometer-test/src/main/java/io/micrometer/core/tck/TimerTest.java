@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,8 +31,16 @@ import java.util.function.Supplier;
 import static io.micrometer.core.instrument.MockClock.clock;
 import static io.micrometer.core.instrument.util.TimeUtils.millisToUnit;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/**
+ * Tests for {@link Timer}
+ *
+ * @author Jon Schneider
+ * @author Oleksii Bondar
+ */
 interface TimerTest {
     Duration step();
 
@@ -92,8 +101,30 @@ interface TimerTest {
     default void recordWithRunnable(MeterRegistry registry) {
         Timer t = registry.timer("myTimer");
 
+        Runnable r = () -> {
+            clock(registry).add(10, TimeUnit.NANOSECONDS);
+        };
         try {
-            t.record(() -> clock(registry).add(10, TimeUnit.NANOSECONDS));
+            t.record(r);
+            clock(registry).add(step());
+        } finally {
+            assertAll(() -> assertEquals(1L, t.count()),
+                    () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+        }
+    }
+
+    @Test
+    @DisplayName("record supplier")
+    default void recordWithSupplier(MeterRegistry registry) {
+        Timer t = registry.timer("myTimer");
+        String expectedResult = "response";
+        Supplier<String> supplier = () -> {
+            clock(registry).add(10, TimeUnit.NANOSECONDS);
+            return expectedResult;
+        };
+        try {
+            String supplierResult = t.record(supplier);
+            assertEquals(supplierResult, expectedResult);
             clock(registry).add(step());
         } finally {
             assertAll(() -> assertEquals(1L, t.count()),

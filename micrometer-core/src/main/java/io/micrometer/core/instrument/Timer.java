@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import java.util.function.Supplier;
  * under a minute.
  *
  * @author Jon Schneider
+ * @author Oleksii Bondar
  */
 public interface Timer extends Meter, HistogramSupport {
     /**
@@ -152,6 +153,17 @@ public interface Timer extends Meter, HistogramSupport {
      */
     default <T> Callable<T> wrap(Callable<T> f) {
         return () -> recordCallable(f);
+    }
+    
+    /**
+     * Wrap a {@link Supplier} so that it is timed when invoked.
+     *
+     * @param f The Supplier to time when it is invoked.
+     * @param   <T> The return type of the Supplier result.
+     * @return The wrapped supplier.
+     */
+    default <T> Supplier<T> wrap(Supplier<T> f) {
+        return () -> record(f);
     }
 
     /**
