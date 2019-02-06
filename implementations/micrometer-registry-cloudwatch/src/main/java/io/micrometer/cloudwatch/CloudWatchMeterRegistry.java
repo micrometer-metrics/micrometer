@@ -78,12 +78,24 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        for (List<MetricDatum> batch : MetricDatumPartition.partition(metricData(), config.batchSize())) {
-            sendMetricData(batch);
+        boolean interrupted = false;
+        try {
+            for (List<MetricDatum> batch : MetricDatumPartition.partition(metricData(), config.batchSize())) {
+                try {
+                    sendMetricData(batch);
+                } catch (InterruptedException ex) {
+                    interrupted = true;
+                }
+            }
+        }
+        finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
-    private void sendMetricData(List<MetricDatum> metricData) {
+    private void sendMetricData(List<MetricDatum> metricData) throws InterruptedException {
         PutMetricDataRequest putMetricDataRequest = new PutMetricDataRequest()
                 .withNamespace(config.namespace())
                 .withMetricData(metricData);
@@ -109,6 +121,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             latch.await(config.readTimeout().toMillis(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             logger.warn("metrics push to cloudwatch took longer than expected");
+            throw e;
         }
     }
 
