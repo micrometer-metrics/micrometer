@@ -124,11 +124,30 @@ interface TimerTest {
         };
         try {
             String supplierResult = t.record(supplier);
-            assertEquals(supplierResult, expectedResult);
+            assertEquals(expectedResult, supplierResult);
             clock(registry).add(step());
         } finally {
             assertAll(() -> assertEquals(1L, t.count()),
                     () -> assertEquals(10, t.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
+        }
+    }
+    
+    @Test
+    @DisplayName("wrap supplier")
+    default void wrapSupplier(MeterRegistry registry) {
+        Timer timer = registry.timer("myTimer");
+        String expectedResult = "response";
+        Supplier<String> supplier = () -> {
+            clock(registry).add(10, TimeUnit.NANOSECONDS);
+            return expectedResult;
+        };
+        try {
+            Supplier<String> wrappedSupplier = timer.wrap(supplier);
+            assertEquals(expectedResult, wrappedSupplier.get());
+            clock(registry).add(step());
+        } finally {
+            assertAll(() -> assertEquals(1L, timer.count()),
+                    () -> assertEquals(10, timer.totalTime(TimeUnit.NANOSECONDS), 1.0e-12));
         }
     }
 
