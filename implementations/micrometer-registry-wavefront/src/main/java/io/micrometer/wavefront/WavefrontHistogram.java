@@ -89,8 +89,7 @@ public class WavefrontHistogram extends AbstractDistributionSummary {
 
     @Override
     public HistogramSnapshot takeSnapshot() {
-        throw new UnsupportedOperationException(
-            "takeSnapshot() is not supported by WavefrontHistogram");
+        return new HistogramSnapshot(count(), totalAmount(), max(), null, null, null);
     }
 
     public List<WavefrontHistogramImpl.Distribution> flushDistributions() {

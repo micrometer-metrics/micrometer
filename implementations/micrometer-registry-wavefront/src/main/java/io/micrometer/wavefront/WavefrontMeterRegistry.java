@@ -47,7 +47,6 @@ import java.util.stream.StreamSupport;
 
 import static com.wavefront.sdk.common.Constants.*;
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
-import static io.micrometer.wavefront.WavefrontConstants.WAVEFRONT_METRIC_TYPE_TAG_KEY;
 import static io.micrometer.wavefront.WavefrontHistogram.isWavefrontHistogram;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
@@ -129,6 +128,28 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
             logger.info("publishing metrics to wavefront every " + TimeUtils.format(config.step()));
         }
         super.start(threadFactory);
+    }
+
+    /**
+     * Measures the distribution of samples using Wavefront's histogram implementation.
+     *
+     * @param name The base metric name
+     * @param tags Sequence of dimensions for breaking down the name.
+     * @return A new or existing Wavefront histogram.
+     */
+    public WavefrontHistogram wavefrontHistogram(String name, Iterable<Tag> tags) {
+        return WavefrontHistogram.builder(name).tags(tags).register(this);
+    }
+
+    /**
+     * Measures the distribution of samples using Wavefront's histogram implementation.
+     *
+     * @param name The base metric name
+     * @param tags MUST be an even number of arguments representing key/value pairs of tags.
+     * @return A new or existing Wavefront histogram.
+     */
+    public WavefrontHistogram wavefrontHistogram(String name, String... tags) {
+        return wavefrontHistogram(name, Tags.of(tags));
     }
 
     @Override
@@ -311,7 +332,6 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     private Map<String, String> getTagsAsMap(Meter.Id id) {
         return getConventionTags(id)
             .stream()
-            .filter(tag -> !tag.getKey().equals(WAVEFRONT_METRIC_TYPE_TAG_KEY))
             .collect(Collectors.toMap(Tag::getKey, Tag::getValue, (tag1, tag2) -> tag2));
     }
 
