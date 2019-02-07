@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import io.micrometer.core.lang.Nullable;
 
 import java.util.List;
 
-import static io.micrometer.wavefront.WavefrontConstants.WAVEFRONT_METRIC_TYPE_TAG_KEY;
-import static io.micrometer.wavefront.WavefrontConstants.isWavefrontMetricType;
+import static io.micrometer.wavefront.WavefrontMetricTypeEvaluator.WAVEFRONT_METRIC_TYPE_TAG_KEY;
+import static io.micrometer.wavefront.WavefrontMetricTypeEvaluator.evaluate;
 
 /**
  * Wavefront's implementation of a DistributionSummary based off of WavefrontHistogramImpl.
@@ -52,7 +52,7 @@ public class WavefrontHistogram extends AbstractDistributionSummary {
      * @return {@code true} if the id identifies a WavefrontHistogram, {@code false} otherwise.
      */
     static boolean isWavefrontHistogram(Id id) {
-        return isWavefrontMetricType(id, WAVEFRONT_METRIC_TYPE_TAG_VALUE);
+        return evaluate(id, WAVEFRONT_METRIC_TYPE_TAG_VALUE);
     }
 
     WavefrontHistogram(Id id, Clock clock,

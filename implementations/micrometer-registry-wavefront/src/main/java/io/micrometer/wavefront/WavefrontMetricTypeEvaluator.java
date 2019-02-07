@@ -19,23 +19,28 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 
 /**
- * Class containing Wavefront-specific constants and related static methods.
+ * Evaluator for Wavefront-specific metric types.
  *
  * @author Han Zhang
  */
-public class WavefrontConstants {
+public final class WavefrontMetricTypeEvaluator {
     /**
      * The tag key that is used to identify Wavefront-specific metric types.
      */
     public static final String WAVEFRONT_METRIC_TYPE_TAG_KEY = "wavefrontMetricType";
 
+    private WavefrontMetricTypeEvaluator() {
+    }
+
     /**
+     * Evaluates whether a particular metric is a particular Wavefront-specific metric type.
+     *
      * @param id                            The identifier for a metric.
      * @param wavefrontMetricTypeTagValue   The tag value that identifies a particular
      *                                      Wavefront-specific metric type.
-     * @return {@code true} if the id identifies the metric type, {@code false} otherwise.
+     * @return {@code true} if the metric is of the specified metric type, {@code false} otherwise.
      */
-    static boolean isWavefrontMetricType(Meter.Id id, String wavefrontMetricTypeTagValue) {
+    static boolean evaluate(Meter.Id id, String wavefrontMetricTypeTagValue) {
         Tag wavefrontMetricTypeTag = Tag.of(WAVEFRONT_METRIC_TYPE_TAG_KEY, wavefrontMetricTypeTagValue);
         for (Tag tag : id.getTags()) {
             if (tag.equals(wavefrontMetricTypeTag)) {

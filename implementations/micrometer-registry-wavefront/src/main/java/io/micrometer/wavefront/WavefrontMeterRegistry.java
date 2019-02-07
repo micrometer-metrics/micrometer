@@ -92,34 +92,32 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
 
     private WavefrontMeterRegistry(WavefrontConfig config, Clock clock, ThreadFactory threadFactory,
                                    HttpSender httpClient, @Nullable Tags globalTags) {
-        super(config, clock);
-        this.config = config;
-        this.httpClient = httpClient;
-        this.wavefrontSender = null;
-        this.globalTags = globalTags;
-        this.histogramGranularities = null;
+        this(config, clock, httpClient, null, null, globalTags);
         if (directToApi() && config.apiToken() == null) {
             throw new MissingRequiredConfigurationException("apiToken must be set whenever publishing directly to the Wavefront API");
         }
-
-        config().namingConvention(new WavefrontNamingConvention(config.globalPrefix()));
-
         start(threadFactory);
     }
 
     private WavefrontMeterRegistry(WavefrontConfig config, Clock clock, ThreadFactory threadFactory,
-                                   WavefrontSender wavefrontSender, @Nullable Tags globalTags,
-                                   Set<HistogramGranularity> histogramGranularities) {
+                                   WavefrontSender wavefrontSender, Set<HistogramGranularity> histogramGranularities,
+                                   @Nullable Tags globalTags) {
+        this(config, clock, (HttpSender) null, wavefrontSender, histogramGranularities, globalTags);
+        start(threadFactory);
+    }
+
+    private WavefrontMeterRegistry(WavefrontConfig config, Clock clock, @Nullable HttpSender httpClient,
+                                   @Nullable WavefrontSender wavefrontSender,
+                                   @Nullable Set<HistogramGranularity> histogramGranularities,
+                                   @Nullable Tags globalTags) {
         super(config, clock);
         this.config = config;
-        this.httpClient = null;
+        this.httpClient = httpClient;
         this.wavefrontSender = wavefrontSender;
         this.globalTags = globalTags;
         this.histogramGranularities = histogramGranularities;
 
         config().namingConvention(new WavefrontNamingConvention(config.globalPrefix()));
-
-        start(threadFactory);
     }
 
     @Override
@@ -249,7 +247,6 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         addMetric(metrics, id, "count", wallTime, timer.count());
         addMetric(metrics, id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
         addMetric(metrics, id, "max", wallTime, timer.max(getBaseTimeUnit()));
-
         return metrics.build();
     }
 
@@ -506,7 +503,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
          */
         public WavefrontMeterRegistry build(WavefrontSender wavefrontSender) {
             return new WavefrontMeterRegistry(config, clock, threadFactory, wavefrontSender,
-                globalTags(), histogramGranularities);
+                histogramGranularities, globalTags());
         }
     }
 }

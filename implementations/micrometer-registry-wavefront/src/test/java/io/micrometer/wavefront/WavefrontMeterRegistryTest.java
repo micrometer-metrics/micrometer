@@ -15,12 +15,16 @@
  */
 package io.micrometer.wavefront;
 
+import com.wavefront.sdk.common.application.ApplicationTags;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.stream.Stream;
 
+import static com.wavefront.sdk.common.Constants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -48,6 +52,17 @@ class WavefrontMeterRegistryTest {
 
     private final WavefrontMeterRegistry registry = new WavefrontMeterRegistry(config, new MockClock());
 
+    private final ApplicationTags applicationTags = new ApplicationTags.Builder("app1", "service1")
+        .cluster("us-west")
+        .customTags(new HashMap<String, String>() {{
+            put("env", "staging");
+        }})
+        .build();
+
+    private final WavefrontMeterRegistry registryWithAppTags = WavefrontMeterRegistry.builder(config)
+        .applicationTags(applicationTags)
+        .build();
+
     @Test
     void addMetric() {
         Stream.Builder<String> metricsStreamBuilder = Stream.builder();
@@ -63,5 +78,21 @@ class WavefrontMeterRegistryTest {
         registry.addMetric(metricsStreamBuilder, id, null, System.currentTimeMillis(), Double.NaN);
         registry.addMetric(metricsStreamBuilder, id, null, System.currentTimeMillis(), Double.POSITIVE_INFINITY);
         assertThat(metricsStreamBuilder.build().count()).isEqualTo(0);
+    }
+
+    @Test
+    void getConventionTags() {
+        Meter.Id id = registry.counter("name", "location", "SF").getId();
+        assertThat(registry.getConventionTags(id)).containsExactlyInAnyOrder(Tag.of("location", "SF"));
+
+        id = registryWithAppTags.counter("name", "location", "SF").getId();
+        assertThat(registryWithAppTags.getConventionTags(id)).containsExactlyInAnyOrder(
+            Tag.of("location", "SF"),
+            Tag.of(APPLICATION_TAG_KEY, "app1"),
+            Tag.of(SERVICE_TAG_KEY, "service1"),
+            Tag.of(CLUSTER_TAG_KEY, "us-west"),
+            Tag.of(SHARD_TAG_KEY, NULL_TAG_VAL),
+            Tag.of("env", "staging")
+        );
     }
 }
