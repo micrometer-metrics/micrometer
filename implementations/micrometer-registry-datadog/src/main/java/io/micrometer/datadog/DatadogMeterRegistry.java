@@ -134,7 +134,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                     } else if (status >= 400) {
                         try (InputStream in = con.getErrorStream()) {
                             logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                                    .lines().collect(joining("\n")));
+                                    .lines().collect(joining(System.lineSeparator())));
                         }
                     } else {
                         logger.error("failed to send metrics: http " + status);
@@ -290,7 +290,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
             } else if (status >= 400) {
                 try (InputStream in = con.getErrorStream()) {
                     String msg = new BufferedReader(new InputStreamReader(in))
-                            .lines().collect(joining("\n"));
+                            .lines().collect(joining(System.lineSeparator()));
                     if (msg.contains("metric_name not found")) {
                         // Do nothing. Metrics that are newly created in Datadog are not immediately available
                         // for metadata modification. We will keep trying this request on subsequent publishes,
