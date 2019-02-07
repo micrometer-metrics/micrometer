@@ -62,8 +62,12 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
         this.config = config;
 
-        if (config.enabled())
+        if (config.enabled()) {
+            if (config.applicationKey() == null) {
+                logger.info("An application key must be configured in order for unit information to be sent to Datadog.");
+            }
             start(threadFactory);
+        }
     }
 
     @Override
