@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * @author Han Zhang
  */
-public class WavefrontHistogramTest {
+class WavefrontHistogramTest {
     private final WavefrontConfig config = new WavefrontConfig() {
         @Override
         public String get(String key) {
