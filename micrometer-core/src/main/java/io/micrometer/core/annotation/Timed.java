@@ -22,6 +22,9 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 public @interface Timed {
+    /**
+     * The name of the metric 
+     */
     String value() default "";
 
     String[] extraTags() default {};
