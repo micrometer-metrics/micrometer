@@ -1,11 +1,19 @@
+apply plugin: "me.champeau.gradle.jmh"
+
 dependencies {
-    compile project(':micrometer-core')
-    compile project(':micrometer-samples-core')
-    compile project(':micrometer-registry-prometheus')
+    jmh project(':micrometer-core')
+    jmh project(':micrometer-samples-core')
+    jmh project(':micrometer-registry-prometheus')
 
-    compile 'org.openjdk.jmh:jmh-core:latest.release'
-    compile 'io.dropwizard.metrics5:metrics-core:latest.release'
-    compile 'io.prometheus:simpleclient_common:latest.release'
+    jmh 'io.dropwizard.metrics5:metrics-core:latest.release'
+    jmh 'io.prometheus:simpleclient_common:latest.release'
 
-    compile 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
+    jmh 'org.openjdk.jmh:jmh-core:latest.release'
+    jmh 'org.openjdk.jmh:jmh-generator-annprocess:latest.release'
+}
+
+jmh {
+    fork = 1
+    warmupIterations = 1
+    iterations = 1
 }
