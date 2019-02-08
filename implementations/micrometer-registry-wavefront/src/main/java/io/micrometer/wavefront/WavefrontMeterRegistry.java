@@ -106,7 +106,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                         } else {
                             try (InputStream in = con.getErrorStream()) {
                                 logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                                        .lines().collect(joining("\n")));
+                                        .lines().collect(joining(System.lineSeparator())));
                             }
                         }
                     } catch (Exception e) {

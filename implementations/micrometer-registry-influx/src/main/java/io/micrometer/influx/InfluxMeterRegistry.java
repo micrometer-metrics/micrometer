@@ -86,7 +86,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             } else if (status >= 400) {
                 try (InputStream in = con.getErrorStream()) {
                     logger.error("unable to create database '{}': {}", config.db(), new BufferedReader(new InputStreamReader(in))
-                            .lines().collect(joining("\n")));
+                            .lines().collect(joining(System.lineSeparator())));
                 }
             }
         } catch (Throwable e) {
@@ -174,7 +174,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     } else if (status >= 400) {
                         try (InputStream in = con.getErrorStream()) {
                             logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                                    .lines().collect(joining("\n")));
+                                    .lines().collect(joining(System.lineSeparator())));
                         }
                     } else {
                         logger.error("failed to send metrics: http " + status);
