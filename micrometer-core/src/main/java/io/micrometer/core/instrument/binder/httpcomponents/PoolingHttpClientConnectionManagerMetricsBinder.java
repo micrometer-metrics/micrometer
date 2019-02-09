@@ -9,11 +9,7 @@ import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.pool.PoolStats;
 
-import javax.annotation.PreDestroy;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -39,10 +35,8 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
     private static final String NAME_HTTPCLIENT_CONNECTION_POOL_ROUTE_LEASED          = "httpcomponents.httpclient.pool.route.leased";
     private static final String NAME_HTTPCLIENT_CONNECTION_POOL_ROUTE_PENDING         = "httpcomponents.httpclient.pool.route.pending";
 
-    private final ScheduledExecutorService routeUpdateTask = Executors.newScheduledThreadPool(1);
     private final PoolingHttpClientConnectionManager connectionManager;
     private final Iterable<Tag> tags;
-    private final boolean monitorRoutes;
 
     private MultiGauge poolRouteMaxGauge;
     private MultiGauge poolRouteAvailableGauge;
@@ -51,7 +45,6 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
 
     /**
      * Creates a metrics binder for the given pooling connection manager.
-     * This instance will not monitor pool statistics of specific routes.
      *
      * @param connectionManager The connection manager to monitor.
      * @param name Name of the connection manager. Will be added as tag with the
@@ -65,29 +58,6 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
 
     /**
      * Creates a metrics binder for the given pooling connection manager.
-     * This instance will not monitor pool statistics of specific routes.
-     *
-     * @param connectionManager The connection manager to monitor.
-     * @param name Name of the connection manager. Will be added as tag with the
-     *             key "httpclient".
-     * @param monitorRoutes When true, this metrics binder will monitor every
-     *                      route (target scheme, host and port). Be careful:
-     *                      Set this to true if and only if you are sure that
-     *                      your service accesses only a limited number of
-     *                      target schemes, hosts and ports. DO NOT ENABLE THIS
-     *                      FEATURE if your HttpClient accesses an unlimited
-     *                      number of routes (i.e. if the target host depends on
-     *                      the user input).
-     * @param tags Tags to apply to all recorded metrics. Must be an even number
-     *             of arguments representing key/value pairs of tags.
-     */
-    public PoolingHttpClientConnectionManagerMetricsBinder(HttpClientConnectionManager connectionManager, String name, boolean monitorRoutes, String... tags) {
-        this(connectionManager, name, monitorRoutes, Tags.of(tags));
-    }
-
-    /**
-     * Creates a metrics binder for the given pooling connection manager.
-     * This instance will not monitor pool statistics of specific routes.
      *
      * @param connectionManager The connection manager to monitor.
      * @param name Name of the connection manager. Will be added as tag with the
@@ -95,34 +65,18 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
      * @param tags Tags to apply to all recorded metrics.
      */
     public PoolingHttpClientConnectionManagerMetricsBinder(HttpClientConnectionManager connectionManager, String name, Iterable<Tag> tags) {
-        this(connectionManager, name, false, tags);
-    }
-
-    /**
-     * Creates a metrics binder for the given pooling connection manager.
-     *
-     * @param connectionManager The connection manager to monitor.
-     * @param name Name of the connection manager. Will be added as tag with the
-     *             key "httpclient".
-     * @param monitorRoutes When true, this metrics binder will monitor every
-     *                      route (target scheme, host and port). Be careful:
-     *                      Set this to true if and only if you are sure that
-     *                      your service accesses only a limited number of
-     *                      target schemes, hosts and ports. DO NOT ENABLE THIS
-     *                      FEATURE if your HttpClient accesses an unlimited
-     *                      number of routes (i.e. if the target host depends on
-     *                      the user input).
-     * @param tags Tags to apply to all recorded metrics.
-     */
-    public PoolingHttpClientConnectionManagerMetricsBinder(HttpClientConnectionManager connectionManager, String name, boolean monitorRoutes, Iterable<Tag> tags) {
         Preconditions.checkArgument(connectionManager instanceof PoolingHttpClientConnectionManager);
         this.connectionManager = (PoolingHttpClientConnectionManager) connectionManager;
         this.tags = Tags.concat(tags, "httpclient", name);
-        this.monitorRoutes = monitorRoutes;
     }
 
     @Override
     public void bindTo(@NonNull MeterRegistry registry) {
+        registerTotalMetrics(registry);
+        registerPerRouteMetrics(registry);
+    }
+
+    private void registerTotalMetrics(MeterRegistry registry) {
         Gauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_TOTAL_MAX,
             connectionManager,
             (connectionManager) -> connectionManager.getTotalStats().getMax())
@@ -148,55 +102,75 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
             PoolingHttpClientConnectionManager::getDefaultMaxPerRoute)
             .tags(tags)
             .register(registry);
-
-        if (monitorRoutes) {
-            poolRouteMaxGauge = MultiGauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_ROUTE_MAX)
-                .tags(tags)
-                .register(registry);
-            poolRouteAvailableGauge = MultiGauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_ROUTE_AVAILABLE)
-                .tags(tags)
-                .register(registry);
-            poolRouteLeasedGauge = MultiGauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_ROUTE_LEASED)
-                .tags(tags)
-                .register(registry);
-            poolRoutePendingGauge = MultiGauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_ROUTE_PENDING)
-                .tags(tags)
-                .register(registry);
-
-            routeUpdateTask.scheduleAtFixedRate(new RouteUpdater(), 10, 10, TimeUnit.SECONDS);
-            routeUpdateTask.execute(new RouteUpdater());
-        }
     }
 
-    @PreDestroy
-    public void shutdown() {
-        routeUpdateTask.shutdownNow();
+    private void registerPerRouteMetrics(MeterRegistry registry) {
+        poolRouteMaxGauge = MultiGauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_ROUTE_MAX)
+            .tags(tags)
+            .register(registry);
+        poolRouteAvailableGauge = MultiGauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_ROUTE_AVAILABLE)
+            .tags(tags)
+            .register(registry);
+        poolRouteLeasedGauge = MultiGauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_ROUTE_LEASED)
+            .tags(tags)
+            .register(registry);
+        poolRoutePendingGauge = MultiGauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_ROUTE_PENDING)
+            .tags(tags)
+            .register(registry);
     }
 
-    private class RouteUpdater implements Runnable {
-        @Override
-        public void run() {
-            Set<HttpRoute> routes = connectionManager.getRoutes();
-            poolRouteMaxGauge.register(toRows(routes, PoolStats::getMax));
-            poolRouteAvailableGauge.register(toRows(routes, PoolStats::getAvailable));
-            poolRouteLeasedGauge.register(toRows(routes, PoolStats::getLeased));
-            poolRoutePendingGauge.register(toRows(routes, PoolStats::getPending));
-        }
+    /**
+     * Updates the list of routes accessed by the monitored http client.
+     *
+     * Call this method periodically if you want to monitor thread pools for
+     * every accessed route (target scheme, host and port). For example:
+     *
+     * <pre>
+     *     &#x40;Bean
+     *     public RouteUpdater routeUpdater(List&#60;PoolingHttpClientConnectionManagerMetricsBinder&#62; metricsBinders) {
+     *         return new RouteUpdater(metricsBinders);
+     *     }
+     *
+     *     private static class RouteUpdater {
+     *         private final HashSet&#60;PoolingHttpClientConnectionManagerMetricsBinder&#62; metricsBinders = new HashSet&#60;&#62;();
+     *
+     *         private RouteUpdater(Collection&#60;PoolingHttpClientConnectionManagerMetricsBinder&#62; metricsBinders) {
+     *             this.metricsBinders.addAll(metricsBinders);
+     *         }
+     *
+     *         &#x40;Scheduled(fixedRate = 10000)
+     *         public void updateRoutes() {
+     *             metricsBinders.forEach(PoolingHttpClientConnectionManagerMetricsBinder::updateRoutes);
+     *         }
+     *     }
+     * </pre>
+     *
+     * BE CAREFUL! Call this if and only if you are sure that your http client
+     * accesses only a limited number of remote schemes, hosts and ports. DO NOT
+     * USE THIS METHOD if your HttpClient accesses a big or unlimited number of
+     * routes (i.e. if the target host depends on the user input).
+     */
+    public void updateRoutes() {
+        Set<HttpRoute> routes = connectionManager.getRoutes();
+        poolRouteMaxGauge.register(routesToRows(routes, PoolStats::getMax));
+        poolRouteAvailableGauge.register(routesToRows(routes, PoolStats::getAvailable));
+        poolRouteLeasedGauge.register(routesToRows(routes, PoolStats::getLeased));
+        poolRoutePendingGauge.register(routesToRows(routes, PoolStats::getPending));
+    }
 
-        private Set<MultiGauge.Row> toRows(Set<HttpRoute> routes, Function<PoolStats, Integer> valueFunction) {
-            return routes.stream()
-                .map((route) -> toRow(route, () -> valueFunction.apply(connectionManager.getStats(route))))
-                .collect(Collectors.toSet());
-        }
+    private Set<MultiGauge.Row> routesToRows(Set<HttpRoute> routes, Function<PoolStats, Integer> valueFunction) {
+        return routes.stream()
+            .map((route) -> routeToRow(route, () -> valueFunction.apply(connectionManager.getStats(route))))
+            .collect(Collectors.toSet());
+    }
 
-        private MultiGauge.Row toRow(HttpRoute route, Supplier<Number> valueFunction) {
-            Tags tags = Tags.of(
-                "target.host", route.getTargetHost().getHostName(),
-                "target.port", String.valueOf(route.getTargetHost().getPort()),
-                "target.scheme", route.getTargetHost().getSchemeName()
-            );
-            return MultiGauge.Row.of(tags, valueFunction);
-        }
+    private MultiGauge.Row routeToRow(HttpRoute route, Supplier<Number> valueFunction) {
+        Tags tags = Tags.of(
+            "target.host", route.getTargetHost().getHostName(),
+            "target.port", String.valueOf(route.getTargetHost().getPort()),
+            "target.scheme", route.getTargetHost().getSchemeName()
+        );
+        return MultiGauge.Row.of(tags, valueFunction);
     }
 
 }
