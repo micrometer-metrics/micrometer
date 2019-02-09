@@ -30,6 +30,12 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
+/**
+ * {@link FunctionTimer} for Dropwizard Metrics.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 public class DropwizardFunctionTimer<T> extends AbstractMeter implements FunctionTimer {
     private final WeakReference<T> ref;
     private final ToLongFunction<T> countFunction;
@@ -145,11 +151,10 @@ public class DropwizardFunctionTimer<T> extends AbstractMeter implements Functio
     @Override
     public double totalTime(TimeUnit unit) {
         T obj2 = ref.get();
-        if (obj2 == null)
-            return lastTime;
-        return (lastTime = TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2),
-            totalTimeFunctionUnits,
-            unit));
+        if (obj2 != null) {
+            lastTime = TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnits, baseTimeUnit());
+        }
+        return TimeUtils.convert(lastTime, baseTimeUnit(), unit);
     }
 
     @Override
