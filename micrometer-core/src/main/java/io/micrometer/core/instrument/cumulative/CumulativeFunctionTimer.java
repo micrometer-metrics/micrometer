@@ -28,6 +28,7 @@ import java.util.function.ToLongFunction;
  * A timer that tracks monotonically increasing functions for count and totalTime.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public class CumulativeFunctionTimer<T> implements FunctionTimer {
     private final Meter.Id id;
@@ -58,16 +59,13 @@ public class CumulativeFunctionTimer<T> implements FunctionTimer {
         return obj2 != null ? (lastCount = countFunction.applyAsLong(obj2)) : lastCount;
     }
 
-    /**
-     * The total time of all occurrences of the timed event.
-     */
+    @Override
     public double totalTime(TimeUnit unit) {
         T obj2 = ref.get();
-        if (obj2 == null)
-            return lastTime;
-        return (lastTime = TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2),
-            totalTimeFunctionUnits,
-            unit));
+        if (obj2 != null) {
+            lastTime = TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnits, baseTimeUnit());
+        }
+        return TimeUtils.convert(lastTime, baseTimeUnit(), unit);
     }
 
     @Override
