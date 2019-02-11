@@ -40,4 +40,11 @@ class DropwizardFunctionTimerTest {
         assertThat(functionTimer.totalTime(TimeUnit.SECONDS)).isEqualTo(1d);
     }
 
+    @Test
+    void getDropwizardMeterGetSnapshotGetMeanShouldReturnNanoseconds() {
+        DropwizardFunctionTimer functionTimer = new DropwizardFunctionTimer(
+                null, new MockClock(), new Object(), (o) -> 1L, (o) -> 1d, TimeUnit.SECONDS, TimeUnit.SECONDS);
+        assertThat(functionTimer.getDropwizardMeter().getSnapshot().getMean()).isEqualTo(1000_000_000d);
+    }
+
 }
