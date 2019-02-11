@@ -41,6 +41,8 @@ public interface FunctionTimer extends Meter {
     double count();
 
     /**
+     * The total time of all occurrences of the timed event.
+     *
      * @param unit The base unit of time to scale the total to.
      * @return The total time of all occurrences of the timed event.
      */
