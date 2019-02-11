@@ -15,7 +15,6 @@
  */
 package io.micrometer.statsd.internal;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
@@ -26,7 +25,6 @@ import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-@Disabled
 class BufferingFluxTest {
 
     @Test
@@ -71,10 +69,10 @@ class BufferingFluxTest {
                 Mono.just("twelve bytes"),
                 Mono.just("fourteen bytes"),
                 Mono.just("twelve bytes"),
-                Mono.just("fourteen bytes").delayElement(Duration.ofMillis(500))
+                Mono.just("fourteen bytes").delayElement(Duration.ofMillis(65)) // avoid multiples of maxMillisecondsBetweenEmits to avoid race condition
         );
 
-        Flux<String> buffered = BufferingFlux.create(source, "\n", Integer.MAX_VALUE, 100);
+        Flux<String> buffered = BufferingFlux.create(source, "\n", Integer.MAX_VALUE, 50);
 
         StepVerifier.create(buffered)
                 .expectNext("twelve bytes\nfourteen bytes\ntwelve bytes")
