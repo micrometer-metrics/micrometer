@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Collections.emptyList;
 
-public class CaffeineCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
+class CaffeineCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
     private AtomicReference<String> loadValue = new AtomicReference<>();
 
     private LoadingCache<String, String> cache = Caffeine.newBuilder()

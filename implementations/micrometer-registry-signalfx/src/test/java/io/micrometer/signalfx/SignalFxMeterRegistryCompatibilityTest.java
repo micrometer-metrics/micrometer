@@ -22,7 +22,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
 
-public class SignalFxMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+class SignalFxMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @Override
     public MeterRegistry registry() {
         return new SignalFxMeterRegistry(new SignalFxConfig() {

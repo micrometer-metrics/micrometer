@@ -27,7 +27,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
  *
  * @author Michael Weirauch
  */
-public class JvmMemoryMetricsTest {
+class JvmMemoryMetricsTest {
 
     @Test
     void memoryMetrics() {

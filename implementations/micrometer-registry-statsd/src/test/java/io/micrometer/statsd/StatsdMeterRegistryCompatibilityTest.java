@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 
-public class StatsdMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+class StatsdMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @BeforeAll
     static void before() {
         ((Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).setLevel(Level.INFO);
