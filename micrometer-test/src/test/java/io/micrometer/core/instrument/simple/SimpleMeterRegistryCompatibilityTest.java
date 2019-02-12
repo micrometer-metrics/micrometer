@@ -21,7 +21,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
 
-public class SimpleMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+class SimpleMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     @Override
     public MeterRegistry registry() {
         return new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());

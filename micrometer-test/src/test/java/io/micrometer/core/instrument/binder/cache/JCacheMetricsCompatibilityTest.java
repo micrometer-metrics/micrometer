@@ -25,7 +25,7 @@ import javax.cache.expiry.AccessedExpiryPolicy;
 import static java.util.Collections.emptyList;
 import static javax.cache.expiry.Duration.ONE_HOUR;
 
-public class JCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
+class JCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
     private Cache<String, String> cache;
 
     JCacheMetricsCompatibilityTest() {

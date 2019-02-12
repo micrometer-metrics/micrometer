@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class HazelcastCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
+class HazelcastCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
     private Config config = new Config();
     private IMap<String, String> cache = Hazelcast.newHazelcastInstance(config).getMap("mycache");
 

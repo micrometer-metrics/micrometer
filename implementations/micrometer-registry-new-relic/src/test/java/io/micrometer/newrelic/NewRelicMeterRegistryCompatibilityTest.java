@@ -22,7 +22,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
 
-public class NewRelicMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+class NewRelicMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
 
     private final NewRelicConfig config = new NewRelicConfig() {
         @Override
