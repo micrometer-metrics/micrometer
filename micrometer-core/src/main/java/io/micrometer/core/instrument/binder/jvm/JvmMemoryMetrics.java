@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
+import io.micrometer.core.lang.Nullable;
 
 import java.lang.management.BufferPoolMXBean;
 import java.lang.management.ManagementFactory;
@@ -108,6 +109,7 @@ public class JvmMemoryMetrics implements MeterBinder {
         return getter.applyAsLong(usage);
     }
 
+    @Nullable
     private MemoryUsage getUsage(MemoryPoolMXBean memoryPoolMXBean) {
         try {
             return memoryPoolMXBean.getUsage();
