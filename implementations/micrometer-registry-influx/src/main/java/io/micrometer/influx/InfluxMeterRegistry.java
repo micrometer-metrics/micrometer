@@ -286,7 +286,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     private String influxLineProtocol(Meter.Id id, String metricType, Stream<Field> fields, long time) {
         String tags = getConventionTags(id).stream()
-                .filter(t -> StringUtils.isNotBlank(t.getValue()))
+                .filter(t -> isNotBlank(t.getValue()))
                 .map(t -> "," + t.getKey() + "=" + t.getValue())
                 .collect(joining(""));
 
@@ -318,5 +318,9 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             }
         }
         return true;
+    }
+
+    private static boolean isNotBlank(@Nullable String str) {
+        return !isBlank(str);
     }
 }
