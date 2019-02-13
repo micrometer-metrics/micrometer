@@ -110,7 +110,8 @@ public class DropwizardFunctionTimer<T> extends AbstractMeter implements Functio
                     @Override
                     public double getMean() {
                         double count = count();
-                        return count == 0 ? 0 : totalTime(baseTimeUnit()) / count;
+                        // This return value is expected to be in nanoseconds, for example in JmxReporter.JmxTimer.
+                        return count == 0 ? 0 : totalTime(TimeUnit.NANOSECONDS) / count;
                     }
 
                     @Override
