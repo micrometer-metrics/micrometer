@@ -382,13 +382,15 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                     })
                     .collect(toCollection(ArrayList::new));
 
-            // trim zero-count buckets on the right side of the domain
-            int lastNonzero = 0;
-            for (int i = 0; i < bucketCounts.size(); i++) {
-                if (bucketCounts.get(i) > 0)
-                    lastNonzero = i;
+            if (!bucketCounts.isEmpty()) {
+                // trim zero-count buckets on the right side of the domain
+                int lastNonzero = 0;
+                for (int i = 0; i < bucketCounts.size(); i++) {
+                    if (bucketCounts.get(i) > 0)
+                        lastNonzero = i;
+                }
+                bucketCounts = bucketCounts.subList(0, lastNonzero + 1);
             }
-            bucketCounts = bucketCounts.subList(0, lastNonzero + 1);
 
             // add the "+infinity" bucket, which does NOT have a corresponding bucket boundary
             bucketCounts.add(snapshot.count() - truncatedSum.get());
