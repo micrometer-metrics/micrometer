@@ -15,7 +15,7 @@
  */
 package io.micrometer.core.ipc.http;
 
-public class HttpUrlConnectionSenderTest extends HttpSenderCompatibilityKit {
+class HttpUrlConnectionSenderTest extends HttpSenderCompatibilityKit {
     @Override
     public HttpSender httpClient() {
         return new HttpUrlConnectionSender();
