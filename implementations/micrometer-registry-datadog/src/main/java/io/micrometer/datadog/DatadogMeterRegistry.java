@@ -91,6 +91,9 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     @Override
     public void start(ThreadFactory threadFactory) {
         if (config.enabled()) {
+            if (config.applicationKey() == null) {
+                logger.info("An application key must be configured in order for unit information to be sent to Datadog.");
+            }
             logger.info("publishing metrics to datadog every " + TimeUtils.format(config.step()));
         }
         super.start(threadFactory);
