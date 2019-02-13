@@ -40,7 +40,9 @@ public class MicrometerMetricsPublisher extends HystrixMetricsPublisher {
 
     @Override
     public HystrixMetricsPublisherThreadPool getMetricsPublisherForThreadPool(HystrixThreadPoolKey threadPoolKey, HystrixThreadPoolMetrics metrics, HystrixThreadPoolProperties properties) {
-        return metricsPublisher.getMetricsPublisherForThreadPool(threadPoolKey, metrics, properties);
+        final HystrixMetricsPublisherThreadPool metricsPublisherForThreadPool =
+            metricsPublisher.getMetricsPublisherForThreadPool(threadPoolKey, metrics, properties);
+        return new MicrometerMetricsPublisherThreadPool(registry, threadPoolKey, metrics, properties, metricsPublisherForThreadPool);
     }
 
     @Override
