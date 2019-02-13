@@ -216,6 +216,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     private String influxLineProtocol(Meter.Id id, String metricType, Stream<Field> fields) {
         String tags = getConventionTags(id).stream()
+                .filter(t -> StringUtils.isNotBlank(t.getValue()))
                 .map(t -> "," + t.getKey() + "=" + t.getValue())
                 .collect(joining(""));
 
@@ -277,4 +278,5 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             return key + "=" + DoubleFormat.decimalOrNan(value);
         }
     }
+
 }
