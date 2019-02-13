@@ -17,7 +17,7 @@ package io.micrometer.core.instrument.binder.db;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.sql.DataSource;
 
@@ -27,14 +27,14 @@ import static org.mockito.Mockito.mock;
 /**
  * @author Kristof Depypere
  */
-public class PostgreSQLDatabaseMetricsTest {
+class PostgreSQLDatabaseMetricsTest {
     private static final String DATABASE_NAME = "test";
     private static final String FUNCTIONAL_COUNTER_KEY = "key";
     private DataSource dataSource = mock(DataSource.class);
     private MeterRegistry registry = new SimpleMeterRegistry();
 
     @Test
-    public void shouldRegisterPostesMetrics() {
+    void shouldRegisterPostesMetrics() {
         PostgreSQLDatabaseMetrics postgreSQLDatabaseMetrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
         postgreSQLDatabaseMetrics.bindTo(registry);
 
@@ -62,7 +62,7 @@ public class PostgreSQLDatabaseMetricsTest {
     }
 
     @Test
-    public void shouldBridgePgStatReset() {
+    void shouldBridgePgStatReset() {
         PostgreSQLDatabaseMetrics postgreSQLDatabaseMetrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
         postgreSQLDatabaseMetrics.bindTo(registry);
 
@@ -77,7 +77,7 @@ public class PostgreSQLDatabaseMetricsTest {
     }
 
     @Test
-    public void shouldBridgeDoublePgStatReset() {
+    void shouldBridgeDoublePgStatReset() {
         PostgreSQLDatabaseMetrics postgreSQLDatabaseMetrics = new PostgreSQLDatabaseMetrics(dataSource, DATABASE_NAME);
         postgreSQLDatabaseMetrics.bindTo(registry);
 

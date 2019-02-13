@@ -27,7 +27,7 @@ import java.time.Duration;
  * @author Martin Westergaard Lassen
  * @author Jon Schneider
  */
-public class HumioMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+class HumioMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     private final HumioConfig config = new HumioConfig() {
         @Override
         public String get(String key) {

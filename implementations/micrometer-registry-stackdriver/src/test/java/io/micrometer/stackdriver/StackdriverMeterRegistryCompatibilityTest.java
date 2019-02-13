@@ -22,7 +22,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
 
-public class StackdriverMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+class StackdriverMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
 
     private final StackdriverConfig config = new StackdriverConfig() {
         @Override

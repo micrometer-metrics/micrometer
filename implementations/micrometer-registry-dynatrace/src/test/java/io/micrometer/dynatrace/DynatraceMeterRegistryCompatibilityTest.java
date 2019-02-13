@@ -21,7 +21,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
 
-public class DynatraceMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+class DynatraceMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
 
     private final DynatraceConfig config = new DynatraceConfig() {
         @Override
