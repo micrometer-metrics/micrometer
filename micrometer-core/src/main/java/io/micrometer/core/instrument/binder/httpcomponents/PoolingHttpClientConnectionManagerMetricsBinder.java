@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.httpcomponents;
 
-import com.google.common.base.Preconditions;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNull;
@@ -61,6 +60,12 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
     /**
      * Creates a metrics binder for the given pooling connection manager.
      *
+     * For convenience this constructor will take care of casting the given
+     * {@link HttpClientConnectionManager} to the required {@link
+     * PoolingHttpClientConnectionManager}. An {@link IllegalArgumentException}
+     * is thrown, if the given {@code connectionManager} is not an instance of
+     * {@link PoolingHttpClientConnectionManager}.
+     *
      * @param connectionManager The connection manager to monitor.
      * @param name Name of the connection manager. Will be added as tag with the
      *             key "httpclient".
@@ -74,13 +79,21 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
     /**
      * Creates a metrics binder for the given pooling connection manager.
      *
+     * For convenience this constructor will take care of casting the given
+     * {@link HttpClientConnectionManager} to the required {@link
+     * PoolingHttpClientConnectionManager}. An {@link IllegalArgumentException}
+     * is thrown, if the given {@code connectionManager} is not an instance of
+     * {@link PoolingHttpClientConnectionManager}.
+     *
      * @param connectionManager The connection manager to monitor.
      * @param name Name of the connection manager. Will be added as tag with the
      *             key "httpclient".
      * @param tags Tags to apply to all recorded metrics.
      */
     public PoolingHttpClientConnectionManagerMetricsBinder(HttpClientConnectionManager connectionManager, String name, Iterable<Tag> tags) {
-        Preconditions.checkArgument(connectionManager instanceof PoolingHttpClientConnectionManager);
+        if (!(connectionManager instanceof PoolingHttpClientConnectionManager)) {
+            throw new IllegalArgumentException("The given connectionManager is not an instance of PoolingHttpClientConnectionManager.");
+        }
         this.connectionManager = (PoolingHttpClientConnectionManager) connectionManager;
         this.tags = Tags.concat(tags, "httpclient", name);
     }
