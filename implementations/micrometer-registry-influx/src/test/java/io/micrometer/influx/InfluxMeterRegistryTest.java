@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests for {@link InfluxMeterRegistry}.
  *
  * @author Johnny Lim
+ * @author Sean Brandt
  */
 class InfluxMeterRegistryTest {
 
@@ -108,6 +109,17 @@ class InfluxMeterRegistryTest {
         counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(meterRegistry);
         clock.add(config.step());
         assertThat(meterRegistry.writeCounter(counter.getId(), Double.NEGATIVE_INFINITY)).isEmpty();
+    }
+
+    @Test
+    void writeShouldDropTagWithBlankValue() {
+        meterRegistry.gauge("my.gauge", Tags.of("foo", "bar").and("baz", ""), 1d);
+        final Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        assertThat(meterRegistry.writeGauge(gauge.getId(), 1d))
+            .hasSize(1)
+            .allSatisfy(s -> assertThat(s)
+                .contains("foo=bar")
+                .doesNotContain("baz"));
     }
 
 }
