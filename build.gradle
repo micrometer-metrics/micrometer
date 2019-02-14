@@ -49,8 +49,20 @@ subprojects {
         }
     }
 
-    compileJava.options.encoding = 'UTF-8'
-    compileTestJava.options.encoding = 'UTF-8'
+    tasks {
+        compileJava {
+            options.encoding = 'UTF-8'
+            // ensure Java 8 baseline is enforced for main source
+            if (JavaVersion.current().isJava9Compatible()) {
+                options.compilerArgs.addAll(['--release', '8'])
+            }
+        }
+        compileTestJava {
+            options.encoding = 'UTF-8'
+            sourceCompatibility = JavaVersion.current()
+            targetCompatibility = JavaVersion.current()
+        }
+    }
 
     if(!project.name.contains('samples') && !project.name.contains('benchmarks')) {
         apply plugin: 'io.spring.publishing'
