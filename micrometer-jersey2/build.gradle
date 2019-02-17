@@ -2,8 +2,8 @@ apply plugin: 'nebula.optional-base'
 
 dependencies {
     compile project(':micrometer-core')
-    compile 'org.glassfish.jersey.core:jersey-server:2.+', optional
-    runtime 'org.glassfish.jersey.inject:jersey-hk2:2.+'
+    compile 'org.glassfish.jersey.core:jersey-server:[2,3)', optional
+    runtime 'org.glassfish.jersey.inject:jersey-hk2:[2,3)'
 
     testCompile 'org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:2.+'
 

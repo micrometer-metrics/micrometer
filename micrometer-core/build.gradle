@@ -18,7 +18,7 @@ dependencies {
     }
 
     // instrumentation options
-    compile 'io.dropwizard.metrics:metrics-core:4.0.+', optional
+    compile 'io.dropwizard.metrics:metrics-core:[4.0,4.1)', optional
 
     // cache monitoring
     compile 'com.google.guava:guava:latest.release', optional
@@ -30,8 +30,8 @@ dependencies {
 
     // server runtime monitoring
     // 9.4+ are incompatible with the latest version of wiremock as of 1/4/2019
-    compile 'org.eclipse.jetty:jetty-server:9.2.+', optional
-    compile 'org.apache.tomcat.embed:tomcat-embed-core:8.+', optional
+    compile 'org.eclipse.jetty:jetty-server:[9.2,9.3)', optional
+    compile 'org.apache.tomcat.embed:tomcat-embed-core:[8,9)', optional
 
     // hystrix monitoring
     // metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
@@ -40,15 +40,15 @@ dependencies {
     compile 'com.netflix.hystrix:hystrix-core:1.5.12', optional
 
     // log monitoring
-    compile 'ch.qos.logback:logback-classic:1.2.+', optional
-    compile 'org.apache.logging.log4j:log4j-core:2.+', optional
+    compile 'ch.qos.logback:logback-classic:[1.2,1.3)', optional
+    compile 'org.apache.logging.log4j:log4j-core:[2,3)', optional
 
     // reactor
     compile 'io.projectreactor:reactor-core:latest.release', optional
     compile 'io.projectreactor.netty:reactor-netty:latest.release', optional
 
     // @Timed AOP
-    compile 'org.aspectj:aspectjweaver:1.8.+', optional
+    compile 'org.aspectj:aspectjweaver:[1.8,1.9)', optional
 
     compile 'com.squareup.okhttp3:okhttp:latest.release', optional
 

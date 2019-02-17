@@ -31,7 +31,7 @@ dependencies {
     compile 'org.springframework:spring-webmvc', optional
     compile 'org.springframework:spring-web', optional
     compile 'javax.servlet:javax.servlet-api:3.1.0', optional
-    compile 'org.aspectj:aspectjweaver:1.8.+', optional
+    compile 'org.aspectj:aspectjweaver:[1.8,1.9)', optional
     compile 'io.prometheus:simpleclient_pushgateway:latest.release', optional
 
     ['atlas', 'azure-monitor', 'prometheus', 'datadog', 'elastic', 'ganglia', 'graphite', 'jmx', 'influx', 'statsd', 'new-relic', 'cloudwatch', 'signalfx', 'wavefront', 'dynatrace', 'humio', 'appoptics', 'kairos', 'stackdriver'].each { sys ->
