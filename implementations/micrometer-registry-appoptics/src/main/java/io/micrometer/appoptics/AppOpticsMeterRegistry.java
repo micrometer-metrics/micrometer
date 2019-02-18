@@ -48,6 +48,7 @@ import static java.util.stream.Collectors.joining;
  */
 public class AppOpticsMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("appoptics-metrics-publisher");
+    private static final String BODY_NO_MEASUREMENTS = "{\"measurements\":[]}";
 
     private final Logger logger = LoggerFactory.getLogger(AppOpticsMeterRegistry.class);
 
@@ -111,7 +112,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
                         .filter(Optional::isPresent)
                         .map(Optional::get)
                         .collect(joining(",", "{\"measurements\":[", "]}"));
-                if (body.equals("{\"measurements\":[]}")) {
+                if (body.equals(BODY_NO_MEASUREMENTS)) {
                     continue;
                 }
                 httpClient.post(config.uri())
