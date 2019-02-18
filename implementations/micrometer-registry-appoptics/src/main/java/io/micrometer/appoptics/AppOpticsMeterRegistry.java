@@ -96,24 +96,27 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         try {
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
+                String body = batch.stream()
+                        .map(meter -> meter.match(
+                                this::writeGauge,
+                                this::writeCounter,
+                                this::writeTimer,
+                                this::writeSummary,
+                                this::writeLongTaskTimer,
+                                this::writeTimeGauge,
+                                this::writeFunctionCounter,
+                                this::writeFunctionTimer,
+                                this::writeMeter)
+                        )
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .collect(joining(",", "{\"measurements\":[", "]}"));
+                if (body.equals("{\"measurements\":[]}")) {
+                    continue;
+                }
                 httpClient.post(config.uri())
                         .withBasicAuthentication(config.apiToken(), "")
-                        .withJsonContent(
-                                batch.stream()
-                                        .map(meter -> meter.match(
-                                                this::writeGauge,
-                                                this::writeCounter,
-                                                this::writeTimer,
-                                                this::writeSummary,
-                                                this::writeLongTaskTimer,
-                                                this::writeTimeGauge,
-                                                this::writeFunctionCounter,
-                                                this::writeFunctionTimer,
-                                                this::writeMeter)
-                                        )
-                                        .filter(Optional::isPresent)
-                                        .map(Optional::get)
-                                        .collect(joining(",", "{\"measurements\":[", "]}")))
+                        .withJsonContent(body)
                         .send()
                         .onSuccess(response -> {
                             if (!response.body().contains("\"failed\":0")) {
