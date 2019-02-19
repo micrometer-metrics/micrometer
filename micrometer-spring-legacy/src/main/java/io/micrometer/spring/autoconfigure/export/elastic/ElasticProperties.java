@@ -38,8 +38,7 @@ public class ElasticProperties extends StepRegistryProperties {
     private String index = "metrics";
 
     /**
-     * Index date format used for rolling indices. Appended to the index name, preceded by
-     * a '-'.
+     * Index date format used for rolling indices. Appended to the index name
      */
     private String indexDateFormat = "yyyy-MM";
 
@@ -67,6 +66,11 @@ public class ElasticProperties extends StepRegistryProperties {
      * Ingest pipeline of the Elastic server.
      */
     private String pipeline = "";
+
+    /**
+     * Prefix to separate the index name from the date format used for rolling indices.
+     */
+    private String dateFormatPrefix = "-";
 
     public String getHost() {
         return this.host;
@@ -130,6 +134,14 @@ public class ElasticProperties extends StepRegistryProperties {
 
     public void setPipeline(String pipeline) {
         this.pipeline = pipeline;
+    }
+
+    public String getDateFormatPrefix() {
+        return this.dateFormatPrefix;
+    }
+
+    public void setDateFormatPrefix(String dateFormatPrefix) {
+        this.dateFormatPrefix = dateFormatPrefix;
     }
 
 }

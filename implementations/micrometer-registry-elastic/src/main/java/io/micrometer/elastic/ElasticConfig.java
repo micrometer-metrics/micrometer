@@ -44,7 +44,8 @@ public interface ElasticConfig extends StepRegistryConfig {
      * @return property pipeline
      */
     default String pipeline() {
-        return null;
+        String v = get(prefix() + ".pipeline");
+        return v == null ? "" : v;
     }
 
     /**
@@ -131,5 +132,16 @@ public interface ElasticConfig extends StepRegistryConfig {
     default String password() {
         String v = get(prefix() + ".password");
         return v == null ? "" : v;
+    }
+
+    /**
+     * The separator to be used between the index name and the date format for rolling indices.
+     * Default is: "-"
+     *
+     * @return separator for rolling indixes date
+     */
+    default String dateFormatPrefix() {
+        String v = get(prefix() + ".dateFormatPrefix");
+        return v == null ? "-" : v;
     }
 }

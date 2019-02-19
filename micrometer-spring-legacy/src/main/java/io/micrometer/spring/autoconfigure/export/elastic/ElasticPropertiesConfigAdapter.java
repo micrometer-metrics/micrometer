@@ -68,4 +68,9 @@ class ElasticPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter
     public String pipeline() {
         return get(ElasticProperties::getPassword, ElasticConfig.super::pipeline);
     }
+
+    @Override
+    public String dateFormatPrefix() {
+        return get(ElasticProperties::getDateFormatPrefix, ElasticConfig.super::dateFormatPrefix);
+    }
 }
