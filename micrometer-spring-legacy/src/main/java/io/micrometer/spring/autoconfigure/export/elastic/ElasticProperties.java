@@ -63,6 +63,11 @@ public class ElasticProperties extends StepRegistryProperties {
      */
     private String password = "";
 
+    /**
+     * Ingest pipeline of the Elastic server.
+     */
+    private String pipeline = "";
+
     public String getHost() {
         return this.host;
     }
@@ -117,6 +122,14 @@ public class ElasticProperties extends StepRegistryProperties {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getPipeline() {
+        return this.pipeline;
+    }
+
+    public void setPipeline(String pipeline) {
+        this.pipeline = pipeline;
     }
 
 }

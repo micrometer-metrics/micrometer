@@ -263,7 +263,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         String timestamp = TIMESTAMP_FORMATTER.format(Instant.ofEpochMilli(config().clock().wallTime()));
         String name = getConventionName(meter.getId());
         String type = meter.getId().getType().toString().toLowerCase();
-        sb.append("{\"").append(config.timestampFieldName()).append("\":\"").append(timestamp).append('"')
+        sb.append("{\"index\":{\"").append(config.timestampFieldName()).append("\":\"").append(timestamp).append('"')
                 .append(",\"name\":\"").append(escapeJson(name)).append('"')
                 .append(",\"type\":\"").append(type).append('"');
 
@@ -274,6 +274,12 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }
 
         consumer.accept(sb);
+        sb.append("}");
+        if(config.pipeline() != null && !config.pipeline().isEmpty()){
+            sb.append(",\"pipeline\":\"");
+            sb.append(config.pipeline());
+            sb.append("\"");
+        }
         sb.append("}");
 
         return sb.toString();

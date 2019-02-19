@@ -39,6 +39,15 @@ public interface ElasticConfig extends StepRegistryConfig {
     String get(String key);
 
     /**
+     * Property pipeline to be used to process incoming metrics.
+     *
+     * @return property pipeline
+     */
+    default String pipeline() {
+        return null;
+    }
+
+    /**
      * Property prefix to prepend to configuration names.
      *
      * @return property prefix
