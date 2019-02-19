@@ -275,10 +275,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
         consumer.accept(sb);
         sb.append("}");
-        if(config.pipeline() != null && !config.pipeline().isEmpty()){
-            sb.append(",\"pipeline\":\"");
-            sb.append(config.pipeline());
-            sb.append("\"");
+        if (config.pipeline() != null && !config.pipeline().isEmpty()) {
+            sb.append(",\"pipeline\":\"").append(config.pipeline()).append("\"");
         }
         sb.append("}");
 
