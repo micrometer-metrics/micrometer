@@ -33,7 +33,7 @@ class StrongReferenceGaugeFunction<T> implements ToDoubleFunction<T> {
      */
     @Nullable
     @SuppressWarnings("FieldCanBeLocal")
-    private final Object obj;
+    private final T obj;
 
     private final ToDoubleFunction<T> f;
 
