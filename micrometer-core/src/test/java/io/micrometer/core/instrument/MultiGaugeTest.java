@@ -92,7 +92,7 @@ class MultiGaugeTest {
             this.hex = hex;
         }
 
-        Row<?> toRow(double frequency) {
+        Row<Color> toRow(double frequency) {
             return Row.of(Tags.of("color", name, "hex", hex), this, c -> frequency);
         }
     }
