@@ -63,4 +63,16 @@ class ElasticPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter
     public String password() {
         return get(ElasticProperties::getPassword, ElasticConfig.super::password);
     }
+
+    @Override
+    public String pipeline() {
+        String v = get(prefix() + ".pipeline");
+        return v == null ? "" : v;
+    }
+
+    @Override
+    public String indexDateSeparator() {
+        String v = get(prefix() + ".indexDateSeparator");
+        return v == null ? "-" : v;
+    }
 }

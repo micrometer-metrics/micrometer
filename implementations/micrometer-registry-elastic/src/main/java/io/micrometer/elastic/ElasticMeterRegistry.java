@@ -51,7 +51,6 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("elastic-metrics-publisher");
     static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ISO_INSTANT;
     private static final String ES_METRICS_TEMPLATE = "/_template/metrics_template";
-    private static final String INDEX_LINE = "{ \"index\" : {} }\n";
 
     private final Logger logger = LoggerFactory.getLogger(ElasticMeterRegistry.class);
 
@@ -59,6 +58,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     private final HttpSender httpClient;
 
     private final DateTimeFormatter indexDateFormatter;
+
+    private final String indexLine;
 
     private volatile boolean checkedForIndexTemplate = false;
 
@@ -75,6 +76,11 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         indexDateFormatter = DateTimeFormatter.ofPattern(config.indexDateFormat());
         this.httpClient = httpClient;
         start(threadFactory);
+        if (config.pipeline() != null && !config.pipeline().isEmpty()) {
+            indexLine = "{ \"index\" : {\"pipeline\":\"" + config.pipeline() + "\"} }\n";
+        } else {
+            indexLine = "{ \"index\" : {} }\n";
+        }
     }
 
     public static Builder builder(ElasticConfig config) {
@@ -166,7 +172,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     private String indexName() {
         ZonedDateTime dt = ZonedDateTime.ofInstant(new Date(config().clock().wallTime()).toInstant(), ZoneOffset.UTC);
-        return config.index() + "-" + indexDateFormatter.format(dt);
+        return config.index() + config.indexDateSeparator() + indexDateFormatter.format(dt);
     }
 
     // VisibleForTesting
@@ -259,7 +265,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     String writeDocument(Meter meter, Consumer<StringBuilder> consumer) {
-        StringBuilder sb = new StringBuilder(INDEX_LINE);
+        StringBuilder sb = new StringBuilder(indexLine);
         String timestamp = TIMESTAMP_FORMATTER.format(Instant.ofEpochMilli(config().clock().wallTime()));
         String name = getConventionName(meter.getId());
         String type = meter.getId().getType().toString().toLowerCase();
