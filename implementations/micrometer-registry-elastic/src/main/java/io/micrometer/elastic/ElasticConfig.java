@@ -123,4 +123,26 @@ public interface ElasticConfig extends StepRegistryConfig {
         String v = get(prefix() + ".password");
         return v == null ? "" : v;
     }
+
+    /**
+     * The ingest pipeline name.
+     * Default is: "" (= do not pre-process events)
+     *
+     * @return ingest pipeline name
+     */
+    default String pipeline() {
+        String v = get(prefix() + ".pipeline");
+        return v == null ? "" : v;
+    }
+
+    /**
+     * The separator between the index name and the date part.
+     * Default is: "-"
+     *
+     * @return index name separator
+     */
+    default String indexDateSeparator() {
+        String v = get(prefix() + ".indexDateSeparator");
+        return v == null ? "-" : v;
+    }
 }
