@@ -51,16 +51,17 @@ public class MultiGauge {
         return new Builder(name);
     }
 
-    public void register(Iterable<Row> rows) {
+    public void register(Iterable<Row<?>> rows) {
         register(rows, false);
     }
 
     @SuppressWarnings("unchecked")
-    public void register(Iterable<Row> rows, boolean overwrite) {
+    public void register(Iterable<Row<?>> rows, boolean overwrite) {
         registeredRows.getAndUpdate(oldRows -> {
             // for some reason the compiler needs type assistance by creating this intermediate variable.
             Stream<Meter.Id> idStream = StreamSupport.stream(rows.spliterator(), false)
                     .map(row -> {
+                        Row r = row;
                         Meter.Id rowId = commonId.withTags(row.uniqueTags);
                         boolean previouslyDefined = oldRows.contains(rowId);
 
@@ -69,7 +70,7 @@ public class MultiGauge {
                         }
 
                         if (overwrite || !previouslyDefined) {
-                            registry.gauge(rowId, row.obj, new StrongReferenceGaugeFunction<>(row.obj, row.valueFunction));
+                            registry.gauge(rowId, row.obj, new StrongReferenceGaugeFunction<>(r.obj, r.valueFunction));
                         }
 
                         return rowId;
@@ -98,15 +99,15 @@ public class MultiGauge {
             this.valueFunction = valueFunction;
         }
 
-        public static <T> Row of(Tags uniqueTags, T obj, ToDoubleFunction<T> valueFunction) {
+        public static <T> Row<T> of(Tags uniqueTags, T obj, ToDoubleFunction<T> valueFunction) {
             return new Row<>(uniqueTags, obj, valueFunction);
         }
 
-        public static Row of(Tags uniqueTags, Number number) {
+        public static Row<Number> of(Tags uniqueTags, Number number) {
             return new Row<>(uniqueTags, number, Number::doubleValue);
         }
 
-        public static Row of(Tags uniqueTags, Supplier<Number> valueFunction) {
+        public static Row<Supplier<Number>> of(Tags uniqueTags, Supplier<Number> valueFunction) {
             return new Row<>(uniqueTags, valueFunction, f -> {
                 Number value = valueFunction.get();
                 return value == null ? Double.NaN : value.doubleValue();
