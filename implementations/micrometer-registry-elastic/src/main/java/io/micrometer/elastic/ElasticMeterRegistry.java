@@ -59,7 +59,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     private final DateTimeFormatter indexDateFormatter;
 
-    private final String indexLine = "{ \"index\" : {} }\n";
+    private final String indexLine;
 
     private volatile boolean checkedForIndexTemplate = false;
 
