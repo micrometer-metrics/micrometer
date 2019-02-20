@@ -24,6 +24,8 @@ import java.lang.annotation.*;
 public @interface Timed {
     /**
      * Name of the Timer metric.
+     *
+     * @return name of the Timer metric
      */
     String value() default "";
 
