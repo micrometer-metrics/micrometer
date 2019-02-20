@@ -76,9 +76,9 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         indexDateFormatter = DateTimeFormatter.ofPattern(config.indexDateFormat());
         this.httpClient = httpClient;
         start(threadFactory);
-        if(config.pipeline() != null && !config.pipeline().isEmpty()){
-            indexLine = "{ \"index\" : {\"pipeline\":\""+config.pipeline()+"\"} }\n";
-        } else{
+        if (config.pipeline() != null && !config.pipeline().isEmpty()) {
+            indexLine = "{ \"index\" : {\"pipeline\":\"" + config.pipeline() + "\"} }\n";
+        } else {
             indexLine = "{ \"index\" : {} }\n";
         }
     }
