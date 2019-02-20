@@ -9,7 +9,7 @@ if [ $CIRCLE_PR_NUMBER ]; then
 elif [ -z $CIRCLE_TAG ]; then
   echo -e "Publishing Snapshot => Branch ['$CIRCLE_BRANCH']"
   openssl aes-256-cbc -d -in gradle.properties.enc -out gradle.properties -k $KEY -md md5
-  ./gradlew snapshot $SWITCHES -x release
+  ./gradlew snapshot $SWITCHES -x release -x test
 elif [ $CIRCLE_TAG ]; then
   echo -e "Publishing Release => Branch ['$CIRCLE_BRANCH']  Tag ['$CIRCLE_TAG']"
   openssl aes-256-cbc -d -in gradle.properties.enc -out gradle.properties -k $KEY -md md5
