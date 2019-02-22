@@ -84,8 +84,8 @@ class PoolingHttpClientConnectionManagerMetricsBinderTest {
         PoolStats poolStats = mock(PoolStats.class);
         when(poolStats.getAvailable()).thenReturn(17);
         when(connectionManager.getTotalStats()).thenReturn(poolStats);
-        assertThat(registry.get("httpcomponents.httpclient.pool.total.available")
-            .tags("httpclient", "test")
+        assertThat(registry.get("httpcomponents.httpclient.pool.total.connections")
+            .tags("httpclient", "test", "state", "available")
             .gauge().value()).isEqualTo(17.0);
     }
 
@@ -94,8 +94,8 @@ class PoolingHttpClientConnectionManagerMetricsBinderTest {
         PoolStats poolStats = mock(PoolStats.class);
         when(poolStats.getLeased()).thenReturn(23);
         when(connectionManager.getTotalStats()).thenReturn(poolStats);
-        assertThat(registry.get("httpcomponents.httpclient.pool.total.leased")
-            .tags("httpclient", "test")
+        assertThat(registry.get("httpcomponents.httpclient.pool.total.connections")
+            .tags("httpclient", "test", "state", "leased")
             .gauge().value()).isEqualTo(23.0);
     }
 
@@ -141,27 +141,27 @@ class PoolingHttpClientConnectionManagerMetricsBinderTest {
         assertThat(registry.get("httpcomponents.httpclient.pool.route.max")
             .tags("target.scheme", "http", "target.host", "one.example.com", "target.port", "80")
             .gauge().value()).isEqualTo(19);
-        assertThat(registry.get("httpcomponents.httpclient.pool.route.leased")
-            .tags("target.scheme", "http", "target.host", "one.example.com", "target.port", "80")
+        assertThat(registry.get("httpcomponents.httpclient.pool.route.connections")
+            .tags("target.scheme", "http", "target.host", "one.example.com", "target.port", "80", "state", "leased")
             .gauge().value()).isEqualTo(29);
         assertThat(registry.get("httpcomponents.httpclient.pool.route.pending")
             .tags("target.scheme", "http", "target.host", "one.example.com", "target.port", "80")
             .gauge().value()).isEqualTo(31);
-        assertThat(registry.get("httpcomponents.httpclient.pool.route.available")
-            .tags("target.scheme", "http", "target.host", "one.example.com", "target.port", "80")
+        assertThat(registry.get("httpcomponents.httpclient.pool.route.connections")
+            .tags("target.scheme", "http", "target.host", "one.example.com", "target.port", "80", "state", "available")
             .gauge().value()).isEqualTo(37);
 
         assertThat(registry.get("httpcomponents.httpclient.pool.route.max")
             .tags("target.scheme", "https", "target.host", "two.example.com", "target.port", "443")
             .gauge().value()).isEqualTo(41);
-        assertThat(registry.get("httpcomponents.httpclient.pool.route.leased")
-            .tags("target.scheme", "https", "target.host", "two.example.com", "target.port", "443")
+        assertThat(registry.get("httpcomponents.httpclient.pool.route.connections")
+            .tags("target.scheme", "https", "target.host", "two.example.com", "target.port", "443", "state", "leased")
             .gauge().value()).isEqualTo(43);
         assertThat(registry.get("httpcomponents.httpclient.pool.route.pending")
             .tags("target.scheme", "https", "target.host", "two.example.com", "target.port", "443")
             .gauge().value()).isEqualTo(47);
-        assertThat(registry.get("httpcomponents.httpclient.pool.route.available")
-            .tags("target.scheme", "https", "target.host", "two.example.com", "target.port", "443")
+        assertThat(registry.get("httpcomponents.httpclient.pool.route.connections")
+            .tags("target.scheme", "https", "target.host", "two.example.com", "target.port", "443", "state", "available")
             .gauge().value()).isEqualTo(53);
     }
 
@@ -179,8 +179,7 @@ class PoolingHttpClientConnectionManagerMetricsBinderTest {
         // do not call binder.updateRoutes();
 
         assertThrows(MeterNotFoundException.class, () -> registry.get("httpcomponents.httpclient.pool.route.max").gauge());
-        assertThrows(MeterNotFoundException.class, () -> registry.get("httpcomponents.httpclient.pool.route.leased").gauge());
-        assertThrows(MeterNotFoundException.class, () -> registry.get("httpcomponents.httpclient.pool.route.pending").gauge());
+        assertThrows(MeterNotFoundException.class, () -> registry.get("httpcomponents.httpclient.pool.route.connections").gauge());
         assertThrows(MeterNotFoundException.class, () -> registry.get("httpcomponents.httpclient.pool.route.available").gauge());
     }
 
@@ -193,14 +192,14 @@ class PoolingHttpClientConnectionManagerMetricsBinderTest {
 
         when(routeStats.getLeased()).thenReturn(17);
         binder.updateRoutes();
-        assertThat(registry.get("httpcomponents.httpclient.pool.route.leased")
-            .tags("target.scheme", "http", "target.host", "one.example.com", "target.port", "80")
+        assertThat(registry.get("httpcomponents.httpclient.pool.route.connections")
+            .tags("target.scheme", "http", "target.host", "one.example.com", "target.port", "80", "state", "leased")
             .gauge().value()).isEqualTo(17);
 
         when(routeStats.getLeased()).thenReturn(19);
         binder.updateRoutes();
-        assertThat(registry.get("httpcomponents.httpclient.pool.route.leased")
-            .tags("target.scheme", "http", "target.host", "one.example.com", "target.port", "80")
+        assertThat(registry.get("httpcomponents.httpclient.pool.route.connections")
+            .tags("target.scheme", "http", "target.host", "one.example.com", "target.port", "80", "state", "leased")
             .gauge().value()).isEqualTo(19);
     }
 
