@@ -59,6 +59,7 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
     @Nullable
     private U accumulatedHistogram;
 
+    @SuppressWarnings("unchecked")
     AbstractTimeWindowHistogram(Clock clock, DistributionStatisticConfig distributionStatisticConfig, Class<T> bucketType,
                                 boolean supportsAggregablePercentiles) {
         this.clock = clock;

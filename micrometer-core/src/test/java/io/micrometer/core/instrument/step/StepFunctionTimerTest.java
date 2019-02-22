@@ -33,7 +33,7 @@ class StepFunctionTimerTest {
     @Test
     void totalTimeWhenStateObjectChangedToNullShouldWorkWithChangedTimeUnit() {
         MockClock clock = new MockClock();
-        StepFunctionTimer functionTimer = new StepFunctionTimer(
+        StepFunctionTimer<Object> functionTimer = new StepFunctionTimer<>(
                 null, clock, 1000L, new Object(), (o) -> 1L, (o) -> 1d, TimeUnit.SECONDS, TimeUnit.SECONDS);
         clock.add(Duration.ofSeconds(1));
         assertThat(functionTimer.totalTime(TimeUnit.SECONDS)).isEqualTo(1d);
