@@ -201,13 +201,13 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
         poolRoutePendingGauge.register(routesToRows(routes, PoolStats::getPending));
     }
 
-    private Set<MultiGauge.Row> routesToRows(Set<HttpRoute> routes, Function<PoolStats, Integer> valueFunction) {
+    private Iterable<MultiGauge.Row<?>> routesToRows(Set<HttpRoute> routes, Function<PoolStats, Integer> valueFunction) {
         return routes.stream()
             .map((route) -> routeToRow(route, () -> valueFunction.apply(connectionManager.getStats(route))))
             .collect(Collectors.toSet());
     }
 
-    private MultiGauge.Row routeToRow(HttpRoute route, Supplier<Number> valueFunction) {
+    private MultiGauge.Row<Supplier<Number>> routeToRow(HttpRoute route, Supplier<Number> valueFunction) {
         Tags tags = Tags.of(
             "target.host", route.getTargetHost().getHostName(),
             "target.port", String.valueOf(route.getTargetHost().getPort()),
