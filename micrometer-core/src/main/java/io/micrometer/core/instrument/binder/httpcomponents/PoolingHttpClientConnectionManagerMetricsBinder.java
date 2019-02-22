@@ -39,13 +39,13 @@ import java.util.stream.Collectors;
  */
 public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBinder {
 
-    private static final String NAME_HTTPCLIENT_CONNECTION_POOL_TOTAL_MAX             = "httpcomponents.httpclient.pool.total.max";
-    private static final String NAME_HTTPCLIENT_CONNECTION_POOL_TOTAL_CONNECTIONS     = "httpcomponents.httpclient.pool.total.connections";
-    private static final String NAME_HTTPCLIENT_CONNECTION_POOL_TOTAL_PENDING         = "httpcomponents.httpclient.pool.total.pending";
-    private static final String NAME_HTTPCLIENT_CONNECTION_POOL_DEFAULT_MAX_PER_ROUTE = "httpcomponents.httpclient.pool.route.max.default";
-    private static final String NAME_HTTPCLIENT_CONNECTION_POOL_ROUTE_MAX             = "httpcomponents.httpclient.pool.route.max";
-    private static final String NAME_HTTPCLIENT_CONNECTION_POOL_ROUTE_CONNECTIONS     = "httpcomponents.httpclient.pool.route.connections";
-    private static final String NAME_HTTPCLIENT_CONNECTION_POOL_ROUTE_PENDING         = "httpcomponents.httpclient.pool.route.pending";
+    private static final String METER_TOTAL_MAX = "httpcomponents.httpclient.pool.total.max";
+    private static final String METER_TOTAL_CONNECTIONS = "httpcomponents.httpclient.pool.total.connections";
+    private static final String METER_TOTAL_PENDING = "httpcomponents.httpclient.pool.total.pending";
+    private static final String METER_DEFAULT_MAX_PER_ROUTE = "httpcomponents.httpclient.pool.route.max.default";
+    private static final String METER_ROUTE_MAX = "httpcomponents.httpclient.pool.route.max";
+    private static final String METER_ROUTE_CONNECTIONS = "httpcomponents.httpclient.pool.route.connections";
+    private static final String METER_ROUTE_PENDING = "httpcomponents.httpclient.pool.route.pending";
     private static final String TAG_CONNECTIONS_STATE = "state";
 
     private final PoolingHttpClientConnectionManager connectionManager;
@@ -104,27 +104,27 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
     }
 
     private void registerTotalMetrics(MeterRegistry registry) {
-        Gauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_TOTAL_MAX,
+        Gauge.builder(METER_TOTAL_MAX,
             connectionManager,
             (connectionManager) -> connectionManager.getTotalStats().getMax())
             .tags(tags)
             .register(registry);
-        Gauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_TOTAL_CONNECTIONS,
+        Gauge.builder(METER_TOTAL_CONNECTIONS,
             connectionManager,
             (connectionManager) -> connectionManager.getTotalStats().getAvailable())
             .tags(tags).tag(TAG_CONNECTIONS_STATE, "available")
             .register(registry);
-        Gauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_TOTAL_CONNECTIONS,
+        Gauge.builder(METER_TOTAL_CONNECTIONS,
             connectionManager,
             (connectionManager) -> connectionManager.getTotalStats().getLeased())
             .tags(tags).tag(TAG_CONNECTIONS_STATE, "leased")
             .register(registry);
-        Gauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_TOTAL_PENDING,
+        Gauge.builder(METER_TOTAL_PENDING,
             connectionManager,
             (connectionManager) -> connectionManager.getTotalStats().getPending())
             .tags(tags)
             .register(registry);
-        Gauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_DEFAULT_MAX_PER_ROUTE,
+        Gauge.builder(METER_DEFAULT_MAX_PER_ROUTE,
             connectionManager,
             PoolingHttpClientConnectionManager::getDefaultMaxPerRoute)
             .tags(tags)
@@ -132,16 +132,16 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
     }
 
     private void registerPerRouteMetrics(MeterRegistry registry) {
-        poolRouteMaxGauge = MultiGauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_ROUTE_MAX)
+        poolRouteMaxGauge = MultiGauge.builder(METER_ROUTE_MAX)
             .tags(tags)
             .register(registry);
-        poolRouteAvailableGauge = MultiGauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_ROUTE_CONNECTIONS)
+        poolRouteAvailableGauge = MultiGauge.builder(METER_ROUTE_CONNECTIONS)
             .tags(tags).tag(TAG_CONNECTIONS_STATE, "available")
             .register(registry);
-        poolRouteLeasedGauge = MultiGauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_ROUTE_CONNECTIONS)
+        poolRouteLeasedGauge = MultiGauge.builder(METER_ROUTE_CONNECTIONS)
             .tags(tags).tag(TAG_CONNECTIONS_STATE, "leased")
             .register(registry);
-        poolRoutePendingGauge = MultiGauge.builder(NAME_HTTPCLIENT_CONNECTION_POOL_ROUTE_PENDING)
+        poolRoutePendingGauge = MultiGauge.builder(METER_ROUTE_PENDING)
             .tags(tags)
             .register(registry);
     }
