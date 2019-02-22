@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,6 +78,7 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
      * @param tags Tags to apply to all recorded metrics. Must be an even number
      *             of arguments representing key/value pairs of tags.
      */
+    @SuppressWarnings("WeakerAccess")
     public PoolingHttpClientConnectionManagerMetricsBinder(HttpClientConnectionManager connectionManager, String name, String... tags) {
         this(connectionManager, name, Tags.of(tags));
     }
@@ -96,6 +97,7 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
      *             key "httpclient".
      * @param tags Tags to apply to all recorded metrics.
      */
+    @SuppressWarnings("WeakerAccess")
     public PoolingHttpClientConnectionManagerMetricsBinder(HttpClientConnectionManager connectionManager, String name, Iterable<Tag> tags) {
         if (!(connectionManager instanceof PoolingHttpClientConnectionManager)) {
             throw new IllegalArgumentException("The given connectionManager is not an instance of PoolingHttpClientConnectionManager.");
@@ -193,6 +195,7 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
      * USE THIS METHOD if your HttpClient accesses a big or unlimited number of
      * routes (i.e. if the target host depends on the user input).
      */
+    @SuppressWarnings("WeakerAccess")
     public void updateRoutes() {
         Set<HttpRoute> routes = connectionManager.getRoutes();
         poolRouteMaxGauge.register(routesToRows(routes, PoolStats::getMax));
