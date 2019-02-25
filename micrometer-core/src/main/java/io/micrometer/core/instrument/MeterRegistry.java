@@ -523,7 +523,6 @@ public abstract class MeterRegistry {
         return registerMeterIfNecessary(meterClass, id, null, (id2, conf) -> builder.apply(id2), noopBuilder);
     }
 
-    @SuppressWarnings("unchecked")
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id,
                                                          @Nullable DistributionStatisticConfig config, BiFunction<Meter.Id, DistributionStatisticConfig, Meter> builder,
                                                          Function<Meter.Id, M> noopBuilder) {
@@ -540,8 +539,7 @@ public abstract class MeterRegistry {
         if (!meterClass.isInstance(m)) {
             throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
         }
-
-        return (M) m;
+        return meterClass.cast(m);
     }
 
     private Meter getOrCreateMeter(@Nullable DistributionStatisticConfig config,

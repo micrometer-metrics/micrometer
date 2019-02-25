@@ -32,7 +32,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 /**
+ * Tests for {@link HibernateMetrics}.
+ *
  * @author Marten Deinum
+ * @author Johnny Lim
  */
 @SuppressWarnings("deprecation")
 class HibernateMetricsTest {
@@ -60,7 +63,8 @@ class HibernateMetricsTest {
 
     @Test
     void shouldExposeMetricsWhenStatsEnabled() {
-        HibernateMetrics.monitor(registry, createEntityManagerFactoryMock(true), "entityManagerFactory");
+        EntityManagerFactory entityManagerFactory = createEntityManagerFactoryMock(true);
+        HibernateMetrics.monitor(registry, entityManagerFactory, "entityManagerFactory");
         assertThat(registry.get("hibernate.sessions.open").functionCounter().count()).isEqualTo(42.0);
         assertThat(registry.get("hibernate.sessions.closed").functionCounter().count()).isEqualTo(42.0);
 
@@ -110,7 +114,8 @@ class HibernateMetricsTest {
 
     @Test
     void shouldNotExposeMetricsWhenStatsNotEnabled() {
-        HibernateMetrics.monitor(registry, createEntityManagerFactoryMock(false), "entityManagerFactory");
+        EntityManagerFactory entityManagerFactory = createEntityManagerFactoryMock(false);
+        HibernateMetrics.monitor(registry, entityManagerFactory, "entityManagerFactory");
         assertThat(registry.find("hibernate.sessions.open").gauge()).isNull();
     }
 
