@@ -30,7 +30,7 @@ class CumulativeFunctionTimerTest {
 
     @Test
     void totalTimeWhenStateObjectChangedToNullShouldWorkWithChangedTimeUnit() {
-        CumulativeFunctionTimer functionTimer = new CumulativeFunctionTimer(
+        CumulativeFunctionTimer<Object> functionTimer = new CumulativeFunctionTimer<>(
                 null, new Object(), (o) -> 1L, (o) -> 1d, TimeUnit.SECONDS, TimeUnit.SECONDS);
         assertThat(functionTimer.totalTime(TimeUnit.SECONDS)).isEqualTo(1d);
         assertThat(functionTimer.totalTime(TimeUnit.MILLISECONDS)).isEqualTo(1000d);

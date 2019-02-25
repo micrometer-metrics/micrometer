@@ -30,7 +30,8 @@ class StatsdGaugeTest {
     private AtomicInteger value = new AtomicInteger(1);
 
     private StatsdLineBuilder lineBuilder = mock(StatsdLineBuilder.class);
-    private Subscriber<String> publisher = mock(Subscriber.class);
+    @SuppressWarnings("unchecked")
+    private Subscriber<String> publisher = (Subscriber<String>) mock(Subscriber.class);
 
     @Test
     void shouldAlwaysPublishValue() {

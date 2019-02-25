@@ -525,9 +525,7 @@ public abstract class MeterRegistry implements AutoCloseable {
         if (!meterClass.isInstance(m)) {
             throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
         }
-
-        //noinspection unchecked
-        return (M) m;
+        return meterClass.cast(m);
     }
 
     private Meter getOrCreateMeter(@Nullable DistributionStatisticConfig config,
