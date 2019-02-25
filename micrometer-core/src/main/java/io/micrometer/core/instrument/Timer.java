@@ -158,9 +158,10 @@ public interface Timer extends Meter, HistogramSupport {
     /**
      * Wrap a {@link Supplier} so that it is timed when invoked.
      *
-     * @param f The Supplier to time when it is invoked.
-     * @param   <T> The return type of the Supplier result.
+     * @param f The {@code Supplier} to time when it is invoked.
+     * @param <T> The return type of the {@code Supplier} result.
      * @return The wrapped supplier.
+     * @since 1.2.0
      */
     default <T> Supplier<T> wrap(Supplier<T> f) {
         return () -> record(f);
