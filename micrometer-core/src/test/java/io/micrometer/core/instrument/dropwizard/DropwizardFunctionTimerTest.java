@@ -31,7 +31,7 @@ class DropwizardFunctionTimerTest {
 
     @Test
     void totalTimeWhenStateObjectChangedToNullShouldWorkWithChangedTimeUnit() {
-        DropwizardFunctionTimer functionTimer = new DropwizardFunctionTimer(
+        DropwizardFunctionTimer<Object> functionTimer = new DropwizardFunctionTimer<>(
                 null, new MockClock(), new Object(), (o) -> 1L, (o) -> 1d, TimeUnit.SECONDS, TimeUnit.SECONDS);
         assertThat(functionTimer.totalTime(TimeUnit.SECONDS)).isEqualTo(1d);
         assertThat(functionTimer.totalTime(TimeUnit.MILLISECONDS)).isEqualTo(1000d);
@@ -42,7 +42,7 @@ class DropwizardFunctionTimerTest {
 
     @Test
     void getDropwizardMeterGetSnapshotGetMeanShouldReturnNanoseconds() {
-        DropwizardFunctionTimer functionTimer = new DropwizardFunctionTimer(
+        DropwizardFunctionTimer<Object> functionTimer = new DropwizardFunctionTimer<>(
                 null, new MockClock(), new Object(), (o) -> 1L, (o) -> 1d, TimeUnit.SECONDS, TimeUnit.SECONDS);
         assertThat(functionTimer.getDropwizardMeter().getSnapshot().getMean()).isEqualTo(1000_000_000d);
     }
