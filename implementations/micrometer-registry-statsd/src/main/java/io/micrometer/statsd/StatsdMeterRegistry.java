@@ -38,17 +38,23 @@ import reactor.netty.tcp.TcpClient;
 import reactor.util.concurrent.Queues;
 
 import java.lang.reflect.InvocationTargetException;
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
 /**
+ * {@link MeterRegistry} for StatsD.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
+ * @since 1.0.0
  */
 public class StatsdMeterRegistry extends MeterRegistry {
     private final StatsdConfig statsdConfig;
@@ -216,14 +222,23 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private void prepareTcpClient(Flux<String> bufferingPublisher) {
-        TcpClient.create()
+        AtomicReference<TcpClient> tcpClientReference = new AtomicReference<>();
+        TcpClient tcpClient = TcpClient.create()
                 .host(statsdConfig.host())
                 .port(statsdConfig.port())
                 .handle((in, out) -> out
                         .options(NettyPipeline.SendOptions::flushOnEach)
                         .sendString(bufferingPublisher)
                         .neverComplete())
+                .doOnDisconnected((connection) -> connectAndSubscribe(tcpClientReference.get()));
+        tcpClientReference.set(tcpClient);
+        connectAndSubscribe(tcpClient);
+    }
+
+    private void connectAndSubscribe(TcpClient tcpClient) {
+        tcpClient
                 .connect()
+                .retryBackoff(Long.MAX_VALUE, Duration.ofSeconds(1), Duration.ofMinutes(1))
                 .subscribe(client -> {
                     this.client.replace(client);
 
