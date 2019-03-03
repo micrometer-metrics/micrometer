@@ -27,10 +27,14 @@ import io.micrometer.spring.web.client.RestTemplateExchangeTagsProvider;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.AllNestedConditions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.web.WebClientAutoConfiguration;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.util.CollectionUtils;
@@ -44,15 +48,20 @@ import java.util.List;
  *
  * @author Jon Schneider
  * @author Phillip Webb
+ * @author Raheela Aslam
+ * @author Johnny Lim
  */
 @Configuration
-@AutoConfigureAfter({ MetricsAutoConfiguration.class, SimpleMetricsExportAutoConfiguration.class })
+@AutoConfigureAfter({
+    MetricsAutoConfiguration.class,
+    SimpleMetricsExportAutoConfiguration.class,
+    WebClientAutoConfiguration.class })
 @ConditionalOnClass(name = {
     "org.springframework.web.client.RestTemplate",
     "org.springframework.web.client.AsyncRestTemplate",
     "org.springframework.boot.web.client.RestTemplateCustomizer" // didn't exist until Boot 1.4
 })
-@ConditionalOnBean(MeterRegistry.class)
+@Conditional(RestTemplateMetricsAutoConfiguration.RestTemplateMetricsConditionalOnBeans.class)
 public class RestTemplateMetricsAutoConfiguration {
 
     private final MetricsProperties properties;
@@ -94,6 +103,22 @@ public class RestTemplateMetricsAutoConfiguration {
                         + "'uriVariables'?", metricName));
         return MeterFilter.maximumAllowableTags(metricName, "uri",
                 this.properties.getWeb().getClient().getMaxUriTags(), denyFilter);
+    }
+
+    static class RestTemplateMetricsConditionalOnBeans extends AllNestedConditions {
+
+        RestTemplateMetricsConditionalOnBeans() {
+            super(ConfigurationPhase.REGISTER_BEAN);
+        }
+
+        @ConditionalOnBean(MeterRegistry.class)
+        static class ConditionalOnMeterRegistryBean {
+        }
+
+        @ConditionalOnBean(RestTemplateBuilder.class)
+        static class ConditionalOnRestTemplateBuilderBean {
+        }
+
     }
 
 }
