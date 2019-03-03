@@ -383,13 +383,18 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                     .collect(toCollection(ArrayList::new));
 
             if (!bucketCounts.isEmpty()) {
+                int endIndex = bucketCounts.size() - 1;
                 // trim zero-count buckets on the right side of the domain
-                int lastNonzero = 0;
-                for (int i = 0; i < bucketCounts.size(); i++) {
-                    if (bucketCounts.get(i) > 0)
-                        lastNonzero = i;
+                if (bucketCounts.get(endIndex) == 0) {
+                    int lastNonZeroIndex = 0;
+                    for (int i = endIndex - 1; i >= 0; i--) {
+                        if (bucketCounts.get(i) > 0) {
+                            lastNonZeroIndex = i;
+                            break;
+                        }
+                    }
+                    bucketCounts = bucketCounts.subList(0, lastNonZeroIndex + 1);
                 }
-                bucketCounts = bucketCounts.subList(0, lastNonzero + 1);
             }
 
             // add the "+infinity" bucket, which does NOT have a corresponding bucket boundary
