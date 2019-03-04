@@ -526,20 +526,24 @@ public abstract class MeterRegistry {
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id,
                                                          @Nullable DistributionStatisticConfig config, BiFunction<Meter.Id, DistributionStatisticConfig, Meter> builder,
                                                          Function<Meter.Id, M> noopBuilder) {
-        Meter.Id mappedId = id;
-
-        if (id.syntheticAssociation() == null) {
-            for (MeterFilter filter : filters) {
-                mappedId = filter.map(mappedId);
-            }
-        }
-
+        Id mappedId = getMappedId(id);
         Meter m = getOrCreateMeter(config, builder, id, mappedId, noopBuilder);
 
         if (!meterClass.isInstance(m)) {
             throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
         }
         return meterClass.cast(m);
+    }
+
+    private Id getMappedId(Id id) {
+        if (id.syntheticAssociation() != null) {
+            return id;
+        }
+        Id mappedId = id;
+        for (MeterFilter filter : filters) {
+            mappedId = filter.map(mappedId);
+        }
+        return mappedId;
     }
 
     private Meter getOrCreateMeter(@Nullable DistributionStatisticConfig config,
@@ -620,14 +624,7 @@ public abstract class MeterRegistry {
     @Incubating(since = "1.1.0")
     @Nullable
     public Meter remove(Meter.Id id) {
-        Meter.Id mappedId = id;
-
-        if (id.syntheticAssociation() == null) {
-            for (MeterFilter filter : filters) {
-                mappedId = filter.map(mappedId);
-            }
-        }
-
+        Id mappedId = getMappedId(id);
         Meter m = meterMap.get(mappedId);
 
         if (m != null) {
