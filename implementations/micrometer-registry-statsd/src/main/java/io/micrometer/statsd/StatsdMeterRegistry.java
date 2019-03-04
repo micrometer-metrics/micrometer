@@ -50,7 +50,21 @@ import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
 /**
+ * {@link MeterRegistry} for StatsD.
+ *
+ * The following StatsD line protocols are supported:
+ *
+ * <ul>
+ *   <li>Datadog (default)</li>
+ *   <li>Etsy</li>
+ *   <li>Telegraf</li>
+ * </ul>
+ *
+ * See {@link StatsdFlavor} for more details.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
+ * @since 1.0.0
  */
 public class StatsdMeterRegistry extends MeterRegistry {
     private final StatsdConfig statsdConfig;
@@ -167,57 +181,59 @@ public class StatsdMeterRegistry extends MeterRegistry {
             this.publisher = processor;
         }
 
-        if (lineSink != null) {
-            publisher.subscribe(new Subscriber<String>() {
-                @Override
-                public void onSubscribe(Subscription s) {
-                    s.request(Long.MAX_VALUE);
-                }
-
-                @Override
-                public void onNext(String line) {
-                    if (started.get()) {
-                        lineSink.accept(line);
-                    }
-                }
-
-                @Override
-                public void onError(Throwable t) {
-                }
-
-                @Override
-                public void onComplete() {
-                    meterPoller.dispose();
-                }
-            });
-
-            // now that we're connected, start polling gauges and other pollable meter types
-            meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
-                    .doOnEach(n -> pollableMeters.forEach(StatsdPollable::poll))
-                    .subscribe());
-        }
-
         if (config.enabled())
             start();
     }
 
     public void start() {
-        if (started.compareAndSet(false, true) && lineSink == null) {
-            UdpClient.create(statsdConfig.host(), statsdConfig.port())
-                    .newHandler((in, out) -> out
-                            .options(NettyPipeline.SendOptions::flushOnEach)
-                            .sendString(publisher)
-                            .neverComplete()
-                    )
-                    .subscribe(client -> {
-                        this.udpClient.replace(client);
+        if (started.compareAndSet(false, true)) {
+            if (lineSink != null) {
+                publisher.subscribe(new Subscriber<String>() {
+                    @Override
+                    public void onSubscribe(Subscription s) {
+                        s.request(Long.MAX_VALUE);
+                    }
 
-                        // now that we're connected, start polling gauges and other pollable meter types
-                        meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
-                                .doOnEach(n -> pollableMeters.forEach(StatsdPollable::poll))
-                                .subscribe());
-                    });
+                    @Override
+                    public void onNext(String line) {
+                        if (started.get()) {
+                            lineSink.accept(line);
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable t) {
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        meterPoller.dispose();
+                    }
+                });
+
+                startPolling();
+            }
+            else {
+                UdpClient.create(statsdConfig.host(), statsdConfig.port())
+                        .newHandler((in, out) -> out
+                                .options(NettyPipeline.SendOptions::flushOnEach)
+                                .sendString(publisher)
+                                .neverComplete()
+                        )
+                        .subscribe(client -> {
+                            this.udpClient.replace(client);
+
+                            // now that we're connected, start polling gauges and other pollable meter types
+                            startPolling();
+                        });
+            }
         }
+    }
+
+    private void startPolling() {
+        meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
+                .doOnEach(n -> pollableMeters.forEach(StatsdPollable::poll))
+                .subscribe());
     }
 
     public void stop() {
