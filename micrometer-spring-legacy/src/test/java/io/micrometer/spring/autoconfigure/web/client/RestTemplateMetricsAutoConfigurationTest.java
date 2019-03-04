@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,127 +15,86 @@
  */
 package io.micrometer.spring.autoconfigure.web.client;
 
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.spring.autoconfigure.MetricsProperties;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.embedded.LocalServerPort;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import io.micrometer.spring.web.client.DefaultRestTemplateExchangeTagsProvider;
+import io.micrometer.spring.web.client.MetricsRestTemplateCustomizer;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.annotation.DirtiesContext.ClassMode;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.AsyncRestTemplate;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.fail;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = RestTemplateMetricsAutoConfigurationTest.ClientApp.class, webEnvironment = WebEnvironment.RANDOM_PORT)
-@TestPropertySource(properties = {
-        "management.port=-1", // Disable the entire Spring Boot actuator, so that it does not get needlessly instrumented
-        "security.ignored=/**",
-})
-@DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
-public class RestTemplateMetricsAutoConfigurationTest {
-    @Autowired
-    private MeterRegistry registry;
+/**
+ * Tests for {@link RestTemplateMetricsAutoConfiguration}.
+ *
+ * @author Raheela Aslam
+ * @author Johnny Lim
+ */
+class RestTemplateMetricsAutoConfigurationTest {
 
-    @Autowired
-    private MetricsProperties metricsProperties;
+    private final AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
 
-    @LocalServerPort
-    private int port;
-
-    @Autowired
-    private RestTemplateBuilder restTemplateBuilder;
-
-    @Autowired
-    private AsyncRestTemplate asyncClient;
-
-    private String rootUri;
-
-    private RestTemplate client;
-
-    @Before
-    public void before() {
-        rootUri = "http://localhost:" + port;
-        client = restTemplateBuilder
-                .rootUri(rootUri)
-                .build();
-    }
-
-    @Test
-    public void restTemplatesCreatedWithBuilderAreInstrumented() {
-        client.getForObject("/it/1", String.class);
-        assertThat(registry.get("http.client.requests").meters()).hasSize(1);
-    }
-
-    @Test
-    public void asyncRestTemplatesInContextAreInstrumented() throws Exception {
-        // therefore a full absolute URI is used
-        ListenableFuture<ResponseEntity<String>> future = asyncClient.getForEntity(rootUri + "/it/2", String.class);
-
-        final CountDownLatch latch = new CountDownLatch(1);
-        future.addCallback(result -> latch.countDown(),
-                result -> fail("should not have failed"));
-
-        future.get();
-
-        latch.await(10, TimeUnit.SECONDS);
-        assertThat(registry.get("http.client.requests").timer().count()).isEqualTo(1);
-    }
-
-    @Test
-    public void afterMaxUrisReachedFurtherUrisAreDenied() {
-        int maxUriTags = metricsProperties.getWeb().getClient().getMaxUriTags();
-        for (int i = 0; i < maxUriTags + 10; i++) {
-            client.getForObject("/it/" + i, String.class);
+    @AfterEach
+    void cleanUp() {
+        if (context != null) {
+            context.close();
         }
-
-        assertThat(registry.get("http.client.requests").meters()).hasSize(maxUriTags);
     }
 
-    @SpringBootApplication(scanBasePackages = "ignore")
-    @Import(SampleController.class)
-    static class ClientApp {
+    @Test
+    void autoConfigureWorks() {
+        registerAndRefresh(
+            MetricsPropertiesConfiguration.class,
+            MeterRegistryConfiguration.class,
+            RestTemplateBuilderConfiguration.class,
+            RestTemplateMetricsAutoConfiguration.class);
+        assertThat(context.getBean(DefaultRestTemplateExchangeTagsProvider.class)).isNotNull();
+        assertThat(context.getBean(MetricsRestTemplateCustomizer.class)).isNotNull();
+    }
+
+    @Test
+    void backsOffWhenRestTemplateBuilderIsMissing() {
+        registerAndRefresh(
+            MetricsPropertiesConfiguration.class,
+            MeterRegistryConfiguration.class,
+            RestTemplateMetricsAutoConfiguration.class);
+        assertThat(context.getBeansOfType(DefaultRestTemplateExchangeTagsProvider.class)).isEmpty();
+        assertThat(context.getBeansOfType(MetricsRestTemplateCustomizer.class)).isEmpty();
+    }
+
+    private void registerAndRefresh(Class<?>... configurationClasses) {
+        context.register(configurationClasses);
+        context.refresh();
+    }
+
+    @Configuration
+    static class MeterRegistryConfiguration {
+
         @Bean
-        public MeterRegistry registry() {
+        public SimpleMeterRegistry meterRegistry() {
             return new SimpleMeterRegistry();
         }
 
-        @Bean
-        public AsyncRestTemplate asyncRestTemplate() {
-            final SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-            requestFactory.setTaskExecutor(new SimpleAsyncTaskExecutor());
-            return new AsyncRestTemplate(requestFactory);
-        }
     }
 
-    @RestController
-    static class SampleController {
-        @GetMapping("/it/{id}")
-        public String it(@PathVariable String id) {
-            return id;
-        }
+    @Configuration
+    @EnableConfigurationProperties(MetricsProperties.class)
+    static class MetricsPropertiesConfiguration {
     }
+
+    @Configuration
+    static class RestTemplateBuilderConfiguration {
+
+        @Bean
+        public RestTemplateBuilder restTemplateBuilder() {
+            return new RestTemplateBuilder();
+        }
+
+    }
+
 }
