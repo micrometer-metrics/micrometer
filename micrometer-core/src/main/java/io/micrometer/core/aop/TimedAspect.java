@@ -43,7 +43,7 @@ import java.util.function.Function;
 @Incubating(since = "1.0.0")
 public class TimedAspect {
     private final MeterRegistry registry;
-    private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinpoint;
+    private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint;
 
     public TimedAspect(MeterRegistry registry) {
         this(registry, pjp ->
@@ -52,9 +52,9 @@ public class TimedAspect {
         );
     }
 
-    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinpoint) {
+    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint) {
         this.registry = registry;
-        this.tagsBasedOnJoinpoint = tagsBasedOnJoinpoint;
+        this.tagsBasedOnJoinPoint = tagsBasedOnJoinPoint;
     }
 
     @Around("execution (@io.micrometer.core.annotation.Timed * *.*(..))")
@@ -78,7 +78,7 @@ public class TimedAspect {
                 sample.stop(Timer.builder(timed.value())
                         .description(timed.description().isEmpty() ? null : timed.description())
                         .tags(timed.extraTags())
-                        .tags(tagsBasedOnJoinpoint.apply(pjp))
+                        .tags(tagsBasedOnJoinPoint.apply(pjp))
                         .publishPercentileHistogram(timed.histogram())
                         .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles())
                         .register(registry));
