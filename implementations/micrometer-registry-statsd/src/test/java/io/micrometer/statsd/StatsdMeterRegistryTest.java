@@ -398,6 +398,30 @@ class StatsdMeterRegistryTest {
     }
 
     @Test
+    @Issue("#1260")
+    void lineSinkDoesNotConsume_whenRegistryDisabled() {
+        Consumer<String> shouldNotBeInvokedConsumer = line -> {
+            throw new RuntimeException("line sink should not be called");
+        };
+        StatsdMeterRegistry registry = StatsdMeterRegistry.builder(new StatsdConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+        })
+            .lineSink(shouldNotBeInvokedConsumer)
+            .build();
+
+        registry.counter("some.metric").increment();
+        assertThat(registry.queueSize()).as("counter increment should already be processed").isZero();
+    }
+
+    @Test
     void stopTrackingMetersThatAreRemoved() {
         Map<String, Integer> lines = new HashMap<>();
 
