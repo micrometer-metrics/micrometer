@@ -64,9 +64,7 @@ public class TomcatMetricsBinder implements ApplicationListener<ApplicationReady
             EmbeddedServletContainer container = ((EmbeddedWebApplicationContext) applicationContext).getEmbeddedServletContainer();
             if (container instanceof TomcatEmbeddedServletContainer) {
                 Context context = findContext((TomcatEmbeddedServletContainer) container);
-                if (context != null) {
-                    return context.getManager();
-                }
+                return context.getManager();
             }
         }
         return null;
