@@ -32,6 +32,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link TimedAspect}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = TimedAspectTest.TestAspectConfig.class)
 public class TimedAspectTest {
@@ -41,10 +47,19 @@ public class TimedAspectTest {
     @Autowired
     private MeterRegistry registry;
 
+    @Autowired
+    private SomeService someService;
+
     @Test
     public void serviceIsTimed() {
         service.timeMe();
         assertThat(registry.get("something").timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    public void timedWhenImplementingInterfaceShouldWork() {
+        assertThat(someService.doService("Hello, world!")).isEqualTo("Done: Hello, world!");
+        assertThat(registry.get("some").timer().count()).isEqualTo(1);
     }
 
     @Configuration
@@ -60,6 +75,11 @@ public class TimedAspectTest {
         public TimedAspect micrometerAspect(MeterRegistry meterRegistry) {
             return new TimedAspect(meterRegistry);
         }
+
+        @Bean
+        public DefaultSomeService someService() {
+            return new DefaultSomeService();
+        }
     }
 
     @Service
@@ -68,5 +88,21 @@ public class TimedAspectTest {
         public String timeMe() {
             return "hello world";
         }
+    }
+
+    interface SomeService {
+
+        String doService(String data);
+
+    }
+
+    static class DefaultSomeService implements SomeService {
+
+        @Timed("some")
+        @Override
+        public String doService(String data) {
+            return "Done: " + data;
+        }
+
     }
 }

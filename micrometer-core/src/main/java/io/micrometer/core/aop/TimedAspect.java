@@ -30,19 +30,20 @@ import org.aspectj.lang.reflect.MethodSignature;
 import java.lang.reflect.Method;
 import java.util.function.Function;
 
-
 /**
- * AspectJ aspect for intercepting types or method annotated with @Timed.
+ * AspectJ aspect for intercepting types or methods annotated with {@link Timed @Timed}.
  *
  * @author David J. M. Karlsen
  * @author Jon Schneider
+ * @author Johnny Lim
+ * @since 1.0.0
  */
 @Aspect
 @NonNullApi
 @Incubating(since = "1.0.0")
 public class TimedAspect {
     private final MeterRegistry registry;
-    private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinpoint;
+    private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint;
 
     public TimedAspect(MeterRegistry registry) {
         this(registry, pjp ->
@@ -51,15 +52,19 @@ public class TimedAspect {
         );
     }
 
-    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinpoint) {
+    public TimedAspect(MeterRegistry registry, Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint) {
         this.registry = registry;
-        this.tagsBasedOnJoinpoint = tagsBasedOnJoinpoint;
+        this.tagsBasedOnJoinPoint = tagsBasedOnJoinPoint;
     }
 
     @Around("execution (@io.micrometer.core.annotation.Timed * *.*(..))")
     public Object timedMethod(ProceedingJoinPoint pjp) throws Throwable {
         Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         Timed timed = method.getAnnotation(Timed.class);
+        if (timed == null) {
+            method = pjp.getTarget().getClass().getMethod(method.getName(), method.getParameterTypes());
+            timed = method.getAnnotation(Timed.class);
+        }
 
         if (timed.value().isEmpty()) {
             return pjp.proceed();
@@ -73,7 +78,7 @@ public class TimedAspect {
                 sample.stop(Timer.builder(timed.value())
                         .description(timed.description().isEmpty() ? null : timed.description())
                         .tags(timed.extraTags())
-                        .tags(tagsBasedOnJoinpoint.apply(pjp))
+                        .tags(tagsBasedOnJoinPoint.apply(pjp))
                         .publishPercentileHistogram(timed.histogram())
                         .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles())
                         .register(registry));
