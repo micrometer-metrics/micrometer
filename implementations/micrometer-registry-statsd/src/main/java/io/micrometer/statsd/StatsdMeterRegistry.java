@@ -67,10 +67,14 @@ import java.util.function.ToLongFunction;
  * @since 1.0.0
  */
 public class StatsdMeterRegistry extends MeterRegistry {
+
+    private static final Processor<String, String> NOOP_PROCESSOR = new NoopProcessor();
+
     private final StatsdConfig statsdConfig;
     private final HierarchicalNameMapper nameMapper;
     private final Collection<StatsdPollable> pollableMeters = new CopyOnWriteArrayList<>();
-    Processor<String, String> publisher;
+
+    Processor<String, String> publisher = NOOP_PROCESSOR;
 
     private final AtomicBoolean started = new AtomicBoolean(false);
 
@@ -172,21 +176,22 @@ public class StatsdMeterRegistry extends MeterRegistry {
         this.lineSink = lineSink;
         config().namingConvention(namingConvention);
 
-        UnicastProcessor<String> processor = UnicastProcessor.create(Queues.<String>unboundedMultiproducer().get());
-
-        try {
-            Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, getClass().getClassLoader());
-            this.publisher = new LogbackMetricsSuppressingUnicastProcessor(processor);
-        } catch (ClassNotFoundException e) {
-            this.publisher = processor;
-        }
-
-        if (config.enabled())
+        if (config.enabled()) {
             start();
+        }
     }
 
     public void start() {
         if (started.compareAndSet(false, true)) {
+            UnicastProcessor<String> processor = UnicastProcessor.create(Queues.<String>unboundedMultiproducer().get());
+
+            try {
+                Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, getClass().getClassLoader());
+                this.publisher = new LogbackMetricsSuppressingUnicastProcessor(processor);
+            } catch (ClassNotFoundException e) {
+                this.publisher = processor;
+            }
+
             if (lineSink != null) {
                 publisher.subscribe(new Subscriber<String>() {
                     @Override
@@ -385,4 +390,29 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 return NamingConvention.camelCase;
         }
     }
+
+    private static final class NoopProcessor implements Processor<String, String> {
+
+        @Override
+        public void subscribe(Subscriber<? super String> s) {
+        }
+
+        @Override
+        public void onSubscribe(Subscription s) {
+        }
+
+        @Override
+        public void onNext(String s) {
+        }
+
+        @Override
+        public void onError(Throwable t) {
+        }
+
+        @Override
+        public void onComplete() {
+        }
+
+    }
+
 }
