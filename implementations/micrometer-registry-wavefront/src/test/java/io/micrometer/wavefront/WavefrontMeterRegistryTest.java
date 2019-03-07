@@ -15,16 +15,16 @@
  */
 package io.micrometer.wavefront;
 
-import com.wavefront.sdk.common.application.ApplicationTags;
+import com.wavefront.sdk.common.Pair;
+import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Tag;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Stream;
 
-import static com.wavefront.sdk.common.Constants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -50,22 +50,12 @@ class WavefrontMeterRegistryTest {
         }
     };
 
-    private final WavefrontMeterRegistry registry = new WavefrontMeterRegistry(config, new MockClock());
-
-    private final ApplicationTags applicationTags = new ApplicationTags.Builder("app1", "service1")
-        .cluster("us-west")
-        .customTags(new HashMap<String, String>() {{
-            put("env", "staging");
-        }})
-        .build();
-
-    private final WavefrontMeterRegistry registryWithAppTags = WavefrontMeterRegistry.builder(config)
-        .applicationTags(applicationTags)
-        .build();
+    private final MockClock clock = new MockClock();
+    private final WavefrontMeterRegistry registry = new WavefrontMeterRegistry(config, clock);
 
     @Test
     void addMetric() {
-        Stream.Builder<String> metricsStreamBuilder = Stream.builder();
+        Stream.Builder<WavefrontMetricLineData> metricsStreamBuilder = Stream.builder();
         Meter.Id id = registry.counter("name").getId();
         registry.addMetric(metricsStreamBuilder, id, null, System.currentTimeMillis(), 1d);
         assertThat(metricsStreamBuilder.build().count()).isEqualTo(1);
@@ -73,7 +63,7 @@ class WavefrontMeterRegistryTest {
 
     @Test
     void addMetricWhenNanOrInfinityShouldNotAdd() {
-        Stream.Builder<String> metricsStreamBuilder = Stream.builder();
+        Stream.Builder<WavefrontMetricLineData> metricsStreamBuilder = Stream.builder();
         Meter.Id id = registry.counter("name").getId();
         registry.addMetric(metricsStreamBuilder, id, null, System.currentTimeMillis(), Double.NaN);
         registry.addMetric(metricsStreamBuilder, id, null, System.currentTimeMillis(), Double.POSITIVE_INFINITY);
@@ -81,18 +71,14 @@ class WavefrontMeterRegistryTest {
     }
 
     @Test
-    void getConventionTags() {
-        Meter.Id id = registry.counter("name", "location", "SF").getId();
-        assertThat(registry.getConventionTags(id)).containsExactlyInAnyOrder(Tag.of("location", "SF"));
-
-        id = registryWithAppTags.counter("name", "location", "SF").getId();
-        assertThat(registryWithAppTags.getConventionTags(id)).containsExactlyInAnyOrder(
-            Tag.of("location", "SF"),
-            Tag.of(APPLICATION_TAG_KEY, "app1"),
-            Tag.of(SERVICE_TAG_KEY, "service1"),
-            Tag.of(CLUSTER_TAG_KEY, "us-west"),
-            Tag.of(SHARD_TAG_KEY, NULL_TAG_VAL),
-            Tag.of("env", "staging")
+    void addDistribution() {
+        Stream.Builder<WavefrontMetricLineData> metricsStreamBuilder = Stream.builder();
+        Meter.Id id = registry.summary("name").getId();
+        List<Pair<Double, Integer>> centroids = Arrays.asList(new Pair<>(1d, 1));
+        List<WavefrontHistogramImpl.Distribution> distributions = Arrays.asList(
+            new WavefrontHistogramImpl.Distribution(System.currentTimeMillis(), centroids)
         );
+        registry.addDistribution(metricsStreamBuilder, id, distributions);
+        assertThat(metricsStreamBuilder.build().count()).isEqualTo(1);
     }
 }
