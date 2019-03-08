@@ -28,6 +28,12 @@ import javax.annotation.Nonnull;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link MeterRegistry}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class MeterRegistryTest {
     private MeterRegistry registry = new SimpleMeterRegistry();
 
@@ -45,7 +51,7 @@ class MeterRegistryTest {
     }
 
     @Test
-    void overidingAcceptMeterFilter() {
+    void overridingAcceptMeterFilter() {
         registry.config().meterFilter(MeterFilter.accept(m -> m.getName().startsWith("jvm.important")));
         registry.config().meterFilter(MeterFilter.deny(m -> m.getName().startsWith("jvm")));
 	
@@ -96,5 +102,13 @@ class MeterRegistryTest {
 
         assertThat(registry.timer("my.timer.before")).isNotInstanceOf(NoopTimer.class);
         assertThat(registry.timer("my.timer.after")).isInstanceOf(NoopTimer.class);
+    }
+
+    @Test
+    void gaugeRegistersGaugeOnceAndSubsequentGaugeCallsWillNotRegister() {
+        registry.gauge("my.gauge", 1d);
+        registry.gauge("my.gauge", 2d);
+
+        assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(1d);
     }
 }
