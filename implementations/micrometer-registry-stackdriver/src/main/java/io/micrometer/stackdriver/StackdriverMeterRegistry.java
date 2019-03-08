@@ -368,7 +368,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                     client.createMetricDescriptor(request);
                     verifiedDescriptors.add(id.getName());
                 } catch (ApiException e) {
-                    logger.warn("failed to create metric descriptor in stackdriver for meter " + id + " {}", e.getCause().getMessage());
+                    logger.warn("failed to create metric descriptor in stackdriver for meter " + id, e);
                 }
             }
         }
