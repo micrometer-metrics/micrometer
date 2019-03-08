@@ -175,6 +175,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                 }
 
                 client.createTimeSeries(request);
+                logger.debug("successfully sent {} metrics to stackdriver", batch.size());
             } catch (ApiException e) {
                 logger.warn("failed to send metrics to stackdriver", e);
             }
