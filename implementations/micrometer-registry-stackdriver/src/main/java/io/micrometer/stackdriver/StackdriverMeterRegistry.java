@@ -53,6 +53,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -87,6 +88,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     private StackdriverMeterRegistry(StackdriverConfig config, Clock clock, ThreadFactory threadFactory,
                                      Callable<MetricServiceSettings> metricServiceSettings) {
         super(config, clock);
+        requireNonNull(config.projectId());
+
         this.config = config;
 
         try {
