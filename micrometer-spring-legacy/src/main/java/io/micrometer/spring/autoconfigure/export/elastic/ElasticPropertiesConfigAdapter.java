@@ -66,13 +66,12 @@ class ElasticPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter
 
     @Override
     public String pipeline() {
-        String v = get(prefix() + ".pipeline");
-        return v == null ? "" : v;
+        return get(ElasticProperties::getPipeline, ElasticConfig.super::pipeline);
     }
 
     @Override
     public String indexDateSeparator() {
-        String v = get(prefix() + ".indexDateSeparator");
-        return v == null ? "-" : v;
+        return get(ElasticProperties::getIndexDateSeparator, ElasticConfig.super::indexDateSeparator);
     }
+
 }

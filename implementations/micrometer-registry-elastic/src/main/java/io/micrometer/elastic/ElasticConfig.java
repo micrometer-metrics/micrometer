@@ -129,6 +129,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * Default is: "" (= do not pre-process events)
      *
      * @return ingest pipeline name
+     * @since 1.2.0
      */
     default String pipeline() {
         String v = get(prefix() + ".pipeline");
@@ -140,6 +141,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      * Default is: "-"
      *
      * @return index name separator
+     * @since 1.2.0
      */
     default String indexDateSeparator() {
         String v = get(prefix() + ".indexDateSeparator");
