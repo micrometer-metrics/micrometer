@@ -51,7 +51,7 @@ class MeterRegistryTest {
     }
 
     @Test
-    void overidingAcceptMeterFilter() {
+    void overridingAcceptMeterFilter() {
         registry.config().meterFilter(MeterFilter.accept(m -> m.getName().startsWith("jvm.important")));
         registry.config().meterFilter(MeterFilter.deny(m -> m.getName().startsWith("jvm")));
 	
@@ -172,5 +172,13 @@ class MeterRegistryTest {
 
         assertThat(registry.find("my.counter").counter()).isNull();
         assertThat(registry.find("my.counter2").counter()).isNull();
+    }
+
+    @Test
+    void gaugeRegistersGaugeOnceAndSubsequentGaugeCallsWillNotRegister() {
+        registry.gauge("my.gauge", 1d);
+        registry.gauge("my.gauge", 2d);
+
+        assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(1d);
     }
 }
