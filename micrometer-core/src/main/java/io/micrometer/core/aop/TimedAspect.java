@@ -150,6 +150,15 @@ public class TimedAspect {
         this.shouldSkip = shouldSkip;
     }
 
+    @Around("@within(io.micrometer.core.annotation.Timed)")
+    public Object timedClass(ProceedingJoinPoint pjp) throws Throwable {
+        Method method = ((MethodSignature) pjp.getSignature()).getMethod();
+        Class<?> declaringClass = method.getDeclaringClass();
+        Timed timed = declaringClass.getAnnotation(Timed.class);
+
+        return perform(pjp, timed, method);
+    }
+
     @Around("execution (@io.micrometer.core.annotation.Timed * *.*(..))")
     public Object timedMethod(ProceedingJoinPoint pjp) throws Throwable {
         if (shouldSkip.test(pjp)) {
@@ -163,6 +172,10 @@ public class TimedAspect {
             timed = method.getAnnotation(Timed.class);
         }
 
+        return perform(pjp, timed, method);
+    }
+
+    private Object perform(ProceedingJoinPoint pjp, Timed timed, Method method) throws Throwable {
         final String metricName = timed.value().isEmpty() ? DEFAULT_METRIC_NAME : timed.value();
         final boolean stopWhenCompleted = CompletionStage.class.isAssignableFrom(method.getReturnType());
 
