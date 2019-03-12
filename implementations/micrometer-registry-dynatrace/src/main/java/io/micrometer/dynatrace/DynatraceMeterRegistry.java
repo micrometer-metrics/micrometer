@@ -16,6 +16,7 @@
 package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
@@ -40,7 +41,6 @@ import java.util.stream.StreamSupport;
 
 import static io.micrometer.dynatrace.DynatraceMetricDefinition.DynatraceUnit;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Objects.requireNonNull;
 
 /**
  * {@link StepMeterRegistry} for Dynatrace.
@@ -71,9 +71,16 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     private DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
-        requireNonNull(config.uri());
-        requireNonNull(config.deviceId());
-        requireNonNull(config.apiToken());
+
+        if (config.apiToken() == null) {
+            throw new MissingRequiredConfigurationException("apiToken must be set to report metrics to Dynatrace");
+        }
+        if (config.deviceId() == null) {
+            throw new MissingRequiredConfigurationException("deviceId must be set to report metrics to Dynatrace");
+        }
+        if (config.uri() == null) {
+            throw new MissingRequiredConfigurationException("uri must be set to report metrics to Dynatrace");
+        }
 
         this.config = config;
         this.httpClient = httpClient;

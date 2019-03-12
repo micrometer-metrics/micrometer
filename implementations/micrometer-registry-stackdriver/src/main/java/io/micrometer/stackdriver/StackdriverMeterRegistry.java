@@ -27,6 +27,7 @@ import com.google.protobuf.Timestamp;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -53,7 +54,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -88,7 +88,10 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     private StackdriverMeterRegistry(StackdriverConfig config, Clock clock, ThreadFactory threadFactory,
                                      Callable<MetricServiceSettings> metricServiceSettings) {
         super(config, clock);
-        requireNonNull(config.projectId());
+
+        if (config.projectId() == null) {
+            throw new MissingRequiredConfigurationException("projectId must be set to report metrics to Stackdriver");
+        }
 
         this.config = config;
 
