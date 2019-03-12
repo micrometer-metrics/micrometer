@@ -163,4 +163,32 @@ class ElasticMeterRegistryTest {
         TimeGauge gauge = TimeGauge.builder("myGauge", Double.NEGATIVE_INFINITY, TimeUnit.MILLISECONDS, Number::doubleValue).register(registry);
         assertThat(registry.writeTimeGauge(gauge)).isNotPresent();
     }
+
+    @Issue("#987")
+    @Test
+    void indexNameSupportsIndexNameWithoutDateSuffix() {
+        ElasticMeterRegistry registry = new ElasticMeterRegistry(new ElasticConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public String index() {
+                return "my-metrics";
+            }
+
+            @Override
+            public String indexDateFormat() {
+                return "";
+            }
+
+            @Override
+            public String indexDateSeparator() {
+                return "";
+            }
+        }, clock);
+        assertThat(registry.indexName()).isEqualTo("my-metrics");
+    }
+
 }
