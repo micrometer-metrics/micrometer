@@ -19,6 +19,7 @@ import com.amazonaws.handlers.AsyncHandler;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
 import com.amazonaws.services.cloudwatch.model.*;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.lang.Nullable;
@@ -33,7 +34,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
@@ -53,7 +53,10 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
                                    AmazonCloudWatchAsync amazonCloudWatchAsync, ThreadFactory threadFactory) {
         super(config, clock);
-        requireNonNull(config.namespace());
+
+        if (config.namespace() == null) {
+            throw new MissingRequiredConfigurationException("namespace must be set to report metrics to CloudWatch");
+        }
 
         this.amazonCloudWatchAsync = amazonCloudWatchAsync;
         this.config = config;

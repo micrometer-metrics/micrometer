@@ -16,6 +16,7 @@
 package io.micrometer.newrelic;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
@@ -40,7 +41,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -62,10 +62,15 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
     public NewRelicMeterRegistry(NewRelicConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
-        this.config = config;
 
-        requireNonNull(config.accountId());
-        requireNonNull(config.apiKey());
+        if (config.accountId() == null) {
+            throw new MissingRequiredConfigurationException("accountId must be set to report metrics to New Relic");
+        }
+        if (config.apiKey() == null) {
+            throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to New Relic");
+        }
+
+        this.config = config;
 
         config().namingConvention(new NewRelicNamingConvention());
         start(threadFactory);

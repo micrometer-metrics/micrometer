@@ -16,6 +16,7 @@
 package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.lang.Nullable;
@@ -56,7 +57,10 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
     public DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
-        requireNonNull(config.apiKey());
+
+        if (config.apiKey() == null) {
+            throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to Datadog");
+        }
 
         config().namingConvention(new DatadogNamingConvention());
 
