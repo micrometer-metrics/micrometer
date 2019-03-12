@@ -70,7 +70,7 @@ public interface ElasticConfig extends StepRegistryConfig {
 
     /**
      * The index date format used for rolling indices.
-     * This is appended to the index name, split by a '-'.
+     * This is appended to the index name, separated by the {@link #indexDateSeparator()}.
      * Default is: "yyyy-MM"
      *
      * @return date format for index
