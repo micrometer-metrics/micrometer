@@ -48,6 +48,9 @@ import static java.util.Objects.requireNonNull;
  * <p>
  * MeterRegistry may be used in a reactive context. As such, implementations must not negatively impact the calling
  * thread, e.g. it should respond immediately by avoiding IO call, deep stack recursion or any coordination.
+ * <p>
+ * If you register meters having the same ID multiple times, the first registration only will work and the subsequent
+ * registrations will be ignored.
  *
  * @author Jon Schneider
  */
