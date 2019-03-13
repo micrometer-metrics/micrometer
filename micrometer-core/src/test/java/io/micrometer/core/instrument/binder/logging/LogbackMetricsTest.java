@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.cumulative.CumulativeCounter;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -34,6 +35,12 @@ import org.slf4j.LoggerFactory;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link LogbackMetrics}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class LogbackMetricsTest {
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     private Logger logger = (Logger) LoggerFactory.getLogger("foo");
@@ -84,6 +91,22 @@ class LogbackMetricsTest {
         assertThat(loggerContext.getTurboFilterList()).hasSize(1);
         logbackMetrics.close();
         assertThat(loggerContext.getTurboFilterList()).isEmpty();
+    }
+
+    @Issue("#1282")
+    @Test
+    void compositeMeterRegistryShouldNotIncrementCounter() {
+        SimpleMeterRegistry simpleMeterRegistry = new SimpleMeterRegistry();
+        CompositeMeterRegistry compositeMeterRegistry = new CompositeMeterRegistry();
+        compositeMeterRegistry.add(simpleMeterRegistry);
+
+        new LogbackMetrics().bindTo(compositeMeterRegistry);
+        new LogbackMetrics().bindTo(simpleMeterRegistry);
+
+        logger.error("Error");
+
+        assertThat(compositeMeterRegistry.counter("logback.events", "level", "error").count()).isEqualTo(1);
+        assertThat(simpleMeterRegistry.counter("logback.events", "level", "error").count()).isEqualTo(1);
     }
 
     @NonNullApi

@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import static java.util.Collections.emptyList;
 
 /**
+ * {@link MeterBinder} for Logback.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 @NonNullApi
 @NonNullFields
@@ -95,7 +99,11 @@ class MetricsTurboFilter extends TurboFilter {
     private final Counter debugCounter;
     private final Counter traceCounter;
 
+    private final boolean disableIncrement;
+
     MetricsTurboFilter(MeterRegistry registry, Iterable<Tag> tags) {
+        disableIncrement = registry instanceof CompositeMeterRegistry;
+
         errorCounter = Counter.builder("logback.events")
             .tags(tags).tags("level", "error")
             .description("Number of error level events that made it to the logs")
@@ -130,7 +138,7 @@ class MetricsTurboFilter extends TurboFilter {
         }
 
         // cannot use logger.isEnabledFor(level), as it would cause a StackOverflowError by calling this filter again!
-        if (level.isGreaterOrEqual(logger.getEffectiveLevel()) && format != null) {
+        if (!disableIncrement && level.isGreaterOrEqual(logger.getEffectiveLevel()) && format != null) {
             switch (level.toInt()) {
                 case Level.ERROR_INT:
                     errorCounter.increment();
