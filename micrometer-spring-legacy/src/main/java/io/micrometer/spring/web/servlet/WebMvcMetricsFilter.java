@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
  * Intercepts incoming HTTP requests and records metrics about execution time and results.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 @NonNullApi
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
@@ -120,6 +121,9 @@ public class WebMvcMetricsFilter extends OncePerRequestFilter {
             response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
             record(timingContext, response, request, handlerObject, e.getCause());
             throw e;
+        } catch (ServletException | IOException | RuntimeException ex) {
+            record(timingContext, response, request, handlerObject, ex);
+            throw ex;
         }
     }
 
