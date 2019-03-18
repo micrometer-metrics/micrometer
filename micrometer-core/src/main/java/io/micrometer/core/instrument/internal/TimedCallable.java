@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +16,38 @@
 package io.micrometer.core.instrument.internal;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 
-import java.util.concurrent.Executor;
+import java.util.concurrent.Callable;
 
 /**
- * An {@link Executor} that is timed
+ * A wrapper for a Callable with idle and execution timings
+ *
+ * @author Sebastian Lövdahl
  */
-public class TimedExecutor implements Executor {
+class TimedCallable<V> implements Callable<V> {
     private final MeterRegistry registry;
-    private final Executor delegate;
     private final Timer executionTimer;
     private final Timer idleTimer;
+    private final Callable<V> callable;
+    private final Timer.Sample idleSample;
 
-    public TimedExecutor(MeterRegistry registry, Executor delegate, String executorName, Iterable<Tag> tags) {
+    TimedCallable(MeterRegistry registry, Timer executionTimer, Timer idleTimer, Callable<V> callable) {
         this.registry = registry;
-        this.delegate = delegate;
-        this.executionTimer = registry.timer("executor.execution", Tags.concat(tags, "name", executorName));
-        this.idleTimer = registry.timer("executor.idle", Tags.concat(tags, "name", executorName));
+        this.executionTimer = executionTimer;
+        this.idleTimer = idleTimer;
+        this.callable = callable;
+        this.idleSample = Timer.start(registry);
     }
 
     @Override
-    public void execute(Runnable command) {
-        delegate.execute(new TimedRunnable(registry, executionTimer, idleTimer, command));
+    public V call() throws Exception {
+        idleSample.stop(idleTimer);
+        Timer.Sample executionSample = Timer.start(registry);
+        try {
+            return callable.call();
+        } finally {
+            executionSample.stop(executionTimer);
+        }
     }
 }

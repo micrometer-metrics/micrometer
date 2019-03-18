@@ -102,6 +102,7 @@ class ExecutorServiceMetricsTest {
         pool.awaitTermination(1, TimeUnit.SECONDS);
 
         assertThat(registry.get("executor").tags(userTags).timer().count()).isEqualTo(2L);
+        assertThat(registry.get("executor.idle").tags(userTags).timer().count()).isEqualTo(2L);
         assertThat(registry.get("executor.queued").tags(userTags).gauge().value()).isEqualTo(0.0);
     }
 
@@ -111,6 +112,7 @@ class ExecutorServiceMetricsTest {
         registry.get("executor.queue.remaining").tags(userTags).tag("name", executorName).gauge();
         registry.get("executor.active").tags(userTags).tag("name", executorName).gauge();
         registry.get("executor.pool.size").tags(userTags).tag("name", executorName).gauge();
+        registry.get("executor.idle").tags(userTags).tag("name", executorName).timer();
         registry.get("executor").tags(userTags).tag("name", executorName).timer();
     }
 }
