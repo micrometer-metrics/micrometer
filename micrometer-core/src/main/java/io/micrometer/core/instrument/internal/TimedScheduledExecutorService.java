@@ -39,6 +39,7 @@ public class TimedScheduledExecutorService implements ScheduledExecutorService {
     public TimedScheduledExecutorService(MeterRegistry registry, ScheduledExecutorService delegate, String executorServiceName, Iterable<Tag> tags) {
         this.registry = registry;
         this.delegate = delegate;
+        // TODO: IMO, it would make more sense to name this timer "executor.execution", but that's a breaking change
         this.executionTimer = registry.timer("executor", Tags.concat(tags, "name", executorServiceName));
         this.idleTimer = registry.timer("executor.idle", Tags.concat(tags, "name", executorServiceName));
         this.scheduledOnce = registry.counter("executor.scheduled.once", Tags.concat(tags, "name", executorServiceName));
