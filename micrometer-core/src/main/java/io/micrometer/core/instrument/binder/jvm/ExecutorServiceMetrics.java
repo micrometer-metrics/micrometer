@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.internal.TimedExecutor;
 import io.micrometer.core.instrument.internal.TimedExecutorService;
+import io.micrometer.core.instrument.internal.TimedScheduledExecutorService;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
@@ -89,6 +90,9 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @return The instrumented executor, proxied.
      */
     public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String executorServiceName, Iterable<Tag> tags) {
+        if (executor instanceof ScheduledExecutorService) {
+            return monitor(registry, (ScheduledExecutorService) executor, executorServiceName, tags);
+        }
         new ExecutorServiceMetrics(executor, executorServiceName, tags).bindTo(registry);
         return new TimedExecutorService(registry, executor, executorServiceName, tags);
     }
@@ -103,6 +107,33 @@ public class ExecutorServiceMetrics implements MeterBinder {
      * @return The instrumented executor, proxied.
      */
     public static ExecutorService monitor(MeterRegistry registry, ExecutorService executor, String executorServiceName, Tag... tags) {
+        return monitor(registry, executor, executorServiceName, asList(tags));
+    }
+
+    /**
+     * Record metrics on the use of an {@link ScheduledExecutorService}.
+     *
+     * @param registry            The registry to bind metrics to.
+     * @param executor            The scheduled executor to instrument.
+     * @param executorServiceName Will be used to tag metrics with "name".
+     * @param tags                Tags to apply to all recorded metrics.
+     * @return The instrumented scheduled executor, proxied.
+     */
+    public static ScheduledExecutorService monitor(MeterRegistry registry, ScheduledExecutorService executor, String executorServiceName, Iterable<Tag> tags) {
+        new ExecutorServiceMetrics(executor, executorServiceName, tags).bindTo(registry);
+        return new TimedScheduledExecutorService(registry, executor, executorServiceName, tags);
+    }
+
+    /**
+     * Record metrics on the use of an {@link ScheduledExecutorService}.
+     *
+     * @param registry            The registry to bind metrics to.
+     * @param executor            The scheduled executor to instrument.
+     * @param executorServiceName Will be used to tag metrics with "name".
+     * @param tags                Tags to apply to all recorded metrics.
+     * @return The instrumented scheduled executor, proxied.
+     */
+    public static ScheduledExecutorService monitor(MeterRegistry registry, ScheduledExecutorService executor, String executorServiceName, Tag... tags) {
         return monitor(registry, executor, executorServiceName, asList(tags));
     }
 
@@ -134,7 +165,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
         try {
             Field e = wrapper.getDeclaredField("e");
             e.setAccessible(true);
-            return (ThreadPoolExecutor) e.get(executorService);
+            return (ThreadPoolExecutor) e.get(executor);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             // Do nothing. We simply can't get to the underlying ThreadPoolExecutor.
         }
