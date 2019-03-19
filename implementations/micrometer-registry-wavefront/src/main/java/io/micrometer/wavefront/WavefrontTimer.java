@@ -38,14 +38,8 @@ public class WavefrontTimer extends StepTimer {
 
     WavefrontTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
                    PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis) {
-        super(id, clock,
-            DistributionStatisticConfig.builder()
-                .percentilesHistogram(false)
-                .sla()
-                .build()
-                .merge(distributionStatisticConfig),
-            pauseDetector, baseTimeUnit, stepMillis, false);
-
+        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, stepMillis,
+            false);
         delegate = distributionStatisticConfig.isPublishingHistogram() ?
             new WavefrontHistogramImpl(clock::wallTime) : null;
     }

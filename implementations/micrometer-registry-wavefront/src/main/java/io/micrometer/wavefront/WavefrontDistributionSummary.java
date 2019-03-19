@@ -36,14 +36,7 @@ public class WavefrontDistributionSummary extends StepDistributionSummary {
     WavefrontDistributionSummary(Id id, Clock clock,
                                  DistributionStatisticConfig distributionStatisticConfig,
                                  double scale, long stepMillis) {
-        super(id, clock,
-            DistributionStatisticConfig.builder()
-                .percentilesHistogram(false)
-                .sla()
-                .build()
-                .merge(distributionStatisticConfig),
-            scale, stepMillis, false);
-
+        super(id, clock, distributionStatisticConfig, scale, stepMillis, false);
         delegate = distributionStatisticConfig.isPublishingHistogram() ?
             new WavefrontHistogramImpl(clock::wallTime) : null;
     }
