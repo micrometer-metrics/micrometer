@@ -44,7 +44,7 @@ public interface AppOpticsConfig extends StepRegistryConfig {
     default String apiToken() {
         String t = get(prefix() + ".apiToken");
         if (t == null)
-            throw new MissingRequiredConfigurationException("token must be set to report metrics to AppOptics");
+            throw new MissingRequiredConfigurationException("apiToken must be set to report metrics to AppOptics");
         return t;
     }
 

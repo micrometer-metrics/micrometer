@@ -32,6 +32,11 @@ class AppOpticsMeterRegistryCompatibilityTest extends MeterRegistryCompatibility
         public boolean enabled() {
             return false;
         }
+
+        @Override
+        public String apiToken() {
+            return "fake";
+        }
     };
 
     @Override
