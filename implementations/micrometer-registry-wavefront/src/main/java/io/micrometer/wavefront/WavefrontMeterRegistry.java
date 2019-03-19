@@ -189,7 +189,8 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
             return;
         }
         try {
-            httpClient.post(new URL(uri.getScheme(), uri.getHost(), uri.getPort(), "/report?f=" + format).toString())
+            String originalPath = uri.getPath() != null && !uri.getPath().equals("/") ? uri.getPath() : "";
+            httpClient.post(new URL(uri.getScheme(), uri.getHost(), uri.getPort(), originalPath + "/report?f=" + format).toString())
                 .withHeader("Authorization", "Bearer " + config.apiToken())
                 .withContent("application/octet-stream", stream.collect(joining()))
                 .compress()
