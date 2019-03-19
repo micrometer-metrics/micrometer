@@ -246,7 +246,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                                     postMessage.metricCount, postMessage.payload.getBytes(UTF_8).length);
                             }
                         })
-                        .onError(response -> logger.error("failed to send metrics to dynatrace: {}", response.body()));
+                        .onError(response -> logger.error("failed to send metrics to dynatrace: {} - requestPayload ({})", response.body(), postMessage.payload));
             }
         } catch (Throwable e) {
             logger.error("failed to send metrics to dynatrace", e);
