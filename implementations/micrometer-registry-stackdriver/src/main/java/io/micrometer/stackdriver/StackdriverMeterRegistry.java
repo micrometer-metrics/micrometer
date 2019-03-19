@@ -27,6 +27,7 @@ import com.google.protobuf.Timestamp;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -87,6 +88,11 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     private StackdriverMeterRegistry(StackdriverConfig config, Clock clock, ThreadFactory threadFactory,
                                      Callable<MetricServiceSettings> metricServiceSettings) {
         super(config, clock);
+
+        if (config.projectId() == null) {
+            throw new MissingRequiredConfigurationException("projectId must be set to report metrics to Stackdriver");
+        }
+
         this.config = config;
 
         try {
