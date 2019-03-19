@@ -21,7 +21,9 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepTimer;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.core.lang.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -31,22 +33,36 @@ import java.util.concurrent.TimeUnit;
  * @author Han Zhang
  */
 public class WavefrontTimer extends StepTimer {
+    @Nullable
     private final WavefrontHistogramImpl delegate;
 
     WavefrontTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
                    PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis) {
-        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, stepMillis,
-            false);
-        this.delegate = new WavefrontHistogramImpl(clock::wallTime);
+        super(id, clock,
+            DistributionStatisticConfig.builder()
+                .percentilesHistogram(false)
+                .sla()
+                .build()
+                .merge(distributionStatisticConfig),
+            pauseDetector, baseTimeUnit, stepMillis, false);
+
+        delegate = distributionStatisticConfig.isPublishingHistogram() ?
+            new WavefrontHistogramImpl(clock::wallTime) : null;
     }
 
     @Override
     protected void recordNonNegative(long amount, TimeUnit unit) {
         super.recordNonNegative(amount, unit);
-        delegate.update(TimeUtils.convert(amount, unit, baseTimeUnit()));
+        if (delegate != null) {
+            delegate.update(TimeUtils.convert(amount, unit, baseTimeUnit()));
+        }
     }
 
-    public List<WavefrontHistogramImpl.Distribution> flushDistributions() {
-        return delegate.flushDistributions();
+    List<WavefrontHistogramImpl.Distribution> flushDistributions() {
+        if (delegate == null) {
+            return new ArrayList<>();
+        } else {
+            return delegate.flushDistributions();
+        }
     }
 }

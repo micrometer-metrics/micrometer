@@ -88,6 +88,10 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                                    HttpSender httpClient) {
         super(config, clock);
         this.config = config;
+        if (config.uri() == null) {
+            throw new MissingRequiredConfigurationException(
+                "uri is required to publish metrics to Wavefront");
+        }
         if (directToApi() && config.apiToken() == null) {
             throw new MissingRequiredConfigurationException(
                 "apiToken must be set whenever publishing directly to the Wavefront API");
@@ -315,7 +319,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
             String lineData = Utils.metricToLineData(name, value, wallTime, source, tags, "unknown");
             metrics.add(new WavefrontMetricLineData(lineData, false));
         } catch (IllegalArgumentException e) {
-            logger.error("failed to convert metric to Wavefront format", e);
+            logger.error("failed to convert metric to Wavefront format: " + fullId.getName(), e);
         }
     }
 
@@ -332,7 +336,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                     histogramGranularities, distribution.timestamp, source, tags, "unknown");
                 metrics.add(new WavefrontMetricLineData(lineData, true));
             } catch (IllegalArgumentException e) {
-                logger.error("failed to convert distribution to Wavefront format", e);
+                logger.error("failed to convert distribution to Wavefront format: " + id.getName(), e);
             }
         }
     }

@@ -19,7 +19,9 @@ import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.step.StepDistributionSummary;
+import io.micrometer.core.lang.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,22 +30,37 @@ import java.util.List;
  * @author Han Zhang
  */
 public class WavefrontDistributionSummary extends StepDistributionSummary {
+    @Nullable
     private final WavefrontHistogramImpl delegate;
 
     WavefrontDistributionSummary(Id id, Clock clock,
                                  DistributionStatisticConfig distributionStatisticConfig,
                                  double scale, long stepMillis) {
-        super(id, clock, distributionStatisticConfig, scale, stepMillis, false);
-        delegate = new WavefrontHistogramImpl(clock::wallTime);
+        super(id, clock,
+            DistributionStatisticConfig.builder()
+                .percentilesHistogram(false)
+                .sla()
+                .build()
+                .merge(distributionStatisticConfig),
+            scale, stepMillis, false);
+
+        delegate = distributionStatisticConfig.isPublishingHistogram() ?
+            new WavefrontHistogramImpl(clock::wallTime) : null;
     }
 
     @Override
     protected void recordNonNegative(double amount) {
         super.recordNonNegative(amount);
-        delegate.update(amount);
+        if (delegate != null) {
+            delegate.update(amount);
+        }
     }
 
-    public List<WavefrontHistogramImpl.Distribution> flushDistributions() {
-        return delegate.flushDistributions();
+    List<WavefrontHistogramImpl.Distribution> flushDistributions() {
+        if (delegate == null) {
+            return new ArrayList<>();
+        } else {
+            return delegate.flushDistributions();
+        }
     }
 }
