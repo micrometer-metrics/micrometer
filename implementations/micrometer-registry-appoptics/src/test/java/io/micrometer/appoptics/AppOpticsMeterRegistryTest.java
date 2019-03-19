@@ -34,7 +34,17 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class AppOpticsMeterRegistryTest {
 
-    private final AppOpticsConfig config = key -> null;
+    private final AppOpticsConfig config = new AppOpticsConfig() {
+        @Override
+        public String get(String key) {
+            return null;
+        }
+
+        @Override
+        public String apiToken() {
+            return "fake";
+        }
+    };
     private final MockClock clock = new MockClock();
     private final AppOpticsMeterRegistry meterRegistry = new AppOpticsMeterRegistry(config, clock);
 
