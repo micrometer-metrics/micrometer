@@ -23,7 +23,7 @@ import io.micrometer.core.instrument.step.StepTimer;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -54,7 +54,8 @@ public class WavefrontTimer extends StepTimer {
 
     List<WavefrontHistogramImpl.Distribution> flushDistributions() {
         if (delegate == null) {
-            return new ArrayList<>();
+            return Collections.emptyList();
+
         } else {
             return delegate.flushDistributions();
         }

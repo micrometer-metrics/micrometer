@@ -21,7 +21,7 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.step.StepDistributionSummary;
 import io.micrometer.core.lang.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -51,7 +51,7 @@ public class WavefrontDistributionSummary extends StepDistributionSummary {
 
     List<WavefrontHistogramImpl.Distribution> flushDistributions() {
         if (delegate == null) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         } else {
             return delegate.flushDistributions();
         }
