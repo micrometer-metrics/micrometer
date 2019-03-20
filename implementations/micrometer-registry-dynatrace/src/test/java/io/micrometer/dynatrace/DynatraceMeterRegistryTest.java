@@ -251,7 +251,7 @@ class DynatraceMeterRegistryTest {
 
             @Override
             public String uri() {
-                return "http://uri";
+                return "http://localhost";
             }
 
             @Override

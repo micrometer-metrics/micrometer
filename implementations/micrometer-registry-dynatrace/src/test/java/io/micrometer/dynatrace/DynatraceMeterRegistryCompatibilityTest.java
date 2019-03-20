@@ -36,7 +36,7 @@ class DynatraceMeterRegistryCompatibilityTest extends MeterRegistryCompatibility
 
         @Override
         public String uri() {
-            return "http://doesnotmatter.com";
+            return "http://localhost";
         }
 
         @Override
