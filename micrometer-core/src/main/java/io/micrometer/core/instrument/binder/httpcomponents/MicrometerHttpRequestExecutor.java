@@ -59,10 +59,10 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
                                           Iterable<Tag> extraTags,
                                           boolean exportTagsForRoute) {
         super(waitForContinue);
-        this.registry = registry;
-        this.requestsMetricName = requestsMetricName;
-        this.uriMapper = uriMapper;
-        this.extraTags = extraTags;
+        this.registry = Optional.ofNullable(registry).orElseThrow(() -> new IllegalArgumentException("registry is required but has been initialized with null"));
+        this.requestsMetricName = Optional.ofNullable(requestsMetricName).orElseThrow(() -> new IllegalArgumentException("requestMetricName is required but has been initialized with null"));
+        this.uriMapper = Optional.ofNullable(uriMapper).orElseThrow(() -> new IllegalArgumentException("uriMapper is required but has been initialized with null"));
+        this.extraTags = Optional.ofNullable(extraTags).orElse(Collections.emptyList());
         this.exportTagsForRoute = exportTagsForRoute;
     }
 

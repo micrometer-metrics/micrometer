@@ -210,6 +210,42 @@ public class MicrometerHttpRequestExecutorTest {
         assertThrows(MeterNotFoundException.class, () -> registry.get(EXPECTED_METER_NAME).timer());
     }
 
+    @Test
+    void settingNullRegistryThrowsException() {
+        assertThrows(IllegalArgumentException.class, () ->
+                MicrometerHttpRequestExecutor.builder(null)
+                        .build());
+    }
+
+    @Test
+    void overridingNameWithNullThrowsException() {
+        assertThrows(IllegalArgumentException.class, () ->
+                MicrometerHttpRequestExecutor.builder(registry)
+                        .name(null)
+                        .build()
+        );
+    }
+
+    @Test
+    void overridingUriMapperWithNullThrowsException() {
+        assertThrows(IllegalArgumentException.class, () ->
+                MicrometerHttpRequestExecutor.builder(registry)
+                        .uriMapper(null)
+                        .build()
+        );
+    }
+
+    @Test
+    void overrideExtraTagsDoesNotThrowAnException(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+        server.stubFor(any(anyUrl()));
+        MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry)
+                .tags(null)
+                .build();
+        HttpClient client = client(executor);
+        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
+        assertThat(registry.get(EXPECTED_METER_NAME)).isNotNull();
+    }
+
     private HttpClient client(HttpRequestExecutor executor) {
         return HttpClientBuilder.create()
                 .setRequestExecutor(executor)
