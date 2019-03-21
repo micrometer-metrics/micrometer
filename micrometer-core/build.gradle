@@ -28,6 +28,10 @@ dependencies {
     compile 'com.hazelcast:hazelcast:latest.release', optional
     compile 'org.hibernate:hibernate-entitymanager:latest.release', optional
 
+    // oshi
+    compile 'com.github.oshi:oshi-core:3.13.0', optional
+
+
     // server runtime monitoring
     // 9.4+ are incompatible with the latest version of wiremock as of 1/4/2019
     compile 'org.eclipse.jetty:jetty-server:9.2.+', optional
