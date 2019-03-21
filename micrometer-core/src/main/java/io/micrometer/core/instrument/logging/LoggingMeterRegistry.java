@@ -152,11 +152,26 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                                     loggingSink.accept(print.id() + " throughput=" + print.rate(count) +
                                             " mean=" + print.time(timer.mean(getBaseTimeUnit())));
                                 },
-                                meter -> loggingSink.accept(print.id() + StreamSupport.stream(meter.measure().spliterator(), false)
-                                        .map(ms -> ms.getStatistic().getTagValueRepresentation() + "=" + decimalOrNan(ms.getValue())))
+                                meter -> loggingSink.accept(writeMeter(meter, print))
                         );
                     });
         }
+    }
+
+    private String writeMeter(Meter meter, Printer print) {
+        return print.id() + StreamSupport.stream(meter.measure().spliterator(), false)
+                .map(ms -> {
+                    String msLine = ms.getStatistic().getTagValueRepresentation() + "=";
+                    switch (ms.getStatistic()) {
+                        case TOTAL:
+                        case MAX:
+                        case VALUE:
+                            return msLine + print.value(ms.getValue());
+                        default:
+                            return msLine + decimalOrNan(ms.getValue());
+                    }
+                })
+                .collect(joining(" ", " ", ""));
     }
 
     @Override
