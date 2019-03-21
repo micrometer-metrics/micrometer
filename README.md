@@ -1,7 +1,7 @@
 # Micrometer Application Metrics
 
 [![Build Status](https://circleci.com/gh/micrometer-metrics/micrometer.svg?style=shield)](https://circleci.com/gh/micrometer-metrics/micrometer)
-[![Apache 2.0](https://img.shields.io/github/license/micrometer-metrics/micrometer.svg)](http://www.apache.org/licenses/LICENSE-2.0)
+[![Apache 2.0](https://img.shields.io/github/license/micrometer-metrics/micrometer.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Maven Central](https://img.shields.io/maven-central/v/io.micrometer/micrometer-core.svg)](https://mvnrepository.com/artifact/io.micrometer/micrometer-core)
 [![Javadocs](http://www.javadoc.io/badge/io.micrometer/micrometer-core.svg)](http://www.javadoc.io/doc/io.micrometer/micrometer-core)
 
