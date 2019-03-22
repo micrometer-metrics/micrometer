@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
 
-import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
@@ -64,15 +63,14 @@ public class GraphiteMeterRegistry extends DropwizardMeterRegistry {
     }
 
     private static GraphiteSender getGraphiteSender(GraphiteConfig config) {
-        InetSocketAddress address = new InetSocketAddress(config.host(), config.port());
         switch (config.protocol()) {
             case PLAINTEXT:
-                return new Graphite(address);
+                return new Graphite(config.host(), config.port());
             case UDP:
-                return new GraphiteUDP(address);
+                return new GraphiteUDP(config.host(), config.port());
             case PICKLED:
             default:
-                return new PickledGraphite(address);
+                return new PickledGraphite(config.host(), config.port());
         }
     }
 
