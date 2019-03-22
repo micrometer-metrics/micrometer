@@ -65,12 +65,12 @@ public class WavefrontProperties extends StepRegistryProperties {
     /**
      * Report histogram distributions aggregated into hour intervals.
      */
-    private Boolean reportHourDistribution = true;
+    private Boolean reportHourDistribution = false;
 
     /**
      * Report histogram distributions aggregated into day intervals.
      */
-    private Boolean reportDayDistribution = true;
+    private Boolean reportDayDistribution = false;
 
     public URI getUri() {
         return this.uri;
