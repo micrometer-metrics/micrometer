@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,21 +19,22 @@ package io.micrometer.wavefront;
  * Data for a single metric or distribution that is formatted as Wavefront line data.
  *
  * @author Han Zhang
+ * @since 1.2.0
  */
-public class WavefrontMetricLineData {
+class WavefrontMetricLineData {
     private final String lineData;
     private final boolean isDistribution;
 
-    public WavefrontMetricLineData(String lineData, boolean isDistribution) {
+    WavefrontMetricLineData(String lineData, boolean isDistribution) {
         this.lineData = lineData;
         this.isDistribution = isDistribution;
     }
 
-    public String lineData() {
+    String lineData() {
         return this.lineData;
     }
 
-    public boolean isDistribution() {
+    boolean isDistribution() {
         return this.isDistribution;
     }
 }
