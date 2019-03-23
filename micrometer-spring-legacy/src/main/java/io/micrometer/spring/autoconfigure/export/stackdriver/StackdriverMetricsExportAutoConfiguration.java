@@ -63,6 +63,7 @@ public class StackdriverMetricsExportAutoConfiguration {
     @ConditionalOnMissingBean
     public StackdriverMeterRegistry stackdriverMeterRegistry(StackdriverConfig config, StackdriverProperties props, Clock clock) {
         return StackdriverMeterRegistry.builder(config)
+                .clock(clock)
                 .metricServiceSettings(() -> {
                     MetricServiceSettings.Builder settingsBuilder = MetricServiceSettings.newBuilder();
                     Resource credentials = props.getServiceAccountCredentials();
