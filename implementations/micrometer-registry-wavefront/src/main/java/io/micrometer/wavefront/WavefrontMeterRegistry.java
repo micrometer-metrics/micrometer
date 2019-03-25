@@ -401,7 +401,7 @@ public class WavefrontMeterRegistry extends PushMeterRegistry {
 
     @Override
     protected TimeUnit getBaseTimeUnit() {
-        return TimeUnit.SECONDS;
+        return TimeUnit.MILLISECONDS;
     }
 
     @Override
