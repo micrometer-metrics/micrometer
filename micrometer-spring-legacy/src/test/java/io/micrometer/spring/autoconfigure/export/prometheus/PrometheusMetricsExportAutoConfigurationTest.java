@@ -45,6 +45,7 @@ class PrometheusMetricsExportAutoConfigurationTest {
     void cleanUp() {
         context.close();
     }
+
     @Test
     void autoConfigureByDefault() {
         registerAndRefresh();
