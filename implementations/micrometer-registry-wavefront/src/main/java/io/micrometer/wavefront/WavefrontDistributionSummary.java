@@ -17,8 +17,8 @@ package io.micrometer.wavefront;
 
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.cumulative.CumulativeDistributionSummary;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.step.StepDistributionSummary;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.Collections;
@@ -29,14 +29,14 @@ import java.util.List;
  *
  * @author Han Zhang
  */
-class WavefrontDistributionSummary extends StepDistributionSummary {
+class WavefrontDistributionSummary extends CumulativeDistributionSummary {
     @Nullable
     private final WavefrontHistogramImpl delegate;
 
     WavefrontDistributionSummary(Id id, Clock clock,
                                  DistributionStatisticConfig distributionStatisticConfig,
-                                 double scale, long stepMillis) {
-        super(id, clock, distributionStatisticConfig, scale, stepMillis, false);
+                                 double scale) {
+        super(id, clock, distributionStatisticConfig, scale, false);
         delegate = distributionStatisticConfig.isPublishingHistogram() ?
             new WavefrontHistogramImpl(clock::wallTime) : null;
     }

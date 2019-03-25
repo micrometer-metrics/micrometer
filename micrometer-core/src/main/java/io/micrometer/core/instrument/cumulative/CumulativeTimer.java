@@ -39,8 +39,8 @@ public class CumulativeTimer extends AbstractTimer {
     }
 
     public CumulativeTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-                           PauseDetector pauseDetector, TimeUnit baseTimeUnit, boolean suppportsAggregablePercentiles) {
-        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, suppportsAggregablePercentiles);
+                           PauseDetector pauseDetector, TimeUnit baseTimeUnit, boolean supportsAggregablePercentiles) {
+        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, supportsAggregablePercentiles);
         this.count = new AtomicLong();
         this.total = new AtomicLong();
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);

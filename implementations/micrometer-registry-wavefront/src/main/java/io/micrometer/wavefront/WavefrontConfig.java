@@ -16,7 +16,7 @@
 package io.micrometer.wavefront;
 
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
-import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.instrument.push.PushRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
 import java.net.InetAddress;
@@ -31,7 +31,7 @@ import java.time.Duration;
  * @author Jon Schneider
  * @since 1.0.0
  */
-public interface WavefrontConfig extends StepRegistryConfig {
+public interface WavefrontConfig extends PushRegistryConfig {
     /**
      * Publishes to a wavefront sidecar running out of process.
      */
