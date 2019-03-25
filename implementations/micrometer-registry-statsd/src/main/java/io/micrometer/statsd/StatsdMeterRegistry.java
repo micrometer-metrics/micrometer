@@ -24,10 +24,7 @@ import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
-import io.micrometer.statsd.internal.DatadogStatsdLineBuilder;
-import io.micrometer.statsd.internal.EtsyStatsdLineBuilder;
-import io.micrometer.statsd.internal.LogbackMetricsSuppressingUnicastProcessor;
-import io.micrometer.statsd.internal.TelegrafStatsdLineBuilder;
+import io.micrometer.statsd.internal.*;
 import org.reactivestreams.Processor;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -40,6 +37,7 @@ import reactor.ipc.netty.udp.UdpClient;
 import reactor.util.concurrent.Queues;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +46,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
+import java.util.stream.LongStream;
 
 /**
  * {@link MeterRegistry} for StatsD.
@@ -280,6 +279,15 @@ public class StatsdMeterRegistry extends MeterRegistry {
         return lineBuilderFunction.apply(id);
     }
 
+    private DistributionStatisticConfig addInfBucket(DistributionStatisticConfig config) {
+        long[] slas = config.getSlaBoundaries() == null ? new long[]{Long.MAX_VALUE} :
+                LongStream.concat(Arrays.stream(config.getSlaBoundaries()), LongStream.of(Long.MAX_VALUE)).toArray();
+        return DistributionStatisticConfig.builder()
+                .sla(slas)
+                .build()
+                .merge(config);
+    }
+
     @Override
     protected Counter newCounter(Meter.Id id) {
         return new StatsdCounter(id, lineBuilder(id), publisher);
@@ -296,6 +304,12 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector
             pauseDetector) {
+
+        // Adds an infinity bucket for SLA violation calculation
+        if (distributionStatisticConfig.getSlaBoundaries() != null) {
+            distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
+        }
+
         Timer timer = new StatsdTimer(id, lineBuilder(id), publisher, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
                 statsdConfig.step().toMillis());
         HistogramGauges.registerWithCommonFormat(timer, this);
@@ -306,6 +320,12 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig
             distributionStatisticConfig, double scale) {
+
+        // Adds an infinity bucket for SLA violation calculation
+        if (distributionStatisticConfig.getSlaBoundaries() != null) {
+            distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
+        }
+
         DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), publisher, clock, distributionStatisticConfig, scale);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;

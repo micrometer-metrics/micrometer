@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.distribution;
 
+import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -63,5 +64,25 @@ class HistogramGaugesTest {
 
         registry.get("MYPREFIX.my.timer.percentile").tag("phi", "0.95").gauge();
         registry.get("MYPREFIX.my.timer.histogram").tag("le", "0.001").gauge();
+    }
+
+    @Test
+    void histogramsContainLongMaxValue() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        Timer timer = Timer.builder("my.timer")
+                .sla(Duration.ofNanos(Long.MAX_VALUE))
+                .register(registry);
+
+        DistributionSummary distributionSummary = DistributionSummary.builder("my.distribution")
+                .sla(Long.MAX_VALUE)
+                .register(registry);
+
+        HistogramGauges distributionGauges = HistogramGauges.registerWithCommonFormat(distributionSummary, registry);
+
+        HistogramGauges timerGauges = HistogramGauges.registerWithCommonFormat(timer, registry);
+
+        assertThat(registry.get("my.distribution.histogram").tag("le", "+Inf").gauge()).isNotNull();
+        assertThat(registry.get("my.timer.histogram").tag("le", "+Inf").gauge()).isNotNull();
     }
 }
