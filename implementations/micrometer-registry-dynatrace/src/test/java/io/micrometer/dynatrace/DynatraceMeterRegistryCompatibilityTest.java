@@ -36,7 +36,7 @@ public class DynatraceMeterRegistryCompatibilityTest extends MeterRegistryCompat
 
         @Override
         public String uri() {
-            return "http://doesnotmatter.com";
+            return "https://www.buydomains.com/lander/doesnotmatter.com?domain=doesnotmatter.com&utm_source=doesnotmatter.com&utm_medium=click&utm_campaign=TDFS-OO-BDLander&traffic_id=TDFS-OO-BDLander&traffic_type=tdfs&redirect=ono-redirect";
         }
 
         @Override
