@@ -29,7 +29,7 @@ public class DoubleFormat {
     /**
      * Because NumberFormat is not thread-safe we cannot share instances across threads. Use a ThreadLocal to
      * create one pre thread as this seems to offer a significant performance improvement over creating one per-thread:
-     * http://stackoverflow.com/a/1285297/2648
+     * https://stackoverflow.com/a/1285297/2648
      * https://github.com/indeedeng/java-dogstatsd-client/issues/4
      */
     private static final ThreadLocal<NumberFormat> DECIMAL_OR_NAN = ThreadLocal.withInitial(() -> {
