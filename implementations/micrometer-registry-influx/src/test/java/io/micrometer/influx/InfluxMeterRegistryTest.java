@@ -15,15 +15,13 @@
  */
 package io.micrometer.influx;
 
+import io.micrometer.core.instrument.*;
+import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.TimeGauge;
-import org.junit.jupiter.api.Test;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Johnny Lim
  * @author Sean Brandt
+ * @author Tommy Ludwig
  */
 class InfluxMeterRegistryTest {
 
@@ -122,4 +121,14 @@ class InfluxMeterRegistryTest {
                 .doesNotContain("baz"));
     }
 
+    void writeCustomMeter() {
+        String expectedInfluxLine = "my_custom,metric_type=unknown value=23,value=13,total_time=5 1";
+
+        Measurement m1 = new Measurement(() -> 23d, Statistic.VALUE);
+        Measurement m2 = new Measurement(() -> 13d, Statistic.VALUE);
+        Measurement m3 = new Measurement(() -> 5d, Statistic.TOTAL_TIME);
+        Meter meter = Meter.builder("my.custom", Meter.Type.OTHER, Arrays.asList(m1, m2, m3)).register(meterRegistry);
+
+        assertThat(meterRegistry.writeMeter(meter).collect(Collectors.joining())).isEqualTo(expectedInfluxLine);
+    }
 }

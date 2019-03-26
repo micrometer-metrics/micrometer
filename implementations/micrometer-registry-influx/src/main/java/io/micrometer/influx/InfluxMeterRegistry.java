@@ -146,11 +146,12 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private Stream<String> writeMeter(Meter m) {
+    // VisibleForTesting
+    Stream<String> writeMeter(Meter m) {
         Stream.Builder<Field> fields = Stream.builder();
 
         for (Measurement measurement : m.measure()) {
-            String fieldKey = measurement.getStatistic().toString()
+            String fieldKey = measurement.getStatistic().getTagValueRepresentation()
                     .replaceAll("(.)(\\p{Upper})", "$1_$2").toLowerCase();
             fields.add(new Field(fieldKey, measurement.getValue()));
         }
