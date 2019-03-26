@@ -37,6 +37,7 @@ import reactor.netty.udp.UdpClient;
 import reactor.util.concurrent.Queues;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +46,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
+import java.util.stream.LongStream;
 
 /**
  * {@link MeterRegistry} for StatsD.
@@ -267,6 +269,15 @@ public class StatsdMeterRegistry extends MeterRegistry {
         return lineBuilderFunction.apply(id);
     }
 
+    private DistributionStatisticConfig addInfBucket(DistributionStatisticConfig config) {
+        long[] slas = config.getSlaBoundaries() == null ? new long[]{Long.MAX_VALUE} :
+                LongStream.concat(Arrays.stream(config.getSlaBoundaries()), LongStream.of(Long.MAX_VALUE)).toArray();
+        return DistributionStatisticConfig.builder()
+                .sla(slas)
+                .build()
+                .merge(config);
+    }
+
     @Override
     protected Counter newCounter(Meter.Id id) {
         return new StatsdCounter(id, lineBuilder(id), processor);
@@ -283,6 +294,12 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector
             pauseDetector) {
+
+        // Adds an infinity bucket for SLA violation calculation
+        if (distributionStatisticConfig.getSlaBoundaries() != null) {
+            distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
+        }
+
         Timer timer = new StatsdTimer(id, lineBuilder(id), processor, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
                 statsdConfig.step().toMillis());
         HistogramGauges.registerWithCommonFormat(timer, this);
@@ -293,6 +310,12 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig
             distributionStatisticConfig, double scale) {
+
+        // Adds an infinity bucket for SLA violation calculation
+        if (distributionStatisticConfig.getSlaBoundaries() != null) {
+            distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
+        }
+
         DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), processor, clock, distributionStatisticConfig, scale);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;

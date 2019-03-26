@@ -50,7 +50,9 @@ public class HistogramGauges {
                 percentile -> Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
                 percentile -> percentile.value(timer.baseTimeUnit()),
                 bucket -> id.getName() + ".histogram",
-                bucket -> Tags.concat(id.getTagsAsIterable(), "le", DoubleFormat.decimalOrWhole(bucket.bucket(timer.baseTimeUnit()))));
+                // We look for Long.MAX_VALUE to ensure a sensible tag on our +Inf bucket
+                bucket -> Tags.concat(id.getTagsAsIterable(), "le", bucket.bucket() != Long.MAX_VALUE
+                        ? DoubleFormat.decimalOrWhole(bucket.bucket(timer.baseTimeUnit())) : "+Inf"));
     }
 
     public static HistogramGauges registerWithCommonFormat(DistributionSummary summary, MeterRegistry registry) {
@@ -60,7 +62,9 @@ public class HistogramGauges {
                 percentile -> Tags.concat(id.getTagsAsIterable(), "phi", DoubleFormat.decimalOrNan(percentile.percentile())),
                 ValueAtPercentile::value,
                 bucket -> id.getName() + ".histogram",
-                bucket -> Tags.concat(id.getTagsAsIterable(), "le", DoubleFormat.decimalOrWhole(bucket.bucket())));
+                // We look for Long.MAX_VALUE to ensure a sensible tag on our +Inf bucket
+                bucket -> Tags.concat(id.getTagsAsIterable(), "le", bucket.bucket() != Long.MAX_VALUE
+                        ? DoubleFormat.decimalOrWhole(bucket.bucket()) : "+Inf"));
     }
 
     public static HistogramGauges register(HistogramSupport meter, MeterRegistry registry,
