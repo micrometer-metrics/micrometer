@@ -21,7 +21,7 @@ import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
+import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.noop.*;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
@@ -34,7 +34,6 @@ import org.pcollections.HashTreePSet;
 import org.pcollections.PMap;
 import org.pcollections.PSet;
 
-import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -77,10 +76,7 @@ public abstract class MeterRegistry {
     private volatile PMap<Id, PSet<Id>> syntheticAssociations = HashTreePMap.empty();
 
     private final AtomicBoolean closed = new AtomicBoolean(false);
-    private PauseDetector pauseDetector = new ClockDriftPauseDetector(
-            Duration.ofMillis(100),
-            Duration.ofMillis(100)
-    );
+    private PauseDetector pauseDetector = new NoPauseDetector();
 
     /**
      * We'll use snake case as a general-purpose default for registries because it is the most
