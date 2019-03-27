@@ -225,7 +225,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                 logger.error("failed to send " + description + " to Wavefront", e);
             }
         } catch (UnknownHostException e) {
-            logger.error("failed to send " + description + " to Wavefront: unknown host + " + uri.getHost());
+            logger.error("failed to send " + description + " to Wavefront: unknown host " + uri.getHost());
         }
     }
 

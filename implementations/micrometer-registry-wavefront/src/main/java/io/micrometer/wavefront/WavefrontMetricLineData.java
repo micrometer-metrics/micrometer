@@ -19,7 +19,6 @@ package io.micrometer.wavefront;
  * Data for a single metric or distribution that is formatted as Wavefront line data.
  *
  * @author Han Zhang
- * @since 1.2.0
  */
 class WavefrontMetricLineData {
     private final String lineData;

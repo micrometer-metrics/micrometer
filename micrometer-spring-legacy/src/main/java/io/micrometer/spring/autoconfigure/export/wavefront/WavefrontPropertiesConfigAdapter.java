@@ -51,17 +51,17 @@ class WavefrontPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapt
 
     @Override
     public boolean reportMinuteDistribution() {
-        return get(WavefrontProperties::getReportMinuteDistribution, WavefrontConfig.super::reportMinuteDistribution);
+        return get(WavefrontProperties::isReportMinuteDistribution, WavefrontConfig.super::reportMinuteDistribution);
     }
 
     @Override
     public boolean reportHourDistribution() {
-        return get(WavefrontProperties::getReportHourDistribution, WavefrontConfig.super::reportHourDistribution);
+        return get(WavefrontProperties::isReportHourDistribution, WavefrontConfig.super::reportHourDistribution);
     }
 
     @Override
     public boolean reportDayDistribution() {
-        return get(WavefrontProperties::getReportDayDistribution, WavefrontConfig.super::reportDayDistribution);
+        return get(WavefrontProperties::isReportDayDistribution, WavefrontConfig.super::reportDayDistribution);
     }
 
     @Override

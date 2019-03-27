@@ -28,9 +28,8 @@ import java.util.List;
  * DistributionSummary that sends histogram distributions to Wavefront using WavefrontHistogramImpl.
  *
  * @author Han Zhang
- * @since 1.2.0
  */
-public class WavefrontDistributionSummary extends StepDistributionSummary {
+class WavefrontDistributionSummary extends StepDistributionSummary {
     @Nullable
     private final WavefrontHistogramImpl delegate;
 
