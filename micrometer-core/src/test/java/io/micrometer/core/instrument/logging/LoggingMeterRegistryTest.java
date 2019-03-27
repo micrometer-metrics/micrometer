@@ -92,7 +92,7 @@ class LoggingMeterRegistryTest {
 
     @Test
     void writeMeterByteValues() {
-        final String expectedResult = "bus-throughput{} count=5 B/s, value=64 B, value=2.125 KiB, value=8 MiB, value=1 GiB";
+        final String expectedResult = "bus-throughput{} throughput=5 B/s, value=64 B, value=2.125 KiB, value=8 MiB, value=1 GiB";
 
         Measurement m1 = new Measurement(() -> 300d, Statistic.COUNT);
         Measurement m2 = new Measurement(() -> (double) (1 << 6), Statistic.VALUE);

@@ -171,7 +171,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                         case DURATION:
                             return msLine + print.time(ms.getValue());
                         case COUNT:
-                            return msLine + print.rate(ms.getValue());
+                            return "throughput=" + print.rate(ms.getValue());
                         default:
                             return msLine + decimalOrNan(ms.getValue());
                     }
