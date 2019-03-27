@@ -18,7 +18,7 @@ elif [ $CIRCLE_TAG ]; then
     ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true candidate $SWITCHES -x release
     ;;
   *)
-    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true final $SWITCHES -x release
+    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true final $SWITCHES -x release -x artifactoryPublish
     ;;
   esac
 else
