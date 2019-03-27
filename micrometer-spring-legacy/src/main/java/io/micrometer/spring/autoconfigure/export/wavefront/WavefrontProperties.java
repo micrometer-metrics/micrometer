@@ -22,6 +22,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * {@link ConfigurationProperties} for configuring Wavefront metrics export.
  *
  * @author Jon Schneider
+ * @since 1.0.0
  */
 @ConfigurationProperties("management.metrics.export.wavefront")
 public class WavefrontProperties extends StepRegistryProperties {

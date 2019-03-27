@@ -22,6 +22,12 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.lang.Nullable;
 
+/**
+ * Naming convention for Wavefront.
+ *
+ * @author Jon Schneider
+ * @since 1.0.0
+ */
 public class WavefrontNamingConvention implements NamingConvention {
 
     private static final Pattern PATTERN_NAME_TO_SANITIZE = Pattern.compile("[^a-zA-Z0-9\\-_\\./,]");

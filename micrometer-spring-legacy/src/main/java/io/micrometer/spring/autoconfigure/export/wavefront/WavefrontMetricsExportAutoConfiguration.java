@@ -33,6 +33,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+/**
+ * Auto-configuration for Wavefront.
+ *
+ * @author Jon Schneider
+ * @since 1.0.0
+ */
 @Configuration
 @AutoConfigureBefore({CompositeMeterRegistryAutoConfiguration.class,
         SimpleMetricsExportAutoConfiguration.class})
