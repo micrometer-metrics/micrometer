@@ -28,6 +28,7 @@ import java.time.Duration;
  *
  * @author Howard Yoo
  * @author Jon Schneider
+ * @since 1.0.0
  */
 public interface WavefrontConfig extends StepRegistryConfig {
     /**
