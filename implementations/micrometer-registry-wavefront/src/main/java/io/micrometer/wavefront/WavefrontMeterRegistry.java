@@ -43,8 +43,11 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
 
 /**
+ * {@link StepMeterRegistry} for Wavefront.
+ *
  * @author Jon Schneider
  * @author Howard Yoo
+ * @since 1.0.0
  */
 public class WavefrontMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("wavefront-metrics-publisher");

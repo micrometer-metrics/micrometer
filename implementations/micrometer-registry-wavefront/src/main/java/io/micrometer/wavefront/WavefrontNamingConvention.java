@@ -22,6 +22,12 @@ import io.micrometer.core.lang.Nullable;
 
 import java.util.regex.Pattern;
 
+/**
+ * Naming convention for Wavefront.
+ *
+ * @author Jon Schneider
+ * @since 1.0.0
+ */
 public class WavefrontNamingConvention implements NamingConvention {
 
     private static final Pattern NAME_CLEANUP_PATTERN = Pattern.compile("[^a-zA-Z0-9\\-_\\./,]");
