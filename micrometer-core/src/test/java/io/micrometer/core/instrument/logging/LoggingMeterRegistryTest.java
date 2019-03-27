@@ -17,7 +17,13 @@ package io.micrometer.core.instrument.logging;
 
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Statistic;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -55,6 +61,49 @@ class LoggingMeterRegistryTest {
     void time() {
         LoggingMeterRegistry.Printer printer = registry.new Printer(registry.timer("my.timer"));
         assertThat(printer.time(12345 /* ms */)).isEqualTo("12.345s");
+    }
+
+    @Test
+    void writeMeterUnitlessValue() {
+        final String expectedResult = "meter.1{} value=0";
+
+        Measurement m1 = new Measurement(() -> 0d, Statistic.VALUE);
+        Meter meter = Meter.builder("meter.1", Meter.Type.OTHER, Collections.singletonList(m1))
+                .register(registry);
+        LoggingMeterRegistry.Printer printer = registry.new Printer(meter);
+        assertThat(registry.writeMeter(meter, printer)).isEqualTo(expectedResult);
+    }
+
+    @Test
+    void writeMeterMultipleValues() {
+        final String expectedResult = "sheepWatch{color=black} value=5 sheep, max=1023 sheep, total=1.1s";
+
+        Measurement m1 = new Measurement(() -> 5d, Statistic.VALUE);
+        Measurement m2 = new Measurement(() -> 1023d, Statistic.MAX);
+        Measurement m3 = new Measurement(() -> 1100d, Statistic.TOTAL_TIME);
+        Meter meter = Meter.builder("sheepWatch", Meter.Type.OTHER, Arrays.asList(m1, m2, m3))
+                .tag("color", "black")
+                .description("Meter for shepherds.")
+                .baseUnit("sheep")
+                .register(registry);
+        LoggingMeterRegistry.Printer printer = registry.new Printer(meter);
+        assertThat(registry.writeMeter(meter, printer)).isEqualTo(expectedResult);
+    }
+
+    @Test
+    void writeMeterByteValues() {
+        final String expectedResult = "bus-throughput{} throughput=5 B/s, value=64 B, value=2.125 KiB, value=8 MiB, value=1 GiB";
+
+        Measurement m1 = new Measurement(() -> 300d, Statistic.COUNT);
+        Measurement m2 = new Measurement(() -> (double) (1 << 6), Statistic.VALUE);
+        Measurement m3 = new Measurement(() -> (double) 0b100010000000, Statistic.VALUE);
+        Measurement m4 = new Measurement(() -> (double) (1 << 23), Statistic.VALUE);
+        Measurement m5 = new Measurement(() -> (double) (1 << 30), Statistic.VALUE);
+        Meter meter = Meter.builder("bus-throughput", Meter.Type.OTHER, Arrays.asList(m1, m2, m3, m4, m5))
+                .baseUnit("bytes")
+                .register(registry);
+        LoggingMeterRegistry.Printer printer = registry.new Printer(meter);
+        assertThat(registry.writeMeter(meter, printer)).isEqualTo(expectedResult);
     }
 
     @Test
