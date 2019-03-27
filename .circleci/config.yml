@@ -64,6 +64,8 @@ jobs:
       - deploy:
           name: Maven Central sync
           command: ./gradlew mavenCentralSync -Prelease.useLastTag=true -x bintrayPublish -x bintrayUpload -x bintrayCreateVersion -x bintrayCreatePackage
+          # Maven Central Sync might take more than 10 minutes per artifact
+          no_output_timeout: 30m
 
 workflows:
   version: 2
