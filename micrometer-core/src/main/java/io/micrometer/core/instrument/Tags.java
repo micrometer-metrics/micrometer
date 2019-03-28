@@ -38,28 +38,28 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@link Tags} instance by merging this collection and the specific key/value pair.
+     * Return a new {@code Tags} instance by merging this collection and the specified key/value pair.
      *
      * @param key   the tag key to add
      * @param value the tag value to add
-     * @return a new {@link Tags} instance
+     * @return a new {@code Tags} instance
      */
     public Tags and(String key, String value) {
         return and(Tag.of(key, value));
     }
 
     /**
-     * Return a new {@link Tags} instance by merging this collection and the specific key/value pairs.
+     * Return a new {@code Tags} instance by merging this collection and the specified key/value pairs.
      *
-     * @param keyValues the key value pairs to add
-     * @return a new {@link Tags} instance
+     * @param keyValues the key/value pairs to add
+     * @return a new {@code Tags} instance
      */
     public Tags and(@Nullable String... keyValues) {
         if (keyValues == null || keyValues.length == 0) {
             return this;
         }
         if (keyValues.length % 2 == 1) {
-            throw new IllegalArgumentException("size must be even, it is a set of key=value pairs");
+            throw new IllegalArgumentException("size must be even, it is a set of key/value pairs");
         }
         List<Tag> tags = new ArrayList<>(keyValues.length / 2);
         for (int i = 0; i < keyValues.length; i += 2) {
@@ -69,10 +69,10 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@link Tags} instance by merging this collection and the specific tags.
+     * Return a new {@code Tags} instance by merging this collection and the specified tags.
      *
      * @param tags the tags to add
-     * @return a new {@link Tags} instance
+     * @return a new {@code Tags} instance
      */
     public Tags and(@Nullable Tag... tags) {
         if (tags == null || tags.length == 0) {
@@ -82,10 +82,10 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@link Tags} instance by merging this collection and the specific tags.
+     * Return a new {@code Tags} instance by merging this collection and the specified tags.
      *
      * @param tags the tags to add
-     * @return a new {@link Tags} instance
+     * @return a new {@code Tags} instance
      */
     public Tags and(@Nullable Iterable<? extends Tag> tags) {
         if (tags == null || !tags.iterator().hasNext()) {
@@ -121,7 +121,7 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@link Tags} instance my concatenating the specified values.
+     * Return a new {@code Tags} instance by concatenating the specified collections of tags.
      *
      * @param tags      the first set of tags
      * @param otherTags the second set of tags
@@ -132,10 +132,10 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@link Tags} instance my concatenating the specified key value pairs.
+     * Return a new {@code Tags} instance by concatenating the specified tags and key/value pairs.
      *
      * @param tags      the first set of tags
-     * @param keyValues the additional key value pairs to add
+     * @param keyValues the additional key/value pairs to add
      * @return the merged tags
      */
     public static Tags concat(Iterable<? extends Tag> tags, String... keyValues) {
@@ -143,10 +143,10 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@link Tags} instance containing tags constructed from the specified source tags.
+     * Return a new {@code Tags} instance containing tags constructed from the specified source tags.
      *
      * @param tags the tags to add
-     * @return a new {@link Tags} instance
+     * @return a new {@code Tags} instance
      */
     public static Tags of(Iterable<? extends Tag> tags) {
         if (tags instanceof Tags) {
@@ -156,40 +156,40 @@ public final class Tags implements Iterable<Tag> {
     }
 
     /**
-     * Return a new {@link Tags} instance containing tags constructed from the specified key value pair.
+     * Return a new {@code Tags} instance containing tags constructed from the specified key/value pair.
      *
      * @param key   the tag key to add
      * @param value the tag value to add
-     * @return a new {@link Tags} instance
+     * @return a new {@code Tags} instance
      */
     public static Tags of(String key, String value) {
         return empty().and(key, value);
     }
 
     /**
-     * Return a new {@link Tags} instance containing tags constructed from the specified key value pairs.
+     * Return a new {@code Tags} instance containing tags constructed from the specified key/value pairs.
      *
-     * @param keyValues the key value pairs to add
-     * @return a new {@link Tags} instance
+     * @param keyValues the key/value pairs to add
+     * @return a new {@code Tags} instance
      */
     public static Tags of(String... keyValues) {
         return empty().and(keyValues);
     }
 
     /**
-     * Return a new {@link Tags} instance containing tags constructed from the specified tags.
+     * Return a new {@code Tags} instance containing tags constructed from the specified tags.
      *
      * @param tags the tags to add
-     * @return a new {@link Tags} instance
+     * @return a new {@code Tags} instance
      */
     public static Tags of(Tag... tags) {
         return empty().and(tags);
     }
 
     /**
-     * Return a {@link Tags} instance that contains no elements.
+     * Return a {@code Tags} instance that contains no elements.
      *
-     * @return an empty {@link Tags} instance
+     * @return an empty {@code Tags} instance
      */
     public static Tags empty() {
         return EMPTY;
