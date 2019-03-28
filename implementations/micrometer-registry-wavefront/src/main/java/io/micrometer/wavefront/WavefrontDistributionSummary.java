@@ -57,4 +57,8 @@ public class WavefrontDistributionSummary extends StepDistributionSummary {
             return delegate.flushDistributions();
         }
     }
+
+    boolean isPublishingHistogram() {
+        return delegate != null;
+    }
 }

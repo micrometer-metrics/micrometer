@@ -60,4 +60,8 @@ public class WavefrontTimer extends StepTimer {
             return delegate.flushDistributions();
         }
     }
+
+    boolean isPublishingHistogram() {
+        return delegate != null;
+    }
 }
