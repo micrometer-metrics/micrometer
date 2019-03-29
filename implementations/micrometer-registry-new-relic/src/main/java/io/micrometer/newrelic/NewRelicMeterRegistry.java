@@ -255,8 +255,9 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                 logger.info("successfully sent {} events to New Relic", events.size());
             } else if (status >= 400) {
                 try (InputStream in = con.getErrorStream()) {
-                    logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                            .lines().collect(joining(System.lineSeparator())));
+                    logger.error("failed to send metrics: http " + status + " " +
+                            new BufferedReader(new InputStreamReader(in))
+                                    .lines().collect(joining(System.lineSeparator())));
                 }
             } else {
                 logger.error("failed to send metrics: http " + status);
