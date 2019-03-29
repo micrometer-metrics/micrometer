@@ -140,7 +140,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             return;
         }
 
-        for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
+        // Stackdriver's API limits us to less than 200 events per call
+        for (List<Meter> batch : MeterPartition.partition(this, Math.min(config.batchSize(), 199))) {
             Batch publishBatch = new Batch();
 
             Iterable<TimeSeries> series = batch.stream()
