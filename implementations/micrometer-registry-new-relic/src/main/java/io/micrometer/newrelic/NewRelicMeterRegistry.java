@@ -231,7 +231,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                     .withJsonContent(events.peek(ev -> totalEvents.incrementAndGet()).collect(Collectors.joining(",", "[", "]")))
                     .send()
                     .onSuccess(response -> logger.debug("successfully sent {} metrics to New Relic.", totalEvents))
-                    .onError(response -> logger.error("failed to send metrics to new relic: {}", response.body()));
+                    .onError(response -> logger.error("failed to send metrics to new relic: http {} {}", response.code(), response.body()));
         } catch (Throwable e) {
             logger.warn("failed to send metrics to new relic", e);
         }
