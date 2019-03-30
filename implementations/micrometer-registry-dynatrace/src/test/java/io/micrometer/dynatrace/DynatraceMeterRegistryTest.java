@@ -24,9 +24,11 @@ import io.micrometer.core.instrument.config.MissingRequiredConfigurationExceptio
 import io.micrometer.core.ipc.http.HttpSender;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -44,6 +46,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DynatraceMeterRegistryTest {
 
     private final DynatraceMeterRegistry meterRegistry = createMeterRegistry();
+
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
     void constructorWhenUriIsMissingShouldThrowMissingRequiredConfigurationException() {
@@ -139,6 +143,25 @@ class DynatraceMeterRegistryTest {
     }
 
     @Test
+    void writeMeterWithGaugeWhenChangingFiniteToNaNShouldWork() {
+        AtomicBoolean first = new AtomicBoolean(true);
+        meterRegistry.gauge("my.gauge", first, (b) -> b.getAndSet(false) ? 1d : Double.NaN);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Stream<DynatraceMeterRegistry.DynatraceCustomMetric> stream = meterRegistry.writeMeter(gauge);
+        List<DynatraceMeterRegistry.DynatraceCustomMetric> metrics = stream.collect(Collectors.toList());
+        assertThat(metrics).hasSize(1);
+        DynatraceMeterRegistry.DynatraceCustomMetric metric = metrics.get(0);
+        DynatraceTimeSeries timeSeries = metric.getTimeSeries();
+        try {
+            Map<String, Object> map = mapper.readValue(timeSeries.asJson(), Map.class);
+            List<List<Number>> dataPoints = (List<List<Number>>) map.get("dataPoints");
+            assertThat(dataPoints.get(0).get(1).doubleValue()).isEqualTo(1d);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Test
     void writeMeterWithGaugeShouldDropInfiniteValues() {
         meterRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
@@ -189,7 +212,7 @@ class DynatraceMeterRegistryTest {
         List<DynatraceBatchedPayload> entries = meterRegistry.createPostMessages("my.type", timeSeries);
         assertThat(entries).hasSize(1);
         assertThat(entries.get(0).metricCount).isEqualTo(1);
-        assertThat(isJSONValid(entries.get(0).payload)).isEqualTo(true);
+        assertThat(isValidJson(entries.get(0).payload)).isEqualTo(true);
     }
 
     @Test
@@ -213,7 +236,7 @@ class DynatraceMeterRegistryTest {
         assertThat(messages.get(1).metricCount).isEqualTo(1);
         assertThat(messages.get(2).metricCount).isEqualTo(2);
         assertThat(messages.get(2).payload.getBytes(UTF_8).length).isEqualTo(15360);
-        assertThat(messages.stream().map(message -> message.payload).allMatch(DynatraceMeterRegistryTest::isJSONValid)).isTrue();
+        assertThat(messages.stream().map(message -> message.payload).allMatch(this::isValidJson)).isTrue();
     }
 
     @Test
@@ -227,7 +250,7 @@ class DynatraceMeterRegistryTest {
         assertThat(messages).hasSize(2);
         assertThat(messages.get(0).metricCount).isEqualTo(2);
         assertThat(messages.get(1).metricCount).isEqualTo(1);
-        assertThat(messages.stream().map(message -> message.payload).allMatch(DynatraceMeterRegistryTest::isJSONValid)).isTrue();
+        assertThat(messages.stream().map(message -> message.payload).allMatch(this::isValidJson)).isTrue();
     }
 
     private DynatraceTimeSeries createTimeSeriesWithDimensions(int numberOfDimensions) {
@@ -269,10 +292,9 @@ class DynatraceMeterRegistryTest {
             .build();
     }
 
-    private static boolean isJSONValid(String jsonInString ) {
+    private boolean isValidJson(String json) {
         try {
-            final ObjectMapper mapper = new ObjectMapper();
-            mapper.readTree(jsonInString);
+            mapper.readTree(json);
             return true;
         } catch (Exception e) {
             return false;
