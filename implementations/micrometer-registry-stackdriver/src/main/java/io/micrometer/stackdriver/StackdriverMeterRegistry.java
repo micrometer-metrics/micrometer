@@ -22,6 +22,7 @@ import com.google.api.MonitoredResource;
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.monitoring.v3.MetricServiceClient;
 import com.google.cloud.monitoring.v3.MetricServiceSettings;
+import com.google.common.collect.Lists;
 import com.google.monitoring.v3.*;
 import com.google.protobuf.Timestamp;
 import io.micrometer.core.annotation.Incubating;
@@ -141,10 +142,11 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         }
 
         // Stackdriver's API limits us to less than 200 events per call
-        for (List<Meter> batch : MeterPartition.partition(this, Math.min(config.batchSize(), 199))) {
+        int limit = 199;
+        for (List<Meter> batch : MeterPartition.partition(this, Math.min(config.batchSize(), limit))) {
             Batch publishBatch = new Batch();
 
-            Iterable<TimeSeries> series = batch.stream()
+            List<TimeSeries> series = batch.stream()
                     .flatMap(meter -> meter.match(
                             m -> createGauge(publishBatch, m),
                             m -> createCounter(publishBatch, m),
@@ -157,19 +159,21 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                             m -> createMeter(publishBatch, m)))
                     .collect(toList());
 
-            try {
-                CreateTimeSeriesRequest request = CreateTimeSeriesRequest.newBuilder()
-                        .setName("projects/" + config.projectId())
-                        .addAllTimeSeries(series)
-                        .build();
+            for (List<TimeSeries> partition : Lists.partition(series, limit)) {
+                try {
+                    CreateTimeSeriesRequest request = CreateTimeSeriesRequest.newBuilder()
+                            .setName("projects/" + config.projectId())
+                            .addAllTimeSeries(partition)
+                            .build();
 
-                if (logger.isTraceEnabled()) {
-                    logger.trace("publishing batch to stackdriver:\n{}", request);
+                    if (logger.isTraceEnabled()) {
+                        logger.trace("publishing batch to stackdriver:\n{}", request);
+                    }
+
+                    client.createTimeSeries(request);
+                } catch (ApiException e) {
+                    logger.warn("failed to send metrics to stackdriver: {}", e.getCause().getMessage());
                 }
-
-                client.createTimeSeries(request);
-            } catch (ApiException e) {
-                logger.warn("failed to send metrics to stackdriver: {}", e.getCause().getMessage());
             }
         }
     }
