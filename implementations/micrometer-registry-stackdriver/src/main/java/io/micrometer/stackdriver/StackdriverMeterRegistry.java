@@ -22,7 +22,6 @@ import com.google.api.MonitoredResource;
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.monitoring.v3.MetricServiceClient;
 import com.google.cloud.monitoring.v3.MetricServiceSettings;
-import com.google.common.collect.Lists;
 import com.google.monitoring.v3.*;
 import com.google.protobuf.Timestamp;
 import io.micrometer.core.annotation.Incubating;
@@ -55,8 +54,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toCollection;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
 @Incubating(since = "1.1.0")
@@ -146,7 +145,9 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         for (List<Meter> batch : MeterPartition.partition(this, Math.min(config.batchSize(), limit))) {
             Batch publishBatch = new Batch();
 
-            List<TimeSeries> series = batch.stream()
+            AtomicLong partitioningCounter = new AtomicLong();
+
+            Collection<List<TimeSeries>> series = batch.stream()
                     .flatMap(meter -> meter.match(
                             m -> createGauge(publishBatch, m),
                             m -> createCounter(publishBatch, m),
@@ -157,9 +158,10 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                             m -> createFunctionCounter(publishBatch, m),
                             m -> createFunctionTimer(publishBatch, m),
                             m -> createMeter(publishBatch, m)))
-                    .collect(toList());
+                    .collect(groupingBy(o -> partitioningCounter.incrementAndGet() / limit))
+                    .values();
 
-            for (List<TimeSeries> partition : Lists.partition(series, limit)) {
+            for (List<TimeSeries> partition : series) {
                 try {
                     CreateTimeSeriesRequest request = CreateTimeSeriesRequest.newBuilder()
                             .setName("projects/" + config.projectId())
