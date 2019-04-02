@@ -27,6 +27,7 @@ import java.lang.management.ManagementFactory;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
@@ -50,7 +51,7 @@ import static java.util.Collections.emptyList;
 @Incubating(since = "1.1.0")
 @NonNullApi
 @NonNullFields
-public class KafkaConsumerMetrics implements MeterBinder {
+public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
     private static final String JMX_DOMAIN = "kafka.consumer";
     private static final String METRIC_NAME_PREFIX = "kafka.consumer.";
 
@@ -60,6 +61,8 @@ public class KafkaConsumerMetrics implements MeterBinder {
 
     @Nullable
     private Integer kafkaMajorVersion;
+
+    private final List<Runnable> notificationListenerCleanUpRunnables = new CopyOnWriteArrayList<>();
 
     public KafkaConsumerMetrics() {
         this(emptyList());
@@ -263,6 +266,12 @@ public class KafkaConsumerMetrics implements MeterBinder {
 
         try {
             mBeanServer.addNotificationListener(MBeanServerDelegate.DELEGATE_NAME, notificationListener, filter, null);
+            notificationListenerCleanUpRunnables.add(() -> {
+                try {
+                    mBeanServer.removeNotificationListener(MBeanServerDelegate.DELEGATE_NAME, notificationListener);
+                } catch (InstanceNotFoundException | ListenerNotFoundException ignored) {
+                }
+            });
         } catch (InstanceNotFoundException e) {
             throw new RuntimeException("Error registering Kafka MBean listener", e);
         }
@@ -299,5 +308,10 @@ public class KafkaConsumerMetrics implements MeterBinder {
 
     private static String sanitize(String value) {
         return value.replaceAll("-", ".");
+    }
+
+    @Override
+    public void close() {
+        notificationListenerCleanUpRunnables.forEach(Runnable::run);
     }
 }
