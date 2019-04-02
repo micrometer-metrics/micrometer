@@ -27,6 +27,7 @@ dependencies {
     compile 'org.springframework.boot:spring-boot', optional
     compile 'org.springframework.boot:spring-boot-actuator', optional
     compile 'org.springframework.boot:spring-boot-starter-aop', optional
+    compile 'org.springframework.boot:spring-boot-starter-cache', optional
     compile 'org.springframework.boot:spring-boot-starter-security', optional
     compile 'org.springframework:spring-webmvc', optional
     compile 'org.springframework:spring-web', optional
@@ -41,6 +42,8 @@ dependencies {
     compile project(":micrometer-jersey2"), optional
 
     compile 'org.springframework.integration:spring-integration-core', optional
+    
+    compile 'com.hazelcast:hazelcast-spring', optional
 
     annotationProcessor 'org.springframework.boot:spring-boot-autoconfigure-processor'
 
