@@ -140,9 +140,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             return;
         }
 
-        // Stackdriver's API limits us to less than 200 events per call
-        int limit = 199;
-        for (List<Meter> batch : MeterPartition.partition(this, Math.min(config.batchSize(), limit))) {
+        for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             Batch publishBatch = new Batch();
 
             AtomicLong partitioningCounter = new AtomicLong();
@@ -158,7 +156,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                             m -> createFunctionCounter(publishBatch, m),
                             m -> createFunctionTimer(publishBatch, m),
                             m -> createMeter(publishBatch, m)))
-                    .collect(groupingBy(o -> partitioningCounter.incrementAndGet() / limit))
+                    // Stackdriver's API limits us to 200 events per call
+                    .collect(groupingBy(o -> partitioningCounter.incrementAndGet() / 200))
                     .values();
 
             for (List<TimeSeries> partition : series) {
