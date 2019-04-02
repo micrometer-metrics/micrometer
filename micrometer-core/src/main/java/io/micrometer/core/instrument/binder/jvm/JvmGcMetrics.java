@@ -22,15 +22,21 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.management.ListenerNotFoundException;
 import javax.management.NotificationEmitter;
+import javax.management.NotificationListener;
 import javax.management.openmbean.CompositeData;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryUsage;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -70,7 +76,10 @@ enum GcGenerationAge {
  */
 @NonNullApi
 @NonNullFields
-public class JvmGcMetrics implements MeterBinder {
+public class JvmGcMetrics implements MeterBinder, AutoCloseable {
+
+    private static final Logger logger = LoggerFactory.getLogger(JvmGcMetrics.class);
+
     private boolean managementExtensionsPresent = isManagementExtensionsPresent();
 
     private Iterable<Tag> tags;
@@ -80,6 +89,8 @@ public class JvmGcMetrics implements MeterBinder {
 
     @Nullable
     private String oldGenPoolName;
+
+    private final List<Runnable> notificationListenerCleanUpRunnables = new CopyOnWriteArrayList<>();
 
     public JvmGcMetrics() {
         this(emptyList());
@@ -128,7 +139,7 @@ public class JvmGcMetrics implements MeterBinder {
 
             for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
                 if (mbean instanceof NotificationEmitter) {
-                    ((NotificationEmitter) mbean).addNotificationListener((notification, ref) -> {
+                    NotificationListener notificationListener = (notification, ref) -> {
                         final String type = notification.getType();
                         if (type.equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
                             CompositeData cd = (CompositeData) notification.getUserData();
@@ -185,7 +196,15 @@ public class JvmGcMetrics implements MeterBinder {
                                 }
                             }
                         }
-                    }, null, null);
+                    };
+                    NotificationEmitter notificationEmitter = (NotificationEmitter) mbean;
+                    notificationEmitter.addNotificationListener(notificationListener, null, null);
+                    notificationListenerCleanUpRunnables.add(() -> {
+                        try {
+                            notificationEmitter.removeNotificationListener(notificationListener);
+                        } catch (ListenerNotFoundException ignore) {
+                        }
+                    });
                 }
             }
         }
@@ -198,6 +217,8 @@ public class JvmGcMetrics implements MeterBinder {
             return true;
         } catch (Throwable e) {
             // We are operating in a JVM without access to this level of detail
+            logger.warn("GC notifications will not be available because " +
+                "com.sun.management.GarbageCollectionNotificationInfo is not present");
             return false;
         }
     }
@@ -213,4 +234,10 @@ public class JvmGcMetrics implements MeterBinder {
     private boolean isYoungGenPool(String name) {
         return name.endsWith("Eden Space");
     }
+
+    @Override
+    public void close() {
+        notificationListenerCleanUpRunnables.forEach(Runnable::run);
+    }
+
 }
