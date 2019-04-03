@@ -37,7 +37,6 @@ import io.micrometer.core.instrument.step.StepDistributionSummary;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.step.StepTimer;
 import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
@@ -54,8 +53,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toCollection;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
 @Incubating(since = "1.1.0")
@@ -68,6 +67,11 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
      * https://cloud.google.com/monitoring/custom-metrics/creating-metrics#which-resource
      */
     private static final String RESOURCE_TYPE = "global";
+    /**
+     * Stackdriver's API only allows up to 200 TimeSeries per request
+     * https://cloud.google.com/monitoring/quotas#custom_metrics_quotas
+     */
+    private static final int TIMESERIES_PER_REQUEST_LIMIT = 200;
     private final Logger logger = LoggerFactory.getLogger(StackdriverMeterRegistry.class);
     private final StackdriverConfig config;
     /**
@@ -140,26 +144,30 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             return;
         }
 
-        for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-            Batch publishBatch = new Batch();
+        Batch publishBatch = new Batch();
 
-            Iterable<TimeSeries> series = batch.stream()
-                    .flatMap(meter -> meter.match(
-                            m -> createGauge(publishBatch, m),
-                            m -> createCounter(publishBatch, m),
-                            m -> createTimer(publishBatch, m),
-                            m -> createSummary(publishBatch, m),
-                            m -> createLongTaskTimer(publishBatch, m),
-                            m -> createTimeGauge(publishBatch, m),
-                            m -> createFunctionCounter(publishBatch, m),
-                            m -> createFunctionTimer(publishBatch, m),
-                            m -> createMeter(publishBatch, m)))
-                    .collect(toList());
+        AtomicLong partitioningCounter = new AtomicLong();
+        long partitionSize = Math.min(config.batchSize(), TIMESERIES_PER_REQUEST_LIMIT);
 
+        Collection<List<TimeSeries>> series = getMeters().stream()
+                .flatMap(meter -> meter.match(
+                        m -> createGauge(publishBatch, m),
+                        m -> createCounter(publishBatch, m),
+                        m -> createTimer(publishBatch, m),
+                        m -> createSummary(publishBatch, m),
+                        m -> createLongTaskTimer(publishBatch, m),
+                        m -> createTimeGauge(publishBatch, m),
+                        m -> createFunctionCounter(publishBatch, m),
+                        m -> createFunctionTimer(publishBatch, m),
+                        m -> createMeter(publishBatch, m)))
+                .collect(groupingBy(o -> partitioningCounter.incrementAndGet() / partitionSize))
+                .values();
+
+        for (List<TimeSeries> partition : series) {
             try {
                 CreateTimeSeriesRequest request = CreateTimeSeriesRequest.newBuilder()
                         .setName("projects/" + config.projectId())
-                        .addAllTimeSeries(series)
+                        .addAllTimeSeries(partition)
                         .build();
 
                 if (logger.isTraceEnabled()) {
