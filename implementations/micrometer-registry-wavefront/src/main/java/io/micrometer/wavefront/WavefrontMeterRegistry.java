@@ -65,6 +65,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     private final WavefrontConfig config;
     private final HttpSender httpClient;
     private final URI uri;
+    private final int distributionPort;
     private final Set<HistogramGranularity> histogramGranularities;
 
     /**
@@ -99,6 +100,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         }
         this.httpClient = httpClient;
         this.uri = URI.create(config.uri());
+        this.distributionPort = config.distributionPort();
 
         this.histogramGranularities = new HashSet<>();
         if (config.reportMinuteDistribution()) {
@@ -179,7 +181,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                     "distributions", distributionCount.get());
             } else {
                 flushToProxy(metricStream, uri.getPort(), "metrics", batch.size());
-                flushToProxy(distributionStream, config.distributionPort(), "distributions",
+                flushToProxy(distributionStream, distributionPort, "distributions",
                     distributionCount.get());
             }
         }
