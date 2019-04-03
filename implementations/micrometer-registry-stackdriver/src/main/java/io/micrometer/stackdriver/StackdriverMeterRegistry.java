@@ -68,6 +68,11 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
      * https://cloud.google.com/monitoring/custom-metrics/creating-metrics#which-resource
      */
     private static final String RESOURCE_TYPE = "global";
+    /**
+     * Stackdriver's API only allows up to 200 TimeSeries per request
+     * https://cloud.google.com/monitoring/quotas#custom_metrics_quotas
+     */
+    private static final int TIMESERIES_PER_REQUEST_LIMIT = 200;
     private final Logger logger = LoggerFactory.getLogger(StackdriverMeterRegistry.class);
     private final StackdriverConfig config;
     /**
@@ -140,41 +145,39 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             return;
         }
 
-        for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-            Batch publishBatch = new Batch();
+        Batch publishBatch = new Batch();
 
-            AtomicLong partitioningCounter = new AtomicLong();
+        AtomicLong partitioningCounter = new AtomicLong();
+        long partitionSize = Math.min(config.batchSize(), TIMESERIES_PER_REQUEST_LIMIT);
 
-            Collection<List<TimeSeries>> series = batch.stream()
-                    .flatMap(meter -> meter.match(
-                            m -> createGauge(publishBatch, m),
-                            m -> createCounter(publishBatch, m),
-                            m -> createTimer(publishBatch, m),
-                            m -> createSummary(publishBatch, m),
-                            m -> createLongTaskTimer(publishBatch, m),
-                            m -> createTimeGauge(publishBatch, m),
-                            m -> createFunctionCounter(publishBatch, m),
-                            m -> createFunctionTimer(publishBatch, m),
-                            m -> createMeter(publishBatch, m)))
-                    // Stackdriver's API limits us to 200 TimeSeries per call
-                    .collect(groupingBy(o -> partitioningCounter.incrementAndGet() / 200))
-                    .values();
+        Collection<List<TimeSeries>> series = getMeters().stream()
+                .flatMap(meter -> meter.match(
+                        m -> createGauge(publishBatch, m),
+                        m -> createCounter(publishBatch, m),
+                        m -> createTimer(publishBatch, m),
+                        m -> createSummary(publishBatch, m),
+                        m -> createLongTaskTimer(publishBatch, m),
+                        m -> createTimeGauge(publishBatch, m),
+                        m -> createFunctionCounter(publishBatch, m),
+                        m -> createFunctionTimer(publishBatch, m),
+                        m -> createMeter(publishBatch, m)))
+                .collect(groupingBy(o -> partitioningCounter.incrementAndGet() / partitionSize))
+                .values();
 
-            for (List<TimeSeries> partition : series) {
-                try {
-                    CreateTimeSeriesRequest request = CreateTimeSeriesRequest.newBuilder()
-                            .setName("projects/" + config.projectId())
-                            .addAllTimeSeries(partition)
-                            .build();
+        for (List<TimeSeries> partition : series) {
+            try {
+                CreateTimeSeriesRequest request = CreateTimeSeriesRequest.newBuilder()
+                        .setName("projects/" + config.projectId())
+                        .addAllTimeSeries(partition)
+                        .build();
 
-                    if (logger.isTraceEnabled()) {
-                        logger.trace("publishing batch to stackdriver:\n{}", request);
-                    }
-
-                    client.createTimeSeries(request);
-                } catch (ApiException e) {
-                    logger.warn("failed to send metrics to stackdriver: {}", e.getCause().getMessage());
+                if (logger.isTraceEnabled()) {
+                    logger.trace("publishing batch to stackdriver:\n{}", request);
                 }
+
+                client.createTimeSeries(request);
+            } catch (ApiException e) {
+                logger.warn("failed to send metrics to stackdriver: {}", e.getCause().getMessage());
             }
         }
     }
