@@ -171,12 +171,13 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                         .build();
 
                 if (logger.isTraceEnabled()) {
-                    logger.trace("publishing batch to stackdriver:\n{}", request);
+                    logger.trace("publishing batch to Stackdriver:\n{}", request);
                 }
 
                 client.createTimeSeries(request);
+                logger.debug("successfully sent {} TimeSeries to Stackdriver", partition.size());
             } catch (ApiException e) {
-                logger.warn("failed to send metrics to stackdriver: {}", e.getCause().getMessage());
+                logger.warn("failed to send metrics to Stackdriver", e);
             }
         }
     }
@@ -368,7 +369,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                     client.createMetricDescriptor(request);
                     verifiedDescriptors.add(id.getName());
                 } catch (ApiException e) {
-                    logger.warn("failed to create metric descriptor in stackdriver for meter " + id + " {}", e.getCause().getMessage());
+                    logger.warn("failed to create metric descriptor in Stackdriver for meter " + id, e);
                 }
             }
         }
