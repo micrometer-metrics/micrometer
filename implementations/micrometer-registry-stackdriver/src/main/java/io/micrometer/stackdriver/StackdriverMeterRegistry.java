@@ -54,8 +54,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toCollection;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
 @Incubating(since = "1.1.0")
@@ -143,7 +143,9 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             Batch publishBatch = new Batch();
 
-            Iterable<TimeSeries> series = batch.stream()
+            AtomicLong partitioningCounter = new AtomicLong();
+
+            Collection<List<TimeSeries>> series = batch.stream()
                     .flatMap(meter -> meter.match(
                             m -> createGauge(publishBatch, m),
                             m -> createCounter(publishBatch, m),
@@ -154,21 +156,25 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                             m -> createFunctionCounter(publishBatch, m),
                             m -> createFunctionTimer(publishBatch, m),
                             m -> createMeter(publishBatch, m)))
-                    .collect(toList());
+                    // Stackdriver's API limits us to 200 TimeSeries per call
+                    .collect(groupingBy(o -> partitioningCounter.incrementAndGet() / 200))
+                    .values();
 
-            try {
-                CreateTimeSeriesRequest request = CreateTimeSeriesRequest.newBuilder()
-                        .setName("projects/" + config.projectId())
-                        .addAllTimeSeries(series)
-                        .build();
+            for (List<TimeSeries> partition : series) {
+                try {
+                    CreateTimeSeriesRequest request = CreateTimeSeriesRequest.newBuilder()
+                            .setName("projects/" + config.projectId())
+                            .addAllTimeSeries(partition)
+                            .build();
 
-                if (logger.isTraceEnabled()) {
-                    logger.trace("publishing batch to stackdriver:\n{}", request);
+                    if (logger.isTraceEnabled()) {
+                        logger.trace("publishing batch to stackdriver:\n{}", request);
+                    }
+
+                    client.createTimeSeries(request);
+                } catch (ApiException e) {
+                    logger.warn("failed to send metrics to stackdriver: {}", e.getCause().getMessage());
                 }
-
-                client.createTimeSeries(request);
-            } catch (ApiException e) {
-                logger.warn("failed to send metrics to stackdriver: {}", e.getCause().getMessage());
             }
         }
     }
