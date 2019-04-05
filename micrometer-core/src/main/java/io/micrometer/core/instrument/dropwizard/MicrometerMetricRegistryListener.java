@@ -19,6 +19,7 @@ import com.codahale.metrics.*;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.util.StringUtils;
 
 import java.util.function.ToDoubleFunction;
 
@@ -38,7 +39,7 @@ public class MicrometerMetricRegistryListener extends MetricRegistryListener.Bas
     private String metricPrefix;
 
     public MicrometerMetricRegistryListener(MeterRegistry registry) {
-        this(registry, "dropwizard");
+        this(registry, "");
     }
 
     public MicrometerMetricRegistryListener(MeterRegistry registry, String metricPrefix) {
@@ -75,13 +76,18 @@ public class MicrometerMetricRegistryListener extends MetricRegistryListener.Bas
     }
 
     private <T> void registerGauge(String name, T obj, ToDoubleFunction<T> f) {
-        Gauge.builder(String.format("%s.%s", metricPrefix, name), obj, f)
+        Gauge.builder(getPrefixedMetricName(metricPrefix, name), obj, f)
                 .register(registry);
     }
 
     private <T> void registerCounter(String name, T obj, ToDoubleFunction<T> f) {
-        FunctionCounter.builder(String.format("%s.%s.count", metricPrefix, name), obj, f)
+        String prefixedMetricName = getPrefixedMetricName(metricPrefix, name);
+        FunctionCounter.builder(String.join(".", prefixedMetricName, "count"), obj, f)
                 .register(registry);
+    }
+
+    private static String getPrefixedMetricName(String prefix, String metric) {
+        return StringUtils.isBlank(prefix) ? metric : String.join(".", prefix, metric);
     }
 
 }

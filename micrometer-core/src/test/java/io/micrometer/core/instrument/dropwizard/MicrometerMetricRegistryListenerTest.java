@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MicrometerMetricRegistryListenerTest {
 
@@ -35,7 +35,7 @@ class MicrometerMetricRegistryListenerTest {
 
     @BeforeEach
     void setUp() {
-        metricRegistry.addListener(new MicrometerMetricRegistryListener(meterRegistry, METRIC_PREFIX));
+        metricRegistry.addListener(new MicrometerMetricRegistryListener(meterRegistry));
     }
 
     @Test
@@ -45,18 +45,18 @@ class MicrometerMetricRegistryListenerTest {
         metricRegistry.register(METRIC_NAME, gauge);
         innerVal.set(1);
         innerVal.set(42);
-        assertEquals(42, meterRegistry.get(String.format("%s.%s", METRIC_PREFIX, METRIC_NAME)).gauge().value());
+        assertEquals(42, meterRegistry.get(METRIC_NAME).gauge().value());
     }
 
     @Test
-    void shouldBindGaugeWithoutListenerPrefix() {
-        metricRegistry.addListener(new MicrometerMetricRegistryListener(meterRegistry));
+    void shouldBindGaugeWithListenerPrefix() {
+        metricRegistry.addListener(new MicrometerMetricRegistryListener(meterRegistry, METRIC_PREFIX));
         AtomicInteger innerVal = new AtomicInteger();
         Gauge<Integer> gauge = innerVal::get;
         metricRegistry.register(METRIC_NAME, gauge);
         innerVal.set(1);
         innerVal.set(42);
-        assertEquals(42, meterRegistry.get(String.format("%s.%s", "dropwizard", METRIC_NAME)).gauge().value());
+        assertEquals(42, meterRegistry.get(String.join(".", METRIC_PREFIX, METRIC_NAME)).gauge().value());
     }
 
     @Test
@@ -65,7 +65,7 @@ class MicrometerMetricRegistryListenerTest {
         metricRegistry.register(METRIC_NAME, counter);
         counter.inc();
         counter.inc(2);
-        assertEquals(3, meterRegistry.get(String.format("%s.%s", METRIC_PREFIX, METRIC_NAME)).gauge().value());
+        assertEquals(3, meterRegistry.get(METRIC_NAME).gauge().value());
     }
 
     @Test
@@ -74,7 +74,7 @@ class MicrometerMetricRegistryListenerTest {
         metricRegistry.register(METRIC_NAME, histogram);
         histogram.update(1);
         histogram.update(42);
-        assertEquals(2, meterRegistry.get(String.format("%s.%s.count", METRIC_PREFIX, METRIC_NAME)).functionCounter().count());
+        assertEquals(2, meterRegistry.get(METRIC_NAME + ".count").functionCounter().count());
     }
 
     @Test
@@ -83,7 +83,7 @@ class MicrometerMetricRegistryListenerTest {
         metricRegistry.register(METRIC_NAME, meter);
         meter.mark();
         meter.mark(2);
-        assertEquals(3, meterRegistry.get(String.format("%s.%s.count", METRIC_PREFIX, METRIC_NAME)).functionCounter().count());
+        assertEquals(3, meterRegistry.get(METRIC_NAME + ".count").functionCounter().count());
     }
 
     @Test
@@ -92,6 +92,6 @@ class MicrometerMetricRegistryListenerTest {
         metricRegistry.register(METRIC_NAME, timer);
         timer.update(5, TimeUnit.SECONDS);
         timer.update(5, TimeUnit.SECONDS);
-        assertEquals(2, meterRegistry.get(String.format("%s.%s.count", METRIC_PREFIX, METRIC_NAME)).functionCounter().count());
+        assertEquals(2, meterRegistry.get(METRIC_NAME + ".count").functionCounter().count());
     }
 }
