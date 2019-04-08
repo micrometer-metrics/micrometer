@@ -12,6 +12,16 @@ More info and the user manual are available on [micrometer.io](https://micromete
 
 Micrometer is the instrumentation library underpinning Spring Boot 2.0's metrics collection.
 
+## Long-term support versions
+
+See [Micrometer's support policy](https://micrometer.io/docs/support) for more details about long-term support (LTS) versus non-LTS versions.
+
+| Minor release | LTS |
+| ------------- | --- |
+| `1.0.x`       | Yes |
+| `1.1.x`       | Yes |
+| `1.2.x`       | No  |
+
 ## Join the discussion
 
 Join the [Micrometer Slack](http://slack.micrometer.io) to share your questions, concerns, and feature requests.
