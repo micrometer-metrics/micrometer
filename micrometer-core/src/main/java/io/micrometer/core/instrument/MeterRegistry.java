@@ -516,13 +516,13 @@ public abstract class MeterRegistry {
         return gauge(name, tags, map, Map::size);
     }
 
-    private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id, Function<Meter.Id, Meter> builder,
+    private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id, Function<Meter.Id, M> builder,
                                                          Function<Meter.Id, M> noopBuilder) {
         return registerMeterIfNecessary(meterClass, id, null, (id2, conf) -> builder.apply(id2), noopBuilder);
     }
 
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id,
-                                                         @Nullable DistributionStatisticConfig config, BiFunction<Meter.Id, DistributionStatisticConfig, Meter> builder,
+                                                         @Nullable DistributionStatisticConfig config, BiFunction<Meter.Id, DistributionStatisticConfig, M> builder,
                                                          Function<Meter.Id, M> noopBuilder) {
         Id mappedId = getMappedId(id);
         Meter m = getOrCreateMeter(config, builder, id, mappedId, noopBuilder);
@@ -545,7 +545,7 @@ public abstract class MeterRegistry {
     }
 
     private Meter getOrCreateMeter(@Nullable DistributionStatisticConfig config,
-                                   BiFunction<Id, /*Nullable Generic*/ DistributionStatisticConfig, Meter> builder,
+                                   BiFunction<Id, /*Nullable Generic*/ DistributionStatisticConfig, ? extends Meter> builder,
                                    Id originalId, Id mappedId, Function<Meter.Id, ? extends Meter> noopBuilder) {
         Meter m = meterMap.get(mappedId);
 
