@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.UnknownHostException;
 import java.time.Duration;
 
@@ -90,13 +91,13 @@ public interface WavefrontConfig extends StepRegistryConfig {
 
     /**
      * @return The port to send to when sending histogram distributions to a Wavefront proxy.
-     * Default is 40000.
+     * The default is the port specified in the uri.
      * <p>For details on configuring the histogram proxy port, see
      * https://docs.wavefront.com/proxies_installing.html#configuring-proxy-ports-for-metrics-histograms-and-traces
      */
     default int distributionPort() {
         String v = get(prefix() + ".distributionPort");
-        return v == null ? 40000 : Integer.parseInt(v);
+        return v == null ? URI.create(uri()).getPort() : Integer.parseInt(v);
     }
 
     /**
