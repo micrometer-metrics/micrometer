@@ -133,7 +133,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                         m -> writeMeter(m, metadataToSend))
                 ).collect(joining(",", "{\"series\":[", "]}"));
 
-                logger.trace("sending metrics batch to datadog:\n{}", body);
+                logger.trace("sending metrics batch to datadog:{}{}", System.lineSeparator(), body);
 
                 httpClient.post(datadogEndpoint)
                         .withJsonContent(
