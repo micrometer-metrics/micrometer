@@ -31,9 +31,8 @@ import java.util.concurrent.TimeUnit;
  * Timer that sends histogram distributions to Wavefront using WavefrontHistogramImpl.
  *
  * @author Han Zhang
- * @since 1.2.0
  */
-public class WavefrontTimer extends StepTimer {
+class WavefrontTimer extends StepTimer {
     @Nullable
     private final WavefrontHistogramImpl delegate;
 

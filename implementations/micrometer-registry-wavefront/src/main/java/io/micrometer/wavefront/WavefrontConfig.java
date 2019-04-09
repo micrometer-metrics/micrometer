@@ -94,6 +94,7 @@ public interface WavefrontConfig extends StepRegistryConfig {
      * The default is the port specified in the uri.
      * <p>For details on configuring the histogram proxy port, see
      * https://docs.wavefront.com/proxies_installing.html#configuring-proxy-ports-for-metrics-histograms-and-traces
+     * @since 1.2.0
      */
     default int distributionPort() {
         String v = get(prefix() + ".distributionPort");
@@ -129,28 +130,31 @@ public interface WavefrontConfig extends StepRegistryConfig {
     /**
      * @return {@code true} to report histogram distributions aggregated into minute intervals.
      * Default is {@code true}.
+     * @since 1.2.0
      */
     default boolean reportMinuteDistribution() {
         String v = get(prefix() + ".reportMinuteDistribution");
-        return v == null || Boolean.valueOf(v);
+        return v == null || Boolean.parseBoolean(v);
     }
 
     /**
      * @return {@code true} to report histogram distributions aggregated into hour intervals.
      * Default is {@code false}.
+     * @since 1.2.0
      */
     default boolean reportHourDistribution() {
         String v = get(prefix() + ".reportHourDistribution");
-        return Boolean.valueOf(v);
+        return Boolean.parseBoolean(v);
     }
 
     /**
      * @return {@code true} to report histogram distributions aggregated into day intervals.
      * Default is {@code false}.
+     * @since 1.2.0
      */
     default boolean reportDayDistribution() {
         String v = get(prefix() + ".reportDayDistribution");
-        return Boolean.valueOf(v);
+        return Boolean.parseBoolean(v);
     }
 
     /**
