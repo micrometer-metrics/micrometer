@@ -153,4 +153,13 @@ public interface StatsdConfig extends MeterRegistryConfig {
         return v == null || Boolean.valueOf(v);
     }
 
+    /**
+     * @return {@code true} if measurements should be buffered before sending to the StatsD server. Default is
+     * {@code true}.  Measurements will be buffered until reaching the max packet length, or until the polling frequency
+     * is reached.
+     */
+    default boolean buffered() {
+        String v = get(prefix() + ".buffered");
+        return v == null || Boolean.valueOf(v);
+    }
 }
