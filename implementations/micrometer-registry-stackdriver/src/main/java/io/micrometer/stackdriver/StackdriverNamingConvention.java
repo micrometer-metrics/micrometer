@@ -25,14 +25,18 @@ import java.util.regex.Pattern;
 /**
  * {@link NamingConvention} for Stackdriver.
  *
+ * Names are mapped to Stackdriver's metric type names and tag keys are mapped to its metric label names.
+ *
+ * @see <a href="https://cloud.google.com/monitoring/api/v3/metrics-details">"Naming rules" section on Stackdriver's reference documentation</a>
+ *
  * @author Jon Schneider
  * @since 1.1.0
  */
 public class StackdriverNamingConvention implements NamingConvention {
     private static final int MAX_NAME_LENGTH = 200;
     private static final int MAX_TAG_KEY_LENGTH = 100;
-    private static final Pattern NAME_WHITELIST = Pattern.compile("[^\\w./]");
-    private static final Pattern TAG_KEY_WHITELIST = Pattern.compile("[^\\w]");
+    private static final Pattern NAME_BLACKLIST = Pattern.compile("[^\\w./_]");
+    private static final Pattern TAG_KEY_BLACKLIST = Pattern.compile("[^\\w_]");
     private final NamingConvention nameDelegate;
     private final NamingConvention tagKeyDelegate;
 
@@ -47,13 +51,15 @@ public class StackdriverNamingConvention implements NamingConvention {
 
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        return StringUtils.truncate(NAME_WHITELIST.matcher(nameDelegate.name(name, type, baseUnit)).replaceAll("_"),
-                MAX_NAME_LENGTH);
+        return sanitize(nameDelegate.name(name, type, baseUnit), NAME_BLACKLIST, MAX_NAME_LENGTH);
+    }
+
+    private String sanitize(String value, Pattern blacklist, int maxLength) {
+        return StringUtils.truncate(blacklist.matcher(value).replaceAll("_"), maxLength);
     }
 
     @Override
     public String tagKey(String key) {
-        return StringUtils.truncate(TAG_KEY_WHITELIST.matcher(tagKeyDelegate.tagKey(key)).replaceAll("_"),
-                MAX_TAG_KEY_LENGTH);
+        return sanitize(tagKeyDelegate.tagKey(key), TAG_KEY_BLACKLIST, MAX_TAG_KEY_LENGTH);
     }
 }
