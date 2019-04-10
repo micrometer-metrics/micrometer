@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -119,6 +120,13 @@ class ElasticMeterRegistryTest {
         Timer timer = Timer.builder("myTimer").register(registry);
         assertThat(registry.writeMeter(timer))
                 .contains("{ \"index\" : {} }\n{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"myTimer\",\"type\":\"timer\",\"count\":\"0.0\",\"total\":\"0.0\",\"max\":\"0.0\"}");
+    }
+
+    @Test
+    void writeMeterWhenCustomMeterIsInfinityShouldNotBeWritten() {
+        Measurement measurement = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, Collections.singletonList(measurement)).register(this.registry);
+        assertThat(registry.writeMeter(meter)).isNotPresent();
     }
 
     @Test
