@@ -159,7 +159,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
     }
 
     String writeMeter(Meter meter, Printer print) {
-        return print.id() + StreamSupport.stream(meter.measure().spliterator(), false)
+        return StreamSupport.stream(meter.measure().spliterator(), false)
                 .map(ms -> {
                     String msLine = ms.getStatistic().getTagValueRepresentation() + "=";
                     switch (ms.getStatistic()) {
@@ -176,7 +176,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                             return msLine + decimalOrNan(ms.getValue());
                     }
                 })
-                .collect(joining(", ", " ", ""));
+                .collect(joining(", ", print.id() + " ", ""));
     }
 
     @Override

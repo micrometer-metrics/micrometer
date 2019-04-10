@@ -170,9 +170,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                         .addAllTimeSeries(partition)
                         .build();
 
-                if (logger.isTraceEnabled()) {
-                    logger.trace("publishing batch to Stackdriver:\n{}", request);
-                }
+                logger.trace("publishing batch to Stackdriver:{}{}", System.lineSeparator(), request);
 
                 client.createTimeSeries(request);
                 logger.debug("successfully sent {} TimeSeries to Stackdriver", partition.size());
@@ -361,9 +359,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                         .setMetricDescriptor(descriptor)
                         .build();
 
-                if (logger.isTraceEnabled()) {
-                    logger.trace("creating metric descriptor:\n{}", request);
-                }
+                logger.trace("creating metric descriptor:{}{}", System.lineSeparator(), request);
 
                 try {
                     client.createMetricDescriptor(request);
