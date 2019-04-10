@@ -22,6 +22,12 @@ import io.micrometer.core.lang.Nullable;
 
 import java.util.regex.Pattern;
 
+/**
+ * {@link NamingConvention} for Stackdriver.
+ *
+ * @author Jon Schneider
+ * @since 1.1.0
+ */
 public class StackdriverNamingConvention implements NamingConvention {
     private static final int MAX_NAME_LENGTH = 200;
     private static final int MAX_TAG_KEY_LENGTH = 100;

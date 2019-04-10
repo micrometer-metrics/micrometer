@@ -41,6 +41,7 @@ import org.springframework.core.io.Resource;
  * Configuration for exporting metrics to Stackdriver.
  *
  * @author Jon Schneider
+ * @since 1.1.0
  */
 @Configuration
 @AutoConfigureBefore({CompositeMeterRegistryAutoConfiguration.class,
