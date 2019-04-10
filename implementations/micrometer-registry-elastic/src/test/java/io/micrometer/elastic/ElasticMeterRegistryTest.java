@@ -20,7 +20,8 @@ import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -123,10 +124,26 @@ class ElasticMeterRegistryTest {
     }
 
     @Test
-    void writeMeterWhenCustomMeterIsInfinityShouldNotBeWritten() {
-        Measurement measurement = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
-        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, Collections.singletonList(measurement)).register(this.registry);
+    void writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten() {
+        Measurement measurement1 = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement2 = new Measurement(() -> Double.NEGATIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
         assertThat(registry.writeMeter(meter)).isNotPresent();
+    }
+
+    @Test
+    void writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues() {
+        Measurement measurement1 = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement2 = new Measurement(() -> Double.NEGATIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
+        Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
+        Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
+        assertThat(registry.writeMeter(meter)).contains("{ \"index\" : {} }\n" +
+                "{\"@timestamp\":\"1970-01-01T00:00:00.001Z\",\"name\":\"my_meter\",\"type\":\"gauge\",\"value\":\"1.0\",\"value\":\"2.0\"}");
     }
 
     @Test

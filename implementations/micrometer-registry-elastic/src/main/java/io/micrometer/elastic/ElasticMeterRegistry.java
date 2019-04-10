@@ -32,7 +32,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadFactory;
@@ -258,20 +257,22 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     Optional<String> writeMeter(Meter meter) {
         Iterable<Measurement> measurements = meter.measure();
+        List<String> names = new ArrayList<>();
         List<Double> values = new ArrayList<>();
         for (Measurement measurement : measurements) {
             double value = measurement.getValue();
             if (!Double.isFinite(value)) {
-                return Optional.empty();
+                continue;
             }
+            names.add(measurement.getStatistic().getTagValueRepresentation());
             values.add(value);
         }
+        if (names.isEmpty()) {
+            return Optional.empty();
+        }
         return Optional.of(writeDocument(meter, builder -> {
-            Iterator<Double> valueIterator = values.iterator();
-            for (Measurement measurement : measurements) {
-                builder.append(",\"")
-                        .append(measurement.getStatistic().getTagValueRepresentation()).append("\":\"")
-                        .append(valueIterator.next()).append("\"");
+            for (int i = 0; i < names.size(); i++) {
+                builder.append(",\"").append(names.get(i)).append("\":\"").append(values.get(i)).append("\"");
             }
         }));
     }
