@@ -25,6 +25,7 @@ import java.time.Duration;
  * {@link ConfigurationProperties} for configuring metrics export to Stackdriver.
  *
  * @author Jon Schneider
+ * @since 1.1.0
  */
 @ConfigurationProperties(prefix = "management.metrics.export.stackdriver")
 public class StackdriverProperties extends StepRegistryProperties {

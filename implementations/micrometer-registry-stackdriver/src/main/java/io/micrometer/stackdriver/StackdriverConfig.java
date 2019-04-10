@@ -18,6 +18,12 @@ package io.micrometer.stackdriver;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
+/**
+ * {@link StepRegistryConfig} for Stackdriver.
+ *
+ * @author Jon Schneider
+ * @since 1.1.0
+ */
 public interface StackdriverConfig extends StepRegistryConfig {
     @Override
     default String prefix() {
