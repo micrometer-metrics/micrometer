@@ -120,10 +120,10 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         int totalSize = events.size();
         int toIndex;
         do {
-            toIndex = Math.min(fromIndex+batchSize,totalSize);
-            if (toIndex>0) sender.accept(events.subList(fromIndex, toIndex));
+            toIndex = Math.min(fromIndex + batchSize,totalSize);
+            if (toIndex > 0) sender.accept(events.subList(fromIndex, toIndex));
             fromIndex = toIndex;
-        } while (toIndex<totalSize);
+        } while (toIndex < totalSize);
     }
 
     private Stream<String> writeLongTaskTimer(LongTaskTimer ltt) {
