@@ -32,6 +32,9 @@ import java.io.UncheckedIOException;
  *
  * @see <a href="https://cloud.google.com/monitoring/docs/reference/libraries#setting_up_authentication">Google Cloud authentication</a>
  * @see <a href="https://cloud.google.com/monitoring/access-control">Google Cloud access control</a>
+ *
+ * @author Jon Schneider
+ * @since 1.1.0
  */
 public class ClearCustomMetricDescriptors {
     public static void clearCustomMetricDescriptors(MetricServiceSettings settings, String projectId) {
