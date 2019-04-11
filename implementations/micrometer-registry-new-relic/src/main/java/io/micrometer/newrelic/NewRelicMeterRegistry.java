@@ -28,6 +28,7 @@ import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
@@ -37,7 +38,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
-import static java.util.stream.StreamSupport.stream;
 
 /**
  * Publishes metrics to New Relic Insights.
@@ -190,14 +190,21 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         );
     }
 
-    private Stream<String> writeMeter(Meter meter) {
-        return Stream.of(
-                event(meter.getId(),
-                        stream(meter.measure().spliterator(), false)
-                                .map(measure -> new Attribute(measure.getStatistic().getTagValueRepresentation(), measure.getValue()))
-                                .toArray(Attribute[]::new)
-                )
-        );
+    // VisibleForTesting
+    Stream<String> writeMeter(Meter meter) {
+        // Snapshot values should be used throughout this method as there are chances for values to be changed in-between.
+        List<Attribute> attributes = new ArrayList<>();
+        for (Measurement measurement : meter.measure()) {
+            double value = measurement.getValue();
+            if (!Double.isFinite(value)) {
+                continue;
+            }
+            attributes.add(new Attribute(measurement.getStatistic().getTagValueRepresentation(), value));
+        }
+        if (attributes.isEmpty()) {
+            return Stream.empty();
+        }
+        return Stream.of(event(meter.getId(), attributes.toArray(new Attribute[0])));
     }
 
     private String event(Meter.Id id, Attribute... attributes) {
