@@ -43,7 +43,6 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.StreamSupport.stream;
 
 /**
  * Publishes metrics to New Relic Insights.
@@ -194,14 +193,21 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         );
     }
 
-    private Stream<String> writeMeter(Meter meter) {
-        return Stream.of(
-                event(meter.getId(),
-                        stream(meter.measure().spliterator(), false)
-                                .map(measure -> new Attribute(measure.getStatistic().getTagValueRepresentation(), measure.getValue()))
-                                .toArray(Attribute[]::new)
-                )
-        );
+    // VisibleForTesting
+    Stream<String> writeMeter(Meter meter) {
+        // Snapshot values should be used throughout this method as there are chances for values to be changed in-between.
+        List<Attribute> attributes = new ArrayList<>();
+        for (Measurement measurement : meter.measure()) {
+            double value = measurement.getValue();
+            if (!Double.isFinite(value)) {
+                continue;
+            }
+            attributes.add(new Attribute(measurement.getStatistic().getTagValueRepresentation(), value));
+        }
+        if (attributes.isEmpty()) {
+            return Stream.empty();
+        }
+        return Stream.of(event(meter.getId(), attributes.toArray(new Attribute[0])));
     }
 
     private String event(Meter.Id id, Attribute... attributes) {
