@@ -189,7 +189,8 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         return metrics.build();
     }
 
-    private Stream<String> writeMeter(Meter meter) {
+    // VisibleForTesting
+    Stream<String> writeMeter(Meter meter) {
         long wallTime = clock.wallTime();
         Stream.Builder<String> metrics = Stream.builder();
 
@@ -204,7 +205,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     void addMetric(Stream.Builder<String> metrics, Meter.Id id, @Nullable String suffix, long wallTime, double value) {
-        if (!Double.isNaN(value)) {
+        if (Double.isFinite(value)) {
             metrics.add(writeMetric(id, suffix, wallTime, value));
         }
     }

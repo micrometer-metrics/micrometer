@@ -15,11 +15,11 @@
  */
 package io.micrometer.wavefront;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Stream;
 
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,7 +30,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Johnny Lim
  */
 class WavefrontMeterRegistryTest {
-
     private final WavefrontConfig config = new WavefrontConfig() {
         @Override
         public String get(String key) {
@@ -53,17 +52,39 @@ class WavefrontMeterRegistryTest {
     @Test
     void addMetric() {
         Stream.Builder<String> metricsStreamBuilder = Stream.builder();
-        Meter.Id id = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.COUNTER);
+        Meter.Id id = registry.counter("name").getId();
         registry.addMetric(metricsStreamBuilder, id, null, System.currentTimeMillis(), 1d);
         assertThat(metricsStreamBuilder.build().count()).isEqualTo(1);
     }
 
     @Test
-    void addMetricWhenNanShouldNotAdd() {
+    void addMetricWhenNanOrInfinityShouldNotAdd() {
         Stream.Builder<String> metricsStreamBuilder = Stream.builder();
-        Meter.Id id = new Meter.Id("name", Tags.empty(), null, null, Meter.Type.COUNTER);
+        Meter.Id id = registry.counter("name").getId();
         registry.addMetric(metricsStreamBuilder, id, null, System.currentTimeMillis(), Double.NaN);
+        registry.addMetric(metricsStreamBuilder, id, null, System.currentTimeMillis(), Double.POSITIVE_INFINITY);
         assertThat(metricsStreamBuilder.build().count()).isEqualTo(0);
     }
 
+    @Test
+    void writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten() {
+        Measurement measurement1 = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement2 = new Measurement(() -> Double.NEGATIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
+        assertThat(registry.writeMeter(meter)).isEmpty();
+    }
+
+    @Test
+    void writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues() {
+        Measurement measurement1 = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement2 = new Measurement(() -> Double.NEGATIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
+        Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
+        Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
+        assertThat(registry.writeMeter(meter)).hasSize(2);
+    }
 }
