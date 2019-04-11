@@ -30,6 +30,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -45,6 +46,7 @@ import static java.util.stream.Collectors.joining;
  *
  * @author Nicolas Portmann
  * @author Jon Schneider
+ * @author Johnny Lim
  * @since 1.1.0
  */
 public class ElasticMeterRegistry extends StepMeterRegistry {
@@ -254,9 +256,24 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeMeter(Meter meter) {
+        Iterable<Measurement> measurements = meter.measure();
+        List<String> names = new ArrayList<>();
+        // Snapshot values should be used throughout this method as there are chances for values to be changed in-between.
+        List<Double> values = new ArrayList<>();
+        for (Measurement measurement : measurements) {
+            double value = measurement.getValue();
+            if (!Double.isFinite(value)) {
+                continue;
+            }
+            names.add(measurement.getStatistic().getTagValueRepresentation());
+            values.add(value);
+        }
+        if (names.isEmpty()) {
+            return Optional.empty();
+        }
         return Optional.of(writeDocument(meter, builder -> {
-            for (Measurement measurement : meter.measure()) {
-                builder.append(",\"").append(measurement.getStatistic().getTagValueRepresentation()).append("\":\"").append(measurement.getValue()).append("\"");
+            for (int i = 0; i < names.size(); i++) {
+                builder.append(",\"").append(names.get(i)).append("\":\"").append(values.get(i)).append("\"");
             }
         }));
     }
