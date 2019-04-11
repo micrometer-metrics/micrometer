@@ -29,6 +29,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -41,7 +42,10 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 /**
+ * {@link MeterRegistry} for InfluxDB.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public class InfluxMeterRegistry extends StepMeterRegistry {
     private final InfluxConfig config;
@@ -225,15 +229,20 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Stream<String> writeMeter(Meter m) {
-        Stream.Builder<Field> fields = Stream.builder();
-
+        List<Field> fields = new ArrayList<>();
         for (Measurement measurement : m.measure()) {
+            double value = measurement.getValue();
+            if (!Double.isFinite(value)) {
+                continue;
+            }
             String fieldKey = measurement.getStatistic().getTagValueRepresentation()
                     .replaceAll("(.)(\\p{Upper})", "$1_$2").toLowerCase();
-            fields.add(new Field(fieldKey, measurement.getValue()));
+            fields.add(new Field(fieldKey, value));
         }
-
-        return Stream.of(influxLineProtocol(m.getId(), "unknown", fields.build(), clock.wallTime()));
+        if (fields.isEmpty()) {
+            return Stream.empty();
+        }
+        return Stream.of(influxLineProtocol(m.getId(), "unknown", fields.stream(), clock.wallTime()));
     }
 
     private Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
@@ -244,13 +253,20 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return Stream.of(influxLineProtocol(timer.getId(), "long_task_timer", fields, clock.wallTime()));
     }
 
-    private Stream<String> writeCounter(Meter.Id id, double count) {
-        return Stream.of(influxLineProtocol(id, "counter", Stream.of(new Field("value", count)), clock.wallTime()));
+    // VisibleForTesting
+    Stream<String> writeCounter(Meter.Id id, double count) {
+        if (Double.isFinite(count)) {
+            return Stream.of(influxLineProtocol(id, "counter", Stream.of(new Field("value", count)), clock.wallTime()));
+        }
+        return Stream.empty();
     }
 
-    private Stream<String> writeGauge(Meter.Id id, Double value) {
-        return value.isNaN() ? Stream.empty() :
-            Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value)), clock.wallTime()));
+    // VisibleForTesting
+    Stream<String> writeGauge(Meter.Id id, Double value) {
+        if (Double.isFinite(value)) {
+            return Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value)), clock.wallTime()));
+        }
+        return Stream.empty();
     }
 
     private Stream<String> writeTimer(FunctionTimer timer) {
