@@ -194,7 +194,8 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         return metrics.build();
     }
 
-    private Stream<String> writeMeter(Meter meter) {
+    // VisibleForTesting
+    Stream<String> writeMeter(Meter meter) {
         long wallTime = clock.wallTime();
         Stream.Builder<String> metrics = Stream.builder();
 

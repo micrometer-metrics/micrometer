@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -115,14 +116,15 @@ class InfluxMeterRegistryTest {
         meterRegistry.gauge("my.gauge", Tags.of("foo", "bar").and("baz", ""), 1d);
         final Gauge gauge = meterRegistry.find("my.gauge").gauge();
         assertThat(meterRegistry.writeGauge(gauge.getId(), 1d))
-            .hasSize(1)
-            .allSatisfy(s -> assertThat(s)
-                .contains("foo=bar")
-                .doesNotContain("baz"));
+                .hasSize(1)
+                .allSatisfy(s -> assertThat(s)
+                        .contains("foo=bar")
+                        .doesNotContain("baz"));
     }
 
+    @Test
     void writeCustomMeter() {
-        String expectedInfluxLine = "my_custom,metric_type=unknown value=23,value=13,total_time=5 1";
+        String expectedInfluxLine = "my_custom,metric_type=unknown value=23,value=13,total=5 1";
 
         Measurement m1 = new Measurement(() -> 23d, Statistic.VALUE);
         Measurement m2 = new Measurement(() -> 13d, Statistic.VALUE);
@@ -130,5 +132,27 @@ class InfluxMeterRegistryTest {
         Meter meter = Meter.builder("my.custom", Meter.Type.OTHER, Arrays.asList(m1, m2, m3)).register(meterRegistry);
 
         assertThat(meterRegistry.writeMeter(meter).collect(Collectors.joining())).isEqualTo(expectedInfluxLine);
+    }
+
+    @Test
+    void writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten() {
+        Measurement measurement1 = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement2 = new Measurement(() -> Double.NEGATIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
+        assertThat(meterRegistry.writeMeter(meter)).isEmpty();
+    }
+
+    @Test
+    void writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues() {
+        Measurement measurement1 = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement2 = new Measurement(() -> Double.NEGATIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
+        Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
+        Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
+        assertThat(meterRegistry.writeMeter(meter)).containsExactly("my_meter,metric_type=unknown value=1,value=2 1");
     }
 }
