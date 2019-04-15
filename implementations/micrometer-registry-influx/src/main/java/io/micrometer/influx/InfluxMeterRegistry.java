@@ -23,6 +23,7 @@ import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.util.List;
@@ -148,15 +149,20 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Stream<String> writeMeter(Meter m) {
-        Stream.Builder<Field> fields = Stream.builder();
-
+        List<Field> fields = new ArrayList<>();
         for (Measurement measurement : m.measure()) {
+            double value = measurement.getValue();
+            if (!Double.isFinite(value)) {
+                continue;
+            }
             String fieldKey = measurement.getStatistic().getTagValueRepresentation()
                     .replaceAll("(.)(\\p{Upper})", "$1_$2").toLowerCase();
-            fields.add(new Field(fieldKey, measurement.getValue()));
+            fields.add(new Field(fieldKey, value));
         }
-
-        return Stream.of(influxLineProtocol(m.getId(), "unknown", fields.build()));
+        if (fields.isEmpty()) {
+            return Stream.empty();
+        }
+        return Stream.of(influxLineProtocol(m.getId(), "unknown", fields.stream()));
     }
 
     private Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
