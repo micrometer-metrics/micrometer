@@ -85,7 +85,7 @@ public class PrometheusProperties {
         /**
          * Base URL for the Pushgateway.
          */
-        private String baseUrl = "localhost:9091";
+        private String baseUrl = "http://localhost:9091";
 
         /**
          * Frequency with which to push metrics.
