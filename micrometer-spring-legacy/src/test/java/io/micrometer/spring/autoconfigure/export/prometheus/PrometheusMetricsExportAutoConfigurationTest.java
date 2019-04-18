@@ -20,6 +20,7 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.test.util.EnvironmentTestUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
 import io.micrometer.core.instrument.Clock;
@@ -96,7 +97,30 @@ class PrometheusMetricsExportAutoConfigurationTest {
 
         registerAndRefresh();
 
-        assertThat(context.getBean(PrometheusPushGatewayManager.class)).isNotNull();
+        hasGatewayURL("http://localhost:9091/metrics/job/");
+    }
+
+    @Test
+    @Deprecated
+    void withCustomLegacyPushGatewayURL() {
+        EnvironmentTestUtils.addEnvironment(context,
+                "management.metrics.export.prometheus.pushgateway.enabled=true",
+                "management.metrics.export.prometheus.pushgateway.base-url=localhost:9090");
+
+        registerAndRefresh();
+
+        hasGatewayURL("http://localhost:9090/metrics/job/");
+    }
+
+    @Test
+    void withCustomPushGatewayURL() {
+        EnvironmentTestUtils.addEnvironment(context,
+                "management.metrics.export.prometheus.pushgateway.enabled=true",
+                "management.metrics.export.prometheus.pushgateway.base-url=https://example.com:8080");
+
+        registerAndRefresh();
+
+        hasGatewayURL("https://example.com:8080/metrics/job/");
     }
 
     @Test
@@ -126,6 +150,12 @@ class PrometheusMetricsExportAutoConfigurationTest {
 
         assertThatThrownBy(() -> this.context.getBean(PrometheusScrapeMvcEndpoint.class))
             .isInstanceOf(NoSuchBeanDefinitionException.class);
+    }
+
+    private void hasGatewayURL(String url) {
+        PrometheusPushGatewayManager gatewayManager = context.getBean(PrometheusPushGatewayManager.class);
+        Object pushGateway = ReflectionTestUtils.getField(gatewayManager, "pushGateway");
+        assertThat(pushGateway).hasFieldOrPropertyWithValue("gatewayBaseURL", url);
     }
 
     private void registerAndRefresh(Class<?>... configurationClasses) {
