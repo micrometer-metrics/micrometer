@@ -19,10 +19,13 @@ import com.mongodb.MongoClient;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.*;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,6 +44,7 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
     private final Map<ServerId, AtomicInteger> poolSize = new ConcurrentHashMap<>();
     private final Map<ServerId, AtomicInteger> checkedOutCount = new ConcurrentHashMap<>();
     private final Map<ServerId, AtomicInteger> waitQueueSize = new ConcurrentHashMap<>();
+    private final Map<ServerId, List<Meter>> meters = new ConcurrentHashMap<>();
 
     private final MeterRegistry registry;
     private final String metricsPrefix;
@@ -56,14 +60,20 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
 
     @Override
     public void connectionPoolOpened(ConnectionPoolOpenedEvent event) {
-        registerGauge(event.getServerId(), metricsPrefix + ".size", poolSize);
-        registerGauge(event.getServerId(), metricsPrefix + ".checkedout", checkedOutCount);
-        registerGauge(event.getServerId(), metricsPrefix + ".waitqueuesize", waitQueueSize);
+        List<Meter> connectionMeters = new ArrayList<>();
+        connectionMeters.add(registerGauge(event.getServerId(), metricsPrefix + ".size", poolSize));
+        connectionMeters.add(registerGauge(event.getServerId(), metricsPrefix + ".checkedout", checkedOutCount));
+        connectionMeters.add(registerGauge(event.getServerId(), metricsPrefix + ".waitqueuesize", waitQueueSize));
+        meters.put(event.getServerId(), connectionMeters);
     }
 
     @Override
     public void connectionPoolClosed(ConnectionPoolClosedEvent event) {
         ServerId serverId = event.getServerId();
+        for (Meter meter: meters.get(event.getServerId())) {
+            registry.remove(meter);
+        }
+        meters.remove(serverId);
         poolSize.remove(serverId);
         checkedOutCount.remove(serverId);
         waitQueueSize.remove(serverId);
@@ -105,13 +115,13 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
                 .decrementAndGet();
     }
 
-    private void registerGauge(ServerId serverId, String metricName, Map<ServerId, AtomicInteger> metrics) {
+    private Gauge registerGauge(ServerId serverId, String metricName, Map<ServerId, AtomicInteger> metrics) {
         metrics.put(serverId, new AtomicInteger());
-        Gauge.builder(metricName, metrics, p -> p.get(serverId).doubleValue())
-                .description(String.format("MongoDB connection pool %s gauge", metricName))
-                .tag("cluster.id", serverId.getClusterId().getValue())
-                .tag("server.address", serverId.getAddress().toString())
-                .register(registry);
+        return Gauge.builder(metricName, metrics, m -> m.get(serverId).doubleValue())
+                    .description(String.format("MongoDB connection pool %s gauge", metricName))
+                    .tag("cluster.id", serverId.getClusterId().getValue())
+                    .tag("server.address", serverId.getAddress().toString())
+                    .register(registry);
     }
 
 }

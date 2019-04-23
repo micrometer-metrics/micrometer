@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static de.flapdoodle.embed.mongo.MongodStarter.getDefaultInstance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Tests for {@link MongoMetricsConnectionPoolListener}.
@@ -94,7 +95,10 @@ class MongoMetricsConnectionPoolListenerTest {
         assertEquals(2, registry.get("org.mongodb.driver.pool.size").tags(tags).gauge().value());
         assertEquals(0, registry.get("org.mongodb.driver.pool.checkedout").gauge().value());
         assertEquals(0, registry.get("org.mongodb.driver.pool.waitqueuesize").gauge().value());
+
         mongo.close();
+
+        assertNull(registry.find("org.mongodb.driver.pool.size").tags(tags).gauge());
     }
 
     @AfterEach
