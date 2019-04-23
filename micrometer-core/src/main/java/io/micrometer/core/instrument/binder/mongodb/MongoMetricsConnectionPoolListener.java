@@ -36,26 +36,29 @@ import java.util.concurrent.atomic.AtomicInteger;
 @NonNullFields
 public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAdapter {
 
-    private static final String METRIC_PREFIX = "mongodb.pool.";
-    private static final String POOLSIZE_METRIC_NAME = METRIC_PREFIX + "size";
-    private static final String CHECKEDOUT_METRIC_NAME = METRIC_PREFIX + "checkedout";
-    private static final String WAITQUEUESIZE_METRIC_NAME = METRIC_PREFIX + "waitqueuesize";
+    private static final String DEFAULT_METRIC_PREFIX = "org.mongodb.driver.pool";
 
     private final Map<ServerId, AtomicInteger> poolSize = new ConcurrentHashMap<>();
     private final Map<ServerId, AtomicInteger> checkedOutCount = new ConcurrentHashMap<>();
     private final Map<ServerId, AtomicInteger> waitQueueSize = new ConcurrentHashMap<>();
 
     private final MeterRegistry registry;
+    private final String metricsPrefix;
 
     public MongoMetricsConnectionPoolListener(MeterRegistry registry) {
+        this(registry, DEFAULT_METRIC_PREFIX);
+    }
+
+    public MongoMetricsConnectionPoolListener(MeterRegistry registry, String metricsPrefix) {
         this.registry = registry;
+        this.metricsPrefix = metricsPrefix;
     }
 
     @Override
     public void connectionPoolOpened(ConnectionPoolOpenedEvent event) {
-        registerGauge(event.getServerId(), POOLSIZE_METRIC_NAME, poolSize);
-        registerGauge(event.getServerId(), CHECKEDOUT_METRIC_NAME, checkedOutCount);
-        registerGauge(event.getServerId(), WAITQUEUESIZE_METRIC_NAME, waitQueueSize);
+        registerGauge(event.getServerId(), metricsPrefix + ".size", poolSize);
+        registerGauge(event.getServerId(), metricsPrefix + ".checkedout", checkedOutCount);
+        registerGauge(event.getServerId(), metricsPrefix + ".waitqueuesize", waitQueueSize);
     }
 
     @Override

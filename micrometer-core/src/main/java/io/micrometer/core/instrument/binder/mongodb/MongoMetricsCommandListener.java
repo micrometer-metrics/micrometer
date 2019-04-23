@@ -36,14 +36,19 @@ import java.util.concurrent.TimeUnit;
 @NonNullFields
 public class MongoMetricsCommandListener implements CommandListener {
 
-    private static final String METRICS_NAME = "mongodb.commands";
-    private static final Timer.Builder TIMER_BUILDER = Timer.builder(METRICS_NAME)
-            .description("Timer of mongodb commands");
+    private static final String DEFAULT_METRICS_NAME = "org.mongodb.driver.commands";
+    private final Timer.Builder timerBuilder;
 
     private final MeterRegistry registry;
 
     public MongoMetricsCommandListener(MeterRegistry registry) {
+        this(registry, DEFAULT_METRICS_NAME);
+    }
+
+    public MongoMetricsCommandListener(MeterRegistry registry, String metricsName) {
         this.registry = registry;
+        this.timerBuilder = Timer.builder(metricsName)
+                .description("Timer of mongodb commands");
     }
 
     @Override
@@ -53,7 +58,7 @@ public class MongoMetricsCommandListener implements CommandListener {
 
     @Override
     public void commandSucceeded(CommandSucceededEvent event) {
-        TIMER_BUILDER
+        timerBuilder
                 .tag("command", event.getCommandName())
                 .tag("cluster.id", event.getConnectionDescription().getConnectionId().getServerId().getClusterId().getValue())
                 .tag("server.address", event.getConnectionDescription().getServerAddress().toString())
@@ -64,7 +69,7 @@ public class MongoMetricsCommandListener implements CommandListener {
 
     @Override
     public void commandFailed(CommandFailedEvent event) {
-        TIMER_BUILDER
+        timerBuilder
                 .tag("command", event.getCommandName())
                 .tag("cluster.id", event.getConnectionDescription().getConnectionId().getServerId().getClusterId().getValue())
                 .tag("server.address", event.getConnectionDescription().getServerAddress().toString())
