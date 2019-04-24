@@ -113,7 +113,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
                 if (exception instanceof AbortedException) {
                     logger.warn("sending metric data was aborted: {}", exception.getMessage());
                 } else {
-                    logger.error("error sending metric data.", exception);
+                    logger.error("error sending metric data:{}", putMetricDataRequest, exception);
                 }
                 latch.countDown();
             }

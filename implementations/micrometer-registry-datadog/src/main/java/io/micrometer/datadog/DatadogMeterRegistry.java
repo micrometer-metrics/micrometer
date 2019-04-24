@@ -140,7 +140,9 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                                 body)
                         .send()
                         .onSuccess(response -> logger.debug("successfully sent {} metrics to datadog", batch.size()))
-                        .onError(response -> logger.error("failed to send metrics to datadog: {}", response.body()));
+                        .onError(response
+                                -> logger.error("failed to send metrics to datadog. Request body:{} Response body:{}",
+                                body, response.body()));
             }
         } catch (Throwable e) {
             logger.warn("failed to send metrics to datadog", e);

@@ -193,13 +193,15 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         }
         try {
             String originalPath = uri.getPath() != null && !uri.getPath().equals("/") ? uri.getPath() : "";
+            String body = stream.collect(joining());
             httpClient.post(new URL(uri.getScheme(), uri.getHost(), uri.getPort(), originalPath + "/report?f=" + format).toString())
                 .withHeader("Authorization", "Bearer " + config.apiToken())
-                .withContent("application/octet-stream", stream.collect(joining()))
+                .withContent("application/octet-stream", body)
                 .compress()
                 .send()
                 .onSuccess(response -> logSuccessfulMetricsSent(description, count))
-                .onError(response -> logger.error("failed to send {} to Wavefront: {}", description, response.body()));
+                .onError(response -> logger.error("failed to send {} to Wavefront: Request body:{} Response body:{}",
+                        description, body, response.body()));
         } catch (Throwable e) {
             logger.error("failed to send " + description + " to Wavefront", e);
         }

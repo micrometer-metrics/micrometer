@@ -167,8 +167,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                             }
                         })
                         .onError(response -> {
-                            logger.error("failed to send metrics to elastic: {}", response.body());
-                            logger.debug("failed metrics payload: {}", requestBody);
+                            logger.error("failed to send metrics to elastic: Request body:{} Response body:{} ",
+                                    requestBody, response.body());
                         });
             } catch (Throwable e) {
                 logger.error("failed to send metrics to elastic", e);

@@ -118,27 +118,29 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             }
 
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
+                String body = batch.stream()
+                        .flatMap(m -> m.match(
+                                gauge -> writeGauge(gauge.getId(), gauge.value()),
+                                counter -> writeCounter(counter.getId(), counter.count()),
+                                this::writeTimer,
+                                this::writeSummary,
+                                this::writeLongTaskTimer,
+                                gauge -> writeGauge(gauge.getId(), gauge.value(getBaseTimeUnit())),
+                                counter -> writeCounter(counter.getId(), counter.count()),
+                                this::writeFunctionTimer,
+                                this::writeMeter))
+                        .collect(joining("\n"));
                 httpClient.post(influxEndpoint)
                         .withBasicAuthentication(config.userName(), config.password())
-                        .withPlainText(batch.stream()
-                                .flatMap(m -> m.match(
-                                        gauge -> writeGauge(gauge.getId(), gauge.value()),
-                                        counter -> writeCounter(counter.getId(), counter.count()),
-                                        this::writeTimer,
-                                        this::writeSummary,
-                                        this::writeLongTaskTimer,
-                                        gauge -> writeGauge(gauge.getId(), gauge.value(getBaseTimeUnit())),
-                                        counter -> writeCounter(counter.getId(), counter.count()),
-                                        this::writeFunctionTimer,
-                                        this::writeMeter))
-                                .collect(joining("\n")))
+                        .withPlainText(body)
                         .compressWhen(config::compressed)
                         .send()
                         .onSuccess(response -> {
                             logger.debug("successfully sent {} metrics to InfluxDB.", batch.size());
                             databaseExists = true;
                         })
-                        .onError(response -> logger.error("failed to send metrics to influx: {}", response.body()));
+                        .onError(response -> logger.error("failed to send metrics to influx: Request body:{} Response body:{}",
+                                body, response.body()));
             }
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Malformed InfluxDB publishing endpoint, see '" + config.prefix() + ".uri'", e);

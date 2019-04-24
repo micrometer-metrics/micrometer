@@ -106,7 +106,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                             .collect(joining(",", "\"tags\":{",  "},"));
                 }
 
-                post.withJsonContent(meters.stream()
+                String body = meters.stream()
                         .map(m -> m.match(
                                 batch::writeGauge,
                                 batch::writeCounter,
@@ -118,10 +118,13 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                                 batch::writeFunctionTimer,
                                 batch::writeMeter)
                         )
-                        .collect(joining(",", "[{" + tags + "\"events\": [", "]}]")))
+                        .collect(joining(",", "[{" + tags + "\"events\": [", "]}]"));
+
+                post.withJsonContent(body)
                         .send()
                         .onSuccess(response -> logger.debug("successfully sent {} metrics to humio.", meters.size()))
-                        .onError(response -> logger.error("failed to send metrics to humio: {}", response.body()));
+                        .onError(response -> logger.error("failed to send metrics to humio: Request body:{} Response body:{}",
+                                body, response.body()));
             } catch (Throwable e) {
                 logger.warn("failed to send metrics to humio", e);
             }
