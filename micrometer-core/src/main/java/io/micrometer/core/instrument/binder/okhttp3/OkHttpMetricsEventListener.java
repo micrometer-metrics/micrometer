@@ -71,15 +71,7 @@ public class OkHttpMetricsEventListener extends EventListener {
 
     @Override
     public void callStart(Call call) {
-        callState.put(call, new CallState(registry.config().clock().monotonicTime()));
-    }
-
-    @Override
-    public void requestHeadersEnd(Call call, Request request) {
-        callState.computeIfPresent(call, (c, state) -> {
-            state.request = request;
-            return state;
-        });
+        callState.put(call, new CallState(registry.config().clock().monotonicTime(), call.request()));
     }
 
     @Override
@@ -104,14 +96,11 @@ public class OkHttpMetricsEventListener extends EventListener {
         Request request = state.request;
         boolean requestAvailable = request != null;
 
-        String uri = state.response == null ? "UNKNOWN" :
-            (state.response.code() == 404 || state.response.code() == 301 ? "NOT_FOUND" : urlMapper.apply(request));
-
         Tags dynamicTags = requestAvailable ? request.tag(Tags.class) : Tags.empty();
 
         Iterable<Tag> tags = Tags.concat(extraTags, Tags.of(
             "method", requestAvailable ? request.method() : "UNKNOWN",
-            "uri", uri,
+            "uri", requestAvailable ?  urlMapper.apply(request) : "UNKNOWN",
             "status", getStatusMessage(state.response, state.exception),
             "host", requestAvailable ? request.url().host() : "UNKNOWN"
         )).and(dynamicTags);
@@ -138,14 +127,15 @@ public class OkHttpMetricsEventListener extends EventListener {
     private static class CallState {
         final long startTime;
         @Nullable
-        Request request;
+        final Request request;
         @Nullable
         Response response;
         @Nullable
         IOException exception;
 
-        CallState(long startTime) {
+        CallState(long startTime, Request request) {
             this.startTime = startTime;
+            this.request = request;
         }
     }
 

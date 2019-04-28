@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.util.function.Function;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import org.junit.jupiter.api.Test;
@@ -44,11 +45,16 @@ import static org.assertj.core.api.Assertions.fail;
  */
 @ExtendWith(WiremockResolver.class)
 class OkHttpMetricsEventListenerTest {
+
+    private static final String URI_EXAMPLE_VALUE = "uriExample";
+    private static final Function<Request, String> URI_MAPPER = req -> URI_EXAMPLE_VALUE;
+
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
     private OkHttpClient client = new OkHttpClient.Builder()
             .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
                     .tags(Tags.of("foo", "bar"))
+                    .uriMapper(URI_MAPPER)
                     .build())
             .build();
 
@@ -62,7 +68,7 @@ class OkHttpMetricsEventListenerTest {
         client.newCall(request).execute().close();
 
         assertThat(registry.get("okhttp.requests")
-                .tags("foo", "bar", "status", "200")
+                .tags("foo", "bar", "status", "200", "uri", URI_EXAMPLE_VALUE)
                 .timer().count()).isEqualTo(1L);
     }
 
@@ -76,7 +82,7 @@ class OkHttpMetricsEventListenerTest {
         client.newCall(request).execute().close();
 
         assertThat(registry.get("okhttp.requests")
-                .tags("foo", "bar", "uri", "NOT_FOUND")
+                .tags("foo", "bar", "status", "404", "uri", URI_EXAMPLE_VALUE)
                 .timer().count()).isEqualTo(1L);
     }
 
@@ -92,6 +98,7 @@ class OkHttpMetricsEventListenerTest {
                 .connectTimeout(1, TimeUnit.MILLISECONDS)
                 .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
                         .tags(Tags.of("foo", "bar"))
+                        .uriMapper(URI_MAPPER)
                         .build())
                 .build();
 
@@ -103,7 +110,7 @@ class OkHttpMetricsEventListenerTest {
         }
 
         assertThat(registry.get("okhttp.requests")
-                .tags("foo", "bar", "uri", "UNKNOWN", "status", "IO_ERROR")
+                .tags("foo", "bar", "uri", URI_EXAMPLE_VALUE, "status", "IO_ERROR")
                 .timer().count()).isEqualTo(1L);
     }
 
@@ -113,6 +120,12 @@ class OkHttpMetricsEventListenerTest {
         Request request = new Request.Builder()
                 .url(server.baseUrl() + "/helloworld.txt")
                 .header(OkHttpMetricsEventListener.URI_PATTERN, "/")
+                .build();
+
+        client = new OkHttpClient.Builder()
+                .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+                        .tags(Tags.of("foo", "bar"))
+                        .build())
                 .build();
 
         client.newCall(request).execute().close();
