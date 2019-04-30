@@ -1,0 +1,15 @@
+dependencies {
+    compile project(':micrometer-core')
+    compile 'org.slf4j:slf4j-api:1.7.+'
+
+    testCompile project(':micrometer-test')
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+            srcDir '../micrometer-registry-influx/src/shared/java'
+        }
+    }
+}

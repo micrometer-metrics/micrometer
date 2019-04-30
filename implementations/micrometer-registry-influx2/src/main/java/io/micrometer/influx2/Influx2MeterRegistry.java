@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 VMware, Inc.
+ * Copyright 2017 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,41 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.influx;
-
-import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.*;
-import io.micrometer.core.ipc.http.HttpSender;
-import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import io.micrometer.influx.internal.LineProtocolBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package io.micrometer.influx2;
 
 import java.net.MalformedURLException;
-import java.net.URLEncoder;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.MeterPartition;
+import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.core.ipc.http.HttpSender;
+import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+import io.micrometer.influx.InfluxNamingConvention;
+import io.micrometer.influx.internal.LineProtocolBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static java.util.stream.Collectors.joining;
 
 /**
- * {@link MeterRegistry} for InfluxDB.
+ * {@link MeterRegistry} for InfluxDB 2.
  *
- * @author Jon Schneider
- * @author Johnny Lim
+ * @author Jakub Bednar
  */
-public class InfluxMeterRegistry extends StepMeterRegistry {
-    private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("influx-metrics-publisher");
-    private final InfluxConfig config;
+public class Influx2MeterRegistry extends StepMeterRegistry {
+    private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("influx2-metrics-publisher");
+    private final Influx2Config config;
     private final LineProtocolBuilder lineProtocolBuilder;
     private final HttpSender httpClient;
-    private final Logger logger = LoggerFactory.getLogger(InfluxMeterRegistry.class);
-    private boolean databaseExists = false;
+    private final Logger logger = LoggerFactory.getLogger(Influx2MeterRegistry.class);
+    private boolean bucketExists = false;
 
     @SuppressWarnings("deprecation")
-    public InfluxMeterRegistry(InfluxConfig config, Clock clock) {
+    public Influx2MeterRegistry(Influx2Config config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY,
                 new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
@@ -56,14 +60,14 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
      * @param config        Configuration options for the registry that are describable as properties.
      * @param clock         The clock to use for timings.
      * @param threadFactory The thread factory to use to create the publishing thread.
-     * @deprecated Use {@link #builder(InfluxConfig)} instead.
+     * @deprecated Use {@link #builder(Influx2Config)} instead.
      */
     @Deprecated
-    public InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory) {
+    public Influx2MeterRegistry(Influx2Config config, Clock clock, ThreadFactory threadFactory) {
         this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
-    private InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
+    private Influx2MeterRegistry(Influx2Config config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
         config().namingConvention(new InfluxNamingConvention());
         this.config = config;
@@ -73,47 +77,52 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         lineProtocolBuilder = new LineProtocolBuilder(getBaseTimeUnit(), config());
     }
 
-    public static Builder builder(InfluxConfig config) {
+    public static Builder builder(Influx2Config config) {
         return new Builder(config);
     }
 
-    private void createDatabaseIfNecessary() {
-        if (!config.autoCreateDb() || databaseExists)
+    @Override
+    public void start(ThreadFactory threadFactory) {
+        if (config.enabled()) {
+            logger.info("publishing metrics to influx every " + TimeUtils.format(config.step()));
+        }
+        super.start(threadFactory);
+    }
+
+    private void createBucketIfNecessary() {
+        if (!config.autoCreateBucket() || bucketExists)
             return;
 
         try {
-            String createDatabaseQuery = new CreateDatabaseQueryBuilder(config.db()).setRetentionDuration(config.retentionDuration())
-                    .setRetentionPolicyName(config.retentionPolicy())
-                    .setRetentionReplicationFactor(config.retentionReplicationFactor())
-                    .setRetentionShardDuration(config.retentionShardDuration()).build();
+            String createBucketJSON = new CreateBucketJSONBuilder(config.bucket(), config.org())
+                    .setEverySeconds(config.everySeconds())
+                    .build();
 
             httpClient
-                    .post(config.uri() + "/query?q=" + URLEncoder.encode(createDatabaseQuery, "UTF-8"))
-                    .withBasicAuthentication(config.userName(), config.password())
+                    .post(config.uri() + "/bucket")
+                    .withHeader("Authorization", "Token " + config.token())
+                    .withJsonContent(createBucketJSON)
                     .send()
                     .onSuccess(response -> {
-                        logger.debug("influx database {} is ready to receive metrics", config.db());
-                        databaseExists = true;
+                        logger.debug("influx bucket {} is ready to receive metrics", config.bucket());
+                        bucketExists = true;
                     })
-                    .onError(response -> logger.error("unable to create database '{}': {}", config.db(), response.body()));
+                    .onError(response -> logger.error("unable to create bucket '{}': {}", config.bucket(), response.body()));
         } catch (Throwable e) {
-            logger.error("unable to create database '{}'", config.db(), e);
+            logger.warn("unable to create bucket '{}'", config.bucket(), e);
         }
     }
 
     @Override
     protected void publish() {
-        createDatabaseIfNecessary();
+        createBucketIfNecessary();
 
         try {
-            String influxEndpoint = config.uri() + "/write?consistency=" + config.consistency().toString().toLowerCase() + "&precision=ms&db=" + config.db();
-            if (StringUtils.isNotBlank(config.retentionPolicy())) {
-                influxEndpoint += "&rp=" + config.retentionPolicy();
-            }
+            String influxEndpoint = config.uri() + "/write?&precision=ms&bucket=" + config.bucket() + "&org=" + config.org();
 
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
                 httpClient.post(influxEndpoint)
-                        .withBasicAuthentication(config.userName(), config.password())
+                        .withHeader("Authorization", "Token " + config.token())
                         .withPlainText(batch.stream()
                                 .flatMap(m -> m.match(
                                         lineProtocolBuilder::writeGauge,
@@ -130,7 +139,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                         .send()
                         .onSuccess(response -> {
                             logger.debug("successfully sent {} metrics to InfluxDB.", batch.size());
-                            databaseExists = true;
+                            bucketExists = true;
                         })
                         .onError(response -> logger.error("failed to send metrics to influx: {}", response.body()));
             }
@@ -147,14 +156,14 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
     }
 
     public static class Builder {
-        private final InfluxConfig config;
+        private final Influx2Config config;
 
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = DEFAULT_THREAD_FACTORY;
         private HttpSender httpClient;
 
         @SuppressWarnings("deprecation")
-        Builder(InfluxConfig config) {
+        Builder(Influx2Config config) {
             this.config = config;
             this.httpClient = new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout());
         }
@@ -174,20 +183,16 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
-        public InfluxMeterRegistry build() {
-            return new InfluxMeterRegistry(config, clock, threadFactory, httpClient);
+        public Influx2MeterRegistry build() {
+            return new Influx2MeterRegistry(config, clock, threadFactory, httpClient);
         }
     }
 
-    static class Field {
+    class Field {
         final String key;
         final double value;
 
         Field(String key, double value) {
-            // `time` cannot be a field key or tag key
-            if (key.equals("time")) {
-                throw new IllegalArgumentException("'time' is an invalid field key in InfluxDB");
-            }
             this.key = key;
             this.value = value;
         }

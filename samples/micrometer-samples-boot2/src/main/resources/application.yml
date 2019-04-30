@@ -32,6 +32,7 @@ management:
     graphite.enabled: false
     humio.enabled: false
     influx.enabled: false
+    influx2.enabled: false
     jmx.enabled: false
     kairos.enabled: false
     logging.enabled: false

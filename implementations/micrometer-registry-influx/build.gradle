@@ -5,3 +5,12 @@ dependencies {
 
     testImplementation project(':micrometer-test')
 }
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+            srcDir 'src/shared/java'
+        }
+    }
+}

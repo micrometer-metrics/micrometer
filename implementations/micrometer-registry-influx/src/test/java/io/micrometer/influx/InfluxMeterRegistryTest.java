@@ -16,6 +16,7 @@
 package io.micrometer.influx;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.influx.internal.LineProtocolBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -38,84 +39,86 @@ class InfluxMeterRegistryTest {
     private final InfluxConfig config = InfluxConfig.DEFAULT;
     private final MockClock clock = new MockClock();
     private final InfluxMeterRegistry meterRegistry = new InfluxMeterRegistry(config, clock);
+    private final LineProtocolBuilder lineProtocolBuilder = new LineProtocolBuilder(
+            meterRegistry.getBaseTimeUnit(), meterRegistry.config());
 
     @Test
     void writeGauge() {
         meterRegistry.gauge("my.gauge", 1d);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
-        assertThat(meterRegistry.writeGauge(gauge.getId(), 1d)).hasSize(1);
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
+        assertThat(lineProtocolBuilder.writeGauge(gauge)).hasSize(1);
     }
 
     @Test
     void writeGaugeShouldDropNanValue() {
         meterRegistry.gauge("my.gauge", Double.NaN);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
-        assertThat(meterRegistry.writeGauge(gauge.getId(), Double.NaN)).isEmpty();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
+        assertThat(lineProtocolBuilder.writeGauge(gauge)).isEmpty();
     }
 
     @Test
     void writeGaugeShouldDropInfiniteValues() {
         meterRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
-        Gauge gauge = meterRegistry.find("my.gauge").gauge();
-        assertThat(meterRegistry.writeGauge(gauge.getId(), Double.POSITIVE_INFINITY)).isEmpty();
+        Gauge gauge = meterRegistry.get("my.gauge").gauge();
+        assertThat(lineProtocolBuilder.writeGauge(gauge)).isEmpty();
 
         meterRegistry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
-        gauge = meterRegistry.find("my.gauge").gauge();
-        assertThat(meterRegistry.writeGauge(gauge.getId(), Double.NEGATIVE_INFINITY)).isEmpty();
+        gauge = meterRegistry.get("my.gauge").gauge();
+        assertThat(lineProtocolBuilder.writeGauge(gauge)).isEmpty();
     }
 
     @Test
     void writeTimeGauge() {
         AtomicReference<Double> obj = new AtomicReference<>(1d);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
-        assertThat(meterRegistry.writeGauge(timeGauge.getId(), 1d)).hasSize(1);
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
+        assertThat(lineProtocolBuilder.writeGauge(timeGauge)).hasSize(1);
     }
 
     @Test
     void writeTimeGaugeShouldDropNanValue() {
         AtomicReference<Double> obj = new AtomicReference<>(Double.NaN);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
-        assertThat(meterRegistry.writeGauge(timeGauge.getId(), Double.NaN)).isEmpty();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
+        assertThat(lineProtocolBuilder.writeGauge(timeGauge)).isEmpty();
     }
 
     @Test
     void writeTimeGaugeShouldDropInfiniteValues() {
         AtomicReference<Double> obj = new AtomicReference<>(Double.POSITIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
-        assertThat(meterRegistry.writeGauge(timeGauge.getId(), Double.POSITIVE_INFINITY)).isEmpty();
+        TimeGauge timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
+        assertThat(lineProtocolBuilder.writeGauge(timeGauge)).isEmpty();
 
         obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
         meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
-        assertThat(meterRegistry.writeGauge(timeGauge.getId(), Double.NEGATIVE_INFINITY)).isEmpty();
+        timeGauge = meterRegistry.get("my.timeGauge").timeGauge();
+        assertThat(lineProtocolBuilder.writeGauge(timeGauge)).isEmpty();
     }
 
     @Test
     void writeCounterWithFunction() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(meterRegistry);
         clock.add(config.step());
-        assertThat(meterRegistry.writeCounter(counter.getId(), 1d)).hasSize(1);
+        assertThat(lineProtocolBuilder.writeFunctionCounter(counter)).hasSize(1);
     }
 
     @Test
     void writeCounterWithFunctionCounterShouldDropInfiniteValues() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(meterRegistry);
         clock.add(config.step());
-        assertThat(meterRegistry.writeCounter(counter.getId(), Double.POSITIVE_INFINITY)).isEmpty();
+        assertThat(lineProtocolBuilder.writeFunctionCounter(counter)).isEmpty();
 
         counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(meterRegistry);
         clock.add(config.step());
-        assertThat(meterRegistry.writeCounter(counter.getId(), Double.NEGATIVE_INFINITY)).isEmpty();
+        assertThat(lineProtocolBuilder.writeFunctionCounter(counter)).isEmpty();
     }
 
     @Test
     void writeShouldDropTagWithBlankValue() {
         meterRegistry.gauge("my.gauge", Tags.of("foo", "bar").and("baz", ""), 1d);
-        final Gauge gauge = meterRegistry.find("my.gauge").gauge();
-        assertThat(meterRegistry.writeGauge(gauge.getId(), 1d))
+        final Gauge gauge = meterRegistry.get("my.gauge").gauge();
+        assertThat(lineProtocolBuilder.writeGauge(gauge))
                 .hasSize(1)
                 .allSatisfy(s -> assertThat(s)
                         .contains("foo=bar")
@@ -131,7 +134,7 @@ class InfluxMeterRegistryTest {
         Measurement m3 = new Measurement(() -> 5d, Statistic.TOTAL_TIME);
         Meter meter = Meter.builder("my.custom", Meter.Type.OTHER, Arrays.asList(m1, m2, m3)).register(meterRegistry);
 
-        assertThat(meterRegistry.writeMeter(meter).collect(Collectors.joining())).isEqualTo(expectedInfluxLine);
+        assertThat(lineProtocolBuilder.writeMeter(meter).collect(Collectors.joining())).isEqualTo(expectedInfluxLine);
     }
 
     @Test
@@ -141,7 +144,7 @@ class InfluxMeterRegistryTest {
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
-        assertThat(meterRegistry.writeMeter(meter)).isEmpty();
+        assertThat(lineProtocolBuilder.writeMeter(meter)).isEmpty();
     }
 
     @Test
@@ -153,6 +156,6 @@ class InfluxMeterRegistryTest {
         Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
-        assertThat(meterRegistry.writeMeter(meter)).containsExactly("my_meter,metric_type=gauge value=1,value=2 1");
+        assertThat(lineProtocolBuilder.writeMeter(meter)).containsExactly("my_meter,metric_type=gauge value=1,value=2 1");
     }
 }
