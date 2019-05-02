@@ -82,22 +82,18 @@ public class TimedAspect {
         }
 
         final String metricName = timed.value().isEmpty() ? DEFAULT_METRIC_NAME : timed.value();
-        Timer.Sample sample = Timer.start(registry);
-        String exceptionClass = "none";
 
         if (!timed.longTask()) {
-            return processWithTimer(pjp, timed, metricName, sample, exceptionClass);
+            return processWithTimer(pjp, timed, metricName);
         } else {
             return processWithLongTaskTimer(pjp, timed, metricName);
         }
     }
 
-    private Object processWithTimer(
-            ProceedingJoinPoint pjp,
-            Timed timed,
-            String metricName,
-            Timer.Sample sample,
-            String exceptionClass) throws Throwable {
+    private Object processWithTimer(ProceedingJoinPoint pjp, Timed timed, String metricName) throws Throwable {
+        Timer.Sample sample = Timer.start(registry);
+        String exceptionClass = "none";
+
         try {
             return pjp.proceed();
         } catch (Exception ex) {
