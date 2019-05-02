@@ -17,6 +17,7 @@ package io.micrometer.core.aop;
 
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -84,6 +85,19 @@ public class TimedAspect {
         Timer.Sample sample = Timer.start(registry);
         String exceptionClass = "none";
 
+        if (!timed.longTask()) {
+            return processWithTimer(pjp, timed, metricName, sample, exceptionClass);
+        } else {
+            return processWithLongTaskTimer(pjp, timed, metricName);
+        }
+    }
+
+    private Object processWithTimer(
+            ProceedingJoinPoint pjp,
+            Timed timed,
+            String metricName,
+            Timer.Sample sample,
+            String exceptionClass) throws Throwable {
         try {
             return pjp.proceed();
         } catch (Exception ex) {
@@ -92,13 +106,33 @@ public class TimedAspect {
         } finally {
             try {
                 sample.stop(Timer.builder(metricName)
-                        .description(timed.description().isEmpty() ? null : timed.description())
-                        .tags(timed.extraTags())
-                        .tags(EXCEPTION_TAG, exceptionClass)
-                        .tags(tagsBasedOnJoinPoint.apply(pjp))
-                        .publishPercentileHistogram(timed.histogram())
-                        .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles())
-                        .register(registry));
+                                    .description(timed.description().isEmpty() ? null : timed.description())
+                                    .tags(timed.extraTags())
+                                    .tags(EXCEPTION_TAG, exceptionClass)
+                                    .tags(tagsBasedOnJoinPoint.apply(pjp))
+                                    .publishPercentileHistogram(timed.histogram())
+                                    .publishPercentiles(timed.percentiles().length == 0 ? null : timed.percentiles())
+                                    .register(registry));
+            } catch (Exception e) {
+                // ignoring on purpose
+            }
+        }
+    }
+
+    private Object processWithLongTaskTimer(ProceedingJoinPoint pjp, Timed timed, String metricName) throws Throwable {
+        LongTaskTimer longTaskTimer = LongTaskTimer.builder(metricName)
+                .description(timed.description().isEmpty() ? null : timed.description())
+                .tags(timed.extraTags())
+                .tags(tagsBasedOnJoinPoint.apply(pjp))
+                .register(registry);
+
+        LongTaskTimer.Sample sample = longTaskTimer.start();
+
+        try {
+            return pjp.proceed();
+        } finally {
+            try {
+                longTaskTimer.stop(sample.task());
             } catch (Exception e) {
                 // ignoring on purpose
             }
