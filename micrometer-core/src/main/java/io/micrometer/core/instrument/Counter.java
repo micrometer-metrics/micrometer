@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument;
 
+import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.Collections;
@@ -60,6 +61,9 @@ public interface Counter extends Meter {
     class Builder {
         private final String name;
         private Tags tags = Tags.empty();
+
+        @Nullable
+        private Meter.Id syntheticAssociation = null;
 
         @Nullable
         private String description;
@@ -117,6 +121,19 @@ public interface Counter extends Meter {
         }
 
         /**
+         * For internal use. Marks counter as a derivative of another metric. Currently only used for SLA
+         * counters generated within the StatsD meter registry implementation.
+         *
+         * @param syntheticAssociation The meter id of a meter for which this metric is a synthetic derivative.
+         * @return The counter builder with an added synthetic association.
+         */
+        @Incubating(since = "1.1.5")
+        public Builder synthetic(@Nullable Meter.Id syntheticAssociation) {
+            this.syntheticAssociation = syntheticAssociation;
+            return this;
+        }
+
+        /**
          * Add the counter to a single registry, or return an existing counter in that registry. The returned
          * counter will be unique for each registry, but each registry is guaranteed to only create one counter
          * for the same combination of name and tags.
@@ -125,7 +142,7 @@ public interface Counter extends Meter {
          * @return A new or existing counter.
          */
         public Counter register(MeterRegistry registry) {
-            return registry.counter(new Meter.Id(name, tags, baseUnit, description, Type.COUNTER));
+            return registry.counter(new Meter.Id(name, tags, baseUnit, description, Type.COUNTER, syntheticAssociation));
         }
     }
 }

@@ -17,12 +17,15 @@ package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.AbstractTimer;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.step.StepDouble;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.core.lang.Nullable;
 import org.reactivestreams.Subscriber;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
@@ -35,12 +38,17 @@ public class StatsdTimer extends AbstractTimer {
     private StepDouble max;
     private volatile boolean shutdown = false;
 
+    @Nullable
+    private Map<Long, Counter> slaCounters;
+
+
     StatsdTimer(Id id, StatsdLineBuilder lineBuilder, Subscriber<String> subscriber, Clock clock,
-                DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis) {
+                DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis, Map<Long, Counter> slaCounters) {
         super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, false);
         this.max = new StepDouble(clock, stepMillis);
         this.lineBuilder = lineBuilder;
         this.subscriber = subscriber;
+        this.slaCounters = slaCounters;
     }
 
     @Override
@@ -50,6 +58,14 @@ public class StatsdTimer extends AbstractTimer {
 
             double msAmount = TimeUtils.convert(amount, unit, TimeUnit.MILLISECONDS);
             totalTime.add(msAmount);
+
+            if (this.slaCounters != null) {
+                for (Map.Entry<Long, Counter> entry : this.slaCounters.entrySet()) {
+                    if (entry.getKey() >= amount) {
+                        entry.getValue().increment();
+                    }
+                }
+            }
 
             // not necessary to ship max, as most StatsD agents calculate this themselves
             max.getCurrent().add(Math.max(msAmount - max.getCurrent().doubleValue(), 0));

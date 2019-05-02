@@ -21,6 +21,7 @@ import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
 import io.micrometer.core.instrument.config.NamingConvention;
+import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -43,8 +44,7 @@ import java.util.function.Consumer;
 
 import static java.util.Collections.singletonList;
 import static java.util.stream.IntStream.range;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * @author Jon Schneider
@@ -341,12 +341,29 @@ class StatsdMeterRegistryTest {
     }
 
     @Test
+    void timersWithSlasHaveCounter() {
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
+        Timer timer = Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry);
+
+        // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the gauge isn't present
+        registry.get("my.timer.sla").tag("le", "1").counter();
+    }
+
+    @Test
     void distributionSummariesWithSlasHaveInfBucket() {
         StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
         DistributionSummary summary = DistributionSummary.builder("my.distribution").sla(1).register(registry);
 
         // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the gauge isn't present
         registry.get("my.distribution.histogram").tag("le", "+Inf").gauge();
+    }
+
+    @Test
+    void distributionSummaariesWithSlasHaveCounter() {
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
+        DistributionSummary summary = DistributionSummary.builder("my.distribution").sla(1).register(registry);
+
+        registry.get("my.distribution.sla").tag("le", "1").counter();
     }
 
     @Test
@@ -360,6 +377,26 @@ class StatsdMeterRegistryTest {
 
        assertThat(timerHist.value()).isEqualTo(1);
        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void slaCounterEqualsCount() {
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
+        Timer timer = Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry);
+        timer.record(1, TimeUnit.MILLISECONDS);
+
+        Counter timerSlaCounter = registry.get("my.timer.sla").tags("le", "1").counter();
+
+        assertThat(timerSlaCounter.count()).isEqualTo(1);
+    }
+
+    @Test
+    void slaCountersNoInf() {
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
+        Timer timer = Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry);
+
+        assertThatExceptionOfType(MeterNotFoundException.class)
+                .isThrownBy(() -> registry.get("my.timer.sla").tags("le", "+Inf").counter());
     }
 
     @Test
