@@ -50,7 +50,7 @@ dependencies {
     // @Timed AOP
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
 
-    compile 'com.squareup.okhttp3:okhttp:latest.release', optional
+    compile 'com.squareup.okhttp3:okhttp:3.+', optional
 
     testCompile 'io.projectreactor:reactor-test:latest.release'
 
