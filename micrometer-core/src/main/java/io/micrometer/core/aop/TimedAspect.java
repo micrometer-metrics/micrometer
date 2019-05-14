@@ -128,7 +128,7 @@ public class TimedAspect {
             return pjp.proceed();
         } finally {
             try {
-                longTaskTimer.stop(sample.task());
+                sample.stop();
             } catch (Exception e) {
                 // ignoring on purpose
             }

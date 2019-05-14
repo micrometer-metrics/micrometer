@@ -181,10 +181,6 @@ public interface LongTaskTimer extends Meter {
         public double duration(TimeUnit unit) {
             return timer.duration(task, unit);
         }
-
-        public long task() {
-            return task;
-        }
     }
 
     /**
