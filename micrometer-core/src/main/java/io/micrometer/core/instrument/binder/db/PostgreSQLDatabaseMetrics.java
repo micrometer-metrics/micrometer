@@ -80,7 +80,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         this.queryConnectionCount = getDBStatQuery(database, "SUM(numbackends)");
         this.queryReadCount = getDBStatQuery(database, "tup_fetched");
         this.queryInsertCount = getDBStatQuery(database, "tup_inserted");
-        this.queryTempBytes = getDBStatQuery(database, "tmp_bytes");
+        this.queryTempBytes = getDBStatQuery(database, "temp_bytes");
         this.queryUpdateCount = getDBStatQuery(database, "tup_updated");
         this.queryDeleteCount = getDBStatQuery(database, "tup_deleted");
         this.queryBlockHits = getDBStatQuery(database, "blks_hit");
