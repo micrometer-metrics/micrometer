@@ -54,6 +54,18 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ISO_INSTANT;
     private static final String ES_METRICS_TEMPLATE = "/_template/metrics_template";
     private static final String INDEX_LINE = "{ \"index\" : {} }\n";
+    private static final String TEMPLATE_BODY = "{\"template\":\"metrics*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false},\"properties\":{"
+            + "\"name\":{\"type\":\"keyword\"},"
+            + "\"count\":{\"type\":\"double\"},"
+            + "\"value\":{\"type\":\"double\"},"
+            + "\"sum\":{\"type\":\"double\"},"
+            + "\"mean\":{\"type\":\"double\"},"
+            + "\"duration\":{\"type\":\"double\"},"
+            + "\"max\":{\"type\":\"double\"},"
+            + "\"total\":{\"type\":\"double\"},"
+            + "\"unknown\":{\"type\":\"double\"},"
+            + "\"active\":{\"type\":\"double\"}"
+            + "}}}}";
 
     private final Logger logger = LoggerFactory.getLogger(ElasticMeterRegistry.class);
 
@@ -114,7 +126,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
             httpClient.put(config.host() + ES_METRICS_TEMPLATE)
                     .withBasicAuthentication(config.userName(), config.password())
-                    .withJsonContent("{\"template\":\"metrics*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false},\"properties\":{\"name\":{\"type\":\"keyword\"}}}}}")
+                    .withJsonContent(TEMPLATE_BODY)
                     .send()
                     .onError(response -> logger.error("failed to add metrics template to elastic: {}", response.body()));
         } catch (Throwable e) {
