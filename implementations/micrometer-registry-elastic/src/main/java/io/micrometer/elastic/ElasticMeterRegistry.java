@@ -37,6 +37,8 @@ import java.util.Optional;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
@@ -66,6 +68,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             + "\"unknown\":{\"type\":\"double\"},"
             + "\"active\":{\"type\":\"double\"}"
             + "}}}}";
+    private static final String ERROR_RESPONSE_BODY_SIGNATURE = "\"errors\":true";
+    private static final Pattern STATUS_CREATED_PATTERN = Pattern.compile("\"status\":201");
 
     private final Logger logger = LoggerFactory.getLogger(ElasticMeterRegistry.class);
 
@@ -103,7 +107,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         super.start(threadFactory);
     }
 
-    private void createIndexIfNeeded() {
+    private void createIndexTemplateIfNeeded() {
         if (checkedForIndexTemplate || !config.autoCreateIndex()) {
             return;
         }
@@ -139,7 +143,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        createIndexIfNeeded();
+        createIndexTemplateIfNeeded();
 
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try {
@@ -163,23 +167,35 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                         .withJsonContent(requestBody)
                         .send()
                         .onSuccess(response -> {
-                            // It's not enough to look at response code. ES could return {"errors":true} in body:
-                            // {"took":16,"errors":true,"items":[{"index":{"_index":"metrics-2018-03","_type":"timer","_id":"i8kdBmIBmtn9wpUGezjX","status":400,"error":{"type":"illegal_argument_exception","reason":"Rejecting mapping update to [metrics-2018-03] as the final mapping would have more than 1 type: [metric, doc]"}}}]}
-                            String body = response.body();
-                            if (body.contains("\"errors\":true")) {
-                                logger.error("failed to send metrics to elastic: {}", body);
+                            int numberOfSentItems = batch.size();
+                            String responseBody = response.body();
+                            if (responseBody.contains(ERROR_RESPONSE_BODY_SIGNATURE)) {
+                                int numberOfCreatedItems = countCreatedItems(responseBody);
+                                logger.debug("failed metrics payload: {}", requestBody);
+                                logger.error("failed to send metrics to elastic (sent {} metrics but created {} metrics): {}",
+                                        numberOfSentItems, numberOfCreatedItems, responseBody);
                             } else {
-                                logger.debug("successfully sent {} metrics to elastic", batch.size());
+                                logger.debug("successfully sent {} metrics to elastic", numberOfSentItems);
                             }
                         })
                         .onError(response -> {
-                            logger.error("failed to send metrics to elastic: {}", response.body());
                             logger.debug("failed metrics payload: {}", requestBody);
+                            logger.error("failed to send metrics to elastic: {}", response.body());
                         });
             } catch (Throwable e) {
                 logger.error("failed to send metrics to elastic", e);
             }
         }
+    }
+
+    // VisibleForTesting
+    static int countCreatedItems(String responseBody) {
+        Matcher matcher = STATUS_CREATED_PATTERN.matcher(responseBody);
+        int count = 0;
+        while (matcher.find()) {
+            count++;
+        }
+        return count;
     }
 
     private String indexName() {
