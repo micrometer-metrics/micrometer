@@ -16,6 +16,7 @@
 package io.micrometer.core.aop;
 
 import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter.Id;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -29,6 +30,8 @@ import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+
+import javax.annotation.Nonnull;
 
 class TimedAspectTest {
     @Test
@@ -47,6 +50,24 @@ class TimedAspectTest {
                 .tag("method", "call")
                 .tag("extra", "tag")
                 .timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    void timeMethodWithLongTaskTimer() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
+        pf.addAspect(new TimedAspect(registry));
+
+        TimedService service = pf.getProxy();
+
+        service.longCall();
+
+        assertThat(registry.get("longCall")
+                .tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedService")
+                .tag("method", "longCall")
+                .tag("extra", "tag")
+                .longTaskTimers().size()).isEqualTo(1);
     }
     
     @Test
@@ -67,8 +88,26 @@ class TimedAspectTest {
                     .tag("extra", "tag")
                     .timer();
         });
-        
-        
+    }
+
+    @Test
+    void timeMethodFailureWithLongTaskTimer() {
+        MeterRegistry failingRegistry = new FailingMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
+        pf.addAspect(new TimedAspect(failingRegistry));
+
+        TimedService service = pf.getProxy();
+
+        service.longCall();
+
+        assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> {
+            failingRegistry.get("longCall")
+                    .tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedService")
+                    .tag("method", "call")
+                    .tag("extra", "tag")
+                    .longTaskTimer();
+        });
     }
 
     private final class FailingMeterRegistry extends SimpleMeterRegistry {
@@ -83,11 +122,21 @@ class TimedAspectTest {
                                  @NonNull PauseDetector pauseDetector) {
             throw new RuntimeException();
         }
+
+        @NonNull
+        @Override
+        protected LongTaskTimer newLongTaskTimer(@Nonnull Id id) {
+            throw new RuntimeException();
+        }
     }
 
     static class TimedService {
         @Timed(value = "call", extraTags = {"extra", "tag"})
         void call() {
+        }
+
+        @Timed(value = "longCall", extraTags = {"extra", "tag"}, longTask = true)
+        void longCall() {
         }
     }
 }

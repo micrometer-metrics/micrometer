@@ -44,6 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  *
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Nejc Korasa
  */
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = TimedAspectTest.TestAspectConfig.class)
@@ -79,6 +80,18 @@ public class TimedAspectTest {
     public void serviceIsTimedWhenThereIsNoException() {
         service.timeWithoutException();
         assertThat(registry.get("somethingElse").tags(EXCEPTION_TAG, "none").timer().count()).isEqualTo(1);
+    }
+
+    @Test
+    public void serviceIsTimedWithLongTaskTimer() {
+        service.timeWithLongTaskTimer();
+        assertThat(registry.get("alsoSomething").longTaskTimers().size()).isEqualTo(1);
+    }
+
+    @Test
+    public void serviceIsTimedWithLongTaskTimerWhenThereIsAnException() {
+        assertThrows(RuntimeException.class, () -> service.timeWithLongTaskTimerOnException());
+        assertThat(registry.get("alsoSomethingElse").longTaskTimers().size()).isEqualTo(1);
     }
 
     @Test
@@ -156,6 +169,16 @@ public class TimedAspectTest {
         @Timed(value = "something", histogram = true)
         public String timeWithHistogram() {
             return "hello histogram";
+        }
+
+        @Timed(value = "alsoSomething", longTask = true)
+        public String timeWithLongTaskTimer() {
+            return "hello, it's been a while";
+        }
+
+        @Timed(value = "alsoSomethingElse", longTask = true)
+        public String timeWithLongTaskTimerOnException() {
+            throw new RuntimeException("bye");
         }
     }
 

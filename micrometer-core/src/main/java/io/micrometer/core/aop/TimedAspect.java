@@ -30,6 +30,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 
 import java.lang.reflect.Method;
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -38,6 +39,7 @@ import java.util.function.Function;
  * @author David J. M. Karlsen
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Nejc Korasa
  * @since 1.0.0
  */
 @Aspect
@@ -116,22 +118,32 @@ public class TimedAspect {
     }
 
     private Object processWithLongTaskTimer(ProceedingJoinPoint pjp, Timed timed, String metricName) throws Throwable {
-        LongTaskTimer longTaskTimer = LongTaskTimer.builder(metricName)
-                .description(timed.description().isEmpty() ? null : timed.description())
-                .tags(timed.extraTags())
-                .tags(tagsBasedOnJoinPoint.apply(pjp))
-                .register(registry);
 
-        LongTaskTimer.Sample sample = longTaskTimer.start();
+        Optional<LongTaskTimer.Sample> sample = buildLongTaskTimer(pjp, timed, metricName).map(LongTaskTimer::start);
 
         try {
             return pjp.proceed();
         } finally {
             try {
-                sample.stop();
+                sample.ifPresent(LongTaskTimer.Sample::stop);
             } catch (Exception e) {
                 // ignoring on purpose
             }
+        }
+    }
+
+    /**
+     * Secure long task timer creation - it should not disrupt the application flow in case of exception
+     */
+    private Optional<LongTaskTimer> buildLongTaskTimer(ProceedingJoinPoint pjp, Timed timed, String metricName) {
+        try {
+            return Optional.of(LongTaskTimer.builder(metricName)
+                                       .description(timed.description().isEmpty() ? null : timed.description())
+                                       .tags(timed.extraTags())
+                                       .tags(tagsBasedOnJoinPoint.apply(pjp))
+                                       .register(registry));
+        } catch (Exception e) {
+            return Optional.empty();
         }
     }
 }
