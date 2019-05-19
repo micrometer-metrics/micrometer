@@ -23,6 +23,12 @@ import java.net.HttpURLConnection;
 import java.time.Duration;
 import java.util.Map;
 
+/**
+ * {@link HttpURLConnection}-based {@link HttpSender}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 public class HttpUrlConnectionSender implements HttpSender {
     private final int connectTimeoutMs;
     private final int readTimeoutMs;
@@ -44,17 +50,19 @@ public class HttpUrlConnectionSender implements HttpSender {
             con = (HttpURLConnection) request.getUrl().openConnection();
             con.setConnectTimeout(connectTimeoutMs);
             con.setReadTimeout(readTimeoutMs);
-            con.setRequestMethod(request.getMethod().toString());
+            Method method = request.getMethod();
+            con.setRequestMethod(method.name());
 
             for (Map.Entry<String, String> header : request.getRequestHeaders().entrySet()) {
                 con.setRequestProperty(header.getKey(), header.getValue());
             }
 
-            con.setDoOutput(true);
-
-            try (OutputStream os = con.getOutputStream()) {
-                os.write(request.getEntity());
-                os.flush();
+            if (method != Method.GET) {
+                con.setDoOutput(true);
+                try (OutputStream os = con.getOutputStream()) {
+                    os.write(request.getEntity());
+                    os.flush();
+                }
             }
 
             int status = con.getResponseCode();
