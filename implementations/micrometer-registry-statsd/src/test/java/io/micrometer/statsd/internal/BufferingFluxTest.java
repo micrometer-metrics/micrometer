@@ -15,15 +15,23 @@
  */
 package io.micrometer.statsd.internal;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
+
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.time.Duration;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.Test;
 
 class BufferingFluxTest {
 
@@ -39,10 +47,10 @@ class BufferingFluxTest {
         Flux<String> buffered = BufferingFlux.create(source, "\n", 14, 200);
 
         StepVerifier.create(buffered)
-                .expectNext("twelve bytes")
-                .expectNext("fourteen bytes")
-                .expectNext("twelve bytes")
-                .expectNext("fourteen bytes")
+                .expectNext("twelve bytes\n")
+                .expectNext("fourteen bytes\n")
+                .expectNext("twelve bytes\n")
+                .expectNext("fourteen bytes\n")
                 .verifyComplete();
     }
 
@@ -58,8 +66,8 @@ class BufferingFluxTest {
         Flux<String> buffered = BufferingFlux.create(source, "\n", 27, Long.MAX_VALUE);
 
         StepVerifier.create(buffered)
-                .expectNext("twelve bytes\nfourteen bytes")
-                .expectNext("twelve bytes\nfourteen bytes")
+                .expectNext("twelve bytes\nfourteen bytes\n")
+                .expectNext("twelve bytes\nfourteen bytes\n")
                 .verifyComplete();
     }
 
@@ -75,8 +83,8 @@ class BufferingFluxTest {
         Flux<String> buffered = BufferingFlux.create(source, "\n", Integer.MAX_VALUE, 50);
 
         StepVerifier.create(buffered)
-                .expectNext("twelve bytes\nfourteen bytes\ntwelve bytes")
-                .expectNext("fourteen bytes")
+                .expectNext("twelve bytes\nfourteen bytes\ntwelve bytes\n")
+                .expectNext("fourteen bytes\n")
                 .verifyComplete();
     }
 
@@ -101,5 +109,33 @@ class BufferingFluxTest {
         } finally {
             end.onComplete();
         }
+    }
+
+    /**
+     * Ensure that we can append buffer messages then split them up without issue.
+     *
+     * Originally written because buffer messages did not contain a trailing new line so appending messages
+     * would join the first line of the new message with the last line of the old message into one line,
+     * which is not a valid statsd line.
+     */
+    @Test
+    void bufferMessagesCanBeAppended() {
+        List<String> stats = new ArrayList<>();
+        IntStream.range(0, 500).forEachOrdered(i -> stats.add("test.msg.example:" + i + "|c"));
+
+        Flux<String> source = Flux.just(stats.toArray(new String[0]))
+                .delayElements(Duration.ofMillis(1));
+        Flux<String> buffered = BufferingFlux.create(source, "\n", 100, 10);
+
+        StringBuilder sb = new StringBuilder();
+        buffered.subscribe(sb::append);
+        buffered.blockLast(Duration.ofSeconds(10));
+
+        // There should be no lines that are not empty or not completely found in the original material
+        List<String> resultLines = new ArrayList<>(Arrays.asList(sb.toString().split("\n")));
+        resultLines.removeAll(stats);
+        resultLines.removeAll(Collections.singletonList(""));
+
+        assertEquals(0, resultLines.size());
     }
 }
