@@ -56,18 +56,54 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ISO_INSTANT;
     private static final String ES_METRICS_TEMPLATE = "/_template/metrics_template";
     private static final String INDEX_LINE = "{ \"index\" : {} }\n";
-    private static final String TEMPLATE_BODY = "{\"template\":\"metrics*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false},\"properties\":{"
-            + "\"name\":{\"type\":\"keyword\"},"
-            + "\"count\":{\"type\":\"double\"},"
-            + "\"value\":{\"type\":\"double\"},"
-            + "\"sum\":{\"type\":\"double\"},"
-            + "\"mean\":{\"type\":\"double\"},"
-            + "\"duration\":{\"type\":\"double\"},"
-            + "\"max\":{\"type\":\"double\"},"
-            + "\"total\":{\"type\":\"double\"},"
-            + "\"unknown\":{\"type\":\"double\"},"
-            + "\"active\":{\"type\":\"double\"}"
-            + "}}}}";
+
+    private static final String TEMPLATE_PROPERTIES = "\"properties\": {\n" +
+            "  \"name\": {\n" +
+            "    \"type\": \"keyword\"\n" +
+            "  },\n" +
+            "  \"count\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  },\n" +
+            "  \"value\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  },\n" +
+            "  \"sum\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  },\n" +
+            "  \"mean\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  },\n" +
+            "  \"duration\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  },\n" +
+            "  \"max\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  },\n" +
+            "  \"total\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  },\n" +
+            "  \"unknown\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  },\n" +
+            "  \"active\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  }\n" +
+            "}";
+    private static final String TEMPLATE_BODY_BEFORE_VERSION_7 = "{\"template\":\"metrics*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false}," + TEMPLATE_PROPERTIES + "}}}";
+    private static final String TEMPLATE_BODY_AFTER_VERSION_7 = "{\n" +
+            "  \"index_patterns\": [\"metrics*\"],\n" +
+            "  \"mappings\": {\n" +
+            "    \"_source\": {\n" +
+            "      \"enabled\": false\n" +
+            "    },\n" + TEMPLATE_PROPERTIES +
+            "  }\n" +
+            "}";
+
+    private static final String TYPE_PATH_BEFORE_VERSION_7 = "/doc";
+    private static final String TYPE_PATH_AFTER_VERSION_7 = "";
+
+    private static final Pattern MAJOR_VERSION_PATTERN = Pattern.compile("\"number\" : \"([\\d]+)");
+
     private static final String ERROR_RESPONSE_BODY_SIGNATURE = "\"errors\":true";
     private static final Pattern STATUS_CREATED_PATTERN = Pattern.compile("\"status\":201");
 
@@ -78,6 +114,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     private final DateTimeFormatter indexDateFormatter;
 
+    private volatile Integer majorVersion;
     private volatile boolean checkedForIndexTemplate = false;
 
     @SuppressWarnings("deprecation")
@@ -113,8 +150,8 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }
 
         try {
-            if (httpClient
-                    .head(config.host() + ES_METRICS_TEMPLATE)
+            String uri = config.host() + ES_METRICS_TEMPLATE;
+            if (httpClient.head(uri)
                     .withBasicAuthentication(config.userName(), config.password())
                     .send()
                     .onError(response -> {
@@ -128,9 +165,9 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 return;
             }
 
-            httpClient.put(config.host() + ES_METRICS_TEMPLATE)
+            httpClient.put(uri)
                     .withBasicAuthentication(config.userName(), config.password())
-                    .withJsonContent(TEMPLATE_BODY)
+                    .withJsonContent(getTemplateBody())
                     .send()
                     .onError(response -> logger.error("failed to add metrics template to elastic: {}", response.body()));
         } catch (Throwable e) {
@@ -141,10 +178,16 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         checkedForIndexTemplate = true;
     }
 
+    private String getTemplateBody() {
+        return majorVersion < 7 ? TEMPLATE_BODY_BEFORE_VERSION_7 : TEMPLATE_BODY_AFTER_VERSION_7;
+    }
+
     @Override
     protected void publish() {
+        determineMajorVersionIfNeeded();
         createIndexTemplateIfNeeded();
 
+        String uri = config.host() + "/" + indexName() + getTypePath() + "/_bulk";
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try {
                 String requestBody = batch.stream()
@@ -162,7 +205,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                         .map(Optional::get)
                         .collect(joining("\n", "", "\n"));
                 httpClient
-                        .post(config.host() + "/" + indexName() + "/doc/_bulk")
+                        .post(uri)
                         .withBasicAuthentication(config.userName(), config.password())
                         .withJsonContent(requestBody)
                         .send()
@@ -186,6 +229,30 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 logger.error("failed to send metrics to elastic", e);
             }
         }
+    }
+
+    private void determineMajorVersionIfNeeded() {
+        if (majorVersion != null) {
+            return;
+        }
+        try {
+            majorVersion = getMajorVersion(httpClient.get(config.host()).send().body());
+        } catch (Throwable ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    // VisibleForTesting
+    static int getMajorVersion(String responseBody) {
+        Matcher matcher = MAJOR_VERSION_PATTERN.matcher(responseBody);
+        if (!matcher.find()) {
+            throw new IllegalArgumentException("Unexpected response body: " + responseBody);
+        }
+        return Integer.parseInt(matcher.group(1));
+    }
+
+    private String getTypePath() {
+        return majorVersion < 7 ? TYPE_PATH_BEFORE_VERSION_7 : TYPE_PATH_AFTER_VERSION_7;
     }
 
     // VisibleForTesting
