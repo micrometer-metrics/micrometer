@@ -195,6 +195,69 @@ class ElasticMeterRegistryTest {
         assertThat(ElasticMeterRegistry.countCreatedItems(responseBody)).isEqualTo(68);
     }
 
+    @Test
+    void getVersionWhenVersionIs7() {
+        String responseBody = "{\n" +
+                "  \"name\" : \"AL01187277.local\",\n" +
+                "  \"cluster_name\" : \"elasticsearch\",\n" +
+                "  \"cluster_uuid\" : \"xwKhDd2ITqK4VanwGDmoDQ\",\n" +
+                "  \"version\" : {\n" +
+                "    \"number\" : \"7.0.1\",\n" +
+                "    \"build_flavor\" : \"default\",\n" +
+                "    \"build_type\" : \"tar\",\n" +
+                "    \"build_hash\" : \"e4efcb5\",\n" +
+                "    \"build_date\" : \"2019-04-29T12:56:03.145736Z\",\n" +
+                "    \"build_snapshot\" : false,\n" +
+                "    \"lucene_version\" : \"8.0.0\",\n" +
+                "    \"minimum_wire_compatibility_version\" : \"6.7.0\",\n" +
+                "    \"minimum_index_compatibility_version\" : \"6.0.0-beta1\"\n" +
+                "  },\n" +
+                "  \"tagline\" : \"You Know, for Search\"\n" +
+                "}";
+        assertThat(ElasticMeterRegistry.getMajorVersion(responseBody)).isEqualTo(7);
+    }
+
+    @Test
+    void getVersionWhenVersionIs6() {
+        String responseBody = "{\n" +
+                "  \"name\" : \"AgISpaH\",\n" +
+                "  \"cluster_name\" : \"elasticsearch\",\n" +
+                "  \"cluster_uuid\" : \"Pycih38FRn-SJBOeaVniog\",\n" +
+                "  \"version\" : {\n" +
+                "    \"number\" : \"6.7.2\",\n" +
+                "    \"build_flavor\" : \"default\",\n" +
+                "    \"build_type\" : \"tar\",\n" +
+                "    \"build_hash\" : \"56c6e48\",\n" +
+                "    \"build_date\" : \"2019-04-29T09:05:50.290371Z\",\n" +
+                "    \"build_snapshot\" : false,\n" +
+                "    \"lucene_version\" : \"7.7.0\",\n" +
+                "    \"minimum_wire_compatibility_version\" : \"5.6.0\",\n" +
+                "    \"minimum_index_compatibility_version\" : \"5.0.0\"\n" +
+                "  },\n" +
+                "  \"tagline\" : \"You Know, for Search\"\n" +
+                "}";
+        assertThat(ElasticMeterRegistry.getMajorVersion(responseBody)).isEqualTo(6);
+    }
+
+    @Test
+    void getVersionWhenVersionIs5() {
+        String responseBody = "{\n" +
+                "  \"name\" : \"kDfH9w4\",\n" +
+                "  \"cluster_name\" : \"elasticsearch\",\n" +
+                "  \"cluster_uuid\" : \"tUrOevi-RcaMGV2250XAnQ\",\n" +
+                "  \"version\" : {\n" +
+                "    \"number\" : \"5.6.15\",\n" +
+                "    \"build_hash\" : \"fe7575a\",\n" +
+                "    \"build_date\" : \"2019-02-13T16:21:45.880Z\",\n" +
+                "    \"build_snapshot\" : false,\n" +
+                "    \"lucene_version\" : \"6.6.1\"\n" +
+                "  },\n" +
+                "  \"tagline\" : \"You Know, for Search\"\n" +
+                "}";
+        assertThat(ElasticMeterRegistry.getMajorVersion(responseBody)).isEqualTo(5);
+    }
+
+
     @Issue("#987")
     @Test
     void indexNameSupportsIndexNameWithoutDateSuffix() {
