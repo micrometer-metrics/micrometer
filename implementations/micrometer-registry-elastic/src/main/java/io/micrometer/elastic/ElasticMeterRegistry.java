@@ -130,12 +130,13 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         this.config = config;
         indexDateFormatter = DateTimeFormatter.ofPattern(config.indexDateFormat());
         this.httpClient = httpClient;
-        start(threadFactory);
         if (config.pipeline() != null && !config.pipeline().isEmpty()) {
             indexLine = "{ \"index\" : {\"pipeline\":\"" + config.pipeline() + "\"} }\n";
         } else {
             indexLine = "{ \"index\" : {} }\n";
         }
+
+        start(threadFactory);
     }
 
     public static Builder builder(ElasticConfig config) {
