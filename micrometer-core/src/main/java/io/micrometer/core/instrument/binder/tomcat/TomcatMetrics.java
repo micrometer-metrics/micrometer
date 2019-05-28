@@ -54,7 +54,7 @@ public class TomcatMetrics implements MeterBinder {
     private final MBeanServer mBeanServer;
     private final Iterable<Tag> tags;
 
-    private String jmxDomain;
+    private volatile String jmxDomain;
 
     public TomcatMetrics(@Nullable Manager manager, Iterable<Tag> tags) {
         this(manager, tags, getMBeanServer());
@@ -277,6 +277,20 @@ public class TomcatMetrics implements MeterBinder {
             }
         }
         return this.jmxDomain;
+    }
+
+    /**
+     * Set JMX domain. If unset, default values will be used as follows:
+     *
+     * <ul>
+     *     <li>Embedded Tomcat: "Tomcat"</li>
+     *     <li>Standalone Tomcat: "Catalina"</li>
+     * </ul>
+     *
+     * @param jmxDomain JMX domain to be used
+     */
+    public void setJmxDomain(String jmxDomain) {
+        this.jmxDomain = jmxDomain;
     }
 
     private boolean hasObjectName(String name) {
