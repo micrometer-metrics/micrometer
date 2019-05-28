@@ -236,7 +236,11 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
             return;
         }
         try {
-            majorVersion = getMajorVersion(httpClient.get(config.host()).send().body());
+            String responseBody = httpClient.get(config.host())
+                    .withBasicAuthentication(config.userName(), config.password())
+                    .send()
+                    .body();
+            majorVersion = getMajorVersion(responseBody);
         } catch (Throwable ex) {
             throw new RuntimeException(ex);
         }
