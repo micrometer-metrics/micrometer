@@ -94,8 +94,9 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
                     interrupted = true;
                 }
             }
-        }
-        finally {
+        } catch (Exception exception) {
+            logger.error("error publishing metric data.", exception);
+        } finally {
             if (interrupted) {
                 Thread.currentThread().interrupt();
             }
