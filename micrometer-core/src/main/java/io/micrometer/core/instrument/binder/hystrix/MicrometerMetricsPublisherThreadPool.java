@@ -20,8 +20,10 @@ import com.netflix.hystrix.HystrixThreadPoolMetrics;
 import com.netflix.hystrix.HystrixThreadPoolProperties;
 import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherThreadPool;
 
+import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -35,7 +37,6 @@ public class MicrometerMetricsPublisherThreadPool implements HystrixMetricsPubli
   private static final String NAME_HYSTRIX_THREADPOOL = "hystrix.threadpool";
 
   private final MeterRegistry meterRegistry;
-  private final HystrixThreadPoolKey threadPoolKey;
   private final HystrixThreadPoolMetrics metrics;
   private final HystrixThreadPoolProperties properties;
   private final HystrixMetricsPublisherThreadPool metricsPublisherForThreadPool;
@@ -48,7 +49,6 @@ public class MicrometerMetricsPublisherThreadPool implements HystrixMetricsPubli
       final HystrixThreadPoolProperties properties,
       final HystrixMetricsPublisherThreadPool metricsPublisherForThreadPool) {
     this.meterRegistry = meterRegistry;
-    this.threadPoolKey = threadPoolKey;
     this.metrics = metrics;
     this.properties = properties;
     this.metricsPublisherForThreadPool = metricsPublisherForThreadPool;
@@ -65,29 +65,14 @@ public class MicrometerMetricsPublisherThreadPool implements HystrixMetricsPubli
         .tags(tags)
         .register(meterRegistry);
 
-    Gauge.builder(metricName("threads.active.rolling.max"), metrics::getRollingMaxActiveThreads)
-        .description("Rolling max number of active threads during rolling statistical window.")
-        .tags(tags)
+    FunctionCounter.builder(metricName("threads.cumulative.count"), metrics, HystrixThreadPoolMetrics::getCumulativeCountThreadsExecuted)
+        .description("Cumulative count of number of threads since the start of the application.")
+        .tags(tags.and(Tag.of("type", "executed")))
         .register(meterRegistry);
 
-    Gauge.builder(metricName("threads.executed.cumulative.count"), metrics::getCumulativeCountThreadsExecuted)
-        .description("Cumulative count of number of threads executed since the start of the application.")
-        .tags(tags)
-        .register(meterRegistry);
-
-    Gauge.builder(metricName("threads.rejected.cumulative.count"), metrics::getCumulativeCountThreadsRejected)
-        .description("Cumulative count of number of threads rejected since the start of the application.")
-        .tags(tags)
-        .register(meterRegistry);
-
-    Gauge.builder(metricName("threads.executed.rolling.count"), metrics::getRollingCountThreadsExecuted)
-        .description("Rolling count of number of threads executed during rolling statistical window.")
-        .tags(tags)
-        .register(meterRegistry);
-
-    Gauge.builder(metricName("threads.rejected.rolling.count"), metrics::getRollingCountThreadsRejected)
-        .description("Rolling count of number of threads rejected during rolling statistical window.")
-        .tags(tags)
+    FunctionCounter.builder(metricName("threads.cumulative.count"), metrics, HystrixThreadPoolMetrics::getCumulativeCountThreadsRejected)
+        .description("Cumulative count of number of threads since the start of the application.")
+        .tags(tags.and(Tag.of("type", "rejected")))
         .register(meterRegistry);
 
     Gauge.builder(metricName("threads.pool.current.size"), metrics::getCurrentPoolSize)
@@ -110,14 +95,14 @@ public class MicrometerMetricsPublisherThreadPool implements HystrixMetricsPubli
         .tags(tags)
         .register(meterRegistry);
 
-    Gauge.builder(metricName("tasks.completed.cumulative.count"), metrics::getCurrentCompletedTaskCount)
-        .description("The approximate total number of tasks that have completed execution.")
-        .tags(tags)
+    FunctionCounter.builder(metricName("tasks.cumulative.count"), metrics, m -> m.getCurrentCompletedTaskCount().longValue())
+        .description("The approximate total number of tasks since the start of the application.")
+        .tags(tags.and(Tag.of("type", "completed")))
         .register(meterRegistry);
 
-    Gauge.builder(metricName("tasks.scheduled.cumulative.count"), metrics::getCurrentTaskCount)
-        .description("The approximate total number of tasks that have ever been scheduled for execution.")
-        .tags(tags)
+    FunctionCounter.builder(metricName("tasks.cumulative.count"), metrics, m -> m.getCurrentTaskCount().longValue())
+        .description("The approximate total number of tasks since the start of the application.")
+        .tags(tags.and(Tag.of("type", "scheduled")))
         .register(meterRegistry);
 
     Gauge.builder(metricName("queue.current.size"), metrics::getCurrentQueueSize)

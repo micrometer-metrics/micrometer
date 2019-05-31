@@ -80,17 +80,14 @@ class MicrometerMetricsPublisherThreadPoolTest {
 
         final Set<MeterId> expectedMeterIds = new HashSet<>(Arrays.asList(
             new MeterId(metricName("threads.active.current.count"), Type.GAUGE, tags),
-            new MeterId(metricName("threads.active.rolling.max"), Type.GAUGE, tags),
-            new MeterId(metricName("threads.executed.cumulative.count"), Type.GAUGE, tags),
-            new MeterId(metricName("threads.rejected.cumulative.count"), Type.GAUGE, tags),
-            new MeterId(metricName("threads.executed.rolling.count"), Type.GAUGE, tags),
-            new MeterId(metricName("threads.rejected.rolling.count"), Type.GAUGE, tags),
+            new MeterId(metricName("threads.cumulative.count"), Type.COUNTER, tags.and(Tags.of("type", "executed"))),
+            new MeterId(metricName("threads.cumulative.count"), Type.COUNTER, tags.and(Tags.of("type", "rejected"))),
             new MeterId(metricName("threads.pool.current.size"), Type.GAUGE, tags),
             new MeterId(metricName("threads.largest.pool.current.size"), Type.GAUGE, tags),
             new MeterId(metricName("threads.max.pool.current.size"), Type.GAUGE, tags),
             new MeterId(metricName("threads.core.pool.current.size"), Type.GAUGE, tags),
-            new MeterId(metricName("tasks.completed.cumulative.count"), Type.GAUGE, tags),
-            new MeterId(metricName("tasks.scheduled.cumulative.count"), Type.GAUGE, tags),
+            new MeterId(metricName("tasks.cumulative.count"), Type.COUNTER, tags.and(Tags.of("type", "scheduled"))),
+            new MeterId(metricName("tasks.cumulative.count"), Type.COUNTER, tags.and(Tags.of("type", "completed"))),
             new MeterId(metricName("queue.current.size"), Type.GAUGE, tags),
             new MeterId(metricName("queue.max.size"), Type.GAUGE, tags),
             new MeterId(metricName("queue.rejection.threshold.size"), Type.GAUGE, tags)
