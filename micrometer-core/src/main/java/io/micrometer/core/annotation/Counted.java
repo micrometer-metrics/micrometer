@@ -31,11 +31,12 @@ import java.lang.annotation.*;
 public @interface Counted {
 
     /**
-     * Represents the metric name for the to-be-recorded counters.
+     * Represents the metric name for the to-be-recorded counters. The default value is
+     * {@code method.counted}.
      *
      * @return The metric name.
      */
-    String value();
+    String value() default "";
 
     /**
      * By default, successful attempts won't be recorded. Switch it to {@code true} in order to
