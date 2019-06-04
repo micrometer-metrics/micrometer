@@ -49,6 +49,11 @@ public class CountedAspect {
     private static final String EXCEPTION_TAG = "exception";
 
     /**
+     * The default metric name.
+     */
+    private static final String DEFAULT_METRIC_NAME = "method.counted";
+
+    /**
      * Where we're going register metrics.
      */
     private final MeterRegistry meterRegistry;
@@ -114,7 +119,8 @@ public class CountedAspect {
     }
 
     private Counter.Builder counter(ProceedingJoinPoint pjp, Counted counted) {
-        return Counter.builder(counted.value()).
+        String metricName = counted.value().trim().isEmpty() ? DEFAULT_METRIC_NAME : counted.value();
+        return Counter.builder(metricName).
                 description(counted.description())
                 .tags(tagsBasedOnJoinPoint.apply(pjp));
     }
