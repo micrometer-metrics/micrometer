@@ -288,6 +288,7 @@ public class TomcatMetrics implements MeterBinder {
      * </ul>
      *
      * @param jmxDomain JMX domain to be used
+     * @since 1.0.11
      */
     public void setJmxDomain(String jmxDomain) {
         this.jmxDomain = jmxDomain;
