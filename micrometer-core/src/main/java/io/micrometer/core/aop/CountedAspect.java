@@ -103,7 +103,7 @@ public class CountedAspect {
         try {
             Object result = pjp.proceed();
             if (!counted.recordFailuresOnly()) {
-                record(pjp, counted, "None", "success");
+                record(pjp, counted, "none", "success");
             }
 
             return result;

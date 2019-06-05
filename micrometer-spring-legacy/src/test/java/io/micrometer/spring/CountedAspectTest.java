@@ -68,7 +68,7 @@ public class CountedAspectTest {
         Counter counter = meterRegistry.get("metric.success")
                 .tag("method", "succeedWithMetrics")
                 .tag("result", "success")
-                .tag("exception", "None").counter();
+                .tag("exception", "none").counter();
 
         assertThat(worked).isEqualTo("Worked!");
         assertThat(counter.count()).isOne();
