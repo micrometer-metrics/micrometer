@@ -19,8 +19,9 @@ import java.lang.annotation.*;
 
 /**
  * Annotated methods would expose a few counter metrics about their execution status.
- * By default, only failure attempts would be reported. Switching the {@link #successfulAttempts()}
- * to {@code true} would instruct the corresponding aspect to record successful attempts, too.
+ * By default, both failed and successful attempts would be reported. Switching the
+ * {@link #successfulAttempts()} to {@code false} would instruct the corresponding aspect
+ * to only record the failed attempts.
  *
  * @author Ali Dehghani
  * @see io.micrometer.core.aop.CountedAspect
@@ -39,8 +40,8 @@ public @interface Counted {
     String value() default "";
 
     /**
-     * By default, successful attempts won't be recorded. Switch it to {@code true} in order to
-     * record successful attempts alongside with failed attempts.
+     * By default, both failed and successful attempts are recorded. Switch it to {@code false} in
+     * order to only record failed attempts.
      *
      * @return Whether to report successful attempts or not.
      */
