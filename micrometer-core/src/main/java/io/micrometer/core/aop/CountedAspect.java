@@ -89,7 +89,7 @@ public class CountedAspect {
     /**
      * Intercept methods annotated with the {@link Counted} annotation and expose a few counters about
      * their execution status. By default, this aspect records both failed and successful attempts. If the
-     * {@link Counted#successfulAttempts()} is set to {@code false}, then the aspect would record only
+     * {@link Counted#recordFailuresOnly()} is set to {@code true}, then the aspect would record only
      * failed attempts. In case of a failure, the aspect tags the counter with the simple name of the thrown
      * exception.
      *
@@ -102,7 +102,7 @@ public class CountedAspect {
     public Object interceptAndRecord(ProceedingJoinPoint pjp, Counted counted) throws Throwable {
         try {
             Object result = pjp.proceed();
-            if (counted.successfulAttempts()) {
+            if (!counted.recordFailuresOnly()) {
                 counter(pjp, counted)
                         .tag(EXCEPTION_TAG, "None")
                         .tag(RESULT_TAG, "success")

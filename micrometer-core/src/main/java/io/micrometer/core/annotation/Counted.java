@@ -20,7 +20,7 @@ import java.lang.annotation.*;
 /**
  * Annotated methods would expose a few counter metrics about their execution status.
  * By default, both failed and successful attempts would be reported. Switching the
- * {@link #successfulAttempts()} to {@code false} would instruct the corresponding aspect
+ * {@link #recordFailuresOnly()} to {@code true} would instruct the corresponding aspect
  * to only record the failed attempts.
  *
  * @author Ali Dehghani
@@ -40,12 +40,12 @@ public @interface Counted {
     String value() default "";
 
     /**
-     * By default, both failed and successful attempts are recorded. Switch it to {@code false} in
+     * By default, both failed and successful attempts are recorded. Switch it to {@code true} in
      * order to only record failed attempts.
      *
-     * @return Whether to report successful attempts or not.
+     * @return Whether to only report failures.
      */
-    boolean successfulAttempts() default true;
+    boolean recordFailuresOnly() default false;
 
     /**
      * An optional description for what the underlying counter is going to record.

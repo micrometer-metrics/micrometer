@@ -138,7 +138,7 @@ public class CountedAspectTest {
     @Service
     static class CountedService {
 
-        @Counted(value = "metric.none", successfulAttempts = false)
+        @Counted(value = "metric.none", recordFailuresOnly = true)
         void succeedWithoutMetrics() {
 
         }
