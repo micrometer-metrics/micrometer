@@ -44,7 +44,7 @@ public @interface Counted {
      *
      * @return Whether to report successful attempts or not.
      */
-    boolean successfulAttempts() default false;
+    boolean successfulAttempts() default true;
 
     /**
      * An optional description for what the underlying counter is going to record.

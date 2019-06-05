@@ -41,7 +41,7 @@ public class CountedAspect {
     /**
      * The tag name to encapsulate the method execution status.
      */
-    private static final String STATUS_TAG = "status";
+    private static final String RESULT_TAG = "result";
 
     /**
      * The tag name to encapsulate the exception thrown by the intercepted method.
@@ -103,14 +103,18 @@ public class CountedAspect {
         try {
             Object result = pjp.proceed();
             if (counted.successfulAttempts()) {
-                counter(pjp, counted).tag(STATUS_TAG, "succeed").register(meterRegistry).increment();
+                counter(pjp, counted)
+                        .tag(EXCEPTION_TAG, "None")
+                        .tag(RESULT_TAG, "success")
+                        .register(meterRegistry)
+                        .increment();
             }
 
             return result;
         } catch (Throwable e) {
             counter(pjp, counted)
                     .tag(EXCEPTION_TAG, e.getClass().getSimpleName())
-                    .tag(STATUS_TAG, "failed")
+                    .tag(RESULT_TAG, "failure")
                     .register(meterRegistry)
                     .increment();
 

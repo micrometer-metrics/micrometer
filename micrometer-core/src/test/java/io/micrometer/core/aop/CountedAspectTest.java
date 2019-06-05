@@ -51,7 +51,7 @@ class CountedAspectTest {
         Counter counter = meterRegistry.get("metric.success")
                 .tag("method", "succeedWithMetrics")
                 .tag("class", "io.micrometer.core.aop.CountedAspectTest$CountedService")
-                .tag("status", "succeed").counter();
+                .tag("result", "success").counter();
 
         assertThat(counter.count()).isOne();
     }
@@ -67,7 +67,7 @@ class CountedAspectTest {
                 .tag("method", "fail")
                 .tag("class", "io.micrometer.core.aop.CountedAspectTest$CountedService")
                 .tag("exception", "RuntimeException")
-                .tag("status", "failed").counter();
+                .tag("result", "failure").counter();
 
         assertThat(counter.count()).isOne();
     }
@@ -81,19 +81,19 @@ class CountedAspectTest {
         }
 
         assertThat(meterRegistry.get("method.counted").counters()).hasSize(2);
-        assertThat(meterRegistry.get("method.counted").tag("status", "succeed").counter().count()).isOne();
-        assertThat(meterRegistry.get("method.counted").tag("status", "failed").counter().count()).isOne();
+        assertThat(meterRegistry.get("method.counted").tag("result", "success").counter().count()).isOne();
+        assertThat(meterRegistry.get("method.counted").tag("result", "failure").counter().count()).isOne();
     }
 
 
     static class CountedService {
 
-        @Counted("metric.none")
+        @Counted(value = "metric.none", successfulAttempts = false)
         void succeedWithoutMetrics() {
 
         }
 
-        @Counted(value = "metric.success", successfulAttempts = true)
+        @Counted("metric.success")
         void succeedWithMetrics() {
 
         }
@@ -103,7 +103,7 @@ class CountedAspectTest {
             throw new RuntimeException("Failing always");
         }
 
-        @Counted(value = "", successfulAttempts = true)
+        @Counted
         void emptyMetricName() {
 
         }

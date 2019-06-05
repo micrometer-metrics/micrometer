@@ -67,7 +67,8 @@ public class CountedAspectTest {
 
         Counter counter = meterRegistry.get("metric.success")
                 .tag("method", "succeedWithMetrics")
-                .tag("status", "succeed").counter();
+                .tag("result", "success")
+                .tag("exception", "None").counter();
 
         assertThat(worked).isEqualTo("Worked!");
         assertThat(counter.count()).isOne();
@@ -83,7 +84,7 @@ public class CountedAspectTest {
         Counter counter = meterRegistry.get("metric.failing")
                 .tag("method", "fail")
                 .tag("exception", "RuntimeException")
-                .tag("status", "failed").counter();
+                .tag("result", "failure").counter();
 
         assertThat(counter.count()).isOne();
     }
@@ -97,8 +98,8 @@ public class CountedAspectTest {
         }
 
         assertThat(meterRegistry.get("method.counted").counters()).hasSize(2);
-        assertThat(meterRegistry.get("method.counted").tag("status", "succeed").counter().count()).isOne();
-        assertThat(meterRegistry.get("method.counted").tag("status", "failed").counter().count()).isOne();
+        assertThat(meterRegistry.get("method.counted").tag("result", "success").counter().count()).isOne();
+        assertThat(meterRegistry.get("method.counted").tag("result", "failure").counter().count()).isOne();
     }
 
     @Test
@@ -107,7 +108,7 @@ public class CountedAspectTest {
 
         Counter counter = meterRegistry.get("metric.interface")
                 .tag("method", "doCount")
-                .tag("status", "succeed").counter();
+                .tag("result", "success").counter();
 
         assertThat(counter.count()).isOne();
     }
@@ -137,12 +138,12 @@ public class CountedAspectTest {
     @Service
     static class CountedService {
 
-        @Counted("metric.none")
+        @Counted(value = "metric.none", successfulAttempts = false)
         void succeedWithoutMetrics() {
 
         }
 
-        @Counted(value = "metric.success", successfulAttempts = true)
+        @Counted(value = "metric.success")
         String succeedWithMetrics() {
             return "Worked!";
         }
@@ -152,7 +153,7 @@ public class CountedAspectTest {
             throw new RuntimeException("Failing always");
         }
 
-        @Counted(value = "", successfulAttempts = true)
+        @Counted
         void emptyMetricName() {
 
         }
@@ -171,7 +172,7 @@ public class CountedAspectTest {
     static class DefaultAbstractCountedService implements AbstractCountedService {
 
         @Override
-        @Counted(value = "metric.interface", successfulAttempts = true)
+        @Counted(value = "metric.interface")
         public void doCount() {
 
         }
