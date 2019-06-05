@@ -103,23 +103,22 @@ public class CountedAspect {
         try {
             Object result = pjp.proceed();
             if (!counted.recordFailuresOnly()) {
-                counter(pjp, counted)
-                        .tag(EXCEPTION_TAG, "None")
-                        .tag(RESULT_TAG, "success")
-                        .register(meterRegistry)
-                        .increment();
+                record(pjp, counted, "None", "success");
             }
 
             return result;
         } catch (Throwable e) {
-            counter(pjp, counted)
-                    .tag(EXCEPTION_TAG, e.getClass().getSimpleName())
-                    .tag(RESULT_TAG, "failure")
-                    .register(meterRegistry)
-                    .increment();
-
+            record(pjp, counted, e.getClass().getSimpleName(), "failure");
             throw e;
         }
+    }
+
+    private void record(ProceedingJoinPoint pjp, Counted counted, String exception, String result) {
+        counter(pjp, counted)
+                .tag(EXCEPTION_TAG, exception)
+                .tag(RESULT_TAG, result)
+                .register(meterRegistry)
+                .increment();
     }
 
     private Counter.Builder counter(ProceedingJoinPoint pjp, Counted counted) {
