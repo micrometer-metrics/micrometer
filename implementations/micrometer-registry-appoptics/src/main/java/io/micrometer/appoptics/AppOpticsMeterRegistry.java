@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.util.DoubleFormat.decimal;
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
@@ -50,9 +51,8 @@ import static java.util.stream.Collectors.joining;
  */
 public class AppOpticsMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("appoptics-metrics-publisher");
-    private static final String BODY_MEASUREMENTS_PREFIX = "{\"measurements\":[";
+    private static final String BODY_MEASUREMENTS_PREFIX = "{\"time\": %d, \"measurements\":[";
     private static final String BODY_MEASUREMENTS_SUFFIX = "]}";
-    private static final String BODY_MEASUREMENTS_NONE = BODY_MEASUREMENTS_PREFIX + BODY_MEASUREMENTS_SUFFIX;
 
     private final Logger logger = LoggerFactory.getLogger(AppOpticsMeterRegistry.class);
 
@@ -105,7 +105,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         try {
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-                String body = batch.stream()
+                final List<String> meters = batch.stream()
                         .map(meter -> meter.match(
                                 this::writeGauge,
                                 this::writeCounter,
@@ -119,13 +119,14 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
                         )
                         .filter(Optional::isPresent)
                         .map(Optional::get)
-                        .collect(joining(",", BODY_MEASUREMENTS_PREFIX, BODY_MEASUREMENTS_SUFFIX));
-                if (body.equals(BODY_MEASUREMENTS_NONE)) {
+                        .collect(Collectors.toList());
+                if (meters.isEmpty()) {
                     continue;
                 }
                 httpClient.post(config.uri())
                         .withBasicAuthentication(config.apiToken(), "")
-                        .withJsonContent(body)
+                        .withJsonContent(
+                                meters.stream().collect(joining(",", getBodyMeasurementsPrefix(), BODY_MEASUREMENTS_SUFFIX)))
                         .send()
                         .onSuccess(response -> {
                             if (!response.body().contains("\"failed\":0")) {
@@ -139,6 +140,16 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         } catch (Throwable t) {
             logger.warn("failed to send metrics to appoptics", t);
         }
+    }
+
+    /**
+     * Align times to caller's clock, and optionally floor for synchronizing across nodes
+     */
+    private String getBodyMeasurementsPrefix() {
+
+        final long stepSeconds = config.step().getSeconds();
+        final long time = config.floorTimes() ? (clock.wallTime() / 1000 / stepSeconds * stepSeconds) : clock.wallTime() / 1000;
+        return String.format(BODY_MEASUREMENTS_PREFIX, time);
     }
 
     // VisibleForTesting

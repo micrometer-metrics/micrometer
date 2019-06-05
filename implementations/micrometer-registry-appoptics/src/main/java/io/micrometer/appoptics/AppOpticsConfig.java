@@ -65,6 +65,13 @@ public interface AppOpticsConfig extends StepRegistryConfig {
         return v == null ? "https://api.appoptics.com/v1/measurements" : v;
     }
 
+    /**
+     * @return whether or not to ship a floored time - synchronizes reporting across nodes
+     */
+    default boolean floorTimes() {
+        return get(prefix() + ".floorTimes") == "true";
+    }
+
     @Override
     default int batchSize() {
         String v = get(prefix() + ".batchSize");
