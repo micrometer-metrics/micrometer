@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.lang.NonNullApi;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -54,6 +55,10 @@ public class TimedAspect {
     private final MeterRegistry registry;
     private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint;
 
+    public TimedAspect() {
+        this(Metrics.globalRegistry);
+    }
+    
     public TimedAspect(MeterRegistry registry) {
         this(registry, pjp ->
                 Tags.of("class", pjp.getStaticPart().getSignature().getDeclaringTypeName(),
