@@ -51,7 +51,8 @@ import static java.util.stream.Collectors.joining;
  */
 public class AppOpticsMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("appoptics-metrics-publisher");
-    private static final String BODY_MEASUREMENTS_PREFIX = "{\"time\": %d, \"measurements\":[";
+    // Visible for testing
+    protected static final String BODY_MEASUREMENTS_PREFIX = "{\"time\": %d, \"measurements\":[";
     private static final String BODY_MEASUREMENTS_SUFFIX = "]}";
 
     private final Logger logger = LoggerFactory.getLogger(AppOpticsMeterRegistry.class);
@@ -64,7 +65,8 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
-    private AppOpticsMeterRegistry(AppOpticsConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
+    // Visible for testing
+    protected AppOpticsMeterRegistry(AppOpticsConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
 
         if (config.apiToken() == null) {
@@ -144,8 +146,9 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
 
     /**
      * Align times to caller's clock, and optionally floor for synchronizing across nodes
+     * Visible for testing
      */
-    private String getBodyMeasurementsPrefix() {
+    protected String getBodyMeasurementsPrefix() {
 
         final long stepSeconds = config.step().getSeconds();
         final long time = config.floorTimes() ? (clock.wallTime() / 1000 / stepSeconds * stepSeconds) : clock.wallTime() / 1000;

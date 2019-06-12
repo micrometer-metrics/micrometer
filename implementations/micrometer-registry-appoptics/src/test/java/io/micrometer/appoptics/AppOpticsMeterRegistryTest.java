@@ -15,8 +15,10 @@
  */
 package io.micrometer.appoptics;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -28,30 +30,38 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.ipc.http.HttpSender;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link AppOpticsMeterRegistry}.
  *
  * @author Johnny Lim
+ * @author Hunter Sherman
  */
 class AppOpticsMeterRegistryTest {
 
-    private final AppOpticsConfig config = new AppOpticsConfig() {
-        @Override
-        public String get(String key) {
-            return null;
-        }
-
-        @Override
-        public String apiToken() {
-            return "fake";
-        }
-    };
     private final MockClock clock = new MockClock();
-    private final AppOpticsMeterRegistry meterRegistry = new AppOpticsMeterRegistry(config, clock);
+    private final AppOpticsConfig mockConfig = mock(AppOpticsConfig.class);
+    private final ThreadFactory mockThreadFactory = mock(ThreadFactory.class);
+    private final HttpSender mockSender = mock(HttpSender.class);
+
+    private AppOpticsMeterRegistry meterRegistry;
+
+    @BeforeEach
+    void setup() {
+        when(mockConfig.apiToken()).thenReturn("fake");
+        when(mockConfig.step()).thenReturn(Duration.ofMinutes(1));
+        when(mockConfig.batchSize()).thenReturn(500);
+        when(mockConfig.uri()).thenReturn("fake uri");
+
+        meterRegistry = new AppOpticsMeterRegistry(
+                mockConfig, clock, mockThreadFactory, mockSender);
+    }
 
     @Test
     void writeGauge() {
@@ -110,18 +120,18 @@ class AppOpticsMeterRegistryTest {
     @Test
     void writeFunctionCounter() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(meterRegistry);
-        clock.add(config.step());
+        clock.add(mockConfig.step());
         assertThat(meterRegistry.writeFunctionCounter(counter).isPresent()).isTrue();
     }
 
     @Test
     void writeFunctionCounterShouldDropInfiniteValues() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(meterRegistry);
-        clock.add(config.step());
+        clock.add(mockConfig.step());
         assertThat(meterRegistry.writeFunctionCounter(counter).isPresent()).isFalse();
 
         counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(meterRegistry);
-        clock.add(config.step());
+        clock.add(mockConfig.step());
         assertThat(meterRegistry.writeFunctionCounter(counter).isPresent()).isFalse();
     }
 
@@ -147,4 +157,33 @@ class AppOpticsMeterRegistryTest {
         assertThat(meterRegistry.writeMeter(meter)).hasValue("{\"name\":\"my.meter\",\"period\":60,\"value\":1.0,\"tags\":{\"statistic\":\"value\"}},{\"name\":\"my.meter\",\"period\":60,\"value\":2.0,\"tags\":{\"statistic\":\"value\"}}");
     }
 
+    @Test
+    void emptyMetersDoNoPosting() {
+
+        meterRegistry.publish();
+
+        verifyNoMoreInteractions(mockSender);
+    }
+
+    @Test
+    void defaultValueDoesNoFlooring() {
+
+        when(mockConfig.floorTimes()).thenCallRealMethod();
+
+        clock.add(Duration.ofSeconds(63));
+
+        assertThat(meterRegistry.getBodyMeasurementsPrefix()).isEqualTo(
+                String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 63));
+    }
+
+    @Test
+    void flooringRoundsToNearestStep() {
+
+        when(mockConfig.floorTimes()).thenReturn(true);
+
+        clock.add(Duration.ofSeconds(63));
+
+        assertThat(meterRegistry.getBodyMeasurementsPrefix()).isEqualTo(
+                String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 60));
+    }
 }
