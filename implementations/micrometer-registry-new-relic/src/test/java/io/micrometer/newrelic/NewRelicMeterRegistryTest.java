@@ -16,9 +16,11 @@
 package io.micrometer.newrelic;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
@@ -31,11 +33,13 @@ import io.micrometer.core.instrument.TimeGauge;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests for {@link NewRelicMeterRegistry}.
  *
  * @author Johnny Lim
+ * @author Denis Tazhkenov
  */
 class NewRelicMeterRegistryTest {
 
@@ -152,6 +156,45 @@ class NewRelicMeterRegistryTest {
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
         assertThat(registry.writeMeter(meter)).contains("{\"eventType\":\"myMeter\",\"value\":1,\"value\":2}");
+    }
+
+    @Test
+    void sendInBatches() {
+        Checker<String> oneChecker = new Checker<>(new int[]{1});
+        NewRelicMeterRegistry.sendInBatches(2, Collections.singletonList("0"), oneChecker);
+        oneChecker.checkComplete();
+
+        Checker<String> evenChecker = new Checker<>(new int[]{2, 2});
+        NewRelicMeterRegistry.sendInBatches(2, Arrays.asList("0", "1", "2", "3"), evenChecker);
+        evenChecker.checkComplete();
+
+        Checker<String> oddChecker = new Checker<>(new int[]{2, 1});
+        NewRelicMeterRegistry.sendInBatches(2, Arrays.asList("0", "1", "2"), oddChecker);
+        oddChecker.checkComplete();
+
+        Checker<String> emptyChecker = new Checker<>(new int[]{});
+        NewRelicMeterRegistry.sendInBatches(2, Collections.emptyList(), emptyChecker);
+        emptyChecker.checkComplete();
+    }
+
+    private static class Checker<T> implements Consumer<List<T>> {
+        final int[] batches;
+        int position = 0;
+
+        Checker(int[] batches) {
+            this.batches = batches;
+        }
+
+        @Override
+        public void accept(List<T> t) {
+            System.out.println(t.size() + " " + t);
+            assertEquals(batches[position], t.size());
+            position += 1;
+        }
+
+        void checkComplete() {
+            assertEquals(batches.length, position);
+        }
     }
 
 }

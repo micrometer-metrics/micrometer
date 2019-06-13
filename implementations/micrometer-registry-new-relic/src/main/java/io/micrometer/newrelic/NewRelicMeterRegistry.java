@@ -32,6 +32,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -49,6 +50,7 @@ import static java.util.stream.Collectors.toList;
  *
  * @author Jon Schneider
  * @author Johnny Lim
+ * @author Denis Tazhkenov
  * @since 1.0.0
  */
 public class NewRelicMeterRegistry extends StepMeterRegistry {
@@ -237,7 +239,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         HttpURLConnection con = null;
 
         try {
-            logger.info("Sending {} events to New Relic", events.size());
+            logger.debug("Sending {} events to New Relic", events.size());
 
             con = (HttpURLConnection) insightsEndpoint.openConnection();
             con.setConnectTimeout((int) config.connectTimeout().toMillis());
