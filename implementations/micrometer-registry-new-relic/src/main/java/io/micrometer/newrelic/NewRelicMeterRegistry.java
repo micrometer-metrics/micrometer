@@ -32,12 +32,12 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -105,23 +105,24 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                 }
             }).collect(toList());
 
-            if (events.size() > batchSize) {
-                sendEvents(insightsEndpoint, events.subList(0, batchSize));
-                events = new ArrayList<>(events.subList(batchSize, events.size()));
-            } else if (events.size() == batchSize) {
-                sendEvents(insightsEndpoint, events);
-                events = new ArrayList<>();
-            }
+            sendInBatches(batchSize, events, batch -> sendEvents(insightsEndpoint, batch));
 
-            // drain the remaining event list
-            if (!events.isEmpty()) {
-                sendEvents(insightsEndpoint, events);
-            }
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("malformed New Relic insights endpoint -- see the 'uri' configuration", e);
         } catch (Throwable t) {
             logger.warn("failed to send metrics", t);
         }
+    }
+
+    static void sendInBatches(int batchSize, List<String> events, Consumer<List<String>> sender) {
+        int fromIndex = 0;
+        int totalSize = events.size();
+        int toIndex;
+        do {
+            toIndex = Math.min(fromIndex + batchSize,totalSize);
+            if (toIndex > 0) sender.accept(events.subList(fromIndex, toIndex));
+            fromIndex = toIndex;
+        } while (toIndex < totalSize);
     }
 
     private Stream<String> writeLongTaskTimer(LongTaskTimer ltt) {
@@ -236,6 +237,8 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         HttpURLConnection con = null;
 
         try {
+            logger.info("Sending {} events to New Relic", events.size());
+
             con = (HttpURLConnection) insightsEndpoint.openConnection();
             con.setConnectTimeout((int) config.connectTimeout().toMillis());
             con.setReadTimeout((int) config.readTimeout().toMillis());
