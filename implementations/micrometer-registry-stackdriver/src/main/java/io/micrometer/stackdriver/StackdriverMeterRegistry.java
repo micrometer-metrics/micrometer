@@ -297,6 +297,11 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                     MetricDescriptor.ValueType.DOUBLE, statistic);
         }
 
+        TimeSeries createTimeSeries(Meter meter, long value, @Nullable String statistic) {
+            return createTimeSeries(meter.getId(), TypedValue.newBuilder().setInt64Value(value).build(),
+                    MetricDescriptor.ValueType.INT64, statistic);
+        }
+
         Stream<TimeSeries> createTimeSeries(HistogramSupport histogramSupport, boolean timeDomain) {
             HistogramSnapshot snapshot = histogramSupport.takeSnapshot();
             return Stream.concat(
@@ -304,7 +309,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                             createTimeSeries(histogramSupport, distribution(snapshot, timeDomain)),
                             createTimeSeries(histogramSupport,
                                     timeDomain ? snapshot.max(getBaseTimeUnit()) : snapshot.max(),
-                                    "max")
+                                    "max"),
+                            createTimeSeries(histogramSupport, snapshot.count(), "count")
                     ),
                     Arrays.stream(snapshot.percentileValues())
                             .map(valueAtP -> createTimeSeries(histogramSupport,
