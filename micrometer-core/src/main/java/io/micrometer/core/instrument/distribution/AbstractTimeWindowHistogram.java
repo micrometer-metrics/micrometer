@@ -176,11 +176,8 @@ abstract class AbstractTimeWindowHistogram<T, U> implements Histogram {
     }
 
     private ValueAtPercentile[] takeValueSnapshot() {
-        if (distributionStatisticConfig.getPercentiles() == null)
-            return new ValueAtPercentile[0];
-
-        final double[] monitoredPercentiles = distributionStatisticConfig.getPercentiles();
-        if (monitoredPercentiles.length == 0) {
+        double[] monitoredPercentiles = distributionStatisticConfig.getPercentiles();
+        if (monitoredPercentiles == null || monitoredPercentiles.length == 0) {
             return null;
         }
 
