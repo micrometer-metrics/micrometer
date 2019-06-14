@@ -117,15 +117,15 @@ public interface NamingConvention {
     NamingConvention slashes = new NamingConvention() {
         @Override
         public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-            return toSnakeCase(name);
+            return toSlashes(name);
         }
 
         @Override
         public String tagKey(String key) {
-            return toSnakeCase(key);
+            return toSlashes(key);
         }
 
-        private String toSnakeCase(String value) {
+        private String toSlashes(String value) {
             return Arrays.stream(value.split("\\.")).filter(Objects::nonNull).collect(Collectors.joining("/"));
         }
     };
