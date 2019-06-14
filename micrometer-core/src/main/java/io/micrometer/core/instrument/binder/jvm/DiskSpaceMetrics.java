@@ -59,11 +59,13 @@ public class DiskSpaceMetrics implements MeterBinder {
                 .tags(tagsWithPath)
                 .description("Usable space for path")
                 .baseUnit("bytes")
+                .strongReference(true)
                 .register(registry);
         Gauge.builder("disk.total", path, File::getTotalSpace)
                 .tags(tagsWithPath)
                 .description("Total space for path")
                 .baseUnit("bytes")
+                .strongReference(true)
                 .register(registry);
     }
 }
