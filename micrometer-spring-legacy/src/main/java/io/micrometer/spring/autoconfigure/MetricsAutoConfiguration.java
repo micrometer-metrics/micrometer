@@ -38,6 +38,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.SearchStrategy;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -70,8 +71,10 @@ public class MetricsAutoConfiguration {
             ObjectProvider<List<MeterBinder>> meterBinders,
             ObjectProvider<List<MeterFilter>> meterFilters,
             ObjectProvider<List<MeterRegistryCustomizer<?>>> meterRegistryCustomizers,
-            ObjectProvider<MetricsProperties> metricsProperties) {
-        return new MeterRegistryPostProcessor(meterBinders, meterFilters, meterRegistryCustomizers, metricsProperties);
+            ObjectProvider<MetricsProperties> metricsProperties,
+            ApplicationContext applicationContext) {
+        return new MeterRegistryPostProcessor(meterBinders, meterFilters, meterRegistryCustomizers, metricsProperties,
+                applicationContext);
     }
 
     @Bean

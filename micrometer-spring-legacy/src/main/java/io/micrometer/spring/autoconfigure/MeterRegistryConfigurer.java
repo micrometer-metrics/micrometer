@@ -18,6 +18,7 @@ package io.micrometer.spring.autoconfigure;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.config.MeterFilter;
 
 import java.util.Collections;
@@ -43,13 +44,16 @@ class MeterRegistryConfigurer {
 
     private final boolean addToGlobalRegistry;
 
+    private final boolean hasCompositeMeterRegistry;
+
     MeterRegistryConfigurer(ObjectProvider<List<MeterRegistryCustomizer<?>>> customizers,
                             ObjectProvider<List<MeterFilter>> filters, ObjectProvider<List<MeterBinder>> binders,
-                            boolean addToGlobalRegistry) {
+                            boolean addToGlobalRegistry, boolean hasCompositeMeterRegistry) {
         this.customizers = customizers;
         this.filters = filters;
         this.binders = binders;
         this.addToGlobalRegistry = addToGlobalRegistry;
+        this.hasCompositeMeterRegistry = hasCompositeMeterRegistry;
     }
 
     void configure(MeterRegistry registry) {
@@ -57,7 +61,10 @@ class MeterRegistryConfigurer {
         // tags or alter timer or summary configuration.
         customize(registry);
         addFilters(registry);
-        addBinders(registry);
+        if (!this.hasCompositeMeterRegistry
+                || registry instanceof CompositeMeterRegistry) {
+            addBinders(registry);
+        }
         if (this.addToGlobalRegistry && registry != Metrics.globalRegistry) {
             Metrics.addRegistry(registry);
         }
