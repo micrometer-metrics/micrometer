@@ -73,6 +73,6 @@ dependencies {
 
     testCompile 'org.springframework.security:spring-security-test'
 
-    testCompileOnly 'junit:junit:4.12'
-    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:latest.release'
+    testImplementation 'junit:junit:4.12'
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.4.+'
 }
