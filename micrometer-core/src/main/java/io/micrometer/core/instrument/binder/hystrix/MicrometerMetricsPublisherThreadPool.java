@@ -30,6 +30,8 @@ import io.micrometer.core.lang.NonNullFields;
 
 /**
  * Micrometer publisher for Hystrix thread pool metrics.
+ *
+ * @since 1.2.0
  */
 @NonNullApi
 @NonNullFields
