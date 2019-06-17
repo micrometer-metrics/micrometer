@@ -65,6 +65,13 @@ public interface AppOpticsConfig extends StepRegistryConfig {
         return v == null ? "https://api.appoptics.com/v1/measurements" : v;
     }
 
+    /**
+     * @return whether or not to ship a floored time - floors time to the multiple of the {@link #step()}
+     */
+    default boolean floorTimes() {
+        return Boolean.parseBoolean(get(prefix() + ".floorTimes"));
+    }
+
     @Override
     default int batchSize() {
         String v = get(prefix() + ".batchSize");

@@ -15,8 +15,10 @@
  */
 package io.micrometer.appoptics;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -28,30 +30,58 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.ipc.http.HttpSender;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link AppOpticsMeterRegistry}.
  *
  * @author Johnny Lim
+ * @author Hunter Sherman
  */
 class AppOpticsMeterRegistryTest {
 
     private final AppOpticsConfig config = new AppOpticsConfig() {
-        @Override
-        public String get(String key) {
-            return null;
-        }
 
         @Override
         public String apiToken() {
             return "fake";
         }
+
+        @Override
+        public String get(String key) {
+            return null;
+        }
     };
+
+    private final AppOpticsConfig configWithFlooring = new AppOpticsConfig() {
+
+        @Override
+        public String apiToken() {
+            return "fake";
+        }
+
+        @Override
+        public boolean floorTimes() {
+            return true;
+        }
+
+        @Override
+        public String get(String key) {
+            return null;
+        }
+    };
+
     private final MockClock clock = new MockClock();
-    private final AppOpticsMeterRegistry meterRegistry = new AppOpticsMeterRegistry(config, clock);
+    private final ThreadFactory mockThreadFactory = mock(ThreadFactory.class);
+    private final HttpSender mockSender = mock(HttpSender.class);
+
+    private AppOpticsMeterRegistry meterRegistry = new AppOpticsMeterRegistry(
+            config, clock, mockThreadFactory, mockSender);
 
     @Test
     void writeGauge() {
@@ -147,4 +177,38 @@ class AppOpticsMeterRegistryTest {
         assertThat(meterRegistry.writeMeter(meter)).hasValue("{\"name\":\"my.meter\",\"period\":60,\"value\":1.0,\"tags\":{\"statistic\":\"value\"}},{\"name\":\"my.meter\",\"period\":60,\"value\":2.0,\"tags\":{\"statistic\":\"value\"}}");
     }
 
+    @Test
+    void emptyMetersDoNoPosting() {
+        meterRegistry.publish();
+
+        verifyNoMoreInteractions(mockSender);
+    }
+
+    @Test
+    void defaultValueDoesNoFlooring() {
+        clock.add(Duration.ofSeconds(63));
+
+        assertThat(meterRegistry.getBodyMeasurementsPrefix()).isEqualTo(
+                String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 63));
+    }
+
+    @Test
+    void flooringRoundsToNearestStep() {
+        meterRegistry = new AppOpticsMeterRegistry(configWithFlooring, clock, mockThreadFactory, mockSender);
+
+        clock.add(Duration.ofSeconds(63));
+
+        assertThat(meterRegistry.getBodyMeasurementsPrefix()).isEqualTo(
+                String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 60));
+
+        clock.addSeconds(56); // 119
+
+        assertThat(meterRegistry.getBodyMeasurementsPrefix()).isEqualTo(
+                String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 60));
+
+        clock.addSeconds(1); // 120
+
+        assertThat(meterRegistry.getBodyMeasurementsPrefix()).isEqualTo(
+                String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 120));
+    }
 }
