@@ -16,12 +16,10 @@
 package io.micrometer.cloudwatch;
 
 import com.amazonaws.services.cloudwatch.model.MetricDatum;
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -86,14 +84,34 @@ class CloudWatchMeterRegistryTest {
     }
 
     @Test
-    void batchFunctionCounterDataShouldDropInfiniteValues() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(registry);
+    void batchFunctionCounterDataShouldClampInfiniteValues() {
+        FunctionCounter counter = FunctionCounter.builder("my.positive.infinity", Double.POSITIVE_INFINITY, Number::doubleValue).register(registry);
         clock.add(config.step());
-        assertThat(registry.new Batch().functionCounterData(counter)).isEmpty();
+        assertThat(registry.new Batch().functionCounterData(counter).findFirst().get().getValue())
+                .isEqualTo(CloudWatchUtils.MAXIMUM_ALLOWED_VALUE);
 
-        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(registry);
+        counter = FunctionCounter.builder("my.negative.infinity", Double.NEGATIVE_INFINITY, Number::doubleValue).register(registry);
         clock.add(config.step());
-        assertThat(registry.new Batch().functionCounterData(counter)).isEmpty();
+        assertThat(registry.new Batch().functionCounterData(counter).findFirst().get().getValue())
+                .isEqualTo(-CloudWatchUtils.MAXIMUM_ALLOWED_VALUE);
+    }
+
+    @Test
+    void writeMeterWhenCustomMeterHasOnlyNaNValuesShouldNotBeWritten() {
+        Measurement measurement = new Measurement(() -> Double.NaN, Statistic.VALUE);
+        List<Measurement> measurements = Arrays.asList(measurement);
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
+        assertThat(registry.new Batch().metricData(meter)).isEmpty();
+    }
+
+    @Test
+    void writeMeterWhenCustomMeterHasMixedNaNAndNonNaNValuesShouldSkipOnlyNaNValues() {
+        Measurement measurement1 = new Measurement(() -> Double.NaN, Statistic.VALUE);
+        Measurement measurement2 = new Measurement(() -> 1d, Statistic.VALUE);
+        Measurement measurement3 = new Measurement(() -> 2d, Statistic.VALUE);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
+        assertThat(registry.new Batch().metricData(meter)).hasSize(2);
     }
 
 }

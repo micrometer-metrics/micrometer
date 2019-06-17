@@ -153,10 +153,11 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         private long wallTime = clock.wallTime();
 
         private Stream<MetricDatum> gaugeData(Gauge gauge) {
-            double value = gauge.value();
-            if (!Double.isFinite(value))
+            MetricDatum metricDatum = metricDatum(gauge.getId(), "value", gauge.value());
+            if (metricDatum == null) {
                 return Stream.empty();
-            return Stream.of(metricDatum(gauge.getId(), "value", value));
+            }
+            return Stream.of(metricDatum);
         }
 
         private Stream<MetricDatum> counterData(Counter counter) {
@@ -192,19 +193,20 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         }
 
         private Stream<MetricDatum> timeGaugeData(TimeGauge gauge) {
-            double value = gauge.value(getBaseTimeUnit());
-            if (!Double.isFinite(value))
+            MetricDatum metricDatum = metricDatum(gauge.getId(), "value", gauge.value(getBaseTimeUnit()));
+            if (metricDatum == null) {
                 return Stream.empty();
-            return Stream.of(metricDatum(gauge.getId(), "value", value));
+            }
+            return Stream.of(metricDatum);
         }
 
         // VisibleForTesting
         Stream<MetricDatum> functionCounterData(FunctionCounter counter) {
-            double count = counter.count();
-            if (Double.isFinite(count)) {
-                return Stream.of(metricDatum(counter.getId(), "count", count));
+            MetricDatum metricDatum = metricDatum(counter.getId(), "count", counter.count());
+            if (metricDatum == null) {
+                return Stream.empty();
             }
-            return Stream.empty();
+            return Stream.of(metricDatum);
         }
 
         private Stream<MetricDatum> functionTimerData(FunctionTimer timer) {
@@ -214,7 +216,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
                     metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit())));
         }
 
-        private Stream<MetricDatum> metricData(Meter m) {
+        // VisibleForTesting
+        Stream<MetricDatum> metricData(Meter m) {
             return stream(m.measure().spliterator(), false)
                     .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), ms.getValue()))
                     .filter(Objects::nonNull);
