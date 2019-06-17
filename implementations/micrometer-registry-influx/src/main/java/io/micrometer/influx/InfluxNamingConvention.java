@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,14 +15,23 @@
  */
 package io.micrometer.influx;
 
+import java.util.regex.Pattern;
+
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
 
 /**
+ * {@link NamingConvention} for Influx.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public class InfluxNamingConvention implements NamingConvention {
+
+    // https://docs.influxdata.com/influxdb/v1.3/write_protocols/line_protocol_reference/#special-characters
+    private static final Pattern PATTERN_SPECIAL_CHARACTERS = Pattern.compile("([, =\"])");
+
     private final NamingConvention delegate;
 
     /**
@@ -39,7 +48,7 @@ public class InfluxNamingConvention implements NamingConvention {
 
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        return format(delegate.name(name, type, baseUnit).replace("=", "_"));
+        return escape(delegate.name(name, type, baseUnit).replace("=", "_"));
     }
 
     @Override
@@ -47,7 +56,7 @@ public class InfluxNamingConvention implements NamingConvention {
         // `time` cannot be a field key or tag key
         if (key.equals("time"))
             throw new IllegalArgumentException("'time' is an invalid tag key in InfluxDB");
-        return format(delegate.tagKey(key));
+        return escape(delegate.tagKey(key));
     }
 
     @Override
@@ -55,15 +64,10 @@ public class InfluxNamingConvention implements NamingConvention {
         // `time` cannot be a field key or tag key
         if (value.equals("time"))
             throw new IllegalArgumentException("'time' is an invalid tag value in InfluxDB");
-        return format(value);
+        return escape(this.delegate.tagValue(value));
     }
 
-    private String format(String name) {
-        // https://docs.influxdata.com/influxdb/v1.3/write_protocols/line_protocol_reference/#special-characters
-        return name
-                .replace(",", "\\,")
-                .replace(" ", "\\ ")
-                .replace("=", "\\=")
-                .replace("\"", "\\\"");
+    private String escape(String string) {
+        return PATTERN_SPECIAL_CHARACTERS.matcher(string).replaceAll("\\\\$1");
     }
 }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -61,7 +61,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     public PrometheusMeterRegistry(PrometheusConfig config, CollectorRegistry registry, Clock clock) {
         super(clock);
         this.registry = registry;
-        this.config().namingConvention(new PrometheusNamingConvention());
+        config().namingConvention(new PrometheusNamingConvention());
         this.prometheusConfig = config;
     }
 
@@ -87,7 +87,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         List<String> tagValues = tagValues(id);
 
         collector.add((conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.COUNTER, conventionName,
-                Stream.of(new Collector.MetricFamilySamples.Sample(conventionName, tagKeys, tagValues, counter.count())))));
+                new Collector.MetricFamilySamples.Sample(conventionName, tagKeys, tagValues, counter.count()))));
 
         return counter;
     }
@@ -148,8 +148,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
                     conventionName + "_sum", tagKeys, tagValues, summary.totalAmount()));
 
             return Stream.of(new MicrometerCollector.Family(type, conventionName, samples.build()),
-                    new MicrometerCollector.Family(Collector.Type.GAUGE, conventionName + "_max", Stream.of(
-                            new Collector.MetricFamilySamples.Sample(conventionName + "_max", tagKeys, tagValues, summary.max()))));
+                    new MicrometerCollector.Family(Collector.Type.GAUGE, conventionName + "_max",
+                            new Collector.MetricFamilySamples.Sample(conventionName + "_max", tagKeys, tagValues, summary.max())));
         });
 
         return summary;
@@ -226,9 +226,8 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         Gauge gauge = new DefaultGauge(id, obj, valueFunction);
         List<String> tagValues = tagValues(id);
 
-        collector.add((conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.GAUGE, conventionName, Stream.of(
-                new Collector.MetricFamilySamples.Sample(conventionName, tagKeys, tagValues, gauge.value())
-        ))));
+        collector.add((conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.GAUGE, conventionName,
+                new Collector.MetricFamilySamples.Sample(conventionName, tagKeys, tagValues, gauge.value()))));
 
         return gauge;
     }
@@ -239,10 +238,10 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         LongTaskTimer ltt = new DefaultLongTaskTimer(id, clock);
         List<String> tagValues = tagValues(id);
 
-        collector.add((conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.UNTYPED, conventionName, Stream.of(
+        collector.add((conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.UNTYPED, conventionName,
                 new Collector.MetricFamilySamples.Sample(conventionName + "_active_count", tagKeys, tagValues, ltt.activeTasks()),
                 new Collector.MetricFamilySamples.Sample(conventionName + "_duration_sum", tagKeys, tagValues, ltt.duration(TimeUnit.SECONDS))
-        ))));
+        )));
 
         return ltt;
     }
@@ -253,10 +252,10 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         FunctionTimer ft = new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnits, getBaseTimeUnit());
         List<String> tagValues = tagValues(id);
 
-        collector.add((conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.SUMMARY, conventionName, Stream.of(
+        collector.add((conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.SUMMARY, conventionName,
                 new Collector.MetricFamilySamples.Sample(conventionName + "_count", tagKeys, tagValues, ft.count()),
                 new Collector.MetricFamilySamples.Sample(conventionName + "_sum", tagKeys, tagValues, ft.totalTime(TimeUnit.SECONDS))
-        ))));
+        )));
 
         return ft;
     }
@@ -267,9 +266,9 @@ public class PrometheusMeterRegistry extends MeterRegistry {
         FunctionCounter fc = new CumulativeFunctionCounter<>(id, obj, countFunction);
         List<String> tagValues = tagValues(id);
 
-        collector.add((conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.COUNTER, conventionName, Stream.of(
+        collector.add((conventionName, tagKeys) -> Stream.of(new MicrometerCollector.Family(Collector.Type.COUNTER, conventionName,
                 new Collector.MetricFamilySamples.Sample(conventionName, tagKeys, tagValues, fc.count())
-        ))));
+        )));
 
         return fc;
     }
@@ -356,7 +355,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             }
 
             throw new IllegalArgumentException("Prometheus requires that all meters with the same name have the same" +
-                    " set of tag keys. There is already an existing meter containing tag keys [" +
+                    " set of tag keys. There is already an existing meter named '" + name + "' containing tag keys [" +
                     existingCollector.getTagKeys().stream().collect(joining(", ")) + "]. The meter you are attempting to register" +
                     " has keys [" + tagKeys.stream().collect(joining(", ")) + "].");
         });

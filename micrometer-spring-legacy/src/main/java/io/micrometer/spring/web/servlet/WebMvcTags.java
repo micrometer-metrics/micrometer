@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -76,10 +76,11 @@ public final class WebMvcTags {
     /**
      * Creates a {@code uri} tag based on the URI of the given {@code request}. Uses the
      * {@link HandlerMapping#BEST_MATCHING_PATTERN_ATTRIBUTE} best matching pattern if
-     * available, falling back to the request's {@link HttpServletRequest#getPathInfo()
-     * path info} if necessary.
+     * available. Falling back to {@code REDIRECTION} for 3xx responses, {@code NOT_FOUND}
+     * for 404 responses, {@code root} for requests with no path info, and {@code UNKNOWN}
+     * for all other requests.
      *
-     * @param request  the request
+     * @param request the request
      * @param response the response
      * @return the uri tag derived from the request
      */
@@ -98,7 +99,7 @@ public final class WebMvcTags {
                 }
             }
             String pathInfo = getPathInfo(request);
-            if(pathInfo.isEmpty()) {
+            if (pathInfo.isEmpty()) {
                 return URI_ROOT;
             }
         }
@@ -135,6 +136,10 @@ public final class WebMvcTags {
      * @return the exception tag derived from the exception
      */
     public static Tag exception(@Nullable Throwable exception) {
-        return exception == null ? EXCEPTION_NONE : Tag.of("exception", exception.getClass().getSimpleName());
+        if (exception == null) {
+            return EXCEPTION_NONE;
+        }
+        String simpleName = exception.getClass().getSimpleName();
+        return Tag.of("exception", simpleName.isEmpty() ? exception.getClass().getName() : simpleName);
     }
 }

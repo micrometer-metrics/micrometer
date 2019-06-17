@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,10 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.Socket;
-import java.net.URI;
-import java.net.URL;
+import java.net.*;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -40,8 +37,11 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
 
 /**
+ * {@link StepMeterRegistry} for Wavefront.
+ *
  * @author Jon Schneider
  * @author Howard Yoo
+ * @since 1.0.0
  */
 public class WavefrontMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(WavefrontMeterRegistry.class);
@@ -91,13 +91,15 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                     try {
                         URL url = new URL(uri.getScheme(), uri.getHost(), uri.getPort(), String.format("/report/metrics?t=%s&h=%s", config.apiToken(), config.source()));
                         con = (HttpURLConnection) url.openConnection();
+                        con.setConnectTimeout((int) config.connectTimeout().toMillis());
+                        con.setReadTimeout((int) config.readTimeout().toMillis());
                         con.setDoOutput(true);
                         con.addRequestProperty("Content-Type", "application/json");
                         con.addRequestProperty("Accept", "application/json");
 
                         try (OutputStream os = con.getOutputStream();
                              OutputStreamWriter writer = new OutputStreamWriter(os, "UTF-8")) {
-                            writer.write("{" + stream.collect(joining(",")) + "}");
+                            writer.write(stream.collect(joining(",", "{", "}")));
                             writer.flush();
                         }
 
@@ -107,7 +109,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                         } else {
                             try (InputStream in = con.getErrorStream()) {
                                 logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                                        .lines().collect(joining("\n")));
+                                        .lines().collect(joining(System.lineSeparator())));
                             }
                         }
                     } catch (Exception e) {
@@ -116,16 +118,26 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                         quietlyCloseUrlConnection(con);
                     }
                 } else {
-                    try (Socket socket = new Socket(uri.getHost(), uri.getPort());
-                         OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream(), "UTF-8")) {
-                        writer.write(stream.collect(joining("\n")) + "\n");
-                        writer.flush();
+                    SocketAddress endpoint = getSocketAddress(uri.getHost(), uri.getPort());
+                    int timeout = (int) this.config.connectTimeout().toMillis();
+
+                    try (Socket socket = new Socket()) {
+                        socket.connect(endpoint, timeout);
+                        try (OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream(), "UTF-8")) {
+                          writer.write(stream.collect(joining("\n", "", "\n")));
+                          writer.flush();
+                        }
                     }
                 }
             }
         } catch (Throwable t) {
             logger.warn("failed to send metrics", t);
         }
+    }
+
+    private static SocketAddress getSocketAddress(String host, int port) throws UnknownHostException {
+        return host != null ? new InetSocketAddress(host, port) :
+                new InetSocketAddress(InetAddress.getByName(null), port);
     }
 
     private void quietlyCloseUrlConnection(@Nullable HttpURLConnection con) {
@@ -139,14 +151,16 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
 
     private Stream<String> writeTimer(FunctionTimer timer) {
         long wallTime = clock.wallTime();
+        Stream.Builder<String> metrics = Stream.builder();
 
         Meter.Id id = timer.getId();
 
         // we can't know anything about max and percentiles originating from a function timer
-        return Stream.of(
-                writeMetric(id, "count", wallTime, timer.count()),
-                writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit())),
-                writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit())));
+        addMetric(metrics, id, "count", wallTime, timer.count());
+        addMetric(metrics, id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
+        addMetric(metrics, id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()));
+
+        return metrics.build();
     }
 
     private Stream<String> writeTimer(Timer timer) {
@@ -154,10 +168,10 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         final Stream.Builder<String> metrics = Stream.builder();
 
         Meter.Id id = timer.getId();
-        metrics.add(writeMetric(id, "sum", wallTime, timer.totalTime(getBaseTimeUnit())));
-        metrics.add(writeMetric(id, "count", wallTime, timer.count()));
-        metrics.add(writeMetric(id, "avg", wallTime, timer.mean(getBaseTimeUnit())));
-        metrics.add(writeMetric(id, "max", wallTime, timer.max(getBaseTimeUnit())));
+        addMetric(metrics, id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()));
+        addMetric(metrics, id, "count", wallTime, timer.count());
+        addMetric(metrics, id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
+        addMetric(metrics, id, "max", wallTime, timer.max(getBaseTimeUnit()));
 
         return metrics.build();
     }
@@ -167,21 +181,33 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         final Stream.Builder<String> metrics = Stream.builder();
 
         Meter.Id id = summary.getId();
-        metrics.add(writeMetric(id, "sum", wallTime, summary.totalAmount()));
-        metrics.add(writeMetric(id, "count", wallTime, summary.count()));
-        metrics.add(writeMetric(id, "avg", wallTime, summary.mean()));
-        metrics.add(writeMetric(id, "max", wallTime, summary.max()));
+        addMetric(metrics, id, "sum", wallTime, summary.totalAmount());
+        addMetric(metrics, id, "count", wallTime, summary.count());
+        addMetric(metrics, id, "avg", wallTime, summary.mean());
+        addMetric(metrics, id, "max", wallTime, summary.max());
 
         return metrics.build();
     }
 
-    private Stream<String> writeMeter(Meter m) {
+    // VisibleForTesting
+    Stream<String> writeMeter(Meter meter) {
         long wallTime = clock.wallTime();
-        return stream(m.measure().spliterator(), false)
-                .map(ms -> {
-                    Meter.Id id = m.getId().withTag(ms.getStatistic());
-                    return writeMetric(id, null, wallTime, ms.getValue());
+        Stream.Builder<String> metrics = Stream.builder();
+
+        stream(meter.measure().spliterator(), false)
+                .forEach(measurement -> {
+                    Meter.Id id = meter.getId().withTag(measurement.getStatistic());
+                    addMetric(metrics, id, null, wallTime, measurement.getValue());
                 });
+
+        return metrics.build();
+    }
+
+    // VisibleForTesting
+    void addMetric(Stream.Builder<String> metrics, Meter.Id id, @Nullable String suffix, long wallTime, double value) {
+        if (Double.isFinite(value)) {
+            metrics.add(writeMetric(id, suffix, wallTime, value));
+        }
     }
 
     /**

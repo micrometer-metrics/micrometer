@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,7 @@
  */
 package io.micrometer.spring.autoconfigure.export.wavefront;
 
-import io.micrometer.spring.autoconfigure.export.PropertiesConfigAdapter;
+import io.micrometer.spring.autoconfigure.export.StepRegistryPropertiesConfigAdapter;
 import io.micrometer.wavefront.WavefrontConfig;
 
 /**
@@ -23,9 +23,9 @@ import io.micrometer.wavefront.WavefrontConfig;
  *
  * @author Jon Schneider
  */
-public class WavefrontPropertiesConfigAdapter extends PropertiesConfigAdapter<WavefrontProperties> implements WavefrontConfig {
+class WavefrontPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<WavefrontProperties> implements WavefrontConfig {
 
-    public WavefrontPropertiesConfigAdapter(WavefrontProperties properties) {
+    WavefrontPropertiesConfigAdapter(WavefrontProperties properties) {
         super(properties);
     }
 

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,13 +28,20 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
+/**
+ * Tests for {@link OkHttpMetricsEventListener}.
+ *
+ * @author Bjarte S. Karlsen
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class OkHttpMetricsEventListenerTest {
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
     private OkHttpClient client = new OkHttpClient.Builder()
         .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
-            .uriMapper(req -> req.url().encodedPath())
             .tags(Tags.of("foo", "bar"))
             .build())
         .build();
@@ -48,24 +55,20 @@ class OkHttpMetricsEventListenerTest {
         client.newCall(request).execute().close();
 
         assertThat(registry.get("okhttp.requests")
-            .tags("uri", "/helloworld.txt", "status", "200")
+            .tags("foo", "bar", "status", "200")
             .timer().count()).isEqualTo(1L);
     }
 
     @Test
-    void timeNotFound() {
+    void timeNotFound() throws IOException {
         Request request = new Request.Builder()
             .url("https://publicobject.com/DOESNOTEXIST")
             .build();
 
-        try {
-            client.newCall(request).execute().close();
-        } catch (IOException ignore) {
-            // expected
-        }
+        client.newCall(request).execute().close();
 
         assertThat(registry.get("okhttp.requests")
-            .tags("uri", "NOT_FOUND")
+            .tags("foo", "bar", "uri", "NOT_FOUND")
             .timer().count()).isEqualTo(1L);
     }
 
@@ -78,19 +81,54 @@ class OkHttpMetricsEventListenerTest {
         OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(1, TimeUnit.MILLISECONDS)
             .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
-                .uriMapper(req -> req.url().encodedPath())
                 .tags(Tags.of("foo", "bar"))
                 .build())
             .build();
 
         try {
             client.newCall(request).execute().close();
+            fail("Expected IOException.");
         } catch (IOException ignored) {
             // expected
         }
 
         assertThat(registry.get("okhttp.requests")
-            .tags("uri", "UNKNOWN", "status", "IO_ERROR")
+            .tags("foo", "bar", "uri", "UNKNOWN", "status", "IO_ERROR")
             .timer().count()).isEqualTo(1L);
     }
+
+    @Test
+    void uriTagWorksWithUriPatternHeader() throws IOException {
+        Request request = new Request.Builder()
+            .url("https://publicobject.com/helloworld.txt")
+            .header(OkHttpMetricsEventListener.URI_PATTERN, "/")
+            .build();
+
+        client.newCall(request).execute().close();
+
+        assertThat(registry.get("okhttp.requests")
+            .tags("foo", "bar", "uri", "/", "status", "200")
+            .timer().count()).isEqualTo(1L);
+    }
+
+    @Test
+    void uriTagWorksWithUriMapper() throws IOException {
+        OkHttpClient client = new OkHttpClient.Builder()
+            .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
+                .uriMapper(req -> req.url().encodedPath())
+                .tags(Tags.of("foo", "bar"))
+                .build())
+            .build();
+
+        Request request = new Request.Builder()
+            .url("https://publicobject.com/helloworld.txt")
+            .build();
+
+        client.newCall(request).execute().close();
+
+        assertThat(registry.get("okhttp.requests")
+            .tags("foo", "bar", "uri", "/helloworld.txt", "status", "200")
+            .timer().count()).isEqualTo(1L);
+    }
+
 }

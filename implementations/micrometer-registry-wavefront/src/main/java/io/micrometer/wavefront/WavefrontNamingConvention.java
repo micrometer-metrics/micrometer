@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,12 +15,24 @@
  */
 package io.micrometer.wavefront;
 
+import java.util.regex.Pattern;
+
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.lang.Nullable;
 
+/**
+ * Naming convention for Wavefront.
+ *
+ * @author Jon Schneider
+ * @since 1.0.0
+ */
 public class WavefrontNamingConvention implements NamingConvention {
+
+    private static final Pattern PATTERN_NAME_TO_SANITIZE = Pattern.compile("[^a-zA-Z0-9\\-_\\./,]");
+    private static final Pattern PATTERN_TAG_KEY_TO_SANITIZE = Pattern.compile("[^a-zA-Z0-9\\-_\\.]");
+
     private final NamingConvention delegate;
 
     @Nullable
@@ -41,7 +53,8 @@ public class WavefrontNamingConvention implements NamingConvention {
      */
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        String sanitizedName = delegate.name(name, type, baseUnit).replaceAll("[^a-zA-Z0-9\\-_\\./,]", "_");
+        String delegatedName = this.delegate.name(name, type, baseUnit);
+        String sanitizedName = PATTERN_NAME_TO_SANITIZE.matcher(delegatedName).replaceAll("_");
 
         // add name prefix if prefix exists
         if (namePrefix != null) {
@@ -55,7 +68,8 @@ public class WavefrontNamingConvention implements NamingConvention {
      */
     @Override
     public String tagKey(String key) {
-        return delegate.tagKey(key).replaceAll("[^a-zA-Z0-9\\-_\\.]", "_");
+        String delegatedTagKey = this.delegate.tagKey(key);
+        return PATTERN_TAG_KEY_TO_SANITIZE.matcher(delegatedTagKey).replaceAll("_");
     }
 
     /**

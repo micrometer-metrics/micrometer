@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,8 +37,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 /**
+ * Tests for {@link TomcatMetrics}.
+ *
  * @author Clint Checketts
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 class TomcatMetricsTest {
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
@@ -111,7 +114,7 @@ class TomcatMetricsTest {
 
             assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 
-            registry.find("tomcat.global.received").functionCounter();
+            assertThat(registry.find("tomcat.global.received").functionCounter()).isNotNull();
         } finally {
             server.stop();
             server.destroy();
@@ -129,7 +132,7 @@ class TomcatMetricsTest {
             server.start();
 
             TomcatMetrics.monitor(registry, null);
-            registry.find("tomcat.global.received").functionCounter();
+            assertThat(registry.find("tomcat.global.received").functionCounter()).isNotNull();
         } finally {
             server.stop();
             server.destroy();

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -69,7 +69,7 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
         // invalid character replacement happens in the spectator-reg-atlas module, so doesn't need
         // to be duplicated here.
-        this.config().namingConvention(new AtlasNamingConvention());
+        config().namingConvention(new AtlasNamingConvention());
 
         start();
     }
@@ -110,11 +110,13 @@ public class AtlasMeterRegistry extends MeterRegistry {
     @Override
     protected io.micrometer.core.instrument.DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
                                                                                        double scale) {
-        com.netflix.spectator.api.DistributionSummary internalSummary = registry.distributionSummary(spectatorId(id));
+        com.netflix.spectator.api.DistributionSummary internalSummary;
 
         if (distributionStatisticConfig.isPercentileHistogram()) {
             // This doesn't report the normal count/totalTime/max stats, so we treat it as additive
-            PercentileDistributionSummary.get(registry, spectatorId(id));
+            internalSummary = PercentileDistributionSummary.get(registry, spectatorId(id));
+        } else {
+            internalSummary = registry.distributionSummary(spectatorId(id));
         }
 
         SpectatorDistributionSummary summary = new SpectatorDistributionSummary(id, internalSummary, clock, distributionStatisticConfig, scale);
@@ -132,11 +134,13 @@ public class AtlasMeterRegistry extends MeterRegistry {
     @SuppressWarnings("ConstantConditions")
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector pauseDetector) {
-        com.netflix.spectator.api.Timer internalTimer = registry.timer(spectatorId(id));
+        com.netflix.spectator.api.Timer internalTimer;
 
         if (distributionStatisticConfig.isPercentileHistogram()) {
             // This doesn't report the normal count/totalTime/max stats, so we treat it as additive
-            PercentileTimer.get(registry, spectatorId(id));
+            internalTimer = PercentileTimer.get(registry, spectatorId(id));
+        } else {
+            internalTimer = registry.timer(spectatorId(id));
         }
 
         SpectatorTimer timer = new SpectatorTimer(id, internalTimer, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit());

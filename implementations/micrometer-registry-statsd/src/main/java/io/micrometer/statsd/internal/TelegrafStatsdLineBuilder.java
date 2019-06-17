@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -52,7 +52,8 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
     @Override
     String line(String amount, @Nullable Statistic stat, String type) {
         updateIfNamingConventionChanged();
-        return name + tagsByStatistic(stat) + ":" + amount + "|" + type;
+        String line = name + tagsByStatistic(stat) + ":" + amount + "|" + type;
+        return line;
     }
 
     private void updateIfNamingConventionChanged() {
@@ -64,12 +65,14 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
             }
 
             this.name = telegrafEscape(next.name(id.getName(), id.getType(), id.getBaseUnit()));
-            this.tags = HashTreePMap.empty();
-            this.conventionTags = id.getTags().iterator().hasNext() ?
-                    id.getConventionTags(this.namingConvention).stream()
-                            .map(t -> telegrafEscape(t.getKey()) + "=" + telegrafEscape(t.getValue()))
-                            .collect(Collectors.joining(","))
-                    : null;
+            synchronized (tagsLock) {
+                this.tags = HashTreePMap.empty();
+                this.conventionTags = id.getTags().iterator().hasNext() ?
+                        id.getConventionTags(this.namingConvention).stream()
+                                .map(t -> telegrafEscape(t.getKey()) + "=" + telegrafEscape(t.getValue()))
+                                .collect(Collectors.joining(","))
+                        : null;
+            }
             this.tagsNoStat = tags(null, conventionTags, "=", ",");
         }
     }
@@ -95,9 +98,16 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
         }
     }
 
+    /**
+     * Backslash escape '=' works fine.
+     * <p>
+     * Trying to escape spaces and commas causes the rest of the name to be dropped by telegraf.
+     * Trying to escape colons doesn't work. All of these must be replaced.
+     */
+    // backslash escape =
+    // trying to escape spaces and comma drops everything after that
     private String telegrafEscape(String value) {
-        return value.replace(",", "\\,")
-                .replace("=", "\\=")
-                .replace(" ", "\\ ");
+        return value.replaceAll("=", "\\=")
+                .replaceAll("[\\s,:]", "_");
     }
 }

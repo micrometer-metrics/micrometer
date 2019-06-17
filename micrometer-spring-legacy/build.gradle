@@ -42,6 +42,8 @@ dependencies {
 
     compile 'org.springframework.integration:spring-integration-core', optional
 
+    annotationProcessor 'org.springframework.boot:spring-boot-autoconfigure-processor'
+
     // to validate auto-completion on configuration properties
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
@@ -70,4 +72,7 @@ dependencies {
     testCompile 'org.springframework.integration:spring-integration-xml'
 
     testCompile 'org.springframework.security:spring-security-test'
+
+    testCompileOnly 'junit:junit:4.12'
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:latest.release'
 }

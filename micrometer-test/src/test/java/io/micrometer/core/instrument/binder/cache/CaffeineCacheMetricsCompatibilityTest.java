@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Collections.emptyList;
 
-public class CaffeineCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
+class CaffeineCacheMetricsCompatibilityTest extends CacheMeterBinderCompatibilityKit {
     private AtomicReference<String> loadValue = new AtomicReference<>();
 
     private LoadingCache<String, String> cache = Caffeine.newBuilder()
@@ -37,7 +37,7 @@ public class CaffeineCacheMetricsCompatibilityTest extends CacheMeterBinderCompa
                 @Override
                 public String load(@Nonnull String key) throws Exception {
                     String val = loadValue.getAndSet(null);
-                    if(val == null)
+                    if (val == null)
                         throw new Exception("don't load this key");
                     return val;
                 }
@@ -60,7 +60,7 @@ public class CaffeineCacheMetricsCompatibilityTest extends CacheMeterBinderCompa
     public String get(String key) {
         try {
             return cache.get(key);
-        } catch(Exception ignored) {
+        } catch (Exception ignored) {
             return null;
         }
     }

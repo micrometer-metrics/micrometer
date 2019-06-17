@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -39,6 +38,7 @@ import static java.util.stream.StreamSupport.stream;
  * All new metrics should pass through each {@link MeterFilter} in the order in which they were added.
  *
  * @author Jon Schneider
+ * @author Clint Checketts
  * @author Johnny Lim
  */
 public interface MeterFilter {
@@ -87,7 +87,7 @@ public interface MeterFilter {
     }
 
     /**
-     * Suppress tags with a given tag key.
+     * Suppress tags with given tag keys.
      *
      * @param tagKeys Keys of tags that should be suppressed.
      * @return A tag-suppressing filter.
@@ -116,9 +116,8 @@ public interface MeterFilter {
      *
      * @param tagKey      The tag key for which replacements should be made
      * @param replacement The value to replace with
-     * @param exceptions  All a matching tag with this value to retain its original value
+     * @param exceptions  All matching tags with this value to retain its original value
      * @return A filter that replaces tag values.
-     * @author Clint Checketts
      */
     static MeterFilter replaceTagValues(String tagKey, Function<String, String> replacement, String... exceptions) {
         return new MeterFilter() {
@@ -213,7 +212,7 @@ public interface MeterFilter {
      * <p>
      * While this filter doesn't discriminate between your most critical and less useful metrics in
      * deciding what to drop (all the metrics you intend to use should fit below this threshold),
-     * it can effectively cap your risk of an accidentally high-cardiality metric costing too much.
+     * it can effectively cap your risk of an accidentally high-cardinality metric costing too much.
      *
      * @param maximumTimeSeries The total number of unique name/tag permutations allowed before filtering kicks in.
      * @return A filter that globally limits the number of unique name and tag combinations.
@@ -245,7 +244,7 @@ public interface MeterFilter {
     static MeterFilter maximumAllowableTags(String meterNamePrefix, String tagKey, int maximumTagValues,
                                             MeterFilter onMaxReached) {
         return new MeterFilter() {
-            private final Set<String> observedTagValues = new ConcurrentSkipListSet<>();
+            private final Set<String> observedTagValues = ConcurrentHashMap.newKeySet();
 
             @Override
             public MeterFilterReply accept(Meter.Id id) {
@@ -262,7 +261,7 @@ public interface MeterFilter {
             }
 
             private String getTagValue(Meter.Id id) {
-                return (id.getName().equals(meterNamePrefix) ? id.getTag(tagKey) : null);
+                return (id.getName().startsWith(meterNamePrefix) ? id.getTag(tagKey) : null);
             }
 
             @Override
@@ -281,7 +280,7 @@ public interface MeterFilter {
     }
 
     /**
-     * Meters that start with the provided name should NOT be present in published metrics.
+     * Meters that start with the provided name prefix should NOT be present in published metrics.
      *
      * @param prefix When a meter name starts with the prefix, guarantee its exclusion in published metrics.
      * @return A filter that guarantees the exclusion of matching meters.
@@ -301,7 +300,7 @@ public interface MeterFilter {
         return new MeterFilter() {
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
-                if (Meter.Type.TIMER.equals(id.getType()) && id.getName().startsWith(prefix)) {
+                if (id.getType() == Meter.Type.TIMER && id.getName().startsWith(prefix)) {
                     return DistributionStatisticConfig.builder()
                             .maximumExpectedValue(max.toNanos())
                             .build()
@@ -316,14 +315,14 @@ public interface MeterFilter {
      * Set a maximum expected value on any {@link DistributionSummary} whose name begins with the given prefix.
      *
      * @param prefix Apply the maximum only to distribution summaries whose name begins with this prefix.
-     * @param max    The maximum expected value of the distribution summmary.
+     * @param max    The maximum expected value of the distribution summary.
      * @return A filter that applies a maximum expected value to a distribution summary.
      */
     static MeterFilter maxExpected(String prefix, long max) {
         return new MeterFilter() {
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
-                if (Meter.Type.DISTRIBUTION_SUMMARY.equals(id.getType()) && id.getName().startsWith(prefix)) {
+                if (id.getType() == Meter.Type.DISTRIBUTION_SUMMARY && id.getName().startsWith(prefix)) {
                     return DistributionStatisticConfig.builder()
                             .maximumExpectedValue(max)
                             .build()
@@ -345,7 +344,7 @@ public interface MeterFilter {
         return new MeterFilter() {
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
-                if (Meter.Type.TIMER.equals(id.getType()) && id.getName().startsWith(prefix)) {
+                if (id.getType() == Meter.Type.TIMER && id.getName().startsWith(prefix)) {
                     return DistributionStatisticConfig.builder()
                             .minimumExpectedValue(min.toNanos())
                             .build()
@@ -360,14 +359,14 @@ public interface MeterFilter {
      * Set a minimum expected value on any {@link DistributionSummary} whose name begins with the given prefix.
      *
      * @param prefix Apply the minimum only to distribution summaries whose name begins with this prefix.
-     * @param min    The minimum expected value of the distribution summmary.
+     * @param min    The minimum expected value of the distribution summary.
      * @return A filter that applies a minimum expected value to a distribution summary.
      */
     static MeterFilter minExpected(String prefix, long min) {
         return new MeterFilter() {
             @Override
             public DistributionStatisticConfig configure(Meter.Id id, DistributionStatisticConfig config) {
-                if (Meter.Type.DISTRIBUTION_SUMMARY.equals(id.getType()) && id.getName().startsWith(prefix)) {
+                if (id.getType() == Meter.Type.DISTRIBUTION_SUMMARY && id.getName().startsWith(prefix)) {
                     return DistributionStatisticConfig.builder()
                             .minimumExpectedValue(min)
                             .build()

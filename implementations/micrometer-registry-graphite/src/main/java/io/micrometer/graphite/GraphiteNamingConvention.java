@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,6 +22,12 @@ import io.micrometer.core.lang.Nullable;
 import java.text.Normalizer;
 import java.util.regex.Pattern;
 
+/**
+ * {@link NamingConvention} for Graphite.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 public class GraphiteNamingConvention implements NamingConvention {
     private final NamingConvention delegate;
 
@@ -41,27 +47,29 @@ public class GraphiteNamingConvention implements NamingConvention {
 
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        return format(name);
+        return sanitize(this.delegate.name(normalize(name), type, baseUnit));
     }
 
     @Override
     public String tagKey(String key) {
-        return format(key);
+        return sanitize(this.delegate.tagKey(normalize(key)));
     }
 
     @Override
     public String tagValue(String value) {
-        return format(value);
+        return sanitize(this.delegate.tagValue(normalize(value)));
     }
 
     /**
      * Github Issue: https://github.com/graphite-project/graphite-web/issues/243
-
      * Unicode is not OK. Some special chars are not OK.
      */
-    private String format(String name) {
-        String sanitized = Normalizer.normalize(name, Normalizer.Form.NFKD);
-        sanitized = delegate.tagKey(sanitized);
-        return blacklistedChars.matcher(sanitized).replaceAll("_");
+    private String normalize(String name) {
+        return Normalizer.normalize(name, Normalizer.Form.NFKD);
     }
+
+    private String sanitize(String delegated) {
+        return blacklistedChars.matcher(delegated).replaceAll("_");
+    }
+
 }

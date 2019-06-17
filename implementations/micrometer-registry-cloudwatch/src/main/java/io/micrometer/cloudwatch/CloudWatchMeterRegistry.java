@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,6 +19,7 @@ import com.amazonaws.handlers.AsyncHandler;
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
 import com.amazonaws.services.cloudwatch.model.*;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.lang.Nullable;
@@ -27,12 +28,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
@@ -52,11 +53,14 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
                                    AmazonCloudWatchAsync amazonCloudWatchAsync, ThreadFactory threadFactory) {
         super(config, clock);
-        requireNonNull(config.namespace());
+
+        if (config.namespace() == null) {
+            throw new MissingRequiredConfigurationException("namespace must be set to report metrics to CloudWatch");
+        }
 
         this.amazonCloudWatchAsync = amazonCloudWatchAsync;
         this.config = config;
-        this.config().namingConvention(NamingConvention.identity);
+        config().namingConvention(NamingConvention.identity);
         start(threadFactory);
     }
 
@@ -132,13 +136,19 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         return metrics.build();
     }
 
-    private Stream<MetricDatum> metricData(Meter m) {
+    // VisibleForTesting
+    Stream<MetricDatum> metricData(Meter m) {
         long wallTime = clock.wallTime();
         return stream(m.measure().spliterator(), false)
-            .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), wallTime, ms.getValue()));
+            .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), wallTime, ms.getValue()))
+            .filter(Objects::nonNull);
     }
 
     private MetricDatum metricDatum(Meter.Id id, long wallTime, double value) {
+        if (Double.isNaN(value)) {
+            return null;
+        }
+
         String metricName = id.getConventionName(config().namingConvention());
         List<Tag> tags = id.getConventionTags(config().namingConvention());
         return new MetricDatum()

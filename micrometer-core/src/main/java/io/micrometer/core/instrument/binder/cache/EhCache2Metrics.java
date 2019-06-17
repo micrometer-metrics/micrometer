@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.cache;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import net.sf.ehcache.Ehcache;
@@ -43,7 +44,6 @@ public class EhCache2Metrics extends CacheMeterBinder {
      * @param cache    The cache to instrument.
      * @param tags     Tags to apply to all recorded metrics. Must be an even number of arguments representing key/value pairs of tags.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
-     * @see com.google.common.cache.CacheStats
      */
     public static Ehcache monitor(MeterRegistry registry, Ehcache cache, String... tags) {
         return monitor(registry, cache, Tags.of(tags));
@@ -56,7 +56,6 @@ public class EhCache2Metrics extends CacheMeterBinder {
      * @param cache    The cache to instrument.
      * @param tags     Tags to apply to all recorded metrics.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
-     * @see com.google.common.cache.CacheStats
      */
     public static Ehcache monitor(MeterRegistry registry, Ehcache cache, Iterable<Tag> tags) {
         new EhCache2Metrics(cache, tags).bindTo(registry);
@@ -117,19 +116,19 @@ public class EhCache2Metrics extends CacheMeterBinder {
         Gauge.builder("cache.local.offheap.size", stats, StatisticsGateway::getLocalOffHeapSize)
                 .tags(getTagsWithCacheName())
                 .description("Local off-heap size")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
         Gauge.builder("cache.local.heap.size", stats, StatisticsGateway::getLocalHeapSizeInBytes)
                 .tags(getTagsWithCacheName())
                 .description("Local heap size")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
         Gauge.builder("cache.local.disk.size", stats, StatisticsGateway::getLocalDiskSizeInBytes)
                 .tags(getTagsWithCacheName())
                 .description("Local disk size")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .register(registry);
     }
 

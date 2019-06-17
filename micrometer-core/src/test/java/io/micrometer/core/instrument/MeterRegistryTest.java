@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,6 +28,12 @@ import javax.annotation.Nonnull;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link MeterRegistry}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class MeterRegistryTest {
     private MeterRegistry registry = new SimpleMeterRegistry();
 
@@ -41,6 +47,16 @@ class MeterRegistryTest {
         });
 
         assertThat(registry.counter("jvm.my.counter")).isInstanceOf(NoopCounter.class);
+        assertThat(registry.counter("my.counter")).isNotInstanceOf(NoopCounter.class);
+    }
+
+    @Test
+    void overridingAcceptMeterFilter() {
+        registry.config().meterFilter(MeterFilter.accept(m -> m.getName().startsWith("jvm.important")));
+        registry.config().meterFilter(MeterFilter.deny(m -> m.getName().startsWith("jvm")));
+	
+        assertThat(registry.counter("jvm.my.counter")).isInstanceOf(NoopCounter.class);
+        assertThat(registry.counter("jvm.important.counter")).isNotInstanceOf(NoopCounter.class);
         assertThat(registry.counter("my.counter")).isNotInstanceOf(NoopCounter.class);
     }
 
@@ -86,5 +102,13 @@ class MeterRegistryTest {
 
         assertThat(registry.timer("my.timer.before")).isNotInstanceOf(NoopTimer.class);
         assertThat(registry.timer("my.timer.after")).isInstanceOf(NoopTimer.class);
+    }
+
+    @Test
+    void gaugeRegistersGaugeOnceAndSubsequentGaugeCallsWillNotRegister() {
+        registry.gauge("my.gauge", 1d);
+        registry.gauge("my.gauge", 2d);
+
+        assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(1d);
     }
 }

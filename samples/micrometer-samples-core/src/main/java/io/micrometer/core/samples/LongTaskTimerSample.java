@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,7 +50,7 @@ public class LongTaskTimerSample {
                 .doOnEach(d -> {
                     if (incomingRequests.nextDouble() + 0.4 > 0 && tasks.isEmpty()) {
                         int taskDur;
-                        while((taskDur = duration.nextInt()) < 0);
+                        while ((taskDur = duration.nextInt()) < 0);
                         synchronized (tasks) {
                             tasks.put(timer.start(), new CountDownLatch(taskDur));
                         }

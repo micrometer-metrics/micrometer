@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -82,6 +82,7 @@ public class DefaultJerseyTagsProviderTest {
     }
 
     @Test
+    @SuppressWarnings("serial")
     public void exceptionsAreMappedCorrectly() {
         assertThat(uut.httpRequestTags(
             event(500, new IllegalArgumentException(), "/app", (String[]) null)))
@@ -92,6 +93,9 @@ public class DefaultJerseyTagsProviderTest {
         assertThat(uut.httpRequestTags(
             event(406, new NotAcceptableException(), "/app", (String[]) null)))
             .containsExactlyInAnyOrder(tagsFrom("/app", 406, "NotAcceptableException"));
+        assertThat(uut.httpRequestTags(
+            event(500, new Exception("anonymous") { }, "/app", (String[]) null)))
+            .containsExactlyInAnyOrder(tagsFrom("/app", 500, "io.micrometer.jersey2.server.DefaultJerseyTagsProviderTest$1"));
     }
 
     @Test

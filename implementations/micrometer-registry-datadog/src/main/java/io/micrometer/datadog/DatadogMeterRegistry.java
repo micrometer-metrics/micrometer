@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@
 package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.lang.Nullable;
@@ -56,26 +57,37 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
     public DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
-        requireNonNull(config.apiKey());
 
-        this.config().namingConvention(new DatadogNamingConvention());
+        if (config.apiKey() == null) {
+            throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to Datadog");
+        }
+
+        config().namingConvention(new DatadogNamingConvention());
 
         this.config = config;
 
-        if (config.enabled())
+        if (config.enabled()) {
+            if (config.applicationKey() == null) {
+                logger.info("An application key must be configured in order for unit information to be sent to Datadog.");
+            }
             start(threadFactory);
+        }
     }
 
     @Override
     protected void publish() {
         Map<String, DatadogMetricMetadata> metadataToSend = new HashMap<>();
 
+        String uriString = config.uri() + "/api/v1/series?api_key=" + config.apiKey();
         URL postTimeSeriesEndpoint;
         try {
-            postTimeSeriesEndpoint = URI.create(config.uri() + "/api/v1/series?api_key=" + config.apiKey()).toURL();
+            postTimeSeriesEndpoint = URI.create(uriString).toURL();
         } catch (MalformedURLException e) {
             // not possible
             throw new RuntimeException(e);
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid URI string for an endpoint to send time series: " + uriString);
+            return;
         }
 
         try {
@@ -130,7 +142,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                     } else if (status >= 400) {
                         try (InputStream in = con.getErrorStream()) {
                             logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                                    .lines().collect(joining("\n")));
+                                    .lines().collect(joining(System.lineSeparator())));
                         }
                     } else {
                         logger.error("failed to send metrics: http " + status);
@@ -286,7 +298,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
             } else if (status >= 400) {
                 try (InputStream in = con.getErrorStream()) {
                     String msg = new BufferedReader(new InputStreamReader(in))
-                            .lines().collect(joining("\n"));
+                            .lines().collect(joining(System.lineSeparator()));
                     if (msg.contains("metric_name not found")) {
                         // Do nothing. Metrics that are newly created in Datadog are not immediately available
                         // for metadata modification. We will keep trying this request on subsequent publishes,

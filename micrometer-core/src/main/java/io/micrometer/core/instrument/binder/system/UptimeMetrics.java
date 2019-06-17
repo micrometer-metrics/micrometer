@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -56,14 +56,14 @@ public class UptimeMetrics implements MeterBinder {
 
     @Override
     public void bindTo(MeterRegistry registry) {
-        TimeGauge.builder("process.uptime", runtimeMXBean, TimeUnit.MILLISECONDS, x -> Long.valueOf(x.getUptime()).doubleValue())
+        TimeGauge.builder("process.uptime", runtimeMXBean, TimeUnit.MILLISECONDS, RuntimeMXBean::getUptime)
             .tags(tags)
             .description("The uptime of the Java virtual machine")
             .register(registry);
 
-        TimeGauge.builder("process.start.time", runtimeMXBean, TimeUnit.SECONDS, x -> Long.valueOf(x.getStartTime()).doubleValue() / 1000.0)
+        TimeGauge.builder("process.start.time", runtimeMXBean, TimeUnit.MILLISECONDS, RuntimeMXBean::getStartTime)
             .tags(tags)
-            .description("Start time of the process since unix epoch in seconds.")
+            .description("Start time of the process since unix epoch.")
             .register(registry);
     }
 }

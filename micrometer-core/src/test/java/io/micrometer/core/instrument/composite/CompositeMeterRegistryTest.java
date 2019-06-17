@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
@@ -24,6 +25,8 @@ import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
@@ -33,9 +36,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
+ * Tests for {@link CompositeMeterRegistry}.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 class CompositeMeterRegistryTest {
     private MockClock clock = new MockClock();
@@ -53,13 +61,13 @@ class CompositeMeterRegistryTest {
     void baseUnitsPreserved() {
         composite.add(simple);
 
-        Counter.builder("counter").baseUnit("bytes").register(composite);
-        DistributionSummary.builder("summary").baseUnit("bytes").register(composite);
-        Gauge.builder("gauge", new AtomicInteger(0), AtomicInteger::get).baseUnit("bytes").register(composite);
+        Counter.builder("counter").baseUnit(BaseUnits.BYTES).register(composite);
+        DistributionSummary.builder("summary").baseUnit(BaseUnits.BYTES).register(composite);
+        Gauge.builder("gauge", new AtomicInteger(0), AtomicInteger::get).baseUnit(BaseUnits.BYTES).register(composite);
 
-        assertThat(simple.get("counter").counter().getId().getBaseUnit()).isEqualTo("bytes");
-        assertThat(simple.get("summary").summary().getId().getBaseUnit()).isEqualTo("bytes");
-        assertThat(simple.get("gauge").gauge().getId().getBaseUnit()).isEqualTo("bytes");
+        assertThat(simple.get("counter").counter().getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
+        assertThat(simple.get("summary").summary().getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
+        assertThat(simple.get("gauge").gauge().getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
     }
 
     @DisplayName("metrics stop receiving updates when their registry parent is removed from a composite")
@@ -275,4 +283,41 @@ class CompositeMeterRegistryTest {
 
         assertThat(composite.getRegistries()).isEmpty();
     }
+
+    @Issue("#704")
+    @Test
+    void noDeadlockOnAddingAndRemovingRegistries() throws InterruptedException {
+        CompositeMeterRegistry composite2 = new CompositeMeterRegistry();
+        composite.add(composite2);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        Flux.range(0, 10000)
+                .parallel(8)
+                .doOnTerminate(latch::countDown)
+                .runOn(Schedulers.parallel())
+                .subscribe(n -> {
+                    if (n % 2 == 0)
+                        composite2.add(simple);
+                    else composite2.remove(simple);
+                });
+
+        latch.await(10, TimeUnit.SECONDS);
+        assertThat(latch.getCount()).isZero();
+    }
+
+    @Issue("#838")
+    @Test
+    void closeShouldCloseAllMeterRegistries() {
+        MeterRegistry registry1 = mock(MeterRegistry.class);
+        MeterRegistry registry2 = mock(MeterRegistry.class);
+
+        CompositeMeterRegistry compositeMeterRegistry = new CompositeMeterRegistry();
+        compositeMeterRegistry.add(registry1);
+        compositeMeterRegistry.add(registry2);
+
+        compositeMeterRegistry.close();
+        verify(registry1).close();
+        verify(registry2).close();
+    }
+
 }

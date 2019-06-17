@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,12 +26,13 @@ import io.micrometer.core.lang.NonNull;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguration;
+import io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsAutoConfiguration;
 import io.prometheus.client.CollectorRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,10 +43,12 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -65,7 +68,9 @@ import java.util.concurrent.CyclicBarrier;
 import static io.micrometer.spring.web.servlet.WebMvcMetricsFilterTest.RedirectAndNotFoundFilter.TEST_MISBEHAVE_HEADER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -99,8 +104,8 @@ public class WebMvcMetricsFilterTest {
         mvc.perform(get("/api/c1/10")).andExpect(status().isOk());
 
         assertThat(this.registry.get("http.server.requests")
-            .tags("status", "200", "uri", "/api/c1/{id}", "public", "true")
-            .timer().count()).isEqualTo(1L);
+                .tags("status", "200", "uri", "/api/c1/{id}", "public", "true")
+                .timer().count()).isEqualTo(1L);
     }
 
     @Test
@@ -108,8 +113,8 @@ public class WebMvcMetricsFilterTest {
         mvc.perform(get("/api/c1/metaTimed/10")).andExpect(status().isOk());
 
         assertThat(this.registry.get("http.server.requests")
-            .tags("status", "200", "uri", "/api/c1/metaTimed/{id}")
-            .timer().count()).isEqualTo(1L);
+                .tags("status", "200", "uri", "/api/c1/metaTimed/{id}")
+                .timer().count()).isEqualTo(1L);
     }
 
     @Test
@@ -117,8 +122,8 @@ public class WebMvcMetricsFilterTest {
         mvc.perform(get("/api/c1/untimed/10")).andExpect(status().isOk());
 
         assertThat(this.registry.find("http.server.requests")
-            .tags("uri", "/api/c1/untimed/10").timer())
-            .isNull();
+                .tags("uri", "/api/c1/untimed/10").timer())
+                .isNull();
     }
 
     @Test
@@ -126,7 +131,7 @@ public class WebMvcMetricsFilterTest {
         mvc.perform(get("/api/c2/10")).andExpect(status().isOk());
 
         assertThat(this.registry.get("http.server.requests").tags("status", "200")
-            .timer().count()).isEqualTo(1L);
+                .timer().count()).isEqualTo(1L);
     }
 
     @Test
@@ -134,37 +139,47 @@ public class WebMvcMetricsFilterTest {
         mvc.perform(get("/api/c1/oops")).andExpect(status().is4xxClientError());
 
         assertThat(this.registry.get("http.server.requests").tags("status", "400")
-            .timer().count()).isEqualTo(1L);
+                .timer().count()).isEqualTo(1L);
     }
 
     @Test
     public void redirectRequest() throws Exception {
         mvc.perform(get("/api/redirect")
-            .header(TEST_MISBEHAVE_HEADER, "302")).andExpect(status().is3xxRedirection());
+                .header(TEST_MISBEHAVE_HEADER, "302")).andExpect(status().is3xxRedirection());
 
         this.registry.get("http.server.requests")
-            .tags("uri", "REDIRECTION", "status", "302").timer();
+                .tags("uri", "REDIRECTION", "status", "302").timer();
     }
 
     @Test
     public void notFoundRequest() throws Exception {
         mvc.perform(get("/api/not/found")
-            .header(TEST_MISBEHAVE_HEADER, "404"))
-            .andExpect(status().is4xxClientError());
+                .header(TEST_MISBEHAVE_HEADER, "404"))
+                .andExpect(status().is4xxClientError());
 
         this.registry.get("http.server.requests")
-            .tags("uri", "NOT_FOUND", "status", "404").timer();
+                .tags("uri", "NOT_FOUND", "status", "404").timer();
     }
 
     @Test
     public void unhandledError() {
         assertThatCode(() -> mvc.perform(get("/api/c1/unhandledError/10"))
-            .andExpect(status().isOk()))
-            .hasRootCauseInstanceOf(RuntimeException.class);
+                .andExpect(status().isOk()))
+                .hasRootCauseInstanceOf(RuntimeException.class);
 
         assertThat(this.registry.get("http.server.requests")
-            .tags("exception", "RuntimeException")
-            .timer().count()).isEqualTo(1L);
+                .tags("exception", "RuntimeException")
+                .timer().count()).isEqualTo(1L);
+    }
+
+    @Test
+    public void streamingError() throws Exception {
+        MvcResult result = this.mvc.perform(get("/api/c1/streamingError"))
+                .andExpect(request().asyncStarted()).andReturn();
+        assertThatCode(
+                () -> this.mvc.perform(asyncDispatch(result)).andExpect(status().isOk()));
+        assertThat(this.registry.get("http.server.requests")
+                .tags("exception", "IOException").timer().count()).isEqualTo(1L);
     }
 
     @Test
@@ -172,7 +187,19 @@ public class WebMvcMetricsFilterTest {
         mvc.perform(get("/api/c1/error/10")).andExpect(status().is4xxClientError());
 
         assertThat(this.registry.get("http.server.requests").tags("status", "422")
-            .timer().count()).isEqualTo(1L);
+                .timer().count()).isEqualTo(1L);
+    }
+
+    @Test
+    public void endpointThrowsAnonymousError() throws Exception {
+        try {
+            mvc.perform(get("/api/c1/anonymousError/10"));
+        } catch (Throwable ignore) {
+        }
+
+        assertThat(this.registry.get("http.server.requests").tag("uri", "/api/c1/anonymousError/{id}").timer().getId()
+                .getTag("exception"))
+                .endsWith("$1");
     }
 
     @Test
@@ -180,8 +207,8 @@ public class WebMvcMetricsFilterTest {
         mvc.perform(get("/api/c1/regex/.abc")).andExpect(status().isOk());
 
         assertThat(this.registry.get("http.server.requests")
-            .tags("uri", "/api/c1/regex/{id:\\.[a-z]+}")
-            .timer().count()).isEqualTo(1L);
+                .tags("uri", "/api/c1/regex/{id:\\.[a-z]+}")
+                .timer().count()).isEqualTo(1L);
     }
 
     @Test
@@ -208,7 +235,8 @@ public class WebMvcMetricsFilterTest {
 
     @Configuration
     @EnableWebMvc
-    @Import({ServletMetricsConfiguration.class, Controller1.class, Controller2.class})
+    @Import({Controller1.class, Controller2.class})
+    @ImportAutoConfiguration(WebMvcMetricsAutoConfiguration.class)
     static class MetricsFilterApp {
         @Bean
         Clock micrometerClock() {
@@ -329,9 +357,24 @@ public class WebMvcMetricsFilterTest {
         }
 
         @Timed
+        @GetMapping("/anonymousError/{id}")
+        public String alwaysThrowsAnonymousException(@PathVariable Long id) throws Exception {
+            throw new Exception("this exception won't have a simple class name") {
+            };
+        }
+
+        @Timed
         @GetMapping("/unhandledError/{id}")
         public String alwaysThrowsUnhandledException(@PathVariable Long id) {
             throw new RuntimeException("Boom on " + id + "!");
+        }
+
+        @GetMapping("/streamingError")
+        public ResponseBodyEmitter streamingError() {
+            ResponseBodyEmitter emitter = new ResponseBodyEmitter();
+            emitter.completeWithError(
+                    new IOException("error while writing to the response"));
+            return emitter;
         }
 
         @Timed

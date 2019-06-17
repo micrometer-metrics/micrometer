@@ -24,7 +24,7 @@ jobs:
 
       - run:
           name: run tests
-          command: ./gradlew test
+          command: ./gradlew check test
 
       - run:
           name: collect test reports
@@ -53,9 +53,23 @@ jobs:
           name: Deployment
           command: sh ./gradle/deploy.sh
 
+  maven-central-sync:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    steps:
+      - checkout
+      - run:
+          name: Decrypt properties
+          command: openssl aes-256-cbc -d -in gradle.properties.enc -out gradle.properties -k $KEY -md md5
+      - deploy:
+          name: Maven Central sync
+          command: ./gradlew mavenCentralSync -Prelease.useLastTag=true -x bintrayPublish -x bintrayUpload -x bintrayCreateVersion -x bintrayCreatePackage
+          # Maven Central Sync might take more than 10 minutes per artifact
+          no_output_timeout: 30m
+
 workflows:
   version: 2
-  build_and_deploy:
+  build_prs_deploy_snapshots:
     jobs:
       - build
       - deploy:
@@ -66,5 +80,30 @@ workflows:
               only:
                 - master
                 - /\d+\.\d+\.x/
+  build_deploy_releases:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
+      - deploy:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
+      - staging-approval:
+          type: approval
+          requires:
+            - deploy
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
+      - maven-central-sync:
+          requires:
+            - staging-approval
+          filters:
             tags:
               only: /^v\d+\.\d+\.\d+(-rc\.\d+)?$/

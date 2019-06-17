@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -206,7 +206,7 @@ public final class RequiredSearch {
                 .map(clazz::cast)
                 .collect(toList());
 
-        if(meters.isEmpty()) {
+        if (meters.isEmpty()) {
             throw MeterNotFoundException.forSearch(this, clazz);
         }
 
@@ -220,7 +220,7 @@ public final class RequiredSearch {
     public Collection<Meter> meters() {
         List<Meter> meters = meterStream().collect(Collectors.toList());
 
-        if(meters.isEmpty()) {
+        if (meters.isEmpty()) {
             throw MeterNotFoundException.forSearch(this, Meter.class);
         }
 

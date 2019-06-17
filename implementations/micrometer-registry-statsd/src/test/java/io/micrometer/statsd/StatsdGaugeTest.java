@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,7 +30,8 @@ class StatsdGaugeTest {
     private AtomicInteger value = new AtomicInteger(1);
 
     private StatsdLineBuilder lineBuilder = mock(StatsdLineBuilder.class);
-    private Subscriber<String> publisher = mock(Subscriber.class);
+    @SuppressWarnings("unchecked")
+    private Subscriber<String> publisher = (Subscriber<String>) mock(Subscriber.class);
 
     @Test
     void shouldAlwaysPublishValue() {
@@ -43,17 +44,17 @@ class StatsdGaugeTest {
     }
 
     @Test
-    void shoulOnlyPublishValue_WhenValueChanges() {
-        StatsdGauge<?> guagePublishingOnChange = gauge(false);
+    void shouldOnlyPublishValue_WhenValueChanges() {
+        StatsdGauge<?> gaugePublishingOnChange = gauge(false);
 
-        guagePublishingOnChange.poll();
-        guagePublishingOnChange.poll();
+        gaugePublishingOnChange.poll();
+        gaugePublishingOnChange.poll();
 
         verify(publisher, times(1)).onNext(any());
 
         //update value and expect the publisher to be called again
         value.incrementAndGet();
-        guagePublishingOnChange.poll();
+        gaugePublishingOnChange.poll();
 
 
         verify(publisher, times(2)).onNext(any());

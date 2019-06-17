@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -44,8 +44,9 @@ public abstract class AbstractDistributionSummary extends AbstractMeter implemen
     @Override
     public final void record(double amount) {
         if (amount >= 0) {
-            histogram.recordDouble(scale * amount);
-            recordNonNegative(scale * amount);
+            double scaledAmount = this.scale * amount;
+            histogram.recordDouble(scaledAmount);
+            recordNonNegative(scaledAmount);
         }
     }
 

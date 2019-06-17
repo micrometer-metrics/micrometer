@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.cache;
 
 import com.hazelcast.core.IMap;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
@@ -43,7 +44,6 @@ public class HazelcastCacheMetrics extends CacheMeterBinder {
      * @param <K>      The cache key type.
      * @param <V>      The cache value type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
-     * @see com.google.common.cache.CacheStats
      */
     public static <K, V, C extends IMap<K, V>> C monitor(MeterRegistry registry, C cache, String... tags) {
         return monitor(registry, cache, Tags.of(tags));
@@ -59,7 +59,6 @@ public class HazelcastCacheMetrics extends CacheMeterBinder {
      * @param <K>      The cache key type.
      * @param <V>      The cache value type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
-     * @see com.google.common.cache.CacheStats
      */
     public static <K, V, C extends IMap<K, V>> C monitor(MeterRegistry registry, C cache, Iterable<Tag> tags) {
         new HazelcastCacheMetrics(cache, tags).bindTo(registry);
@@ -77,7 +76,7 @@ public class HazelcastCacheMetrics extends CacheMeterBinder {
     }
 
     /**
-     * @return The number of hits against cache entries hold in this local partition. Not all gets had to result from
+     * @return The number of hits against cache entries held in this local partition. Not all gets had to result from
      * a get operation against {@link #cache}. If a get operation elsewhere in the cluster caused a lookup against an entry
      * held in this partition, the hit will be recorded against map stats in this partition and not in the map stats of the
      * calling {@link IMap}.
@@ -121,13 +120,13 @@ public class HazelcastCacheMetrics extends CacheMeterBinder {
         Gauge.builder("cache.entry.memory", cache, cache -> cache.getLocalMapStats().getBackupEntryMemoryCost())
                 .tags(getTagsWithCacheName()).tag("ownership", "backup")
                 .description("Memory cost of backup entries held by this member")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
         Gauge.builder("cache.entry.memory", cache, cache -> cache.getLocalMapStats().getOwnedEntryMemoryCost())
                 .tags(getTagsWithCacheName()).tag("ownership", "owned")
                 .description("Memory cost of owned entries held by this member")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
         FunctionCounter.builder("cache.partition.gets", cache, cache -> cache.getLocalMapStats().getGetOperationCount())
@@ -166,21 +165,21 @@ public class HazelcastCacheMetrics extends CacheMeterBinder {
     private void timings(MeterRegistry registry) {
         FunctionTimer.builder("cache.gets.latency", cache,
                 cache -> cache.getLocalMapStats().getGetOperationCount(),
-                cache -> cache.getLocalMapStats().getTotalGetLatency(), TimeUnit.NANOSECONDS)
+                cache -> cache.getLocalMapStats().getTotalGetLatency(), TimeUnit.MILLISECONDS)
                 .tags(getTagsWithCacheName())
                 .description("Cache gets")
                 .register(registry);
 
         FunctionTimer.builder("cache.puts.latency", cache,
                 cache -> cache.getLocalMapStats().getPutOperationCount(),
-                cache -> cache.getLocalMapStats().getTotalPutLatency(), TimeUnit.NANOSECONDS)
+                cache -> cache.getLocalMapStats().getTotalPutLatency(), TimeUnit.MILLISECONDS)
                 .tags(getTagsWithCacheName())
                 .description("Cache puts")
                 .register(registry);
 
         FunctionTimer.builder("cache.removals.latency", cache,
                 cache -> cache.getLocalMapStats().getRemoveOperationCount(),
-                cache -> cache.getLocalMapStats().getTotalRemoveLatency(), TimeUnit.NANOSECONDS)
+                cache -> cache.getLocalMapStats().getTotalRemoveLatency(), TimeUnit.MILLISECONDS)
                 .tags(getTagsWithCacheName())
                 .description("Cache removals")
                 .register(registry);

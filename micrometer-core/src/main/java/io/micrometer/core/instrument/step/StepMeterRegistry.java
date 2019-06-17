@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -48,7 +48,11 @@ public abstract class StepMeterRegistry extends MeterRegistry {
     }
 
     public void start() {
-        start(Executors.defaultThreadFactory());
+        start((r) -> {
+            Thread t = Executors.defaultThreadFactory().newThread(r);
+            t.setDaemon(true);
+            return t;
+        });
     }
 
     public void start(ThreadFactory threadFactory) {
@@ -71,7 +75,9 @@ public abstract class StepMeterRegistry extends MeterRegistry {
 
     @Override
     public void close() {
-        publish();
+        if (config.enabled()) {
+            publish();
+        }
         stop();
         super.close();
     }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -55,15 +55,21 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
             this.namingConvention = next;
-            this.name = next.name(id.getName(), id.getType(), id.getBaseUnit()) + ":";
-            this.tags = HashTreePMap.empty();
-            this.conventionTags = id.getTags().iterator().hasNext() ?
-                    id.getConventionTags(this.namingConvention).stream()
-                            .map(t -> t.getKey() + ":" + t.getValue())
-                            .collect(Collectors.joining(","))
-                    : null;
+            this.name = next.name(sanitize(id.getName()), id.getType(), id.getBaseUnit()) + ":";
+            synchronized (tagsLock) {
+                this.tags = HashTreePMap.empty();
+                this.conventionTags = id.getTags().iterator().hasNext() ?
+                        id.getConventionTags(this.namingConvention).stream()
+                                .map(t -> sanitize(t.getKey()) + ":" + sanitize(t.getValue()))
+                                .collect(Collectors.joining(","))
+                        : null;
+            }
             this.tagsNoStat = tags(null, conventionTags, ":", "|#");
         }
+    }
+
+    private String sanitize(String value) {
+        return value.replace(':', '_');
     }
 
     private String tagsByStatistic(@Nullable Statistic stat) {

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,7 +36,10 @@ class TimeWindowPercentileHistogramTest {
 
         histogram.recordDouble(3);
 
-        assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).contains(new CountAtBucket(3, 1));
+        assertThat(histogram.takeSnapshot(0, 0, 0).histogramCounts()).containsExactly(
+                new CountAtBucket(3, 1),
+                new CountAtBucket(6, 1),
+                new CountAtBucket(7, 1));
 
         histogram.recordDouble(6);
 
@@ -216,7 +219,7 @@ class TimeWindowPercentileHistogramTest {
 
     private double percentileValue(Histogram histogram, double p) {
         for (ValueAtPercentile valueAtPercentile : histogram.takeSnapshot(0, 0, 0).percentileValues()) {
-            if(valueAtPercentile.percentile() == p)
+            if (valueAtPercentile.percentile() == p)
                 return valueAtPercentile.value();
         }
         return Double.NaN;

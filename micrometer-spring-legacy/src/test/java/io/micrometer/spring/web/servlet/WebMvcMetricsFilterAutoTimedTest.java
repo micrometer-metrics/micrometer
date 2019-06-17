@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,10 +20,11 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.spring.autoconfigure.web.servlet.ServletMetricsConfiguration;
+import io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsAutoConfiguration;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -69,7 +70,8 @@ public class WebMvcMetricsFilterAutoTimedTest {
 
     @Configuration
     @EnableWebMvc
-    @Import({Controller.class, ServletMetricsConfiguration.class})
+    @Import(Controller.class)
+    @ImportAutoConfiguration(WebMvcMetricsAutoConfiguration.class)
     static class TestConfiguration {
         @Bean
         MockClock clock() {

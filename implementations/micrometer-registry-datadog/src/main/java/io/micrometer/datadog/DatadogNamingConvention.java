@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -49,11 +49,11 @@ public class DatadogNamingConvention implements NamingConvention {
 
         // Metrics that don't start with a letter get dropped on the floor by the Datadog publish API,
         // so we will prepend them with 'm.'.
-        if(!Character.isLetter(sanitized.charAt(0))) {
+        if (!Character.isLetter(sanitized.charAt(0))) {
             sanitized = "m." + sanitized;
         }
 
-        if(sanitized.length() > 200)
+        if (sanitized.length() > 200)
             return sanitized.substring(0, 200);
         return sanitized;
     }
@@ -65,7 +65,7 @@ public class DatadogNamingConvention implements NamingConvention {
     @Override
     public String tagKey(String key) {
         String sanitized = StringEscapeUtils.escapeJson(delegate.tagKey(key));
-        if(Character.isDigit(sanitized.charAt(0))) {
+        if (Character.isDigit(sanitized.charAt(0))) {
             sanitized = "m." + sanitized;
         }
         return sanitized;
