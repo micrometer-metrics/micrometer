@@ -168,7 +168,7 @@ public class ExecutorServiceMetrics implements MeterBinder {
         Gauge.builder("executor.queue.remaining", tp, tpRef -> tpRef.getQueue().remainingCapacity())
                 .tags(tags)
                 .description("The number of additional elements that this queue can ideally accept without blocking")
-                .baseUnit("tasks")
+                .baseUnit(BaseUnits.THREADS)
                 .register(registry);
 
         Gauge.builder("executor.pool.size", tp, ThreadPoolExecutor::getPoolSize)
