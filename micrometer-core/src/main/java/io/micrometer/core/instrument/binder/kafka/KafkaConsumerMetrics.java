@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.kafka;
 
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -101,10 +102,10 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
                 }
             // metrics reported per consumer and topic
             }  else if (tags.stream().anyMatch(t -> t.getKey().equals("topic"))) {
-                registerGaugeForObject(registry, o, "fetch-size-avg", tags, "The average number of bytes fetched per request.", "bytes");
-                registerGaugeForObject(registry, o, "fetch-size-max", tags, "The maximum number of bytes fetched per request.", "bytes");
+                registerGaugeForObject(registry, o, "fetch-size-avg", tags, "The average number of bytes fetched per request.", BaseUnits.BYTES);
+                registerGaugeForObject(registry, o, "fetch-size-max", tags, "The maximum number of bytes fetched per request.", BaseUnits.BYTES);
                 registerGaugeForObject(registry, o, "records-per-request-avg", tags, "The average number of records in each request.", "records");
-                registerFunctionCounterForObject(registry, o, "bytes-consumed-total", tags, "The total number of bytes consumed.", "bytes");
+                registerFunctionCounterForObject(registry, o, "bytes-consumed-total", tags, "The total number of bytes consumed.", BaseUnits.BYTES);
                 registerFunctionCounterForObject(registry, o, "records-consumed-total", tags, "The total number of records consumed.", "records");
             // metrics reported just per consumer
             }  else {
@@ -150,8 +151,8 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
                 registerGaugeForObject(registry, o, "failed-authentication-total", "authentication-attempts",
                         Tags.concat(tags, "result", "failed"), "The number of failed authentication attempts.", null);
 
-                registerGaugeForObject(registry, o, "network-io-total", tags, "", "bytes");
-                registerGaugeForObject(registry, o, "outgoing-byte-total", tags, "", "bytes");
+                registerGaugeForObject(registry, o, "network-io-total", tags, "", BaseUnits.BYTES);
+                registerGaugeForObject(registry, o, "outgoing-byte-total", tags, "", BaseUnits.BYTES);
                 registerGaugeForObject(registry, o, "request-total", tags, "", "requests");
                 registerGaugeForObject(registry, o, "response-total", tags, "", "responses");
 

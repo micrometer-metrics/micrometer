@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -39,7 +40,7 @@ class LoggingMeterRegistryTest {
     @Test
     void humanReadableByteCount() {
         LoggingMeterRegistry.Printer printer = registry.new Printer(DistributionSummary.builder("my.summary")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .register(registry));
 
         assertThat(printer.humanReadableBaseUnit(1.0)).isEqualTo("1 B");
@@ -100,7 +101,7 @@ class LoggingMeterRegistryTest {
         Measurement m4 = new Measurement(() -> (double) (1 << 23), Statistic.VALUE);
         Measurement m5 = new Measurement(() -> (double) (1 << 30), Statistic.VALUE);
         Meter meter = Meter.builder("bus-throughput", Meter.Type.OTHER, Arrays.asList(m1, m2, m3, m4, m5))
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .register(registry);
         LoggingMeterRegistry.Printer printer = registry.new Printer(meter);
         assertThat(registry.writeMeter(meter, printer)).isEqualTo(expectedResult);

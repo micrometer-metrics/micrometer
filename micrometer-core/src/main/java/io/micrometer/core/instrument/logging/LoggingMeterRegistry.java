@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -231,7 +232,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
 
         String humanReadableBaseUnit(double value) {
             String baseUnit = meter.getId().getBaseUnit();
-            if ("bytes".equals(baseUnit)) {
+            if (BaseUnits.BYTES.equals(baseUnit)) {
                 return humanReadableByteCount(value);
             }
             return decimalOrNan(value) + (baseUnit != null ? " " + baseUnit : "");
