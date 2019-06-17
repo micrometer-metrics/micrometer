@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.db;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -128,7 +129,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
                 dataSource -> resettableFunctionalCounter("postgres.temp.writes", this::getTempBytes))
                 .tags(tags)
                 .description("The total amount of temporary writes to disk to execute queries")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
         registerRowCountMetrics(registry);

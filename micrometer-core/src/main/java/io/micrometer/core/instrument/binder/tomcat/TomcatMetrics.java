@@ -133,19 +133,19 @@ public class TomcatMetrics implements MeterBinder {
             Gauge.builder("tomcat.threads.config.max", mBeanServer,
                     s -> safeDouble(() -> s.getAttribute(name, "maxThreads")))
                     .tags(allTags)
-                    .baseUnit("threads")
+                    .baseUnit(BaseUnits.THREADS)
                     .register(registry);
 
             Gauge.builder("tomcat.threads.busy", mBeanServer,
                     s -> safeDouble(() -> s.getAttribute(name, "currentThreadsBusy")))
                     .tags(allTags)
-                    .baseUnit("threads")
+                    .baseUnit(BaseUnits.THREADS)
                     .register(registry);
 
             Gauge.builder("tomcat.threads.current", mBeanServer,
                     s -> safeDouble(() -> s.getAttribute(name, "currentThreadCount")))
                     .tags(allTags)
-                    .baseUnit("threads")
+                    .baseUnit(BaseUnits.THREADS)
                     .register(registry);
         });
     }
