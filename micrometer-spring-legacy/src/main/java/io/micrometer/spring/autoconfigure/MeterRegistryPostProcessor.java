@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,22 +17,49 @@ package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.config.MeterFilter;
-import io.micrometer.core.lang.NonNullApi;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 
-import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
-@NonNullApi
-public class MeterRegistryPostProcessor implements BeanPostProcessor {
-    private final ApplicationContext context;
+/**
+ * {@link BeanPostProcessor} that delegates to a lazily created
+ * {@link MeterRegistryConfigurer} to post-process {@link MeterRegistry} beans.
+ *
+ * @author Jon Schneider
+ * @author Phillip Webb
+ * @author Andy Wilkinson
+ */
+class MeterRegistryPostProcessor implements BeanPostProcessor {
+
+    private final ObjectProvider<List<MeterBinder>> meterBinders;
+
+    private final ObjectProvider<List<MeterFilter>> meterFilters;
+
+    private final ObjectProvider<List<MeterRegistryCustomizer<?>>> meterRegistryCustomizers;
+
+    private final ObjectProvider<MetricsProperties> metricsProperties;
 
     private volatile MeterRegistryConfigurer configurer;
 
-    MeterRegistryPostProcessor(ApplicationContext context) {
-        this.context = context;
+    private volatile ApplicationContext applicationContext;
+
+    MeterRegistryPostProcessor(
+            ObjectProvider<List<MeterBinder>> meterBinders,
+            ObjectProvider<List<MeterFilter>> meterFilters,
+            ObjectProvider<List<MeterRegistryCustomizer<?>>> meterRegistryCustomizers,
+            ObjectProvider<MetricsProperties> metricsProperties,
+            ApplicationContext applicationContext) {
+        this.meterBinders = meterBinders;
+        this.meterFilters = meterFilters;
+        this.meterRegistryCustomizers = meterRegistryCustomizers;
+        this.metricsProperties = metricsProperties;
+        this.applicationContext = applicationContext;
     }
 
     @Override
@@ -41,27 +68,30 @@ public class MeterRegistryPostProcessor implements BeanPostProcessor {
     }
 
     @Override
-    public Object postProcessAfterInitialization(Object bean, String beanName)
-            throws BeansException {
+    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
         if (bean instanceof MeterRegistry) {
             getConfigurer().configure((MeterRegistry) bean);
         }
         return bean;
     }
 
-    @SuppressWarnings("unchecked")
     private MeterRegistryConfigurer getConfigurer() {
         if (this.configurer == null) {
-            this.configurer = new MeterRegistryConfigurer(beansOfType(MeterBinder.class),
-                    beansOfType(MeterFilter.class),
-                    (Collection<MeterRegistryCustomizer<?>>) (Object) beansOfType(
-                            MeterRegistryCustomizer.class),
-                    this.context.getBean(MetricsProperties.class).isUseGlobalRegistry());
+            boolean hasCompositeMeterRegistry = this.applicationContext
+                    .getBeanNamesForType(CompositeMeterRegistry.class, false, false)
+                    .length != 0;
+            this.configurer = new MeterRegistryConfigurer(
+                    getOrEmpty(this.meterBinders.getIfAvailable()),
+                    getOrEmpty(this.meterFilters.getIfAvailable()),
+                    getOrEmpty(this.meterRegistryCustomizers.getIfAvailable()),
+                    this.metricsProperties.getObject().isUseGlobalRegistry(),
+                    hasCompositeMeterRegistry);
         }
         return this.configurer;
     }
 
-    private <T> Collection<T> beansOfType(Class<T> type) {
-        return this.context.getBeansOfType(type).values();
+    private <T> List<T> getOrEmpty(List<T> list) {
+        return list != null ? list : Collections.emptyList();
     }
+
 }

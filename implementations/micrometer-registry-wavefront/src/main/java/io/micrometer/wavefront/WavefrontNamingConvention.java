@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,6 +22,12 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.lang.Nullable;
 
+/**
+ * Naming convention for Wavefront.
+ *
+ * @author Jon Schneider
+ * @since 1.0.0
+ */
 public class WavefrontNamingConvention implements NamingConvention {
 
     private static final Pattern PATTERN_NAME_TO_SANITIZE = Pattern.compile("[^a-zA-Z0-9\\-_\\./,]");

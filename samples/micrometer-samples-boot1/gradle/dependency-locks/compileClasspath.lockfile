@@ -55,6 +55,7 @@ io.prometheus:simpleclient_pushgateway:0.2.0
 io.reactivex:rxjava:1.2.0
 javax.annotation:javax.annotation-api:1.2
 javax.cache:cache-api:1.0.0
+javax.inject:javax.inject:1
 javax.servlet:javax.servlet-api:3.1.0
 javax.validation:validation-api:1.1.0.Final
 javax.ws.rs:javax.ws.rs-api:2.0.1

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -81,10 +81,10 @@ public interface NamingConvention {
                     conventionName.append(str);
                 } else {
                     final char firstChar = str.charAt(0);
-                    if (Character.isTitleCase(firstChar)) {
+                    if (Character.isUpperCase(firstChar)) {
                         conventionName.append(str); // already capitalized
                     } else {
-                        conventionName.append(String.valueOf(Character.toTitleCase(firstChar))).append(str.substring(1));
+                        conventionName.append(Character.toUpperCase(firstChar)).append(str.substring(1));
                     }
                 }
             }
@@ -100,11 +100,7 @@ public interface NamingConvention {
         }
 
         private String capitalize(String name) {
-            if (name.length() == 0) {
-                return name;
-            }
-
-            if (Character.isUpperCase(name.charAt(0))) {
+            if (name.length() == 0 || Character.isUpperCase(name.charAt(0))) {
                 return name;
             }
 

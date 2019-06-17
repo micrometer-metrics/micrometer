@@ -158,6 +158,7 @@ org.junit.jupiter:junit-jupiter-api:5.1.0-RC1
 org.junit.jupiter:junit-jupiter-engine:5.1.0-RC1
 org.junit.platform:junit-platform-commons:1.1.0-RC1
 org.junit.platform:junit-platform-engine:1.1.0-RC1
+org.junit.vintage:junit-vintage-engine:5.1.0-RC1
 org.latencyutils:LatencyUtils:2.0.3
 org.mockito:mockito-core:1.10.19
 org.objenesis:objenesis:2.1

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -127,6 +127,7 @@ public interface Gauge extends Meter {
          * This method may be removed in future minor or major releases if we find a way to mark derivatives in a
          * private way that does not have other API compatibility consequences.
          *
+         * @param synthetic whether this gauge is a synthetic derivative or not
          * @return Whether this gauge is a synthetic derivative or not.
          */
         @Incubating(since = "1.0.6")

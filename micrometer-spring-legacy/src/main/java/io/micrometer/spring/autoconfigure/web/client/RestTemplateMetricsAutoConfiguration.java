@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,20 +15,15 @@
  */
 package io.micrometer.spring.autoconfigure.web.client;
 
-import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.config.MeterFilter;
-import io.micrometer.core.instrument.config.MeterFilterReply;
-import io.micrometer.core.lang.NonNull;
-import io.micrometer.spring.autoconfigure.MeterRegistryCustomizer;
 import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.MetricsProperties;
+import io.micrometer.spring.autoconfigure.OnlyOnceLoggingDenyMeterFilter;
 import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
 import io.micrometer.spring.web.client.DefaultRestTemplateExchangeTagsProvider;
 import io.micrometer.spring.web.client.MetricsRestTemplateCustomizer;
 import io.micrometer.spring.web.client.RestTemplateExchangeTagsProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -43,7 +38,6 @@ import org.springframework.web.client.AsyncRestTemplate;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Configuration for {@link RestTemplate}- and {@link AsyncRestTemplate}-related metrics.
@@ -60,7 +54,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 })
 @ConditionalOnBean(MeterRegistry.class)
 public class RestTemplateMetricsAutoConfiguration {
-    private final Logger logger = LoggerFactory.getLogger(RestTemplateMetricsAutoConfiguration.class);
+
+    private final MetricsProperties properties;
+
+    public RestTemplateMetricsAutoConfiguration(MetricsProperties properties) {
+        this.properties = properties;
+    }
 
     @Bean
     @ConditionalOnMissingBean(RestTemplateExchangeTagsProvider.class)
@@ -70,8 +69,7 @@ public class RestTemplateMetricsAutoConfiguration {
 
     @Bean
     public MetricsRestTemplateCustomizer metricsRestTemplateCustomizer(MeterRegistry meterRegistry,
-                                                                       RestTemplateExchangeTagsProvider restTemplateTagConfigurer,
-                                                                       MetricsProperties properties) {
+                                                                       RestTemplateExchangeTagsProvider restTemplateTagConfigurer) {
         return new MetricsRestTemplateCustomizer(meterRegistry, restTemplateTagConfigurer,
             properties.getWeb().getClient().getRequestsMetricName());
     }
@@ -89,21 +87,13 @@ public class RestTemplateMetricsAutoConfiguration {
 
     @Bean
     @Order(0)
-    public MeterRegistryCustomizer limitCardinalityOfUriTag(MetricsProperties properties) {
-        String metricName = properties.getWeb().getClient().getRequestsMetricName();
-        return r -> r.config().meterFilter(MeterFilter.maximumAllowableTags(metricName,
-            "uri", properties.getWeb().getClient().getMaxUriTags(), new MeterFilter() {
-                private AtomicBoolean alreadyWarned = new AtomicBoolean(false);
-
-                @Override
-                @NonNull
-                public MeterFilterReply accept(@NonNull Meter.Id id) {
-                    if (alreadyWarned.compareAndSet(false, true)) {
-                        logger.warn("Reached the maximum number of URI tags for '" + metricName + "'. Are you using uriVariables on RestTemplate calls?");
-                    }
-                    return MeterFilterReply.DENY;
-                }
-            })
-        );
+    public MeterFilter metricsHttpClientUriTagFilter() {
+        String metricName = this.properties.getWeb().getClient().getRequestsMetricName();
+        MeterFilter denyFilter = new OnlyOnceLoggingDenyMeterFilter(() -> String
+                .format("Reached the maximum number of URI tags for '%s'. Are you using "
+                        + "'uriVariables'?", metricName));
+        return MeterFilter.maximumAllowableTags(metricName, "uri",
+                this.properties.getWeb().getClient().getMaxUriTags(), denyFilter);
     }
+
 }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -55,7 +55,7 @@ public class TomcatMetrics implements MeterBinder {
     private final MBeanServer mBeanServer;
     private final Iterable<Tag> tags;
 
-    private String jmxDomain;
+    private volatile String jmxDomain;
 
     public TomcatMetrics(@Nullable Manager manager, Iterable<Tag> tags) {
         this(manager, tags, getMBeanServer());
@@ -215,7 +215,7 @@ public class TomcatMetrics implements MeterBinder {
     private void registerMetricsEventually(String key, String value, BiConsumer<ObjectName, Iterable<Tag>> perObject) {
         if (getJmxDomain() != null) {
             try {
-                Set<ObjectName> objectNames = this.mBeanServer.queryNames(new ObjectName(getJmxDomain() + ":" + key + "=" + value + ",*"), null);
+                Set<ObjectName> objectNames = this.mBeanServer.queryNames(new ObjectName(getJmxDomain() + ":" + key + "=" + value + ",name=*"), null);
                 if (!objectNames.isEmpty()) {
                     // MBean is present, so we can register metrics now.
                     objectNames.forEach(objectName -> perObject.accept(objectName, Tags.concat(tags, nameTag(objectName))));
@@ -273,6 +273,21 @@ public class TomcatMetrics implements MeterBinder {
             }
         }
         return this.jmxDomain;
+    }
+
+    /**
+     * Set JMX domain. If unset, default values will be used as follows:
+     *
+     * <ul>
+     *     <li>Embedded Tomcat: "Tomcat"</li>
+     *     <li>Standalone Tomcat: "Catalina"</li>
+     * </ul>
+     *
+     * @param jmxDomain JMX domain to be used
+     * @since 1.0.11
+     */
+    public void setJmxDomain(String jmxDomain) {
+        this.jmxDomain = jmxDomain;
     }
 
     private boolean hasObjectName(String name) {

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,8 +21,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.spring.TimedUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -48,13 +48,14 @@ import java.util.stream.Collectors;
  * Intercepts incoming HTTP requests and records metrics about execution time and results.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 @NonNullApi
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class WebMvcMetricsFilter extends OncePerRequestFilter {
     private static final String TIMING_SAMPLE = "micrometer.timingSample";
 
-    private final Logger logger = LoggerFactory.getLogger(WebMvcMetricsFilter.class);
+    private static final Log logger = LogFactory.getLog(WebMvcMetricsFilter.class);
 
     private final MeterRegistry registry;
     private final WebMvcTagsProvider tagsProvider;
@@ -120,6 +121,9 @@ public class WebMvcMetricsFilter extends OncePerRequestFilter {
             response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
             record(timingContext, response, request, handlerObject, e.getCause());
             throw e;
+        } catch (ServletException | IOException | RuntimeException ex) {
+            record(timingContext, response, request, handlerObject, ex);
+            throw ex;
         }
     }
 

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,7 +30,8 @@ class StatsdGaugeTest {
     private AtomicInteger value = new AtomicInteger(1);
 
     private StatsdLineBuilder lineBuilder = mock(StatsdLineBuilder.class);
-    private Subscriber<String> publisher = mock(Subscriber.class);
+    @SuppressWarnings("unchecked")
+    private Subscriber<String> publisher = (Subscriber<String>) mock(Subscriber.class);
 
     @Test
     void shouldAlwaysPublishValue() {

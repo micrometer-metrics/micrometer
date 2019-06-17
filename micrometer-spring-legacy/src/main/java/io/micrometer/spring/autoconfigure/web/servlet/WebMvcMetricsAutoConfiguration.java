@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,8 +16,10 @@
 package io.micrometer.spring.autoconfigure.web.servlet;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.spring.autoconfigure.MetricsAutoConfiguration;
 import io.micrometer.spring.autoconfigure.MetricsProperties;
+import io.micrometer.spring.autoconfigure.OnlyOnceLoggingDenyMeterFilter;
 import io.micrometer.spring.autoconfigure.export.simple.SimpleMetricsExportAutoConfiguration;
 import io.micrometer.spring.web.servlet.DefaultWebMvcTagsProvider;
 import io.micrometer.spring.web.servlet.WebMvcMetricsFilter;
@@ -32,6 +34,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
@@ -41,6 +44,7 @@ import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
  * MVC servlet-based request mappings.
  *
  * @author Jon Schneider
+ * @author Dmytro Nosan
  */
 @Configuration
 @AutoConfigureAfter({ MetricsAutoConfiguration.class,
@@ -51,6 +55,12 @@ import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 @EnableConfigurationProperties(MetricsProperties.class)
 public class WebMvcMetricsAutoConfiguration {
 
+    private final MetricsProperties properties;
+
+    public WebMvcMetricsAutoConfiguration(MetricsProperties properties) {
+        this.properties = properties;
+    }
+
     @Bean
     @ConditionalOnMissingBean(WebMvcTagsProvider.class)
     public DefaultWebMvcTagsProvider servletTagsProvider() {
@@ -59,7 +69,7 @@ public class WebMvcMetricsAutoConfiguration {
 
     @SuppressWarnings("deprecation")
     @Bean
-    public WebMvcMetricsFilter webMetricsFilter(MeterRegistry registry, MetricsProperties properties,
+    public WebMvcMetricsFilter webMetricsFilter(MeterRegistry registry,
                                                 WebMvcTagsProvider tagsProvider,
                                                 WebApplicationContext ctx) {
         return new WebMvcMetricsFilter(registry, tagsProvider,
@@ -67,4 +77,15 @@ public class WebMvcMetricsAutoConfiguration {
                 properties.getWeb().getServer().isAutoTimeRequests(),
                 new HandlerMappingIntrospector(ctx));
     }
+
+    @Bean
+    @Order(0)
+    public MeterFilter metricsHttpServerUriTagFilter() {
+        String metricName = this.properties.getWeb().getServer().getRequestsMetricName();
+        MeterFilter filter = new OnlyOnceLoggingDenyMeterFilter(() -> String
+                .format("Reached the maximum number of URI tags for '%s'.", metricName));
+        return MeterFilter.maximumAllowableTags(metricName, "uri",
+                this.properties.getWeb().getServer().getMaxUriTags(), filter);
+    }
+
 }

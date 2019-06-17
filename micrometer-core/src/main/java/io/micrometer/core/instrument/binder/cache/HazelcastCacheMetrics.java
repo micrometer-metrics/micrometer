@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -165,21 +165,21 @@ public class HazelcastCacheMetrics extends CacheMeterBinder {
     private void timings(MeterRegistry registry) {
         FunctionTimer.builder("cache.gets.latency", cache,
                 cache -> cache.getLocalMapStats().getGetOperationCount(),
-                cache -> cache.getLocalMapStats().getTotalGetLatency(), TimeUnit.NANOSECONDS)
+                cache -> cache.getLocalMapStats().getTotalGetLatency(), TimeUnit.MILLISECONDS)
                 .tags(getTagsWithCacheName())
                 .description("Cache gets")
                 .register(registry);
 
         FunctionTimer.builder("cache.puts.latency", cache,
                 cache -> cache.getLocalMapStats().getPutOperationCount(),
-                cache -> cache.getLocalMapStats().getTotalPutLatency(), TimeUnit.NANOSECONDS)
+                cache -> cache.getLocalMapStats().getTotalPutLatency(), TimeUnit.MILLISECONDS)
                 .tags(getTagsWithCacheName())
                 .description("Cache puts")
                 .register(registry);
 
         FunctionTimer.builder("cache.removals.latency", cache,
                 cache -> cache.getLocalMapStats().getRemoveOperationCount(),
-                cache -> cache.getLocalMapStats().getTotalRemoveLatency(), TimeUnit.NANOSECONDS)
+                cache -> cache.getLocalMapStats().getTotalRemoveLatency(), TimeUnit.MILLISECONDS)
                 .tags(getTagsWithCacheName())
                 .description("Cache removals")
                 .register(registry);

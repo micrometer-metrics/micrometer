@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -61,7 +61,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     public PrometheusMeterRegistry(PrometheusConfig config, CollectorRegistry registry, Clock clock) {
         super(clock);
         this.registry = registry;
-        this.config().namingConvention(new PrometheusNamingConvention());
+        config().namingConvention(new PrometheusNamingConvention());
         this.prometheusConfig = config;
     }
 
@@ -355,7 +355,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
             }
 
             throw new IllegalArgumentException("Prometheus requires that all meters with the same name have the same" +
-                    " set of tag keys. There is already an existing meter containing tag keys [" +
+                    " set of tag keys. There is already an existing meter named '" + name + "' containing tag keys [" +
                     existingCollector.getTagKeys().stream().collect(joining(", ")) + "]. The meter you are attempting to register" +
                     " has keys [" + tagKeys.stream().collect(joining(", ")) + "].");
         });

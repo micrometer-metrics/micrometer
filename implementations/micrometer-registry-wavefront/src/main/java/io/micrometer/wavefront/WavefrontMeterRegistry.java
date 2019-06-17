@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,8 +37,11 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
 
 /**
+ * {@link StepMeterRegistry} for Wavefront.
+ *
  * @author Jon Schneider
  * @author Howard Yoo
+ * @since 1.0.0
  */
 public class WavefrontMeterRegistry extends StepMeterRegistry {
     private final Logger logger = LoggerFactory.getLogger(WavefrontMeterRegistry.class);
@@ -96,7 +99,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
 
                         try (OutputStream os = con.getOutputStream();
                              OutputStreamWriter writer = new OutputStreamWriter(os, "UTF-8")) {
-                            writer.write("{" + stream.collect(joining(",")) + "}");
+                            writer.write(stream.collect(joining(",", "{", "}")));
                             writer.flush();
                         }
 
@@ -106,7 +109,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                         } else {
                             try (InputStream in = con.getErrorStream()) {
                                 logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                                        .lines().collect(joining("\n")));
+                                        .lines().collect(joining(System.lineSeparator())));
                             }
                         }
                     } catch (Exception e) {
@@ -121,7 +124,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                     try (Socket socket = new Socket()) {
                         socket.connect(endpoint, timeout);
                         try (OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream(), "UTF-8")) {
-                          writer.write(stream.collect(joining("\n")) + "\n");
+                          writer.write(stream.collect(joining("\n", "", "\n")));
                           writer.flush();
                         }
                     }
@@ -186,7 +189,8 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         return metrics.build();
     }
 
-    private Stream<String> writeMeter(Meter meter) {
+    // VisibleForTesting
+    Stream<String> writeMeter(Meter meter) {
         long wallTime = clock.wallTime();
         Stream.Builder<String> metrics = Stream.builder();
 
@@ -199,8 +203,9 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         return metrics.build();
     }
 
-    private void addMetric(Stream.Builder<String> metrics, Meter.Id id, @Nullable String suffix, long wallTime, double value) {
-        if (value != Double.NaN) {
+    // VisibleForTesting
+    void addMetric(Stream.Builder<String> metrics, Meter.Id id, @Nullable String suffix, long wallTime, double value) {
+        if (Double.isFinite(value)) {
             metrics.add(writeMetric(id, suffix, wallTime, value));
         }
     }

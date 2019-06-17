@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,7 +20,7 @@ import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
+import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.noop.*;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
@@ -31,7 +31,6 @@ import io.micrometer.core.lang.Nullable;
 import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
 
-import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +47,9 @@ import static java.util.Objects.requireNonNull;
  * <p>
  * MeterRegistry may be used in a reactive context. As such, implementations must not negatively impact the calling
  * thread, e.g. it should respond immediately by avoiding IO call, deep stack recursion or any coordination.
+ * <p>
+ * If you register meters having the same ID multiple times, the first registration only will work and the subsequent
+ * registrations will be ignored.
  *
  * @author Jon Schneider
  */
@@ -60,10 +62,7 @@ public abstract class MeterRegistry implements AutoCloseable {
     private final More more = new More();
     private volatile PMap<Id, Meter> meterMap = HashTreePMap.empty();
     private final AtomicBoolean closed = new AtomicBoolean(false);
-    private PauseDetector pauseDetector = new ClockDriftPauseDetector(
-            Duration.ofMillis(100),
-            Duration.ofMillis(100)
-    );
+    private PauseDetector pauseDetector = new NoPauseDetector();
 
     /**
      * We'll use snake case as a general-purpose default for registries because it is the most
@@ -407,12 +406,6 @@ public abstract class MeterRegistry implements AutoCloseable {
      * Register a gauge that reports the value of the object after the function
      * {@code f} is applied. The registration will keep a weak reference to the object so it will
      * not prevent garbage collection. Applying {@code f} on the object should be thread safe.
-     * <p>
-     * If multiple gauges are registered with the same id, then the values will be aggregated and
-     * the sum will be reported. For example, registering multiple gauges for active threads in
-     * a thread pool with the same id would produce a value that is the overall number
-     * of active threads. For other behaviors, manage it on the user side and avoid multiple
-     * registrations.
      *
      * @param name          Name of the gauge being registered.
      * @param tags          Sequence of dimensions for breaking down the name.
@@ -510,13 +503,13 @@ public abstract class MeterRegistry implements AutoCloseable {
         return gauge(name, tags, map, Map::size);
     }
 
-    private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id, Function<Meter.Id, Meter> builder,
+    private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id, Function<Meter.Id, M> builder,
                                                          Function<Meter.Id, M> noopBuilder) {
         return registerMeterIfNecessary(meterClass, id, null, (id2, conf) -> builder.apply(id2), noopBuilder);
     }
 
     private <M extends Meter> M registerMeterIfNecessary(Class<M> meterClass, Meter.Id id,
-                                                         @Nullable DistributionStatisticConfig config, BiFunction<Meter.Id, DistributionStatisticConfig, Meter> builder,
+                                                         @Nullable DistributionStatisticConfig config, BiFunction<Meter.Id, DistributionStatisticConfig, M> builder,
                                                          Function<Meter.Id, M> noopBuilder) {
         Meter.Id mappedId = id;
 
@@ -531,13 +524,11 @@ public abstract class MeterRegistry implements AutoCloseable {
         if (!meterClass.isInstance(m)) {
             throw new IllegalArgumentException("There is already a registered meter of a different type with the same name");
         }
-
-        //noinspection unchecked
-        return (M) m;
+        return meterClass.cast(m);
     }
 
     private Meter getOrCreateMeter(@Nullable DistributionStatisticConfig config,
-                                   BiFunction<Id, /*Nullable Generic*/ DistributionStatisticConfig, Meter> builder,
+                                   BiFunction<Id, /*Nullable Generic*/ DistributionStatisticConfig, ? extends Meter> builder,
                                    Id originalId, Id mappedId, Function<Meter.Id, ? extends Meter> noopBuilder) {
         Meter m = meterMap.get(mappedId);
 
@@ -577,8 +568,15 @@ public abstract class MeterRegistry implements AutoCloseable {
     }
 
     private boolean accept(Meter.Id id) {
-        return this.filters.stream()
-            .noneMatch((filter) -> filter.accept(id) == MeterFilterReply.DENY);
+        for (MeterFilter filter : filters) {
+            MeterFilterReply reply = filter.accept(id);
+            if (reply == MeterFilterReply.DENY) {
+                return false;
+            } else if (reply == MeterFilterReply.ACCEPT) {
+                return true;
+            }
+        }
+        return true;
     }
 
     /**

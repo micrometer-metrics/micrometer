@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -44,25 +44,28 @@ public class GangliaMeterRegistry extends DropwizardMeterRegistry {
         this.config = config;
 
         try {
-            final GMetric ganglia = new GMetric(config.host(), config.port(), config.addressingMode(), config.ttl());
-            this.reporter = GangliaReporter.forRegistry(getDropwizardRegistry())
+            GMetric ganglia = new GMetric(config.host(), config.port(), config.addressingMode(), config.ttl());
+            reporter = GangliaReporter.forRegistry(getDropwizardRegistry())
                     .convertRatesTo(config.rateUnits())
                     .convertDurationsTo(config.durationUnits())
                     .build(ganglia);
 
-            if (config.enabled())
-                start();
+            start();
         } catch (IOException e) {
             throw new RuntimeException("Failed to configure Ganglia metrics reporting", e);
         }
     }
 
     public void stop() {
-        this.reporter.stop();
+        if (config.enabled()) {
+            reporter.stop();
+        }
     }
 
     public void start() {
-        this.reporter.start(config.step().getSeconds(), TimeUnit.SECONDS);
+        if (config.enabled()) {
+            reporter.start(config.step().getSeconds(), TimeUnit.SECONDS);
+        }
     }
 
     @Override
@@ -71,7 +74,9 @@ public class GangliaMeterRegistry extends DropwizardMeterRegistry {
             reporter.report();
         }
         stop();
-        this.reporter.close();
+        if (config.enabled()) {
+            reporter.close();
+        }
         super.close();
     }
 

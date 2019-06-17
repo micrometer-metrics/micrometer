@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -273,17 +273,54 @@ class StatsdMeterRegistryTest {
 
         Gauge summaryHist1 = registry.get("my.summary.histogram").tags("le", "1").gauge();
         Gauge summaryHist2 = registry.get("my.summary.histogram").tags("le", "2").gauge();
-        Gauge timerHist = registry.get("my.timer.histogram").tags("le", "1").gauge();
+        Gauge summaryHist3 = registry.get("my.summary.histogram").tags("le", "+Inf").gauge();
+        Gauge timerHist1 = registry.get("my.timer.histogram").tags("le", "1").gauge();
+        Gauge timerHist2 = registry.get("my.timer.histogram").tags("le", "+Inf").gauge();
 
         assertThat(summaryHist1.value()).isEqualTo(1);
         assertThat(summaryHist2.value()).isEqualTo(1);
-        assertThat(timerHist.value()).isEqualTo(1);
+        assertThat(summaryHist3.value()).isEqualTo(1);
+        assertThat(timerHist1.value()).isEqualTo(1);
+        assertThat(timerHist2.value()).isEqualTo(1);
 
         clock.add(config.step());
 
         assertThat(summaryHist1.value()).isEqualTo(0);
         assertThat(summaryHist2.value()).isEqualTo(0);
-        assertThat(timerHist.value()).isEqualTo(0);
+        assertThat(summaryHist3.value()).isEqualTo(0);
+        assertThat(timerHist1.value()).isEqualTo(0);
+        assertThat(timerHist2.value()).isEqualTo(0);
+    }
+
+    @Test
+    void timersWithSlasHaveInfBucket() {
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
+        Timer timer = Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry);
+
+        // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the gauge isn't present
+        registry.get("my.timer.histogram").tag("le", "+Inf").gauge();
+    }
+
+    @Test
+    void distributionSummariesWithSlasHaveInfBucket() {
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
+        DistributionSummary summary = DistributionSummary.builder("my.distribution").sla(1).register(registry);
+
+        // A io.micrometer.core.instrument.search.MeterNotFoundException is thrown if the gauge isn't present
+        registry.get("my.distribution.histogram").tag("le", "+Inf").gauge();
+    }
+
+    @Test
+    void infBucketEqualsCount() {
+        StatsdMeterRegistry registry = new StatsdMeterRegistry(configWithFlavor(StatsdFlavor.ETSY), clock);
+        Timer timer = Timer.builder("my.timer").sla(Duration.ofMillis(1)).register(registry);
+        timer.record(1, TimeUnit.MILLISECONDS);
+
+        Gauge timerHist = registry.get("my.timer.histogram").tags("le", "+Inf").gauge();
+        Long count = timer.takeSnapshot().count();
+
+       assertThat(timerHist.value()).isEqualTo(1);
+       assertThat(count).isEqualTo(1);
     }
 
     @Test
@@ -333,6 +370,30 @@ class StatsdMeterRegistryTest {
                 assertThat(namingConventionUses.intValue()).isEqualTo(5);
                 break;
         }
+    }
+
+    @Test
+    @Issue("#1260")
+    void lineSinkDoesNotConsume_whenRegistryDisabled() {
+        Consumer<String> shouldNotBeInvokedConsumer = line -> {
+            throw new RuntimeException("line sink should not be called");
+        };
+        StatsdMeterRegistry registry = StatsdMeterRegistry.builder(new StatsdConfig() {
+            @Override
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+        })
+            .lineSink(shouldNotBeInvokedConsumer)
+            .build();
+
+        registry.counter("some.metric").increment();
+        assertThat(registry.queueSize()).as("counter increment should already be processed").isZero();
     }
 
     private static StatsdConfig configWithFlavor(StatsdFlavor flavor) {

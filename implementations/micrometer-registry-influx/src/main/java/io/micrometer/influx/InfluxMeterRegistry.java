@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,6 +29,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -41,7 +42,10 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 /**
+ * {@link MeterRegistry} for InfluxDB.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public class InfluxMeterRegistry extends StepMeterRegistry {
     private final InfluxConfig config;
@@ -50,7 +54,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     public InfluxMeterRegistry(InfluxConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
-        this.config().namingConvention(new InfluxNamingConvention());
+        config().namingConvention(new InfluxNamingConvention());
         this.config = config;
         start(threadFactory);
     }
@@ -86,7 +90,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             } else if (status >= 400) {
                 try (InputStream in = con.getErrorStream()) {
                     logger.error("unable to create database '{}': {}", config.db(), new BufferedReader(new InputStreamReader(in))
-                            .lines().collect(joining("\n")));
+                            .lines().collect(joining(System.lineSeparator())));
                 }
             }
         } catch (Throwable e) {
@@ -174,7 +178,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
                     } else if (status >= 400) {
                         try (InputStream in = con.getErrorStream()) {
                             logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                                    .lines().collect(joining("\n")));
+                                    .lines().collect(joining(System.lineSeparator())));
                         }
                     } else {
                         logger.error("failed to send metrics: http " + status);
@@ -223,16 +227,22 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private Stream<String> writeMeter(Meter m) {
-        Stream.Builder<Field> fields = Stream.builder();
-
+    // VisibleForTesting
+    Stream<String> writeMeter(Meter m) {
+        List<Field> fields = new ArrayList<>();
         for (Measurement measurement : m.measure()) {
-            String fieldKey = measurement.getStatistic().toString()
+            double value = measurement.getValue();
+            if (!Double.isFinite(value)) {
+                continue;
+            }
+            String fieldKey = measurement.getStatistic().getTagValueRepresentation()
                     .replaceAll("(.)(\\p{Upper})", "$1_$2").toLowerCase();
-            fields.add(new Field(fieldKey, measurement.getValue()));
+            fields.add(new Field(fieldKey, value));
         }
-
-        return Stream.of(influxLineProtocol(m.getId(), "unknown", fields.build(), clock.wallTime()));
+        if (fields.isEmpty()) {
+            return Stream.empty();
+        }
+        return Stream.of(influxLineProtocol(m.getId(), "unknown", fields.stream(), clock.wallTime()));
     }
 
     private Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
@@ -243,13 +253,20 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         return Stream.of(influxLineProtocol(timer.getId(), "long_task_timer", fields, clock.wallTime()));
     }
 
-    private Stream<String> writeCounter(Meter.Id id, double count) {
-        return Stream.of(influxLineProtocol(id, "counter", Stream.of(new Field("value", count)), clock.wallTime()));
+    // VisibleForTesting
+    Stream<String> writeCounter(Meter.Id id, double count) {
+        if (Double.isFinite(count)) {
+            return Stream.of(influxLineProtocol(id, "counter", Stream.of(new Field("value", count)), clock.wallTime()));
+        }
+        return Stream.empty();
     }
 
-    private Stream<String> writeGauge(Meter.Id id, Double value) {
-        return value.isNaN() ? Stream.empty() :
-            Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value)), clock.wallTime()));
+    // VisibleForTesting
+    Stream<String> writeGauge(Meter.Id id, Double value) {
+        if (Double.isFinite(value)) {
+            return Stream.of(influxLineProtocol(id, "gauge", Stream.of(new Field("value", value)), clock.wallTime()));
+        }
+        return Stream.empty();
     }
 
     private Stream<String> writeTimer(FunctionTimer timer) {
@@ -286,6 +303,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     private String influxLineProtocol(Meter.Id id, String metricType, Stream<Field> fields, long time) {
         String tags = getConventionTags(id).stream()
+                .filter(t -> isNotBlank(t.getValue()))
                 .map(t -> "," + t.getKey() + "=" + t.getValue())
                 .collect(joining(""));
 
@@ -317,5 +335,9 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             }
         }
         return true;
+    }
+
+    private static boolean isNotBlank(@Nullable String str) {
+        return !isBlank(str);
     }
 }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@
 package io.micrometer.newrelic;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
@@ -37,18 +38,20 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.StreamSupport.stream;
 
 /**
  * Publishes metrics to New Relic Insights.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
+ * @author Denis Tazhkenov
+ * @since 1.0.0
  */
 public class NewRelicMeterRegistry extends StepMeterRegistry {
     private final NewRelicConfig config;
@@ -60,10 +63,15 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
     public NewRelicMeterRegistry(NewRelicConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
-        this.config = config;
 
-        requireNonNull(config.accountId());
-        requireNonNull(config.apiKey());
+        if (config.accountId() == null) {
+            throw new MissingRequiredConfigurationException("accountId must be set to report metrics to New Relic");
+        }
+        if (config.apiKey() == null) {
+            throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to New Relic");
+        }
+
+        this.config = config;
 
         config().namingConvention(new NewRelicNamingConvention());
         start(threadFactory);
@@ -99,23 +107,24 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                 }
             }).collect(toList());
 
-            if (events.size() > batchSize) {
-                sendEvents(insightsEndpoint, events.subList(0, batchSize));
-                events = new ArrayList<>(events.subList(batchSize, events.size()));
-            } else if (events.size() == batchSize) {
-                sendEvents(insightsEndpoint, events);
-                events = new ArrayList<>();
-            }
+            sendInBatches(batchSize, events, batch -> sendEvents(insightsEndpoint, batch));
 
-            // drain the remaining event list
-            if (!events.isEmpty()) {
-                sendEvents(insightsEndpoint, events);
-            }
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("malformed New Relic insights endpoint -- see the 'uri' configuration", e);
         } catch (Throwable t) {
             logger.warn("failed to send metrics", t);
         }
+    }
+
+    static void sendInBatches(int batchSize, List<String> events, Consumer<List<String>> sender) {
+        int fromIndex = 0;
+        int totalSize = events.size();
+        int toIndex;
+        do {
+            toIndex = Math.min(fromIndex + batchSize,totalSize);
+            if (toIndex > 0) sender.accept(events.subList(fromIndex, toIndex));
+            fromIndex = toIndex;
+        } while (toIndex < totalSize);
     }
 
     private Stream<String> writeLongTaskTimer(LongTaskTimer ltt) {
@@ -126,22 +135,35 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         );
     }
 
-    private Stream<String> writeCounter(FunctionCounter counter) {
-        return Stream.of(event(counter.getId(), new Attribute("throughput", counter.count())));
+    // VisibleForTesting
+    Stream<String> writeCounter(FunctionCounter counter) {
+        double count = counter.count();
+        if (Double.isFinite(count)) {
+            return Stream.of(event(counter.getId(), new Attribute("throughput", count)));
+        }
+        return Stream.empty();
     }
 
     private Stream<String> writeCounter(Counter counter) {
         return Stream.of(event(counter.getId(), new Attribute("throughput", counter.count())));
     }
 
-    private Stream<String> writeGauge(Gauge gauge) {
+    // VisibleForTesting
+    Stream<String> writeGauge(Gauge gauge) {
         Double value = gauge.value();
-        return value.isNaN() ? Stream.empty() : Stream.of(event(gauge.getId(), new Attribute("value", value)));
+        if (Double.isFinite(value)) {
+            return Stream.of(event(gauge.getId(), new Attribute("value", value)));
+        }
+        return Stream.empty();
     }
 
-    private Stream<String> writeGauge(TimeGauge gauge) {
+    // VisibleForTesting
+    Stream<String> writeGauge(TimeGauge gauge) {
         Double value = gauge.value(getBaseTimeUnit());
-        return value.isNaN() ? Stream.empty() : Stream.of(event(gauge.getId(), new Attribute("value", value)));
+        if (Double.isFinite(value)) {
+            return Stream.of(event(gauge.getId(), new Attribute("value", value)));
+        }
+        return Stream.empty();
     }
 
     private Stream<String> writeSummary(DistributionSummary summary) {
@@ -174,14 +196,21 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         );
     }
 
-    private Stream<String> writeMeter(Meter meter) {
-        return Stream.of(
-                event(meter.getId(),
-                        stream(meter.measure().spliterator(), false)
-                                .map(measure -> new Attribute(measure.getStatistic().getTagValueRepresentation(), measure.getValue()))
-                                .toArray(Attribute[]::new)
-                )
-        );
+    // VisibleForTesting
+    Stream<String> writeMeter(Meter meter) {
+        // Snapshot values should be used throughout this method as there are chances for values to be changed in-between.
+        List<Attribute> attributes = new ArrayList<>();
+        for (Measurement measurement : meter.measure()) {
+            double value = measurement.getValue();
+            if (!Double.isFinite(value)) {
+                continue;
+            }
+            attributes.add(new Attribute(measurement.getStatistic().getTagValueRepresentation(), value));
+        }
+        if (attributes.isEmpty()) {
+            return Stream.empty();
+        }
+        return Stream.of(event(meter.getId(), attributes.toArray(new Attribute[0])));
     }
 
     private String event(Meter.Id id, Attribute... attributes) {
@@ -210,6 +239,8 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         HttpURLConnection con = null;
 
         try {
+            logger.debug("Sending {} events to New Relic", events.size());
+
             con = (HttpURLConnection) insightsEndpoint.openConnection();
             con.setConnectTimeout((int) config.connectTimeout().toMillis());
             con.setReadTimeout((int) config.readTimeout().toMillis());
@@ -235,8 +266,9 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                 logger.info("successfully sent {} events to New Relic", events.size());
             } else if (status >= 400) {
                 try (InputStream in = con.getErrorStream()) {
-                    logger.error("failed to send metrics: " + new BufferedReader(new InputStreamReader(in))
-                            .lines().collect(joining("\n")));
+                    logger.error("failed to send metrics: http " + status + " " +
+                            new BufferedReader(new InputStreamReader(in))
+                                    .lines().collect(joining(System.lineSeparator())));
                 }
             } else {
                 logger.error("failed to send metrics: http " + status);

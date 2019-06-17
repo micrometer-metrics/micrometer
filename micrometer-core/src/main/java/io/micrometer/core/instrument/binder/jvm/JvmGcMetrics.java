@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,14 +26,18 @@ import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.ListenerNotFoundException;
 import javax.management.NotificationEmitter;
+import javax.management.NotificationListener;
 import javax.management.openmbean.CompositeData;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryUsage;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -73,7 +77,7 @@ enum GcGenerationAge {
  */
 @NonNullApi
 @NonNullFields
-public class JvmGcMetrics implements MeterBinder {
+public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(JvmGcMetrics.class);
 
@@ -86,6 +90,8 @@ public class JvmGcMetrics implements MeterBinder {
 
     @Nullable
     private String oldGenPoolName;
+
+    private final List<Runnable> notificationListenerCleanUpRunnables = new CopyOnWriteArrayList<>();
 
     public JvmGcMetrics() {
         this(emptyList());
@@ -134,7 +140,7 @@ public class JvmGcMetrics implements MeterBinder {
 
             for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
                 if (mbean instanceof NotificationEmitter) {
-                    ((NotificationEmitter) mbean).addNotificationListener((notification, ref) -> {
+                    NotificationListener notificationListener = (notification, ref) -> {
                         final String type = notification.getType();
                         if (type.equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
                             CompositeData cd = (CompositeData) notification.getUserData();
@@ -191,7 +197,15 @@ public class JvmGcMetrics implements MeterBinder {
                                 }
                             }
                         }
-                    }, null, null);
+                    };
+                    NotificationEmitter notificationEmitter = (NotificationEmitter) mbean;
+                    notificationEmitter.addNotificationListener(notificationListener, null, null);
+                    notificationListenerCleanUpRunnables.add(() -> {
+                        try {
+                            notificationEmitter.removeNotificationListener(notificationListener);
+                        } catch (ListenerNotFoundException ignore) {
+                        }
+                    });
                 }
             }
         }
@@ -221,4 +235,10 @@ public class JvmGcMetrics implements MeterBinder {
     private boolean isYoungGenPool(String name) {
         return name.endsWith("Eden Space");
     }
+
+    @Override
+    public void close() {
+        notificationListenerCleanUpRunnables.forEach(Runnable::run);
+    }
+
 }
