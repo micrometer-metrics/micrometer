@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.composite;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.pause.ClockDriftPauseDetector;
@@ -65,13 +66,13 @@ class CompositeMeterRegistryTest {
     void baseUnitsPreserved() {
         composite.add(simple);
 
-        Counter.builder("counter").baseUnit("bytes").register(composite);
-        DistributionSummary.builder("summary").baseUnit("bytes").register(composite);
-        Gauge.builder("gauge", new AtomicInteger(0), AtomicInteger::get).baseUnit("bytes").register(composite);
+        Counter.builder("counter").baseUnit(BaseUnits.BYTES).register(composite);
+        DistributionSummary.builder("summary").baseUnit(BaseUnits.BYTES).register(composite);
+        Gauge.builder("gauge", new AtomicInteger(0), AtomicInteger::get).baseUnit(BaseUnits.BYTES).register(composite);
 
-        assertThat(simple.get("counter").counter().getId().getBaseUnit()).isEqualTo("bytes");
-        assertThat(simple.get("summary").summary().getId().getBaseUnit()).isEqualTo("bytes");
-        assertThat(simple.get("gauge").gauge().getId().getBaseUnit()).isEqualTo("bytes");
+        assertThat(simple.get("counter").counter().getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
+        assertThat(simple.get("summary").summary().getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
+        assertThat(simple.get("gauge").gauge().getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
     }
 
     @DisplayName("metrics stop receiving updates when their registry parent is removed from a composite")

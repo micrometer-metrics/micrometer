@@ -17,6 +17,7 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.prometheus.client.Collector;
@@ -55,7 +56,7 @@ class PrometheusMeterRegistryTest {
     @Test
     void baseUnitMakesItToScrape() {
         AtomicInteger n = new AtomicInteger(0);
-        Gauge.builder("gauge", n, AtomicInteger::get).baseUnit("bytes").register(registry);
+        Gauge.builder("gauge", n, AtomicInteger::get).baseUnit(BaseUnits.BYTES).register(registry);
         assertThat(registry.scrape()).contains("gauge_bytes");
     }
 
