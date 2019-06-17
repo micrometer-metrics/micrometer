@@ -45,23 +45,43 @@ import static org.mockito.Mockito.*;
  */
 class AppOpticsMeterRegistryTest {
 
+    private final AppOpticsConfig config = new AppOpticsConfig() {
+
+        @Override
+        public String apiToken() {
+            return "fake";
+        }
+
+        @Override
+        public String get(String key) {
+            return null;
+        }
+    };
+
+    private final AppOpticsConfig configWithFlooring = new AppOpticsConfig() {
+
+        @Override
+        public String apiToken() {
+            return "fake";
+        }
+
+        @Override
+        public boolean floorTimes() {
+            return true;
+        }
+
+        @Override
+        public String get(String key) {
+            return null;
+        }
+    };
+
     private final MockClock clock = new MockClock();
-    private final AppOpticsConfig mockConfig = mock(AppOpticsConfig.class);
     private final ThreadFactory mockThreadFactory = mock(ThreadFactory.class);
     private final HttpSender mockSender = mock(HttpSender.class);
 
-    private AppOpticsMeterRegistry meterRegistry;
-
-    @BeforeEach
-    void setup() {
-        when(mockConfig.apiToken()).thenReturn("fake");
-        when(mockConfig.step()).thenReturn(Duration.ofMinutes(1));
-        when(mockConfig.batchSize()).thenReturn(500);
-        when(mockConfig.uri()).thenReturn("fake uri");
-
-        meterRegistry = new AppOpticsMeterRegistry(
-                mockConfig, clock, mockThreadFactory, mockSender);
-    }
+    private AppOpticsMeterRegistry meterRegistry = new AppOpticsMeterRegistry(
+            config, clock, mockThreadFactory, mockSender);
 
     @Test
     void writeGauge() {
@@ -120,18 +140,18 @@ class AppOpticsMeterRegistryTest {
     @Test
     void writeFunctionCounter() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(meterRegistry);
-        clock.add(mockConfig.step());
+        clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter).isPresent()).isTrue();
     }
 
     @Test
     void writeFunctionCounterShouldDropInfiniteValues() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(meterRegistry);
-        clock.add(mockConfig.step());
+        clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter).isPresent()).isFalse();
 
         counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(meterRegistry);
-        clock.add(mockConfig.step());
+        clock.add(config.step());
         assertThat(meterRegistry.writeFunctionCounter(counter).isPresent()).isFalse();
     }
 
@@ -159,7 +179,6 @@ class AppOpticsMeterRegistryTest {
 
     @Test
     void emptyMetersDoNoPosting() {
-
         meterRegistry.publish();
 
         verifyNoMoreInteractions(mockSender);
@@ -167,9 +186,6 @@ class AppOpticsMeterRegistryTest {
 
     @Test
     void defaultValueDoesNoFlooring() {
-
-        when(mockConfig.floorTimes()).thenCallRealMethod();
-
         clock.add(Duration.ofSeconds(63));
 
         assertThat(meterRegistry.getBodyMeasurementsPrefix()).isEqualTo(
@@ -178,12 +194,21 @@ class AppOpticsMeterRegistryTest {
 
     @Test
     void flooringRoundsToNearestStep() {
-
-        when(mockConfig.floorTimes()).thenReturn(true);
+        meterRegistry = new AppOpticsMeterRegistry(configWithFlooring, clock, mockThreadFactory, mockSender);
 
         clock.add(Duration.ofSeconds(63));
 
         assertThat(meterRegistry.getBodyMeasurementsPrefix()).isEqualTo(
                 String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 60));
+
+        clock.addSeconds(56); // 119
+
+        assertThat(meterRegistry.getBodyMeasurementsPrefix()).isEqualTo(
+                String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 60));
+
+        clock.addSeconds(1); // 120
+
+        assertThat(meterRegistry.getBodyMeasurementsPrefix()).isEqualTo(
+                String.format(AppOpticsMeterRegistry.BODY_MEASUREMENTS_PREFIX, 120));
     }
 }

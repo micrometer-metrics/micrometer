@@ -145,11 +145,10 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
     }
 
     /**
-     * Align times to caller's clock, and optionally floor for synchronizing across nodes
-     * Visible for testing
+     * Build body prefix with time based on the clock and flooring configuration.
      */
-    protected String getBodyMeasurementsPrefix() {
-
+    // VisibleForTesting
+    String getBodyMeasurementsPrefix() {
         final long stepSeconds = config.step().getSeconds();
         final long time = config.floorTimes() ? (clock.wallTime() / 1000 / stepSeconds * stepSeconds) : clock.wallTime() / 1000;
         return String.format(BODY_MEASUREMENTS_PREFIX, time);

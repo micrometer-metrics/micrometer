@@ -66,7 +66,7 @@ public interface AppOpticsConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return whether or not to ship a floored time - synchronizes reporting across nodes
+     * @return whether or not to ship a floored time - floors time to the multiple of the {@link #step()}
      */
     default boolean floorTimes() {
         return Boolean.parseBoolean(get(prefix() + ".floorTimes"));
