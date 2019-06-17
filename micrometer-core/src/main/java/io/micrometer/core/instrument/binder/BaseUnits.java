@@ -16,7 +16,7 @@
 package io.micrometer.core.instrument.binder;
 
 /**
- * Base units.
+ * Base units constants for convenience.
  *
  * @author Johnny Lim
  */
