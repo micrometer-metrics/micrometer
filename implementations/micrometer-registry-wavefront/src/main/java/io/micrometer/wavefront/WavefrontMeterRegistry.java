@@ -21,10 +21,16 @@ import com.wavefront.sdk.entities.histograms.HistogramGranularity;
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
+import io.micrometer.core.instrument.cumulative.CumulativeCounter;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.step.StepMeterRegistry;
+import io.micrometer.core.instrument.internal.DefaultGauge;
+import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
+import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.micrometer.core.instrument.push.PushMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
@@ -45,6 +51,8 @@ import java.util.Set;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -58,7 +66,7 @@ import static java.util.stream.StreamSupport.stream;
  * @author Howard Yoo
  * @since 1.0.0
  */
-public class WavefrontMeterRegistry extends StepMeterRegistry {
+public class WavefrontMeterRegistry extends PushMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY =
         new NamedThreadFactory("wavefront-metrics-publisher");
     private final Logger logger = LoggerFactory.getLogger(WavefrontMeterRegistry.class);
@@ -127,10 +135,25 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     }
 
     @Override
+    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+        return new DefaultGauge<>(id, obj, valueFunction);
+    }
+
+    @Override
+    protected Counter newCounter(Meter.Id id) {
+        return new CumulativeCounter(id);
+    }
+
+    @Override
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
+        return new DefaultLongTaskTimer(id, clock);
+    }
+
+    @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
                              PauseDetector pauseDetector) {
         WavefrontTimer timer = new WavefrontTimer(id, clock, distributionStatisticConfig, pauseDetector,
-            getBaseTimeUnit(), config.step().toMillis());
+            getBaseTimeUnit());
         if (!timer.isPublishingHistogram()) {
             HistogramGauges.registerWithCommonFormat(timer, this);
         }
@@ -141,11 +164,26 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     protected DistributionSummary newDistributionSummary(
         Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
         WavefrontDistributionSummary summary = new WavefrontDistributionSummary(id, clock,
-            distributionStatisticConfig, scale, config.step().toMillis());
+            distributionStatisticConfig, scale);
         if (!summary.isPublishingHistogram()) {
             HistogramGauges.registerWithCommonFormat(summary, this);
         }
         return summary;
+    }
+
+    @Override
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+        return new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
+    }
+
+    @Override
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
+        return new CumulativeFunctionCounter<>(id, obj, countFunction);
+    }
+
+    @Override
+    protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+        return new DefaultMeter(id, type, measurements);
     }
 
     @Override
@@ -364,6 +402,14 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.SECONDS;
+    }
+
+    @Override
+    protected DistributionStatisticConfig defaultHistogramConfig() {
+        return DistributionStatisticConfig.builder()
+                .expiry(config.step())
+                .build()
+                .merge(DistributionStatisticConfig.DEFAULT);
     }
 
     public static Builder builder(WavefrontConfig config) {

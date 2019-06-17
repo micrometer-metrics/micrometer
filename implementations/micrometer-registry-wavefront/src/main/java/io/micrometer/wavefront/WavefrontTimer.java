@@ -17,9 +17,9 @@ package io.micrometer.wavefront;
 
 import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.cumulative.CumulativeTimer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.step.StepTimer;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
@@ -32,14 +32,13 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Han Zhang
  */
-class WavefrontTimer extends StepTimer {
+class WavefrontTimer extends CumulativeTimer {
     @Nullable
     private final WavefrontHistogramImpl delegate;
 
     WavefrontTimer(Id id, Clock clock, DistributionStatisticConfig distributionStatisticConfig,
-                   PauseDetector pauseDetector, TimeUnit baseTimeUnit, long stepMillis) {
-        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, stepMillis,
-            false);
+                   PauseDetector pauseDetector, TimeUnit baseTimeUnit) {
+        super(id, clock, distributionStatisticConfig, pauseDetector, baseTimeUnit, false);
         delegate = distributionStatisticConfig.isPublishingHistogram() ?
             new WavefrontHistogramImpl(clock::wallTime) : null;
     }
