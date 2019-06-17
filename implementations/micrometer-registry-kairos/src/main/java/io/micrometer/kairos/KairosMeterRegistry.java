@@ -28,12 +28,12 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 
@@ -174,15 +174,23 @@ public class KairosMeterRegistry extends StepMeterRegistry {
         );
     }
 
-    private Stream<String> writeCustomMetric(Meter meter) {
+    // VisibleForTesting
+    Stream<String> writeCustomMetric(Meter meter) {
         long wallTime = config().clock().wallTime();
         List<Tag> tags = getConventionTags(meter.getId());
-        return StreamSupport.stream(meter.measure().spliterator(), false)
-                .map(ms -> new KairosMetricBuilder()
-                        .field("name", ms.getStatistic().getTagValueRepresentation())
-                        .datapoints(wallTime, ms.getValue())
-                        .tags(tags)
-                        .build());
+        List<String> metrics = new ArrayList<>();
+        for (Measurement measurement : meter.measure()) {
+            double value = measurement.getValue();
+            if (!Double.isFinite(value)) {
+                continue;
+            }
+            metrics.add(new KairosMetricBuilder()
+                    .field("name", measurement.getStatistic().getTagValueRepresentation())
+                    .datapoints(wallTime, value)
+                    .tags(tags)
+                    .build());
+        }
+        return metrics.stream();
     }
 
     String writeMetric(Meter.Id id, long wallTime, double value) {
