@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.tomcat;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -180,13 +181,13 @@ public class TomcatMetrics implements MeterBinder {
             FunctionCounter.builder("tomcat.global.sent", mBeanServer,
                 s -> safeDouble(() -> s.getAttribute(name, "bytesSent")))
                 .tags(allTags)
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
             FunctionCounter.builder("tomcat.global.received", mBeanServer,
                 s -> safeDouble(() -> s.getAttribute(name, "bytesReceived")))
                 .tags(allTags)
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
             FunctionCounter.builder("tomcat.global.error", mBeanServer,

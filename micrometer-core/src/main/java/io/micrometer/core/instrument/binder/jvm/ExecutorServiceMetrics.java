@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.jvm;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.internal.TimedExecutor;
 import io.micrometer.core.instrument.internal.TimedExecutorService;
@@ -148,25 +149,25 @@ public class ExecutorServiceMetrics implements MeterBinder {
         FunctionCounter.builder("executor.completed", tp, ThreadPoolExecutor::getCompletedTaskCount)
                 .tags(tags)
                 .description("The approximate total number of tasks that have completed execution")
-                .baseUnit("tasks")
+                .baseUnit(BaseUnits.TASKS)
                 .register(registry);
 
         Gauge.builder("executor.active", tp, ThreadPoolExecutor::getActiveCount)
                 .tags(tags)
                 .description("The approximate number of threads that are actively executing tasks")
-                .baseUnit("threads")
+                .baseUnit(BaseUnits.THREADS)
                 .register(registry);
 
         Gauge.builder("executor.queued", tp, tpRef -> tpRef.getQueue().size())
                 .tags(tags)
                 .description("The approximate number of tasks that are queued for execution")
-                .baseUnit("tasks")
+                .baseUnit(BaseUnits.TASKS)
                 .register(registry);
 
         Gauge.builder("executor.pool.size", tp, ThreadPoolExecutor::getPoolSize)
                 .tags(tags)
                 .description("The current number of threads in the pool")
-                .baseUnit("threads")
+                .baseUnit(BaseUnits.THREADS)
                 .register(registry);
     }
 
