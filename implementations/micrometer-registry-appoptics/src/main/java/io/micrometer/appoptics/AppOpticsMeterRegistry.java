@@ -29,11 +29,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.StreamSupport;
 
 import static io.micrometer.core.instrument.util.DoubleFormat.decimal;
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
@@ -140,10 +141,28 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private Optional<String> writeMeter(Meter meter) {
-        return Optional.of(StreamSupport.stream(meter.measure().spliterator(), false)
-                .map(ms -> write(meter.getId().withTag(ms.getStatistic()), null, Fields.Value.tag(), decimal(ms.getValue())))
-                .collect(joining(",")));
+    // VisibleForTesting
+    Optional<String> writeMeter(Meter meter) {
+        Iterable<Measurement> measurements = meter.measure();
+        List<Statistic> statistics = new ArrayList<>();
+        // Snapshot values should be used throughout this method as there are chances for values to be changed in-between.
+        List<Double> values = new ArrayList<>();
+        for (Measurement measurement : measurements) {
+            double value = measurement.getValue();
+            if (!Double.isFinite(value)) {
+                continue;
+            }
+            statistics.add(measurement.getStatistic());
+            values.add(value);
+        }
+        if (statistics.isEmpty()) {
+            return Optional.empty();
+        }
+        StringJoiner joiner = new StringJoiner(",");
+        for (int i = 0; i < statistics.size(); i++) {
+            joiner.add(write(meter.getId().withTag(statistics.get(i)), null, Fields.Value.tag(), decimal(values.get(i))));
+        }
+        return Optional.of(joiner.toString());
     }
 
     // VisibleForTesting

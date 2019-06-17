@@ -95,10 +95,8 @@ class HttpUrlConnectionSenderTest {
             assertThat(response.body()).isEqualTo(expectedBody);
             verify(connection).setReadTimeout(eq(10000));
             verify(connection).setConnectTimeout(eq(1000));
-            verify(connection).setDoOutput(true);
-            verify(connection).setRequestMethod(eq(request.getMethod().toString()));
+            verify(connection).setRequestMethod(eq("GET"));
             verify(connection).getErrorStream();
-            verify(connection).getOutputStream();
             verify(connection, times(2)).getInputStream();
             verify(connection).disconnect();
         }

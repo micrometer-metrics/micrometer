@@ -107,6 +107,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         String insightsEndpoint = config.uri() + "/v1/accounts/" + config.accountId() + "/events";
 
         // New Relic's Insights API limits us to 1000 events per call
+        // 1:1 mapping between Micrometer meters and New Relic events
         for (List<Meter> batch : MeterPartition.partition(this, Math.min(config.batchSize(), 1000))) {
             sendEvents(insightsEndpoint, batch.stream().flatMap(meter -> meter.match(
                     this::writeGauge,
@@ -225,7 +226,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         }
 
         return Arrays.stream(attributes)
-                .map(attr -> ",\"" + attr.getName() + "\":" + DoubleFormat.decimalOrWhole(attr.getValue().doubleValue()))
+                .map(attr -> ",\"" + attr.getName() + "\":" + DoubleFormat.wholeOrDecimal(attr.getValue().doubleValue()))
                 .collect(Collectors.joining("", "{\"eventType\":\"" + escapeJson(getConventionName(id)) + "\"", tagsJson + "}"));
     }
 

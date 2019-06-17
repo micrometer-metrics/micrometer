@@ -162,7 +162,8 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         if (fields.isEmpty()) {
             return Stream.empty();
         }
-        return Stream.of(influxLineProtocol(m.getId(), "unknown", fields.stream()));
+        Meter.Id id = m.getId();
+        return Stream.of(influxLineProtocol(id, id.getType().name().toLowerCase(), fields.stream()));
     }
 
     private Stream<String> writeLongTaskTimer(LongTaskTimer timer) {

@@ -124,7 +124,7 @@ class InfluxMeterRegistryTest {
 
     @Test
     void writeCustomMeter() {
-        String expectedInfluxLine = "my_custom,metric_type=unknown value=23,value=13,total=5 1";
+        String expectedInfluxLine = "my_custom,metric_type=other value=23,value=13,total=5 1";
 
         Measurement m1 = new Measurement(() -> 23d, Statistic.VALUE);
         Measurement m2 = new Measurement(() -> 13d, Statistic.VALUE);
@@ -153,6 +153,6 @@ class InfluxMeterRegistryTest {
         Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
-        assertThat(meterRegistry.writeMeter(meter)).containsExactly("my_meter,metric_type=unknown value=1,value=2 1");
+        assertThat(meterRegistry.writeMeter(meter)).containsExactly("my_meter,metric_type=gauge value=1,value=2 1");
     }
 }

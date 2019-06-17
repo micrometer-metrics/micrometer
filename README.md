@@ -16,11 +16,11 @@ Micrometer is the instrumentation library underpinning Spring Boot 2.0's metrics
 
 See [Micrometer's support policy](https://micrometer.io/docs/support) for more details about long-term support (LTS) versus non-LTS versions.
 
-| Minor release | LTS |
-| ------------- | --- |
-| `1.0.x`       | Yes |
-| `1.1.x`       | Yes |
-| `1.2.x`       | No  |
+| Minor version line | LTS | Final patch |
+| ------------------ | --- | ----------- |
+| `1.0.x`            | Yes | `1.0.11`    |
+| `1.1.x`            | Yes |  |
+| `1.2.x`            | No  |  |
 
 ## Join the discussion
 

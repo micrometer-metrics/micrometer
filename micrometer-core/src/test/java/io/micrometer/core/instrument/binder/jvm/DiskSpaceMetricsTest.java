@@ -29,24 +29,36 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
  *
  * @author jmcshane
  * @author Johnny Lim
+ * @author Tommy Ludwig
  */
 class DiskSpaceMetricsTest {
+
+    MeterRegistry registry = new SimpleMeterRegistry();
+
     @Test
     void diskSpaceMetrics() {
-        MeterRegistry registry = new SimpleMeterRegistry();
         new DiskSpaceMetrics(new File(System.getProperty("user.dir"))).bindTo(registry);
 
-        assertThat(registry.get("disk.free").gauge().value()).isGreaterThan(0);
-        assertThat(registry.get("disk.total").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("disk.free").gauge().value()).isNotNaN().isGreaterThan(0);
+        assertThat(registry.get("disk.total").gauge().value()).isNotNaN().isGreaterThan(0);
     }
 
     @Test
     void diskSpaceMetricsWithTags() {
-        MeterRegistry registry = new SimpleMeterRegistry();
         new DiskSpaceMetrics(new File(System.getProperty("user.dir")), Tags.of("key1", "value1")).bindTo(registry);
 
-        assertThat(registry.get("disk.free").tags("key1", "value1").gauge().value()).isGreaterThan(0);
-        assertThat(registry.get("disk.total").tags("key1", "value1").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("disk.free").tags("key1", "value1").gauge().value()).isNotNaN().isGreaterThan(0);
+        assertThat(registry.get("disk.total").tags("key1", "value1").gauge().value()).isNotNaN().isGreaterThan(0);
+    }
+
+    @Test
+    void garbageCollectionDoesNotLoseGaugeValue() {
+        new DiskSpaceMetrics(new File(System.getProperty("user.dir"))).bindTo(registry);
+
+        System.gc();
+
+        assertThat(registry.get("disk.free").gauge().value()).isNotNaN().isGreaterThan(0);
+        assertThat(registry.get("disk.total").gauge().value()).isNotNaN().isGreaterThan(0);
     }
 
 }

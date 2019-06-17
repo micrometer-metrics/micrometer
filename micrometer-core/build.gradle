@@ -50,17 +50,15 @@ dependencies {
     // @Timed AOP
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
 
-    compile 'com.squareup.okhttp3:okhttp:latest.release', optional
+    compile 'com.squareup.okhttp3:okhttp:3.+', optional
 
     testCompile 'io.projectreactor:reactor-test:latest.release'
 
     // JUnit 5
-    testCompile 'org.junit.jupiter:junit-jupiter-api:latest.release'
-    testCompile 'org.junit.jupiter:junit-jupiter-params:latest.release'
-    testRuntime 'org.junit.jupiter:junit-jupiter-engine:latest.release'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.4.+'
 
     // Eclipse still needs this (as of 4.7.1a)
-    testRuntime 'org.junit.platform:junit-platform-launcher:latest.release'
+    testRuntime 'org.junit.platform:junit-platform-launcher:1.4.+'
 
     testCompile 'org.mockito:mockito-core:latest.release'
 

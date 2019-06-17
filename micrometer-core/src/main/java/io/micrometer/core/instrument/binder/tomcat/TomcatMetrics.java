@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.tomcat;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -54,7 +55,7 @@ public class TomcatMetrics implements MeterBinder {
     private final MBeanServer mBeanServer;
     private final Iterable<Tag> tags;
 
-    private String jmxDomain;
+    private volatile String jmxDomain;
 
     public TomcatMetrics(@Nullable Manager manager, Iterable<Tag> tags) {
         this(manager, tags, getMBeanServer());
@@ -132,19 +133,19 @@ public class TomcatMetrics implements MeterBinder {
             Gauge.builder("tomcat.threads.config.max", mBeanServer,
                     s -> safeDouble(() -> s.getAttribute(name, "maxThreads")))
                     .tags(allTags)
-                    .baseUnit("threads")
+                    .baseUnit(BaseUnits.THREADS)
                     .register(registry);
 
             Gauge.builder("tomcat.threads.busy", mBeanServer,
                     s -> safeDouble(() -> s.getAttribute(name, "currentThreadsBusy")))
                     .tags(allTags)
-                    .baseUnit("threads")
+                    .baseUnit(BaseUnits.THREADS)
                     .register(registry);
 
             Gauge.builder("tomcat.threads.current", mBeanServer,
                     s -> safeDouble(() -> s.getAttribute(name, "currentThreadCount")))
                     .tags(allTags)
-                    .baseUnit("threads")
+                    .baseUnit(BaseUnits.THREADS)
                     .register(registry);
         });
     }
@@ -186,16 +187,16 @@ public class TomcatMetrics implements MeterBinder {
     private void registerGlobalRequestMetrics(MeterRegistry registry) {
         registerMetricsEventually("type", "GlobalRequestProcessor", (name, allTags) -> {
             FunctionCounter.builder("tomcat.global.sent", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "bytesSent")))
-                    .tags(allTags)
-                    .baseUnit("bytes")
-                    .register(registry);
+                s -> safeDouble(() -> s.getAttribute(name, "bytesSent")))
+                .tags(allTags)
+                .baseUnit(BaseUnits.BYTES)
+                .register(registry);
 
             FunctionCounter.builder("tomcat.global.received", mBeanServer,
-                    s -> safeDouble(() -> s.getAttribute(name, "bytesReceived")))
-                    .tags(allTags)
-                    .baseUnit("bytes")
-                    .register(registry);
+                s -> safeDouble(() -> s.getAttribute(name, "bytesReceived")))
+                .tags(allTags)
+                .baseUnit(BaseUnits.BYTES)
+                .register(registry);
 
             FunctionCounter.builder("tomcat.global.error", mBeanServer,
                     s -> safeDouble(() -> s.getAttribute(name, "errorCount")))
@@ -277,6 +278,21 @@ public class TomcatMetrics implements MeterBinder {
             }
         }
         return this.jmxDomain;
+    }
+
+    /**
+     * Set JMX domain. If unset, default values will be used as follows:
+     *
+     * <ul>
+     *     <li>Embedded Tomcat: "Tomcat"</li>
+     *     <li>Standalone Tomcat: "Catalina"</li>
+     * </ul>
+     *
+     * @param jmxDomain JMX domain to be used
+     * @since 1.0.11
+     */
+    public void setJmxDomain(String jmxDomain) {
+        this.jmxDomain = jmxDomain;
     }
 
     private boolean hasObjectName(String name) {

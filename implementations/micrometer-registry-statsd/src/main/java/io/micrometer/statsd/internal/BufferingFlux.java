@@ -15,12 +15,12 @@
  */
 package io.micrometer.statsd.internal;
 
-import reactor.core.publisher.DirectProcessor;
-import reactor.core.publisher.Flux;
-
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import reactor.core.publisher.DirectProcessor;
+import reactor.core.publisher.Flux;
 
 public class BufferingFlux {
 
@@ -93,7 +93,7 @@ public class BufferingFlux {
                     }, true)
                     .map(lines -> {
                         lines.removeIf(String::isEmpty); // Ignore empty messages
-                        return String.join(delimiter, lines);
+                        return String.join(delimiter, lines) + delimiter;
                     });
         });
     }

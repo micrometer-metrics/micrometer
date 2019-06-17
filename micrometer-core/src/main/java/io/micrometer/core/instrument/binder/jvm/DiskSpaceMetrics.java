@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -58,12 +59,14 @@ public class DiskSpaceMetrics implements MeterBinder {
         Gauge.builder("disk.free", path, File::getUsableSpace)
                 .tags(tagsWithPath)
                 .description("Usable space for path")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
+                .strongReference(true)
                 .register(registry);
         Gauge.builder("disk.total", path, File::getTotalSpace)
                 .tags(tagsWithPath)
                 .description("Total space for path")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
+                .strongReference(true)
                 .register(registry);
     }
 }
