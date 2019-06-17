@@ -129,18 +129,22 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
                              PauseDetector pauseDetector) {
-        Timer timer = new WavefrontTimer(id, clock, distributionStatisticConfig, pauseDetector,
+        WavefrontTimer timer = new WavefrontTimer(id, clock, distributionStatisticConfig, pauseDetector,
             getBaseTimeUnit(), config.step().toMillis());
-        HistogramGauges.registerWithCommonFormat(timer, this);
+        if (!timer.isPublishingHistogram()) {
+            HistogramGauges.registerWithCommonFormat(timer, this);
+        }
         return timer;
     }
 
     @Override
     protected DistributionSummary newDistributionSummary(
         Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
-        DistributionSummary summary = new WavefrontDistributionSummary(id, clock,
+        WavefrontDistributionSummary summary = new WavefrontDistributionSummary(id, clock,
             distributionStatisticConfig, scale, config.step().toMillis());
-        HistogramGauges.registerWithCommonFormat(summary, this);
+        if (!summary.isPublishingHistogram()) {
+            HistogramGauges.registerWithCommonFormat(summary, this);
+        }
         return summary;
     }
 
@@ -257,13 +261,18 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         final long wallTime = clock.wallTime();
         final Stream.Builder<WavefrontMetricLineData> metrics = Stream.builder();
 
-        Meter.Id id = timer.getId();
+        final Meter.Id id = timer.getId();
+        final WavefrontTimer wfTimer = (WavefrontTimer) timer;
 
-        addMetric(metrics, id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()));
-        addMetric(metrics, id, "count", wallTime, timer.count());
-        addMetric(metrics, id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
-        addMetric(metrics, id, "max", wallTime, timer.max(getBaseTimeUnit()));
-        addDistribution(metrics, id, ((WavefrontTimer) timer).flushDistributions());
+        if (wfTimer.isPublishingHistogram()) {
+            addDistribution(metrics, id, wfTimer.flushDistributions());
+        } else {
+            addMetric(metrics, id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()));
+            addMetric(metrics, id, "count", wallTime, timer.count());
+            addMetric(metrics, id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
+            addMetric(metrics, id, "max", wallTime, timer.max(getBaseTimeUnit()));
+        }
+
         return metrics.build();
     }
 
@@ -271,13 +280,17 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         final long wallTime = clock.wallTime();
         final Stream.Builder<WavefrontMetricLineData> metrics = Stream.builder();
 
-        Meter.Id id = summary.getId();
+        final Meter.Id id = summary.getId();
+        final WavefrontDistributionSummary wfSummary = (WavefrontDistributionSummary) summary;
 
-        addMetric(metrics, id, "sum", wallTime, summary.totalAmount());
-        addMetric(metrics, id, "count", wallTime, summary.count());
-        addMetric(metrics, id, "avg", wallTime, summary.mean());
-        addMetric(metrics, id, "max", wallTime, summary.max());
-        addDistribution(metrics, id, ((WavefrontDistributionSummary) summary).flushDistributions());
+        if (wfSummary.isPublishingHistogram()) {
+            addDistribution(metrics, id, wfSummary.flushDistributions());
+        } else {
+            addMetric(metrics, id, "sum", wallTime, summary.totalAmount());
+            addMetric(metrics, id, "count", wallTime, summary.count());
+            addMetric(metrics, id, "avg", wallTime, summary.mean());
+            addMetric(metrics, id, "max", wallTime, summary.max());
+        }
 
         return metrics.build();
     }
