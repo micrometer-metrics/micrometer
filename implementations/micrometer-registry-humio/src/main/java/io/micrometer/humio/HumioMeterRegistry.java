@@ -31,11 +31,11 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.StreamSupport;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
@@ -258,9 +258,19 @@ public class HumioMeterRegistry extends StepMeterRegistry {
 
         // VisibleForTesting
         String writeMeter(Meter meter) {
-            return writeEvent(meter, StreamSupport.stream(meter.measure().spliterator(), false)
-                    .map(ms -> event(ms.getStatistic().getTagValueRepresentation(), ms.getValue()))
-                    .toArray(Attribute[]::new));
+            // Snapshot values should be used throughout this method as there are chances for values to be changed in-between.
+            List<Attribute> attributes = new ArrayList<>();
+            for (Measurement measurement : meter.measure()) {
+                double value = measurement.getValue();
+                if (!Double.isFinite(value)) {
+                    continue;
+                }
+                attributes.add(event(measurement.getStatistic().getTagValueRepresentation(), value));
+            }
+            if (attributes.isEmpty()) {
+                return null;
+            }
+            return writeEvent(meter, attributes.toArray(new Attribute[0]));
         }
 
         /*
