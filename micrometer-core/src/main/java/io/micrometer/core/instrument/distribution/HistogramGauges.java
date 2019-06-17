@@ -50,7 +50,7 @@ public class HistogramGauges {
                 bucket -> id.getName() + ".histogram",
                 // We look for Long.MAX_VALUE to ensure a sensible tag on our +Inf bucket
                 bucket -> Tags.concat(id.getTags(), "le", bucket.bucket() != Long.MAX_VALUE
-                        ? DoubleFormat.decimalOrWhole(bucket.bucket(timer.baseTimeUnit())) : "+Inf"));
+                        ? DoubleFormat.wholeOrDecimal(bucket.bucket(timer.baseTimeUnit())) : "+Inf"));
     }
 
     public static HistogramGauges registerWithCommonFormat(DistributionSummary summary, MeterRegistry registry) {
@@ -62,7 +62,7 @@ public class HistogramGauges {
                 bucket -> id.getName() + ".histogram",
                 // We look for Long.MAX_VALUE to ensure a sensible tag on our +Inf bucket
                 bucket -> Tags.concat(id.getTags(), "le", bucket.bucket() != Long.MAX_VALUE
-                        ? DoubleFormat.decimalOrWhole(bucket.bucket()) : "+Inf"));
+                        ? DoubleFormat.wholeOrDecimal(bucket.bucket()) : "+Inf"));
     }
 
     public static HistogramGauges register(HistogramSupport meter, MeterRegistry registry,
