@@ -31,9 +31,9 @@ class DoubleFormatTest {
     }
 
     @Test
-    void decimalOrWhole() {
-        assertThat(DoubleFormat.decimalOrWhole(123456.1234567)).isEqualTo("123456.123457");
-        assertThat(DoubleFormat.decimalOrWhole(1)).isEqualTo("1");
+    void wholeOrDecimal() {
+        assertThat(DoubleFormat.wholeOrDecimal(123456.1234567)).isEqualTo("123456.123457");
+        assertThat(DoubleFormat.wholeOrDecimal(1)).isEqualTo("1");
     }
 
     @Test
@@ -46,7 +46,7 @@ class DoubleFormatTest {
     @Issue("#539")
     @Test
     void noScientificNotation() {
-        assertThat(DoubleFormat.decimalOrWhole(4.6875392E7)).isEqualTo("46875392");
+        assertThat(DoubleFormat.wholeOrDecimal(4.6875392E7)).isEqualTo("46875392");
         assertThat(DoubleFormat.decimalOrNan(4.6875392E7)).isEqualTo("46875392");
     }
 }

@@ -10,7 +10,6 @@ dependencies {
 
     testCompile project(':micrometer-test')
     testCompile 'io.projectreactor:reactor-test:latest.release'
-    testCompile 'org.junit.jupiter:junit-jupiter-params:latest.release'
     testCompile 'org.mockito:mockito-core:latest.release'
 }
 
