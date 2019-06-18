@@ -148,10 +148,10 @@ public class HibernateMetrics implements MeterBinder {
         }
 
         FunctionCounter.builder(name, statistics, f)
-                .tags(tags)
-                .tags(extraTags)
-                .description(description)
-                .register(registry);
+            .tags(tags)
+            .tags(extraTags)
+            .description(description)
+            .register(registry);
     }
 
     @Override
@@ -166,31 +166,31 @@ public class HibernateMetrics implements MeterBinder {
 
         // Transaction statistics
         counter(registry, "hibernate.transactions", "The number of transactions we know to have been successful",
-                Statistics::getSuccessfulTransactionCount, "result", "success");
+            Statistics::getSuccessfulTransactionCount, "result", "success");
         counter(registry, "hibernate.transactions", "The number of transactions we know to have failed",
-                s -> s.getTransactionCount() - s.getSuccessfulTransactionCount(), "result", "failure");
+            s -> s.getTransactionCount() - s.getSuccessfulTransactionCount(), "result", "failure");
         counter(registry, "hibernate.optimistic.failures", "The number of StaleObjectStateExceptions that have occurred",
-                Statistics::getOptimisticFailureCount);
+            Statistics::getOptimisticFailureCount);
 
         counter(registry, "hibernate.flushes", "The global number of flushes executed by sessions (either implicit or explicit)",
-                Statistics::getFlushCount);
+            Statistics::getFlushCount);
         counter(registry, "hibernate.connections.obtained", "Get the global number of connections asked by the sessions " +
-                "(the actual number of connections used may be much smaller depending " +
-                "whether you use a connection pool or not)", Statistics::getConnectCount);
+            "(the actual number of connections used may be much smaller depending " +
+            "whether you use a connection pool or not)", Statistics::getConnectCount);
 
         // Statements
         counter(registry, "hibernate.statements", "The number of prepared statements that were acquired",
-                Statistics::getPrepareStatementCount, "status", "prepared");
+            Statistics::getPrepareStatementCount, "status", "prepared");
         counter(registry, "hibernate.statements", "The number of prepared statements that were released",
-                Statistics::getCloseStatementCount, "status", "closed");
+            Statistics::getCloseStatementCount, "status", "closed");
 
         // Second Level Caching
         counter(registry, "hibernate.second.level.cache.requests", "The number of cacheable entities/collections successfully retrieved from the cache",
-                Statistics::getSecondLevelCacheHitCount, "result", "hit");
+            Statistics::getSecondLevelCacheHitCount, "result", "hit");
         counter(registry, "hibernate.second.level.cache.requests", "The number of cacheable entities/collections not found in the cache and loaded from the database",
-                Statistics::getSecondLevelCacheMissCount, "result", "miss");
+            Statistics::getSecondLevelCacheMissCount, "result", "miss");
         counter(registry, "hibernate.second.level.cache.puts", "The number of cacheable entities/collections put in the cache",
-                Statistics::getSecondLevelCachePutCount);
+            Statistics::getSecondLevelCachePutCount);
 
         // Entity information
         counter(registry, "hibernate.entities.deletes", "The number of entity deletes", Statistics::getEntityDeleteCount);
@@ -208,43 +208,43 @@ public class HibernateMetrics implements MeterBinder {
 
         // Natural Id cache
         counter(registry, "hibernate.cache.natural.id.requests", "The number of cached naturalId lookups successfully retrieved from cache",
-                Statistics::getNaturalIdCacheHitCount, "result", "hit");
+            Statistics::getNaturalIdCacheHitCount, "result", "hit");
         counter(registry, "hibernate.cache.natural.id.requests", "The number of cached naturalId lookups not found in cache",
-                Statistics::getNaturalIdCacheMissCount, "result", "miss");
+            Statistics::getNaturalIdCacheMissCount, "result", "miss");
         counter(registry, "hibernate.cache.natural.id.puts", "The number of cacheable naturalId lookups put in cache",
-                Statistics::getNaturalIdCachePutCount);
+            Statistics::getNaturalIdCachePutCount);
 
         counter(registry, "hibernate.query.natural.id.executions", "The number of naturalId queries executed against the database",
-                Statistics::getNaturalIdQueryExecutionCount);
+            Statistics::getNaturalIdQueryExecutionCount);
 
         TimeGauge.builder("hibernate.query.natural.id.executions.max", statistics, TimeUnit.MILLISECONDS, Statistics::getNaturalIdQueryExecutionMaxTime)
-                .description("The maximum query time for naturalId queries executed against the database")
-                .tags(tags)
-                .register(registry);
+            .description("The maximum query time for naturalId queries executed against the database")
+            .tags(tags)
+            .register(registry);
 
         // Query statistics
         counter(registry, "hibernate.query.executions", "The number of executed queries", Statistics::getQueryExecutionCount);
 
         TimeGauge.builder("hibernate.query.executions.max", statistics, TimeUnit.MILLISECONDS, Statistics::getQueryExecutionMaxTime)
-                .description("The time of the slowest query")
-                .tags(tags)
-                .register(registry);
+            .description("The time of the slowest query")
+            .tags(tags)
+            .register(registry);
 
         // Update timestamp cache
         counter(registry, "hibernate.cache.update.timestamps.requests", "The number of timestamps successfully retrieved from cache",
-                Statistics::getUpdateTimestampsCacheHitCount, "result", "hit");
+            Statistics::getUpdateTimestampsCacheHitCount, "result", "hit");
         counter(registry, "hibernate.cache.update.timestamps.requests", "The number of tables for which no update timestamps was not found in cache",
-                Statistics::getUpdateTimestampsCacheMissCount, "result", "miss");
+            Statistics::getUpdateTimestampsCacheMissCount, "result", "miss");
         counter(registry, "hibernate.cache.update.timestamps.puts", "The number of timestamps put in cache",
-                Statistics::getUpdateTimestampsCachePutCount);
+            Statistics::getUpdateTimestampsCachePutCount);
 
         // Query Caching
         counter(registry, "hibernate.cache.query.requests", "The number of cached queries successfully retrieved from cache",
-                Statistics::getQueryCacheHitCount, "result", "hit");
+            Statistics::getQueryCacheHitCount, "result", "hit");
         counter(registry, "hibernate.cache.query.requests", "The number of cached queries not found in cache",
-                Statistics::getQueryCacheMissCount, "result", "miss");
+            Statistics::getQueryCacheMissCount, "result", "miss");
         counter(registry, "hibernate.cache.query.puts", "The number of cacheable queries put in cache",
-                Statistics::getQueryCachePutCount);
+            Statistics::getQueryCachePutCount);
 
         registerListeners(registry);
     }
