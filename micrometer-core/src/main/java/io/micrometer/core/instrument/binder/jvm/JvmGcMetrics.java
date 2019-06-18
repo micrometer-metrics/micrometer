@@ -61,7 +61,9 @@ enum GcGenerationAge {
         put("PS MarkSweep", OLD);
         put("PS Scavenge", YOUNG);
         put("ParNew", YOUNG);
-    }};
+		put("scavenge", YOUNG);
+		put("global", OLD);
+	}};
 
     static GcGenerationAge fromName(String name) {
         GcGenerationAge t = knownCollectors.get(name);
@@ -229,11 +231,11 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     }
 
     private boolean isOldGenPool(String name) {
-        return name.endsWith("Old Gen") || name.endsWith("Tenured Gen");
+        return name.endsWith("Old Gen") || name.endsWith("Tenured Gen") || name.equals("tenured-SOA");
     }
 
     private boolean isYoungGenPool(String name) {
-        return name.endsWith("Eden Space");
+        return name.endsWith("Eden Space") || name.equals("nursery-allocate");
     }
 
     @Override
