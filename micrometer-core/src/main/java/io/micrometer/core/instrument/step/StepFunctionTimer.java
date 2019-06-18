@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,6 +28,7 @@ import java.util.function.ToLongFunction;
  * A timer that tracks monotonically increasing functions for count and totalTime.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public class StepFunctionTimer<T> implements FunctionTimer {
     private final Id id;
@@ -75,10 +76,10 @@ public class StepFunctionTimer<T> implements FunctionTimer {
         T obj2 = ref.get();
         if (obj2 != null) {
             double prevLast = lastTime;
-            lastTime = Math.max(TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnit, unit), 0);
+            lastTime = Math.max(TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnit, baseTimeUnit()), 0);
             total.getCurrent().add(lastTime - prevLast);
         }
-        return total.poll();
+        return TimeUtils.convert(total.poll(), baseTimeUnit(), unit);
     }
 
     @Override

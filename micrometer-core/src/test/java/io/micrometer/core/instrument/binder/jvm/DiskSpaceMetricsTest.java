@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,24 +29,36 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
  *
  * @author jmcshane
  * @author Johnny Lim
+ * @author Tommy Ludwig
  */
 class DiskSpaceMetricsTest {
+
+    MeterRegistry registry = new SimpleMeterRegistry();
+
     @Test
     void diskSpaceMetrics() {
-        MeterRegistry registry = new SimpleMeterRegistry();
         new DiskSpaceMetrics(new File(System.getProperty("user.dir"))).bindTo(registry);
 
-        assertThat(registry.get("disk.free").gauge().value()).isGreaterThan(0);
-        assertThat(registry.get("disk.total").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("disk.free").gauge().value()).isNotNaN().isGreaterThan(0);
+        assertThat(registry.get("disk.total").gauge().value()).isNotNaN().isGreaterThan(0);
     }
 
     @Test
     void diskSpaceMetricsWithTags() {
-        MeterRegistry registry = new SimpleMeterRegistry();
         new DiskSpaceMetrics(new File(System.getProperty("user.dir")), Tags.of("key1", "value1")).bindTo(registry);
 
-        assertThat(registry.get("disk.free").tags("key1", "value1").gauge().value()).isGreaterThan(0);
-        assertThat(registry.get("disk.total").tags("key1", "value1").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("disk.free").tags("key1", "value1").gauge().value()).isNotNaN().isGreaterThan(0);
+        assertThat(registry.get("disk.total").tags("key1", "value1").gauge().value()).isNotNaN().isGreaterThan(0);
+    }
+
+    @Test
+    void garbageCollectionDoesNotLoseGaugeValue() {
+        new DiskSpaceMetrics(new File(System.getProperty("user.dir"))).bindTo(registry);
+
+        System.gc();
+
+        assertThat(registry.get("disk.free").gauge().value()).isNotNaN().isGreaterThan(0);
+        assertThat(registry.get("disk.total").gauge().value()).isNotNaN().isGreaterThan(0);
     }
 
 }

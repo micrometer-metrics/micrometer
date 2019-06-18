@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,15 +18,20 @@ package io.micrometer.dynatrace;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.ipc.http.HttpSender;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -44,6 +49,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DynatraceMeterRegistryTest {
 
     private final DynatraceMeterRegistry meterRegistry = createMeterRegistry();
+
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
     void constructorWhenUriIsMissingShouldThrowMissingRequiredConfigurationException() {
@@ -139,6 +146,25 @@ class DynatraceMeterRegistryTest {
     }
 
     @Test
+    void writeMeterWithGaugeWhenChangingFiniteToNaNShouldWork() {
+        AtomicBoolean first = new AtomicBoolean(true);
+        meterRegistry.gauge("my.gauge", first, (b) -> b.getAndSet(false) ? 1d : Double.NaN);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        Stream<DynatraceMeterRegistry.DynatraceCustomMetric> stream = meterRegistry.writeMeter(gauge);
+        List<DynatraceMeterRegistry.DynatraceCustomMetric> metrics = stream.collect(Collectors.toList());
+        assertThat(metrics).hasSize(1);
+        DynatraceMeterRegistry.DynatraceCustomMetric metric = metrics.get(0);
+        DynatraceTimeSeries timeSeries = metric.getTimeSeries();
+        try {
+            Map<String, Object> map = mapper.readValue(timeSeries.asJson(), Map.class);
+            List<List<Number>> dataPoints = (List<List<Number>>) map.get("dataPoints");
+            assertThat(dataPoints.get(0).get(1).doubleValue()).isEqualTo(1d);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    @Test
     void writeMeterWithGaugeShouldDropInfiniteValues() {
         meterRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
@@ -189,7 +215,7 @@ class DynatraceMeterRegistryTest {
         List<DynatraceBatchedPayload> entries = meterRegistry.createPostMessages("my.type", timeSeries);
         assertThat(entries).hasSize(1);
         assertThat(entries.get(0).metricCount).isEqualTo(1);
-        assertThat(isJSONValid(entries.get(0).payload)).isEqualTo(true);
+        assertThat(isValidJson(entries.get(0).payload)).isEqualTo(true);
     }
 
     @Test
@@ -213,7 +239,7 @@ class DynatraceMeterRegistryTest {
         assertThat(messages.get(1).metricCount).isEqualTo(1);
         assertThat(messages.get(2).metricCount).isEqualTo(2);
         assertThat(messages.get(2).payload.getBytes(UTF_8).length).isEqualTo(15360);
-        assertThat(messages.stream().map(message -> message.payload).allMatch(DynatraceMeterRegistryTest::isJSONValid)).isTrue();
+        assertThat(messages.stream().map(message -> message.payload).allMatch(this::isValidJson)).isTrue();
     }
 
     @Test
@@ -227,7 +253,29 @@ class DynatraceMeterRegistryTest {
         assertThat(messages).hasSize(2);
         assertThat(messages.get(0).metricCount).isEqualTo(2);
         assertThat(messages.get(1).metricCount).isEqualTo(1);
-        assertThat(messages.stream().map(message -> message.payload).allMatch(DynatraceMeterRegistryTest::isJSONValid)).isTrue();
+        assertThat(messages.stream().map(message -> message.payload).allMatch(this::isValidJson)).isTrue();
+    }
+
+    @Test
+    void writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten() {
+        Measurement measurement1 = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement2 = new Measurement(() -> Double.NEGATIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
+        assertThat(meterRegistry.writeMeter(meter)).isEmpty();
+    }
+
+    @Test
+    void writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues() {
+        Measurement measurement1 = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement2 = new Measurement(() -> Double.NEGATIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
+        Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
+        Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
+        assertThat(meterRegistry.writeMeter(meter)).hasSize(2);
     }
 
     private DynatraceTimeSeries createTimeSeriesWithDimensions(int numberOfDimensions) {
@@ -251,7 +299,7 @@ class DynatraceMeterRegistryTest {
 
             @Override
             public String uri() {
-                return "http://uri";
+                return "http://localhost";
             }
 
             @Override
@@ -269,10 +317,9 @@ class DynatraceMeterRegistryTest {
             .build();
     }
 
-    private static boolean isJSONValid(String jsonInString ) {
+    private boolean isValidJson(String json) {
         try {
-            final ObjectMapper mapper = new ObjectMapper();
-            mapper.readTree(jsonInString);
+            mapper.readTree(json);
             return true;
         } catch (Exception e) {
             return false;

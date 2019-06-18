@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,9 +23,9 @@ import io.micrometer.wavefront.WavefrontConfig;
  *
  * @author Jon Schneider
  */
-public class WavefrontPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<WavefrontProperties> implements WavefrontConfig {
+class WavefrontPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<WavefrontProperties> implements WavefrontConfig {
 
-    public WavefrontPropertiesConfigAdapter(WavefrontProperties properties) {
+    WavefrontPropertiesConfigAdapter(WavefrontProperties properties) {
         super(properties);
     }
 
@@ -47,6 +47,21 @@ public class WavefrontPropertiesConfigAdapter extends StepRegistryPropertiesConf
     @Override
     public String apiToken() {
         return get(WavefrontProperties::getApiToken, WavefrontConfig.super::apiToken);
+    }
+
+    @Override
+    public boolean reportMinuteDistribution() {
+        return get(WavefrontProperties::isReportMinuteDistribution, WavefrontConfig.super::reportMinuteDistribution);
+    }
+
+    @Override
+    public boolean reportHourDistribution() {
+        return get(WavefrontProperties::isReportHourDistribution, WavefrontConfig.super::reportHourDistribution);
+    }
+
+    @Override
+    public boolean reportDayDistribution() {
+        return get(WavefrontProperties::isReportDayDistribution, WavefrontConfig.super::reportDayDistribution);
     }
 
     @Override

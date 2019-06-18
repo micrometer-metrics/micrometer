@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,31 +30,92 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
 
 /**
+ * {@link MeterRegistry} for Elasticsearch.
+ *
  * @author Nicolas Portmann
  * @author Jon Schneider
+ * @author Johnny Lim
+ * @since 1.1.0
  */
 public class ElasticMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("elastic-metrics-publisher");
-    static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_INSTANT;
+    static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ISO_INSTANT;
     private static final String ES_METRICS_TEMPLATE = "/_template/metrics_template";
-    private static final String INDEX_LINE = "{ \"index\" : {} }\n";
+
+    private static final String TEMPLATE_PROPERTIES = "\"properties\": {\n" +
+            "  \"name\": {\n" +
+            "    \"type\": \"keyword\"\n" +
+            "  },\n" +
+            "  \"count\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  },\n" +
+            "  \"value\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  },\n" +
+            "  \"sum\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  },\n" +
+            "  \"mean\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  },\n" +
+            "  \"duration\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  },\n" +
+            "  \"max\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  },\n" +
+            "  \"total\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  },\n" +
+            "  \"unknown\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  },\n" +
+            "  \"active\": {\n" +
+            "    \"type\": \"double\"\n" +
+            "  }\n" +
+            "}";
+    private static final String TEMPLATE_BODY_BEFORE_VERSION_7 = "{\"template\":\"metrics*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false}," + TEMPLATE_PROPERTIES + "}}}";
+    private static final String TEMPLATE_BODY_AFTER_VERSION_7 = "{\n" +
+            "  \"index_patterns\": [\"metrics*\"],\n" +
+            "  \"mappings\": {\n" +
+            "    \"_source\": {\n" +
+            "      \"enabled\": false\n" +
+            "    },\n" + TEMPLATE_PROPERTIES +
+            "  }\n" +
+            "}";
+
+    private static final String TYPE_PATH_BEFORE_VERSION_7 = "/doc";
+    private static final String TYPE_PATH_AFTER_VERSION_7 = "";
+
+    private static final Pattern MAJOR_VERSION_PATTERN = Pattern.compile("\"number\" : \"([\\d]+)");
+
+    private static final String ERROR_RESPONSE_BODY_SIGNATURE = "\"errors\":true";
+    private static final Pattern STATUS_CREATED_PATTERN = Pattern.compile("\"status\":201");
 
     private final Logger logger = LoggerFactory.getLogger(ElasticMeterRegistry.class);
 
     private final ElasticConfig config;
     private final HttpSender httpClient;
 
+    private final DateTimeFormatter indexDateFormatter;
+
+    private final String indexLine;
+
+    private volatile Integer majorVersion;
     private volatile boolean checkedForIndexTemplate = false;
 
     @SuppressWarnings("deprecation")
@@ -67,7 +128,14 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         super(config, clock);
         config().namingConvention(new ElasticNamingConvention());
         this.config = config;
+        indexDateFormatter = DateTimeFormatter.ofPattern(config.indexDateFormat());
         this.httpClient = httpClient;
+        if (config.pipeline() != null && !config.pipeline().isEmpty()) {
+            indexLine = "{ \"index\" : {\"pipeline\":\"" + config.pipeline() + "\"} }\n";
+        } else {
+            indexLine = "{ \"index\" : {} }\n";
+        }
+
         start(threadFactory);
     }
 
@@ -83,19 +151,19 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         super.start(threadFactory);
     }
 
-    private void createIndexIfNeeded() {
+    private void createIndexTemplateIfNeeded() {
         if (checkedForIndexTemplate || !config.autoCreateIndex()) {
             return;
         }
 
         try {
-            if (httpClient
-                    .head(config.host() + ES_METRICS_TEMPLATE)
+            String uri = config.host() + ES_METRICS_TEMPLATE;
+            if (httpClient.head(uri)
                     .withBasicAuthentication(config.userName(), config.password())
                     .send()
                     .onError(response -> {
                         if (response.code() != 404) {
-                            logger.error("could not create index in elastic (HTTP {})", response.code(), response.body());
+                            logger.error("could not create index in elastic (HTTP {}): {}", response.code(), response.body());
                         }
                     })
                     .isSuccessful()) {
@@ -104,11 +172,11 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 return;
             }
 
-            httpClient.put(config.host() + ES_METRICS_TEMPLATE)
+            httpClient.put(uri)
                     .withBasicAuthentication(config.userName(), config.password())
-                    .withJsonContent("{\"template\":\"metrics*\",\"mappings\":{\"_default_\":{\"_all\":{\"enabled\":false},\"properties\":{\"name\":{\"type\":\"keyword\"}}}}}")
+                    .withJsonContent(getTemplateBody())
                     .send()
-                    .onError(response -> logger.error("failed to add metrics template to elastic", response.body()));
+                    .onError(response -> logger.error("failed to add metrics template to elastic: {}", response.body()));
         } catch (Throwable e) {
             logger.error("could not create index in elastic", e);
             return;
@@ -117,50 +185,101 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         checkedForIndexTemplate = true;
     }
 
+    private String getTemplateBody() {
+        return majorVersion < 7 ? TEMPLATE_BODY_BEFORE_VERSION_7 : TEMPLATE_BODY_AFTER_VERSION_7;
+    }
+
     @Override
     protected void publish() {
-        createIndexIfNeeded();
+        determineMajorVersionIfNeeded();
+        createIndexTemplateIfNeeded();
 
+        String uri = config.host() + "/" + indexName() + getTypePath() + "/_bulk";
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
             try {
+                String requestBody = batch.stream()
+                        .map(m -> m.match(
+                                this::writeGauge,
+                                this::writeCounter,
+                                this::writeTimer,
+                                this::writeSummary,
+                                this::writeLongTaskTimer,
+                                this::writeTimeGauge,
+                                this::writeFunctionCounter,
+                                this::writeFunctionTimer,
+                                this::writeMeter))
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .collect(joining("\n", "", "\n"));
                 httpClient
-                        .post(config.host() + "/" + indexName() + "/doc/_bulk")
+                        .post(uri)
                         .withBasicAuthentication(config.userName(), config.password())
-                        .withJsonContent(batch.stream()
-                                .map(m -> m.match(
-                                        this::writeGauge,
-                                        this::writeCounter,
-                                        this::writeTimer,
-                                        this::writeSummary,
-                                        this::writeLongTaskTimer,
-                                        this::writeTimeGauge,
-                                        this::writeFunctionCounter,
-                                        this::writeFunctionTimer,
-                                        this::writeMeter))
-                                .filter(Optional::isPresent)
-                                .map(Optional::get)
-                                .collect(joining("\n", "", "\n")))
+                        .withJsonContent(requestBody)
                         .send()
                         .onSuccess(response -> {
-                            // It's not enough to look at response code. ES could return {"errors":true} in body:
-                            // {"took":16,"errors":true,"items":[{"index":{"_index":"metrics-2018-03","_type":"timer","_id":"i8kdBmIBmtn9wpUGezjX","status":400,"error":{"type":"illegal_argument_exception","reason":"Rejecting mapping update to [metrics-2018-03] as the final mapping would have more than 1 type: [metric, doc]"}}}]}
-                            String body = response.body();
-                            if (body.contains("\"errors\":true")) {
-                                logger.error("failed to send metrics to elastic: {}", body);
+                            int numberOfSentItems = batch.size();
+                            String responseBody = response.body();
+                            if (responseBody.contains(ERROR_RESPONSE_BODY_SIGNATURE)) {
+                                int numberOfCreatedItems = countCreatedItems(responseBody);
+                                logger.debug("failed metrics payload: {}", requestBody);
+                                logger.error("failed to send metrics to elastic (sent {} metrics but created {} metrics): {}",
+                                        numberOfSentItems, numberOfCreatedItems, responseBody);
                             } else {
-                                logger.debug("successfully sent {} metrics to elastic", batch.size());
+                                logger.debug("successfully sent {} metrics to elastic", numberOfSentItems);
                             }
                         })
-                        .onError(response -> logger.error("failed to send metrics to elastic: {}", response.body()));
+                        .onError(response -> {
+                            logger.debug("failed metrics payload: {}", requestBody);
+                            logger.error("failed to send metrics to elastic: {}", response.body());
+                        });
             } catch (Throwable e) {
                 logger.error("failed to send metrics to elastic", e);
             }
         }
     }
 
-    private String indexName() {
+    private void determineMajorVersionIfNeeded() {
+        if (majorVersion != null) {
+            return;
+        }
+        try {
+            String responseBody = httpClient.get(config.host())
+                    .withBasicAuthentication(config.userName(), config.password())
+                    .send()
+                    .body();
+            majorVersion = getMajorVersion(responseBody);
+        } catch (Throwable ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    // VisibleForTesting
+    static int getMajorVersion(String responseBody) {
+        Matcher matcher = MAJOR_VERSION_PATTERN.matcher(responseBody);
+        if (!matcher.find()) {
+            throw new IllegalArgumentException("Unexpected response body: " + responseBody);
+        }
+        return Integer.parseInt(matcher.group(1));
+    }
+
+    private String getTypePath() {
+        return majorVersion < 7 ? TYPE_PATH_BEFORE_VERSION_7 : TYPE_PATH_AFTER_VERSION_7;
+    }
+
+    // VisibleForTesting
+    static int countCreatedItems(String responseBody) {
+        Matcher matcher = STATUS_CREATED_PATTERN.matcher(responseBody);
+        int count = 0;
+        while (matcher.find()) {
+            count++;
+        }
+        return count;
+    }
+
+    // VisibleForTesting
+    String indexName() {
         ZonedDateTime dt = ZonedDateTime.ofInstant(new Date(config().clock().wallTime()).toInstant(), ZoneOffset.UTC);
-        return config.index() + "-" + DateTimeFormatter.ofPattern(config.indexDateFormat()).format(dt);
+        return config.index() + config.indexDateSeparator() + indexDateFormatter.format(dt);
     }
 
     // VisibleForTesting
@@ -195,10 +314,10 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeTimeGauge(TimeGauge gauge) {
-        Double value = gauge.value();
+        Double value = gauge.value(getBaseTimeUnit());
         if (Double.isFinite(value)) {
             return Optional.of(writeDocument(gauge, builder -> {
-                builder.append(",\"value\":").append(gauge.value(getBaseTimeUnit()));
+                builder.append(",\"value\":").append(value);
             }));
         }
         return Optional.empty();
@@ -244,17 +363,32 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     Optional<String> writeMeter(Meter meter) {
+        Iterable<Measurement> measurements = meter.measure();
+        List<String> names = new ArrayList<>();
+        // Snapshot values should be used throughout this method as there are chances for values to be changed in-between.
+        List<Double> values = new ArrayList<>();
+        for (Measurement measurement : measurements) {
+            double value = measurement.getValue();
+            if (!Double.isFinite(value)) {
+                continue;
+            }
+            names.add(measurement.getStatistic().getTagValueRepresentation());
+            values.add(value);
+        }
+        if (names.isEmpty()) {
+            return Optional.empty();
+        }
         return Optional.of(writeDocument(meter, builder -> {
-            for (Measurement measurement : meter.measure()) {
-                builder.append(",\"").append(measurement.getStatistic().getTagValueRepresentation()).append("\":\"").append(measurement.getValue()).append("\"");
+            for (int i = 0; i < names.size(); i++) {
+                builder.append(",\"").append(names.get(i)).append("\":\"").append(values.get(i)).append("\"");
             }
         }));
     }
 
     // VisibleForTesting
     String writeDocument(Meter meter, Consumer<StringBuilder> consumer) {
-        StringBuilder sb = new StringBuilder(INDEX_LINE);
-        String timestamp = FORMATTER.format(Instant.ofEpochMilli(config().clock().wallTime()));
+        StringBuilder sb = new StringBuilder(indexLine);
+        String timestamp = TIMESTAMP_FORMATTER.format(Instant.ofEpochMilli(config().clock().wallTime()));
         String name = getConventionName(meter.getId());
         String type = meter.getId().getType().toString().toLowerCase();
         sb.append("{\"").append(config.timestampFieldName()).append("\":\"").append(timestamp).append('"')

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -55,26 +56,26 @@ public class JvmThreadMetrics implements MeterBinder {
         Gauge.builder("jvm.threads.peak", threadBean, ThreadMXBean::getPeakThreadCount)
                 .tags(tags)
                 .description("The peak live thread count since the Java virtual machine started or peak was reset")
-                .baseUnit("threads")
+                .baseUnit(BaseUnits.THREADS)
                 .register(registry);
 
         Gauge.builder("jvm.threads.daemon", threadBean, ThreadMXBean::getDaemonThreadCount)
                 .tags(tags)
                 .description("The current number of live daemon threads")
-                .baseUnit("threads")
+                .baseUnit(BaseUnits.THREADS)
                 .register(registry);
 
         Gauge.builder("jvm.threads.live", threadBean, ThreadMXBean::getThreadCount)
                 .tags(tags)
                 .description("The current number of live threads including both daemon and non-daemon threads")
-                .baseUnit("threads")
+                .baseUnit(BaseUnits.THREADS)
                 .register(registry);
 
         for (Thread.State state : Thread.State.values()) {
             Gauge.builder("jvm.threads.states", threadBean, (bean) -> getThreadStateCount(bean, state))
                     .tags(Tags.concat(tags, "state", getStateTagValue(state)))
                     .description("The current number of threads having " + state + " state")
-                    .baseUnit("threads")
+                    .baseUnit(BaseUnits.THREADS)
                     .register(registry);
         }
     }

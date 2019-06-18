@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,6 +28,13 @@ import java.util.concurrent.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+/**
+ * Tests for {@link ExecutorServiceMetrics}.
+ *
+ * @author Clint Checketts
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class ExecutorServiceMetricsTest {
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     private Iterable<Tag> userTags = Tags.of("userTagKey", "userTagValue");
@@ -101,6 +108,7 @@ class ExecutorServiceMetricsTest {
     private void assertThreadPoolExecutorMetrics(String executorName) {
         registry.get("executor.completed").tags(userTags).tag("name", executorName).meter();
         registry.get("executor.queued").tags(userTags).tag("name", executorName).gauge();
+        registry.get("executor.queue.remaining").tags(userTags).tag("name", executorName).gauge();
         registry.get("executor.active").tags(userTags).tag("name", executorName).gauge();
         registry.get("executor.pool.size").tags(userTags).tag("name", executorName).gauge();
         registry.get("executor").tags(userTags).tag("name", executorName).timer();

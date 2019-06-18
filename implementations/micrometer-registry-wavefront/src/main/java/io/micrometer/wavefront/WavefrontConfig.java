@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,10 +16,11 @@
 package io.micrometer.wavefront;
 
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
-import io.micrometer.core.instrument.step.StepRegistryConfig;
+import io.micrometer.core.instrument.push.PushRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.UnknownHostException;
 import java.time.Duration;
 
@@ -28,8 +29,9 @@ import java.time.Duration;
  *
  * @author Howard Yoo
  * @author Jon Schneider
+ * @since 1.0.0
  */
-public interface WavefrontConfig extends StepRegistryConfig {
+public interface WavefrontConfig extends PushRegistryConfig {
     /**
      * Publishes to a wavefront sidecar running out of process.
      */
@@ -88,6 +90,18 @@ public interface WavefrontConfig extends StepRegistryConfig {
     }
 
     /**
+     * @return The port to send to when sending histogram distributions to a Wavefront proxy.
+     * The default is the port specified in the uri.
+     * <p>For details on configuring the histogram proxy port, see
+     * https://docs.wavefront.com/proxies_installing.html#configuring-proxy-ports-for-metrics-histograms-and-traces
+     * @since 1.2.0
+     */
+    default int distributionPort() {
+        String v = get(prefix() + ".distributionPort");
+        return v == null ? URI.create(uri()).getPort() : Integer.parseInt(v);
+    }
+
+    /**
      * @return Unique identifier for the app instance that is publishing metrics to Wavefront. Defaults to the local host name.
      */
     default String source() {
@@ -111,6 +125,36 @@ public interface WavefrontConfig extends StepRegistryConfig {
     default String apiToken() {
         String v = get(prefix() + ".apiToken");
         return v == null ? null : v.trim().length() > 0 ? v : null;
+    }
+
+    /**
+     * @return {@code true} to report histogram distributions aggregated into minute intervals.
+     * Default is {@code true}.
+     * @since 1.2.0
+     */
+    default boolean reportMinuteDistribution() {
+        String v = get(prefix() + ".reportMinuteDistribution");
+        return v == null || Boolean.parseBoolean(v);
+    }
+
+    /**
+     * @return {@code true} to report histogram distributions aggregated into hour intervals.
+     * Default is {@code false}.
+     * @since 1.2.0
+     */
+    default boolean reportHourDistribution() {
+        String v = get(prefix() + ".reportHourDistribution");
+        return Boolean.parseBoolean(v);
+    }
+
+    /**
+     * @return {@code true} to report histogram distributions aggregated into day intervals.
+     * Default is {@code false}.
+     * @since 1.2.0
+     */
+    default boolean reportDayDistribution() {
+        String v = get(prefix() + ".reportDayDistribution");
+        return Boolean.parseBoolean(v);
     }
 
     /**

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,7 +30,8 @@ final class CloudWatchUtils {
      * Maximum allowed value as specified by
      * {@link com.amazonaws.services.cloudwatch.model.MetricDatum#setValue(Double)}
      */
-    private static final double MAXIMUM_ALLOWED_VALUE = 1.174271e+108;
+    // VisibleForTesting
+    static final double MAXIMUM_ALLOWED_VALUE = 1.174271e+108;
 
     private CloudWatchUtils() {
     }

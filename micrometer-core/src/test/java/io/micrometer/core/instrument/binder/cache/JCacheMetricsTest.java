@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -49,7 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests for {@link CaffeineCacheMetrics}.
+ * Tests for {@link JCacheMetrics}.
  *
  * @author Oleksii Bondar
  */
@@ -116,17 +116,17 @@ class JCacheMetricsTest extends AbstractCacheMetricsTest {
     }
 
     @Test
-    void returnCacheSize() {
+    void returnNullForCacheSize() {
         assertThat(metrics.size()).isNull();
     }
 
     @Test
-    void returnNullForMissCount() {
+    void returnMissCount() {
         assertThat(metrics.missCount()).isEqualTo(expectedAttributeValue);
     }
 
     @Test
-    void returnNullForEvictionCount() {
+    void returnEvictionCount() {
         assertThat(metrics.evictionCount()).isEqualTo(expectedAttributeValue);
     }
 

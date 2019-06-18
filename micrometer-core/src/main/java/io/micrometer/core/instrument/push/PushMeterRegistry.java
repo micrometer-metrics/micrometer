@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,8 @@ package io.micrometer.core.instrument.push;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.lang.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -25,6 +27,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public abstract class PushMeterRegistry extends MeterRegistry {
+    private final static Logger logger = LoggerFactory.getLogger(PushMeterRegistry.class);
     private final PushRegistryConfig config;
 
     @Nullable
@@ -36,6 +39,17 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     }
 
     protected abstract void publish();
+
+    /**
+     * Catch uncaught exceptions thrown from {@link #publish()}.
+     */
+    private void publishSafely() {
+        try {
+            publish();
+        } catch (Throwable e) {
+            logger.warn("Unexpected exception thrown while publishing metrics for " + this.getClass().getSimpleName(), e);
+        }
+    }
 
     /**
      * @deprecated Use {@link #start(ThreadFactory)} instead.
@@ -51,7 +65,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
 
         if (config.enabled()) {
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactory);
-            scheduledExecutorService.scheduleAtFixedRate(this::publish, config.step()
+            scheduledExecutorService.scheduleAtFixedRate(this::publishSafely, config.step()
                     .toMillis(), config.step().toMillis(), TimeUnit.MILLISECONDS);
         }
     }
@@ -66,7 +80,7 @@ public abstract class PushMeterRegistry extends MeterRegistry {
     @Override
     public void close() {
         if (config.enabled()) {
-            publish();
+            publishSafely();
         }
         stop();
         super.close();

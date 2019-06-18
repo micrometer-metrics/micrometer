@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,6 +21,7 @@ import com.microsoft.applicationinsights.telemetry.MetricTelemetry;
 import com.microsoft.applicationinsights.telemetry.SeverityLevel;
 import com.microsoft.applicationinsights.telemetry.TraceTelemetry;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.StringUtils;
@@ -64,6 +65,9 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
         config().namingConvention(new AzureMonitorNamingConvention());
 
         if (StringUtils.isEmpty(telemetryConfiguration.getInstrumentationKey())) {
+            if (config.instrumentationKey() == null) {
+                throw new MissingRequiredConfigurationException("instrumentationKey must be set to report metrics to Azure Monitor");
+            }
             telemetryConfiguration.setInstrumentationKey(config.instrumentationKey());
         }
 

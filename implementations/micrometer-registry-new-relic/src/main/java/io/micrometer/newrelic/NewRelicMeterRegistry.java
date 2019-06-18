@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@
 package io.micrometer.newrelic;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.DoubleFormat;
@@ -27,6 +28,7 @@ import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
@@ -36,13 +38,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
-import static java.util.Objects.requireNonNull;
-import static java.util.stream.StreamSupport.stream;
 
 /**
  * Publishes metrics to New Relic Insights.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
+ * @since 1.0.0
  */
 public class NewRelicMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("new-relic-metrics-publisher");
@@ -73,11 +75,16 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
     private NewRelicMeterRegistry(NewRelicConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
+
+        if (config.accountId() == null) {
+            throw new MissingRequiredConfigurationException("accountId must be set to report metrics to New Relic");
+        }
+        if (config.apiKey() == null) {
+            throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to New Relic");
+        }
+
         this.config = config;
         this.httpClient = httpClient;
-
-        requireNonNull(config.accountId());
-        requireNonNull(config.apiKey());
 
         config().namingConvention(new NewRelicNamingConvention());
         start(threadFactory);
@@ -100,6 +107,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         String insightsEndpoint = config.uri() + "/v1/accounts/" + config.accountId() + "/events";
 
         // New Relic's Insights API limits us to 1000 events per call
+        // 1:1 mapping between Micrometer meters and New Relic events
         for (List<Meter> batch : MeterPartition.partition(this, Math.min(config.batchSize(), 1000))) {
             sendEvents(insightsEndpoint, batch.stream().flatMap(meter -> meter.match(
                     this::writeGauge,
@@ -122,22 +130,35 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         );
     }
 
-    private Stream<String> writeFunctionCounter(FunctionCounter counter) {
-        return Stream.of(event(counter.getId(), new Attribute("throughput", counter.count())));
+    // VisibleForTesting
+    Stream<String> writeFunctionCounter(FunctionCounter counter) {
+        double count = counter.count();
+        if (Double.isFinite(count)) {
+            return Stream.of(event(counter.getId(), new Attribute("throughput", count)));
+        }
+        return Stream.empty();
     }
 
     private Stream<String> writeCounter(Counter counter) {
         return Stream.of(event(counter.getId(), new Attribute("throughput", counter.count())));
     }
 
-    private Stream<String> writeGauge(Gauge gauge) {
+    // VisibleForTesting
+    Stream<String> writeGauge(Gauge gauge) {
         Double value = gauge.value();
-        return value.isNaN() ? Stream.empty() : Stream.of(event(gauge.getId(), new Attribute("value", value)));
+        if (Double.isFinite(value)) {
+            return Stream.of(event(gauge.getId(), new Attribute("value", value)));
+        }
+        return Stream.empty();
     }
 
-    private Stream<String> writeTimeGauge(TimeGauge gauge) {
+    // VisibleForTesting
+    Stream<String> writeTimeGauge(TimeGauge gauge) {
         Double value = gauge.value(getBaseTimeUnit());
-        return value.isNaN() ? Stream.empty() : Stream.of(event(gauge.getId(), new Attribute("value", value)));
+        if (Double.isFinite(value)) {
+            return Stream.of(event(gauge.getId(), new Attribute("value", value)));
+        }
+        return Stream.empty();
     }
 
     private Stream<String> writeSummary(DistributionSummary summary) {
@@ -170,14 +191,21 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         );
     }
 
-    private Stream<String> writeMeter(Meter meter) {
-        return Stream.of(
-                event(meter.getId(),
-                        stream(meter.measure().spliterator(), false)
-                                .map(measure -> new Attribute(measure.getStatistic().getTagValueRepresentation(), measure.getValue()))
-                                .toArray(Attribute[]::new)
-                )
-        );
+    // VisibleForTesting
+    Stream<String> writeMeter(Meter meter) {
+        // Snapshot values should be used throughout this method as there are chances for values to be changed in-between.
+        List<Attribute> attributes = new ArrayList<>();
+        for (Measurement measurement : meter.measure()) {
+            double value = measurement.getValue();
+            if (!Double.isFinite(value)) {
+                continue;
+            }
+            attributes.add(new Attribute(measurement.getStatistic().getTagValueRepresentation(), value));
+        }
+        if (attributes.isEmpty()) {
+            return Stream.empty();
+        }
+        return Stream.of(event(meter.getId(), attributes.toArray(new Attribute[0])));
     }
 
     private String event(Meter.Id id, Attribute... attributes) {
@@ -198,7 +226,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         }
 
         return Arrays.stream(attributes)
-                .map(attr -> ",\"" + attr.getName() + "\":" + DoubleFormat.decimalOrWhole(attr.getValue().doubleValue()))
+                .map(attr -> ",\"" + attr.getName() + "\":" + DoubleFormat.wholeOrDecimal(attr.getValue().doubleValue()))
                 .collect(Collectors.joining("", "{\"eventType\":\"" + escapeJson(getConventionName(id)) + "\"", tagsJson + "}"));
     }
 
@@ -211,7 +239,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                     .withJsonContent(events.peek(ev -> totalEvents.incrementAndGet()).collect(Collectors.joining(",", "[", "]")))
                     .send()
                     .onSuccess(response -> logger.debug("successfully sent {} metrics to New Relic.", totalEvents))
-                    .onError(response -> logger.error("failed to send metrics to new relic: {}", response.body()));
+                    .onError(response -> logger.error("failed to send metrics to new relic: http {} {}", response.code(), response.body()));
         } catch (Throwable e) {
             logger.warn("failed to send metrics to new relic", e);
         }

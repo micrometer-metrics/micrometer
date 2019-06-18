@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,6 +25,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * {@link ConfigurationProperties} for configuring Wavefront metrics export.
  *
  * @author Jon Schneider
+ * @since 1.0.0
  */
 @ConfigurationProperties("management.metrics.export.wavefront")
 public class WavefrontProperties extends StepRegistryProperties {
@@ -56,6 +57,21 @@ public class WavefrontProperties extends StepRegistryProperties {
      * viewed in the Wavefront UI.
      */
     private String globalPrefix;
+
+    /**
+     * Report histogram distributions aggregated into minute intervals.
+     */
+    private boolean reportMinuteDistribution = true;
+
+    /**
+     * Report histogram distributions aggregated into hour intervals.
+     */
+    private boolean reportHourDistribution = false;
+
+    /**
+     * Report histogram distributions aggregated into day intervals.
+     */
+    private boolean reportDayDistribution = false;
 
     public URI getUri() {
         return this.uri;
@@ -99,4 +115,27 @@ public class WavefrontProperties extends StepRegistryProperties {
         this.globalPrefix = globalPrefix;
     }
 
+    public boolean isReportMinuteDistribution() {
+        return reportMinuteDistribution;
+    }
+
+    public void setReportMinuteDistribution(boolean reportMinuteDistribution) {
+        this.reportMinuteDistribution = reportMinuteDistribution;
+    }
+
+    public boolean isReportHourDistribution() {
+        return reportHourDistribution;
+    }
+
+    public void setReportHourDistribution(boolean reportHourDistribution) {
+        this.reportHourDistribution = reportHourDistribution;
+    }
+
+    public boolean isReportDayDistribution() {
+        return reportDayDistribution;
+    }
+
+    public void setReportDayDistribution(boolean reportDayDistribution) {
+        this.reportDayDistribution = reportDayDistribution;
+    }
 }

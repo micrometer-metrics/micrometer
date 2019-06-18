@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.db;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -80,7 +81,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
         this.queryConnectionCount = getDBStatQuery(database, "SUM(numbackends)");
         this.queryReadCount = getDBStatQuery(database, "tup_fetched");
         this.queryInsertCount = getDBStatQuery(database, "tup_inserted");
-        this.queryTempBytes = getDBStatQuery(database, "tmp_bytes");
+        this.queryTempBytes = getDBStatQuery(database, "temp_bytes");
         this.queryUpdateCount = getDBStatQuery(database, "tup_updated");
         this.queryDeleteCount = getDBStatQuery(database, "tup_deleted");
         this.queryBlockHits = getDBStatQuery(database, "blks_hit");
@@ -128,7 +129,7 @@ public class PostgreSQLDatabaseMetrics implements MeterBinder {
                 dataSource -> resettableFunctionalCounter("postgres.temp.writes", this::getTempBytes))
                 .tags(tags)
                 .description("The total amount of temporary writes to disk to execute queries")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .register(registry);
 
         registerRowCountMetrics(registry);

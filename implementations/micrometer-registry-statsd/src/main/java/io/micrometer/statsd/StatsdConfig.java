@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -153,4 +153,13 @@ public interface StatsdConfig extends MeterRegistryConfig {
         return v == null || Boolean.valueOf(v);
     }
 
+    /**
+     * @return {@code true} if measurements should be buffered before sending to the StatsD server. Default is
+     * {@code true}.  Measurements will be buffered until reaching the max packet length, or until the polling frequency
+     * is reached.
+     */
+    default boolean buffered() {
+        String v = get(prefix() + ".buffered");
+        return v == null || Boolean.valueOf(v);
+    }
 }

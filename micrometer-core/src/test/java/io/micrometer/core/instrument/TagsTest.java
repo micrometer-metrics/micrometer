@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -220,7 +220,7 @@ class TagsTest {
     void iteratorShouldIterateTags() {
         Tags tags = Tags.of("t1", "v1");
         Iterator<Tag> iterator = tags.iterator();
-        assertThat(iterator).containsExactly(Tag.of("t1", "v1"));
+        assertThat(iterator).toIterable().containsExactly(Tag.of("t1", "v1"));
     }
 
     @Test
@@ -282,7 +282,7 @@ class TagsTest {
 
     @Test
     void emptyShouldNotContainTags() {
-        assertThat(Tags.empty().iterator()).isEmpty();
+        assertThat(Tags.empty().iterator()).isExhausted();
     }
 
     private void assertTags(Tags tags, String... keyValues) {

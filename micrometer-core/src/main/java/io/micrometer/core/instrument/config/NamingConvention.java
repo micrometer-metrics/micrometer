@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -82,10 +82,10 @@ public interface NamingConvention {
                     conventionName.append(str);
                 } else {
                     final char firstChar = str.charAt(0);
-                    if (Character.isTitleCase(firstChar)) {
+                    if (Character.isUpperCase(firstChar)) {
                         conventionName.append(str); // already capitalized
                     } else {
-                        conventionName.append(String.valueOf(Character.toTitleCase(firstChar))).append(str.substring(1));
+                        conventionName.append(Character.toUpperCase(firstChar)).append(str.substring(1));
                     }
                 }
             }
@@ -101,11 +101,7 @@ public interface NamingConvention {
         }
 
         private String capitalize(String name) {
-            if (name.length() == 0) {
-                return name;
-            }
-
-            if (Character.isUpperCase(name.charAt(0))) {
+            if (name.length() == 0 || Character.isUpperCase(name.charAt(0))) {
                 return name;
             }
 
@@ -121,15 +117,15 @@ public interface NamingConvention {
     NamingConvention slashes = new NamingConvention() {
         @Override
         public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-            return toSnakeCase(name);
+            return toSlashes(name);
         }
 
         @Override
         public String tagKey(String key) {
-            return toSnakeCase(key);
+            return toSlashes(key);
         }
 
-        private String toSnakeCase(String value) {
+        private String toSlashes(String value) {
             return Arrays.stream(value.split("\\.")).filter(Objects::nonNull).collect(Collectors.joining("/"));
         }
     };

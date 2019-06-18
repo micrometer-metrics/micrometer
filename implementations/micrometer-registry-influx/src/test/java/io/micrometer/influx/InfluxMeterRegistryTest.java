@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,15 +15,14 @@
  */
 package io.micrometer.influx;
 
+import io.micrometer.core.instrument.*;
+import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.TimeGauge;
-import org.junit.jupiter.api.Test;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,6 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests for {@link InfluxMeterRegistry}.
  *
  * @author Johnny Lim
+ * @author Sean Brandt
+ * @author Tommy Ludwig
  */
 class InfluxMeterRegistryTest {
 
@@ -110,4 +111,48 @@ class InfluxMeterRegistryTest {
         assertThat(meterRegistry.writeCounter(counter.getId(), Double.NEGATIVE_INFINITY)).isEmpty();
     }
 
+    @Test
+    void writeShouldDropTagWithBlankValue() {
+        meterRegistry.gauge("my.gauge", Tags.of("foo", "bar").and("baz", ""), 1d);
+        final Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        assertThat(meterRegistry.writeGauge(gauge.getId(), 1d))
+                .hasSize(1)
+                .allSatisfy(s -> assertThat(s)
+                        .contains("foo=bar")
+                        .doesNotContain("baz"));
+    }
+
+    @Test
+    void writeCustomMeter() {
+        String expectedInfluxLine = "my_custom,metric_type=other value=23,value=13,total=5 1";
+
+        Measurement m1 = new Measurement(() -> 23d, Statistic.VALUE);
+        Measurement m2 = new Measurement(() -> 13d, Statistic.VALUE);
+        Measurement m3 = new Measurement(() -> 5d, Statistic.TOTAL_TIME);
+        Meter meter = Meter.builder("my.custom", Meter.Type.OTHER, Arrays.asList(m1, m2, m3)).register(meterRegistry);
+
+        assertThat(meterRegistry.writeMeter(meter).collect(Collectors.joining())).isEqualTo(expectedInfluxLine);
+    }
+
+    @Test
+    void writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten() {
+        Measurement measurement1 = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement2 = new Measurement(() -> Double.NEGATIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
+        assertThat(meterRegistry.writeMeter(meter)).isEmpty();
+    }
+
+    @Test
+    void writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues() {
+        Measurement measurement1 = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement2 = new Measurement(() -> Double.NEGATIVE_INFINITY, Statistic.VALUE);
+        Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
+        Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
+        Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterRegistry);
+        assertThat(meterRegistry.writeMeter(meter)).containsExactly("my_meter,metric_type=gauge value=1,value=2 1");
+    }
 }

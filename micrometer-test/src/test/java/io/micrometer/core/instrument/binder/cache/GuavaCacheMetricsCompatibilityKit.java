@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Collections.emptyList;
 
-public class GuavaCacheMetricsCompatibilityKit extends CacheMeterBinderCompatibilityKit {
+class GuavaCacheMetricsCompatibilityKit extends CacheMeterBinderCompatibilityKit {
     private AtomicReference<String> loadValue = new AtomicReference<>();
 
     private LoadingCache<String, String> cache = CacheBuilder.newBuilder()

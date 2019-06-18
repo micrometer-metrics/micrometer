@@ -8,6 +8,7 @@ io.micrometer.spring.autoconfigure.Log4J2MetricsAutoConfiguration,\
 io.micrometer.spring.autoconfigure.LogbackMetricsAutoConfiguration,\
 io.micrometer.spring.autoconfigure.MetricsAutoConfiguration,\
 io.micrometer.spring.autoconfigure.SystemMetricsAutoConfiguration,\
+io.micrometer.spring.autoconfigure.cache.CacheMetricsAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.appoptics.AppOpticsMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.atlas.AtlasMetricsExportAutoConfiguration,\
 io.micrometer.spring.autoconfigure.export.azuremonitor.AzureMonitorMetricsExportAutoConfiguration,\
@@ -31,6 +32,7 @@ io.micrometer.spring.autoconfigure.export.wavefront.WavefrontMetricsExportAutoCo
 io.micrometer.spring.autoconfigure.jdbc.DataSourcePoolMetricsAutoConfiguration,\
 io.micrometer.spring.autoconfigure.jersey.JerseyServerMetricsAutoConfiguration,\
 io.micrometer.spring.autoconfigure.kafka.consumer.KafkaMetricsAutoConfiguration,\
+io.micrometer.spring.autoconfigure.orm.jpa.HibernateMetricsAutoConfiguration,\
 io.micrometer.spring.autoconfigure.web.client.RestTemplateMetricsAutoConfiguration,\
 io.micrometer.spring.autoconfigure.web.jetty.JettyMetricsAutoConfiguration,\
 io.micrometer.spring.autoconfigure.web.servlet.WebMvcMetricsAutoConfiguration,\

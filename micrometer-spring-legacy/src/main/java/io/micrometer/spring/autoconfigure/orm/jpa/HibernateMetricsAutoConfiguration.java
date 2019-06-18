@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,9 +24,11 @@ import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.AllNestedConditions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
 
@@ -42,13 +44,14 @@ import java.util.Map;
  *
  * @author Rui Figueira
  * @author Stephane Nicoll
+ * @author Johnny Lim
  * @since 1.1.0
  */
 @Configuration
 @AutoConfigureAfter({MetricsAutoConfiguration.class, HibernateJpaAutoConfiguration.class,
         SimpleMetricsExportAutoConfiguration.class})
 @ConditionalOnClass({EntityManagerFactory.class, SessionFactory.class, MeterRegistry.class})
-@ConditionalOnBean({EntityManagerFactory.class, MeterRegistry.class})
+@Conditional(HibernateMetricsAutoConfiguration.HibernateMetricsConditionalOnBeans.class)
 public class HibernateMetricsAutoConfiguration {
     private static final String ENTITY_MANAGER_FACTORY_SUFFIX = "entityManagerFactory";
 
@@ -87,4 +90,21 @@ public class HibernateMetricsAutoConfiguration {
         }
         return beanName;
     }
+
+    static class HibernateMetricsConditionalOnBeans extends AllNestedConditions {
+
+        HibernateMetricsConditionalOnBeans() {
+            super(ConfigurationPhase.REGISTER_BEAN);
+        }
+
+        @ConditionalOnBean(MeterRegistry.class)
+        static class ConditionalOnMeterRegistryBean {
+        }
+
+        @ConditionalOnBean(EntityManagerFactory.class)
+        static class ConditionalOnEntityManagerFactoryBean {
+        }
+
+    }
+
 }

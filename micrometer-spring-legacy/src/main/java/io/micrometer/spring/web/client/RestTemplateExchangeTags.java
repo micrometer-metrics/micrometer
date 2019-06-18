@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -131,6 +131,13 @@ public final class RestTemplateExchangeTags {
         return Tag.of("clientName", host);
     }
 
+    /**
+     * Creates an {@code outcome} {@code Tag} derived from the
+     * {@link ClientHttpResponse#getStatusCode() status} of the given {@code response}.
+     * @param response the response
+     * @return the outcome tag
+     * @since 1.1.2
+     */
     public static Tag outcome(ClientHttpResponse response) {
         try {
             if (response != null) {

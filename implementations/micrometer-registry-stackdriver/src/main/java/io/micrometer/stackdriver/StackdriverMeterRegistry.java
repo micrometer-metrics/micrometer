@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,6 +27,7 @@ import com.google.protobuf.Timestamp;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -36,7 +37,6 @@ import io.micrometer.core.instrument.step.StepDistributionSummary;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.step.StepTimer;
 import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
@@ -53,10 +53,16 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toCollection;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
+/**
+ * {@link StepMeterRegistry} for Stackdriver.
+ *
+ * @author Jon Schneider
+ * @since 1.1.0
+ */
 @Incubating(since = "1.1.0")
 public class StackdriverMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("stackdriver-metrics-publisher");
@@ -67,6 +73,11 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
      * https://cloud.google.com/monitoring/custom-metrics/creating-metrics#which-resource
      */
     private static final String RESOURCE_TYPE = "global";
+    /**
+     * Stackdriver's API only allows up to 200 TimeSeries per request
+     * https://cloud.google.com/monitoring/quotas#custom_metrics_quotas
+     */
+    private static final int TIMESERIES_PER_REQUEST_LIMIT = 200;
     private final Logger logger = LoggerFactory.getLogger(StackdriverMeterRegistry.class);
     private final StackdriverConfig config;
     /**
@@ -87,6 +98,11 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     private StackdriverMeterRegistry(StackdriverConfig config, Clock clock, ThreadFactory threadFactory,
                                      Callable<MetricServiceSettings> metricServiceSettings) {
         super(config, clock);
+
+        if (config.projectId() == null) {
+            throw new MissingRequiredConfigurationException("projectId must be set to report metrics to Stackdriver");
+        }
+
         this.config = config;
 
         try {
@@ -134,35 +150,38 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             return;
         }
 
-        for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-            Batch publishBatch = new Batch();
+        Batch publishBatch = new Batch();
 
-            Iterable<TimeSeries> series = batch.stream()
-                    .flatMap(meter -> meter.match(
-                            m -> createGauge(publishBatch, m),
-                            m -> createCounter(publishBatch, m),
-                            m -> createTimer(publishBatch, m),
-                            m -> createSummary(publishBatch, m),
-                            m -> createLongTaskTimer(publishBatch, m),
-                            m -> createTimeGauge(publishBatch, m),
-                            m -> createFunctionCounter(publishBatch, m),
-                            m -> createFunctionTimer(publishBatch, m),
-                            m -> createMeter(publishBatch, m)))
-                    .collect(toList());
+        AtomicLong partitioningCounter = new AtomicLong();
+        long partitionSize = Math.min(config.batchSize(), TIMESERIES_PER_REQUEST_LIMIT);
 
+        Collection<List<TimeSeries>> series = getMeters().stream()
+                .flatMap(meter -> meter.match(
+                        m -> createGauge(publishBatch, m),
+                        m -> createCounter(publishBatch, m),
+                        m -> createTimer(publishBatch, m),
+                        m -> createSummary(publishBatch, m),
+                        m -> createLongTaskTimer(publishBatch, m),
+                        m -> createTimeGauge(publishBatch, m),
+                        m -> createFunctionCounter(publishBatch, m),
+                        m -> createFunctionTimer(publishBatch, m),
+                        m -> createMeter(publishBatch, m)))
+                .collect(groupingBy(o -> partitioningCounter.incrementAndGet() / partitionSize))
+                .values();
+
+        for (List<TimeSeries> partition : series) {
             try {
                 CreateTimeSeriesRequest request = CreateTimeSeriesRequest.newBuilder()
                         .setName("projects/" + config.projectId())
-                        .addAllTimeSeries(series)
+                        .addAllTimeSeries(partition)
                         .build();
 
-                if (logger.isTraceEnabled()) {
-                    logger.trace("publishing batch to stackdriver:\n{}", request);
-                }
+                logger.trace("publishing batch to Stackdriver:{}{}", System.lineSeparator(), request);
 
                 client.createTimeSeries(request);
+                logger.debug("successfully sent {} TimeSeries to Stackdriver", partition.size());
             } catch (ApiException e) {
-                logger.warn("failed to send metrics to stackdriver: {}", e.getCause().getMessage());
+                logger.warn("failed to send metrics to Stackdriver", e);
             }
         }
     }
@@ -278,6 +297,11 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                     MetricDescriptor.ValueType.DOUBLE, statistic);
         }
 
+        TimeSeries createTimeSeries(Meter meter, long value, @Nullable String statistic) {
+            return createTimeSeries(meter.getId(), TypedValue.newBuilder().setInt64Value(value).build(),
+                    MetricDescriptor.ValueType.INT64, statistic);
+        }
+
         Stream<TimeSeries> createTimeSeries(HistogramSupport histogramSupport, boolean timeDomain) {
             HistogramSnapshot snapshot = histogramSupport.takeSnapshot();
             return Stream.concat(
@@ -285,7 +309,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                             createTimeSeries(histogramSupport, distribution(snapshot, timeDomain)),
                             createTimeSeries(histogramSupport,
                                     timeDomain ? snapshot.max(getBaseTimeUnit()) : snapshot.max(),
-                                    "max")
+                                    "max"),
+                            createTimeSeries(histogramSupport, snapshot.count(), "count")
                     ),
                     Arrays.stream(snapshot.percentileValues())
                             .map(valueAtP -> createTimeSeries(histogramSupport,
@@ -346,15 +371,13 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                         .setMetricDescriptor(descriptor)
                         .build();
 
-                if (logger.isTraceEnabled()) {
-                    logger.trace("creating metric descriptor:\n{}", request);
-                }
+                logger.trace("creating metric descriptor:{}{}", System.lineSeparator(), request);
 
                 try {
                     client.createMetricDescriptor(request);
                     verifiedDescriptors.add(id.getName());
                 } catch (ApiException e) {
-                    logger.warn("failed to create metric descriptor in stackdriver for meter " + id + " {}", e.getCause().getMessage());
+                    logger.warn("failed to create metric descriptor in Stackdriver for meter " + id, e);
                 }
             }
         }
@@ -382,13 +405,20 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                     })
                     .collect(toCollection(ArrayList::new));
 
-            // trim zero-count buckets on the right side of the domain
-            int lastNonzero = 0;
-            for (int i = 0; i < bucketCounts.size(); i++) {
-                if (bucketCounts.get(i) > 0)
-                    lastNonzero = i;
+            if (!bucketCounts.isEmpty()) {
+                int endIndex = bucketCounts.size() - 1;
+                // trim zero-count buckets on the right side of the domain
+                if (bucketCounts.get(endIndex) == 0) {
+                    int lastNonZeroIndex = 0;
+                    for (int i = endIndex - 1; i >= 0; i--) {
+                        if (bucketCounts.get(i) > 0) {
+                            lastNonZeroIndex = i;
+                            break;
+                        }
+                    }
+                    bucketCounts = bucketCounts.subList(0, lastNonZeroIndex + 1);
+                }
             }
-            bucketCounts = bucketCounts.subList(0, lastNonzero + 1);
 
             // add the "+infinity" bucket, which does NOT have a corresponding bucket boundary
             bucketCounts.add(snapshot.count() - truncatedSum.get());

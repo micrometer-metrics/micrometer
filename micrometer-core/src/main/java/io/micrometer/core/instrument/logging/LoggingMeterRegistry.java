@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
@@ -38,8 +39,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
 
-import static io.micrometer.core.instrument.util.DoubleFormat.decimal;
-import static io.micrometer.core.instrument.util.DoubleFormat.decimalOrWhole;
+import static io.micrometer.core.instrument.util.DoubleFormat.decimalOrNan;
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -153,11 +153,31 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
                                     loggingSink.accept(print.id() + " throughput=" + print.rate(count) +
                                             " mean=" + print.time(timer.mean(getBaseTimeUnit())));
                                 },
-                                meter -> loggingSink.accept(print.id() + StreamSupport.stream(meter.measure().spliterator(), false)
-                                        .map(ms -> ms.getStatistic().getTagValueRepresentation() + "=" + decimalOrWhole(ms.getValue())))
+                                meter -> loggingSink.accept(writeMeter(meter, print))
                         );
                     });
         }
+    }
+
+    String writeMeter(Meter meter, Printer print) {
+        return StreamSupport.stream(meter.measure().spliterator(), false)
+                .map(ms -> {
+                    String msLine = ms.getStatistic().getTagValueRepresentation() + "=";
+                    switch (ms.getStatistic()) {
+                        case TOTAL:
+                        case MAX:
+                        case VALUE:
+                            return msLine + print.value(ms.getValue());
+                        case TOTAL_TIME:
+                        case DURATION:
+                            return msLine + print.time(ms.getValue());
+                        case COUNT:
+                            return "throughput=" + print.rate(ms.getValue());
+                        default:
+                            return msLine + decimalOrNan(ms.getValue());
+                    }
+                })
+                .collect(joining(", ", print.id() + " ", ""));
     }
 
     @Override
@@ -194,7 +214,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         }
 
         String unitlessRate(double rate) {
-            return decimal(rate / (double) config.step().getSeconds()) + "/s";
+            return decimalOrNan(rate / (double) config.step().getSeconds()) + "/s";
         }
 
         String value(double value) {
@@ -204,18 +224,18 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         // see https://stackoverflow.com/a/3758880/510017
         String humanReadableByteCount(double bytes) {
             int unit = 1024;
-            if (bytes < unit) return decimalOrWhole(bytes) + " B";
+            if (bytes < unit) return decimalOrNan(bytes) + " B";
             int exp = (int) (Math.log(bytes) / Math.log(unit));
             String pre = "KMGTPE".charAt(exp - 1) + "i";
-            return decimalOrWhole(bytes / Math.pow(unit, exp)) + " " + pre + "B";
+            return decimalOrNan(bytes / Math.pow(unit, exp)) + " " + pre + "B";
         }
 
         String humanReadableBaseUnit(double value) {
             String baseUnit = meter.getId().getBaseUnit();
-            if ("bytes".equals(baseUnit)) {
+            if (BaseUnits.BYTES.equals(baseUnit)) {
                 return humanReadableByteCount(value);
             }
-            return decimalOrWhole(value) + (baseUnit != null ? " " + baseUnit : "");
+            return decimalOrNan(value) + (baseUnit != null ? " " + baseUnit : "");
         }
     }
 

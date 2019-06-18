@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -44,7 +44,7 @@ public interface AppOpticsConfig extends StepRegistryConfig {
     default String apiToken() {
         String t = get(prefix() + ".apiToken");
         if (t == null)
-            throw new MissingRequiredConfigurationException("token must be set to report metrics to AppOptics");
+            throw new MissingRequiredConfigurationException("apiToken must be set to report metrics to AppOptics");
         return t;
     }
 
@@ -63,6 +63,13 @@ public interface AppOpticsConfig extends StepRegistryConfig {
     default String uri() {
         String v = get(prefix() + ".uri");
         return v == null ? "https://api.appoptics.com/v1/measurements" : v;
+    }
+
+    /**
+     * @return whether or not to ship a floored time - floors time to the multiple of the {@link #step()}
+     */
+    default boolean floorTimes() {
+        return Boolean.parseBoolean(get(prefix() + ".floorTimes"));
     }
 
     @Override

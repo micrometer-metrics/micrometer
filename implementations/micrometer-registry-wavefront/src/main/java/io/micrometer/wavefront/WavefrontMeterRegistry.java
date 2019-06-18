@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,10 +15,22 @@
  */
 package io.micrometer.wavefront;
 
+import com.wavefront.sdk.common.Constants;
+import com.wavefront.sdk.common.Utils;
+import com.wavefront.sdk.entities.histograms.HistogramGranularity;
+import com.wavefront.sdk.entities.histograms.WavefrontHistogramImpl;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
-import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.cumulative.CumulativeCounter;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionCounter;
+import io.micrometer.core.instrument.cumulative.CumulativeFunctionTimer;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.HistogramGauges;
+import io.micrometer.core.instrument.distribution.pause.PauseDetector;
+import io.micrometer.core.instrument.internal.DefaultGauge;
+import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
+import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.micrometer.core.instrument.push.PushMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
@@ -32,25 +44,37 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
 
 /**
+ * {@link StepMeterRegistry} for Wavefront.
+ *
  * @author Jon Schneider
  * @author Howard Yoo
+ * @since 1.0.0
  */
-public class WavefrontMeterRegistry extends StepMeterRegistry {
-    private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("wavefront-metrics-publisher");
+public class WavefrontMeterRegistry extends PushMeterRegistry {
+    private static final ThreadFactory DEFAULT_THREAD_FACTORY =
+        new NamedThreadFactory("wavefront-metrics-publisher");
     private final Logger logger = LoggerFactory.getLogger(WavefrontMeterRegistry.class);
     private final WavefrontConfig config;
     private final HttpSender httpClient;
+    private final URI uri;
+    private final int distributionPort;
+    private final Set<HistogramGranularity> histogramGranularities;
 
     /**
      * @param config Configuration options for the registry that are describable as properties.
@@ -59,7 +83,7 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     @SuppressWarnings("deprecation")
     public WavefrontMeterRegistry(WavefrontConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY,
-                new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+            new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
     /**
@@ -70,15 +94,31 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
      */
     @Deprecated
     public WavefrontMeterRegistry(WavefrontConfig config, Clock clock, ThreadFactory threadFactory) {
-        this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
+        this(config, clock, threadFactory,
+            new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
-    private WavefrontMeterRegistry(WavefrontConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
+    private WavefrontMeterRegistry(WavefrontConfig config, Clock clock, ThreadFactory threadFactory,
+                                   HttpSender httpClient) {
         super(config, clock);
         this.config = config;
-        this.httpClient = httpClient;
         if (directToApi() && config.apiToken() == null) {
-            throw new MissingRequiredConfigurationException("apiToken must be set whenever publishing directly to the Wavefront API");
+            throw new MissingRequiredConfigurationException(
+                "apiToken must be set whenever publishing directly to the Wavefront API");
+        }
+        this.httpClient = httpClient;
+        this.uri = URI.create(config.uri());
+        this.distributionPort = config.distributionPort();
+
+        this.histogramGranularities = new HashSet<>();
+        if (config.reportMinuteDistribution()) {
+            this.histogramGranularities.add(HistogramGranularity.MINUTE);
+        }
+        if (config.reportHourDistribution()) {
+            this.histogramGranularities.add(HistogramGranularity.HOUR);
+        }
+        if (config.reportDayDistribution()) {
+            this.histogramGranularities.add(HistogramGranularity.DAY);
         }
 
         config().namingConvention(new WavefrontNamingConvention(config.globalPrefix()));
@@ -89,16 +129,72 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     @Override
     public void start(ThreadFactory threadFactory) {
         if (config.enabled()) {
-            logger.info("publishing metrics to wavefront every " + TimeUtils.format(config.step()));
+            logger.info("publishing metrics to Wavefront every " + TimeUtils.format(config.step()));
         }
         super.start(threadFactory);
     }
 
-    @SuppressWarnings("deprecation")
+    @Override
+    protected <T> Gauge newGauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
+        return new DefaultGauge<>(id, obj, valueFunction);
+    }
+
+    @Override
+    protected Counter newCounter(Meter.Id id) {
+        return new CumulativeCounter(id);
+    }
+
+    @Override
+    protected LongTaskTimer newLongTaskTimer(Meter.Id id) {
+        return new DefaultLongTaskTimer(id, clock);
+    }
+
+    @Override
+    protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig,
+                             PauseDetector pauseDetector) {
+        WavefrontTimer timer = new WavefrontTimer(id, clock, distributionStatisticConfig, pauseDetector,
+            getBaseTimeUnit());
+        if (!timer.isPublishingHistogram()) {
+            HistogramGauges.registerWithCommonFormat(timer, this);
+        }
+        return timer;
+    }
+
+    @Override
+    protected DistributionSummary newDistributionSummary(
+        Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, double scale) {
+        WavefrontDistributionSummary summary = new WavefrontDistributionSummary(id, clock,
+            distributionStatisticConfig, scale);
+        if (!summary.isPublishingHistogram()) {
+            HistogramGauges.registerWithCommonFormat(summary, this);
+        }
+        return summary;
+    }
+
+    @Override
+    protected <T> FunctionTimer newFunctionTimer(Meter.Id id, T obj, ToLongFunction<T> countFunction, ToDoubleFunction<T> totalTimeFunction, TimeUnit totalTimeFunctionUnit) {
+        return new CumulativeFunctionTimer<>(id, obj, countFunction, totalTimeFunction, totalTimeFunctionUnit, getBaseTimeUnit());
+    }
+
+    @Override
+    protected <T> FunctionCounter newFunctionCounter(Meter.Id id, T obj, ToDoubleFunction<T> countFunction) {
+        return new CumulativeFunctionCounter<>(id, obj, countFunction);
+    }
+
+    @Override
+    protected Meter newMeter(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
+        return new DefaultMeter(id, type, measurements);
+    }
+
     @Override
     protected void publish() {
         for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
-            Stream<String> stream = batch.stream().flatMap(m -> m.match(
+            Stream.Builder<String> metrics = Stream.builder();
+            Stream.Builder<String> distributions = Stream.builder();
+            AtomicInteger distributionCount = new AtomicInteger();
+
+            batch.stream()
+                .flatMap(m -> m.match(
                     this::writeMeter,
                     this::writeMeter,
                     this::writeTimer,
@@ -107,53 +203,87 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
                     this::writeMeter,
                     this::writeMeter,
                     this::writeFunctionTimer,
-                    this::writeMeter));
+                    this::writeMeter))
+                .forEach(metricLineData -> {
+                    if (metricLineData.isDistribution()) {
+                        distributions.add(metricLineData.lineData());
+                        distributionCount.getAndIncrement();
+                    } else {
+                        metrics.add(metricLineData.lineData());
+                    }
+                });
+
+            Stream<String> metricStream = metrics.build();
+            Stream<String> distributionStream = distributions.build();
 
             if (directToApi()) {
-                try {
-                    httpClient.post(config.uri() + "/report/metrics?t=" + config.apiToken() + "&h=" + config.source())
-                            .acceptJson()
-                            .withJsonContent("{" + stream.collect(joining(",")) + "}")
-                            .send()
-                            .onSuccess(response -> logSuccessfulMetricsSent(batch))
-                            .onError(response -> logger.error("failed to send metrics to wavefront: {}", response.body()));
-                } catch (Throwable e) {
-                    logger.error("failed to send metrics to wavefront", e);
-                }
+                flushDirectToApi(metricStream, Constants.WAVEFRONT_METRIC_FORMAT, "metrics",
+                    batch.size());
+                flushDirectToApi(distributionStream, Constants.WAVEFRONT_HISTOGRAM_FORMAT,
+                    "distributions", distributionCount.get());
             } else {
-                URI uri = URI.create(config.uri());
-                try {
-                    SocketAddress endpoint = uri.getHost() != null ? new InetSocketAddress(uri.getHost(), uri.getPort()) :
-                            new InetSocketAddress(InetAddress.getByName(null), uri.getPort());
-                    try (Socket socket = new Socket()) {
-                        // connectTimeout should be pulled up to WavefrontConfig when it is removed elsewhere
-                        socket.connect(endpoint, (int) this.config.connectTimeout().toMillis());
-                        try (OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8)) {
-                            writer.write(stream.collect(joining("\n")) + "\n");
-                            writer.flush();
-                        }
-                        logSuccessfulMetricsSent(batch);
-                    } catch (IOException e) {
-                        logger.error("failed to send metrics to wavefront", e);
-                    }
-                } catch (UnknownHostException e) {
-                    logger.error("failed to send metrics to wavefront: unknown host + " + uri.getHost());
-                }
+                flushToProxy(metricStream, uri.getPort(), "metrics", batch.size());
+                flushToProxy(distributionStream, distributionPort, "distributions",
+                    distributionCount.get());
             }
         }
     }
 
-    private void logSuccessfulMetricsSent(List<Meter> batch) {
-        logger.debug("successfully sent {} metrics to Wavefront.", batch.size());
+    private void flushDirectToApi(Stream<String> stream, String format, String description, int count) {
+        if (count == 0) {
+            return;
+        }
+        try {
+            String originalPath = uri.getPath() != null && !uri.getPath().equals("/") ? uri.getPath() : "";
+            httpClient.post(new URL(uri.getScheme(), uri.getHost(), uri.getPort(), originalPath + "/report?f=" + format).toString())
+                .withHeader("Authorization", "Bearer " + config.apiToken())
+                .withContent("application/octet-stream", stream.collect(joining()))
+                .compress()
+                .send()
+                .onSuccess(response -> logSuccessfulMetricsSent(description, count))
+                .onError(response -> logger.error("failed to send {} to Wavefront: {}", description, response.body()));
+        } catch (Throwable e) {
+            logger.error("failed to send " + description + " to Wavefront", e);
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private void flushToProxy(Stream<String> stream, int port, String description, int count) {
+        if (count == 0) {
+            return;
+        }
+        try {
+            SocketAddress endpoint = uri.getHost() != null ?
+                new InetSocketAddress(uri.getHost(), port) :
+                new InetSocketAddress(InetAddress.getByName(null), port);
+            try (Socket socket = new Socket()) {
+                // connectTimeout should be pulled up to WavefrontConfig when it is removed elsewhere
+                socket.connect(endpoint, (int) this.config.connectTimeout().toMillis());
+                try (OutputStreamWriter writer =
+                         new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8)) {
+                    writer.write(stream.collect(joining()));
+                    writer.flush();
+                }
+                logSuccessfulMetricsSent(description, count);
+            } catch (IOException e) {
+                logger.error("failed to send " + description + " to Wavefront", e);
+            }
+        } catch (UnknownHostException e) {
+            logger.error("failed to send " + description + " to Wavefront: unknown host " + uri.getHost());
+        }
+    }
+
+    private void logSuccessfulMetricsSent(String description, int count) {
+        logger.debug("successfully sent {} {} to Wavefront.", count, description);
     }
 
     private boolean directToApi() {
         return !"proxy".equals(URI.create(config.uri()).getScheme());
     }
 
-    private Stream<String> writeFunctionTimer(FunctionTimer timer) {
+    private Stream<WavefrontMetricLineData> writeFunctionTimer(FunctionTimer timer) {
         long wallTime = clock.wallTime();
-        Stream.Builder<String> metrics = Stream.builder();
+        Stream.Builder<WavefrontMetricLineData> metrics = Stream.builder();
 
         Meter.Id id = timer.getId();
 
@@ -165,101 +295,104 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
         return metrics.build();
     }
 
-    private Stream<String> writeTimer(Timer timer) {
+    private Stream<WavefrontMetricLineData> writeTimer(Timer timer) {
         final long wallTime = clock.wallTime();
-        final Stream.Builder<String> metrics = Stream.builder();
+        final Stream.Builder<WavefrontMetricLineData> metrics = Stream.builder();
 
-        Meter.Id id = timer.getId();
-        addMetric(metrics, id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()));
-        addMetric(metrics, id, "count", wallTime, timer.count());
-        addMetric(metrics, id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
-        addMetric(metrics, id, "max", wallTime, timer.max(getBaseTimeUnit()));
+        final Meter.Id id = timer.getId();
+        final WavefrontTimer wfTimer = (WavefrontTimer) timer;
+
+        if (wfTimer.isPublishingHistogram()) {
+            addDistribution(metrics, id, wfTimer.flushDistributions());
+        } else {
+            addMetric(metrics, id, "sum", wallTime, timer.totalTime(getBaseTimeUnit()));
+            addMetric(metrics, id, "count", wallTime, timer.count());
+            addMetric(metrics, id, "avg", wallTime, timer.mean(getBaseTimeUnit()));
+            addMetric(metrics, id, "max", wallTime, timer.max(getBaseTimeUnit()));
+        }
 
         return metrics.build();
     }
 
-    private Stream<String> writeSummary(DistributionSummary summary) {
+    private Stream<WavefrontMetricLineData> writeSummary(DistributionSummary summary) {
         final long wallTime = clock.wallTime();
-        final Stream.Builder<String> metrics = Stream.builder();
+        final Stream.Builder<WavefrontMetricLineData> metrics = Stream.builder();
 
-        Meter.Id id = summary.getId();
-        addMetric(metrics, id, "sum", wallTime, summary.totalAmount());
-        addMetric(metrics, id, "count", wallTime, summary.count());
-        addMetric(metrics, id, "avg", wallTime, summary.mean());
-        addMetric(metrics, id, "max", wallTime, summary.max());
+        final Meter.Id id = summary.getId();
+        final WavefrontDistributionSummary wfSummary = (WavefrontDistributionSummary) summary;
 
-        return metrics.build();
-    }
-
-    private Stream<String> writeMeter(Meter meter) {
-        long wallTime = clock.wallTime();
-        Stream.Builder<String> metrics = Stream.builder();
-
-        stream(meter.measure().spliterator(), false)
-                .forEach(measurement -> {
-                    Meter.Id id = meter.getId().withTag(measurement.getStatistic());
-                    addMetric(metrics, id, null, wallTime, measurement.getValue());
-                });
+        if (wfSummary.isPublishingHistogram()) {
+            addDistribution(metrics, id, wfSummary.flushDistributions());
+        } else {
+            addMetric(metrics, id, "sum", wallTime, summary.totalAmount());
+            addMetric(metrics, id, "count", wallTime, summary.count());
+            addMetric(metrics, id, "avg", wallTime, summary.mean());
+            addMetric(metrics, id, "max", wallTime, summary.max());
+        }
 
         return metrics.build();
     }
 
     // VisibleForTesting
-    void addMetric(Stream.Builder<String> metrics, Meter.Id id, @Nullable String suffix, long wallTime, double value) {
-        if (Double.isFinite(value)) {
-            metrics.add(writeMetric(id, suffix, wallTime, value));
+    Stream<WavefrontMetricLineData> writeMeter(Meter meter) {
+        long wallTime = clock.wallTime();
+        Stream.Builder<WavefrontMetricLineData> metrics = Stream.builder();
+
+        stream(meter.measure().spliterator(), false)
+            .forEach(measurement -> {
+                Meter.Id id = meter.getId().withTag(measurement.getStatistic());
+                addMetric(metrics, id, null, wallTime, measurement.getValue());
+            });
+
+        return metrics.build();
+    }
+
+    // VisibleForTesting
+    void addMetric(Stream.Builder<WavefrontMetricLineData> metrics, Meter.Id id, @Nullable String suffix,
+                   long wallTime, double value) {
+        if (!Double.isFinite(value)) {
+            return;
+        }
+
+        Meter.Id fullId = id;
+        if (suffix != null) {
+            fullId = idWithSuffix(id, suffix);
+        }
+
+        String name = getConventionName(fullId);
+        String source = config.source();
+        Map<String, String> tags = getTagsAsMap(id);
+
+        try {
+            String lineData = Utils.metricToLineData(name, value, wallTime, source, tags, "unknown");
+            metrics.add(new WavefrontMetricLineData(lineData, false));
+        } catch (IllegalArgumentException e) {
+            logger.error("failed to convert metric to Wavefront format: " + fullId.getName(), e);
         }
     }
 
-    /**
-     * The metric format is a little different depending on whether you are going straight to the
-     * Wavefront API server or through a sidecar proxy.
-     * <p>
-     * https://docs.wavefront.com/wavefront_data_format.html#wavefront-data-format-syntax
-     */
-    private String writeMetric(Meter.Id id, @Nullable String suffix, long wallTime, double value) {
-        return directToApi() ?
-                writeMetricDirect(id, suffix, value) :
-                writeMetricProxy(id, suffix, wallTime, value);
+    // VisibleForTesting
+    void addDistribution(Stream.Builder<WavefrontMetricLineData> metrics, Meter.Id id,
+                         List<WavefrontHistogramImpl.Distribution> distributions) {
+        String name = getConventionName(id);
+        String source = config.source();
+        Map<String, String> tags = getTagsAsMap(id);
+
+        for (WavefrontHistogramImpl.Distribution distribution : distributions) {
+            try {
+                String lineData = Utils.histogramToLineData(name, distribution.centroids,
+                    histogramGranularities, distribution.timestamp, source, tags, "unknown");
+                metrics.add(new WavefrontMetricLineData(lineData, true));
+            } catch (IllegalArgumentException e) {
+                logger.error("failed to convert distribution to Wavefront format: " + id.getName(), e);
+            }
+        }
     }
 
-    private String writeMetricProxy(Meter.Id id, @Nullable String suffix, long wallTime, double value) {
-        Meter.Id fullId = id;
-        if (suffix != null)
-            fullId = idWithSuffix(id, suffix);
-
-        // surrounding the name with double quotes allows for / and , in names
-        return "\"" + getConventionName(fullId) + "\" " + DoubleFormat.decimalOrNan(value) + " " + (wallTime / 1000) +
-                " source=" + config.source() + " " +
-                getConventionTags(fullId)
-                        .stream()
-                        .map(t -> t.getKey() + "=\"" + t.getValue() + "\"")
-                        .collect(joining(" "));
-    }
-
-    private String writeMetricDirect(Meter.Id id, @Nullable String suffix, double value) {
-        Meter.Id fullId = id;
-        if (suffix != null)
-            fullId = idWithSuffix(id, suffix);
-
-        List<Tag> conventionTags = getConventionTags(fullId);
-
-        String tags = conventionTags
-                .stream()
-                .map(t -> "\"" + escapeJson(t.getKey()) + "\": \"" + escapeJson(t.getValue()) + "\"")
-                .collect(joining(","));
-
-        UUID uuid = UUID.randomUUID();
-        String uniqueNameSuffix = ((Long) uuid.getMostSignificantBits()).toString() + uuid.getLeastSignificantBits();
-
-        // To be valid JSON, the metric name must be unique. Since the same name can occur in multiple entries because of
-        // variance in tag values, we need to append a suffix to the name. The suffix must be numeric, or Wavefront interprets
-        // it as part of the name. Wavefront strips a $<NUMERIC> suffix from the name at parsing time.
-        return "\"" + escapeJson(getConventionName(fullId)) + "$" + uniqueNameSuffix + "\"" +
-                ": {" +
-                "\"value\": " + DoubleFormat.decimalOrNan(value) + "," +
-                "\"tags\": {" + tags + "}" +
-                "}";
+    private Map<String, String> getTagsAsMap(Meter.Id id) {
+        return getConventionTags(id)
+            .stream()
+            .collect(Collectors.toMap(Tag::getKey, Tag::getValue, (tag1, tag2) -> tag2));
     }
 
     private Meter.Id idWithSuffix(Meter.Id id, String suffix) {
@@ -269,6 +402,14 @@ public class WavefrontMeterRegistry extends StepMeterRegistry {
     @Override
     protected TimeUnit getBaseTimeUnit() {
         return TimeUnit.SECONDS;
+    }
+
+    @Override
+    protected DistributionStatisticConfig defaultHistogramConfig() {
+        return DistributionStatisticConfig.builder()
+                .expiry(config.step())
+                .build()
+                .merge(DistributionStatisticConfig.DEFAULT);
     }
 
     public static Builder builder(WavefrontConfig config) {

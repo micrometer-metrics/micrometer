@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -43,10 +43,12 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -66,7 +68,9 @@ import java.util.concurrent.CyclicBarrier;
 import static io.micrometer.spring.web.servlet.WebMvcMetricsFilterTest.RedirectAndNotFoundFilter.TEST_MISBEHAVE_HEADER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -166,6 +170,16 @@ public class WebMvcMetricsFilterTest {
         assertThat(this.registry.get("http.server.requests")
                 .tags("exception", "RuntimeException")
                 .timer().count()).isEqualTo(1L);
+    }
+
+    @Test
+    public void streamingError() throws Exception {
+        MvcResult result = this.mvc.perform(get("/api/c1/streamingError"))
+                .andExpect(request().asyncStarted()).andReturn();
+        assertThatCode(
+                () -> this.mvc.perform(asyncDispatch(result)).andExpect(status().isOk()));
+        assertThat(this.registry.get("http.server.requests")
+                .tags("exception", "IOException").timer().count()).isEqualTo(1L);
     }
 
     @Test
@@ -353,6 +367,14 @@ public class WebMvcMetricsFilterTest {
         @GetMapping("/unhandledError/{id}")
         public String alwaysThrowsUnhandledException(@PathVariable Long id) {
             throw new RuntimeException("Boom on " + id + "!");
+        }
+
+        @GetMapping("/streamingError")
+        public ResponseBodyEmitter streamingError() {
+            ResponseBodyEmitter emitter = new ResponseBodyEmitter();
+            emitter.completeWithError(
+                    new IOException("error while writing to the response"));
+            return emitter;
         }
 
         @Timed

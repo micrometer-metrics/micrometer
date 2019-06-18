@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,7 @@ package io.micrometer.appoptics;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
@@ -28,11 +29,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.StreamSupport;
+import java.util.stream.Collectors;
 
 import static io.micrometer.core.instrument.util.DoubleFormat.decimal;
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
@@ -48,6 +51,9 @@ import static java.util.stream.Collectors.joining;
  */
 public class AppOpticsMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("appoptics-metrics-publisher");
+    // Visible for testing
+    protected static final String BODY_MEASUREMENTS_PREFIX = "{\"time\": %d, \"measurements\":[";
+    private static final String BODY_MEASUREMENTS_SUFFIX = "]}";
 
     private final Logger logger = LoggerFactory.getLogger(AppOpticsMeterRegistry.class);
 
@@ -59,8 +65,13 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         this(config, clock, DEFAULT_THREAD_FACTORY, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
-    private AppOpticsMeterRegistry(AppOpticsConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
+    // Visible for testing
+    protected AppOpticsMeterRegistry(AppOpticsConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
+
+        if (config.apiToken() == null) {
+            throw new MissingRequiredConfigurationException("apiToken must be set to report metrics to AppOptics");
+        }
 
         config().namingConvention(new AppOpticsNamingConvention());
 
@@ -96,24 +107,28 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         try {
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
+                final List<String> meters = batch.stream()
+                        .map(meter -> meter.match(
+                                this::writeGauge,
+                                this::writeCounter,
+                                this::writeTimer,
+                                this::writeSummary,
+                                this::writeLongTaskTimer,
+                                this::writeTimeGauge,
+                                this::writeFunctionCounter,
+                                this::writeFunctionTimer,
+                                this::writeMeter)
+                        )
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .collect(Collectors.toList());
+                if (meters.isEmpty()) {
+                    continue;
+                }
                 httpClient.post(config.uri())
                         .withBasicAuthentication(config.apiToken(), "")
                         .withJsonContent(
-                                batch.stream()
-                                        .map(meter -> meter.match(
-                                                this::writeGauge,
-                                                this::writeCounter,
-                                                this::writeTimer,
-                                                this::writeSummary,
-                                                this::writeLongTaskTimer,
-                                                this::writeTimeGauge,
-                                                this::writeFunctionCounter,
-                                                this::writeFunctionTimer,
-                                                this::writeMeter)
-                                        )
-                                        .filter(Optional::isPresent)
-                                        .map(Optional::get)
-                                        .collect(joining(",", "{\"measurements\":[", "]}")))
+                                meters.stream().collect(joining(",", getBodyMeasurementsPrefix(), BODY_MEASUREMENTS_SUFFIX)))
                         .send()
                         .onSuccess(response -> {
                             if (!response.body().contains("\"failed\":0")) {
@@ -129,10 +144,38 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private Optional<String> writeMeter(Meter meter) {
-        return Optional.of(StreamSupport.stream(meter.measure().spliterator(), false)
-                .map(ms -> write(meter.getId().withTag(ms.getStatistic()), null, Fields.Value.tag(), decimal(ms.getValue())))
-                .collect(joining(",")));
+    /**
+     * Build body prefix with time based on the clock and flooring configuration.
+     */
+    // VisibleForTesting
+    String getBodyMeasurementsPrefix() {
+        final long stepSeconds = config.step().getSeconds();
+        final long time = config.floorTimes() ? (clock.wallTime() / 1000 / stepSeconds * stepSeconds) : clock.wallTime() / 1000;
+        return String.format(BODY_MEASUREMENTS_PREFIX, time);
+    }
+
+    // VisibleForTesting
+    Optional<String> writeMeter(Meter meter) {
+        Iterable<Measurement> measurements = meter.measure();
+        List<Statistic> statistics = new ArrayList<>();
+        // Snapshot values should be used throughout this method as there are chances for values to be changed in-between.
+        List<Double> values = new ArrayList<>();
+        for (Measurement measurement : measurements) {
+            double value = measurement.getValue();
+            if (!Double.isFinite(value)) {
+                continue;
+            }
+            statistics.add(measurement.getStatistic());
+            values.add(value);
+        }
+        if (statistics.isEmpty()) {
+            return Optional.empty();
+        }
+        StringJoiner joiner = new StringJoiner(",");
+        for (int i = 0; i < statistics.size(); i++) {
+            joiner.add(write(meter.getId().withTag(statistics.get(i)), null, Fields.Value.tag(), decimal(values.get(i))));
+        }
+        return Optional.of(joiner.toString());
     }
 
     // VisibleForTesting

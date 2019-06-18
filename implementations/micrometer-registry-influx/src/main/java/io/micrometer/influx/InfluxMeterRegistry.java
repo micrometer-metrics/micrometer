@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,6 +23,7 @@ import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.util.List;
@@ -146,16 +147,23 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private Stream<String> writeMeter(Meter m) {
-        Stream.Builder<Field> fields = Stream.builder();
-
+    // VisibleForTesting
+    Stream<String> writeMeter(Meter m) {
+        List<Field> fields = new ArrayList<>();
         for (Measurement measurement : m.measure()) {
-            String fieldKey = measurement.getStatistic().toString()
+            double value = measurement.getValue();
+            if (!Double.isFinite(value)) {
+                continue;
+            }
+            String fieldKey = measurement.getStatistic().getTagValueRepresentation()
                     .replaceAll("(.)(\\p{Upper})", "$1_$2").toLowerCase();
-            fields.add(new Field(fieldKey, measurement.getValue()));
+            fields.add(new Field(fieldKey, value));
         }
-
-        return Stream.of(influxLineProtocol(m.getId(), "unknown", fields.build()));
+        if (fields.isEmpty()) {
+            return Stream.empty();
+        }
+        Meter.Id id = m.getId();
+        return Stream.of(influxLineProtocol(id, id.getType().name().toLowerCase(), fields.stream()));
     }
 
     private Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
@@ -216,6 +224,7 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
 
     private String influxLineProtocol(Meter.Id id, String metricType, Stream<Field> fields) {
         String tags = getConventionTags(id).stream()
+                .filter(t -> StringUtils.isNotBlank(t.getValue()))
                 .map(t -> "," + t.getKey() + "=" + t.getValue())
                 .collect(joining(""));
 
@@ -277,4 +286,5 @@ public class InfluxMeterRegistry extends StepMeterRegistry {
             return key + "=" + DoubleFormat.decimalOrNan(value);
         }
     }
+
 }

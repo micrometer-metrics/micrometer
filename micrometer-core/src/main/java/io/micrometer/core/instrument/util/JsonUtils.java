@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,11 @@
  */
 package io.micrometer.core.instrument.util;
 
-public class JsonUtils {
+public final class JsonUtils {
+
+    private JsonUtils() {
+    }
+    
     /**
      * Based on https://stackoverflow.com/a/49564514/510017
      *

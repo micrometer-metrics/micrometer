@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
 
-public class AppOpticsMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
+class AppOpticsMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
     private final AppOpticsConfig config = new AppOpticsConfig() {
         @Override
         public String get(String key) {
@@ -31,6 +31,11 @@ public class AppOpticsMeterRegistryCompatibilityTest extends MeterRegistryCompat
         @Override
         public boolean enabled() {
             return false;
+        }
+
+        @Override
+        public String apiToken() {
+            return "fake";
         }
     };
 

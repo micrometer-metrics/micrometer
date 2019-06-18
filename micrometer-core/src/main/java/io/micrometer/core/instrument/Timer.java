@@ -1,11 +1,11 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,6 +35,7 @@ import java.util.function.Supplier;
  * under a minute.
  *
  * @author Jon Schneider
+ * @author Oleksii Bondar
  */
 public interface Timer extends Meter, HistogramSupport {
     /**
@@ -152,6 +153,18 @@ public interface Timer extends Meter, HistogramSupport {
      */
     default <T> Callable<T> wrap(Callable<T> f) {
         return () -> recordCallable(f);
+    }
+    
+    /**
+     * Wrap a {@link Supplier} so that it is timed when invoked.
+     *
+     * @param f The {@code Supplier} to time when it is invoked.
+     * @param <T> The return type of the {@code Supplier} result.
+     * @return The wrapped supplier.
+     * @since 1.2.0
+     */
+    default <T> Supplier<T> wrap(Supplier<T> f) {
+        return () -> record(f);
     }
 
     /**

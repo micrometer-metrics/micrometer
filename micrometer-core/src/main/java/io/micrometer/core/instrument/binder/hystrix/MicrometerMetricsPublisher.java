@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,7 +40,9 @@ public class MicrometerMetricsPublisher extends HystrixMetricsPublisher {
 
     @Override
     public HystrixMetricsPublisherThreadPool getMetricsPublisherForThreadPool(HystrixThreadPoolKey threadPoolKey, HystrixThreadPoolMetrics metrics, HystrixThreadPoolProperties properties) {
-        return metricsPublisher.getMetricsPublisherForThreadPool(threadPoolKey, metrics, properties);
+        final HystrixMetricsPublisherThreadPool metricsPublisherForThreadPool =
+            metricsPublisher.getMetricsPublisherForThreadPool(threadPoolKey, metrics, properties);
+        return new MicrometerMetricsPublisherThreadPool(registry, threadPoolKey, metrics, properties, metricsPublisherForThreadPool);
     }
 
     @Override

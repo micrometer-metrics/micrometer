@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,10 @@ package io.micrometer.elastic;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
 /**
+ * Configuration for {@link ElasticMeterRegistry}.
+ *
  * @author Nicolas Portmann
+ * @since 1.1.0
  */
 public interface ElasticConfig extends StepRegistryConfig {
 
@@ -30,7 +33,7 @@ public interface ElasticConfig extends StepRegistryConfig {
     /**
      * Get the value associated with a key.
      *
-     * @param key Key to lookup in the config.
+     * @param key Key to look up in the config.
      * @return Value for the key or null if no key is present.
      */
     String get(String key);
@@ -67,7 +70,7 @@ public interface ElasticConfig extends StepRegistryConfig {
 
     /**
      * The index date format used for rolling indices.
-     * This is appended to the index name, split by a '-'.
+     * This is appended to the index name, separated by the {@link #indexDateSeparator()}.
      * Default is: "yyyy-MM"
      *
      * @return date format for index
@@ -119,5 +122,29 @@ public interface ElasticConfig extends StepRegistryConfig {
     default String password() {
         String v = get(prefix() + ".password");
         return v == null ? "" : v;
+    }
+
+    /**
+     * The ingest pipeline name.
+     * Default is: "" (= do not pre-process events)
+     *
+     * @return ingest pipeline name
+     * @since 1.2.0
+     */
+    default String pipeline() {
+        String v = get(prefix() + ".pipeline");
+        return v == null ? "" : v;
+    }
+
+    /**
+     * The separator between the index name and the date part.
+     * Default is: "-"
+     *
+     * @return index name separator
+     * @since 1.2.0
+     */
+    default String indexDateSeparator() {
+        String v = get(prefix() + ".indexDateSeparator");
+        return v == null ? "-" : v;
     }
 }

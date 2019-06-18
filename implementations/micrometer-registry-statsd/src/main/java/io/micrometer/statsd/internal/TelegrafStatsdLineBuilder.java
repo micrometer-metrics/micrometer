@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -59,12 +59,14 @@ public class TelegrafStatsdLineBuilder extends FlavorStatsdLineBuilder {
             }
 
             this.name = telegrafEscape(next.name(id.getName(), id.getType(), id.getBaseUnit()));
-            this.tags = HashTreePMap.empty();
-            this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
-                    id.getConventionTags(this.namingConvention).stream()
-                            .map(t -> telegrafEscape(t.getKey()) + "=" + telegrafEscape(t.getValue()))
-                            .collect(Collectors.joining(","))
-                    : null;
+            synchronized (tagsLock) {
+                this.tags = HashTreePMap.empty();
+                this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
+                        id.getConventionTags(this.namingConvention).stream()
+                                .map(t -> telegrafEscape(t.getKey()) + "=" + telegrafEscape(t.getValue()))
+                                .collect(Collectors.joining(","))
+                        : null;
+            }
             this.tagsNoStat = tags(null, conventionTags, "=", ",");
         }
     }

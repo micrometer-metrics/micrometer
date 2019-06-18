@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,9 +23,9 @@ import io.micrometer.spring.autoconfigure.export.properties.StepRegistryProperti
  *
  * @author Nicolas Portmann
  */
-public class ElasticPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<ElasticProperties> implements ElasticConfig {
+class ElasticPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<ElasticProperties> implements ElasticConfig {
 
-    public ElasticPropertiesConfigAdapter(ElasticProperties properties) {
+    ElasticPropertiesConfigAdapter(ElasticProperties properties) {
         super(properties);
     }
 
@@ -63,4 +63,15 @@ public class ElasticPropertiesConfigAdapter extends StepRegistryPropertiesConfig
     public String password() {
         return get(ElasticProperties::getPassword, ElasticConfig.super::password);
     }
+
+    @Override
+    public String pipeline() {
+        return get(ElasticProperties::getPipeline, ElasticConfig.super::pipeline);
+    }
+
+    @Override
+    public String indexDateSeparator() {
+        return get(ElasticProperties::getIndexDateSeparator, ElasticConfig.super::indexDateSeparator);
+    }
+
 }

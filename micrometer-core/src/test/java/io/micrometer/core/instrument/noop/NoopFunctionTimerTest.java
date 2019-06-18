@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -42,12 +42,12 @@ class NoopFunctionTimerTest {
 
     @Test
     void returnsCountAsZero() {
-        assertThat(timer.count()).isEqualTo(0.);
+        assertThat(timer.count()).isEqualTo(0d);
     }
 
     @Test
     void returnsTotalTimeAsZero() {
-        assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(0.);
+        assertThat(timer.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(0d);
     }
 
     @Test

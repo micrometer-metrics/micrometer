@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,18 +31,22 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.StreamSupport;
 
 import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 import static java.util.stream.Collectors.joining;
 
 /**
+ * {@link MeterRegistry} for Humio.
+ *
  * @author Martin Westergaard Lassen
  * @author Jon Schneider
+ * @author Johnny Lim
+ * @since 1.1.0
  */
 public class HumioMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("humio-metrics-publisher");
@@ -98,8 +102,8 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                 String tags = "";
                 Map<String, String> datasourceTags = config.tags();
                 if (datasourceTags != null && !datasourceTags.isEmpty()) {
-                    tags = "\"tags\":{" + datasourceTags.entrySet().stream().map(tag -> "\"" + tag.getKey() + "\": \"" + tag.getValue() + "\"")
-                            .collect(joining(",")) + "},";
+                    tags = datasourceTags.entrySet().stream().map(tag -> "\"" + tag.getKey() + "\": \"" + tag.getValue() + "\"")
+                            .collect(joining(",", "\"tags\":{",  "},"));
                 }
 
                 post.withJsonContent(meters.stream()
@@ -177,7 +181,8 @@ public class HumioMeterRegistry extends StepMeterRegistry {
     class Batch {
         private final String timestamp;
 
-        private Batch(long wallTime) {
+        // VisibleForTesting
+        Batch(long wallTime) {
             timestamp = DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(wallTime));
         }
 
@@ -187,16 +192,21 @@ public class HumioMeterRegistry extends StepMeterRegistry {
         }
 
         // VisibleForTesting
+        @Nullable
         String writeFunctionCounter(FunctionCounter counter) {
-            return writeEvent(counter, event("count", counter.count()));
+            double count = counter.count();
+            if (Double.isFinite(count)) {
+                return writeEvent(counter, event("count", count));
+            }
+            return null;
         }
 
         // VisibleForTesting
         @Nullable
         String writeGauge(Gauge gauge) {
-            Double value = gauge.value();
-            if (!value.isNaN()) {
-                return writeEvent(gauge, event("value", gauge.value()));
+            double value = gauge.value();
+            if (Double.isFinite(value)) {
+                return writeEvent(gauge, event("value", value));
             }
             return null;
         }
@@ -204,9 +214,9 @@ public class HumioMeterRegistry extends StepMeterRegistry {
         // VisibleForTesting
         @Nullable
         String writeTimeGauge(TimeGauge gauge) {
-            Double value = gauge.value();
-            if (!value.isNaN()) {
-                return writeEvent(gauge, event("value", gauge.value(getBaseTimeUnit())));
+            double value = gauge.value(getBaseTimeUnit());
+            if (Double.isFinite(value)) {
+                return writeEvent(gauge, event("value", value));
             }
             return null;
         }
@@ -248,9 +258,19 @@ public class HumioMeterRegistry extends StepMeterRegistry {
 
         // VisibleForTesting
         String writeMeter(Meter meter) {
-            return writeEvent(meter, StreamSupport.stream(meter.measure().spliterator(), false)
-                    .map(ms -> event(ms.getStatistic().getTagValueRepresentation(), ms.getValue()))
-                    .toArray(Attribute[]::new));
+            // Snapshot values should be used throughout this method as there are chances for values to be changed in-between.
+            List<Attribute> attributes = new ArrayList<>();
+            for (Measurement measurement : meter.measure()) {
+                double value = measurement.getValue();
+                if (!Double.isFinite(value)) {
+                    continue;
+                }
+                attributes.add(event(measurement.getStatistic().getTagValueRepresentation(), value));
+            }
+            if (attributes.isEmpty()) {
+                return null;
+            }
+            return writeEvent(meter, attributes.toArray(new Attribute[0]));
         }
 
         /*
@@ -258,6 +278,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
             "timestamp": "2016-06-06T13:00:02+02:00",
             "attributes": {
               "name": "value1"
+            }
           }
          */
         // VisibleForTesting
@@ -277,7 +298,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
             for (Tag tag : tags) {
                 String key = tag.getKey();
                 for (Attribute attribute : attributes) {
-                    if (attribute.name.equals(tag.getKey())) {
+                    if (attribute.name.equals(key)) {
                         key = "_" + key;
                         break;
                     }

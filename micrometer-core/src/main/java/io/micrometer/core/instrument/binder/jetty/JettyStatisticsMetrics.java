@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.jetty;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -55,7 +56,7 @@ public class JettyStatisticsMetrics implements MeterBinder {
         bindCounter(registry, "jetty.async.expires", "Total number of async requests that have expired", StatisticsHandler::getExpires);
         FunctionCounter.builder("jetty.responses.size", statisticsHandler, StatisticsHandler::getResponsesBytesTotal)
             .description("Total number of bytes across all responses")
-            .baseUnit("bytes")
+            .baseUnit(BaseUnits.BYTES)
             .register(registry);
 
         bindGauge(registry, "jetty.requests.active", "Number of requests currently active", StatisticsHandler::getRequestsActive);

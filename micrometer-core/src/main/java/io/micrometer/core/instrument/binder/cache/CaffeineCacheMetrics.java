@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,10 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.cache;
 
-import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.*;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.lang.NonNullApi;
@@ -99,7 +96,7 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      * @param <C>       The cache type.
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      */
-    public static <C extends AsyncLoadingCache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
+    public static <C extends AsyncCache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, String... tags) {
         return monitor(registry, cache, cacheName, Tags.of(tags));
     }
 
@@ -115,7 +112,7 @@ public class CaffeineCacheMetrics extends CacheMeterBinder {
      * @return The instrumented cache, unchanged. The original cache is not wrapped or proxied in any way.
      * @see CacheStats
      */
-    public static <C extends AsyncLoadingCache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
+    public static <C extends AsyncCache<?, ?>> C monitor(MeterRegistry registry, C cache, String cacheName, Iterable<Tag> tags) {
         monitor(registry, cache.synchronous(), cacheName, tags);
         return cache;
     }

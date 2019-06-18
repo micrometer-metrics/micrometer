@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,6 +21,8 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.search.RequiredSearch;
 
 /**
+ * Base class for cache metrics tests.
+ *
  * @author Oleksii Bondar
  */
 abstract class AbstractCacheMetricsTest {
@@ -46,10 +48,10 @@ abstract class AbstractCacheMetricsTest {
     }
 
     protected RequiredSearch fetch(MeterRegistry meterRegistry, String name) {
-        return meterRegistry.get(name).tags(expectedTag);
+        return fetch(meterRegistry, name, expectedTag);
     }
 
     protected RequiredSearch fetch(MeterRegistry meterRegistry, String name, Iterable<Tag> tags) {
-        return fetch(meterRegistry, name).tags(tags);
+        return meterRegistry.get(name).tags(tags);
     }
 }

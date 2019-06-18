@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +24,7 @@ import com.signalfx.metrics.errorhandler.OnSendErrorHandler;
 import com.signalfx.metrics.flush.AggregateMetricSender;
 import com.signalfx.metrics.protobuf.SignalFxProtocolBuffers;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
@@ -64,6 +65,10 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
     public SignalFxMeterRegistry(SignalFxConfig config, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
         this.config = config;
+
+        if (config.accessToken() == null) {
+            throw new MissingRequiredConfigurationException("accessToken must be set to report metrics to SignalFX");
+        }
 
         URI apiUri = URI.create(config.uri());
         int port = apiUri.getPort();

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
  * Intercepts incoming HTTP requests and records metrics about execution time and results.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 @NonNullApi
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
@@ -120,6 +121,9 @@ public class WebMvcMetricsFilter extends OncePerRequestFilter {
             response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
             record(timingContext, response, request, handlerObject, e.getCause());
             throw e;
+        } catch (ServletException | IOException | RuntimeException ex) {
+            record(timingContext, response, request, handlerObject, ex);
+            throw ex;
         }
     }
 

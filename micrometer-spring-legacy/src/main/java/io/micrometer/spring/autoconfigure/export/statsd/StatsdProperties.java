@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -72,6 +72,9 @@ public class StatsdProperties {
      */
     private boolean publishUnchangedMeters = true;
 
+    /** Whether measurements should be buffered before sending to the StatsD server. */
+    private boolean buffered = true;
+
     public boolean isEnabled() {
         return this.enabled;
     }
@@ -136,4 +139,11 @@ public class StatsdProperties {
         this.publishUnchangedMeters = publishUnchangedMeters;
     }
 
+    public boolean isBuffered() {
+        return buffered;
+    }
+
+    public void setBuffered(boolean buffered) {
+        this.buffered = buffered;
+    }
 }

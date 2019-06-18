@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,12 +17,13 @@ package io.micrometer.spring.autoconfigure;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.config.MeterFilter;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.context.ApplicationContext;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -45,15 +46,19 @@ class MeterRegistryPostProcessor implements BeanPostProcessor {
 
     private volatile MeterRegistryConfigurer configurer;
 
+    private volatile ApplicationContext applicationContext;
+
     MeterRegistryPostProcessor(
             ObjectProvider<List<MeterBinder>> meterBinders,
             ObjectProvider<List<MeterFilter>> meterFilters,
             ObjectProvider<List<MeterRegistryCustomizer<?>>> meterRegistryCustomizers,
-            ObjectProvider<MetricsProperties> metricsProperties) {
+            ObjectProvider<MetricsProperties> metricsProperties,
+            ApplicationContext applicationContext) {
         this.meterBinders = meterBinders;
         this.meterFilters = meterFilters;
         this.meterRegistryCustomizers = meterRegistryCustomizers;
         this.metricsProperties = metricsProperties;
+        this.applicationContext = applicationContext;
     }
 
     @Override
@@ -71,17 +76,15 @@ class MeterRegistryPostProcessor implements BeanPostProcessor {
 
     private MeterRegistryConfigurer getConfigurer() {
         if (this.configurer == null) {
-            this.configurer = new MeterRegistryConfigurer(
-                    getOrEmpty(this.meterBinders.getIfAvailable()),
-                    getOrEmpty(this.meterFilters.getIfAvailable()),
-                    getOrEmpty(this.meterRegistryCustomizers.getIfAvailable()),
-                    this.metricsProperties.getObject().isUseGlobalRegistry());
+            boolean hasCompositeMeterRegistry = this.applicationContext
+                    .getBeanNamesForType(CompositeMeterRegistry.class, false, false)
+                    .length != 0;
+            this.configurer = new MeterRegistryConfigurer(this.meterRegistryCustomizers,
+                    this.meterFilters, this.meterBinders,
+                    this.metricsProperties.getObject().isUseGlobalRegistry(),
+                    hasCompositeMeterRegistry);
         }
         return this.configurer;
-    }
-
-    private <T> List<T> getOrEmpty(List<T> list) {
-        return list != null ? list : Collections.emptyList();
     }
 
 }

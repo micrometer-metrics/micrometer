@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,7 +41,7 @@ class GuavaCacheMetricsTest extends AbstractCacheMetricsTest {
     private LoadingCache<String, String> cache = CacheBuilder.newBuilder().build(new CacheLoader<String, String>() {
         public String load(String key) throws Exception {
             return "";
-        };
+        }
     });
     private GuavaCacheMetrics metrics = new GuavaCacheMetrics(cache, "testCache", expectedTag);
 

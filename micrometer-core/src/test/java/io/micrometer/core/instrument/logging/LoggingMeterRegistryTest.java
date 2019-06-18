@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,7 +16,15 @@
 package io.micrometer.core.instrument.logging;
 
 import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests for {@link LoggingMeterRegistry}.
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 class LoggingMeterRegistryTest {
     private final LoggingMeterRegistry registry = new LoggingMeterRegistry();
@@ -31,7 +40,7 @@ class LoggingMeterRegistryTest {
     @Test
     void humanReadableByteCount() {
         LoggingMeterRegistry.Printer printer = registry.new Printer(DistributionSummary.builder("my.summary")
-                .baseUnit("bytes")
+                .baseUnit(BaseUnits.BYTES)
                 .register(registry));
 
         assertThat(printer.humanReadableBaseUnit(1.0)).isEqualTo("1 B");
@@ -54,4 +63,64 @@ class LoggingMeterRegistryTest {
         LoggingMeterRegistry.Printer printer = registry.new Printer(registry.timer("my.timer"));
         assertThat(printer.time(12345 /* ms */)).isEqualTo("12.345s");
     }
+
+    @Test
+    void writeMeterUnitlessValue() {
+        final String expectedResult = "meter.1{} value=0";
+
+        Measurement m1 = new Measurement(() -> 0d, Statistic.VALUE);
+        Meter meter = Meter.builder("meter.1", Meter.Type.OTHER, Collections.singletonList(m1))
+                .register(registry);
+        LoggingMeterRegistry.Printer printer = registry.new Printer(meter);
+        assertThat(registry.writeMeter(meter, printer)).isEqualTo(expectedResult);
+    }
+
+    @Test
+    void writeMeterMultipleValues() {
+        final String expectedResult = "sheepWatch{color=black} value=5 sheep, max=1023 sheep, total=1.1s";
+
+        Measurement m1 = new Measurement(() -> 5d, Statistic.VALUE);
+        Measurement m2 = new Measurement(() -> 1023d, Statistic.MAX);
+        Measurement m3 = new Measurement(() -> 1100d, Statistic.TOTAL_TIME);
+        Meter meter = Meter.builder("sheepWatch", Meter.Type.OTHER, Arrays.asList(m1, m2, m3))
+                .tag("color", "black")
+                .description("Meter for shepherds.")
+                .baseUnit("sheep")
+                .register(registry);
+        LoggingMeterRegistry.Printer printer = registry.new Printer(meter);
+        assertThat(registry.writeMeter(meter, printer)).isEqualTo(expectedResult);
+    }
+
+    @Test
+    void writeMeterByteValues() {
+        final String expectedResult = "bus-throughput{} throughput=5 B/s, value=64 B, value=2.125 KiB, value=8 MiB, value=1 GiB";
+
+        Measurement m1 = new Measurement(() -> 300d, Statistic.COUNT);
+        Measurement m2 = new Measurement(() -> (double) (1 << 6), Statistic.VALUE);
+        Measurement m3 = new Measurement(() -> (double) 0b100010000000, Statistic.VALUE);
+        Measurement m4 = new Measurement(() -> (double) (1 << 23), Statistic.VALUE);
+        Measurement m5 = new Measurement(() -> (double) (1 << 30), Statistic.VALUE);
+        Meter meter = Meter.builder("bus-throughput", Meter.Type.OTHER, Arrays.asList(m1, m2, m3, m4, m5))
+                .baseUnit(BaseUnits.BYTES)
+                .register(registry);
+        LoggingMeterRegistry.Printer printer = registry.new Printer(meter);
+        assertThat(registry.writeMeter(meter, printer)).isEqualTo(expectedResult);
+    }
+
+    @Test
+    void printerValueWhenGaugeIsNaNShouldPrintNaN() {
+        registry.gauge("my.gauge", Double.NaN);
+        Gauge gauge = registry.find("my.gauge").gauge();
+        LoggingMeterRegistry.Printer printer = registry.new Printer(gauge);
+        assertThat(printer.value(Double.NaN)).isEqualTo("NaN");
+    }
+
+    @Test
+    void printerValueWhenGaugeIsInfinityShouldPrintInfinity() {
+        registry.gauge("my.gauge", Double.POSITIVE_INFINITY);
+        Gauge gauge = registry.find("my.gauge").gauge();
+        LoggingMeterRegistry.Printer printer = registry.new Printer(gauge);
+        assertThat(printer.value(Double.POSITIVE_INFINITY)).isEqualTo("∞");
+    }
+
 }

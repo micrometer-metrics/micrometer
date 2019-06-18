@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.statsd.internal.*;
 import org.reactivestreams.Processor;
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
@@ -38,6 +39,7 @@ import reactor.netty.tcp.TcpClient;
 import reactor.util.concurrent.Queues;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -46,16 +48,35 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
+import java.util.stream.LongStream;
 
 /**
+ * {@link MeterRegistry} for StatsD.
+ *
+ * The following StatsD line protocols are supported:
+ *
+ * <ul>
+ *   <li>Datadog (default)</li>
+ *   <li>Etsy</li>
+ *   <li>Telegraf</li>
+ *   <li>Sysdig</li>
+ * </ul>
+ *
+ * See {@link StatsdFlavor} for more details.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
+ * @since 1.0.0
  */
 public class StatsdMeterRegistry extends MeterRegistry {
+
+    private static final Processor<String, String> NOOP_PROCESSOR = new NoopProcessor();
+
     private final StatsdConfig statsdConfig;
     private final HierarchicalNameMapper nameMapper;
     private final Map<Meter.Id, StatsdPollable> pollableMeters = new ConcurrentHashMap<>();
     private final AtomicBoolean started = new AtomicBoolean(false);
-    Processor<String, String> processor;
+    Processor<String, String> processor = NOOP_PROCESSOR;
     private Disposable.Swap client = Disposables.swap();
     private Disposable.Swap meterPoller = Disposables.swap();
 
@@ -95,65 +116,27 @@ public class StatsdMeterRegistry extends MeterRegistry {
         this.lineSink = lineSink;
         config().namingConvention(namingConvention);
 
-        UnicastProcessor<String> unicastProcessor = UnicastProcessor.create(Queues.<String>unboundedMultiproducer().get());
-
-        try {
-            Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, getClass().getClassLoader());
-            this.processor = new LogbackMetricsSuppressingUnicastProcessor(unicastProcessor);
-        } catch (ClassNotFoundException e) {
-            this.processor = unicastProcessor;
-        }
-
-        if (lineSink != null) {
-            processor.subscribe(new Subscriber<String>() {
-                @Override
-                public void onSubscribe(Subscription s) {
-                    s.request(Long.MAX_VALUE);
-                }
-
-                @Override
-                public void onNext(String line) {
-                    if (started.get()) {
-                        lineSink.accept(line);
-                    }
-                }
-
-                @Override
-                public void onError(Throwable t) {
-                }
-
-                @Override
-                public void onComplete() {
-                    meterPoller.dispose();
-                }
-            });
-
-            // now that we're connected, start polling gauges and other pollable meter types
-            meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
-                    .doOnEach(n -> poll())
-                    .subscribe());
-        }
-
         config().onMeterRemoved(meter -> {
             //noinspection SuspiciousMethodCalls
             meter.use(
-                    this::removePollableMeter,
-                    c -> ((StatsdCounter) c).shutdown(),
-                    t -> ((StatsdTimer) t).shutdown(),
-                    d -> ((StatsdDistributionSummary) d).shutdown(),
-                    this::removePollableMeter,
-                    this::removePollableMeter,
-                    this::removePollableMeter,
-                    this::removePollableMeter,
-                    m -> {
-                        for (Measurement measurement : m.measure()) {
-                            pollableMeters.remove(m.getId().withTag(measurement.getStatistic()));
-                        }
-                    });
+                this::removePollableMeter,
+                c -> ((StatsdCounter) c).shutdown(),
+                t -> ((StatsdTimer) t).shutdown(),
+                d -> ((StatsdDistributionSummary) d).shutdown(),
+                this::removePollableMeter,
+                this::removePollableMeter,
+                this::removePollableMeter,
+                this::removePollableMeter,
+                m -> {
+                    for (Measurement measurement : m.measure()) {
+                        pollableMeters.remove(m.getId().withTag(measurement.getStatistic()));
+                    }
+                });
         });
 
-        if (config.enabled())
+        if (config.enabled()) {
             start();
+        }
     }
 
     public static Builder builder(StatsdConfig config) {
@@ -183,25 +166,65 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     public void start() {
-        final Flux<String> bufferingPublisher = BufferingFlux.create(Flux.from(processor), "\n", statsdConfig.maxPacketLength(), statsdConfig.pollingFrequency().toMillis())
-                .onBackpressureLatest();
+        if (started.compareAndSet(false, true)) {
+            UnicastProcessor<String> unicastProcessor = UnicastProcessor.create(Queues.<String>unboundedMultiproducer().get());
 
-        if (started.compareAndSet(false, true) && lineSink == null) {
-            if (statsdConfig.protocol() == StatsdProtocol.UDP) {
-                prepareUdpClient(bufferingPublisher);
-            } else if (statsdConfig.protocol() == StatsdProtocol.TCP) {
-                prepareTcpClient(bufferingPublisher);
+            try {
+                Class.forName("ch.qos.logback.classic.turbo.TurboFilter", false, getClass().getClassLoader());
+                this.processor = new LogbackMetricsSuppressingUnicastProcessor(unicastProcessor);
+            } catch (ClassNotFoundException e) {
+                this.processor = unicastProcessor;
+            }
+
+            if (lineSink != null) {
+                processor.subscribe(new Subscriber<String>() {
+                    @Override
+                    public void onSubscribe(Subscription s) {
+                        s.request(Long.MAX_VALUE);
+                    }
+
+                    @Override
+                    public void onNext(String line) {
+                        if (started.get()) {
+                            lineSink.accept(line);
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable t) {
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        meterPoller.dispose();
+                    }
+                });
+
+                startPolling();
+            } else {
+                final Publisher<String> publisher;
+                if (statsdConfig.buffered()) {
+                    publisher = BufferingFlux.create(Flux.from(processor), "\n", statsdConfig.maxPacketLength(), statsdConfig.pollingFrequency().toMillis())
+                        .onBackpressureLatest();
+                } else {
+                    publisher = processor;
+                }
+                if (statsdConfig.protocol() == StatsdProtocol.UDP) {
+                    prepareUdpClient(publisher);
+                } else if (statsdConfig.protocol() == StatsdProtocol.TCP) {
+                    prepareTcpClient(publisher);
+                }
             }
         }
     }
 
-    private void prepareUdpClient(Flux<String> bufferingPublisher) {
+    private void prepareUdpClient(Publisher<String> publisher) {
         UdpClient.create()
                 .host(statsdConfig.host())
                 .port(statsdConfig.port())
                 .handle((in, out) -> out
                         .options(NettyPipeline.SendOptions::flushOnEach)
-                        .sendString(bufferingPublisher)
+                        .sendString(publisher)
                         .neverComplete()
                 )
                 .connect()
@@ -209,29 +232,31 @@ public class StatsdMeterRegistry extends MeterRegistry {
                     this.client.replace(client);
 
                     // now that we're connected, start polling gauges and other pollable meter types
-                    meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
-                            .doOnEach(n -> poll())
-                            .subscribe());
+                    startPolling();
                 });
     }
 
-    private void prepareTcpClient(Flux<String> bufferingPublisher) {
+    private void prepareTcpClient(Publisher<String> publisher) {
         TcpClient.create()
                 .host(statsdConfig.host())
                 .port(statsdConfig.port())
                 .handle((in, out) -> out
                         .options(NettyPipeline.SendOptions::flushOnEach)
-                        .sendString(bufferingPublisher)
+                        .sendString(publisher)
                         .neverComplete())
                 .connect()
                 .subscribe(client -> {
                     this.client.replace(client);
 
                     // now that we're connected, start polling gauges and other pollable meter types
-                    meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
-                            .doOnEach(n -> poll())
-                            .subscribe());
+                    startPolling();
                 });
+    }
+
+    private void startPolling() {
+        meterPoller.replace(Flux.interval(statsdConfig.pollingFrequency())
+                .doOnEach(n -> poll())
+                .subscribe());
     }
 
     public void stop() {
@@ -274,6 +299,15 @@ public class StatsdMeterRegistry extends MeterRegistry {
         return lineBuilderFunction.apply(id);
     }
 
+    private DistributionStatisticConfig addInfBucket(DistributionStatisticConfig config) {
+        long[] slas = config.getSlaBoundaries() == null ? new long[]{Long.MAX_VALUE} :
+                LongStream.concat(Arrays.stream(config.getSlaBoundaries()), LongStream.of(Long.MAX_VALUE)).toArray();
+        return DistributionStatisticConfig.builder()
+                .sla(slas)
+                .build()
+                .merge(config);
+    }
+
     @Override
     protected Counter newCounter(Meter.Id id) {
         return new StatsdCounter(id, lineBuilder(id), processor);
@@ -290,6 +324,12 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector
             pauseDetector) {
+
+        // Adds an infinity bucket for SLA violation calculation
+        if (distributionStatisticConfig.getSlaBoundaries() != null) {
+            distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
+        }
+
         Timer timer = new StatsdTimer(id, lineBuilder(id), processor, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
                 statsdConfig.step().toMillis());
         HistogramGauges.registerWithCommonFormat(timer, this);
@@ -300,6 +340,12 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig
             distributionStatisticConfig, double scale) {
+
+        // Adds an infinity bucket for SLA violation calculation
+        if (distributionStatisticConfig.getSlaBoundaries() != null) {
+            distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
+        }
+
         DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), processor, clock, distributionStatisticConfig, scale);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
@@ -429,4 +475,29 @@ public class StatsdMeterRegistry extends MeterRegistry {
             return new StatsdMeterRegistry(config, nameMapper, namingConvention, clock, lineBuilderFunction, lineSink);
         }
     }
+
+    private static final class NoopProcessor implements Processor<String, String> {
+
+        @Override
+        public void subscribe(Subscriber<? super String> s) {
+        }
+
+        @Override
+        public void onSubscribe(Subscription s) {
+        }
+
+        @Override
+        public void onNext(String s) {
+        }
+
+        @Override
+        public void onError(Throwable t) {
+        }
+
+        @Override
+        public void onComplete() {
+        }
+
+    }
+
 }

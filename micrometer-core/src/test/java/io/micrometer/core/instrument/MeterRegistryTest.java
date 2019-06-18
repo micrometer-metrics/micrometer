@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -51,7 +51,7 @@ class MeterRegistryTest {
     }
 
     @Test
-    void overidingAcceptMeterFilter() {
+    void overridingAcceptMeterFilter() {
         registry.config().meterFilter(MeterFilter.accept(m -> m.getName().startsWith("jvm.important")));
         registry.config().meterFilter(MeterFilter.deny(m -> m.getName().startsWith("jvm")));
 	
@@ -172,5 +172,13 @@ class MeterRegistryTest {
 
         assertThat(registry.find("my.counter").counter()).isNull();
         assertThat(registry.find("my.counter2").counter()).isNull();
+    }
+
+    @Test
+    void gaugeRegistersGaugeOnceAndSubsequentGaugeCallsWillNotRegister() {
+        registry.gauge("my.gauge", 1d);
+        registry.gauge("my.gauge", 2d);
+
+        assertThat(registry.get("my.gauge").gauge().value()).isEqualTo(1d);
     }
 }

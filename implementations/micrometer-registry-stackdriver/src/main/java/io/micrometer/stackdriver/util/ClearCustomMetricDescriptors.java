@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,6 +32,9 @@ import java.io.UncheckedIOException;
  *
  * @see <a href="https://cloud.google.com/monitoring/docs/reference/libraries#setting_up_authentication">Google Cloud authentication</a>
  * @see <a href="https://cloud.google.com/monitoring/access-control">Google Cloud access control</a>
+ *
+ * @author Jon Schneider
+ * @since 1.1.0
  */
 public class ClearCustomMetricDescriptors {
     public static void clearCustomMetricDescriptors(MetricServiceSettings settings, String projectId) {

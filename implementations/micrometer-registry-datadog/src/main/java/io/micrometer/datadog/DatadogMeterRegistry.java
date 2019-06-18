@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@
 package io.micrometer.datadog;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
@@ -78,7 +79,10 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
 
     private DatadogMeterRegistry(DatadogConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
-        requireNonNull(config.apiKey());
+
+        if (config.apiKey() == null) {
+            throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to Datadog");
+        }
 
         config().namingConvention(new DatadogNamingConvention());
 
@@ -91,6 +95,9 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
     @Override
     public void start(ThreadFactory threadFactory) {
         if (config.enabled()) {
+            if (config.applicationKey() == null) {
+                logger.info("An application key must be configured in order for unit information to be sent to Datadog.");
+            }
             logger.info("publishing metrics to datadog every " + TimeUtils.format(config.step()));
         }
         super.start(threadFactory);
@@ -126,7 +133,7 @@ public class DatadogMeterRegistry extends StepMeterRegistry {
                         m -> writeMeter(m, metadataToSend))
                 ).collect(joining(",", "{\"series\":[", "]}"));
 
-                logger.trace("sending metrics batch to datadog:\n{}", body);
+                logger.trace("sending metrics batch to datadog:{}{}", System.lineSeparator(), body);
 
                 httpClient.post(datadogEndpoint)
                         .withJsonContent(

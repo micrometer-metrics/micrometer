@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,19 +18,26 @@ package io.micrometer.core.instrument.binder.jvm;
 import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.GcInfo;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.management.ListenerNotFoundException;
 import javax.management.NotificationEmitter;
+import javax.management.NotificationListener;
 import javax.management.openmbean.CompositeData;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryUsage;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -70,7 +77,10 @@ enum GcGenerationAge {
  */
 @NonNullApi
 @NonNullFields
-public class JvmGcMetrics implements MeterBinder {
+public class JvmGcMetrics implements MeterBinder, AutoCloseable {
+
+    private static final Logger logger = LoggerFactory.getLogger(JvmGcMetrics.class);
+
     private boolean managementExtensionsPresent = isManagementExtensionsPresent();
 
     private Iterable<Tag> tags;
@@ -80,6 +90,8 @@ public class JvmGcMetrics implements MeterBinder {
 
     @Nullable
     private String oldGenPoolName;
+
+    private final List<Runnable> notificationListenerCleanUpRunnables = new CopyOnWriteArrayList<>();
 
     public JvmGcMetrics() {
         this(emptyList());
@@ -99,28 +111,28 @@ public class JvmGcMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         AtomicLong maxDataSize = new AtomicLong(0L);
         Gauge.builder("jvm.gc.max.data.size", maxDataSize, AtomicLong::get)
-                .tags(tags)
-                .description("Max size of old generation memory pool")
-                .baseUnit("bytes")
-                .register(registry);
+            .tags(tags)
+            .description("Max size of old generation memory pool")
+            .baseUnit(BaseUnits.BYTES)
+            .register(registry);
 
         AtomicLong liveDataSize = new AtomicLong(0L);
 
         Gauge.builder("jvm.gc.live.data.size", liveDataSize, AtomicLong::get)
-                .tags(tags)
-                .description("Size of old generation memory pool after a full GC")
-                .baseUnit("bytes")
-                .register(registry);
+            .tags(tags)
+            .description("Size of old generation memory pool after a full GC")
+            .baseUnit(BaseUnits.BYTES)
+            .register(registry);
 
         Counter promotedBytes = Counter.builder("jvm.gc.memory.promoted").tags(tags)
-                .baseUnit("bytes")
-                .description("Count of positive increases in the size of the old generation memory pool before GC to after GC")
-                .register(registry);
+            .baseUnit(BaseUnits.BYTES)
+            .description("Count of positive increases in the size of the old generation memory pool before GC to after GC")
+            .register(registry);
 
         Counter allocatedBytes = Counter.builder("jvm.gc.memory.allocated").tags(tags)
-                .baseUnit("bytes")
-                .description("Incremented for an increase in the size of the young generation memory pool after one GC to before the next")
-                .register(registry);
+            .baseUnit(BaseUnits.BYTES)
+            .description("Incremented for an increase in the size of the young generation memory pool after one GC to before the next")
+            .register(registry);
 
         if (this.managementExtensionsPresent) {
             // start watching for GC notifications
@@ -128,7 +140,7 @@ public class JvmGcMetrics implements MeterBinder {
 
             for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
                 if (mbean instanceof NotificationEmitter) {
-                    ((NotificationEmitter) mbean).addNotificationListener((notification, ref) -> {
+                    NotificationListener notificationListener = (notification, ref) -> {
                         final String type = notification.getType();
                         if (type.equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
                             CompositeData cd = (CompositeData) notification.getUserData();
@@ -185,7 +197,15 @@ public class JvmGcMetrics implements MeterBinder {
                                 }
                             }
                         }
-                    }, null, null);
+                    };
+                    NotificationEmitter notificationEmitter = (NotificationEmitter) mbean;
+                    notificationEmitter.addNotificationListener(notificationListener, null, null);
+                    notificationListenerCleanUpRunnables.add(() -> {
+                        try {
+                            notificationEmitter.removeNotificationListener(notificationListener);
+                        } catch (ListenerNotFoundException ignore) {
+                        }
+                    });
                 }
             }
         }
@@ -198,6 +218,8 @@ public class JvmGcMetrics implements MeterBinder {
             return true;
         } catch (Throwable e) {
             // We are operating in a JVM without access to this level of detail
+            logger.warn("GC notifications will not be available because " +
+                "com.sun.management.GarbageCollectionNotificationInfo is not present");
             return false;
         }
     }
@@ -213,4 +235,10 @@ public class JvmGcMetrics implements MeterBinder {
     private boolean isYoungGenPool(String name) {
         return name.endsWith("Eden Space");
     }
+
+    @Override
+    public void close() {
+        notificationListenerCleanUpRunnables.forEach(Runnable::run);
+    }
+
 }

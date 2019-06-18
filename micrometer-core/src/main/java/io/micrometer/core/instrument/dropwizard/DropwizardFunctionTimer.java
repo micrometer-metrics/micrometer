@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,6 +30,12 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
+/**
+ * {@link FunctionTimer} for Dropwizard Metrics.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 public class DropwizardFunctionTimer<T> extends AbstractMeter implements FunctionTimer {
     private final WeakReference<T> ref;
     private final ToLongFunction<T> countFunction;
@@ -104,7 +110,8 @@ public class DropwizardFunctionTimer<T> extends AbstractMeter implements Functio
                     @Override
                     public double getMean() {
                         double count = count();
-                        return count == 0 ? 0 : totalTime(baseTimeUnit()) / count;
+                        // This return value is expected to be in nanoseconds, for example in JmxReporter.JmxTimer.
+                        return count == 0 ? 0 : totalTime(TimeUnit.NANOSECONDS) / count;
                     }
 
                     @Override
@@ -145,11 +152,10 @@ public class DropwizardFunctionTimer<T> extends AbstractMeter implements Functio
     @Override
     public double totalTime(TimeUnit unit) {
         T obj2 = ref.get();
-        if (obj2 == null)
-            return lastTime;
-        return (lastTime = TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2),
-            totalTimeFunctionUnit,
-            unit));
+        if (obj2 != null) {
+            lastTime = TimeUtils.convert(totalTimeFunction.applyAsDouble(obj2), totalTimeFunctionUnit, baseTimeUnit());
+        }
+        return TimeUtils.convert(lastTime, baseTimeUnit(), unit);
     }
 
     @Override

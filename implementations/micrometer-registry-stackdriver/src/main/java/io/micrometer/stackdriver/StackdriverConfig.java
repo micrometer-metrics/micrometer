@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,12 @@ package io.micrometer.stackdriver;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
+/**
+ * {@link StepRegistryConfig} for Stackdriver.
+ *
+ * @author Jon Schneider
+ * @since 1.1.0
+ */
 public interface StackdriverConfig extends StepRegistryConfig {
     @Override
     default String prefix() {

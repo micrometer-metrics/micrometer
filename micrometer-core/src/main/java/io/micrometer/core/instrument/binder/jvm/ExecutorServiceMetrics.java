@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@
 package io.micrometer.core.instrument.binder.jvm;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.internal.TimedExecutor;
 import io.micrometer.core.instrument.internal.TimedExecutorService;
@@ -35,6 +36,7 @@ import static java.util.Arrays.asList;
  *
  * @author Jon Schneider
  * @author Clint Checketts
+ * @author Johnny Lim
  */
 @NonNullApi
 @NonNullFields
@@ -148,25 +150,31 @@ public class ExecutorServiceMetrics implements MeterBinder {
         FunctionCounter.builder("executor.completed", tp, ThreadPoolExecutor::getCompletedTaskCount)
                 .tags(tags)
                 .description("The approximate total number of tasks that have completed execution")
-                .baseUnit("tasks")
+                .baseUnit(BaseUnits.TASKS)
                 .register(registry);
 
         Gauge.builder("executor.active", tp, ThreadPoolExecutor::getActiveCount)
                 .tags(tags)
                 .description("The approximate number of threads that are actively executing tasks")
-                .baseUnit("threads")
+                .baseUnit(BaseUnits.THREADS)
                 .register(registry);
 
         Gauge.builder("executor.queued", tp, tpRef -> tpRef.getQueue().size())
                 .tags(tags)
                 .description("The approximate number of tasks that are queued for execution")
-                .baseUnit("tasks")
+                .baseUnit(BaseUnits.TASKS)
+                .register(registry);
+
+        Gauge.builder("executor.queue.remaining", tp, tpRef -> tpRef.getQueue().remainingCapacity())
+                .tags(tags)
+                .description("The number of additional elements that this queue can ideally accept without blocking")
+                .baseUnit(BaseUnits.TASKS)
                 .register(registry);
 
         Gauge.builder("executor.pool.size", tp, ThreadPoolExecutor::getPoolSize)
                 .tags(tags)
                 .description("The current number of threads in the pool")
-                .baseUnit("threads")
+                .baseUnit(BaseUnits.THREADS)
                 .register(registry);
     }
 

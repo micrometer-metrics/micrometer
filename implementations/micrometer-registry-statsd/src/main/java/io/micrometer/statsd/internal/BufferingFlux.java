@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,12 +15,12 @@
  */
 package io.micrometer.statsd.internal;
 
-import reactor.core.publisher.DirectProcessor;
-import reactor.core.publisher.Flux;
-
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import reactor.core.publisher.DirectProcessor;
+import reactor.core.publisher.Flux;
 
 public class BufferingFlux {
 
@@ -93,7 +93,7 @@ public class BufferingFlux {
                     }, true)
                     .map(lines -> {
                         lines.removeIf(String::isEmpty); // Ignore empty messages
-                        return String.join(delimiter, lines);
+                        return String.join(delimiter, lines) + delimiter;
                     });
         });
     }

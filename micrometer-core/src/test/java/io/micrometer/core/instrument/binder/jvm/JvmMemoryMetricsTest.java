@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,7 @@ package io.micrometer.core.instrument.binder.jvm;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
@@ -44,15 +45,15 @@ class JvmMemoryMetricsTest {
     private void assertJvmMemoryMetrics(MeterRegistry registry, String area) {
         Gauge memUsed = registry.get("jvm.memory.used").tags("area", area).gauge();
         assertThat(memUsed.value()).isGreaterThanOrEqualTo(0);
-        assertThat(memUsed.getId().getBaseUnit()).isEqualTo("bytes");
+        assertThat(memUsed.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
 
         Gauge memCommitted = registry.get("jvm.memory.committed").tags("area", area).gauge();
         assertThat(memCommitted.value()).isNotNull();
-        assertThat(memCommitted.getId().getBaseUnit()).isEqualTo("bytes");
+        assertThat(memCommitted.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
 
         Gauge memMax = registry.get("jvm.memory.max").tags("area", area).gauge();
         assertThat(memMax.value()).isNotNull();
-        assertThat(memMax.getId().getBaseUnit()).isEqualTo("bytes");
+        assertThat(memMax.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
     }
 
     private void assertJvmBufferMetrics(MeterRegistry registry, String bufferId) {
@@ -61,11 +62,11 @@ class JvmMemoryMetricsTest {
 
         Gauge memoryUsedDirect = registry.get("jvm.buffer.memory.used").tags("id", bufferId).gauge();
         assertThat(memoryUsedDirect.value()).isNotNull();
-        assertThat(memoryUsedDirect.getId().getBaseUnit()).isEqualTo("bytes");
+        assertThat(memoryUsedDirect.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
 
         Gauge bufferTotal = registry.get("jvm.buffer.total.capacity").tags("id", bufferId).gauge();
         assertThat(bufferTotal.value()).isGreaterThanOrEqualTo(0);
-        assertThat(bufferTotal.getId().getBaseUnit()).isEqualTo("bytes");
+        assertThat(bufferTotal.getId().getBaseUnit()).isEqualTo(BaseUnits.BYTES);
     }
 
 }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,6 +22,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * {@link ConfigurationProperties} for configuring Elastic metrics export.
  *
  * @author Nicolas Portmann
+ * @since 1.1.0
  */
 @ConfigurationProperties(prefix = "management.metrics.export.elastic")
 public class ElasticProperties extends StepRegistryProperties {
@@ -61,6 +62,16 @@ public class ElasticProperties extends StepRegistryProperties {
      * Login password of the Elastic server.
      */
     private String password = "";
+
+    /**
+     * Ingest pipeline name.
+     */
+    private String pipeline = "";
+
+    /**
+     * Separator between the index name and the date part.
+     */
+    private String indexDateSeparator = "-";
 
     public String getHost() {
         return this.host;
@@ -116,6 +127,22 @@ public class ElasticProperties extends StepRegistryProperties {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getPipeline() {
+        return this.pipeline;
+    }
+
+    public void setPipeline(String pipeline) {
+        this.pipeline = pipeline;
+    }
+
+    public String getIndexDateSeparator() {
+        return this.indexDateSeparator;
+    }
+
+    public void setIndexDateSeparator(String indexDateSeparator) {
+        this.indexDateSeparator = indexDateSeparator;
     }
 
 }

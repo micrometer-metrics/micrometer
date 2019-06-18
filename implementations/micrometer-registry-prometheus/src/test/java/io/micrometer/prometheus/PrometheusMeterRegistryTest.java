@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,7 @@ package io.micrometer.prometheus;
 
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.prometheus.client.Collector;
@@ -55,7 +56,7 @@ class PrometheusMeterRegistryTest {
     @Test
     void baseUnitMakesItToScrape() {
         AtomicInteger n = new AtomicInteger(0);
-        Gauge.builder("gauge", n, AtomicInteger::get).baseUnit("bytes").register(registry);
+        Gauge.builder("gauge", n, AtomicInteger::get).baseUnit(BaseUnits.BYTES).register(registry);
         assertThat(registry.scrape()).contains("gauge_bytes");
     }
 

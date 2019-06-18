@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -57,6 +57,7 @@ class AppOpticsMetricsExportAutoConfigurationTest {
 
     @Test
     void autoConfiguresItsConfigAndMeterRegistry() {
+        EnvironmentTestUtils.addEnvironment(context, "management.metrics.export.appoptics.api-token=fakeToken");
         registerAndRefresh(BaseConfiguration.class);
         assertThat(context.getBean(AppOpticsMeterRegistry.class)).isNotNull();
         assertThat(context.getBean(AppOpticsConfig.class)).isNotNull();
@@ -81,6 +82,7 @@ class AppOpticsMetricsExportAutoConfigurationTest {
 
     @Test
     void allowsCustomRegistryToBeUsed() {
+        EnvironmentTestUtils.addEnvironment(context, "management.metrics.export.appoptics.api-token=fakeToken");
         registerAndRefresh(CustomRegistryConfiguration.class);
         assertThat(context.getBean(AppOpticsMeterRegistry.class)).isEqualTo(context.getBean("customRegistry"));
         assertThat(context.getBean(AppOpticsConfig.class)).isNotNull();
@@ -88,6 +90,7 @@ class AppOpticsMetricsExportAutoConfigurationTest {
 
     @Test
     public void stopsMeterRegistryWhenContextIsClosed() {
+        EnvironmentTestUtils.addEnvironment(context, "management.metrics.export.appoptics.api-token=fakeToken");
         registerAndRefresh(BaseConfiguration.class);
         AppOpticsMeterRegistry registry = context.getBean(AppOpticsMeterRegistry.class);
         assertThat(registry.isClosed()).isFalse();
@@ -119,7 +122,17 @@ class AppOpticsMetricsExportAutoConfigurationTest {
 
         @Bean
         public AppOpticsConfig customConfig() {
-            return (key) -> null;
+            return new AppOpticsConfig() {
+                @Override
+                public String get(String key) {
+                    return null;
+                }
+
+                @Override
+                public String apiToken() {
+                    return "fake";
+                }
+            };
         }
 
     }

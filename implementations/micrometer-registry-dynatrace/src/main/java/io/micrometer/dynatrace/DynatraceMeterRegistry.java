@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@
 package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
@@ -40,7 +41,6 @@ import java.util.stream.StreamSupport;
 
 import static io.micrometer.dynatrace.DynatraceMetricDefinition.DynatraceUnit;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Objects.requireNonNull;
 
 /**
  * {@link StepMeterRegistry} for Dynatrace.
@@ -71,9 +71,16 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     private DynatraceMeterRegistry(DynatraceConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
-        requireNonNull(config.uri());
-        requireNonNull(config.deviceId());
-        requireNonNull(config.apiToken());
+
+        if (config.apiToken() == null) {
+            throw new MissingRequiredConfigurationException("apiToken must be set to report metrics to Dynatrace");
+        }
+        if (config.deviceId() == null) {
+            throw new MissingRequiredConfigurationException("deviceId must be set to report metrics to Dynatrace");
+        }
+        if (config.uri() == null) {
+            throw new MissingRequiredConfigurationException("uri must be set to report metrics to Dynatrace");
+        }
 
         this.config = config;
         this.httpClient = httpClient;
@@ -139,8 +146,9 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     Stream<DynatraceCustomMetric> writeMeter(Meter meter) {
         final long wallTime = clock.wallTime();
         return StreamSupport.stream(meter.measure().spliterator(), false)
-                .filter(ms -> Double.isFinite(ms.getValue()))
-                .map(ms -> createCustomMetric(meter.getId(), wallTime, ms.getValue()));
+                .map(Measurement::getValue)
+                .filter(Double::isFinite)
+                .map(value -> createCustomMetric(meter.getId(), wallTime, value));
     }
 
     private Stream<DynatraceCustomMetric> writeLongTaskTimer(LongTaskTimer longTaskTimer) {
@@ -240,9 +248,16 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                 httpClient.post(customDeviceMetricEndpoint)
                         .withJsonContent(postMessage.payload)
                         .send()
-                        .onSuccess(response -> logger.debug("successfully sent {} metrics to Dynatrace ({} bytes).",
-                                postMessage.metricCount, postMessage.payload.getBytes(UTF_8).length))
-                        .onError(response -> logger.error("failed to send metrics to dynatrace: {}", response.body()));
+                        .onSuccess(response -> {
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("successfully sent {} metrics to Dynatrace ({} bytes).",
+                                    postMessage.metricCount, postMessage.payload.getBytes(UTF_8).length);
+                            }
+                        })
+                        .onError(response -> {
+                            logger.error("failed to send metrics to dynatrace: {}", response.body());
+                            logger.debug("failed metrics payload: {}", postMessage.payload);
+                        });
             }
         } catch (Throwable e) {
             logger.error("failed to send metrics to dynatrace", e);
