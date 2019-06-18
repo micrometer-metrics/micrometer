@@ -61,9 +61,9 @@ enum GcGenerationAge {
         put("PS MarkSweep", OLD);
         put("PS Scavenge", YOUNG);
         put("ParNew", YOUNG);
-		put("scavenge", YOUNG);
-		put("global", OLD);
-	}};
+        put("scavenge", YOUNG);
+        put("global", OLD);
+    }};
 
     static GcGenerationAge fromName(String name) {
         GcGenerationAge t = knownCollectors.get(name);
