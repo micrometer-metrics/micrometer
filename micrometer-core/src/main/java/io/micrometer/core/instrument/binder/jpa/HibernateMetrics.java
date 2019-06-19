@@ -295,7 +295,7 @@ public class HibernateMetrics implements MeterBinder {
             for (String query : statistics.getQueries()) {
                 QueryStatistics queryStatistics = statistics.getQueryStatistics(query);
                 if (Objects.nonNull(queryStatistics)) {
-                    String queryName = query.replace(" ", "_").toLowerCase();
+                    String queryName = query.replace(" ", "_").replace(".", "_").toLowerCase();
                     if (Objects.isNull(Search.in(meterRegistry).tags("query", queryName).functionCounter())) {
 
                         FunctionCounter.builder("hibernate.query.cache.requests", queryStatistics, QueryStatistics::getCacheHitCount)
