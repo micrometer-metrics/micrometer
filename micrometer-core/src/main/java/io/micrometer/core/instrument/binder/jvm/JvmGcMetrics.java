@@ -47,6 +47,7 @@ import static java.util.Collections.emptyList;
  * Record metrics that report a number of statistics related to garbage
  * collection emanating from the MXBean and also adds information about GC causes.
  *
+ * @author Jon Schneider
  * @see GarbageCollectorMXBean
  */
 @NonNullApi
@@ -55,9 +56,9 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(JvmGcMetrics.class);
 
-    private boolean managementExtensionsPresent = isManagementExtensionsPresent();
+    private final boolean managementExtensionsPresent = isManagementExtensionsPresent();
 
-    private Iterable<Tag> tags;
+    private final Iterable<Tag> tags;
 
     @Nullable
     private String youngGenPoolName;
@@ -73,10 +74,12 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
     public JvmGcMetrics(Iterable<Tag> tags) {
         for (MemoryPoolMXBean mbean : ManagementFactory.getMemoryPoolMXBeans()) {
-            if (isYoungGenPool(mbean.getName()))
-                youngGenPoolName = mbean.getName();
-            if (isOldGenPool(mbean.getName()))
-                oldGenPoolName = mbean.getName();
+            String name = mbean.getName();
+            if (isYoungGenPool(name)) {
+                youngGenPoolName = name;
+            } else if (isOldGenPool(name)) {
+                oldGenPoolName = name;
+            }
         }
         this.tags = tags;
     }
@@ -120,24 +123,25 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                             CompositeData cd = (CompositeData) notification.getUserData();
                             GarbageCollectionNotificationInfo notificationInfo = GarbageCollectionNotificationInfo.from(cd);
 
-                            if (isConcurrentPhase(notificationInfo.getGcCause())) {
+                            String gcCause = notificationInfo.getGcCause();
+                            String gcAction = notificationInfo.getGcAction();
+                            GcInfo gcInfo = notificationInfo.getGcInfo();
+                            long duration = gcInfo.getDuration();
+                            if (isConcurrentPhase(gcCause)) {
                                 Timer.builder("jvm.gc.concurrent.phase.time")
                                         .tags(tags)
-                                        .tags("action", notificationInfo.getGcAction(), "cause", notificationInfo.getGcCause())
+                                        .tags("action", gcAction, "cause", gcCause)
                                         .description("Time spent in concurrent phase")
                                         .register(registry)
-                                        .record(notificationInfo.getGcInfo().getDuration(), TimeUnit.MILLISECONDS);
+                                        .record(duration, TimeUnit.MILLISECONDS);
                             } else {
                                 Timer.builder("jvm.gc.pause")
                                         .tags(tags)
-                                        .tags("action", notificationInfo.getGcAction(),
-                                                "cause", notificationInfo.getGcCause())
+                                        .tags("action", gcAction, "cause", gcCause)
                                         .description("Time spent in GC pause")
                                         .register(registry)
-                                        .record(notificationInfo.getGcInfo().getDuration(), TimeUnit.MILLISECONDS);
+                                        .record(duration, TimeUnit.MILLISECONDS);
                             }
-
-                            GcInfo gcInfo = notificationInfo.getGcInfo();
 
                             // Update promotion and allocation counters
                             final Map<String, MemoryUsage> before = gcInfo.getMemoryUsageBeforeGc();
@@ -236,8 +240,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
         }};
 
         static GcGenerationAge fromName(String name) {
-            GcGenerationAge t = knownCollectors.get(name);
-            return (t == null) ? UNKNOWN : t;
+            return knownCollectors.getOrDefault(name, UNKNOWN);
         }
     }
 
