@@ -111,81 +111,84 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             .description("Incremented for an increase in the size of the young generation memory pool after one GC to before the next")
             .register(registry);
 
-        if (this.managementExtensionsPresent) {
-            // start watching for GC notifications
-            final AtomicLong youngGenSizeAfter = new AtomicLong(0L);
+        if (!this.managementExtensionsPresent) {
+            return;
+        }
 
-            for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
-                if (mbean instanceof NotificationEmitter) {
-                    NotificationListener notificationListener = (notification, ref) -> {
-                        final String type = notification.getType();
-                        if (type.equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
-                            CompositeData cd = (CompositeData) notification.getUserData();
-                            GarbageCollectionNotificationInfo notificationInfo = GarbageCollectionNotificationInfo.from(cd);
+        // start watching for GC notifications
+        final AtomicLong youngGenSizeAfter = new AtomicLong(0L);
 
-                            String gcCause = notificationInfo.getGcCause();
-                            String gcAction = notificationInfo.getGcAction();
-                            GcInfo gcInfo = notificationInfo.getGcInfo();
-                            long duration = gcInfo.getDuration();
-                            if (isConcurrentPhase(gcCause)) {
-                                Timer.builder("jvm.gc.concurrent.phase.time")
-                                        .tags(tags)
-                                        .tags("action", gcAction, "cause", gcCause)
-                                        .description("Time spent in concurrent phase")
-                                        .register(registry)
-                                        .record(duration, TimeUnit.MILLISECONDS);
-                            } else {
-                                Timer.builder("jvm.gc.pause")
-                                        .tags(tags)
-                                        .tags("action", gcAction, "cause", gcCause)
-                                        .description("Time spent in GC pause")
-                                        .register(registry)
-                                        .record(duration, TimeUnit.MILLISECONDS);
-                            }
-
-                            // Update promotion and allocation counters
-                            final Map<String, MemoryUsage> before = gcInfo.getMemoryUsageBeforeGc();
-                            final Map<String, MemoryUsage> after = gcInfo.getMemoryUsageAfterGc();
-
-                            if (oldGenPoolName != null) {
-                                final long oldBefore = before.get(oldGenPoolName).getUsed();
-                                final long oldAfter = after.get(oldGenPoolName).getUsed();
-                                final long delta = oldAfter - oldBefore;
-                                if (delta > 0L) {
-                                    promotedBytes.increment(delta);
-                                }
-
-                                // Some GC implementations such as G1 can reduce the old gen size as part of a minor GC. To track the
-                                // live data size we record the value if we see a reduction in the old gen heap size or
-                                // after a major GC.
-                                if (oldAfter < oldBefore || GcGenerationAge.fromName(notificationInfo.getGcName()) == GcGenerationAge.OLD) {
-                                    liveDataSize.set(oldAfter);
-                                    final long oldMaxAfter = after.get(oldGenPoolName).getMax();
-                                    maxDataSize.set(oldMaxAfter);
-                                }
-                            }
-
-                            if (youngGenPoolName != null) {
-                                final long youngBefore = before.get(youngGenPoolName).getUsed();
-                                final long youngAfter = after.get(youngGenPoolName).getUsed();
-                                final long delta = youngBefore - youngGenSizeAfter.get();
-                                youngGenSizeAfter.set(youngAfter);
-                                if (delta > 0L) {
-                                    allocatedBytes.increment(delta);
-                                }
-                            }
-                        }
-                    };
-                    NotificationEmitter notificationEmitter = (NotificationEmitter) mbean;
-                    notificationEmitter.addNotificationListener(notificationListener, null, null);
-                    notificationListenerCleanUpRunnables.add(() -> {
-                        try {
-                            notificationEmitter.removeNotificationListener(notificationListener);
-                        } catch (ListenerNotFoundException ignore) {
-                        }
-                    });
-                }
+        for (GarbageCollectorMXBean mbean : ManagementFactory.getGarbageCollectorMXBeans()) {
+            if (!(mbean instanceof NotificationEmitter)) {
+                continue;
             }
+            NotificationListener notificationListener = (notification, ref) -> {
+                if (!notification.getType().equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
+                    return;
+                }
+                CompositeData cd = (CompositeData) notification.getUserData();
+                GarbageCollectionNotificationInfo notificationInfo = GarbageCollectionNotificationInfo.from(cd);
+
+                String gcCause = notificationInfo.getGcCause();
+                String gcAction = notificationInfo.getGcAction();
+                GcInfo gcInfo = notificationInfo.getGcInfo();
+                long duration = gcInfo.getDuration();
+                if (isConcurrentPhase(gcCause)) {
+                    Timer.builder("jvm.gc.concurrent.phase.time")
+                            .tags(tags)
+                            .tags("action", gcAction, "cause", gcCause)
+                            .description("Time spent in concurrent phase")
+                            .register(registry)
+                            .record(duration, TimeUnit.MILLISECONDS);
+                } else {
+                    Timer.builder("jvm.gc.pause")
+                            .tags(tags)
+                            .tags("action", gcAction, "cause", gcCause)
+                            .description("Time spent in GC pause")
+                            .register(registry)
+                            .record(duration, TimeUnit.MILLISECONDS);
+                }
+
+                // Update promotion and allocation counters
+                final Map<String, MemoryUsage> before = gcInfo.getMemoryUsageBeforeGc();
+                final Map<String, MemoryUsage> after = gcInfo.getMemoryUsageAfterGc();
+
+                if (oldGenPoolName != null) {
+                    final long oldBefore = before.get(oldGenPoolName).getUsed();
+                    final long oldAfter = after.get(oldGenPoolName).getUsed();
+                    final long delta = oldAfter - oldBefore;
+                    if (delta > 0L) {
+                        promotedBytes.increment(delta);
+                    }
+
+                    // Some GC implementations such as G1 can reduce the old gen size as part of a minor GC. To track the
+                    // live data size we record the value if we see a reduction in the old gen heap size or
+                    // after a major GC.
+                    if (oldAfter < oldBefore || GcGenerationAge.fromName(notificationInfo.getGcName()) == GcGenerationAge.OLD) {
+                        liveDataSize.set(oldAfter);
+                        final long oldMaxAfter = after.get(oldGenPoolName).getMax();
+                        maxDataSize.set(oldMaxAfter);
+                    }
+                }
+
+                if (youngGenPoolName != null) {
+                    final long youngBefore = before.get(youngGenPoolName).getUsed();
+                    final long youngAfter = after.get(youngGenPoolName).getUsed();
+                    final long delta = youngBefore - youngGenSizeAfter.get();
+                    youngGenSizeAfter.set(youngAfter);
+                    if (delta > 0L) {
+                        allocatedBytes.increment(delta);
+                    }
+                }
+            };
+            NotificationEmitter notificationEmitter = (NotificationEmitter) mbean;
+            notificationEmitter.addNotificationListener(notificationListener, null, null);
+            notificationListenerCleanUpRunnables.add(() -> {
+                try {
+                    notificationEmitter.removeNotificationListener(notificationListener);
+                } catch (ListenerNotFoundException ignore) {
+                }
+            });
         }
     }
 
