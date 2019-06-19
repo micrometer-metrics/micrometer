@@ -33,10 +33,9 @@ class JvmGcMetricsTest {
             assertThat(registry.get("jvm.gc.live.data.size").gauge().value()).isGreaterThanOrEqualTo(0);
             assertThat(registry.get("jvm.gc.memory.promoted").counter().count()).isGreaterThanOrEqualTo(0);
             assertThat(registry.get("jvm.gc.memory.allocated").counter().count()).isGreaterThanOrEqualTo(0);
-            assertThat(registry.get("jvm.gc.pause").timer().count()).isGreaterThanOrEqualTo(0);
 
-            // we can't test "jvm.gc.concurrent.phase.time" because its only exisiting after
-            // a concurrent phase
+            // we can't test "jvm.gc.pause" and "jvm.gc.concurrent.phase.time" because its only exisiting after
+            // some time
         }
     }
 }
