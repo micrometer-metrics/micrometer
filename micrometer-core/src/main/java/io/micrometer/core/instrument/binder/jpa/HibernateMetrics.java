@@ -316,16 +316,10 @@ public class HibernateMetrics implements MeterBinder {
                                 .description("The number of putting the query into cache")
                                 .register(meterRegistry);
 
-                        FunctionCounter.builder("hibernate.query.executions", queryStatistics, QueryStatistics::getExecutionCount)
+                        FunctionTimer.builder("hibernate.query.executions.total", queryStatistics, QueryStatistics::getExecutionCount, QueryStatistics::getExecutionTotalTime, TimeUnit.MILLISECONDS)
                                 .tags(tags)
                                 .tags("query", queryName)
-                                .description("Total number of query executions")
-                                .register(meterRegistry);
-
-                        TimeGauge.builder("hibernate.query.executions.total", queryStatistics, TimeUnit.MILLISECONDS, QueryStatistics::getExecutionTotalTime)
-                                .tags(tags)
-                                .tags("query", queryName)
-                                .description("Query total execution time")
+                                .description("Function tracked total number of query executions during time")
                                 .register(meterRegistry);
 
                         TimeGauge.builder("hibernate.query.executions.avg", queryStatistics, TimeUnit.MILLISECONDS, QueryStatistics::getExecutionAvgTime)
