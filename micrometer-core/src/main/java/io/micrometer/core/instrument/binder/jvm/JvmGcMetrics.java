@@ -44,34 +44,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import static java.util.Collections.emptyList;
 
 /**
- * Generalization of which parts of the heap are considered "young" or "old" for multiple GC implementations
- */
-@NonNullApi
-enum GcGenerationAge {
-    OLD,
-    YOUNG,
-    UNKNOWN;
-
-    private static Map<String, GcGenerationAge> knownCollectors = new HashMap<String, GcGenerationAge>() {{
-        put("ConcurrentMarkSweep", OLD);
-        put("Copy", YOUNG);
-        put("G1 Old Generation", OLD);
-        put("G1 Young Generation", YOUNG);
-        put("MarkSweepCompact", OLD);
-        put("PS MarkSweep", OLD);
-        put("PS Scavenge", YOUNG);
-        put("ParNew", YOUNG);
-        put("scavenge", YOUNG);
-        put("global", OLD);
-    }};
-
-    static GcGenerationAge fromName(String name) {
-        GcGenerationAge t = knownCollectors.get(name);
-        return (t == null) ? UNKNOWN : t;
-    }
-}
-
-/**
  * Record metrics that report a number of statistics related to garbage
  * collection emanating from the MXBean and also adds information about GC causes.
  *
@@ -241,6 +213,34 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     @Override
     public void close() {
         notificationListenerCleanUpRunnables.forEach(Runnable::run);
+    }
+
+    /**
+     * Generalization of which parts of the heap are considered "young" or "old" for multiple GC implementations
+     */
+    @NonNullApi
+    enum GcGenerationAge {
+        OLD,
+        YOUNG,
+        UNKNOWN;
+
+        private static Map<String, GcGenerationAge> knownCollectors = new HashMap<String, GcGenerationAge>() {{
+            put("ConcurrentMarkSweep", OLD);
+            put("Copy", YOUNG);
+            put("G1 Old Generation", OLD);
+            put("G1 Young Generation", YOUNG);
+            put("MarkSweepCompact", OLD);
+            put("PS MarkSweep", OLD);
+            put("PS Scavenge", YOUNG);
+            put("ParNew", YOUNG);
+            put("scavenge", YOUNG);
+            put("global", OLD);
+        }};
+
+        static GcGenerationAge fromName(String name) {
+            GcGenerationAge t = knownCollectors.get(name);
+            return (t == null) ? UNKNOWN : t;
+        }
     }
 
 }
