@@ -36,19 +36,13 @@ import java.util.concurrent.TimeUnit;
 @NonNullFields
 public class MongoMetricsCommandListener implements CommandListener {
 
-    private static final String DEFAULT_METRICS_NAME = "org.mongodb.driver.commands";
-    private final Timer.Builder timerBuilder;
+    private final Timer.Builder timerBuilder = Timer.builder("org.mongodb.driver.commands")
+            .description("Timer of mongodb commands");
 
     private final MeterRegistry registry;
 
     public MongoMetricsCommandListener(MeterRegistry registry) {
-        this(registry, DEFAULT_METRICS_NAME);
-    }
-
-    public MongoMetricsCommandListener(MeterRegistry registry, String metricsName) {
         this.registry = registry;
-        this.timerBuilder = Timer.builder(metricsName)
-                .description("Timer of mongodb commands");
     }
 
     @Override
