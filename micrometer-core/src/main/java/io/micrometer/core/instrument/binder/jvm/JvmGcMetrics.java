@@ -34,6 +34,8 @@ import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryUsage;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,8 +64,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     @Nullable
     private String youngGenPoolName;
 
-    @Nullable
-    private String oldGenPoolName;
+    private Collection<String> oldGenPoolNames = new ArrayList<>();
 
     private final List<Runnable> notificationListenerCleanUpRunnables = new CopyOnWriteArrayList<>();
 
@@ -76,7 +77,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             if (isYoungGenPool(mbean.getName()))
                 youngGenPoolName = mbean.getName();
             if (isOldGenPool(mbean.getName()))
-                oldGenPoolName = mbean.getName();
+                oldGenPoolNames.add(mbean.getName());
         }
         this.tags = tags;
     }
@@ -143,21 +144,39 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                             final Map<String, MemoryUsage> before = gcInfo.getMemoryUsageBeforeGc();
                             final Map<String, MemoryUsage> after = gcInfo.getMemoryUsageAfterGc();
 
-                            if (oldGenPoolName != null) {
-                                final long oldBefore = before.get(oldGenPoolName).getUsed();
-                                final long oldAfter = after.get(oldGenPoolName).getUsed();
-                                final long delta = oldAfter - oldBefore;
-                                if (delta > 0L) {
-                                    promotedBytes.increment(delta);
+                            if (!oldGenPoolNames.isEmpty()) {
+                                boolean isOldGenGarbageCollected = false;
+                                long liveDataSizeValue = 0l;
+                                long maxDataSizeValue = 0l;
+
+                                for (String oldGenPoolName : oldGenPoolNames) {
+                                    final long oldBefore = before.get(oldGenPoolName).getUsed();
+                                    final long oldAfter = after.get(oldGenPoolName).getUsed();
+                                    final long delta = oldAfter - oldBefore;
+                                    if (delta > 0L) {
+                                        promotedBytes.increment(delta);
+                                    }
+
+                                    // Some GC implementations such as G1 can reduce the old gen size as part of a
+                                    // minor GC. To track the live data size we record the value if we see a
+                                    // reduction in the old gen heap size or after a major GC.
+                                    if (oldAfter < oldBefore || GcGenerationAge.fromName(notificationInfo.getGcName()) == GcGenerationAge.OLD) {
+                                        isOldGenGarbageCollected = true;
+                                        final long oldMaxAfter = after.get(oldGenPoolName).getMax();
+
+                                        if (liveDataSizeValue > 0) {
+                                            liveDataSizeValue += oldAfter;
+                                        }
+
+                                        if (oldMaxAfter > 0) {
+                                            maxDataSizeValue += oldMaxAfter;
+                                        }
+                                    }
                                 }
 
-                                // Some GC implementations such as G1 can reduce the old gen size as part of a minor GC. To track the
-                                // live data size we record the value if we see a reduction in the old gen heap size or
-                                // after a major GC.
-                                if (oldAfter < oldBefore || GcGenerationAge.fromName(notificationInfo.getGcName()) == GcGenerationAge.OLD) {
-                                    liveDataSize.set(oldAfter);
-                                    final long oldMaxAfter = after.get(oldGenPoolName).getMax();
-                                    maxDataSize.set(oldMaxAfter);
+                                if(isOldGenGarbageCollected) {
+                                    liveDataSize.set(liveDataSizeValue);
+                                    maxDataSize.set(maxDataSizeValue);
                                 }
                             }
 
@@ -203,7 +222,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
     }
 
     private boolean isOldGenPool(String name) {
-        return name.endsWith("Old Gen") || name.endsWith("Tenured Gen") || name.equals("tenured-SOA");
+        return name.endsWith("Old Gen") || name.endsWith("Tenured Gen") || name.equals("tenured-SOA") || name.equals("tenured-LOA");
     }
 
     private boolean isYoungGenPool(String name) {
