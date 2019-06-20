@@ -146,8 +146,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
                             if (!oldGenPoolNames.isEmpty()) {
                                 boolean isOldGenGarbageCollected = false;
-                                long liveDataSizeValue = 0l;
-                                long maxDataSizeValue = 0l;
+                                long liveDataSizeValue = 0L;
+                                long maxDataSizeValue = 0L;
 
                                 for (String oldGenPoolName : oldGenPoolNames) {
                                     final long oldBefore = before.get(oldGenPoolName).getUsed();
@@ -174,7 +174,7 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
                                     }
                                 }
 
-                                if(isOldGenGarbageCollected) {
+                                if (isOldGenGarbageCollected) {
                                     liveDataSize.set(liveDataSizeValue);
                                     maxDataSize.set(maxDataSizeValue);
                                 }
