@@ -65,7 +65,7 @@ class DynatraceMetricDefinition {
         String displayName = description == null ? metricId : StringEscapeUtils.escapeJson(description);
         String body = "{\"displayName\":\"" + StringUtils.truncate(displayName, MAX_DISPLAY_NAME) + "\"";
 
-        if(StringUtils.isNotBlank(group))
+        if (StringUtils.isNotBlank(group))
             body += ",\"group\":\"" + StringUtils.truncate(group, MAX_GROUP_NAME) + "\"";
 
         if (unit != null)

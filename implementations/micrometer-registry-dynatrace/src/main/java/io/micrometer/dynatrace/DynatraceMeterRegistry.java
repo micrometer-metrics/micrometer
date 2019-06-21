@@ -15,7 +15,14 @@
  */
 package io.micrometer.dynatrace;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
@@ -253,7 +260,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                         .onSuccess(response -> {
                             if (logger.isDebugEnabled()) {
                                 logger.debug("successfully sent {} metrics to Dynatrace ({} bytes).",
-                                    postMessage.metricCount, postMessage.payload.getBytes(UTF_8).length);
+                                        postMessage.metricCount, postMessage.payload.getBytes(UTF_8).length);
                             }
                         })
                         .onError(response -> {
@@ -269,9 +276,9 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     List<DynatraceBatchedPayload> createPostMessages(String type, String group, List<DynatraceTimeSeries> timeSeries) {
         final String header;
-        if(StringUtils.isNotBlank(group)){
+        if (StringUtils.isNotBlank(group)) {
             header = "{\"type\":\"" + type + '\"' + ",\"group\":\"" + group + '\"' + ",\"series\":[";
-        }else{
+        } else {
             header = "{\"type\":\"" + type + '\"' + ",\"series\":[";
         }
         final String footer = "]}";
@@ -297,7 +304,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
                 continue;
             }
             if ((payload.length() == 0 && totalByteCount + jsonByteCount > maxSize) ||
-                (payload.length() > 0 && totalByteCount + jsonByteCount + 1 > maxSize)) {
+                    (payload.length() > 0 && totalByteCount + jsonByteCount + 1 > maxSize)) {
                 messages.add(new DynatraceBatchedPayload(payload.toString(), metricCount));
                 payload.setLength(0);
                 totalByteCount = 0;
