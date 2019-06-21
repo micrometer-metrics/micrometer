@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.distribution.HistogramSnapshot;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
@@ -133,6 +134,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
             if (!createdCustomMetrics.isEmpty() && !series.isEmpty()) {
                 postCustomMetricValues(
                         config.technologyType(),
+                        config.group(),
                         series.stream()
                                 .map(DynatraceCustomMetric::getTimeSeries)
                                 .filter(this::isCustomMetricCreated)
@@ -201,7 +203,7 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         final String metricId = getConventionName(id);
         final List<Tag> tags = getConventionTags(id);
         return new DynatraceCustomMetric(
-                new DynatraceMetricDefinition(metricId, id.getDescription(), unit, extractDimensions(tags), new String[]{config.technologyType()}),
+                new DynatraceMetricDefinition(metricId, id.getDescription(), unit, extractDimensions(tags), new String[]{config.technologyType()}, config.group()),
                 new DynatraceTimeSeries(metricId, time, value.doubleValue(), extractDimensionValues(tags)));
     }
 
@@ -242,9 +244,9 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private void postCustomMetricValues(String type, List<DynatraceTimeSeries> timeSeries, String customDeviceMetricEndpoint) {
+    private void postCustomMetricValues(String type, String group, List<DynatraceTimeSeries> timeSeries, String customDeviceMetricEndpoint) {
         try {
-            for (DynatraceBatchedPayload postMessage : createPostMessages(type, timeSeries)) {
+            for (DynatraceBatchedPayload postMessage : createPostMessages(type, group, timeSeries)) {
                 httpClient.post(customDeviceMetricEndpoint)
                         .withJsonContent(postMessage.payload)
                         .send()
@@ -265,8 +267,13 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
     }
 
     // VisibleForTesting
-    List<DynatraceBatchedPayload> createPostMessages(String type, List<DynatraceTimeSeries> timeSeries) {
-        final String header = "{\"type\":\"" + type + '\"' + ",\"series\":[";
+    List<DynatraceBatchedPayload> createPostMessages(String type, String group, List<DynatraceTimeSeries> timeSeries) {
+        final String header;
+        if(StringUtils.isNotBlank(group)){
+            header = "{\"type\":\"" + type + '\"' + ",\"group\":\"" + group + '\"' + ",\"series\":[";
+        }else{
+            header = "{\"type\":\"" + type + '\"' + ",\"series\":[";
+        }
         final String footer = "]}";
         final int headerFooterBytes = header.getBytes(UTF_8).length + footer.getBytes(UTF_8).length;
         final int maxMessageSize = MAX_MESSAGE_SIZE - headerFooterBytes;

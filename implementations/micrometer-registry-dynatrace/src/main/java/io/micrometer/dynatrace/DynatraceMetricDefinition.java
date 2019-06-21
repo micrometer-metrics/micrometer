@@ -34,6 +34,7 @@ import static java.util.Arrays.stream;
 class DynatraceMetricDefinition {
 
     private static final int MAX_DISPLAY_NAME = 256;
+    private static final int MAX_GROUP_NAME = 256;
     private final String metricId;
     @Nullable
     private final String description;
@@ -43,14 +44,17 @@ class DynatraceMetricDefinition {
     private final Set<String> dimensions;
     // Guaranteed to be non-empty
     private final String[] technologyTypes;
+    @Nullable
+    private final String group;
 
     DynatraceMetricDefinition(String metricId, @Nullable String description, @Nullable DynatraceUnit unit, @Nullable Set<String> dimensions,
-                              String[] technologyTypes) {
+                              String[] technologyTypes, String group) {
         this.metricId = metricId;
         this.description = description;
         this.unit = unit;
         this.dimensions = dimensions;
         this.technologyTypes = technologyTypes;
+        this.group = group;
     }
 
     String getMetricId() {
@@ -60,6 +64,9 @@ class DynatraceMetricDefinition {
     String asJson() {
         String displayName = description == null ? metricId : StringEscapeUtils.escapeJson(description);
         String body = "{\"displayName\":\"" + StringUtils.truncate(displayName, MAX_DISPLAY_NAME) + "\"";
+
+        if(StringUtils.isNotBlank(group))
+            body += ",\"group\":\"" + StringUtils.truncate(group, MAX_GROUP_NAME) + "\"";
 
         if (unit != null)
             body += ",\"unit\":\"" + unit + "\"";
