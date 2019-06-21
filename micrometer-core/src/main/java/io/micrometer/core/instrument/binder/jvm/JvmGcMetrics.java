@@ -86,6 +86,10 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
 
     @Override
     public void bindTo(MeterRegistry registry) {
+        if (!this.managementExtensionsPresent) {
+            return;
+        }
+
         AtomicLong maxDataSize = new AtomicLong(0L);
         Gauge.builder("jvm.gc.max.data.size", maxDataSize, AtomicLong::get)
             .tags(tags)
@@ -110,10 +114,6 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             .baseUnit(BaseUnits.BYTES)
             .description("Incremented for an increase in the size of the young generation memory pool after one GC to before the next")
             .register(registry);
-
-        if (!this.managementExtensionsPresent) {
-            return;
-        }
 
         // start watching for GC notifications
         final AtomicLong youngGenSizeAfter = new AtomicLong(0L);
