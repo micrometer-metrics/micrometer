@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@
 package io.micrometer.cloudwatch2;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
@@ -39,7 +40,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
@@ -64,7 +64,10 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
                                    CloudWatchAsyncClient cloudWatchAsyncClient, ThreadFactory threadFactory) {
         super(config, clock);
-        requireNonNull(config.namespace());
+
+        if (config.namespace() == null) {
+            throw new MissingRequiredConfigurationException("namespace must be set to report metrics to CloudWatch");
+        }
 
         this.cloudWatchAsyncClient = cloudWatchAsyncClient;
         this.config = config;
@@ -82,12 +85,24 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        for (List<MetricDatum> batch : MetricDatumPartition.partition(metricData(), config.batchSize())) {
-            sendMetricData(batch);
+        boolean interrupted = false;
+        try {
+            for (List<MetricDatum> batch : MetricDatumPartition.partition(metricData(), config.batchSize())) {
+                try {
+                    sendMetricData(batch);
+                } catch (InterruptedException ex) {
+                    interrupted = true;
+                }
+            }
+        }
+        finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
-    private void sendMetricData(List<MetricDatum> metricData) {
+    private void sendMetricData(List<MetricDatum> metricData) throws InterruptedException {
         PutMetricDataRequest putMetricDataRequest = PutMetricDataRequest.builder()
                 .namespace(config.namespace())
                 .metricData(metricData)
@@ -109,6 +124,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             latch.await(config.readTimeout().toMillis(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             logger.warn("metrics push to cloudwatch took longer than expected");
+            throw e;
         }
     }
 
@@ -130,39 +146,43 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     class Batch {
-        private long wallTime = clock.wallTime();
+        private final long wallTime = clock.wallTime();
 
         private Stream<MetricDatum> gaugeData(Gauge gauge) {
-            double value = gauge.value();
-            if (!Double.isFinite(value))
+            MetricDatum metricDatum = metricDatum(gauge.getId(), "value", gauge.value());
+            if (metricDatum == null) {
                 return Stream.empty();
-            return Stream.of(metricDatum(gauge.getId(), "value", value));
+            }
+            return Stream.of(metricDatum);
         }
 
         private Stream<MetricDatum> counterData(Counter counter) {
             return Stream.of(metricDatum(counter.getId(), "count", counter.count()));
         }
 
-        private Stream<MetricDatum> timerData(Timer timer) {
+        // VisibleForTesting
+        Stream<MetricDatum> timerData(Timer timer) {
             final Stream.Builder<MetricDatum> metrics = Stream.builder();
 
             metrics.add(metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
             metrics.add(metricDatum(timer.getId(), "count", "count", timer.count()));
-            metrics.add(metricDatum(timer.getId(), "avg", getBaseTimeUnit().name(), timer.mean(getBaseTimeUnit())));
-            metrics.add(metricDatum(timer.getId(), "max", getBaseTimeUnit().name(), timer.max(getBaseTimeUnit())));
 
-            return metrics.build();
+            MetricDatum avg = metricDatum(timer.getId(), "avg", getBaseTimeUnit().name(), timer.mean(getBaseTimeUnit()));
+            MetricDatum max = metricDatum(timer.getId(), "max", getBaseTimeUnit().name(), timer.max(getBaseTimeUnit()));
+            return timer.count() > 0 ? metrics.add(avg).add(max).build() : metrics.build();
         }
 
-        private Stream<MetricDatum> summaryData(DistributionSummary summary) {
+        // VisibleForTesting
+        Stream<MetricDatum> summaryData(DistributionSummary summary) {
             final Stream.Builder<MetricDatum> metrics = Stream.builder();
 
             metrics.add(metricDatum(summary.getId(), "sum", summary.totalAmount()));
             metrics.add(metricDatum(summary.getId(), "count", summary.count()));
-            metrics.add(metricDatum(summary.getId(), "avg", summary.mean()));
-            metrics.add(metricDatum(summary.getId(), "max", summary.max()));
 
-            return metrics.build();
+            MetricDatum avg = metricDatum(summary.getId(), "avg", summary.mean());
+            MetricDatum max = metricDatum(summary.getId(), "max", summary.max());
+            return summary.count() > 0 ? metrics.add(avg).add(max).build() : metrics.build();
+
         }
 
         private Stream<MetricDatum> longTaskTimerData(LongTaskTimer longTaskTimer) {
@@ -172,29 +192,34 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         }
 
         private Stream<MetricDatum> timeGaugeData(TimeGauge gauge) {
-            double value = gauge.value(getBaseTimeUnit());
-            if (!Double.isFinite(value))
+            MetricDatum metricDatum = metricDatum(gauge.getId(), "value", gauge.value(getBaseTimeUnit()));
+            if (metricDatum == null) {
                 return Stream.empty();
-            return Stream.of(metricDatum(gauge.getId(), "value", value));
+            }
+            return Stream.of(metricDatum);
         }
 
         // VisibleForTesting
         Stream<MetricDatum> functionCounterData(FunctionCounter counter) {
-            double count = counter.count();
-            if (Double.isFinite(count)) {
-                return Stream.of(metricDatum(counter.getId(), "count", count));
+            MetricDatum metricDatum = metricDatum(counter.getId(), "count", counter.count());
+            if (metricDatum == null) {
+                return Stream.empty();
             }
-            return Stream.empty();
+            return Stream.of(metricDatum);
         }
 
-        private Stream<MetricDatum> functionTimerData(FunctionTimer timer) {
+        // VisibleForTesting
+        Stream<MetricDatum> functionTimerData(FunctionTimer timer) {
             // we can't know anything about max and percentiles originating from a function timer
-            return Stream.of(
-                    metricDatum(timer.getId(), "count", timer.count()),
-                    metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit())));
+
+            MetricDatum count = metricDatum(timer.getId(),"count", timer.count());
+            MetricDatum avg = metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit()));
+
+            return timer.count() > 0 ? Stream.of(count, avg) : Stream.of(count);
         }
 
-        private Stream<MetricDatum> metricData(Meter m) {
+        // VisibleForTesting
+        Stream<MetricDatum> metricData(Meter m) {
             return stream(m.measure().spliterator(), false)
                     .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), ms.getValue()))
                     .filter(Objects::nonNull);
