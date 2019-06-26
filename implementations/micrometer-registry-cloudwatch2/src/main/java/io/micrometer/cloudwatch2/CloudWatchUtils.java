@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.cloudwatch;
+package io.micrometer.cloudwatch2;
+
+import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
 
 /**
- * Utilities for cloudwatch registry
+ * Utilities for CloudWatch registry
  */
 final class CloudWatchUtils {
 
     /**
      * Minimum allowed value as specified by
-     * {@link com.amazonaws.services.cloudwatch.model.MetricDatum#setValue(Double)}
+     * {@link MetricDatum#value()}
      */
     private static final double MINIMUM_ALLOWED_VALUE = 8.515920e-109;
 
     /**
      * Maximum allowed value as specified by
-     * {@link com.amazonaws.services.cloudwatch.model.MetricDatum#setValue(Double)}
+     * {@link MetricDatum#value()}
      */
     private static final double MAXIMUM_ALLOWED_VALUE = 1.174271e+108;
 
@@ -37,7 +39,7 @@ final class CloudWatchUtils {
 
     /**
      * Clean up metric to be within the allowable range as specified in
-     * {@link com.amazonaws.services.cloudwatch.model.MetricDatum#setValue(Double)}
+     * {@link MetricDatum#value()}
      *
      * @param value unsanitized value
      * @return value clamped to allowable range
