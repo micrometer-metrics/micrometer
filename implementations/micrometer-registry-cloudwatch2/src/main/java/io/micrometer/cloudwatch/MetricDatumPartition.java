@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * https://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,8 +15,8 @@
  */
 package io.micrometer.cloudwatch;
 
-import com.amazonaws.services.cloudwatch.model.MetricDatum;
 import io.micrometer.core.instrument.util.MathUtils;
+import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
 
 import java.util.AbstractList;
 import java.util.List;
@@ -25,10 +25,7 @@ import java.util.List;
  * Modified from {@link io.micrometer.core.instrument.util.MeterPartition}.
  *
  * @author Dawid Kublik
- * @deprecated the micrometer-registry-cloudwatch implementation has been deprecated in favour of
- *             micrometer-registry-cloudwatch2, which uses AWS SDK for Java 2.x
  */
-@Deprecated
 public class MetricDatumPartition extends AbstractList<List<MetricDatum>> {
     private final List<MetricDatum> list;
     private final int partitionSize;

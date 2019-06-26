@@ -14,6 +14,7 @@ MODULES=(
     micrometer-test
     micrometer-registry-atlas
     micrometer-registry-cloudwatch
+    micrometer-registry-cloudwatch2
     micrometer-registry-datadog
     micrometer-registry-ganglia
     micrometer-registry-graphite

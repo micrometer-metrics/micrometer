@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * https://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,25 +15,23 @@
  */
 package io.micrometer.cloudwatch;
 
-import com.amazonaws.AbortedException;
-import com.amazonaws.handlers.AsyncHandler;
-import com.amazonaws.services.cloudwatch.AmazonCloudWatchAsync;
-import com.amazonaws.services.cloudwatch.model.Dimension;
-import com.amazonaws.services.cloudwatch.model.MetricDatum;
-import com.amazonaws.services.cloudwatch.model.PutMetricDataRequest;
-import com.amazonaws.services.cloudwatch.model.PutMetricDataResult;
-import com.amazonaws.services.cloudwatch.model.StandardUnit;
 import io.micrometer.core.instrument.*;
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
+import software.amazon.awssdk.core.exception.AbortedException;
+import software.amazon.awssdk.services.cloudwatch.CloudWatchAsyncClient;
+import software.amazon.awssdk.services.cloudwatch.model.Dimension;
+import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
+import software.amazon.awssdk.services.cloudwatch.model.PutMetricDataRequest;
+import software.amazon.awssdk.services.cloudwatch.model.StandardUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
@@ -41,6 +39,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 
@@ -50,29 +49,24 @@ import static java.util.stream.StreamSupport.stream;
  * @author Dawid Kublik
  * @author Jon Schneider
  * @author Johnny Lim
- * @deprecated the micrometer-registry-cloudwatch implementation has been deprecated in favour of
- *             micrometer-registry-cloudwatch2, which uses AWS SDK for Java 2.x
+ * @author Pierre-Yves B.
  */
-@Deprecated
 public class CloudWatchMeterRegistry extends StepMeterRegistry {
     private final CloudWatchConfig config;
-    private final AmazonCloudWatchAsync amazonCloudWatchAsync;
+    private final CloudWatchAsyncClient cloudWatchAsyncClient;
     private final Logger logger = LoggerFactory.getLogger(CloudWatchMeterRegistry.class);
 
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
-                                   AmazonCloudWatchAsync amazonCloudWatchAsync) {
-        this(config, clock, amazonCloudWatchAsync, new NamedThreadFactory("cloudwatch-metrics-publisher"));
+                                   CloudWatchAsyncClient cloudWatchAsyncClient) {
+        this(config, clock, cloudWatchAsyncClient, new NamedThreadFactory("cloudwatch-metrics-publisher"));
     }
 
     public CloudWatchMeterRegistry(CloudWatchConfig config, Clock clock,
-                                   AmazonCloudWatchAsync amazonCloudWatchAsync, ThreadFactory threadFactory) {
+                                   CloudWatchAsyncClient cloudWatchAsyncClient, ThreadFactory threadFactory) {
         super(config, clock);
+        requireNonNull(config.namespace());
 
-        if (config.namespace() == null) {
-            throw new MissingRequiredConfigurationException("namespace must be set to report metrics to CloudWatch");
-        }
-
-        this.amazonCloudWatchAsync = amazonCloudWatchAsync;
+        this.cloudWatchAsyncClient = cloudWatchAsyncClient;
         this.config = config;
         config().namingConvention(NamingConvention.identity);
         start(threadFactory);
@@ -88,50 +82,33 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected void publish() {
-        boolean interrupted = false;
-        try {
-            for (List<MetricDatum> batch : MetricDatumPartition.partition(metricData(), config.batchSize())) {
-                try {
-                    sendMetricData(batch);
-                } catch (InterruptedException ex) {
-                    interrupted = true;
-                }
-            }
-        }
-        finally {
-            if (interrupted) {
-                Thread.currentThread().interrupt();
-            }
+        for (List<MetricDatum> batch : MetricDatumPartition.partition(metricData(), config.batchSize())) {
+            sendMetricData(batch);
         }
     }
 
-    private void sendMetricData(List<MetricDatum> metricData) throws InterruptedException {
-        PutMetricDataRequest putMetricDataRequest = new PutMetricDataRequest()
-                .withNamespace(config.namespace())
-                .withMetricData(metricData);
+    private void sendMetricData(List<MetricDatum> metricData) {
+        PutMetricDataRequest putMetricDataRequest = PutMetricDataRequest.builder()
+                .namespace(config.namespace())
+                .metricData(metricData)
+                .build();
         CountDownLatch latch = new CountDownLatch(1);
-        amazonCloudWatchAsync.putMetricDataAsync(putMetricDataRequest, new AsyncHandler<PutMetricDataRequest, PutMetricDataResult>() {
-            @Override
-            public void onError(Exception exception) {
-                if (exception instanceof AbortedException) {
-                    logger.warn("sending metric data was aborted: {}", exception.getMessage());
+        cloudWatchAsyncClient.putMetricData(putMetricDataRequest).whenCompleteAsync((response, t) -> {
+            if (t != null) {
+                if (t instanceof AbortedException) {
+                    logger.warn("sending metric data was aborted: {}", t.getMessage());
                 } else {
-                    logger.error("error sending metric data.", exception);
+                    logger.error("error sending metric data.", t);
                 }
-                latch.countDown();
+            } else {
+                logger.debug("published metric with namespace:{}", putMetricDataRequest.namespace());
             }
-
-            @Override
-            public void onSuccess(PutMetricDataRequest request, PutMetricDataResult result) {
-                logger.debug("published metric with namespace:{}", request.getNamespace());
-                latch.countDown();
-            }
+            latch.countDown();
         });
         try {
             latch.await(config.readTimeout().toMillis(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             logger.warn("metrics push to cloudwatch took longer than expected");
-            throw e;
         }
     }
 
@@ -153,43 +130,39 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     class Batch {
-        private final long wallTime = clock.wallTime();
+        private long wallTime = clock.wallTime();
 
         private Stream<MetricDatum> gaugeData(Gauge gauge) {
-            MetricDatum metricDatum = metricDatum(gauge.getId(), "value", gauge.value());
-            if (metricDatum == null) {
+            double value = gauge.value();
+            if (!Double.isFinite(value))
                 return Stream.empty();
-            }
-            return Stream.of(metricDatum);
+            return Stream.of(metricDatum(gauge.getId(), "value", value));
         }
 
         private Stream<MetricDatum> counterData(Counter counter) {
             return Stream.of(metricDatum(counter.getId(), "count", counter.count()));
         }
 
-        // VisibleForTesting
-        Stream<MetricDatum> timerData(Timer timer) {
+        private Stream<MetricDatum> timerData(Timer timer) {
             final Stream.Builder<MetricDatum> metrics = Stream.builder();
 
             metrics.add(metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
             metrics.add(metricDatum(timer.getId(), "count", "count", timer.count()));
+            metrics.add(metricDatum(timer.getId(), "avg", getBaseTimeUnit().name(), timer.mean(getBaseTimeUnit())));
+            metrics.add(metricDatum(timer.getId(), "max", getBaseTimeUnit().name(), timer.max(getBaseTimeUnit())));
 
-            MetricDatum avg = metricDatum(timer.getId(), "avg", getBaseTimeUnit().name(), timer.mean(getBaseTimeUnit()));
-            MetricDatum max = metricDatum(timer.getId(), "max", getBaseTimeUnit().name(), timer.max(getBaseTimeUnit()));
-            return timer.count() > 0 ? metrics.add(avg).add(max).build() : metrics.build();
+            return metrics.build();
         }
 
-        // VisibleForTesting
-        Stream<MetricDatum> summaryData(DistributionSummary summary) {
+        private Stream<MetricDatum> summaryData(DistributionSummary summary) {
             final Stream.Builder<MetricDatum> metrics = Stream.builder();
 
             metrics.add(metricDatum(summary.getId(), "sum", summary.totalAmount()));
             metrics.add(metricDatum(summary.getId(), "count", summary.count()));
+            metrics.add(metricDatum(summary.getId(), "avg", summary.mean()));
+            metrics.add(metricDatum(summary.getId(), "max", summary.max()));
 
-            MetricDatum avg = metricDatum(summary.getId(), "avg", summary.mean());
-            MetricDatum max = metricDatum(summary.getId(), "max", summary.max());
-            return summary.count() > 0 ? metrics.add(avg).add(max).build() : metrics.build();
-
+            return metrics.build();
         }
 
         private Stream<MetricDatum> longTaskTimerData(LongTaskTimer longTaskTimer) {
@@ -199,34 +172,29 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         }
 
         private Stream<MetricDatum> timeGaugeData(TimeGauge gauge) {
-            MetricDatum metricDatum = metricDatum(gauge.getId(), "value", gauge.value(getBaseTimeUnit()));
-            if (metricDatum == null) {
+            double value = gauge.value(getBaseTimeUnit());
+            if (!Double.isFinite(value))
                 return Stream.empty();
-            }
-            return Stream.of(metricDatum);
+            return Stream.of(metricDatum(gauge.getId(), "value", value));
         }
 
         // VisibleForTesting
         Stream<MetricDatum> functionCounterData(FunctionCounter counter) {
-            MetricDatum metricDatum = metricDatum(counter.getId(), "count", counter.count());
-            if (metricDatum == null) {
-                return Stream.empty();
+            double count = counter.count();
+            if (Double.isFinite(count)) {
+                return Stream.of(metricDatum(counter.getId(), "count", count));
             }
-            return Stream.of(metricDatum);
+            return Stream.empty();
         }
 
-        // VisibleForTesting
-        Stream<MetricDatum> functionTimerData(FunctionTimer timer) {
+        private Stream<MetricDatum> functionTimerData(FunctionTimer timer) {
             // we can't know anything about max and percentiles originating from a function timer
-
-            MetricDatum count = metricDatum(timer.getId(),"count", timer.count());
-            MetricDatum avg = metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit()));
-
-            return timer.count() > 0 ? Stream.of(count, avg) : Stream.of(count);
+            return Stream.of(
+                    metricDatum(timer.getId(), "count", timer.count()),
+                    metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit())));
         }
 
-        // VisibleForTesting
-        Stream<MetricDatum> metricData(Meter m) {
+        private Stream<MetricDatum> metricData(Meter m) {
             return stream(m.measure().spliterator(), false)
                     .map(ms -> metricDatum(m.getId().withTag(ms.getStatistic()), ms.getValue()))
                     .filter(Objects::nonNull);
@@ -249,12 +217,13 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             }
 
             List<Tag> tags = id.getConventionTags(config().namingConvention());
-            return new MetricDatum()
-                    .withMetricName(getMetricName(id, suffix))
-                    .withDimensions(toDimensions(tags))
-                    .withTimestamp(new Date(wallTime))
-                    .withValue(CloudWatchUtils.clampMetricValue(value))
-                    .withUnit(toStandardUnit(unit));
+            return MetricDatum.builder()
+                    .metricName(getMetricName(id, suffix))
+                    .dimensions(toDimensions(tags))
+                    .timestamp(Instant.ofEpochMilli(wallTime))
+                    .value(CloudWatchUtils.clampMetricValue(value))
+                    .unit(toStandardUnit(unit))
+                    .build();
         }
 
         // VisibleForTesting
@@ -265,23 +234,23 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         private StandardUnit toStandardUnit(@Nullable String unit) {
             if (unit == null) {
-                return StandardUnit.None;
+                return StandardUnit.NONE;
             }
             switch (unit.toLowerCase()) {
                 case "bytes":
-                    return StandardUnit.Bytes;
+                    return StandardUnit.BYTES;
                 case "milliseconds":
-                    return StandardUnit.Milliseconds;
+                    return StandardUnit.MILLISECONDS;
                 case "count":
-                    return StandardUnit.Count;
+                    return StandardUnit.COUNT;
             }
-            return StandardUnit.None;
+            return StandardUnit.NONE;
         }
 
 
         private List<Dimension> toDimensions(List<Tag> tags) {
             return tags.stream()
-                    .map(tag -> new Dimension().withName(tag.getKey()).withValue(tag.getValue()))
+                    .map(tag -> Dimension.builder().name(tag.getKey()).value(tag.getValue()).build())
                     .collect(toList());
         }
     }
