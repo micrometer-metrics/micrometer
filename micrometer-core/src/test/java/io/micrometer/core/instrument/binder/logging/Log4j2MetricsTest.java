@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.logging;
 
+import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
@@ -25,11 +26,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.ConfigurationSource;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,36 +46,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 class Log4j2MetricsTest {
 
     private final MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-    private final Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
-    private final Logger additivityDisabledLogger = LogManager.getLogger("additivityDisabledLogger");
-    
-    private Log4j2Metrics log4j2Metrics;
 
-    @BeforeEach
-    void setUp() {
-        configureAdditivityDisabledLogger();
-        log4j2Metrics = new Log4j2Metrics();
-        log4j2Metrics.bindTo(registry);
-    }
-    
     @AfterEach
-    void tearDown() {
-        log4j2Metrics.close();
-    }
-
-    private void configureAdditivityDisabledLogger() {
-        Configurator.setLevel("additivityDisabledLogger", Level.INFO);
-
-        LoggerContext loggerContext = (LoggerContext) LogManager.getContext();
-        Configuration configuration = loggerContext.getConfiguration();
-        LoggerConfig loggerConfig = configuration.getLoggerConfig("additivityDisabledLogger");
-        loggerConfig.setAdditive(false);
+    void cleanUp() {
+        LogManager.shutdown();
     }
 
     @Test
     void log4j2LevelMetrics() {
+        new Log4j2Metrics().bindTo(registry);
+
         assertThat(registry.get("log4j2.events").counter().count()).isEqualTo(0.0);
 
+        Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
         Configurator.setLevel(Log4j2MetricsTest.class.getName(), Level.INFO);
         logger.info("info");
         logger.warn("warn");
@@ -91,21 +77,52 @@ class Log4j2MetricsTest {
 
     @Test
     void filterWhenLoggerAdditivityIsFalseShouldWork() {
+        Logger additivityDisabledLogger = LogManager.getLogger("additivityDisabledLogger");
+        Configurator.setLevel("additivityDisabledLogger", Level.INFO);
+
+        LoggerContext loggerContext = (LoggerContext) LogManager.getContext();
+        Configuration configuration = loggerContext.getConfiguration();
+        LoggerConfig loggerConfig = configuration.getLoggerConfig("additivityDisabledLogger");
+        loggerConfig.setAdditive(false);
+
+        new Log4j2Metrics().bindTo(registry);
+
         assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(0);
 
         additivityDisabledLogger.info("Hello, world!");
         assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1);
     }
 
+    @Issue("#1466")
+    @Test
+    void filterWhenRootLoggerAdditivityIsFalseShouldWork() throws IOException {
+        ConfigurationSource source = new ConfigurationSource(getClass().getResourceAsStream("/binder/logging/log4j2-root-logger-additivity-false.xml"));
+        Configurator.initialize(null, source);
+
+        Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
+
+        new Log4j2Metrics().bindTo(registry);
+
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(0);
+
+        logger.info("Hello, world!");
+        assertThat(registry.get("log4j2.events").tags("level", "info").counter().count()).isEqualTo(1);
+    }
+
     @Test
     void isLevelEnabledDoesntContributeToCounts() {
+        new Log4j2Metrics().bindTo(registry);
+
+        Logger logger = LogManager.getLogger(Log4j2MetricsTest.class);
         logger.isErrorEnabled();
 
         assertThat(registry.get("log4j2.events").tags("level", "error").counter().count()).isEqualTo(0.0);
     }
 
     @Test
-    void removeFilterFromLoggerContextOnClose() throws Exception {
+    void removeFilterFromLoggerContextOnClose() {
+        new Log4j2Metrics().bindTo(registry);
+
         LoggerContext loggerContext = new LoggerContext("test");
         Log4j2Metrics log4j2Metrics = new Log4j2Metrics(emptyList(), loggerContext);
         log4j2Metrics.bindTo(registry);
