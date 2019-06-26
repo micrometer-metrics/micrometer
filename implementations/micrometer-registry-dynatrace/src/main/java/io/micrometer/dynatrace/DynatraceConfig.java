@@ -59,4 +59,8 @@ public interface DynatraceConfig extends StepRegistryConfig {
 
         return v;
     }
+
+    default String group() {
+        return get(prefix() + ".group");
+    }
 }

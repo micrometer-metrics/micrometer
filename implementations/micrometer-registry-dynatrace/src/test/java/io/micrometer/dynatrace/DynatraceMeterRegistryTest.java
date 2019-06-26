@@ -126,7 +126,7 @@ class DynatraceMeterRegistryTest {
         Set<String> createdCustomMetrics = (Set<String>) createdCustomMetricsField.get(meterRegistry);
         assertThat(createdCustomMetrics).isEmpty();
 
-        DynatraceMetricDefinition customMetric = new DynatraceMetricDefinition("metricId", null, null, null, new String[]{"type"});
+        DynatraceMetricDefinition customMetric = new DynatraceMetricDefinition("metricId", null, null, null, new String[]{"type"}, null);
         meterRegistry.putCustomMetric(customMetric);
         assertThat(createdCustomMetrics).containsExactly("metricId");
     }
@@ -212,7 +212,7 @@ class DynatraceMeterRegistryTest {
         List<DynatraceTimeSeries> timeSeries = series
             .map(DynatraceMeterRegistry.DynatraceCustomMetric::getTimeSeries)
             .collect(Collectors.toList());
-        List<DynatraceBatchedPayload> entries = meterRegistry.createPostMessages("my.type", timeSeries);
+        List<DynatraceBatchedPayload> entries = meterRegistry.createPostMessages("my.type", null, timeSeries);
         assertThat(entries).hasSize(1);
         assertThat(entries.get(0).metricCount).isEqualTo(1);
         assertThat(isValidJson(entries.get(0).payload)).isEqualTo(true);
@@ -220,19 +220,19 @@ class DynatraceMeterRegistryTest {
 
     @Test
     void whenAllTsTooLargeEmptyMessageListReturned() {
-        List<DynatraceBatchedPayload> messages = meterRegistry.createPostMessages("my.type", Collections.singletonList(createTimeSeriesWithDimensions(10_000)));
+        List<DynatraceBatchedPayload> messages = meterRegistry.createPostMessages("my.type", null, Collections.singletonList(createTimeSeriesWithDimensions(10_000)));
         assertThat(messages).isEmpty();
     }
 
     @Test
     void splitsWhenExactlyExceedingMaxByComma() {
         // comma needs to be considered when there is more than one time series
-        List<DynatraceBatchedPayload> messages = meterRegistry.createPostMessages("my.type",
+        List<DynatraceBatchedPayload> messages = meterRegistry.createPostMessages("my.type", "my.group",
             // Max bytes: 15330 (excluding header/footer, 15360 with header/footer)
             Arrays.asList(createTimeSeriesWithDimensions(750), // 14861 bytes
                 createTimeSeriesWithDimensions(23, "asdfg"), // 469 bytes (overflows due to comma)
                 createTimeSeriesWithDimensions(750), // 14861 bytes
-                createTimeSeriesWithDimensions(23, "asdf") // 468 bytes + comma
+                createTimeSeriesWithDimensions(22, "asd") // 468 bytes + comma
             ));
         assertThat(messages).hasSize(3);
         assertThat(messages.get(0).metricCount).isEqualTo(1);
@@ -244,7 +244,7 @@ class DynatraceMeterRegistryTest {
 
     @Test
     void countsPreviousAndNextComma() {
-        List<DynatraceBatchedPayload> messages = meterRegistry.createPostMessages("my.type",
+        List<DynatraceBatchedPayload> messages = meterRegistry.createPostMessages("my.type", null,
             // Max bytes: 15330 (excluding header/footer, 15360 with header/footer)
             Arrays.asList(createTimeSeriesWithDimensions(750), // 14861 bytes
                 createTimeSeriesWithDimensions(10, "asdf"), // 234 bytes + comma

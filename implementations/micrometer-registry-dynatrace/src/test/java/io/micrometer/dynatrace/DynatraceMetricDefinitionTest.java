@@ -27,7 +27,7 @@ class DynatraceMetricDefinitionTest {
 
     @Test
     void usesMetricIdAsDescriptionWhenDescriptionIsNotAvailable() {
-        final DynatraceMetricDefinition metric = new DynatraceMetricDefinition("custom:test.metric", null, null, null, technologyTypes);
+        final DynatraceMetricDefinition metric = new DynatraceMetricDefinition("custom:test.metric", null, null, null, technologyTypes, null);
 
         assertThat(metric.asJson()).isEqualTo("{\"displayName\":\"custom:test.metric\",\"types\":[\"java\"]}");
     }
@@ -37,14 +37,14 @@ class DynatraceMetricDefinitionTest {
         final DynatraceMetricDefinition metric = new DynatraceMetricDefinition(
                 "custom:test.metric",
                 "The /\"recent cpu usage\" for the Java Virtual Machine process",
-                null, null, technologyTypes);
+                null, null, technologyTypes, null);
 
         assertThat(metric.asJson()).isEqualTo("{\"displayName\":\"The /\\\"recent cpu usage\\\" for the Java Virtual Machine process\",\"types\":[\"java\"]}");
     }
 
     @Test
     void addsUnitWhenAvailable() {
-        final DynatraceMetricDefinition metric = new DynatraceMetricDefinition("custom:test.metric", "my test metric", DynatraceMetricDefinition.DynatraceUnit.Count, null, technologyTypes);
+        final DynatraceMetricDefinition metric = new DynatraceMetricDefinition("custom:test.metric", "my test metric", DynatraceMetricDefinition.DynatraceUnit.Count, null, technologyTypes, null);
 
         assertThat(metric.asJson()).isEqualTo("{\"displayName\":\"my test metric\",\"unit\":\"Count\",\"types\":[\"java\"]}");
     }
@@ -55,8 +55,14 @@ class DynatraceMetricDefinitionTest {
         dimensions.add("first");
         dimensions.add("second");
         dimensions.add("unknown");
-        final DynatraceMetricDefinition metric = new DynatraceMetricDefinition("custom:test.metric", "my test metric", null, dimensions, technologyTypes);
+        final DynatraceMetricDefinition metric = new DynatraceMetricDefinition("custom:test.metric", "my test metric", null, dimensions, technologyTypes, null);
 
         assertThat(metric.asJson()).isEqualTo("{\"displayName\":\"my test metric\",\"dimensions\":[\"first\",\"second\",\"unknown\"],\"types\":[\"java\"]}");
+    }
+
+    @Test
+    void addsGroupWhenAvailable() {
+        final DynatraceMetricDefinition metric = new DynatraceMetricDefinition("custom:test.metric", "my test metric", DynatraceMetricDefinition.DynatraceUnit.Count, null, technologyTypes, "my test group");
+        assertThat(metric.asJson()).isEqualTo("{\"displayName\":\"my test metric\",\"group\":\"my test group\",\"unit\":\"Count\",\"types\":[\"java\"]}");
     }
 }
