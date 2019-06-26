@@ -26,6 +26,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.filter.AbstractFilter;
 
 import static java.util.Collections.emptyList;
@@ -68,10 +69,16 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
         metricsFilter.start();
 
         Configuration configuration = loggerContext.getConfiguration();
-        configuration.getRootLogger().addFilter(metricsFilter);
+        LoggerConfig rootLoggerConfig = configuration.getRootLogger();
+        rootLoggerConfig.addFilter(metricsFilter);
         loggerContext.getLoggers().stream()
-            .filter(logger -> !logger.isAdditive())
-            .forEach(logger -> configuration.getLoggerConfig(logger.getName()).addFilter(metricsFilter));
+                .filter(logger -> !logger.isAdditive())
+                .forEach(logger -> {
+                    LoggerConfig loggerConfig = configuration.getLoggerConfig(logger.getName());
+                    if (loggerConfig != rootLoggerConfig) {
+                        loggerConfig.addFilter(metricsFilter);
+                    }
+                });
         loggerContext.updateLoggers(configuration);
     }
 
@@ -79,10 +86,16 @@ public class Log4j2Metrics implements MeterBinder, AutoCloseable {
     public void close() {
         if (metricsFilter != null) {
             Configuration configuration = loggerContext.getConfiguration();
-            configuration.getRootLogger().removeFilter(metricsFilter);
+            LoggerConfig rootLoggerConfig = configuration.getRootLogger();
+            rootLoggerConfig.removeFilter(metricsFilter);
             loggerContext.getLoggers().stream()
-                .filter(logger -> !logger.isAdditive())
-                .forEach(logger -> configuration.getLoggerConfig(logger.getName()).removeFilter(metricsFilter));
+                    .filter(logger -> !logger.isAdditive())
+                    .forEach(logger -> {
+                        LoggerConfig loggerConfig = configuration.getLoggerConfig(logger.getName());
+                        if (loggerConfig != rootLoggerConfig) {
+                            loggerConfig.removeFilter(metricsFilter);
+                        }
+                    });
             loggerContext.updateLoggers(configuration);
             metricsFilter.stop();
         }
