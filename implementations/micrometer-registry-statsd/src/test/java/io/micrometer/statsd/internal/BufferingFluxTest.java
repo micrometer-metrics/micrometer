@@ -15,12 +15,10 @@
  */
 package io.micrometer.statsd.internal;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -123,7 +121,8 @@ class BufferingFluxTest {
         List<String> stats = new ArrayList<>();
         IntStream.range(0, 500).forEachOrdered(i -> stats.add("test.msg.example:" + i + "|c"));
 
-        Flux<String> source = Flux.just(stats.toArray(new String[0]))
+        String[] lines = stats.toArray(new String[0]);
+        Flux<String> source = Flux.just(lines)
                 .delayElements(Duration.ofMillis(1));
         Flux<String> buffered = BufferingFlux.create(source, "\n", 100, 10);
 
@@ -131,11 +130,7 @@ class BufferingFluxTest {
         buffered.subscribe(sb::append);
         buffered.blockLast(Duration.ofSeconds(10));
 
-        // There should be no lines that are not empty or not completely found in the original material
-        List<String> resultLines = new ArrayList<>(Arrays.asList(sb.toString().split("\n")));
-        resultLines.removeAll(stats);
-        resultLines.removeAll(Collections.singletonList(""));
-
-        assertEquals(0, resultLines.size());
+        String[] resultLines = sb.toString().split("\n");
+        assertThat(resultLines).isEqualTo(lines);
     }
 }
