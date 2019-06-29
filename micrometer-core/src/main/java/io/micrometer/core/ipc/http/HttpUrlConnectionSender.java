@@ -39,18 +39,32 @@ public class HttpUrlConnectionSender implements HttpSender {
     private final int readTimeoutMs;
     private final Proxy proxy;
 
+    /**
+     * Creates a sender with the specified timeouts but uses the default proxy settings.
+     *
+     * @param connectTimeout connect timeout when establishing a connection
+     * @param readTimeout read timeout when receiving a response
+     */
     public HttpUrlConnectionSender(Duration connectTimeout, Duration readTimeout) {
-        this.connectTimeoutMs = (int) connectTimeout.toMillis();
-        this.readTimeoutMs = (int) readTimeout.toMillis();
-        this.proxy = null;
+        this(connectTimeout, readTimeout, null);
     }
 
+    /**
+     * Creates a sender with the specified timeouts and proxy settings.
+     *
+     * @param connectTimeout connect timeout when establishing a connection
+     * @param readTimeout read timeout when receiving a response
+     * @param proxy proxy to use when establishing a connection
+     */
     public HttpUrlConnectionSender(Duration connectTimeout, Duration readTimeout, Proxy proxy) {
         this.connectTimeoutMs = (int) connectTimeout.toMillis();
         this.readTimeoutMs = (int) readTimeout.toMillis();
         this.proxy = proxy;
     }
 
+    /**
+     * Use the default timeouts and proxy settings for the sender.
+     */
     public HttpUrlConnectionSender() {
         this.connectTimeoutMs = DEFAULT_CONNECT_TIMEOUT_MS;
         this.readTimeoutMs = DEFAULT_READ_TIMEOUT_MS;
