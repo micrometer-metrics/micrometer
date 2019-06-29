@@ -34,7 +34,7 @@ class LoggingMeterRegistryTest {
     private final LoggingMeterRegistry registry = new LoggingMeterRegistry();
 
     @Test
-    void defaultMeterNamePrinter() {
+    void defaultMeterIdPrinter() {
         LoggingMeterRegistry registry = LoggingMeterRegistry.builder(LoggingRegistryConfig.DEFAULT)
                 .build();
         Counter counter = registry.counter("my.gauage", "tag-1", "tag-2");
@@ -44,9 +44,9 @@ class LoggingMeterRegistryTest {
     }
 
     @Test
-    void customMeterNamePrinter() {
+    void customMeterIdPrinter() {
         LoggingMeterRegistry registry = LoggingMeterRegistry.builder(LoggingRegistryConfig.DEFAULT)
-                .meterNamePrinter(meter -> meter.getId().getName())
+                .meterIdPrinter(meter -> meter.getId().getName())
                 .build();
         Counter counter = registry.counter("my.gauage", "tag-1", "tag-2");
         LoggingMeterRegistry.Printer printer = registry.new Printer(counter);

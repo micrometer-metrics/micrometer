@@ -54,7 +54,7 @@ import static java.util.stream.Collectors.joining;
 public class LoggingMeterRegistry extends StepMeterRegistry {
     private final LoggingRegistryConfig config;
     private final Consumer<String> loggingSink;
-    private final Function<Meter, String> meterNamePrinter;
+    private final Function<Meter, String> meterIdPrinter;
 
     public LoggingMeterRegistry() {
         this(LoggingRegistryConfig.DEFAULT, Clock.SYSTEM);
@@ -64,14 +64,14 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         this(config, clock, new NamedThreadFactory("logging-metrics-publisher"), defaultLoggingSink(), null);
     }
 
-    private LoggingMeterRegistry(LoggingRegistryConfig config, Clock clock, ThreadFactory threadFactory, Consumer<String> loggingSink, @Nullable Function<Meter, String> meterNamePrinter) {
+    private LoggingMeterRegistry(LoggingRegistryConfig config, Clock clock, ThreadFactory threadFactory, Consumer<String> loggingSink, @Nullable Function<Meter, String> meterIdPrinter) {
         super(config, clock);
         this.config = config;
         this.loggingSink = loggingSink;
-        if (meterNamePrinter == null) {
-            meterNamePrinter = defaultMeterNamePrinter();
+        if (meterIdPrinter == null) {
+            meterIdPrinter = defaultMeterIdPrinter();
         }
-        this.meterNamePrinter = meterNamePrinter;
+        this.meterIdPrinter = meterIdPrinter;
         config().namingConvention(NamingConvention.dot);
         start(threadFactory);
     }
@@ -93,7 +93,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private Function<Meter, String> defaultMeterNamePrinter() {
+    private Function<Meter, String> defaultMeterIdPrinter() {
         return (meter) -> getConventionName(meter.getId()) + getConventionTags(meter.getId()).stream()
                 .map(t -> t.getKey() + "=" + t.getValue())
                 .collect(joining(",", "{", "}"));
@@ -213,7 +213,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         }
 
         String id() {
-            return meterNamePrinter.apply(meter);
+            return meterIdPrinter.apply(meter);
         }
 
         String time(double time) {
@@ -266,7 +266,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         private ThreadFactory threadFactory = new NamedThreadFactory("logging-metrics-publisher");
         private Consumer<String> loggingSink = defaultLoggingSink();
         @Nullable
-        private Function<Meter, String> meterNamePrinter = null;
+        private Function<Meter, String> meterIdPrinter = null;
 
         Builder(LoggingRegistryConfig config) {
             this.config = config;
@@ -287,13 +287,13 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
-        public Builder meterNamePrinter(Function<Meter, String> meterNamePrinter) {
-            this.meterNamePrinter = meterNamePrinter;
+        public Builder meterIdPrinter(Function<Meter, String> meterIdPrinter) {
+            this.meterIdPrinter = meterIdPrinter;
             return this;
         }
 
         public LoggingMeterRegistry build() {
-            return new LoggingMeterRegistry(config, clock, threadFactory, loggingSink, meterNamePrinter);
+            return new LoggingMeterRegistry(config, clock, threadFactory, loggingSink, meterIdPrinter);
         }
     }
 }
