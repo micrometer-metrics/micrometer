@@ -48,7 +48,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  */
 @ExtendWith(WiremockResolver.class)
-public class MicrometerHttpRequestExecutorTest {
+class MicrometerHttpRequestExecutorTest {
 
     private static final String EXPECTED_METER_NAME = "httpcomponents.httpclient.request";
 
@@ -87,27 +87,32 @@ public class MicrometerHttpRequestExecutorTest {
     void httpStatusCodeIsTagged(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(urlEqualTo("/ok")).willReturn(aResponse().withStatus(200)));
         server.stubFor(any(urlEqualTo("/notfound")).willReturn(aResponse().withStatus(404)));
+        server.stubFor(any(urlEqualTo("/error")).willReturn(aResponse().withStatus(500)));
         HttpClient client = client(executor(false));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/ok")).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/ok")).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/notfound")).getEntity());
+        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/error")).getEntity());
         assertThat(registry.get(EXPECTED_METER_NAME)
                 .tags("method", "GET", "status", "200")
                 .timer().count()).isEqualTo(2L);
         assertThat(registry.get(EXPECTED_METER_NAME)
                 .tags("method", "GET", "status", "404")
                 .timer().count()).isEqualTo(1L);
+        assertThat(registry.get(EXPECTED_METER_NAME)
+                .tags("method", "GET", "status", "500")
+                .timer().count()).isEqualTo(1L);
     }
 
     @Test
-    void uriIsOtherByDefault(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+    void uriIsUnknownByDefault(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         HttpClient client = client(executor(false));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/someuri")).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl() + "/otheruri")).getEntity());
         assertThat(registry.get(EXPECTED_METER_NAME)
-                .tags("uri", "other")
+                .tags("uri", "UNKNOWN")
                 .timer().count()).isEqualTo(3L);
     }
 
@@ -199,31 +204,10 @@ public class MicrometerHttpRequestExecutorTest {
     }
 
     @Test
-    void nameCanBeOverridden(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
-        server.stubFor(any(anyUrl()));
-        MicrometerHttpRequestExecutor executor = MicrometerHttpRequestExecutor.builder(registry)
-                .name("some.other.metric.name")
-                .build();
-        HttpClient client = client(executor);
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
-        assertThat(registry.get("some.other.metric.name").timer().count()).isEqualTo(1L);
-        assertThrows(MeterNotFoundException.class, () -> registry.get(EXPECTED_METER_NAME).timer());
-    }
-
-    @Test
     void settingNullRegistryThrowsException() {
         assertThrows(IllegalArgumentException.class, () ->
                 MicrometerHttpRequestExecutor.builder(null)
                         .build());
-    }
-
-    @Test
-    void overridingNameWithNullThrowsException() {
-        assertThrows(IllegalArgumentException.class, () ->
-                MicrometerHttpRequestExecutor.builder(registry)
-                        .name(null)
-                        .build()
-        );
     }
 
     @Test
