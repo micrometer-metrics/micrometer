@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.util.IOUtils;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.Proxy;
 import java.time.Duration;
 import java.util.Map;
 
@@ -33,25 +34,38 @@ public class HttpUrlConnectionSender implements HttpSender {
 
     private static final int DEFAULT_CONNECT_TIMEOUT_MS = 1000;
     private static final int DEFAULT_READ_TIMEOUT_MS = 10000;
-    
+
     private final int connectTimeoutMs;
     private final int readTimeoutMs;
+    private final Proxy proxy;
 
     public HttpUrlConnectionSender(Duration connectTimeout, Duration readTimeout) {
         this.connectTimeoutMs = (int) connectTimeout.toMillis();
         this.readTimeoutMs = (int) readTimeout.toMillis();
+        this.proxy = null;
+    }
+
+    public HttpUrlConnectionSender(Duration connectTimeout, Duration readTimeout, Proxy proxy) {
+        this.connectTimeoutMs = (int) connectTimeout.toMillis();
+        this.readTimeoutMs = (int) readTimeout.toMillis();
+        this.proxy = proxy;
     }
 
     public HttpUrlConnectionSender() {
         this.connectTimeoutMs = DEFAULT_CONNECT_TIMEOUT_MS;
         this.readTimeoutMs = DEFAULT_READ_TIMEOUT_MS;
+        this.proxy = null;
     }
 
     @Override
     public Response send(Request request) throws IOException {
         HttpURLConnection con = null;
         try {
-            con = (HttpURLConnection) request.getUrl().openConnection();
+            if (proxy != null ) {
+                con = (HttpURLConnection) request.getUrl().openConnection(proxy);
+            } else {
+                con = (HttpURLConnection) request.getUrl().openConnection();
+            }
             con.setConnectTimeout(connectTimeoutMs);
             con.setReadTimeout(readTimeoutMs);
             Method method = request.getMethod();
