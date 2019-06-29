@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @NonNullFields
 public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAdapter {
 
-    private static final String DEFAULT_METRIC_PREFIX = "org.mongodb.driver.pool";
+    private static final String METRIC_PREFIX = "mongodb.driver.pool.";
 
     private final Map<ServerId, AtomicInteger> poolSize = new ConcurrentHashMap<>();
     private final Map<ServerId, AtomicInteger> checkedOutCount = new ConcurrentHashMap<>();
@@ -47,23 +47,20 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
     private final Map<ServerId, List<Meter>> meters = new ConcurrentHashMap<>();
 
     private final MeterRegistry registry;
-    private final String metricsPrefix;
 
     public MongoMetricsConnectionPoolListener(MeterRegistry registry) {
-        this(registry, DEFAULT_METRIC_PREFIX);
-    }
-
-    public MongoMetricsConnectionPoolListener(MeterRegistry registry, String metricsPrefix) {
         this.registry = registry;
-        this.metricsPrefix = metricsPrefix;
     }
 
     @Override
     public void connectionPoolOpened(ConnectionPoolOpenedEvent event) {
         List<Meter> connectionMeters = new ArrayList<>();
-        connectionMeters.add(registerGauge(event.getServerId(), metricsPrefix + ".size", poolSize));
-        connectionMeters.add(registerGauge(event.getServerId(), metricsPrefix + ".checkedout", checkedOutCount));
-        connectionMeters.add(registerGauge(event.getServerId(), metricsPrefix + ".waitqueuesize", waitQueueSize));
+        connectionMeters.add(registerGauge(event.getServerId(), METRIC_PREFIX + "size",
+                "the current size of the connection pool, including idle and and in-use members", poolSize));
+        connectionMeters.add(registerGauge(event.getServerId(), METRIC_PREFIX + "checkedout",
+                "the count of connections that are currently in use", checkedOutCount));
+        connectionMeters.add(registerGauge(event.getServerId(), METRIC_PREFIX + "waitqueuesize",
+                "the current size of the wait queue for a connection from the pool", waitQueueSize));
         meters.put(event.getServerId(), connectionMeters);
     }
 
@@ -115,10 +112,10 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
                 .decrementAndGet();
     }
 
-    private Gauge registerGauge(ServerId serverId, String metricName, Map<ServerId, AtomicInteger> metrics) {
+    private Gauge registerGauge(ServerId serverId, String metricName, String description, Map<ServerId, AtomicInteger> metrics) {
         metrics.put(serverId, new AtomicInteger());
         return Gauge.builder(metricName, metrics, m -> m.get(serverId).doubleValue())
-                    .description(String.format("MongoDB connection pool %s gauge", metricName))
+                    .description(description)
                     .tag("cluster.id", serverId.getClusterId().getValue())
                     .tag("server.address", serverId.getAddress().toString())
                     .register(registry);

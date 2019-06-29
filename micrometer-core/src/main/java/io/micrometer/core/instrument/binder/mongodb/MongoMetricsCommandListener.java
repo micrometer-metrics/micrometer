@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 @NonNullFields
 public class MongoMetricsCommandListener implements CommandListener {
 
-    private final Timer.Builder timerBuilder = Timer.builder("org.mongodb.driver.commands")
+    private final Timer.Builder timerBuilder = Timer.builder("mongodb.driver.commands")
             .description("Timer of mongodb commands");
 
     private final MeterRegistry registry;

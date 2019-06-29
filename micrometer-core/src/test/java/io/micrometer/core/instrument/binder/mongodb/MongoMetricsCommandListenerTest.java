@@ -93,7 +93,7 @@ class MongoMetricsCommandListenerTest {
                 "command", "insert",
                 "status", "SUCCESS"
         );
-        assertEquals(1, registry.get("org.mongodb.driver.commands").tags(tags).timer().count());
+        assertEquals(1, registry.get("mongodb.driver.commands").tags(tags).timer().count());
     }
 
     @Test
@@ -108,7 +108,7 @@ class MongoMetricsCommandListenerTest {
                 "command", "dropIndexes",
                 "status", "FAILED"
         );
-        assertEquals(1, registry.get("org.mongodb.driver.commands").tags(tags).timer().count());
+        assertEquals(1, registry.get("mongodb.driver.commands").tags(tags).timer().count());
     }
 
     @AfterEach

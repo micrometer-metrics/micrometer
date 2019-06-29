@@ -92,13 +92,13 @@ class MongoMetricsConnectionPoolListenerTest {
                 "server.address", String.format("%s:%s", HOST, port)
         );
 
-        assertEquals(2, registry.get("org.mongodb.driver.pool.size").tags(tags).gauge().value());
-        assertEquals(0, registry.get("org.mongodb.driver.pool.checkedout").gauge().value());
-        assertEquals(0, registry.get("org.mongodb.driver.pool.waitqueuesize").gauge().value());
+        assertEquals(2, registry.get("mongodb.driver.pool.size").tags(tags).gauge().value());
+        assertEquals(0, registry.get("mongodb.driver.pool.checkedout").gauge().value());
+        assertEquals(0, registry.get("mongodb.driver.pool.waitqueuesize").gauge().value());
 
         mongo.close();
 
-        assertNull(registry.find("org.mongodb.driver.pool.size").tags(tags).gauge());
+        assertNull(registry.find("mongodb.driver.pool.size").tags(tags).gauge());
     }
 
     @AfterEach
