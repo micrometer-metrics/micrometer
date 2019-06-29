@@ -60,7 +60,7 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.StreamSupport.stream;
 
 /**
- * {@link StepMeterRegistry} for Wavefront.
+ * {@link PushMeterRegistry} for Wavefront.
  *
  * @author Jon Schneider
  * @author Howard Yoo

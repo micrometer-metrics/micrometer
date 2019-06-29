@@ -36,13 +36,13 @@ import java.util.function.Function;
  * registered as request executor when creating the HttpClient instance.
  * For example:
  *
- * <code><pre>
+ * <pre>
  *     HttpClientBuilder.create()
  *         .setRequestExecutor(MicrometerHttpRequestExecutor
  *                 .builder(meterRegistry)
  *                 .build())
  *         .build();
- * </pre></code>
+ * </pre>
  *
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  * @author Tommy Ludwig
