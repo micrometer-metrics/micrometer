@@ -39,7 +39,6 @@ public class HttpUrlConnectionSender implements HttpSender {
     private final int readTimeoutMs;
     private final Proxy proxy;
 
-    @Deprecated
     public HttpUrlConnectionSender(Duration connectTimeout, Duration readTimeout) {
         this.connectTimeoutMs = (int) connectTimeout.toMillis();
         this.readTimeoutMs = (int) readTimeout.toMillis();
@@ -52,7 +51,6 @@ public class HttpUrlConnectionSender implements HttpSender {
         this.proxy = proxy;
     }
 
-    @Deprecated
     public HttpUrlConnectionSender() {
         this.connectTimeoutMs = DEFAULT_CONNECT_TIMEOUT_MS;
         this.readTimeoutMs = DEFAULT_READ_TIMEOUT_MS;
@@ -63,7 +61,7 @@ public class HttpUrlConnectionSender implements HttpSender {
     public Response send(Request request) throws IOException {
         HttpURLConnection con = null;
         try {
-            if ( proxy != null ) {
+            if (proxy != null ) {
                 con = (HttpURLConnection) request.getUrl().openConnection(proxy);
             } else {
                 con = (HttpURLConnection) request.getUrl().openConnection();
