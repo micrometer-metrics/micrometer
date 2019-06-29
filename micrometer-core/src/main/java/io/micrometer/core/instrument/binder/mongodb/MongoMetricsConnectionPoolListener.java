@@ -18,6 +18,7 @@ package io.micrometer.core.instrument.binder.mongodb;
 import com.mongodb.MongoClient;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.*;
+import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -34,9 +35,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * {@link ConnectionPoolListener} for collecting connection pool metrics from {@link MongoClient}.
  *
  * @author Christophe Bornet
+ * @since 1.2.0
  */
 @NonNullApi
 @NonNullFields
+@Incubating(since = "1.2.0")
 public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAdapter {
 
     private static final String METRIC_PREFIX = "mongodb.driver.pool.";

@@ -20,6 +20,7 @@ import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
+import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.lang.NonNullApi;
@@ -31,9 +32,11 @@ import java.util.concurrent.TimeUnit;
  * {@link CommandListener} for collecting command metrics from {@link MongoClient}.
  *
  * @author Christophe Bornet
+ * @since 1.2.0
  */
 @NonNullApi
 @NonNullFields
+@Incubating(since = "1.2.0")
 public class MongoMetricsCommandListener implements CommandListener {
 
     private final Timer.Builder timerBuilder = Timer.builder("mongodb.driver.commands")
