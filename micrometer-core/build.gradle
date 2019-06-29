@@ -52,6 +52,8 @@ dependencies {
 
     compile 'com.squareup.okhttp3:okhttp:3.+', optional
 
+    compile 'org.mongodb:mongo-java-driver:latest.release', optional
+
     testCompile 'io.projectreactor:reactor-test:latest.release'
 
     // JUnit 5
@@ -82,6 +84,8 @@ dependencies {
 
     testCompile 'ru.lanwen.wiremock:wiremock-junit5:1.2.0'
     testCompile 'com.github.tomakehurst:wiremock:latest.release'
+
+    testCompile 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:latest.release'
 }
 
 shadowJar {
