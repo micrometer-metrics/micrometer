@@ -38,8 +38,7 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static de.flapdoodle.embed.mongo.MongodStarter.getDefaultInstance;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@link MongoMetricsConnectionPoolListener}.
@@ -92,13 +91,15 @@ class MongoMetricsConnectionPoolListenerTest {
                 "server.address", String.format("%s:%s", HOST, port)
         );
 
-        assertEquals(2, registry.get("mongodb.driver.pool.size").tags(tags).gauge().value());
-        assertEquals(0, registry.get("mongodb.driver.pool.checkedout").gauge().value());
-        assertEquals(0, registry.get("mongodb.driver.pool.waitqueuesize").gauge().value());
+        assertThat(registry.get("mongodb.driver.pool.size").tags(tags).gauge().value()).isEqualTo(2);
+        assertThat(registry.get("mongodb.driver.pool.checkedout").gauge().value()).isZero();
+        assertThat(registry.get("mongodb.driver.pool.waitqueuesize").gauge().value()).isZero();
 
         mongo.close();
 
-        assertNull(registry.find("mongodb.driver.pool.size").tags(tags).gauge());
+        assertThat(registry.find("mongodb.driver.pool.size").tags(tags).gauge())
+                .describedAs("metrics should be removed when the connection pool is closed")
+                .isNull();
     }
 
     @AfterEach

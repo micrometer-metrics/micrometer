@@ -39,7 +39,7 @@ import java.util.Date;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static de.flapdoodle.embed.mongo.MongodStarter.getDefaultInstance;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@link MongoMetricsCommandListener}.
@@ -93,7 +93,7 @@ class MongoMetricsCommandListenerTest {
                 "command", "insert",
                 "status", "SUCCESS"
         );
-        assertEquals(1, registry.get("mongodb.driver.commands").tags(tags).timer().count());
+        assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
     }
 
     @Test
@@ -108,7 +108,7 @@ class MongoMetricsCommandListenerTest {
                 "command", "dropIndexes",
                 "status", "FAILED"
         );
-        assertEquals(1, registry.get("mongodb.driver.commands").tags(tags).timer().count());
+        assertThat(registry.get("mongodb.driver.commands").tags(tags).timer().count()).isEqualTo(1);
     }
 
     @AfterEach
