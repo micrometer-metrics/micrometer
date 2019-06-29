@@ -34,6 +34,15 @@ import java.util.function.Function;
  * This HttpRequestExecutor tracks the request duration of every request, that
  * goes through a {@link org.apache.http.client.HttpClient}. It must be
  * registered as request executor when creating the HttpClient instance.
+ * For example:
+ *
+ * <code><pre>
+ *     HttpClientBuilder.create()
+ *         .setRequestExecutor(MicrometerHttpRequestExecutor
+ *                 .builder(meterRegistry)
+ *                 .build())
+ *         .build();
+ * </pre></code>
  *
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
  * @author Tommy Ludwig
