@@ -48,6 +48,8 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
 
     private static final Tag METHOD_UNKNOWN = Tag.of("method", UNKNOWN);
     private static final Tag STATUS_UNKNOWN = Tag.of("status", UNKNOWN);
+    private static final Tag STATUS_CLIENT_ERROR = Tag.of("status", "CLIENT_ERROR");
+    private static final Tag STATUS_IO_ERROR = Tag.of("status", "IO_ERROR");
     private static final Tag URI_UNKNOWN = Tag.of("uri", UNKNOWN);
 
     private final MeterRegistry registry;
@@ -88,16 +90,15 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
         Tag method = request != null ? Tag.of("method", request.getRequestLine().getMethod()) : METHOD_UNKNOWN;
         Tag uri = request != null ? Tag.of("uri", uriMapper.apply(request)) : URI_UNKNOWN;
         Tag status = STATUS_UNKNOWN;
-        String exception = "none";
 
         Tags routeTags = exportTagsForRoute ? generateTagsForRoute(context) : Tags.empty();
 
         try {
             HttpResponse response = super.execute(request, conn, context);
-            status = response != null ? Tag.of("status", Integer.toString(response.getStatusLine().getStatusCode())) : STATUS_UNKNOWN;
+            status = response != null ? Tag.of("status", Integer.toString(response.getStatusLine().getStatusCode())) : STATUS_CLIENT_ERROR;
             return response;
         } catch (IOException | HttpException | RuntimeException e) {
-            exception = e.getClass().getSimpleName();
+            status = STATUS_IO_ERROR;
             throw e;
         } finally {
             Iterable<Tag> tags = Tags.of(extraTags)
@@ -107,7 +108,6 @@ public class MicrometerHttpRequestExecutor extends HttpRequestExecutor {
             timerSample.stop(Timer.builder(METER_NAME)
                     .description("Duration of Apache HttpClient request execution")
                     .tags(tags)
-                    .tags("exception", exception)
                     .register(registry));
         }
     }
