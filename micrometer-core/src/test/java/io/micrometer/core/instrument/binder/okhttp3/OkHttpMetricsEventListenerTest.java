@@ -82,7 +82,7 @@ class OkHttpMetricsEventListenerTest {
         client.newCall(request).execute().close();
 
         assertThat(registry.get("okhttp.requests")
-                .tags("foo", "bar", "status", "404", "uri", URI_EXAMPLE_VALUE)
+                .tags("foo", "bar", "status", "404", "uri", "NOT_FOUND")
                 .timer().count()).isEqualTo(1L);
     }
 

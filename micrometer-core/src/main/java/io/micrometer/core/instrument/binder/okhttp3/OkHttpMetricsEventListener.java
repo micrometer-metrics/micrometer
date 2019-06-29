@@ -96,11 +96,14 @@ public class OkHttpMetricsEventListener extends EventListener {
         Request request = state.request;
         boolean requestAvailable = request != null;
 
+        String uri = !requestAvailable ? "UNKNOWN" :
+                state.response != null && (state.response.code() == 404 || state.response.code() == 301) ? "NOT_FOUND" : urlMapper.apply(request);
+
         Tags dynamicTags = requestAvailable ? request.tag(Tags.class) : Tags.empty();
 
         Iterable<Tag> tags = Tags.concat(extraTags, Tags.of(
             "method", requestAvailable ? request.method() : "UNKNOWN",
-            "uri", requestAvailable ?  urlMapper.apply(request) : "UNKNOWN",
+            "uri", uri,
             "status", getStatusMessage(state.response, state.exception),
             "host", requestAvailable ? request.url().host() : "UNKNOWN"
         )).and(dynamicTags);
