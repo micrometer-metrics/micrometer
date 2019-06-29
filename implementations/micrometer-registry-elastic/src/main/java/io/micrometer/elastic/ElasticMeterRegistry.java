@@ -384,10 +384,14 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }));
     }
 
+    protected String generateTimestamp() {
+        return TIMESTAMP_FORMATTER.format(Instant.ofEpochMilli(config().clock().wallTime()));
+    }
+
     // VisibleForTesting
     String writeDocument(Meter meter, Consumer<StringBuilder> consumer) {
         StringBuilder sb = new StringBuilder(indexLine);
-        String timestamp = TIMESTAMP_FORMATTER.format(Instant.ofEpochMilli(config().clock().wallTime()));
+        String timestamp = generateTimestamp();
         String name = getConventionName(meter.getId());
         String type = meter.getId().getType().toString().toLowerCase();
         sb.append("{\"").append(config.timestampFieldName()).append("\":\"").append(timestamp).append('"')
