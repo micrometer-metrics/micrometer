@@ -68,7 +68,7 @@ import static java.util.stream.StreamSupport.stream;
  */
 public class WavefrontMeterRegistry extends PushMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY =
-        new NamedThreadFactory("wavefront-metrics-publisher");
+        new NamedThreadFactory("waveferont-metrics-publisher");
     private final Logger logger = LoggerFactory.getLogger(WavefrontMeterRegistry.class);
     private final WavefrontConfig config;
     private final HttpSender httpClient;
