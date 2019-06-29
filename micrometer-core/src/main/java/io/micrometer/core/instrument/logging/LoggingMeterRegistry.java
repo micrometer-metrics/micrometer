@@ -30,6 +30,7 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.step.StepTimer;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.core.lang.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -37,6 +38,7 @@ import java.time.Duration;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 import static io.micrometer.core.instrument.util.DoubleFormat.decimalOrNan;
@@ -52,19 +54,24 @@ import static java.util.stream.Collectors.joining;
 public class LoggingMeterRegistry extends StepMeterRegistry {
     private final LoggingRegistryConfig config;
     private final Consumer<String> loggingSink;
+    private final Function<Meter, String> meterIdPrinter;
 
     public LoggingMeterRegistry() {
         this(LoggingRegistryConfig.DEFAULT, Clock.SYSTEM);
     }
 
     public LoggingMeterRegistry(LoggingRegistryConfig config, Clock clock) {
-        this(config, clock, new NamedThreadFactory("logging-metrics-publisher"), defaultLoggingSink());
+        this(config, clock, new NamedThreadFactory("logging-metrics-publisher"), defaultLoggingSink(), null);
     }
 
-    private LoggingMeterRegistry(LoggingRegistryConfig config, Clock clock, ThreadFactory threadFactory, Consumer<String> loggingSink) {
+    private LoggingMeterRegistry(LoggingRegistryConfig config, Clock clock, ThreadFactory threadFactory, Consumer<String> loggingSink, @Nullable Function<Meter, String> meterIdPrinter) {
         super(config, clock);
         this.config = config;
         this.loggingSink = loggingSink;
+        if (meterIdPrinter == null) {
+            meterIdPrinter = defaultMeterIdPrinter();
+        }
+        this.meterIdPrinter = meterIdPrinter;
         config().namingConvention(NamingConvention.dot);
         start(threadFactory);
     }
@@ -84,6 +91,12 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             return System.out::println;
         }
+    }
+
+    private Function<Meter, String> defaultMeterIdPrinter() {
+        return (meter) -> getConventionName(meter.getId()) + getConventionTags(meter.getId()).stream()
+                .map(t -> t.getKey() + "=" + t.getValue())
+                .collect(joining(",", "{", "}"));
     }
 
     @Override
@@ -200,9 +213,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         }
 
         String id() {
-            return getConventionName(meter.getId()) + getConventionTags(meter.getId()).stream()
-                    .map(t -> t.getKey() + "=" + t.getValue())
-                    .collect(joining(",", "{", "}"));
+            return meterIdPrinter.apply(meter);
         }
 
         String time(double time) {
@@ -254,6 +265,8 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = new NamedThreadFactory("logging-metrics-publisher");
         private Consumer<String> loggingSink = defaultLoggingSink();
+        @Nullable
+        private Function<Meter, String> meterIdPrinter = null;
 
         Builder(LoggingRegistryConfig config) {
             this.config = config;
@@ -274,8 +287,13 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
+        public Builder meterIdPrinter(Function<Meter, String> meterIdPrinter) {
+            this.meterIdPrinter = meterIdPrinter;
+            return this;
+        }
+
         public LoggingMeterRegistry build() {
-            return new LoggingMeterRegistry(config, clock, threadFactory, loggingSink);
+            return new LoggingMeterRegistry(config, clock, threadFactory, loggingSink, meterIdPrinter);
         }
     }
 }

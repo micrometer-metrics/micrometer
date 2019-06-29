@@ -15,11 +15,7 @@
  */
 package io.micrometer.core.instrument.logging;
 
-import io.micrometer.core.instrument.DistributionSummary;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Measurement;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.Statistic;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import org.junit.jupiter.api.Test;
 
@@ -36,6 +32,27 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class LoggingMeterRegistryTest {
     private final LoggingMeterRegistry registry = new LoggingMeterRegistry();
+
+    @Test
+    void defaultMeterIdPrinter() {
+        LoggingMeterRegistry registry = LoggingMeterRegistry.builder(LoggingRegistryConfig.DEFAULT)
+                .build();
+        Counter counter = registry.counter("my.gauage", "tag-1", "tag-2");
+        LoggingMeterRegistry.Printer printer = registry.new Printer(counter);
+
+        assertThat(printer.id()).isEqualTo("my.gauage{tag-1=tag-2}");
+    }
+
+    @Test
+    void customMeterIdPrinter() {
+        LoggingMeterRegistry registry = LoggingMeterRegistry.builder(LoggingRegistryConfig.DEFAULT)
+                .meterIdPrinter(meter -> meter.getId().getName())
+                .build();
+        Counter counter = registry.counter("my.gauage", "tag-1", "tag-2");
+        LoggingMeterRegistry.Printer printer = registry.new Printer(counter);
+
+        assertThat(printer.id()).isEqualTo("my.gauage");
+    }
 
     @Test
     void humanReadableByteCount() {
