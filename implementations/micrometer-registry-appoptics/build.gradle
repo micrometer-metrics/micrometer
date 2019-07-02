@@ -3,5 +3,4 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.+'
 
     testCompile project(':micrometer-test')
-    testCompile 'org.mockito:mockito-core:latest.release'
 }

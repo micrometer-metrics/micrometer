@@ -7,6 +7,7 @@ dependencies {
 
     compile 'ru.lanwen.wiremock:wiremock-junit5:latest.release'
     compile 'com.github.tomakehurst:wiremock:latest.release'
+    compile 'org.mockito:mockito-core:latest.release'
 
     testCompile 'org.jsr107.ri:cache-ri-impl:1.0.0'
 }
