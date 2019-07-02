@@ -34,6 +34,25 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import javax.annotation.Nonnull;
 
 class TimedAspectTest {
+
+    @Test
+    void timeClass() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
+        pf.addAspect(new TimedAspect(registry));
+
+        TimedService service = pf.getProxy();
+
+        service.classCall();
+
+        assertThat(registry.get("classCall")
+                .tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedService")
+                .tag("method", "classCall")
+                .tag("extra", "tag")
+                .timer().count()).isEqualTo(1);
+    }
+
     @Test
     void timeMethod() {
         MeterRegistry registry = new SimpleMeterRegistry();
@@ -69,7 +88,27 @@ class TimedAspectTest {
                 .tag("extra", "tag")
                 .longTaskTimers().size()).isEqualTo(1);
     }
-    
+
+    @Test
+    void timeClassFailure() {
+        MeterRegistry failingRegistry = new FailingMeterRegistry();
+
+        AspectJProxyFactory pf = new AspectJProxyFactory(new TimedService());
+        pf.addAspect(new TimedAspect(failingRegistry));
+
+        TimedService service = pf.getProxy();
+
+        service.classCall();
+
+        assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> {
+            failingRegistry.get("classCall")
+                    .tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedService")
+                    .tag("method", "classCall")
+                    .tag("extra", "tag")
+                    .timer();
+        });
+    }
+
     @Test
     void timeMethodFailure() {
         MeterRegistry failingRegistry = new FailingMeterRegistry();
@@ -130,7 +169,11 @@ class TimedAspectTest {
         }
     }
 
+    @Timed(value = "classCall", extraTags = {"extra", "tag"})
     static class TimedService {
+        void classCall() {
+        }
+
         @Timed(value = "call", extraTags = {"extra", "tag"})
         void call() {
         }

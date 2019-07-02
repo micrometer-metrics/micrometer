@@ -74,10 +74,14 @@ public class TimedAspect {
         this.tagsBasedOnJoinPoint = tagsBasedOnJoinPoint;
     }
 
-    @Around("execution (@io.micrometer.core.annotation.Timed * *.*(..))")
+    @Around("@within (io.micrometer.core.annotation.Timed) || " +
+            "execution (@io.micrometer.core.annotation.Timed * *.*(..))")
     public Object timedMethod(ProceedingJoinPoint pjp) throws Throwable {
         Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         Timed timed = method.getAnnotation(Timed.class);
+        if (timed == null) {
+            timed = pjp.getTarget().getClass().getAnnotation(Timed.class);
+        }
         if (timed == null) {
             method = pjp.getTarget().getClass().getMethod(method.getName(), method.getParameterTypes());
             timed = method.getAnnotation(Timed.class);
