@@ -16,10 +16,7 @@
 package io.micrometer.core.instrument.binder.mongodb;
 
 import com.mongodb.MongoClient;
-import com.mongodb.event.CommandFailedEvent;
-import com.mongodb.event.CommandListener;
-import com.mongodb.event.CommandStartedEvent;
-import com.mongodb.event.CommandSucceededEvent;
+import com.mongodb.event.*;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -50,29 +47,27 @@ public class MongoMetricsCommandListener implements CommandListener {
 
     @Override
     public void commandStarted(CommandStartedEvent commandStartedEvent) {
-        // NoOp
     }
 
     @Override
     public void commandSucceeded(CommandSucceededEvent event) {
-        timerBuilder
-                .tag("command", event.getCommandName())
-                .tag("cluster.id", event.getConnectionDescription().getConnectionId().getServerId().getClusterId().getValue())
-                .tag("server.address", event.getConnectionDescription().getServerAddress().toString())
-                .tag("status", "SUCCESS")
-                .register(registry)
-                .record(event.getElapsedTime(TimeUnit.NANOSECONDS), TimeUnit.NANOSECONDS);
+        timeCommand(event, "SUCCESS", event.getElapsedTime(TimeUnit.NANOSECONDS));
     }
 
     @Override
     public void commandFailed(CommandFailedEvent event) {
+        timeCommand(event, "FAILED", event.getElapsedTime(TimeUnit.NANOSECONDS));
+    }
+
+    private void timeCommand(CommandEvent event, String status, long elapsedTimeInNanoseconds) {
         timerBuilder
                 .tag("command", event.getCommandName())
                 .tag("cluster.id", event.getConnectionDescription().getConnectionId().getServerId().getClusterId().getValue())
                 .tag("server.address", event.getConnectionDescription().getServerAddress().toString())
-                .tag("status", "FAILED")
+                .tag("status", status)
                 .register(registry)
-                .record(event.getElapsedTime(TimeUnit.NANOSECONDS), TimeUnit.NANOSECONDS);
+                .record(elapsedTimeInNanoseconds, TimeUnit.NANOSECONDS);
     }
+
 }
 
