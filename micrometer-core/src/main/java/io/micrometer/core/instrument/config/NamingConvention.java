@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
  * from Spring Web).
  *
  * @author Jon Schneider
+ * @author Johnny Lim
  */
 public interface NamingConvention {
     NamingConvention identity = (name, type, baseUnit) -> name;
@@ -96,8 +97,12 @@ public interface NamingConvention {
     NamingConvention upperCamelCase = new NamingConvention() {
         @Override
         public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-            String lowerCamel = camelCase.name(name, type, baseUnit);
-            return capitalize(lowerCamel);
+            return capitalize(camelCase.name(name, type, baseUnit));
+        }
+
+        @Override
+        public String tagKey(String key) {
+            return capitalize(camelCase.tagKey(key));
         }
 
         private String capitalize(String name) {
