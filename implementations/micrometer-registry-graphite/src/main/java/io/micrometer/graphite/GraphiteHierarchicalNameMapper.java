@@ -23,6 +23,12 @@ import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * {@link HierarchicalNameMapper} for Graphite.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 public class GraphiteHierarchicalNameMapper implements HierarchicalNameMapper {
     private final List<String> tagsAsPrefix;
 
@@ -42,15 +48,11 @@ public class GraphiteHierarchicalNameMapper implements HierarchicalNameMapper {
         hierarchicalName.append(id.getConventionName(convention));
         for (Tag tag : id.getTagsAsIterable()) {
             if (!tagsAsPrefix.contains(tag.getKey())) {
-                hierarchicalName.append('.').append(sanitize(convention.tagKey(tag.getKey())))
-                        .append('.').append(sanitize(convention.tagValue(tag.getValue())));
+                hierarchicalName.append('.').append(convention.tagKey(tag.getKey()))
+                        .append('.').append(convention.tagValue(tag.getValue()));
             }
         }
         return hierarchicalName.toString();
-    }
-
-    private String sanitize(String value) {
-        return value.replace(" ", "_");
     }
 
 }

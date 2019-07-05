@@ -33,7 +33,8 @@ public class GraphiteNamingConvention implements NamingConvention {
      * A list that probably is blacklisted: https://github.com/graphite-project/graphite-web/blob/master/webapp/graphite/render/grammar.py#L48-L55.
      * Empirically, we have found others.
      */
-    private static final Pattern blacklistedChars = Pattern.compile("[{}(),=\\[\\]/]");
+    private static final Pattern PATTERN_NAME_BLACKLISTED_CHARS = Pattern.compile("[{}(),=\\[\\]/ ]");
+    private static final Pattern PATTERN_TAG_BLACKLISTED_CHARS = Pattern.compile("[{}(),=\\[\\]/ .]");
     private final NamingConvention delegate;
 
     public GraphiteNamingConvention() {
@@ -46,17 +47,17 @@ public class GraphiteNamingConvention implements NamingConvention {
 
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        return sanitize(this.delegate.name(normalize(name), type, baseUnit));
+        return sanitizeName(this.delegate.name(normalize(name), type, baseUnit));
     }
 
     @Override
     public String tagKey(String key) {
-        return sanitize(this.delegate.tagKey(normalize(key)));
+        return sanitizeTag(this.delegate.tagKey(normalize(key)));
     }
 
     @Override
     public String tagValue(String value) {
-        return sanitize(this.delegate.tagValue(normalize(value)));
+        return sanitizeTag(this.delegate.tagValue(normalize(value)));
     }
 
     /**
@@ -67,8 +68,12 @@ public class GraphiteNamingConvention implements NamingConvention {
         return Normalizer.normalize(name, Normalizer.Form.NFKD);
     }
 
-    private String sanitize(String delegated) {
-        return blacklistedChars.matcher(delegated).replaceAll("_");
+    private String sanitizeName(String delegated) {
+        return PATTERN_NAME_BLACKLISTED_CHARS.matcher(delegated).replaceAll("_");
+    }
+
+    private String sanitizeTag(String delegated) {
+        return PATTERN_TAG_BLACKLISTED_CHARS.matcher(delegated).replaceAll("_");
     }
 
 }
