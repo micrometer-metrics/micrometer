@@ -106,6 +106,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
     @Override
     protected void publish() {
         try {
+            String bodyMeasurementsPrefix = getBodyMeasurementsPrefix();
             for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
                 final List<String> meters = batch.stream()
                         .map(meter -> meter.match(
@@ -128,7 +129,7 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
                 httpClient.post(config.uri())
                         .withBasicAuthentication(config.apiToken(), "")
                         .withJsonContent(
-                                meters.stream().collect(joining(",", getBodyMeasurementsPrefix(), BODY_MEASUREMENTS_SUFFIX)))
+                                meters.stream().collect(joining(",", bodyMeasurementsPrefix, BODY_MEASUREMENTS_SUFFIX)))
                         .send()
                         .onSuccess(response -> {
                             if (!response.body().contains("\"failed\":0")) {
@@ -149,9 +150,12 @@ public class AppOpticsMeterRegistry extends StepMeterRegistry {
      */
     // VisibleForTesting
     String getBodyMeasurementsPrefix() {
-        final long stepSeconds = config.step().getSeconds();
-        final long time = config.floorTimes() ? (clock.wallTime() / 1000 / stepSeconds * stepSeconds) : clock.wallTime() / 1000;
-        return String.format(BODY_MEASUREMENTS_PREFIX, time);
+        long stepSeconds = config.step().getSeconds();
+        long wallTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(clock.wallTime());
+        if (config.floorTimes()) {
+            wallTimeInSeconds -= wallTimeInSeconds % stepSeconds;
+        }
+        return String.format(BODY_MEASUREMENTS_PREFIX, wallTimeInSeconds);
     }
 
     // VisibleForTesting
