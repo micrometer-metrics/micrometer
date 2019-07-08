@@ -20,12 +20,6 @@ import com.mongodb.MongoClientOptions;
 import com.mongodb.ServerAddress;
 import com.mongodb.event.ClusterListenerAdapter;
 import com.mongodb.event.ClusterOpeningEvent;
-import de.flapdoodle.embed.mongo.MongodExecutable;
-import de.flapdoodle.embed.mongo.config.IMongodConfig;
-import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
-import de.flapdoodle.embed.mongo.config.Net;
-import de.flapdoodle.embed.mongo.distribution.Version;
-import de.flapdoodle.embed.process.runtime.Network;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -34,11 +28,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static de.flapdoodle.embed.mongo.MongodStarter.getDefaultInstance;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -46,28 +38,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Christophe Bornet
  */
-class MongoMetricsCommandListenerTest {
+class MongoMetricsCommandListenerTest extends AbstractMongoDbTest {
 
-    private static final String HOST = "localhost";
-
-    private MongodExecutable mongodExecutable;
     private MeterRegistry registry;
-    private int port;
     private AtomicReference<String> clusterId;
     private MongoClient mongo;
 
     @BeforeEach
-    void setup() throws IOException {
+    void setup() {
         registry = new SimpleMeterRegistry();
-        port = Network.getFreeServerPort();
-
-        IMongodConfig mongodConfig = new MongodConfigBuilder()
-                .version(Version.Main.PRODUCTION)
-                .net(new Net(HOST, port, Network.localhostIsIPv6()))
-                .build();
-        mongodExecutable = getDefaultInstance().prepare(mongodConfig);
-        mongodExecutable.start();
-
         clusterId = new AtomicReference<>();
         MongoClientOptions options = MongoClientOptions.builder()
                 .addCommandListener(new MongoMetricsCommandListener(registry))
@@ -77,7 +56,6 @@ class MongoMetricsCommandListenerTest {
                         clusterId.set(event.getClusterId().getValue());
                     }
                 }).build();
-
         mongo = new MongoClient(new ServerAddress(HOST, port), options);
     }
 
@@ -115,9 +93,6 @@ class MongoMetricsCommandListenerTest {
     void destroy() {
         if (mongo != null) {
             mongo.close();
-        }
-        if (mongodExecutable != null) {
-            mongodExecutable.stop();
         }
     }
 

@@ -24,6 +24,7 @@ import java.lang.annotation.*;
  * to only record the failed attempts.
  *
  * @author Ali Dehghani
+ * @since 1.2.0
  * @see io.micrometer.core.aop.CountedAspect
  */
 @Inherited
@@ -32,12 +33,11 @@ import java.lang.annotation.*;
 public @interface Counted {
 
     /**
-     * Represents the metric name for the to-be-recorded counters. The default value is
-     * {@code method.counted}.
+     * Represents the metric name for the to-be-recorded counters.
      *
      * @return The metric name.
      */
-    String value() default "";
+    String value() default "method.counted";
 
     /**
      * By default, both failed and successful attempts are recorded. Switch it to {@code true} in

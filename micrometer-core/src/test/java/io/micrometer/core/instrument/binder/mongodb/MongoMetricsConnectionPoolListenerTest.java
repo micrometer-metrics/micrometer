@@ -20,24 +20,13 @@ import com.mongodb.MongoClientOptions;
 import com.mongodb.ServerAddress;
 import com.mongodb.event.ClusterListenerAdapter;
 import com.mongodb.event.ClusterOpeningEvent;
-import de.flapdoodle.embed.mongo.MongodExecutable;
-import de.flapdoodle.embed.mongo.MongodStarter;
-import de.flapdoodle.embed.mongo.config.IMongodConfig;
-import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
-import de.flapdoodle.embed.mongo.config.Net;
-import de.flapdoodle.embed.mongo.distribution.Version;
-import de.flapdoodle.embed.process.runtime.Network;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static de.flapdoodle.embed.mongo.MongodStarter.getDefaultInstance;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -45,32 +34,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Christophe Bornet
  */
-class MongoMetricsConnectionPoolListenerTest {
-
-    private static final String HOST = "localhost";
-    private int port;
-
-    private MongodExecutable mongodExecutable = null;
-
-    @BeforeEach
-    void setup() throws IOException {
-        MongodStarter starter = getDefaultInstance();
-
-        port = Network.getFreeServerPort();
-
-        IMongodConfig mongodConfig = new MongodConfigBuilder()
-                .version(Version.Main.PRODUCTION)
-                .net(new Net(HOST, port, Network.localhostIsIPv6()))
-                .build();
-        mongodExecutable = starter.prepare(mongodConfig);
-        mongodExecutable.start();
-    }
+class MongoMetricsConnectionPoolListenerTest extends AbstractMongoDbTest {
 
     @Test
     void shouldCreatePoolMetrics() {
         MeterRegistry registry = new SimpleMeterRegistry();
         AtomicReference<String> clusterId = new AtomicReference<>();
-
         MongoClientOptions options = MongoClientOptions.builder()
                 .minConnectionsPerHost(2)
                 .addConnectionPoolListener(new MongoMetricsConnectionPoolListener(registry))
@@ -81,8 +50,8 @@ class MongoMetricsConnectionPoolListenerTest {
                     }
                 })
                 .build();
-
         MongoClient mongo = new MongoClient(new ServerAddress(HOST, port), options);
+
         mongo.getDatabase("test")
                 .createCollection("testCol");
 
@@ -100,13 +69,6 @@ class MongoMetricsConnectionPoolListenerTest {
         assertThat(registry.find("mongodb.driver.pool.size").tags(tags).gauge())
                 .describedAs("metrics should be removed when the connection pool is closed")
                 .isNull();
-    }
-
-    @AfterEach
-    void destroy() {
-        if (mongodExecutable != null) {
-            mongodExecutable.stop();
-        }
     }
 
 }

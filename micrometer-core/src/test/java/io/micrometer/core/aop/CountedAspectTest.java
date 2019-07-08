@@ -54,6 +54,7 @@ class CountedAspectTest {
                 .tag("result", "success").counter();
 
         assertThat(counter.count()).isOne();
+        assertThat(counter.getId().getDescription()).isNull();
     }
 
     @Test
@@ -70,13 +71,14 @@ class CountedAspectTest {
                 .tag("result", "failure").counter();
 
         assertThat(counter.count()).isOne();
+        assertThat(counter.getId().getDescription()).isEqualTo("To record something");
     }
 
     @Test
-    void countedWithEmptyOrBlankMetricNames() {
+    void countedWithEmptyMetricNames() {
         countedService.emptyMetricName();
         try {
-            countedService.blankMetricName();
+            countedService.emptyMetricNameWithException();
         } catch (Exception ignored) {
         }
 
@@ -108,8 +110,8 @@ class CountedAspectTest {
 
         }
 
-        @Counted("  ")
-        void blankMetricName() {
+        @Counted
+        void emptyMetricNameWithException() {
             throw new RuntimeException("This is it");
         }
 

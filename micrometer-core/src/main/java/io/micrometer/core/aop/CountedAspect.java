@@ -32,6 +32,7 @@ import java.util.function.Function;
  * annotation and record a few counter metrics about their execution status.
  *
  * @author Ali Dehghani
+ * @since 1.2.0
  * @see Counted
  */
 @Aspect
@@ -47,11 +48,6 @@ public class CountedAspect {
      * The tag name to encapsulate the exception thrown by the intercepted method.
      */
     private static final String EXCEPTION_TAG = "exception";
-
-    /**
-     * The default metric name.
-     */
-    private static final String DEFAULT_METRIC_NAME = "method.counted";
 
     /**
      * Where we're going register metrics.
@@ -105,7 +101,6 @@ public class CountedAspect {
             if (!counted.recordFailuresOnly()) {
                 record(pjp, counted, "none", "success");
             }
-
             return result;
         } catch (Throwable e) {
             record(pjp, counted, e.getClass().getSimpleName(), "failure");
@@ -122,9 +117,11 @@ public class CountedAspect {
     }
 
     private Counter.Builder counter(ProceedingJoinPoint pjp, Counted counted) {
-        String metricName = counted.value().trim().isEmpty() ? DEFAULT_METRIC_NAME : counted.value();
-        return Counter.builder(metricName).
-                description(counted.description())
-                .tags(tagsBasedOnJoinPoint.apply(pjp));
+        Counter.Builder builder = Counter.builder(counted.value()).tags(tagsBasedOnJoinPoint.apply(pjp));
+        String description = counted.description();
+        if (!description.isEmpty()) {
+            builder.description(description);
+        }
+        return builder;
     }
 }

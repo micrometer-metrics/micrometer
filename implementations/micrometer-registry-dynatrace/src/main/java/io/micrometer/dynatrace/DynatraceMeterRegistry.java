@@ -275,7 +275,9 @@ public class DynatraceMeterRegistry extends StepMeterRegistry {
 
     // VisibleForTesting
     List<DynatraceBatchedPayload> createPostMessages(String type, String group, List<DynatraceTimeSeries> timeSeries) {
-        final String header = "{\"type\":\"" + type + (StringUtils.isNotBlank(group) ? '\"' + ",\"group\":\"" + group : "") + '\"' + ",\"series\":[";
+        final String header = "{\"type\":\"" + type + '\"'
+                + (StringUtils.isNotBlank(group) ? ",\"group\":\"" + group + '\"' : "")
+                + ",\"series\":[";
         final String footer = "]}";
         final int headerFooterBytes = header.getBytes(UTF_8).length + footer.getBytes(UTF_8).length;
         final int maxMessageSize = MAX_MESSAGE_SIZE - headerFooterBytes;
