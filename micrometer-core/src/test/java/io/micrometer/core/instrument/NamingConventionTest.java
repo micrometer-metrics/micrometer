@@ -20,22 +20,46 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+/**
+ * Tests for {@link NamingConvention}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class NamingConventionTest {
     @Test
-    void camelCase() {
+    void camelCaseName() {
         String name = NamingConvention.camelCase.name("a.Name.with.Words", Meter.Type.COUNTER);
         assertThat(name).isEqualTo("aNameWithWords");
     }
 
     @Test
-    void snakeCase() {
+    void camelCaseTagKey() {
+        String name = NamingConvention.camelCase.tagKey("a.Name.with.Words");
+        assertThat(name).isEqualTo("aNameWithWords");
+    }
+
+    @Test
+    void snakeCaseName() {
         String name = NamingConvention.snakeCase.name("a.Name.with.Words", Meter.Type.COUNTER);
         assertThat(name).isEqualTo("a_Name_with_Words");
     }
 
     @Test
-    void upperCamelCase() {
+    void snakeCaseTagKey() {
+        String name = NamingConvention.snakeCase.tagKey("a.Name.with.Words");
+        assertThat(name).isEqualTo("a_Name_with_Words");
+    }
+
+    @Test
+    void upperCamelCaseName() {
         String name = NamingConvention.upperCamelCase.name("a.name.with.words", Meter.Type.COUNTER);
+        assertThat(name).isEqualTo("ANameWithWords");
+    }
+
+    @Test
+    void upperCamelCaseTagKey() {
+        String name = NamingConvention.upperCamelCase.tagKey("a.name.with.words");
         assertThat(name).isEqualTo("ANameWithWords");
     }
 }
