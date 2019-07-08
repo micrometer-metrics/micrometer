@@ -70,7 +70,7 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
     @Override
     public void connectionPoolClosed(ConnectionPoolClosedEvent event) {
         ServerId serverId = event.getServerId();
-        for (Meter meter: meters.get(event.getServerId())) {
+        for (Meter meter : meters.get(serverId)) {
             registry.remove(meter);
         }
         meters.remove(serverId);
