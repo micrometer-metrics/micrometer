@@ -60,6 +60,12 @@ public interface DynatraceConfig extends StepRegistryConfig {
         return v;
     }
 
+    /**
+     * Return device group name.
+     *
+     * @return device group name
+     * @since 1.2.0
+     */
     default String group() {
         return get(prefix() + ".group");
     }
