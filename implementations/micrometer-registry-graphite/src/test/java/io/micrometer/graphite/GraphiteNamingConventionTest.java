@@ -46,9 +46,9 @@ class GraphiteNamingConventionTest {
 
         GraphiteNamingConvention convention = new GraphiteNamingConvention(delegateNamingConvention);
 
-        assertThat(convention.name("my.name", Meter.Type.TIMER)).isEqualTo("name:my.name");
-        assertThat(convention.tagKey("my_tag_key")).isEqualTo("key:my_tag_key");
-        assertThat(convention.tagValue("my_tag_value")).isEqualTo("value:my_tag_value");
+        assertThat(convention.name("my.name", Meter.Type.TIMER)).isEqualTo("name-my.name");
+        assertThat(convention.tagKey("my_tag_key")).isEqualTo("key-my_tag_key");
+        assertThat(convention.tagValue("my_tag_value")).isEqualTo("value-my_tag_value");
     }
 
     @Test
@@ -63,6 +63,16 @@ class GraphiteNamingConventionTest {
     }
 
     @Test
+    void nameShouldSanitizeQuestionMark() {
+        assertThat(convention.name("counter?1", Meter.Type.COUNTER)).isEqualTo("counter_1");
+    }
+
+    @Test
+    void nameShouldSanitizeColon() {
+        assertThat(convention.name("counter:1", Meter.Type.COUNTER)).isEqualTo("counter_1");
+    }
+
+    @Test
     void tagKeyShouldSanitizeDot() {
         GraphiteNamingConvention convention = new GraphiteNamingConvention(NamingConvention.identity);
         assertThat(convention.tagKey("my.tag")).isEqualTo("my_tag");
@@ -71,6 +81,16 @@ class GraphiteNamingConventionTest {
     @Test
     void tagKeyShouldSanitizeSpace() {
         assertThat(convention.tagKey("tag 1")).isEqualTo("tag_1");
+    }
+
+    @Test
+    void tagKeyShouldSanitizeQuestionMark() {
+        assertThat(convention.tagKey("tag?1")).isEqualTo("tag_1");
+    }
+
+    @Test
+    void tagKeyShouldSanitizeColon() {
+        assertThat(convention.tagKey("tag:1")).isEqualTo("tag_1");
     }
 
     @Test
@@ -83,21 +103,31 @@ class GraphiteNamingConventionTest {
         assertThat(convention.tagKey("value 1")).isEqualTo("value_1");
     }
 
+    @Test
+    void tagValueShouldSanitizeQuestionMark() {
+        assertThat(convention.tagKey("value?1")).isEqualTo("value_1");
+    }
+
+    @Test
+    void tagValueShouldSanitizeColon() {
+        assertThat(convention.tagKey("value:1")).isEqualTo("value_1");
+    }
+
     private static class CustomNamingConvention implements NamingConvention {
 
         @Override
         public String name(String name, Meter.Type type, String baseUnit) {
-            return "name:" + name;
+            return "name-" + name;
         }
 
         @Override
         public String tagKey(String key) {
-            return "key:" + key;
+            return "key-" + key;
         }
 
         @Override
         public String tagValue(String value) {
-            return "value:" + value;
+            return "value-" + value;
         }
 
     }
