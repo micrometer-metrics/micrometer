@@ -90,10 +90,10 @@ public class CountedAspectTest {
     }
 
     @Test
-    public void countedWithEmptyOrBlankMetricNames() {
+    public void countedWithEmptyMetricNames() {
         countedService.emptyMetricName();
         try {
-            countedService.blankMetricName();
+            countedService.emptyMetricNameWithException();
         } catch (Exception ignored) {
         }
 
@@ -158,8 +158,8 @@ public class CountedAspectTest {
 
         }
 
-        @Counted("  ")
-        void blankMetricName() {
+        @Counted
+        void emptyMetricNameWithException() {
             throw new RuntimeException("This is it");
         }
     }
