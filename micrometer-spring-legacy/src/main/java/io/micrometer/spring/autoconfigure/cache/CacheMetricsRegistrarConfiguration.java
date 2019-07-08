@@ -20,10 +20,12 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.spring.cache.CacheMeterBinderProvider;
 import io.micrometer.spring.cache.CacheMetricsRegistrar;
+import org.springframework.boot.autoconfigure.condition.AllNestedConditions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
 
@@ -36,9 +38,10 @@ import java.util.Map;
  * caches}.
  *
  * @author Stephane Nicoll
+ * @author Johnny Lim
  */
 @Configuration
-@ConditionalOnBean({CacheMeterBinderProvider.class, MeterRegistry.class})
+@Conditional(CacheMetricsRegistrarConfiguration.CacheMetricsRegistrarConditionalOnBeans.class)
 class CacheMetricsRegistrarConfiguration {
 
     private static final String CACHE_MANAGER_SUFFIX = "cacheManager";
@@ -91,6 +94,22 @@ class CacheMetricsRegistrarConfiguration {
                     beanName.length() - CACHE_MANAGER_SUFFIX.length());
         }
         return beanName;
+    }
+
+    static class CacheMetricsRegistrarConditionalOnBeans extends AllNestedConditions {
+
+        CacheMetricsRegistrarConditionalOnBeans() {
+            super(ConfigurationPhase.REGISTER_BEAN);
+        }
+
+        @ConditionalOnBean(MeterRegistry.class)
+        static class ConditionalOnMeterRegistryBean {
+        }
+
+        @ConditionalOnBean(CacheMeterBinderProvider.class)
+        static class ConditionalOnCacheMeterBinderProviderBean {
+        }
+
     }
 
 }
