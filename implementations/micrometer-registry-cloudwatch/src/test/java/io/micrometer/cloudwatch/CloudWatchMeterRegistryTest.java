@@ -61,7 +61,7 @@ class CloudWatchMeterRegistryTest {
     @Test
     void metricData() {
         registry.gauge("gauge", 1d);
-        List<MetricDatum> metricDatumStream = registry.metricData();
+        List<MetricDatum> metricDatumStream = registry.metricData(registry.getMeters());
         assertThat(metricDatumStream.size()).isEqualTo(1);
     }
 
@@ -72,7 +72,7 @@ class CloudWatchMeterRegistryTest {
         AtomicReference<Double> value = new AtomicReference<>(Double.NaN);
         registry.more().timeGauge("time.gauge", Tags.empty(), value, TimeUnit.MILLISECONDS, AtomicReference::get);
 
-        List<MetricDatum> metricDatumStream = registry.metricData();
+        List<MetricDatum> metricDatumStream = registry.metricData(registry.getMeters());
         assertThat(metricDatumStream.size()).isEqualTo(0);
     }
 

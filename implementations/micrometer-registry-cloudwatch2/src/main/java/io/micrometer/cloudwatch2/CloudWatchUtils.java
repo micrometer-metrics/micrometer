@@ -26,13 +26,13 @@ final class CloudWatchUtils {
      * Minimum allowed value as specified by
      * {@link MetricDatum#value()}
      */
-    private static final double MINIMUM_ALLOWED_VALUE = 8.515920e-109;
+    static final double MINIMUM_ALLOWED_VALUE = 8.515920e-109;
 
     /**
      * Maximum allowed value as specified by
      * {@link MetricDatum#value()}
      */
-    private static final double MAXIMUM_ALLOWED_VALUE = 1.174271e+108;
+    static final double MAXIMUM_ALLOWED_VALUE = 1.174271e+108;
 
     private CloudWatchUtils() {
     }

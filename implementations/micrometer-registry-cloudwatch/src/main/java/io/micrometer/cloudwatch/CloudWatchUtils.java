@@ -27,7 +27,7 @@ final class CloudWatchUtils {
      * Minimum allowed value as specified by
      * {@link com.amazonaws.services.cloudwatch.model.MetricDatum#setValue(Double)}
      */
-    private static final double MINIMUM_ALLOWED_VALUE = 8.515920e-109;
+    static final double MINIMUM_ALLOWED_VALUE = 8.515920e-109;
 
     /**
      * Maximum allowed value as specified by

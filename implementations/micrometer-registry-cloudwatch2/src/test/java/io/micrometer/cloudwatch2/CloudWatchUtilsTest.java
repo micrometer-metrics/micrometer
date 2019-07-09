@@ -24,9 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class CloudWatchUtilsTest {
 
-    private static final double EXPECTED_MIN = 8.515920e-109;
-    private static final double EXPECTED_MAX = 1.174271e+108;
-
     @Test
     void testClamp() {
         assertThat(CloudWatchUtils.clampMetricValue(Double.NaN))
@@ -35,19 +32,19 @@ class CloudWatchUtilsTest {
 
         assertThat(CloudWatchUtils.clampMetricValue(Double.MIN_VALUE))
                 .as("Check minimum value")
-                .isEqualTo(EXPECTED_MIN);
+                .isEqualTo(CloudWatchUtils.MINIMUM_ALLOWED_VALUE);
 
         assertThat(CloudWatchUtils.clampMetricValue(Double.NEGATIVE_INFINITY))
                 .as("Check negative infinity")
-                .isEqualTo(-EXPECTED_MAX);
+                .isEqualTo(-CloudWatchUtils.MAXIMUM_ALLOWED_VALUE);
 
         assertThat(CloudWatchUtils.clampMetricValue(Double.POSITIVE_INFINITY))
                 .as("Check positive infinity")
-                .isEqualTo(EXPECTED_MAX);
+                .isEqualTo(CloudWatchUtils.MAXIMUM_ALLOWED_VALUE);
 
         assertThat(CloudWatchUtils.clampMetricValue(-Double.MAX_VALUE))
                 .as("Check negative max value")
-                .isEqualTo(-EXPECTED_MAX);
+                .isEqualTo(-CloudWatchUtils.MAXIMUM_ALLOWED_VALUE);
 
         assertThat(CloudWatchUtils.clampMetricValue(0))
                 .as("Check 0")
