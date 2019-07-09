@@ -58,6 +58,11 @@ public class TimedAspect {
     private final MeterRegistry registry;
     private final Function<ProceedingJoinPoint, Iterable<Tag>> tagsBasedOnJoinPoint;
 
+    /**
+     * Create a {@code TimedAspect} instance with {@link Metrics#globalRegistry}.
+     *
+     * @since 1.2.0
+     */
     public TimedAspect() {
         this(Metrics.globalRegistry);
     }
