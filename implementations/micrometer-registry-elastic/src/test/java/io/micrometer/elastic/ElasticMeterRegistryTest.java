@@ -257,4 +257,11 @@ class ElasticMeterRegistryTest {
         assertThat(ElasticMeterRegistry.getMajorVersion(responseBody)).isEqualTo(5);
     }
 
+    @Issue("#1505")
+    @Test
+    void getVersionWhenVersionIs5_3_0() {
+        String responseBody = "{\"status\":200,\"name\":\"Sematext-Logsene\",\"cluster_name\":\"elasticsearch\",\"cluster_uuid\":\"anything\",\"version\":{\"number\":\"5.3.0\",\"build_hash\":\"3adb13b\",\"build_date\":\"2017-03-23T03:31:50.652Z\",\"build_snapshot\":false,\"lucene_version\":\"6.4.1\"},\"tagline\":\"You Know, for Search\"}";
+        assertThat(ElasticMeterRegistry.getMajorVersion(responseBody)).isEqualTo(5);
+    }
+
 }
