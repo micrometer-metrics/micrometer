@@ -23,6 +23,12 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link GraphiteHierarchicalNameMapper}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class GraphiteHierarchicalNameMapperTest {
     private final GraphiteHierarchicalNameMapper nameMapper = new GraphiteHierarchicalNameMapper("stack", "app.name");
     private final Meter.Id id = new SimpleMeterRegistry().counter("my.name",
@@ -33,5 +39,13 @@ class GraphiteHierarchicalNameMapperTest {
     void tagsAsPrefix() {
         assertThat(nameMapper.toHierarchicalName(id, NamingConvention.camelCase))
                 .isEqualTo("PROD.MYAPP.myName.otherTag.value");
+    }
+
+    @Test
+    void toHierarchicalNameShouldSanitizeTagValueFromTagsAsPrefix() {
+        Meter.Id id = new SimpleMeterRegistry().counter("my.name",
+                "app.name", "MY APP", "stack", "PROD", "other.tag", "value").getId();
+        assertThat(nameMapper.toHierarchicalName(id, new GraphiteNamingConvention()))
+                .isEqualTo("PROD.MY_APP.myName.otherTag.value");
     }
 }
