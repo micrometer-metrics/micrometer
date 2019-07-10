@@ -47,7 +47,7 @@ public class BufferingFlux {
 
             final DirectProcessor<Void> intervalEnd = DirectProcessor.create();
 
-            final Flux<String> hearbeat = Flux.interval(Duration.ofMillis(maxMillisecondsBetweenEmits))
+            final Flux<String> heartbeat = Flux.interval(Duration.ofMillis(maxMillisecondsBetweenEmits))
                     .map(l -> "")
                     .takeUntilOther(intervalEnd);
 
@@ -55,7 +55,7 @@ public class BufferingFlux {
             // buffer flushes when the source doesn't emit for a while.
             final Flux<String> sourceWithEmptyStringKeepAlive = source
                     .doOnTerminate(intervalEnd::onComplete)
-                    .mergeWith(hearbeat);
+                    .mergeWith(heartbeat);
 
             return sourceWithEmptyStringKeepAlive
                     .bufferUntil(line -> {
