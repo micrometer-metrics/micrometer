@@ -102,7 +102,7 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
     private static final String TYPE_PATH_BEFORE_VERSION_7 = "/doc";
     private static final String TYPE_PATH_AFTER_VERSION_7 = "";
 
-    private static final Pattern MAJOR_VERSION_PATTERN = Pattern.compile("\"number\" : \"([\\d]+)");
+    private static final Pattern MAJOR_VERSION_PATTERN = Pattern.compile("\"number\" *: *\"([\\d]+)");
 
     private static final String ERROR_RESPONSE_BODY_SIGNATURE = "\"errors\":true";
     private static final Pattern STATUS_CREATED_PATTERN = Pattern.compile("\"status\":201");
