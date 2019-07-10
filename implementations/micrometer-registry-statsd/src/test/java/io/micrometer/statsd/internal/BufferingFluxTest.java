@@ -31,6 +31,12 @@ import reactor.test.StepVerifier;
 
 import org.junit.jupiter.api.Test;
 
+/**
+ * Tests for {@link BufferingFlux}.
+ *
+ * @author Nils Breunese
+ * @author Johnny Lim
+ */
 class BufferingFluxTest {
 
     @Test
@@ -117,18 +123,28 @@ class BufferingFluxTest {
      * which is not a valid statsd line.
      */
     @Test
-    void bufferMessagesCanBeAppended() {
+    void bufferMessagesCanBeAppended() throws InterruptedException {
+        int numberOfLines = 500;
+
         List<String> stats = new ArrayList<>();
-        IntStream.range(0, 500).forEachOrdered(i -> stats.add("test.msg.example:" + i + "|c"));
+        IntStream.range(0, numberOfLines).forEachOrdered(i -> stats.add("test.msg.example:" + i + "|c"));
 
         String[] lines = stats.toArray(new String[0]);
         Flux<String> source = Flux.just(lines)
                 .delayElements(Duration.ofMillis(1));
         Flux<String> buffered = BufferingFlux.create(source, "\n", 100, 10);
 
+        CountDownLatch latch = new CountDownLatch(numberOfLines);
         StringBuilder sb = new StringBuilder();
-        buffered.subscribe(sb::append);
-        buffered.blockLast(Duration.ofSeconds(10));
+        buffered.subscribe((bufferedLines) -> {
+            sb.append(bufferedLines);
+
+            int numberOfBufferedLines = bufferedLines.split("\n").length;
+            for (int i = 0; i < numberOfBufferedLines; i++) {
+                latch.countDown();
+            }
+        });
+        assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 
         String[] resultLines = sb.toString().split("\n");
         assertThat(resultLines).isEqualTo(lines);
