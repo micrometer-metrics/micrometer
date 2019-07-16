@@ -55,6 +55,7 @@ public class HttpUrlConnectionSender implements HttpSender {
      * @param connectTimeout connect timeout when establishing a connection
      * @param readTimeout read timeout when receiving a response
      * @param proxy proxy to use when establishing a connection
+     * @since 1.2.0
      */
     public HttpUrlConnectionSender(Duration connectTimeout, Duration readTimeout, Proxy proxy) {
         this.connectTimeoutMs = (int) connectTimeout.toMillis();
