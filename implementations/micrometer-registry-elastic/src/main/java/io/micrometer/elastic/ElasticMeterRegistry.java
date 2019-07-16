@@ -399,6 +399,12 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }));
     }
 
+    /**
+     * Return formatted current timestamp.
+     *
+     * @return formatted current timestamp
+     * @since 1.2.0
+     */
     protected String generateTimestamp() {
         return TIMESTAMP_FORMATTER.format(Instant.ofEpochMilli(config().clock().wallTime()));
     }
