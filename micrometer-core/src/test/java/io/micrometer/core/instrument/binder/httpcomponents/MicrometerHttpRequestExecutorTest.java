@@ -55,7 +55,7 @@ class MicrometerHttpRequestExecutorTest {
     private MeterRegistry registry;
 
     @BeforeEach
-    private void setup() {
+    void setup() {
         registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
     }
 
@@ -121,13 +121,13 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(anyUrl()));
         HttpClient client = client(executor(false));
         HttpGet getWithHeader = new HttpGet(server.baseUrl());
-        getWithHeader.addHeader("URI_PATTERN", "/some/pattern");
+        getWithHeader.addHeader(MicrometerHttpRequestExecutor.DEFAULT_URI_PATTERN_HEADER, "/some/pattern");
         EntityUtils.consume(client.execute(getWithHeader).getEntity());
         assertThat(registry.get(EXPECTED_METER_NAME)
                 .tags("uri", "/some/pattern")
                 .timer().count()).isEqualTo(1L);
         assertThrows(MeterNotFoundException.class, () -> registry.get(EXPECTED_METER_NAME)
-                .tags("uri", "other")
+                .tags("uri", "UNKNOWN")
                 .timer());
     }
 
@@ -135,7 +135,6 @@ class MicrometerHttpRequestExecutorTest {
     void routeNotTaggedByDefault(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
         server.stubFor(any(anyUrl()));
         HttpClient client = client(executor(false));
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         List<String> tagKeys = registry.get(EXPECTED_METER_NAME)
                 .timer().getId().getTags().stream()
@@ -150,7 +149,6 @@ class MicrometerHttpRequestExecutorTest {
         server.stubFor(any(anyUrl()));
         HttpClient client = client(executor(true));
         EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
-        EntityUtils.consume(client.execute(new HttpGet(server.baseUrl())).getEntity());
         List<String> tagKeys = registry.get(EXPECTED_METER_NAME)
                 .timer().getId().getTags().stream()
                 .map(Tag::getKey)
@@ -160,11 +158,10 @@ class MicrometerHttpRequestExecutorTest {
 
     @Test
     void waitForContinueGetsPassedToSuper() {
-        // We cannot see the private variable inside the HttpRequestExecutor,
-        // but we can see, if its constructor fails because of an illegal value.
-        assertThrows(IllegalArgumentException.class, () -> MicrometerHttpRequestExecutor.builder(registry)
-                    .waitForContinue(-7654)
-                    .build());
+        MicrometerHttpRequestExecutor requestExecutor = MicrometerHttpRequestExecutor.builder(registry)
+                .waitForContinue(1000)
+                .build();
+        assertThat(requestExecutor).hasFieldOrPropertyWithValue("waitForContinue", 1000);
     }
 
     @Test
