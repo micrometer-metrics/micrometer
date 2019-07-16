@@ -104,7 +104,7 @@ class TimedAspectTest {
         assertThatExceptionOfType(MeterNotFoundException.class).isThrownBy(() -> {
             failingRegistry.get("longCall")
                     .tag("class", "io.micrometer.core.aop.TimedAspectTest$TimedService")
-                    .tag("method", "call")
+                    .tag("method", "longCall")
                     .tag("extra", "tag")
                     .longTaskTimer();
         });
