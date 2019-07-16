@@ -136,7 +136,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         @Nullable
         IOException exception;
 
-        CallState(long startTime, Request request) {
+        CallState(long startTime, @Nullable Request request) {
             this.startTime = startTime;
             this.request = request;
         }
