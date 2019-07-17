@@ -131,7 +131,8 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
             registerTimeGaugeForObject(registry, o, "sync-time-avg", tags, "The average time taken for a group sync.");
             registerTimeGaugeForObject(registry, o, "sync-time-max", tags, "The max time taken for a group sync.");
             registerTimeGaugeForObject(registry, o, "heartbeat-response-time-max", tags, "The max time taken to receive a response to a heartbeat request.");
-            registerTimeGaugeForObject(registry, o, "last-heartbeat-seconds-ago", "last-heartbeat", tags, "The time since the last controller heartbeat.");
+            registerTimeGaugeForObject(registry, o, "last-heartbeat-seconds-ago", "last-heartbeat", tags,
+                    "The time since the last controller heartbeat.", TimeUnit.SECONDS);
         });
 
         registerMetricsEventually("consumer-metrics", (o, tags) -> {
@@ -142,8 +143,11 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
             registerGaugeForObject(registry, o, "io-wait-ratio", tags, "The fraction of time the I/O thread spent waiting.", null);
             registerGaugeForObject(registry, o, "select-total", tags, "Number of times the I/O layer checked for new I/O to perform.", null);
 
-            registerTimeGaugeForObject(registry, o, "io-time-ns-avg", "io-time-avg", tags, "The average length of time for I/O per select call.");
-            registerTimeGaugeForObject(registry, o, "io-wait-time-ns-avg", "io-wait-time-avg", tags, "The average length of time the I/O thread spent waiting for a socket to be ready for reads or writes.");
+            registerTimeGaugeForObject(registry, o, "io-time-ns-avg", "io-time-avg", tags,
+                    "The average length of time for I/O per select call.", TimeUnit.NANOSECONDS);
+            registerTimeGaugeForObject(registry, o, "io-wait-time-ns-avg", "io-wait-time-avg", tags,
+                    "The average length of time the I/O thread spent waiting for a socket to be ready for reads or writes.",
+                    TimeUnit.NANOSECONDS);
 
             if (kafkaMajorVersion(tags) >= 2) {
                 registerGaugeForObject(registry, o, "successful-authentication-total", "authentication-attempts",
@@ -156,8 +160,11 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
                 registerGaugeForObject(registry, o, "request-total", tags, "", "requests");
                 registerGaugeForObject(registry, o, "response-total", tags, "", "responses");
 
-                registerTimeGaugeForObject(registry, o, "io-waittime-total", "io-wait-time-total", tags, "Time spent on the I/O thread waiting for a socket to be ready for reads or writes.");
-                registerTimeGaugeForObject(registry, o, "iotime-total", "io-time-total", tags, "Time spent in I/O during select calls.");
+                registerTimeGaugeForObject(registry, o, "io-waittime-total", "io-wait-time-total", tags,
+                        "Time spent on the I/O thread waiting for a socket to be ready for reads or writes.",
+                        TimeUnit.NANOSECONDS);
+                registerTimeGaugeForObject(registry, o, "iotime-total", "io-time-total", tags,
+                        "Time spent in I/O during select calls.", TimeUnit.NANOSECONDS);
             }
         });
     }
@@ -188,13 +195,19 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
                 .register(registry));
     }
 
-    private void registerTimeGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, String meterName, Tags allTags, String description) {
+    private void registerTimeGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName,
+            String meterName, Tags allTags, String description, TimeUnit timeUnit) {
         final AtomicReference<TimeGauge> timeGauge = new AtomicReference<>();
-        timeGauge.set(TimeGauge.builder(METRIC_NAME_PREFIX + meterName, mBeanServer, TimeUnit.MILLISECONDS,
+        timeGauge.set(TimeGauge.builder(METRIC_NAME_PREFIX + meterName, mBeanServer, timeUnit,
                 getJmxAttribute(registry, timeGauge, o, jmxMetricName))
                 .description(description)
                 .tags(allTags)
                 .register(registry));
+    }
+
+    private void registerTimeGaugeForObject(MeterRegistry registry, ObjectName o, String jmxMetricName,
+            String meterName, Tags allTags, String description) {
+        registerTimeGaugeForObject(registry, o, jmxMetricName, meterName, allTags, description, TimeUnit.MILLISECONDS);
     }
 
     private ToDoubleFunction<MBeanServer> getJmxAttribute(MeterRegistry registry, AtomicReference<? extends Meter> meter,
