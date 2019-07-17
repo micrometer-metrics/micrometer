@@ -68,10 +68,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         super(config, clock);
         this.config = config;
         this.loggingSink = loggingSink;
-        if (meterIdPrinter == null) {
-            meterIdPrinter = defaultMeterIdPrinter();
-        }
-        this.meterIdPrinter = meterIdPrinter;
+        this.meterIdPrinter = meterIdPrinter != null ? meterIdPrinter : defaultMeterIdPrinter();
         config().namingConvention(NamingConvention.dot);
         start(threadFactory);
     }
@@ -266,7 +263,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         private ThreadFactory threadFactory = new NamedThreadFactory("logging-metrics-publisher");
         private Consumer<String> loggingSink = defaultLoggingSink();
         @Nullable
-        private Function<Meter, String> meterIdPrinter = null;
+        private Function<Meter, String> meterIdPrinter;
 
         Builder(LoggingRegistryConfig config) {
             this.config = config;
@@ -287,6 +284,13 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
             return this;
         }
 
+        /**
+         * Configure printer for meter IDs.
+         *
+         * @param meterIdPrinter printer to use for meter IDs
+         * @return this builder instance
+         * @since 1.2.0
+         */
         public Builder meterIdPrinter(Function<Meter, String> meterIdPrinter) {
             this.meterIdPrinter = meterIdPrinter;
             return this;
