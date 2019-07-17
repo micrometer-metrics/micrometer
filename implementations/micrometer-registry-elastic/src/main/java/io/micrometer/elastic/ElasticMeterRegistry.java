@@ -124,7 +124,16 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
                 new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
-    private ElasticMeterRegistry(ElasticConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
+    /**
+     * Create a new instance with given parameters.
+     *
+     * @param config configuration to use
+     * @param clock clock to use
+     * @param threadFactory thread factory to use
+     * @param httpClient http client to use
+     * @since 1.2.1
+     */
+    protected ElasticMeterRegistry(ElasticConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
         config().namingConvention(new ElasticNamingConvention());
         this.config = config;
@@ -276,6 +285,12 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         return count;
     }
 
+    /**
+     * Return index name.
+     *
+     * @return index name.
+     * @since 1.2.0
+     */
     protected String indexName() {
         ZonedDateTime dt = ZonedDateTime.ofInstant(new Date(config().clock().wallTime()).toInstant(), ZoneOffset.UTC);
         return config.index() + config.indexDateSeparator() + indexDateFormatter.format(dt);
@@ -384,6 +399,12 @@ public class ElasticMeterRegistry extends StepMeterRegistry {
         }));
     }
 
+    /**
+     * Return formatted current timestamp.
+     *
+     * @return formatted current timestamp
+     * @since 1.2.0
+     */
     protected String generateTimestamp() {
         return TIMESTAMP_FORMATTER.format(Instant.ofEpochMilli(config().clock().wallTime()));
     }
