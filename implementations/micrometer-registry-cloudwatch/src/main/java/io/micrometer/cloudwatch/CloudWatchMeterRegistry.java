@@ -34,8 +34,11 @@ import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadFactory;
@@ -56,6 +59,17 @@ import static java.util.stream.StreamSupport.stream;
  */
 @Deprecated
 public class CloudWatchMeterRegistry extends StepMeterRegistry {
+
+    private static final Map<String, StandardUnit> STANDARD_UNIT_BY_LOWERCASE_VALUE;
+
+    static {
+        Map<String, StandardUnit> standardUnitByLowercaseValue = new HashMap<>();
+        for (StandardUnit standardUnit : StandardUnit.values()) {
+            standardUnitByLowercaseValue.put(standardUnit.toString().toLowerCase(), standardUnit);
+        }
+        STANDARD_UNIT_BY_LOWERCASE_VALUE = Collections.unmodifiableMap(standardUnitByLowercaseValue);
+    }
+
     private final CloudWatchConfig config;
     private final AmazonCloudWatchAsync amazonCloudWatchAsync;
     private final Logger logger = LoggerFactory.getLogger(CloudWatchMeterRegistry.class);
@@ -165,7 +179,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         }
 
         private Stream<MetricDatum> counterData(Counter counter) {
-            return Stream.of(metricDatum(counter.getId(), "count", "count", counter.count()));
+            return Stream.of(metricDatum(counter.getId(), "count", StandardUnit.Count, counter.count()));
         }
 
         // VisibleForTesting
@@ -173,7 +187,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             Stream.Builder<MetricDatum> metrics = Stream.builder();
             metrics.add(metricDatum(timer.getId(), "sum", getBaseTimeUnit().name(), timer.totalTime(getBaseTimeUnit())));
             long count = timer.count();
-            metrics.add(metricDatum(timer.getId(), "count", "count", count));
+            metrics.add(metricDatum(timer.getId(), "count", StandardUnit.Count, count));
             if (count > 0) {
                 metrics.add(metricDatum(timer.getId(), "avg", getBaseTimeUnit().name(), timer.mean(getBaseTimeUnit())));
                 metrics.add(metricDatum(timer.getId(), "max", getBaseTimeUnit().name(), timer.max(getBaseTimeUnit())));
@@ -186,7 +200,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             Stream.Builder<MetricDatum> metrics = Stream.builder();
             metrics.add(metricDatum(summary.getId(), "sum", summary.totalAmount()));
             long count = summary.count();
-            metrics.add(metricDatum(summary.getId(), "count", "count", count));
+            metrics.add(metricDatum(summary.getId(), "count", StandardUnit.Count, count));
             if (count > 0) {
                 metrics.add(metricDatum(summary.getId(), "avg", summary.mean()));
                 metrics.add(metricDatum(summary.getId(), "max", summary.max()));
@@ -211,7 +225,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         // VisibleForTesting
         Stream<MetricDatum> functionCounterData(FunctionCounter counter) {
-            MetricDatum metricDatum = metricDatum(counter.getId(), "count", "count", counter.count());
+            MetricDatum metricDatum = metricDatum(counter.getId(), "count", StandardUnit.Count, counter.count());
             if (metricDatum == null) {
                 return Stream.empty();
             }
@@ -223,7 +237,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             // we can't know anything about max and percentiles originating from a function timer
             Stream.Builder<MetricDatum> metrics = Stream.builder();
             double count = timer.count();
-            metrics.add(metricDatum(timer.getId(), "count", "count", count));
+            metrics.add(metricDatum(timer.getId(), "count", StandardUnit.Count, count));
             if (count > 0) {
                 metrics.add(metricDatum(timer.getId(), "avg", timer.mean(getBaseTimeUnit())));
             }
@@ -239,16 +253,21 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
 
         @Nullable
         private MetricDatum metricDatum(Meter.Id id, double value) {
-            return metricDatum(id, null, null, value);
+            return metricDatum(id, null, id.getBaseUnit(), value);
         }
 
         @Nullable
         private MetricDatum metricDatum(Meter.Id id, @Nullable String suffix, double value) {
-            return metricDatum(id, suffix, null, value);
+            return metricDatum(id, suffix, id.getBaseUnit(), value);
         }
 
         @Nullable
         private MetricDatum metricDatum(Meter.Id id, @Nullable String suffix, @Nullable String unit, double value) {
+            return metricDatum(id, suffix, toStandardUnit(unit), value);
+        }
+
+        @Nullable
+        private MetricDatum metricDatum(Meter.Id id, @Nullable String suffix, StandardUnit standardUnit, double value) {
             if (Double.isNaN(value)) {
                 return null;
             }
@@ -259,7 +278,7 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
                     .withDimensions(toDimensions(tags))
                     .withTimestamp(timestamp)
                     .withValue(CloudWatchUtils.clampMetricValue(value))
-                    .withUnit(toStandardUnit(unit));
+                    .withUnit(standardUnit);
         }
 
         // VisibleForTesting
@@ -272,18 +291,9 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             if (unit == null) {
                 return StandardUnit.None;
             }
-            switch (unit.toLowerCase()) {
-                case "bytes":
-                    return StandardUnit.Bytes;
-                case "milliseconds":
-                    return StandardUnit.Milliseconds;
-                case "count":
-                    return StandardUnit.Count;
-                default:
-                    return StandardUnit.None;
-            }
+            StandardUnit standardUnit = STANDARD_UNIT_BY_LOWERCASE_VALUE.get(unit.toLowerCase());
+            return standardUnit != null ? standardUnit : StandardUnit.None;
         }
-
 
         private List<Dimension> toDimensions(List<Tag> tags) {
             return tags.stream()
