@@ -68,12 +68,6 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("stackdriver-metrics-publisher");
 
     /**
-     * The "global" type is meant as a catch-all when no other resource type is suitable, which
-     * includes everything that Micrometer ships.
-     * https://cloud.google.com/monitoring/custom-metrics/creating-metrics#which-resource
-     */
-    private static final String RESOURCE_TYPE = "global";
-    /**
      * Stackdriver's API only allows up to 200 TimeSeries per request
      * https://cloud.google.com/monitoring/quotas#custom_metrics_quotas
      */
@@ -341,10 +335,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                             .setType(metricType)
                             .putAllLabels(metricLabels)
                             .build())
-                    .setResource(MonitoredResource.newBuilder()
-                            .setType(RESOURCE_TYPE)
-                            .putLabels("project_id", config.projectId())
-                            .build())
+                    .setResource(config.monitoredResource())
                     .setMetricKind(MetricDescriptor.MetricKind.GAUGE) // https://cloud.google.com/monitoring/api/v3/metrics-details#metric-kinds
                     .setValueType(valueType)
                     .addPoints(Point.newBuilder()

@@ -15,6 +15,8 @@
  */
 package io.micrometer.stackdriver;
 
+import com.google.api.MonitoredResource;
+
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
@@ -25,6 +27,13 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
  * @since 1.1.0
  */
 public interface StackdriverConfig extends StepRegistryConfig {
+    /**
+     * The "global" type is meant as a catch-all when no other resource type is suitable, which
+     * includes everything that Micrometer ships.
+     * https://cloud.google.com/monitoring/custom-metrics/creating-metrics#which-resource
+     */
+    String RESOURCE_TYPE = "global";
+
     @Override
     default String prefix() {
         return "stackdriver";
@@ -35,5 +44,12 @@ public interface StackdriverConfig extends StepRegistryConfig {
         if (v == null)
             throw new MissingRequiredConfigurationException("projectId must be set to report metrics to Stackdriver");
         return v;
+    }
+
+    default MonitoredResource monitoredResource() {
+        return MonitoredResource.newBuilder()
+                .setType(RESOURCE_TYPE)
+                .putLabels("project_id", projectId())
+                .build();
     }
 }
