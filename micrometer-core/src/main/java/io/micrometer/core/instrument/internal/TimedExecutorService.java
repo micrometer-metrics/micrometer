@@ -72,12 +72,12 @@ public class TimedExecutorService implements ExecutorService {
 
     @Override
     public <T> Future<T> submit(Runnable task, T result) {
-        return delegate.submit(() -> timer.record(task), result);
+        return delegate.submit(timer.wrap(task), result);
     }
 
     @Override
     public Future<?> submit(Runnable task) {
-        return delegate.submit(() -> timer.record(task));
+        return delegate.submit(timer.wrap(task));
     }
 
     @Override
