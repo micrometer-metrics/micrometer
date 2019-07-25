@@ -29,6 +29,10 @@ public @interface Timed {
      */
     String value() default "";
 
+    /**
+     * A list of key-value pair arguments to supply the underlying Timer 
+     * {@link io.micrometer.core.instrument.Timer.Builder#tags(String...)} 
+     */
     String[] extraTags() default {};
 
     boolean longTask() default false;
