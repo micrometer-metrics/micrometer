@@ -76,7 +76,11 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
         Gauge<Double> gauge = () -> {
             T obj2 = ref.get();
             if (obj2 != null) {
-                return valueFunction.applyAsDouble(obj2);
+                try {
+                    return valueFunction.applyAsDouble(obj2);
+                } catch (Throwable ex) {
+                    return nullGaugeValue();
+                }
             } else {
                 return nullGaugeValue();
             }
