@@ -39,7 +39,7 @@ import java.util.function.Supplier;
  */
 public interface Timer extends Meter, HistogramSupport {
     /**
-     * Start a timing sample.
+     * Start a timing sample using the {@link Clock#SYSTEM System clock}.
      * @return A timing sample with start time recorded.
      * @since 1.1.0
      */
@@ -49,7 +49,7 @@ public interface Timer extends Meter, HistogramSupport {
 
     /**
      * Start a timing sample.
-     * @param registry a meter registry to be used
+     * @param registry a meter registry whose clock is to be used
      * @return A timing sample with start time recorded.
      */
     static Sample start(MeterRegistry registry) {
