@@ -46,14 +46,6 @@ public interface HumioConfig extends StepRegistryConfig {
     }
 
     /**
-     * @return The repository name to write metrics to.
-     */
-    default String repository() {
-        String v = get(prefix() + ".repository");
-        return v == null ? "sandbox" : v;
-    }
-
-    /**
      * Humio uses a concept called "tags" to decide which datasource to store metrics in. This concept
      * is distinct from Micrometer's notion of tags, which divides a metric along dimensional boundaries.
      * All metrics from this registry will be stored under a datasource defined by these tags.

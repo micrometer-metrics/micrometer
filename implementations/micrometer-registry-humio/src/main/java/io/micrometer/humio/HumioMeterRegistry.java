@@ -91,7 +91,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         for (List<Meter> meters : MeterPartition.partition(this, config.batchSize())) {
             try {
-                HttpSender.Request.Builder post = httpClient.post(config.uri() + "/api/v1/dataspaces/" + config.repository() + "/ingest");
+                HttpSender.Request.Builder post = httpClient.post(config.uri() + "/api/v1/ingest/humio-structured");
                 String token = config.apiToken();
                 if (token != null) {
                     post.withHeader("Authorization", "Bearer " + token);
