@@ -1,6 +1,7 @@
 dependencies {
     compile project(':micrometer-core')
-    compile 'com.netflix.spectator:spectator-reg-atlas:latest.release'
+    // FIXME see https://github.com/micrometer-metrics/micrometer/issues/1545
+    compile 'com.netflix.spectator:spectator-reg-atlas:0.92.2'
 
     testCompile project(':micrometer-test')
 }
