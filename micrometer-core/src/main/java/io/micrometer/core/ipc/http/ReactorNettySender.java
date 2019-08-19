@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.ipc.http;
 
-import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufFlux;
 import reactor.util.function.Tuple2;
@@ -37,8 +36,7 @@ public class ReactorNettySender implements HttpSender {
                 .uri(request.getUrl().toString())
                 .send((httpClientRequest, nettyOutbound) -> {
                     request.getRequestHeaders().forEach(httpClientRequest::addHeader);
-                    nettyOutbound.send(ByteBufFlux.fromString(Mono.just(new String(request.getEntity()))));
-                    return Subscriber::onComplete;
+                    return nettyOutbound.send(ByteBufFlux.fromString(Mono.just(new String(request.getEntity()))));
                 })
                 .responseSingle((r, body) -> Mono.just(r.status().code()).zipWith(body.asString().defaultIfEmpty("")))
                 .log()
