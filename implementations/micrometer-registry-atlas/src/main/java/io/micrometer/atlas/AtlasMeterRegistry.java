@@ -33,8 +33,6 @@ import io.micrometer.core.instrument.step.StepFunctionTimer;
 import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.lang.Nullable;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
@@ -88,15 +86,6 @@ public class AtlasMeterRegistry extends MeterRegistry {
 
     @Override
     public void close() {
-        try {
-            @SuppressWarnings("JavaReflectionMemberAccess")
-            Method collectData = registry.getClass().getDeclaredMethod("collectData");
-            collectData.setAccessible(true);
-            collectData.invoke(registry);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            // oh well, we tried
-        }
-
         stop();
         super.close();
     }
