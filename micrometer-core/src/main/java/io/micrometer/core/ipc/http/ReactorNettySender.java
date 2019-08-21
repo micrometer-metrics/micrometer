@@ -34,7 +34,10 @@ public class ReactorNettySender implements HttpSender {
     public Response send(Request request) {
         Tuple2<Integer, String> response = httpClient.request(toNettyHttpMethod(request.getMethod()))
                 .uri(request.getUrl().toString())
-                .send(ByteBufFlux.fromString(Mono.just(new String(request.getEntity()))))
+                .send((httpClientRequest, nettyOutbound) -> {
+                    request.getRequestHeaders().forEach(httpClientRequest::addHeader);
+                    return nettyOutbound.send(ByteBufFlux.fromString(Mono.just(new String(request.getEntity()))));
+                })
                 .responseSingle((r, body) -> Mono.just(r.status().code()).zipWith(body.asString().defaultIfEmpty("")))
                 .log()
                 .block();
