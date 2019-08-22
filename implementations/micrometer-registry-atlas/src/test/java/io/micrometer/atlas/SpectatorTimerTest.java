@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Timer;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import static io.micrometer.core.instrument.MockClock.clock;
@@ -28,7 +29,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SpectatorTimerTest {
     @Test
     void timerMax() {
-        AtlasConfig atlasConfig = k -> null;
+        AtlasConfig atlasConfig = new AtlasConfig() {
+            @Override
+            public String get(String k) {
+                return null;
+            }
+
+            @Override
+            public Duration lwcStep() {
+                return step();
+            }
+        };
         AtlasMeterRegistry registry = new AtlasMeterRegistry(atlasConfig, new MockClock());
         Timer timer = registry.timer("timer");
 

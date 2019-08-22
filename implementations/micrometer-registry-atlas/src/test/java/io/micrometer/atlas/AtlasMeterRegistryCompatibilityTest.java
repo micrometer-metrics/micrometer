@@ -41,6 +41,11 @@ class AtlasMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit 
             public Duration step() {
                 return Duration.ofMinutes(1);
             }
+
+            @Override
+            public Duration lwcStep() {
+                return step();
+            }
         }, new MockClock());
     }
 
