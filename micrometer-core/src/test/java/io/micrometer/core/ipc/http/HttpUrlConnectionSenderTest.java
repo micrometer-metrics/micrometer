@@ -21,6 +21,7 @@ import io.micrometer.core.ipc.http.HttpSender.Response;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -51,6 +52,7 @@ import static org.mockito.Mockito.when;
  * 
  * @author Oleksii Bondar
  */
+@Disabled("Mocks global state which affects HttpUrlConnectionSenderTests making real requests")
 class HttpUrlConnectionSenderTest {
 
     private static HttpUrlStreamHandler httpUrlStreamHandler;
