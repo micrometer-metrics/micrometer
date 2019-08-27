@@ -4,12 +4,12 @@ plugins {
 
 dependencies {
     compile project(':micrometer-core')
-    compile 'io.projectreactor:reactor-core:latest.release'
-    compile 'io.projectreactor.netty:reactor-netty:latest.release'
-    compile 'org.pcollections:pcollections:latest.release'
+    compile 'io.projectreactor:reactor-core:3.2.11.RELEASE'
+    compile 'io.projectreactor.netty:reactor-netty:0.8.10.RELEASE'
+    compile 'org.pcollections:pcollections:3.0.+'
 
     testCompile project(':micrometer-test')
-    testCompile 'io.projectreactor:reactor-test:latest.release'
+    testCompile 'io.projectreactor:reactor-test:3.2.11.RELEASE'
     testCompile 'org.mockito:mockito-core:latest.release'
 }
 

@@ -7,7 +7,7 @@ plugins {
 apply plugin: 'nebula.optional-base'
 
 dependencies {
-    compile 'org.pcollections:pcollections:latest.release'
+    compile 'org.pcollections:pcollections:3.0.+'
 
     // JSR-305 only used for non-required meta-annotations
     compile "com.google.code.findbugs:jsr305:latest.release", optional
@@ -47,8 +47,8 @@ dependencies {
     compile 'org.apache.logging.log4j:log4j-core:2.+', optional
 
     // reactor
-    compile 'io.projectreactor:reactor-core:latest.release', optional
-    compile 'io.projectreactor.netty:reactor-netty:latest.release', optional
+    compile 'io.projectreactor:reactor-core:3.2.11.RELEASE', optional
+    compile 'io.projectreactor.netty:reactor-netty:0.8.10.RELEASE', optional
 
     // @Timed AOP
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
@@ -57,7 +57,7 @@ dependencies {
 
     compile 'org.mongodb:mongo-java-driver:latest.release', optional
 
-    testCompile 'io.projectreactor:reactor-test:latest.release'
+    testCompile 'io.projectreactor:reactor-test:3.2.11.RELEASE'
 
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter:5.4.+'

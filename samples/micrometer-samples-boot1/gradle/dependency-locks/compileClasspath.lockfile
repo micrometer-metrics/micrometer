@@ -83,7 +83,7 @@ io.netty:netty-transport:4.1.36.Final
 io.opencensus:opencensus-api:0.21.0
 io.opencensus:opencensus-contrib-grpc-metrics:0.21.0
 io.opencensus:opencensus-contrib-http-util:0.21.0
-io.projectreactor.netty:reactor-netty:0.8.9.RELEASE
+io.projectreactor.netty:reactor-netty:0.8.10.RELEASE
 io.projectreactor:reactor-core:3.2.2.RELEASE
 io.prometheus:simpleclient:0.6.0
 io.prometheus:simpleclient_common:0.6.0
@@ -141,7 +141,7 @@ org.jboss.logging:jboss-logging:3.3.2.Final
 org.jboss:jandex:2.0.0.Final
 org.latencyutils:LatencyUtils:2.0.3
 org.mongodb:mongo-java-driver:3.4.3
-org.pcollections:pcollections:3.0.3
+org.pcollections:pcollections:3.0.5
 org.reactivestreams:reactive-streams:1.0.2
 org.slf4j:jcl-over-slf4j:1.7.25
 org.slf4j:jul-to-slf4j:1.7.25

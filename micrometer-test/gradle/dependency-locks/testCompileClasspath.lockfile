@@ -43,8 +43,8 @@ io.netty:netty-resolver:4.1.36.Final
 io.netty:netty-transport-native-epoll:4.1.36.Final
 io.netty:netty-transport-native-unix-common:4.1.36.Final
 io.netty:netty-transport:4.1.36.Final
-io.projectreactor.netty:reactor-netty:0.8.9.RELEASE
-io.projectreactor:reactor-core:3.2.10.RELEASE
+io.projectreactor.netty:reactor-netty:0.8.10.RELEASE
+io.projectreactor:reactor-core:3.2.11.RELEASE
 io.reactivex:rxjava:1.2.0
 javax.annotation:jsr250-api:1.0
 javax.cache:cache-api:1.1.1
@@ -100,7 +100,7 @@ org.latencyutils:LatencyUtils:2.0.3
 org.mongodb:mongo-java-driver:3.11.0-beta4
 org.opentest4j:opentest4j:1.1.1
 org.ow2.asm:asm:7.0
-org.pcollections:pcollections:3.0.3
+org.pcollections:pcollections:3.0.5
 org.reactivestreams:reactive-streams:1.0.2
 org.slf4j:slf4j-api:1.7.25
 org.xmlunit:xmlunit-core:2.6.2

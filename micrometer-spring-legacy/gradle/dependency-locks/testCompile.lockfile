@@ -99,7 +99,7 @@ io.netty:netty-transport:4.1.36.Final
 io.opencensus:opencensus-api:0.21.0
 io.opencensus:opencensus-contrib-grpc-metrics:0.21.0
 io.opencensus:opencensus-contrib-http-util:0.21.0
-io.projectreactor.netty:reactor-netty:0.9.0.M2
+io.projectreactor.netty:reactor-netty:0.8.10.RELEASE
 io.projectreactor:reactor-core:3.1.4.RELEASE
 io.prometheus:simpleclient:0.6.0
 io.prometheus:simpleclient_common:0.6.0
@@ -141,7 +141,7 @@ org.apache.maven:maven-plugin-api:3.3.9
 org.apache.maven:maven-repository-metadata:3.3.9
 org.apache.maven:maven-settings-builder:3.3.9
 org.apache.maven:maven-settings:3.3.9
-org.apache.tomcat.embed:tomcat-embed-core:8.5.42
+org.apache.tomcat.embed:tomcat-embed-core:8.5.34
 org.apache.tomcat.embed:tomcat-embed-el:8.5.34
 org.apache.tomcat.embed:tomcat-embed-websocket:8.5.34
 org.apache.tomcat:tomcat-annotations-api:8.5.34
@@ -226,7 +226,7 @@ org.mongodb:mongo-java-driver:3.4.3
 org.objenesis:objenesis:2.1
 org.opentest4j:opentest4j:1.1.1
 org.ow2.asm:asm:7.0
-org.pcollections:pcollections:3.0.3
+org.pcollections:pcollections:3.0.5
 org.reactivestreams:reactive-streams:1.0.2
 org.skyscreamer:jsonassert:1.4.0
 org.slf4j:jcl-over-slf4j:1.7.25
