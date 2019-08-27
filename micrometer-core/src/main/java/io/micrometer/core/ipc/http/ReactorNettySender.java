@@ -15,19 +15,24 @@
  */
 package io.micrometer.core.ipc.http;
 
+import io.netty.handler.codec.http.HttpMethod;
 import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufFlux;
+import reactor.netty.http.client.HttpClient;
 import reactor.util.function.Tuple2;
 
+/**
+ * {@link HttpSender} implementation based on the Reactor Netty {@link HttpClient}.
+ */
 public class ReactorNettySender implements HttpSender {
-    private final reactor.netty.http.client.HttpClient httpClient;
+    private final HttpClient httpClient;
 
-    public ReactorNettySender(reactor.netty.http.client.HttpClient httpClient) {
+    public ReactorNettySender(HttpClient httpClient) {
         this.httpClient = httpClient;
     }
 
     public ReactorNettySender() {
-        this(reactor.netty.http.client.HttpClient.create());
+        this(HttpClient.create());
     }
 
     @Override
@@ -43,20 +48,20 @@ public class ReactorNettySender implements HttpSender {
         return new Response(response.getT1(), response.getT2());
     }
 
-    private io.netty.handler.codec.http.HttpMethod toNettyHttpMethod(Method method) {
+    private HttpMethod toNettyHttpMethod(Method method) {
         switch (method) {
             case PUT:
-                return io.netty.handler.codec.http.HttpMethod.PUT;
+                return HttpMethod.PUT;
             case POST:
-                return io.netty.handler.codec.http.HttpMethod.POST;
+                return HttpMethod.POST;
             case HEAD:
-                return io.netty.handler.codec.http.HttpMethod.HEAD;
+                return HttpMethod.HEAD;
             case GET:
-                return io.netty.handler.codec.http.HttpMethod.GET;
+                return HttpMethod.GET;
             case DELETE:
-                return io.netty.handler.codec.http.HttpMethod.DELETE;
+                return HttpMethod.DELETE;
             case OPTIONS:
-                return io.netty.handler.codec.http.HttpMethod.OPTIONS;
+                return HttpMethod.OPTIONS;
             default:
                 throw new UnsupportedOperationException("http method " + method.toString() + " is not supported by the reactor netty client");
         }
