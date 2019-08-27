@@ -40,7 +40,7 @@ dependencies {
     compile 'org.apache.logging.log4j:log4j-core:2.+', optional
 
     // reactor
-    compile 'io.projectreactor:reactor-core:latest.release', optional
+    compile 'io.projectreactor:reactor-core:3.2.11.RELEASE', optional
     compile 'io.projectreactor.netty:reactor-netty:latest.release', optional
 
     // @Timed AOP
@@ -48,7 +48,7 @@ dependencies {
 
     compile 'com.squareup.okhttp3:okhttp:latest.release', optional
 
-    testCompile 'io.projectreactor:reactor-test:latest.release'
+    testCompile 'io.projectreactor:reactor-test:3.2.11.RELEASE'
 
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter:5.4.+'
