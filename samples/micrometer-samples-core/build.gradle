@@ -14,7 +14,7 @@ dependencies {
     }
 
     compile 'io.prometheus:simpleclient_pushgateway:latest.release'
-    compile 'io.projectreactor.netty:reactor-netty:latest.release'
+    compile 'io.projectreactor.netty:reactor-netty:0.8.10.RELEASE'
     compile 'org.apache.kafka:kafka-clients:latest.release'
     compile 'com.github.charithe:kafka-junit:4.1.2'
 }
