@@ -15,9 +15,34 @@
  */
 package io.micrometer.core.ipc.http;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import io.netty.handler.timeout.ReadTimeoutException;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
+import org.junit.jupiter.api.Test;
+import reactor.netty.http.client.HttpClient;
+import ru.lanwen.wiremock.ext.WiremockResolver;
+
+import java.util.concurrent.TimeUnit;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+
 class ReactorNettySenderTests extends AbstractHttpSenderTests {
     @Override
     void setHttpSender() {
         this.httpSender = new ReactorNettySender();
+    }
+
+    @Test
+    void customReadTimeoutHonored(@WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+        this.httpSender = new ReactorNettySender(HttpClient.create()
+                .tcpConfiguration(tcpClient -> tcpClient.doOnConnected(connection ->
+                        connection.addHandlerLast(new ReadTimeoutHandler(1, TimeUnit.MILLISECONDS))
+                                .addHandlerLast(new WriteTimeoutHandler(1, TimeUnit.MILLISECONDS)))));
+        server.stubFor(any(urlEqualTo("/metrics")).willReturn(ok().withFixedDelay(5)));
+
+        assertThatExceptionOfType(ReadTimeoutException.class)
+                .isThrownBy(() -> httpSender.post(server.baseUrl() + "/metrics").send());
     }
 }

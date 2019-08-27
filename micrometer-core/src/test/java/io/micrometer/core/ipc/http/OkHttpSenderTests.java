@@ -15,9 +15,41 @@
  */
 package io.micrometer.core.ipc.http;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import okhttp3.OkHttpClient;
+import org.junit.jupiter.api.Test;
+import ru.lanwen.wiremock.ext.WiremockResolver;
+
+import java.net.SocketTimeoutException;
+import java.util.concurrent.TimeUnit;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+
 class OkHttpSenderTests extends AbstractHttpSenderTests {
     @Override
     void setHttpSender() {
         this.httpSender = new OkHttpSender();
+    }
+
+    @Test
+    void customReadTimeoutHonored(@WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+        this.httpSender = new OkHttpSender(new OkHttpClient.Builder().readTimeout(1, TimeUnit.MILLISECONDS).build());
+        server.stubFor(any(urlEqualTo("/metrics")).willReturn(ok().withFixedDelay(5)));
+
+        assertThatExceptionOfType(SocketTimeoutException.class)
+                .isThrownBy(() -> httpSender.post(server.baseUrl() + "/metrics").send());
+    }
+
+    @Test
+    void appendUtf8CharsetContentType(@WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+        server.stubFor(any(urlEqualTo("/metrics")));
+
+        this.httpSender.post(server.baseUrl() + "/metrics")
+                .withContent("application/xml", "<xml></xml>")
+                .send();
+
+        server.verify(postRequestedFor(urlEqualTo("/metrics"))
+                .withHeader("Content-Type", equalTo("application/xml; charset=utf-8")));
     }
 }
