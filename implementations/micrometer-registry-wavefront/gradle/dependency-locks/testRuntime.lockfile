@@ -91,7 +91,7 @@ org.latencyutils:LatencyUtils:2.0.3
 org.mozilla:rhino:1.7.7
 org.opentest4j:opentest4j:1.1.1
 org.ow2.asm:asm:5.0.4
-org.pcollections:pcollections:3.0.3
+org.pcollections:pcollections:3.0.5
 org.reactivestreams:reactive-streams:1.0.2
 org.slf4j:slf4j-api:1.7.25
 org.xmlunit:xmlunit-core:2.5.1

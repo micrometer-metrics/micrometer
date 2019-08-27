@@ -88,6 +88,6 @@ org.jboss:jandex:2.0.3.Final
 org.latencyutils:LatencyUtils:2.0.3
 org.mockito:mockito-core:2.23.0
 org.objenesis:objenesis:2.6
-org.pcollections:pcollections:3.0.3
+org.pcollections:pcollections:3.0.5
 org.reactivestreams:reactive-streams:1.0.2
 org.slf4j:slf4j-api:1.7.25

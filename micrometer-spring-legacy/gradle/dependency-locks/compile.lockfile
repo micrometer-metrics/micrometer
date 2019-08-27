@@ -123,7 +123,7 @@ org.javassist:javassist:3.21.0-GA
 org.jboss.logging:jboss-logging:3.3.2.Final
 org.jboss:jandex:2.0.0.Final
 org.latencyutils:LatencyUtils:2.0.3
-org.pcollections:pcollections:3.0.3
+org.pcollections:pcollections:3.0.5
 org.reactivestreams:reactive-streams:1.0.2
 org.slf4j:jcl-over-slf4j:1.7.25
 org.slf4j:jul-to-slf4j:1.7.25

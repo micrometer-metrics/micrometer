@@ -6,7 +6,7 @@ dependencies {
     compile project(':micrometer-core')
     compile 'io.projectreactor:reactor-core:latest.release'
     compile 'io.projectreactor.netty:reactor-netty:latest.release'
-    compile 'org.pcollections:pcollections:latest.release'
+    compile 'org.pcollections:pcollections:3.0.+'
 
     testCompile project(':micrometer-test')
     testCompile 'io.projectreactor:reactor-test:latest.release'

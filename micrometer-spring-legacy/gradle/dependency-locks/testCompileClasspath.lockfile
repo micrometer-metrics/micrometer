@@ -211,7 +211,7 @@ org.mozilla:rhino:1.7.7
 org.objenesis:objenesis:2.1
 org.opentest4j:opentest4j:1.1.1
 org.ow2.asm:asm:5.0.3
-org.pcollections:pcollections:3.0.3
+org.pcollections:pcollections:3.0.5
 org.reactivestreams:reactive-streams:1.0.2
 org.skyscreamer:jsonassert:1.4.0
 org.slf4j:jcl-over-slf4j:1.7.25

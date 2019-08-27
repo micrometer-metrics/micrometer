@@ -131,7 +131,7 @@ org.junit.platform:junit-platform-commons:1.1.0-M1
 org.latencyutils:LatencyUtils:2.0.3
 org.lz4:lz4-java:1.4.1
 org.opentest4j:opentest4j:1.0.0
-org.pcollections:pcollections:3.0.3
+org.pcollections:pcollections:3.0.5
 org.reactivestreams:reactive-streams:1.0.2
 org.scala-lang:scala-library:2.12.6
 org.scala-lang:scala-reflect:2.12.6

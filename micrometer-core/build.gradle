@@ -7,7 +7,7 @@ plugins {
 apply plugin: 'nebula.optional-base'
 
 dependencies {
-    compile 'org.pcollections:pcollections:latest.release'
+    compile 'org.pcollections:pcollections:3.0.+'
 
     // JSR-305 only used for non-required meta-annotations
     compile "com.google.code.findbugs:jsr305:latest.release", optional

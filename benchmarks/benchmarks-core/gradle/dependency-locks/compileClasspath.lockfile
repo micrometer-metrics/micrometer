@@ -135,7 +135,7 @@ org.lz4:lz4-java:1.4.1
 org.openjdk.jmh:jmh-core:1.21
 org.openjdk.jmh:jmh-generator-annprocess:1.21
 org.opentest4j:opentest4j:1.0.0
-org.pcollections:pcollections:3.0.3
+org.pcollections:pcollections:3.0.5
 org.reactivestreams:reactive-streams:1.0.2
 org.scala-lang:scala-library:2.12.6
 org.scala-lang:scala-reflect:2.12.6
