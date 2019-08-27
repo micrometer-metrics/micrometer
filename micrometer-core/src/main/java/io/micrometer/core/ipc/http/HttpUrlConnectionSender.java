@@ -28,6 +28,7 @@ import java.util.Map;
  *
  * @author Jon Schneider
  * @author Johnny Lim
+ * @since 1.1.0
  */
 public class HttpUrlConnectionSender implements HttpSender {
     private final int connectTimeoutMs;

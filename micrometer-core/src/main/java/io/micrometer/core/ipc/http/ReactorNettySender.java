@@ -23,6 +23,9 @@ import reactor.util.function.Tuple2;
 
 /**
  * {@link HttpSender} implementation based on the Reactor Netty {@link HttpClient}.
+ *
+ * @author Jon Schneider
+ * @since 1.1.0
  */
 public class ReactorNettySender implements HttpSender {
     private final HttpClient httpClient;
