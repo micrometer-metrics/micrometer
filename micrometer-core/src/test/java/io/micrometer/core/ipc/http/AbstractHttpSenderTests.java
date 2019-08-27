@@ -27,6 +27,7 @@ import ru.lanwen.wiremock.ext.WiremockResolver;
 import ru.lanwen.wiremock.ext.WiremockResolver.Wiremock;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(WiremockResolver.class)
 abstract class AbstractHttpSenderTests {
@@ -41,7 +42,7 @@ abstract class AbstractHttpSenderTests {
 
     @ParameterizedTest
     @EnumSource(HttpSender.Method.class)
-    void requestSent(HttpSender.Method method, @Wiremock WireMockServer server) throws Throwable {
+    void requestSentWithDefaults(HttpSender.Method method, @Wiremock WireMockServer server) throws Throwable {
         server.stubFor(any(urlEqualTo("/metrics")));
 
         httpSender.newRequest(server.baseUrl() + "/metrics")
@@ -59,5 +60,24 @@ abstract class AbstractHttpSenderTests {
                 .withBasicAuth(new BasicCredentials("user", "pass"))
                 .withHeader("Accept", equalTo("customAccept"))
                 .withHeader("customHeader", equalTo("customHeaderValue")));
+    }
+
+    @ParameterizedTest
+    @EnumSource(HttpSender.Method.class)
+    void errorResponseReceived(HttpSender.Method method, @Wiremock WireMockServer server) throws Throwable {
+        server.stubFor(any(urlEqualTo("/metrics"))
+                .willReturn(badRequest().withBody("Error processing metrics")));
+
+        HttpSender.Response response = httpSender.newRequest(server.baseUrl() + "/metrics")
+                .withMethod(method)
+                .withBasicAuthentication("user", "pass")
+                .accept("customAccept")
+                .withHeader("customHeader", "customHeaderValue")
+                .send();
+
+        assertThat(response.code()).isEqualTo(400);
+        if (!HttpSender.Method.HEAD.equals(method)) { // HEAD responses do not have a body
+            assertThat(response.body()).isEqualTo("Error processing metrics");
+        }
     }
 }
