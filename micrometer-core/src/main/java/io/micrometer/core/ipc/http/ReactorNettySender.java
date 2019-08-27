@@ -38,7 +38,6 @@ public class ReactorNettySender implements HttpSender {
                 .uri(request.getUrl().toString())
                 .send(ByteBufFlux.fromString(Mono.just(new String(request.getEntity()))))
                 .responseSingle((r, body) -> Mono.just(r.status().code()).zipWith(body.asString().defaultIfEmpty("")))
-                .log()
                 .block();
 
         return new Response(response.getT1(), response.getT2());
