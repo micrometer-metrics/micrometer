@@ -96,7 +96,7 @@ public abstract class HttpSenderCompatibilityKit {
                         MatchResult.of(request.getUrl().equals("/metrics"))
                 ))
                 .withHeader("Accept", equalTo("customAccept"))
-                .withHeader("Content-Type", equalTo("custom/type"))
+                .withHeader("Content-Type", containing("custom/type")) // charset may be added to the type
                 .withRequestBody(equalTo("this is a line")));
     }
 
@@ -137,7 +137,7 @@ public abstract class HttpSenderCompatibilityKit {
                         MatchResult.of(request.getMethod().getName().equals(method.name())),
                         MatchResult.of(request.getUrl().equals("/metrics"))
                 ))
-                .withBasicAuth(new BasicCredentials("user", "pass")));
+                .withBasicAuth(new BasicCredentials("superuser", "superpassword")));
     }
 
     @ParameterizedTest
