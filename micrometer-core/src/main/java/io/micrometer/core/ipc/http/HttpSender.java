@@ -168,7 +168,7 @@ public interface HttpSender {
             }
 
             /**
-             * Set the request body as JSON.
+             * Set the request body as JSON content type.
              *
              * @param content The request body.
              * @return This request builder.
@@ -178,7 +178,7 @@ public interface HttpSender {
             }
 
             /**
-             * Set the request body as JSON.
+             * Set the request body as plain text content type.
              *
              * @param content The request body.
              * @return This request builder.
