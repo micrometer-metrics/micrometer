@@ -16,85 +16,149 @@
 package io.micrometer.core.ipc.http;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.BasicCredentials;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.matching.MatchResult;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * A compatibility kit that can be used to verify user-provided {@link HttpSender} implementations.
+ * A compatibility kit to verify {@link HttpSender} implementations.
  *
  * @author Jon Schneider
+ * @author Tommy Ludwig
  */
-@ExtendWith({
-        HttpClientResolver.class,
-        WiremockResolver.class
-})
+@ExtendWith(WiremockResolver.class)
 public abstract class HttpSenderCompatibilityKit {
+
+    protected HttpSender httpSender;
+
     public abstract HttpSender httpClient();
+
+    @BeforeEach
+    void setup() {
+        httpSender = httpClient();
+    }
 
     @Test
     @DisplayName("compatibility test provides a non-null http client instance")
-    void httpClientIsNotNull(HttpSender httpClient) {
-        assertThat(httpClient).isNotNull();
+    void httpSenderIsNotNull() {
+        assertThat(httpSender).isNotNull();
     }
 
-    @Test
-    void successfulPostWithBody(HttpSender httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
-        server.stubFor(any(anyUrl()).willReturn(aResponse()
-                .withBody("a body")));
+    @ParameterizedTest
+    @DisplayName("successfully send a request with NO body and receive a response with NO body")
+    @EnumSource(HttpSender.Method.class)
+    void successfulRequestSentWithNoBody(HttpSender.Method method, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+        server.stubFor(any(urlEqualTo("/metrics")));
 
-        assertThat(httpClient.post(server.baseUrl() + "/api")
-                .withPlainText("this is a line")
-                .send().body()).isEqualTo("a body");
+        HttpSender.Response response = httpSender.newRequest(server.baseUrl() + "/metrics")
+                .withMethod(method)
+                .send();
 
-        server.verify(postRequestedFor(urlEqualTo("/api")).withRequestBody(equalTo("this is a line")));
+        assertThat(response.code()).isEqualTo(200);
+        assertThat(response.body()).isEqualTo(HttpSender.Response.NO_RESPONSE_BODY);
+
+        server.verify(WireMock.requestMadeFor(request ->
+                MatchResult.aggregate(
+                        MatchResult.of(request.getMethod().getName().equals(method.name())),
+                        MatchResult.of(request.getUrl().equals("/metrics"))
+                )));
     }
 
-    @Test
-    void successfulPostNoBody(HttpSender httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
-        server.stubFor(any(anyUrl()));
+    @ParameterizedTest
+    @DisplayName("successfully send a request with a body and receive a response with a body")
+    @EnumSource(value = HttpSender.Method.class, names = {"POST", "PUT"})
+    void successfulRequestSentWithBody(HttpSender.Method method, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+        server.stubFor(any(urlEqualTo("/metrics"))
+                .willReturn(ok("a body")));
 
-        assertThat(httpClient.post(server.baseUrl() + "/api")
-                .withPlainText("this is a line")
-                .send().body()).isEqualTo(HttpSender.Response.NO_RESPONSE_BODY);
+        HttpSender.Response response = httpSender.newRequest(server.baseUrl() + "/metrics")
+                .withMethod(method)
+                .accept("customAccept")
+                .withContent("custom/type", "this is a line")
+                .send();
 
-        server.verify(postRequestedFor(urlEqualTo("/api")).withRequestBody(equalTo("this is a line")));
+        assertThat(response.code()).isEqualTo(200);
+        assertThat(response.body()).isEqualTo("a body");
+
+        server.verify(WireMock.requestMadeFor(request ->
+                MatchResult.aggregate(
+                        MatchResult.of(request.getMethod().getName().equals(method.name())),
+                        MatchResult.of(request.getUrl().equals("/metrics"))
+                ))
+                .withHeader("Accept", equalTo("customAccept"))
+                .withHeader("Content-Type", equalTo("custom/type"))
+                .withRequestBody(equalTo("this is a line")));
     }
 
-    @Test
-    void failedPostWithBody(HttpSender httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
-        server.stubFor(any(anyUrl()).willReturn(aResponse()
-                .withStatus(500)
-                .withBody("a body")));
+    @ParameterizedTest
+    @DisplayName("receive an error response")
+    @EnumSource(HttpSender.Method.class)
+    void errorResponseReceived(HttpSender.Method method, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+        server.stubFor(any(urlEqualTo("/metrics"))
+                .willReturn(badRequest().withBody("Error processing metrics")));
 
-        assertThat(httpClient.post(server.baseUrl() + "/api").send().body()).isEqualTo("a body");
+        HttpSender.Response response = httpSender.newRequest(server.baseUrl() + "/metrics")
+                .withMethod(method)
+                .send();
+
+        assertThat(response.code()).isEqualTo(400);
+        if (!HttpSender.Method.HEAD.equals(method)) { // HEAD responses do not have a body
+            assertThat(response.body()).isEqualTo("Error processing metrics");
+        } else {
+            assertThat(response.body()).isEqualTo(HttpSender.Response.NO_RESPONSE_BODY);
+        }
     }
 
-    @Test
-    void failedPostWithNoBody(HttpSender httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
-        server.stubFor(any(anyUrl()).willReturn(aResponse()
-                .withStatus(500)));
+    @ParameterizedTest
+    @EnumSource(HttpSender.Method.class)
+    void basicAuth(HttpSender.Method method, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+        server.stubFor(any(urlEqualTo("/metrics"))
+                .willReturn(unauthorized()));
 
-        assertThat(httpClient.post(server.baseUrl() + "/api").send().body()).isEqualTo(HttpSender.Response.NO_RESPONSE_BODY);
+        HttpSender.Response response = httpSender.newRequest(server.baseUrl() + "/metrics")
+                .withMethod(method)
+                .withBasicAuthentication("superuser", "superpassword")
+                .send();
+
+        assertThat(response.code()).isEqualTo(401);
+
+        server.verify(WireMock.requestMadeFor(request ->
+                MatchResult.aggregate(
+                        MatchResult.of(request.getMethod().getName().equals(method.name())),
+                        MatchResult.of(request.getUrl().equals("/metrics"))
+                ))
+                .withBasicAuth(new BasicCredentials("user", "pass")));
     }
 
-    @Test
-    void successfulHead(HttpSender httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
-        server.stubFor(any(anyUrl()));
+    @ParameterizedTest
+    @EnumSource(HttpSender.Method.class)
+    void customHeader(HttpSender.Method method, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
+        server.stubFor(any(urlEqualTo("/metrics"))
+                .willReturn(unauthorized()));
 
-        assertThat(httpClient.head(server.baseUrl() + "/api")
-                .send().body()).isEqualTo(HttpSender.Response.NO_RESPONSE_BODY);
+        HttpSender.Response response = httpSender.newRequest(server.baseUrl() + "/metrics")
+                .withMethod(method)
+                .withHeader("customHeader", "customHeaderValue")
+                .send();
+
+        assertThat(response.code()).isEqualTo(401);
+
+        server.verify(WireMock.requestMadeFor(request ->
+                MatchResult.aggregate(
+                        MatchResult.of(request.getMethod().getName().equals(method.name())),
+                        MatchResult.of(request.getUrl().equals("/metrics"))
+                ))
+                .withHeader("customHeader", equalTo("customHeaderValue")));
     }
 
-    @Test
-    void failedHeadWithNoBody(HttpSender httpClient, @WiremockResolver.Wiremock WireMockServer server) throws Throwable {
-        server.stubFor(any(anyUrl()).willReturn(aResponse().withStatus(500)));
-
-        assertThat(httpClient.head(server.baseUrl() + "/api")
-                .send().body()).isEqualTo(HttpSender.Response.NO_RESPONSE_BODY);
-    }
 }

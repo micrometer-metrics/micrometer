@@ -20,6 +20,7 @@ import io.netty.handler.timeout.ReadTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import reactor.netty.http.client.HttpClient;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
@@ -28,11 +29,9 @@ import java.util.concurrent.TimeUnit;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-class ReactorNettySenderTests extends AbstractHttpSenderTests {
-    @Override
-    void setHttpSender() {
-        this.httpSender = new ReactorNettySender();
-    }
+@ExtendWith(WiremockResolver.class)
+class ReactorNettySenderTests {
+    HttpSender httpSender = new ReactorNettySender();
 
     @Test
     void customReadTimeoutHonored(@WiremockResolver.Wiremock WireMockServer server) throws Throwable {
