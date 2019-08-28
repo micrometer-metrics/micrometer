@@ -17,6 +17,7 @@ package io.micrometer.core.ipc.http;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import ru.lanwen.wiremock.ext.WiremockResolver;
 
 import java.net.SocketTimeoutException;
@@ -25,11 +26,9 @@ import java.time.Duration;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-class HttpUrlConnectionSenderTests extends AbstractHttpSenderTests {
-    @Override
-    void setHttpSender() {
-        this.httpSender = new HttpUrlConnectionSender();
-    }
+@ExtendWith(WiremockResolver.class)
+class HttpUrlConnectionSenderTests {
+    HttpSender httpSender = new HttpUrlConnectionSender();
 
     @Test
     void customReadTimeoutHonored(@WiremockResolver.Wiremock WireMockServer server) throws Throwable {
