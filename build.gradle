@@ -109,7 +109,7 @@ subprojects {
 }
 
 wrapper {
-    gradleVersion = '5.6'
+    gradleVersion = '5.6.1'
 }
 
 defaultTasks 'build'
