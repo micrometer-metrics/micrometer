@@ -163,31 +163,25 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
 
     private Stream<MetricTelemetry> trackCounter(Counter counter) {
         MetricTelemetry mt = createMetricTelemetry(counter, null);
-        double count = counter.count();
-        mt.setValue(count);
-        mt.setCount((int) Math.round(count));
+        mt.setValue(counter.count());
         return Stream.of(mt);
     }
 
     private Stream<MetricTelemetry> trackFunctionCounter(FunctionCounter counter) {
         MetricTelemetry mt = createMetricTelemetry(counter, null);
-        double count = counter.count();
-        mt.setValue(count);
-        mt.setCount((int) Math.round(count));
+        mt.setValue(counter.count());
         return Stream.of(mt);
     }
 
     private Stream<MetricTelemetry> trackGauge(Gauge gauge) {
         MetricTelemetry mt = createMetricTelemetry(gauge, null);
         mt.setValue(gauge.value());
-        mt.setCount(1);
         return Stream.of(mt);
     }
 
     private Stream<MetricTelemetry> trackTimeGauge(TimeGauge meter) {
         MetricTelemetry mt = createMetricTelemetry(meter, null);
         mt.setValue(meter.value(getBaseTimeUnit()));
-        mt.setCount(1);
         return Stream.of(mt);
     }
 
