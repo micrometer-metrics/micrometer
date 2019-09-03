@@ -1,6 +1,7 @@
 dependencies {
     compile project(':micrometer-core')
     compile 'com.google.cloud:google-cloud-monitoring:latest.release'
+    compile 'org.slf4j:slf4j-api:1.7.+'
 
     testCompile project(':micrometer-test')
 }
