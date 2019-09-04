@@ -18,8 +18,8 @@ package io.micrometer.core.instrument.push;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.lang.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -27,7 +27,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public abstract class PushMeterRegistry extends MeterRegistry {
-    private final static Logger logger = LoggerFactory.getLogger(PushMeterRegistry.class);
+    private final static InternalLogger logger = InternalLoggerFactory.getInstance(PushMeterRegistry.class);
     private final PushRegistryConfig config;
 
     @Nullable
