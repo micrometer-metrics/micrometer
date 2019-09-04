@@ -85,7 +85,7 @@ io.netty:netty:3.10.5.Final
 io.opencensus:opencensus-api:0.12.3
 io.opencensus:opencensus-contrib-grpc-metrics:0.12.3
 io.projectreactor.netty:reactor-netty:0.8.10.RELEASE
-io.projectreactor:reactor-core:3.2.11.RELEASE
+io.projectreactor:reactor-core:3.2.12.RELEASE
 io.prometheus:simpleclient:0.5.0
 io.prometheus:simpleclient_common:0.5.0
 io.prometheus:simpleclient_pushgateway:0.5.0
