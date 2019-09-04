@@ -15,7 +15,6 @@
  */
 package io.micrometer.core.instrument.binder.undertow;
 
-import com.google.common.base.CaseFormat;
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -44,7 +43,6 @@ import static io.undertow.server.handlers.MetricsHandler.MetricResult;
 @NonNullFields
 public class UndertowMetrics implements MetricsCollector, MeterBinder {
 
-    private static final String METRIC_PREFIX = "undertow.";
     private Map<String, MetricsHandler> metricsHandlers;
     private Iterable<Tag> tags;
 
@@ -55,37 +53,41 @@ public class UndertowMetrics implements MetricsCollector, MeterBinder {
 
     @Override
     public void registerMetric(String servletName, MetricsHandler handler) {
-        metricsHandlers.put(CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, servletName), handler);
+        metricsHandlers.put(servletName, handler);
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
         for (Map.Entry<String, MetricsHandler> handlerEntry : metricsHandlers.entrySet()) {
             MetricResult metricResult = handlerEntry.getValue().getMetrics();
-            bindTimer(registry, METRIC_PREFIX + handlerEntry.getKey() + "." + "requests", "Request duration", metricResult, MetricResult::getTotalRequests, MetricsHandler.MetricResult::getMinRequestTime);
-            bindTimeGauge(registry, METRIC_PREFIX + handlerEntry.getKey() + ".request.time.max", "Maximum time spent handling requests", metricResult, MetricResult::getMaxRequestTime);
-            bindTimeGauge(registry, METRIC_PREFIX + handlerEntry.getKey() + ".request.time.min", "Minimum time spent handling requests", metricResult, MetricResult::getMinRequestTime);
-            bindCounter(registry, METRIC_PREFIX + handlerEntry.getKey() + ".request.errors", "Total number of error requests ", metricResult, MetricResult::getTotalErrors);
+            String servletName = handlerEntry.getKey();
+            bindTimer(registry,  "undertow.requests", "Request duration", servletName, metricResult, MetricResult::getTotalRequests, MetricsHandler.MetricResult::getMinRequestTime);
+            bindTimeGauge(registry, "undertow.request.time.max", "Maximum time spent handling requests", servletName, metricResult, MetricResult::getMaxRequestTime);
+            bindTimeGauge(registry, "undertow.request.time.min", "Minimum time spent handling requests", servletName, metricResult, MetricResult::getMinRequestTime);
+            bindCounter(registry,  "undertow.request.errors", "Total number of error requests ", servletName, metricResult, MetricResult::getTotalErrors);
         }
     }
 
-    private void bindTimer(MeterRegistry registry, String name, String desc, MetricsHandler.MetricResult metricResult, ToLongFunction<MetricsHandler.MetricResult> countFunc, ToDoubleFunction<MetricsHandler.MetricResult> consumer) {
+    private void bindTimer(MeterRegistry registry, String name, String desc, String servletName, MetricResult metricResult, ToLongFunction<MetricResult> countFunc, ToDoubleFunction<MetricResult> consumer) {
         FunctionTimer.builder(name, metricResult, countFunc, consumer, TimeUnit.MILLISECONDS)
                 .tags(tags)
+                .tag("servlet_name", servletName)
                 .description(desc)
                 .register(registry);
     }
 
-    private void bindTimeGauge(MeterRegistry registry, String name, String desc, MetricResult metricResult, ToDoubleFunction<MetricResult> consumer) {
+    private void bindTimeGauge(MeterRegistry registry, String name, String desc, String servletName, MetricResult metricResult, ToDoubleFunction<MetricResult> consumer) {
         TimeGauge.builder(name, metricResult, TimeUnit.MILLISECONDS, consumer)
                 .tags(tags)
+                .tag("servlet_name", servletName)
                 .description(desc)
                 .register(registry);
     }
 
-    private void bindCounter(MeterRegistry registry, String name, String desc, MetricResult metricResult, ToDoubleFunction<MetricResult> consumer) {
+    private void bindCounter(MeterRegistry registry, String name, String desc, String servletName, MetricResult metricResult, ToDoubleFunction<MetricResult> consumer) {
         FunctionCounter.builder(name, metricResult, consumer)
                 .tags(tags)
+                .tag("servlet_name", servletName)
                 .description(desc)
                 .register(registry);
     }

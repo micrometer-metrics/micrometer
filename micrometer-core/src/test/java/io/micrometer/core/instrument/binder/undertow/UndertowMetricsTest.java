@@ -15,8 +15,8 @@
  */
 package io.micrometer.core.instrument.binder.undertow;
 
-import com.google.common.base.CaseFormat;
 import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.undertow.Undertow;
@@ -35,7 +35,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -45,12 +44,11 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 public class UndertowMetricsTest {
 
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-    private String servletName = "MetricTestServlet";
-    private String metricKey = CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, servletName);
 
     @Test
     public void testUndertowMetrics() throws ServletException, IOException {
-        UndertowMetrics metrics = new UndertowMetrics(Collections.emptyList());
+        String servletName = "MetricTestServlet";
+        UndertowMetrics metrics = new UndertowMetrics(Tags.of("some", "tag"));
 
         final ServletContainer container = ServletContainer.Factory.newInstance();
         DeploymentInfo builder = new DeploymentInfo()
@@ -58,7 +56,7 @@ public class UndertowMetricsTest {
                 .setClassLoader(UndertowMetricsTest.class.getClassLoader())
                 .setContextPath("/servletContext")
                 .setDeploymentName("servletContext.war")
-                .addServlet(new ServletInfo("MetricTestServlet", MetricTestServlet.class).addMapping("/path/default"))
+                .addServlet(new ServletInfo(servletName, MetricTestServlet.class).addMapping("/path/default"))
                 .setMetricsCollector(metrics);
 
         DeploymentManager manager = container.addDeployment(builder);
@@ -73,14 +71,14 @@ public class UndertowMetricsTest {
         client.newCall(new Request.Builder().url("http://localhost:8080/path/default").get().build()).execute();
 
         metrics.bindTo(registry);
-        assertThat(registry.get("undertow." + metricKey + ".requests").functionTimer().count()).isEqualTo(1.0);
-        assertThat(registry.get("undertow." + metricKey + ".requests").functionTimer().totalTime(TimeUnit.MILLISECONDS)).isGreaterThan(0);
-        assertThat(registry.get("undertow." + metricKey + ".request.time.max").timeGauge().value(TimeUnit.MILLISECONDS)).isGreaterThan(0);
-        assertThat(registry.get("undertow." + metricKey + ".request.time.min").timeGauge().value(TimeUnit.MILLISECONDS)).isGreaterThan(0);
-        assertThat(registry.get("undertow." + metricKey + ".request.time.max").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(registry.get("undertow." + metricKey + ".requests").functionTimer().totalTime(TimeUnit.MILLISECONDS));
-        assertThat(registry.get("undertow." + metricKey + ".request.time.min").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(registry.get("undertow." + metricKey + ".requests").functionTimer().totalTime(TimeUnit.MILLISECONDS));
-        assertThat(registry.get("undertow." + metricKey + ".request.errors").functionCounter().count()).isEqualTo(1);
-
+        assertThat(registry.get("undertow.requests").functionTimer().count()).isEqualTo(1.0);
+        assertThat(registry.get("undertow.requests").functionTimer().totalTime(TimeUnit.MILLISECONDS)).isGreaterThan(0);
+        assertThat(registry.get("undertow.request.time.max").timeGauge().value(TimeUnit.MILLISECONDS)).isGreaterThan(0);
+        assertThat(registry.get("undertow.request.time.min").timeGauge().value(TimeUnit.MILLISECONDS)).isGreaterThan(0);
+        assertThat(registry.get("undertow.request.time.max").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(registry.get("undertow.requests").functionTimer().totalTime(TimeUnit.MILLISECONDS));
+        assertThat(registry.get("undertow.request.time.min").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(registry.get("undertow.requests").functionTimer().totalTime(TimeUnit.MILLISECONDS));
+        assertThat(registry.get("undertow.request.errors").functionCounter().count()).isEqualTo(1);
+        assertThat(registry.get("undertow.requests").tags("some", "tag", "servlet_name", servletName)).isNotNull();
         undertow.stop();
     }
 
