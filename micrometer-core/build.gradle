@@ -32,6 +32,9 @@ dependencies {
     // 9.4+ are incompatible with the latest version of wiremock as of 1/4/2019
     compile 'org.eclipse.jetty:jetty-server:9.2.+', optional
     compile 'org.apache.tomcat.embed:tomcat-embed-core:8.+', optional
+    // https://mvnrepository.com/artifact/io.undertow/undertow-servlet
+    compile 'io.undertow:undertow-servlet:2.0.+', optional
+
 
     // apache httpcomponents monitoring
     compile 'org.apache.httpcomponents:httpclient:4.5.6', optional
