@@ -64,7 +64,7 @@ subprojects {
         }
     }
 
-    if(!project.name.contains('samples') && !project.name.contains('benchmarks')) {
+    if(!['samples', 'benchmarks'].find{project.name.contains(it)}) {
         apply plugin: 'io.spring.publishing'
 
         contacts {
