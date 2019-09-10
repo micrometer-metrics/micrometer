@@ -17,20 +17,14 @@ package io.micrometer.core.instrument.binder.jpa;
 
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
 import org.hibernate.SessionFactory;
-import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.event.service.spi.EventListenerRegistry;
-import org.hibernate.event.spi.*;
-import org.hibernate.stat.QueryStatistics;
 import org.hibernate.stat.Statistics;
 
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceException;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.ToDoubleFunction;
 
@@ -41,7 +35,6 @@ import java.util.function.ToDoubleFunction;
  * @author Marten Deinum
  * @author Jon Schneider
  * @author Johnny Lim
- * @author Pawel Stepien
  */
 @NonNullApi
 @NonNullFields
@@ -53,9 +46,6 @@ public class HibernateMetrics implements MeterBinder {
 
     @Nullable
     private final Statistics statistics;
-
-    @Nullable
-    private final SessionFactory sessionFactory;
 
     /**
      * Create {@code HibernateMetrics} and bind to the specified meter registry.
@@ -119,7 +109,6 @@ public class HibernateMetrics implements MeterBinder {
         this.tags = Tags.concat(tags, SESSION_FACTORY_TAG_NAME, sessionFactoryName);
         Statistics statistics = sessionFactory.getStatistics();
         this.statistics = statistics.isStatisticsEnabled() ? statistics : null;
-        this.sessionFactory = sessionFactory;
     }
 
     /**
@@ -133,7 +122,6 @@ public class HibernateMetrics implements MeterBinder {
     public HibernateMetrics(EntityManagerFactory entityManagerFactory, String entityManagerFactoryName, Iterable<Tag> tags) {
         this.tags = Tags.concat(tags, SESSION_FACTORY_TAG_NAME, entityManagerFactoryName);
         SessionFactory sessionFactory = unwrap(entityManagerFactory);
-        this.sessionFactory = sessionFactory;
         if (sessionFactory != null) {
             Statistics statistics = sessionFactory.getStatistics();
             this.statistics = statistics.isStatisticsEnabled() ? statistics : null;
@@ -245,8 +233,6 @@ public class HibernateMetrics implements MeterBinder {
             Statistics::getQueryCacheMissCount, "result", "miss");
         counter(registry, "hibernate.cache.query.puts", "The number of cacheable queries put in cache",
             Statistics::getQueryCachePutCount);
-
-        registerListeners(registry);
     }
 
     /**
@@ -261,93 +247,6 @@ public class HibernateMetrics implements MeterBinder {
             return entityManagerFactory.unwrap(SessionFactory.class);
         } catch (PersistenceException ex) {
             return null;
-        }
-    }
-
-    /**
-     * Register hibernate loadEvent listener - event trigger the metrics registration,
-     * only select queries are recorded in QueryStatistics {@link org.hibernate.stat.spi.StatisticsImplementor}
-     * @param meterRegistry meterRegistry to use
-     */
-    private void registerListeners(MeterRegistry meterRegistry) {
-        if (Objects.nonNull(sessionFactory) && sessionFactory instanceof SessionFactoryImplementor) {
-            EventListenerRegistry registry = ((SessionFactoryImplementor) sessionFactory).getServiceRegistry().getService(EventListenerRegistry.class);
-            MetricsEventHandler metricsEventHandler = new MetricsEventHandler(meterRegistry);
-            registry.appendListeners(EventType.POST_LOAD, metricsEventHandler);
-        }
-
-    }
-
-    class MetricsEventHandler implements PostLoadEventListener {
-
-        private final MeterRegistry meterRegistry;
-
-        MetricsEventHandler(MeterRegistry meterRegistry) {
-            this.meterRegistry = meterRegistry;
-        }
-
-        @Override
-        public void onPostLoad(PostLoadEvent event) {
-            registerQueryMetric(event.getSession().getFactory().getStatistics());
-        }
-
-        void registerQueryMetric(Statistics statistics) {
-            for (String query : statistics.getQueries()) {
-                QueryStatistics queryStatistics = statistics.getQueryStatistics(query);
-                if (Objects.nonNull(queryStatistics)) {
-                    String queryName = query.replace(" ", "_").replace(".", "_").toLowerCase();
-                    if (Objects.isNull(Search.in(meterRegistry).tags("query", queryName).functionCounter())) {
-
-                        FunctionCounter.builder("hibernate.query.cache.requests", queryStatistics, QueryStatistics::getCacheHitCount)
-                                .tags(tags)
-                                .tags("result", "hit", "query", queryName)
-                                .description("The number of query cache hits")
-                                .register(meterRegistry);
-
-                        FunctionCounter.builder("hibernate.query.cache.requests", queryStatistics, QueryStatistics::getCacheMissCount)
-                                .tags(tags)
-                                .tags("result", "miss", "query", queryName)
-                                .description("The number of query cache miss")
-                                .register(meterRegistry);
-
-                        FunctionCounter.builder("hibernate.query.cache.puts", queryStatistics, QueryStatistics::getCacheMissCount)
-                                .tags(tags)
-                                .tags("query", queryName)
-                                .description("The number of putting the query into cache")
-                                .register(meterRegistry);
-
-                        FunctionTimer.builder("hibernate.query.executions.total", queryStatistics, QueryStatistics::getExecutionCount, QueryStatistics::getExecutionTotalTime, TimeUnit.MILLISECONDS)
-                                .tags(tags)
-                                .tags("query", queryName)
-                                .description("Function tracked total number of query executions during time")
-                                .register(meterRegistry);
-
-                        TimeGauge.builder("hibernate.query.executions.avg", queryStatistics, TimeUnit.MILLISECONDS, QueryStatistics::getExecutionAvgTime)
-                                .tags(tags)
-                                .tags("query", queryName)
-                                .description("Query average execution time")
-                                .register(meterRegistry);
-
-                        TimeGauge.builder("hibernate.query.executions.max", queryStatistics, TimeUnit.MILLISECONDS, QueryStatistics::getExecutionMaxTime)
-                                .tags(tags)
-                                .tags("query", queryName)
-                                .description("Query maximum execution time")
-                                .register(meterRegistry);
-
-                        TimeGauge.builder("hibernate.query.executions.min", queryStatistics, TimeUnit.MILLISECONDS, QueryStatistics::getExecutionMinTime)
-                                .tags(tags)
-                                .tags("query", queryName)
-                                .description("Query minimum execution time")
-                                .register(meterRegistry);
-
-                        FunctionCounter.builder("hibernate.query.executions.rows", queryStatistics, QueryStatistics::getExecutionRowCount)
-                                .tags(tags)
-                                .tags("query", queryName)
-                                .description("The number of rows returned by query")
-                                .register(meterRegistry);
-                    }
-                }
-            }
         }
     }
 
