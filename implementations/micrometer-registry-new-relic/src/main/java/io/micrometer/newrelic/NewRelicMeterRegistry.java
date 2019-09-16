@@ -233,11 +233,10 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             
             String name = id.getConventionName(config().namingConvention());
             newAttrs[size] = new Attribute("metricName", name);
-            newAttrs[size+1] = new Attribute("metricType", id.getType().toString());
+            newAttrs[size + 1] = new Attribute("metricType", id.getType().toString());
             
             return event(id, Tags.empty(), newAttrs);
-    	}
-        
+        }
         return event(id, Tags.empty(), attributes);
     }
 
