@@ -78,9 +78,9 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     NewRelicMeterRegistry(NewRelicConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
 
-        if(config.meterNameEventTypeEnabled() == false
-        		&& (config.eventType() == null || config.eventType().isEmpty())) {
-        	throw new MissingRequiredConfigurationException("eventType must be set to report metrics to New Relic");
+        if (config.meterNameEventTypeEnabled() == false
+                && (config.eventType() == null || config.eventType().isEmpty())) {
+            throw new MissingRequiredConfigurationException("eventType must be set to report metrics to New Relic");
         }
         if (config.accountId() == null || config.accountId().isEmpty()) {
             throw new MissingRequiredConfigurationException("accountId must be set to report metrics to New Relic");
@@ -167,9 +167,10 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     Stream<String> writeTimeGauge(TimeGauge gauge) {
         Double value = gauge.value(getBaseTimeUnit());
         if (Double.isFinite(value)) {
-            return Stream.of(event(gauge.getId(), 
-            					new Attribute("value", value),
-                    			new Attribute("timeUnit", getBaseTimeUnit().name().toLowerCase())));
+            return Stream.of(
+                    event(gauge.getId(), 
+                            new Attribute("value", value),
+                            new Attribute("timeUnit", getBaseTimeUnit().name().toLowerCase())));
         }
         return Stream.empty();
     }
@@ -224,19 +225,19 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     }
 
     private String event(Meter.Id id, Attribute... attributes) {
-    	if(config.meterNameEventTypeEnabled() == false) {
-    		//Include contextual attributes when publishing all metrics under a single categorical eventType,
-    		//  NOT when publishing an eventType per Meter/metric name
-    		int size = attributes.length;
-    		Attribute[] newAttrs = Arrays.copyOf(attributes, size + 2);
-    		
-    		String name = id.getConventionName(config().namingConvention());
-    		newAttrs[size] = new Attribute("metricName", name);
-    		newAttrs[size+1] = new Attribute("metricType", id.getType().toString());
-    		
-    		return event(id, Tags.empty(), newAttrs);
+        if (config.meterNameEventTypeEnabled() == false) {
+            //Include contextual attributes when publishing all metrics under a single categorical eventType,
+            //  NOT when publishing an eventType per Meter/metric name
+            int size = attributes.length;
+            Attribute[] newAttrs = Arrays.copyOf(attributes, size + 2);
+            
+            String name = id.getConventionName(config().namingConvention());
+            newAttrs[size] = new Attribute("metricName", name);
+            newAttrs[size+1] = new Attribute("metricType", id.getType().toString());
+            
+            return event(id, Tags.empty(), newAttrs);
     	}
-    	
+        
         return event(id, Tags.empty(), attributes);
     }
 
@@ -256,24 +257,24 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         String eventType = getEventType(id, config, convention);
         
         return Arrays.stream(attributes)
-                .map(attr -> 
-	                	(attr.getValue() instanceof Number)
-		                	? ",\"" + attr.getName() + "\":" + DoubleFormat.wholeOrDecimal(((Number)attr.getValue()).doubleValue())
-		                	: ",\"" + attr.getName() + "\":\"" + convention.tagValue(((String)attr.getValue()).toString()) + "\""
-            		)
+                .map(attr ->
+                        (attr.getValue() instanceof Number)
+                            ? ",\"" + attr.getName() + "\":" + DoubleFormat.wholeOrDecimal(((Number)attr.getValue()).doubleValue())
+                            : ",\"" + attr.getName() + "\":\"" + convention.tagValue(((String)attr.getValue()).toString()) + "\""
+                )
                 .collect(Collectors.joining("", "{\"eventType\":\"" + escapeJson(eventType) + "\"", tagsJson + "}"));
     }
 
     String getEventType(Meter.Id id, NewRelicConfig config, NamingConvention convention) {
-    	String eventType = null;
-    	if(config.meterNameEventTypeEnabled()) {
-    		//meter/metric name event type
-    		eventType = id.getConventionName(convention);
-    	} else {
-    		//static eventType "category"
-    		eventType = config.eventType();
-    	}
-    	return eventType;
+        String eventType = null;
+        if (config.meterNameEventTypeEnabled()) {
+            //meter/metric name event type
+            eventType = id.getConventionName(convention);
+        } else {
+            //static eventType "category"
+            eventType = config.eventType();
+        }
+        return eventType;
     }
     
     private void sendEvents(String insightsEndpoint, Stream<String> events) {
