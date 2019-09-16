@@ -31,6 +31,18 @@ public interface NewRelicConfig extends StepRegistryConfig {
         return "newrelic";
     }
 
+    default boolean meterNameEventTypeEnabled() {
+    	String v = get(prefix() + ".meterNameEventTypeEnabled");
+    	return (v == null) ? false : new Boolean(v);
+    }
+    
+    default String eventType() {
+    	String v = get(prefix() + ".eventType");
+    	if (v == null)
+    		v = "MicrometerSample";
+    	return v;
+    }
+    
     default String apiKey() {
         String v = get(prefix() + ".apiKey");
         if (v == null)

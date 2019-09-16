@@ -25,6 +25,8 @@ import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
+
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,14 +75,22 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         this(config, clock, threadFactory, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()));
     }
 
-    private NewRelicMeterRegistry(NewRelicConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
+    // VisibleForTesting
+    NewRelicMeterRegistry(NewRelicConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
 
-        if (config.accountId() == null) {
+        if(config.meterNameEventTypeEnabled() == false
+        		&& StringUtils.isEmpty(config.eventType())) {
+        	throw new MissingRequiredConfigurationException("eventType must be set to report metrics to New Relic");
+        }
+        if (StringUtils.isEmpty(config.accountId())) {
             throw new MissingRequiredConfigurationException("accountId must be set to report metrics to New Relic");
         }
-        if (config.apiKey() == null) {
+        if (StringUtils.isEmpty(config.apiKey())) {
             throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to New Relic");
+        }
+        if (StringUtils.isEmpty(config.uri())) {
+            throw new MissingRequiredConfigurationException("uri must be set to report metrics to New Relic");
         }
 
         this.config = config;
@@ -126,7 +136,8 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         return Stream.of(
                 event(ltt.getId(),
                         new Attribute("activeTasks", ltt.activeTasks()),
-                        new Attribute("duration", ltt.duration(getBaseTimeUnit())))
+                        new Attribute("duration", ltt.duration(getBaseTimeUnit())),
+                        new Attribute("timeUnit", getBaseTimeUnit().name().toLowerCase()))
         );
     }
 
@@ -140,6 +151,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<String> writeCounter(Counter counter) {
+    	//TODO: Double.isFinite() check here like writeFunctionCounter ???
         return Stream.of(event(counter.getId(), new Attribute("throughput", counter.count())));
     }
 
@@ -156,7 +168,9 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     Stream<String> writeTimeGauge(TimeGauge gauge) {
         Double value = gauge.value(getBaseTimeUnit());
         if (Double.isFinite(value)) {
-            return Stream.of(event(gauge.getId(), new Attribute("value", value)));
+            return Stream.of(event(gauge.getId(), 
+            					new Attribute("value", value),
+                    			new Attribute("timeUnit", getBaseTimeUnit().name().toLowerCase())));
         }
         return Stream.empty();
     }
@@ -177,7 +191,8 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                 new Attribute("count", timer.count()),
                 new Attribute("avg", timer.mean(getBaseTimeUnit())),
                 new Attribute("totalTime", timer.totalTime(getBaseTimeUnit())),
-                new Attribute("max", timer.max(getBaseTimeUnit()))
+                new Attribute("max", timer.max(getBaseTimeUnit())),
+                new Attribute("timeUnit", getBaseTimeUnit().name().toLowerCase())
         ));
     }
 
@@ -186,7 +201,8 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                 event(timer.getId(),
                         new Attribute("count", timer.count()),
                         new Attribute("avg", timer.mean(getBaseTimeUnit())),
-                        new Attribute("totalTime", timer.totalTime(getBaseTimeUnit()))
+                        new Attribute("totalTime", timer.totalTime(getBaseTimeUnit())),
+                        new Attribute("timeUnit", getBaseTimeUnit().name().toLowerCase())
                 )
         );
     }
@@ -209,6 +225,19 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     }
 
     private String event(Meter.Id id, Attribute... attributes) {
+    	if(config.meterNameEventTypeEnabled() == false) {
+    		//Include contextual attributes when publishing all metrics under a single categorical eventType,
+    		//  NOT when publishing an eventType per Meter/metric name
+    		int size = attributes.length;
+    		Attribute[] newAttrs = Arrays.copyOf(attributes, size + 2);
+    		
+    		String name = id.getConventionName(config().namingConvention());
+    		newAttrs[size] = new Attribute("metricName", name);
+    		newAttrs[size+1] = new Attribute("metricType", id.getType().toString());
+    		
+    		return event(id, Tags.empty(), newAttrs);
+    	}
+    	
         return event(id, Tags.empty(), attributes);
     }
 
@@ -225,11 +254,29 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                     .append("\":\"").append(escapeJson(convention.tagValue(tag.getValue()))).append("\"");
         }
 
+        String eventType = getEventType(id, config, convention);
+        
         return Arrays.stream(attributes)
-                .map(attr -> ",\"" + attr.getName() + "\":" + DoubleFormat.wholeOrDecimal(attr.getValue().doubleValue()))
-                .collect(Collectors.joining("", "{\"eventType\":\"" + escapeJson(getConventionName(id)) + "\"", tagsJson + "}"));
+                .map(attr -> 
+	                	(attr.getValue() instanceof Number)
+		                	? ",\"" + attr.getName() + "\":" + DoubleFormat.wholeOrDecimal(((Number)attr.getValue()).doubleValue())
+		                	: ",\"" + attr.getName() + "\":\"" + convention.tagValue(((String)attr.getValue()).toString()) + "\""
+            		)
+                .collect(Collectors.joining("", "{\"eventType\":\"" + escapeJson(eventType) + "\"", tagsJson + "}"));
     }
 
+    String getEventType(Meter.Id id, NewRelicConfig config, NamingConvention convention) {
+    	String eventType = null;
+    	if(config.meterNameEventTypeEnabled()) {
+    		//meter/metric name event type
+    		eventType = id.getConventionName(convention);
+    	} else {
+    		//static eventType "category"
+    		eventType = config.eventType();
+    	}
+    	return eventType;
+    }
+    
     private void sendEvents(String insightsEndpoint, Stream<String> events) {
         try {
             AtomicInteger totalEvents = new AtomicInteger();
@@ -285,9 +332,9 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
     private class Attribute {
         private final String name;
-        private final Number value;
+        private final Object value;
 
-        private Attribute(String name, Number value) {
+        private Attribute(String name, Object value) {
             this.name = name;
             this.value = value;
         }
@@ -296,7 +343,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             return name;
         }
 
-        public Number getValue() {
+        public Object getValue() {
             return value;
         }
     }
