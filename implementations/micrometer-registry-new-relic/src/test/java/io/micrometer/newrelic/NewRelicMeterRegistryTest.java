@@ -46,54 +46,55 @@ import static org.junit.Assert.assertTrue;
 class NewRelicMeterRegistryTest {
 
     private final NewRelicConfig config = new NewRelicConfig() {
-
+        
         @Override
-		public boolean meterNameEventTypeEnabled() {
-        	//Default is false. Publish all metrics under a single eventType
-			return NewRelicConfig.super.meterNameEventTypeEnabled();
-		}
-
-		@Override
+        public boolean meterNameEventTypeEnabled() {
+            //Default is false. Publish all metrics under a single eventType
+            return NewRelicConfig.super.meterNameEventTypeEnabled();
+        }
+        
+        @Override
         public String get(String key) {
             return null;
         }
-
+        
         @Override
         public String accountId() {
             return "accountId";
         }
-
+        
         @Override
         public String apiKey() {
             return "apiKey";
         }
-
-    };	
-	
-    private final NewRelicConfig meterNameEventTypeEnabledConfig = new NewRelicConfig() {
-
-        @Override
-		public boolean meterNameEventTypeEnabled() {
-        	//Previous behavior for backward compatibility
-			return true;
-		}
-
-		@Override
-        public String get(String key) {
-            return null;
-        }
-
-        @Override
-        public String accountId() {
-            return "accountId";
-        }
-
-        @Override
-        public String apiKey() {
-            return "apiKey";
-        }
-
+        
     };
+   
+    private final NewRelicConfig meterNameEventTypeEnabledConfig = new NewRelicConfig() {
+        
+        @Override
+        public boolean meterNameEventTypeEnabled() {
+            //Previous behavior for backward compatibility
+            return true;
+        }
+        
+        @Override
+        public String get(String key) {
+            return null;
+        }
+        
+        @Override
+        public String accountId() {
+            return "accountId";
+        }
+        
+        @Override
+        public String apiKey() {
+            return "apiKey";
+        }
+        
+    };
+    
     private final MockClock clock = new MockClock();
     private final NewRelicMeterRegistry meterNameEventTypeEnabledRegistry = new NewRelicMeterRegistry(meterNameEventTypeEnabledConfig, clock);
     private final NewRelicMeterRegistry registry = new NewRelicMeterRegistry(config, clock);
@@ -109,7 +110,6 @@ class NewRelicMeterRegistryTest {
         gauge = registry.find("my.gauge").gauge(); 
         streamResult = registry.writeGauge(gauge);
         assertThat(streamResult).contains("{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\"}");
-        
     }
 
     @Test
@@ -128,7 +128,7 @@ class NewRelicMeterRegistryTest {
         meterNameEventTypeEnabledRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
         Gauge gauge = meterNameEventTypeEnabledRegistry.find("my.gauge").gauge();
         assertThat(meterNameEventTypeEnabledRegistry.writeGauge(gauge)).isEmpty();
-
+        
         meterNameEventTypeEnabledRegistry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
         gauge = meterNameEventTypeEnabledRegistry.find("my.gauge").gauge();
         assertThat(meterNameEventTypeEnabledRegistry.writeGauge(gauge)).isEmpty();
@@ -136,7 +136,7 @@ class NewRelicMeterRegistryTest {
         registry.gauge("my.gauge", Double.POSITIVE_INFINITY);
         gauge = registry.find("my.gauge").gauge();
         assertThat(registry.writeGauge(gauge)).isEmpty();
-
+        
         registry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
         gauge = registry.find("my.gauge").gauge();
         assertThat(registry.writeGauge(gauge)).isEmpty();
@@ -174,7 +174,7 @@ class NewRelicMeterRegistryTest {
         meterNameEventTypeEnabledRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
         TimeGauge timeGauge = meterNameEventTypeEnabledRegistry.find("my.timeGauge").timeGauge();
         assertThat(meterNameEventTypeEnabledRegistry.writeTimeGauge(timeGauge)).isEmpty();
-
+        
         obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
         meterNameEventTypeEnabledRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
         timeGauge = meterNameEventTypeEnabledRegistry.find("my.timeGauge").timeGauge();
@@ -184,7 +184,7 @@ class NewRelicMeterRegistryTest {
         registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
         timeGauge = registry.find("my.timeGauge").timeGauge();
         assertThat(registry.writeTimeGauge(timeGauge)).isEmpty();
-
+        
         obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
         registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
         timeGauge = registry.find("my.timeGauge").timeGauge();
@@ -209,7 +209,7 @@ class NewRelicMeterRegistryTest {
         FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(meterNameEventTypeEnabledRegistry);
         clock.add(config.step());
         assertThat(meterNameEventTypeEnabledRegistry.writeFunctionCounter(counter)).isEmpty();
-
+        
         counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(meterNameEventTypeEnabledRegistry);
         clock.add(config.step());
         assertThat(meterNameEventTypeEnabledRegistry.writeFunctionCounter(counter)).isEmpty();
@@ -217,7 +217,7 @@ class NewRelicMeterRegistryTest {
         counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(registry);
         clock.add(config.step());
         assertThat(registry.writeFunctionCounter(counter)).isEmpty();
-
+        
         counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(registry);
         clock.add(config.step());
         assertThat(registry.writeFunctionCounter(counter)).isEmpty();
@@ -250,12 +250,12 @@ class NewRelicMeterRegistryTest {
         meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
         assertThat(registry.writeMeter(meter)).contains("{\"eventType\":\"MicrometerSample\",\"value\":1,\"value\":2,\"metricName\":\"myMeter\",\"metricType\":\"GAUGE\"}");
     }
-    
+
     @Test
     void publish() {
-    	MockHttpSender mockHttpSender = new MockHttpSender();
-    	NewRelicMeterRegistry registry = new NewRelicMeterRegistry(config, clock, new NamedThreadFactory("new-relic-test"), mockHttpSender);
-    	
+        MockHttpSender mockHttpSender = new MockHttpSender();
+        NewRelicMeterRegistry registry = new NewRelicMeterRegistry(config, clock, new NamedThreadFactory("new-relic-test"), mockHttpSender);
+        
         registry.gauge("my.gauge", 1d);
         Gauge gauge = registry.find("my.gauge").gauge();
         assertThat(gauge).isNotNull();
@@ -263,130 +263,128 @@ class NewRelicMeterRegistryTest {
         registry.publish();
         
         assertThat(new String(mockHttpSender.getRequest().getEntity()))
-        		.contains("{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\"}");
-    	
+            .contains("{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\"}");
     }
-    
+
     @Test
     void configMissing() {
-    	try {
-    		NewRelicConfig missingEventTypeConfig = new NewRelicConfig() {
-				@Override
-				public  String eventType() {
-					return "";
-				}
-				@Override
-				public String get(String key) {
-					return null;
-				}
-			};
-			new NewRelicMeterRegistry(missingEventTypeConfig, clock);
- 		
-    		assertTrue(false);	
-    	} catch(MissingRequiredConfigurationException mrce) {
-    		assertTrue(true);
-    	} catch (Exception e) {
-    		assertTrue(false);
-    	}
-    	
-    	try {
-    		NewRelicConfig missingAccountIdConfig = new NewRelicConfig() {
-				@Override
-				public  String eventType() {
-					return "eventType";
-				}
-    			@Override
-				public  String accountId() {
-					return null;
-				}
-				@Override
-				public String get(String key) {
-					return null;
-				}
-			};
-			new NewRelicMeterRegistry(missingAccountIdConfig, clock);
- 		
-    		assertTrue(false);	
-    	} catch(MissingRequiredConfigurationException mrce) {
-    		assertTrue(true);
-    	} catch (Exception e) {
-    		assertTrue(false);
-    	}
-    	
-    	try {
-    		NewRelicConfig missingApiKeyConfig = new NewRelicConfig() {
-				@Override
-				public  String eventType() {
-					return "eventType";
-				}
-    			@Override
-				public  String accountId() {
-					return "accountId";
-				}
-    			@Override
-				public  String apiKey() {
-					return "";
-				}
-				@Override
-				public String get(String key) {
-					return null;
-				}
-			};
-			new NewRelicMeterRegistry(missingApiKeyConfig, clock);
- 		
-    		assertTrue(false);	
-    	} catch(MissingRequiredConfigurationException mrce) {
-    		assertTrue(true);
-    	} catch (Exception e) {
-    		assertTrue(false);
-    	}
-    	
-    	try {
-    		NewRelicConfig missingUriConfig = new NewRelicConfig() {
-				@Override
-				public  String eventType() {
-					return "eventType";
-				}
-    			@Override
-				public  String accountId() {
-					return "accountId";
-				}
-    			@Override
-				public  String apiKey() {
-					return "apiKey";
-				}
-    			@Override
-				public  String uri() {
-					return "";
-				}
-				@Override
-				public String get(String key) {
-					return null;
-				}
-			};
-			new NewRelicMeterRegistry(missingUriConfig, clock);
- 		
-    		assertTrue(false);	
-    	} catch(MissingRequiredConfigurationException mrce) {
-    		assertTrue(true);
-    	} catch (Exception e) {
-    		assertTrue(false);
-    	}     	
+        try {
+            NewRelicConfig missingEventTypeConfig = new NewRelicConfig() {
+                @Override
+                public String eventType() {
+                    return "";
+                }
+                @Override
+                public String get(String key) {
+                    return null;
+                }
+            };
+            new NewRelicMeterRegistry(missingEventTypeConfig, clock);
+            
+            assertTrue(false);
+        } catch (MissingRequiredConfigurationException mrce) {
+            assertTrue(true);
+        } catch (Exception e) {
+            assertTrue(false);
+        }
+        
+        try {
+            NewRelicConfig missingAccountIdConfig = new NewRelicConfig() {
+                @Override
+                public String eventType() {
+                    return "eventType";
+                }
+                @Override
+                public String accountId() {
+                    return null;
+                }
+                @Override
+                public String get(String key) {
+                    return null;
+                }
+            };
+            new NewRelicMeterRegistry(missingAccountIdConfig, clock);
+            
+            assertTrue(false);
+        } catch (MissingRequiredConfigurationException mrce) {
+            assertTrue(true);
+        } catch (Exception e) {
+            assertTrue(false);
+        }
+        
+        try {
+            NewRelicConfig missingApiKeyConfig = new NewRelicConfig() {
+                @Override
+                public String eventType() {
+                    return "eventType";
+                }
+                @Override
+                public String accountId() {
+                    return "accountId";
+                }
+                @Override
+                public String apiKey() {
+                    return "";
+                }
+                @Override
+                public String get(String key) {
+                    return null;
+                }
+            };
+            new NewRelicMeterRegistry(missingApiKeyConfig, clock);
+            
+            assertTrue(false);
+        } catch (MissingRequiredConfigurationException mrce) {
+            assertTrue(true);
+        } catch (Exception e) {
+            assertTrue(false);
+        }
+        
+        try {
+            NewRelicConfig missingUriConfig = new NewRelicConfig() {
+                @Override
+                public String eventType() {
+                    return "eventType";
+                }
+                @Override
+                public String accountId() {
+                    return "accountId";
+                }
+                @Override
+                public String apiKey() {
+                    return "apiKey";
+                }
+                @Override
+                public String uri() {
+                    return "";
+                }
+                @Override
+                public String get(String key) {
+                    return null;
+                }
+            };
+            new NewRelicMeterRegistry(missingUriConfig, clock);
+            
+            assertTrue(false);
+        } catch (MissingRequiredConfigurationException mrce) {
+            assertTrue(true);
+        } catch (Exception e) {
+            assertTrue(false);
+        }
     }
 
     class MockHttpSender implements HttpSender {
-
-    	private Request request;
-    	
-		@Override
-		public Response send(Request request) throws Throwable {
-			this.request=request;
-			return new Response(200, "body");
-		}
-
-		public Request getRequest() {
-			return request;
-		}
-    	
+        
+        private Request request;
+        
+        @Override
+        public Response send(Request request) throws Throwable {
+            this.request=request;
+            return new Response(200, "body");
+        }
+        
+        public Request getRequest() {
+            return request;
+        }
     }
 }
