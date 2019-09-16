@@ -26,7 +26,6 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,16 +79,16 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         super(config, clock);
 
         if(config.meterNameEventTypeEnabled() == false
-        		&& StringUtils.isEmpty(config.eventType())) {
+        		&& (config.eventType() == null || config.eventType().isEmpty())) {
         	throw new MissingRequiredConfigurationException("eventType must be set to report metrics to New Relic");
         }
-        if (StringUtils.isEmpty(config.accountId())) {
+        if (config.accountId() == null || config.accountId().isEmpty()) {
             throw new MissingRequiredConfigurationException("accountId must be set to report metrics to New Relic");
         }
-        if (StringUtils.isEmpty(config.apiKey())) {
+        if (config.apiKey() == null || config.apiKey().isEmpty()) {
             throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to New Relic");
         }
-        if (StringUtils.isEmpty(config.uri())) {
+        if (config.uri() == null || config.uri().isEmpty()) {
             throw new MissingRequiredConfigurationException("uri must be set to report metrics to New Relic");
         }
 
