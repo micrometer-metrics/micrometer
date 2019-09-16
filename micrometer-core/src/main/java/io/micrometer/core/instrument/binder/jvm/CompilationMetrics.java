@@ -15,9 +15,10 @@
  */
 package io.micrometer.core.instrument.binder.jvm;
 
-import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -44,8 +45,8 @@ public class CompilationMetrics implements MeterBinder {
     public void bindTo(MeterRegistry registry) {
         CompilationMXBean compilationBean = ManagementFactory.getCompilationMXBean();
         if (compilationBean.isCompilationTimeMonitoringSupported()) {
-            Gauge.builder("jvm.compilation.time.total", compilationBean, CompilationMXBean::getTotalCompilationTime)
-                    .tags(tags)
+            FunctionCounter.builder("jvm.compilation.time.total", compilationBean, CompilationMXBean::getTotalCompilationTime)
+                    .tags(Tags.concat(tags, "compiler", compilationBean.getName()))
                     .description("The approximate accumulated elapsed time spent in compilation")
                     .baseUnit("ms")
                     .register(registry);

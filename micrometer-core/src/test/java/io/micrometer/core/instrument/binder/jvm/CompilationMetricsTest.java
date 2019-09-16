@@ -27,6 +27,6 @@ class CompilationMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         new CompilationMetrics().bindTo(registry);
 
-        assertThat(registry.get("jvm.compilation.time.total").gauge().value()).isGreaterThan(0);
+        assertThat(registry.get("jvm.compilation.time.total").functionCounter().count()).isGreaterThan(0);
     }
 }
