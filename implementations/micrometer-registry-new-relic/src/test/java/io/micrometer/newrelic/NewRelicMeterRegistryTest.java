@@ -379,7 +379,7 @@ class NewRelicMeterRegistryTest {
         
         @Override
         public Response send(Request request) throws Throwable {
-            this.request=request;
+            this.request = request;
             return new Response(200, "body");
         }
         
