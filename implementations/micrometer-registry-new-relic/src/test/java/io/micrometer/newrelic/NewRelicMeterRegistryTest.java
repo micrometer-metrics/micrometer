@@ -15,11 +15,16 @@
  */
 package io.micrometer.newrelic;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
+
+import org.junit.jupiter.api.Test;
 
 import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
@@ -32,11 +37,6 @@ import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
-
-import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for {@link NewRelicMeterRegistry}.
@@ -267,112 +267,105 @@ class NewRelicMeterRegistryTest {
     }
 
     @Test
-    void configMissing() {
-        try {
-            NewRelicConfig missingEventTypeConfig = new NewRelicConfig() {
-                @Override
-                public String eventType() {
-                    return "";
-                }
-                @Override
-                public String get(String key) {
-                    return null;
-                }
-            };
-            new NewRelicMeterRegistry(missingEventTypeConfig, clock);
-            
-            assertTrue(false);
-        } catch (MissingRequiredConfigurationException mrce) {
-            assertTrue(true);
-        } catch (Exception e) {
-            assertTrue(false);
-        }
+    void configMissingEventType() {
+        NewRelicConfig config = new NewRelicConfig() {
+            @Override
+            public String eventType() {
+                return "";
+            }
+            @Override
+            public String get(String key) {
+                return null;
+            }
+        };
         
-        try {
-            NewRelicConfig missingAccountIdConfig = new NewRelicConfig() {
-                @Override
-                public String eventType() {
-                    return "eventType";
-                }
-                @Override
-                public String accountId() {
-                    return null;
-                }
-                @Override
-                public String get(String key) {
-                    return null;
-                }
-            };
-            new NewRelicMeterRegistry(missingAccountIdConfig, clock);
-            
-            assertTrue(false);
-        } catch (MissingRequiredConfigurationException mrce) {
-            assertTrue(true);
-        } catch (Exception e) {
-            assertTrue(false);
-        }
-        
-        try {
-            NewRelicConfig missingApiKeyConfig = new NewRelicConfig() {
-                @Override
-                public String eventType() {
-                    return "eventType";
-                }
-                @Override
-                public String accountId() {
-                    return "accountId";
-                }
-                @Override
-                public String apiKey() {
-                    return "";
-                }
-                @Override
-                public String get(String key) {
-                    return null;
-                }
-            };
-            new NewRelicMeterRegistry(missingApiKeyConfig, clock);
-            
-            assertTrue(false);
-        } catch (MissingRequiredConfigurationException mrce) {
-            assertTrue(true);
-        } catch (Exception e) {
-            assertTrue(false);
-        }
-        
-        try {
-            NewRelicConfig missingUriConfig = new NewRelicConfig() {
-                @Override
-                public String eventType() {
-                    return "eventType";
-                }
-                @Override
-                public String accountId() {
-                    return "accountId";
-                }
-                @Override
-                public String apiKey() {
-                    return "apiKey";
-                }
-                @Override
-                public String uri() {
-                    return "";
-                }
-                @Override
-                public String get(String key) {
-                    return null;
-                }
-            };
-            new NewRelicMeterRegistry(missingUriConfig, clock);
-            
-            assertTrue(false);
-        } catch (MissingRequiredConfigurationException mrce) {
-            assertTrue(true);
-        } catch (Exception e) {
-            assertTrue(false);
-        }
+        Exception exception = assertThrows(MissingRequiredConfigurationException.class, () -> {
+            new NewRelicMeterRegistry(config, clock);
+        });
+        assertThat(exception.getMessage()).contains("eventType");
     }
 
+    @Test
+    void configMissingAccountId() {
+        NewRelicConfig config = new NewRelicConfig() {
+            @Override
+            public String eventType() {
+                return "eventType";
+            }
+            @Override
+            public String accountId() {
+                return null;
+            }
+            @Override
+            public String get(String key) {
+                return null;
+            }
+        };
+        
+        Exception exception = assertThrows(MissingRequiredConfigurationException.class, () -> {
+            new NewRelicMeterRegistry(config, clock);
+        });
+        assertThat(exception.getMessage()).contains("accountId");
+    }
+    
+    @Test
+    void configMissingApiKey() {
+        NewRelicConfig config = new NewRelicConfig() {
+            @Override
+            public String eventType() {
+                return "eventType";
+            }
+            @Override
+            public String accountId() {
+                return "accountId";
+            }
+            @Override
+            public String apiKey() {
+                return "";
+            }
+            @Override
+            public String get(String key) {
+                return null;
+            }
+        };
+        
+        Exception exception = assertThrows(MissingRequiredConfigurationException.class, () -> {
+            new NewRelicMeterRegistry(config, clock);
+        });
+        assertThat(exception.getMessage()).contains("apiKey");
+    }
+    
+    @Test
+    void configMissingUri() {
+        NewRelicConfig config = new NewRelicConfig() {
+            @Override
+            public String eventType() {
+                return "eventType";
+            }
+            @Override
+            public String accountId() {
+                return "accountId";
+            }
+            @Override
+            public String apiKey() {
+                return "apiKey";
+            }
+            @Override
+            public String uri() {
+                return "";
+            }
+            @Override
+            public String get(String key) {
+                return null;
+            }
+        };
+        
+        Exception exception = assertThrows(MissingRequiredConfigurationException.class, () -> {
+            new NewRelicMeterRegistry(config, clock);
+        });
+        assertThat(exception.getMessage()).contains("uri");
+    }
+    
     class MockHttpSender implements HttpSender {
         
         private Request request;
