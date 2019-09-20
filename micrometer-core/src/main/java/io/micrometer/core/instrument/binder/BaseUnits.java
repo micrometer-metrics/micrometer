@@ -42,6 +42,11 @@ public final class BaseUnits {
      */
     public static final String THREADS = "threads";
 
+    /**
+     * For connections.
+     */
+    public static final String CONNECTIONS = "connections";
+
     private BaseUnits() {
     }
 

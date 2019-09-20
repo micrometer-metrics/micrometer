@@ -147,6 +147,12 @@ public class TomcatMetrics implements MeterBinder {
                     .tags(allTags)
                     .baseUnit(BaseUnits.THREADS)
                     .register(registry);
+
+            Gauge.builder("tomcat.threads.active", mBeanServer,
+                    s -> safeLong(() -> s.getAttribute(name, "connectionCount")))
+                    .tags(allTags)
+                    .baseUnit(BaseUnits.CONNECTIONS)
+                    .register(registry);
         });
     }
 
