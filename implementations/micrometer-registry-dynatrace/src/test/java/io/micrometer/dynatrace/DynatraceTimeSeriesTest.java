@@ -32,4 +32,13 @@ class DynatraceTimeSeriesTest {
         final DynatraceTimeSeries timeSeries = new DynatraceTimeSeries("custom:test.metric", 12345, 1, dimensions);
         assertThat(timeSeries.asJson()).isEqualTo("{\"timeseriesId\":\"custom:test.metric\",\"dataPoints\":[[12345,1]],\"dimensions\":{\"first\":\"one\",\"second\":\"two\"}}");
     }
+
+    @Test
+    void asJsonShouldEscapeDimensionValue() {
+        Map<String, String> dimensions = new HashMap<>();
+        dimensions.put("path", "C:\\MyPath");
+        dimensions.put("second", "two");
+        DynatraceTimeSeries timeSeries = new DynatraceTimeSeries("custom:test.metric", 12345, 1, dimensions);
+        assertThat(timeSeries.asJson()).isEqualTo("{\"timeseriesId\":\"custom:test.metric\",\"dataPoints\":[[12345,1]],\"dimensions\":{\"path\":\"C:\\\\MyPath\",\"second\":\"two\"}}");
+    }
 }
