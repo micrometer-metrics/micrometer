@@ -259,7 +259,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                 .map(attr ->
                         (attr.getValue() instanceof Number)
                             ? ",\"" + attr.getName() + "\":" + DoubleFormat.wholeOrDecimal(((Number)attr.getValue()).doubleValue())
-                            : ",\"" + attr.getName() + "\":\"" + convention.tagValue(((String)attr.getValue()).toString()) + "\""
+                            : ",\"" + attr.getName() + "\":\"" + convention.tagValue(attr.getValue().toString()) + "\""
                 )
                 .collect(Collectors.joining("", "{\"eventType\":\"" + escapeJson(eventType) + "\"", tagsJson + "}"));
     }
