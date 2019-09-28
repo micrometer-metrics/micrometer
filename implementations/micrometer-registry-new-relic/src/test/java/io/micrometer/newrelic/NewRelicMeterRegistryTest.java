@@ -163,4 +163,5 @@ class NewRelicMeterRegistryTest {
         assertThat(registry.writeMeter(meter)).contains("{\"eventType\":\"myMeter\",\"value\":2}");
     }
 
+    
 }
