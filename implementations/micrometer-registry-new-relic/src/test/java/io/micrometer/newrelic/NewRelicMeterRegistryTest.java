@@ -148,8 +148,17 @@ class NewRelicMeterRegistryTest {
         Measurement measurement2 = new Measurement(() -> Double.NEGATIVE_INFINITY, Statistic.VALUE);
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
-        Measurement measurement5 = new Measurement(() -> 2d, Statistic.VALUE);
-        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4, measurement5);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4);
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
+        assertThat(registry.writeMeter(meter)).contains("{\"eventType\":\"myMeter\",\"value\":1}");
+    }
+    
+    @Test
+    void writeMeterWhenCustomMeterHasDuplicatesKeysShouldWriteOnlyLastValue() {
+        Measurement measurement1 = new Measurement(() -> 3d, Statistic.VALUE);
+        Measurement measurement2 = new Measurement(() -> 1d, Statistic.VALUE);
+        Measurement measurement3 = new Measurement(() -> 2d, Statistic.VALUE);
+        List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
         assertThat(registry.writeMeter(meter)).contains("{\"eventType\":\"myMeter\",\"value\":2}");
     }
