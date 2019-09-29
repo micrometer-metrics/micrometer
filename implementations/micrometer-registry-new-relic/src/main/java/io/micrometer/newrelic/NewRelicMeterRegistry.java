@@ -16,6 +16,7 @@
 package io.micrometer.newrelic;
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
@@ -29,9 +30,7 @@ import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -210,18 +209,19 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     Stream<String> writeMeter(Meter meter) {
         // Snapshot values should be used throughout this method as there are chances for values to be changed in-between.
-        List<Attribute> attributes = new ArrayList<>();
+        Map<String, Attribute> attributes = new HashMap<>();
         for (Measurement measurement : meter.measure()) {
             double value = measurement.getValue();
             if (!Double.isFinite(value)) {
                 continue;
             }
-            attributes.add(new Attribute(measurement.getStatistic().getTagValueRepresentation(), value));
+            String name = measurement.getStatistic().getTagValueRepresentation();
+            attributes.put(name, new Attribute(name, value));
         }
         if (attributes.isEmpty()) {
             return Stream.empty();
         }
-        return Stream.of(event(meter.getId(), attributes.toArray(new Attribute[0])));
+        return Stream.of(event(meter.getId(), attributes.values().toArray(new Attribute[0])));
     }
 
     private String event(Meter.Id id, Attribute... attributes) {

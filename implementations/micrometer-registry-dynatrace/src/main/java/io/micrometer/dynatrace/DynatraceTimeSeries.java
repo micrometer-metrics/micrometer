@@ -16,6 +16,7 @@
 package io.micrometer.dynatrace;
 
 import io.micrometer.core.instrument.util.DoubleFormat;
+import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.lang.Nullable;
 
 import java.util.Map;
@@ -45,7 +46,7 @@ class DynatraceTimeSeries {
         if (dimensions != null && !dimensions.isEmpty()) {
             body += ",\"dimensions\":{" +
                     dimensions.entrySet().stream()
-                            .map(t -> "\"" + t.getKey() + "\":\"" + t.getValue() + "\"")
+                            .map(t -> "\"" + t.getKey() + "\":\"" + StringEscapeUtils.escapeJson(t.getValue()) + "\"")
                             .collect(Collectors.joining(",")) +
                     "}";
         }

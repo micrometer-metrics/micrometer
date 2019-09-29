@@ -39,7 +39,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class MicrometerMetricsPublisherThreadPoolTest {
     private static final String NAME_HYSTRIX_THREADPOOL = "hystrix.threadpool";
@@ -93,7 +93,7 @@ class MicrometerMetricsPublisherThreadPoolTest {
             new MeterId(metricName("queue.rejection.threshold.size"), Type.GAUGE, tags)
         ));
 
-        assertTrue(actualMeterIds.containsAll(expectedMeterIds));
+        assertThat(actualMeterIds).containsAll(expectedMeterIds);
     }
 
     private class SampleCommand extends HystrixCommand<Integer> {
