@@ -1,11 +1,11 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
- * https://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,10 +15,7 @@
  */
 package io.micrometer.core.instrument.internal;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -27,21 +24,26 @@ import java.util.concurrent.*;
 import static java.util.stream.Collectors.toList;
 
 /**
- * An {@link java.util.concurrent.ExecutorService} that is timed
+ * A {@link ScheduledExecutorService} that is timed
  *
- * @author Jon Schneider
+ * @author Sebastian Lövdahl
  */
-public class TimedExecutorService implements ExecutorService {
+public class TimedScheduledExecutorService implements ScheduledExecutorService {
     private final MeterRegistry registry;
-    private final ExecutorService delegate;
+    private final ScheduledExecutorService delegate;
     private final Timer executionTimer;
     private final Timer idleTimer;
+    private final Counter scheduledOnce;
+    private final Counter scheduledRepetitively;
 
-    public TimedExecutorService(MeterRegistry registry, ExecutorService delegate, String executorServiceName, Iterable<Tag> tags) {
+    public TimedScheduledExecutorService(MeterRegistry registry, ScheduledExecutorService delegate, String executorServiceName, Iterable<Tag> tags) {
         this.registry = registry;
         this.delegate = delegate;
+        // TODO: IMO, it would make more sense to name this timer "executor.execution", but that's a breaking change
         this.executionTimer = registry.timer("executor", Tags.concat(tags, "name", executorServiceName));
         this.idleTimer = registry.timer("executor.idle", Tags.concat(tags, "name", executorServiceName));
+        this.scheduledOnce = registry.counter("executor.scheduled.once", Tags.concat(tags, "name", executorServiceName));
+        this.scheduledRepetitively = registry.counter("executor.scheduled.repetitively", Tags.concat(tags, "name", executorServiceName));
     }
 
     @Override
@@ -107,6 +109,30 @@ public class TimedExecutorService implements ExecutorService {
     @Override
     public void execute(Runnable command) {
         delegate.execute(wrap(command));
+    }
+
+    @Override
+    public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
+        scheduledOnce.increment();
+        return delegate.schedule(executionTimer.wrap(command), delay, unit);
+    }
+
+    @Override
+    public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
+        scheduledOnce.increment();
+        return delegate.schedule(executionTimer.wrap(callable), delay, unit);
+    }
+
+    @Override
+    public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
+        scheduledRepetitively.increment();
+        return delegate.scheduleAtFixedRate(executionTimer.wrap(command), initialDelay, period, unit);
+    }
+
+    @Override
+    public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
+        scheduledRepetitively.increment();
+        return delegate.scheduleWithFixedDelay(executionTimer.wrap(command), initialDelay, delay, unit);
     }
 
     private Runnable wrap(Runnable task) {
