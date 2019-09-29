@@ -97,7 +97,7 @@ class PrometheusMetricsExportAutoConfigurationTest {
 
         registerAndRefresh();
 
-        hasGatewayURL("http://localhost:9091/metrics/job/");
+        hasGatewayURL("http://localhost:9091/metrics/");
     }
 
     @Test
@@ -109,7 +109,7 @@ class PrometheusMetricsExportAutoConfigurationTest {
 
         registerAndRefresh();
 
-        hasGatewayURL("http://localhost:9090/metrics/job/");
+        hasGatewayURL("http://localhost:9090/metrics/");
     }
 
     @Test
@@ -120,7 +120,7 @@ class PrometheusMetricsExportAutoConfigurationTest {
 
         registerAndRefresh();
 
-        hasGatewayURL("https://example.com:8080/metrics/job/");
+        hasGatewayURL("https://example.com:8080/metrics/");
     }
 
     @Test
