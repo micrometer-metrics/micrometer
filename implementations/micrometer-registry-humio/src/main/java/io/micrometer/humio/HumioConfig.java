@@ -47,10 +47,11 @@ public interface HumioConfig extends StepRegistryConfig {
 
     /**
      * @return The repository name to write metrics to.
+     * @deprecated No longer used as repository is resolved from the api token
      */
+    @Deprecated
     default String repository() {
-        String v = get(prefix() + ".repository");
-        return v == null ? "sandbox" : v;
+        return "";
     }
 
     /**

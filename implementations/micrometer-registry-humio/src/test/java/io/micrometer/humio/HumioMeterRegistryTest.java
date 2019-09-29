@@ -59,7 +59,7 @@ class HumioMeterRegistryTest {
 
         server.stubFor(any(anyUrl()));
         registry.publish();
-        server.verify(postRequestedFor(urlMatching("/api/v1/dataspaces/repo/ingest"))
+        server.verify(postRequestedFor(urlMatching("/api/v1/ingest/humio-structured"))
                 .withRequestBody(equalTo("[{\"events\": [{\"timestamp\":\"1970-01-01T00:00:00.001Z\",\"attributes\":{\"name\":\"my_timer\",\"count\":0,\"sum\":0,\"avg\":0,\"max\":0,\"status\":\"success\"}}]}]")));
     }
 
@@ -70,7 +70,7 @@ class HumioMeterRegistryTest {
 
         server.stubFor(any(anyUrl()));
         registry.publish();
-        server.verify(postRequestedFor(urlMatching("/api/v1/dataspaces/repo/ingest"))
+        server.verify(postRequestedFor(urlMatching("/api/v1/ingest/humio-structured"))
                 .withRequestBody(containing("\"tags\":{\"name\": \"micrometer\"}")));
     }
 
@@ -192,11 +192,6 @@ class HumioMeterRegistryTest {
             @Override
             public String uri() {
                 return server.baseUrl();
-            }
-
-            @Override
-            public String repository() {
-                return "repo";
             }
 
             @Override
