@@ -19,9 +19,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 
 /**
- * A wrapper for a Runnable with idle and execution timings
- *
- * @author Sebastian Lövdahl
+ * A wrapper for a {@link Runnable} with idle and execution timings.
  */
 class TimedRunnable implements Runnable {
     private final MeterRegistry registry;

@@ -167,7 +167,7 @@ class ExecutorServiceMetricsTest {
         assertThat(registry.get("executor.idle").tags(userTags).timer().count()).isEqualTo(0L);
     }
 
-    @DisplayName("ScheduledExecutorService can be monitored with a default set of metrics")
+    @DisplayName("ScheduledExecutorService repetitive tasks can be monitored with a default set of metrics")
     @Test
     void monitorScheduledExecutorServiceWithRepetitiveTasks() throws InterruptedException {
         ScheduledExecutorService pool = ExecutorServiceMetrics.monitor(registry, Executors.newScheduledThreadPool(1), "scheduled.pool", userTags);

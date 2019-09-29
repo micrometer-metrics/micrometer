@@ -21,9 +21,7 @@ import io.micrometer.core.instrument.Timer;
 import java.util.concurrent.Callable;
 
 /**
- * A wrapper for a Callable with idle and execution timings
- *
- * @author Sebastian Lövdahl
+ * A wrapper for a {@link Callable} with idle and execution timings.
  */
 class TimedCallable<V> implements Callable<V> {
     private final MeterRegistry registry;
