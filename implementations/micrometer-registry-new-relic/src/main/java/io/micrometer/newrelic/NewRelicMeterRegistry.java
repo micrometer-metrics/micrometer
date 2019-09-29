@@ -225,16 +225,16 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     }
 
     private String event(Meter.Id id, Attribute... attributes) {
-        if (config.meterNameEventTypeEnabled() == false) {
-            //Include contextual attributes when publishing all metrics under a single categorical eventType,
+        if (!config.meterNameEventTypeEnabled()) {
+            // Include contextual attributes when publishing all metrics under a single categorical eventType,
             //  NOT when publishing an eventType per Meter/metric name
             int size = attributes.length;
             Attribute[] newAttrs = Arrays.copyOf(attributes, size + 2);
-            
+
             String name = id.getConventionName(config().namingConvention());
             newAttrs[size] = new Attribute("metricName", name);
             newAttrs[size + 1] = new Attribute("metricType", id.getType().toString());
-            
+
             return event(id, Tags.empty(), newAttrs);
         }
         return event(id, Tags.empty(), attributes);
@@ -253,7 +253,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                     .append("\":\"").append(escapeJson(convention.tagValue(tag.getValue()))).append("\"");
         }
 
-        String eventType = getEventType(id, config, convention);
+        String eventType = getEventType(id);
         
         return Arrays.stream(attributes)
                 .map(attr ->
@@ -264,16 +264,12 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
                 .collect(Collectors.joining("", "{\"eventType\":\"" + escapeJson(eventType) + "\"", tagsJson + "}"));
     }
 
-    String getEventType(Meter.Id id, NewRelicConfig config, NamingConvention convention) {
-        String eventType = null;
+    private String getEventType(Meter.Id id) {
         if (config.meterNameEventTypeEnabled()) {
-            //meter/metric name event type
-            eventType = id.getConventionName(convention);
+            return id.getConventionName(config().namingConvention());
         } else {
-            //static eventType "category"
-            eventType = config.eventType();
+            return config.eventType();
         }
-        return eventType;
     }
     
     private void sendEvents(String insightsEndpoint, Stream<String> events) {
