@@ -15,7 +15,34 @@
  */
 package io.micrometer.newrelic;
 
-import io.micrometer.core.instrument.*;
+import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
@@ -25,19 +52,6 @@ import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static io.micrometer.core.instrument.util.StringEscapeUtils.escapeJson;
 
 /**
  * Publishes metrics to New Relic Insights.
@@ -194,18 +208,19 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     // VisibleForTesting
     Stream<String> writeMeter(Meter meter) {
         // Snapshot values should be used throughout this method as there are chances for values to be changed in-between.
-        List<Attribute> attributes = new ArrayList<>();
+        Map<String, Attribute> attributes = new HashMap<>();
         for (Measurement measurement : meter.measure()) {
             double value = measurement.getValue();
             if (!Double.isFinite(value)) {
                 continue;
             }
-            attributes.add(new Attribute(measurement.getStatistic().getTagValueRepresentation(), value));
+            String name = measurement.getStatistic().getTagValueRepresentation();
+            attributes.put(name, new Attribute(name, value));
         }
         if (attributes.isEmpty()) {
             return Stream.empty();
         }
-        return Stream.of(event(meter.getId(), attributes.toArray(new Attribute[0])));
+        return Stream.of(event(meter.getId(), attributes.values().toArray(new Attribute[0])));
     }
 
     private String event(Meter.Id id, Attribute... attributes) {
