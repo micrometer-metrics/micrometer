@@ -25,6 +25,7 @@ import io.micrometer.core.instrument.step.StepRegistryConfig;
  * @since 1.1.0
  */
 public interface StackdriverConfig extends StepRegistryConfig {
+
     @Override
     default String prefix() {
         return "stackdriver";
@@ -35,5 +36,10 @@ public interface StackdriverConfig extends StepRegistryConfig {
         if (v == null)
             throw new MissingRequiredConfigurationException("projectId must be set to report metrics to Stackdriver");
         return v;
+    }
+
+    default String resourceType() {
+        String resourceType = get(prefix() + ".resourceType");
+        return resourceType == null ? "global" : resourceType;
     }
 }
