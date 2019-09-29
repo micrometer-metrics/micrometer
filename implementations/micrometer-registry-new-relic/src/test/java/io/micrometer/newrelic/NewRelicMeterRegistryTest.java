@@ -257,7 +257,7 @@ class NewRelicMeterRegistryTest {
         Measurement measurement3 = new Measurement(() -> 2d, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
-        assertThat(registry.writeMeter(meter)).contains("{\"eventType\":\"myMeter\",\"value\":2}");
+        assertThat(registry.writeMeter(meter)).contains("{\"eventType\":\"MicrometerSample\",\"value\":2,\"metricName\":\"myMeter\",\"metricType\":\"GAUGE\"}");
     }
 
     @Test
