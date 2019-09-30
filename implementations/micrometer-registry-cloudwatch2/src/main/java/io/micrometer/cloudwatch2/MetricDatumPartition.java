@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micrometer.core.instrument.util;
+package io.micrometer.cloudwatch2;
 
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.util.AbstractPartition;
+import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
 
 import java.util.List;
 
 /**
- * {@link AbstractPartition} for {@link Meter}.
+ * {@link AbstractPartition} for {@link MetricDatum}.
  *
  * @author Jon Schneider
  */
-public class MeterPartition extends AbstractPartition<Meter> {
+class MetricDatumPartition extends AbstractPartition<MetricDatum> {
 
-    public MeterPartition(MeterRegistry registry, int partitionSize) {
-        super(registry.getMeters(), partitionSize);
+    MetricDatumPartition(List<MetricDatum> list, int partitionSize) {
+        super(list, partitionSize);
     }
 
-    public static List<List<Meter>> partition(MeterRegistry registry, int partitionSize) {
-        return new MeterPartition(registry, partitionSize);
+    static List<List<MetricDatum>> partition(List<MetricDatum> list, int partitionSize) {
+        return new MetricDatumPartition(list, partitionSize);
     }
 
 }
