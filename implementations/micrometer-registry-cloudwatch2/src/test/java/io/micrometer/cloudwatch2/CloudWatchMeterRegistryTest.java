@@ -17,8 +17,10 @@ package io.micrometer.cloudwatch2;
 
 import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -32,8 +34,7 @@ import static io.micrometer.core.instrument.Meter.Id;
 import static io.micrometer.core.instrument.Meter.Type;
 import static io.micrometer.core.instrument.Meter.Type.DISTRIBUTION_SUMMARY;
 import static io.micrometer.core.instrument.Meter.Type.TIMER;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link CloudWatchMeterRegistry}.
@@ -55,13 +56,13 @@ class CloudWatchMeterRegistryTest {
     };
 
     private final MockClock clock = new MockClock();
-    private final CloudWatchMeterRegistry registry = new CloudWatchMeterRegistry(config, clock, null);
+    private final CloudWatchMeterRegistry registry = spy(new CloudWatchMeterRegistry(config, clock, null));
     private CloudWatchMeterRegistry.Batch registryBatch = registry.new Batch();
 
     @Test
     void metricData() {
         registry.gauge("gauge", 1d);
-        List<MetricDatum> metricDatumStream = registry.metricData(registry.getMeters());
+        List<MetricDatum> metricDatumStream = registry.metricData();
         assertThat(metricDatumStream.size()).isEqualTo(1);
     }
 
@@ -72,7 +73,7 @@ class CloudWatchMeterRegistryTest {
         AtomicReference<Double> value = new AtomicReference<>(Double.NaN);
         registry.more().timeGauge("time.gauge", Tags.empty(), value, TimeUnit.MILLISECONDS, AtomicReference::get);
 
-        List<MetricDatum> metricDatumStream = registry.metricData(registry.getMeters());
+        List<MetricDatum> metricDatumStream = registry.metricData();
         assertThat(metricDatumStream.size()).isEqualTo(0);
     }
 
@@ -200,6 +201,23 @@ class CloudWatchMeterRegistryTest {
 
         assertThat(streamSupplier.get().noneMatch(hasAvgMetric(meterId))).isTrue();
         assertThat(streamSupplier.get().noneMatch(hasMaxMetric(meterId))).isTrue();
+    }
+
+    @Test
+    public void batchSizeShouldWorkOnMetricDatum() throws InterruptedException {
+        List<Meter> meters = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            Timer timer = Timer.builder("timer." + i).register(this.registry);
+            meters.add(timer);
+        }
+        when(this.registry.getMeters()).thenReturn(meters);
+        doNothing().when(this.registry).sendMetricData(any());
+        this.registry.publish();
+        ArgumentCaptor<List<MetricDatum>> argumentCaptor = ArgumentCaptor.forClass(List.class);
+        verify(this.registry, times(2)).sendMetricData(argumentCaptor.capture());
+        List<List<MetricDatum>> allValues = argumentCaptor.getAllValues();
+        assertThat(allValues.get(0)).hasSize(20);
+        assertThat(allValues.get(1)).hasSize(20);
     }
 
     private Predicate<MetricDatum> hasAvgMetric(Id id) {
