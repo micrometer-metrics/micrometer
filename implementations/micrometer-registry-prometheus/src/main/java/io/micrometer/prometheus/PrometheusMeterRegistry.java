@@ -71,7 +71,7 @@ public class PrometheusMeterRegistry extends MeterRegistry {
     }
 
     /**
-     * @return Content that should be included in the response body for an endpoint designate for
+     * @return Content that should be included in the response body for an endpoint designated for
      * Prometheus to scrape from.
      */
     public String scrape() {
