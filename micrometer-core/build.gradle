@@ -48,7 +48,7 @@ dependencies {
 
     // reactor
     compile 'io.projectreactor:reactor-core:latest.release', optional
-    compile 'io.projectreactor.netty:reactor-netty:0.8.6.RELEASE', optional
+    compile 'io.projectreactor.netty:reactor-netty:latest.release', optional
 
     // @Timed AOP
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
