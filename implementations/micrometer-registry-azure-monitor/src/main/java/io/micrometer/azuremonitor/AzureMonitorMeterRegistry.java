@@ -139,7 +139,7 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     private Stream<MetricTelemetry> trackDistributionSummary(DistributionSummary summary) {
         MetricTelemetry mt = createMetricTelemetry(summary, null);
         mt.setValue(summary.totalAmount());
-        mt.setCount((int) summary.count());
+        mt.setCount(castCountToInt(summary.count()));
         mt.setMax(summary.max());
         mt.setMin(0.0); // TODO: when #457 is resolved, support min
         return Stream.of(mt);
@@ -148,7 +148,7 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     private Stream<MetricTelemetry> trackTimer(Timer timer) {
         MetricTelemetry mt = createMetricTelemetry(timer, null);
         mt.setValue(timer.totalTime(getBaseTimeUnit()));
-        mt.setCount((int) timer.count());
+        mt.setCount(castCountToInt(timer.count()));
         mt.setMin(0.0); // TODO: when #457 is resolved, support min
         mt.setMax(timer.max(getBaseTimeUnit()));
         return Stream.of(mt);
@@ -157,37 +157,31 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     private Stream<MetricTelemetry> trackFunctionTimer(FunctionTimer timer) {
         MetricTelemetry mt = createMetricTelemetry(timer, null);
         mt.setValue(timer.totalTime(getBaseTimeUnit()));
-        mt.setCount((int) timer.count());
+        mt.setCount(castCountToInt(timer.count()));
         return Stream.of(mt);
     }
 
     private Stream<MetricTelemetry> trackCounter(Counter counter) {
         MetricTelemetry mt = createMetricTelemetry(counter, null);
-        double count = counter.count();
-        mt.setValue(count);
-        mt.setCount((int) Math.round(count));
+        mt.setValue(counter.count());
         return Stream.of(mt);
     }
 
     private Stream<MetricTelemetry> trackFunctionCounter(FunctionCounter counter) {
         MetricTelemetry mt = createMetricTelemetry(counter, null);
-        double count = counter.count();
-        mt.setValue(count);
-        mt.setCount((int) Math.round(count));
+        mt.setValue(counter.count());
         return Stream.of(mt);
     }
 
     private Stream<MetricTelemetry> trackGauge(Gauge gauge) {
         MetricTelemetry mt = createMetricTelemetry(gauge, null);
         mt.setValue(gauge.value());
-        mt.setCount(1);
         return Stream.of(mt);
     }
 
     private Stream<MetricTelemetry> trackTimeGauge(TimeGauge meter) {
         MetricTelemetry mt = createMetricTelemetry(meter, null);
         mt.setValue(meter.value(getBaseTimeUnit()));
-        mt.setCount(1);
         return Stream.of(mt);
     }
 
@@ -214,6 +208,14 @@ public class AzureMonitorMeterRegistry extends StepMeterRegistry {
     public void close() {
         client.flush();
         super.close();
+    }
+
+    private static int castCountToInt(long count) {
+        return count < Integer.MAX_VALUE ? (int) count : Integer.MAX_VALUE;
+    }
+
+    private static int castCountToInt(double count) {
+        return count < Integer.MAX_VALUE ? (int) count : Integer.MAX_VALUE;
     }
 
     public static class Builder {
