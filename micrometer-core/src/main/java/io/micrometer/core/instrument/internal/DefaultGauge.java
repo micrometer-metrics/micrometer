@@ -24,6 +24,14 @@ import io.micrometer.core.lang.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.function.ToDoubleFunction;
 
+/**
+ * Default implementation for {@link Gauge}.
+ *
+ * @param <T> reference type
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 public class DefaultGauge<T> extends AbstractMeter implements Gauge {
     private final WeakReference<T> ref;
     private final ToDoubleFunction<T> value;
@@ -37,7 +45,14 @@ public class DefaultGauge<T> extends AbstractMeter implements Gauge {
     @Override
     public double value() {
         T obj = ref.get();
-        return obj != null ? value.applyAsDouble(ref.get()) : Double.NaN;
+        if (obj != null) {
+            try {
+                return value.applyAsDouble(ref.get());
+            }
+            catch (Throwable ex) {
+            }
+        }
+        return Double.NaN;
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
