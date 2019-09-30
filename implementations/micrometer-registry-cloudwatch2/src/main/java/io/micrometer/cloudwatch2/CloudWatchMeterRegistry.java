@@ -19,7 +19,6 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.MeterPartition;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
@@ -104,9 +103,9 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     protected void publish() {
         boolean interrupted = false;
         try {
-            for (List<Meter> batch : MeterPartition.partition(this, config.batchSize())) {
+            for (List<MetricDatum> batch : MetricDatumPartition.partition(metricData(), config.batchSize())) {
                 try {
-                    sendMetricData(metricData(batch));
+                    sendMetricData(batch);
                 } catch (InterruptedException ex) {
                     interrupted = true;
                 }
@@ -119,7 +118,8 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
         }
     }
 
-    private void sendMetricData(List<MetricDatum> metricData) throws InterruptedException {
+    // VisibleForTesting
+    void sendMetricData(List<MetricDatum> metricData) throws InterruptedException {
         PutMetricDataRequest putMetricDataRequest = PutMetricDataRequest.builder()
                 .namespace(config.namespace())
                 .metricData(metricData)
@@ -146,9 +146,9 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
     }
 
     //VisibleForTesting
-    List<MetricDatum> metricData(List<Meter> meters) {
+    List<MetricDatum> metricData() {
         Batch batch = new Batch();
-        return meters.stream().flatMap(m -> m.match(
+        return getMeters().stream().flatMap(m -> m.match(
                 batch::gaugeData,
                 batch::counterData,
                 batch::timerData,
