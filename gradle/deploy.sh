@@ -15,11 +15,11 @@ elif [ $CIRCLE_TAG ]; then
   openssl aes-256-cbc -d -in gradle.properties.enc -out gradle.properties -k "$KEY" -md sha256
   case "$CIRCLE_TAG" in
   *-rc\.*)
-    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true candidate $SWITCHES -x release -x bintrayPublish
+    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true candidate bintrayUpload $SWITCHES -x release -x bintrayPublish
     ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true :micrometer-core:bintrayPublish $SWITCHES -x bintrayUpload
     ;;
   *)
-    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true final $SWITCHES -x release -x artifactoryPublish -x bintrayPublish
+    ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true final bintrayUpload $SWITCHES -x release -x artifactoryPublish -x bintrayPublish
     ./gradlew -Prelease.disableGitChecks=true -Prelease.useLastTag=true :micrometer-core:bintrayPublish $SWITCHES -x bintrayUpload
     ;;
   esac
