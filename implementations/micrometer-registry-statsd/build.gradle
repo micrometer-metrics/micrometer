@@ -5,7 +5,7 @@ plugins {
 dependencies {
     compile project(':micrometer-core')
     compile 'io.projectreactor:reactor-core:3.2.12.RELEASE'
-    compile 'io.projectreactor.netty:reactor-netty:0.8.11.RELEASE'
+    compile 'io.projectreactor.netty:reactor-netty:0.8.6.RELEASE'
     compile 'org.pcollections:pcollections:3.0.+'
 
     testCompile project(':micrometer-test')
