@@ -27,7 +27,7 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
  * It monitors the overall connection pool state.
  *
  * @author Benjamin Hubert (benjamin.hubert@willhaben.at)
- * @since 1.2.0
+ * @since 1.3.0
  */
 public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBinder {
 
