@@ -19,14 +19,12 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.pool.PoolStats;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -49,16 +47,8 @@ class PoolingHttpClientConnectionManagerMetricsBinderTest {
     }
 
     @Test
-    void creationWithNonPoolingHttpClientThrowsException() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            HttpClientConnectionManager connectionManager = mock(HttpClientConnectionManager.class);
-            new PoolingHttpClientConnectionManagerMetricsBinder(connectionManager, "test");
-        });
-    }
-
-    @Test
     void creationWithPoolingHttpClientIsOk() {
-        HttpClientConnectionManager connectionManager = mock(PoolingHttpClientConnectionManager.class);
+        PoolingHttpClientConnectionManager connectionManager = mock(PoolingHttpClientConnectionManager.class);
         new PoolingHttpClientConnectionManagerMetricsBinder(connectionManager, "test");
     }
 

@@ -18,7 +18,6 @@ package io.micrometer.core.instrument.binder.httpcomponents;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNull;
-import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
 /**
@@ -31,27 +30,11 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
  */
 public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBinder {
 
-    private static final String METER_TOTAL_MAX_DESC = "The configured maximum number of allowed persistent connections for all routes.";
-    private static final String METER_TOTAL_MAX = "httpcomponents.httpclient.pool.total.max";
-    private static final String METER_TOTAL_CONNECTIONS_DESC = "The number of persistent and leased connections for all routes.";
-    private static final String METER_TOTAL_CONNECTIONS = "httpcomponents.httpclient.pool.total.connections";
-    private static final String METER_TOTAL_PENDING_DESC = "The number of connection requests being blocked awaiting a free connection for all routes.";
-    private static final String METER_TOTAL_PENDING = "httpcomponents.httpclient.pool.total.pending";
-    private static final String METER_DEFAULT_MAX_PER_ROUTE_DESC = "The configured default maximum number of allowed persistent connections per route.";
-    private static final String METER_DEFAULT_MAX_PER_ROUTE = "httpcomponents.httpclient.pool.route.max.default";
-    private static final String TAG_CONNECTIONS_STATE = "state";
-
     private final PoolingHttpClientConnectionManager connectionManager;
     private final Iterable<Tag> tags;
 
     /**
      * Creates a metrics binder for the given pooling connection manager.
-     *
-     * For convenience this constructor will take care of casting the given
-     * {@link HttpClientConnectionManager} to the required {@link
-     * PoolingHttpClientConnectionManager}. An {@link IllegalArgumentException}
-     * is thrown, if the given {@code connectionManager} is not an instance of
-     * {@link PoolingHttpClientConnectionManager}.
      *
      * @param connectionManager The connection manager to monitor.
      * @param name Name of the connection manager. Will be added as tag with the
@@ -60,18 +43,12 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
      *             of arguments representing key/value pairs of tags.
      */
     @SuppressWarnings("WeakerAccess")
-    public PoolingHttpClientConnectionManagerMetricsBinder(HttpClientConnectionManager connectionManager, String name, String... tags) {
+    public PoolingHttpClientConnectionManagerMetricsBinder(PoolingHttpClientConnectionManager connectionManager, String name, String... tags) {
         this(connectionManager, name, Tags.of(tags));
     }
 
     /**
      * Creates a metrics binder for the given pooling connection manager.
-     *
-     * For convenience this constructor will take care of casting the given
-     * {@link HttpClientConnectionManager} to the required {@link
-     * PoolingHttpClientConnectionManager}. An {@link IllegalArgumentException}
-     * is thrown, if the given {@code connectionManager} is not an instance of
-     * {@link PoolingHttpClientConnectionManager}.
      *
      * @param connectionManager The connection manager to monitor.
      * @param name Name of the connection manager. Will be added as tag with the
@@ -79,11 +56,8 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
      * @param tags Tags to apply to all recorded metrics.
      */
     @SuppressWarnings("WeakerAccess")
-    public PoolingHttpClientConnectionManagerMetricsBinder(HttpClientConnectionManager connectionManager, String name, Iterable<Tag> tags) {
-        if (!(connectionManager instanceof PoolingHttpClientConnectionManager)) {
-            throw new IllegalArgumentException("The given connectionManager is not an instance of PoolingHttpClientConnectionManager.");
-        }
-        this.connectionManager = (PoolingHttpClientConnectionManager) connectionManager;
+    public PoolingHttpClientConnectionManagerMetricsBinder(PoolingHttpClientConnectionManager connectionManager, String name, Iterable<Tag> tags) {
+        this.connectionManager = connectionManager;
         this.tags = Tags.concat(tags, "httpclient", name);
     }
 
@@ -93,34 +67,34 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
     }
 
     private void registerTotalMetrics(MeterRegistry registry) {
-        Gauge.builder(METER_TOTAL_MAX,
+        Gauge.builder("httpcomponents.httpclient.pool.total.max",
             connectionManager,
             (connectionManager) -> connectionManager.getTotalStats().getMax())
-            .description(METER_TOTAL_MAX_DESC)
+            .description("The configured maximum number of allowed persistent connections for all routes.")
             .tags(tags)
             .register(registry);
-        Gauge.builder(METER_TOTAL_CONNECTIONS,
+        Gauge.builder("httpcomponents.httpclient.pool.total.connections",
             connectionManager,
             (connectionManager) -> connectionManager.getTotalStats().getAvailable())
-            .description(METER_TOTAL_CONNECTIONS_DESC)
-            .tags(tags).tag(TAG_CONNECTIONS_STATE, "available")
+            .description("The number of persistent and leased connections for all routes.")
+            .tags(tags).tag("state", "available")
             .register(registry);
-        Gauge.builder(METER_TOTAL_CONNECTIONS,
+        Gauge.builder("httpcomponents.httpclient.pool.total.connections",
             connectionManager,
             (connectionManager) -> connectionManager.getTotalStats().getLeased())
-            .description(METER_TOTAL_CONNECTIONS_DESC)
-            .tags(tags).tag(TAG_CONNECTIONS_STATE, "leased")
+            .description("The number of persistent and leased connections for all routes.")
+            .tags(tags).tag("state", "leased")
             .register(registry);
-        Gauge.builder(METER_TOTAL_PENDING,
+        Gauge.builder("httpcomponents.httpclient.pool.total.pending",
             connectionManager,
             (connectionManager) -> connectionManager.getTotalStats().getPending())
-            .description(METER_TOTAL_PENDING_DESC)
+            .description("The number of connection requests being blocked awaiting a free connection for all routes.")
             .tags(tags)
             .register(registry);
-        Gauge.builder(METER_DEFAULT_MAX_PER_ROUTE,
+        Gauge.builder("httpcomponents.httpclient.pool.route.max.default",
             connectionManager,
             PoolingHttpClientConnectionManager::getDefaultMaxPerRoute)
-            .description(METER_DEFAULT_MAX_PER_ROUTE_DESC)
+            .description("The configured default maximum number of allowed persistent connections per route.")
             .tags(tags)
             .register(registry);
     }
