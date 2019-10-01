@@ -34,8 +34,9 @@ public class TimedExecutor implements Executor {
     public TimedExecutor(MeterRegistry registry, Executor delegate, String executorName, Iterable<Tag> tags) {
         this.registry = registry;
         this.delegate = delegate;
-        this.executionTimer = registry.timer("executor.execution", Tags.concat(tags, "name", executorName));
-        this.idleTimer = registry.timer("executor.idle", Tags.concat(tags, "name", executorName));
+        Tags finalTags = Tags.concat(tags, "name", executorName);
+        this.executionTimer = registry.timer("executor.execution", finalTags);
+        this.idleTimer = registry.timer("executor.idle", finalTags);
     }
 
     @Override

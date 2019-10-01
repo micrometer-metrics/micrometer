@@ -112,13 +112,14 @@ public class ExecutorServiceMetrics implements MeterBinder {
     }
 
     /**
-     * Record metrics on the use of an {@link ScheduledExecutorService}.
+     * Record metrics on the use of a {@link ScheduledExecutorService}.
      *
      * @param registry            The registry to bind metrics to.
      * @param executor            The scheduled executor to instrument.
      * @param executorServiceName Will be used to tag metrics with "name".
      * @param tags                Tags to apply to all recorded metrics.
      * @return The instrumented scheduled executor, proxied.
+     * @since 1.3.0
      */
     public static ScheduledExecutorService monitor(MeterRegistry registry, ScheduledExecutorService executor, String executorServiceName, Iterable<Tag> tags) {
         new ExecutorServiceMetrics(executor, executorServiceName, tags).bindTo(registry);
@@ -126,13 +127,14 @@ public class ExecutorServiceMetrics implements MeterBinder {
     }
 
     /**
-     * Record metrics on the use of an {@link ScheduledExecutorService}.
+     * Record metrics on the use of a {@link ScheduledExecutorService}.
      *
      * @param registry            The registry to bind metrics to.
      * @param executor            The scheduled executor to instrument.
      * @param executorServiceName Will be used to tag metrics with "name".
      * @param tags                Tags to apply to all recorded metrics.
      * @return The instrumented scheduled executor, proxied.
+     * @since 1.3.0
      */
     public static ScheduledExecutorService monitor(MeterRegistry registry, ScheduledExecutorService executor, String executorServiceName, Tag... tags) {
         return monitor(registry, executor, executorServiceName, asList(tags));
