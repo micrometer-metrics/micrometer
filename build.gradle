@@ -27,8 +27,43 @@ allprojects {
 }
 
 subprojects {
-    apply plugin: 'java'
-    apply plugin: 'checkstyle'
+    if (project.name != 'micrometer-bom') {
+        apply plugin: 'java'
+        apply plugin: 'checkstyle'
+
+        tasks {
+            compileJava {
+                options.encoding = 'UTF-8'
+                // ensure Java 8 baseline is enforced for main source
+                if (JavaVersion.current().isJava9Compatible()) {
+                    options.compilerArgs.addAll(['--release', '8'])
+                }
+            }
+            compileTestJava {
+                options.encoding = 'UTF-8'
+                sourceCompatibility = JavaVersion.current()
+                targetCompatibility = JavaVersion.current()
+            }
+        }
+
+        //noinspection GroovyAssignabilityCheck
+        test {
+            // set heap size for the test JVM(s)
+            maxHeapSize = "1500m"
+
+            useJUnitPlatform()
+        }
+
+        checkstyle {
+            toolVersion = '8.23'
+            configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+        }
+
+        license {
+            ext.year = Calendar.getInstance().get(Calendar.YEAR)
+            skipExistingHeaders = true
+        }
+    }
 
     dependencyLocking {
         lockAllConfigurations()
@@ -46,21 +81,6 @@ subprojects {
                     it.resolve()
                 }
             }
-        }
-    }
-
-    tasks {
-        compileJava {
-            options.encoding = 'UTF-8'
-            // ensure Java 8 baseline is enforced for main source
-            if (JavaVersion.current().isJava9Compatible()) {
-                options.compilerArgs.addAll(['--release', '8'])
-            }
-        }
-        compileTestJava {
-            options.encoding = 'UTF-8'
-            sourceCompatibility = JavaVersion.current()
-            targetCompatibility = JavaVersion.current()
         }
     }
 
@@ -87,26 +107,8 @@ subprojects {
         mavenLocal()
     }
 
-    checkstyle {
-        toolVersion = '8.23'
-        configFile = rootProject.file('config/checkstyle/checkstyle.xml')
-    }
-
     def check = tasks.findByName('check')
     if (check) project.rootProject.tasks.releaseCheck.dependsOn check
-
-    //noinspection GroovyAssignabilityCheck
-    test {
-        // set heap size for the test JVM(s)
-        maxHeapSize = "1500m"
-
-        useJUnitPlatform()
-    }
-
-    license {
-        ext.year = Calendar.getInstance().get(Calendar.YEAR)
-        skipExistingHeaders = true
-    }
 }
 
 wrapper {

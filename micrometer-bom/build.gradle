@@ -1,5 +1,5 @@
 plugins {
-    id 'maven-publish'
+    id 'java-platform'
     id 'io.spring.dependency-management' version '1.0.8.RELEASE'
 }
 
@@ -19,25 +19,10 @@ dependencyManagement {
     }
 }
 
-bintray.publication = 'mavenBom'
-artifactory {
-    publish {
-        defaults {
-            publications 'mavenBom'
-        }
-    }
-}
-
 publishing {
     publications {
-        mavenBom(MavenPublication) {
+        nebula(MavenPublication) {
+            from components.javaPlatform
         }
-    }
-}
-
-tasks.withType(PublishToMavenLocal) {
-    onlyIf {
-        // avoid publishing `nebula` publication added by plugins
-        publication == publishing.publications.mavenBom
     }
 }
