@@ -20,7 +20,8 @@ See [Micrometer's support policy](https://micrometer.io/docs/support) for more d
 | ------------------ | --- | ----------- |
 | `1.0.x`            | Yes | `1.0.11`    |
 | `1.1.x`            | Yes |  |
-| `1.2.x`            | No  |  |
+| `1.2.x`            | No  | `1.2.2` |
+| `1.3.x`            | Yes |  |
 
 ## Join the discussion
 
