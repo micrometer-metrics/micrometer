@@ -1,4 +1,5 @@
 plugins {
+    id 'java-platform'
     id 'io.spring.dependency-management' version '1.0.8.RELEASE'
 }
 
@@ -14,6 +15,14 @@ dependencyManagement {
             dependency(group: it.group,
                     name: it.name,
                     version: it.version.toString())
+        }
+    }
+}
+
+publishing {
+    publications {
+        nebula(MavenPublication) {
+            from components.javaPlatform
         }
     }
 }
