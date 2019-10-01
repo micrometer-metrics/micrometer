@@ -105,18 +105,20 @@ class ExecutorServiceMetricsTest {
 
         pool.submit(() -> {
             taskStart.countDown();
-            taskComplete.await(1, TimeUnit.SECONDS);
+            assertThat(taskComplete.await(1, TimeUnit.SECONDS)).isTrue();
             System.out.println("beep");
             return 0;
         });
         pool.submit(() -> System.out.println("boop"));
 
-        taskStart.await(1, TimeUnit.SECONDS);
+        assertThat(taskStart.await(1, TimeUnit.SECONDS)).isTrue();
         assertThat(registry.get("executor.queued").tags(userTags).tag("name", "beep.pool")
                 .gauge().value()).isEqualTo(1.0);
 
         taskComplete.countDown();
-        pool.awaitTermination(1, TimeUnit.SECONDS);
+
+        pool.shutdown();
+        assertThat(pool.awaitTermination(1, TimeUnit.SECONDS)).isTrue();
 
         assertThat(registry.get("executor").tags(userTags).timer().count()).isEqualTo(2L);
         assertThat(registry.get("executor.idle").tags(userTags).timer().count()).isEqualTo(2L);
@@ -126,7 +128,7 @@ class ExecutorServiceMetricsTest {
     @DisplayName("ScheduledExecutorService can be monitored with a default set of metrics")
     @Test
     void monitorScheduledExecutorService() throws TimeoutException, ExecutionException, InterruptedException {
-        ScheduledExecutorService pool = ExecutorServiceMetrics.monitor(registry, Executors.newScheduledThreadPool(1), "scheduled.pool", userTags);
+        ScheduledExecutorService pool = ExecutorServiceMetrics.monitor(registry, Executors.newScheduledThreadPool(2), "scheduled.pool", userTags);
         CountDownLatch callableTaskStart = new CountDownLatch(1);
         CountDownLatch runnableTaskStart = new CountDownLatch(1);
         CountDownLatch callableTaskComplete = new CountDownLatch(1);
@@ -134,8 +136,7 @@ class ExecutorServiceMetricsTest {
 
         Callable<Integer> scheduledBeepCallable = () -> {
             callableTaskStart.countDown();
-            callableTaskComplete.await(1, TimeUnit.SECONDS);
-            System.out.println("scheduled beep callable");
+            assertThat(callableTaskComplete.await(1, TimeUnit.SECONDS)).isTrue();
             return 1;
         };
         ScheduledFuture<Integer> callableResult = pool.schedule(scheduledBeepCallable, 10, TimeUnit.MILLISECONDS);
@@ -143,22 +144,23 @@ class ExecutorServiceMetricsTest {
         Runnable scheduledBeepRunnable = () -> {
             runnableTaskStart.countDown();
             try {
-                runnableTaskComplete.await(1, TimeUnit.SECONDS);
+                assertThat(runnableTaskComplete.await(1, TimeUnit.SECONDS)).isTrue();
             } catch (InterruptedException e) {
                 throw new IllegalStateException("scheduled runnable interrupted before completion");
             }
-            System.out.println("scheduled beep runnable");
         };
         ScheduledFuture<?> runnableResult = pool.schedule(scheduledBeepRunnable, 15, TimeUnit.MILLISECONDS);
 
         assertThat(registry.get("executor.scheduled.once").tags(userTags).tag("name", "scheduled.pool").counter().count()).isEqualTo(2);
 
-        callableTaskStart.await(1, TimeUnit.SECONDS);
-        runnableTaskComplete.await(1, TimeUnit.SECONDS);
+        assertThat(callableTaskStart.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(runnableTaskStart.await(1, TimeUnit.SECONDS)).isTrue();
 
         callableTaskComplete.countDown();
         runnableTaskComplete.countDown();
-        pool.awaitTermination(1, TimeUnit.SECONDS);
+
+        pool.shutdown();
+        assertThat(pool.awaitTermination(1, TimeUnit.SECONDS)).isTrue();
 
         assertThat(callableResult.get(1, TimeUnit.MINUTES)).isEqualTo(1);
         assertThat(runnableResult.get(1, TimeUnit.MINUTES)).isNull();
@@ -182,7 +184,6 @@ class ExecutorServiceMetricsTest {
             if (fixedRateInvocations.getCount() == 0) {
                 throw new RuntimeException("finished execution");
             }
-            System.out.println("fixed rate beep runnable");
         };
         pool.scheduleAtFixedRate(repeatedAtFixedRate, 10, 10, TimeUnit.MILLISECONDS);
 
@@ -191,16 +192,16 @@ class ExecutorServiceMetricsTest {
             if (fixedDelayInvocations.getCount() == 0) {
                 throw new RuntimeException("finished execution");
             }
-            System.out.println("fixed delay beep runnable");
         };
         pool.scheduleWithFixedDelay(repeatedWithFixedDelay, 5, 15, TimeUnit.MILLISECONDS);
 
         assertThat(registry.get("executor.scheduled.repetitively").tags(userTags).counter().count()).isEqualTo(2);
 
-        fixedRateInvocations.await(5, TimeUnit.SECONDS);
-        fixedDelayInvocations.await(5, TimeUnit.SECONDS);
+        assertThat(fixedRateInvocations.await(5, TimeUnit.SECONDS)).isTrue();
+        assertThat(fixedDelayInvocations.await(5, TimeUnit.SECONDS)).isTrue();
 
-        pool.awaitTermination(1, TimeUnit.SECONDS);
+        pool.shutdown();
+        assertThat(pool.awaitTermination(1, TimeUnit.SECONDS)).isTrue();
 
         assertThat(registry.get("executor").tags(userTags).timer().count()).isEqualTo(6L);
         assertThat(registry.get("executor.idle").tags(userTags).timer().count()).isEqualTo(0L);
