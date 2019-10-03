@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
@@ -34,6 +35,8 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -445,4 +448,31 @@ class CompositeMeterRegistryTest {
         counting.publish();
         assertThat(counting.count(functionCounter)).isEqualTo(1);
     }
+
+    @RepeatedTest(100)
+    void meterRegistrationShouldWorkConcurrently() throws InterruptedException {
+        this.composite.add(this.simple);
+
+        String meterName = "test.counter";
+        String tagName = "test.tag";
+
+        int count = 10000;
+        int tagCount = 100;
+        ExecutorService executor = Executors.newFixedThreadPool(10);
+        for (int i = 0; i < count; i++) {
+            int tagValue = i % tagCount;
+            executor.execute(() -> {
+                Counter counter = Counter.builder(meterName).tag(tagName, String.valueOf(tagValue))
+                        .register(this.composite);
+                counter.increment();
+            });
+        }
+        executor.shutdown();
+        assertThat(executor.awaitTermination(1L, TimeUnit.DAYS)).isTrue();
+        for (int i = 0; i < tagCount; i++) {
+            assertThat(this.composite.find(meterName).tag(tagName, String.valueOf(i)).counter().count())
+                    .isEqualTo(count / tagCount);
+        }
+    }
+
 }
