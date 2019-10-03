@@ -61,21 +61,19 @@ class HibernateQueryMetricsTest {
     @Test
     void shouldExposeQueryMetrics() {
         String query = "Select generatedAlias0 from Table as generatedAlias0 where generatedAlias0.param0 :val0";
-        String expectedNormalizedQuery = "select_generatedalias0_from_table_as_generatedalias0_where_generatedalias0_param0_:val0";
 
         HibernateQueryMetrics.MetricsEventHandler eventHandler = createMetricsEventHandlerMock();
         Statistics statistics = createQueryStatisticsMock(query);
 
         eventHandler.registerQueryMetric(statistics);
 
-        assertThat(registry.get("hibernate.query.cache.requests").tags("result", "hit", "query", expectedNormalizedQuery).functionCounter().count()).isEqualTo(43.0d);
-        assertThat(registry.get("hibernate.query.cache.requests").tags("result", "hit", "query", expectedNormalizedQuery).functionCounter().count()).isEqualTo(43.0d);
-        assertThat(registry.get("hibernate.query.cache.puts").tags("query", expectedNormalizedQuery).functionCounter().count()).isEqualTo(43.0d);
-        assertThat(registry.get("hibernate.query.executions.total").tags("query", expectedNormalizedQuery).functionTimer().count()).isEqualTo(43.0d);
-        assertThat(registry.get("hibernate.query.executions.total").tags("query", expectedNormalizedQuery).functionTimer().totalTime(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
-        assertThat(registry.get("hibernate.query.executions.avg").tags("query", expectedNormalizedQuery).timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
-        assertThat(registry.get("hibernate.query.executions.max").tags("query", expectedNormalizedQuery).timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
-        assertThat(registry.get("hibernate.query.executions.min").tags("query", expectedNormalizedQuery).timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
-        assertThat(registry.get("hibernate.query.executions.rows").tags("query", expectedNormalizedQuery).functionCounter().count()).isEqualTo(43.0);
+        assertThat(registry.get("hibernate.query.cache.requests").tags("result", "hit", "query", query).functionCounter().count()).isEqualTo(43.0d);
+        assertThat(registry.get("hibernate.query.cache.requests").tags("result", "hit", "query", query).functionCounter().count()).isEqualTo(43.0d);
+        assertThat(registry.get("hibernate.query.cache.puts").tags("query", query).functionCounter().count()).isEqualTo(43.0d);
+        assertThat(registry.get("hibernate.query.executions.total").tags("query", query).functionTimer().count()).isEqualTo(43.0d);
+        assertThat(registry.get("hibernate.query.executions.total").tags("query", query).functionTimer().totalTime(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
+        assertThat(registry.get("hibernate.query.executions.max").tags("query", query).timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
+        assertThat(registry.get("hibernate.query.executions.min").tags("query", query).timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(43.0d);
+        assertThat(registry.get("hibernate.query.executions.rows").tags("query", query).functionCounter().count()).isEqualTo(43.0);
     }
 }

@@ -123,7 +123,7 @@ public class HibernateQueryMetrics implements MeterBinder {
             for (String query : statistics.getQueries()) {
                 QueryStatistics queryStatistics = statistics.getQueryStatistics(query);
                 if (Objects.nonNull(queryStatistics)) {
-                    String queryName = query.replace(" ", "_").replace(".", "_").toLowerCase();
+                    String queryName = meterRegistry.config().namingConvention().tagValue(query);
                     if (Objects.isNull(Search.in(meterRegistry).tags("query", queryName).functionCounter())) {
 
                         FunctionCounter.builder("hibernate.query.cache.requests", queryStatistics, QueryStatistics::getCacheHitCount)
@@ -138,7 +138,7 @@ public class HibernateQueryMetrics implements MeterBinder {
                                 .description("The number of query cache miss")
                                 .register(meterRegistry);
 
-                        FunctionCounter.builder("hibernate.query.cache.puts", queryStatistics, QueryStatistics::getCacheMissCount)
+                        FunctionCounter.builder("hibernate.query.cache.puts", queryStatistics, QueryStatistics::getCachePutCount)
                                 .tags(tags)
                                 .tags("query", queryName)
                                 .description("The number of putting the query into cache")
@@ -148,12 +148,6 @@ public class HibernateQueryMetrics implements MeterBinder {
                                 .tags(tags)
                                 .tags("query", queryName)
                                 .description("Function tracked total number of query executions during time")
-                                .register(meterRegistry);
-
-                        TimeGauge.builder("hibernate.query.executions.avg", queryStatistics, TimeUnit.MILLISECONDS, QueryStatistics::getExecutionAvgTime)
-                                .tags(tags)
-                                .tags("query", queryName)
-                                .description("Query average execution time")
                                 .register(meterRegistry);
 
                         TimeGauge.builder("hibernate.query.executions.max", queryStatistics, TimeUnit.MILLISECONDS, QueryStatistics::getExecutionMaxTime)
