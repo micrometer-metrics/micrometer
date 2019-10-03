@@ -691,24 +691,24 @@ public abstract class MeterRegistry {
         /**
          * Register an event listener for each meter added to the registry.
          *
-         * @param meter The meter that has just been added
+         * @param meterAddedListener a meter-added event listener to be added
          * @return This configuration instance.
          */
-        public Config onMeterAdded(Consumer<Meter> meter) {
-            meterAddedListeners.add(meter);
+        public Config onMeterAdded(Consumer<Meter> meterAddedListener) {
+            meterAddedListeners.add(meterAddedListener);
             return this;
         }
 
         /**
          * Register an event listener for each meter removed from the registry.
          *
-         * @param meter The meter that has just been added
+         * @param meterRemovedListener a meter-removed event listener to be added
          * @return This configuration instance.
          * @since 1.1.0
          */
         @Incubating(since = "1.1.0")
-        public Config onMeterRemoved(Consumer<Meter> meter) {
-            meterRemovedListeners.add(meter);
+        public Config onMeterRemoved(Consumer<Meter> meterRemovedListener) {
+            meterRemovedListeners.add(meterRemovedListener);
             return this;
         }
 
