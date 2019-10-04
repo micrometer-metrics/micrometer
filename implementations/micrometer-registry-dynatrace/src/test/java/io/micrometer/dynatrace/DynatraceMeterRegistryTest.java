@@ -206,7 +206,8 @@ class DynatraceMeterRegistryTest {
 
     @Test
     void writeCustomMetrics() {
-        meterRegistry.gauge("my.gauge", 1d);
+        Double number = 1d;
+        meterRegistry.gauge("my.gauge", number);
         Gauge gauge = meterRegistry.find("my.gauge").gauge();
         Stream<DynatraceMeterRegistry.DynatraceCustomMetric> series = meterRegistry.writeMeter(gauge);
         List<DynatraceTimeSeries> timeSeries = series

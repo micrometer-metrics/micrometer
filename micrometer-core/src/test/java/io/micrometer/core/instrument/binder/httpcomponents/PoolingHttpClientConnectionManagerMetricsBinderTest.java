@@ -47,12 +47,6 @@ class PoolingHttpClientConnectionManagerMetricsBinderTest {
     }
 
     @Test
-    void creationWithPoolingHttpClientIsOk() {
-        PoolingHttpClientConnectionManager connectionManager = mock(PoolingHttpClientConnectionManager.class);
-        new PoolingHttpClientConnectionManagerMetricsBinder(connectionManager, "test");
-    }
-
-    @Test
     void totalMax() {
         PoolStats poolStats = mock(PoolStats.class);
         when(poolStats.getMax()).thenReturn(13);

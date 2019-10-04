@@ -76,7 +76,7 @@ public class PoolingHttpClientConnectionManagerMetricsBinder implements MeterBin
         Gauge.builder("httpcomponents.httpclient.pool.total.connections",
             connectionManager,
             (connectionManager) -> connectionManager.getTotalStats().getAvailable())
-            .description("The number of persistent and leased connections for all routes.")
+            .description("The number of persistent and available connections for all routes.")
             .tags(tags).tag("state", "available")
             .register(registry);
         Gauge.builder("httpcomponents.httpclient.pool.total.connections",
