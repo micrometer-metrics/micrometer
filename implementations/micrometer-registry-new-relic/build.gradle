@@ -1,6 +1,7 @@
 dependencies {
     compile project(':micrometer-core')
     compile 'org.slf4j:slf4j-api:1.7.+'
+    compile 'com.newrelic.agent.java:newrelic-api:5.+'
 
     testCompile project(':micrometer-test')
 }
