@@ -27,10 +27,10 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
-import io.micrometer.newrelic.OldNewRelicMeterRegistry.Builder;
 
 /**
- * Publishes metrics to New Relic Insights based on provider selected.
+ * Publishes metrics to New Relic Insights based on client provider selected (Http or Java Agent). 
+ * Defaults to Http client provider.
  *
  * @author Jon Schneider
  * @author Johnny Lim
@@ -122,7 +122,6 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
         Builder(NewRelicConfig config) {
             this.config = config;
-            httpClientProvider();
         }
 
         public Builder agentClientProvider() {
@@ -133,7 +132,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             return clientProvider(new NewRelicHttpClientProviderImpl(config));
         } 
 
-        public Builder clientProvider(NewRelicClientProvider clientProvider) {
+        Builder clientProvider(NewRelicClientProvider clientProvider) {
             this.clientProvider = clientProvider;
             return this;
         }       

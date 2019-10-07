@@ -223,7 +223,8 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
 
     private String event(Meter.Id id, Attribute... attributes) {
         if (!config.meterNameEventTypeEnabled()) {
-            //Include these if NOT generating an event per Meter/metric name
+            // Include contextual attributes when publishing all metrics under a single categorical eventType,
+            //  NOT when publishing an eventType per Meter/metric name
             int size = attributes.length;
             Attribute[] newAttrs = Arrays.copyOf(attributes, size + 2);
 
@@ -233,7 +234,6 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
             
             return event(id, Tags.empty(), newAttrs);
         }
-
         return event(id, Tags.empty(), attributes);
     }
 
@@ -261,7 +261,6 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
     }
 
     void sendEvents(Meter.Id id, Object attributesObj) {
-
         if (attributesObj instanceof Stream) {
             @SuppressWarnings("unchecked")
             Stream<String> events = (Stream<String>)attributesObj;
