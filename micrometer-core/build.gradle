@@ -60,10 +60,10 @@ dependencies {
     testCompile 'io.projectreactor:reactor-test:latest.release'
 
     // JUnit 5
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.4.+'
+    testImplementation 'org.junit.jupiter:junit-jupiter:latest.release'
 
     // Eclipse still needs this (as of 4.7.1a)
-    testRuntime 'org.junit.platform:junit-platform-launcher:1.4.+'
+    testRuntime 'org.junit.platform:junit-platform-launcher:latest.release'
 
     testCompile 'org.mockito:mockito-core:latest.release'
 
