@@ -51,8 +51,8 @@ public interface NewRelicClientProvider {
     //timer
     static final String TIME_UNIT = "timeUnit";
     //all
-    static final String METER_TYPE = "meterType";
-    static final String METER_NAME = "meterName";
+    static final String METRIC_TYPE = "metricType";
+    static final String METRIC_NAME = "metricName";
 
     default String getEventType(Meter.Id id, NewRelicConfig config, NamingConvention namingConvention) {
         String eventType = null;

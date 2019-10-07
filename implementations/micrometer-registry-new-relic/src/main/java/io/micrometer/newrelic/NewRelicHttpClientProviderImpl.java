@@ -228,8 +228,8 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
             Attribute[] newAttrs = Arrays.copyOf(attributes, size + 2);
 
             String name = id.getConventionName(namingConvention);
-            newAttrs[size] = new Attribute(METER_NAME, name);
-            newAttrs[size + 1] = new Attribute(METER_TYPE, id.getType().toString());
+            newAttrs[size] = new Attribute(METRIC_NAME, name);
+            newAttrs[size + 1] = new Attribute(METRIC_TYPE, id.getType().toString());
             
             return event(id, Tags.empty(), newAttrs);
         }

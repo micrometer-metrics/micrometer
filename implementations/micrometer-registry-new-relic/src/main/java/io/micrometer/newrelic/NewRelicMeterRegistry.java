@@ -19,6 +19,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
@@ -37,11 +38,19 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
     /**
      * @param config Configuration options for the registry that are describable as properties.
+     * @param clock  The clock to use for timings.
+     */
+    public NewRelicMeterRegistry(NewRelicConfig config, Clock clock) {
+        this(config, new NewRelicHttpClientProviderImpl(config), clock);
+    }
+    
+    /**
+     * @param config Configuration options for the registry that are describable as properties.
      * @param clientProvider Provider of the HTTP or Agent-based client that publishes metrics to New Relic
      * @param clock  The clock to use for timings.
      */
     public NewRelicMeterRegistry(NewRelicConfig config, NewRelicClientProvider clientProvider, Clock clock) {
-        this(config,clientProvider, new NewRelicNamingConvention(), clock, DEFAULT_THREAD_FACTORY);
+        this(config, clientProvider, new NewRelicNamingConvention(), clock, DEFAULT_THREAD_FACTORY);
     }
 
     /**
@@ -50,16 +59,26 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
      * @param namingConvention Naming convention to apply before metric publishing
      * @param clock  The clock to use for timings.
      * @param threadFactory The thread factory to use to create the publishing thread.
-     * @deprecated Use {@link #builder(NewNewRelicConfig)} instead.
+     * @deprecated Use {@link #builder(NewRelicConfig)} instead.
      */
-    @Deprecated
-    public NewRelicMeterRegistry(NewRelicConfig config, NewRelicClientProvider clientProvider,  
-            NamingConvention convention, Clock clock, ThreadFactory threadFactory) {
+    @Deprecated  // VisibleForTesting
+    NewRelicMeterRegistry(NewRelicConfig config, NewRelicClientProvider clientProvider,  
+                NamingConvention namingConvention, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
 
+        if (clientProvider == null) {
+            throw new MissingRequiredConfigurationException("clientProvider required to report metrics to New Relic");
+        }
+        if (namingConvention == null) {
+            throw new MissingRequiredConfigurationException("namingConvention must be set to report metrics to New Relic");
+        }
+        if (threadFactory == null) {
+            throw new MissingRequiredConfigurationException("threadFactory must be set to report metrics to New Relic");
+        }
+        
         this.clientProvider = clientProvider;
 
-        config().namingConvention(convention);
+        config().namingConvention(namingConvention);
         start(threadFactory);
     }
     
@@ -83,11 +102,12 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
         Builder(NewRelicConfig config) {
             this.config = config;
+            httpClientProvider();
         }
 
-//        public Builder agentClientProvider() {
-//            return clientProvider(new NewRelicAgentClientProviderImpl(config));
-//        } 
+        public Builder agentClientProvider() {
+            return clientProvider(new NewRelicAgentClientProviderImpl(config));
+        } 
 
         public Builder httpClientProvider() {
             return clientProvider(new NewRelicHttpClientProviderImpl(config));
