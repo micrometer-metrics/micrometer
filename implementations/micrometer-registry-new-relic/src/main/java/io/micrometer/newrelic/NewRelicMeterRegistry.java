@@ -18,11 +18,16 @@ package io.micrometer.newrelic;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
+import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.newrelic.OldNewRelicMeterRegistry.Builder;
 
 /**
  * Publishes metrics to New Relic Insights based on provider selected.
@@ -34,7 +39,9 @@ import io.micrometer.core.instrument.util.NamedThreadFactory;
 public class NewRelicMeterRegistry extends StepMeterRegistry {
 
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("new-relic-metrics-publisher");
+    private final NewRelicConfig config;
     private NewRelicClientProvider clientProvider;
+    private final Logger logger = LoggerFactory.getLogger(NewRelicMeterRegistry.class);
 
     /**
      * @param config Configuration options for the registry that are describable as properties.
@@ -76,10 +83,23 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
             throw new MissingRequiredConfigurationException("threadFactory must be set to report metrics to New Relic");
         }
         
+        this.config = config;
         this.clientProvider = clientProvider;
 
         config().namingConvention(namingConvention);
         start(threadFactory);
+    }
+
+    public static Builder builder(NewRelicConfig config) {
+        return new Builder(config);
+    }
+
+    @Override
+    public void start(ThreadFactory threadFactory) {
+        if (config.enabled()) {
+            logger.info("publishing metrics to new relic every " + TimeUtils.format(config.step()));
+        }
+        super.start(threadFactory);
     }
     
     @Override
