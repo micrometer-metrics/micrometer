@@ -16,17 +16,11 @@
 
 package io.micrometer.spring.autoconfigure.export.newrelic;
 
-import io.micrometer.appoptics.AppOpticsMeterRegistry;
-import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
-import io.micrometer.newrelic.NewRelicConfig;
-import io.micrometer.newrelic.NewRelicMeterRegistry;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.test.util.EnvironmentTestUtils;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -34,8 +28,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.newrelic.NewRelicConfig;
+import io.micrometer.newrelic.NewRelicMeterRegistry;
 
 /**
  *
