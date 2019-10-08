@@ -22,12 +22,23 @@ import io.micrometer.spring.autoconfigure.export.properties.StepRegistryProperti
  * Adapter to convert {@link NewRelicProperties} to a {@link NewRelicConfig}.
  *
  * @author Jon Schneider
+ * @author Neil Powell
  */
 class NewRelicPropertiesConfigAdapter extends StepRegistryPropertiesConfigAdapter<NewRelicProperties>
     implements NewRelicConfig {
 
     NewRelicPropertiesConfigAdapter(NewRelicProperties properties) {
         super(properties);
+    }
+
+    @Override
+    public boolean meterNameEventTypeEnabled() {
+        return get(NewRelicProperties::isMeterNameEventTypeEnabled, NewRelicConfig.super::meterNameEventTypeEnabled);
+    }
+
+    @Override
+    public String eventType() {
+        return get(NewRelicProperties::getEventType, NewRelicConfig.super::eventType);
     }
 
     @Override
