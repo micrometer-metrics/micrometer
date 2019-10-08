@@ -18,9 +18,11 @@ package io.micrometer.spring.autoconfigure.export.newrelic;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.test.util.EnvironmentTestUtils;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -29,6 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.newrelic.NewRelicConfig;
 import io.micrometer.newrelic.NewRelicMeterRegistry;
 
@@ -56,40 +59,40 @@ class NewRelicMetricsExportAutoConfigurationTests {
                 .isThrownBy(() -> context.getBean(NewRelicMeterRegistry.class));
     }
     
-//	@Test
-//	void failsWithoutAnApiKey() {
-//		this.contextRunner.withUserConfiguration(BaseConfiguration.class)
-//				.withPropertyValues("management.metrics.export.newrelic.account-id=12345")
-//				.run((context) -> assertThat(context).hasFailed());
-//	}
-//
-//	@Test
-//	void failsWithoutAnAccountId() {
-//		this.contextRunner.withUserConfiguration(BaseConfiguration.class)
-//				.withPropertyValues("management.metrics.export.newrelic.api-key=abcde")
-//				.run((context) -> assertThat(context).hasFailed());
-//	}
+    @Test
+    void failsWithoutAnApiKey() {
+        EnvironmentTestUtils.addEnvironment(context, 
+                "management.metrics.export.newrelic.account-id=12345");
+        Exception exception = assertThrows(BeanCreationException.class, () -> {
+            registerAndRefresh(BaseConfiguration.class);
+        });
+        assertThat(exception.getCause().getCause()).isInstanceOf(MissingRequiredConfigurationException.class);
+        assertThat(exception.getMessage()).contains("apiKey");
+    }
 
-//    @Test
-//    void failsToAutoConfigureWithoutEventType() {
-////		this.contextRunner.withUserConfiguration(BaseConfiguration.class)
-////				.withPropertyValues("management.metrics.export.newrelic.api-key=abcde",
-////						"management.metrics.export.newrelic.account-id=12345",
-////						"management.metrics.export.newrelic.event-type=")
-////				.run((context) -> assertThat(context).hasFailed());
-//		
-//        EnvironmentTestUtils.addEnvironment(context, 
-//                "management.metrics.export.newrelic.api-key=abcde",
-//                "management.metrics.export.newrelic.account-id=12345",
-//                "management.metrics.export.newrelic.event-type=");
-//        registerAndRefresh(BaseConfiguration.class);
-////                assertThatExceptionOfType(MissingRequiredConfigurationException.class)
-////                    .isThrownBy(() -> context.getBean(NewRelicMeterRegistry.class));
-//                
-//        Exception exception = assertThrows(BeanCreationException.class, () -> {
-//            context.getBean(NewRelicMeterRegistry.class);
-//        });
-//    }
+    @Test
+    void failsWithoutAnAccountId() {
+        EnvironmentTestUtils.addEnvironment(context, 
+                "management.metrics.export.newrelic.api-key=abcde");
+        Exception exception = assertThrows(BeanCreationException.class, () -> {
+            registerAndRefresh(BaseConfiguration.class);
+        });
+        assertThat(exception.getCause().getCause()).isInstanceOf(MissingRequiredConfigurationException.class);
+        assertThat(exception.getMessage()).contains("accountId");
+    }
+
+    @Test
+    void failsToAutoConfigureWithoutEventType() {
+        EnvironmentTestUtils.addEnvironment(context, 
+                "management.metrics.export.newrelic.api-key=abcde",
+                "management.metrics.export.newrelic.account-id=12345",
+                "management.metrics.export.newrelic.event-type=");
+        Exception exception = assertThrows(BeanCreationException.class, () -> {
+            registerAndRefresh(BaseConfiguration.class);
+        });
+        assertThat(exception.getCause().getCause()).isInstanceOf(MissingRequiredConfigurationException.class);
+        assertThat(exception.getMessage()).contains("eventType");
+    }
 
     @Test
     void autoConfiguresWithEventTypeOverriden() {
