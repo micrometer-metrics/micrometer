@@ -53,15 +53,19 @@ public class SysdigStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private void updateIfNamingConventionChanged() {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
-            this.namingConvention = next;
-            this.name = sanitize(next.name(id.getName(), id.getType(), id.getBaseUnit()));
-            this.tags = HashTreePMap.empty();
-            this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
-                    id.getConventionTags(this.namingConvention).stream()
-                            .map(t -> sanitize(t.getKey()) + "=" + sanitize(t.getValue()))
-                            .collect(Collectors.joining(","))
-                    : null;
-            this.tagsNoStat = tags(null, conventionTags, "=", "#");
+            synchronized (tagsLock) {
+                if (this.namingConvention != next) {
+                    this.name = sanitize(next.name(id.getName(), id.getType(), id.getBaseUnit()));
+                    this.tags = HashTreePMap.empty();
+                    this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
+                            id.getConventionTags(next).stream()
+                                    .map(t -> sanitize(t.getKey()) + "=" + sanitize(t.getValue()))
+                                    .collect(Collectors.joining(","))
+                            : null;
+                    this.tagsNoStat = tags(null, conventionTags, "=", "#");
+                    this.namingConvention = next;
+                }
+            }
         }
     }
 

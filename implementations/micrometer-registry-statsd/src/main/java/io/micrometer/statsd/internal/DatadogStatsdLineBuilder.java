@@ -50,17 +50,19 @@ public class DatadogStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private void updateIfNamingConventionChanged() {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
-            this.namingConvention = next;
-            this.name = next.name(sanitize(id.getName()), id.getType(), id.getBaseUnit()) + ":";
             synchronized (tagsLock) {
-                this.tags = HashTreePMap.empty();
-                this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
-                        id.getConventionTags(this.namingConvention).stream()
-                                .map(t -> sanitize(t.getKey()) + ":" + sanitize(t.getValue()))
-                                .collect(Collectors.joining(","))
-                        : null;
+                if (this.namingConvention != next) {
+                    this.name = next.name(sanitize(id.getName()), id.getType(), id.getBaseUnit()) + ":";
+                    this.tags = HashTreePMap.empty();
+                    this.conventionTags = id.getTagsAsIterable().iterator().hasNext() ?
+                            id.getConventionTags(next).stream()
+                                    .map(t -> sanitize(t.getKey()) + ":" + sanitize(t.getValue()))
+                                    .collect(Collectors.joining(","))
+                            : null;
+                }
+                this.tagsNoStat = tags(null, conventionTags, ":", "|#");
+                this.namingConvention = next;
             }
-            this.tagsNoStat = tags(null, conventionTags, ":", "|#");
         }
     }
 

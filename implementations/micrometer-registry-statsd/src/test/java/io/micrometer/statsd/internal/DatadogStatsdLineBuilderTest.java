@@ -15,6 +15,7 @@
  */
 package io.micrometer.statsd.internal;
 
+import com.google.common.util.concurrent.SettableFuture;
 import io.micrometer.core.Issue;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -22,6 +23,10 @@ import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,6 +43,34 @@ class DatadogStatsdLineBuilderTest {
 
         registry.config().namingConvention(NamingConvention.camelCase);
         assertThat(lb.line("1", Statistic.COUNT, "c")).isEqualTo("myCounter:1|c|#statistic:count,myTag:value");
+    }
+
+    @Test
+    void multiThreadLineCall() throws InterruptedException, TimeoutException, ExecutionException {
+        Counter c = registry.counter("my.counter", "my.tag", "value");
+        DatadogStatsdLineBuilder lb = new DatadogStatsdLineBuilder(c.getId(), registry.config());
+
+        SettableFuture<String> line1Future = SettableFuture.create();
+        SettableFuture<String> line2Future = SettableFuture.create();
+        Thread t1 = new Thread(() -> line1Future.set(lb.line("1", Statistic.COUNT, "c")));
+        Thread t2 = new Thread(() -> line2Future.set(lb.line("1", Statistic.COUNT, "c")));
+
+        t1.start();
+        t2.start();
+
+        String line1 = line1Future.get(100, TimeUnit.MILLISECONDS);
+        String line2 = line2Future.get(100, TimeUnit.MILLISECONDS);
+
+        assertThat(line1)
+                .contains("my_counter")
+                .contains("my_tag")
+                .contains("value")
+                .doesNotContain("null");
+        assertThat(line2)
+                .contains("my_counter")
+                .contains("my_tag")
+                .contains("value")
+                .doesNotContain("null");
     }
 
     @Issue("#739")
