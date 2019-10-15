@@ -30,7 +30,7 @@ import io.micrometer.core.instrument.util.TimeUtils;
 
 /**
  * Publishes metrics to New Relic Insights based on client provider selected (Http or Java Agent). 
- * Defaults to Http client provider.
+ * Defaults to the HTTP/REST client provider.
  *
  * @author Jon Schneider
  * @author Johnny Lim
@@ -48,6 +48,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
      * @param clock  The clock to use for timings.
      */
     public NewRelicMeterRegistry(NewRelicConfig config, Clock clock) {
+        //default to the HTTP/REST client
         this(config, new NewRelicHttpClientProviderImpl(config), clock);
     }
     
@@ -153,6 +154,10 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         }
 
         public NewRelicMeterRegistry build() {
+            if (clientProvider == null) {
+                //default to the HTTP/REST client
+                clientProvider = new NewRelicHttpClientProviderImpl(config);
+            }
             return new NewRelicMeterRegistry(config, clientProvider, convention, clock, threadFactory);
         }
     }
