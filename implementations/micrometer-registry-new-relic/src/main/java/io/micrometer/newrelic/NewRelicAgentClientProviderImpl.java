@@ -70,7 +70,32 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
         this.config = config;
         this.namingConvention = namingConvention;
     }
-    
+
+    @Override
+    public void publish(NewRelicMeterRegistry meterRegistry, List<Meter> meters) {
+        
+        this.timeUnit = meterRegistry.getBaseTimeUnit();
+        
+        // New Relic's Java Agent Insights API is backed by a reservoir/buffer
+        // and handles the actual publishing of events to New Relic.
+        // 1:1 mapping between Micrometer meters and New Relic events
+        for (Meter meter : meters) {
+            sendEvents(
+                    meter.getId(), 
+                        meter.match(
+                            this::writeGauge,
+                            this::writeCounter,
+                            this::writeTimer,
+                            this::writeSummary,
+                            this::writeLongTaskTimer,
+                            this::writeTimeGauge,
+                            this::writeFunctionCounter,
+                            this::writeFunctionTimer,
+                            this::writeMeter)
+                    );
+        }
+    }
+
     @Override
     public Map<String, Object> writeLongTaskTimer(LongTaskTimer timer) {
         Map<String, Object> attributes = new HashMap<String, Object>();
@@ -211,31 +236,6 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
     void addAttribute(String key, String value, Map<String, Object> attributes) {
         //process other tags
         attributes.put(namingConvention.tagKey(key), namingConvention.tagValue(value));
-    }
-
-    @Override
-    public void publish(NewRelicMeterRegistry meterRegistry, List<Meter> meters) {
-        
-        this.timeUnit = meterRegistry.getBaseTimeUnit();
-        
-        // New Relic's Java Agent Insights API is backed by a reservoir/buffer
-        // and handles the actual publishing of events to New Relic.
-        // 1:1 mapping between Micrometer meters and New Relic events
-        for (Meter meter : meters) {
-            sendEvents(
-                    meter.getId(), 
-                        meter.match(
-                            this::writeGauge,
-                            this::writeCounter,
-                            this::writeTimer,
-                            this::writeSummary,
-                            this::writeLongTaskTimer,
-                            this::writeTimeGauge,
-                            this::writeFunctionCounter,
-                            this::writeFunctionTimer,
-                            this::writeMeter)
-                    );
-        }
     }
 
     void sendEvents(Meter.Id id, Object attributesObj) {
