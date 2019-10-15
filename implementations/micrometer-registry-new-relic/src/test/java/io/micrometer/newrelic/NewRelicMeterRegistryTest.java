@@ -44,7 +44,6 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.Tags;
@@ -357,7 +356,7 @@ class NewRelicMeterRegistryTest {
         //test meterNameEventTypeEnabledConfig = false (default)
         MockHttpSender mockHttpClient = new MockHttpSender();
         NewRelicHttpClientProviderImpl httpProvider = new NewRelicHttpClientProviderImpl(
-                                                                        httpConfig, mockHttpClient, registry.config().namingConvention(), registry.getBaseTimeUnit());
+                                                                        httpConfig, mockHttpClient, registry.config().namingConvention());
         
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(httpConfig, httpProvider, clock);
         
@@ -372,7 +371,7 @@ class NewRelicMeterRegistryTest {
         //test meterNameEventTypeEnabledConfig = true
         mockHttpClient = new MockHttpSender();
         httpProvider = new NewRelicHttpClientProviderImpl(
-                                meterNameEventTypeEnabledConfig, mockHttpClient, registry.config().namingConvention(), registry.getBaseTimeUnit());
+                                meterNameEventTypeEnabledConfig, mockHttpClient, registry.config().namingConvention());
         
         registry.gauge("my.gauge2", 1d);
         gauge = registry.find("my.gauge2").gauge();
@@ -388,7 +387,7 @@ class NewRelicMeterRegistryTest {
         //test meterNameEventTypeEnabledConfig = false (default)
         MockNewRelicAgent mockNewRelicAgent = new MockNewRelicAgent();
         NewRelicAgentClientProviderImpl agentProvider = new NewRelicAgentClientProviderImpl(
-                                                agentConfig, mockNewRelicAgent, registry.config().namingConvention(), registry.getBaseTimeUnit());
+                                                agentConfig, mockNewRelicAgent, registry.config().namingConvention());
         
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(agentConfig, agentProvider, clock);
         
@@ -404,7 +403,7 @@ class NewRelicMeterRegistryTest {
         //test meterNameEventTypeEnabledConfig = true
         mockNewRelicAgent = new MockNewRelicAgent();
         agentProvider = new NewRelicAgentClientProviderImpl(
-                                meterNameEventTypeEnabledConfig, mockNewRelicAgent, registry.config().namingConvention(), registry.getBaseTimeUnit());
+                                meterNameEventTypeEnabledConfig, mockNewRelicAgent, registry.config().namingConvention());
         
         registry.gauge("my.gauge2", 1d);
         gauge = registry.find("my.gauge2").gauge();
@@ -421,7 +420,7 @@ class NewRelicMeterRegistryTest {
         //test meterNameEventTypeEnabledConfig = false (default)
         MockHttpSender mockHttpClient = new MockHttpSender();
         NewRelicHttpClientProviderImpl httpProvider = new NewRelicHttpClientProviderImpl(
-                                              httpConfig, mockHttpClient, registry.config().namingConvention(), registry.getBaseTimeUnit());
+                                              httpConfig, mockHttpClient, registry.config().namingConvention());
         
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(httpConfig, httpProvider, clock);
         
@@ -440,7 +439,7 @@ class NewRelicMeterRegistryTest {
         //test meterNameEventTypeEnabledConfig = false (default)
         MockNewRelicAgent mockNewRelicAgent = new MockNewRelicAgent();
         NewRelicAgentClientProviderImpl agentProvider = new NewRelicAgentClientProviderImpl(
-                                                agentConfig, mockNewRelicAgent, registry.config().namingConvention(), registry.getBaseTimeUnit());
+                                                agentConfig, mockNewRelicAgent, registry.config().namingConvention());
         
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(agentConfig, agentProvider, clock);
         
@@ -688,7 +687,7 @@ class NewRelicMeterRegistryTest {
     class MockClientProvider implements NewRelicClientProvider {
 
         @Override
-        public void publish(MeterRegistry meterRegistry, List<Meter> meters) {
+        public void publish(NewRelicMeterRegistry meterRegistry, List<Meter> meters) {
             //No-op
         }
 

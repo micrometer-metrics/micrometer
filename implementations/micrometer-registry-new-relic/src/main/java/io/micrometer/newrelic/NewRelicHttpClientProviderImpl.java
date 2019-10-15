@@ -37,7 +37,6 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
@@ -64,14 +63,14 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
     private final HttpSender httpClient;
     private final String insightsEndpoint;
     private final NamingConvention namingConvention;
-    private final TimeUnit timeUnit;
+    private TimeUnit timeUnit = TimeUnit.MILLISECONDS;
 
     @SuppressWarnings("deprecation")
     public NewRelicHttpClientProviderImpl(NewRelicConfig config) {
-        this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), new NewRelicNamingConvention(), TimeUnit.MILLISECONDS);
+        this(config, new HttpUrlConnectionSender(config.connectTimeout(), config.readTimeout()), new NewRelicNamingConvention());
     }
 
-    public NewRelicHttpClientProviderImpl(NewRelicConfig config, HttpSender httpClient, NamingConvention namingConvention, TimeUnit timeUnit) {
+    public NewRelicHttpClientProviderImpl(NewRelicConfig config, HttpSender httpClient, NamingConvention namingConvention) {
 
         if (config.meterNameEventTypeEnabled() == false
                 && (config.eventType() == null || config.eventType().isEmpty())) {
@@ -90,12 +89,14 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
         this.config = config;
         this.httpClient = httpClient;
         this.namingConvention = namingConvention;
-        this.timeUnit = timeUnit;
         this.insightsEndpoint = config.uri() + "/v1/accounts/" + config.accountId() + "/events";
     }
 
     @Override
-    public void publish(MeterRegistry meterRegistry, List<Meter> meters) {
+    public void publish(NewRelicMeterRegistry meterRegistry, List<Meter> meters) {
+        
+        this.timeUnit = meterRegistry.getBaseTimeUnit();
+        
         // New Relic's Insights API limits us to 1000 events per call
         // 1:1 mapping between Micrometer meters and New Relic events
         for (List<Meter> batch : MeterPartition.partition(meterRegistry, Math.min(config.batchSize(), 1000))) {

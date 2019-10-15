@@ -34,7 +34,6 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
@@ -54,13 +53,13 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
     private final Agent newRelicAgent;
     private final NewRelicConfig config;
     private final NamingConvention namingConvention;
-    private final TimeUnit timeUnit;
+    private TimeUnit timeUnit = TimeUnit.MILLISECONDS;
     
     public NewRelicAgentClientProviderImpl(NewRelicConfig config) {
-        this(config, NewRelic.getAgent(), new NewRelicNamingConvention(), TimeUnit.MILLISECONDS);
+        this(config, NewRelic.getAgent(), new NewRelicNamingConvention());
     }
 
-    public NewRelicAgentClientProviderImpl(NewRelicConfig config, Agent newRelicAgent, NamingConvention namingConvention, TimeUnit timeUnit) {
+    public NewRelicAgentClientProviderImpl(NewRelicConfig config, Agent newRelicAgent, NamingConvention namingConvention) {
 
         if (config.meterNameEventTypeEnabled() == false
                 && StringUtils.isEmpty(config.eventType())) {
@@ -70,7 +69,6 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
         this.newRelicAgent = newRelicAgent;
         this.config = config;
         this.namingConvention = namingConvention;
-        this.timeUnit = timeUnit;
     }
     
     @Override
@@ -216,7 +214,10 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
     }
 
     @Override
-    public void publish(MeterRegistry meterRegistry, List<Meter> meters) {
+    public void publish(NewRelicMeterRegistry meterRegistry, List<Meter> meters) {
+        
+        this.timeUnit = meterRegistry.getBaseTimeUnit();
+        
         // New Relic's Java Agent Insights API is backed by a reservoir/buffer
         // and handles the actual publishing of events to New Relic.
         // 1:1 mapping between Micrometer meters and New Relic events

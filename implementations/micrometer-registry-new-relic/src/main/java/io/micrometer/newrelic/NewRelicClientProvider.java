@@ -24,7 +24,6 @@ import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.NamingConvention;
@@ -66,7 +65,7 @@ public interface NewRelicClientProvider {
         return eventType;
     }
 
-    void publish(MeterRegistry meterRegistry, List<Meter> meters);
+    void publish(NewRelicMeterRegistry meterRegistry, List<Meter> meters);
 
     Object writeFunctionTimer(FunctionTimer timer);
 
