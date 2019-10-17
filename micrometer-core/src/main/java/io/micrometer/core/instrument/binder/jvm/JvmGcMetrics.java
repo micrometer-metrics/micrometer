@@ -23,6 +23,8 @@ import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.NotificationEmitter;
@@ -51,6 +53,8 @@ import static java.util.Collections.emptyList;
 @NonNullApi
 @NonNullFields
 public class JvmGcMetrics implements MeterBinder, AutoCloseable {
+
+    private final static InternalLogger log = InternalLoggerFactory.getInstance(JvmGcMetrics.class);
 
     private final boolean managementExtensionsPresent = isManagementExtensionsPresent();
 
@@ -195,7 +199,8 @@ public class JvmGcMetrics implements MeterBinder, AutoCloseable {
             return true;
         } catch (Throwable e) {
             // We are operating in a JVM without access to this level of detail
-            // TODO log a message about the unavailable class; see gh-1572
+            log.warn("GC notifications will not be available because " +
+                    "com.sun.management.GarbageCollectionNotificationInfo is not present");
             return false;
         }
     }
