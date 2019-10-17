@@ -15,7 +15,6 @@
  */
 package io.micrometer.newrelic;
 
-import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
 /**
@@ -54,18 +53,13 @@ public interface NewRelicConfig extends StepRegistryConfig {
         return v;
     }
 
-//	public interface Http extends NewRelicConfig {
     default String apiKey() {
         String v = get(prefix() + ".apiKey");
-//        if (v == null)
-//            throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to New Relic");
         return v;
     }
 
     default String accountId() {
         String v = get(prefix() + ".accountId");
-//        if (v == null)
-//            throw new MissingRequiredConfigurationException("accountId must be set to report metrics to New Relic");
         return v;
     }
 
@@ -78,6 +72,5 @@ public interface NewRelicConfig extends StepRegistryConfig {
         String v = get(prefix() + ".uri");
         return (v == null) ? "https://insights-collector.newrelic.com" : v;
     }
-//	}
 
 }
