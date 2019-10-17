@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.*;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import software.amazon.awssdk.services.cloudwatch.model.MetricDatum;
+import software.amazon.awssdk.services.cloudwatch.model.StandardUnit;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -204,7 +205,7 @@ class CloudWatchMeterRegistryTest {
     }
 
     @Test
-    public void batchSizeShouldWorkOnMetricDatum() throws InterruptedException {
+    void batchSizeShouldWorkOnMetricDatum() throws InterruptedException {
         List<Meter> meters = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
             Timer timer = Timer.builder("timer." + i).register(this.registry);
@@ -218,6 +219,11 @@ class CloudWatchMeterRegistryTest {
         List<List<MetricDatum>> allValues = argumentCaptor.getAllValues();
         assertThat(allValues.get(0)).hasSize(20);
         assertThat(allValues.get(1)).hasSize(20);
+    }
+
+    @Test
+    void batchToStandardUnitWhenUnitIsUnknownShouldReturnNone() {
+        assertThat(this.registry.new Batch().toStandardUnit("unknownUnit")).isEqualTo(StandardUnit.NONE);
     }
 
     private Predicate<MetricDatum> hasAvgMetric(Id id) {
