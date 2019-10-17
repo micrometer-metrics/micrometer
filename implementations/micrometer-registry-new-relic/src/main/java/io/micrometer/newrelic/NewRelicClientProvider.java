@@ -55,7 +55,7 @@ public interface NewRelicClientProvider {
 
     default String getEventType(Meter.Id id, NewRelicConfig config, NamingConvention namingConvention) {
         String eventType = null;
-        if(config.meterNameEventTypeEnabled()) {
+        if (config.meterNameEventTypeEnabled()) {
             //meter/metric name event type
             eventType = id.getConventionName(namingConvention);
         } else {

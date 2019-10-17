@@ -182,13 +182,13 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
     @Override
     public Stream<String> writeTimer(Timer timer) {
         return Stream.of(
-        	event(timer.getId(),
-	                new Attribute(COUNT, timer.count()),
-	                new Attribute(AVG, timer.mean(timeUnit)),
-	                new Attribute(TOTAL_TIME, timer.totalTime(timeUnit)),
-	                new Attribute(MAX, timer.max(timeUnit)),
-	                new Attribute(TIME_UNIT, timeUnit.name().toLowerCase())
-	        )
+                event(timer.getId(),
+                        new Attribute(COUNT, timer.count()),
+                        new Attribute(AVG, timer.mean(timeUnit)),
+                        new Attribute(TOTAL_TIME, timer.totalTime(timeUnit)),
+                        new Attribute(MAX, timer.max(timeUnit)),
+                        new Attribute(TIME_UNIT, timeUnit.name().toLowerCase())
+                )
             );
     }
 

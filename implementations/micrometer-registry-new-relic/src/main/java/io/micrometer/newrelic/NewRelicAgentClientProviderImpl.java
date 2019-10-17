@@ -244,7 +244,7 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
             Map<String, Object> attributes = (Map<String, Object>)attributesObj;
     
             //Delegate to New Relic Java Agent
-            if(attributes != null && attributes.isEmpty() == false) {
+            if (attributes != null && attributes.isEmpty() == false) {
                 String eventType = getEventType(id, config, namingConvention);
                 try {
                     newRelicAgent.getInsights().recordCustomEvent(eventType, attributes);
