@@ -574,7 +574,6 @@ public abstract class MeterRegistry {
                     }
 
                     m = builder.apply(mappedId, config);
-                    meterMap = meterMap.plus(mappedId, m);
 
                     Id synAssoc = originalId.syntheticAssociation();
                     if (synAssoc != null) {
@@ -585,6 +584,7 @@ public abstract class MeterRegistry {
                     for (Consumer<Meter> onAdd : meterAddedListeners) {
                         onAdd.accept(m);
                     }
+                    meterMap = meterMap.plus(mappedId, m);
                 }
             }
         }
