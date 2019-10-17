@@ -468,7 +468,7 @@ class CompositeMeterRegistryTest {
             });
         }
         executor.shutdown();
-        assertThat(executor.awaitTermination(1L, TimeUnit.DAYS)).isTrue();
+        assertThat(executor.awaitTermination(1L, TimeUnit.SECONDS)).isTrue();
         for (int i = 0; i < tagCount; i++) {
             assertThat(this.composite.find(meterName).tag(tagName, String.valueOf(i)).counter().count())
                     .isEqualTo(count / tagCount);
