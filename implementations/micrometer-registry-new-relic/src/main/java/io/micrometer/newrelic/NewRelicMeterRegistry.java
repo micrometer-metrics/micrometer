@@ -20,10 +20,7 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.step.StepMeterRegistry;
-import io.micrometer.core.instrument.util.DoubleFormat;
-import io.micrometer.core.instrument.util.MeterPartition;
-import io.micrometer.core.instrument.util.NamedThreadFactory;
-import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.core.instrument.util.*;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.core.ipc.http.HttpUrlConnectionSender;
 
@@ -77,17 +74,16 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     NewRelicMeterRegistry(NewRelicConfig config, Clock clock, ThreadFactory threadFactory, HttpSender httpClient) {
         super(config, clock);
 
-        if (config.meterNameEventTypeEnabled() == false
-                && (config.eventType() == null || config.eventType().isEmpty())) {
+        if (!config.meterNameEventTypeEnabled() && StringUtils.isEmpty(config.eventType())) {
             throw new MissingRequiredConfigurationException("eventType must be set to report metrics to New Relic");
         }
-        if (config.accountId() == null || config.accountId().isEmpty()) {
+        if (StringUtils.isEmpty(config.accountId())) {
             throw new MissingRequiredConfigurationException("accountId must be set to report metrics to New Relic");
         }
-        if (config.apiKey() == null || config.apiKey().isEmpty()) {
+        if (StringUtils.isEmpty(config.apiKey())) {
             throw new MissingRequiredConfigurationException("apiKey must be set to report metrics to New Relic");
         }
-        if (config.uri() == null || config.uri().isEmpty()) {
+        if (StringUtils.isEmpty(config.uri())) {
             throw new MissingRequiredConfigurationException("uri must be set to report metrics to New Relic");
         }
 
@@ -149,7 +145,6 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<String> writeCounter(Counter counter) {
-    	//TODO: Double.isFinite() check here like writeFunctionCounter ???
         return Stream.of(event(counter.getId(), new Attribute("throughput", counter.count())));
     }
 
@@ -227,7 +222,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     private String event(Meter.Id id, Attribute... attributes) {
         if (!config.meterNameEventTypeEnabled()) {
             // Include contextual attributes when publishing all metrics under a single categorical eventType,
-            //  NOT when publishing an eventType per Meter/metric name
+            // NOT when publishing an eventType per Meter/metric name
             int size = attributes.length;
             Attribute[] newAttrs = Arrays.copyOf(attributes, size + 2);
 
