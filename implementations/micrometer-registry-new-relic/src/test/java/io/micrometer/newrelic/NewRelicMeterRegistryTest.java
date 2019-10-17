@@ -16,13 +16,12 @@
 package io.micrometer.newrelic;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
@@ -48,12 +47,6 @@ class NewRelicMeterRegistryTest {
     private final NewRelicConfig config = new NewRelicConfig() {
         
         @Override
-        public boolean meterNameEventTypeEnabled() {
-            //Default is false. Publish all metrics under a single eventType
-            return NewRelicConfig.super.meterNameEventTypeEnabled();
-        }
-        
-        @Override
         public String get(String key) {
             return null;
         }
@@ -74,7 +67,7 @@ class NewRelicMeterRegistryTest {
         
         @Override
         public boolean meterNameEventTypeEnabled() {
-            //Previous behavior for backward compatibility
+            // Previous behavior for backward compatibility
             return true;
         }
         
@@ -101,155 +94,159 @@ class NewRelicMeterRegistryTest {
 
     @Test
     void writeGauge() {
-        meterNameEventTypeEnabledRegistry.gauge("my.gauge", 1d);
-        Gauge gauge = meterNameEventTypeEnabledRegistry.find("my.gauge").gauge(); 
-        Stream<String> streamResult = meterNameEventTypeEnabledRegistry.writeGauge(gauge);
-        assertThat(streamResult).contains("{\"eventType\":\"myGauge\",\"value\":1}");
-        
-        registry.gauge("my.gauge", 1d);
-        gauge = registry.find("my.gauge").gauge(); 
-        streamResult = registry.writeGauge(gauge);
-        assertThat(streamResult).contains("{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\"}");
+        writeGauge(this.meterNameEventTypeEnabledRegistry, "{\"eventType\":\"myGauge\",\"value\":1}");
+        writeGauge(this.registry,
+                "{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\"}");
+    }
+
+    private void writeGauge(NewRelicMeterRegistry meterRegistry, String expectedJson) {
+        meterRegistry.gauge("my.gauge", 1d);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        assertThat(meterRegistry.writeGauge(gauge)).containsExactly(expectedJson);
     }
 
     @Test
     void writeGaugeShouldDropNanValue() {
-        meterNameEventTypeEnabledRegistry.gauge("my.gauge", Double.NaN);
-        Gauge gauge = meterNameEventTypeEnabledRegistry.find("my.gauge").gauge();
-        assertThat(meterNameEventTypeEnabledRegistry.writeGauge(gauge)).isEmpty();
-        
-        registry.gauge("my.gauge", Double.NaN);
-        gauge = registry.find("my.gauge").gauge();
-        assertThat(registry.writeGauge(gauge)).isEmpty();
+        writeGaugeShouldDropNanValue(this.meterNameEventTypeEnabledRegistry);
+        writeGaugeShouldDropNanValue(this.registry);
+    }
+
+    private void writeGaugeShouldDropNanValue(NewRelicMeterRegistry meterRegistry) {
+        meterRegistry.gauge("my.gauge", Double.NaN);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        assertThat(meterRegistry.writeGauge(gauge)).isEmpty();
     }
 
     @Test
     void writeGaugeShouldDropInfiniteValues() {
-        meterNameEventTypeEnabledRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
-        Gauge gauge = meterNameEventTypeEnabledRegistry.find("my.gauge").gauge();
-        assertThat(meterNameEventTypeEnabledRegistry.writeGauge(gauge)).isEmpty();
-        
-        meterNameEventTypeEnabledRegistry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
-        gauge = meterNameEventTypeEnabledRegistry.find("my.gauge").gauge();
-        assertThat(meterNameEventTypeEnabledRegistry.writeGauge(gauge)).isEmpty();
-        
-        registry.gauge("my.gauge", Double.POSITIVE_INFINITY);
-        gauge = registry.find("my.gauge").gauge();
-        assertThat(registry.writeGauge(gauge)).isEmpty();
-        
-        registry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
-        gauge = registry.find("my.gauge").gauge();
-        assertThat(registry.writeGauge(gauge)).isEmpty();
+        writeGaugeShouldDropInfiniteValues(this.meterNameEventTypeEnabledRegistry);
+        writeGaugeShouldDropInfiniteValues(this.registry);
+    }
+
+    private void writeGaugeShouldDropInfiniteValues(NewRelicMeterRegistry meterRegistry) {
+        meterRegistry.gauge("my.gauge", Double.POSITIVE_INFINITY);
+        Gauge gauge = meterRegistry.find("my.gauge").gauge();
+        assertThat(meterRegistry.writeGauge(gauge)).isEmpty();
+
+        meterRegistry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
+        gauge = meterRegistry.find("my.gauge").gauge();
+        assertThat(meterRegistry.writeGauge(gauge)).isEmpty();
     }
 
     @Test
     void writeGaugeWithTimeGauge() {
+        writeGaugeWithTimeGauge(this.meterNameEventTypeEnabledRegistry,
+                "{\"eventType\":\"myTimeGauge\",\"value\":1,\"timeUnit\":\"seconds\"}");
+        writeGaugeWithTimeGauge(this.registry,
+                "{\"eventType\":\"MicrometerSample\",\"value\":1,\"timeUnit\":\"seconds\",\"metricName\":\"myTimeGauge\",\"metricType\":\"GAUGE\"}");
+    }
+
+    private void writeGaugeWithTimeGauge(NewRelicMeterRegistry meterRegistry, String expectedJson) {
         AtomicReference<Double> obj = new AtomicReference<>(1d);
-        meterNameEventTypeEnabledRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterNameEventTypeEnabledRegistry.find("my.timeGauge").timeGauge();
-        Stream<String> streamResult = meterNameEventTypeEnabledRegistry.writeTimeGauge(timeGauge);
-        assertThat(streamResult).contains("{\"eventType\":\"myTimeGauge\",\"value\":1,\"timeUnit\":\"seconds\"}");
-        
-        registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        timeGauge = registry.find("my.timeGauge").timeGauge();
-        streamResult = registry.writeTimeGauge(timeGauge);
-        assertThat(streamResult).contains("{\"eventType\":\"MicrometerSample\",\"value\":1,\"timeUnit\":\"seconds\",\"metricName\":\"myTimeGauge\",\"metricType\":\"GAUGE\"}");
+        meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
+        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        assertThat(meterRegistry.writeTimeGauge(timeGauge)).containsExactly(expectedJson);
     }
 
     @Test
     void writeGaugeWithTimeGaugeShouldDropNanValue() {
+        writeGaugeWithTimeGaugeShouldDropNanValue(this.meterNameEventTypeEnabledRegistry);
+        writeGaugeWithTimeGaugeShouldDropNanValue(this.registry);
+    }
+
+    private void writeGaugeWithTimeGaugeShouldDropNanValue(NewRelicMeterRegistry meterRegistry) {
         AtomicReference<Double> obj = new AtomicReference<>(Double.NaN);
-        meterNameEventTypeEnabledRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterNameEventTypeEnabledRegistry.find("my.timeGauge").timeGauge();
-        assertThat(meterNameEventTypeEnabledRegistry.writeTimeGauge(timeGauge)).isEmpty();
-        
-        registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        timeGauge = registry.find("my.timeGauge").timeGauge();
-        assertThat(registry.writeTimeGauge(timeGauge)).isEmpty();
+        meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
+        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        assertThat(meterRegistry.writeTimeGauge(timeGauge)).isEmpty();
     }
 
     @Test
     void writeGaugeWithTimeGaugeShouldDropInfiniteValues() {
+        writeGaugeWithTimeGaugeShouldDropInfiniteValues(this.meterNameEventTypeEnabledRegistry);
+        writeGaugeWithTimeGaugeShouldDropInfiniteValues(this.registry);
+    }
+
+    private void writeGaugeWithTimeGaugeShouldDropInfiniteValues(NewRelicMeterRegistry meterRegistry) {
         AtomicReference<Double> obj = new AtomicReference<>(Double.POSITIVE_INFINITY);
-        meterNameEventTypeEnabledRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = meterNameEventTypeEnabledRegistry.find("my.timeGauge").timeGauge();
-        assertThat(meterNameEventTypeEnabledRegistry.writeTimeGauge(timeGauge)).isEmpty();
-        
+        meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
+        TimeGauge timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        assertThat(meterRegistry.writeTimeGauge(timeGauge)).isEmpty();
+
         obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
-        meterNameEventTypeEnabledRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        timeGauge = meterNameEventTypeEnabledRegistry.find("my.timeGauge").timeGauge();
-        assertThat(meterNameEventTypeEnabledRegistry.writeTimeGauge(timeGauge)).isEmpty();
-        
-        obj = new AtomicReference<>(Double.POSITIVE_INFINITY);
-        registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        timeGauge = registry.find("my.timeGauge").timeGauge();
-        assertThat(registry.writeTimeGauge(timeGauge)).isEmpty();
-        
-        obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
-        registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        timeGauge = registry.find("my.timeGauge").timeGauge();
-        assertThat(registry.writeTimeGauge(timeGauge)).isEmpty();
+        meterRegistry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
+        timeGauge = meterRegistry.find("my.timeGauge").timeGauge();
+        assertThat(meterRegistry.writeTimeGauge(timeGauge)).isEmpty();
     }
 
     @Test
     void writeCounterWithFunctionCounter() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(meterNameEventTypeEnabledRegistry);
+        writeCounterWithFunctionCounter(this.meterNameEventTypeEnabledRegistry,
+                "{\"eventType\":\"myCounter\",\"throughput\":1}");
+        writeCounterWithFunctionCounter(this.registry,
+                "{\"eventType\":\"MicrometerSample\",\"throughput\":1,\"metricName\":\"myCounter\",\"metricType\":\"COUNTER\"}");
+    }
+
+    private void writeCounterWithFunctionCounter(NewRelicMeterRegistry meterRegistry, String expectedJson) {
+        FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(meterRegistry);
         clock.add(config.step());
-        Stream<String> streamResult = meterNameEventTypeEnabledRegistry.writeFunctionCounter(counter);
-        assertThat(streamResult).contains("{\"eventType\":\"myCounter\",\"throughput\":1}");
-        
-        counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(registry);
-        clock.add(config.step());
-        streamResult = registry.writeFunctionCounter(counter);
-        assertThat(streamResult).contains("{\"eventType\":\"MicrometerSample\",\"throughput\":1,\"metricName\":\"myCounter\",\"metricType\":\"COUNTER\"}");
+        assertThat(meterRegistry.writeFunctionCounter(counter)).containsExactly(expectedJson);
     }
 
     @Test
     void writeCounterWithFunctionCounterShouldDropInfiniteValues() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(meterNameEventTypeEnabledRegistry);
+        writeCounterWithFunctionCounterShouldDropInfiniteValues(this.meterNameEventTypeEnabledRegistry);
+        writeCounterWithFunctionCounterShouldDropInfiniteValues(this.registry);
+    }
+
+    private void writeCounterWithFunctionCounterShouldDropInfiniteValues(NewRelicMeterRegistry meterRegistry) {
+        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
+                .register(meterRegistry);
         clock.add(config.step());
-        assertThat(meterNameEventTypeEnabledRegistry.writeFunctionCounter(counter)).isEmpty();
-        
-        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(meterNameEventTypeEnabledRegistry);
+        assertThat(meterRegistry.writeFunctionCounter(counter)).isEmpty();
+
+        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
+                .register(meterRegistry);
         clock.add(config.step());
-        assertThat(meterNameEventTypeEnabledRegistry.writeFunctionCounter(counter)).isEmpty();
-        
-        counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(registry);
-        clock.add(config.step());
-        assertThat(registry.writeFunctionCounter(counter)).isEmpty();
-        
-        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(registry);
-        clock.add(config.step());
-        assertThat(registry.writeFunctionCounter(counter)).isEmpty();
+        assertThat(meterRegistry.writeFunctionCounter(counter)).isEmpty();
     }
 
     @Test
     void writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten() {
+        writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten(this.meterNameEventTypeEnabledRegistry);
+        writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten(this.registry);
+    }
+
+    private void writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten(
+            NewRelicMeterRegistry meterRegistry) {
         Measurement measurement1 = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
         Measurement measurement2 = new Measurement(() -> Double.NEGATIVE_INFINITY, Statistic.VALUE);
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
-        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterNameEventTypeEnabledRegistry);
-        assertThat(meterNameEventTypeEnabledRegistry.writeMeter(meter)).isEmpty();
-        
-        meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
-        assertThat(registry.writeMeter(meter)).isEmpty();
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(meterRegistry);
+        assertThat(meterRegistry.writeMeter(meter)).isEmpty();
     }
 
     @Test
     void writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues() {
+        writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues(
+                this.meterNameEventTypeEnabledRegistry, "{\"eventType\":\"myMeter\",\"value\":1}");
+        writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues(
+                this.registry,
+                "{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myMeter\",\"metricType\":\"GAUGE\"}");
+    }
+
+    private void writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues(
+            NewRelicMeterRegistry meterRegistry, String expectedJson) {
         Measurement measurement1 = new Measurement(() -> Double.POSITIVE_INFINITY, Statistic.VALUE);
         Measurement measurement2 = new Measurement(() -> Double.NEGATIVE_INFINITY, Statistic.VALUE);
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4);
-        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.meterNameEventTypeEnabledRegistry);
-        assertThat(meterNameEventTypeEnabledRegistry.writeMeter(meter)).contains("{\"eventType\":\"myMeter\",\"value\":1}");
-        
-        meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
-        assertThat(registry.writeMeter(meter)).contains("{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myMeter\",\"metricType\":\"GAUGE\"}");
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(meterRegistry);
+        assertThat(meterRegistry.writeMeter(meter)).containsExactly(expectedJson);
     }
-  
+
     @Test
     void writeMeterWhenCustomMeterHasDuplicatesKeysShouldWriteOnlyLastValue() {
         Measurement measurement1 = new Measurement(() -> 3d, Statistic.VALUE);
@@ -257,7 +254,7 @@ class NewRelicMeterRegistryTest {
         Measurement measurement3 = new Measurement(() -> 2d, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
-        assertThat(registry.writeMeter(meter)).contains("{\"eventType\":\"MicrometerSample\",\"value\":2,\"metricName\":\"myMeter\",\"metricType\":\"GAUGE\"}");
+        assertThat(registry.writeMeter(meter)).containsExactly("{\"eventType\":\"MicrometerSample\",\"value\":2,\"metricName\":\"myMeter\",\"metricType\":\"GAUGE\"}");
     }
 
     @Test
@@ -288,10 +285,9 @@ class NewRelicMeterRegistryTest {
             }
         };
         
-        Exception exception = assertThrows(MissingRequiredConfigurationException.class, () -> {
-            new NewRelicMeterRegistry(config, clock);
-        });
-        assertThat(exception.getMessage()).contains("eventType");
+        assertThatThrownBy(() -> new NewRelicMeterRegistry(config, clock))
+                .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
+                .hasMessageContaining("eventType");
     }
 
     @Test
@@ -310,11 +306,10 @@ class NewRelicMeterRegistryTest {
                 return null;
             }
         };
-        
-        Exception exception = assertThrows(MissingRequiredConfigurationException.class, () -> {
-            new NewRelicMeterRegistry(config, clock);
-        });
-        assertThat(exception.getMessage()).contains("accountId");
+
+        assertThatThrownBy(() -> new NewRelicMeterRegistry(config, clock))
+                .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
+                .hasMessageContaining("accountId");
     }
     
     @Test
@@ -337,11 +332,10 @@ class NewRelicMeterRegistryTest {
                 return null;
             }
         };
-        
-        Exception exception = assertThrows(MissingRequiredConfigurationException.class, () -> {
-            new NewRelicMeterRegistry(config, clock);
-        });
-        assertThat(exception.getMessage()).contains("apiKey");
+
+        assertThatThrownBy(() -> new NewRelicMeterRegistry(config, clock))
+                .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
+                .hasMessageContaining("apiKey");
     }
     
     @Test
@@ -368,19 +362,18 @@ class NewRelicMeterRegistryTest {
                 return null;
             }
         };
-        
-        Exception exception = assertThrows(MissingRequiredConfigurationException.class, () -> {
-            new NewRelicMeterRegistry(config, clock);
-        });
-        assertThat(exception.getMessage()).contains("uri");
+
+        assertThatThrownBy(() -> new NewRelicMeterRegistry(config, clock))
+                .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
+                .hasMessageContaining("uri");
     }
     
-    class MockHttpSender implements HttpSender {
+    static class MockHttpSender implements HttpSender {
         
         private Request request;
         
         @Override
-        public Response send(Request request) throws Throwable {
+        public Response send(Request request) {
             this.request = request;
             return new Response(200, "body");
         }
