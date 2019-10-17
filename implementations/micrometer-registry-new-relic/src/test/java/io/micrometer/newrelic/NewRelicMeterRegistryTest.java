@@ -752,7 +752,7 @@ class NewRelicMeterRegistryTest {
         private final Insights insights;
 
         public MockNewRelicAgent() {
-            this.insights=new MockNewRelicInsights();
+            this.insights = new MockNewRelicInsights();
         }
 
         @Override
@@ -788,8 +788,8 @@ class NewRelicMeterRegistryTest {
                 private Map<String, ?> attributes;
    
                 public InsightData(String eventType, Map<String, ?> attributes) {
-                    this.eventType=eventType;
-                    this.attributes=attributes;
+                    this.eventType = eventType;
+                    this.attributes = attributes;
                 }
     
                 public String getEventType() {
