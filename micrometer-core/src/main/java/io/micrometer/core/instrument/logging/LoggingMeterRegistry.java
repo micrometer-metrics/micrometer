@@ -30,9 +30,9 @@ import io.micrometer.core.instrument.step.StepMeterRegistry;
 import io.micrometer.core.instrument.step.StepTimer;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +50,8 @@ import static java.util.stream.Collectors.joining;
  */
 @Incubating(since = "1.1.0")
 public class LoggingMeterRegistry extends StepMeterRegistry {
+    private final static InternalLogger log = InternalLoggerFactory.getInstance(LoggingMeterRegistry.class);
+
     private final LoggingRegistryConfig config;
     private final Consumer<String> loggingSink;
 
@@ -58,7 +60,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
     }
 
     public LoggingMeterRegistry(LoggingRegistryConfig config, Clock clock) {
-        this(config, clock, new NamedThreadFactory("logging-metrics-publisher"), defaultLoggingSink());
+        this(config, clock, new NamedThreadFactory("logging-metrics-publisher"), log::info);
     }
 
     private LoggingMeterRegistry(LoggingRegistryConfig config, Clock clock, ThreadFactory threadFactory, Consumer<String> loggingSink) {
@@ -67,23 +69,6 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         this.loggingSink = loggingSink;
         config().namingConvention(NamingConvention.dot);
         start(threadFactory);
-    }
-
-    private static Consumer<String> defaultLoggingSink() {
-        try {
-            Class<?> slf4jLogger = Class.forName("org.slf4j.LoggerFactory");
-            Object logger = slf4jLogger.getMethod("getLogger", Class.class).invoke(null, LoggingMeterRegistry.class);
-            final Method loggerInfo = logger.getClass().getMethod("info", String.class);
-            return stmt -> {
-                try {
-                    loggerInfo.invoke(logger, stmt);
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    throw new RuntimeException(e); // should never happen
-                }
-            };
-        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            return System.out::println;
-        }
     }
 
     @Override
@@ -253,7 +238,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
 
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = new NamedThreadFactory("logging-metrics-publisher");
-        private Consumer<String> loggingSink = defaultLoggingSink();
+        private Consumer<String> loggingSink = log::info;
 
         Builder(LoggingRegistryConfig config) {
             this.config = config;
