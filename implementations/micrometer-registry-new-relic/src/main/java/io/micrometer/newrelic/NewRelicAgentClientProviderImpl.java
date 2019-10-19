@@ -120,7 +120,7 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
     Map<String, Object> writeCounterValues(Meter.Id id, double count) {
         Map<String, Object> attributes = new HashMap<String, Object>();
         if (Double.isFinite(count)) {
-            addAttribute(THROUGHPUT, count, attributes);  //TODO Why not named Count?  ..confusing output!
+            addAttribute(THROUGHPUT, count, attributes);
             //process meter's name, type and tags
             addMeterAsAttributes(id, attributes);			
         }
@@ -208,9 +208,10 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
     }
 
     void addMeterAsAttributes(Meter.Id id, Map<String, Object> attributes) {
-        if (config.meterNameEventTypeEnabled() == false) {
-            //Include these if NOT generating an event per Meter/metric name
-            String name = id.getConventionName(namingConvention); // same as getConventionName( meter.getId() )	
+        if (!config.meterNameEventTypeEnabled()) {
+            // Include contextual attributes when publishing all metrics under a single categorical eventType,
+            // NOT when publishing an eventType per Meter/metric name
+            String name = id.getConventionName(namingConvention);
             attributes.put(METRIC_NAME, name);
             attributes.put(METRIC_TYPE, id.getType().toString());
         }

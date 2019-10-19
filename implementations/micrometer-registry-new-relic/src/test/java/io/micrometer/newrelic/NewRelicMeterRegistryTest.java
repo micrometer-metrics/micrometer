@@ -16,14 +16,14 @@
 package io.micrometer.newrelic;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
@@ -90,6 +90,7 @@ class NewRelicMeterRegistryTest {
 
         @Override
         public boolean meterNameEventTypeEnabled() {
+            // Previous behavior for backward compatibility
             return true;
         }
 
@@ -121,172 +122,245 @@ class NewRelicMeterRegistryTest {
 
     @Test
     void writeGauge() {
+        //test Http clientProvider
+        writeGauge(meterNameEventTypeEnabledConfig, "{\"eventType\":\"myGauge\",\"value\":1}");
+        writeGauge(httpConfig, 
+                "{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\"}");
+        
+        //test Agent clientProvider
+        Map<String, Object> expectedEntries = new HashMap<>();
+        expectedEntries.put("value", 1);
+        writeGauge(meterNameEventTypeEnabledConfig, expectedEntries);
+        expectedEntries.put("metricName", "myGauge");
+        expectedEntries.put("metricType", "GAUGE");
+        writeGauge(agentConfig, expectedEntries);
+    }
+
+    private void writeGauge(NewRelicConfig config, String expectedJson) {
         registry.gauge("my.gauge", 1d);
         Gauge gauge = registry.find("my.gauge").gauge();
-        //test Http clientProvider
-        Stream<String> streamResult = getHttpClientProvider(meterNameEventTypeEnabledConfig).writeGauge(gauge);
-        assertThat(streamResult).contains("{\"eventType\":\"myGauge\",\"value\":1}");
-
-        streamResult = getHttpClientProvider(httpConfig).writeGauge(gauge);
-        assertThat(streamResult).contains("{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\"}");
-
-        //test Agent clientProvider
-        Map<String, Object> result = getAgentClientProvider(meterNameEventTypeEnabledConfig).writeGauge(gauge); 
-        assertThat(result).hasSize(1);
-        assertThat(result).containsEntry("value", 1);
-        
-        result = getAgentClientProvider(agentConfig).writeGauge(gauge); 
-        assertThat(result).hasSize(3);
-        assertThat(result).containsEntry("metricName", "myGauge");
-        assertThat(result).containsEntry("metricType", "GAUGE");
-        assertThat(result).containsEntry("value", 1);
+        assertThat(getHttpClientProvider(config).writeGauge(gauge)).containsExactly(expectedJson);
     }
+    
+    private void writeGauge(NewRelicConfig config, Map<String, Object> expectedEntries) {
+        registry.gauge("my.gauge", 1d);
+        Gauge gauge = registry.find("my.gauge").gauge();
+        Map<String, Object> result = getAgentClientProvider(config).writeGauge(gauge);
+        assertThat(result).hasSize(expectedEntries.size());
+        assertThat(result).containsExactlyEntriesOf(expectedEntries);
+    }
+
 
     @Test
     void writeGaugeShouldDropNanValue() {
-        registry.gauge("my.gauge", Double.NaN);
-        Gauge gauge = registry.find("my.gauge").gauge();
         //test Http clientProvider
-        assertThat(getHttpClientProvider(meterNameEventTypeEnabledConfig).writeGauge(gauge)).isEmpty();
-        assertThat(getHttpClientProvider(httpConfig).writeGauge(gauge)).isEmpty();
+        writeGaugeShouldDropNanValue(getHttpClientProvider(meterNameEventTypeEnabledConfig));
+        writeGaugeShouldDropNanValue(getHttpClientProvider(httpConfig));
         
         //test Agent clientProvider
-        assertThat(getAgentClientProvider(meterNameEventTypeEnabledConfig).writeGauge(gauge)).isEmpty();
-        assertThat(getAgentClientProvider(agentConfig).writeGauge(gauge)).isEmpty();
+        writeGaugeShouldDropNanValue(getAgentClientProvider(meterNameEventTypeEnabledConfig));
+        writeGaugeShouldDropNanValue(getAgentClientProvider(agentConfig));
     }
+    
+    private void writeGaugeShouldDropNanValue(NewRelicHttpClientProviderImpl clientProvider) {
+        registry.gauge("my.gauge", Double.NaN);
+        Gauge gauge = registry.find("my.gauge").gauge();
+        assertThat(clientProvider.writeGauge(gauge)).isEmpty();
+    }
+    
+    private void writeGaugeShouldDropNanValue(NewRelicAgentClientProviderImpl clientProvider) {
+        registry.gauge("my.gauge", Double.NaN);
+        Gauge gauge = registry.find("my.gauge").gauge();
+        assertThat(clientProvider.writeGauge(gauge)).isEmpty();
+    }     
 
     @Test
     void writeGaugeShouldDropInfiniteValues() {
-        registry.gauge("my.gauge", Double.POSITIVE_INFINITY);
-        Gauge gauge = registry.find("my.gauge").gauge();
         //test Http clientProvider
-        assertThat(getHttpClientProvider(meterNameEventTypeEnabledConfig).writeGauge(gauge)).isEmpty();
-        assertThat(getHttpClientProvider(httpConfig).writeGauge(gauge)).isEmpty();
+        writeGaugeShouldDropInfiniteValues(getHttpClientProvider(meterNameEventTypeEnabledConfig));
+        writeGaugeShouldDropInfiniteValues(getHttpClientProvider(httpConfig));
         
         //test Agent clientProvider
-        assertThat(getAgentClientProvider(meterNameEventTypeEnabledConfig).writeGauge(gauge)).isEmpty();
-        assertThat(getAgentClientProvider(agentConfig).writeGauge(gauge)).isEmpty();
+        writeGaugeShouldDropInfiniteValues(getAgentClientProvider(meterNameEventTypeEnabledConfig));
+        writeGaugeShouldDropInfiniteValues(getAgentClientProvider(agentConfig));
+    }
+
+    private void writeGaugeShouldDropInfiniteValues(NewRelicHttpClientProviderImpl clientProvider) {
+        registry.gauge("my.gauge", Double.POSITIVE_INFINITY);
+        Gauge gauge = registry.find("my.gauge").gauge();
+        assertThat(clientProvider.writeGauge(gauge)).isEmpty();
 
         registry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
         gauge = registry.find("my.gauge").gauge();
-        //test Http clientProvider
-        assertThat(getHttpClientProvider(meterNameEventTypeEnabledConfig).writeGauge(gauge)).isEmpty();
-        assertThat(getHttpClientProvider(httpConfig).writeGauge(gauge)).isEmpty();
-        
-        //test Agent clientProvider
-        assertThat(getAgentClientProvider(meterNameEventTypeEnabledConfig).writeGauge(gauge)).isEmpty();
-        assertThat(getAgentClientProvider(agentConfig).writeGauge(gauge)).isEmpty();
+        assertThat(clientProvider.writeGauge(gauge)).isEmpty();
     }
+    
+    private void writeGaugeShouldDropInfiniteValues(NewRelicAgentClientProviderImpl clientProvider) {
+        registry.gauge("my.gauge", Double.POSITIVE_INFINITY);
+        Gauge gauge = registry.find("my.gauge").gauge();
+        assertThat(clientProvider.writeGauge(gauge)).isEmpty();
 
+        registry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
+        gauge = registry.find("my.gauge").gauge();
+        assertThat(clientProvider.writeGauge(gauge)).isEmpty();
+    }
+    
     @Test
     void writeGaugeWithTimeGauge() {
+        //test Http clientProvider
+        writeGaugeWithTimeGauge(getHttpClientProvider(meterNameEventTypeEnabledConfig),
+                "{\"eventType\":\"myTimeGauge\",\"value\":1000,\"timeUnit\":\"milliseconds\"}");
+        writeGaugeWithTimeGauge(getHttpClientProvider(httpConfig),
+                "{\"eventType\":\"MicrometerSample\",\"value\":1000,\"timeUnit\":\"milliseconds\",\"metricName\":\"myTimeGauge\",\"metricType\":\"GAUGE\"}");
+        
+        //test Agent clientProvider
+        Map<String, Object> expectedEntries = new HashMap<>();
+        expectedEntries.put("value", 1000);
+        expectedEntries.put("timeUnit", "milliseconds");
+        writeGaugeWithTimeGauge(getAgentClientProvider(meterNameEventTypeEnabledConfig), expectedEntries);
+        expectedEntries.put("metricName", "myTimeGauge");
+        expectedEntries.put("metricType", "GAUGE");
+        writeGaugeWithTimeGauge(getAgentClientProvider(agentConfig), expectedEntries);
+    }
+    
+    private void writeGaugeWithTimeGauge(NewRelicHttpClientProviderImpl clientProvider, String expectedJson) {
         AtomicReference<Double> obj = new AtomicReference<>(1d);
         registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
         TimeGauge timeGauge = registry.find("my.timeGauge").timeGauge();
-        //test Http clientProvider
-        Stream<String> streamResult = getHttpClientProvider(meterNameEventTypeEnabledConfig).writeTimeGauge(timeGauge);
-        assertThat(streamResult).contains("{\"eventType\":\"myTimeGauge\",\"value\":1000,\"timeUnit\":\"milliseconds\"}");  
-        
-        streamResult = getHttpClientProvider(httpConfig).writeTimeGauge(timeGauge);
-        assertThat(streamResult).contains("{\"eventType\":\"MicrometerSample\",\"value\":1000,\"timeUnit\":\"milliseconds\",\"metricName\":\"myTimeGauge\",\"metricType\":\"GAUGE\"}");
-
-        //test Agent clientProvider
-        Map<String, Object> result = getAgentClientProvider(meterNameEventTypeEnabledConfig).writeTimeGauge(timeGauge);
-        assertThat(result).hasSize(2);
-        assertThat(result).containsEntry("timeUnit", "milliseconds");
-        assertThat(result).containsEntry("value", 1000); 
-        
-        result = getAgentClientProvider(agentConfig).writeTimeGauge(timeGauge);
-        assertThat(result).hasSize(4);
-        assertThat(result).containsEntry("metricName", "myTimeGauge");
-        assertThat(result).containsEntry("metricType", "GAUGE");
-        assertThat(result).containsEntry("timeUnit", "milliseconds");
-        assertThat(result).containsEntry("value", 1000);
+        assertThat(clientProvider.writeTimeGauge(timeGauge)).containsExactly(expectedJson);       
+    }
+    
+    private void writeGaugeWithTimeGauge(NewRelicAgentClientProviderImpl clientProvider, Map<String, Object> expectedEntries) {
+        AtomicReference<Double> obj = new AtomicReference<>(1d);
+        registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
+        TimeGauge timeGauge = registry.find("my.timeGauge").timeGauge();
+        Map<String, Object> result = clientProvider.writeTimeGauge(timeGauge);
+        assertThat(result).hasSize(expectedEntries.size());
+        assertThat(result).containsExactlyEntriesOf(expectedEntries);
     }
     
     @Test
     void writeGaugeWithTimeGaugeShouldDropNanValue() {
+        //test Http clientProvider
+        writeGaugeWithTimeGaugeShouldDropNanValue(getHttpClientProvider(meterNameEventTypeEnabledConfig));
+        writeGaugeWithTimeGaugeShouldDropNanValue(getHttpClientProvider(httpConfig));
+        
+        //test Agent clientProvider
+        writeGaugeWithTimeGaugeShouldDropNanValue(getAgentClientProvider(meterNameEventTypeEnabledConfig));
+        writeGaugeWithTimeGaugeShouldDropNanValue(getAgentClientProvider(agentConfig));
+    }
+    
+    private void writeGaugeWithTimeGaugeShouldDropNanValue(NewRelicHttpClientProviderImpl clientProvider) {
         AtomicReference<Double> obj = new AtomicReference<>(Double.NaN);
         registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
         TimeGauge timeGauge = registry.find("my.timeGauge").timeGauge();
-        //test Http clientProvider
-        assertThat(getHttpClientProvider(meterNameEventTypeEnabledConfig).writeTimeGauge(timeGauge)).isEmpty();
-        assertThat(getHttpClientProvider(httpConfig).writeTimeGauge(timeGauge)).isEmpty();
-        
-        //test Agent clientProvider
-        assertThat(getAgentClientProvider(meterNameEventTypeEnabledConfig).writeTimeGauge(timeGauge)).isEmpty();
-        assertThat(getAgentClientProvider(agentConfig).writeTimeGauge(timeGauge)).isEmpty();
+        assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
+    }
+    
+    private void writeGaugeWithTimeGaugeShouldDropNanValue(NewRelicAgentClientProviderImpl clientProvider) {
+        AtomicReference<Double> obj = new AtomicReference<>(Double.NaN);
+        registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
+        TimeGauge timeGauge = registry.find("my.timeGauge").timeGauge();
+        assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
     }
 
     @Test
     void writeGaugeWithTimeGaugeShouldDropInfiniteValues() {
+        //test Http clientProvider
+        writeGaugeWithTimeGaugeShouldDropInfiniteValues(getHttpClientProvider(meterNameEventTypeEnabledConfig));
+        writeGaugeWithTimeGaugeShouldDropInfiniteValues(getHttpClientProvider(httpConfig));
+        
+        //test Agent clientProvider
+        writeGaugeWithTimeGaugeShouldDropInfiniteValues(getAgentClientProvider(meterNameEventTypeEnabledConfig));
+        writeGaugeWithTimeGaugeShouldDropInfiniteValues(getAgentClientProvider(agentConfig));
+    }
+    
+    private void writeGaugeWithTimeGaugeShouldDropInfiniteValues(NewRelicHttpClientProviderImpl clientProvider) {
         AtomicReference<Double> obj = new AtomicReference<>(Double.POSITIVE_INFINITY);
         registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
         TimeGauge timeGauge = registry.find("my.timeGauge").timeGauge();
-        //test Http clientProvider
-        assertThat(getHttpClientProvider(meterNameEventTypeEnabledConfig).writeTimeGauge(timeGauge)).isEmpty();
-        assertThat(getHttpClientProvider(httpConfig).writeTimeGauge(timeGauge)).isEmpty();
-        
-        //test Agent clientProvider
-        assertThat(getAgentClientProvider(meterNameEventTypeEnabledConfig).writeTimeGauge(timeGauge)).isEmpty();
-        assertThat(getAgentClientProvider(agentConfig).writeTimeGauge(timeGauge)).isEmpty();
-        
+        assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
+
         obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
         registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
         timeGauge = registry.find("my.timeGauge").timeGauge();
-        //test Http clientProvider
-        assertThat(getHttpClientProvider(meterNameEventTypeEnabledConfig).writeTimeGauge(timeGauge)).isEmpty();
-        assertThat(getHttpClientProvider(httpConfig).writeTimeGauge(timeGauge)).isEmpty();
-        
-        //test Agent clientProvider
-        assertThat(getAgentClientProvider(meterNameEventTypeEnabledConfig).writeTimeGauge(timeGauge)).isEmpty();
-        assertThat(getAgentClientProvider(agentConfig).writeTimeGauge(timeGauge)).isEmpty();
+        assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
+    }
+    
+    private void writeGaugeWithTimeGaugeShouldDropInfiniteValues(NewRelicAgentClientProviderImpl clientProvider) {
+        AtomicReference<Double> obj = new AtomicReference<>(Double.POSITIVE_INFINITY);
+        registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
+        TimeGauge timeGauge = registry.find("my.timeGauge").timeGauge();
+        assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
+
+        obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
+        registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
+        timeGauge = registry.find("my.timeGauge").timeGauge();
+        assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
     }
 
     @Test
     void writeCounterWithFunctionCounter() {
         FunctionCounter counter = FunctionCounter.builder("myCounter", 1d, Number::doubleValue).register(registry);
-        clock.add(agentConfig.step());
-        //test Http clientProvider
-        Stream<String> streamResult = getHttpClientProvider(meterNameEventTypeEnabledConfig).writeFunctionCounter(counter);
-        assertThat(streamResult).contains("{\"eventType\":\"myCounter\",\"throughput\":1}"); 
-
-        streamResult = getHttpClientProvider(httpConfig).writeFunctionCounter(counter);
-        assertThat(streamResult).contains("{\"eventType\":\"MicrometerSample\",\"throughput\":1,\"metricName\":\"myCounter\",\"metricType\":\"COUNTER\"}");
-
-        //test Agent clientProvider
-        Map<String, Object> result = getAgentClientProvider(meterNameEventTypeEnabledConfig).writeFunctionCounter(counter);
-        assertThat(result).hasSize(1);
-        assertThat(result).containsEntry("throughput", 1); 
-        
-        result = getAgentClientProvider(agentConfig).writeFunctionCounter(counter);
-        assertThat(result).hasSize(3);
-        assertThat(result).containsEntry("metricName", "myCounter");
-        assertThat(result).containsEntry("metricType", "COUNTER");
-        assertThat(result).containsEntry("throughput", 1);
-    }
-
-    @Test
-    void writeCounterWithFunctionCounterShouldDropInfiniteValues() {
-        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue).register(registry);
-        clock.add(agentConfig.step());
-        //test Http clientProvider
-        assertThat(getHttpClientProvider(meterNameEventTypeEnabledConfig).writeFunctionCounter(counter)).isEmpty();
-        assertThat(getHttpClientProvider(httpConfig).writeFunctionCounter(counter)).isEmpty();
-        
-        //test Agent clientProvider
-        assertThat(getAgentClientProvider(meterNameEventTypeEnabledConfig).writeFunctionCounter(counter)).isEmpty();
-        assertThat(getAgentClientProvider(agentConfig).writeFunctionCounter(counter)).isEmpty();
-
-        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue).register(registry);
         clock.add(httpConfig.step());
         //test Http clientProvider
-        assertThat(getHttpClientProvider(meterNameEventTypeEnabledConfig).writeFunctionCounter(counter)).isEmpty();
-        assertThat(getHttpClientProvider(httpConfig).writeFunctionCounter(counter)).isEmpty();
+        writeCounterWithFunctionCounter(counter, getHttpClientProvider(meterNameEventTypeEnabledConfig),
+                "{\"eventType\":\"myCounter\",\"throughput\":1}");
+        writeCounterWithFunctionCounter(counter, getHttpClientProvider(httpConfig),
+                "{\"eventType\":\"MicrometerSample\",\"throughput\":1,\"metricName\":\"myCounter\",\"metricType\":\"COUNTER\"}");
         
         //test Agent clientProvider
-        assertThat(getAgentClientProvider(meterNameEventTypeEnabledConfig).writeFunctionCounter(counter)).isEmpty();
-        assertThat(getAgentClientProvider(agentConfig).writeFunctionCounter(counter)).isEmpty();
+        Map<String, Object> expectedEntries = new HashMap<>();
+        expectedEntries.put("throughput", 1);
+        writeCounterWithFunctionCounter(counter, getAgentClientProvider(meterNameEventTypeEnabledConfig), expectedEntries);
+        expectedEntries.put("metricName", "myCounter");
+        expectedEntries.put("metricType", "COUNTER");
+        writeCounterWithFunctionCounter(counter, getAgentClientProvider(agentConfig), expectedEntries);
+    }
+
+    private void writeCounterWithFunctionCounter(FunctionCounter counter, NewRelicHttpClientProviderImpl clientProvider, String expectedJson) {
+        assertThat(clientProvider.writeFunctionCounter(counter)).containsExactly(expectedJson);
+    }
+    
+    private void writeCounterWithFunctionCounter(FunctionCounter counter, NewRelicAgentClientProviderImpl clientProvider, Map<String, Object> expectedEntries) {
+        Map<String, Object> result = clientProvider.writeFunctionCounter(counter);
+        assertThat(result).hasSize(expectedEntries.size());
+        assertThat(result).containsExactlyEntriesOf(expectedEntries);
+    }
+    
+    @Test
+    void writeCounterWithFunctionCounterShouldDropInfiniteValues() {
+        //test Http clientProvider
+        writeCounterWithFunctionCounterShouldDropInfiniteValues(getHttpClientProvider(meterNameEventTypeEnabledConfig));
+        writeCounterWithFunctionCounterShouldDropInfiniteValues(getHttpClientProvider(httpConfig));
+        
+        //test Agent clientProvider
+        writeCounterWithFunctionCounterShouldDropInfiniteValues(getAgentClientProvider(meterNameEventTypeEnabledConfig));
+        writeCounterWithFunctionCounterShouldDropInfiniteValues(getAgentClientProvider(agentConfig));
+    }
+
+    private void writeCounterWithFunctionCounterShouldDropInfiniteValues(NewRelicHttpClientProviderImpl clientProvider) {
+        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
+                .register(registry);
+        clock.add(httpConfig.step());
+        assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();
+
+        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
+                .register(registry);
+        clock.add(httpConfig.step());
+        assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();
+    }
+    
+    private void writeCounterWithFunctionCounterShouldDropInfiniteValues(NewRelicAgentClientProviderImpl clientProvider) {
+        FunctionCounter counter = FunctionCounter.builder("myCounter", Double.POSITIVE_INFINITY, Number::doubleValue)
+                .register(registry);
+        clock.add(httpConfig.step());
+        assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();
+
+        counter = FunctionCounter.builder("myCounter", Double.NEGATIVE_INFINITY, Number::doubleValue)
+                .register(registry);
+        clock.add(httpConfig.step());
+        assertThat(clientProvider.writeFunctionCounter(counter)).isEmpty();
     }
 
     @Test
@@ -295,14 +369,30 @@ class NewRelicMeterRegistryTest {
         Measurement measurement2 = new Measurement(() -> Double.NEGATIVE_INFINITY, Statistic.VALUE);
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
-        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(registry);
+        
         //test Http clientProvider
-        assertThat(getHttpClientProvider(meterNameEventTypeEnabledConfig).writeMeter(meter)).isEmpty();
-        assertThat(getHttpClientProvider(httpConfig).writeMeter(meter)).isEmpty();
+        writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten(
+                measurements, getHttpClientProvider(meterNameEventTypeEnabledConfig));
+        writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten(
+                measurements, getHttpClientProvider(httpConfig));
         
         //test Agent clientProvider
-        assertThat(getAgentClientProvider(meterNameEventTypeEnabledConfig).writeMeter(meter)).isEmpty();
-        assertThat(getAgentClientProvider(agentConfig).writeMeter(meter)).isEmpty();
+        writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten(
+                measurements, getAgentClientProvider(meterNameEventTypeEnabledConfig));
+        writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten(
+                measurements, getAgentClientProvider(agentConfig));
+    }
+
+    private void writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten(
+            List<Measurement> measurements, NewRelicHttpClientProviderImpl clientProvider) {
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(registry);
+        assertThat(clientProvider.writeMeter(meter)).isEmpty();
+    }
+    
+    private void writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten(
+            List<Measurement> measurements, NewRelicAgentClientProviderImpl clientProvider) {
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(registry);
+        assertThat(clientProvider.writeMeter(meter)).isEmpty();
     }
 
     @Test
@@ -312,24 +402,37 @@ class NewRelicMeterRegistryTest {
         Measurement measurement3 = new Measurement(() -> Double.NaN, Statistic.VALUE);
         Measurement measurement4 = new Measurement(() -> 1d, Statistic.VALUE);
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3, measurement4);
-        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(registry);
         //test Http clientProvider
-        Stream<String> streamResult = getHttpClientProvider(meterNameEventTypeEnabledConfig).writeMeter(meter);
-        assertThat(streamResult).contains("{\"eventType\":\"myMeter\",\"value\":1}"); 
-        
-        streamResult = getHttpClientProvider(httpConfig).writeMeter(meter);
-        assertThat(streamResult).contains("{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myMeter\",\"metricType\":\"GAUGE\"}");
+        writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues(
+                measurements, getHttpClientProvider(meterNameEventTypeEnabledConfig), 
+                "{\"eventType\":\"myMeter\",\"value\":1}");
+        writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues(
+                measurements, getHttpClientProvider(httpConfig),
+                "{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myMeter\",\"metricType\":\"GAUGE\"}");
         
         //test Agent clientProvider
-        Map<String, Object> result = getAgentClientProvider(meterNameEventTypeEnabledConfig).writeMeter(meter);
-        assertThat(result).hasSize(1);
-        assertThat(result).containsEntry("value", 1);
-        
-        result = getAgentClientProvider(agentConfig).writeMeter(meter);
-        assertThat(result).hasSize(3);
-        assertThat(result).containsEntry("metricName", "myMeter");
-        assertThat(result).containsEntry("metricType", "GAUGE");
-        assertThat(result).containsEntry("value", 1);
+        Map<String, Object> expectedEntries = new HashMap<>();
+        expectedEntries.put("value", 1);
+        writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues(
+                measurements, getAgentClientProvider(meterNameEventTypeEnabledConfig), expectedEntries);
+        expectedEntries.put("metricName", "myMeter");
+        expectedEntries.put("metricType", "GAUGE");
+        writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues(
+                measurements, getAgentClientProvider(agentConfig), expectedEntries);
+    }
+
+    private void writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues(
+            List<Measurement> measurements, NewRelicHttpClientProviderImpl clientProvider, String expectedJson) {
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(registry);
+        assertThat(clientProvider.writeMeter(meter)).containsExactly(expectedJson);
+    }
+    
+    private void writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues(
+            List<Measurement> measurements, NewRelicAgentClientProviderImpl clientProvider, Map<String, Object> expectedEntries) {
+        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(registry);
+        Map<String, Object> result = clientProvider.writeMeter(meter);
+        assertThat(result).hasSize(expectedEntries.size());
+        assertThat(result).containsExactlyEntriesOf(expectedEntries);
     }
   
     @Test
@@ -340,16 +443,20 @@ class NewRelicMeterRegistryTest {
         List<Measurement> measurements = Arrays.asList(measurement1, measurement2, measurement3);
         Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(this.registry);
         //test Http clientProvider
-        Stream<String> streamResult = getHttpClientProvider(httpConfig).writeMeter(meter);
-        assertThat(streamResult).contains("{\"eventType\":\"MicrometerSample\",\"value\":2,\"metricName\":\"myMeter\",\"metricType\":\"GAUGE\"}"); 
+        assertThat(getHttpClientProvider(httpConfig).writeMeter(meter)).containsExactly(
+                "{\"eventType\":\"MicrometerSample\",\"value\":2,\"metricName\":\"myMeter\",\"metricType\":\"GAUGE\"}"); 
         
         //test Agent clientProvider
+        Map<String, Object> expectedEntries = new HashMap<>();
+        expectedEntries.put("value", 2);
+        expectedEntries.put("metricName", "myMeter");
+        expectedEntries.put("metricType", "GAUGE");
         Map<String, Object> result = getAgentClientProvider(agentConfig).writeMeter(meter);
-        assertThat(result).hasSize(3);
-        assertThat(result).containsEntry("metricName", "myMeter");
-        assertThat(result).containsEntry("metricType", "GAUGE");
-        assertThat(result).containsEntry("value", 2);
+        assertThat(result).hasSize(expectedEntries.size());
+        assertThat(result).containsExactlyEntriesOf(expectedEntries);
     }
+    
+    
 
     @Test
     void sendEventsWithHttpProvider() {
@@ -463,13 +570,12 @@ class NewRelicMeterRegistryTest {
             }
         };
         
-        @SuppressWarnings("deprecation")
-        Exception exception = assertThrows(MissingRequiredConfigurationException.class, () -> {
-            new NewRelicMeterRegistry(config, null, new NewRelicNamingConvention(), clock, new NamedThreadFactory("test"));
-        });
-        assertThat(exception.getMessage()).contains("clientProvider");
+        assertThatThrownBy(() -> new NewRelicMeterRegistry(config, null, clock))
+            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
+            .hasMessageContaining("clientProvider");
     }
     
+    @SuppressWarnings("deprecation")
     @Test
     void failsConfigMissingNamingConvention() {
         NewRelicConfig config = new NewRelicConfig() {
@@ -479,13 +585,12 @@ class NewRelicMeterRegistryTest {
             }
         };
         
-        @SuppressWarnings("deprecation")
-        Exception exception = assertThrows(MissingRequiredConfigurationException.class, () -> {
-            new NewRelicMeterRegistry(config, new MockClientProvider(), null, clock, new NamedThreadFactory("test"));
-        });
-        assertThat(exception.getMessage()).contains("namingConvention");
+        assertThatThrownBy(() -> new NewRelicMeterRegistry(config, new MockClientProvider(), null, clock, new NamedThreadFactory("test")))
+            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
+            .hasMessageContaining("namingConvention");
     }
     
+    @SuppressWarnings("deprecation")
     @Test
     void failsConfigMissingThreadFactory() {
         NewRelicConfig config = new NewRelicConfig() {
@@ -495,11 +600,9 @@ class NewRelicMeterRegistryTest {
             }
         };
         
-        @SuppressWarnings("deprecation")
-        Exception exception = assertThrows(MissingRequiredConfigurationException.class, () -> {
-            new NewRelicMeterRegistry(config, new MockClientProvider(), new NewRelicNamingConvention(), clock, null);
-        });
-        assertThat(exception.getMessage()).contains("threadFactory");
+        assertThatThrownBy(() -> new NewRelicMeterRegistry(config, new MockClientProvider(), new NewRelicNamingConvention(), clock, null))
+            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
+            .hasMessageContaining("threadFactory");
     }
     
     @Test
@@ -515,10 +618,9 @@ class NewRelicMeterRegistryTest {
             }
         };
         
-        Exception exception = assertThrows(MissingRequiredConfigurationException.class, () -> {
-            getHttpClientProvider(config);
-        });
-        assertThat(exception.getMessage()).contains("eventType");
+        assertThatThrownBy(() -> getHttpClientProvider(config))
+            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
+            .hasMessageContaining("eventType");
     }
     
     @Test
@@ -566,10 +668,9 @@ class NewRelicMeterRegistryTest {
             }
         };
         
-        Exception exception = assertThrows(MissingRequiredConfigurationException.class, () -> {
-            getHttpClientProvider(config);
-        });
-        assertThat(exception.getMessage()).contains("accountId");
+        assertThatThrownBy(() -> getHttpClientProvider(config))
+            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
+            .hasMessageContaining("accountId");
     }
     
     @Test
@@ -593,10 +694,9 @@ class NewRelicMeterRegistryTest {
             }
         };
         
-        Exception exception = assertThrows(MissingRequiredConfigurationException.class, () -> {
-            getHttpClientProvider(config);
-        });
-        assertThat(exception.getMessage()).contains("apiKey");
+        assertThatThrownBy(() -> getHttpClientProvider(config))
+            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
+            .hasMessageContaining("apiKey");
     }
     
     @Test
@@ -624,10 +724,9 @@ class NewRelicMeterRegistryTest {
             }
         };
         
-        Exception exception = assertThrows(MissingRequiredConfigurationException.class, () -> {
-            getHttpClientProvider(config);
-        });
-        assertThat(exception.getMessage()).contains("uri");
+        assertThatThrownBy(() -> getHttpClientProvider(config))
+            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
+            .hasMessageContaining("uri");
     }
     
     @Test
@@ -643,10 +742,9 @@ class NewRelicMeterRegistryTest {
             }
         };
         
-        Exception exception = assertThrows(MissingRequiredConfigurationException.class, () -> {
-            getAgentClientProvider(config);
-        });
-        assertThat(exception.getMessage()).contains("eventType");
+        assertThatThrownBy(() -> getAgentClientProvider(config))
+            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
+            .hasMessageContaining("eventType");
     }
     
     @Test
