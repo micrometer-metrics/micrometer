@@ -110,7 +110,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
 
     @Override
     protected TimeUnit getBaseTimeUnit() {
-        return TimeUnit.MILLISECONDS;
+        return TimeUnit.SECONDS;
     }
 
     public static class Builder {

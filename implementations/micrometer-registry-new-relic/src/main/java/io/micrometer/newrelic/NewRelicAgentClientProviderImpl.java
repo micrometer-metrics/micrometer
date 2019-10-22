@@ -53,7 +53,6 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
     private final Agent newRelicAgent;
     private final NewRelicConfig config;
     private final NamingConvention namingConvention;
-    private TimeUnit timeUnit = TimeUnit.MILLISECONDS;
     
     public NewRelicAgentClientProviderImpl(NewRelicConfig config) {
         this(config, NewRelic.getAgent(), new NewRelicNamingConvention());
@@ -73,9 +72,6 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
 
     @Override
     public void publish(NewRelicMeterRegistry meterRegistry, List<Meter> meters) {
-        
-        this.timeUnit = meterRegistry.getBaseTimeUnit();
-        
         // New Relic's Java Agent Insights API is backed by a reservoir/buffer
         // and handles the actual publishing of events to New Relic.
         // 1:1 mapping between Micrometer meters and New Relic events
@@ -99,9 +95,10 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
     @Override
     public Map<String, Object> writeLongTaskTimer(LongTaskTimer timer) {
         Map<String, Object> attributes = new HashMap<String, Object>();
+        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit());
         addAttribute(ACTIVE_TASKS, timer.activeTasks(), attributes);          	
         addAttribute(DURATION, timer.duration(timeUnit), attributes);
-        addAttribute(TIME_UNIT, timeUnit.name().toLowerCase(), attributes);
+        addAttribute(TIME_UNIT, timeUnit.toString().toLowerCase(), attributes);
         //process meter's name, type and tags
         addMeterAsAttributes(timer.getId(), attributes);
         return attributes;
@@ -142,10 +139,10 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
     @Override
     public Map<String, Object> writeTimeGauge(TimeGauge gauge) {
         Map<String, Object> attributes = new HashMap<String, Object>();
-        double value = gauge.value(timeUnit);
+        double value = gauge.value();
         if (Double.isFinite(value)) {
             addAttribute(VALUE, value, attributes);
-            addAttribute(TIME_UNIT, gauge.baseTimeUnit().name().toLowerCase(), attributes);
+            addAttribute(TIME_UNIT, gauge.baseTimeUnit().toString().toLowerCase(), attributes);
             //process meter's name, type and tags
             addMeterAsAttributes(gauge.getId(), attributes);
         }
@@ -167,11 +164,12 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
     @Override
     public Map<String, Object> writeTimer(Timer timer) {
         Map<String, Object> attributes = new HashMap<String, Object>();
+        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit());
         addAttribute(COUNT, (new Double(timer.count())).longValue(), attributes);
         addAttribute(AVG, timer.mean(timeUnit), attributes);
         addAttribute(TOTAL_TIME, timer.totalTime(timeUnit), attributes);		
         addAttribute(MAX, timer.max(timeUnit), attributes);
-        addAttribute(TIME_UNIT, timeUnit.name().toLowerCase(), attributes);
+        addAttribute(TIME_UNIT, timeUnit.toString().toLowerCase(), attributes);
         //process meter's name, type and tags
         addMeterAsAttributes(timer.getId(), attributes);
         return attributes;
@@ -180,10 +178,11 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
     @Override
     public Map<String, Object> writeFunctionTimer(FunctionTimer timer) {
         Map<String, Object> attributes = new HashMap<String, Object>();
+        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit());
         addAttribute(COUNT, (new Double(timer.count())).longValue(), attributes);
         addAttribute(AVG, timer.mean(timeUnit), attributes);
         addAttribute(TOTAL_TIME, timer.totalTime(timeUnit), attributes);
-        addAttribute(TIME_UNIT, timeUnit.name().toLowerCase(), attributes);
+        addAttribute(TIME_UNIT, timeUnit.toString().toLowerCase(), attributes);
         //process meter's name, type and tags
         addMeterAsAttributes(timer.getId(), attributes);
         return attributes;

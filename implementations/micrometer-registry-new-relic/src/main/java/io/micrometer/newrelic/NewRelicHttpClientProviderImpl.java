@@ -62,7 +62,6 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
     private final HttpSender httpClient;
     private final String insightsEndpoint;
     private final NamingConvention namingConvention;
-    private TimeUnit timeUnit = TimeUnit.MILLISECONDS;
 
     @SuppressWarnings("deprecation")
     public NewRelicHttpClientProviderImpl(NewRelicConfig config) {
@@ -92,9 +91,6 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
 
     @Override
     public void publish(NewRelicMeterRegistry meterRegistry, List<Meter> meters) {
-        
-        this.timeUnit = meterRegistry.getBaseTimeUnit();
-        
         // New Relic's Insights API limits us to 1000 events per call
         // 1:1 mapping between Micrometer meters and New Relic events
         for (List<Meter> batch : MeterPartition.partition(meterRegistry, Math.min(config.batchSize(), 1000))) {
@@ -117,12 +113,13 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
     }
     
     @Override
-    public Stream<String> writeLongTaskTimer(LongTaskTimer ltt) {
+    public Stream<String> writeLongTaskTimer(LongTaskTimer timer) {
+        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit());
         return Stream.of(
-                event(ltt.getId(),
-                        new Attribute(ACTIVE_TASKS, ltt.activeTasks()),
-                        new Attribute(DURATION, ltt.duration(timeUnit)),
-                        new Attribute(TIME_UNIT, timeUnit.name().toLowerCase())
+                event(timer.getId(),
+                        new Attribute(ACTIVE_TASKS, timer.activeTasks()),
+                        new Attribute(DURATION, timer.duration(timeUnit)),
+                        new Attribute(TIME_UNIT, timeUnit.toString().toLowerCase())
                 )
         );
     }
@@ -152,12 +149,12 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
 
     @Override
     public Stream<String> writeTimeGauge(TimeGauge gauge) {
-        Double value = gauge.value(timeUnit);
+        Double value = gauge.value();
         if (Double.isFinite(value)) {
             return Stream.of(
                     event(gauge.getId(),
                             new Attribute(VALUE, value),
-                            new Attribute(TIME_UNIT, timeUnit.name().toLowerCase())
+                            new Attribute(TIME_UNIT, gauge.baseTimeUnit().toString().toLowerCase())
                     )
             );
         }
@@ -178,25 +175,27 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
 
     @Override
     public Stream<String> writeTimer(Timer timer) {
+        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit());
         return Stream.of(
                 event(timer.getId(),
                         new Attribute(COUNT, timer.count()),
                         new Attribute(AVG, timer.mean(timeUnit)),
                         new Attribute(TOTAL_TIME, timer.totalTime(timeUnit)),
                         new Attribute(MAX, timer.max(timeUnit)),
-                        new Attribute(TIME_UNIT, timeUnit.name().toLowerCase())
+                        new Attribute(TIME_UNIT, timeUnit.toString().toLowerCase())
                 )
             );
     }
 
     @Override
     public Stream<String> writeFunctionTimer(FunctionTimer timer) {
+        TimeUnit timeUnit = TimeUnit.valueOf(timer.getId().getBaseUnit());
         return Stream.of(
                 event(timer.getId(),
                         new Attribute(COUNT, timer.count()),
                         new Attribute(AVG, timer.mean(timeUnit)),
                         new Attribute(TOTAL_TIME, timer.totalTime(timeUnit)),
-                        new Attribute(TIME_UNIT, timeUnit.name().toLowerCase())
+                        new Attribute(TIME_UNIT, timeUnit.toString().toLowerCase())
                 )
             );
     }

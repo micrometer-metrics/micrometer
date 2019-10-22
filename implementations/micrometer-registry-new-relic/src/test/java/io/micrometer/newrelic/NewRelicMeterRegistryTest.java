@@ -131,7 +131,7 @@ class NewRelicMeterRegistryTest {
         Map<String, Object> expectedEntries = new HashMap<>();
         expectedEntries.put("value", 1);
         writeGauge(meterNameEventTypeEnabledConfig, expectedEntries);
-        expectedEntries.put("metricName", "myGauge");
+        expectedEntries.put("metricName", "myGauge2");
         expectedEntries.put("metricType", "GAUGE");
         writeGauge(agentConfig, expectedEntries);
     }
@@ -143,8 +143,8 @@ class NewRelicMeterRegistryTest {
     }
     
     private void writeGauge(NewRelicConfig config, Map<String, Object> expectedEntries) {
-        registry.gauge("my.gauge", 1d);
-        Gauge gauge = registry.find("my.gauge").gauge();
+        registry.gauge("my.gauge2", 1d);
+        Gauge gauge = registry.find("my.gauge2").gauge();
         Map<String, Object> result = getAgentClientProvider(config).writeGauge(gauge);
         assertThat(result).hasSize(expectedEntries.size());
         assertThat(result).containsExactlyEntriesOf(expectedEntries);
@@ -169,8 +169,8 @@ class NewRelicMeterRegistryTest {
     }
     
     private void writeGaugeShouldDropNanValue(NewRelicAgentClientProviderImpl clientProvider) {
-        registry.gauge("my.gauge", Double.NaN);
-        Gauge gauge = registry.find("my.gauge").gauge();
+        registry.gauge("my.gauge2", Double.NaN);
+        Gauge gauge = registry.find("my.gauge2").gauge();
         assertThat(clientProvider.writeGauge(gauge)).isEmpty();
     }     
 
@@ -196,12 +196,12 @@ class NewRelicMeterRegistryTest {
     }
     
     private void writeGaugeShouldDropInfiniteValues(NewRelicAgentClientProviderImpl clientProvider) {
-        registry.gauge("my.gauge", Double.POSITIVE_INFINITY);
-        Gauge gauge = registry.find("my.gauge").gauge();
+        registry.gauge("my.gauge2", Double.POSITIVE_INFINITY);
+        Gauge gauge = registry.find("my.gauge2").gauge();
         assertThat(clientProvider.writeGauge(gauge)).isEmpty();
 
-        registry.gauge("my.gauge", Double.NEGATIVE_INFINITY);
-        gauge = registry.find("my.gauge").gauge();
+        registry.gauge("my.gauge2", Double.NEGATIVE_INFINITY);
+        gauge = registry.find("my.gauge2").gauge();
         assertThat(clientProvider.writeGauge(gauge)).isEmpty();
     }
     
@@ -209,16 +209,16 @@ class NewRelicMeterRegistryTest {
     void writeGaugeWithTimeGauge() {
         //test Http clientProvider
         writeGaugeWithTimeGauge(getHttpClientProvider(meterNameEventTypeEnabledConfig),
-                "{\"eventType\":\"myTimeGauge\",\"value\":1000,\"timeUnit\":\"milliseconds\"}");
+                "{\"eventType\":\"myTimeGauge\",\"value\":1,\"timeUnit\":\"seconds\"}");
         writeGaugeWithTimeGauge(getHttpClientProvider(httpConfig),
-                "{\"eventType\":\"MicrometerSample\",\"value\":1000,\"timeUnit\":\"milliseconds\",\"metricName\":\"myTimeGauge\",\"metricType\":\"GAUGE\"}");
+                "{\"eventType\":\"MicrometerSample\",\"value\":1,\"timeUnit\":\"seconds\",\"metricName\":\"myTimeGauge\",\"metricType\":\"GAUGE\"}");
         
         //test Agent clientProvider
         Map<String, Object> expectedEntries = new HashMap<>();
-        expectedEntries.put("value", 1000);
-        expectedEntries.put("timeUnit", "milliseconds");
+        expectedEntries.put("value", 1);
+        expectedEntries.put("timeUnit", "seconds");
         writeGaugeWithTimeGauge(getAgentClientProvider(meterNameEventTypeEnabledConfig), expectedEntries);
-        expectedEntries.put("metricName", "myTimeGauge");
+        expectedEntries.put("metricName", "myTimeGauge2");
         expectedEntries.put("metricType", "GAUGE");
         writeGaugeWithTimeGauge(getAgentClientProvider(agentConfig), expectedEntries);
     }
@@ -232,8 +232,8 @@ class NewRelicMeterRegistryTest {
     
     private void writeGaugeWithTimeGauge(NewRelicAgentClientProviderImpl clientProvider, Map<String, Object> expectedEntries) {
         AtomicReference<Double> obj = new AtomicReference<>(1d);
-        registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = registry.find("my.timeGauge").timeGauge();
+        registry.more().timeGauge("my.timeGauge2", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
+        TimeGauge timeGauge = registry.find("my.timeGauge2").timeGauge();
         Map<String, Object> result = clientProvider.writeTimeGauge(timeGauge);
         assertThat(result).hasSize(expectedEntries.size());
         assertThat(result).containsExactlyEntriesOf(expectedEntries);
@@ -259,8 +259,8 @@ class NewRelicMeterRegistryTest {
     
     private void writeGaugeWithTimeGaugeShouldDropNanValue(NewRelicAgentClientProviderImpl clientProvider) {
         AtomicReference<Double> obj = new AtomicReference<>(Double.NaN);
-        registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        TimeGauge timeGauge = registry.find("my.timeGauge").timeGauge();
+        registry.more().timeGauge("my.timeGauge2", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
+        TimeGauge timeGauge = registry.find("my.timeGauge2").timeGauge();
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
     }
 
@@ -294,8 +294,8 @@ class NewRelicMeterRegistryTest {
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
 
         obj = new AtomicReference<>(Double.NEGATIVE_INFINITY);
-        registry.more().timeGauge("my.timeGauge", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
-        timeGauge = registry.find("my.timeGauge").timeGauge();
+        registry.more().timeGauge("my.timeGauge2", Tags.empty(), obj, TimeUnit.SECONDS, AtomicReference::get);
+        timeGauge = registry.find("my.timeGauge2").timeGauge();
         assertThat(clientProvider.writeTimeGauge(timeGauge)).isEmpty();
     }
 
@@ -391,7 +391,7 @@ class NewRelicMeterRegistryTest {
     
     private void writeMeterWhenCustomMeterHasOnlyNonFiniteValuesShouldNotBeWritten(
             List<Measurement> measurements, NewRelicAgentClientProviderImpl clientProvider) {
-        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(registry);
+        Meter meter = Meter.builder("my.meter2", Meter.Type.GAUGE, measurements).register(registry);
         assertThat(clientProvider.writeMeter(meter)).isEmpty();
     }
 
@@ -415,7 +415,7 @@ class NewRelicMeterRegistryTest {
         expectedEntries.put("value", 1);
         writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues(
                 measurements, getAgentClientProvider(meterNameEventTypeEnabledConfig), expectedEntries);
-        expectedEntries.put("metricName", "myMeter");
+        expectedEntries.put("metricName", "myMeter2");
         expectedEntries.put("metricType", "GAUGE");
         writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues(
                 measurements, getAgentClientProvider(agentConfig), expectedEntries);
@@ -429,7 +429,7 @@ class NewRelicMeterRegistryTest {
     
     private void writeMeterWhenCustomMeterHasMixedFiniteAndNonFiniteValuesShouldSkipOnlyNonFiniteValues(
             List<Measurement> measurements, NewRelicAgentClientProviderImpl clientProvider, Map<String, Object> expectedEntries) {
-        Meter meter = Meter.builder("my.meter", Meter.Type.GAUGE, measurements).register(registry);
+        Meter meter = Meter.builder("my.meter2", Meter.Type.GAUGE, measurements).register(registry);
         Map<String, Object> result = clientProvider.writeMeter(meter);
         assertThat(result).hasSize(expectedEntries.size());
         assertThat(result).containsExactlyEntriesOf(expectedEntries);
