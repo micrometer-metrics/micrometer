@@ -282,12 +282,13 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             return config().namingConvention().name(name, id.getType(), id.getBaseUnit());
         }
 
-        private StandardUnit toStandardUnit(@Nullable String unit) {
+        // VisibleForTesting
+        StandardUnit toStandardUnit(@Nullable String unit) {
             if (unit == null) {
                 return StandardUnit.NONE;
             }
             StandardUnit standardUnit = STANDARD_UNIT_BY_LOWERCASE_VALUE.get(unit.toLowerCase());
-            return standardUnit != null ? standardUnit : StandardUnit.UNKNOWN_TO_SDK_VERSION;
+            return standardUnit != null ? standardUnit : StandardUnit.NONE;
         }
 
         private List<Dimension> toDimensions(List<Tag> tags) {
