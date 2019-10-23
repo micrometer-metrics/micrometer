@@ -31,6 +31,7 @@ import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
@@ -47,6 +48,8 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
     private final HierarchicalNameMapper nameMapper;
     private final DropwizardClock dropwizardClock;
     private final DropwizardConfig dropwizardConfig;
+
+    private final AtomicBoolean warnLogged = new AtomicBoolean();
 
     public DropwizardMeterRegistry(DropwizardConfig config, MetricRegistry registry, HierarchicalNameMapper nameMapper, Clock clock) {
         super(clock);
@@ -83,12 +86,12 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
                 try {
                     return valueFunction.applyAsDouble(obj2);
                 } catch (Throwable ex) {
-                    String message = "Failed to apply the value function for the gauge '" + id.getName() + "'";
-                    if (log.isDebugEnabled()) {
-                        log.warn(message + ".", ex);
+                    String message = "Failed to apply the value function for the gauge '" + id.getName() + "'.";
+                    if (this.warnLogged.compareAndSet(false, true)) {
+                        log.warn(message, ex);
                     }
                     else {
-                        log.warn(message + ": " + ex);
+                        log.debug(message, ex);
                     }
                 }
             }
