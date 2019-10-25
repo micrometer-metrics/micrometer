@@ -15,23 +15,34 @@
  */
 package io.micrometer.core.instrument.binder.tomcat;
 
-import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.simple.SimpleConfig;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.catalina.Context;
-import org.apache.catalina.LifecycleException;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.core.StandardHost;
 import org.apache.catalina.session.ManagerBase;
 import org.apache.catalina.session.StandardSession;
 import org.apache.catalina.session.TooManyActiveSessionsException;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import io.micrometer.core.instrument.MockClock;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.simple.SimpleConfig;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -95,7 +106,7 @@ class TomcatMetricsTest {
     }
 
     @Test
-    void mbeansAvailableAfterBinder() throws LifecycleException, InterruptedException {
+    void mbeansAvailableAfterBinder() throws Exception {
         TomcatMetrics.monitor(registry, null);
 
         CountDownLatch latch = new CountDownLatch(1);
@@ -104,25 +115,63 @@ class TomcatMetricsTest {
                 latch.countDown();
         });
 
-        Tomcat server = new Tomcat();
-        try {
-            StandardHost host = new StandardHost();
-            host.setName("localhost");
-            server.setHost(host);
-            server.setPort(61000);
-            server.start();
+        HttpServlet servlet = new HttpServlet() {
+            @Override
+            protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+                req.getInputStream().readAllBytes();
 
+                resp.getOutputStream().write("yes".getBytes());
+            }
+        };
+
+        runTomcat(servlet, () -> {
             assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
 
-            assertThat(registry.find("tomcat.global.received").functionCounter()).isNotNull();
-        } finally {
-            server.stop();
-            server.destroy();
-        }
+            checkMbeansInitialState();
+
+            try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+                HttpPost post = new HttpPost("http://localhost:61000/");
+                post.setEntity(new StringEntity("you there?"));
+                httpClient.execute(post);
+
+                httpClient.execute(new HttpGet("http://localhost:61000/nowhere"));
+            }
+
+            checkMbeansAfterRequests();
+
+            return null;
+        });
+    }
+    @Test
+    void mbeansAvailableBeforeBinder() throws Exception {
+        HttpServlet servlet = new HttpServlet() {
+            @Override
+            protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+                req.getInputStream().readAllBytes();
+
+                resp.getOutputStream().write("yes".getBytes());
+            }
+        };
+
+        runTomcat(servlet, () -> {
+            TomcatMetrics.monitor(registry, null);
+
+            try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+                HttpPost post = new HttpPost("http://localhost:61000/");
+                post.setEntity(new StringEntity("you there?"));
+                httpClient.execute(post);
+
+                httpClient.execute(new HttpGet("http://localhost:61000/nowhere"));
+            }
+
+            checkMbeansAfterRequests();
+
+            return null;
+        });
     }
 
-    @Test
-    void mbeansAvailableBeforeBinder() throws LifecycleException {
+
+    void runTomcat(HttpServlet servlet, Callable<Void> doWithTomcat) throws Exception {
         Tomcat server = new Tomcat();
         try {
             StandardHost host = new StandardHost();
@@ -131,12 +180,40 @@ class TomcatMetricsTest {
             server.setPort(61000);
             server.start();
 
-            TomcatMetrics.monitor(registry, null);
-            assertThat(registry.find("tomcat.global.received").functionCounter()).isNotNull();
+            Context context = server.addContext("/", null);
+            server.addServlet("/", "servletname", servlet);
+            context.addServletMappingDecoded("/", "servletname");
+
+            doWithTomcat.call();
+
         } finally {
             server.stop();
             server.destroy();
+
         }
     }
 
+    private void checkMbeansInitialState() {
+        assertThat(registry.get("tomcat.global.sent").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.global.received").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.global.error").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.global.request").functionTimer().count()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.global.request").functionTimer().totalTime(TimeUnit.MILLISECONDS)).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.global.request.max").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.threads.config.max").gauge().value()).isGreaterThan(0.0);
+        assertThat(registry.get("tomcat.threads.busy").gauge().value()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.threads.current").gauge().value()).isGreaterThan(0.0);
+    }
+
+    private void checkMbeansAfterRequests() {
+        assertThat(registry.get("tomcat.global.sent").functionCounter().count()).isEqualTo(1119.0);
+        assertThat(registry.get("tomcat.global.received").functionCounter().count()).isEqualTo(10.0);
+        assertThat(registry.get("tomcat.global.error").functionCounter().count()).isEqualTo(1.0);
+        assertThat(registry.get("tomcat.global.request").functionTimer().count()).isEqualTo(2.0);
+        assertThat(registry.get("tomcat.global.request").functionTimer().totalTime(TimeUnit.MILLISECONDS)).isGreaterThan(0.0);
+        assertThat(registry.get("tomcat.global.request.max").timeGauge().value(TimeUnit.MILLISECONDS)).isGreaterThan(0.0);
+        assertThat(registry.get("tomcat.threads.config.max").gauge().value()).isGreaterThan(0.0);
+        assertThat(registry.get("tomcat.threads.busy").gauge().value()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.threads.current").gauge().value()).isGreaterThan(0.0);
+    }
 }
