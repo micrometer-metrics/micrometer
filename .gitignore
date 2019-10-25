@@ -1,6 +1,5 @@
 build/
 .gradle/
-gradle.properties
 out/
 
 *.iml
