@@ -26,9 +26,12 @@ import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToLongFunction;
 
@@ -39,10 +42,14 @@ import java.util.function.ToLongFunction;
  * @author Johnny Lim
  */
 public abstract class DropwizardMeterRegistry extends MeterRegistry {
+    private static final InternalLogger log = InternalLoggerFactory.getInstance(DropwizardMeterRegistry.class);
+
     private final MetricRegistry registry;
     private final HierarchicalNameMapper nameMapper;
     private final DropwizardClock dropwizardClock;
     private final DropwizardConfig dropwizardConfig;
+
+    private final AtomicBoolean warnLogged = new AtomicBoolean();
 
     public DropwizardMeterRegistry(DropwizardConfig config, MetricRegistry registry, HierarchicalNameMapper nameMapper, Clock clock) {
         super(clock);
@@ -79,11 +86,16 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
                 try {
                     return valueFunction.applyAsDouble(obj2);
                 } catch (Throwable ex) {
-                    return nullGaugeValue();
+                    String message = "Failed to apply the value function for the gauge '" + id.getName() + "'.";
+                    if (this.warnLogged.compareAndSet(false, true)) {
+                        log.warn(message, ex);
+                    }
+                    else {
+                        log.debug(message, ex);
+                    }
                 }
-            } else {
-                return nullGaugeValue();
             }
+            return nullGaugeValue();
         };
         registry.register(hierarchicalName(id), gauge);
         return new DropwizardGauge(id, gauge);
