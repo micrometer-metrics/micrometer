@@ -144,25 +144,25 @@ public class HibernateQueryMetrics implements MeterBinder {
                                 .description("The number of putting the query into cache")
                                 .register(meterRegistry);
 
-                        FunctionTimer.builder("hibernate.query.executions.total", queryStatistics, QueryStatistics::getExecutionCount, QueryStatistics::getExecutionTotalTime, TimeUnit.MILLISECONDS)
+                        FunctionTimer.builder("hibernate.query.execution.total", queryStatistics, QueryStatistics::getExecutionCount, QueryStatistics::getExecutionTotalTime, TimeUnit.MILLISECONDS)
                                 .tags(tags)
                                 .tags("query", queryName)
                                 .description("Function tracked total number of query executions during time")
                                 .register(meterRegistry);
 
-                        TimeGauge.builder("hibernate.query.executions.max", queryStatistics, TimeUnit.MILLISECONDS, QueryStatistics::getExecutionMaxTime)
+                        TimeGauge.builder("hibernate.query.execution.max", queryStatistics, TimeUnit.MILLISECONDS, QueryStatistics::getExecutionMaxTime)
                                 .tags(tags)
                                 .tags("query", queryName)
                                 .description("Query maximum execution time")
                                 .register(meterRegistry);
 
-                        TimeGauge.builder("hibernate.query.executions.min", queryStatistics, TimeUnit.MILLISECONDS, QueryStatistics::getExecutionMinTime)
+                        TimeGauge.builder("hibernate.query.execution.min", queryStatistics, TimeUnit.MILLISECONDS, QueryStatistics::getExecutionMinTime)
                                 .tags(tags)
                                 .tags("query", queryName)
                                 .description("Query minimum execution time")
                                 .register(meterRegistry);
 
-                        FunctionCounter.builder("hibernate.query.executions.rows", queryStatistics, QueryStatistics::getExecutionRowCount)
+                        FunctionCounter.builder("hibernate.query.execution.rows", queryStatistics, QueryStatistics::getExecutionRowCount)
                                 .tags(tags)
                                 .tags("query", queryName)
                                 .description("The number of rows returned by query")
