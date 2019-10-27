@@ -57,15 +57,13 @@ class SignalFxMeterRegistryTest {
     }
 
     @Test
-    void sourceTagIsAddedToDimensionsIfEnabled() {
+    void sourceTagIsAddedToDimensions() {
         SignalFxProtocolBuffers.DataPoint dataPoint = whenDataPointGenerated(registry);
 
         assertThat(dataPoint.getDimensionsList()).hasSize(3)
-                .contains(dimension("source", "test-source"))
-                .contains(dimension("sample_tag", "value"))
-                .contains(dimension("normalized", "value1"))
-        ;
-        assertThat(dataPoint.getValue().getDoubleValue()).isEqualTo(0.0);
+                .containsExactlyInAnyOrder(dimension("source", "test-source"),
+                        dimension("sample_tag", "value"),
+                        dimension("normalized", "value1"));
     }
 
     private SignalFxProtocolBuffers.DataPoint whenDataPointGenerated(SignalFxMeterRegistry registry) {

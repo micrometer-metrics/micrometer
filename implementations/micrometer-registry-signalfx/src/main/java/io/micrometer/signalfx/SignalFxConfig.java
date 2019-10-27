@@ -33,8 +33,6 @@ import static io.micrometer.core.instrument.config.validate.PropertyValidator.*;
  */
 public interface SignalFxConfig extends StepRegistryConfig {
 
-    String DEFAULT_SOURCE_TAG = "source";
-
     @Override
     default String prefix() {
         return "signalfx";
@@ -67,24 +65,6 @@ public interface SignalFxConfig extends StepRegistryConfig {
                 return "unknown";
             }
         });
-    }
-
-    /**
-     * @return if value of {@code source} property should be reported as dimension
-     */
-    default boolean includeSourceTag() {
-        String v = get(prefix() + ".includeSourceTag");
-        return v != null && Boolean.valueOf(v);
-    }
-
-    /**
-     * Name of source tag that should be used as dimension key.
-     *
-     * @see SignalFxConfig#DEFAULT_SOURCE_TAG
-     */
-    default String sourceTag() {
-        String v = get(prefix() + ".sourceTag");
-        return v == null ? DEFAULT_SOURCE_TAG : v;
     }
 
     @Override

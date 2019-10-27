@@ -152,10 +152,8 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
                 .setMetricType(metricType)
                 .setValue(datum);
 
-        if (this.config.includeSourceTag()) {
-            String sourceTagValue = config().namingConvention().tagValue(this.config.source());
-            dataPointBuilder.addDimensions(dimension(this.config.sourceTag(), sourceTagValue));
-        }
+        String sourceTagValue = config().namingConvention().tagValue(this.config.source());
+        dataPointBuilder.addDimensions(dimension("source", sourceTagValue));
 
         for (Tag tag : getConventionTags(meter.getId())) {
             dataPointBuilder.addDimensions(dimension(tag.getKey(), tag.getValue()));
