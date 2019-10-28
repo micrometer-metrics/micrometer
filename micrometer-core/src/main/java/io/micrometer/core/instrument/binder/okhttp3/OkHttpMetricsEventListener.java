@@ -25,6 +25,7 @@ import io.micrometer.core.lang.Nullable;
 import okhttp3.*;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,6 +52,20 @@ public class OkHttpMetricsEventListener extends EventListener {
      * Header name for URI patterns which will be used for tag values.
      */
     public static final String URI_PATTERN = "URI_PATTERN";
+
+    private static final boolean REQUEST_TAG_CLASS_EXISTS;
+
+    static {
+        REQUEST_TAG_CLASS_EXISTS = getMethod("tag", Class.class) != null;
+    }
+
+    private static Method getMethod(String name, Class<?>... parameterTypes) {
+        try {
+            return Request.class.getMethod(name, parameterTypes);
+        } catch (NoSuchMethodException e) {
+            return null;
+        }
+    }
 
     private final MeterRegistry registry;
     private final String requestsMetricName;
@@ -99,20 +114,34 @@ public class OkHttpMetricsEventListener extends EventListener {
         String uri = state.response != null && (state.response.code() == 404 || state.response.code() == 301)
                 ? "NOT_FOUND" : urlMapper.apply(request);
 
-        Tags dynamicTags = requestAvailable ? request.tag(Tags.class) : Tags.empty();
+        Tags requestTags = requestAvailable ? getRequestTags(request) : Tags.empty();
 
         Iterable<Tag> tags = Tags.concat(extraTags, Tags.of(
             "method", requestAvailable ? request.method() : "UNKNOWN",
             "uri", requestAvailable ? uri : "UNKNOWN",
             "status", getStatusMessage(state.response, state.exception),
             "host", requestAvailable ? request.url().host() : "UNKNOWN"
-        )).and(dynamicTags);
+        )).and(requestTags);
 
         Timer.builder(this.requestsMetricName)
             .tags(tags)
             .description("Timer of OkHttp operation")
             .register(registry)
             .record(registry.config().clock().monotonicTime() - state.startTime, TimeUnit.NANOSECONDS);
+    }
+
+    private Tags getRequestTags(Request request) {
+        if (REQUEST_TAG_CLASS_EXISTS) {
+            Tags requestTag = request.tag(Tags.class);
+            if (requestTag != null) {
+                return requestTag;
+            }
+        }
+        Object requestTag = request.tag();
+        if (requestTag instanceof Tags) {
+            return (Tags) requestTag;
+        }
+        return Tags.empty();
     }
 
     private String getStatusMessage(@Nullable Response response, @Nullable IOException exception) {
