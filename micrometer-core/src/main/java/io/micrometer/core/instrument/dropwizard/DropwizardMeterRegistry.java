@@ -26,8 +26,7 @@ import io.micrometer.core.instrument.internal.DefaultLongTaskTimer;
 import io.micrometer.core.instrument.internal.DefaultMeter;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
-import io.micrometer.core.util.internal.logging.InternalLogger;
-import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
+import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +41,8 @@ import java.util.function.ToLongFunction;
  * @author Johnny Lim
  */
 public abstract class DropwizardMeterRegistry extends MeterRegistry {
-    private static final InternalLogger log = InternalLoggerFactory.getInstance(DropwizardMeterRegistry.class);
+
+    private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(DropwizardMeterRegistry.class);
 
     private final MetricRegistry registry;
     private final HierarchicalNameMapper nameMapper;
@@ -86,13 +86,7 @@ public abstract class DropwizardMeterRegistry extends MeterRegistry {
                 try {
                     return valueFunction.applyAsDouble(obj2);
                 } catch (Throwable ex) {
-                    String message = "Failed to apply the value function for the gauge '" + id.getName() + "'.";
-                    if (this.warnLogged.compareAndSet(false, true)) {
-                        log.warn(message, ex);
-                    }
-                    else {
-                        log.debug(message, ex);
-                    }
+                    logger.log("Failed to apply the value function for the gauge '" + id.getName() + "'.", ex);
                 }
             }
             return nullGaugeValue();
