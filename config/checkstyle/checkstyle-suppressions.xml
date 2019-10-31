@@ -7,5 +7,4 @@
 	<suppress files="io[\\/]micrometer[\\/]core[\\/]util[\\/]internal[\\/]logging[\\/].+" checks="IllegalImport" />
 	<suppress files="implementations[\\/].+" checks="IllegalImport" />
 	<suppress files="LogbackMetricsAutoConfiguration" checks="IllegalImport" />
-	<suppress files="micrometer-spring-legacy[\\/]src[\\/]test[\\/].+" checks="IllegalImport" />
 </suppressions>

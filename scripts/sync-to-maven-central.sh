@@ -25,7 +25,6 @@ MODULES=(
     micrometer-registry-signalfx
     micrometer-registry-statsd
     micrometer-registry-wavefront
-    micrometer-spring-legacy
     micrometer-jersey2
     micrometer-registry-stackdriver
     micrometer-registry-elastic
