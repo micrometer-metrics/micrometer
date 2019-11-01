@@ -86,7 +86,13 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     private MetricServiceClient client;
 
     public StackdriverMeterRegistry(StackdriverConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY, () -> MetricServiceSettings.newBuilder().build());
+        this(config, clock, DEFAULT_THREAD_FACTORY, () ->  {
+            MetricServiceSettings.Builder builder = MetricServiceSettings.newBuilder();
+            if (config.credentials() != null) {
+                builder.setCredentialsProvider(config.credentials());
+            }
+            return builder.build();
+        });
     }
 
     private StackdriverMeterRegistry(StackdriverConfig config, Clock clock, ThreadFactory threadFactory,
