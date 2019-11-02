@@ -85,14 +85,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     @Nullable
     private MetricServiceClient client;
 
-    public StackdriverMeterRegistry(StackdriverConfig config, Clock clock) {
-        this(config, clock, DEFAULT_THREAD_FACTORY, () ->  {
-            MetricServiceSettings.Builder builder = MetricServiceSettings.newBuilder();
-            if (config.credentials() != null) {
-                builder.setCredentialsProvider(config.credentials());
-            }
-            return builder.build();
-        });
+    protected StackdriverMeterRegistry(StackdriverConfig config, Clock clock) {
+        this(config, clock, DEFAULT_THREAD_FACTORY, () ->  MetricServiceSettings.newBuilder().build());
     }
 
     private StackdriverMeterRegistry(StackdriverConfig config, Clock clock, ThreadFactory threadFactory,
@@ -262,6 +256,14 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
         Builder(StackdriverConfig config) {
             this.config = config;
+            this.metricServiceSettings = () -> {
+                MetricServiceSettings.Builder builder = MetricServiceSettings.newBuilder();
+                if (config.credentials() != null) {
+                    builder.setCredentialsProvider(config.credentials());
+                }
+                builder.setHeaderProvider(new UserAgentHeaderProvider("stackdriver"));
+                return builder.build();
+            };
         }
 
         public Builder clock(Clock clock) {
