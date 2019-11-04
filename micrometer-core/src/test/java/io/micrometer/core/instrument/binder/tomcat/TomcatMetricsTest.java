@@ -33,9 +33,11 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +59,19 @@ import static org.assertj.core.api.Assertions.fail;
  */
 class TomcatMetricsTest {
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+
+    private int port;
+
+    @BeforeEach
+    void setUp() throws IOException {
+        this.port = getAvailablePort();
+    }
+
+    private int getAvailablePort() throws IOException {
+        try (ServerSocket serverSocket = new ServerSocket(0)) {
+            return serverSocket.getLocalPort();
+        }
+    }
 
     @Test
     void managerBasedMetrics() {
@@ -131,11 +146,11 @@ class TomcatMetricsTest {
             checkMbeansInitialState();
 
             try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-                HttpPost post = new HttpPost("http://localhost:61000/");
+                HttpPost post = new HttpPost("http://localhost:" + this.port + "/");
                 post.setEntity(new StringEntity("you there?"));
                 httpClient.execute(post);
 
-                httpClient.execute(new HttpGet("http://localhost:61000/nowhere"));
+                httpClient.execute(new HttpGet("http://localhost:" + this.port + "/nowhere"));
             }
 
             checkMbeansAfterRequests();
@@ -158,11 +173,11 @@ class TomcatMetricsTest {
             TomcatMetrics.monitor(registry, null);
 
             try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-                HttpPost post = new HttpPost("http://localhost:61000/");
+                HttpPost post = new HttpPost("http://localhost:" + this.port + "/");
                 post.setEntity(new StringEntity("you there?"));
                 httpClient.execute(post);
 
-                httpClient.execute(new HttpGet("http://localhost:61000/nowhere"));
+                httpClient.execute(new HttpGet("http://localhost:" + this.port + "/nowhere"));
             }
 
             checkMbeansAfterRequests();
@@ -178,7 +193,7 @@ class TomcatMetricsTest {
             StandardHost host = new StandardHost();
             host.setName("localhost");
             server.setHost(host);
-            server.setPort(61000);
+            server.setPort(this.port);
             server.start();
 
             Context context = server.addContext("/", null);
