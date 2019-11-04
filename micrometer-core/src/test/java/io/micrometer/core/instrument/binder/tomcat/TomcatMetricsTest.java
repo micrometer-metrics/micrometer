@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.core.instrument.util.IOUtils;
 import org.apache.catalina.Context;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.core.StandardHost;
@@ -118,7 +119,7 @@ class TomcatMetricsTest {
         HttpServlet servlet = new HttpServlet() {
             @Override
             protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-                req.getInputStream().readAllBytes();
+                IOUtils.toString(req.getInputStream());
 
                 resp.getOutputStream().write("yes".getBytes());
             }
@@ -147,7 +148,7 @@ class TomcatMetricsTest {
         HttpServlet servlet = new HttpServlet() {
             @Override
             protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-                req.getInputStream().readAllBytes();
+                IOUtils.toString(req.getInputStream());
 
                 resp.getOutputStream().write("yes".getBytes());
             }
