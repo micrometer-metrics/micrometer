@@ -204,6 +204,8 @@ class TomcatMetricsTest {
         assertThat(registry.get("tomcat.threads.config.max").gauge().value()).isGreaterThan(0.0);
         assertThat(registry.get("tomcat.threads.busy").gauge().value()).isEqualTo(0.0);
         assertThat(registry.get("tomcat.threads.current").gauge().value()).isGreaterThan(0.0);
+        assertThat(registry.get("tomcat.cache.access").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.cache.hit").functionCounter().count()).isEqualTo(0.0);
     }
 
     private void checkMbeansAfterRequests() {
@@ -216,5 +218,7 @@ class TomcatMetricsTest {
         assertThat(registry.get("tomcat.threads.config.max").gauge().value()).isGreaterThan(0.0);
         assertThat(registry.get("tomcat.threads.busy").gauge().value()).isEqualTo(0.0);
         assertThat(registry.get("tomcat.threads.current").gauge().value()).isGreaterThan(0.0);
+        assertThat(registry.get("tomcat.cache.access").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.cache.hit").functionCounter().count()).isEqualTo(0.0);
     }
 }
