@@ -21,8 +21,17 @@ import io.micrometer.core.lang.Nullable;
 
 import java.util.regex.Pattern;
 
+/**
+ * {@link NamingConvention} for Dynatrace.
+ *
+ * @author Oriol Barcelona Palau
+ * @author Jon Schneider
+ * @author Johnny Lim
+ * @since 1.1.0
+ */
 public class DynatraceNamingConvention implements NamingConvention {
 
+    private static final Pattern NAME_CLEANUP_PATTERN = Pattern.compile("[^\\w._-]");
     private static final Pattern KEY_CLEANUP_PATTERN = Pattern.compile("[^\\w.-]");
 
     private final NamingConvention delegate;
@@ -37,7 +46,14 @@ public class DynatraceNamingConvention implements NamingConvention {
 
     @Override
     public String name(String name, Meter.Type type, @Nullable String baseUnit) {
-        return "custom:" + delegate.name(name, type, baseUnit);
+        return "custom:" + sanitizeName(delegate.name(name, type, baseUnit));
+    }
+
+    private String sanitizeName(String name) {
+        if (name.equals("system.load.average.1m")) {
+            return "system.load.average.oneminute";
+        }
+        return NAME_CLEANUP_PATTERN.matcher(name).replaceAll("_");
     }
 
     @Override
