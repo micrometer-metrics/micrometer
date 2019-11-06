@@ -47,7 +47,11 @@ import static com.signalfx.metrics.protobuf.SignalFxProtocolBuffers.MetricType.G
 import static java.util.stream.StreamSupport.stream;
 
 /**
+ * {@link StepMeterRegistry} for SignalFx.
+ *
  * @author Jon Schneider
+ * @author Johnny Lim
+ * @since 1.0.0
  */
 public class SignalFxMeterRegistry extends StepMeterRegistry {
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("signalfx-metrics-publisher");
@@ -151,7 +155,7 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         SignalFxProtocolBuffers.Datum.Builder datumBuilder = SignalFxProtocolBuffers.Datum.newBuilder();
         SignalFxProtocolBuffers.Datum datum = (value instanceof Double ?
                 datumBuilder.setDoubleValue((Double) value) :
-                datumBuilder.setIntValue((Long) value)
+                datumBuilder.setIntValue(value.longValue())
         ).build();
 
         String metricName = config().namingConvention().name(statSuffix == null ? meter.getId().getName() : meter.getId().getName() + "." + statSuffix,
@@ -172,7 +176,8 @@ public class SignalFxMeterRegistry extends StepMeterRegistry {
         return dataPointBuilder;
     }
 
-    private Stream<SignalFxProtocolBuffers.DataPoint.Builder> addLongTaskTimer(LongTaskTimer longTaskTimer) {
+    // VisibleForTesting
+    Stream<SignalFxProtocolBuffers.DataPoint.Builder> addLongTaskTimer(LongTaskTimer longTaskTimer) {
         return Stream.of(
                 addDatapoint(longTaskTimer, GAUGE, "activeTasks", longTaskTimer.activeTasks()),
                 addDatapoint(longTaskTimer, COUNTER, "duration", longTaskTimer.duration(getBaseTimeUnit()))
