@@ -62,7 +62,6 @@ public class OkHttpMetricsEventListener extends EventListener {
      */
     public static final String URI_PATTERN = "URI_PATTERN";
 
-    private static final String UNKNOWN = "UNKNOWN";
     private static final boolean REQUEST_TAG_CLASS_EXISTS;
 
     static {
