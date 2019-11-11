@@ -23,6 +23,9 @@ import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
 import io.micrometer.core.lang.Nullable;
 import okhttp3.*;
+import org.apache.http.HttpHost;
+import org.apache.http.conn.routing.HttpRoute;
+import org.apache.http.protocol.HttpContext;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -58,6 +61,7 @@ public class OkHttpMetricsEventListener extends EventListener {
      */
     public static final String URI_PATTERN = "URI_PATTERN";
 
+    private static final String UNKNOWN = "UNKNOWN";
     private static final boolean REQUEST_TAG_CLASS_EXISTS;
 
     static {
@@ -130,7 +134,7 @@ public class OkHttpMetricsEventListener extends EventListener {
         String uri = state.response != null && (state.response.code() == 404 || state.response.code() == 301)
                 ? "NOT_FOUND" : urlMapper.apply(request);
 
-        Tags requestTags = requestAvailable ? getRequestTags(request) : Tags.empty();
+        Tags requestTags = requestAvailable ? getRequestTags(request).and(generateTagsForRoute(request)) : Tags.empty();
 
         Iterable<Tag> tags = Tags.of(
                         "method", requestAvailable ? request.method() : "UNKNOWN",
@@ -149,6 +153,14 @@ public class OkHttpMetricsEventListener extends EventListener {
                 .description("Timer of OkHttp operation")
                 .register(registry)
                 .record(registry.config().clock().monotonicTime() - state.startTime, TimeUnit.NANOSECONDS);
+    }
+
+    private Tags generateTagsForRoute(Request request) {
+        return Tags.of(
+                "target.scheme", request.url().scheme(),
+                "target.host", request.url().host(),
+                "target.port", request.url().scheme()
+        );
     }
 
     private Tags getRequestTags(Request request) {
