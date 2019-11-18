@@ -143,7 +143,7 @@ public interface LongTaskTimer extends Meter {
 
     /**
      * @param unit The time unit to scale the duration to.
-     * @return The cumulative duration of all current tasks in nanoseconds.
+     * @return The cumulative duration of all current tasks.
      */
     double duration(TimeUnit unit);
 
