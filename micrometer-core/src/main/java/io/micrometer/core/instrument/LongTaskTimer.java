@@ -137,7 +137,7 @@ public interface LongTaskTimer extends Meter {
      *
      * @param task Id for the task to stop. This should be the value returned from {@link #start()}.
      * @param unit The time unit to scale the duration to.
-     * @return Duration for the task in nanoseconds. A -1 value will be returned for an unknown task.
+     * @return Duration for the task. A -1 value will be returned for an unknown task.
      */
     double duration(long task, TimeUnit unit);
 
@@ -172,12 +172,16 @@ public interface LongTaskTimer extends Meter {
         /**
          * Records the duration of the operation
          *
-         * @return The duration that was stop in nanoseconds
+         * @return The duration, in nanoseconds, of this sample that was stopped
          */
         public long stop() {
             return timer.stop(task);
         }
 
+        /**
+         * @param unit time unit to which the return value will be scaled
+         * @return duration of this sample
+         */
         public double duration(TimeUnit unit) {
             return timer.duration(task, unit);
         }
