@@ -252,7 +252,7 @@ public abstract class MeterRegistry {
      * @param obj           State object used to compute a value.
      * @param valueFunction Function that is applied on the value for the number.
      * @param <T>           The type of the state object from which the gauge value is extracted.
-     * @return A new or existing long task timer.
+     * @return A new or existing gauge.
      */
     <T> Gauge gauge(Meter.Id id, @Nullable T obj, ToDoubleFunction<T> valueFunction) {
         return registerMeterIfNecessary(Gauge.class, id, id2 -> newGauge(id2, obj, valueFunction), NoopGauge::new);
@@ -290,7 +290,7 @@ public abstract class MeterRegistry {
      * @param id           Id of the meter being registered.
      * @param type         Meter type, which may be used by naming conventions to normalize the name.
      * @param measurements A sequence of measurements describing how to sample the meter.
-     * @return The registry.
+     * @return The meter.
      */
     Meter register(Meter.Id id, Meter.Type type, Iterable<Measurement> measurements) {
         return registerMeterIfNecessary(Meter.class, id, id2 -> newMeter(id2, type, measurements), NoopMeter::new);
@@ -776,7 +776,7 @@ public abstract class MeterRegistry {
         /**
          * Measures the time taken for long tasks.
          *
-         * @param name Name of the gauge being registered.
+         * @param name Name of the long task timer being registered.
          * @param tags MUST be an even number of arguments representing key/value pairs of tags.
          * @return A new or existing long task timer.
          */
@@ -787,7 +787,7 @@ public abstract class MeterRegistry {
         /**
          * Measures the time taken for long tasks.
          *
-         * @param name Name of the gauge being registered.
+         * @param name Name of the long task timer being registered.
          * @param tags Sequence of dimensions for breaking down the name.
          * @return A new or existing long task timer.
          */
@@ -812,7 +812,7 @@ public abstract class MeterRegistry {
          * Tracks a monotonically increasing value, automatically incrementing the counter whenever
          * the value is observed.
          *
-         * @param name          Name of the gauge being registered.
+         * @param name          Name of the counter being registered.
          * @param tags          Sequence of dimensions for breaking down the name.
          * @param obj           State object used to compute a value.
          * @param countFunction Function that produces a monotonically increasing counter value from the state object.
@@ -826,7 +826,7 @@ public abstract class MeterRegistry {
         /**
          * Tracks a number, maintaining a weak reference on it.
          *
-         * @param name   Name of the gauge being registered.
+         * @param name   Name of the counter being registered.
          * @param tags   Sequence of dimensions for breaking down the name.
          * @param number A monotonically increasing number to track.
          * @param <T>    The type of the state object from which the counter value is extracted.
@@ -853,7 +853,7 @@ public abstract class MeterRegistry {
         /**
          * A timer that tracks monotonically increasing functions for count and totalTime.
          *
-         * @param name                  Name of the gauge being registered.
+         * @param name                  Name of the timer being registered.
          * @param tags                  Sequence of dimensions for breaking down the name.
          * @param obj                   State object used to compute a value.
          * @param countFunction         Function that produces a monotonically increasing counter value from the state object.
