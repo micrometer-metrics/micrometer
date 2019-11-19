@@ -81,6 +81,8 @@ dependencies {
 
     testImplementation 'org.apache.kafka:kafka-clients'
 
+    testImplementation 'org.apache.commons:commons-pool2:2.+'
+
     testImplementation 'ru.lanwen.wiremock:wiremock-junit5', {
         exclude group: 'com.github.tomakehurst', module: 'wiremock'
     }
