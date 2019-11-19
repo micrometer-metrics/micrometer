@@ -89,6 +89,7 @@ dependencies {
     testCompile 'com.github.tomakehurst:wiremock:latest.release'
 
     testCompile 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:latest.release'
+    testCompile 'org.apache.commons:commons-pool2:2.+'
 }
 
 shadowJar {
