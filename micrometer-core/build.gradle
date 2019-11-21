@@ -85,7 +85,9 @@ dependencies {
     // Pin version temporarily to restore builds.
     testCompile 'org.apache.kafka:kafka-clients:2.3.1'
 
-    testCompile 'ru.lanwen.wiremock:wiremock-junit5:1.2.0'
+    testCompile 'ru.lanwen.wiremock:wiremock-junit5:1.2.0', {
+        exclude group: 'com.github.tomakehurst', module: 'wiremock'
+    }
     testCompile 'com.github.tomakehurst:wiremock-jre8:latest.release'
 
     testCompile 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:latest.release'
