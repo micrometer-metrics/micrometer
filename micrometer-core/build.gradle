@@ -29,8 +29,7 @@ dependencies {
     compile 'org.hibernate:hibernate-entitymanager:latest.release', optional
 
     // server runtime monitoring
-    // 9.4+ are incompatible with the latest version of wiremock as of 1/4/2019
-    compile 'org.eclipse.jetty:jetty-server:9.2.+', optional
+    compile 'org.eclipse.jetty:jetty-server:9.4.+', optional
     compile 'org.apache.tomcat.embed:tomcat-embed-core:8.+', optional
 
     // apache httpcomponents monitoring
@@ -87,7 +86,7 @@ dependencies {
     testCompile 'org.apache.kafka:kafka-clients:2.3.1'
 
     testCompile 'ru.lanwen.wiremock:wiremock-junit5:1.2.0'
-    testCompile 'com.github.tomakehurst:wiremock:latest.release'
+    testCompile 'com.github.tomakehurst:wiremock-jre8:latest.release'
 
     testCompile 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:latest.release'
 }
