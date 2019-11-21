@@ -39,6 +39,7 @@ import java.util.concurrent.CountDownLatch;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JettyConnectionMetricsTest {
 
@@ -93,7 +94,7 @@ public class JettyConnectionMetricsTest {
         // Convenient way to get Jetty to flush its connections, which is required to update the sent/received bytes metrics
         server.stop();
 
-        latch.await(5, SECONDS);
+        assertTrue(latch.await(10, SECONDS));
 
         assertThat(registry.get("jetty.connector.bytesSent").gauge().value()).isGreaterThan(0.0);
         assertThat(registry.get("jetty.connector.bytesReceived").gauge().value()).isGreaterThan(0.0);
