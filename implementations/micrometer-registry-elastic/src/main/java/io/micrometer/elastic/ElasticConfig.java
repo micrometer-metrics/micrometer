@@ -99,7 +99,7 @@ public interface ElasticConfig extends StepRegistryConfig {
      */
     default boolean autoCreateIndex() {
         String v = get(prefix() + ".autoCreateIndex");
-        return v == null || Boolean.valueOf(v);
+        return v == null || Boolean.parseBoolean(v);
     }
 
     /**
