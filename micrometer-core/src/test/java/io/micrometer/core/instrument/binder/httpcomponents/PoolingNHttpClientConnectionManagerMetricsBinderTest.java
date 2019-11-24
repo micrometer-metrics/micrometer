@@ -52,7 +52,7 @@ class PoolingNHttpClientConnectionManagerMetricsBinderTest {
         when(poolStats.getMax()).thenReturn(13);
         when(connectionManager.getTotalStats()).thenReturn(poolStats);
         assertThat(registry.get("httpcomponents.httpasyncclient.pool.total.max")
-            .tags("httpasyncclient", "test")
+            .tags("httpclient", "test")
             .gauge().value()).isEqualTo(13.0);
     }
 
@@ -62,7 +62,7 @@ class PoolingNHttpClientConnectionManagerMetricsBinderTest {
         when(poolStats.getAvailable()).thenReturn(17);
         when(connectionManager.getTotalStats()).thenReturn(poolStats);
         assertThat(registry.get("httpcomponents.httpasyncclient.pool.total.connections")
-            .tags("httpasyncclient", "test", "state", "available")
+            .tags("httpclient", "test", "state", "available")
             .gauge().value()).isEqualTo(17.0);
     }
 
@@ -72,7 +72,7 @@ class PoolingNHttpClientConnectionManagerMetricsBinderTest {
         when(poolStats.getLeased()).thenReturn(23);
         when(connectionManager.getTotalStats()).thenReturn(poolStats);
         assertThat(registry.get("httpcomponents.httpasyncclient.pool.total.connections")
-            .tags("httpasyncclient", "test", "state", "leased")
+            .tags("httpclient", "test", "state", "leased")
             .gauge().value()).isEqualTo(23.0);
     }
 
@@ -82,7 +82,7 @@ class PoolingNHttpClientConnectionManagerMetricsBinderTest {
         when(poolStats.getPending()).thenReturn(37);
         when(connectionManager.getTotalStats()).thenReturn(poolStats);
         assertThat(registry.get("httpcomponents.httpasyncclient.pool.total.pending")
-            .tags("httpasyncclient", "test")
+            .tags("httpclient", "test")
             .gauge().value()).isEqualTo(37.0);
     }
 
@@ -90,7 +90,7 @@ class PoolingNHttpClientConnectionManagerMetricsBinderTest {
     void routeMaxDefault() {
         when(connectionManager.getDefaultMaxPerRoute()).thenReturn(7);
         assertThat(registry.get("httpcomponents.httpasyncclient.pool.route.max.default")
-            .tags("httpasyncclient", "test")
+            .tags("httpclient", "test")
             .gauge().value()).isEqualTo(7.0);
     }
 
