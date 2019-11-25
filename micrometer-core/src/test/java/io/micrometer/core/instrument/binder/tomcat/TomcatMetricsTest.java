@@ -28,6 +28,7 @@ import org.apache.catalina.session.ManagerBase;
 import org.apache.catalina.session.StandardSession;
 import org.apache.catalina.session.TooManyActiveSessionsException;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -148,12 +149,15 @@ class TomcatMetricsTest {
             try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
                 HttpPost post = new HttpPost("http://localhost:" + this.port + "/");
                 post.setEntity(new StringEntity("you there?"));
-                httpClient.execute(post);
+                CloseableHttpResponse response1 = httpClient.execute(post);
 
-                httpClient.execute(new HttpGet("http://localhost:" + this.port + "/nowhere"));
+                CloseableHttpResponse response2 = httpClient.execute(
+                        new HttpGet("http://localhost:" + this.port + "/nowhere"));
+
+                long expectedSentBytes = response1.getEntity().getContentLength()
+                        + response2.getEntity().getContentLength();
+                checkMbeansAfterRequests(expectedSentBytes);
             }
-
-            checkMbeansAfterRequests();
 
             return null;
         });
@@ -175,12 +179,15 @@ class TomcatMetricsTest {
             try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
                 HttpPost post = new HttpPost("http://localhost:" + this.port + "/");
                 post.setEntity(new StringEntity("you there?"));
-                httpClient.execute(post);
+                CloseableHttpResponse response1 = httpClient.execute(post);
 
-                httpClient.execute(new HttpGet("http://localhost:" + this.port + "/nowhere"));
+                CloseableHttpResponse response2 = httpClient.execute(
+                        new HttpGet("http://localhost:" + this.port + "/nowhere"));
+
+                long expectedSentBytes = response1.getEntity().getContentLength()
+                        + response2.getEntity().getContentLength();
+                checkMbeansAfterRequests(expectedSentBytes);
             }
-
-            checkMbeansAfterRequests();
 
             return null;
         });
@@ -223,8 +230,8 @@ class TomcatMetricsTest {
         assertThat(registry.get("tomcat.cache.hit").functionCounter().count()).isEqualTo(0.0);
     }
 
-    private void checkMbeansAfterRequests() {
-        assertThat(registry.get("tomcat.global.sent").functionCounter().count()).isEqualTo(1119.0);
+    private void checkMbeansAfterRequests(long expectedSentBytes) {
+        assertThat(registry.get("tomcat.global.sent").functionCounter().count()).isEqualTo(expectedSentBytes);
         assertThat(registry.get("tomcat.global.received").functionCounter().count()).isEqualTo(10.0);
         assertThat(registry.get("tomcat.global.error").functionCounter().count()).isEqualTo(1.0);
         assertThat(registry.get("tomcat.global.request").functionTimer().count()).isEqualTo(2.0);
