@@ -118,7 +118,7 @@ public interface InfluxConfig extends StepRegistryConfig {
      */
     default boolean compressed() {
         String v = get(prefix() + ".compressed");
-        return v == null || Boolean.valueOf(v);
+        return v == null || Boolean.parseBoolean(v);
     }
 
     /**
@@ -127,6 +127,6 @@ public interface InfluxConfig extends StepRegistryConfig {
      */
     default boolean autoCreateDb() {
         String v = get(prefix() + ".autoCreateDb");
-        return v == null || Boolean.valueOf(v);
+        return v == null || Boolean.parseBoolean(v);
     }
 }

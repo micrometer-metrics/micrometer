@@ -98,6 +98,6 @@ public interface GangliaConfig extends StepRegistryConfig {
      */
     default boolean enabled() {
         String v = get(prefix() + ".enabled");
-        return v == null || Boolean.valueOf(v);
+        return v == null || Boolean.parseBoolean(v);
     }
 }
