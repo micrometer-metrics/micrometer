@@ -203,8 +203,8 @@ class TomcatMetricsTest {
             server.setPort(this.port);
             server.start();
 
-            Context context = server.addContext("/", null);
-            server.addServlet("/", "servletname", servlet);
+            Context context = server.addContext("", null);
+            server.addServlet("", "servletname", servlet);
             context.addServletMappingDecoded("/", "servletname");
 
             doWithTomcat.call();
