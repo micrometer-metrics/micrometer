@@ -15,6 +15,21 @@
  */
 package io.micrometer.stackdriver;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.google.api.Distribution;
 import com.google.api.Metric;
 import com.google.api.MetricDescriptor;
@@ -22,10 +37,27 @@ import com.google.api.MonitoredResource;
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.monitoring.v3.MetricServiceClient;
 import com.google.cloud.monitoring.v3.MetricServiceSettings;
-import com.google.monitoring.v3.*;
+import com.google.monitoring.v3.CreateMetricDescriptorRequest;
+import com.google.monitoring.v3.CreateTimeSeriesRequest;
+import com.google.monitoring.v3.ListMetricDescriptorsRequest;
+import com.google.monitoring.v3.Point;
+import com.google.monitoring.v3.ProjectName;
+import com.google.monitoring.v3.TimeInterval;
+import com.google.monitoring.v3.TimeSeries;
+import com.google.monitoring.v3.TypedValue;
 import com.google.protobuf.Timestamp;
 import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.FunctionTimer;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.LongTaskTimer;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
@@ -42,17 +74,6 @@ import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.StreamSupport.stream;
@@ -128,7 +149,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             } else {
                 try {
                     this.client = MetricServiceClient.create(metricServiceSettings);
-                    logger.info("publishing metrics to stackdriver every " + TimeUtils.format(config.step()));
+                    logger.info("publishing metrics to stackdriver every {}", TimeUtils.format(config.step()));
                     super.start(threadFactory);
                 } catch (Exception e) {
                     logger.error("unable to create stackdriver client", e);
@@ -334,6 +355,13 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             String metricType = metricType(id, statistic);
 
             Map<String, String> metricLabels = getConventionTags(id).stream()
+                    // label value cannot be more than 1024 characters. See https://cloud.google.com/monitoring/quotas#custom_metrics_quotas
+                    .peek(tag -> {
+                        if (tag.getValue().length() >= 1024) {
+                            logger.warn("Filtered out tag {}, for metric {}, because its value exceeded the max length of 1024 characters", tag.getKey(), metricType);
+                        }
+                    })
+                    .filter(tag -> tag.getValue().length() < 1024)
                     .collect(Collectors.toMap(Tag::getKey, Tag::getValue));
 
             return TimeSeries.newBuilder()
@@ -356,9 +384,15 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
         private void createMetricDescriptorIfNecessary(MetricServiceClient client, Meter.Id id,
                                                        MetricDescriptor.ValueType valueType, @Nullable String statistic) {
-            if (!verifiedDescriptors.contains(id.getName())) {
+
+            if (verifiedDescriptors.isEmpty()) {
+                prePopulateVerifiedDescriptors();
+            }
+
+            final String metricType = metricType(id, statistic);
+            if (!verifiedDescriptors.contains(metricType)) {
                 MetricDescriptor descriptor = MetricDescriptor.newBuilder()
-                        .setType(metricType(id, statistic))
+                        .setType(metricType)
                         .setDescription(id.getDescription() == null ? "" : id.getDescription())
                         .setMetricKind(MetricDescriptor.MetricKind.GAUGE)
                         .setValueType(valueType)
@@ -375,12 +409,37 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
                 try {
                     client.createMetricDescriptor(request);
-                    verifiedDescriptors.add(id.getName());
+                    verifiedDescriptors.add(metricType);
                 } catch (ApiException e) {
                     logger.warn("failed to create metric descriptor in Stackdriver for meter " + id, e);
                 }
             }
         }
+
+        private void prePopulateVerifiedDescriptors() {
+            try {
+                if (client != null) {
+                    final String prefix = metricType(new Meter.Id("", Tags.empty(), null, null, Meter.Type.OTHER), null);
+                    final String filter = String.format("metric.type = starts_with(\"%s\")", prefix);
+                    final String projectName = "projects/" + config.projectId();
+
+                    final ListMetricDescriptorsRequest listMetricDescriptorsRequest = ListMetricDescriptorsRequest.newBuilder()
+                            .setName(projectName)
+                            .setFilter(filter)
+                            .build();
+
+                    final MetricServiceClient.ListMetricDescriptorsPagedResponse listMetricDescriptorsPagedResponse = client.listMetricDescriptors(listMetricDescriptorsRequest);
+                    listMetricDescriptorsPagedResponse.iterateAll().forEach(
+                            metricDescriptor -> verifiedDescriptors.add(metricDescriptor.getType()));
+
+                    logger.trace("Pre populated verified descriptors for project: {}, with filter: {}, existing metrics: {}", projectName, filter, verifiedDescriptors);
+                }
+            } catch (Exception e) {
+                // only log on warning and continue, this should not be a showstopper
+                logger.warn("Failed to pre populate verified descriptors for {}", config.projectId(), e);
+            }
+        }
+
 
         private String metricType(Meter.Id id, @Nullable String statistic) {
             StringBuilder metricType = new StringBuilder("custom.googleapis.com/").append(getConventionName(id));
@@ -421,7 +480,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             }
 
             // add the "+infinity" bucket, which does NOT have a corresponding bucket boundary
-            bucketCounts.add(snapshot.count() - truncatedSum.get());
+            // BUGFIX LINE: https://github.com/micrometer-metrics/micrometer/issues/1325
+            bucketCounts.add(Math.max(snapshot.count(), truncatedSum.get()) - truncatedSum.get());
 
             List<Double> bucketBoundaries = Arrays.stream(histogram)
                     .map(countAtBucket -> timeDomain ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket())
