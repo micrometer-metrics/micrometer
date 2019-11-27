@@ -22,7 +22,14 @@ import com.google.api.MonitoredResource;
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.monitoring.v3.MetricServiceClient;
 import com.google.cloud.monitoring.v3.MetricServiceSettings;
-import com.google.monitoring.v3.*;
+import com.google.monitoring.v3.CreateMetricDescriptorRequest;
+import com.google.monitoring.v3.CreateTimeSeriesRequest;
+import com.google.monitoring.v3.ListMetricDescriptorsRequest;
+import com.google.monitoring.v3.Point;
+import com.google.monitoring.v3.ProjectName;
+import com.google.monitoring.v3.TimeInterval;
+import com.google.monitoring.v3.TimeSeries;
+import com.google.monitoring.v3.TypedValue;
 import com.google.protobuf.Timestamp;
 import io.micrometer.core.annotation.Incubating;
 import io.micrometer.core.instrument.Timer;
@@ -65,7 +72,7 @@ import static java.util.stream.StreamSupport.stream;
  */
 @Incubating(since = "1.1.0")
 public class StackdriverMeterRegistry extends StepMeterRegistry {
-
+    
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("stackdriver-metrics-publisher");
 
     /**
@@ -416,7 +423,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             }
 
             // add the "+infinity" bucket, which does NOT have a corresponding bucket boundary
-            bucketCounts.add(snapshot.count() - truncatedSum.get());
+            bucketCounts.add(Math.max(snapshot.count(), truncatedSum.get()) - truncatedSum.get());
 
             List<Double> bucketBoundaries = Arrays.stream(histogram)
                     .map(countAtBucket -> timeDomain ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket())
