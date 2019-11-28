@@ -16,6 +16,11 @@
 {
   "properties": [
     {
+      "name": "endpoints.prometheus.path",
+      "type": "java.lang.String",
+      "description": "Endpoint URL path."
+    },
+    {
       "name": "management.metrics.binders.files.enabled",
       "type": "java.lang.Boolean",
       "description": "Whether to enable files metrics.",

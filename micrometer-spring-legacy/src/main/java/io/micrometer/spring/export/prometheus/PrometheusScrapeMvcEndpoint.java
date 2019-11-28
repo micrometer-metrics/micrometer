@@ -16,8 +16,10 @@
 package io.micrometer.spring.export.prometheus;
 
 import org.springframework.boot.actuate.endpoint.mvc.EndpointMvcAdapter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.web.bind.annotation.GetMapping;
 
+@ConfigurationProperties("endpoints.prometheus")
 public class PrometheusScrapeMvcEndpoint extends EndpointMvcAdapter {
 
     public PrometheusScrapeMvcEndpoint(PrometheusScrapeEndpoint delegate) {
