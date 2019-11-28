@@ -25,20 +25,34 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class WarnThenDebugLogger {
 
-    private final InternalLogger log;
+    private final InternalLogger logger;
     private final AtomicBoolean warnLogged = new AtomicBoolean();
 
     public WarnThenDebugLogger(Class<?> clazz) {
-        this.log = InternalLoggerFactory.getInstance(clazz);
+        this.logger = InternalLoggerFactory.getInstance(clazz);
     }
 
     public void log(String message, Throwable ex) {
+        InternalLogLevel level;
+        String finalMessage;
         if (this.warnLogged.compareAndSet(false, true)) {
-            this.log.warn(message + " Note that subsequent logs will be logged at debug level.", ex);
+            level = InternalLogLevel.WARN;
+            finalMessage = message + " Note that subsequent logs will be logged at debug level.";
         }
         else {
-            this.log.debug(message, ex);
+            level = InternalLogLevel.DEBUG;
+            finalMessage = message;
         }
+        if (ex != null) {
+            this.logger.log(level, finalMessage, ex);
+        }
+        else {
+            this.logger.log(level, finalMessage);
+        }
+    }
+
+    public void log(String message) {
+        log(message, null);
     }
 
 }
