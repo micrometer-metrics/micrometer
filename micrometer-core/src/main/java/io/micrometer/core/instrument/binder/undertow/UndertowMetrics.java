@@ -36,7 +36,27 @@ import static io.undertow.server.handlers.MetricsHandler.MetricResult;
 
 /**
  * {@link MetricsHandler} to collect metrics for {@link io.undertow.Undertow}
+ * For Example
+ * <pre>
+ * {@code
+ * UndertowMetrics metrics = new UndertowMetrics(Tags.of("some", "tag"));
  *
+ * DeploymentInfo builder = new DeploymentInfo()
+ *      ....
+ *      ....
+ *      .setMetricsCollector(metrics);
+ * DeploymentManager manager = container.addDeployment(builder);
+ * manager.deploy();
+ *
+ * Undertow undertow = Undertow.builder()
+ *      .addHttpListener(8080, "localhost")
+ *      .setHandler(manager.start())
+ *      .build();
+ * undertow.start();
+ * }
+ * </pre>
+ * @see io.undertow.servlet.api.MetricsCollector
+ * @see io.undertow.server.handlers.MetricsHandler
  * @author Dharmesh Jogadia
  * */
 @NonNullApi
