@@ -79,7 +79,7 @@ public class UndertowMetrics implements MetricsCollector, MeterBinder {
     private void bindTimeGauge(MeterRegistry registry, String name, String desc, String servletName, MetricResult metricResult, ToDoubleFunction<MetricResult> consumer) {
         TimeGauge.builder(name, metricResult, TimeUnit.MILLISECONDS, consumer)
                 .tags(tags)
-                .tag("servlet_name", servletName)
+                .tag("servlet.name", servletName)
                 .description(desc)
                 .register(registry);
     }
@@ -87,7 +87,7 @@ public class UndertowMetrics implements MetricsCollector, MeterBinder {
     private void bindCounter(MeterRegistry registry, String name, String desc, String servletName, MetricResult metricResult, ToDoubleFunction<MetricResult> consumer) {
         FunctionCounter.builder(name, metricResult, consumer)
                 .tags(tags)
-                .tag("servlet_name", servletName)
+                .tag("servlet.name", servletName)
                 .description(desc)
                 .register(registry);
     }
