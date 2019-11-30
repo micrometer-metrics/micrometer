@@ -222,7 +222,7 @@ public class KairosMeterRegistry extends StepMeterRegistry {
         }
 
         KairosMetricBuilder datapoints(long wallTime, double value) {
-            sb.append(",\"datapoints\":[[").append(wallTime).append(',').append(DoubleFormat.decimalOrWhole(value)).append("]]");
+            sb.append(",\"datapoints\":[[").append(wallTime).append(',').append(DoubleFormat.wholeOrDecimal(value)).append("]]");
             return this;
         }
 
