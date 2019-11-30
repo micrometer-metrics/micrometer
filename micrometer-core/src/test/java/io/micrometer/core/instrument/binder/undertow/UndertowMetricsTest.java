@@ -78,7 +78,7 @@ public class UndertowMetricsTest {
         assertThat(registry.get("undertow.request.time.max").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(registry.get("undertow.requests").functionTimer().totalTime(TimeUnit.MILLISECONDS));
         assertThat(registry.get("undertow.request.time.min").timeGauge().value(TimeUnit.MILLISECONDS)).isEqualTo(registry.get("undertow.requests").functionTimer().totalTime(TimeUnit.MILLISECONDS));
         assertThat(registry.get("undertow.request.errors").functionCounter().count()).isEqualTo(1);
-        assertThat(registry.get("undertow.requests").tags("some", "tag", "servlet_name", servletName)).isNotNull();
+        assertThat(registry.get("undertow.requests").tags("some", "tag", "servlet.name", servletName)).isNotNull();
         undertow.stop();
     }
 

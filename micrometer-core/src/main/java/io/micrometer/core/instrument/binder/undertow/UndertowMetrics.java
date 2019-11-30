@@ -91,7 +91,7 @@ public class UndertowMetrics implements MetricsCollector, MeterBinder {
     private void bindTimer(MeterRegistry registry, String name, String desc, String servletName, MetricResult metricResult, ToLongFunction<MetricResult> countFunc, ToDoubleFunction<MetricResult> consumer) {
         FunctionTimer.builder(name, metricResult, countFunc, consumer, TimeUnit.MILLISECONDS)
                 .tags(tags)
-                .tag("servlet_name", servletName)
+                .tag("servlet.name", servletName)
                 .description(desc)
                 .register(registry);
     }
