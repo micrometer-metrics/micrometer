@@ -1,7 +1,7 @@
 plugins {
     id "net.ltgt.apt" version "0.10" // for dagger injection testing
     id 'idea'
-    id 'com.github.johnrengelman.shadow' version '4.0.3'
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
 }
 
 apply plugin: 'nebula.optional-base'
@@ -25,7 +25,7 @@ dependencies {
     compile 'com.github.ben-manes.caffeine:caffeine:latest.release', optional
     compile 'net.sf.ehcache:ehcache:latest.release', optional
     compile 'javax.cache:cache-api:latest.release', optional
-    compile 'com.hazelcast:hazelcast:latest.release', optional
+    compile 'com.hazelcast:hazelcast:3.+', optional
     compile 'org.hibernate:hibernate-entitymanager:latest.release', optional
 
     // server runtime monitoring
@@ -50,23 +50,23 @@ dependencies {
     compile 'org.apache.logging.log4j:log4j-core:2.+', optional
 
     // reactor
-    compile 'io.projectreactor:reactor-core:latest.release', optional
-    compile 'io.projectreactor.netty:reactor-netty:latest.release', optional
+    compile 'io.projectreactor:reactor-core:3.2.12.RELEASE', optional
+    compile 'io.projectreactor.netty:reactor-netty:0.8.6.RELEASE', optional
 
     // @Timed AOP
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
 
-    compile 'com.squareup.okhttp3:okhttp:3.+', optional
+    compile 'com.squareup.okhttp3:okhttp:latest.release', optional
 
     compile 'org.mongodb:mongo-java-driver:latest.release', optional
 
     testCompile 'io.projectreactor:reactor-test:latest.release'
 
     // JUnit 5
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.4.+'
+    testImplementation 'org.junit.jupiter:junit-jupiter:latest.release'
 
     // Eclipse still needs this (as of 4.7.1a)
-    testRuntime 'org.junit.platform:junit-platform-launcher:1.4.+'
+    testRuntime 'org.junit.platform:junit-platform-launcher:latest.release'
 
     testCompile 'org.mockito:mockito-core:latest.release'
 

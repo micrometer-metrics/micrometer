@@ -31,9 +31,9 @@ import io.micrometer.core.instrument.step.StepTimer;
 import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +52,8 @@ import static java.util.stream.Collectors.joining;
  */
 @Incubating(since = "1.1.0")
 public class LoggingMeterRegistry extends StepMeterRegistry {
+    private final static InternalLogger log = InternalLoggerFactory.getInstance(LoggingMeterRegistry.class);
+
     private final LoggingRegistryConfig config;
     private final Consumer<String> loggingSink;
     private final Function<Meter, String> meterIdPrinter;
@@ -61,7 +63,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
     }
 
     public LoggingMeterRegistry(LoggingRegistryConfig config, Clock clock) {
-        this(config, clock, new NamedThreadFactory("logging-metrics-publisher"), defaultLoggingSink(), null);
+        this(config, clock, new NamedThreadFactory("logging-metrics-publisher"), log::info, null);
     }
 
     private LoggingMeterRegistry(LoggingRegistryConfig config, Clock clock, ThreadFactory threadFactory, Consumer<String> loggingSink, @Nullable Function<Meter, String> meterIdPrinter) {
@@ -71,23 +73,6 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         this.meterIdPrinter = meterIdPrinter != null ? meterIdPrinter : defaultMeterIdPrinter();
         config().namingConvention(NamingConvention.dot);
         start(threadFactory);
-    }
-
-    private static Consumer<String> defaultLoggingSink() {
-        try {
-            Class<?> slf4jLogger = Class.forName("org.slf4j.LoggerFactory");
-            Object logger = slf4jLogger.getMethod("getLogger", Class.class).invoke(null, LoggingMeterRegistry.class);
-            final Method loggerInfo = logger.getClass().getMethod("info", String.class);
-            return stmt -> {
-                try {
-                    loggerInfo.invoke(logger, stmt);
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    throw new RuntimeException(e); // should never happen
-                }
-            };
-        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            return System.out::println;
-        }
     }
 
     private Function<Meter, String> defaultMeterIdPrinter() {
@@ -232,7 +217,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
         // see https://stackoverflow.com/a/3758880/510017
         String humanReadableByteCount(double bytes) {
             int unit = 1024;
-            if (bytes < unit) return decimalOrNan(bytes) + " B";
+            if (bytes < unit || Double.isNaN(bytes)) return decimalOrNan(bytes) + " B";
             int exp = (int) (Math.log(bytes) / Math.log(unit));
             String pre = "KMGTPE".charAt(exp - 1) + "i";
             return decimalOrNan(bytes / Math.pow(unit, exp)) + " " + pre + "B";
@@ -261,7 +246,7 @@ public class LoggingMeterRegistry extends StepMeterRegistry {
 
         private Clock clock = Clock.SYSTEM;
         private ThreadFactory threadFactory = new NamedThreadFactory("logging-metrics-publisher");
-        private Consumer<String> loggingSink = defaultLoggingSink();
+        private Consumer<String> loggingSink = log::info;
         @Nullable
         private Function<Meter, String> meterIdPrinter;
 

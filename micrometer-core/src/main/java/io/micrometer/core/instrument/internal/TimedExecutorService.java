@@ -32,12 +32,17 @@ import static java.util.stream.Collectors.toList;
  * @author Jon Schneider
  */
 public class TimedExecutorService implements ExecutorService {
+    private final MeterRegistry registry;
     private final ExecutorService delegate;
-    private final Timer timer;
+    private final Timer executionTimer;
+    private final Timer idleTimer;
 
     public TimedExecutorService(MeterRegistry registry, ExecutorService delegate, String executorServiceName, Iterable<Tag> tags) {
+        this.registry = registry;
         this.delegate = delegate;
-        this.timer = registry.timer("executor", Tags.concat(tags ,"name", executorServiceName));
+        Tags finalTags = Tags.concat(tags, "name", executorServiceName);
+        this.executionTimer = registry.timer("executor", finalTags);
+        this.idleTimer = registry.timer("executor.idle", finalTags);
     }
 
     @Override
@@ -67,17 +72,17 @@ public class TimedExecutorService implements ExecutorService {
 
     @Override
     public <T> Future<T> submit(Callable<T> task) {
-        return delegate.submit(timer.wrap(task));
+        return delegate.submit(wrap(task));
     }
 
     @Override
     public <T> Future<T> submit(Runnable task, T result) {
-        return delegate.submit(timer.wrap(task), result);
+        return delegate.submit(wrap(task), result);
     }
 
     @Override
     public Future<?> submit(Runnable task) {
-        return delegate.submit(timer.wrap(task));
+        return delegate.submit(wrap(task));
     }
 
     @Override
@@ -102,10 +107,18 @@ public class TimedExecutorService implements ExecutorService {
 
     @Override
     public void execute(Runnable command) {
-        delegate.execute(timer.wrap(command));
+        delegate.execute(wrap(command));
+    }
+
+    private Runnable wrap(Runnable task) {
+        return new TimedRunnable(registry, executionTimer, idleTimer, task);
+    }
+
+    private <T> Callable<T> wrap(Callable<T> task) {
+        return new TimedCallable<>(registry, executionTimer, idleTimer, task);
     }
 
     private <T> Collection<? extends Callable<T>> wrapAll(Collection<? extends Callable<T>> tasks) {
-        return tasks.stream().map(timer::wrap).collect(toList());
+        return tasks.stream().map(this::wrap).collect(toList());
     }
 }

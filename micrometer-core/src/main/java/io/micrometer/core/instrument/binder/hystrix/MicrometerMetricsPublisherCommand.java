@@ -21,8 +21,8 @@ import com.netflix.hystrix.strategy.metrics.HystrixMetricsPublisherCommand;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.micrometer.core.util.internal.logging.InternalLogger;
+import io.micrometer.core.util.internal.logging.InternalLoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 @NonNullApi
 @NonNullFields
 public class MicrometerMetricsPublisherCommand implements HystrixMetricsPublisherCommand {
-    private static final Logger LOG = LoggerFactory.getLogger(MicrometerMetricsPublisherCommand.class);
+    private static final InternalLogger LOG = InternalLoggerFactory.getInstance(MicrometerMetricsPublisherCommand.class);
 
     private static final String NAME_HYSTRIX_CIRCUIT_BREAKER_OPEN = "hystrix.circuit.breaker.open";
     private static final String NAME_HYSTRIX_EXECUTION = "hystrix.execution";

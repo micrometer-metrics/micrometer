@@ -18,43 +18,21 @@ package io.micrometer.core.instrument.util;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 
-import java.util.AbstractList;
 import java.util.List;
 
 /**
- * Modified from {@link com.google.common.collect.Lists#partition(List, int)}.
+ * {@link AbstractPartition} for {@link Meter}.
  *
  * @author Jon Schneider
  */
-public class MeterPartition extends AbstractList<List<Meter>> {
-    private final List<Meter> list;
-    private final int partitionSize;
-    private final int partitionCount;
+public class MeterPartition extends AbstractPartition<Meter> {
 
     public MeterPartition(MeterRegistry registry, int partitionSize) {
-        this.list = registry.getMeters();
-        this.partitionSize = partitionSize;
-        this.partitionCount = MathUtils.divideWithCeilingRoundingMode(list.size(), partitionSize);
+        super(registry.getMeters(), partitionSize);
     }
 
     public static List<List<Meter>> partition(MeterRegistry registry, int partitionSize) {
         return new MeterPartition(registry, partitionSize);
     }
 
-    @Override
-    public List<Meter> get(int index) {
-        int start = index * partitionSize;
-        int end = Math.min(start + partitionSize, list.size());
-        return list.subList(start, end);
-    }
-
-    @Override
-    public int size() {
-        return this.partitionCount;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return list.isEmpty();
-    }
 }

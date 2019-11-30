@@ -20,7 +20,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
+/**
+ * Tests for {@link DynatraceNamingConvention}.
+ *
+ * @author Oriol Barcelona Palau
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class DynatraceNamingConventionTest {
 
     private final DynatraceNamingConvention convention = new DynatraceNamingConvention();
@@ -28,6 +34,24 @@ class DynatraceNamingConventionTest {
     @Test
     void nameStartsWithCustomAndColon() {
         assertThat(convention.name("mymetric", Meter.Type.COUNTER, null)).isEqualTo("custom:mymetric");
+    }
+
+    @Test
+    void nameShouldAllowAlphanumericUnderscoreAndDash() {
+        assertThat(convention.name("my.name1", Meter.Type.COUNTER, null)).isEqualTo("custom:my.name1");
+        assertThat(convention.name("my_name1", Meter.Type.COUNTER, null)).isEqualTo("custom:my_name1");
+        assertThat(convention.name("my-name1", Meter.Type.COUNTER, null)).isEqualTo("custom:my-name1");
+    }
+
+    @Test
+    void nameShouldSanitize() {
+        assertThat(convention.name("my,name1", Meter.Type.COUNTER, null)).isEqualTo("custom:my_name1");
+    }
+
+    @Test
+    void nameWithSystemLoadAverageOneMintueShouldSanitize() {
+        assertThat(convention.name("system.load.average.1m", Meter.Type.COUNTER, null))
+                .isEqualTo("custom:system.load.average.oneminute");
     }
 
     @Test

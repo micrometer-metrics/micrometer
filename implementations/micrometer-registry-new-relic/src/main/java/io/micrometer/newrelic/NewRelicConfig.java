@@ -31,6 +31,28 @@ public interface NewRelicConfig extends StepRegistryConfig {
         return "newrelic";
     }
 
+    /**
+     * When this is {@code false}, the New Relic eventType value will be set to {@link #eventType()}. Otherwise, the meter name will be used.
+     * Defaults to {@code false}.
+     * @return whether to use meter names as the New Relic eventType value
+     */
+    default boolean meterNameEventTypeEnabled() {
+        String v = get(prefix() + ".meterNameEventTypeEnabled");
+        return Boolean.parseBoolean(v);
+    }
+
+    /**
+     * This configuration property will only be used if {@link #meterNameEventTypeEnabled()} is {@code false}.
+     * Default value is {@code MicrometerSample}.
+     * @return static eventType value to send to New Relic for all metrics.
+     */
+    default String eventType() {
+        String v = get(prefix() + ".eventType");
+        if (v == null)
+            return "MicrometerSample";
+        return v;
+    }
+
     default String apiKey() {
         String v = get(prefix() + ".apiKey");
         if (v == null)

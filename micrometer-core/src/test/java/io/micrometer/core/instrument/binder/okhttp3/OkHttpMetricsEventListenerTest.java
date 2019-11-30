@@ -157,7 +157,26 @@ class OkHttpMetricsEventListenerTest {
     }
 
     @Test
-    void addDynamicTags(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+    void requestTagsWithClass(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+        Request request = new Request.Builder()
+                .url(server.baseUrl() + "/helloworld.txt")
+                .tag(Tags.class, Tags.of("requestTag1", "tagValue1"))
+                .build();
+
+        testRequestTags(server, request);
+    }
+
+    @Test
+    void requestTagsWithoutClass(@WiremockResolver.Wiremock WireMockServer server) throws IOException {
+        Request request = new Request.Builder()
+                .url(server.baseUrl() + "/helloworld.txt")
+                .tag(Tags.of("requestTag1", "tagValue1"))
+                .build();
+
+        testRequestTags(server, request);
+    }
+
+    private void testRequestTags(@WiremockResolver.Wiremock WireMockServer server, Request request) throws IOException {
         server.stubFor(any(anyUrl()));
         OkHttpClient client = new OkHttpClient.Builder()
                 .eventListener(OkHttpMetricsEventListener.builder(registry, "okhttp.requests")
@@ -166,15 +185,11 @@ class OkHttpMetricsEventListenerTest {
                         .build())
                 .build();
 
-        Request request = new Request.Builder()
-                .url(server.baseUrl() + "/helloworld.txt")
-                .tag(Tags.class, Tags.of("dynamicTag1", "tagValue1"))
-                .build();
-
         client.newCall(request).execute().close();
 
         assertThat(registry.get("okhttp.requests")
-                .tags("foo", "bar", "uri", "/helloworld.txt", "status", "200", "dynamicTag1", "tagValue1")
+                .tags("foo", "bar", "uri", "/helloworld.txt", "status", "200", "requestTag1", "tagValue1")
                 .timer().count()).isEqualTo(1L);
     }
+
 }

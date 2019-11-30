@@ -34,37 +34,13 @@ public class TimedExecutor implements Executor {
     public TimedExecutor(MeterRegistry registry, Executor delegate, String executorName, Iterable<Tag> tags) {
         this.registry = registry;
         this.delegate = delegate;
-        this.executionTimer = registry.timer("executor.execution", Tags.concat(tags, "name", executorName));
-        this.idleTimer = registry.timer("executor.idle", Tags.concat(tags, "name", executorName));
+        Tags finalTags = Tags.concat(tags, "name", executorName);
+        this.executionTimer = registry.timer("executor.execution", finalTags);
+        this.idleTimer = registry.timer("executor.idle", finalTags);
     }
 
     @Override
     public void execute(Runnable command) {
-        delegate.execute(new TimedRunnable(command));
+        delegate.execute(new TimedRunnable(registry, executionTimer, idleTimer, command));
     }
-
-    class TimedRunnable implements Runnable {
-
-        private final Runnable command;
-        private final Timer.Sample idleSample;
-
-        public TimedRunnable(Runnable command) {
-            this.command = command;
-            this.idleSample = Timer.start(registry);
-        }
-
-        @Override
-        public void run() {
-            idleSample.stop(idleTimer);
-            Timer.Sample executionSample = Timer.start(registry);
-            try {
-                command.run();
-            } finally {
-                executionSample.stop(executionTimer);
-            }
-        }
-
-    }
-
-
 }
