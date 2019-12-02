@@ -291,7 +291,7 @@ public class HumioMeterRegistry extends StepMeterRegistry {
                     .append(escapeJson(name)).append('"');
 
             for (Attribute attribute : attributes) {
-                sb.append(",\"").append(attribute.name).append("\":").append(DoubleFormat.decimalOrWhole(attribute.value));
+                sb.append(",\"").append(attribute.name).append("\":").append(DoubleFormat.wholeOrDecimal(attribute.value));
             }
 
             List<Tag> tags = getConventionTags(meter.getId());
