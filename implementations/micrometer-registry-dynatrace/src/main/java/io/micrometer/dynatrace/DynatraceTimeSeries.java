@@ -41,7 +41,7 @@ class DynatraceTimeSeries {
 
     String asJson() {
         String body = "{\"timeseriesId\":\"" + metricId + "\"" +
-                ",\"dataPoints\":[[" + time + "," + DoubleFormat.decimalOrWhole(value) + "]]";
+                ",\"dataPoints\":[[" + time + "," + DoubleFormat.wholeOrDecimal(value) + "]]";
 
         if (dimensions != null && !dimensions.isEmpty()) {
             body += ",\"dimensions\":{" +

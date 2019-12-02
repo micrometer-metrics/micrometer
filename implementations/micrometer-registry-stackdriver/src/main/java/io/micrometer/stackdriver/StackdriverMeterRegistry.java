@@ -315,7 +315,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                     Arrays.stream(snapshot.percentileValues())
                             .map(valueAtP -> createTimeSeries(histogramSupport,
                                     timeDomain ? valueAtP.value(getBaseTimeUnit()) : valueAtP.value(),
-                                    "p" + DoubleFormat.decimalOrWhole(valueAtP.percentile() * 100)))
+                                    "p" + DoubleFormat.wholeOrDecimal(valueAtP.percentile() * 100)))
             );
         }
 
