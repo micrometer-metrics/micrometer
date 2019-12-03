@@ -34,6 +34,7 @@ subprojects {
         tasks {
             compileJava {
                 options.encoding = 'UTF-8'
+                options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
                 // ensure Java 8 baseline is enforced for main source
                 if (JavaVersion.current().isJava9Compatible()) {
                     options.compilerArgs.addAll(['--release', '8'])
@@ -41,6 +42,7 @@ subprojects {
             }
             compileTestJava {
                 options.encoding = 'UTF-8'
+                options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
                 sourceCompatibility = JavaVersion.current()
                 targetCompatibility = JavaVersion.current()
             }
