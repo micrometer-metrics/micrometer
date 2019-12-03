@@ -52,7 +52,9 @@ subprojects {
     }
 
     compileJava.options.encoding = 'UTF-8'
+    compileJava.options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
     compileTestJava.options.encoding = 'UTF-8'
+    compileTestJava.options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
 
     if(!project.name.contains('samples') && !project.name.contains('benchmarks')) {
         apply plugin: 'io.spring.publishing'
