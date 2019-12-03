@@ -86,6 +86,7 @@ import static java.util.stream.StreamSupport.stream;
  */
 @Incubating(since = "1.1.0")
 public class StackdriverMeterRegistry extends StepMeterRegistry {
+    
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("stackdriver-metrics-publisher");
 
     /**
