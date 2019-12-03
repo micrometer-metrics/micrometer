@@ -27,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public abstract class StepRegistryPropertiesTest {
 
+    @SuppressWarnings("deprecation")
     protected void assertStepRegistryDefaultValues(StepRegistryProperties properties,
             StepRegistryConfig config) {
         assertThat(properties.getStep()).isEqualTo(config.step());

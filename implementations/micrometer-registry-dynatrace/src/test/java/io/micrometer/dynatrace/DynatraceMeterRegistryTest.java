@@ -145,6 +145,7 @@ class DynatraceMeterRegistryTest {
         assertThat(meterRegistry.writeMeter(gauge)).isEmpty();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void writeMeterWithGaugeWhenChangingFiniteToNaNShouldWork() {
         AtomicBoolean first = new AtomicBoolean(true);
