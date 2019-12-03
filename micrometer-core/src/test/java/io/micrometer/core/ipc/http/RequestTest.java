@@ -36,6 +36,7 @@ class RequestTest {
         HttpSender.Request.Builder builder = HttpSender.Request.build("https://micrometer.io/", mock(HttpSender.class)).compress();
         Field requestHeadersField = HttpSender.Request.Builder.class.getDeclaredField("requestHeaders");
         requestHeadersField.setAccessible(true);
+        @SuppressWarnings("unchecked")
         Map<String, String> requestHeaders = (Map<String, String>) requestHeadersField.get(builder);
         assertThat(requestHeaders).containsEntry("Content-Encoding", "gzip");
     }

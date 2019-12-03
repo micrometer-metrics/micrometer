@@ -79,7 +79,7 @@ public class RestTemplateExchangeTagsTest {
     @Test
     public void outcomeTagIsUnknownWhenResponseThrowsIOException() throws Exception {
         ClientHttpResponse response = mock(ClientHttpResponse.class);
-        given(response.getRawStatusCode()).willThrow(IOException.class);
+        given(response.getRawStatusCode()).willThrow(new IOException());
         Tag tag = RestTemplateExchangeTags.outcome(response);
         assertThat(tag.getValue()).isEqualTo("UNKNOWN");
     }
@@ -87,7 +87,7 @@ public class RestTemplateExchangeTagsTest {
     @Test
     public void outcomeTagIsUnknownForCustomResponseStatus() throws Exception {
         ClientHttpResponse response = mock(ClientHttpResponse.class);
-        given(response.getRawStatusCode()).willThrow(IllegalArgumentException.class);
+        given(response.getRawStatusCode()).willThrow(new IllegalArgumentException());
         Tag tag = RestTemplateExchangeTags.outcome(response);
         assertThat(tag.getValue()).isEqualTo("UNKNOWN");
     }

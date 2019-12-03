@@ -53,11 +53,13 @@ public abstract class StepRegistryPropertiesConfigAdapter<T extends StepRegistry
         return get(T::isEnabled, StepRegistryConfig.super::enabled);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public Duration connectTimeout() {
         return get(T::getConnectTimeout, StepRegistryConfig.super::connectTimeout);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public Duration readTimeout() {
         return get(T::getReadTimeout, StepRegistryConfig.super::readTimeout);
