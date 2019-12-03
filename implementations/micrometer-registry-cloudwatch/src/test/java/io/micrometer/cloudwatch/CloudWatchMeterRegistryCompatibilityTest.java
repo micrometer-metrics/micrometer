@@ -22,6 +22,7 @@ import io.micrometer.core.tck.MeterRegistryCompatibilityKit;
 
 import java.time.Duration;
 
+@SuppressWarnings("deprecation")
 class CloudWatchMeterRegistryCompatibilityTest extends MeterRegistryCompatibilityKit {
 
     private final CloudWatchConfig config = new CloudWatchConfig() {
