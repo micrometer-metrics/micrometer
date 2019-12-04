@@ -148,7 +148,7 @@ class MeterFilterTest {
         filter.accept(id1);
         filter.accept(id2);
         filter.accept(id3);
-        verifyZeroInteractions(onMaxReached);
+        verifyNoInteractions(onMaxReached);
 
         filter.accept(id4);
         verify(onMaxReached).accept(id4);
@@ -170,7 +170,7 @@ class MeterFilterTest {
         filter.accept(id1);
         filter.accept(id2);
         filter.accept(id3);
-        verifyZeroInteractions(onMaxReached);
+        verifyNoInteractions(onMaxReached);
 
         filter.accept(id4);
         verify(onMaxReached).accept(id4);
