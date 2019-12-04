@@ -52,7 +52,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         //default to the HTTP/REST client
         this(config, new NewRelicHttpClientProvider(config), clock);
     }
-    
+
     /**
      * @param config Configuration options for the registry that are describable as properties.
      * @param clientProvider Provider of the HTTP or Agent-based client that publishes metrics to New Relic
@@ -64,14 +64,14 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     }
 
     // VisibleForTesting
-    NewRelicMeterRegistry(NewRelicConfig config, NewRelicClientProvider clientProvider,  
+    NewRelicMeterRegistry(NewRelicConfig config, NewRelicClientProvider clientProvider,
                 NamingConvention namingConvention, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
 
         if (clientProvider == null) {
             throw new MissingRequiredConfigurationException("clientProvider required to report metrics to New Relic");
         }
-        
+
         this.config = config;
         this.clientProvider = clientProvider;
 
@@ -83,14 +83,6 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         return new Builder(config);
     }
 
-    @Override
-    public void start(ThreadFactory threadFactory) {
-        if (config.enabled()) {
-            logger.info("publishing metrics to new relic every " + TimeUtils.format(config.step()));
-        }
-        super.start(threadFactory);
-    }
-    
     @Override
     protected void publish() {
         clientProvider.publish(this);
@@ -129,7 +121,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
          */
         public Builder httpClientProvider() {
             return clientProvider(new NewRelicHttpClientProvider(config));
-        } 
+        }
 
         Builder clientProvider(NewRelicClientProvider clientProvider) {
             this.clientProvider = clientProvider;
