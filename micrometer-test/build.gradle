@@ -10,6 +10,8 @@ dependencies {
     }
     api 'com.github.tomakehurst:wiremock-jre8'
     api 'org.mockito:mockito-core:latest.release'
+    api 'org.testcontainers:testcontainers:latest.release'
+    api 'org.testcontainers:junit-jupiter:latest.release'
 
     testImplementation 'org.jsr107.ri:cache-ri-impl'
 
