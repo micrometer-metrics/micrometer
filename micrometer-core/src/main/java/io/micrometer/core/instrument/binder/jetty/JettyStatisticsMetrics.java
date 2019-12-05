@@ -57,6 +57,7 @@ public class JettyStatisticsMetrics implements MeterBinder {
         FunctionCounter.builder("jetty.responses.size", statisticsHandler, StatisticsHandler::getResponsesBytesTotal)
             .description("Total number of bytes across all responses")
             .baseUnit(BaseUnits.BYTES)
+            .tags(tags)
             .register(registry);
 
         bindGauge(registry, "jetty.requests.active", "Number of requests currently active", StatisticsHandler::getRequestsActive);
