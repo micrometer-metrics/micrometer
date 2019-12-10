@@ -52,6 +52,8 @@ public abstract class AbstractInternalLogger implements InternalLogger, Serializ
 
     /**
      * Creates a new instance.
+     *
+     * @param name logger name
      */
     protected AbstractInternalLogger(String name) {
         requireNonNull(name, "name");
