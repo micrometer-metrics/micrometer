@@ -86,7 +86,7 @@ public interface NamingConvention {
                     if (Character.isUpperCase(firstChar)) {
                         conventionName.append(str); // already capitalized
                     } else {
-                        conventionName.append(Character.toUpperCase(firstChar)).append(str.substring(1));
+                        conventionName.append(Character.toUpperCase(firstChar)).append(str, 1, str.length());
                     }
                 }
             }
