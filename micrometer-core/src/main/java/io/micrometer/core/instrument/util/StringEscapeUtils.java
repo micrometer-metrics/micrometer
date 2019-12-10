@@ -65,7 +65,7 @@ public final class StringEscapeUtils {
                 default:
                     if (c < ' ') {
                         String t = "000" + Integer.toHexString(c);
-                        sb.append("\\u").append(t.substring(t.length() - 4));
+                        sb.append("\\u").append(t, t.length() - 4, t.length());
                     } else {
                         sb.append(c);
                     }
