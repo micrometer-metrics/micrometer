@@ -45,45 +45,29 @@ class KafkaConsumerMetricsTest {
 
     private final KafkaConsumerMetrics kafkaConsumerMetrics = new KafkaConsumerMetrics();
 
-    private static Consumer<Long, String> createConsumer() {
-        Properties props = new Properties();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "MicrometerTestConsumer");
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class.getName());
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-
-        Consumer<Long, String> consumer = new KafkaConsumer<>(props);
-        consumer.subscribe(Collections.singletonList(TOPIC));
-        return consumer;
-    }
-
     @Test
     void consumerMetrics() {
-        Consumer<Long, String> consumer1 = createConsumer();
-        Consumer<Long, String> consumer2 = createConsumer();
+        try (Consumer<Long, String> consumer1 = createConsumer();
+             Consumer<Long, String> consumer2 = createConsumer()) {
 
-        MeterRegistry registry = new SimpleMeterRegistry();
-        kafkaConsumerMetrics.bindTo(registry);
+            MeterRegistry registry = new SimpleMeterRegistry();
+            kafkaConsumerMetrics.bindTo(registry);
 
-        // consumer group metrics
-        Gauge assignedPartitions = registry.get("kafka.consumer.assigned.partitions").gauge();
-        assertThat(assignedPartitions.getId().getTag("client.id")).startsWith("consumer-");
+            // consumer group metrics
+            Gauge assignedPartitions = registry.get("kafka.consumer.assigned.partitions").gauge();
+            assertThat(assignedPartitions.getId().getTag("client.id")).startsWith("consumer-");
 
-        // global connection metrics
-        Gauge connectionCount = registry.get("kafka.consumer.connection.count").gauge();
-        assertThat(connectionCount.getId().getTag("client.id")).startsWith("consumer-");
-
-        consumer1.close();
-        consumer2.close();
+            // global connection metrics
+            Gauge connectionCount = registry.get("kafka.consumer.connection.count").gauge();
+            assertThat(connectionCount.getId().getTag("client.id")).startsWith("consumer-");
+        }
     }
 
     @Test
     void kafkaMajorVersion() {
-        Consumer<Long, String> consumer = createConsumer();
-
-        assertThat(kafkaConsumerMetrics.kafkaMajorVersion(Tags.of("client.id", "consumer-1"))).isGreaterThanOrEqualTo(2);
-
-        consumer.close();
+        try (Consumer<Long, String> consumer = createConsumer()) {
+            assertThat(kafkaConsumerMetrics.kafkaMajorVersion(Tags.of("client.id", "consumer-1"))).isGreaterThanOrEqualTo(2);
+        }
     }
 
     @Test
@@ -97,24 +81,20 @@ class KafkaConsumerMetricsTest {
                 latch.countDown();
         });
 
-        Consumer<Long, String> consumer = createConsumer();
-
-        latch.await(10, TimeUnit.SECONDS);
-
-        consumer.close();
+        try (Consumer<Long, String> consumer = createConsumer()) {
+            latch.await(10, TimeUnit.SECONDS);
+        }
     }
 
     @Test
     void consumerBeforeBindingWhenClosedShouldRemoveMeters() {
-        Consumer<Long, String> consumer = createConsumer();
-
         MeterRegistry registry = new SimpleMeterRegistry();
-        kafkaConsumerMetrics.bindTo(registry);
+        try (Consumer<Long, String> consumer = createConsumer()) {
+            kafkaConsumerMetrics.bindTo(registry);
 
-        Gauge gauge = registry.get("kafka.consumer.assigned.partitions").gauge();
-        assertThat(gauge.getId().getTag("client.id")).startsWith("consumer-");
-
-        consumer.close();
+            Gauge gauge = registry.get("kafka.consumer.assigned.partitions").gauge();
+            assertThat(gauge.getId().getTag("client.id")).startsWith("consumer-");
+        }
         assertThat(registry.find("kafka.consumer.assigned.partitions").gauge()).isNull();
     }
 
@@ -123,11 +103,22 @@ class KafkaConsumerMetricsTest {
         MeterRegistry registry = new SimpleMeterRegistry();
         kafkaConsumerMetrics.bindTo(registry);
 
-        Consumer<Long, String> consumer = createConsumer();
-        Gauge gauge = registry.get("kafka.consumer.assigned.partitions").gauge();
-        assertThat(gauge.getId().getTag("client.id")).startsWith("consumer-");
-
-        consumer.close();
+        try (Consumer<Long, String> consumer = createConsumer()) {
+            Gauge gauge = registry.get("kafka.consumer.assigned.partitions").gauge();
+            assertThat(gauge.getId().getTag("client.id")).startsWith("consumer-");
+        }
         assertThat(registry.find("kafka.consumer.assigned.partitions").gauge()).isNull();
+    }
+
+    private static Consumer<Long, String> createConsumer() {
+        Properties props = new Properties();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "MicrometerTestConsumer");
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class.getName());
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+
+        Consumer<Long, String> consumer = new KafkaConsumer<>(props);
+        consumer.subscribe(Collections.singletonList(TOPIC));
+        return consumer;
     }
 }
