@@ -91,12 +91,14 @@ public class MongoMetricsConnectionPoolListener extends ConnectionPoolListenerAd
                 .decrementAndGet();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void waitQueueEntered(ConnectionPoolWaitQueueEnteredEvent event) {
         waitQueueSize.get(event.getServerId())
                 .incrementAndGet();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void waitQueueExited(ConnectionPoolWaitQueueExitedEvent event) {
         waitQueueSize.get(event.getServerId())
