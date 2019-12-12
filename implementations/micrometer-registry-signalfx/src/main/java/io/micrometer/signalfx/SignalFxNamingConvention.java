@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.StringEscapeUtils;
 import io.micrometer.core.instrument.util.StringUtils;
 import io.micrometer.core.lang.Nullable;
+import io.micrometer.core.util.internal.logging.WarnThenDebugLogger;
 
 /**
  * {@link NamingConvention} for SignalFx.
@@ -32,6 +33,8 @@ import io.micrometer.core.lang.Nullable;
  * @author Johnny Lim
  */
 public class SignalFxNamingConvention implements NamingConvention {
+
+    private static final WarnThenDebugLogger logger = new WarnThenDebugLogger(SignalFxNamingConvention.class);
 
     private static final Pattern START_UNDERSCORE_PATTERN = Pattern.compile("^_");
     private static final Pattern SF_PATTERN = Pattern.compile("^sf_");
@@ -72,9 +75,14 @@ public class SignalFxNamingConvention implements NamingConvention {
         conventionKey = SF_PATTERN.matcher(conventionKey).replaceAll(""); // 2
 
         conventionKey = PATTERN_TAG_KEY_BLACKLISTED_CHARS.matcher(conventionKey).replaceAll("_");
-        if (PATTERN_TAG_KEY_BLACKLISTED_PREFIX.matcher(conventionKey).matches()
-                || !START_LETTERS_PATTERN.matcher(conventionKey).matches()) { // 3
+        if (!START_LETTERS_PATTERN.matcher(conventionKey).matches()) { // 3
             conventionKey = "a" + conventionKey;
+        }
+        if (PATTERN_TAG_KEY_BLACKLISTED_PREFIX.matcher(conventionKey).matches()) {
+            logger.log("'" + conventionKey + "' (original name: '" + key + "') is not a valid meter name. "
+                    + "Must not start with any of these prefixes: aws_, gcp_, or azure_. "
+                    + "Please rename it to conform to the constraints. "
+                    + "If it comes from a third party, please use MeterFilter to rename it.");
         }
         return StringUtils.truncate(conventionKey, KEY_MAX_LENGTH); // 1
     }

@@ -41,11 +41,4 @@ class SignalFxNamingConventionTest {
         assertThat(convention.tagKey("a.b")).isEqualTo("a_b");
     }
 
-    @Test
-    void tagKeyWhenKeyStartsWithBlacklistedPrefixShouldSanitize() {
-        assertThat(convention.tagKey("aws_a")).isEqualTo("aaws_a");
-        assertThat(convention.tagKey("gcp_a")).isEqualTo("agcp_a");
-        assertThat(convention.tagKey("azure_a")).isEqualTo("aazure_a");
-    }
-
 }
