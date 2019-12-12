@@ -98,6 +98,9 @@ public class JettyConnectionMetricsTest {
 
         assertThat(registry.get("jetty.connector.bytesSent").gauge().value()).isGreaterThan(0.0);
         assertThat(registry.get("jetty.connector.bytesReceived").gauge().value()).isGreaterThan(0.0);
+        assertThat(registry.get("jetty.connector.duration.max").gauge().value()).isGreaterThan(0.0);
+        assertThat(registry.get("jetty.connector.duration.mean").gauge().value()).isGreaterThan(0.0);
+        assertThat(registry.get("jetty.connector.duration.stddev").gauge().value()).isNotNull();
     }
 
     private String getBaseUrl() {

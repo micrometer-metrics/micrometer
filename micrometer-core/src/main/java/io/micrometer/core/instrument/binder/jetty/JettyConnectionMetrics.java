@@ -45,6 +45,7 @@ public class JettyConnectionMetrics implements MeterBinder {
                 .tags(tags)
                 .description("The total number of connections")
                 .register(registry);
+
         Gauge.builder("jetty.connector.bytesReceived", connectionStatistics, ConnectionStatistics::getReceivedBytesRate)
                 .tags(tags)
                 .description("The rate of bytes received")
@@ -54,6 +55,22 @@ public class JettyConnectionMetrics implements MeterBinder {
                 .tags(tags)
                 .description("The rate of bytes sent")
                 .baseUnit("bytes/second")
+                .register(registry);
+
+        Gauge.builder("jetty.connector.duration.max", connectionStatistics, ConnectionStatistics::getConnectionDurationMax)
+                .tags(tags)
+                .description("The maximum connection lifetime duration")
+                .baseUnit("milliseconds")
+                .register(registry);
+        Gauge.builder("jetty.connector.duration.mean", connectionStatistics, ConnectionStatistics::getConnectionDurationMean)
+                .tags(tags)
+                .description("The mean connection lifetime duration")
+                .baseUnit("milliseconds")
+                .register(registry);
+        Gauge.builder("jetty.connector.duration.stddev", connectionStatistics, ConnectionStatistics::getConnectionDurationStdDev)
+                .tags(tags)
+                .description("The standard deviation of the connection lifetime duration")
+                .baseUnit("milliseconds")
                 .register(registry);
     }
 }
