@@ -19,12 +19,17 @@ import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.eclipse.jetty.io.ConnectionStatistics;
 
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class JettyConnectionMetrics implements MeterBinder {
 
     private final ConnectionStatistics connectionStatistics;
     private final Iterable<Tag> tags;
+
+    public JettyConnectionMetrics(ConnectionStatistics connectionStatistics) {
+        this(connectionStatistics, emptyList());
+    }
 
     public JettyConnectionMetrics(ConnectionStatistics connectionStatistics, Iterable<Tag> tags) {
         this.connectionStatistics = connectionStatistics;
