@@ -22,6 +22,28 @@ import org.eclipse.jetty.io.ConnectionStatistics;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+/**
+ * {@link MeterBinder} for Jetty's connection metrics.<br><br>
+ *
+ * Usage example:
+ *
+ * <pre>{@code
+ * MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+ *
+ * ServerConnectionStatistics serverConnectionStatistics = new ServerConnectionStatistics();
+ * JettyConnectionMetrics connectionMetrics =
+ *     new JettyConnectionMetrics(serverConnectionStatistics, singletonList(Tag.of("protocol", "http")));
+ * connectionMetrics.bindTo(registry);
+ *
+ * Server server = new Server(0);
+ * Connector connector = new ServerConnector(server);
+ * connector.addBean(serverConnectionStatistics);
+ * server.setConnectors(new Connector[] { connector });
+ * }</pre>
+ *
+ * @author Tom Akehurst
+ *
+ */
 public class JettyConnectionMetrics implements MeterBinder {
 
     private final ConnectionStatistics connectionStatistics;
