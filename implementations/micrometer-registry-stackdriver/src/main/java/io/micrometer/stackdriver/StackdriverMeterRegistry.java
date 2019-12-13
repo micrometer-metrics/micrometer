@@ -39,7 +39,6 @@ import com.google.cloud.monitoring.v3.MetricServiceClient;
 import com.google.cloud.monitoring.v3.MetricServiceSettings;
 import com.google.monitoring.v3.CreateMetricDescriptorRequest;
 import com.google.monitoring.v3.CreateTimeSeriesRequest;
-import com.google.monitoring.v3.ListMetricDescriptorsRequest;
 import com.google.monitoring.v3.Point;
 import com.google.monitoring.v3.ProjectName;
 import com.google.monitoring.v3.TimeInterval;
@@ -56,7 +55,6 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
@@ -385,15 +383,9 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
         private void createMetricDescriptorIfNecessary(MetricServiceClient client, Meter.Id id,
                                                        MetricDescriptor.ValueType valueType, @Nullable String statistic) {
-
-            if (verifiedDescriptors.isEmpty()) {
-                prePopulateVerifiedDescriptors();
-            }
-
-            final String metricType = metricType(id, statistic);
-            if (!verifiedDescriptors.contains(metricType)) {
+            if (!verifiedDescriptors.contains(id.getName())) {
                 MetricDescriptor descriptor = MetricDescriptor.newBuilder()
-                        .setType(metricType)
+                        .setType(metricType(id, statistic))
                         .setDescription(id.getDescription() == null ? "" : id.getDescription())
                         .setMetricKind(MetricDescriptor.MetricKind.GAUGE)
                         .setValueType(valueType)
@@ -410,37 +402,12 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
 
                 try {
                     client.createMetricDescriptor(request);
-                    verifiedDescriptors.add(metricType);
+                    verifiedDescriptors.add(id.getName());
                 } catch (ApiException e) {
                     logger.warn("failed to create metric descriptor in Stackdriver for meter " + id, e);
                 }
             }
         }
-
-        private void prePopulateVerifiedDescriptors() {
-            try {
-                if (client != null) {
-                    final String prefix = metricType(new Meter.Id("", Tags.empty(), null, null, Meter.Type.OTHER), null);
-                    final String filter = String.format("metric.type = starts_with(\"%s\")", prefix);
-                    final String projectName = "projects/" + config.projectId();
-
-                    final ListMetricDescriptorsRequest listMetricDescriptorsRequest = ListMetricDescriptorsRequest.newBuilder()
-                            .setName(projectName)
-                            .setFilter(filter)
-                            .build();
-
-                    final MetricServiceClient.ListMetricDescriptorsPagedResponse listMetricDescriptorsPagedResponse = client.listMetricDescriptors(listMetricDescriptorsRequest);
-                    listMetricDescriptorsPagedResponse.iterateAll().forEach(
-                            metricDescriptor -> verifiedDescriptors.add(metricDescriptor.getType()));
-
-                    logger.trace("Pre populated verified descriptors for project: {}, with filter: {}, existing metrics: {}", projectName, filter, verifiedDescriptors);
-                }
-            } catch (Exception e) {
-                // only log on warning and continue, this should not be a showstopper
-                logger.warn("Failed to pre populate verified descriptors for {}", config.projectId(), e);
-            }
-        }
-
 
         private String metricType(Meter.Id id, @Nullable String statistic) {
             StringBuilder metricType = new StringBuilder("custom.googleapis.com/").append(getConventionName(id));
@@ -481,9 +448,8 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             }
 
             // add the "+infinity" bucket, which does NOT have a corresponding bucket boundary
-            // BUGFIX LINE: https://github.com/micrometer-metrics/micrometer/issues/1325
-            bucketCounts.add(Math.max(snapshot.count(), truncatedSum.get()) - truncatedSum.get());
-
+            bucketCounts.add(snapshot.count() - truncatedSum.get());
+            
             List<Double> bucketBoundaries = Arrays.stream(histogram)
                     .map(countAtBucket -> timeDomain ? countAtBucket.bucket(getBaseTimeUnit()) : countAtBucket.bucket())
                     .collect(toCollection(ArrayList::new));
