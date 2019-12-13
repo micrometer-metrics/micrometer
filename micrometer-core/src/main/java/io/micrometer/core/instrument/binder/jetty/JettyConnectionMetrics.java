@@ -15,11 +15,11 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.eclipse.jetty.io.ConnectionStatistics;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class JettyConnectionMetrics implements MeterBinder {
 
@@ -46,31 +46,28 @@ public class JettyConnectionMetrics implements MeterBinder {
                 .description("The total number of connections")
                 .register(registry);
 
-        Gauge.builder("jetty.connector.bytesReceived", connectionStatistics, ConnectionStatistics::getReceivedBytesRate)
+        FunctionCounter.builder("jetty.connector.bytesReceived", connectionStatistics, ConnectionStatistics::getReceivedBytesRate)
                 .tags(tags)
                 .description("The rate of bytes received")
-                .baseUnit("bytes/second")
+                .baseUnit("bytes")
                 .register(registry);
-        Gauge.builder("jetty.connector.bytesSent", connectionStatistics, ConnectionStatistics::getSentBytesRate)
+        FunctionCounter.builder("jetty.connector.bytesSent", connectionStatistics, ConnectionStatistics::getSentBytesRate)
                 .tags(tags)
                 .description("The rate of bytes sent")
-                .baseUnit("bytes/second")
+                .baseUnit("bytes")
                 .register(registry);
 
-        Gauge.builder("jetty.connector.duration.max", connectionStatistics, ConnectionStatistics::getConnectionDurationMax)
+        TimeGauge.builder("jetty.connector.duration.max", connectionStatistics, MILLISECONDS, ConnectionStatistics::getConnectionDurationMax)
                 .tags(tags)
                 .description("The maximum connection lifetime duration")
-                .baseUnit("milliseconds")
                 .register(registry);
-        Gauge.builder("jetty.connector.duration.mean", connectionStatistics, ConnectionStatistics::getConnectionDurationMean)
+        TimeGauge.builder("jetty.connector.duration.mean", connectionStatistics, MILLISECONDS, ConnectionStatistics::getConnectionDurationMean)
                 .tags(tags)
                 .description("The mean connection lifetime duration")
-                .baseUnit("milliseconds")
                 .register(registry);
-        Gauge.builder("jetty.connector.duration.stddev", connectionStatistics, ConnectionStatistics::getConnectionDurationStdDev)
+        TimeGauge.builder("jetty.connector.duration.stddev", connectionStatistics, MILLISECONDS, ConnectionStatistics::getConnectionDurationStdDev)
                 .tags(tags)
                 .description("The standard deviation of the connection lifetime duration")
-                .baseUnit("milliseconds")
                 .register(registry);
     }
 }

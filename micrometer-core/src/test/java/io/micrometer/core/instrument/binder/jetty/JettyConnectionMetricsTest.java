@@ -96,11 +96,11 @@ public class JettyConnectionMetricsTest {
 
         assertTrue(latch.await(10, SECONDS));
 
-        assertThat(registry.get("jetty.connector.bytesSent").gauge().value()).isGreaterThan(0.0);
-        assertThat(registry.get("jetty.connector.bytesReceived").gauge().value()).isGreaterThan(0.0);
-        assertThat(registry.get("jetty.connector.duration.max").gauge().value()).isGreaterThan(0.0);
-        assertThat(registry.get("jetty.connector.duration.mean").gauge().value()).isGreaterThan(0.0);
-        assertThat(registry.get("jetty.connector.duration.stddev").gauge().value()).isNotNull();
+        assertThat(registry.get("jetty.connector.bytesSent").functionCounter().count()).isGreaterThan(0.0);
+        assertThat(registry.get("jetty.connector.bytesReceived").functionCounter().count()).isGreaterThan(0.0);
+        assertThat(registry.get("jetty.connector.duration.max").timeGauge().value()).isGreaterThan(0.0);
+        assertThat(registry.get("jetty.connector.duration.mean").timeGauge().value()).isGreaterThan(0.0);
+        assertThat(registry.get("jetty.connector.duration.stddev").timeGauge().value()).isNotNull();
     }
 
     private String getBaseUrl() {
