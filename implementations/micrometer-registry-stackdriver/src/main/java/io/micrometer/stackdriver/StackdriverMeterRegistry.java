@@ -354,13 +354,6 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             String metricType = metricType(id, statistic);
 
             Map<String, String> metricLabels = getConventionTags(id).stream()
-                    // label value cannot be more than 1024 characters. See https://cloud.google.com/monitoring/quotas#custom_metrics_quotas
-                    .peek(tag -> {
-                        if (tag.getValue().length() >= 1024) {
-                            logger.warn("Filtered out tag {}, for metric {}, because its value exceeded the max length of 1024 characters", tag.getKey(), metricType);
-                        }
-                    })
-                    .filter(tag -> tag.getValue().length() < 1024)
                     .collect(Collectors.toMap(Tag::getKey, Tag::getValue));
 
             return TimeSeries.newBuilder()
