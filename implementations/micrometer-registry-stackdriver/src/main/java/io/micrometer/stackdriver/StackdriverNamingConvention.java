@@ -69,7 +69,7 @@ public class StackdriverNamingConvention implements NamingConvention {
     }
 
     @Override
-    public String tagValue(final String value) {
+    public String tagValue(String value) {
         return StringUtils.truncate(value, MAX_TAG_VALUE_LENGTH);
     }
 }
