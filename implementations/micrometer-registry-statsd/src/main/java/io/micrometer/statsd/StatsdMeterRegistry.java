@@ -72,8 +72,10 @@ public class StatsdMeterRegistry extends MeterRegistry {
 
     private static final Processor<String, String> NOOP_PROCESSOR = new NoopProcessor();
 
-    private final StatsdConfig statsdConfig;
-    private final HierarchicalNameMapper nameMapper;
+    @SuppressWarnings("WeakerAccess")
+    protected final StatsdConfig statsdConfig;
+    @SuppressWarnings("WeakerAccess")
+    protected final HierarchicalNameMapper nameMapper;
     private final Map<Meter.Id, StatsdPollable> pollableMeters = new ConcurrentHashMap<>();
     private final AtomicBoolean started = new AtomicBoolean(false);
     Processor<String, String> processor = NOOP_PROCESSOR;
@@ -102,7 +104,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
         this(config, nameMapper, namingConventionFromFlavor(config.flavor()), clock, null, null);
     }
 
-    private StatsdMeterRegistry(StatsdConfig config,
+    @SuppressWarnings("WeakerAccess")
+    public StatsdMeterRegistry(StatsdConfig config,
                                 HierarchicalNameMapper nameMapper,
                                 NamingConvention namingConvention,
                                 Clock clock,
@@ -280,7 +283,8 @@ public class StatsdMeterRegistry extends MeterRegistry {
         return gauge;
     }
 
-    private StatsdLineBuilder lineBuilder(Meter.Id id) {
+    @SuppressWarnings("WeakerAccess")
+    protected StatsdLineBuilder lineBuilder(Meter.Id id) {
         if (lineBuilderFunction == null) {
             lineBuilderFunction = id2 -> {
                 switch (statsdConfig.flavor()) {
