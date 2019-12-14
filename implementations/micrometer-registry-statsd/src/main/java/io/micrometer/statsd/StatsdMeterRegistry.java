@@ -466,6 +466,11 @@ public class StatsdMeterRegistry extends MeterRegistry {
             return this;
         }
 
+        public Builder namingConvention(NamingConvention namingConvention) {
+            this.namingConvention = namingConvention;
+            return this;
+        }
+
         public Builder lineSink(Consumer<String> lineSink) {
             this.lineSink = lineSink;
             return this;
