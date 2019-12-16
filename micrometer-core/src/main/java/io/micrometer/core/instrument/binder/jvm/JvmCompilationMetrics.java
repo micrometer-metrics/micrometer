@@ -28,24 +28,29 @@ import java.lang.management.ManagementFactory;
 
 import static java.util.Collections.emptyList;
 
+/**
+ * {@link MeterBinder} for JVM compilation metrics.
+ *
+ * @since 1.4.0
+ */
 @NonNullApi
 @NonNullFields
-public class CompilationMetrics implements MeterBinder {
+public class JvmCompilationMetrics implements MeterBinder {
     private final Iterable<Tag> tags;
 
-    public CompilationMetrics() {
+    public JvmCompilationMetrics() {
         this(emptyList());
     }
 
-    public CompilationMetrics(Iterable<Tag> tags) {
+    public JvmCompilationMetrics(Iterable<Tag> tags) {
         this.tags = tags;
     }
 
     @Override
     public void bindTo(MeterRegistry registry) {
         CompilationMXBean compilationBean = ManagementFactory.getCompilationMXBean();
-        if (compilationBean.isCompilationTimeMonitoringSupported()) {
-            FunctionCounter.builder("jvm.compilation.time.total", compilationBean, CompilationMXBean::getTotalCompilationTime)
+        if (compilationBean != null && compilationBean.isCompilationTimeMonitoringSupported()) {
+            FunctionCounter.builder("jvm.compilation.time", compilationBean, CompilationMXBean::getTotalCompilationTime)
                     .tags(Tags.concat(tags, "compiler", compilationBean.getName()))
                     .description("The approximate accumulated elapsed time spent in compilation")
                     .baseUnit("ms")

@@ -19,14 +19,26 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import java.lang.management.CompilationMXBean;
+import java.lang.management.ManagementFactory;
 
-class CompilationMetricsTest {
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.Assume.assumeTrue;
+
+/**
+ * Tests for {@link JvmCompilationMetrics}.
+ */
+class JvmCompilationMetricsTest {
+
+    MeterRegistry registry = new SimpleMeterRegistry();
+
     @Test
     void compilationTimeMetric() {
-        MeterRegistry registry = new SimpleMeterRegistry();
-        new CompilationMetrics().bindTo(registry);
+        new JvmCompilationMetrics().bindTo(registry);
 
-        assertThat(registry.get("jvm.compilation.time.total").functionCounter().count()).isGreaterThan(0);
+        CompilationMXBean compilationMXBean = ManagementFactory.getCompilationMXBean();
+        assumeTrue(compilationMXBean != null && compilationMXBean.isCompilationTimeMonitoringSupported());
+
+        assertThat(registry.get("jvm.compilation.time").functionCounter().count()).isGreaterThan(0);
     }
 }
