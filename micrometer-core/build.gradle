@@ -83,7 +83,8 @@ dependencies {
 
     testCompile 'org.ehcache:ehcache:latest.release'
 
-    testCompile 'org.apache.kafka:kafka-clients:latest.release'
+    // Pin version temporarily to restore builds.
+    testCompile 'org.apache.kafka:kafka-clients:2.3.1'
 
     testCompile 'ru.lanwen.wiremock:wiremock-junit5:1.2.0'
     testCompile 'com.github.tomakehurst:wiremock:latest.release'
