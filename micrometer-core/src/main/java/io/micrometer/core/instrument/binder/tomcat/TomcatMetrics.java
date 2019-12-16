@@ -227,7 +227,7 @@ public class TomcatMetrics implements MeterBinder {
     private void registerMetricsEventually(String key, String value, BiConsumer<ObjectName, Iterable<Tag>> perObject, boolean hasName) {
         if (getJmxDomain() != null) {
             try {
-                String name = getJmxDomain() + ":" + key + "=" + value + (hasName ? ",name=*" : "");
+                String name = getJmxDomain() + ":" + key + "=" + value + (hasName ? ",name=*,*" : "");
                 Set<ObjectName> objectNames = this.mBeanServer.queryNames(new ObjectName(name), null);
                 if (!objectNames.isEmpty()) {
                     // MBean is present, so we can register metrics now.

@@ -228,6 +228,7 @@ class TomcatMetricsTest {
         assertThat(registry.get("tomcat.threads.current").gauge().value()).isGreaterThan(0.0);
         assertThat(registry.get("tomcat.cache.access").functionCounter().count()).isEqualTo(0.0);
         assertThat(registry.get("tomcat.cache.hit").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.servlet.error").functionCounter().count()).isEqualTo(0.0);
     }
 
     private void checkMbeansAfterRequests(long expectedSentBytes) {
@@ -242,5 +243,6 @@ class TomcatMetricsTest {
         assertThat(registry.get("tomcat.threads.current").gauge().value()).isGreaterThan(0.0);
         assertThat(registry.get("tomcat.cache.access").functionCounter().count()).isEqualTo(0.0);
         assertThat(registry.get("tomcat.cache.hit").functionCounter().count()).isEqualTo(0.0);
+        assertThat(registry.get("tomcat.servlet.error").functionCounter().count()).isEqualTo(1.0);
     }
 }
