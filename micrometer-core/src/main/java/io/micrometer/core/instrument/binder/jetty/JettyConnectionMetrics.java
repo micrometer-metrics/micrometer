@@ -75,12 +75,12 @@ public class JettyConnectionMetrics implements MeterBinder {
                 .description("The total number of connections")
                 .register(registry);
 
-        FunctionCounter.builder("jetty.connector.bytesReceived", connectionStatistics, ConnectionStatistics::getReceivedBytesRate)
+        FunctionCounter.builder("jetty.connector.received", connectionStatistics, ConnectionStatistics::getReceivedBytesRate)
                 .tags(tags)
                 .description("The rate of bytes received")
                 .baseUnit("bytes")
                 .register(registry);
-        FunctionCounter.builder("jetty.connector.bytesSent", connectionStatistics, ConnectionStatistics::getSentBytesRate)
+        FunctionCounter.builder("jetty.connector.sent", connectionStatistics, ConnectionStatistics::getSentBytesRate)
                 .tags(tags)
                 .description("The rate of bytes sent")
                 .baseUnit("bytes")

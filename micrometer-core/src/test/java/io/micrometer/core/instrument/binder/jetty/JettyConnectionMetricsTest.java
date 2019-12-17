@@ -96,8 +96,8 @@ public class JettyConnectionMetricsTest {
 
         assertTrue(latch.await(10, SECONDS));
 
-        assertThat(registry.get("jetty.connector.bytesSent").functionCounter().count()).isGreaterThan(0.0);
-        assertThat(registry.get("jetty.connector.bytesReceived").functionCounter().count()).isGreaterThan(0.0);
+        assertThat(registry.get("jetty.connector.sent").functionCounter().count()).isGreaterThan(0.0);
+        assertThat(registry.get("jetty.connector.received").functionCounter().count()).isGreaterThan(0.0);
     }
 
     private String getBaseUrl() {
