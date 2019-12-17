@@ -15,12 +15,14 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.FunctionCounter;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import org.eclipse.jetty.io.ConnectionStatistics;
 
 import static java.util.Collections.emptyList;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * {@link MeterBinder} for Jetty's connection metrics.<br><br>
@@ -82,19 +84,6 @@ public class JettyConnectionMetrics implements MeterBinder {
                 .tags(tags)
                 .description("The rate of bytes sent")
                 .baseUnit("bytes")
-                .register(registry);
-
-        TimeGauge.builder("jetty.connector.duration.max", connectionStatistics, MILLISECONDS, ConnectionStatistics::getConnectionDurationMax)
-                .tags(tags)
-                .description("The maximum connection lifetime duration")
-                .register(registry);
-        TimeGauge.builder("jetty.connector.duration.mean", connectionStatistics, MILLISECONDS, ConnectionStatistics::getConnectionDurationMean)
-                .tags(tags)
-                .description("The mean connection lifetime duration")
-                .register(registry);
-        TimeGauge.builder("jetty.connector.duration.stddev", connectionStatistics, MILLISECONDS, ConnectionStatistics::getConnectionDurationStdDev)
-                .tags(tags)
-                .description("The standard deviation of the connection lifetime duration")
                 .register(registry);
     }
 }
