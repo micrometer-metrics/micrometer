@@ -81,7 +81,7 @@ public class JettyConnectionMetricsTest {
         try (CloseableHttpResponse response = client.execute(post)) {
             assertThat(registry.get("jetty.connector.connections.max").gauge().value()).isEqualTo(1.0);
             assertThat(registry.get("jetty.connector.connections.current").gauge().value()).isEqualTo(1.0);
-            assertThat(registry.get("jetty.connector.connections.total").gauge().value()).isEqualTo(1.0);
+            assertThat(registry.get("jetty.connector.connections.total").functionCounter().count()).isEqualTo(1.0);
         }
 
         CountDownLatch latch = new CountDownLatch(1);

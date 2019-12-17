@@ -70,7 +70,7 @@ public class JettyConnectionMetrics implements MeterBinder {
                 .tags(tags)
                 .description("The maximum number of connections")
                 .register(registry);
-        Gauge.builder("jetty.connector.connections.total", connectionStatistics, ConnectionStatistics::getConnectionsTotal)
+        FunctionCounter.builder("jetty.connector.connections.total", connectionStatistics, ConnectionStatistics::getConnectionsTotal)
                 .tags(tags)
                 .description("The total number of connections")
                 .register(registry);
