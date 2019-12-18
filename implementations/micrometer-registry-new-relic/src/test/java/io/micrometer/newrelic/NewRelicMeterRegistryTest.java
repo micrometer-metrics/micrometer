@@ -534,10 +534,16 @@ class NewRelicMeterRegistryTest {
         Gauge gauge = registry.find("my.gauge").gauge();
         assertThat(gauge).isNotNull();
         
+        registry.gauge("other.gauge", 2d);
+        Gauge other = registry.find("other.gauge").gauge();
+        assertThat(other).isNotNull();
+        
         registry.publish();
 
+        //should send a batch of multiple
         assertThat(new String(mockHttpClient.getRequest().getEntity()))
-                        .contains("{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\"}");        
+                        .contains("[{\"eventType\":\"MicrometerSample\",\"value\":2,\"metricName\":\"otherGauge\",\"metricType\":\"GAUGE\"}," +
+                                "{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\"}]");
     }
 
     @Test
