@@ -41,7 +41,7 @@ public interface PrometheusConfig extends MeterRegistryConfig {
      */
     default boolean descriptions() {
         String v = get(prefix() + ".descriptions");
-        return v == null || Boolean.valueOf(v);
+        return v == null || Boolean.parseBoolean(v);
     }
 
     /**

@@ -60,7 +60,7 @@ public interface StatsdConfig extends MeterRegistryConfig {
      */
     default boolean enabled() {
         String v = get(prefix() + ".enabled");
-        return v == null || Boolean.valueOf(v);
+        return v == null || Boolean.parseBoolean(v);
     }
 
     /**
@@ -150,7 +150,7 @@ public interface StatsdConfig extends MeterRegistryConfig {
      */
     default boolean publishUnchangedMeters() {
         String v = get(prefix() + ".publishUnchangedMeters");
-        return v == null || Boolean.valueOf(v);
+        return v == null || Boolean.parseBoolean(v);
     }
 
     /**
@@ -160,6 +160,6 @@ public interface StatsdConfig extends MeterRegistryConfig {
      */
     default boolean buffered() {
         String v = get(prefix() + ".buffered");
-        return v == null || Boolean.valueOf(v);
+        return v == null || Boolean.parseBoolean(v);
     }
 }

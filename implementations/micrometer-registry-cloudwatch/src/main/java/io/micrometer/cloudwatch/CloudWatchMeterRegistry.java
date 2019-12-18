@@ -143,7 +143,9 @@ public class CloudWatchMeterRegistry extends StepMeterRegistry {
             }
         });
         try {
-            latch.await(config.readTimeout().toMillis(), TimeUnit.MILLISECONDS);
+            @SuppressWarnings("deprecation")
+            long readTimeoutMillis = config.readTimeout().toMillis();
+            latch.await(readTimeoutMillis, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             logger.warn("metrics push to cloudwatch took longer than expected");
             throw e;
