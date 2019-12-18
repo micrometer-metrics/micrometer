@@ -31,25 +31,25 @@ import io.micrometer.core.instrument.config.NamingConvention;
  */
 public interface NewRelicClientProvider {
     //long task timer
-    static final String DURATION = "duration";
-    static final String ACTIVE_TASKS = "activeTasks";
+    String DURATION = "duration";
+    String ACTIVE_TASKS = "activeTasks";
     //distribution summary & timer
-    static final String MAX = "max";
-    static final String TOTAL = "total";
-    static final String AVG = "avg";
-    static final String COUNT = "count";
+    String MAX = "max";
+    String TOTAL = "total";
+    String AVG = "avg";
+    String COUNT = "count";
     //timer
-    static final String TOTAL_TIME = "totalTime";
-    static final String TIME = "time";
+    String TOTAL_TIME = "totalTime";
+    String TIME = "time";
     //gauge
-    static final String VALUE = "value";
+    String VALUE = "value";
     //counter
-    static final String THROUGHPUT = "throughput";  //TODO Why not "count"? ..confusing if just counting something
+    String THROUGHPUT = "throughput";  //TODO Why not "count"? ..confusing if just counting something
     //timer
-    static final String TIME_UNIT = "timeUnit";
+    String TIME_UNIT = "timeUnit";
     //all
-    static final String METRIC_TYPE = "metricType";
-    static final String METRIC_NAME = "metricName";
+    String METRIC_TYPE = "metricType";
+    String METRIC_NAME = "metricName";
 
     default String getEventType(Meter.Id id, NewRelicConfig config, NamingConvention namingConvention) {
         String eventType = null;
