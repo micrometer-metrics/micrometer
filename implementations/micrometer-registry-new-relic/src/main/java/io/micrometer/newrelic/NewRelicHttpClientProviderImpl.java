@@ -94,21 +94,16 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
         // New Relic's Insights API limits us to 1000 events per call
         // 1:1 mapping between Micrometer meters and New Relic events
         for (List<Meter> batch : MeterPartition.partition(meterRegistry, Math.min(config.batchSize(), 1000))) {
-            for (Meter meter : batch) {
-                sendEvents(meter.getId(),
-                        meter.match(
-                                this::writeGauge,
-                                this::writeCounter,
-                                this::writeTimer,
-                                this::writeSummary,
-                                this::writeLongTaskTimer,
-                                this::writeTimeGauge,
-                                this::writeFunctionCounter,
-                                this::writeFunctionTimer,
-                                this::writeMeter
-                        )
-                );
-            }
+            sendEvents(batch.stream().flatMap(meter -> meter.match(
+                    this::writeGauge,
+                    this::writeCounter,
+                    this::writeTimer,
+                    this::writeSummary,
+                    this::writeLongTaskTimer,
+                    this::writeTimeGauge,
+                    this::writeFunctionCounter,
+                    this::writeFunctionTimer,
+                    this::writeMeter)));
         }
     }
     
@@ -257,7 +252,7 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
                 .collect(Collectors.joining("", "{\"eventType\":\"" + escapeJson(eventType) + "\"", tagsJson + "}"));
     }
 
-    void sendEvents(Meter.Id id, Stream<String> events) {
+    void sendEvents(Stream<String> events) {
         try {
             AtomicInteger totalEvents = new AtomicInteger();
 

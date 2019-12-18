@@ -469,7 +469,7 @@ class NewRelicMeterRegistryTest {
         registry.gauge("my.gauge", 1d);
         Gauge gauge = registry.find("my.gauge").gauge();
                
-        httpProvider.sendEvents(gauge.getId(), httpProvider.writeGauge(gauge));
+        httpProvider.sendEvents(httpProvider.writeGauge(gauge));
 
         assertThat(new String(mockHttpClient.getRequest().getEntity()))
                         .contains("{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\"}");
@@ -482,7 +482,7 @@ class NewRelicMeterRegistryTest {
         registry.gauge("my.gauge2", 1d);
         gauge = registry.find("my.gauge2").gauge();
         
-        httpProvider.sendEvents(gauge.getId(), httpProvider.writeGauge(gauge));
+        httpProvider.sendEvents(httpProvider.writeGauge(gauge));
         
         assertThat(new String(mockHttpClient.getRequest().getEntity()))
                                         .contains("{\"eventType\":\"myGauge2\",\"value\":1}");        
