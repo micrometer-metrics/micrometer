@@ -61,27 +61,13 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
         this(config, clientProvider, new NewRelicNamingConvention(), clock, DEFAULT_THREAD_FACTORY);
     }
 
-    /**
-     * @param config Configuration options for the registry that are describable as properties.
-     * @param clientProvider Provider of the HTTP or Agent-based client that publishes metrics to New Relic
-     * @param namingConvention Naming convention to apply before metric publishing
-     * @param clock  The clock to use for timings.
-     * @param threadFactory The thread factory to use to create the publishing thread.
-     * @deprecated Use {@link #builder(NewRelicConfig)} instead.
-     */
-    @Deprecated  // VisibleForTesting
+    // VisibleForTesting
     NewRelicMeterRegistry(NewRelicConfig config, NewRelicClientProvider clientProvider,  
                 NamingConvention namingConvention, Clock clock, ThreadFactory threadFactory) {
         super(config, clock);
 
         if (clientProvider == null) {
             throw new MissingRequiredConfigurationException("clientProvider required to report metrics to New Relic");
-        }
-        if (namingConvention == null) {
-            throw new MissingRequiredConfigurationException("namingConvention must be set to report metrics to New Relic");
-        }
-        if (threadFactory == null) {
-            throw new MissingRequiredConfigurationException("threadFactory must be set to report metrics to New Relic");
         }
         
         this.config = config;
@@ -105,7 +91,7 @@ public class NewRelicMeterRegistry extends StepMeterRegistry {
     
     @Override
     protected void publish() {
-        clientProvider.publish(this, getMeters());
+        clientProvider.publish(this);
     }
 
     @Override

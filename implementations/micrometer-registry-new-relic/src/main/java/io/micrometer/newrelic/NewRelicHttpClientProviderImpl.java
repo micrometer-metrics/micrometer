@@ -90,7 +90,7 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
     }
 
     @Override
-    public void publish(NewRelicMeterRegistry meterRegistry, List<Meter> meters) {
+    public void publish(NewRelicMeterRegistry meterRegistry) {
         // New Relic's Insights API limits us to 1000 events per call
         // 1:1 mapping between Micrometer meters and New Relic events
         for (List<Meter> batch : MeterPartition.partition(meterRegistry, Math.min(config.batchSize(), 1000))) {

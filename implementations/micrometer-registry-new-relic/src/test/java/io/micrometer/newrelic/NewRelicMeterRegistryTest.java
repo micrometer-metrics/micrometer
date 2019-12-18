@@ -50,7 +50,6 @@ import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
-import io.micrometer.core.instrument.util.NamedThreadFactory;
 import io.micrometer.core.ipc.http.HttpSender;
 import io.micrometer.newrelic.NewRelicMeterRegistryTest.MockNewRelicAgent.MockNewRelicInsights;
 
@@ -575,36 +574,6 @@ class NewRelicMeterRegistryTest {
             .hasMessageContaining("clientProvider");
     }
     
-    @SuppressWarnings("deprecation")
-    @Test
-    void failsConfigMissingNamingConvention() {
-        NewRelicConfig config = new NewRelicConfig() {
-            @Override
-            public String get(String key) {
-                return null;
-            }
-        };
-        
-        assertThatThrownBy(() -> new NewRelicMeterRegistry(config, new MockClientProvider(), null, clock, new NamedThreadFactory("test")))
-            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
-            .hasMessageContaining("namingConvention");
-    }
-    
-    @SuppressWarnings("deprecation")
-    @Test
-    void failsConfigMissingThreadFactory() {
-        NewRelicConfig config = new NewRelicConfig() {
-            @Override
-            public String get(String key) {
-                return null;
-            }
-        };
-        
-        assertThatThrownBy(() -> new NewRelicMeterRegistry(config, new MockClientProvider(), new NewRelicNamingConvention(), clock, null))
-            .isExactlyInstanceOf(MissingRequiredConfigurationException.class)
-            .hasMessageContaining("threadFactory");
-    }
-    
     @Test
     void failsConfigHttpMissingEventType() {
         NewRelicConfig config = new NewRelicConfig() {
@@ -785,7 +754,7 @@ class NewRelicMeterRegistryTest {
     class MockClientProvider implements NewRelicClientProvider {
 
         @Override
-        public void publish(NewRelicMeterRegistry meterRegistry, List<Meter> meters) {
+        public void publish(NewRelicMeterRegistry meterRegistry) {
             //No-op
         }
 

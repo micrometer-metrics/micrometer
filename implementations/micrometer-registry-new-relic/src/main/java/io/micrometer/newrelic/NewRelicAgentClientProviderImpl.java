@@ -16,7 +16,6 @@
 package io.micrometer.newrelic;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -71,11 +70,11 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
     }
 
     @Override
-    public void publish(NewRelicMeterRegistry meterRegistry, List<Meter> meters) {
+    public void publish(NewRelicMeterRegistry meterRegistry) {
         // New Relic's Java Agent Insights API is backed by a reservoir/buffer
         // and handles the actual publishing of events to New Relic.
         // 1:1 mapping between Micrometer meters and New Relic events
-        for (Meter meter : meters) {
+        for (Meter meter : meterRegistry.getMeters()) {
             sendEvents(
                     meter.getId(), 
                         meter.match(

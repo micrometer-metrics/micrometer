@@ -15,8 +15,6 @@
  */
 package io.micrometer.newrelic;
 
-import java.util.List;
-
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.FunctionCounter;
@@ -65,7 +63,7 @@ public interface NewRelicClientProvider {
         return eventType;
     }
 
-    void publish(NewRelicMeterRegistry meterRegistry, List<Meter> meters);
+    void publish(NewRelicMeterRegistry meterRegistry);
 
     Object writeFunctionTimer(FunctionTimer timer);
 
