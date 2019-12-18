@@ -257,22 +257,18 @@ public class NewRelicHttpClientProviderImpl implements NewRelicClientProvider {
                 .collect(Collectors.joining("", "{\"eventType\":\"" + escapeJson(eventType) + "\"", tagsJson + "}"));
     }
 
-    void sendEvents(Meter.Id id, Object attributesObj) {
-        if (attributesObj instanceof Stream) {
-            @SuppressWarnings("unchecked")
-            Stream<String> events = (Stream<String>)attributesObj;
-            try {
-                AtomicInteger totalEvents = new AtomicInteger();
+    void sendEvents(Meter.Id id, Stream<String> events) {
+        try {
+            AtomicInteger totalEvents = new AtomicInteger();
 
-                httpClient.post(insightsEndpoint)
-                        .withHeader("X-Insert-Key", config.apiKey())
-                        .withJsonContent(events.peek(ev -> totalEvents.incrementAndGet()).collect(Collectors.joining(",", "[", "]")))
-                        .send()
-                        .onSuccess(response -> logger.debug("successfully sent {} metrics to New Relic.", totalEvents))
-                        .onError(response -> logger.error("failed to send metrics to new relic: http {} {}", response.code(), response.body()));
-            } catch (Throwable e) {
-                logger.warn("failed to send metrics to new relic", e);
-            }            
+            httpClient.post(insightsEndpoint)
+                    .withHeader("X-Insert-Key", config.apiKey())
+                    .withJsonContent(events.peek(ev -> totalEvents.incrementAndGet()).collect(Collectors.joining(",", "[", "]")))
+                    .send()
+                    .onSuccess(response -> logger.debug("successfully sent {} metrics to New Relic.", totalEvents))
+                    .onError(response -> logger.error("failed to send metrics to new relic: http {} {}", response.code(), response.body()));
+        } catch (Throwable e) {
+            logger.warn("failed to send metrics to new relic", e);
         }
     }
 

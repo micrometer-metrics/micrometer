@@ -237,19 +237,14 @@ public class NewRelicAgentClientProviderImpl implements NewRelicClientProvider {
         attributes.put(namingConvention.tagKey(key), namingConvention.tagValue(value));
     }
 
-    void sendEvents(Meter.Id id, Object attributesObj) {
-        if (attributesObj instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> attributes = (Map<String, Object>)attributesObj;
-    
-            //Delegate to New Relic Java Agent
-            if (attributes != null && attributes.isEmpty() == false) {
-                String eventType = getEventType(id, config, namingConvention);
-                try {
-                    newRelicAgent.getInsights().recordCustomEvent(eventType, attributes);
-                } catch (Throwable e) {
-                    logger.warn("failed to send metrics to new relic", e);
-                }
+    void sendEvents(Meter.Id id, Map<String, Object> attributes) {
+        //Delegate to New Relic Java Agent
+        if (attributes != null && attributes.isEmpty() == false) {
+            String eventType = getEventType(id, config, namingConvention);
+            try {
+                newRelicAgent.getInsights().recordCustomEvent(eventType, attributes);
+            } catch (Throwable e) {
+                logger.warn("failed to send metrics to new relic", e);
             }
         }
     }
