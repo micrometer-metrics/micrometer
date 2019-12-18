@@ -530,7 +530,7 @@ class NewRelicMeterRegistryTest {
         
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(httpConfig, httpProvider, clock);
         
-        registry.gauge("my.gauge", 1d);
+        registry.gauge("my.gauge", Tags.of("theTag", "theValue"), 1d);
         Gauge gauge = registry.find("my.gauge").gauge();
         assertThat(gauge).isNotNull();
         
@@ -540,10 +540,10 @@ class NewRelicMeterRegistryTest {
         
         registry.publish();
 
-        //should send a batch of multiple
+        //should send a batch of multiple in one json payload
         assertThat(new String(mockHttpClient.getRequest().getEntity()))
                         .contains("[{\"eventType\":\"MicrometerSample\",\"value\":2,\"metricName\":\"otherGauge\",\"metricType\":\"GAUGE\"}," +
-                                "{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\"}]");
+                            "{\"eventType\":\"MicrometerSample\",\"value\":1,\"metricName\":\"myGauge\",\"metricType\":\"GAUGE\",\"theTag\":\"theValue\"}]");
     }
 
     @Test
@@ -555,15 +555,20 @@ class NewRelicMeterRegistryTest {
         
         NewRelicMeterRegistry registry = new NewRelicMeterRegistry(agentConfig, agentProvider, clock);
         
-        registry.gauge("my.gauge", 1d);
+        registry.gauge("my.gauge", Tags.of("theTag", "theValue"), 1d);
         Gauge gauge = registry.find("my.gauge").gauge();
-        assertThat(gauge).isNotNull();       
+        assertThat(gauge).isNotNull();
+        
+        registry.gauge("other.gauge", 2d);
+        Gauge other = registry.find("other.gauge").gauge();
+        assertThat(other).isNotNull();
         
         registry.publish();
         
+        //should delegate to the Agent one at a time
         assertThat(((MockNewRelicInsights)mockNewRelicAgent.getInsights()).getInsightData().getEventType()).isEqualTo("MicrometerSample");
         Map<String, ?> result = ((MockNewRelicInsights)mockNewRelicAgent.getInsights()).getInsightData().getAttributes();
-        assertThat(result).hasSize(3);       
+        assertThat(result).hasSize(4);       
     }
     
     @Test
