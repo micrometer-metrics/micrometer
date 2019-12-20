@@ -57,6 +57,8 @@ dependencies {
 
     compile 'org.mongodb:mongo-java-driver:latest.release', optional
 
+    compile 'org.jooq:jooq-meta:latest.release', optional
+
     testCompile 'io.projectreactor:reactor-test:latest.release'
 
     // JUnit 5
@@ -76,6 +78,8 @@ dependencies {
     testCompile 'org.springframework:spring-context:4.+'
     testCompile 'org.springframework:spring-test:4.+'
     testCompile 'com.google.inject:guice:4.1.0'
+
+    testCompile 'com.h2database:h2:latest.release'
 
     // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
 //    testCompile 'com.google.dagger:dagger:2.11'
