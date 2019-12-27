@@ -42,6 +42,31 @@ public final class BaseUnits {
      */
     public static final String THREADS = "threads";
 
+    /**
+     * For classes.
+     */
+    public static final String CLASSES = "classes";
+
+    /**
+     * For buffers.
+     */
+    public static final String BUFFERS = "buffers";
+
+    /**
+     * For events.
+     */
+    public static final String EVENTS = "events";
+
+    /**
+     * For files.
+     */
+    public static final String FILES = "files";
+
+    /**
+     * For sessions.
+     */
+    public static final String SESSIONS = "sessions";
+
     private BaseUnits() {
     }
 

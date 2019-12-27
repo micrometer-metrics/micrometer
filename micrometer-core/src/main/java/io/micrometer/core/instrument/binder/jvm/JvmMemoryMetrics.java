@@ -63,7 +63,7 @@ public class JvmMemoryMetrics implements MeterBinder {
             Gauge.builder("jvm.buffer.count", bufferPoolBean, BufferPoolMXBean::getCount)
                     .tags(tagsWithId)
                     .description("An estimate of the number of buffers in the pool")
-                    .baseUnit("buffers")
+                    .baseUnit(BaseUnits.BUFFERS)
                     .register(registry);
 
             Gauge.builder("jvm.buffer.memory.used", bufferPoolBean, BufferPoolMXBean::getMemoryUsed)

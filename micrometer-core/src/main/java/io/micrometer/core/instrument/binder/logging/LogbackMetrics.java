@@ -23,6 +23,7 @@ import ch.qos.logback.core.spi.FilterReply;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -99,31 +100,31 @@ class MetricsTurboFilter extends TurboFilter {
         errorCounter = Counter.builder("logback.events")
                 .tags(tags).tags("level", "error")
                 .description("Number of error level events that made it to the logs")
-                .baseUnit("events")
+                .baseUnit(BaseUnits.EVENTS)
                 .register(registry);
 
         warnCounter = Counter.builder("logback.events")
                 .tags(tags).tags("level", "warn")
                 .description("Number of warn level events that made it to the logs")
-                .baseUnit("events")
+                .baseUnit(BaseUnits.EVENTS)
                 .register(registry);
 
         infoCounter = Counter.builder("logback.events")
                 .tags(tags).tags("level", "info")
                 .description("Number of info level events that made it to the logs")
-                .baseUnit("events")
+                .baseUnit(BaseUnits.EVENTS)
                 .register(registry);
 
         debugCounter = Counter.builder("logback.events")
                 .tags(tags).tags("level", "debug")
                 .description("Number of debug level events that made it to the logs")
-                .baseUnit("events")
+                .baseUnit(BaseUnits.EVENTS)
                 .register(registry);
 
         traceCounter = Counter.builder("logback.events")
                 .tags(tags).tags("level", "trace")
                 .description("Number of trace level events that made it to the logs")
-                .baseUnit("events")
+                .baseUnit(BaseUnits.EVENTS)
                 .register(registry);
     }
 
