@@ -52,6 +52,7 @@ public @interface Counted {
      *
      * @return key-value pair of tags
      * @see io.micrometer.core.instrument.Counter.Builder#tags(String...)
+     * @since 1.4.0
      */
     String[] extraTags() default {};
 
