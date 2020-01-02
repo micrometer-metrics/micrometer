@@ -19,6 +19,8 @@ import io.micrometer.core.instrument.push.PushRegistryConfig;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 import io.micrometer.core.lang.Nullable;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.Duration;
 
 /**
@@ -34,15 +36,16 @@ public interface ZabbixConfig extends StepRegistryConfig {
     /**
      * @return The hostname of the Zabbix installation where the metrics will be shipped.
      */
-    default String host() {
-        return get(prefix() + ".host");
+    default String instanceHost() {
+        String v = get(prefix() + ".instanceHost");
+        return (v == null) ? "localhost" : v;
     }
 
     /**
      * @return The port of the Zabbix installation where the metrics will be shipped.
      */
-    default int port() {
-        String v = get(prefix() + ".port");
+    default int instancePort() {
+        String v = get(prefix() + ".instancePort");
         return v == null ? 10051 : Integer.parseInt(v);
     }
 
@@ -50,10 +53,16 @@ public interface ZabbixConfig extends StepRegistryConfig {
      * @return The name of the host for the instance that is monitored.
      * @see <a href="https://www.zabbix.com/documentation/current/manual/config/hosts/host">Zabbix Host Configuration</a>
      */
-    @Nullable
-    default String hostTag() {
-        String v = get(prefix() + ".hostTag");
-        return v == null ? "instance" : v;
+    default String host() {
+        String v = get(prefix() + ".host");
+        if (v != null)
+            return v;
+
+        try {
+            return InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException uhe) {
+            return "unknown";
+        }
     }
 
     /**

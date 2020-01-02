@@ -15,16 +15,38 @@
  */
 package io.micrometer.zabbix;
 
+import io.github.hengyunabc.zabbix.sender.SenderResult;
+import io.github.hengyunabc.zabbix.sender.ZabbixSender;
+import io.micrometer.core.lang.Nullable;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
+import java.io.IOException;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.*;
 
 class ZabbixDiscoveryPublisherTest {
+
+    final ZabbixConfig config = new ZabbixConfig() {
+        @Override
+        public boolean enabled() {
+            return false;
+        }
+
+        @Override
+        @Nullable
+        public String get(String key) {
+            return null;
+        }
+    };
 
     @Test
     void buildEmptyMetricAnnouncement() {
@@ -36,7 +58,7 @@ class ZabbixDiscoveryPublisherTest {
     void buildSingleConfigurationMetricAnnouncement() {
         final String metricAnnouncement = ZabbixDiscoveryPublisher.buildMetricAnnouncement(
                 Collections.singleton(new ZabbixDiscoveryItem.ZabbixDiscoveryItemConfiguration(
-                        Collections.singletonMap("key", "value"))));
+                        singletonMap("key", "value"))));
         assertThat(metricAnnouncement).isEqualTo("{\"data\":[{\"{#KEY}\":\"value\"}]}");
     }
 
@@ -61,8 +83,72 @@ class ZabbixDiscoveryPublisherTest {
     void buildSingleConfigurationWithJsonEscapeCharactersMetricAnnouncement() {
         final String metricAnnouncement = ZabbixDiscoveryPublisher.buildMetricAnnouncement(
                 Collections.singleton(new ZabbixDiscoveryItem.ZabbixDiscoveryItemConfiguration(
-                        Collections.singletonMap("key", "v\"alu\"e"))));
+                        singletonMap("key", "v\"alu\"e"))));
         assertThat(metricAnnouncement).isEqualTo("{\"data\":[{\"{#KEY}\":\"v\\\"alu\\\"e\"}]}");
+    }
+
+    @Test
+    void newDiscoveryItemShouldBePublished() throws IOException {
+        final ZabbixSender zabbixSender = Mockito.mock(ZabbixSender.class);
+        final ZabbixDiscoveryPublisher zabbixDiscoveryPublisher = new ZabbixDiscoveryPublisher(zabbixSender, config);
+        when(zabbixSender.send(anyList())).thenReturn(new SenderResult());
+        zabbixDiscoveryPublisher.publish(Collections.singletonList(ZabbixDiscoveryItem.builder().key("discovery").addValue(new ZabbixDiscoveryItem.ZabbixDiscoveryItemConfiguration(
+                singletonMap("key", "value"))).build()));
+        verify(zabbixSender, times(1)).send(anyList());
+    }
+
+    @Test
+    void existingUnchangedDiscoveryItemShouldNotBePublished() throws IOException {
+        final ZabbixSender zabbixSender = Mockito.mock(ZabbixSender.class);
+        final ZabbixDiscoveryPublisher zabbixDiscoveryPublisher = new ZabbixDiscoveryPublisher(zabbixSender, config);
+        when(zabbixSender.send(anyList())).thenReturn(new SenderResult());
+        zabbixDiscoveryPublisher.publish(Collections.singletonList(ZabbixDiscoveryItem.builder().key("discovery").addValue(new ZabbixDiscoveryItem.ZabbixDiscoveryItemConfiguration(
+                singletonMap("key", "value"))).build()));
+        zabbixDiscoveryPublisher.publish(Collections.singletonList(ZabbixDiscoveryItem.builder().key("discovery").addValue(new ZabbixDiscoveryItem.ZabbixDiscoveryItemConfiguration(
+                singletonMap("key", "value"))).build()));
+        verify(zabbixSender, times(1)).send(anyList());
+    }
+
+    @Test
+    void changedDiscoveryItemShouldBePublishedAgain() throws IOException {
+        final ZabbixSender zabbixSender = Mockito.mock(ZabbixSender.class);
+        final ZabbixDiscoveryPublisher zabbixDiscoveryPublisher = new ZabbixDiscoveryPublisher(zabbixSender, config);
+        when(zabbixSender.send(anyList())).thenReturn(new SenderResult());
+        zabbixDiscoveryPublisher.publish(Collections.singletonList(ZabbixDiscoveryItem.builder().key("discovery").addValue(new ZabbixDiscoveryItem.ZabbixDiscoveryItemConfiguration(
+                singletonMap("key", "value"))).build()));
+        zabbixDiscoveryPublisher.publish(Collections.singletonList(ZabbixDiscoveryItem.builder().key("discovery").addValue(new ZabbixDiscoveryItem.ZabbixDiscoveryItemConfiguration(
+                singletonMap("key", "value1"))).build()));
+        verify(zabbixSender, times(2)).send(anyList());
+    }
+
+    @Test
+    void unchangedDiscoveryItemShouldBePublishedAgainAfterDiscoveryDelay() throws IOException {
+        final ZabbixConfig config = new ZabbixConfig() {
+            @Override
+            public boolean enabled() {
+                return false;
+            }
+
+            @Override
+            @Nullable
+            public String get(String key) {
+                return null;
+            }
+
+            @Override
+            public Duration discoveryDelay() {
+                return Duration.ofMillis(0L);
+            }
+        };
+
+        final ZabbixSender zabbixSender = Mockito.mock(ZabbixSender.class);
+        final ZabbixDiscoveryPublisher zabbixDiscoveryPublisher = new ZabbixDiscoveryPublisher(zabbixSender, config);
+        when(zabbixSender.send(anyList())).thenReturn(new SenderResult());
+        zabbixDiscoveryPublisher.publish(Collections.singletonList(ZabbixDiscoveryItem.builder().key("discovery").addValue(new ZabbixDiscoveryItem.ZabbixDiscoveryItemConfiguration(
+                singletonMap("key", "value"))).build()));
+        zabbixDiscoveryPublisher.publish(Collections.singletonList(ZabbixDiscoveryItem.builder().key("discovery").addValue(new ZabbixDiscoveryItem.ZabbixDiscoveryItemConfiguration(
+                singletonMap("key", "value"))).build()));
+        verify(zabbixSender, times(2)).send(anyList());
     }
 
 }

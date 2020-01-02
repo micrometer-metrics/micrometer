@@ -96,7 +96,7 @@ public class ZabbixDiscoveryPublisher {
 
             final List<DataObject> requestBody = eligibleDiscoveryItems.stream()
                     .map(item -> DataObject.builder()
-                            .host(config.hostTag())
+                            .host(config.host())
                             .key(item.getKey())
                             .value(buildMetricAnnouncement(item.getValues()))
                             .build())
@@ -107,10 +107,10 @@ public class ZabbixDiscoveryPublisher {
             if (!senderResult.success()) {
                 logger.debug("failed discovery payload: {}", requestBody);
                 logger.error("failed to send discovery to Zabbix @ {}:{} (sent {} items but created {} items): {}",
-                        config.host(), config.port(), senderResult.getTotal(), senderResult.getProcessed(),
+                        config.instanceHost(), config.instancePort(), senderResult.getTotal(), senderResult.getProcessed(),
                         senderResult);
             } else {
-                eligibleDiscoveryItems.stream().forEach(item -> {
+                eligibleDiscoveryItems.forEach(item -> {
                     item.setLastSent(now);
                     sentItems.put(item.getKey(), item);
                 });

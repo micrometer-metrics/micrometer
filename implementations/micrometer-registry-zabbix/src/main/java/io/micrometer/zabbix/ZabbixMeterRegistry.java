@@ -45,7 +45,6 @@ import static java.util.stream.StreamSupport.stream;
  */
 public class ZabbixMeterRegistry extends StepMeterRegistry {
 
-
     public static final String KEY_SUFFIX_EMPTY = "";
     public static final String KEY_SUFFIX_VALUE = "value";
     public static final String KEY_SUFFIX_AVG = "avg";
@@ -66,7 +65,7 @@ public class ZabbixMeterRegistry extends StepMeterRegistry {
     @SuppressWarnings("deprecation")
     public ZabbixMeterRegistry(ZabbixConfig config, Clock clock, final ZabbixDiscoveryProvider discoveryProvider) {
         this(config, clock, DEFAULT_THREAD_FACTORY,
-                new ZabbixSender(config.host(), config.port(), Math.toIntExact(config.connectTimeout().toMillis()),
+                new ZabbixSender(config.instanceHost(), config.instancePort(), Math.toIntExact(config.connectTimeout().toMillis()),
                         Math.toIntExact(config.readTimeout().toMillis())),
                 new ZabbixKeyNameGenerator(), discoveryProvider);
     }
@@ -91,8 +90,8 @@ public class ZabbixMeterRegistry extends StepMeterRegistry {
     @Override
     public void start(final ThreadFactory threadFactory) {
         if (config.enabled()) {
-            logger.info("Publishing metrics to Zabbix at " + config.host() + ":" + config.port() + "  every "
-                    + TimeUtils.format(config.step()));
+            logger.info("Publishing metrics to Zabbix at {}:{} every {}",
+                    config.instanceHost(), config.instancePort(), TimeUtils.format(config.step()));
         }
         super.start(threadFactory);
     }
@@ -126,7 +125,7 @@ public class ZabbixMeterRegistry extends StepMeterRegistry {
                     logger.debug("failed metrics payload: {}", requestBody);
                     logger.error(
                             "failed to send metrics to Zabbix @ {}:{} (sent {} metrics but created {} metrics): {}",
-                            config.host(), config.port(), senderResult.getTotal(), senderResult.getProcessed(),
+                            config.instanceHost(), config.instancePort(), senderResult.getTotal(), senderResult.getProcessed(),
                             senderResult);
                 } else {
                     logger.debug("successfully sent {} metrics to Zabbix", senderResult.getTotal());
@@ -138,11 +137,7 @@ public class ZabbixMeterRegistry extends StepMeterRegistry {
     }
 
     private Stream<ZabbixDataItem> writeGauge(Gauge gauge, long wallTime) {
-        ZabbixDataItem ZabbixDataItem = zabbixDataItem(gauge.getId(), KEY_SUFFIX_SUM, gauge.value(), wallTime);
-        if (ZabbixDataItem == null) {
-            return Stream.empty();
-        }
-        return Stream.of(ZabbixDataItem);
+        return Stream.of(zabbixDataItem(gauge.getId(), KEY_SUFFIX_SUM, gauge.value(), wallTime));
     }
 
     private Stream<ZabbixDataItem> counterData(Counter counter, final long wallTime) {
@@ -218,7 +213,7 @@ public class ZabbixMeterRegistry extends StepMeterRegistry {
         Iterable<Tag> tags = getConventionTags(id);
 
         return ZabbixDataItem.builder()
-                .host(config.hostTag())
+                .host(config.host())
                 .metricName(metricName)
                 .tags(tags)
                 .id(id)
