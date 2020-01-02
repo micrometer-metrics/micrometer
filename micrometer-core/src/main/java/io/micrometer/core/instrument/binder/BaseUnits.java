@@ -67,6 +67,11 @@ public final class BaseUnits {
      */
     public static final String SESSIONS = "sessions";
 
+    /**
+     * For milliseconds.
+     */
+    public static final String MILLISECONDS = "ms";
+
     private BaseUnits() {
     }
 
