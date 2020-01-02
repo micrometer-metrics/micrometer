@@ -22,6 +22,15 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+/**
+ * Tests for {@link ProcessorMetrics}.
+ *
+ * @author Jon Schneider
+ * @author Michael Weirauch
+ * @author Clint Checketts
+ * @author Tommy Ludwig
+ * @author Johnny Lim
+ */
 class ProcessorMetricsTest {
     @Test
     void cpuMetrics() {
@@ -39,7 +48,7 @@ class ProcessorMetricsTest {
 
     @Test
     void hotspotCpuMetrics() {
-        assumeTrue(classExists("com.sun.management.OperatingSystemMXBean"));
+        assumeTrue(!isOpenJ9());
 
         MeterRegistry registry = new SimpleMeterRegistry();
         new ProcessorMetrics().bindTo(registry);
@@ -50,7 +59,7 @@ class ProcessorMetricsTest {
 
     @Test
     void openJ9CpuMetrics() {
-        assumeTrue(classExists("com.ibm.lang.management.OperatingSystemMXBean"));
+        assumeTrue(isOpenJ9());
 
         MeterRegistry registry = new SimpleMeterRegistry();
         new ProcessorMetrics().bindTo(registry);
@@ -64,6 +73,10 @@ class ProcessorMetricsTest {
          */
         registry.get("system.cpu.usage").gauge();
         registry.get("process.cpu.usage").gauge();
+    }
+
+    private boolean isOpenJ9() {
+        return classExists("com.ibm.lang.management.OperatingSystemMXBean");
     }
 
     private boolean classExists(String className) {
