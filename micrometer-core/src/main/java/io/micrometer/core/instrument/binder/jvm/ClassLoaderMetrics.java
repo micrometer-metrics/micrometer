@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.NonNullApi;
 import io.micrometer.core.lang.NonNullFields;
@@ -48,13 +49,13 @@ public class ClassLoaderMetrics implements MeterBinder {
         Gauge.builder("jvm.classes.loaded", classLoadingBean, ClassLoadingMXBean::getLoadedClassCount)
                 .tags(tags)
                 .description("The number of classes that are currently loaded in the Java virtual machine")
-                .baseUnit("classes")
+                .baseUnit(BaseUnits.CLASSES)
                 .register(registry);
 
         FunctionCounter.builder("jvm.classes.unloaded", classLoadingBean, ClassLoadingMXBean::getUnloadedClassCount)
                 .tags(tags)
                 .description("The total number of classes unloaded since the Java virtual machine has started execution")
-                .baseUnit("classes")
+                .baseUnit(BaseUnits.CLASSES)
                 .register(registry);
     }
 }

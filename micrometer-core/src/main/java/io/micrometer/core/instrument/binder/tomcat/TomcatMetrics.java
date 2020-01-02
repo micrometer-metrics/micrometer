@@ -100,27 +100,27 @@ public class TomcatMetrics implements MeterBinder {
 
         Gauge.builder("tomcat.sessions.active.max", manager, Manager::getMaxActive)
                 .tags(tags)
-                .baseUnit("sessions")
+                .baseUnit(BaseUnits.SESSIONS)
                 .register(registry);
 
         Gauge.builder("tomcat.sessions.active.current", manager, Manager::getActiveSessions)
                 .tags(tags)
-                .baseUnit("sessions")
+                .baseUnit(BaseUnits.SESSIONS)
                 .register(registry);
 
         FunctionCounter.builder("tomcat.sessions.created", manager, Manager::getSessionCounter)
                 .tags(tags)
-                .baseUnit("sessions")
+                .baseUnit(BaseUnits.SESSIONS)
                 .register(registry);
 
         FunctionCounter.builder("tomcat.sessions.expired", manager, Manager::getExpiredSessions)
                 .tags(tags)
-                .baseUnit("sessions")
+                .baseUnit(BaseUnits.SESSIONS)
                 .register(registry);
 
         FunctionCounter.builder("tomcat.sessions.rejected", manager, Manager::getRejectedSessions)
                 .tags(tags)
-                .baseUnit("sessions")
+                .baseUnit(BaseUnits.SESSIONS)
                 .register(registry);
 
         TimeGauge.builder("tomcat.sessions.alive.max", manager, TimeUnit.SECONDS, Manager::getSessionMaxAliveTime)
