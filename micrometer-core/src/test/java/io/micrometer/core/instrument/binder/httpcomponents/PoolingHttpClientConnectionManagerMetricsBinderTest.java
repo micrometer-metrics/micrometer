@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MockClock;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.pool.ConnPoolControl;
 import org.apache.http.pool.PoolStats;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,12 +37,13 @@ import static org.mockito.Mockito.when;
 class PoolingHttpClientConnectionManagerMetricsBinderTest {
 
     private MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-    private ConnPoolControl connPoolControl;
+    private ConnPoolControl<HttpRoute> connPoolControl;
     private PoolingHttpClientConnectionManagerMetricsBinder binder;
 
     @BeforeEach
+    @SuppressWarnings("unchecked")
     void setup() {
-        connPoolControl = mock(ConnPoolControl.class);
+        connPoolControl = (ConnPoolControl<HttpRoute>) mock(ConnPoolControl.class);
         binder = new PoolingHttpClientConnectionManagerMetricsBinder(connPoolControl, "test");
         binder.bindTo(registry);
     }
