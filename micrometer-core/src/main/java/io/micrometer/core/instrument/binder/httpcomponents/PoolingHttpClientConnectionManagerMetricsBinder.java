@@ -25,7 +25,8 @@ import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.pool.ConnPoolControl;
 
 /**
- * Collects metrics from a {@link ConnPoolControl}, for example a {@link org.apache.http.impl.conn.PoolingHttpClientConnectionManager}.
+ * Collects metrics from a {@link ConnPoolControl}, for example {@link org.apache.http.impl.conn.PoolingHttpClientConnectionManager}
+ * for synchronous HTTP clients or {@link org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager} for asynchronous HTTP clients.
  * <p>
  * It monitors the overall connection pool state.
  *
