@@ -29,7 +29,7 @@ dependencies {
     compile 'org.hibernate:hibernate-entitymanager:latest.release', optional
 
     // server runtime monitoring
-    compile 'org.eclipse.jetty:jetty-server:9.4.+', optional
+    compile 'org.eclipse.jetty:jetty-server:9.+', optional
     compile 'org.apache.tomcat.embed:tomcat-embed-core:8.+', optional
 
     // apache httpcomponents monitoring
@@ -68,6 +68,8 @@ dependencies {
     testCompile 'org.mockito:mockito-core:latest.release'
 
     testCompile 'org.hsqldb:hsqldb:latest.release'
+
+    testCompile 'org.eclipse.jetty:jetty-client:9.+', optional
 
     // dependency injection tests
     testCompile 'javax.inject:javax.inject:1'

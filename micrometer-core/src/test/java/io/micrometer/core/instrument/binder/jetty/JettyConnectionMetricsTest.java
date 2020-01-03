@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package io.micrometer.core.instrument.binder.jetty;
 
 import io.micrometer.core.instrument.MockClock;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.simple.SimpleConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -24,9 +23,11 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.Request;
+import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnectionStatistics;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
@@ -36,34 +37,21 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
 
-import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JettyConnectionMetricsTest {
-
-    private SimpleMeterRegistry registry;
-    private ServerConnector connector;
-    private Server server;
-    private CloseableHttpClient client;
+    private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
+    private Server server = new Server(0);
+    private ServerConnector connector = new ServerConnector(server);
+    private CloseableHttpClient client = HttpClients.createDefault();
 
     @BeforeEach
     void setup() throws Exception {
-        registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
-
-        ServerConnectionStatistics serverConnectionStatistics = new ServerConnectionStatistics();
-        JettyConnectionMetrics connectionMetrics =
-                new JettyConnectionMetrics(serverConnectionStatistics, singletonList(Tag.of("protocol", "http")));
-        connectionMetrics.bindTo(registry);
-
-        server = new Server(0);
-        connector = new ServerConnector(server);
-        connector.addBean(serverConnectionStatistics);
-        server.setConnectors(new Connector[] { connector });
+        connector.addBean(new JettyConnectionMetrics(registry));
+        server.setConnectors(new Connector[]{connector});
         server.start();
-
-        client = HttpClients.createDefault();
     }
 
     @AfterEach
@@ -74,14 +62,15 @@ public class JettyConnectionMetricsTest {
     }
 
     @Test
-    void contributesConnectorMetrics() throws Exception {
-        String url = getBaseUrl();
-        HttpPost post = new HttpPost(url);
-        post.setEntity(new StringEntity("some blah whatever text"));
-        try (CloseableHttpResponse response = client.execute(post)) {
-            assertThat(registry.get("jetty.connector.connections.max").gauge().value()).isEqualTo(1.0);
-            assertThat(registry.get("jetty.connector.connections.current").gauge().value()).isEqualTo(1.0);
-            assertThat(registry.get("jetty.connector.connections.total").functionCounter().count()).isEqualTo(1.0);
+    void contributesServerConnectorMetrics() throws Exception {
+        HttpPost post = new HttpPost("http://localhost:" + connector.getLocalPort());
+        post.setEntity(new StringEntity("123456"));
+
+        try (CloseableHttpResponse ignored = client.execute(post)) {
+            try (CloseableHttpResponse ignored2 = client.execute(post)) {
+                assertThat(registry.get("jetty.connections.current").gauge().value()).isEqualTo(2.0);
+                assertThat(registry.get("jetty.connections.max").gauge().value()).isEqualTo(2.0);
+            }
         }
 
         CountDownLatch latch = new CountDownLatch(1);
@@ -95,12 +84,37 @@ public class JettyConnectionMetricsTest {
         server.stop();
 
         assertTrue(latch.await(10, SECONDS));
-
-        assertThat(registry.get("jetty.connector.sent").functionCounter().count()).isGreaterThan(0.0);
-        assertThat(registry.get("jetty.connector.received").functionCounter().count()).isGreaterThan(0.0);
+        assertThat(registry.get("jetty.connections.max").gauge().value()).isEqualTo(2.0);
+        assertThat(registry.get("jetty.connections.request").tag("type", "server").timer().count())
+                .isEqualTo(2);
+        assertThat(registry.get("jetty.connections.bytes.in").summary().totalAmount()).isGreaterThan(1);
     }
 
-    private String getBaseUrl() {
-        return "http://localhost:" + connector.getLocalPort();
+    @Test
+    void contributesClientConnectorMetrics() throws Exception {
+        HttpClient httpClient = new HttpClient();
+        httpClient.setFollowRedirects(false);
+        httpClient.addBean(new JettyConnectionMetrics(registry));
+
+        CountDownLatch latch = new CountDownLatch(1);
+        httpClient.addLifeCycleListener(new AbstractLifeCycle.AbstractLifeCycleListener() {
+            @Override
+            public void lifeCycleStopped(LifeCycle event) {
+                latch.countDown();
+            }
+        });
+
+        httpClient.start();
+
+        Request post = httpClient.POST("http://localhost:" + connector.getLocalPort());
+        post.content(new StringContentProvider("123456"));
+        post.send();
+        httpClient.stop();
+
+        assertTrue(latch.await(10, SECONDS));
+        assertThat(registry.get("jetty.connections.max").gauge().value()).isEqualTo(1.0);
+        assertThat(registry.get("jetty.connections.request").tag("type", "client").timer().count())
+                .isGreaterThanOrEqualTo(1);
+        assertThat(registry.get("jetty.connections.bytes.out").summary().totalAmount()).isGreaterThan(1);
     }
 }

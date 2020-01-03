@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2019 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,75 +15,139 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.core.instrument.FunctionCounter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.binder.MeterBinder;
-import org.eclipse.jetty.io.ConnectionStatistics;
-
-import static java.util.Collections.emptyList;
+import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.distribution.TimeWindowMax;
+import org.eclipse.jetty.io.Connection;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.HttpConnection;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.util.component.AbstractLifeCycle;
+import org.pcollections.HashTreePMap;
+import org.pcollections.PMap;
 
 /**
- * {@link MeterBinder} for Jetty's connection metrics.<br><br>
- *
+ * Jetty connection metrics.<br><br>
+ * <p>
  * Usage example:
  *
  * <pre>{@code
- * MeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
- *
- * ServerConnectionStatistics serverConnectionStatistics = new ServerConnectionStatistics();
- * JettyConnectionMetrics connectionMetrics =
- *     new JettyConnectionMetrics(serverConnectionStatistics, singletonList(Tag.of("protocol", "http")));
- * connectionMetrics.bindTo(registry);
- *
+ * MeterRegistry registry = ...;
  * Server server = new Server(0);
  * Connector connector = new ServerConnector(server);
- * connector.addBean(serverConnectionStatistics);
+ * connector.addBean(new JettyConnectionMetrics(registry));
  * server.setConnectors(new Connector[] { connector });
  * }</pre>
  *
- * @author Tom Akehurst
+ * Alternatively, configure on all connectors with {@link JettyConnectionMetrics#addToAllConnectors(Server, MeterRegistry, Iterable)}.
  *
+ * @author Jon Schneider
+ * @since 1.4.0
  */
-public class JettyConnectionMetrics implements MeterBinder {
-
-    private final ConnectionStatistics connectionStatistics;
+public class JettyConnectionMetrics extends AbstractLifeCycle implements Connection.Listener {
+    private final MeterRegistry registry;
     private final Iterable<Tag> tags;
 
-    public JettyConnectionMetrics(ConnectionStatistics connectionStatistics) {
-        this(connectionStatistics, emptyList());
+    private final Object connectionSamplesLock = new Object();
+    private volatile PMap<Connection, Timer.Sample> connectionSamples = HashTreePMap.empty();
+
+    private final Counter messagesIn;
+    private final Counter messagesOut;
+    private final DistributionSummary bytesIn;
+    private final DistributionSummary bytesOut;
+
+    private final TimeWindowMax maxConnections;
+
+    public JettyConnectionMetrics(MeterRegistry registry) {
+        this(registry, Tags.empty());
     }
 
-    public JettyConnectionMetrics(ConnectionStatistics connectionStatistics, Iterable<Tag> tags) {
-        this.connectionStatistics = connectionStatistics;
+    public JettyConnectionMetrics(MeterRegistry registry, Iterable<Tag> tags) {
+        this.registry = registry;
         this.tags = tags;
+
+        this.messagesIn = Counter.builder("jetty.connections.messages.in")
+                .baseUnit("messages")
+                .description("Messages received by tracked connections")
+                .tags(tags)
+                .register(registry);
+
+        this.messagesOut = Counter.builder("jetty.connections.messages.out")
+                .baseUnit("messages")
+                .description("Messages sent by tracked connections")
+                .tags(tags)
+                .register(registry);
+
+        this.bytesIn = DistributionSummary.builder("jetty.connections.bytes.in")
+                .baseUnit("bytes")
+                .description("Bytes received by tracked connections")
+                .tags(tags)
+                .register(registry);
+
+        this.bytesOut = DistributionSummary.builder("jetty.connections.bytes.out")
+                .baseUnit("bytes")
+                .description("Bytes sent by tracked connections")
+                .tags(tags)
+                .register(registry);
+
+        this.maxConnections = new TimeWindowMax(registry.config().clock(), DistributionStatisticConfig.DEFAULT);
+
+        Gauge.builder("jetty.connections.max", this, jcm -> jcm.maxConnections.poll())
+                .strongReference(true)
+                .baseUnit("connections")
+                .description("The maximum number of observed connections over a rolling 2-minute interval")
+                .tags(tags)
+                .register(registry);
+
+        Gauge.builder("jetty.connections.current", this, jcm -> jcm.connectionSamples.size())
+                .strongReference(true)
+                .baseUnit("connections")
+                .description("The current number of open Jetty connections")
+                .tags(tags)
+                .register(registry);
     }
 
     @Override
-    public void bindTo(MeterRegistry registry) {
-        Gauge.builder("jetty.connector.connections.current", connectionStatistics, ConnectionStatistics::getConnections)
-                .tags(tags)
-                .description("The current number of open connections")
-                .register(registry);
-        Gauge.builder("jetty.connector.connections.max", connectionStatistics, ConnectionStatistics::getConnectionsMax)
-                .tags(tags)
-                .description("The maximum number of connections")
-                .register(registry);
-        FunctionCounter.builder("jetty.connector.connections.total", connectionStatistics, ConnectionStatistics::getConnectionsTotal)
-                .tags(tags)
-                .description("The total number of connections")
-                .register(registry);
+    public void onOpened(Connection connection) {
+        synchronized (connectionSamplesLock) {
+            connectionSamples = connectionSamples.plus(connection, Timer.start(registry));
+            maxConnections.record(connectionSamples.size());
+        }
+    }
 
-        FunctionCounter.builder("jetty.connector.received", connectionStatistics, ConnectionStatistics::getReceivedBytesRate)
-                .tags(tags)
-                .description("The rate of bytes received")
-                .baseUnit("bytes")
-                .register(registry);
-        FunctionCounter.builder("jetty.connector.sent", connectionStatistics, ConnectionStatistics::getSentBytesRate)
-                .tags(tags)
-                .description("The rate of bytes sent")
-                .baseUnit("bytes")
-                .register(registry);
+    @Override
+    public void onClosed(Connection connection) {
+        Timer.Sample sample;
+        synchronized (connectionSamplesLock) {
+            sample = connectionSamples.get(connection);
+            connectionSamples = connectionSamples.minus(connection);
+        }
+
+        if (sample != null) {
+            String serverOrClient = connection instanceof HttpConnection ? "server" : "client";
+            sample.stop(Timer.builder("jetty.connections.request")
+                    .description("Jetty client or server requests")
+                    .tag("type", serverOrClient)
+                    .tags(tags)
+                    .register(registry));
+        }
+
+        messagesIn.increment(connection.getMessagesIn());
+        messagesOut.increment(connection.getMessagesOut());
+
+        bytesIn.record(connection.getBytesIn());
+        bytesOut.record(connection.getBytesOut());
+    }
+
+    public static void addToAllConnectors(Server server, MeterRegistry registry, Iterable<Tag> tags) {
+        for (Connector connector : server.getConnectors()) {
+            if (connector != null) {
+                connector.addBean(new JettyConnectionMetrics(registry, tags));
+            }
+        }
+    }
+
+    public static void addToAllConnectors(Server server, MeterRegistry registry) {
+        addToAllConnectors(server, registry, Tags.empty());
     }
 }
