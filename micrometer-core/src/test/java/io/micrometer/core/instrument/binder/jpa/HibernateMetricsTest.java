@@ -133,14 +133,14 @@ class HibernateMetricsTest {
     void deprecatedMonitorShouldNotExposeMetricsWhenStatsNotEnabled() {
         EntityManagerFactory entityManagerFactory = createMockEntityManagerFactory(false);
         HibernateMetrics.monitor(registry, entityManagerFactory, "entityManagerFactory");
-        assertThat(registry.find("hibernate.sessions.open").gauge()).isNull();
+        assertThat(registry.find("hibernate.sessions.open").functionCounter()).isNull();
     }
 
     @Test
     void monitorShouldNotExposeMetricsWhenStatsNotEnabled() {
-        SessionFactory sessionFactory = createMockSessionFactory(true);
+        SessionFactory sessionFactory = createMockSessionFactory(false);
         HibernateMetrics.monitor(registry, sessionFactory, "sessionFactory");
-        assertThat(registry.find("hibernate.sessions.open").gauge()).isNull();
+        assertThat(registry.find("hibernate.sessions.open").functionCounter()).isNull();
     }
 
 }
