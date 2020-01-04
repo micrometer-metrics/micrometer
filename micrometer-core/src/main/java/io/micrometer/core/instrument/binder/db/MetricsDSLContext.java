@@ -48,6 +48,13 @@ import java.util.stream.Stream;
  * Time SQL queries passing through JOOQ.
  *
  * Timing of batch operations and with statements not supported.
+ * <p>
+ * This can be used as the regular JOOQ {@link DSLContext} but queries will be timed
+ * and tags can be set for the query timed. For example:
+ * <code><pre>
+ *     MetricsDSLContext jooq = MetricsDSLContext.withMetrics(DSL.using(configuration), meterRegistry, Tags.empty());
+ *     jooq.tag("name", "selectAllAuthors").select(asterisk()).from("author").fetch();
+ * </pre></code>
  *
  * @author Jon Schneider
  * @since 1.4.0
