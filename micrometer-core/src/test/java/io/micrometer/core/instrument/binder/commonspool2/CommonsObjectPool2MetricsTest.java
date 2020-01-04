@@ -41,19 +41,21 @@ class CommonsObjectPool2MetricsTest {
         GenericObjectPool objectPool = createGenericObjectPool();
         MeterRegistry registry = new SimpleMeterRegistry();
         commonsObjectPool2Metrics.bindTo(registry);
-        String[] gaugeNames = new String[]{"commons.pool2.numIdle",
-                "commons.pool2.numWaiters"};
+        String[] gaugeNames = new String[]{"commons.pool2.num.idle",
+                "commons.pool2.num.waiters"};
         for (String name : gaugeNames) {
             registry.get(name).tags(tags).gauge();
         }
 
-        String[] functionCounterNames = new String[]{"commons.pool2.createdCount", "commons.pool2.borrowedCount",
-                "commons.pool2.returnedCount", "commons.pool2.destroyedCount", "commons.pool2.destroyedByEvictorCount", "commons.pool2.destroyedByBorrowValidationCount",};
+        String[] functionCounterNames = new String[]{"commons.pool2.created.count", "commons.pool2.borrowed.count",
+                "commons.pool2.returned.count", "commons.pool2.destroyed.count",
+                "commons.pool2.destroyed.by.evictor.count", "commons.pool2.destroyed.by.borrow.validation.count",};
         for (String name : functionCounterNames) {
             registry.get(name).tags(tags).functionCounter();
         }
 
-        String[] timeGaugeNames = new String[]{"commons.pool2.maxBorrowWaitTime", "commons.pool2.meanActiveTime", "commons.pool2.meanIdleTime", "commons.pool2.meanBorrowWaitTime"};
+        String[] timeGaugeNames = new String[]{"commons.pool2.max.borrow.wait.time", "commons.pool2.mean.active.time",
+                "commons.pool2.mean.idle.time", "commons.pool2.mean.borrow.wait.time"};
         for (String name : timeGaugeNames) {
             registry.get(name).tags(tags).timeGauge();
         }
@@ -66,19 +68,21 @@ class CommonsObjectPool2MetricsTest {
         Tags tagsToMatch = tags.and("type", "GenericKeyedObjectPool");
         MeterRegistry registry = new SimpleMeterRegistry();
         commonsObjectPool2Metrics.bindTo(registry);
-        String[] gaugeNames = new String[]{"commons.pool2.numIdle",
-                "commons.pool2.numWaiters"};
+        String[] gaugeNames = new String[]{"commons.pool2.num.idle",
+                "commons.pool2.num.waiters"};
         for (String name : gaugeNames) {
             registry.get(name).tags(tagsToMatch).gauge();
         }
 
-        String[] functionCounterNames = new String[]{"commons.pool2.createdCount", "commons.pool2.borrowedCount",
-                "commons.pool2.returnedCount", "commons.pool2.destroyedCount", "commons.pool2.destroyedByEvictorCount", "commons.pool2.destroyedByBorrowValidationCount",};
+        String[] functionCounterNames = new String[]{"commons.pool2.created.count", "commons.pool2.borrowed.count",
+                "commons.pool2.returned.count", "commons.pool2.destroyed.count",
+                "commons.pool2.destroyed.by.evictor.count", "commons.pool2.destroyed.by.borrow.validation.count",};
         for (String name : functionCounterNames) {
             registry.get(name).tags(tagsToMatch).functionCounter();
         }
 
-        String[] timeGaugeNames = new String[]{"commons.pool2.maxBorrowWaitTime", "commons.pool2.meanActiveTime", "commons.pool2.meanIdleTime", "commons.pool2.meanBorrowWaitTime"};
+        String[] timeGaugeNames = new String[]{"commons.pool2.max.borrow.wait.time", "commons.pool2.mean.active.time",
+                "commons.pool2.mean.idle.time", "commons.pool2.mean.borrow.wait.time"};
         for (String name : timeGaugeNames) {
             registry.get(name).tags(tagsToMatch).timeGauge();
         }
@@ -94,8 +98,8 @@ class CommonsObjectPool2MetricsTest {
         commonsObjectPool2Metrics.bindTo(registry);
 
         // fetch metrics
-        registry.get("commons.pool2.numWaiters").tag("name", "pool" + genericObjectPoolCount).gauge();
-        registry.get("commons.pool2.numWaiters").tag("name", "pool" + (genericObjectPoolCount - 1)).gauge();
+        registry.get("commons.pool2.num.waiters").tag("name", "pool" + genericObjectPoolCount).gauge();
+        registry.get("commons.pool2.num.waiters").tag("name", "pool" + (genericObjectPoolCount - 1)).gauge();
     }
 
     @Test

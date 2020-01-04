@@ -102,35 +102,36 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
             registerMetricsEventually(
                     type,
                     (o, tags) -> {
-                        registerGaugeForObject(registry, o, "NumIdle", tags, "The number of instances currently idle in this pool", "objects");
+                        registerGaugeForObject(registry, o, "NumIdle", "num.idle", tags, "The number of instances currently idle in this pool", "objects");
 
-                        registerGaugeForObject(registry, o, "NumWaiters", tags, "The estimate of the number of threads currently blocked waiting for an object from the pool", "threads");
+                        registerGaugeForObject(registry, o, "NumWaiters", "num.waiters", tags, "The estimate of the number of threads currently blocked waiting for an object from the pool", "threads");
 
-                        registerFunctionCounterForObject(registry, o, "CreatedCount", tags, "The total number of objects created for this pool over the lifetime of the pool", "objects");
-                        registerFunctionCounterForObject(registry, o, "BorrowedCount", tags, "The total number of objects successfully borrowed from this pool over the lifetime of the pool", "objects");
-                        registerFunctionCounterForObject(registry, o, "ReturnedCount", tags, "The total number of objects returned to this pool over the lifetime of the pool", "objects");
-                        registerFunctionCounterForObject(registry, o, "DestroyedCount", tags, "The total number of objects destroyed by this pool over the lifetime of the pool", "objects");
+                        registerFunctionCounterForObject(registry, o, "CreatedCount", "created.count", tags, "The total number of objects created for this pool over the lifetime of the pool", "objects");
+                        registerFunctionCounterForObject(registry, o, "BorrowedCount", "borrowed.count", tags, "The total number of objects successfully borrowed from this pool over the lifetime of the pool", "objects");
+                        registerFunctionCounterForObject(registry, o, "ReturnedCount", "returned.count", tags, "The total number of objects returned to this pool over the lifetime of the pool", "objects");
+                        registerFunctionCounterForObject(registry, o, "DestroyedCount", "destroyed.count", tags, "The total number of objects destroyed by this pool over the lifetime of the pool", "objects");
                         registerFunctionCounterForObject(
-                                registry, o, "DestroyedByEvictorCount", tags, "The total number of objects destroyed by the evictor associated with this pool over the lifetime of the pool", "objects");
+                                registry, o, "DestroyedByEvictorCount", "destroyed.by.evictor.count", tags, "The total number of objects destroyed by the evictor associated with this pool over the lifetime of the pool", "objects");
                         registerFunctionCounterForObject(
                                 registry,
                                 o,
                                 "DestroyedByBorrowValidationCount",
+                                "destroyed.by.borrow.validation.count",
                                 tags,
                                 "The total number of objects destroyed by this pool as a result of failing validation during borrowObject() over the lifetime of the pool",
                                 "objects");
 
                         registerTimeGaugeForObject(
-                                registry, o, "MaxBorrowWaitTimeMillis", "maxBorrowWaitTime", tags, "The maximum time a thread has waited to borrow objects from the pool");
+                                registry, o, "MaxBorrowWaitTimeMillis", "max.borrow.wait.time", tags, "The maximum time a thread has waited to borrow objects from the pool");
                         registerTimeGaugeForObject(
-                                registry, o, "MeanActiveTimeMillis", "meanActiveTime", tags, "The mean time objects are active");
+                                registry, o, "MeanActiveTimeMillis", "mean.active.time", tags, "The mean time objects are active");
                         registerTimeGaugeForObject(
-                                registry, o, "MeanIdleTimeMillis", "meanIdleTime", tags, "The mean time objects are idle");
+                                registry, o, "MeanIdleTimeMillis", "mean.idle.time", tags, "The mean time objects are idle");
                         registerTimeGaugeForObject(
                                 registry,
                                 o,
                                 "MeanBorrowWaitTimeMillis",
-                                "meanBorrowWaitTime",
+                                "mean.borrow.wait.time",
                                 tags,
                                 "The mean time threads wait to borrow an object");
                     });
@@ -264,26 +265,10 @@ public class CommonsObjectPool2Metrics implements MeterBinder, AutoCloseable {
                         .register(registry));
     }
 
-    private static String sanitize(String value) {
-        String s = value.replaceAll("-", ".");
-        return s.substring(0, 1).toLowerCase() + s.substring(1);
-    }
-
-    private void registerGaugeForObject(
-            MeterRegistry registry,
-            ObjectName o,
-            String jmxMetricName,
-            Tags allTags,
-            String description,
-            @Nullable String baseUnit) {
-        registerGaugeForObject(
-                registry, o, jmxMetricName, sanitize(jmxMetricName), allTags, description, baseUnit);
-    }
-
-    private void registerFunctionCounterForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, Tags allTags, String description, @Nullable String baseUnit) {
+    private void registerFunctionCounterForObject(MeterRegistry registry, ObjectName o, String jmxMetricName, String meterName, Tags allTags, String description, @Nullable String baseUnit) {
         final AtomicReference<FunctionCounter> counter = new AtomicReference<>();
         counter.set(FunctionCounter
-                .builder(METRIC_NAME_PREFIX + sanitize(jmxMetricName), mBeanServer,
+                .builder(METRIC_NAME_PREFIX + meterName, mBeanServer,
                         getJmxAttribute(registry, counter, o, jmxMetricName))
                 .description(description)
                 .baseUnit(baseUnit)
