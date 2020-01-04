@@ -57,7 +57,7 @@ dependencies {
 
     compile 'org.mongodb:mongo-java-driver:latest.release', optional
 
-    compile 'org.jooq:jooq-meta:latest.release', optional
+    compile 'org.jooq:jooq:latest.release', optional
 
     testCompile 'io.projectreactor:reactor-test:latest.release'
 
