@@ -59,6 +59,8 @@ import static org.assertj.core.api.Assertions.fail;
  * @author Johnny Lim
  */
 class TomcatMetricsTest {
+    private static final int PROCESSING_TIME_IN_MILLIS = 10;
+
     private SimpleMeterRegistry registry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, new MockClock());
 
     private int port;
@@ -122,6 +124,14 @@ class TomcatMetricsTest {
         assertThat(registry.get("tomcat.sessions.alive.max").tags(tags).timeGauge().value()).isGreaterThan(1.0);
     }
 
+    private void sleep() {
+        try {
+            Thread.sleep(PROCESSING_TIME_IN_MILLIS);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
     @Test
     void mbeansAvailableAfterBinder() throws Exception {
         TomcatMetrics.monitor(registry, null);
@@ -136,7 +146,7 @@ class TomcatMetricsTest {
             @Override
             protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
                 IOUtils.toString(req.getInputStream());
-
+                sleep();
                 resp.getOutputStream().write("yes".getBytes());
             }
         };
@@ -162,19 +172,22 @@ class TomcatMetricsTest {
             return null;
         });
     }
+
     @Test
     void mbeansAvailableBeforeBinder() throws Exception {
         HttpServlet servlet = new HttpServlet() {
             @Override
             protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
                 IOUtils.toString(req.getInputStream());
-
+                sleep();
                 resp.getOutputStream().write("yes".getBytes());
             }
         };
 
         runTomcat(servlet, () -> {
             TomcatMetrics.monitor(registry, null);
+
+            checkMbeansInitialState();
 
             try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
                 HttpPost post = new HttpPost("http://localhost:" + this.port + "/");
@@ -236,8 +249,8 @@ class TomcatMetricsTest {
         assertThat(registry.get("tomcat.global.received").functionCounter().count()).isEqualTo(10.0);
         assertThat(registry.get("tomcat.global.error").functionCounter().count()).isEqualTo(1.0);
         assertThat(registry.get("tomcat.global.request").functionTimer().count()).isEqualTo(2.0);
-        assertThat(registry.get("tomcat.global.request").functionTimer().totalTime(TimeUnit.MILLISECONDS)).isGreaterThan(0.0);
-        assertThat(registry.get("tomcat.global.request.max").timeGauge().value(TimeUnit.MILLISECONDS)).isGreaterThan(0.0);
+        assertThat(registry.get("tomcat.global.request").functionTimer().totalTime(TimeUnit.MILLISECONDS)).isGreaterThanOrEqualTo(PROCESSING_TIME_IN_MILLIS);
+        assertThat(registry.get("tomcat.global.request.max").timeGauge().value(TimeUnit.MILLISECONDS)).isGreaterThanOrEqualTo(PROCESSING_TIME_IN_MILLIS);
         assertThat(registry.get("tomcat.threads.config.max").gauge().value()).isGreaterThan(0.0);
         assertThat(registry.get("tomcat.threads.busy").gauge().value()).isGreaterThanOrEqualTo(0.0);
         assertThat(registry.get("tomcat.threads.current").gauge().value()).isGreaterThan(0.0);
