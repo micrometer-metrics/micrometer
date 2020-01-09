@@ -19,6 +19,10 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
+/**
+ * @deprecated statsd publisher queue metrics are no longer available
+ */
+@Deprecated
 public class StatsdMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
