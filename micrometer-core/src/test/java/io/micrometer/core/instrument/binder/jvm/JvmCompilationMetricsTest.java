@@ -23,7 +23,7 @@ import java.lang.management.CompilationMXBean;
 import java.lang.management.ManagementFactory;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Tests for {@link JvmCompilationMetrics}.
