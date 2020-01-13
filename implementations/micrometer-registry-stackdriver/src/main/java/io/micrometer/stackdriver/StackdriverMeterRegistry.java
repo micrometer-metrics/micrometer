@@ -85,7 +85,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
     @Nullable
     private MetricServiceClient client;
 
-    protected StackdriverMeterRegistry(StackdriverConfig config, Clock clock) {
+    public StackdriverMeterRegistry(StackdriverConfig config, Clock clock) {
         this(config, clock, DEFAULT_THREAD_FACTORY, () ->  MetricServiceSettings.newBuilder().build());
     }
 
