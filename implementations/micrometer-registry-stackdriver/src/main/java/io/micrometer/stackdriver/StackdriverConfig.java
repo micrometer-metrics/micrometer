@@ -18,6 +18,9 @@ package io.micrometer.stackdriver;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
 
+import java.util.Collections;
+import java.util.Map;
+
 /**
  * {@link StepRegistryConfig} for Stackdriver.
  *
@@ -41,5 +44,9 @@ public interface StackdriverConfig extends StepRegistryConfig {
     default String resourceType() {
         String resourceType = get(prefix() + ".resourceType");
         return resourceType == null ? "global" : resourceType;
+    }
+
+    default Map<String, String> resourceLabels() {
+        return Collections.emptyMap();
     }
 }

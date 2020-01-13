@@ -339,6 +339,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                     .setResource(MonitoredResource.newBuilder()
                             .setType(config.resourceType())
                             .putLabels("project_id", config.projectId())
+                            .putAllLabels(config.resourceLabels())
                             .build())
                     .setMetricKind(MetricDescriptor.MetricKind.GAUGE) // https://cloud.google.com/monitoring/api/v3/metrics-details#metric-kinds
                     .setValueType(valueType)
