@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Test methods in CloudWatchUtils
  */
+@SuppressWarnings("deprecation")
 class CloudWatchUtilsTest {
 
     private static final double EXPECTED_MIN = 8.515920e-109;

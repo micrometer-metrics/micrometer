@@ -100,27 +100,27 @@ public class TomcatMetrics implements MeterBinder {
 
         Gauge.builder("tomcat.sessions.active.max", manager, Manager::getMaxActive)
                 .tags(tags)
-                .baseUnit("sessions")
+                .baseUnit(BaseUnits.SESSIONS)
                 .register(registry);
 
         Gauge.builder("tomcat.sessions.active.current", manager, Manager::getActiveSessions)
                 .tags(tags)
-                .baseUnit("sessions")
+                .baseUnit(BaseUnits.SESSIONS)
                 .register(registry);
 
         FunctionCounter.builder("tomcat.sessions.created", manager, Manager::getSessionCounter)
                 .tags(tags)
-                .baseUnit("sessions")
+                .baseUnit(BaseUnits.SESSIONS)
                 .register(registry);
 
         FunctionCounter.builder("tomcat.sessions.expired", manager, Manager::getExpiredSessions)
                 .tags(tags)
-                .baseUnit("sessions")
+                .baseUnit(BaseUnits.SESSIONS)
                 .register(registry);
 
         FunctionCounter.builder("tomcat.sessions.rejected", manager, Manager::getRejectedSessions)
                 .tags(tags)
-                .baseUnit("sessions")
+                .baseUnit(BaseUnits.SESSIONS)
                 .register(registry);
 
         TimeGauge.builder("tomcat.sessions.alive.max", manager, TimeUnit.SECONDS, Manager::getSessionMaxAliveTime)
@@ -161,7 +161,7 @@ public class TomcatMetrics implements MeterBinder {
                     s -> safeDouble(() -> s.getAttribute(name, "hitCount")))
                     .tags(allTags)
                     .register(registry);
-        });
+        }, false);
     }
 
     private void registerServletMetrics(MeterRegistry registry) {
@@ -216,14 +216,19 @@ public class TomcatMetrics implements MeterBinder {
         });
     }
 
+    private void registerMetricsEventually(String key, String value, BiConsumer<ObjectName, Iterable<Tag>> perObject) {
+        registerMetricsEventually(key, value, perObject, true);
+    }
+
     /**
      * If the MBean already exists, register metrics immediately. Otherwise register an MBean registration listener
      * with the MBeanServer and register metrics when/if the MBean becomes available.
      */
-    private void registerMetricsEventually(String key, String value, BiConsumer<ObjectName, Iterable<Tag>> perObject) {
+    private void registerMetricsEventually(String key, String value, BiConsumer<ObjectName, Iterable<Tag>> perObject, boolean hasName) {
         if (getJmxDomain() != null) {
             try {
-                Set<ObjectName> objectNames = this.mBeanServer.queryNames(new ObjectName(getJmxDomain() + ":" + key + "=" + value + ",name=*"), null);
+                String name = getJmxDomain() + ":" + key + "=" + value + (hasName ? ",name=*,*" : "");
+                Set<ObjectName> objectNames = this.mBeanServer.queryNames(new ObjectName(name), null);
                 if (!objectNames.isEmpty()) {
                     // MBean is present, so we can register metrics now.
                     objectNames.forEach(objectName -> perObject.accept(objectName, Tags.concat(tags, nameTag(objectName))));

@@ -33,6 +33,7 @@ import reactor.core.Disposable;
 import reactor.core.Disposables;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.UnicastProcessor;
+import reactor.netty.NettyPipeline;
 import reactor.netty.udp.UdpClient;
 import reactor.netty.tcp.TcpClient;
 import reactor.util.concurrent.Queues;
@@ -222,6 +223,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 .host(statsdConfig.host())
                 .port(statsdConfig.port())
                 .handle((in, out) -> out
+                        .options(NettyPipeline.SendOptions::flushOnEach)
                         .sendString(publisher)
                         .neverComplete()
                 )
@@ -239,6 +241,7 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 .host(statsdConfig.host())
                 .port(statsdConfig.port())
                 .handle((in, out) -> out
+                        .options(NettyPipeline.SendOptions::flushOnEach)
                         .sendString(publisher)
                         .neverComplete())
                 .connect()

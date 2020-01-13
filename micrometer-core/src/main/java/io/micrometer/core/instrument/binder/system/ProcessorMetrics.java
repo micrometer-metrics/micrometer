@@ -41,6 +41,11 @@ import static java.util.Objects.requireNonNull;
  *     <li>HotSpot</li>
  *     <li>J9</li>
  * </ul>
+ *
+ * @author Jon Schneider
+ * @author Michael Weirauch
+ * @author Clint Checketts
+ * @author Tommy Ludwig
  */
 @NonNullApi
 @NonNullFields

@@ -48,6 +48,15 @@ public @interface Counted {
     boolean recordFailuresOnly() default false;
 
     /**
+     * List of key-value pair arguments to supply the Counter as extra tags.
+     *
+     * @return key-value pair of tags
+     * @see io.micrometer.core.instrument.Counter.Builder#tags(String...)
+     * @since 1.4.0
+     */
+    String[] extraTags() default {};
+
+    /**
      * An optional description for what the underlying counter is going to record.
      *
      * @return The counter description.

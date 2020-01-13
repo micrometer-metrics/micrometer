@@ -1,7 +1,7 @@
 plugins {
     id "net.ltgt.apt" version "0.10" // for dagger injection testing
     id 'idea'
-    id 'com.github.johnrengelman.shadow' version '4.0.3'
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
 }
 
 apply plugin: 'nebula.optional-base'
@@ -25,16 +25,16 @@ dependencies {
     compile 'com.github.ben-manes.caffeine:caffeine:latest.release', optional
     compile 'net.sf.ehcache:ehcache:latest.release', optional
     compile 'javax.cache:cache-api:latest.release', optional
-    compile 'com.hazelcast:hazelcast:latest.release', optional
+    compile 'com.hazelcast:hazelcast:3.+', optional
     compile 'org.hibernate:hibernate-entitymanager:latest.release', optional
 
     // server runtime monitoring
-    // 9.4+ are incompatible with the latest version of wiremock as of 1/4/2019
-    compile 'org.eclipse.jetty:jetty-server:9.2.+', optional
+    compile 'org.eclipse.jetty:jetty-server:9.+', optional
     compile 'org.apache.tomcat.embed:tomcat-embed-core:8.+', optional
 
     // apache httpcomponents monitoring
     compile 'org.apache.httpcomponents:httpclient:4.5.6', optional
+    compile 'org.apache.httpcomponents:httpasyncclient:4.1.4', optional
 
     // hystrix monitoring
     // metrics are better with https://github.com/Netflix/Hystrix/pull/1568 introduced
@@ -47,8 +47,8 @@ dependencies {
     compile 'org.apache.logging.log4j:log4j-core:2.+', optional
 
     // reactor
-    compile 'io.projectreactor:reactor-core:latest.release', optional
-    compile 'io.projectreactor.netty:reactor-netty:latest.release', optional
+    compile 'io.projectreactor:reactor-core:3.2.12.RELEASE', optional
+    compile 'io.projectreactor.netty:reactor-netty:0.8.6.RELEASE', optional
 
     // @Timed AOP
     compile 'org.aspectj:aspectjweaver:1.8.+', optional
@@ -56,6 +56,8 @@ dependencies {
     compile 'com.squareup.okhttp3:okhttp:latest.release', optional
 
     compile 'org.mongodb:mongo-java-driver:latest.release', optional
+
+    compile 'org.jooq:jooq:latest.release', optional
 
     testCompile 'io.projectreactor:reactor-test:latest.release'
 
@@ -69,11 +71,15 @@ dependencies {
 
     testCompile 'org.hsqldb:hsqldb:latest.release'
 
+    testCompile 'org.eclipse.jetty:jetty-client:9.+', optional
+
     // dependency injection tests
     testCompile 'javax.inject:javax.inject:1'
     testCompile 'org.springframework:spring-context:4.+'
     testCompile 'org.springframework:spring-test:4.+'
     testCompile 'com.google.inject:guice:4.1.0'
+
+    testCompile 'com.h2database:h2:latest.release'
 
     // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
 //    testCompile 'com.google.dagger:dagger:2.11'
@@ -83,10 +89,13 @@ dependencies {
 
     testCompile 'org.ehcache:ehcache:latest.release'
 
-    testCompile 'org.apache.kafka:kafka-clients:latest.release'
+    // Pin version temporarily to restore builds.
+    testCompile 'org.apache.kafka:kafka-clients:2.3.1'
 
-    testCompile 'ru.lanwen.wiremock:wiremock-junit5:1.2.0'
-    testCompile 'com.github.tomakehurst:wiremock:latest.release'
+    testCompile 'ru.lanwen.wiremock:wiremock-junit5:1.2.0', {
+        exclude group: 'com.github.tomakehurst', module: 'wiremock'
+    }
+    testCompile 'com.github.tomakehurst:wiremock-jre8:latest.release'
 
     testCompile 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:latest.release'
 }

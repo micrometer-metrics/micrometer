@@ -51,6 +51,7 @@ class CountedAspectTest {
         Counter counter = meterRegistry.get("metric.success")
                 .tag("method", "succeedWithMetrics")
                 .tag("class", "io.micrometer.core.aop.CountedAspectTest$CountedService")
+                .tag("extra", "tag")
                 .tag("result", "success").counter();
 
         assertThat(counter.count()).isOne();
@@ -95,7 +96,7 @@ class CountedAspectTest {
 
         }
 
-        @Counted("metric.success")
+        @Counted(value = "metric.success", extraTags = {"extra", "tag"})
         void succeedWithMetrics() {
 
         }

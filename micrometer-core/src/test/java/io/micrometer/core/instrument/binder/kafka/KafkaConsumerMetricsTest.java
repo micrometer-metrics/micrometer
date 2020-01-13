@@ -15,6 +15,7 @@
  */
 package io.micrometer.core.instrument.binder.kafka;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -32,6 +33,12 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Tests for {@link KafkaConsumerMetrics}.
+ *
+ * @author Jon Schneider
+ * @author Johnny Lim
+ */
 class KafkaConsumerMetricsTest {
     private final static String TOPIC = "my-example-topic";
     private final static String BOOTSTRAP_SERVERS = "localhost:9092";
@@ -48,16 +55,19 @@ class KafkaConsumerMetricsTest {
             kafkaConsumerMetrics.bindTo(registry);
 
             // consumer coordinator metrics
-            registry.get("kafka.consumer.assigned.partitions").tags(tags).gauge();
+            Gauge assignedPartitions = registry.get("kafka.consumer.assigned.partitions").tags(tags).gauge();
+            assertThat(assignedPartitions.getId().getTag("client.id")).isEqualTo("consumer-" + consumerCount);
 
             // global connection metrics
-            registry.get("kafka.consumer.connection.count").tags(tags).gauge();
+            Gauge connectionCount = registry.get("kafka.consumer.connection.count").tags(tags).gauge();
+            assertThat(connectionCount.getId().getTag("client.id")).startsWith("consumer-" + consumerCount);
         }
     }
 
     @Test
     void metricsReportedPerMultipleConsumers() {
-        try (Consumer<Long, String> consumer = createConsumer(); Consumer<Long, String> consumer2 = createConsumer()) {
+        try (Consumer<Long, String> consumer = createConsumer();
+             Consumer<Long, String> consumer2 = createConsumer()) {
 
             MeterRegistry registry = new SimpleMeterRegistry();
             kafkaConsumerMetrics.bindTo(registry);
@@ -105,6 +115,30 @@ class KafkaConsumerMetricsTest {
         try (Consumer<Long, String> consumer = createConsumer()) {
             assertThat(kafkaConsumerMetrics.kafkaMajorVersion(Tags.empty())).isEqualTo(-1);
         }
+    }
+
+    @Test
+    void consumerBeforeBindingWhenClosedShouldRemoveMeters() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        try (Consumer<Long, String> consumer = createConsumer()) {
+            kafkaConsumerMetrics.bindTo(registry);
+
+            Gauge gauge = registry.get("kafka.consumer.assigned.partitions").gauge();
+            assertThat(gauge.getId().getTag("client.id")).isEqualTo("consumer-" + consumerCount);
+        }
+        assertThat(registry.find("kafka.consumer.assigned.partitions").gauge()).isNull();
+    }
+
+    @Test
+    void consumerAfterBindingWhenClosedShouldRemoveMeters() {
+        MeterRegistry registry = new SimpleMeterRegistry();
+        kafkaConsumerMetrics.bindTo(registry);
+
+        try (Consumer<Long, String> consumer = createConsumer()) {
+            Gauge gauge = registry.get("kafka.consumer.assigned.partitions").gauge();
+            assertThat(gauge.getId().getTag("client.id")).isEqualTo("consumer-" + consumerCount);
+        }
+        assertThat(registry.find("kafka.consumer.assigned.partitions").gauge()).isNull();
     }
 
     private Consumer<Long, String> createConsumer() {

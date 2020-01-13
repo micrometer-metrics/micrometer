@@ -25,8 +25,8 @@ import com.google.cloud.monitoring.v3.MetricServiceSettings;
 import com.google.monitoring.v3.*;
 import com.google.protobuf.Timestamp;
 import io.micrometer.core.annotation.Incubating;
-import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.distribution.CountAtBucket;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
@@ -65,6 +65,7 @@ import static java.util.stream.StreamSupport.stream;
  */
 @Incubating(since = "1.1.0")
 public class StackdriverMeterRegistry extends StepMeterRegistry {
+
     private static final ThreadFactory DEFAULT_THREAD_FACTORY = new NamedThreadFactory("stackdriver-metrics-publisher");
 
     /**
@@ -122,7 +123,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
             } else {
                 try {
                     this.client = MetricServiceClient.create(metricServiceSettings);
-                    logger.info("publishing metrics to stackdriver every " + TimeUtils.format(config.step()));
+                    logger.info("publishing metrics to stackdriver every {}", TimeUtils.format(config.step()));
                     super.start(threadFactory);
                 } catch (Exception e) {
                     logger.error("unable to create stackdriver client", e);
@@ -317,7 +318,7 @@ public class StackdriverMeterRegistry extends StepMeterRegistry {
                     Arrays.stream(snapshot.percentileValues())
                             .map(valueAtP -> createTimeSeries(histogramSupport,
                                     timeDomain ? valueAtP.value(getBaseTimeUnit()) : valueAtP.value(),
-                                    "p" + DoubleFormat.decimalOrWhole(valueAtP.percentile() * 100)))
+                                    "p" + DoubleFormat.wholeOrDecimal(valueAtP.percentile() * 100)))
             );
         }
 

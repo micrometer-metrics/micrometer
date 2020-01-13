@@ -41,6 +41,7 @@ import static org.mockito.Mockito.*;
  *
  * @author Johnny Lim
  */
+@SuppressWarnings("deprecation")
 class CloudWatchMeterRegistryTest {
     private static final String METER_NAME = "test";
     private final CloudWatchConfig config = new CloudWatchConfig() {
@@ -213,6 +214,7 @@ class CloudWatchMeterRegistryTest {
         when(this.registry.getMeters()).thenReturn(meters);
         doNothing().when(this.registry).sendMetricData(any());
         this.registry.publish();
+        @SuppressWarnings("unchecked")
         ArgumentCaptor<List<MetricDatum>> argumentCaptor = ArgumentCaptor.forClass(List.class);
         verify(this.registry, times(2)).sendMetricData(argumentCaptor.capture());
         List<List<MetricDatum>> allValues = argumentCaptor.getAllValues();
