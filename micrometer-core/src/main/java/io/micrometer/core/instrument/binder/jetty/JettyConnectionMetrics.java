@@ -109,8 +109,9 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
 
     @Override
     public void onOpened(Connection connection) {
+        Timer.Sample started = Timer.start(registry);
         synchronized (connectionSamplesLock) {
-            connectionSamples.put(connection, Timer.start(registry));
+            connectionSamples.put(connection, started);
             maxConnections.record(connectionSamples.size());
         }
     }
