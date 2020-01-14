@@ -29,12 +29,9 @@ import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
-import org.pcollections.HashTreePMap;
-import org.pcollections.HashTreePSet;
-import org.pcollections.PMap;
-import org.pcollections.PSet;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -66,14 +63,17 @@ public abstract class MeterRegistry {
     private final Config config = new Config();
     private final More more = new More();
 
-    private volatile PMap<Id, Meter> meterMap = HashTreePMap.empty();
+    // Eventhough writes are guarded by meterMapLock, iterators across value space are supported
+    // Hence, we use CHM to support that iteration without ConcurrentModificationException risk
+    private final Map<Id, Meter> meterMap = new ConcurrentHashMap<>();
 
     /**
      * Map of meter id whose associated meter contains synthetic counterparts to those synthetic ids.
      * We maintain these associations so that when we remove a meter with synthetics, they can removed
      * as well.
      */
-    private volatile PMap<Id, PSet<Id>> syntheticAssociations = HashTreePMap.empty();
+    // Guarded by meterMapLock for both reads and writes
+    private final Map<Id, Set<Id>> syntheticAssociations = new LinkedHashMap<>();
 
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private PauseDetector pauseDetector = new NoPauseDetector();
@@ -300,6 +300,8 @@ public abstract class MeterRegistry {
      * @return The set of registered meters.
      */
     public List<Meter> getMeters() {
+        // NOTE: previously used pcollections HashTreePMap which consistently ordered by the key's
+        // hashCode. We don't retain that behavior as hashCode algos are not stable anyway.
         return Collections.unmodifiableList(new ArrayList<>(meterMap.values()));
     }
 
@@ -577,14 +579,15 @@ public abstract class MeterRegistry {
 
                     Id synAssoc = originalId.syntheticAssociation();
                     if (synAssoc != null) {
-                        PSet<Id> existingSynthetics = syntheticAssociations.getOrDefault(synAssoc, HashTreePSet.empty());
-                        syntheticAssociations = syntheticAssociations.plus(synAssoc, existingSynthetics.plus(originalId));
+                        Set<Id> associations = syntheticAssociations.computeIfAbsent(synAssoc,
+                                k -> new LinkedHashSet<>());
+                        associations.add(originalId);
                     }
 
                     for (Consumer<Meter> onAdd : meterAddedListeners) {
                         onAdd.accept(m);
                     }
-                    meterMap = meterMap.plus(mappedId, m);
+                    meterMap.put(mappedId, m);
                 }
             }
         }
@@ -628,14 +631,14 @@ public abstract class MeterRegistry {
 
         if (m != null) {
             synchronized (meterMapLock) {
-                m = meterMap.get(mappedId);
+                m = meterMap.remove(mappedId);
                 if (m != null) {
-                    meterMap = meterMap.minus(mappedId);
-
-                    for (Id synthetic : syntheticAssociations.getOrDefault(id, HashTreePSet.empty())) {
-                        remove(synthetic);
+                    Set<Id> synthetics = syntheticAssociations.remove(id);
+                    if (synthetics != null) {
+                        for (Id synthetic : synthetics) {
+                            remove(synthetic);
+                        }
                     }
-                    syntheticAssociations = syntheticAssociations.minus(id);
 
                     for (Consumer<Meter> onRemove : meterRemovedListeners) {
                         onRemove.accept(m);

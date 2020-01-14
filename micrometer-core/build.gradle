@@ -7,8 +7,6 @@ plugins {
 apply plugin: 'nebula.optional-base'
 
 dependencies {
-    compile 'org.pcollections:pcollections:latest.release'
-
     // JSR-305 only used for non-required meta-annotations
     compile "com.google.code.findbugs:jsr305:latest.release", optional
 
@@ -98,32 +96,4 @@ dependencies {
     testCompile 'com.github.tomakehurst:wiremock-jre8:latest.release'
 
     testCompile 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:latest.release'
-}
-
-shadowJar {
-    configurations = [project.configurations.compile]
-    classifier = null
-    dependencies {
-        include(dependency('org.pcollections:'))
-    }
-    relocate 'org.pcollections', 'io.micrometer.shaded.org.pcollections'
-}
-
-jar.enabled = false
-jar.dependsOn shadowJar
-
-publishing {
-    publications {
-        withType(MavenPublication) {
-            pom.withXml {
-                asNode()
-                        .dependencies
-                        .dependency
-                        .findAll {
-                    ['pcollections'].contains(it.artifactId.text())
-                }
-                .each { it.parent().remove(it) }
-            }
-        }
-    }
 }

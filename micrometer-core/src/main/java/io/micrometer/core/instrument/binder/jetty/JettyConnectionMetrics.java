@@ -18,13 +18,13 @@ package io.micrometer.core.instrument.binder.jetty;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.eclipse.jetty.io.Connection;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConnection;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
-import org.pcollections.HashTreePMap;
-import org.pcollections.PMap;
 
 /**
  * Jetty connection metrics.<br><br>
@@ -49,7 +49,7 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
     private final Iterable<Tag> tags;
 
     private final Object connectionSamplesLock = new Object();
-    private volatile PMap<Connection, Timer.Sample> connectionSamples = HashTreePMap.empty();
+    private final Map<Connection, Timer.Sample> connectionSamples = new LinkedHashMap<>();
 
     private final Counter messagesIn;
     private final Counter messagesOut;
@@ -110,7 +110,7 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
     @Override
     public void onOpened(Connection connection) {
         synchronized (connectionSamplesLock) {
-            connectionSamples = connectionSamples.plus(connection, Timer.start(registry));
+            connectionSamples.put(connection, Timer.start(registry));
             maxConnections.record(connectionSamples.size());
         }
     }
@@ -119,8 +119,7 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
     public void onClosed(Connection connection) {
         Timer.Sample sample;
         synchronized (connectionSamplesLock) {
-            sample = connectionSamples.get(connection);
-            connectionSamples = connectionSamples.minus(connection);
+            sample = connectionSamples.remove(connection);
         }
 
         if (sample != null) {

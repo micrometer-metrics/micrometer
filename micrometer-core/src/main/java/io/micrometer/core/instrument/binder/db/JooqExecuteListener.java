@@ -19,11 +19,11 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.util.StringUtils;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.jooq.ExecuteContext;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DefaultExecuteListener;
-import org.pcollections.HashTreePMap;
-import org.pcollections.PMap;
 
 import java.util.function.Supplier;
 
@@ -33,7 +33,7 @@ class JooqExecuteListener extends DefaultExecuteListener {
     private final Supplier<Iterable<Tag>> queryTagsSupplier;
 
     private final Object sampleLock = new Object();
-    private volatile PMap<ExecuteContext, Timer.Sample> sampleByExecuteContext = HashTreePMap.empty();
+    private final Map<ExecuteContext, Timer.Sample> sampleByExecuteContext = new LinkedHashMap<>();
 
     public JooqExecuteListener(MeterRegistry registry, Iterable<Tag> tags, Supplier<Iterable<Tag>> queryTags) {
         this.registry = registry;
@@ -52,8 +52,9 @@ class JooqExecuteListener extends DefaultExecuteListener {
     }
 
     private void startTimer(ExecuteContext ctx) {
+        Timer.Sample started = Timer.start(registry);
         synchronized (sampleLock) {
-            sampleByExecuteContext = sampleByExecuteContext.plus(ctx, Timer.start(registry));
+            sampleByExecuteContext.put(ctx, started);
         }
     }
 
@@ -69,40 +70,40 @@ class JooqExecuteListener extends DefaultExecuteListener {
 
     private void stopTimerIfStillRunning(ExecuteContext ctx) {
         Iterable<Tag> queryTags = queryTagsSupplier.get();
-        Timer.Sample sample = sampleByExecuteContext.get(ctx);
+        if (queryTags == null) return;
 
-        if (sample != null && queryTags != null) {
-            synchronized (sampleLock) {
-                sampleByExecuteContext = sampleByExecuteContext.minus(ctx);
-            }
-
-            String exceptionName = "none";
-            String exceptionSubclass = "none";
-
-            Exception exception = ctx.exception();
-            if (exception != null) {
-                if (exception instanceof DataAccessException) {
-                    DataAccessException dae = (DataAccessException) exception;
-                    exceptionName = dae.sqlStateClass().name().toLowerCase().replace('_', ' ');
-                    exceptionSubclass = dae.sqlStateSubclass().name().toLowerCase().replace('_', ' ');
-                    if (exceptionSubclass.contains("no subclass")) {
-                        exceptionSubclass = "none";
-                    }
-                } else {
-                    String simpleName = exception.getClass().getSimpleName();
-                    exceptionName = StringUtils.isNotBlank(simpleName) ? simpleName : exception.getClass().getName();
-                }
-            }
-
-            //noinspection unchecked
-            sample.stop(Timer.builder("jooq.query")
-                    .description("Execution time of a SQL query performed with JOOQ")
-                    .tags(queryTags)
-                    .tag("type", ctx.type().name().toLowerCase())
-                    .tag("exception", exceptionName)
-                    .tag("exception.subclass", exceptionSubclass)
-                    .tags(tags)
-                    .register(registry));
+        Timer.Sample sample;
+        synchronized (sampleLock) {
+            sample = sampleByExecuteContext.remove(ctx);
         }
+        if (sample == null) return;
+
+        String exceptionName = "none";
+        String exceptionSubclass = "none";
+
+        Exception exception = ctx.exception();
+        if (exception != null) {
+            if (exception instanceof DataAccessException) {
+                DataAccessException dae = (DataAccessException) exception;
+                exceptionName = dae.sqlStateClass().name().toLowerCase().replace('_', ' ');
+                exceptionSubclass = dae.sqlStateSubclass().name().toLowerCase().replace('_', ' ');
+                if (exceptionSubclass.contains("no subclass")) {
+                    exceptionSubclass = "none";
+                }
+            } else {
+                String simpleName = exception.getClass().getSimpleName();
+                exceptionName = StringUtils.isNotBlank(simpleName) ? simpleName : exception.getClass().getName();
+            }
+        }
+
+        //noinspection unchecked
+        sample.stop(Timer.builder("jooq.query")
+                .description("Execution time of a SQL query performed with JOOQ")
+                .tags(queryTags)
+                .tag("type", ctx.type().name().toLowerCase())
+                .tag("exception", exceptionName)
+                .tag("exception.subclass", exceptionSubclass)
+                .tags(tags)
+                .register(registry));
     }
 }
