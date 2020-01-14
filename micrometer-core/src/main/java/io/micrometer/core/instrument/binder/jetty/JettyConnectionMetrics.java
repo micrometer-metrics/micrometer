@@ -15,10 +15,16 @@
  */
 package io.micrometer.core.instrument.binder.jetty;
 
-import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.jetty.io.Connection;
 import org.eclipse.jetty.server.Connector;
@@ -49,7 +55,7 @@ public class JettyConnectionMetrics extends AbstractLifeCycle implements Connect
     private final Iterable<Tag> tags;
 
     private final Object connectionSamplesLock = new Object();
-    private final Map<Connection, Timer.Sample> connectionSamples = new LinkedHashMap<>();
+    private final Map<Connection, Timer.Sample> connectionSamples = new HashMap<>();
 
     private final Counter messagesIn;
     private final Counter messagesOut;

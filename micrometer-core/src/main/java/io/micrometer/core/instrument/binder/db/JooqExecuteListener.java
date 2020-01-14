@@ -19,7 +19,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.util.StringUtils;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 import org.jooq.ExecuteContext;
 import org.jooq.exception.DataAccessException;
@@ -33,7 +33,7 @@ class JooqExecuteListener extends DefaultExecuteListener {
     private final Supplier<Iterable<Tag>> queryTagsSupplier;
 
     private final Object sampleLock = new Object();
-    private final Map<ExecuteContext, Timer.Sample> sampleByExecuteContext = new LinkedHashMap<>();
+    private final Map<ExecuteContext, Timer.Sample> sampleByExecuteContext = new HashMap<>();
 
     public JooqExecuteListener(MeterRegistry registry, Iterable<Tag> tags, Supplier<Iterable<Tag>> queryTags) {
         this.registry = registry;
