@@ -21,17 +21,17 @@ import io.micrometer.core.instrument.Statistic;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
-import org.pcollections.HashTreePMap;
-import org.pcollections.PMap;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
     private final HierarchicalNameMapper nameMapper;
-    private final Object namesLock = new Object();
     @SuppressWarnings({"NullableProblems", "unused"})
     private volatile NamingConvention namingConvention;
     @Nullable
     private volatile String nameNoStat;
-    private volatile PMap<Statistic, String> names = HashTreePMap.empty();
+    private final ConcurrentMap<Statistic, String> names = new ConcurrentHashMap<>();
 
     public EtsyStatsdLineBuilder(Meter.Id id, MeterRegistry.Config config, HierarchicalNameMapper nameMapper) {
         super(id, config);
@@ -48,8 +48,8 @@ public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
         NamingConvention next = config.namingConvention();
         if (this.namingConvention != next) {
             this.namingConvention = next;
-            this.names = HashTreePMap.empty();
             this.nameNoStat = null;
+            this.names.clear();
         }
     }
 
@@ -61,21 +61,7 @@ public class EtsyStatsdLineBuilder extends FlavorStatsdLineBuilder {
             //noinspection ConstantConditions
             return nameNoStat;
         }
-
-        String nameString = names.get(stat);
-        if (nameString != null)
-            return nameString;
-
-        synchronized (namesLock) {
-            nameString = names.get(stat);
-            if (nameString != null) {
-                return nameString;
-            }
-
-            nameString = etsyName(stat);
-            names = names.plus(stat, nameString);
-            return nameString;
-        }
+        return names.computeIfAbsent(stat, this::etsyName);
     }
 
     private String etsyName(@Nullable Statistic stat) {
