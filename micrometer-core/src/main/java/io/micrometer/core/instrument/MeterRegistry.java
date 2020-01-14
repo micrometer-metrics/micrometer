@@ -23,19 +23,38 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.pause.NoPauseDetector;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
-import io.micrometer.core.instrument.noop.*;
+import io.micrometer.core.instrument.noop.NoopCounter;
+import io.micrometer.core.instrument.noop.NoopDistributionSummary;
+import io.micrometer.core.instrument.noop.NoopFunctionCounter;
+import io.micrometer.core.instrument.noop.NoopFunctionTimer;
+import io.micrometer.core.instrument.noop.NoopGauge;
+import io.micrometer.core.instrument.noop.NoopLongTaskTimer;
+import io.micrometer.core.instrument.noop.NoopMeter;
+import io.micrometer.core.instrument.noop.NoopTimeGauge;
+import io.micrometer.core.instrument.noop.NoopTimer;
 import io.micrometer.core.instrument.search.MeterNotFoundException;
 import io.micrometer.core.instrument.search.RequiredSearch;
 import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.*;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToLongFunction;
 
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
@@ -73,7 +92,7 @@ public abstract class MeterRegistry {
      * as well.
      */
     // Guarded by meterMapLock for both reads and writes
-    private final Map<Id, Set<Id>> syntheticAssociations = new LinkedHashMap<>();
+    private final Map<Id, Set<Id>> syntheticAssociations = new HashMap<>();
 
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private PauseDetector pauseDetector = new NoPauseDetector();
@@ -300,8 +319,6 @@ public abstract class MeterRegistry {
      * @return The set of registered meters.
      */
     public List<Meter> getMeters() {
-        // NOTE: previously used pcollections HashTreePMap which consistently ordered by the key's
-        // hashCode. We don't retain that behavior as hashCode algos are not stable anyway.
         return Collections.unmodifiableList(new ArrayList<>(meterMap.values()));
     }
 
@@ -580,7 +597,7 @@ public abstract class MeterRegistry {
                     Id synAssoc = originalId.syntheticAssociation();
                     if (synAssoc != null) {
                         Set<Id> associations = syntheticAssociations.computeIfAbsent(synAssoc,
-                                k -> new LinkedHashSet<>());
+                                k -> new HashSet<>());
                         associations.add(originalId);
                     }
 
