@@ -38,11 +38,13 @@ import reactor.netty.udp.UdpClient;
 import reactor.util.context.Context;
 
 import java.net.PortUnreachableException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.*;
 import java.util.stream.LongStream;
 
@@ -232,13 +234,22 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private void prepareTcpClient(Publisher<String> publisher) {
-        TcpClient.create()
+        AtomicReference<TcpClient> tcpClientReference = new AtomicReference<>();
+        TcpClient tcpClient = TcpClient.create()
                 .host(statsdConfig.host())
                 .port(statsdConfig.port())
                 .handle((in, out) -> out
                         .sendString(publisher)
                         .neverComplete())
+                .doOnDisconnected(connection -> connectAndSubscribe(tcpClientReference.get()));
+        tcpClientReference.set(tcpClient);
+        connectAndSubscribe(tcpClient);
+    }
+
+    private void connectAndSubscribe(TcpClient tcpClient) {
+        tcpClient
                 .connect()
+                .retryBackoff(Long.MAX_VALUE, Duration.ofSeconds(1), Duration.ofMinutes(1))
                 .subscribe(client -> {
                     this.client.replace(client);
 
