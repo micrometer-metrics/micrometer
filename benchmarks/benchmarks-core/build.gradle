@@ -16,4 +16,6 @@ jmh {
     fork = 1
     warmupIterations = 1
     iterations = 1
+    duplicateClassesStrategy = 'exclude'
+    zip64 = true
 }
