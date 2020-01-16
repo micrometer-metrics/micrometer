@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Pivotal Software, Inc.
+ * Copyright 2020 Pivotal Software, Inc.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,44 +17,89 @@ package io.micrometer.benchmark.core;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.openjdk.jmh.annotations.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Group;
+import org.openjdk.jmh.annotations.GroupThreads;
+import org.openjdk.jmh.annotations.Level;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
+import org.openjdk.jmh.annotations.Threads;
+import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-import java.util.concurrent.TimeUnit;
-
-@State(Scope.Benchmark)
+@Measurement(iterations = 5, time = 1)
+@Warmup(iterations = 10, time = 1)
+@Fork(3)
+@BenchmarkMode(Mode.SampleTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
+@State(Scope.Group)
 public class MeterRegistrationBenchmark {
+    MeterRegistry registry = new SimpleMeterRegistry();
+    AtomicLong i = new AtomicLong();
+
+    @TearDown(Level.Iteration)
+    public void clear() {
+        i.set(0);
+        registry.clear();
+    }
+
+    @Benchmark @Group("no_contention") @GroupThreads(1)
+    public void no_contention_register_counter() {
+        register_counter();
+    }
+
+    @Benchmark @Group("mild_contention") @GroupThreads(2)
+    public void mild_contention_register_counter() {
+        register_counter();
+    }
+
+    @Benchmark @Group("high_contention") @GroupThreads(8)
+    public void high_contention_register_counter() {
+        register_counter();
+    }
+
+    void register_counter() {
+        registry.counter("counter." + i.incrementAndGet(), "k", "v");
+    }
+
+    @Benchmark @Group("no_contention") @GroupThreads(1)
+    public void register_counter_redundant() {
+        String name = "counter." + i.incrementAndGet();
+        registry.counter(name, "k", "v");
+        registry.counter(name, "k", "v");
+    }
+
+    @Benchmark @Group("no_contention") @GroupThreads(1)
+    public void register_counter_same_name_different_tags() {
+        String name = "counter." + i.incrementAndGet();
+        registry.counter(name, "k1", "v");
+        registry.counter(name, "k2", "v");
+    }
+
+    @Benchmark @Group("no_contention") @GroupThreads(1)
+    public void register_counter_different_name_different_tags() {
+        registry.counter("counter." + i.incrementAndGet(), "k1", "v");
+        registry.counter("counter." + i.incrementAndGet(), "k2", "v");
+    }
+
+    // Convenience main entry-point
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
+                .addProfiler("gc")
                 .include(MeterRegistrationBenchmark.class.getSimpleName())
-                .warmupIterations(2)
-                .measurementIterations(5)
-                .mode(Mode.SampleTime)
-                .timeUnit(TimeUnit.SECONDS)
-                .forks(1)
                 .build();
 
         new Runner(opt).run();
-    }
-
-    private int x = 923;
-    private int y = 123;
-
-    @Benchmark
-    public int insert10_000() {
-        MeterRegistry registry = new SimpleMeterRegistry();
-        for (int i = 0; i < 10_000; i++) {
-            registry.counter("my.counter", "k" + i, "v1");
-        }
-        return sum();
-    }
-
-    @Benchmark
-    public int sum() {
-        return x + y;
     }
 }
