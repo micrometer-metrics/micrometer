@@ -659,8 +659,7 @@ public abstract class MeterRegistry {
          * @return This configuration instance.
          */
         public Config commonTags(Iterable<Tag> tags) {
-            meterFilter(MeterFilter.commonTags(tags));
-            return this;
+            return meterFilter(MeterFilter.commonTags(tags));
         }
 
         /**
