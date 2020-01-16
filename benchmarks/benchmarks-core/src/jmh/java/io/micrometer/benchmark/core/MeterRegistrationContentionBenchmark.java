@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Group;
+import org.openjdk.jmh.annotations.GroupThreads;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
@@ -40,8 +42,8 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 @Fork(3)
 @BenchmarkMode(Mode.SampleTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-@State(Scope.Thread)
-public class MeterRegistrationBenchmark {
+@State(Scope.Group)
+public class MeterRegistrationContentionBenchmark {
     MeterRegistry registry = new SimpleMeterRegistry();
     AtomicLong i = new AtomicLong();
 
@@ -51,36 +53,30 @@ public class MeterRegistrationBenchmark {
         registry.clear();
     }
 
-    @Benchmark
-    public void register_counter() {
+    @Benchmark @Group("no_contention") @GroupThreads(1)
+    public void no_contention_register_counter() {
+        register_counter();
+    }
+
+    @Benchmark @Group("mild_contention") @GroupThreads(2)
+    public void mild_contention_register_counter() {
+        register_counter();
+    }
+
+    @Benchmark @Group("high_contention") @GroupThreads(8)
+    public void high_contention_register_counter() {
+        register_counter();
+    }
+
+    void register_counter() {
         registry.counter("counter." + i.incrementAndGet(), "k", "v");
-    }
-
-    @Benchmark
-    public void register_counter_redundant() {
-        String name = "counter." + i.incrementAndGet();
-        registry.counter(name, "k", "v");
-        registry.counter(name, "k", "v");
-    }
-
-    @Benchmark
-    public void register_counter_same_name_different_tags() {
-        String name = "counter." + i.incrementAndGet();
-        registry.counter(name, "k1", "v");
-        registry.counter(name, "k2", "v");
-    }
-
-    @Benchmark
-    public void register_counter_different_name_different_tags() {
-        registry.counter("counter." + i.incrementAndGet(), "k1", "v");
-        registry.counter("counter." + i.incrementAndGet(), "k2", "v");
     }
 
     // Convenience main entry-point
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
                 .addProfiler("gc")
-                .include(MeterRegistrationBenchmark.class.getSimpleName())
+                .include(MeterRegistrationContentionBenchmark.class.getSimpleName())
                 .build();
 
         new Runner(opt).run();
