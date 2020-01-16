@@ -228,7 +228,7 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
 
     private ToDoubleFunction<MBeanServer> getJmxAttribute(MeterRegistry registry, AtomicReference<? extends Meter> meter,
                                                           ObjectName o, String jmxMetricName) {
-        return s -> safeDouble(jmxMetricName, () -> {
+        return s -> safeDouble(() -> {
             if (!s.isRegistered(o)) {
                 registry.remove(meter.get());
             }
@@ -330,7 +330,7 @@ public class KafkaConsumerMetrics implements MeterBinder, AutoCloseable {
         }
     }
 
-    private double safeDouble(String jmxMetricName, Callable<Object> callable) {
+    private double safeDouble(Callable<Object> callable) {
         try {
             return Double.parseDouble(callable.call().toString());
         } catch (Exception e) {
