@@ -35,6 +35,8 @@ import java.util.function.BiConsumer;
 
 /**
  * {@link MeterBinder} for Tomcat.
+ * <p>Note: the {@link #close()} method should be called when the application shuts down
+ * to clean up listeners this binder registers.
  *
  * @author Clint Checketts
  * @author Jon Schneider
