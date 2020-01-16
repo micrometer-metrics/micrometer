@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
@@ -41,7 +42,7 @@ import java.util.function.BiConsumer;
  */
 @NonNullApi
 @NonNullFields
-public class TomcatMetrics implements MeterBinder {
+public class TomcatMetrics implements MeterBinder, AutoCloseable {
 
     private static final String JMX_DOMAIN_EMBEDDED = "Tomcat";
     private static final String JMX_DOMAIN_STANDALONE = "Catalina";
@@ -54,6 +55,8 @@ public class TomcatMetrics implements MeterBinder {
 
     private final MBeanServer mBeanServer;
     private final Iterable<Tag> tags;
+
+    private final Set<NotificationListener> notificationListeners = ConcurrentHashMap.newKeySet();
 
     private volatile String jmxDomain;
 
@@ -250,11 +253,13 @@ public class TomcatMetrics implements MeterBinder {
                 perObject.accept(objectName, Tags.concat(tags, nameTag(objectName)));
                 try {
                     mBeanServer.removeNotificationListener(MBeanServerDelegate.DELEGATE_NAME, this);
+                    notificationListeners.remove(this);
                 } catch (InstanceNotFoundException | ListenerNotFoundException ex) {
                     throw new RuntimeException(ex);
                 }
             }
         };
+        notificationListeners.add(notificationListener);
 
         NotificationFilter notificationFilter = (NotificationFilter) notification -> {
             if (!MBeanServerNotification.REGISTRATION_NOTIFICATION.equals(notification.getType())) {
@@ -331,4 +336,16 @@ public class TomcatMetrics implements MeterBinder {
         }
         return Collections.emptyList();
     }
+
+    @Override
+    public void close() {
+        for (NotificationListener notificationListener : this.notificationListeners) {
+            try {
+                this.mBeanServer.removeNotificationListener(MBeanServerDelegate.DELEGATE_NAME, notificationListener);
+            } catch (InstanceNotFoundException | ListenerNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }
+
 }
