@@ -9,6 +9,16 @@ buildscript {
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.2.0'
         classpath 'me.champeau.gradle:jmh-gradle-plugin:0.5.0'
         classpath 'com.netflix.nebula:nebula-project-plugin:3.4.0'
+
+        constraints {
+            classpath('org.ow2.asm:asm:7.3.1') {
+                because 'Supports modern JDKs'
+            }
+
+            classpath('org.jfrog.buildinfo:build-info-extractor-gradle:4.13.0') {
+                because 'Need recent version for Gradle 6+ compatibility'
+            }
+        }
     }
 
     configurations.classpath.resolutionStrategy.cacheDynamicVersionsFor 0, 'minutes'
@@ -20,7 +30,7 @@ allprojects {
     apply plugin: 'io.spring.license'
 
     afterEvaluate { project ->
-        println "I'm building $project.name with version $project.version"
+        println "I'm configuring $project.name with version $project.version"
     }
     group = 'io.micrometer'
 }
@@ -63,6 +73,22 @@ subprojects {
         license {
             ext.year = Calendar.getInstance().get(Calendar.YEAR)
             skipExistingHeaders = true
+        }
+
+        plugins.withId('maven-publish') {
+            publishing {
+                publications {
+                    nebula(MavenPublication) {
+                        // Nebula converts dynamic versions to static ones so it's ok.
+                        suppressPomMetadataWarningsFor('apiElements')
+                    }
+                }
+            }
+
+            // Nebula doesn't interface with Gradle's module format so just disable it for now.
+            tasks.withType(GenerateModuleMetadata) {
+                enabled = false
+            }
         }
     }
 
@@ -113,7 +139,7 @@ subprojects {
 }
 
 wrapper {
-    gradleVersion = '5.6.4'
+    gradleVersion = '6.1'
 }
 
 defaultTasks 'build'

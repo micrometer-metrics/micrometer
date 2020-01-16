@@ -1,5 +1,4 @@
 plugins {
-    id "net.ltgt.apt" version "0.10" // for dagger injection testing
     id 'idea'
     id 'com.github.johnrengelman.shadow' version '5.2.0'
 }
@@ -81,7 +80,7 @@ dependencies {
 
     // Uncomment these if you are interested in testing injection with dagger in MeterRegistryInjectionTest
 //    testCompile 'com.google.dagger:dagger:2.11'
-//    testCompile 'com.google.dagger:dagger-compiler:2.11'
+//    testAnnotationProcessor 'com.google.dagger:dagger-compiler:2.11'
 
     testCompile 'org.assertj:assertj-core:latest.release'
 
