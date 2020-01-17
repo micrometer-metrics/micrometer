@@ -86,10 +86,12 @@ class StatsdMeterRegistryPublishTest {
         // start server
         server = startServer(protocol, port);
         assertThat(serverLatch.getCount()).isEqualTo(3);
+        // make sure the client is connected before making counter increments
+        await().until(() -> !clientIsDisposed());
         counter.increment(5);
         counter.increment(6);
         counter.increment(7);
-        assertThat(serverLatch.await(1, TimeUnit.SECONDS)).isTrue();
+        assertThat(serverLatch.await(3, TimeUnit.SECONDS)).isTrue();
         meterRegistry.close();
 
         server.disposeNow();
@@ -154,6 +156,7 @@ class StatsdMeterRegistryPublishTest {
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         IntStream.range(0, 100).forEach(counter::increment);
         server = startServer(protocol, port);
+        // client is null until TcpClient first connects
         await().until(() -> meterRegistry.client.get() != null);
         // TcpClient may take some time to reconnect to the server
         await().until(() -> !clientIsDisposed());
@@ -198,6 +201,7 @@ class StatsdMeterRegistryPublishTest {
                             in.receive().asString()
                                     .flatMap(packet -> {
                                         IntStream.range(0, packet.split("my.counter").length - 1).forEach(i -> serverLatch.countDown());
+                                        in.withConnection(DisposableChannel::dispose);
                                         return Flux.never();
                                     }))
                     .wiretap("tcpserver", LogLevel.INFO)
