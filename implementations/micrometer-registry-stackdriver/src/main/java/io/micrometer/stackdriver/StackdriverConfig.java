@@ -15,8 +15,15 @@
  */
 package io.micrometer.stackdriver;
 
+import com.google.api.gax.core.CredentialsProvider;
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.monitoring.v3.MetricServiceSettings;
 import io.micrometer.core.instrument.config.MissingRequiredConfigurationException;
 import io.micrometer.core.instrument.step.StepRegistryConfig;
+
+import java.io.FileInputStream;
+import java.io.IOException;
 
 /**
  * {@link StepRegistryConfig} for Stackdriver.
@@ -41,5 +48,12 @@ public interface StackdriverConfig extends StepRegistryConfig {
     default String resourceType() {
         String resourceType = get(prefix() + ".resourceType");
         return resourceType == null ? "global" : resourceType;
+    }
+
+    default CredentialsProvider credentials() throws IOException {
+        String credentials = get(prefix() + ".credentials");
+        return credentials == null ? MetricServiceSettings.defaultCredentialsProviderBuilder().build()
+                : FixedCredentialsProvider.create(GoogleCredentials.fromStream(new FileInputStream(credentials))
+                        .createScoped(MetricServiceSettings.getDefaultServiceScopes()));
     }
 }
