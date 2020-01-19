@@ -22,7 +22,9 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.HistogramGauges;
 import io.micrometer.core.instrument.distribution.pause.PauseDetector;
 import io.micrometer.core.instrument.internal.DefaultMeter;
+import io.micrometer.core.instrument.util.DoubleFormat;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.core.instrument.util.TimeUtils;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.statsd.internal.*;
 import org.reactivestreams.Processor;
@@ -40,6 +42,7 @@ import reactor.util.concurrent.Queues;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -308,6 +311,26 @@ public class StatsdMeterRegistry extends MeterRegistry {
                 .merge(config);
     }
 
+    private Map<Long, Counter> registerSlaCounters(Meter.Id id, DistributionStatisticConfig config) {
+        Map<Long, Counter> slaCounters = new HashMap<>();
+
+        if (config.getSlaBoundaries() != null) {
+            for (Long sla : config.getSlaBoundaries()) {
+                // Register an infinity counter isn't necessary, we can rely on the timer's count
+                if (sla != Long.MAX_VALUE) {
+                    slaCounters.put(sla, Counter.builder(id.getName() + ".sla")
+                            .tags(Tags.concat(id.getTagsAsIterable(), "le",
+                                    id.getType() == Meter.Type.TIMER
+                                            ? DoubleFormat.decimalOrNan(TimeUtils.nanosToUnit(sla.doubleValue(),
+                                            TimeUnit.MILLISECONDS)) : sla.toString()))
+                            .synthetic(id)
+                            .register(this));
+                }
+            }
+        }
+        return slaCounters;
+    }
+
     @Override
     protected Counter newCounter(Meter.Id id) {
         return new StatsdCounter(id, lineBuilder(id), processor);
@@ -324,14 +347,17 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected Timer newTimer(Meter.Id id, DistributionStatisticConfig distributionStatisticConfig, PauseDetector
             pauseDetector) {
+        Map<Long, Counter> slaCounters = null;
 
-        // Adds an infinity bucket for SLA violation calculation
         if (distributionStatisticConfig.getSlaBoundaries() != null) {
+            // Adds an infinity bucket for SLA violation calculation
             distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
+            // Registers counters for each SLA boundary
+            slaCounters = registerSlaCounters(id, distributionStatisticConfig);
         }
 
         Timer timer = new StatsdTimer(id, lineBuilder(id), processor, clock, distributionStatisticConfig, pauseDetector, getBaseTimeUnit(),
-                statsdConfig.step().toMillis());
+                statsdConfig.step().toMillis(), slaCounters);
         HistogramGauges.registerWithCommonFormat(timer, this);
         return timer;
     }
@@ -340,13 +366,17 @@ public class StatsdMeterRegistry extends MeterRegistry {
     @Override
     protected DistributionSummary newDistributionSummary(Meter.Id id, DistributionStatisticConfig
             distributionStatisticConfig, double scale) {
+        Map<Long, Counter> slaCounters = null;
 
         // Adds an infinity bucket for SLA violation calculation
         if (distributionStatisticConfig.getSlaBoundaries() != null) {
+            // Adds an infinity bucket for SLA violation calculation
             distributionStatisticConfig = addInfBucket(distributionStatisticConfig);
+            // Registers counters for each SLA boundary
+            slaCounters = registerSlaCounters(id, distributionStatisticConfig);
         }
 
-        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), processor, clock, distributionStatisticConfig, scale);
+        DistributionSummary summary = new StatsdDistributionSummary(id, lineBuilder(id), processor, clock, distributionStatisticConfig, scale, slaCounters);
         HistogramGauges.registerWithCommonFormat(summary, this);
         return summary;
     }

@@ -17,6 +17,7 @@ package io.micrometer.statsd;
 
 import io.micrometer.core.instrument.AbstractDistributionSummary;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.distribution.TimeWindowMax;
@@ -24,6 +25,7 @@ import io.micrometer.core.instrument.util.MeterEquivalence;
 import io.micrometer.core.lang.Nullable;
 import org.reactivestreams.Subscriber;
 
+import java.util.Map;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -34,13 +36,16 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
     private final StatsdLineBuilder lineBuilder;
     private final Subscriber<String> subscriber;
     private volatile boolean shutdown = false;
+    @Nullable
+    private Map<Long, Counter> slaCounters;
 
     StatsdDistributionSummary(Meter.Id id, StatsdLineBuilder lineBuilder, Subscriber<String> subscriber, Clock clock,
-                              DistributionStatisticConfig distributionStatisticConfig, double scale) {
+                              DistributionStatisticConfig distributionStatisticConfig, double scale, Map<Long, Counter> slaCounters) {
         super(id, clock, distributionStatisticConfig, scale, false);
         this.max = new TimeWindowMax(clock, distributionStatisticConfig);
         this.lineBuilder = lineBuilder;
         this.subscriber = subscriber;
+        this.slaCounters = slaCounters;
     }
 
     @Override
@@ -48,6 +53,15 @@ public class StatsdDistributionSummary extends AbstractDistributionSummary {
         if (!shutdown && amount >= 0) {
             count.increment();
             this.amount.add(amount);
+
+            if (this.slaCounters != null) {
+                for (Map.Entry<Long, Counter> entry : this.slaCounters.entrySet()) {
+                    if (entry.getKey() >= amount) {
+                        entry.getValue().increment();
+                    }
+                }
+            }
+
             max.record(amount);
             subscriber.onNext(lineBuilder.histogram(amount));
         }
