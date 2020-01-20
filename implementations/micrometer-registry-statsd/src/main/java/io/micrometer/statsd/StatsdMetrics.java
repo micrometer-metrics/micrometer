@@ -15,27 +15,15 @@
  */
 package io.micrometer.statsd;
 
-import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
 /**
- * @deprecated statsd publisher queue metrics are no longer available
+ * @deprecated statsd metrics are no longer available
  */
 @Deprecated
 public class StatsdMetrics implements MeterBinder {
     @Override
     public void bindTo(MeterRegistry registry) {
-        if (registry instanceof StatsdMeterRegistry) {
-            StatsdMeterRegistry statsdRegistry = (StatsdMeterRegistry) registry;
-
-            Gauge.builder("statsd.queue.size", statsdRegistry, StatsdMeterRegistry::queueSize)
-                    .description("The total number of StatsD events queued for transmission over UDP")
-                    .register(statsdRegistry);
-
-            Gauge.builder("statsd.queue.capacity", statsdRegistry, StatsdMeterRegistry::queueCapacity)
-                    .description("The maximum number of StatsD events that can be queued for transmission")
-                    .register(statsdRegistry);
-        }
     }
 }
