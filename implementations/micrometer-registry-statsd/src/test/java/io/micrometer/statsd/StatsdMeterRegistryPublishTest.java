@@ -82,7 +82,6 @@ class StatsdMeterRegistryPublishTest {
         serverLatch = new CountDownLatch(3);
         // client will try to send but server is down
         IntStream.range(2, 100).forEach(counter::increment);
-        // TODO wait until processor queue is drained...
         // start server
         server = startServer(protocol, port);
         assertThat(serverLatch.getCount()).isEqualTo(3);
@@ -171,7 +170,7 @@ class StatsdMeterRegistryPublishTest {
 
     @ParameterizedTest
     @EnumSource(StatsdProtocol.class)
-    void whenRegistryStopped_doNotAttemptToConnectToBackend(StatsdProtocol protocol) throws InterruptedException {
+    void whenRegistryStopped_doNotConnectToBackend(StatsdProtocol protocol) throws InterruptedException {
         serverLatch = new CountDownLatch(3);
         // start server to secure an open port
         DisposableChannel server = startServer(protocol, 0);
@@ -189,7 +188,6 @@ class StatsdMeterRegistryPublishTest {
 
     private void startRegistryAndWaitForClient() {
         meterRegistry.start();
-        // TODO alternatively, configure the processor to buffer when no subscriber is present... previous behavior used to be this, I think?
         await().until(() -> !clientIsDisposed());
     }
 

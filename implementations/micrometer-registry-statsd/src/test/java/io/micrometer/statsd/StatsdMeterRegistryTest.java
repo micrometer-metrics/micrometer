@@ -455,7 +455,7 @@ class StatsdMeterRegistryTest {
             .build();
 
         registry.counter("some.metric").increment();
-//        assertThat(registry.queueSize()).as("counter increment should already be processed").isZero();
+        assertThat(registry.processor.inners().count()).as("processor has no subscribers registered").isZero();
     }
 
     @Test
