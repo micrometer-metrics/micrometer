@@ -274,7 +274,9 @@ public class StatsdMeterRegistry extends MeterRegistry {
             if (client.get() != null) {
                 client.get().dispose();
             }
-            meterPoller.dispose();
+            if (meterPoller.get() != null) {
+                meterPoller.get().dispose();
+            }
         }
     }
 
