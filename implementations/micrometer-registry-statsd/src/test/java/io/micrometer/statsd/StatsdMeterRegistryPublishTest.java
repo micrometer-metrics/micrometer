@@ -169,6 +169,24 @@ class StatsdMeterRegistryPublishTest {
         server.disposeNow();
     }
 
+    @ParameterizedTest
+    @EnumSource(StatsdProtocol.class)
+    void whenRegistryStopped_doNotAttemptToConnectToBackend(StatsdProtocol protocol) throws InterruptedException {
+        serverLatch = new CountDownLatch(3);
+        // start server to secure an open port
+        DisposableChannel server = startServer(protocol, 0);
+        final int port = server.address().getPort();
+        meterRegistry = new StatsdMeterRegistry(getUnbufferedConfig(protocol, port), Clock.SYSTEM);
+        startRegistryAndWaitForClient();
+        server.disposeNow();
+        meterRegistry.stop();
+        await().until(this::clientIsDisposed);
+        server = startServer(protocol, port);
+        Counter counter = Counter.builder("my.counter").register(meterRegistry);
+        IntStream.range(0, 100).forEach(counter::increment);
+        assertThat(serverLatch.await(1, TimeUnit.SECONDS)).isFalse();
+    }
+
     private void startRegistryAndWaitForClient() {
         meterRegistry.start();
         // TODO alternatively, configure the processor to buffer when no subscriber is present... previous behavior used to be this, I think?

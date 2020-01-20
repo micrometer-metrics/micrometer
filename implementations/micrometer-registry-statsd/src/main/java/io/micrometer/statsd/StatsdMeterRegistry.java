@@ -33,6 +33,7 @@ import reactor.core.Disposables;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.Mono;
 import reactor.netty.tcp.TcpClient;
 import reactor.netty.udp.UdpClient;
 import reactor.util.context.Context;
@@ -247,17 +248,19 @@ public class StatsdMeterRegistry extends MeterRegistry {
     }
 
     private void connectAndSubscribe(TcpClient tcpClient) {
-        if (started.get()) {
-            tcpClient
-                    .connect()
-                    .retryBackoff(Long.MAX_VALUE, Duration.ofSeconds(1), Duration.ofMinutes(1))
-                    .subscribe(client -> {
-                        this.client.replace(client);
+        Mono.defer(() -> {
+            if (started.get()) {
+                return tcpClient.connect();
+            }
+            return Mono.empty();
+        })
+                .retryBackoff(Long.MAX_VALUE, Duration.ofSeconds(1), Duration.ofMinutes(1))
+                .subscribe(client -> {
+                    this.client.replace(client);
 
-                        // now that we're connected, start polling gauges and other pollable meter types
-                        startPolling();
-                    });
-        }
+                    // now that we're connected, start polling gauges and other pollable meter types
+                    startPolling();
+                });
     }
 
     private void startPolling() {
