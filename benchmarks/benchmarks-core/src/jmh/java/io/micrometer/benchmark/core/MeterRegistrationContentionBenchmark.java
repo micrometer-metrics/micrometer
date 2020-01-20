@@ -45,11 +45,10 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 @State(Scope.Group)
 public class MeterRegistrationContentionBenchmark {
     MeterRegistry registry = new SimpleMeterRegistry();
-    AtomicLong i = new AtomicLong();
 
-    @TearDown(Level.Iteration)
+    /** Ensures we are testing a clean registry each time */
+    @TearDown(Level.Invocation)
     public void clear() {
-        i.set(0);
         registry.clear();
     }
 
@@ -68,8 +67,30 @@ public class MeterRegistrationContentionBenchmark {
         register_counter();
     }
 
+    /** @see io.micrometer.benchmark.core.MeterRegistrationBenchmark#register_counter() */
     void register_counter() {
-        registry.counter("counter." + i.incrementAndGet(), "k", "v");
+        registry.counter("counter", "k", "v");
+    }
+
+    @Benchmark @Group("no_contention") @GroupThreads(1)
+    public void no_contention_register_counter_redundant() {
+        register_counter_redundant();
+    }
+
+    @Benchmark @Group("mild_contention") @GroupThreads(2)
+    public void mild_contention_register_counter_redundant() {
+        register_counter_redundant();
+    }
+
+    @Benchmark @Group("high_contention") @GroupThreads(8)
+    public void high_contention_register_counter_redundant() {
+        register_counter_redundant();
+    }
+
+    /** @see io.micrometer.benchmark.core.MeterRegistrationBenchmark#register_counter_redundant() */
+    void register_counter_redundant() {
+        registry.counter("counter", "k", "v");
+        registry.counter("counter", "k", "v");
     }
 
     // Convenience main entry-point

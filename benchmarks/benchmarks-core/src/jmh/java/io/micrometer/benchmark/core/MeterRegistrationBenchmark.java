@@ -18,7 +18,6 @@ package io.micrometer.benchmark.core;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -43,37 +42,35 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 @State(Scope.Thread)
 public class MeterRegistrationBenchmark {
     MeterRegistry registry = new SimpleMeterRegistry();
-    AtomicLong i = new AtomicLong();
 
-    @TearDown(Level.Iteration)
+    /** Ensures we are testing a clean registry each time */
+    @TearDown(Level.Invocation)
     public void clear() {
-        i.set(0);
         registry.clear();
     }
 
     @Benchmark
     public void register_counter() {
-        registry.counter("counter." + i.incrementAndGet(), "k", "v");
+        registry.counter("counter", "k", "v");
     }
 
+    /** Ex. using a counter derived from a request property w/o an external counter cache */
     @Benchmark
     public void register_counter_redundant() {
-        String name = "counter." + i.incrementAndGet();
-        registry.counter(name, "k", "v");
-        registry.counter(name, "k", "v");
+        registry.counter("counter", "k", "v");
+        registry.counter("counter", "k", "v");
     }
 
     @Benchmark
     public void register_counter_same_name_different_tags() {
-        String name = "counter." + i.incrementAndGet();
-        registry.counter(name, "k1", "v");
-        registry.counter(name, "k2", "v");
+        registry.counter("counter", "k1", "v");
+        registry.counter("counter", "k2", "v");
     }
 
     @Benchmark
     public void register_counter_different_name_different_tags() {
-        registry.counter("counter." + i.incrementAndGet(), "k1", "v");
-        registry.counter("counter." + i.incrementAndGet(), "k2", "v");
+        registry.counter("counter.1", "k1", "v");
+        registry.counter("counter.2", "k2", "v");
     }
 
     // Convenience main entry-point
