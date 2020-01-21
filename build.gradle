@@ -74,21 +74,21 @@ subprojects {
             ext.year = Calendar.getInstance().get(Calendar.YEAR)
             skipExistingHeaders = true
         }
+    }
 
-        plugins.withId('maven-publish') {
-            publishing {
-                publications {
-                    nebula(MavenPublication) {
-                        // Nebula converts dynamic versions to static ones so it's ok.
-                        suppressPomMetadataWarningsFor('apiElements')
-                    }
+    plugins.withId('maven-publish') {
+        publishing {
+            publications {
+                nebula(MavenPublication) {
+                    // Nebula converts dynamic versions to static ones so it's ok.
+                    suppressPomMetadataWarningsFor('apiElements')
                 }
             }
+        }
 
-            // Nebula doesn't interface with Gradle's module format so just disable it for now.
-            tasks.withType(GenerateModuleMetadata) {
-                enabled = false
-            }
+        // Nebula doesn't interface with Gradle's module format so just disable it for now.
+        tasks.withType(GenerateModuleMetadata) {
+            enabled = false
         }
     }
 
