@@ -25,7 +25,7 @@ dependencies {
     compile 'com.github.ben-manes.caffeine:caffeine:latest.release', optional
     compile 'net.sf.ehcache:ehcache:latest.release', optional
     compile 'javax.cache:cache-api:latest.release', optional
-    compile 'com.hazelcast:hazelcast:latest.release', optional
+    compile 'com.hazelcast:hazelcast:3.+', optional
     compile 'org.hibernate:hibernate-entitymanager:latest.release', optional
 
     // server runtime monitoring
