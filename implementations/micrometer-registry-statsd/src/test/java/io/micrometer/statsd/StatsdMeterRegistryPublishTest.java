@@ -77,12 +77,10 @@ class StatsdMeterRegistryPublishTest {
         Counter counter = Counter.builder("my.counter").register(meterRegistry);
         counter.increment(1);
         assertThat(serverLatch.await(5, TimeUnit.SECONDS)).isTrue();
-        // stop server
         server.disposeNow();
         serverLatch = new CountDownLatch(3);
         // client will try to send but server is down
         IntStream.range(2, 100).forEach(counter::increment);
-        // start server
         server = startServer(protocol, port);
         assertThat(serverLatch.getCount()).isEqualTo(3);
         // make sure the client is connected before making counter increments
