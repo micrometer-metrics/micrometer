@@ -84,4 +84,33 @@ class StepMeterRegistryTest {
         registry.close();
         assertThat(publishes.get()).isEqualTo(1);
     }
+
+    @Issue("#1796")
+    @Test
+    void maxValueFromLastStep() {
+
+        final Timer timer = Timer.builder("my.timer").register(registry);
+
+        timer.record(Duration.ofMillis(20));
+        timer.record(Duration.ofMillis(10));
+
+        clock.add(config.step().minusMillis(2));
+        assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(0L);
+
+        clock.add(Duration.ofMillis(1));
+        assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(20L);
+
+        clock.add(Duration.ofMillis(1));
+        timer.record(Duration.ofMillis(10));
+        timer.record(Duration.ofMillis(5));
+
+        clock.add(config.step().minusMillis(2));
+        assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(20L);
+
+        clock.add(Duration.ofMillis(1));
+        assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(10L);
+
+        clock.add(config.step());
+        assertThat(timer.max(TimeUnit.MILLISECONDS)).isEqualTo(0L);
+    }
 }
